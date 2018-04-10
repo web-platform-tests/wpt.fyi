@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+{{ template "_head_common.html" }}
+
+<link rel="import" href="/components/wpt-runs.html">
+</head>
+<body>
+<div id="content">
+  {{ template "_header.html" }}
+  <div>
+    <wpt-runs test-run-resources="{{ .TestRunSources }}"></wpt-runs>
+  </div>
+  {{ template "_footer.html" }}
+</div>
+{{ template "_ga.html" }}
+</body>
+</html>

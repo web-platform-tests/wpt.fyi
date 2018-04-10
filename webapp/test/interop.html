@@ -1,0 +1,229 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../components/path-part.html">
+  <link rel="import" href="../components/runs.html">
+  <link rel="import" href="../components/test-run.html">
+  <link rel="import" href="../components/interop.html">
+</head>
+<body>
+  <test-fixture id="wpt-interop-fixture">
+    <template>
+      <wpt-interop></wpt-interop>
+    </template>
+  </test-fixture>
+  <script>
+    /* global WPTInterop */
+    suite('WPTInterop', () => {
+      let fetches = [];
+      let sandbox;
+      let fetchResponse;
+
+      async function fetchToJson(url) {
+        const response = await window.fetch(url);
+        return await response.json();
+      }
+
+      function Response(jsonValue) {
+        this.ok = true;
+        this.status = 200;
+        this.json = () => Promise.resolve(jsonValue);
+      }
+
+      async function waitingOn(predicate) {
+        return await new Promise(resolve => {
+          let interval = setInterval(() => {
+            if (predicate()) {
+              clearInterval(interval);
+              resolve(true);
+            }
+          }, 0);
+        });
+      }
+
+      setup(done => {
+        sandbox = sinon.sandbox.create();
+
+
+        let prfetch = Promise.resolve();
+
+        if (!fetches.length) {
+          prfetch = fetchToJson('fixtures/passrates.json').then(json => {
+            fetches.push(json);
+            return true;
+          });
+        }
+
+        prfetch.then(() => {
+          fetchResponse = new Response(fetches[0]);
+          sandbox.stub(window, 'fetch', () => Promise.resolve(fetchResponse));
+          done();
+        });
+      });
+
+      teardown(done => {
+        sandbox.restore();
+        done();
+      });
+
+      test('EMPTY', done => {
+        console.log(fetches.length === 1);
+        console.log(fetches[0]);
+        done();
+      });
+
+      test('instanceof Polymer.Element', () => {
+        assert.isTrue(new WPTInterop() instanceof window.Polymer.Element);
+        assert.isTrue(document.createElement('wpt-interop') instanceof window.Polymer.Element);
+      });
+
+      suite('static get is()', () => {
+        test('wpt-interop', () => {
+          assert.equal(WPTInterop.is, 'wpt-interop');
+        });
+      });
+
+      suite('static get properties()', () => {
+        test('passRateMetadata', () => {
+          assert.property(WPTInterop.properties, 'passRateMetadata');
+          assert.equal(WPTInterop.properties.passRateMetadata, Object);
+        });
+        test('allMetrics', () => {
+          assert.property(WPTInterop.properties, 'allMetrics');
+          assert.equal(WPTInterop.properties.allMetrics, Object);
+        });
+        test('metrics', () => {
+          assert.property(WPTInterop.properties.metrics, 'type');
+          assert.equal(WPTInterop.properties.metrics.type, Object);
+          assert.equal(WPTInterop.properties.metrics.computed,
+            'computeMetrics(path, query, allMetrics)');
+        });
+        test('path', () => {
+          assert.property(WPTInterop.properties.path, 'type');
+          assert.equal(WPTInterop.properties.path.type, String);
+          // console.log(WPTInterop.properties.path.value, window.location.pathname);
+          // assert.ok(WPTInterop.properties.path.value.includes(window.location.pathname));
+        });
+        test('currentNode', () => {
+          assert.property(WPTInterop.properties.currentNode, 'type');
+          assert.equal(WPTInterop.properties.currentNode.type, Object);
+          assert.equal(WPTInterop.properties.currentNode.computed,
+            'computeCurrentNode(allMetrics, path)');
+        });
+        test('query', () => {
+          assert.property(WPTInterop.properties.query, 'type');
+          assert.equal(WPTInterop.properties.query.value, '');
+          assert.equal(WPTInterop.properties.query.observer, 'queryChanged');
+          assert.equal(WPTInterop.properties.query.type, String);
+        });
+        test('pathIsATestFile', () => {
+          assert.property(WPTInterop.properties.pathIsATestFile, 'type');
+          assert.equal(WPTInterop.properties.pathIsATestFile.type, Boolean);
+          assert.equal(WPTInterop.properties.pathIsATestFile.computed,
+            'computePathIsATestFile(path)');
+        });
+        test('thLabels', () => {
+          assert.property(WPTInterop.properties.thLabels, 'type');
+          assert.equal(WPTInterop.properties.thLabels.type, Array);
+          assert.equal(WPTInterop.properties.thLabels.computed,
+            'computeThLabels(allMetrics)');
+        });
+        test('queryPlaceholder', () => {
+          assert.property(WPTInterop.properties.queryPlaceholder, 'type');
+          assert.equal(WPTInterop.properties.queryPlaceholder.type, String);
+          assert.equal(WPTInterop.properties.queryPlaceholder.computed,
+            'computeQueryPlaceholder()');
+        });
+        test('queryTimeoutId', () => {
+          assert.property(WPTInterop.properties.queryTimeoutId, 'type');
+          assert.equal(WPTInterop.properties.queryTimeoutId.type, Number);
+        });
+      });
+
+      suite('WPTInterop.prototype.*', () => {
+        let superConnectedCallback;
+        let wpti;
+
+        setup((done) => {
+          superConnectedCallback = Promise.resolve(true);
+          sandbox.stub(window.Polymer.Element.prototype, 'connectedCallback')
+            .returns(superConnectedCallback);
+
+          sandbox.spy(WPTInterop.prototype, 'initState');
+          sandbox.spy(WPTInterop.prototype, 'fetchMetrics');
+
+          wpti = fixture('wpt-interop-fixture');
+
+          // passRateMetadata or pass-rate-metadata will be
+          // bootstrapped on the server by interop_handler.go
+          wpti.passRateMetadata = fetches[0].metadata;
+
+          done();
+        });
+
+        suite('async connectedCallback()', () => {
+          test('super.connectedCallback()', (done) => {
+            superConnectedCallback.then(() => (assert.ok(true),done()));
+          });
+          test('Sets window.onpopstate', (done) => {
+            let onpopstate = window.onpopstate;
+            window.onpopstate = null;
+            superConnectedCallback
+              .then(() => waitingOn(() => window.fetch.called))
+              .then(() => {
+                // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
+                assert.isTrue(typeof window.onpopstate === 'function');
+                assert.notEqual(window.onpopstate, onpopstate);
+
+                window.onpopstate({
+                  state: {}
+                });
+                assert.equal(wpti.path, '/');
+                assert.equal(wpti.query, '');
+
+                window.onpopstate({
+                  state: {
+                    path: 'foo/bar/baz',
+                    query: 'whatever',
+                  }
+                });
+                assert.equal(wpti.path, 'foo/bar/baz');
+                assert.equal(wpti.query, 'whatever');
+              })
+              .then(done);
+          });
+          test('Calls fetchMetrics(url)', (done) => {
+            superConnectedCallback
+              .then(() => waitingOn(() => window.fetch.called))
+              .then(() => {
+                // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
+                assert.equal(wpti.fetchMetrics.callCount, 1);
+                assert.isTrue(wpti.fetchMetrics.firstCall.args[0].endsWith('pass-rates.json.gz'));
+
+              })
+              .then(done);
+          });
+        });
+
+        suite('async fetchMetrics()', () => {
+          test('Calls window.fetch(...)', (done) => {
+            superConnectedCallback
+              .then(() => waitingOn(() => window.fetch.called))
+              .then(() => {
+                // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
+                assert.equal(window.fetch.callCount, 1);
+                assert.isTrue(window.fetch.firstCall.args[0].endsWith('pass-rates.json.gz'));
+              })
+              .then(done);
+          });
+        });
+      });
+
+    });
+  </script>
+</body>
+</html>

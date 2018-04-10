@@ -1,0 +1,36 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "mocha": true
+  },
+  "extends": "eslint:recommended",
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "module"
+  },
+  "globals": {
+    "assert": true,
+    "fixture": true,
+    "sandbox": true,
+    "sinon": true
+  },
+  "rules": {
+    "brace-style": ["error", "1tbs"],
+    "curly": ["error", "all"],
+    "eqeqeq": ["error", "always"],
+    "func-call-spacing": ["error", "never"],
+    "indent": ["error", 2],
+    "linebreak-style": ["error", "unix"],
+    "no-console": [0],
+    "no-mixed-spaces-and-tabs": ["error"],
+    "no-redeclare": ["error"],
+    "no-trailing-spaces": ["error"],
+    "no-underscore-dangle": ["error"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "space-before-function-paren": ["error", "never"],
+    "strict": ["error", "global"],
+    "yoda": ["error"]
+  }
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+{{ template "_head.html" }}
+<body>
+<div id="content">
+  {{ template "_header.html" }}
+  <article>
+    <h1>About</h1>
+    <p>The WPT Dashboard, <a href="http://wpt.fyi/">wpt.fyi</a>, displays results for the <a href="https://github.com/w3c/web-platform-tests">web-platform-tests</a>, or WPT, which are a group of test suites for many web platform specifications.</p>
+    <p>If the web platform as a whole were an engineering project, it'd be crazy not to have a test suite that's run regularly. The goal of the WPT Dashboard is to promote viewing the web platform as one entity and to make identifying and fixing interoperability issues as easy as possible.</p>
+    <p>The WPT Dashboard project is comprised of two parts:</p>
+    <ul>
+      <li>
+        <b>Running:</b> currently the goal is to run WPT in Chrome, Edge, Firefox, and Safari daily.
+      </li>
+      <li>
+        <b>Serving:</b> this site, <a href="http://wpt.fyi/">wpt.fyi</a>, displaying test results.
+      </li>
+    </ul>
+    <h2>Source and Documentation</h2>
+    <p>The source code for both running and serving test results is on <a href="https://github.com/w3c/wptdashboard">GitHub</a>.</p>
+    <h2>Contact</h2>
+    <p>Please file a <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new">GitHub issue</a>. For other discussion, most people who contribute to the WPT Dashboard monitor the <a href="http://lists.w3.org/Archives/Public/public-test-infra/">public-test-infra@w3.org</a> mailing list.</p>
+  </article>
+</div>
+{{ template "_ga.html" }}
+</body>
+</html>

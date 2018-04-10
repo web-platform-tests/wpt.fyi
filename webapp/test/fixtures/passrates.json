@@ -1,0 +1,9006 @@
+{
+  "metadata": {
+    "start_time": "2018-01-16T10:36:09.22781468-05:00",
+    "end_time": "2018-01-16T10:37:08.630891994-05:00",
+    "test_runs": [
+      {
+        "browser_name": "chrome",
+        "browser_version": "63.0",
+        "os_name": "linux",
+        "os_version": "",
+        "revision": "53c5bf648c",
+        "results_url": "https://storage.googleapis.com/wptd/53c5bf648c/chrome-63.0-linux-summary.json.gz",
+        "created_at": "2018-01-09T15:47:03.949Z"
+      },
+      {
+        "browser_name": "edge",
+        "browser_version": "15",
+        "os_name": "windows",
+        "os_version": "10",
+        "revision": "13eaad17a4",
+        "results_url": "https://storage.googleapis.com/wptd/13eaad17a4/edge-15-windows-10-sauce-summary.json.gz",
+        "created_at": "2018-01-13T19:21:20.165711Z"
+      },
+      {
+        "browser_name": "firefox",
+        "browser_version": "57.0",
+        "os_name": "linux",
+        "os_version": "*",
+        "revision": "1f9c924a4b",
+        "results_url": "https://storage.googleapis.com/wptd/1f9c924a4b/firefox-57.0-linux-summary.json.gz",
+        "created_at": "2018-01-09T15:54:04.296Z"
+      },
+      {
+        "browser_name": "safari",
+        "browser_version": "11.0",
+        "os_name": "macos",
+        "os_version": "10.12",
+        "revision": "3b19057653",
+        "results_url": "https://storage.googleapis.com/wptd/3b19057653/safari-11.0-macos-10.12-sauce-summary.json.gz",
+        "created_at": "2018-01-01T17:59:48.129561Z"
+      }
+    ],
+    "url": "https://storage.googleapis.com/wptd-metrics/1516116969-1516117028/pass-rates.json.gz"
+  },
+  "data": [
+    {
+      "dir": "",
+      "pass_rates": [ 102, 180, 237, 3021, 2202 ],
+      "total": 5742
+    },
+    {
+      "dir": "/2dcontext",
+      "pass_rates": [
+        34,
+        60,
+        79,
+        1007,
+        734
+      ],
+      "total": 1914
+    },
+    {
+      "dir": "/2dcontext/building-paths",
+      "pass_rates": [
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/building-paths/canvas_complexshapes_arcto_001.htm",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/building-paths/canvas_complexshapes_beziercurveto_001.htm",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/compositing",
+      "pass_rates": [
+        1,
+        0,
+        2,
+        91,
+        93
+      ],
+      "total": 187
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.destination-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.destination-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.lighter.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.source-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.source-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.canvas.xor.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.destination-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.destination-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.lighter.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.source-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.source-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.clip.xor.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.canvas.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.canvascopy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.canvaspattern.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.default.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.fill.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.image.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.imagepattern.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.globalAlpha.range.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.destination-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.destination-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.lighter.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.source-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.source-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.image.xor.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.casesensitive.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.clear.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.darker.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.default.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.get.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.highlight.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.nullsuffix.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.operation.unrecognised.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.destination-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.destination-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.lighter.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.source-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.source-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.solid.xor.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.destination-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.destination-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.lighter.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.source-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.source-over.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.transparent.xor.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.fill.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.fill.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.fill.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.fill.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.fill.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.image.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.image.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.image.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.image.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.image.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.nocontext.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.nocontext.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.nocontext.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.nocontext.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.nocontext.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.pattern.copy.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.pattern.destination-atop.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.pattern.destination-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.pattern.source-in.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/2d.composite.uncovered.pattern.source-out.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/compositing/canvas_compositing_globalcompositeoperation_001.htm",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/conformance-requirements",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        3,
+        2
+      ],
+      "total": 6
+    },
+    {
+      "dir": "/2dcontext/conformance-requirements/2d.missingargs.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/conformance-requirements/2d.type.delete.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/conformance-requirements/2d.voidreturn.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas",
+      "pass_rates": [
+        0,
+        4,
+        36,
+        285,
+        33
+      ],
+      "total": 358
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.3arg.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.5arg.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.9arg.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.9arg.destpos.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.9arg.destsize.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.9arg.sourcepos.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.9arg.sourcesize.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.alpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.animated.apng.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.animated.gif.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.animated.poster.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.broken.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.canvas.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.clip.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.composite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.floatsource.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.incomplete.emptysrc.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.incomplete.immediate.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.incomplete.nosrc.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.incomplete.reload.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.incomplete.removedsrc.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.negativedest.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.negativedir.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.negativesource.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.nowrap.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.null.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.path.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.self.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.self.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.svg.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.transform.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.wrongtype.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.zerocanvas.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.zerosource.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/2d.drawImage.zerosource.image.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/drawimage_canvas.html",
+      "pass_rates": [
+        0,
+        0,
+        24,
+        128,
+        0
+      ],
+      "total": 152
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/drawimage_html_image.html",
+      "pass_rates": [
+        0,
+        0,
+        4,
+        124,
+        0
+      ],
+      "total": 128
+    },
+    {
+      "dir": "/2dcontext/drawing-images-to-the-canvas/drawimage_svg_image_1.html",
+      "pass_rates": [
+        0,
+        0,
+        5,
+        0,
+        1
+      ],
+      "total": 6
+    },
+    {
+      "dir": "/2dcontext/drawing-paths-to-the-canvas",
+      "pass_rates": [
+        2,
+        0,
+        0,
+        5,
+        8
+      ],
+      "total": 15
+    },
+    {
+      "dir": "/2dcontext/drawing-paths-to-the-canvas/canvas_complexshapes_ispointInpath_001.htm",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-paths-to-the-canvas/canvas_focus_drawCustomFocusRing_001.html",
+      "pass_rates": [
+        2,
+        0,
+        0,
+        1,
+        0
+      ],
+      "total": 3
+    },
+    {
+      "dir": "/2dcontext/drawing-paths-to-the-canvas/drawFocusIfNeeded_001.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-paths-to-the-canvas/drawFocusIfNeeded_002.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-paths-to-the-canvas/drawFocusIfNeeded_003.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-paths-to-the-canvas/drawFocusIfNeeded_004.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-paths-to-the-canvas/drawFocusIfNeeded_005.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        33,
+        31
+      ],
+      "total": 64
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.clip.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.globalalpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.globalcomposite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.path.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.shadow.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.transform.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.clearRect.zero.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.fillRect.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.fillRect.clip.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.fillRect.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.fillRect.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.fillRect.path.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.fillRect.shadow.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.fillRect.transform.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.fillRect.zero.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.clip.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.globalalpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.globalcomposite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.path.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.shadow.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.transform.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.zero.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.zero.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.zero.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.zero.4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-rectangles-to-the-canvas/2d.strokeRect.zero.5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        21,
+        24
+      ],
+      "total": 46
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.align.center.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.align.end.ltr.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.align.end.rtl.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.align.left.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.align.right.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.align.start.ltr.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.align.start.rtl.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.baseline.alphabetic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fill.maxWidth.NaN.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fill.maxWidth.bound.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fill.maxWidth.fontface.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fill.maxWidth.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fill.maxWidth.small.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fill.maxWidth.zero.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fill.unaffected.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fontface.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fontface.notinpage.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.fontface.repeat.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.space.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.space.collapse.nonspace.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.draw.stroke.unaffected.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.measure.width.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/drawing-text-to-the-canvas/2d.text.measure.width.empty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles",
+      "pass_rates": [
+        1,
+        28,
+        7,
+        221,
+        203
+      ],
+      "total": 460
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.default.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.get.semitransparent.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.get.solid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.get.transparent.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.invalidstring.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.invalidtype.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-1.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-2.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-3.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-4.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-5.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-6.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-7.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-8.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsl-9.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-1.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-2.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-3.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-4.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-5.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-6.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-7.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-8.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-hsla-9.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgb-1.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgb-2.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgb-3.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgb-4.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgb-5.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgb-6.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgba-1.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgba-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgba-3.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgba-4.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgba-5.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.css-color-4-rgba-6.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.current.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.current.changed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.current.notrendered.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.current.removed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hex3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hex4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hex6.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hex8.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-6.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-clamp-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-clamp-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-clamp-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsl-clamp-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsla-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsla-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsla-clamp-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsla-clamp-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsla-clamp-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsla-clamp-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsla-clamp-5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.hsla-clamp-6.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.html4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-hsl-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-hsl-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-hsl-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-hsl-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-hsl-5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-hsla-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-hsla-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-hsla-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-rgb-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-rgb-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-rgb-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-rgb-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-rgb-5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-rgba-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-rgba-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.css-color-4-rgba-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hex1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hex2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hex3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hex4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hex5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hex6.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hex7.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hex8.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsl-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsl-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsl-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsl-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsl-5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsl-6.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsla-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsla-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.hsla-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.name-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.name-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.name-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.name-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.name-5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.rgb-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.rgb-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.rgb-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.rgba-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.rgba-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.rgba-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.rgba-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.invalid.rgba-5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgb-clamp-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgb-clamp-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgb-clamp-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgb-clamp-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgb-clamp-5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgb-eof.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgb-num.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgb-percent.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-clamp-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-clamp-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-eof.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-num-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-num-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-percent.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-solid-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-solid-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-solid-3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.rgba-solid-4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.svg-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.svg-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.system.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.transparent-1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.fillStyle.parse.transparent-2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.empty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.alpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.colour.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.colouralpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.multiple.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.overlap.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.overlap2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.solid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.vertical.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.zerosize.fill.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.zerosize.fillRect.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.zerosize.fillText.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.zerosize.stroke.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.zerosize.strokeRect.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.interpolate.zerosize.strokeText.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.linear.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.linear.transform.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.linear.transform.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.linear.transform.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.object.compare.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.object.crosscanvas.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.object.current.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.object.invalidcolour.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.object.invalidoffset.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.object.return.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.object.type.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.object.update.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.cone.behind.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.cone.beside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.cone.bottom.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.cone.cylinder.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.cone.front.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.cone.shape1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.cone.shape2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.cone.top.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.equal.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.inside1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.inside2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.inside3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.outside1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.outside2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.outside3.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.touch1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.touch2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.touch3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.transform.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.transform.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.gradient.radial.transform.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.animated.gif.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.basic.canvas.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.basic.image.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.basic.nocontext.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.basic.type.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.basic.zerocanvas.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.crosscanvas.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.broken.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.incomplete.emptysrc.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.incomplete.immediate.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.incomplete.nosrc.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.incomplete.reload.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.incomplete.removedsrc.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.null.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.string.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.image.undefined.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.modify.canvas1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.modify.canvas2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.modify.image1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.modify.image2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.norepeat.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.norepeat.coord1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.norepeat.coord2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.norepeat.coord3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.norepeat.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.orientation.canvas.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.orientation.image.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeat.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeat.coord1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeat.coord2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeat.coord3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeat.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeatx.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeatx.coord1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeatx.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeaty.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeaty.coord1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.paint.repeaty.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.repeat.case.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.repeat.empty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.repeat.null.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.repeat.nullsuffix.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.repeat.undefined.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.repeat.unrecognised.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.pattern.repeat.unrecognisednull.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/2d.strokeStyle.default.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/fill-and-stroke-styles/canvas_colorsandstyles_createlineargradient_001.htm",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/hit-regions",
+      "pass_rates": [
+        7,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 9
+    },
+    {
+      "dir": "/2dcontext/hit-regions/addHitRegions-NotSupportedError-01.html",
+      "pass_rates": [
+        4,
+        0,
+        0,
+        0,
+        1
+      ],
+      "total": 5
+    },
+    {
+      "dir": "/2dcontext/hit-regions/hitregions-members-exist.html",
+      "pass_rates": [
+        3,
+        0,
+        0,
+        1,
+        0
+      ],
+      "total": 4
+    },
+    {
+      "dir": "/2dcontext/image-smoothing",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        3,
+        7
+      ],
+      "total": 10
+    },
+    {
+      "dir": "/2dcontext/image-smoothing/imagesmoothing.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        3,
+        7
+      ],
+      "total": 10
+    },
+    {
+      "dir": "/2dcontext/imagebitmap",
+      "pass_rates": [
+        4,
+        20,
+        19,
+        0,
+        1
+      ],
+      "total": 44
+    },
+    {
+      "dir": "/2dcontext/imagebitmap/createImageBitmap-drawImage.html",
+      "pass_rates": [
+        0,
+        0,
+        7,
+        0,
+        0
+      ],
+      "total": 7
+    },
+    {
+      "dir": "/2dcontext/imagebitmap/createImageBitmap-invalid-args.html",
+      "pass_rates": [
+        4,
+        20,
+        7,
+        0,
+        0
+      ],
+      "total": 31
+    },
+    {
+      "dir": "/2dcontext/imagebitmap/createImageBitmap-sizeOverflow.html",
+      "pass_rates": [
+        0,
+        0,
+        5,
+        0,
+        1
+      ],
+      "total": 6
+    },
+    {
+      "dir": "/2dcontext/line-styles",
+      "pass_rates": [
+        2,
+        0,
+        0,
+        35,
+        30
+      ],
+      "total": 67
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.cap.butt.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.cap.closed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.cap.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.cap.open.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.cap.round.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.cap.square.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.cap.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.cross.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.defaults.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.join.bevel.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.join.closed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.join.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.join.miter.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.join.open.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.join.parallel.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.join.round.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.join.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.miter.acute.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.miter.exceeded.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.miter.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.miter.lineedge.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.miter.obtuse.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.miter.rightangle.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.miter.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.miter.within.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.union.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.width.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.width.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.width.scaledefault.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.width.transformed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/2d.line.width.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/line-styles/canvas_linestyles_linecap_001.htm",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/line-styles/lineto_a.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/line-styles/setLineDash.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        3,
+        0
+      ],
+      "total": 3
+    },
+    {
+      "dir": "/2dcontext/path-objects",
+      "pass_rates": [
+        0,
+        2,
+        3,
+        134,
+        127
+      ],
+      "total": 266
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.angle.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.angle.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.angle.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.angle.4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.angle.5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.angle.6.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.default.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.empty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.end.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.nonempty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.scale.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.scale.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.selfintersect.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.selfintersect.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.shape.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.shape.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.shape.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.shape.4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.shape.5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.twopie.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.twopie.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.twopie.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.twopie.4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.zero.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.zero.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arc.zeroradius.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.coincide.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.coincide.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.collinear.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.collinear.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.collinear.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.ensuresubpath.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.ensuresubpath.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.scale.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.shape.curve1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.shape.curve2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.shape.end.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.shape.start.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.transformation.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.zero.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.arcTo.zero.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.beginPath.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.bezierCurveTo.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.bezierCurveTo.ensuresubpath.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.bezierCurveTo.ensuresubpath.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.bezierCurveTo.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.bezierCurveTo.scaled.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.bezierCurveTo.shape.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.clip.basic.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.clip.basic.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.clip.empty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.clip.intersect.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.clip.unaffected.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.clip.winding.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.clip.winding.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.closePath.empty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.closePath.newline.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.closePath.nextpoint.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.fill.closed.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.fill.closed.unaffected.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.fill.overlap.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.fill.winding.add.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.fill.winding.subtract.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.fill.winding.subtract.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.fill.winding.subtract.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.initial.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.arc.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.basic.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.basic.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.bezier.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.bigarc.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.edge.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.empty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.subpath.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.transform.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.transform.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.transform.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.transform.4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.unclosed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.isPointInPath.winding.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.lineTo.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.lineTo.ensuresubpath.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.lineTo.ensuresubpath.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.lineTo.nextpoint.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.lineTo.nonfinite.details.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.lineTo.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.moveTo.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.moveTo.multiple.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.moveTo.newsubpath.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.moveTo.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.quadraticCurveTo.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.quadraticCurveTo.ensuresubpath.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.quadraticCurveTo.ensuresubpath.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.quadraticCurveTo.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.quadraticCurveTo.scaled.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.quadraticCurveTo.shape.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.closed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.end.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.end.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.newsubpath.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.selfintersect.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.winding.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.zero.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.zero.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.zero.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.zero.4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.zero.5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.rect.zero.6.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.empty.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.overlap.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.prune.arc.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.prune.closed.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.prune.corner.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.prune.curve.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.prune.line.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.prune.rect.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.scale1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.scale2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.skew.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.unaffected.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.stroke.union.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.transformation.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.transformation.changing.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/path-objects/2d.path.transformation.multiple.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation",
+      "pass_rates": [
+        0,
+        2,
+        8,
+        58,
+        52
+      ],
+      "total": 120
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create1.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create1.initial.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create1.this.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create1.type.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create1.zero.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.double.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.initial.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.large.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.this.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.type.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.create2.zero.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.clamp.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.double.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.length.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.nonpremul.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.order.alpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.order.cols.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.order.rgb.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.order.rows.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.range.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.source.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.source.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.source.size.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.type.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.unaffected.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.get.zero.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.clamp.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.ctor.array.bounds.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.ctor.array.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.ctor.size.bounds.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.ctor.size.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.nan.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.properties.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.readonly.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.round.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.set.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.string.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.object.undefined.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.alpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.clip.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.created.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.cross.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.dirty.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.dirty.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.dirty.rect1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.dirty.rect2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.dirty.zero.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.modified.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.null.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.path.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.unaffected.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.unchanged.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/pixel-manipulation/2d.imageData.put.wrongtype.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        56,
+        58
+      ],
+      "total": 115
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.alpha.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.alpha.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.alpha.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.alpha.4.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.alpha.5.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowBlur.initial.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowBlur.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowBlur.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowColor.initial.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowColor.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowColor.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowOffset.initial.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowOffset.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.attributes.shadowOffset.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.canvas.alpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.canvas.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.canvas.transparent.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.canvas.transparent.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.clip.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.clip.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.clip.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.composite.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.composite.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.composite.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.enable.blur.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.enable.off.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.enable.off.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.enable.x.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.enable.y.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.gradient.alpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.gradient.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.gradient.transparent.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.gradient.transparent.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.image.alpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.image.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.image.scale.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.image.section.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.image.transparent.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.image.transparent.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.offset.negativeX.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.offset.negativeY.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.offset.positiveX.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.offset.positiveY.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.outside.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.pattern.alpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.pattern.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.pattern.transparent.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.pattern.transparent.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.stroke.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.stroke.cap.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.stroke.cap.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.stroke.join.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.stroke.join.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.stroke.join.3.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.transform.1.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/2d.shadow.transform.2.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/canvas_shadows_001.htm",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/shadows/canvas_shadows_002.htm",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/text-styles",
+      "pass_rates": [
+        8,
+        3,
+        4,
+        19,
+        15
+      ],
+      "total": 49
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.align.default.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.align.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.align.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.baseline.default.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.baseline.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.baseline.valid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.baseline.bottom.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.baseline.hanging.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.baseline.ideographic.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.baseline.middle.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.baseline.top.html",
+      "pass_rates": [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.space.collapse.end.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.space.collapse.other.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.space.collapse.space.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.draw.space.collapse.start.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.font.default.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.font.parse.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.font.parse.complex.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.font.parse.invalid.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.font.parse.size.percentage.default.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.font.parse.size.percentage.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.font.parse.system.html",
+      "pass_rates": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.font.parse.tiny.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/2d.text.measure.width.space.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        1,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/text-styles/canvas_text_font_001.htm",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        22,
+        26
+      ],
+      "total": 49
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.bitmap.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.clip.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.fillStyle.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.font.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.globalAlpha.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.globalCompositeOperation.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.imageSmoothingEnabled.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.lineCap.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.lineJoin.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.lineWidth.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.miterLimit.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.path.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.shadowBlur.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.shadowColor.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.shadowOffsetX.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.shadowOffsetY.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.stack.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.stackdepth.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.strokeStyle.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.textAlign.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.textBaseline.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.transformation.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/2d.state.saverestore.underflow.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/the-canvas-state/canvas_state_restore_001.htm",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/transformations",
+      "pass_rates": [
+        4,
+        0,
+        0,
+        20,
+        23
+      ],
+      "total": 47
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.order.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.rotate.direction.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.rotate.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.rotate.radians.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.rotate.wrap.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.rotate.wrapnegative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.rotate.zero.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.scale.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.scale.large.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.scale.multiple.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.scale.negative.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.scale.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.scale.zero.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.setTransform.multiple.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.setTransform.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.setTransform.skewed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.transform.identity.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.transform.multiply.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.transform.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.transform.skewed.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.translate.basic.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/2d.transformation.translate.nonfinite.html",
+      "pass_rates": [
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "dir": "/2dcontext/transformations/canvas_transformations_reset_001.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/transformations/canvas_transformations_scale_001.htm",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    },
+    {
+      "dir": "/2dcontext/transformations/transform_a.html",
+      "pass_rates": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "total": 1
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+# Copyright 2017 The WPT Dashboard Project. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+runtime: go
+api_version: go1
+
+builtins:
+- remote_api: on
+
+handlers:
+- url: /components
+  static_dir: components
+  secure: always
+- url: /bower_components
+  static_dir: bower_components
+  secure: always
+- url: /static
+  static_dir: static
+  secure: always
+- url: /.*
+  script: _go_app
+  secure: always
+
+# Don't upload mock-data static files to AppEngine
+skip_files:
+- bower_components/accessibility-developer-tools/
+- bower_components/async/
+- bower_components/chai/
+- bower_components/lodash/
+- bower_components/mocha/
+- bower_components/sinon-chai/
+- bower_components/sinonjs/
+- bower_components/stacky/
+- bower_components/test-fixture/
+- bower_components/web-component-tester/
+- node_modules/
+- static/b952881825/
+- static/wptd-metrics/
+- test/
+- .eslintrc.json
+- bower.json
+- package.json
+- README.md

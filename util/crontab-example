@@ -1,0 +1,4 @@
+# This file is simply to help me (and others who may help maintain it) remember the cron command for running it in the VMs.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+0 7 * * * cd $HOME/wpt.fyi && ./run/run.py firefox-56.0-linux --upload --create-testrun &>> /var/log/wptd.log

@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../components/test-run.html">
+</head>
+<body>
+  <test-fixture id="test-run-fixture">
+    <template>
+      <test-run></test-run>
+    </template>
+  </test-fixture>
+
+  <script>
+    /* global TestRun */
+    suite('<test-run>', () => {
+      let trf = null;
+
+      setup(() => {
+        trf = fixture('test-run-fixture');
+      });
+
+      suite('static get properties()', () => {
+        test('testRun', () => {
+          assert.property(TestRun.properties, 'testRun');
+          assert.property(TestRun.properties.testRun, 'type');
+          assert.equal(TestRun.properties.testRun.type, Object);
+        });
+      });
+
+      suite('TestRunsBase.prototype.*', () => {
+        suite('dateFormat()', () => {
+          test('dateFormat(iso string)', () => {
+            assert.equal(trf.dateFormat('2018-01-12T12:00:00Z'), 'Jan 12 2018');
+          });
+        });
+        suite('isDiff()', () => {
+          test('isDiff("Diff|diff")', () => {
+            assert.isTrue(trf.isDiff('Diff'));
+            assert.isTrue(trf.isDiff('diff'));
+          });
+          test('isDiff(anything else)', () => {
+            assert.isFalse(trf.isDiff('literally anything'));
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

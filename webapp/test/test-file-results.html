@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../components/runs.html">
+  <link rel="import" href="../components/test-run.html">
+  <link rel="import" href="../components/test-file-results.html">
+</head>
+<body>
+  <test-fixture id="test-file-results-fixture">
+    <template>
+      <test-file-results
+        test-runs=""
+        test-run-resources="[&#34;/api/runs?sha=latest&#34;]"
+        test-file="/2dcontext/the-canvas-state/2d.state.saverestore.bitmap.html">
+      </test-file-results>
+
+      [[path]]
+    </template>
+  </test-fixture>
+  <script>
+    /* global TestRunsBase, TestFileResults */
+    suite('TestFileResults', () => {
+      const fetches = [
+        {'browser_name':'chrome','browser_version':'63.0','os_name':'linux','os_version':'','revision':'53c5bf648c','results_url':'https://storage.googleapis.com/wptd/53c5bf648c/chrome-63.0-linux-summary.json.gz','created_at':'2018-01-09T15:47:03.949Z'},
+        {'browser_name':'edge','browser_version':'15','os_name':'windows','os_version':'10','revision':'03d67ae5d9','results_url':'https://storage.googleapis.com/wptd/03d67ae5d9/edge-15-windows-10-sauce-summary.json.gz','created_at':'2018-01-17T10:11:24.678461Z'},
+        {'browser_name':'firefox','browser_version':'57.0','os_name':'linux','os_version':'*','revision':'1f9c924a4b','results_url':'https://storage.googleapis.com/wptd/1f9c924a4b/firefox-57.0-linux-summary.json.gz','created_at':'2018-01-09T15:54:04.296Z'},
+        {'browser_name':'safari','browser_version':'11.0','os_name':'macos','os_version':'10.12','revision':'3b19057653','results_url':'https://storage.googleapis.com/wptd/3b19057653/safari-11.0-macos-10.12-sauce-summary.json.gz','created_at':'2018-01-01T17:59:48.129561Z'}
+      ];
+      let sandbox;
+      let fetchResponse;
+
+      function Response(jsonValue) {
+        this.ok = true;
+        this.status = 200;
+        this.json = () => Promise.resolve(jsonValue);
+      }
+
+      setup(() => {
+        sandbox = sinon.sandbox.create();
+        fetchResponse = new Response(fetches[0]);
+        sandbox.stub(window, 'fetch', () => Promise.resolve(fetchResponse));
+      });
+
+      teardown(() => {
+        sandbox.restore();
+      });
+
+      test('instanceof Polymer.Element', () => {
+        assert.isTrue(new TestFileResults() instanceof window.Polymer.Element);
+        assert.isTrue(document.createElement('test-file-results') instanceof window.Polymer.Element);
+      });
+
+      test('instanceof TestRunsBase', () => {
+        assert.isTrue(new TestFileResults() instanceof TestRunsBase);
+        assert.isTrue(document.createElement('test-file-results') instanceof TestRunsBase);
+      });
+
+      suite('static get is()', () => {
+        test('test-file-results', () => {
+          assert.equal(TestFileResults.is, 'test-file-results');
+        });
+      });
+
+      suite('static get properties()', () => {
+        test('testFile', () => {
+          assert.property(TestFileResults.properties, 'testFile');
+          assert.property(TestFileResults.properties.testFile, 'type');
+          assert.equal(TestFileResults.properties.testFile.type, String);
+          assert.equal(TestFileResults.properties.testFile.observer, 'testFileChanged');
+        });
+        test('subtestNames', () => {
+          assert.property(TestFileResults.properties, 'subtestNames');
+          assert.property(TestFileResults.properties.subtestNames, 'type');
+          assert.equal(TestFileResults.properties.subtestNames.type, Array);
+          assert.isTrue(Array.isArray(TestFileResults.properties.subtestNames.value));
+          assert.equal(TestFileResults.properties.subtestNames.value.length, 0);
+        });
+      });
+
+      suite('TestFileResults.prototype.*', () => {
+        test('TODO', () => {
+          assert.ok(true);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

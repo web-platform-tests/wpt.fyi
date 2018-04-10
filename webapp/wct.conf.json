@@ -1,0 +1,15 @@
+{
+  "suites": [
+    "test/interop.html",
+    "test/path-part.html",
+    "test/runs.html",
+    "test/test-run.html",
+    "test/test-file-results.html"
+  ],
+  "verbose": true,
+  "plugins": {
+    "local": {
+      "browsers": ["chrome", "firefox"]
+    }
+  }
+}

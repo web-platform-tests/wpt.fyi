@@ -1,0 +1,429 @@
+<!--
+Copyright 2017 The WPT Dashboard Project. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="path-part.html">
+<link rel="import" href="runs.html">
+<link rel="import" href="test-file-results.html">
+<link rel="import" href="test-run.html">
+
+<dom-module id="wpt-results">
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-size: 15px;
+      }
+      section.search {
+        border-bottom: solid 1px #ccc;
+        padding-bottom: 1em;
+        margin-bottom: 1em;
+      }
+      section.search .path {
+        margin-top: 1em;
+      }
+      input.query {
+        font-size: 16px;
+        display: block;
+        padding: 0.5em 0;
+        width: 100%;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      tr.spec {
+        background-color: #eee;
+      }
+      tr td {
+        padding: 0 0.5em;
+      }
+      tr.spec td {
+        padding: 0.2em 0.5em;
+        border: solid 1px #ccc;
+      }
+      .path-separator {
+        padding: 0 0.1em;
+      }
+      .links {
+        margin-bottom: 1em;
+      }
+      .info {
+        padding: 0.5em;
+        background-color: #e2e3fd;
+        margin-bottom: 1em;
+        margin-top: 2em;
+        border-left: solid 4px #7477f4;
+      }
+      .info small {
+        float: right;
+      }
+
+      @media (max-width: 800px) {
+        table tr td:first-child::after {
+          content: "";
+          display: inline-block;
+          vertical-align: top;
+          min-height: 30px;
+        }
+      }
+    </style>
+
+    <section class="search">
+      <input
+        value="{{query::input}}"
+        class="query"
+        placeholder="Search test files, like cors/allow-headers.htm">
+      <div class="path">
+        <a href="/" on-click="navigate">WPT</a>
+        <template is="dom-repeat" items="{{ splitPathIntoLinkedParts(path) }}" as="part">
+          <span class="path-separator">/</span>
+          <a href="{{ part.path }}" on-click="navigate">{{ part.name }}</a>
+        </template>
+
+        <template is="dom-if" if="{{ !isLatest }}">
+          <section class="info">
+            Showing results for run <b>{{ sha }}</b>.
+            <small><a href='?sha=latest'>View latest run</a></small>
+          </section>
+        </template>
+      </div>
+    </section>
+
+    <template is="dom-if" if="{{ pathIsATestFile }}">
+      <div class="links">
+        <ul>
+          <li><a href$="https://github.com/w3c/web-platform-tests/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
+          <li><a href$="https://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+        </ul>
+      </div>
+
+      <test-file-results
+        test-runs="[[testRuns]]"
+        test-run-resources="[[testRunResources]]"
+        test-file="[[path]]">
+      </test-file-results>
+    </template>
+
+    <template is="dom-if" if="{{ !pathIsATestFile }}">
+      <table>
+        <thead>
+          <tr>
+            <th>Spec</th>
+            <template is="dom-repeat" items="{{testRuns}}" as="testRun">
+              <!-- Repeats for as many different browser test runs are available -->
+              <th><test-run test-run="[[testRun]]"></test-run></th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+
+          <template is="dom-repeat" items="{{displayedNodes}}" as="node">
+            <tr>
+              <td>
+                <path-part path="{{ node.path }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
+              </td>
+
+              <template is="dom-repeat" items="{{testRuns}}" as="testRun">
+                <td style="{{ testResultStyle(node, testRun) }}">
+                  <template is="dom-if" if="{{ hasResults(node, testRun) }}">
+                    {{ getNodeResultDataByPropertyName(node, testRun, 'passing') }}
+                    /
+                    {{ getNodeResultDataByPropertyName(node, testRun, 'total') }}
+                  </template>
+                </td>
+              </template>
+
+            </tr>
+          </template>
+
+        </tbody>
+      </table>
+    </template>
+
+  </template>
+
+  <script>
+    /* global TestRunsBase */
+    class WPTResults extends TestRunsBase {
+      static get is() {
+        return 'wpt-results';
+      }
+
+      static get properties() {
+        return {
+          query: {
+            type: String,
+            value: '',
+            observer: 'refreshDisplayedNodes'
+          },
+          sha: {
+            type: String
+          },
+          isLatest: {
+            type: Boolean,
+            computed: 'computeIsLatest(sha)'
+          },
+          path: {
+            type: String,
+            value: window.location.pathname.replace(/(.+)(\/)$/, '$1')
+          },
+          pathIsATestFile: {
+            type: Boolean,
+            computed: 'computePathIsATestFile(path)'
+          },
+          testFiles: {
+            type: Object,
+            value: {}
+          },
+          displayedNodes: {
+            type: Array,
+            value: []
+          }
+        };
+      }
+
+      computeIsLatest(sha) {
+        return !sha || sha === 'latest';
+      }
+
+      computePathIsATestFile(path) {
+        return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
+      }
+
+      async connectedCallback() {
+        await super.connectedCallback();
+
+        window.onpopstate = () => {
+          this.path = window.location.pathname.replace(/(.+)(\/)$/, '$1');
+          this.refreshDisplayedNodes();
+        };
+
+        // Fetch the results JSON for the TestRuns
+        const testFileResults = await Promise.all(
+          this.testRuns.map(async json => this.fetchResults(json.results_url))
+        );
+
+        testFileResults.forEach(result => {
+          const {testFiles, resultsURL} = result;
+
+          Object.keys(testFiles).forEach(testFileName => {
+            if (!this.testFiles[testFileName]) {
+              this.testFiles[testFileName] = {};
+            }
+            this.testFiles[testFileName][resultsURL] = testFiles[testFileName];
+          });
+        });
+
+        this.refreshDisplayedNodes();
+      }
+
+      async fetchResults(resultsURL) {
+        const response = await window.fetch(resultsURL);
+        const testFiles = response.ok ? await response.json() : {};
+        return {testFiles, resultsURL};
+      }
+
+      nodeSort(a, b) {
+        if (a.path < b.path) {
+          return -1;
+        }
+        if (a.path > b.path) {
+          return 1;
+        }
+        return 0;
+      }
+
+      refreshDisplayedNodes() {
+        /* Recomputes the list of displayed directories and test files. */
+        const displayedNodeMap = new Map();
+        const currentPathParts = this.splitPathIntoLinkedParts(this.path);
+
+
+        const updateResults = (testFileName, dirPath, isDir) => {
+          if (!displayedNodeMap.has(dirPath)) {
+            displayedNodeMap.set(dirPath, {isDir: isDir, results: {}});
+          }
+          let results = this.testFiles[testFileName];
+          Object.keys(results).forEach(resultURL => {
+            if (!(resultURL in displayedNodeMap.get(dirPath).results)) {
+              displayedNodeMap.get(dirPath).results[resultURL] = {passing: 0, total: 0};
+            }
+            displayedNodeMap.get(dirPath).results[resultURL].passing += results[resultURL][0];
+            displayedNodeMap.get(dirPath).results[resultURL].total += results[resultURL][1];
+          });
+        };
+
+        Object.keys(this.testFiles).forEach(testFileName => {
+          if (this.path !== '/' && !testFileName.startsWith(`${this.path}/`)) {
+            return;
+          }
+
+          if (this.query.length > 0) {
+            if (!testFileName.toLowerCase().includes(this.query.toLowerCase())) {
+              return;
+            }
+          }
+
+          let parts = this.splitPathIntoLinkedParts(testFileName);
+
+          if (this.path === '/' && parts.length === 2) {
+            let dirParts = [parts[0]];
+            let dirPath = dirParts[dirParts.length - 1].path;
+            updateResults(testFileName, dirPath, true);
+
+            // Add test files in current directory
+          } else if (parts.length === currentPathParts.length + 1) {
+            let path = parts[parts.length - 1].path;
+            updateResults(testFileName, path, false);
+
+            // Add subdirectories in current directory
+          } else if (parts.length > currentPathParts.length + 1) {
+            let dirParts;
+            if (this.path === '/') {
+              dirParts = [parts[0]];
+            } else {
+              dirParts = parts.slice(0, currentPathParts.length + 1);
+            }
+            let dirPath = dirParts[dirParts.length - 1].path;
+            updateResults(testFileName, dirPath, true);
+          }
+        });
+
+        this.displayedNodes = Array.from(displayedNodeMap.keys()).map(key => ({
+          path: key,
+          isDir: displayedNodeMap.get(key).isDir,
+          results: displayedNodeMap.get(key).results
+        }));
+
+        this.displayedNodes.sort(this.nodeSort);
+      }
+
+      platformID({browser_name, browser_version, os_name, os_version}) {
+        return `${browser_name}-${browser_version}-${os_name}-${os_version}`;
+      }
+
+      bindNavigate() {
+        return this.navigate.bind(this);
+      }
+
+      navigate(event) {
+        event.preventDefault();
+        let path = event.target.pathname.replace(/(.+)(\/)$/, '$1');
+        if (path === this.path) {
+          return;
+        }
+        this.path = path;
+        this.refreshDisplayedNodes();
+        if (this.sha && this.sha !== '' && this.sha !== 'latest') {
+          path += !path.startsWith('?') ? '?' : '&';
+          path += 'sha=' + this.sha;
+        }
+        let diffRuns = this.testRuns.filter(r => r.revision === 'diff');
+        if (diffRuns.length > 0) {
+          path += !path.startsWith('?') ? '?' : '&';
+          let [before, after] = this.testRuns.slice(0, 2)
+            .map(JSON.stringify)
+            .map(btoa);
+          path += `before=${before}&after=${after}`;
+        }
+        window.history.pushState({}, '', path);
+
+        // Send Google Analytics pageview event
+        if ('ga' in window) {
+          window.ga('send', 'pageview', path);
+        }
+      }
+
+      splitPathIntoLinkedParts(input) {
+        const parts = input.split('/').slice(1);
+        let path = '';
+        return parts.map(name => {
+          path += `/${name}`;
+          return {
+            name, path
+          };
+        });
+      }
+
+      testResultStyle(node, testRun) {
+        if (!node || !testRun) {
+          return;
+        }
+
+        const result = node.results[testRun.results_url];
+
+        if (typeof result === 'undefined') {
+          return;
+        }
+
+        if (this.path === '/') {
+          // Do not add color to top-level directories
+          return 'background-color: #eee';
+        }
+
+        // Need saturation between 65-100, reversed (range 35)
+        const passRate = result.passing / result.total;
+        if (passRate === 1) {
+          // Green
+          return 'background-color: hsl(129, 85%, 65%)';
+        } else {
+          const luminance = 65 + passRate * 20;
+          // Some shade of red
+          return `background-color: hsl(0, 85%, ${luminance}%)`;
+        }
+      }
+
+      hasResults(node, testRun) {
+        return typeof node.results[testRun.results_url] !== 'undefined';
+      }
+
+      getNodeResultDataByPropertyName(node, testRun, property) {
+        if (testRun.results_url in node.results) {
+          return node.results[testRun.results_url][property];
+        }
+      }
+
+      /* Function for getting total numbers.
+       * Intentionally not exposed in UI.
+       * To generate, open your console and run:
+       * document.querySelector('wpt-results').generateTotalPassNumbers()
+       */
+      generateTotalPassNumbers() {
+        const totals = {};
+
+        this.testRuns.forEach(testRun => {
+          const testRunID = this.platformID(testRun);
+          totals[testRunID] = {passing: 0, total: 0};
+
+          Object.keys(this.specDirs).forEach(specKey => {
+            let { passing, total } = this.specDirs[specKey].results[testRun.results_url];
+
+            totals[testRunID].passing += passing;
+            totals[testRunID].total += total;
+          });
+        });
+
+        Object.keys(totals).forEach(key => {
+          totals[key].percent = (totals[key].passing / totals[key].total) * 100;
+        });
+
+        console.table(Object.keys(totals).map(k => ({
+          platformID: k,
+          passing: totals[k].passing,
+          total: totals[k].total,
+          percent: totals[k].percent
+        })));
+
+        console.log('JSON version:', JSON.stringify(totals));
+      }
+    }
+
+    window.customElements.define(WPTResults.is, WPTResults);
+  </script>
+</dom-module>
