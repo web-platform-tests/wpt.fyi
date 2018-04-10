@@ -41,6 +41,8 @@ before_install: |
   export DOCKER_FILE=Dockerfile.dev
   export DOCKER_IMAGE=wptd-dev
   export DOCKER_INSTANCE=wptd-dev-${RANDOM}
+  # Decrypt client-secret.json for Appengine.
+  openssl aes-256-cbc -K $encrypted_7975e007b6c8_key -iv $encrypted_7975e007b6c8_iv -in client-secret.json.enc -out client-secret.json -d
 
   # Disabled while this is not in use.
   # if [ "${MAKE_TEST_TARGET}" == "jenkins_test" ]; then
