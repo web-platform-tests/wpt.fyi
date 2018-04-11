@@ -44,7 +44,7 @@ before_install: |
 
   docker build -t wptd-base -f Dockerfile.base .
   docker build -t "${DOCKER_IMAGE}" -f "${DOCKER_FILE}" .
-  docker run -t -d --entrypoint /bin/bash -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -v "$(pwd)":/home/jenkins/wptdashboard -u $(id -u $USER):$(id -g $USER) --name "${DOCKER_INSTANCE}" "${DOCKER_IMAGE}"
+  docker run -t -d --entrypoint /bin/bash -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -v "$(pwd)":/home/jenkins/wpt.fyi -u $(id -u $USER):$(id -g $USER) --name "${DOCKER_INSTANCE}" "${DOCKER_IMAGE}"
 
 
 install: |
