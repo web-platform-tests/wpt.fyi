@@ -1,0 +1,88 @@
+# Copyright 2017 The WPT Dashboard Project. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+sudo: required
+
+# Ensure latest stable chrome for WCT
+addons:
+  chrome: stable
+
+services:
+  - docker
+
+matrix:
+  include:
+    - language: python
+      env:
+        - WCT=1
+    - language: go
+      env:
+        - MAKE_DEPS_TARGET=go_deps
+        - MAKE_TEST_TARGET=go_lint
+    - language: go
+      env:
+        - MAKE_DEPS_TARGET=go_deps
+        - MAKE_TEST_TARGET=go_test
+    # Disabled while this is not in use.
+    # - language: python
+    #   env:
+    #     - DOCKER_FILE=Dockerfile.jenkins
+    #     - DOCKER_IMAGE=wptd-testrun-jenkins
+    #     - DOCKER_INSTANCE=wptd-testrun-jenkins-${RANDOM}
+    #     - MAKE_DEPS_TARGET=jenkins_install
+    #     - MAKE_TEST_TARGET=jenkins_test
+
+before_install: |
+  export DOCKER_FILE=Dockerfile.dev
+  export DOCKER_IMAGE=wptd-dev
+  export DOCKER_INSTANCE=wptd-dev-${RANDOM}
+  # Decrypt client-secret.json for Appengine.
+  openssl aes-256-cbc -K $encrypted_7975e007b6c8_key -iv $encrypted_7975e007b6c8_iv -in client-secret.json.enc -out client-secret.json -d
+
+  # Disabled while this is not in use.
+  # if [ "${MAKE_TEST_TARGET}" == "jenkins_test" ]; then
+  #   DOCKER_FILE=Dockerfile.jenkins
+  #   DOCKER_IMAGE=wptd-testrun-jenkins
+  # fi;
+
+  docker build -t wptd-base -f Dockerfile.base .
+  docker build -t "${DOCKER_IMAGE}" -f "${DOCKER_FILE}" .
+  docker run -t -d --entrypoint /bin/bash -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -v "$(pwd)":/home/jenkins/wpt.fyi -u $(id -u $USER):$(id -g $USER) --name "${DOCKER_INSTANCE}" "${DOCKER_IMAGE}"
+
+
+install: |
+  if [ "${WCT}" == "1" ]; then
+    wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
+    source ~/.nvm/nvm.sh
+    nvm install 6
+    node --version
+    cd webapp
+    npm install -g bower
+    bower install
+    npm install -g web-component-tester
+    npm install
+    cd ../
+    export DISPLAY=:99.0
+    sh -e /etc/init.d/xvfb start
+  fi
+
+  if [ "${MAKE_DEPS_TARGET}" != "" ]; then
+    docker exec -t -u 0:0 "${DOCKER_INSTANCE}" make "${MAKE_DEPS_TARGET}";
+  fi
+
+  docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) /home/jenkins
+
+script:
+  - |
+    if [ "${MAKE_TEST_TARGET}" != "" ]; then
+      docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}"
+    fi
+  - |
+    if [ "${WCT}" == "1" ]; then
+      cd webapp && npm test
+    fi
+
+after_script:
+  - docker stop "${DOCKER_INSTANCE}"
+  - docker rm "${DOCKER_INSTANCE}"
