@@ -4,6 +4,10 @@
 
 sudo: required
 
+# Ensure latest stable chrome for WCT
+addons:
+  chrome: stable
+
 services:
   - docker
 
