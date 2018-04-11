@@ -4,6 +4,10 @@
 
 sudo: required
 
+branches:
+  only:
+    - master
+
 # Ensure latest stable chrome for WCT
 addons:
   chrome: stable
