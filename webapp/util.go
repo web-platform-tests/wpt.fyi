@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"sort"
 
-	models "github.com/w3c/wptdashboard/shared"
+	models "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // All errors are considered fatal

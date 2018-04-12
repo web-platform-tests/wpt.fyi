@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	models "github.com/w3c/wptdashboard/shared"
+	models "github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )

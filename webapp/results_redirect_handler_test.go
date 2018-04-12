@@ -7,7 +7,7 @@ package webapp
 import (
 	"testing"
 
-	base "github.com/w3c/wptdashboard/shared"
+	base "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 type Case struct {
