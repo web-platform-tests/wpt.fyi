@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
-	models "github.com/w3c/wptdashboard/shared"
+	models "github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
