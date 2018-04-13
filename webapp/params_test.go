@@ -26,6 +26,14 @@ func TestParseSHAParam_2(t *testing.T) {
 	assert.Equal(t, sha, runSHA)
 }
 
+func TestParseSHAParam_FullSHA(t *testing.T) {
+	sha := "0123456789aaaaabbbbbcccccdddddeeeeefffff"
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
+	runSHA, err := ParseSHAParam(r)
+	assert.Nil(t, err)
+	assert.Equal(t, sha[:10], runSHA)
+}
+
 func TestParseSHAParam_BadRequest(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=%zz", nil)
 	runSHA, err := ParseSHAParam(r)
