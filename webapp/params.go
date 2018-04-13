@@ -26,7 +26,7 @@ const MaxCountMaxValue = 500
 const MaxCountMinValue = 1
 
 // SHARegex is a regex for SHA[0:10] slice of a git hash.
-var SHARegex = regexp.MustCompile("[0-9a-fA-F]{10}")
+var SHARegex = regexp.MustCompile("[0-9a-fA-F]{10,40}")
 
 // ParseSHAParam parses and validates the 'sha' param for the request.
 // It returns "latest" by default (and in error cases).
@@ -40,7 +40,7 @@ func ParseSHAParam(r *http.Request) (runSHA string, err error) {
 
 	runParam := params.Get("sha")
 	if SHARegex.MatchString(runParam) {
-		runSHA = runParam
+		runSHA = runParam[:10]
 	}
 	return runSHA, err
 }
