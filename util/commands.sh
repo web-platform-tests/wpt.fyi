@@ -16,4 +16,3 @@ function wptd_stop() {
 function wptd_rm() {
   docker rm wptd-dev-instance
 }
-
