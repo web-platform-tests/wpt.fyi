@@ -24,7 +24,7 @@ import (
 // The JSON property "initially_loaded" is what controls this.
 func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	if strings.Index(r.URL.Path, "/results/") != 0 {
-		http.Redirect(w, r, fmt.Sprintf("/results%s", r.URL.Path), 308)
+		http.Redirect(w, r, fmt.Sprintf("/results%s", r.URL.Path), http.StatusTemporaryRedirect)
 		return
 	}
 
