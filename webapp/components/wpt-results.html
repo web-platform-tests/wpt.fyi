@@ -151,10 +151,6 @@ found in the LICENSE file.
   <script>
     /* global TestRunsBase */
     class WPTResults extends TestRunsBase {
-      static get UrlToResultsPath() {
-        return location => location.pathname.replace(/\/results(.+)(\/)?$/, '$1');
-      }
-
       static get is() {
         return 'wpt-results';
       }
@@ -177,10 +173,7 @@ found in the LICENSE file.
             type: String,
             computed: 'computeTestScheme(path)'
           },
-          path: {
-            type: String,
-            value: WPTResults.UrlToResultsPath(location)
-          },
+          path: String,
           pathIsATestFile: {
             type: Boolean,
             computed: 'computePathIsATestFile(path)'
@@ -194,6 +187,11 @@ found in the LICENSE file.
             value: []
           }
         };
+      }
+
+      ready() {
+        super.ready();
+        this.path = this.urlToResultsPath(window.location);
       }
 
       computeIsLatest(sha) {
@@ -211,11 +209,16 @@ found in the LICENSE file.
         return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
       }
 
+      urlToResultsPath(location) {
+        return location.pathname.replace(/\/results\/(.+)?$/, '/$1');
+      }
+
       async connectedCallback() {
         await super.connectedCallback();
 
+        const that = this;
         window.onpopstate = () => {
-          this.path = WPTResults.UrlToResultsPath(window.location);
+          this.path = that.urlToResultsPath(window.location);
           this.refreshDisplayedNodes();
         };
 
@@ -318,7 +321,7 @@ found in the LICENSE file.
 
       navigate(event) {
         event.preventDefault();
-        let path = WPTResults.UrlToResultsPath(event.target);
+        let path = this.urlToResultsPath(event.target);
         if (path === this.path) {
           return;
         }
