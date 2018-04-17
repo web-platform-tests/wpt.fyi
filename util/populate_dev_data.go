@@ -6,14 +6,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/w3c/wptdashboard/metrics"
-	base "github.com/w3c/wptdashboard/shared"
+	"log"
+	"time"
+
+	"github.com/web-platform-tests/results-analysis/metrics"
+	base "github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
-	"log"
-	"time"
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
