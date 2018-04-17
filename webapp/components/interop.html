@@ -144,7 +144,7 @@ found in the LICENSE file.
         <li>
           <a href$="https://github.com/w3c/web-platform-tests/blob/master[[path]]"
              target="_blank">View source on GitHub</a></li>
-        <li><a href$="https://w3c-test.org[[path]]" target="_blank">Run in your
+        <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
           browser on w3c-test.org</a></li>
       </ul>
     </div>
@@ -215,6 +215,10 @@ found in the LICENSE file.
         metrics: {
           type: Object,
           computed: 'computeMetrics(path, query, allMetrics)'
+        },
+        scheme: {
+          type: String,
+          value: window.location.pathname.indexOf('.https.') !== -1 ? 'https' : 'http'
         },
         path: {
           type: String,

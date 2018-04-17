@@ -99,7 +99,7 @@ found in the LICENSE file.
       <div class="links">
         <ul>
           <li><a href$="https://github.com/w3c/web-platform-tests/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
-          <li><a href$="https://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+          <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
         </ul>
       </div>
 
@@ -168,6 +168,10 @@ found in the LICENSE file.
           isLatest: {
             type: Boolean,
             computed: 'computeIsLatest(sha)'
+          },
+          scheme: {
+            type: String,
+            value: window.location.pathname.indexOf('.https.') !== -1 ? 'https' : 'http'
           },
           path: {
             type: String,
