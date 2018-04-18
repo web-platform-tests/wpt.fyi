@@ -144,7 +144,7 @@ found in the LICENSE file.
         <li>
           <a href$="https://github.com/w3c/web-platform-tests/blob/master[[path]]"
              target="_blank">View source on GitHub</a></li>
-        <li><a href$="https://w3c-test.org[[path]]" target="_blank">Run in your
+        <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
           browser on w3c-test.org</a></li>
       </ul>
     </div>
@@ -215,6 +215,10 @@ found in the LICENSE file.
         metrics: {
           type: Object,
           computed: 'computeMetrics(path, query, allMetrics)'
+        },
+        scheme: {
+          type: String,
+          computed: 'computeTestScheme(path)'
         },
         path: {
           type: String,
@@ -322,6 +326,13 @@ found in the LICENSE file.
       }
       const encodedQuery = window.encodeURIComponent(query);
       stateFunc(state, '', `/interop${path}?q=${encodedQuery}`);
+    }
+
+    computeTestScheme(path) {
+      // This should (close enough) match up with the logic in:
+      // https://github.com/w3c/web-platform-tests/blob/master/tools/manifest/item.py
+      // https://github.com/w3c/web-platform-tests/blob/master/tools/wptrunner/wptrunner/wpttest.py
+      return path.indexOf('.https.') !== -1 ? 'https' : 'http';
     }
 
     computePathIsATestFile(path) {

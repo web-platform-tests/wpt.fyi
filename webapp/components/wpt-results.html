@@ -99,7 +99,7 @@ found in the LICENSE file.
       <div class="links">
         <ul>
           <li><a href$="https://github.com/w3c/web-platform-tests/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
-          <li><a href$="https://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+          <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
         </ul>
       </div>
 
@@ -169,6 +169,10 @@ found in the LICENSE file.
             type: Boolean,
             computed: 'computeIsLatest(sha)'
           },
+          scheme: {
+            type: String,
+            computed: 'computeTestScheme(path)'
+          },
           path: {
             type: String,
             value: window.location.pathname.replace(/(.+)(\/)$/, '$1')
@@ -190,6 +194,13 @@ found in the LICENSE file.
 
       computeIsLatest(sha) {
         return !sha || sha === 'latest';
+      }
+
+      computeTestScheme(path) {
+        // This should (close enough) match up with the logic in:
+        // https://github.com/w3c/web-platform-tests/blob/master/tools/manifest/item.py
+        // https://github.com/w3c/web-platform-tests/blob/master/tools/wptrunner/wptrunner/wpttest.py
+        return path.indexOf('.https.') !== -1 ? 'https' : 'http';
       }
 
       computePathIsATestFile(path) {
