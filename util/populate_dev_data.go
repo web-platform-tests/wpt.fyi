@@ -6,14 +6,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/w3c/wptdashboard/metrics"
-	base "github.com/w3c/wptdashboard/shared"
+	"log"
+	"time"
+
+	"github.com/web-platform-tests/results-analysis/metrics"
+	base "github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
-	"log"
-	"time"
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -89,7 +90,7 @@ func main() {
 			StartTime: timeZero,
 			EndTime:   timeZero,
 			TestRuns:  staticTestRuns,
-			DataUrl:   fmt.Sprintf(metricsUrlFmtString, "pass-rates"),
+			DataURL:   fmt.Sprintf(metricsUrlFmtString, "pass-rates"),
 		},
 	}
 
@@ -98,28 +99,28 @@ func main() {
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataUrl:     fmt.Sprintf(metricsUrlFmtString, "chrome-failures"),
+			DataURL:     fmt.Sprintf(metricsUrlFmtString, "chrome-failures"),
 			BrowserName: "chrome",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataUrl:     fmt.Sprintf(metricsUrlFmtString, "edge-failures"),
+			DataURL:     fmt.Sprintf(metricsUrlFmtString, "edge-failures"),
 			BrowserName: "edge",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataUrl:     fmt.Sprintf(metricsUrlFmtString, "firefox-failures"),
+			DataURL:     fmt.Sprintf(metricsUrlFmtString, "firefox-failures"),
 			BrowserName: "firefox",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataUrl:     fmt.Sprintf(metricsUrlFmtString, "safari-failures"),
+			DataURL:     fmt.Sprintf(metricsUrlFmtString, "safari-failures"),
 			BrowserName: "safari",
 		},
 	}

@@ -6,10 +6,11 @@ package webapp
 
 import (
 	"encoding/json"
-	"github.com/w3c/wptdashboard/metrics"
+	"net/http"
+
+	"github.com/web-platform-tests/results-analysis/metrics"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"net/http"
 )
 
 // interopHandler handles the view of test results broken down by the
