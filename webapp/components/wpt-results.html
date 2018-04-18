@@ -197,6 +197,9 @@ found in the LICENSE file.
       }
 
       computeTestScheme(path) {
+        // This should (close enough) match up with the logic in:
+        // https://github.com/w3c/web-platform-tests/blob/master/tools/manifest/item.py
+        // https://github.com/w3c/web-platform-tests/blob/master/tools/wptrunner/wptrunner/wpttest.py
         return path.indexOf('.https.') !== -1 ? 'https' : 'http';
       }
 
