@@ -2,11 +2,9 @@
 
 A dashboard of cross-browser results for [web-platform-tests](https://github.com/w3c/web-platform-tests).
 
-It consists of 3 parts:
+**Backend**: An [App Engine app](webapp/main.go) for storing test run metadata and serving HTML
 
-- **Running**: VMs scheduled to [run tests locally and on Sauce](run/run.py) daily (thanks to [Sauce Labs](https://saucelabs.com) for providing us with infrastructure to run Edge + Safari builds)
-- **Serving**: An [App Engine app](webapp/main.go) for storing test run metadata and serving HTML
-- **Visualizing**: [Polymer elements](webapp/components/wpt-results.html) for loading and visualizing test results
+**Frontend**: [Polymer elements](webapp/components/wpt-results.html) for loading and visualizing test results
 
 ## Setting up your environment
 
@@ -40,19 +38,6 @@ execute the script which leverages `util/populate_dev_data.go` by running:
 **IMPORTANT:** If this command fails, you may need to authorize your development environment by running `./util/docker-dev/dev_auth.sh` and following the instructions. Once complete, rerun `./util/docker-dev/dev_data.sh`.
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for more information on local development.
-
-## Running the tests
-
-We run the tests in the development environment with a Python script [`run/run.py`](run/run.py) which is a thin wrapper around WPT's [`wpt run`](https://github.com/w3c/web-platform-tests/#running-tests-automatically). If you're triaging test failures, use `wpt run`.
-
-### Running
-
-Ensure that the Docker development image is running (`./util/docker-dev/run.sh`). To run a directory of WPT, pass the [platform ID](#platform-id) and a test path to `run/run.py` on the development server:
-
-```sh
-docker exec -it -u $(id -u $USER):$(id -g $USER) wptd-dev-instance \
-    run/run.py firefox-56.0-linux --path battery-status
-```
 
 # Filesystem and network output
 
