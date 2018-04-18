@@ -58,3 +58,11 @@ go_deps: $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
 dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run util/populate_dev_data.go
+
+webapp_deploy_staging: env-BRANCH_NAME
+	gcloud config set project wptdashboard
+	gcloud auth activate-service-account --key-file $(WPTD_PATH)/client-secret.json
+	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME)
+
+env-%:
+	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
