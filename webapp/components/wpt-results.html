@@ -171,7 +171,7 @@ found in the LICENSE file.
           },
           scheme: {
             type: String,
-            value: window.location.pathname.indexOf('.https.') !== -1 ? 'https' : 'http'
+            computed: 'computeTestScheme(path)'
           },
           path: {
             type: String,
@@ -194,6 +194,10 @@ found in the LICENSE file.
 
       computeIsLatest(sha) {
         return !sha || sha === 'latest';
+      }
+
+      computeTestScheme(path) {
+        return path.indexOf('.https.') !== -1 ? 'https' : 'http';
       }
 
       computePathIsATestFile(path) {

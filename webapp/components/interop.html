@@ -218,7 +218,7 @@ found in the LICENSE file.
         },
         scheme: {
           type: String,
-          value: window.location.pathname.indexOf('.https.') !== -1 ? 'https' : 'http'
+          computed: 'computeTestScheme(path)'
         },
         path: {
           type: String,
@@ -326,6 +326,10 @@ found in the LICENSE file.
       }
       const encodedQuery = window.encodeURIComponent(query);
       stateFunc(state, '', `/interop${path}?q=${encodedQuery}`);
+    }
+
+    computeTestScheme(path) {
+      return path.indexOf('.https.') !== -1 ? 'https' : 'http';
     }
 
     computePathIsATestFile(path) {
