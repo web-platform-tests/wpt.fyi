@@ -16,7 +16,7 @@ import (
 // FetchLatestRuns fetches the TestRun metadata for the latest runs, using the
 // API on the given host.
 func FetchLatestRuns(wptdHost string) []TestRun {
-	url := "https://" + wptdHost + "/api/runs"
+	url := "https://" + wptdHost + "/api/runs?complete=true"
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
