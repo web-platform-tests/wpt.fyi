@@ -113,7 +113,7 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Platform))
 		}
 	} else {
-		const sourceURL = `/api/runs?sha=%s`
+		const sourceURL = `/api/runs?sha=%s&complete=true`
 		testRunSources = []string{fmt.Sprintf(sourceURL, runSHA)}
 	}
 
