@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
@@ -48,6 +49,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	labels := ParseLabelsParam(r)
+	unstable := labels != nil && labels.Contains("unstable")
+
 	var testRuns []models.TestRun
 	var limit int
 	if limit, err = ParseMaxCountParam(r); err != nil {
@@ -61,6 +65,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, browserName := range browserNames {
 		var testRunResults []models.TestRun
+		if unstable {
+			browserName = browserName + "-experimental"
+		}
 		query := baseQuery.Filter("BrowserName =", browserName)
 		if runSHA != "" && runSHA != "latest" {
 			query = query.Filter("Revision =", runSHA)
@@ -68,6 +75,11 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		if _, err := query.GetAll(ctx, &testRunResults); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+		if unstable {
+			for i := range testRunResults {
+				testRunResults[i].BrowserName = strings.Replace(testRunResults[i].BrowserName, "-experimental", "", 1)
+			}
 		}
 		testRuns = append(testRuns, testRunResults...)
 	}

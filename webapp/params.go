@@ -190,3 +190,30 @@ func ParsePathsParam(r *http.Request) (paths mapset.Set) {
 	}
 	return paths
 }
+
+// ParseLabelsParam returns a set list of test-run labels to include, or nil if
+// no labels are provided.
+func ParseLabelsParam(r *http.Request) (labels mapset.Set) {
+	labelParams := r.URL.Query()["label"]
+	labelsParam := r.URL.Query().Get("labels")
+	if len(labelParams) == 0 && labelsParam == "" {
+		return nil
+	}
+
+	labels = mapset.NewSet()
+	for _, label := range labelParams {
+		labels.Add(label)
+	}
+	if labelsParam != "" {
+		for _, label := range strings.Split(labelsParam, ",") {
+			labels.Add(label)
+		}
+	}
+	if labels.Contains("") {
+		labels.Remove("")
+	}
+	if labels.Cardinality() == 0 {
+		return nil
+	}
+	return labels
+}
