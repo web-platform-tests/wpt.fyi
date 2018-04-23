@@ -28,6 +28,10 @@ matrix:
       env:
         - MAKE_DEPS_TARGET=go_deps
         - MAKE_TEST_TARGET=go_test
+    - language: go
+      env:
+        - secure: "UuTZnGD+HSB+EYQFg2+lKhDwxlDUtU/uz4XdUG8/8F7Us9G7e7w/DL0jhnzpHjK13ig7Yafj83zZmNszpfaXhNdNp2glhiIeuupODODd24tRA4e9DBIoEToJEyjkXD7RttK4H7SaRp12yVEnE+gnUTiDCOJQHmkDl6DHwwUfeTG3P+dKgHsybdrXcUZG+ff4DPrwq9B6NU7izKC3QqByfcxhfxv+SE9e6vi8LKs6qdRbg4PnPEOc85kiqMmtqNHQ7hph3Np3oEaEeZqMylo2hKh/gXxWgNjH3uFwEtJx7sWYL/c3HpiNRMTPUFVJmGaU/xQqH3gGqEbt0QIjrQVFGJZ0wjJoha1+TigIB9LjJ3eSJCtUwj6naWwi0laOZJyR4L/+XCWpNRH2SjLvakIjims7ZEKbE3rVA/Vr0mY67NLnEm0fh6xglN2Jlm5Mag5hw3bHcOi72sQthjQofEtUE0fElAEGc4wBVCd87LzcLyCvZhg6VeJ/M+kC4uJuiMQJ6qkO92UDaV0bvY9svLlGBuBbd/PH0YPh0kkTUlH5IzJx/wymE2mSwtP8af1n0IBIItVfq6uuzct5IhEZvMoZsDv1pU5pqM/ucRuuvb6rtZedGpGjBZacM1uNa/MbvnF5imAHxfY7783saGaIpdNr6k4cxmHglelxwSR0zqujU2Q="
+        - MAKE_DEPLOY_TARGET=webapp_deploy_staging
     # Disabled while this is not in use.
     # - language: python
     #   env:
@@ -42,7 +46,7 @@ before_install: |
   export DOCKER_IMAGE=wptd-dev
   export DOCKER_INSTANCE=wptd-dev-${RANDOM}
   # Decrypt client-secret.json for Appengine.
-  openssl aes-256-cbc -K $encrypted_7975e007b6c8_key -iv $encrypted_7975e007b6c8_iv -in client-secret.json.enc -out client-secret.json -d
+  openssl aes-256-cbc -K $encrypted_c8659b25fe66_key -iv $encrypted_c8659b25fe66_iv -in client-secret.json.enc -out client-secret.json -d
 
   # Disabled while this is not in use.
   # if [ "${MAKE_TEST_TARGET}" == "jenkins_test" ]; then
@@ -52,41 +56,54 @@ before_install: |
 
   docker build -t wptd-base -f Dockerfile.base .
   docker build -t "${DOCKER_IMAGE}" -f "${DOCKER_FILE}" .
-  docker run -t -d --entrypoint /bin/bash -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -v "$(pwd)":/home/jenkins/wpt.fyi -u $(id -u $USER):$(id -g $USER) --name "${DOCKER_INSTANCE}" "${DOCKER_IMAGE}"
+  docker run -t -d \
+      --entrypoint /bin/bash \
+      -v /etc/group:/etc/group:ro \
+      -v /etc/passwd:/etc/passwd:ro \
+      -v "$(pwd)":/home/jenkins/wpt.fyi \
+      -u $(id -u $USER):$(id -g $USER) \
+      --name "${DOCKER_INSTANCE}" \
+      "${DOCKER_IMAGE}"
 
 
-install: |
-  if [ "${WCT}" == "1" ]; then
-    wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
-    source ~/.nvm/nvm.sh
-    nvm install 6
-    node --version
-    cd webapp
-    npm install -g bower
-    bower install
-    npm install -g web-component-tester
-    npm install
-    cd ../
-    export DISPLAY=:99.0
-    sh -e /etc/init.d/xvfb start
-  fi
-
-  if [ "${MAKE_DEPS_TARGET}" != "" ]; then
-    docker exec -t -u 0:0 "${DOCKER_INSTANCE}" make "${MAKE_DEPS_TARGET}";
-  fi
-
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) /home/jenkins
+install:
+  - | # Set up Web Components Tests
+    if [ "${WCT}" == "1" ]; then
+      wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
+      source ~/.nvm/nvm.sh
+      nvm install 6
+      node --version
+      cd webapp
+      npm install -g bower
+      bower install
+      npm install -g web-component-tester
+      npm install
+      cd ../
+      export DISPLAY=:99.0
+      sh -e /etc/init.d/xvfb start
+    fi
+  - | # Set the user as home dir owner in the docker instance
+    docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) /home/jenkins
+  - | # Install any dependencies
+    if [ "${MAKE_DEPS_TARGET}" != "" ]; then
+      docker exec -t -u 0:0 "${DOCKER_INSTANCE}" make "${MAKE_DEPS_TARGET}" || exit $?
+    fi
 
 script:
-  - |
+  - | # Deploy PR to staging environment
+    if [ "${MAKE_DEPLOY_TARGET}" != "" ]; then
+      echo "Copying output to ${TEMP_FILE:=$(mktemp)}"
+      # NOTE: Most gcloud output is stderr, so need to redirect it to stdout.
+      docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_DEPLOY_TARGET}" BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH} 2>&1 | tee ${TEMP_FILE}
+      if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
+      DEPLOYED_URL="$(grep -Po 'Deployed to \K[^\s]+' ${TEMP_FILE} | tr -d '\n')"
+      util/deploy-comment.sh "${DEPLOYED_URL}"
+    fi
+  - | # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
       docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}"
     fi
-  - |
+  - | # Run WCT tests
     if [ "${WCT}" == "1" ]; then
       cd webapp && npm test
     fi
-
-after_script:
-  - docker stop "${DOCKER_INSTANCE}"
-  - docker rm "${DOCKER_INSTANCE}"
