@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -21,7 +22,12 @@ import (
 //
 // The browsers initially displayed to the user are defined in browsers.json.
 // The JSON property "initially_loaded" is what controls this.
-func testHandler(w http.ResponseWriter, r *http.Request) {
+func testResultsHandler(w http.ResponseWriter, r *http.Request) {
+	if strings.Index(r.URL.Path, "/results/") != 0 {
+		http.Redirect(w, r, fmt.Sprintf("/results%s", r.URL.Path), http.StatusTemporaryRedirect)
+		return
+	}
+
 	runSHA, err := ParseSHAParam(r)
 	if err != nil {
 		http.Error(w, "Invalid query params", http.StatusBadRequest)

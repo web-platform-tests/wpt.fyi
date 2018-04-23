@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../components/wpt-results.html">
+</head>
+
+<body>
+  <test-fixture id="wpt-results-fixture">
+    <template>
+      <wpt-results></wpt-results>
+    </template>
+  </test-fixture>
+
+  <script>
+    suite('<wpt-results>', () => {
+      let trf = null;
+
+      setup(() => {
+        trf = fixture('wpt-results-fixture');
+      });
+
+      suite('WPTResults.prototype.*', () => {
+        suite('urlToResultsPath()', () => {
+          test('urlToResultsPath(location Location)', () => {
+            test('Path regex', () => {
+              const url = s => new URL(`https://wpt.fyi${s}`);
+              assert.equal(trf.urlToResultsPath(url('/results/')), '/');
+              assert.equal(trf.urlToResultsPath(url('/results/abc')), '/abc');
+              assert.equal(trf.urlToResultsPath(url('/results/abc/')), '/abc');
+              assert.equal(trf.urlToResultsPath(url('/results/abc/def.html')), '/abc/def.html');
+            });
+          });
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

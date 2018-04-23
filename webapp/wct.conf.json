@@ -1,10 +1,6 @@
 {
   "suites": [
-    "test/interop.html",
-    "test/path-part.html",
-    "test/runs.html",
-    "test/test-run.html",
-    "test/test-file-results.html"
+    "test/*.html"
   ],
   "verbose": true,
   "plugins": {
