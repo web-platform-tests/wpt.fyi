@@ -93,9 +93,10 @@ script:
   - | # Deploy PR to staging environment
     if [ "${MAKE_DEPLOY_TARGET}" != "" ]; then
       echo "Copying output to ${TEMP_FILE:=$(mktemp)}"
+      # NOTE: Most gcloud output is stderr, so need to redirect it to stdout.
       docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_DEPLOY_TARGET}" BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH} 2>&1 | tee ${TEMP_FILE}
       if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
-      DEPLOYED_URL="$(grep -Po 'Deployed to \K.*$' ${TEMP_FILE})"
+      DEPLOYED_URL="$(grep -Po 'Deployed to \K[^\s]+' ${TEMP_FILE} | tr -d '\n')"
       util/deploy-comment.sh "${DEPLOYED_URL}"
     fi
   - | # Run tests

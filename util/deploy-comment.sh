@@ -3,8 +3,7 @@
 # Helper script for posting a GitHub comment pointing to the deployed environment,
 # from Travis CI. Also see deploy.sh
 
-# Ensure no carriage returns or newlines
-STAGING_URL="$(echo $1 | tr -d '\r\n')"
+STAGING_URL="$1"
 
 REPO_DIR="$(dirname $0)"
 source "${REPO_DIR}/logging.sh"
