@@ -18,7 +18,14 @@ func TestParseSHAParam(t *testing.T) {
 	assert.Equal(t, "latest", runSHA)
 }
 
-func TestParseSHAParam_2(t *testing.T) {
+func TestParseSHAParam_Latest(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=latest", nil)
+	runSHA, err := ParseSHAParam(r)
+	assert.Nil(t, err)
+	assert.Equal(t, "latest", runSHA)
+}
+
+func TestParseSHAParam_ShortSHA(t *testing.T) {
 	sha := "0123456789"
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
 	runSHA, err := ParseSHAParam(r)
@@ -43,16 +50,14 @@ func TestParseSHAParam_BadRequest(t *testing.T) {
 
 func TestParseSHAParam_NonSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=123", nil)
-	runSHA, err := ParseSHAParam(r)
-	assert.Nil(t, err)
-	assert.Equal(t, "latest", runSHA)
+	_, err := ParseSHAParam(r)
+	assert.NotNil(t, err)
 }
 
 func TestParseSHAParam_NonSHA_2(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=zapper0123", nil)
-	runSHA, err := ParseSHAParam(r)
-	assert.Nil(t, err)
-	assert.Equal(t, "latest", runSHA)
+	_, err := ParseSHAParam(r)
+	assert.NotNil(t, err)
 }
 
 func TestParseBrowserParam(t *testing.T) {
@@ -93,30 +98,22 @@ func TestParseBrowsersParam_ChromeSafari(t *testing.T) {
 
 func TestParseBrowsersParam_ChromeInvalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=chrome,invalid", nil)
-	browsers, err := ParseBrowsersParam(r)
-	assert.Nil(t, err)
-	assert.Equal(t, []string{"chrome"}, browsers)
-}
-
-func TestParseBrowsersParam_AllInvalid(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=notabrowser,invalid", nil)
-	browsers, err := ParseBrowsersParam(r)
-	assert.Nil(t, err)
-	assert.Empty(t, browsers)
+	_, err := ParseBrowsersParam(r)
+	assert.NotNil(t, err)
 }
 
 func TestParseBrowsersParam_EmptyCommas(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=,notabrowser,,,,invalid,,", nil)
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=,chrome,,,,safari,,", nil)
 	browsers, err := ParseBrowsersParam(r)
 	assert.Nil(t, err)
-	assert.Empty(t, browsers)
+	assert.Equal(t, []string{"chrome", "safari"}, browsers)
 }
 
 func TestParseBrowsersParam_SafariChrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=safari,chrome", nil)
 	browsers, err := ParseBrowsersParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, []string{"chrome", "safari"}, browsers)
+	assert.Equal(t, []string{"chrome", "safari"}, browsers) // Alphabetical
 }
 
 func TestParseBrowsersParam_MultiBrowserParam_SafariChrome(t *testing.T) {
@@ -128,16 +125,8 @@ func TestParseBrowsersParam_MultiBrowserParam_SafariChrome(t *testing.T) {
 
 func TestParseBrowsersParam_MultiBrowserParam_SafariInvalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=safari&browser=invalid", nil)
-	browsers, err := ParseBrowsersParam(r)
-	assert.Nil(t, err)
-	assert.Equal(t, []string{"safari"}, browsers)
-}
-
-func TestParseBrowsersParam_MultiBrowserParam_AllInvalid(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=invalid&browser=notabrowser", nil)
-	browsers, err := ParseBrowsersParam(r)
-	assert.Nil(t, err)
-	assert.Empty(t, browsers)
+	_, err := ParseBrowsersParam(r)
+	assert.NotNil(t, err)
 }
 
 func TestParseMaxCountParam_Missing(t *testing.T) {

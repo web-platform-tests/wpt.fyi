@@ -26,7 +26,7 @@ import (
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	runSHA, err := ParseSHAParam(r)
 	if err != nil {
-		http.Error(w, "Invalid query params", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
