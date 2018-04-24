@@ -261,3 +261,37 @@ func TestParseDiffFilterParam_Invalid(t *testing.T) {
 	_, err := ParseDiffFilterParams(r)
 	assert.NotNil(t, err)
 }
+
+func TestParseLabelsParam_Missing(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs", nil)
+	labels := ParseLabelsParam(r)
+	assert.Nil(t, labels)
+}
+
+func TestParseLabelsParam_Empty(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?label=", nil)
+	labels := ParseLabelsParam(r)
+	assert.Nil(t, labels)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=", nil)
+	labels = ParseLabelsParam(r)
+	assert.Nil(t, labels)
+}
+
+func TestParseLabelsParam_Label_Duplicate(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?label=unstable&label=unstable", nil)
+	labels := ParseLabelsParam(r)
+	assert.Equal(t, 1, labels.Cardinality())
+}
+
+func TestParseLabelsParam_Labels_Duplicate(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=unstable,unstable", nil)
+	labels := ParseLabelsParam(r)
+	assert.Equal(t, 1, labels.Cardinality())
+}
+
+func TestParseLabelsParam_LabelsAndLabel_Duplicate(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=unstable&label=unstable", nil)
+	labels := ParseLabelsParam(r)
+	assert.Equal(t, 1, labels.Cardinality())
+}
