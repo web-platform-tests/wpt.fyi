@@ -192,16 +192,6 @@ func NewMockRepository(tags []Tag, fetchImpl FetchImpl) *MockRepository {
 	}
 }
 
-/*
-func NewMockRepository(refs []*plumbing.Reference, commits map[string]*object.Commit, fetchImpl FetchImpl) *MockRepository {
-	return &MockRepository{
-		refs,
-		commits,
-		fetchImpl,
-	}
-}
-*/
-
 func NewCommitFromHash(hash plumbing.Hash, commitTime time.Time) *object.Commit {
 	return &object.Commit{
 		Hash: hash,
