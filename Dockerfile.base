@@ -67,9 +67,10 @@ ENV WPTD_GO_PATH="${GOPATH}/src/github.com/web-platform-tests/wpt.fyi"
 # Setup go + python binaries path
 ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:${USER_HOME}/.local/bin
 
-# Install go dependencies
-RUN go get \
-    github.com/golang/lint/golint
+# Install go dependencies. Manual git clone is a workaround for #85.
+RUN mkdir -p "${GOPATH}/src/github.com/golang"
+RUN cd "${GOPATH}/src/github.com/golang" \
+    && git clone https://github.com/golang/lint
 
 RUN mkdir "${WPTD_PATH}"
 RUN mkdir "${WPT_PATH}"
