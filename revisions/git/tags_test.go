@@ -13,37 +13,38 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
-func TestTimeOrderedReferenceIter_Simple(t *testing.T) {
+func TestTimeOrderedReferenceIter_ReorderTaggedCommitsByCommitTime(t *testing.T) {
+	now := time.Now()
 	tags := []test.Tag{
 		test.Tag{
 			TagName:    "not_a_mergedpr_1",
 			Hash:       "01",
-			CommitTime: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 2),
 		},
 		test.Tag{
 			TagName:    "not_a_mergedpr_2",
 			Hash:       "02",
-			CommitTime: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 1),
 		},
 		test.Tag{
 			TagName:    "not_a_mergedpr_3",
 			Hash:       "03",
-			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 5),
 		},
 		test.Tag{
 			TagName:    "merge_pr_4",
 			Hash:       "04",
-			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
+			CommitTime: now,
 		},
 		test.Tag{
 			TagName:    "not_a_mergedpr_5",
 			Hash:       "05",
-			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 4),
 		},
 		test.Tag{
 			TagName:    "merge_pr_6",
 			Hash:       "06",
-			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 3),
 		},
 	}
 	refs := test.Tags(tags).Refs()
@@ -77,37 +78,38 @@ func TestTimeOrderedReferenceIter_Simple(t *testing.T) {
 	assert.True(t, err == nil)
 }
 
-func TestMergedPRIter_Simple(t *testing.T) {
+func TestMergedPRIter_MergePRTagsInCommitTimeOrder(t *testing.T) {
+	now := time.Now()
 	tags := []test.Tag{
 		test.Tag{
 			TagName:    "not_a_mergedpr_1",
 			Hash:       "01",
-			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
+			CommitTime: now,
 		},
 		test.Tag{
 			TagName:    "not_a_mergedpr_2",
 			Hash:       "02",
-			CommitTime: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 1),
 		},
 		test.Tag{
 			TagName:    "not_a_mergedpr_3",
 			Hash:       "03",
-			CommitTime: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 2),
 		},
 		test.Tag{
 			TagName:    "merge_pr_4",
 			Hash:       "04",
-			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 3),
 		},
 		test.Tag{
 			TagName:    "not_a_mergedpr_5",
 			Hash:       "05",
-			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 4),
 		},
 		test.Tag{
 			TagName:    "merge_pr_6",
 			Hash:       "06",
-			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
+			CommitTime: now.AddDate(0, 0, 5),
 		},
 	}
 	refs := test.Tags(tags).Refs()
@@ -145,7 +147,7 @@ func stopAtHash(h plumbing.Hash) func(ref *plumbing.Reference) bool {
 	}
 }
 
-func TestStopReferenceIter_Simple(t *testing.T) {
+func TestStopReferenceIter_StopAtFourthOfSixTags(t *testing.T) {
 	stopAt := test.NewHash("04")
 	includedRefs := []*plumbing.Reference{
 		test.NewTagRef("some_tag_1", "01"),
