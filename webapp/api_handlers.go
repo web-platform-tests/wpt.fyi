@@ -20,6 +20,8 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+const experimentalLabel = `experimental`
+
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
 //
 // URL Params:
@@ -50,7 +52,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	labels := ParseLabelsParam(r)
-	unstable := labels != nil && labels.Contains("unstable")
+	experimentalBrowsers := labels != nil && labels.Contains(experimentalLabel)
 
 	var testRuns []models.TestRun
 	var limit int
@@ -65,8 +67,8 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, browserName := range browserNames {
 		var testRunResults []models.TestRun
-		if unstable {
-			browserName = browserName + "-experimental"
+		if experimentalBrowsers {
+			browserName = browserName + "-" + experimentalLabel
 		}
 		query := baseQuery.Filter("BrowserName =", browserName)
 		if runSHA != "" && runSHA != "latest" {
@@ -76,9 +78,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if unstable {
+		if experimentalBrowsers {
 			for i := range testRunResults {
-				testRunResults[i].BrowserName = strings.Replace(testRunResults[i].BrowserName, "-experimental", "", 1)
+				testRunResults[i].BrowserName = strings.Replace(testRunResults[i].BrowserName, "-"+experimentalLabel, "", 1)
 			}
 		}
 		testRuns = append(testRuns, testRunResults...)

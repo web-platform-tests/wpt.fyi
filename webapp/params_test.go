@@ -279,19 +279,19 @@ func TestParseLabelsParam_Empty(t *testing.T) {
 }
 
 func TestParseLabelsParam_Label_Duplicate(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?label=unstable&label=unstable", nil)
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?label=experimental&label=experimental", nil)
 	labels := ParseLabelsParam(r)
 	assert.Equal(t, 1, labels.Cardinality())
 }
 
 func TestParseLabelsParam_Labels_Duplicate(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=unstable,unstable", nil)
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=experimental,experimental", nil)
 	labels := ParseLabelsParam(r)
 	assert.Equal(t, 1, labels.Cardinality())
 }
 
 func TestParseLabelsParam_LabelsAndLabel_Duplicate(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=unstable&label=unstable", nil)
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=experimental&label=experimental", nil)
 	labels := ParseLabelsParam(r)
 	assert.Equal(t, 1, labels.Cardinality())
 }
