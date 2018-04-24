@@ -71,7 +71,7 @@ ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:${USER_HOME}/.local/bin
 ENV GOLANG_ORG_PATH="${GOPATH}/src/golang.org/x"
 RUN mkdir -p ${GOLANG_ORG_PATH}
 RUN cd ${GOLANG_ORG_PATH} && git clone https://github.com/golang/lint
-RUN cd ${GOLANG_ORG_PATH}/lint && go install ./...
+RUN cd ${GOLANG_ORG_PATH}/lint && go get ./... && go install ./...
 
 RUN mkdir "${WPTD_PATH}"
 RUN mkdir "${WPT_PATH}"
