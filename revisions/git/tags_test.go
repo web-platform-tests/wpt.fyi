@@ -77,47 +77,6 @@ func TestTimeOrderedReferenceIter_Simple(t *testing.T) {
 	assert.True(t, err == nil)
 }
 
-func TestFilteredReferenceIter_Custom(t *testing.T) {
-	refs := []*plumbing.Reference{
-		test.NewTagRef("tag_1", "01"),
-		test.NewTagRef("tag_2", "02"),
-		test.NewTagRef("tag_3", "03"),
-	}
-
-	// Include every other commit.
-	newFilter := func() agit.ReferencePredicate {
-		include := false
-		return func(ref *plumbing.Reference) bool {
-			include = !include
-			return include
-		}
-	}
-
-	iter := test.NewMockIter(refs)
-	stopIter := agit.NewFilteredReferenceIter(&iter, newFilter())
-	firstRef, err := stopIter.Next()
-	assert.True(t, err == nil)
-	assert.True(t, firstRef == refs[0])
-	secondRef, err := stopIter.Next()
-	assert.True(t, err == nil)
-	assert.True(t, secondRef == refs[2])
-	_, err = stopIter.Next()
-	assert.True(t, err == io.EOF)
-
-	iter = test.NewMockIter(refs)
-	stopIter = agit.NewFilteredReferenceIter(&iter, newFilter())
-	i := 0
-	err = stopIter.ForEach(func(ref *plumbing.Reference) error {
-		assert.True(t, ref == refs[i])
-		i += 2
-		return nil
-	})
-	assert.True(t, err == nil)
-}
-
-// TODO(markdittmer): Rename TestMergedPRIter TestMergedPRIter.
-// Test custom filtered reference iter.
-
 func TestMergedPRIter_Simple(t *testing.T) {
 	tags := []test.Tag{
 		test.Tag{
@@ -177,7 +136,7 @@ func TestMergedPRIter_Simple(t *testing.T) {
 	assert.True(t, i == len(prs))
 }
 
-func stopAtHash(h plumbing.Hash) agit.ReferencePredicate {
+func stopAtHash(h plumbing.Hash) func(ref *plumbing.Reference) bool {
 	return func(ref *plumbing.Reference) bool {
 		if ref == nil {
 			log.Fatal("Unexpected nil reference in test stopAtHash function")
