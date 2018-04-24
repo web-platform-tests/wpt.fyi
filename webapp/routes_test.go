@@ -96,6 +96,6 @@ func assertHSTS(t *testing.T, path string) {
 	rr := httptest.NewRecorder()
 	handler, _ := http.DefaultServeMux.Handler(req)
 	handler.ServeHTTP(rr, req)
-	assert.Equal(t, "max-age=31536000; includeSubDomains; preload",
+	assert.Equal(t, "max-age=31536000; preload",
 		rr.HeaderMap["Strict-Transport-Security"][0])
 }

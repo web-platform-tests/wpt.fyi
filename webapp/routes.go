@@ -54,7 +54,7 @@ func init() {
 
 func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		value := "max-age=31536000; includeSubDomains; preload"
+		value := "max-age=31536000; preload"
 		w.Header().Add("Strict-Transport-Security", value)
 		h(w, r)
 	})
