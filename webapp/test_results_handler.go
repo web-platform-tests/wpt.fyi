@@ -23,8 +23,20 @@ import (
 // The browsers initially displayed to the user are defined in browsers.json.
 // The JSON property "initially_loaded" is what controls this.
 func testResultsHandler(w http.ResponseWriter, r *http.Request) {
-	if strings.Index(r.URL.Path, "/results/") != 0 {
-		http.Redirect(w, r, fmt.Sprintf("/results%s", r.URL.Path), http.StatusTemporaryRedirect)
+	// Redirect legacy paths.
+	testPath := ""
+	if r.URL.Path == "/" || r.URL.Path == "/results" {
+		testPath = "/"
+	} else if strings.Index(r.URL.Path, "/results/") != 0 {
+		testPath = r.URL.Path
+	}
+	if testPath != "" {
+		params := ""
+		if r.URL.RawQuery != "" {
+			params = "?" + r.URL.RawQuery
+		}
+		url := fmt.Sprintf("/results%s%s", testPath, params)
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 		return
 	}
 
