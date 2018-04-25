@@ -119,7 +119,13 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Platform))
 		}
 	} else {
-		const sourceURL = `/api/runs?sha=%s&complete=true`
+		var sourceURL = `/api/runs?sha=%s&complete=true`
+		labels := ParseLabelsParam(r)
+		if labels != nil {
+			for label := range labels.Iterator().C {
+				sourceURL = sourceURL + "&label=" + label.(string)
+			}
+		}
 		testRunSources = []string{fmt.Sprintf(sourceURL, runSHA)}
 	}
 

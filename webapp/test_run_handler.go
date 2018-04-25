@@ -31,6 +31,13 @@ func handleTestRunGet(w http.ResponseWriter, r *http.Request) {
 	}
 	sourceURL := fmt.Sprintf(`/api/runs?max-count=%d`, maxCount)
 
+	labels := ParseLabelsParam(r)
+	if labels != nil {
+		for label := range labels.Iterator().C {
+			sourceURL = sourceURL + "&label=" + label.(string)
+		}
+	}
+
 	// Serialize the data + pipe through the test-runs.html template.
 	testRunSourcesBytes, err := json.Marshal([]string{sourceURL})
 	if err != nil {
