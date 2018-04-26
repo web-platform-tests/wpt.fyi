@@ -114,7 +114,7 @@ found in the LICENSE file.
       <table>
         <thead>
           <tr>
-            <th>Spec</th>
+            <th>Path</th>
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
               <!-- Repeats for as many different browser test runs are available -->
               <th><test-run test-run="[[testRun]]"></test-run></th>
@@ -126,7 +126,7 @@ found in the LICENSE file.
           <template is="dom-repeat" items="{{displayedNodes}}" as="node">
             <tr>
               <td>
-                <path-part path="{{ node.path }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
+                <path-part prefix="/results" path="{{ node.path }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
               </td>
 
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
@@ -175,7 +175,7 @@ found in the LICENSE file.
           },
           path: {
             type: String,
-            value: window.location.pathname.replace(/(.+)(\/)$/, '$1')
+            value: '',
           },
           pathIsATestFile: {
             type: Boolean,
@@ -192,6 +192,11 @@ found in the LICENSE file.
         };
       }
 
+      ready() {
+        super.ready();
+        this.path = this.urlToResultsPath(window.location);
+      }
+
       computeIsLatest(sha) {
         return !sha || sha === 'latest';
       }
@@ -200,18 +205,23 @@ found in the LICENSE file.
         // This should (close enough) match up with the logic in:
         // https://github.com/w3c/web-platform-tests/blob/master/tools/manifest/item.py
         // https://github.com/w3c/web-platform-tests/blob/master/tools/wptrunner/wptrunner/wpttest.py
-        return path.indexOf('.https.') !== -1 ? 'https' : 'http';
+        return (path || '').indexOf('.https.') !== -1 ? 'https' : 'http';
       }
 
       computePathIsATestFile(path) {
         return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
       }
 
+      urlToResultsPath(location) {
+        return location.pathname.replace(/\/results\/(.+)?$/, '/$1');
+      }
+
       async connectedCallback() {
         await super.connectedCallback();
 
+        const that = this;
         window.onpopstate = () => {
-          this.path = window.location.pathname.replace(/(.+)(\/)$/, '$1');
+          this.path = that.urlToResultsPath(window.location);
           this.refreshDisplayedNodes();
         };
 
@@ -314,7 +324,7 @@ found in the LICENSE file.
 
       navigate(event) {
         event.preventDefault();
-        let path = event.target.pathname.replace(/(.+)(\/)$/, '$1');
+        let path = this.urlToResultsPath(event.target);
         if (path === this.path) {
           return;
         }
@@ -332,7 +342,7 @@ found in the LICENSE file.
             .map(btoa);
           path += `before=${before}&after=${after}`;
         }
-        window.history.pushState({}, '', path);
+        window.history.pushState({}, '', `/results${path}`);
 
         // Send Google Analytics pageview event
         if ('ga' in window) {
@@ -341,7 +351,7 @@ found in the LICENSE file.
       }
 
       splitPathIntoLinkedParts(input) {
-        const parts = input.split('/').slice(1);
+        const parts = (input || '').split('/').slice(1);
         let path = '';
         return parts.map(name => {
           path += `/${name}`;

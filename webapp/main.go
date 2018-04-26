@@ -14,7 +14,9 @@ var templates = template.Must(template.ParseGlob("templates/*.html"))
 func init() {
 	// Test run results, viewed by browser (default view)
 	// For run results diff view, 'before' and 'after' params can be given.
-	http.HandleFunc("/", testHandler)
+	http.HandleFunc("/", testResultsHandler)
+	http.HandleFunc("/results", testResultsHandler) // Prevent default redirect
+	http.HandleFunc("/results/", testResultsHandler)
 
 	// About wpt.fyi
 	http.HandleFunc("/about", aboutHandler)
@@ -38,5 +40,5 @@ func init() {
 	http.HandleFunc("/api/run", apiTestRunHandler)
 
 	// API endpoint for redirecting to a run's summary JSON blob.
-	http.HandleFunc("/results", resultsRedirectHandler)
+	http.HandleFunc("/api/results", apiResultsRedirectHandler)
 }

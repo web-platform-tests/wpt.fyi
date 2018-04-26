@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -21,7 +22,24 @@ import (
 //
 // The browsers initially displayed to the user are defined in browsers.json.
 // The JSON property "initially_loaded" is what controls this.
-func testHandler(w http.ResponseWriter, r *http.Request) {
+func testResultsHandler(w http.ResponseWriter, r *http.Request) {
+	// Redirect legacy paths.
+	testPath := ""
+	if r.URL.Path == "/" || r.URL.Path == "/results" {
+		testPath = "/"
+	} else if strings.Index(r.URL.Path, "/results/") != 0 {
+		testPath = r.URL.Path
+	}
+	if testPath != "" {
+		params := ""
+		if r.URL.RawQuery != "" {
+			params = "?" + r.URL.RawQuery
+		}
+		url := fmt.Sprintf("/results%s%s", testPath, params)
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+		return
+	}
+
 	runSHA, err := ParseSHAParam(r)
 	if err != nil {
 		http.Error(w, "Invalid query params", http.StatusBadRequest)
@@ -113,7 +131,13 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Platform))
 		}
 	} else {
-		const sourceURL = `/api/runs?sha=%s`
+		var sourceURL = `/api/runs?sha=%s`
+		labels := ParseLabelsParam(r)
+		if labels != nil {
+			for label := range labels.Iterator().C {
+				sourceURL = sourceURL + "&label=" + label.(string)
+			}
+		}
 		testRunSources = []string{fmt.Sprintf(sourceURL, runSHA)}
 	}
 

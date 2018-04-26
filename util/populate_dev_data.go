@@ -37,7 +37,7 @@ func main() {
 
 	// Follow pattern established in run/*.py data collection code.
 	const staticRunSHA = "b952881825"
-	const summaryUrlFmtString = "/static/wptd/" + staticRunSHA + "/%s"
+	const summaryUrlFmtString = "/static/" + staticRunSHA + "/%s"
 	staticTestRuns := []base.TestRun{
 		{
 			BrowserName:    "chrome",

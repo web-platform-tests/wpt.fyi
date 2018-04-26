@@ -164,29 +164,43 @@ func ParseDiffFilterParams(r *http.Request) (param DiffFilterParam, err error) {
 	return param, nil
 }
 
-// ParsePathsParam returns a set list of test paths to include, or nil if no filter is provided (and all tests should be
-// included). It parses the 'paths' parameter, split on commas, and also checks for the (repeatable) 'path' params.
+// ParsePathsParam returns a set list of test paths to include, or nil if no
+// filter is provided (and all tests should be included). It parses the 'paths'
+// parameter, split on commas, and also checks for the (repeatable) 'path' params
 func ParsePathsParam(r *http.Request) (paths mapset.Set) {
-	pathParams := r.URL.Query()["path"]
-	pathsParam := r.URL.Query().Get("paths")
-	if len(pathParams) == 0 && pathsParam == "" {
+	return ParseRepeatedParam(r, "path", "paths")
+}
+
+// ParseLabelsParam returns a set list of test-run labels to include, or nil if
+// no labels are provided.
+func ParseLabelsParam(r *http.Request) (labels mapset.Set) {
+	return ParseRepeatedParam(r, "label", "labels")
+}
+
+// ParseRepeatedParam parses a param that may be a plural name, with all values
+// comma-separated, or a repeated singular param.
+// e.g. ?label=foo&label=bar vs ?labels=foo,bar
+func ParseRepeatedParam(r *http.Request, singular string, plural string) (params mapset.Set) {
+	repeatedParam := r.URL.Query()[singular]
+	pluralParam := r.URL.Query().Get(plural)
+	if len(repeatedParam) == 0 && pluralParam == "" {
 		return nil
 	}
 
-	paths = mapset.NewSet()
-	for _, path := range pathParams {
-		paths.Add(path)
+	params = mapset.NewSet()
+	for _, label := range repeatedParam {
+		params.Add(label)
 	}
-	if pathsParam != "" {
-		for _, path := range strings.Split(pathsParam, ",") {
-			paths.Add(path)
+	if pluralParam != "" {
+		for _, label := range strings.Split(pluralParam, ",") {
+			params.Add(label)
 		}
 	}
-	if paths.Contains("") {
-		paths.Remove("")
+	if params.Contains("") {
+		params.Remove("")
 	}
-	if paths.Cardinality() == 0 {
+	if params.Cardinality() == 0 {
 		return nil
 	}
-	return paths
+	return params
 }
