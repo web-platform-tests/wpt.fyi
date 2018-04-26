@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
@@ -18,6 +19,8 @@ import (
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
+
+const experimentalLabel = `experimental`
 
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
 //
@@ -48,6 +51,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	labels := ParseLabelsParam(r)
+	experimentalBrowsers := labels != nil && labels.Contains(experimentalLabel)
+
 	var testRuns []models.TestRun
 	var limit int
 	if limit, err = ParseMaxCountParam(r); err != nil {
@@ -61,6 +67,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, browserName := range browserNames {
 		var testRunResults []models.TestRun
+		if experimentalBrowsers {
+			browserName = browserName + "-" + experimentalLabel
+		}
 		query := baseQuery.Filter("BrowserName =", browserName)
 		if runSHA != "" && runSHA != "latest" {
 			query = query.Filter("Revision =", runSHA)
@@ -68,6 +77,11 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		if _, err := query.GetAll(ctx, &testRunResults); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+		if experimentalBrowsers {
+			for i := range testRunResults {
+				testRunResults[i].BrowserName = strings.Replace(testRunResults[i].BrowserName, "-"+experimentalLabel, "", 1)
+			}
 		}
 		testRuns = append(testRuns, testRunResults...)
 	}

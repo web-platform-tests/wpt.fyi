@@ -32,6 +32,7 @@
               assert.equal(trf.urlToResultsPath(url('/results/')), '/');
               assert.equal(trf.urlToResultsPath(url('/results/abc')), '/abc');
               assert.equal(trf.urlToResultsPath(url('/results/abc/')), '/abc');
+              assert.equal(trf.urlToResultsPath(url('/results/abc/def/')), '/abc/def');
               assert.equal(trf.urlToResultsPath(url('/results/abc/def.html')), '/abc/def.html');
             });
           });
