@@ -48,6 +48,10 @@ func ParseSHAParam(r *http.Request) (runSHA string, err error) {
 	return runSHA, err
 }
 
+// ParseSHAParam parses and validates the 'sha' param for the request.
+// It returns "latest" by default (and in error cases).
+func ParseSHAParamFull(r *http.Request)
+
 // ParseBrowserParam parses and validates the 'browser' param for the request.
 // It returns "" by default (and in error cases).
 func ParseBrowserParam(r *http.Request) (browser string, err error) {

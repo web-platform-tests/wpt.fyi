@@ -17,6 +17,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/urlfetch"
 )
 
 const experimentalLabel = `experimental`
@@ -367,4 +368,46 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(bytes)
+}
+
+func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
+	sha, err := ParseSHAParam(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := appengine.NewContext(r)
+	if manifest, err := getManifestForSHA(ctx, sha); err != nil {
+		panic(manifest)
+	}
+}
+
+func getManifestForSHA(ctx context.Context, sha string) (manifest interface{}, err error) {
+	const githubSearch = `https://api.github.com/search/issues?SHA=%s+user:w3c+repo:web-platform-tests`
+	url := fmt.Sprintf(githubSearch, sha)
+	client := urlfetch.Client(ctx)
+	var resp *http.Response
+	if resp, err = client.Get(url); err != nil {
+		panic("hi")
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var body []byte
+	if body, err = ioutil.ReadAll(resp.Body); err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s returned HTTP status %d:\n%s", url, resp.StatusCode, string(body))
+	}
+	panic(string(body))
+
+	type Issue struct {
+		Number int `json:"number"`
+	}
+	var issues []Issue
+	if err = json.Unmarshal(body, &issues); err != nil {
+		return nil, err
+	}
+	panic(len(issues))
 }
