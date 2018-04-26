@@ -35,10 +35,6 @@ build: go_deps
 
 test: go_test
 
-# Note: Do not depend on jenkins_install; it should run as root
-jenkins_test:
-	$(WPTD_PATH)/util/docker-jenkins/inner/travis_ci_run.sh
-
 lint: go_lint
 
 go_lint: go_deps
