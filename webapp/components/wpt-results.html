@@ -214,8 +214,8 @@ found in the LICENSE file.
 
       urlToResultsPath(location) {
         return location.pathname
-            .replace(/^\/results\/(.+)?$/, '/$1') // Strip '/results' prefix
-            .replace(/\/$/, ''); // Strip trailing slash
+          .replace(/^\/results\/(.+)?$/, '/$1') // Strip '/results' prefix
+          .replace(/\/$/, ''); // Strip trailing slash
       }
 
       async connectedCallback() {
