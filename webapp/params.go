@@ -39,7 +39,10 @@ func ParseSHAParam(r *http.Request) (runSHA string, err error) {
 	}
 
 	runParam := params.Get("sha")
-	if SHARegex.MatchString(runParam) {
+	if runParam != "" && runParam != "latest" {
+		if !SHARegex.MatchString(runParam) {
+			return "", fmt.Errorf("Invalid sha param value: %s", runParam)
+		}
 		runSHA = runParam[:10]
 	}
 	return runSHA, err
@@ -55,7 +58,7 @@ func ParseBrowserParam(r *http.Request) (browser string, err error) {
 	if IsBrowserName(browser) {
 		return browser, nil
 	}
-	return "", fmt.Errorf("invalid browser param %s", browser)
+	return "", fmt.Errorf("Invalid browser param value: %s", browser)
 }
 
 // ParseBrowsersParam returns a sorted list of browsers to include.
@@ -77,10 +80,14 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 	// Otherwise filter to valid browser names.
 	for i := 0; i < len(browsers); {
 		if !IsBrowserName(browsers[i]) {
-			// 'Remove' browser by switching to end and cropping.
-			browsers[len(browsers)-1], browsers[i] = browsers[i], browsers[len(browsers)-1]
-			browsers = browsers[:len(browsers)-1]
-			continue
+			if browsers[i] == "" {
+				// 'Remove' empty browser by switching to end and cropping.
+				browsers[len(browsers)-1], browsers[i] = browsers[i], browsers[len(browsers)-1]
+				browsers = browsers[:len(browsers)-1]
+				continue
+			} else {
+				return nil, fmt.Errorf("Invalid browser param value %s", browsers[i])
+			}
 		}
 		i++
 	}
