@@ -15,6 +15,7 @@ func init() {
 	// Test run results, viewed by browser (default view)
 	// For run results diff view, 'before' and 'after' params can be given.
 	http.HandleFunc("/", testResultsHandler)
+	http.HandleFunc("/results", testResultsHandler) // Prevent default redirect
 	http.HandleFunc("/results/", testResultsHandler)
 
 	// About wpt.fyi
