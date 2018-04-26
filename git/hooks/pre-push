@@ -12,7 +12,7 @@ WPTD_PATH=${WPTD_PATH:-$(absdir "${REPO_DIR}")}
 DIFF_STATUS="${?}"
 if [ "${DIFF_STATUS}" != "0" ]; then
   confirm "You have uncommitted local changes. Push committed changes anyway?"
-  if [ "${?}" != "0" ]; then exit "${?}"; fi
+  if [ ${?} != 0 ]; then fatal "User cancelled the push" ${?}; fi
 fi
 
 docker inspect wptd-dev-instance > /dev/null 2>&1
@@ -37,7 +37,7 @@ LINT_STATUS="${?}"
 FINAL_STATUS="${LINT_STATUS}"
 if [ "${LINT_STATUS}" != "0" ]; then
   confirm "Lint failed. Push anyway?"
-  if [ "${?}" != "0" ]; then exit "${?}"; fi
+  if [ ${?} != 0 ]; then fatal "User cancelled the push" ${?}; fi
 
   info "Pushing in spite of lint errors..."
   FINAL_STATUS="0"
@@ -51,6 +51,15 @@ if [ "${FINAL_STATUS}" == "0" ]; then
   info "Pre-push exit status: ${FINAL_STATUS}"
 else
   error "Pre-push exit status: ${FINAL_STATUS}"
+fi
+
+# Confirm if pushing to web-platform-tests/master
+BRANCH_NAME=${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"}
+USER="$(git remote -v get-url origin | sed -E 's#(https?:\/\/|git@)github.com(\/|:)##' | sed 's#/.*$##')"
+if [[ "${USER}" == "web-platform-tests" ]] && [[ "${BRANCH_NAME}" == "master" ]];
+then
+  confirm "Are you sure you want to push web-platform-tests/master?"
+  if [ ${?} != 0 ]; then fatal "User cancelled the push" ${?}; fi
 fi
 
 exit "${FINAL_STATUS}"
