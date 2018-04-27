@@ -51,7 +51,7 @@ go_deps: $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
 
 dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
-	go run util/populate_dev_data.go
+	go run util/populate_dev_data.go $(FLAGS)
 
 webapp_deploy_staging: env-BRANCH_NAME
 	gcloud config set project wptdashboard

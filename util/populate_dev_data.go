@@ -5,9 +5,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/deckarep/golang-set"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
 	base "github.com/web-platform-tests/wpt.fyi/shared"
@@ -15,6 +18,10 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
+)
+
+var (
+	host = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -27,6 +34,8 @@ import (
 // Usage (from util/):
 // go run populate_dev_data.go
 func main() {
+	flag.Parse()
+
 	ctx, err := getRemoteAPIContext()
 	if err != nil {
 		log.Fatal(err)
@@ -139,8 +148,16 @@ func main() {
 	addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 
 	log.Print("Adding latest production TestRun data...")
-	prodTestRuns := base.FetchLatestRuns("wpt.fyi")
+	prodTestRuns := base.FetchLatestRuns(*host)
 	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
+	for i := range prodTestRuns {
+		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
+	}
+	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
+
+	log.Print("Adding latest experimental TestRun data...")
+	prodTestRuns = base.FetchRuns(*host, "latest", mapset.NewSet("experimental"))
+	latestProductionTestRunMetadata = make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
 	}
