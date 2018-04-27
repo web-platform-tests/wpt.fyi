@@ -5,6 +5,8 @@
 package webapp
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -371,24 +373,110 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
-	sha, err := ParseSHAParam(r)
+	sha, err := ParseSHAParamFull(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	ctx := appengine.NewContext(r)
 	if manifest, err := getManifestForSHA(ctx, sha); err != nil {
-		panic(manifest)
+		http.Error(w, err.Error(), http.StatusNotFound)
+	} else if manifest == nil {
+		http.NotFound(w, r)
+	} else {
+		w.Header().Add("content-type", "application/json")
+		w.Write(manifest)
 	}
 }
 
-func getManifestForSHA(ctx context.Context, sha string) (manifest interface{}, err error) {
-	const githubSearch = `https://api.github.com/search/issues?SHA=%s+user:w3c+repo:web-platform-tests`
+func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err error) {
+	// Fetch models.Token entity for GitHub API Token.
+	tokenKey := datastore.NewKey(ctx, "Token", "github-api-token", 0, nil)
+	var token models.Token
+	datastore.Get(ctx, tokenKey, &token)
+
+	// Search for the PR associated with the SHA.
+	const githubSearch = `https://api.github.com/search/issues?q=SHA:%s+user:w3c+repo:web-platform-tests`
 	url := fmt.Sprintf(githubSearch, sha)
+	var body []byte
+	if body, err = fetchGitHubURL(ctx, url, token.Secret); err != nil {
+		return nil, err
+	}
+
+	var queryResults map[string]*json.RawMessage
+	if err = json.Unmarshal(body, &queryResults); err != nil {
+		return nil, err
+	}
+	var issues []map[string]*json.RawMessage
+	if err = json.Unmarshal(*queryResults["items"], &issues); err != nil {
+		return nil, err
+	}
+	if len(issues) < 1 {
+		return nil, fmt.Errorf("No search results found for SHA %s", sha)
+	}
+
+	// Load the release by the presumed tag name merge_pr_*
+	var prNumber int
+	if err = json.Unmarshal(*issues[0]["number"], &prNumber); err != nil {
+		return nil, err
+	}
+
+	releaseTag := fmt.Sprintf("merge_pr_%d", prNumber)
+	const githubRelease = `https://api.github.com/repos/w3c/web-platform-tests/releases/tags/%s`
+	url = fmt.Sprintf(githubRelease, releaseTag)
+	if body, err = fetchGitHubURL(ctx, url, token.Secret); err != nil {
+		return nil, err
+	}
+
+	var release map[string]*json.RawMessage
+	if err = json.Unmarshal(body, &release); err != nil {
+		return nil, err
+	}
+	var assets []map[string]*json.RawMessage
+	if err = json.Unmarshal(*release["assets"], &assets); err != nil {
+		return nil, err
+	}
+	if len(assets) < 1 {
+		return nil, fmt.Errorf("No assets found for release %s", releaseTag)
+	}
+	// Get (and unzip) the asset with name "MANIFEST-{sha}.json.gz"
+	for _, asset := range assets {
+		var name string
+		if err = json.Unmarshal(*asset["name"], &name); err != nil {
+			return nil, err
+		}
+		if strings.Contains(name, sha) {
+			if err = json.Unmarshal(*asset["browser_download_url"], &url); err != nil {
+				return nil, err
+			}
+
+			if body, err = fetchGitHubURL(ctx, url, token.Secret); err != nil {
+				return nil, err
+			}
+			gzReader, err := gzip.NewReader(bytes.NewReader(body))
+			if err != nil {
+				return nil, err
+			}
+			if body, err = ioutil.ReadAll(gzReader); err != nil {
+				return nil, err
+			}
+			return body, nil
+		}
+	}
+	return nil, nil
+}
+
+func fetchGitHubURL(ctx context.Context, url string, githubToken string) ([]byte, error) {
 	client := urlfetch.Client(ctx)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if githubToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", githubToken))
+	}
 	var resp *http.Response
-	if resp, err = client.Get(url); err != nil {
-		panic("hi")
+	if resp, err = client.Do(req); err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -400,14 +488,5 @@ func getManifestForSHA(ctx context.Context, sha string) (manifest interface{}, e
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("%s returned HTTP status %d:\n%s", url, resp.StatusCode, string(body))
 	}
-	panic(string(body))
-
-	type Issue struct {
-		Number int `json:"number"`
-	}
-	var issues []Issue
-	if err = json.Unmarshal(body, &issues); err != nil {
-		return nil, err
-	}
-	panic(len(issues))
+	return body, nil
 }

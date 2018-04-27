@@ -28,9 +28,19 @@ const MaxCountMinValue = 1
 // SHARegex is a regex for SHA[0:10] slice of a git hash.
 var SHARegex = regexp.MustCompile("[0-9a-fA-F]{10,40}")
 
-// ParseSHAParam parses and validates the 'sha' param for the request.
-// It returns "latest" by default (and in error cases).
+// ParseSHAParam parses and validates the 'sha' param for the request,
+// cropping it to 10 chars. It returns "latest" by default. (and in error cases).
 func ParseSHAParam(r *http.Request) (runSHA string, err error) {
+	sha, err := ParseSHAParamFull(r)
+	if err != nil || !SHARegex.MatchString(sha) {
+		return sha, err
+	}
+	return sha[:10], nil
+}
+
+// ParseSHAParamFull parses and validates the 'sha' param for the request.
+// It returns "latest" by default (and in error cases).
+func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	// Get the SHA for the run being loaded (the first part of the path.)
 	runSHA = "latest"
 	params, err := url.ParseQuery(r.URL.RawQuery)
@@ -41,16 +51,11 @@ func ParseSHAParam(r *http.Request) (runSHA string, err error) {
 	runParam := params.Get("sha")
 	if runParam != "" && runParam != "latest" {
 		if !SHARegex.MatchString(runParam) {
-			return "", fmt.Errorf("Invalid sha param value: %s", runParam)
+			return "latest", fmt.Errorf("Invalid sha param value: %s", runParam)
 		}
-		runSHA = runParam[:10]
 	}
-	return runSHA, err
+	return runParam, err
 }
-
-// ParseSHAParam parses and validates the 'sha' param for the request.
-// It returns "latest" by default (and in error cases).
-func ParseSHAParamFull(r *http.Request)
 
 // ParseBrowserParam parses and validates the 'browser' param for the request.
 // It returns "" by default (and in error cases).
