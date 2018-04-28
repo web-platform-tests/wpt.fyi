@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
@@ -29,7 +28,7 @@ const experimentalLabel = `experimental`
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	runSHA, err := ParseSHAParam(r)
 	if err != nil {
-		http.Error(w, "Invalid query params", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -77,11 +76,6 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		if _, err := query.GetAll(ctx, &testRunResults); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-		}
-		if experimentalBrowsers {
-			for i := range testRunResults {
-				testRunResults[i].BrowserName = strings.Replace(testRunResults[i].BrowserName, "-"+experimentalLabel, "", 1)
-			}
 		}
 		testRuns = append(testRuns, testRunResults...)
 	}

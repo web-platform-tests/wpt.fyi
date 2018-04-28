@@ -61,16 +61,16 @@ See models.go for more details.
   <script>
     const DISPLAY_NAMES = (() => {
       let m = new Map();
-      m.set('chrome', 'Chrome');
-      m.set('firefox', 'Firefox');
-      m.set('edge', 'Edge');
+      ['chrome', 'chrome-experimental'].forEach(n => m.set(n, 'Chrome'));
+      ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
+      ['edge', 'edge-experimental'].forEach(n => m.set(n, 'Edge'));
       m.set('linux', 'Linux');
       m.set('macos', 'macOS');
-      m.set('safari', 'Safari');
+      ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
       m.set('windows', 'Windows');
       return m;
     })();
-    
+
     class TestRun extends window.Polymer.Element {
       static get is() {
         return 'test-run';

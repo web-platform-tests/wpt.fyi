@@ -12,9 +12,24 @@ WPTD_PATH=${WPTD_PATH:-$(absdir "${REPO_DIR}")}
 DIFF_STATUS="${?}"
 if [ "${DIFF_STATUS}" != "0" ]; then
   confirm "You have uncommitted local changes. Push committed changes anyway?"
-  if [ "${?}" != "0" ]; then exit "${?}"; fi
+  if [ ${?} != 0 ]; then fatal "User cancelled the push"; fi
 fi
 
+info "Checking where we're pushing..."
+while read local_ref local_sha remote_ref remote_sha
+do
+  debug "$local_ref $local_sha $remote_ref $remote_sha"
+  if [[ -n "$remote_ref" ]];
+  then
+    if [[ "$(echo $remote_ref | sed -e 's,.*/\(.*\),\1,')" == "master" ]]
+    then
+      confirm "Are you sure you want to push master?"
+      if [ ${?} != 0 ]; then fatal "User cancelled the push"; fi
+    fi
+  fi
+done
+
+info "Running lint task in docker..."
 docker inspect wptd-dev-instance > /dev/null 2>&1
 INSPECT_STATUS="${?}"
 
@@ -37,7 +52,7 @@ LINT_STATUS="${?}"
 FINAL_STATUS="${LINT_STATUS}"
 if [ "${LINT_STATUS}" != "0" ]; then
   confirm "Lint failed. Push anyway?"
-  if [ "${?}" != "0" ]; then exit "${?}"; fi
+  if [ ${?} != 0 ]; then fatal "User cancelled the push"; fi
 
   info "Pushing in spite of lint errors..."
   FINAL_STATUS="0"
