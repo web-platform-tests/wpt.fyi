@@ -50,11 +50,12 @@ func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 
 	runParam := params.Get("sha")
 	if runParam != "" && runParam != "latest" {
+		runSHA = runParam
 		if !SHARegex.MatchString(runParam) {
 			return "latest", fmt.Errorf("Invalid sha param value: %s", runParam)
 		}
 	}
-	return runParam, err
+	return runSHA, err
 }
 
 // ParseBrowserParam parses and validates the 'browser' param for the request.
