@@ -19,7 +19,10 @@ var browserNames, browserNamesAlphabetical = loadBrowsers()
 // of the browsers which are to be included (flagged as initially_loaded in the
 // JSON).
 func GetBrowserNames() ([]string, error) {
-	return browserNamesAlphabetical, nil
+	// Slice to make source immutable
+	tmp := make([]string, len(browserNamesAlphabetical))
+	copy(tmp, browserNamesAlphabetical)
+	return tmp, nil
 }
 
 // IsBrowserName determines whether the given name string is a valid browser name.

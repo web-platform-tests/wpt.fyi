@@ -61,23 +61,15 @@ func ParseBrowserParam(r *http.Request) (browser string, err error) {
 	return "", fmt.Errorf("Invalid browser param value: %s", browser)
 }
 
-// ParseBrowsersParam returns a sorted list of browsers to include.
-// It parses the 'browsers' parameter, split on commas, and also checks for the (repeatable) 'browser' params,
-// before falling back to the default set of browsers.
+// ParseBrowsersParam returns a sorted list of browser params for the request.
+// It parses the 'browsers' parameter, split on commas, and also checks for the (repeatable)
+// 'browser' params.
 func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 	browsers = r.URL.Query()["browser"]
 	if browsersParam := r.URL.Query().Get("browsers"); browsersParam != "" {
 		browsers = append(browsers, strings.Split(browsersParam, ",")...)
 	}
-	// If no params found, return the default.
-	var browserNames []string
-	if browserNames, err = GetBrowserNames(); err != nil {
-		return nil, err
-	}
-	if len(browsers) == 0 {
-		return browserNames, nil
-	}
-	// Otherwise filter to valid browser names.
+	// Otherwise validate browser names.
 	for i := 0; i < len(browsers); {
 		if !IsBrowserName(browsers[i]) {
 			if browsers[i] == "" {
@@ -92,6 +84,53 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 		i++
 	}
 	sort.Strings(browsers)
+	return browsers, nil
+}
+
+// GetBrowsersForRequest parses the 'browsers' param, returning the sorted list of browsers
+// to include, or a default list.
+func GetBrowsersForRequest(r *http.Request) (browsers []string, err error) {
+	if browsers, err = ParseBrowsersParam(r); err != nil {
+		return browsers, err
+	}
+	if browsers == nil || len(browsers) == 0 {
+		if browsers, err = GetBrowserNames(); err != nil {
+			return browsers, err
+		}
+	}
+	labels := ParseLabelsParam(r)
+	if labels != nil {
+		experimental := labels.Contains(experimentalLabel)
+		browserNames, err := GetBrowserNames()
+		if err != nil {
+			return nil, err
+		}
+
+		browserLabel := ""
+		for _, name := range browserNames {
+			if !labels.Contains(name) {
+				continue
+			}
+			// If we already encountered a browser name, nothing is two browsers (return empty set).
+			if browserLabel != "" {
+				browsers = nil
+				break
+			}
+			browserLabel = name
+			browsers = []string{name}
+			// For a browser label (e.g. "chrome"), we also include experimental, unless we explicitly only
+			// want experimental, which is handled below.
+			if !experimental {
+				browsers = append(browsers, name+"-"+experimentalLabel)
+			}
+		}
+
+		if experimental {
+			for i := range browsers {
+				browsers[i] = browsers[i] + "-" + experimentalLabel
+			}
+		}
+	}
 	return browsers, nil
 }
 

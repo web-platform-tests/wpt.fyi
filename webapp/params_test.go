@@ -81,52 +81,77 @@ func TestParseBrowserParam_Invalid(t *testing.T) {
 	assert.Equal(t, "", browser)
 }
 
-func TestParseBrowsersParam(t *testing.T) {
+func TestGetBrowsersForRequest(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
-	browsers, err := ParseBrowsersParam(r)
+	browsers, err := GetBrowsersForRequest(r)
 	assert.Nil(t, err)
 	defaultBrowsers, err := GetBrowserNames()
 	assert.Equal(t, defaultBrowsers, browsers)
 }
 
-func TestParseBrowsersParam_ChromeSafari(t *testing.T) {
+func TestGetBrowsersForRequest_ChromeSafari(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=chrome,safari", nil)
-	browsers, err := ParseBrowsersParam(r)
+	browsers, err := GetBrowsersForRequest(r)
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"chrome", "safari"}, browsers)
 }
 
-func TestParseBrowsersParam_ChromeInvalid(t *testing.T) {
+func TestGetBrowsersForRequest_ChromeInvalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=chrome,invalid", nil)
-	_, err := ParseBrowsersParam(r)
+	_, err := GetBrowsersForRequest(r)
 	assert.NotNil(t, err)
 }
 
-func TestParseBrowsersParam_EmptyCommas(t *testing.T) {
+func TestGetBrowsersForRequest_EmptyCommas(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=,chrome,,,,safari,,", nil)
-	browsers, err := ParseBrowsersParam(r)
+	browsers, err := GetBrowsersForRequest(r)
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"chrome", "safari"}, browsers)
 }
 
-func TestParseBrowsersParam_SafariChrome(t *testing.T) {
+func TestGetBrowsersForRequest_SafariChrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=safari,chrome", nil)
-	browsers, err := ParseBrowsersParam(r)
+	browsers, err := GetBrowsersForRequest(r)
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"chrome", "safari"}, browsers) // Alphabetical
 }
 
-func TestParseBrowsersParam_MultiBrowserParam_SafariChrome(t *testing.T) {
+func TestGetBrowsersForRequest_MultiBrowserParam_SafariChrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=safari&browser=chrome", nil)
-	browsers, err := ParseBrowsersParam(r)
+	browsers, err := GetBrowsersForRequest(r)
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"chrome", "safari"}, browsers)
 }
 
-func TestParseBrowsersParam_MultiBrowserParam_SafariInvalid(t *testing.T) {
+func TestGetBrowsersForRequest_MultiBrowserParam_SafariInvalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=safari&browser=invalid", nil)
-	_, err := ParseBrowsersParam(r)
+	_, err := GetBrowsersForRequest(r)
 	assert.NotNil(t, err)
+}
+
+func TestGetBrowsersForRequest_ChromeLabel(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?label=chrome", nil)
+	browsers, err := GetBrowsersForRequest(r)
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"chrome", "chrome-experimental"}, browsers)
+}
+
+func TestGetBrowsersForRequest_ExperimentalLabel(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=experimental", nil)
+	browsers, err := GetBrowsersForRequest(r)
+	assert.Nil(t, err)
+	names, _ := GetBrowserNames()
+	for i := range names {
+		names[i] = names[i] + "-" + experimentalLabel
+	}
+	assert.Equal(t, names, browsers)
+}
+
+func TestGetBrowsersForRequest_ChromeAndExperimentalLabel(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=chrome,experimental", nil)
+	browsers, err := GetBrowsersForRequest(r)
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"chrome-experimental"}, browsers)
 }
 
 func TestParseMaxCountParam_Missing(t *testing.T) {
