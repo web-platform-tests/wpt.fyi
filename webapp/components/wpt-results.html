@@ -188,7 +188,13 @@ found in the LICENSE file.
           displayedNodes: {
             type: Array,
             value: []
-          }
+          },
+          // Show a diff column (if there are 2 testRuns).
+          diff: Boolean,
+          filter: {
+            type: String,
+            value: "ADCU", // Added, Deleted, Changed, Unchanged
+          },
         };
       }
 
@@ -227,13 +233,23 @@ found in the LICENSE file.
           this.refreshDisplayedNodes();
         };
 
+        // Add a diff testRun spoof, if needed.
+        if (this.diff && this.testRuns && this.testRuns.length == 2) {
+          this.fetchDiff(this.testRuns);
+        }
         // Fetch the results JSON for the TestRuns
+        await this.fetchResults(this.testRuns);
+        this.refreshDisplayedNodes();
+      }
+
+
+      async fetchResults(testRuns) {
         const testFileResults = await Promise.all(
-          this.testRuns.map(async json => this.fetchResults(json.results_url))
+          testRuns.map(async json => this.fetchResultsJSON(json.results_url))
         );
 
         testFileResults.forEach(result => {
-          const {testFiles, resultsURL} = result;
+          const { testFiles, resultsURL } = result;
 
           Object.keys(testFiles).forEach(testFileName => {
             if (!this.testFiles[testFileName]) {
@@ -242,14 +258,32 @@ found in the LICENSE file.
             this.testFiles[testFileName][resultsURL] = testFiles[testFileName];
           });
         });
-
-        this.refreshDisplayedNodes();
       }
 
-      async fetchResults(resultsURL) {
+      async fetchResultsJSON(resultsURL) {
         const response = await window.fetch(resultsURL);
-        const testFiles = response.ok ? await response.json() : {};
+        let testFiles = {};
+        try {
+          testFiles = response.ok ? await response.json() : {};
+        } catch (e) {
+          // Fall through.
+        }
         return {testFiles, resultsURL};
+      }
+
+      async fetchDiff(testRuns) {
+        const [before, after] = testRuns;
+        const b = `${before.browser_name}@${before.revision}`;
+        const a = `${after.browser_name}@${after.revision}`;
+        const diffRunURL = `/api/diff?before=${b}&after=${a}&filter=${this.filter}`
+        const diffRun = {
+          revision: "diff",
+          browser_name: "diff",
+          results_url: diffRunURL,
+        };
+        await this.fetchResults([diffRun]);
+        this.push('testRuns', diffRun);
+        this.refreshDisplayedNodes();
       }
 
       nodeSort(a, b) {
