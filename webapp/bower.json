@@ -2,7 +2,8 @@
   "name": "wpt.fyi",
   "private": true,
   "dependencies": {
-    "polymer": "Polymer/polymer#2"
+    "polymer": "Polymer/polymer#2",
+    "paper-styles": "PolymerElements/paper-styles#^2.1.0"
   },
   "devDependencies": {
     "web-component-tester": "^6.4.3"
