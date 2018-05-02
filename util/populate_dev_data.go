@@ -27,7 +27,7 @@ import (
 // Usage (from util/):
 // go run populate_dev_data.go
 func main() {
-	ctx, err := getRemoteApiContext()
+	ctx, err := getRemoteAPIContext()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func main() {
 
 	// Follow pattern established in run/*.py data collection code.
 	const staticRunSHA = "b952881825"
-	const summaryUrlFmtString = "/static/" + staticRunSHA + "/%s"
+	const summaryURLFmtString = "/static/" + staticRunSHA + "/%s"
 	staticTestRuns := []base.TestRun{
 		{
 			BrowserName:    "chrome",
@@ -45,7 +45,7 @@ func main() {
 			OSName:         "linux",
 			OSVersion:      "3.16",
 			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryUrlFmtString, "chrome-63.0-linux-summary.json.gz"),
+			ResultsURL:     fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			CreatedAt:      staticDataTime,
 		},
 		{
@@ -54,7 +54,7 @@ func main() {
 			OSName:         "windows",
 			OSVersion:      "10",
 			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryUrlFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
+			ResultsURL:     fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
 			CreatedAt:      staticDataTime,
 		},
 		{
@@ -63,7 +63,7 @@ func main() {
 			OSName:         "linux",
 			OSVersion:      "*",
 			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryUrlFmtString, "firefox-57.0-linux-summary.json.gz"),
+			ResultsURL:     fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			CreatedAt:      staticDataTime,
 		},
 		{
@@ -72,7 +72,7 @@ func main() {
 			OSName:         "macos",
 			OSVersion:      "10.12",
 			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryUrlFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
+			ResultsURL:     fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
 			CreatedAt:      staticDataTime,
 		},
 	}
@@ -80,7 +80,7 @@ func main() {
 	timeZero := time.Unix(0, 0)
 	// Follow pattern established in metrics/run/*.go data collection code.
 	// Use unzipped JSON for local dev.
-	const metricsUrlFmtString = "/static/wptd-metrics/0-0/%s.json"
+	const metricsURLFmtString = "/static/wptd-metrics/0-0/%s.json"
 	staticTestRunMetadata := make([]interface{}, len(staticTestRuns))
 	for i := range staticTestRuns {
 		staticTestRunMetadata[i] = &staticTestRuns[i]
@@ -90,7 +90,7 @@ func main() {
 			StartTime: timeZero,
 			EndTime:   timeZero,
 			TestRuns:  staticTestRuns,
-			DataURL:   fmt.Sprintf(metricsUrlFmtString, "pass-rates"),
+			DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
 		},
 	}
 
@@ -99,28 +99,28 @@ func main() {
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataURL:     fmt.Sprintf(metricsUrlFmtString, "chrome-failures"),
+			DataURL:     fmt.Sprintf(metricsURLFmtString, "chrome-failures"),
 			BrowserName: "chrome",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataURL:     fmt.Sprintf(metricsUrlFmtString, "edge-failures"),
+			DataURL:     fmt.Sprintf(metricsURLFmtString, "edge-failures"),
 			BrowserName: "edge",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataURL:     fmt.Sprintf(metricsUrlFmtString, "firefox-failures"),
+			DataURL:     fmt.Sprintf(metricsURLFmtString, "firefox-failures"),
 			BrowserName: "firefox",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataURL:     fmt.Sprintf(metricsUrlFmtString, "safari-failures"),
+			DataURL:     fmt.Sprintf(metricsURLFmtString, "safari-failures"),
 			BrowserName: "safari",
 		},
 	}
@@ -158,7 +158,7 @@ func addData(ctx context.Context, kindName string, data []interface{}) {
 	log.Printf("Added %v %s entities", len(data), kindName)
 }
 
-func getRemoteApiContext() (context.Context, error) {
+func getRemoteAPIContext() (context.Context, error) {
 	const host = "localhost:9999"
 	ctx := context.Background()
 
