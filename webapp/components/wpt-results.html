@@ -193,7 +193,7 @@ found in the LICENSE file.
           },
           path: {
             type: String,
-            value: '',
+            value: '/',
           },
           pathIsATestFile: {
             type: Boolean,
@@ -233,7 +233,7 @@ found in the LICENSE file.
       urlToResultsPath(location) {
         return location.pathname
           .replace(/^\/results\/(.+)?$/, '/$1') // Strip '/results' prefix
-          .replace(/\/$/, ''); // Strip trailing slash
+          .replace(/.+\/$/, ''); // Strip trailing slash
       }
 
       async connectedCallback() {
@@ -391,12 +391,13 @@ found in the LICENSE file.
           return 'none';
         }
 
-        if (this.path === '/') {
+        const isDiff = this.isDiff(testRun);
+        if (this.path === '/' && !isDiff) {
           // Do not add color to top-level directories
           return 'top';
         }
 
-        if (this.isDiff(testRun)) {
+        if (isDiff) {
           const delta = this.getDiffDelta(node, prop);
           if (!delta) return 'delta none';
           return `delta ${delta > 0 ? 'positive' : 'negative'}`;
