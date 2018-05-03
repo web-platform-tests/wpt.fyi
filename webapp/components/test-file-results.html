@@ -126,9 +126,9 @@ found in the LICENSE file.
       async loadResultFile(testRun) {
         const url = this.resultsURL(testRun, this.testFile);
         const response = await window.fetch(url);
-        if (response.status !== 200) {
-          console.error(`Got non-200 status for url: ${url}`);
-          return Promise.resolve(null);
+        if (!response.ok) {
+          console.error(`Got non-OK status ${response.status} for url: ${url}`);
+          return null;
         }
         return response.json();
       }
