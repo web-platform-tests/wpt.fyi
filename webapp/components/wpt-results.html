@@ -7,6 +7,8 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="path-part.html">
 <link rel="import" href="runs.html">
 <link rel="import" href="test-file-results.html">
@@ -63,6 +65,10 @@ found in the LICENSE file.
       .info small {
         float: right;
       }
+      .yellow-button {
+        color: #eeff41;
+        margin-left: 32px;
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -95,10 +101,10 @@ found in the LICENSE file.
       </div>
     </section>
 
-    <template is='dom-if' if='[[isInvalidDiffUse()]]'>
-      <section class="invalid-diff">
-        <strong>diff</strong> was requested, but is only valid when comparing exactly two test runs.
-      </section>
+    <template is='dom-if' if='[[isInvalidDiffUse(diff, testRuns)]]'>
+      <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
+        <paper-button on-click="hideDiffInvalidToast" class="yellow-button">Close</paper-button>
+      </paper-toast>
     </template>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -209,10 +215,14 @@ found in the LICENSE file.
         this.path = this.urlToResultsPath(window.location);
       }
 
-      isInvalidDiffUse() {
+      isInvalidDiffUse(diff, testRuns) {
         return this.diff
             && this.testRuns
             && this.testRuns.filter(r => r.revision != 'diff') != 2;
+      }
+
+      hideDiffInvalidToast() {
+        this.shadowRoot.querySelector('#diffInvalid').toggle();
       }
 
       computeIsLatest(sha) {
