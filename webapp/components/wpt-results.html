@@ -95,6 +95,12 @@ found in the LICENSE file.
       </div>
     </section>
 
+    <template is='dom-if' if='[[isInvalidDiffUse()]]'>
+      <section class="invalid-diff">
+        <strong>diff</strong> was requested, but is only valid when comparing exactly two test runs.
+      </section>
+    </template>
+
     <template is="dom-if" if="{{ pathIsATestFile }}">
       <div class="links">
         <ul>
@@ -201,6 +207,12 @@ found in the LICENSE file.
       ready() {
         super.ready();
         this.path = this.urlToResultsPath(window.location);
+      }
+
+      isInvalidDiffUse() {
+        return this.diff
+            && this.testRuns
+            && this.testRuns.filter(r => r.revision != 'diff') != 2;
       }
 
       computeIsLatest(sha) {
