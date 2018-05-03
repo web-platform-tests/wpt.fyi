@@ -69,7 +69,7 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 	if browsersParam := r.URL.Query().Get("browsers"); browsersParam != "" {
 		browsers = append(browsers, strings.Split(browsersParam, ",")...)
 	}
-	// Otherwise validate browser names.
+	// Validate browser names.
 	for i := 0; i < len(browsers); {
 		if !IsBrowserName(browsers[i]) {
 			if browsers[i] == "" {
