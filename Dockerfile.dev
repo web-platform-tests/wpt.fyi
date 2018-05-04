@@ -21,7 +21,7 @@ RUN apt-get install -y nodejs
 
 # Install wct
 # Note that --unsafe-perm bypasses a post install script issue.
-# See https://github.com/Polymer/polymer-cli/issues/832#issuecomment-320238339
+# See https://github.com/npm/npm/issues/17346
 RUN npm install -g web-component-tester --unsafe-perm
 
 # Put wpt.fyi code in GOPATH
