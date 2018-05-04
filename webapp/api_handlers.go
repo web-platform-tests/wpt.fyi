@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
@@ -381,8 +382,6 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	if manifest, err := getManifestForSHA(ctx, sha); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
-	} else if manifest == nil {
-		http.NotFound(w, r)
 	} else {
 		w.Header().Add("content-type", "application/json")
 		w.Write(manifest)
@@ -463,7 +462,7 @@ func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err er
 			return body, nil
 		}
 	}
-	return nil, nil
+	return nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
 }
 
 func fetchGitHubURL(ctx context.Context, url string, githubToken string) ([]byte, error) {
