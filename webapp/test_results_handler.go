@@ -40,6 +40,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	query := r.URL.Query()
 	runSHA, err := ParseSHAParam(r)
 	if err != nil {
 		http.Error(w, "Invalid query params", http.StatusBadRequest)
@@ -57,9 +58,14 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		TestRuns       string
 		TestRunSources string
 		SHA            string
+		Diff           bool
+		Filter         string
 	}{
-		SHA: runSHA,
+		SHA:    runSHA,
+		Filter: r.URL.Query().Get("filter"),
 	}
+	_, diff := query["diff"]
+	data.Diff = diff || query.Get("before") != "" || query.Get("after") != ""
 
 	// Run source URLs
 	if testRunSources != nil && len(testRunSources) > 0 {
@@ -93,7 +99,6 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []string, testRuns []models.TestRun, err error) {
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")
-	filter := r.URL.Query().Get("filter")
 	if before != "" || after != "" {
 		if before == "" {
 			return nil, nil, errors.New("after param provided, but before param missing")
@@ -139,21 +144,6 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			}
 		}
 		testRunSources = []string{fmt.Sprintf(sourceURL, runSHA)}
-	}
-
-	if before != "" || after != "" {
-		const diffRunURL = `/api/diff?before=%s&after=%s`
-		resultsURL := fmt.Sprintf(diffRunURL, before, after)
-		if filter == "" {
-			filter = "ACDU" // Added, Changed, Deleted, Unchanged
-		}
-		resultsURL += "&filter=" + filter
-		diffRun := models.TestRun{
-			Revision:    "diff",
-			BrowserName: "diff",
-			ResultsURL:  resultsURL,
-		}
-		testRuns = append(testRuns, diffRun)
 	}
 	return testRunSources, testRuns, nil
 }

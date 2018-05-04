@@ -13,6 +13,7 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+// AnomalyData is a view model for the interop anomalies view.
 type AnomalyData struct {
 	Metadata string
 	Browser  string
