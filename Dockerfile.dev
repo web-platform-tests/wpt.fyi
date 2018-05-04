@@ -23,6 +23,7 @@ RUN apt-get install -y nodejs
 # Note that --unsafe-perm bypasses a post install script issue.
 # See https://github.com/npm/npm/issues/17346
 RUN npm install -g web-component-tester --unsafe-perm
+RUN npm install -g eslint babel-eslint eslint-plugin-html
 
 # Put wpt.fyi code in GOPATH
 RUN mkdir -p "${GOPATH}/src/github.com/web-platform-tests"
