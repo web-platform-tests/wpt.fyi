@@ -19,12 +19,6 @@ RUN gcloud components install \
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash
 RUN apt-get install -y nodejs
 
-# Change global install path to be user-relative.
-ENV NPM_GLOBAL_PATH="${USER_HOME}/.npm-global"
-RUN mkdir ${NPM_GLOBAL_PATH}
-RUN npm config set prefix "${NPM_GLOBAL_PATH}"
-RUN export PATH=$PATH:${NPM_GLOBAL_PATH}/bin
-
 # Install wct
 # Note that --unsafe-perm bypasses a post install script issue.
 # See https://github.com/Polymer/polymer-cli/issues/832#issuecomment-320238339
