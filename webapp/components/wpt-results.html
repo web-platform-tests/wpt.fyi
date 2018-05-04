@@ -236,7 +236,7 @@ found in the LICENSE file.
       isInvalidDiffUse(diff, testRuns) {
         return diff
             && testRuns
-            && testRuns.filter(r => r.revision !== 'diff') !== 2;
+            && testRuns.filter(r => r.revision !== 'diff').length !== 2;
       }
 
       hideDiffInvalidToast() {
