@@ -388,17 +388,29 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type gitHubClient interface {
+	fetch(url string) ([]byte, error)
+}
+
 func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err error) {
 	// Fetch models.Token entity for GitHub API Token.
 	tokenKey := datastore.NewKey(ctx, "Token", "github-api-token", 0, nil)
 	var token models.Token
 	datastore.Get(ctx, tokenKey, &token)
 
+	client := gitHubClientImpl{
+		Token:   &token,
+		Context: ctx,
+	}
+	return getGitHubReleaseAsset(&client, sha)
+}
+
+func getGitHubReleaseAsset(client gitHubClient, sha string) (manifest []byte, err error) {
 	// Search for the PR associated with the SHA.
 	const githubSearch = `https://api.github.com/search/issues?q=SHA:%s+user:w3c+repo:web-platform-tests`
 	url := fmt.Sprintf(githubSearch, sha)
 	var body []byte
-	if body, err = fetchGitHubURL(ctx, url, token.Secret); err != nil {
+	if body, err = client.fetch(url); err != nil {
 		return nil, err
 	}
 
@@ -423,7 +435,7 @@ func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err er
 	releaseTag := fmt.Sprintf("merge_pr_%d", prNumber)
 	const githubRelease = `https://api.github.com/repos/w3c/web-platform-tests/releases/tags/%s`
 	url = fmt.Sprintf(githubRelease, releaseTag)
-	if body, err = fetchGitHubURL(ctx, url, token.Secret); err != nil {
+	if body, err = client.fetch(url); err != nil {
 		return nil, err
 	}
 
@@ -449,7 +461,7 @@ func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err er
 				return nil, err
 			}
 
-			if body, err = fetchGitHubURL(ctx, url, token.Secret); err != nil {
+			if body, err = client.fetch(url); err != nil {
 				return nil, err
 			}
 			gzReader, err := gzip.NewReader(bytes.NewReader(body))
@@ -465,14 +477,19 @@ func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err er
 	return nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
 }
 
-func fetchGitHubURL(ctx context.Context, url string, githubToken string) ([]byte, error) {
-	client := urlfetch.Client(ctx)
+type gitHubClientImpl struct {
+	Token   *models.Token
+	Context context.Context
+}
+
+func (g *gitHubClientImpl) fetch(url string) ([]byte, error) {
+	client := urlfetch.Client(g.Context)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	if githubToken != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", githubToken))
+	if g.Token != nil {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", g.Token.Secret))
 	}
 	var resp *http.Response
 	if resp, err = client.Do(req); err != nil {
