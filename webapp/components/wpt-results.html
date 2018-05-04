@@ -7,8 +7,9 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="path-part.html">
 <link rel="import" href="runs.html">
 <link rel="import" href="test-file-results.html">
@@ -64,6 +65,26 @@ found in the LICENSE file.
       }
       .info small {
         float: right;
+      }
+      .top,
+      .delta {
+        background-color: #eee;
+      }
+      .passing-0 { background-color: hsl(0, 85%, 65%); }
+      .passing-20 { background-color: hsl(0, 85%, 70%); }
+      .passing-40 { background-color: hsl(0, 85%, 75%); }
+      .passing-60 { background-color: hsl(0, 85%, 80%); }
+      .passing-80 { background-color: hsl(0, 85%, 85%); }
+      .passing-100 { background-color: hsl(129, 85%, 65%); }
+
+      span.delta.negative {
+        color: var(--paper-red-700);
+      }
+      span.delta.positive {
+        color: var(--paper-green-700);
+      }
+      td.none {
+        visibility: hidden;
       }
       .yellow-button {
         color: #eeff41;
@@ -142,15 +163,12 @@ found in the LICENSE file.
               </td>
 
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                <td style="{{ testResultStyle(node, testRun) }}">
-                  <template is="dom-if" if="{{ hasResults(node, testRun) }}">
-                    {{ getNodeResultDataByPropertyName(node, testRun, 'passing') }}
-                    /
-                    {{ getNodeResultDataByPropertyName(node, testRun, 'total') }}
-                  </template>
+                <td class$="[[ testResultClass(node, testRun, 'passing') ]]">
+                  <span class$="passing [[ testResultClass(node, testRun, 'passing') ]]">{{ getNodeResultDataByPropertyName(node, testRun, 'passing') }}</span>
+                  /
+                  <span class$="total [[ testResultClass(node, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, testRun, 'total') }}</span>
                 </td>
               </template>
-
             </tr>
           </template>
 
@@ -187,7 +205,7 @@ found in the LICENSE file.
           },
           path: {
             type: String,
-            value: '',
+            value: '/',
           },
           pathIsATestFile: {
             type: Boolean,
@@ -218,7 +236,7 @@ found in the LICENSE file.
       isInvalidDiffUse(diff, testRuns) {
         return diff
             && testRuns
-            && testRuns.filter(r => r.revision !== 'diff') !== 2;
+            && testRuns.filter(r => r.revision !== 'diff').length !== 2;
       }
 
       hideDiffInvalidToast() {
@@ -243,7 +261,7 @@ found in the LICENSE file.
       urlToResultsPath(location) {
         return location.pathname
           .replace(/^\/results\/(.+)?$/, '/$1') // Strip '/results' prefix
-          .replace(/\/$/, ''); // Strip trailing slash
+          .replace(/.+\/$/, ''); // Strip trailing slash
       }
 
       async connectedCallback() {
@@ -419,39 +437,62 @@ found in the LICENSE file.
         });
       }
 
-      testResultStyle(node, testRun) {
+      testResultClass(node, testRun, prop) {
         if (!node || !testRun) {
-          return;
+          return 'none';
         }
 
         const result = node.results[testRun.results_url];
-
         if (typeof result === 'undefined') {
-          return;
+          return 'none';
         }
 
-        if (this.path === '/') {
+        const isDiff = this.isDiff(testRun);
+        if (this.path === '/' && !isDiff) {
           // Do not add color to top-level directories
-          return 'background-color: #eee';
+          return 'top';
         }
 
-        // Need saturation between 65-100, reversed (range 35)
-        const passRate = result.passing / result.total;
-        if (passRate === 1) {
-          // Green
-          return 'background-color: hsl(129, 85%, 65%)';
+        if (isDiff) {
+          const delta = this.getDiffDelta(node, prop);
+          if (!delta) {
+            return 'delta none';
+          }
+          return `delta ${delta > 0 ? 'positive' : 'negative'}`;
         } else {
-          const luminance = 65 + passRate * 20;
-          // Some shade of red
-          return `background-color: hsl(0, 85%, ${luminance}%)`;
+          const passing = result.passing / result.total;
+          return `passing-${passing * 100 - (passing * 100 % 20)}`;
         }
+      }
+
+      getDiffDelta(node, prop) {
+        const [before, after] = this.testRuns.slice(0, 2)
+          .map(r => node.results[r.results_url] || {})
+          .map(r => r[prop || 'passing'] || 0);
+        return after - before;
+      }
+
+      getDiffDeltaStr(node, prop) {
+        const delta = this.getDiffDelta(node, prop);
+        if (delta === 0) {
+          return 0;
+        }
+        const posOrNeg = delta > 0 ? '+' : '';
+        return `${posOrNeg}${delta}`;
       }
 
       hasResults(node, testRun) {
         return typeof node.results[testRun.results_url] !== 'undefined';
       }
 
+      isDiff(testRun) {
+        return testRun && testRun.revision === 'diff';
+      }
+
       getNodeResultDataByPropertyName(node, testRun, property) {
+        if (this.isDiff(testRun)) {
+          return this.getDiffDeltaStr(node, property);
+        }
         if (testRun.results_url in node.results) {
           return node.results[testRun.results_url][property];
         }
