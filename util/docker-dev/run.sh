@@ -60,7 +60,7 @@ docker run -t -d --entrypoint /bin/bash \
     --name wptd-dev-instance wptd-dev
 DOCKER_INSTANCE_PID="${!}"
 
-info "Ensuring current user has root..."
+info "Ensuring the home directory is owned by the user..."
 wptd_chown "/home/jenkins"
 
 info "Instance wptd-dev-instance started."
