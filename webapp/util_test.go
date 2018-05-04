@@ -5,11 +5,19 @@
 package webapp
 
 import (
+	"encoding/json"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+type object map[string]interface{}
+
+func unsafeMarshal(i interface{}) []byte {
+	result, _ := json.Marshal(i)
+	return result
+}
 
 func TestGetBrowserNames(t *testing.T) {
 	names, _ := GetBrowserNames()

@@ -20,7 +20,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/urlfetch"
 )
 
 const experimentalLabel = `experimental`
@@ -388,6 +387,14 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func gitHubSHASearchURL(sha string) string {
+	return fmt.Sprintf(`https://api.github.com/search/issues?q=SHA:%s+user:w3c+repo:web-platform-tests`, sha)
+}
+
+func gitHubReleaseURL(tag string) string {
+	return fmt.Sprintf(`https://api.github.com/repos/w3c/web-platform-tests/releases/tags/%s`, tag)
+}
+
 type gitHubClient interface {
 	fetch(url string) ([]byte, error)
 }
@@ -402,13 +409,12 @@ func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err er
 		Token:   &token,
 		Context: ctx,
 	}
-	return getGitHubReleaseAsset(&client, sha)
+	return getGitHubReleaseAssetForSHA(&client, sha)
 }
 
-func getGitHubReleaseAsset(client gitHubClient, sha string) (manifest []byte, err error) {
+func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (manifest []byte, err error) {
 	// Search for the PR associated with the SHA.
-	const githubSearch = `https://api.github.com/search/issues?q=SHA:%s+user:w3c+repo:web-platform-tests`
-	url := fmt.Sprintf(githubSearch, sha)
+	url := gitHubSHASearchURL(sha)
 	var body []byte
 	if body, err = client.fetch(url); err != nil {
 		return nil, err
@@ -433,8 +439,7 @@ func getGitHubReleaseAsset(client gitHubClient, sha string) (manifest []byte, er
 	}
 
 	releaseTag := fmt.Sprintf("merge_pr_%d", prNumber)
-	const githubRelease = `https://api.github.com/repos/w3c/web-platform-tests/releases/tags/%s`
-	url = fmt.Sprintf(githubRelease, releaseTag)
+	url = gitHubReleaseURL(releaseTag)
 	if body, err = client.fetch(url); err != nil {
 		return nil, err
 	}
@@ -475,34 +480,4 @@ func getGitHubReleaseAsset(client gitHubClient, sha string) (manifest []byte, er
 		}
 	}
 	return nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
-}
-
-type gitHubClientImpl struct {
-	Token   *models.Token
-	Context context.Context
-}
-
-func (g *gitHubClientImpl) fetch(url string) ([]byte, error) {
-	client := urlfetch.Client(g.Context)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	if g.Token != nil {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", g.Token.Secret))
-	}
-	var resp *http.Response
-	if resp, err = client.Do(req); err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var body []byte
-	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("%s returned HTTP status %d:\n%s", url, resp.StatusCode, string(body))
-	}
-	return body, nil
 }
