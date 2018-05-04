@@ -5,7 +5,11 @@
 <div id="content">
   {{ template "_header.html" }}
   <div>
-    <wpt-results test-runs="{{ .TestRuns }}" test-run-resources="{{ .TestRunSources }}" sha="{{ .SHA }}"></wpt-results>
+    <wpt-results
+        test-runs="{{ .TestRuns }}"
+        test-run-resources="{{ .TestRunSources }}"
+        sha="{{ .SHA }}"
+         {{if .Diff}}diff{{end}}></wpt-results>
   </div>
 </div>
 {{ template "_ga.html" }}

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"sort"
+	"strings"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -25,6 +26,9 @@ func GetBrowserNames() ([]string, error) {
 // IsBrowserName determines whether the given name string is a valid browser name.
 // Used for validating user-input params for browsers.
 func IsBrowserName(name string) bool {
+	if strings.HasSuffix(name, "-"+experimentalLabel) {
+		name = name[0 : len(name)-1-len(experimentalLabel)] // Trim suffix.
+	}
 	_, ok := browserNames[name]
 	return ok
 }
