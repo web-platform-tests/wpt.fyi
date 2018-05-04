@@ -15,6 +15,21 @@ RUN gcloud components install \
     gsutil \
     app-engine-python
 
+# Install npm, and use a user-relative global path.
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash
+RUN apt-get install -y nodejs
+
+# Change global install path to be user-relative.
+ENV NPM_GLOBAL_PATH="${USER_HOME}/.npm-global"
+RUN mkdir ${NPM_GLOBAL_PATH}
+RUN npm config set prefix "${NPM_GLOBAL_PATH}"
+RUN export PATH=$PATH:${NPM_GLOBAL_PATH}/bin
+
+# Install wct
+# Note that --unsafe-perm bypasses a post install script issue.
+# See https://github.com/Polymer/polymer-cli/issues/832#issuecomment-320238339
+RUN npm install -g web-component-tester --unsafe-perm
+
 # Put wpt.fyi code in GOPATH
 RUN mkdir -p "${GOPATH}/src/github.com/web-platform-tests"
 RUN ln -s "${WPTD_PATH}" "${GOPATH}/src/github.com/web-platform-tests/wpt.fyi"
