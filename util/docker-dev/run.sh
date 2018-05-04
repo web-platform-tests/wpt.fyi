@@ -29,38 +29,43 @@ info "Creating docker instance for dev server. Instance name: wptd-dev-instance"
 docker inspect wptd-dev-instance > /dev/null 2>&1
 INSPECT_STATUS="${?}"
 
-set -e
-
-DOCKER_INSTANCE_PID=""
-if [ "${INSPECT_STATUS}" != "0" ]; then
-  info "Docker instance wptd-dev-instance not found. Starting it..."
-  docker run -t -d --entrypoint /bin/bash \
-      -v "${WPTD_PATH}":/home/jenkins/wpt.fyi \
-      -u $(id -u $USER):$(id -g $USER) \
-      -p "${WPTD_HOST_WEB_PORT}:8080" \
-      -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
-      -p "${WPTD_HOST_API_WEB_PORT}:9999" \
-      --name wptd-dev-instance wptd-dev
-  DOCKER_INSTANCE_PID="${!}"
-else
-  info "Found existing docker instance wptd-dev-instance"
-fi
-
-info "Ensuring current users has root..."
-wptd_chown "/home/jenkins"
-
 function stop() {
   warn "run.sh: Recieved interrupt. Exiting..."
   info "Stopping wptd-dev-instance..."
   wptd_stop
   info "Removing wptd-dev-instance..."
   wptd_rm
+}
+
+function quit() {
+  stop
   exit 0
 }
 
+DOCKER_INSTANCE_PID=""
+if [ "${INSPECT_STATUS}" == "0" ]; then
+  info "Found existing docker instance wptd-dev-instance. Killing it..."
+  stop
+fi
+
+set -e
+
+info "Starting docker instance wptd-dev-instance..."
+docker run -t -d --entrypoint /bin/bash \
+    -v "${WPTD_PATH}":/home/jenkins/wpt.fyi \
+    -u $(id -u $USER):$(id -g $USER) \
+    -p "${WPTD_HOST_WEB_PORT}:8080" \
+    -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
+    -p "${WPTD_HOST_API_WEB_PORT}:9999" \
+    --name wptd-dev-instance wptd-dev
+DOCKER_INSTANCE_PID="${!}"
+
+info "Ensuring current user has root..."
+wptd_chown "/home/jenkins"
+
 info "Instance wptd-dev-instance started."
 
-trap stop INT
+trap quit INT
 
 while true; do
     info "Hit Ctrl+C to end"
