@@ -20,12 +20,9 @@ func testClosePositive(t *testing.T, e epoch.Epoch) {
 	assert.True(t, e.IsEpochal(justAfter, justPrior))
 }
 
-var lastYear = time.Date(2017, 5, 1, 0, 0, 0, 0, time.UTC)
-var thisYear = time.Date(2018, 5, 1, 0, 0, 0, 0, time.UTC)
-
 func testFarPositive(t *testing.T, e epoch.Epoch) {
-	lastYear := time.Date(2017, 5, 1, 0, 0, 0, 0, time.UTC)
-	thisYear := time.Date(2018, 5, 1, 0, 0, 0, 0, time.UTC)
+	thisYear := time.Now()
+	lastYear := thisYear.AddDate(-1, 0, 0)
 	assert.True(t, e.IsEpochal(lastYear, thisYear))
 	assert.True(t, e.IsEpochal(thisYear, lastYear))
 }
