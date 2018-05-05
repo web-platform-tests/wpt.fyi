@@ -49,7 +49,7 @@ See models.go for more details.
 
     <div>
       <div><img src="/static/{{testRun.browser_name}}_64x64.png" /></div>
-      <div>{{displayName(testRun.browser_name)}} {{testRun.browser_version}}</div>
+      <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
       <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
         <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
         <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
@@ -70,6 +70,10 @@ See models.go for more details.
       m.set('windows', 'Windows');
       return m;
     })();
+    const VERSION_PATTERNS = {
+      major: /(\d+)/,
+      majorAndMinor: /(\d+\.\d+)/
+    };
 
     class TestRun extends window.Polymer.Element {
       static get is() {
@@ -94,6 +98,26 @@ See models.go for more details.
 
       displayName(name) {
         return DISPLAY_NAMES.get(name) || name;
+      }
+
+      minorIsSignificant(browserName) {
+        return browserName === 'safari';
+      }
+
+      /**
+       * Truncate a software version identifier to include only the most
+       * salient information for the specified browser.
+       */
+      shortVersion(browserName, browserVersion) {
+        const pattern = this.minorIsSignificant(browserName) ?
+          VERSION_PATTERNS.majorAndMinor : VERSION_PATTERNS.major;
+        const match = pattern.exec(browserVersion);
+
+        if (!match) {
+          return browserVersion;
+        }
+
+        return match[1];
       }
     }
 

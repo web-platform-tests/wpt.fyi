@@ -27,4 +27,4 @@ else
     ${COPY_COMMAND}
 fi
 
-wptd_exec "make dev_data"
+wptd_exec "make dev_data FLAGS=$@"

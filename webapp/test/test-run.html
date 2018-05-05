@@ -21,6 +21,10 @@
 
       setup(() => {
         trf = fixture('test-run-fixture');
+        trf.set('testRun', {
+          browser_name: 'f',
+          created_at: '2018-01-12T12:00:00Z'
+        });
       });
 
       suite('static get properties()', () => {
@@ -44,6 +48,48 @@
           });
           test('isDiff(anything else)', () => {
             assert.isFalse(trf.isDiff('literally anything'));
+          });
+        });
+        suite('shortVersion', () => {
+          test('valid, major only', () => {
+
+            assert.equal(trf.shortVersion('chrome', '1'), '1');
+
+            assert.equal(trf.shortVersion('chrome', '2.3'), '2');
+
+            assert.equal(trf.shortVersion('chrome', '3.4.5'), '3');
+
+            assert.equal(trf.shortVersion('chrome', '4.5.6.7'), '4');
+
+            assert.equal(trf.shortVersion('chrome', '765.687'), '765');
+
+            assert.equal(trf.shortVersion('chrome', '   11.0 '), '11');
+
+            assert.equal(trf.shortVersion('chrome', '56.0a'), '56');
+          });
+          test('valid, major and minor', () => {
+            assert.equal(trf.shortVersion('safari', '1'), '1');
+
+            assert.equal(trf.shortVersion('safari', '2.3'), '2.3');
+
+            assert.equal(trf.shortVersion('safari', '3.4.5'), '3.4');
+
+            assert.equal(trf.shortVersion('safari', '4.5.6.7'), '4.5');
+
+            assert.equal(trf.shortVersion('safari', '765.687'), '765.687');
+
+            assert.equal(trf.shortVersion('safari', '   11.0 '), '11.0');
+
+            assert.equal(trf.shortVersion('safari', '56.0a'), '56.0');
+          });
+          test('invalid', () => {
+            assert.equal(trf.shortVersion('chrome', 'five'), 'five');
+
+            assert.equal(trf.shortVersion('chrome', ''), '');
+
+            assert.equal(trf.shortVersion('safari', 'five'), 'five');
+
+            assert.equal(trf.shortVersion('safari', ''), '');
           });
         });
       });
