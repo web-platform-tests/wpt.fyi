@@ -2,22 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package shared
 
 import (
-	"encoding/json"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-type object map[string]interface{}
-
-func unsafeMarshal(i interface{}) []byte {
-	result, _ := json.Marshal(i)
-	return result
-}
 
 func TestGetBrowserNames(t *testing.T) {
 	names, _ := GetBrowserNames()

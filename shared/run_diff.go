@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package shared
 
 import (
 	"encoding/base64"
@@ -14,13 +14,14 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
-	models "github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 )
 
-type platformAtRevision struct {
+// PlatformAtRevision is represents a test-run spec, of [platform]@[SHA],
+// e.g. 'chrome@latest' or 'safari-10@abcdef1234'
+type PlatformAtRevision struct {
 	// Platform is the string representing browser (+ version), and OS (+ version).
 	Platform string
 
@@ -28,7 +29,8 @@ type platformAtRevision struct {
 	Revision string
 }
 
-func parsePlatformAtRevisionSpec(spec string) (platformAtRevision platformAtRevision, err error) {
+// ParsePlatformAtRevisionSpec parses a test-run spec into a PlatformAtRevision struct.
+func ParsePlatformAtRevisionSpec(spec string) (platformAtRevision PlatformAtRevision, err error) {
 	pieces := strings.Split(spec, "@")
 	if len(pieces) > 2 {
 		return platformAtRevision, errors.New("invalid platform@revision spec: " + spec)
@@ -47,41 +49,41 @@ func parsePlatformAtRevisionSpec(spec string) (platformAtRevision platformAtRevi
 	return platformAtRevision, errors.New("Platform " + platformAtRevision.Platform + " not found")
 }
 
-func fetchRunResultsJSONForParam(
+func FetchRunResultsJSONForParam(
 	ctx context.Context, r *http.Request, param string) (results map[string][]int, err error) {
 	afterDecoded, err := base64.URLEncoding.DecodeString(param)
 	if err == nil {
-		var run models.TestRun
+		var run TestRun
 		if err = json.Unmarshal([]byte(afterDecoded), &run); err != nil {
 			return nil, err
 		}
-		return fetchRunResultsJSON(ctx, r, run)
+		return FetchRunResultsJSON(ctx, r, run)
 	}
-	var spec platformAtRevision
-	if spec, err = parsePlatformAtRevisionSpec(param); err != nil {
+	var spec PlatformAtRevision
+	if spec, err = ParsePlatformAtRevisionSpec(param); err != nil {
 		return nil, err
 	}
-	return fetchRunResultsJSONForSpec(ctx, r, spec)
+	return FetchRunResultsJSONForSpec(ctx, r, spec)
 }
 
-func fetchRunResultsJSONForSpec(
-	ctx context.Context, r *http.Request, revision platformAtRevision) (results map[string][]int, err error) {
-	var run models.TestRun
-	if run, err = fetchRunForSpec(ctx, revision); err != nil {
+func FetchRunResultsJSONForSpec(
+	ctx context.Context, r *http.Request, revision PlatformAtRevision) (results map[string][]int, err error) {
+	var run TestRun
+	if run, err = FetchRunForSpec(ctx, revision); err != nil {
 		return nil, err
-	} else if (run == models.TestRun{}) {
+	} else if (run == TestRun{}) {
 		return nil, nil
 	}
-	return fetchRunResultsJSON(ctx, r, run)
+	return FetchRunResultsJSON(ctx, r, run)
 }
 
-func fetchRunForSpec(ctx context.Context, revision platformAtRevision) (models.TestRun, error) {
+func FetchRunForSpec(ctx context.Context, revision PlatformAtRevision) (TestRun, error) {
 	baseQuery := datastore.
 		NewQuery("TestRun").
 		Order("-CreatedAt").
 		Limit(1)
 
-	var results []models.TestRun
+	var results []TestRun
 	// TODO(lukebjerring): Handle actual platforms (split out version + os)
 	query := baseQuery.
 		Filter("BrowserName =", revision.Platform)
@@ -89,17 +91,17 @@ func fetchRunForSpec(ctx context.Context, revision platformAtRevision) (models.T
 		query = query.Filter("Revision = ", revision.Revision)
 	}
 	if _, err := query.GetAll(ctx, &results); err != nil {
-		return models.TestRun{}, err
+		return TestRun{}, err
 	}
 	if len(results) < 1 {
-		return models.TestRun{}, nil
+		return TestRun{}, nil
 	}
 	return results[0], nil
 }
 
 // fetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
 // a full run can span 20k files).
-func fetchRunResultsJSON(ctx context.Context, r *http.Request, run models.TestRun) (results map[string][]int, err error) {
+func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (results map[string][]int, err error) {
 	client := urlfetch.Client(ctx)
 	url := strings.TrimSpace(run.ResultsURL)
 	if strings.Index(url, "/") == 0 {
@@ -125,10 +127,10 @@ func fetchRunResultsJSON(ctx context.Context, r *http.Request, run models.TestRu
 	return results, nil
 }
 
-// getResultsDiff returns a map of test name to an array of [count-different-tests, total-tests], for tests which had
+// GetResultsDiff returns a map of test name to an array of [count-different-tests, total-tests], for tests which had
 // different results counts in their map (which is test name to array of [count-passed, total-tests]).
 //
-func getResultsDiff(before map[string][]int, after map[string][]int, filter DiffFilterParam) map[string][]int {
+func GetResultsDiff(before map[string][]int, after map[string][]int, filter DiffFilterParam) map[string][]int {
 	diff := make(map[string][]int)
 	if filter.Deleted || filter.Changed {
 		for test, resultsBefore := range before {
@@ -186,4 +188,18 @@ func anyPathMatches(paths mapset.Set, testPath string) bool {
 		}
 	}
 	return false
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func max(x int, y int) int {
+	if x < y {
+		return y
+	}
+	return x
 }

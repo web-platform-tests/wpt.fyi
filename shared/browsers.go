@@ -1,3 +1,6 @@
+package shared
+
+const browsersJSON = `
 {
     "chrome-64.0-linux": {
         "initially_loaded": true,
@@ -99,3 +102,4 @@
         "sauce": true
     }
 }
+`
