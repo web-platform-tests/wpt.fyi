@@ -59,7 +59,7 @@ then
 else
     QUIET_FLAG=""
 fi
-COMMAND="gcloud app deploy ${PROMOTE} ${QUIET_FLAG} --version=${VERSION} ${WPTD_PATH}/webapp ${WPTD_PATH}/results-proccesor"
+COMMAND="gcloud app deploy ${PROMOTE} ${QUIET_FLAG} --version=${VERSION} ${WPTD_PATH}/webapp ${WPTD_PATH}/results-processor"
 
 if [[ -z "${QUIET}" ]]
 then
