@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/webapp/api"
 )
 
 // This handler is responsible for all pages that display test results.
@@ -41,7 +42,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.URL.Query()
-	runSHA, err := ParseSHAParam(r)
+	runSHA, err := api.ParseSHAParam(r)
 	if err != nil {
 		http.Error(w, "Invalid query params", http.StatusBadRequest)
 		return
@@ -115,8 +116,8 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			}
 			testRuns = append(testRuns, run)
 		} else {
-			var beforeSpec platformAtRevision
-			if beforeSpec, err = parsePlatformAtRevisionSpec(before); err != nil {
+			var beforeSpec api.PlatformAtRevision
+			if beforeSpec, err = api.ParsePlatformAtRevisionSpec(before); err != nil {
 				return nil, nil, errors.New("invalid before param")
 			}
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, beforeSpec.Revision, beforeSpec.Platform))
@@ -129,15 +130,15 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			}
 			testRuns = append(testRuns, run)
 		} else {
-			var afterSpec platformAtRevision
-			if afterSpec, err = parsePlatformAtRevisionSpec(after); err != nil {
+			var afterSpec api.PlatformAtRevision
+			if afterSpec, err = api.ParsePlatformAtRevisionSpec(after); err != nil {
 				return nil, nil, errors.New("invalid after param")
 			}
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Platform))
 		}
 	} else {
 		var sourceURL = `/api/runs?sha=%s`
-		labels := ParseLabelsParam(r)
+		labels := api.ParseLabelsParam(r)
 		if labels != nil {
 			for label := range labels.Iterator().C {
 				sourceURL = sourceURL + "&label=" + label.(string)

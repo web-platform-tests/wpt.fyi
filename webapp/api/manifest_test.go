@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package api
 
 import (
 	"bytes"
@@ -14,6 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Shorthand for arbitrary json objects.
+type object map[string]interface{}
+
 type mockGitHubClient struct {
 	Responses map[string][]byte
 }
@@ -23,6 +26,11 @@ func (m *mockGitHubClient) fetch(url string) ([]byte, error) {
 		return nil, fmt.Errorf("fore! oh; for: %s", url)
 	}
 	return m.Responses[url], nil
+}
+
+func unsafeMarshal(i interface{}) []byte {
+	result, _ := json.Marshal(i)
+	return result
 }
 
 func TestGetGitHubReleaseAssetForSHA_SHANotFound(t *testing.T) {
