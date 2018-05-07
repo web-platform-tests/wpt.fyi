@@ -12,8 +12,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/web-platform-tests/wpt.fyi/api"
 	models "github.com/web-platform-tests/wpt.fyi/shared"
-	"github.com/web-platform-tests/wpt.fyi/webapp/api"
 )
 
 // This handler is responsible for all pages that display test results.

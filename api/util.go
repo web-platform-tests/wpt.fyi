@@ -6,9 +6,6 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"os"
-	"path"
 	"sort"
 	"strings"
 
@@ -43,23 +40,10 @@ func IsBrowserName(name string) bool {
 func loadBrowsers() (map[string]bool, []string) {
 	var browsers map[string]models.Browser
 	var err error
-	var bytes []byte
 	var browserNames map[string]bool
 	var browserNamesAlphabetical []string
 
-	// Climb the working directory into /webapp/ folder
-	var dir string
-	if dir, _ = os.Getwd(); err != nil {
-		panic(err)
-	}
-	for path.Base(dir) != "webapp" {
-		dir = path.Join(dir, "..")
-	}
-	if bytes, err = ioutil.ReadFile(path.Join(dir, "browsers.json")); err != nil {
-		panic(err)
-	}
-
-	if err = json.Unmarshal(bytes, &browsers); err != nil {
+	if err = json.Unmarshal([]byte(browsersJSON), &browsers); err != nil {
 		panic(err)
 	}
 

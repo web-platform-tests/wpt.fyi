@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/web-platform-tests/wpt.fyi/webapp/api"
+	"github.com/web-platform-tests/wpt.fyi/api"
 )
 
 // testRunsHandler handles GET/POST requests to /test-runs

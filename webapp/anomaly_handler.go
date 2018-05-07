@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
-	"github.com/web-platform-tests/wpt.fyi/webapp/api"
+	"github.com/web-platform-tests/wpt.fyi/api"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
