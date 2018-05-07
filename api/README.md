@@ -1,12 +1,17 @@
-# API endpoints documentation
+# wpt.fyi API
 
-This document covers the HTTP REST endpoints available on [wpt.fyi](http://wpt.fyi).
+This package defines and implements HTTP API endpoints for [wpt.fyi](https://wpt.fyi/), and this
+document covers usage and parameters of those endpoints.
+
+## Endpoints
+
+An exhaustive list of the endpoints can be found in `routes.go`.
 
  - [/api/run](#apirun)
  - [/api/runs](#apiruns)
  - [/api/diff](#apidiff)
  - [/results](#results)
- 
+
 ### /api/run
 
 Gets a specific (single) TestRun metadata, for a given SHA[0:10] and platform.
@@ -22,7 +27,7 @@ __`platform`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 Gets the TestRun metadata for all runs for a given SHA[0:10].
 
 __Parameters__
- 
+
 __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
 
 __`max-count`__ : Maximum number of runs to get (for each browser). Only relevant when `sha` is `latest`. Maximum of 500.
@@ -44,7 +49,7 @@ __`filter`__ : Differences to include in the summary.
  - `A` : Added - tests which are present after, but not before.
  - `D` : Deleted - tests which are present before, but not after.
  - `C` : Changed - tests which are present before and after, but the results summary is different.
- - `U` : Unchanged - tests which are present before and after, and the results summary count is not different. 
+ - `U` : Unchanged - tests which are present before and after, and the results summary count is not different.
 
 ### /results
 

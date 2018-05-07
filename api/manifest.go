@@ -14,13 +14,13 @@ import (
 	"net/http"
 	"strings"
 
-	models "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
 func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
-	sha, err := ParseSHAParamFull(r)
+	sha, err := shared.ParseSHAParamFull(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -47,9 +47,9 @@ type gitHubClient interface {
 }
 
 func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err error) {
-	// Fetch models.Token entity for GitHub API Token.
+	// Fetch shared.Token entity for GitHub API Token.
 	tokenKey := datastore.NewKey(ctx, "Token", "github-api-token", 0, nil)
-	var token models.Token
+	var token shared.Token
 	datastore.Get(ctx, tokenKey, &token)
 
 	client := gitHubClientImpl{

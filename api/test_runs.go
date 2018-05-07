@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
-	models "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
@@ -20,7 +20,7 @@ import (
 // URL Params:
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
-	runSHA, err := ParseSHAParam(r)
+	runSHA, err := shared.ParseSHAParam(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -39,17 +39,17 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var browserNames []string
-	if browserNames, err = ParseBrowsersParam(r); err != nil {
+	if browserNames, err = shared.ParseBrowsersParam(r); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	labels := ParseLabelsParam(r)
-	experimentalBrowsers := labels != nil && labels.Contains(ExperimentalLabel)
+	labels := shared.ParseLabelsParam(r)
+	experimentalBrowsers := labels != nil && labels.Contains(shared.ExperimentalLabel)
 
-	var testRuns []models.TestRun
+	var testRuns []shared.TestRun
 	var limit int
-	if limit, err = ParseMaxCountParam(r); err != nil {
+	if limit, err = shared.ParseMaxCountParam(r); err != nil {
 		http.Error(w, "Invalid 'max-count' param: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -59,9 +59,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		Limit(limit)
 
 	for _, browserName := range browserNames {
-		var testRunResults []models.TestRun
+		var testRunResults []shared.TestRun
 		if experimentalBrowsers {
-			browserName = browserName + "-" + ExperimentalLabel
+			browserName = browserName + "-" + shared.ExperimentalLabel
 		}
 		query := baseQuery.Filter("BrowserName =", browserName)
 		if runSHA != "" && runSHA != "latest" {
@@ -95,14 +95,14 @@ func getLastCompleteRunSHA(ctx context.Context) (sha string, err error) {
 	// Map is sha -> browser -> seen yet?  - this prevents over-counting dupes.
 	runSHAs := make(map[string]map[string]bool)
 	var browserNames []string
-	if browserNames, err = GetBrowserNames(); err != nil {
+	if browserNames, err = shared.GetBrowserNames(); err != nil {
 		return sha, err
 	}
 
 	for _, browser := range browserNames {
 		it := baseQuery.Filter("BrowserName = ", browser).Run(ctx)
 		for {
-			var testRun models.TestRun
+			var testRun shared.TestRun
 			_, err := it.Next(&testRun)
 			if err == datastore.Done {
 				break

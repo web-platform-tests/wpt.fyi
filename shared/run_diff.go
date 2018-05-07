@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package shared
 
 import (
 	"encoding/base64"
@@ -11,138 +11,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
-	models "github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 )
-
-// apiDiffHandler takes 2 test-run results JSON blobs and produces JSON in the same format, with only the differences
-// between runs.
-//
-// GET takes before and after params, for historical production runs.
-// POST takes only a before param, and the after state is provided in the body of the POST request.
-func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		handleAPIDiffGet(w, r)
-	case "POST":
-		handleAPIDiffPost(w, r)
-	default:
-		http.Error(w, fmt.Sprintf("invalid HTTP method %s", r.Method), http.StatusBadRequest)
-	}
-}
-
-func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-
-	var err error
-	params, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	specBefore := params.Get("before")
-	if specBefore == "" {
-		http.Error(w, "before param missing", http.StatusBadRequest)
-		return
-	}
-	var beforeJSON map[string][]int
-	if beforeJSON, err = fetchRunResultsJSONForParam(ctx, r, specBefore); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if beforeJSON == nil {
-		http.Error(w, specBefore+" not found", http.StatusNotFound)
-		return
-	}
-
-	specAfter := params.Get("after")
-	if specAfter == "" {
-		http.Error(w, "after param missing", http.StatusBadRequest)
-		return
-	}
-	var afterJSON map[string][]int
-	if afterJSON, err = fetchRunResultsJSONForParam(ctx, r, specAfter); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if afterJSON == nil {
-		http.Error(w, specAfter+" not found", http.StatusNotFound)
-		return
-	}
-
-	var filter DiffFilterParam
-	if filter, err = ParseDiffFilterParams(r); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	diffJSON := getResultsDiff(beforeJSON, afterJSON, filter)
-	var bytes []byte
-	if bytes, err = json.Marshal(diffJSON); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write(bytes)
-}
-
-// handleAPIDiffPost handles POST requests to /api/diff, which allows the caller to produce the diff of an arbitrary
-// run result JSON blob against a historical production run.
-func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-
-	var err error
-	params, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	specBefore := params.Get("before")
-	if specBefore == "" {
-		http.Error(w, "before param missing", http.StatusBadRequest)
-		return
-	}
-	var beforeJSON map[string][]int
-	if beforeJSON, err = fetchRunResultsJSONForParam(ctx, r, specBefore); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if beforeJSON == nil {
-		http.Error(w, specBefore+" not found", http.StatusNotFound)
-		return
-	}
-
-	var body []byte
-	if body, err = ioutil.ReadAll(r.Body); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	var afterJSON map[string][]int
-	if err = json.Unmarshal(body, &afterJSON); err != nil {
-		http.Error(w, "Failed to parse JSON: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var filter DiffFilterParam
-	if filter, err = ParseDiffFilterParams(r); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	diffJSON := getResultsDiff(beforeJSON, afterJSON, filter)
-	var bytes []byte
-	if bytes, err = json.Marshal(diffJSON); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write(bytes)
-}
 
 // PlatformAtRevision is represents a test-run spec, of [platform]@[SHA],
 // e.g. 'chrome@latest' or 'safari-10@abcdef1234'
@@ -174,41 +49,41 @@ func ParsePlatformAtRevisionSpec(spec string) (platformAtRevision PlatformAtRevi
 	return platformAtRevision, errors.New("Platform " + platformAtRevision.Platform + " not found")
 }
 
-func fetchRunResultsJSONForParam(
+func FetchRunResultsJSONForParam(
 	ctx context.Context, r *http.Request, param string) (results map[string][]int, err error) {
 	afterDecoded, err := base64.URLEncoding.DecodeString(param)
 	if err == nil {
-		var run models.TestRun
+		var run TestRun
 		if err = json.Unmarshal([]byte(afterDecoded), &run); err != nil {
 			return nil, err
 		}
-		return fetchRunResultsJSON(ctx, r, run)
+		return FetchRunResultsJSON(ctx, r, run)
 	}
 	var spec PlatformAtRevision
 	if spec, err = ParsePlatformAtRevisionSpec(param); err != nil {
 		return nil, err
 	}
-	return fetchRunResultsJSONForSpec(ctx, r, spec)
+	return FetchRunResultsJSONForSpec(ctx, r, spec)
 }
 
-func fetchRunResultsJSONForSpec(
+func FetchRunResultsJSONForSpec(
 	ctx context.Context, r *http.Request, revision PlatformAtRevision) (results map[string][]int, err error) {
-	var run models.TestRun
-	if run, err = fetchRunForSpec(ctx, revision); err != nil {
+	var run TestRun
+	if run, err = FetchRunForSpec(ctx, revision); err != nil {
 		return nil, err
-	} else if (run == models.TestRun{}) {
+	} else if (run == TestRun{}) {
 		return nil, nil
 	}
-	return fetchRunResultsJSON(ctx, r, run)
+	return FetchRunResultsJSON(ctx, r, run)
 }
 
-func fetchRunForSpec(ctx context.Context, revision PlatformAtRevision) (models.TestRun, error) {
+func FetchRunForSpec(ctx context.Context, revision PlatformAtRevision) (TestRun, error) {
 	baseQuery := datastore.
 		NewQuery("TestRun").
 		Order("-CreatedAt").
 		Limit(1)
 
-	var results []models.TestRun
+	var results []TestRun
 	// TODO(lukebjerring): Handle actual platforms (split out version + os)
 	query := baseQuery.
 		Filter("BrowserName =", revision.Platform)
@@ -216,17 +91,17 @@ func fetchRunForSpec(ctx context.Context, revision PlatformAtRevision) (models.T
 		query = query.Filter("Revision = ", revision.Revision)
 	}
 	if _, err := query.GetAll(ctx, &results); err != nil {
-		return models.TestRun{}, err
+		return TestRun{}, err
 	}
 	if len(results) < 1 {
-		return models.TestRun{}, nil
+		return TestRun{}, nil
 	}
 	return results[0], nil
 }
 
 // fetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
 // a full run can span 20k files).
-func fetchRunResultsJSON(ctx context.Context, r *http.Request, run models.TestRun) (results map[string][]int, err error) {
+func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (results map[string][]int, err error) {
 	client := urlfetch.Client(ctx)
 	url := strings.TrimSpace(run.ResultsURL)
 	if strings.Index(url, "/") == 0 {
@@ -252,10 +127,10 @@ func fetchRunResultsJSON(ctx context.Context, r *http.Request, run models.TestRu
 	return results, nil
 }
 
-// getResultsDiff returns a map of test name to an array of [count-different-tests, total-tests], for tests which had
+// GetResultsDiff returns a map of test name to an array of [count-different-tests, total-tests], for tests which had
 // different results counts in their map (which is test name to array of [count-passed, total-tests]).
 //
-func getResultsDiff(before map[string][]int, after map[string][]int, filter DiffFilterParam) map[string][]int {
+func GetResultsDiff(before map[string][]int, after map[string][]int, filter DiffFilterParam) map[string][]int {
 	diff := make(map[string][]int)
 	if filter.Deleted || filter.Changed {
 		for test, resultsBefore := range before {

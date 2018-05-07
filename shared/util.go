@@ -2,14 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package shared
 
 import (
 	"encoding/json"
 	"sort"
 	"strings"
-
-	models "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // All errors are considered fatal
@@ -38,7 +36,7 @@ func IsBrowserName(name string) bool {
 // loadBrowsers loads, parses and returns the set of names of browsers which
 // are to be included (flagged as initially_loaded in the JSON).
 func loadBrowsers() (map[string]bool, []string) {
-	var browsers map[string]models.Browser
+	var browsers map[string]Browser
 	var err error
 	var browserNames map[string]bool
 	var browserNamesAlphabetical []string

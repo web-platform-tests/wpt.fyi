@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
-	"github.com/web-platform-tests/wpt.fyi/api"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
@@ -23,7 +23,7 @@ type AnomalyData struct {
 // anomalyHandler handles the view of test results showing which tests pass in
 // some, but not all, browsers.
 func anomalyHandler(w http.ResponseWriter, r *http.Request) {
-	browser, err := api.ParseBrowserParam(r)
+	browser, err := shared.ParseBrowserParam(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

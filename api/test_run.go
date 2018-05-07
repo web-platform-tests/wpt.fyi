@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	models "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
@@ -34,14 +34,14 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 //     sha: SHA[0:10] of the repo when the test was executed (or 'latest')
 //     browser: Browser for the run (e.g. 'chrome', 'safari-10')
 func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
-	runSHA, err := ParseSHAParam(r)
+	runSHA, err := shared.ParseSHAParam(r)
 	if err != nil {
 		http.Error(w, "Invalid query params", http.StatusBadRequest)
 		return
 	}
 
 	var browserName string
-	browserName, err = ParseBrowserParam(r)
+	browserName, err = shared.ParseBrowserParam(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -61,7 +61,7 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		query = query.Filter("Revision =", runSHA)
 	}
 
-	var testRuns []models.TestRun
+	var testRuns []shared.TestRun
 	if _, err := query.GetAll(ctx, &testRuns); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -83,16 +83,16 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 
 // TestRunPostHandler is responsible for handling TestRun submissions (via HTTP POST requests).
 // It asserts the presence of a required secret token, then saves the JSON blob to the Datastore.
-// See models.go for the JSON format expected.
+// See shared.go for the JSON format expected.
 // It is exported for re-use as the legacy endpoint '/test-runs' in the webapp.
 func TestRunPostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	var err error
 
-	// Fetch pre-uploaded models.Token entity.
+	// Fetch pre-uploaded shared.Token entity.
 	suppliedSecret := r.URL.Query().Get("secret")
 	tokenKey := datastore.NewKey(ctx, "Token", "upload-token", 0, nil)
-	var token models.Token
+	var token shared.Token
 	if err = datastore.Get(ctx, tokenKey, &token); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -109,7 +109,7 @@ func TestRunPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var testRun models.TestRun
+	var testRun shared.TestRun
 	if err = json.Unmarshal(body, &testRun); err != nil {
 		http.Error(w, "Failed to parse JSON: "+err.Error(), http.StatusBadRequest)
 		return
@@ -120,7 +120,7 @@ func TestRunPostHandler(w http.ResponseWriter, r *http.Request) {
 		testRun.CreatedAt = time.Now()
 	}
 
-	// Create a new models.TestRun out of the JSON body of the request.
+	// Create a new shared.TestRun out of the JSON body of the request.
 	key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
 	if _, err := datastore.Put(ctx, key, &testRun); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

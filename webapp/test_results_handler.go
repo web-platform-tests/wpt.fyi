@@ -12,8 +12,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/web-platform-tests/wpt.fyi/api"
-	models "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // This handler is responsible for all pages that display test results.
@@ -42,14 +41,14 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.URL.Query()
-	runSHA, err := api.ParseSHAParam(r)
+	runSHA, err := shared.ParseSHAParam(r)
 	if err != nil {
 		http.Error(w, "Invalid query params", http.StatusBadRequest)
 		return
 	}
 
 	var testRunSources []string
-	var testRuns []models.TestRun
+	var testRuns []shared.TestRun
 	if testRunSources, testRuns, err = getTestRunsAndSources(r, runSHA); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -94,10 +93,10 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getTestRunsAndSources gets the arrays of source urls and placeholder-TestRun-models from the parameters for the
+// getTestRunsAndSources gets the arrays of source urls and placeholder-TestRun-shared from the parameters for the
 // current request. When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [platform]@[sha]), or
 // base64 encoded TestRun JSON blobs for the results summaries.
-func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []string, testRuns []models.TestRun, err error) {
+func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []string, testRuns []shared.TestRun, err error) {
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")
 	if before != "" || after != "" {
@@ -110,35 +109,35 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 		const singleRunURL = `/api/run?sha=%s&browser=%s`
 
 		if beforeDecoded, err := base64.URLEncoding.DecodeString(before); err == nil {
-			var run models.TestRun
+			var run shared.TestRun
 			if err = json.Unmarshal([]byte(beforeDecoded), &run); err != nil {
 				return nil, nil, err
 			}
 			testRuns = append(testRuns, run)
 		} else {
-			var beforeSpec api.PlatformAtRevision
-			if beforeSpec, err = api.ParsePlatformAtRevisionSpec(before); err != nil {
+			var beforeSpec shared.PlatformAtRevision
+			if beforeSpec, err = shared.ParsePlatformAtRevisionSpec(before); err != nil {
 				return nil, nil, errors.New("invalid before param")
 			}
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, beforeSpec.Revision, beforeSpec.Platform))
 		}
 
 		if afterDecoded, err := base64.URLEncoding.DecodeString(after); err == nil {
-			var run models.TestRun
+			var run shared.TestRun
 			if err = json.Unmarshal([]byte(afterDecoded), &run); err != nil {
 				return nil, nil, err
 			}
 			testRuns = append(testRuns, run)
 		} else {
-			var afterSpec api.PlatformAtRevision
-			if afterSpec, err = api.ParsePlatformAtRevisionSpec(after); err != nil {
+			var afterSpec shared.PlatformAtRevision
+			if afterSpec, err = shared.ParsePlatformAtRevisionSpec(after); err != nil {
 				return nil, nil, errors.New("invalid after param")
 			}
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Platform))
 		}
 	} else {
 		var sourceURL = `/api/runs?sha=%s`
-		labels := api.ParseLabelsParam(r)
+		labels := shared.ParseLabelsParam(r)
 		if labels != nil {
 			for label := range labels.Iterator().C {
 				sourceURL = sourceURL + "&label=" + label.(string)
