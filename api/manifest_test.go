@@ -9,6 +9,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -54,10 +55,11 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 	)
 	downloadURL := "http://github.com/magic_url"
 
-	releasesJSON := object{
+	strings.Repeat("abcdef0123456789", 2)
+	releaseJSON := object{
 		"assets": []object{
 			object{
-				"name":                 "MANIFEST-abcdef1234.json.gz",
+				"name":                 "MANIFEST-abcdef0123456789abcdef0123456789abcdef01.json.gz",
 				"browser_download_url": downloadURL,
 			},
 		},
@@ -72,8 +74,9 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 	client := mockGitHubClient{
 		Responses: map[string][]byte{
 			gitHubSHASearchURL(sha):          searchResults,
-			gitHubReleaseURL("merge_pr_123"): unsafeMarshal(releasesJSON),
+			gitHubReleaseURL("merge_pr_123"): unsafeMarshal(releaseJSON),
 			downloadURL:                      data,
+			gitHubLatestReleaseURL:           unsafeMarshal(releaseJSON),
 		},
 	}
 
@@ -82,22 +85,28 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, []byte("magic data"), manifest)
 
+	// 1a) Release by empty SHA or "latest" match.
+	latestManifest, _ := getGitHubReleaseAssetForSHA(&client, "")
+	assert.Equal(t, manifest, latestManifest)
+	latestManifest, _ = getGitHubReleaseAssetForSHA(&client, "latest")
+	assert.Equal(t, manifest, latestManifest)
+
 	// 2) Correct asset picked when first asset is some other asset.
-	releasesJSON["assets"] = []object{
+	releaseJSON["assets"] = []object{
 		object{
 			"name":                 "Some other asset.txt",
 			"browser_download_url": "http://huh.com?",
 		},
-		releasesJSON["assets"].([]object)[0],
+		releaseJSON["assets"].([]object)[0],
 	}
-	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releasesJSON)
+	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
 	manifest, err = getGitHubReleaseAssetForSHA(&client, sha)
 	assert.Nil(t, err)
 	assert.Equal(t, []byte("magic data"), manifest)
 
 	// 3) Error when no matching asset found.
-	releasesJSON["assets"] = releasesJSON["assets"].([]object)[0:1] // Just the other asset
-	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releasesJSON)
+	releaseJSON["assets"] = releaseJSON["assets"].([]object)[0:1] // Just the other asset
+	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
 	manifest, err = getGitHubReleaseAssetForSHA(&client, sha)
 	assert.NotNil(t, err)
 	assert.Nil(t, manifest)
