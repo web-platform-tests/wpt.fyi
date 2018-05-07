@@ -33,6 +33,9 @@ func init() {
 	// API endpoint for diff of two test run summary JSON blobs.
 	http.HandleFunc("/api/diff", apiDiffHandler)
 
+	// API endpoint for fetching a manifest for a commit SHA.
+	http.HandleFunc("/api/manifest", apiManifestHandler)
+
 	// API endpoint for listing all test runs for a given SHA.
 	http.HandleFunc("/api/runs", apiTestRunsHandler)
 

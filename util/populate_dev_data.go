@@ -41,7 +41,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	emptySecretToken := []interface{}{&base.Token{}}
+	emptySecretToken := &base.Token{}
 	staticDataTime, _ := time.Parse(time.RFC3339, "2017-10-18T00:00:00Z")
 
 	// Follow pattern established in run/*.py data collection code.
@@ -134,15 +134,17 @@ func main() {
 		},
 	}
 
-	tokenKindName := "Token"
 	testRunKindName := "TestRun"
 	passRateMetadataKindName := metrics.GetDatastoreKindName(
 		metrics.PassRateMetadata{})
 	failuresMetadataKindName := metrics.GetDatastoreKindName(
 		metrics.FailuresMetadata{})
 
+	log.Print("Adding local (empty) secrets...")
+	addSecretToken(ctx, "upload-token", emptySecretToken)
+	addSecretToken(ctx, "github-api-token", emptySecretToken)
+
 	log.Print("Adding local mock data (static/)...")
-	addData(ctx, tokenKindName, emptySecretToken)
 	addData(ctx, testRunKindName, staticTestRunMetadata)
 	addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
 	addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
@@ -162,6 +164,14 @@ func main() {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
 	}
 	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
+}
+
+func addSecretToken(ctx context.Context, id string, data interface{}) {
+	key := datastore.NewKey(ctx, "Token", id, 0, nil)
+	if _, err := datastore.Put(ctx, key, data); err != nil {
+		log.Fatalf("Failed to add %s secret: %s", id, err.Error())
+	}
+	log.Printf("Added %s secret", id)
 }
 
 func addData(ctx context.Context, kindName string, data []interface{}) {
