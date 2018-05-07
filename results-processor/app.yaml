@@ -1,0 +1,14 @@
+service: processor
+runtime: custom
+env: flex
+entrypoint: gunicorn -b :$PORT test:app
+
+runtime_config:
+  python_version: 3
+
+manual_scaling:
+  instances: 1
+resources:
+  cpu: 1
+  memory_gb: 4
+  disk_size_gb: 10
