@@ -25,13 +25,19 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	paths := shared.ParsePathsParam(r)
 	ctx := appengine.NewContext(r)
-	if manifest, err := getManifestForSHA(ctx, sha); err != nil {
+	manifest, err := getManifestForSHA(ctx, sha)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
-	} else {
-		w.Header().Add("content-type", "application/json")
-		w.Write(manifest)
+		return
 	}
+	w.Header().Add("content-type", "application/json")
+	if paths == nil {
+		w.Write(manifest)
+		return
+	}
+
 }
 
 func gitHubSHASearchURL(sha string) string {
