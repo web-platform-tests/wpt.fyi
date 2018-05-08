@@ -25,7 +25,7 @@ func (g *gitHubClientImpl) fetch(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if g.Token != nil {
+	if g.Token != nil && g.Token.Secret != "" {
 		req.Header.Add("Authorization", fmt.Sprintf("token %s", g.Token.Secret))
 	}
 	var resp *http.Response
