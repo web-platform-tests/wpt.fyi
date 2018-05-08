@@ -16,8 +16,8 @@ type Case struct {
 	expected string
 }
 
-const sha = "abcdef0123"
-const resultsURLBase = "https://storage.googleapis.com/wptd/" + sha + "/"
+const shortSHA = "abcdef0123"
+const resultsURLBase = "https://storage.googleapis.com/wptd/" + shortSHA + "/"
 const platform = "chrome-63.0-linux"
 const resultsURL = resultsURLBase + "/" + platform + "-summary.json.gz"
 
@@ -27,7 +27,7 @@ func TestGetResultsURL_EmptyFile(t *testing.T) {
 		Case{
 			base.TestRun{
 				ResultsURL: resultsURL,
-				Revision:   sha,
+				Revision:   shortSHA,
 			},
 			"",
 			resultsURL,
@@ -41,7 +41,7 @@ func TestGetResultsURL_TestFile(t *testing.T) {
 		Case{
 			base.TestRun{
 				ResultsURL: resultsURL,
-				Revision:   sha,
+				Revision:   shortSHA,
 			},
 			file,
 			resultsURLBase + platform + "/" + file,
@@ -54,7 +54,7 @@ func TestGetResultsURL_TrailingSlash(t *testing.T) {
 		Case{
 			base.TestRun{
 				ResultsURL: resultsURL,
-				Revision:   sha,
+				Revision:   shortSHA,
 			},
 			"/",
 			resultsURL,
