@@ -119,7 +119,7 @@ func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (manifest []by
 	// Get (and unzip) the asset with name "MANIFEST-{sha}.json.gz"
 	shaMatch := sha
 	if sha == "" || sha == "latest" {
-		shaMatch = "[0-9a-f]{1,40}"
+		shaMatch = "[0-9a-f]{40}"
 	}
 	assetRegex := regexp.MustCompile(fmt.Sprintf("MANIFEST-%s.json.gz", shaMatch))
 	for _, asset := range assets {

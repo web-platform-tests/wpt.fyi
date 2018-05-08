@@ -63,31 +63,20 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 		},
 	}
 
-	var buf bytes.Buffer
-	zw := gzip.NewWriter(&buf)
-	zw.Write([]byte("magic data"))
-	zw.Close()
-	data := buf.Bytes()
-
+	content := "magic data"
+	data := getManifestPayload(content)
 	client := mockGitHubClient{
 		Responses: map[string][]byte{
 			gitHubSHASearchURL(fullSHA):      searchResults,
 			gitHubReleaseURL("merge_pr_123"): unsafeMarshal(releaseJSON),
 			downloadURL:                      data,
-			gitHubLatestReleaseURL:           unsafeMarshal(releaseJSON),
 		},
 	}
 
 	// 1) Data is unzipped.
 	manifest, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, err)
-	assert.Equal(t, []byte("magic data"), manifest)
-
-	// 1a) Release by empty SHA or "latest" match.
-	latestManifest, _ := getGitHubReleaseAssetForSHA(&client, "")
-	assert.Equal(t, manifest, latestManifest)
-	latestManifest, _ = getGitHubReleaseAssetForSHA(&client, "latest")
-	assert.Equal(t, manifest, latestManifest)
+	assert.Equal(t, []byte(content), manifest)
 
 	// 2) Correct asset picked when first asset is some other asset.
 	releaseJSON["assets"] = []object{
@@ -100,7 +89,7 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
 	manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, err)
-	assert.Equal(t, []byte("magic data"), manifest)
+	assert.Equal(t, []byte(content), manifest)
 
 	// 3) Error when no matching asset found.
 	releaseJSON["assets"] = releaseJSON["assets"].([]object)[0:1] // Just the other asset
@@ -108,4 +97,39 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 	manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.NotNil(t, err)
 	assert.Nil(t, manifest)
+}
+
+func TestGetGitHubReleaseAssetLatest(t *testing.T) {
+	downloadURL := "http://github.com/magic_url"
+	releaseJSON := object{
+		"assets": []object{
+			object{
+				"name":                 fmt.Sprintf("MANIFEST-%s.json.gz", fullSHA),
+				"browser_download_url": downloadURL,
+			},
+		},
+	}
+
+	content := "latest data"
+	data := getManifestPayload(content)
+	client := mockGitHubClient{
+		Responses: map[string][]byte{
+			downloadURL:            data,
+			gitHubLatestReleaseURL: unsafeMarshal(releaseJSON),
+		},
+	}
+
+	// Release by empty SHA or "latest" match.
+	latestManifest, _ := getGitHubReleaseAssetForSHA(&client, "")
+	assert.Equal(t, []byte(content), latestManifest)
+	latestManifest, _ = getGitHubReleaseAssetForSHA(&client, "latest")
+	assert.Equal(t, []byte(content), latestManifest)
+}
+
+func getManifestPayload(data string) []byte {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	zw.Write([]byte(data))
+	zw.Close()
+	return buf.Bytes()
 }
