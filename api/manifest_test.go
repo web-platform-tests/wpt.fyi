@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const fullSHA = "abcdef0123456789abcdef0123456789abcdef01"
+
 // Shorthand for arbitrary json objects.
 type object map[string]interface{}
 
@@ -35,14 +37,12 @@ func unsafeMarshal(i interface{}) []byte {
 
 func TestGetGitHubReleaseAssetForSHA_SHANotFound(t *testing.T) {
 	client := mockGitHubClient{}
-	const sha = "abcdef1234"
-	manifest, err := getGitHubReleaseAssetForSHA(&client, sha)
+	manifest, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, manifest)
 	assert.NotNil(t, err)
 }
 
 func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
-	const sha = "abcdef1234"
 	searchResults, _ := json.Marshal(
 		object{
 			"items": []object{
@@ -54,51 +54,82 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 	)
 	downloadURL := "http://github.com/magic_url"
 
-	releasesJSON := object{
+	releaseJSON := object{
 		"assets": []object{
 			object{
-				"name":                 "MANIFEST-abcdef1234.json.gz",
+				"name":                 fmt.Sprintf("MANIFEST-%s.json.gz", fullSHA),
 				"browser_download_url": downloadURL,
 			},
 		},
 	}
 
-	var buf bytes.Buffer
-	zw := gzip.NewWriter(&buf)
-	zw.Write([]byte("magic data"))
-	zw.Close()
-	data := buf.Bytes()
-
+	content := "magic data"
+	data := getManifestPayload(content)
 	client := mockGitHubClient{
 		Responses: map[string][]byte{
-			gitHubSHASearchURL(sha):          searchResults,
-			gitHubReleaseURL("merge_pr_123"): unsafeMarshal(releasesJSON),
+			gitHubSHASearchURL(fullSHA):      searchResults,
+			gitHubReleaseURL("merge_pr_123"): unsafeMarshal(releaseJSON),
 			downloadURL:                      data,
 		},
 	}
 
 	// 1) Data is unzipped.
-	manifest, err := getGitHubReleaseAssetForSHA(&client, sha)
+	manifest, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, err)
-	assert.Equal(t, []byte("magic data"), manifest)
+	assert.Equal(t, []byte(content), manifest)
 
 	// 2) Correct asset picked when first asset is some other asset.
-	releasesJSON["assets"] = []object{
+	releaseJSON["assets"] = []object{
 		object{
 			"name":                 "Some other asset.txt",
 			"browser_download_url": "http://huh.com?",
 		},
-		releasesJSON["assets"].([]object)[0],
+		releaseJSON["assets"].([]object)[0],
 	}
-	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releasesJSON)
-	manifest, err = getGitHubReleaseAssetForSHA(&client, sha)
+	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
+	manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, err)
-	assert.Equal(t, []byte("magic data"), manifest)
+	assert.Equal(t, []byte(content), manifest)
 
 	// 3) Error when no matching asset found.
-	releasesJSON["assets"] = releasesJSON["assets"].([]object)[0:1] // Just the other asset
-	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releasesJSON)
-	manifest, err = getGitHubReleaseAssetForSHA(&client, sha)
+	releaseJSON["assets"] = releaseJSON["assets"].([]object)[0:1] // Just the other asset
+	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
+	manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.NotNil(t, err)
 	assert.Nil(t, manifest)
+}
+
+func TestGetGitHubReleaseAssetLatest(t *testing.T) {
+	downloadURL := "http://github.com/magic_url"
+	releaseJSON := object{
+		"assets": []object{
+			object{
+				"name":                 fmt.Sprintf("MANIFEST-%s.json.gz", fullSHA),
+				"browser_download_url": downloadURL,
+			},
+		},
+	}
+
+	content := "latest data"
+	data := getManifestPayload(content)
+	client := mockGitHubClient{
+		Responses: map[string][]byte{
+			downloadURL:            data,
+			gitHubLatestReleaseURL: unsafeMarshal(releaseJSON),
+		},
+	}
+
+	// Release by empty SHA or "latest" match.
+	latestManifest, _ := getGitHubReleaseAssetForSHA(&client, "")
+	assert.Equal(t, []byte(content), latestManifest)
+	latestManifest, _ = getGitHubReleaseAssetForSHA(&client, "latest")
+	assert.Equal(t, []byte(content), latestManifest)
+}
+
+func getManifestPayload(data string) []byte {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	zw.Write([]byte(data))
+	zw.Close()
+	return buf.Bytes()
 }
