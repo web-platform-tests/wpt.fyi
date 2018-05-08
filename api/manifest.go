@@ -13,10 +13,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/memcache"
 )
 
 func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +50,8 @@ type gitHubClient interface {
 	fetch(url string) ([]byte, error)
 }
 
+// getManifestForSHA loads the contents of the manifest JSON for the release associated with
+// the given SHA, if any.
 func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err error) {
 	// Fetch shared.Token entity for GitHub API Token.
 	tokenKey := datastore.NewKey(ctx, "Token", "github-api-token", 0, nil)
@@ -58,9 +62,42 @@ func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err er
 		Token:   &token,
 		Context: ctx,
 	}
-	return getGitHubReleaseAssetForSHA(&client, sha)
+	return loadOrFetchManifestForSHA(ctx, &client, sha)
 }
 
+// loadOrFetchManifestForSHA gets the bytes for the SHA's release's manifest json asset (unzipped).
+// The gzipped Value is stored in / loaded from memcache, to avoid unnecessary round-trips.
+func loadOrFetchManifestForSHA(ctx context.Context, client gitHubClient, sha string) (manifest []byte, err error) {
+	var body []byte
+	cached, err := memcache.Get(ctx, sha)
+	if err != nil && err != memcache.ErrCacheMiss {
+		return nil, err
+	} else if cached != nil {
+		body = cached.Value
+	} else {
+		if body, err = getGitHubReleaseAssetForSHA(client, sha); err != nil {
+			return nil, err
+		}
+		item := &memcache.Item{
+			Key:   sha,
+			Value: body,
+		}
+		// Shorter expiry for latest SHA, to keep it current.
+		if sha == "latest" || sha == "" {
+			item.Expiration = time.Minute * 20
+		}
+		memcache.Set(ctx, item)
+	}
+
+	gzReader, err := gzip.NewReader(bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(gzReader)
+}
+
+// getGitHubReleaseAssetForSHA gets the bytes for the SHA's release's manifest json gzip asset.
+// This is done using a few hops on the GitHub API, so should be cached afterward.
 func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (manifest []byte, err error) {
 	var releaseBody []byte
 	var releaseTag string
@@ -137,14 +174,7 @@ func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (manifest []by
 			if body, err = client.fetch(url); err != nil {
 				return nil, err
 			}
-			gzReader, err := gzip.NewReader(bytes.NewReader(body))
-			if err != nil {
-				return nil, err
-			}
-			if body, err = ioutil.ReadAll(gzReader); err != nil {
-				return nil, err
-			}
-			return body, nil
+			return body, err
 		}
 	}
 	return nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)

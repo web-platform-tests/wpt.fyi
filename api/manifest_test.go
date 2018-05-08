@@ -74,9 +74,9 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 	}
 
 	// 1) Data is unzipped.
-	manifest, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
+	manifestGZIP, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, err)
-	assert.Equal(t, []byte(content), manifest)
+	assert.Equal(t, data, manifestGZIP)
 
 	// 2) Correct asset picked when first asset is some other asset.
 	releaseJSON["assets"] = []object{
@@ -87,16 +87,16 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 		releaseJSON["assets"].([]object)[0],
 	}
 	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
-	manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
+	manifestGZIP, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, err)
-	assert.Equal(t, []byte(content), manifest)
+	assert.Equal(t, data, manifestGZIP)
 
 	// 3) Error when no matching asset found.
 	releaseJSON["assets"] = releaseJSON["assets"].([]object)[0:1] // Just the other asset
 	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
-	manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
+	manifestGZIP, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.NotNil(t, err)
-	assert.Nil(t, manifest)
+	assert.Nil(t, manifestGZIP)
 }
 
 func TestGetGitHubReleaseAssetLatest(t *testing.T) {
@@ -120,10 +120,10 @@ func TestGetGitHubReleaseAssetLatest(t *testing.T) {
 	}
 
 	// Release by empty SHA or "latest" match.
-	latestManifest, _ := getGitHubReleaseAssetForSHA(&client, "")
-	assert.Equal(t, []byte(content), latestManifest)
-	latestManifest, _ = getGitHubReleaseAssetForSHA(&client, "latest")
-	assert.Equal(t, []byte(content), latestManifest)
+	manifestGZIP, _ := getGitHubReleaseAssetForSHA(&client, "")
+	assert.Equal(t, data, manifestGZIP)
+	manifestGZIP, _ = getGitHubReleaseAssetForSHA(&client, "latest")
+	assert.Equal(t, data, manifestGZIP)
 }
 
 func getManifestPayload(data string) []byte {
