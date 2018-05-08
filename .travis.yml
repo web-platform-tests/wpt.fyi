@@ -81,6 +81,12 @@ script:
         && [ "${TRAVIS_SECURE_ENV_VARS}" != "false" ] \
         && [ "${TRAVIS_PULL_REQUEST_BRANCH}" != "" ];
     then
+      # Skip if webapp isn't modified.
+      git diff --name-only FETCH_HEAD...${TRAVIS_BRANCH} | grep ^webapp/ || {
+        echo "No webapp updates, skipping staging deployment."
+        exit 0
+      }
+
       echo "Copying output to ${TEMP_FILE:=$(mktemp)}"
       # NOTE: Most gcloud output is stderr, so need to redirect it to stdout.
       docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_DEPLOY_TARGET}" BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH} 2>&1 | tee ${TEMP_FILE}
