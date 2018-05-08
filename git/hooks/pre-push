@@ -35,7 +35,7 @@ if [ "${DIFF_STATUS}" != "0" ]; then
       || fatal "User cancelled the push"
 fi
 
-info "Running lint task in docker..."
+info "Running pre-push checks in docker..."
 docker inspect wptd-dev-instance > /dev/null 2>&1
 INSPECT_STATUS="${?}"
 
@@ -53,7 +53,7 @@ fi
 # Ensure rights.
 wptd_chown "/home/jenkins"
 
-docker exec -t -u $(id -u $USER):$(id -g $USER) wptd-dev-instance make lint
+docker exec -t -u $(id -u $USER):$(id -g $USER) wptd-dev-instance make prepush
 LINT_STATUS="${?}"
 FINAL_STATUS="${LINT_STATUS}"
 if [ "${LINT_STATUS}" != "0" ]; then
