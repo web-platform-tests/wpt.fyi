@@ -54,7 +54,7 @@ func (m Manifest) FilterByPath(paths mapset.Set) (result Manifest, err error) {
 	if result.Items.Manual, err = m.Items.Manual.FilterByPath(paths); err != nil {
 		return result, err
 	}
-	if result.Items.Reftests, err = m.Items.Reftests.FilterByPath(paths); err != nil {
+	if result.Items.Reftest, err = m.Items.Reftest.FilterByPath(paths); err != nil {
 		return result, err
 	}
 	if result.Items.TestHarness, err = m.Items.TestHarness.FilterByPath(paths); err != nil {
@@ -65,7 +65,7 @@ func (m Manifest) FilterByPath(paths mapset.Set) (result Manifest, err error) {
 
 type ManifestItems struct {
 	Manual      *ManifestItem `json:"manual,omitempty"`
-	Reftests    *ManifestItem `json:"reftests,omitempty"`
+	Reftest     *ManifestItem `json:"reftest,omitempty"`
 	TestHarness *ManifestItem `json:"testharness,omitempty"`
 }
 

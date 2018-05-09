@@ -128,10 +128,10 @@ func TestGetGitHubReleaseAssetLatest(t *testing.T) {
 	assert.Equal(t, []byte(content), latestManifest)
 }
 
-func TestFilterManifest_Reftests(t *testing.T) {
+func TestFilterManifest_Reftest(t *testing.T) {
 	bytes := []byte(`{
 	"items": {
-		"reftests": {
+		"reftest": {
       "css/css-images/linear-gradient-2.html": [
         [
 					"/css/css-images/linear-gradient-2.html",
@@ -153,12 +153,26 @@ func TestFilterManifest_Reftests(t *testing.T) {
 	// Specific file
 	filtered, err := filterManifest(bytes, mapset.NewSet("/css/css-images/tiled-gradients.html"))
 	assert.Nil(t, err)
-	var unmarshalled shared.Manifest
-	if err = json.Unmarshal(filtered, &unmarshalled); err != nil {
-		panic(err)
-	}
-	assert.NotNil(t, unmarshalled.Items.Reftests)
-	assert.Equal(t, 1, len(*unmarshalled.Items.Reftests))
+	unmarshalled := shared.Manifest{}
+	json.Unmarshal(filtered, &unmarshalled)
+	assert.NotNil(t, unmarshalled.Items.Reftest)
+	assert.Equal(t, 1, len(*unmarshalled.Items.Reftest))
+
+	// Prefix
+	filtered, err = filterManifest(bytes, mapset.NewSet("/css/css-images/"))
+	assert.Nil(t, err)
+	unmarshalled = shared.Manifest{}
+	json.Unmarshal(filtered, &unmarshalled)
+	assert.NotNil(t, unmarshalled.Items.Reftest)
+	assert.Equal(t, 2, len(*unmarshalled.Items.Reftest))
+
+	// No matches
+	filtered, err = filterManifest(bytes, mapset.NewSet("/not-a-folder/test.html"))
+	assert.Nil(t, err)
+	unmarshalled = shared.Manifest{}
+	json.Unmarshal(filtered, &unmarshalled)
+	assert.NotNil(t, unmarshalled.Items.Reftest)
+	assert.Equal(t, 0, len(*unmarshalled.Items.Reftest))
 }
 
 func getManifestPayload(data string) []byte {
