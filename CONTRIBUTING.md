@@ -17,6 +17,7 @@ information on using pull requests.
 You'll need NodeJS installed locally.
 
 ```sh
+cd webapp
 npm install
 npm test
 ```
