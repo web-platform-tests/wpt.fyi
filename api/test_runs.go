@@ -75,21 +75,26 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		testRuns = append(testRuns, testRunResults)
 	}
 
-	// Crop at `limit` runs - whichever is the youngest `limit`th run.
-	youngestRun := time.Unix(0, 0)
-	for _, runs := range testRuns {
-		if len(runs) == limit && runs[limit-1].CreatedAt.After(youngestRun) {
-			youngestRun = runs[limit-1].CreatedAt
+	var allRuns []shared.TestRun
+	if limit > 1 {
+		// Crop at `limit` runs - whichever is the youngest `limit`th run.
+		youngestRun := time.Unix(0, 0)
+		for _, runs := range testRuns {
+			if len(runs) == limit && runs[limit-1].CreatedAt.After(youngestRun) {
+				youngestRun = runs[limit-1].CreatedAt
+			}
+		}
+		for i, runs := range testRuns {
+			for len(runs) > 0 && runs[len(runs)-1].CreatedAt.Before(youngestRun) {
+				runs = runs[0 : len(runs)-1]
+			}
+			testRuns[i] = runs
 		}
 	}
-
-	var allRuns []shared.TestRun
 	for _, runs := range testRuns {
-		for len(runs) > 0 && runs[len(runs)-1].CreatedAt.Before(youngestRun) {
-			runs = runs[0 : len(runs)-1]
-		}
 		allRuns = append(allRuns, runs...)
 	}
+
 	testRunsBytes, err := json.Marshal(allRuns)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
