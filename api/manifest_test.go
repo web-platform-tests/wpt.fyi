@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 const fullSHA = "abcdef0123456789abcdef0123456789abcdef01"
@@ -124,6 +126,39 @@ func TestGetGitHubReleaseAssetLatest(t *testing.T) {
 	assert.Equal(t, []byte(content), latestManifest)
 	latestManifest, _ = getGitHubReleaseAssetForSHA(&client, "latest")
 	assert.Equal(t, []byte(content), latestManifest)
+}
+
+func TestFilterManifest_Reftests(t *testing.T) {
+	bytes := []byte(`{
+	"items": {
+		"reftests": {
+      "css/css-images/linear-gradient-2.html": [
+        [
+					"/css/css-images/linear-gradient-2.html",
+					[ ["/css/css-images/linear-gradient-ref.html","=="] ],
+          {}
+        ]
+      ],
+      "css/css-images/tiled-gradients.html": [
+        [
+					"/css/css-images/tiled-gradients.html",
+					[ ["/css/css-images/tiled-gradients-ref.html","=="] ],
+          {}
+        ]
+			]
+		}
+	}
+}`)
+
+	// Specific file
+	filtered, err := filterManifest(bytes, mapset.NewSet("/css/css-images/tiled-gradients.html"))
+	assert.Nil(t, err)
+	var unmarshalled shared.Manifest
+	if err = json.Unmarshal(filtered, &unmarshalled); err != nil {
+		panic(err)
+	}
+	assert.NotNil(t, unmarshalled.Items.Reftests)
+	assert.Equal(t, 1, len(*unmarshalled.Items.Reftests))
 }
 
 func getManifestPayload(data string) []byte {

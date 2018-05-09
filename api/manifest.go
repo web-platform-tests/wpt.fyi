@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
@@ -27,17 +28,19 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	paths := shared.ParsePathsParam(r)
 	ctx := appengine.NewContext(r)
-	manifest, err := getManifestForSHA(ctx, sha)
+	manifestBytes, err := getManifestForSHA(ctx, sha)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	w.Header().Add("content-type", "application/json")
-	if paths == nil {
-		w.Write(manifest)
-		return
+	if paths != nil {
+		if manifestBytes, err = filterManifest(manifestBytes, paths); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-
+	w.Write(manifestBytes)
 }
 
 func gitHubSHASearchURL(sha string) string {
@@ -154,4 +157,17 @@ func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (manifest []by
 		}
 	}
 	return nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
+}
+
+// filterManifest filters items in the the given manifest JSON, omitting anything that isn't an
+// item which has a URL beginning with one of the given paths.
+func filterManifest(manifestBytes []byte, paths mapset.Set) (result []byte, err error) {
+	var manifest shared.Manifest
+	if err = json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return nil, err
+	}
+	if manifest, err = manifest.FilterByPath(paths); err != nil {
+		return nil, err
+	}
+	return json.Marshal(manifest)
 }

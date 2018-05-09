@@ -5,7 +5,11 @@
 package shared
 
 import (
+	"encoding/json"
+	"strings"
 	"time"
+
+	mapset "github.com/deckarep/golang-set"
 )
 
 // TestRun stores metadata for a test run (produced by run/run.py)
@@ -39,4 +43,57 @@ type Browser struct {
 // Token is used for test result uploads.
 type Token struct {
 	Secret string `json:"secret"`
+}
+
+type Manifest struct {
+	Items   ManifestItems `json:"items,omitempty"`
+	Version *int          `json:"version,omitempty"`
+}
+
+func (m Manifest) FilterByPath(paths mapset.Set) (result Manifest, err error) {
+	if result.Items.Manual, err = m.Items.Manual.FilterByPath(paths); err != nil {
+		return result, err
+	}
+	if result.Items.Reftests, err = m.Items.Reftests.FilterByPath(paths); err != nil {
+		return result, err
+	}
+	if result.Items.TestHarness, err = m.Items.TestHarness.FilterByPath(paths); err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+type ManifestItems struct {
+	Manual      *ManifestItem `json:"manual,omitempty"`
+	Reftests    *ManifestItem `json:"reftests,omitempty"`
+	TestHarness *ManifestItem `json:"testharness,omitempty"`
+}
+
+type ManifestItem map[string][][]*json.RawMessage
+
+func (m *ManifestItem) FilterByPath(paths mapset.Set) (item *ManifestItem, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	filtered := make(ManifestItem)
+	for path, items := range *m {
+		match := false
+		for _, item := range items {
+			var url string
+			if err = json.Unmarshal(*item[0], &url); err != nil {
+				return nil, err
+			}
+			for prefix := range paths.Iter() {
+				if strings.Index(url, prefix.(string)) == 0 {
+					match = true
+					break
+				}
+			}
+		}
+		if !match {
+			continue
+		}
+		filtered[path] = items
+	}
+	return &filtered, nil
 }

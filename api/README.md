@@ -70,7 +70,10 @@ The high-level structure of the `v4` manifest is as follows:
     {
       "items": {
         "manual": {
-            "file/path": [manifest items],
+            "file/path": [
+              manifest_item,
+              ...
+            ],
             ...
         },
         "reftest": {...},
@@ -78,10 +81,10 @@ The high-level structure of the `v4` manifest is as follows:
       },
     }
 
-`manifest items` is an array with varying contents, but loosely:
+`manifest_item` is an **array** (nested in the map's `"file/path"` value's array) with varying contents. Loosely,
 
-- For `testharness` entries: [url, extras]
+- For `testharness` entries: `[url, extras]`
   - `extras` example: `{"timeout": "long", "testdriver": True}`
-- For `reftest` entries: [url, references, extras]
+- For `reftest` entries: `[url, references, extras]`
   - `references` example: `[[reference_url1, "=="], [reference_url2, "!="], ...]`
   - `extras` example: `{"timeout": "long", "viewport_size": ..., "dpi": ...}`
