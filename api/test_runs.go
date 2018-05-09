@@ -39,13 +39,10 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var browserNames []string
-	if browserNames, err = shared.ParseBrowsersParam(r); err != nil {
+	if browserNames, err = shared.GetBrowsersForRequest(r); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	labels := shared.ParseLabelsParam(r)
-	experimentalBrowsers := labels != nil && labels.Contains(shared.ExperimentalLabel)
 
 	var testRuns []shared.TestRun
 	var limit int
@@ -60,9 +57,6 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, browserName := range browserNames {
 		var testRunResults []shared.TestRun
-		if experimentalBrowsers {
-			browserName = browserName + "-" + shared.ExperimentalLabel
-		}
 		query := baseQuery.Filter("BrowserName =", browserName)
 		if runSHA != "" && runSHA != "latest" {
 			query = query.Filter("Revision =", runSHA)
