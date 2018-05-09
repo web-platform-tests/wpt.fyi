@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package shared
 
 import (
 	"fmt"
@@ -28,9 +28,19 @@ const MaxCountMinValue = 1
 // SHARegex is a regex for SHA[0:10] slice of a git hash.
 var SHARegex = regexp.MustCompile("[0-9a-fA-F]{10,40}")
 
-// ParseSHAParam parses and validates the 'sha' param for the request.
-// It returns "latest" by default (and in error cases).
+// ParseSHAParam parses and validates the 'sha' param for the request,
+// cropping it to 10 chars. It returns "latest" by default. (and in error cases).
 func ParseSHAParam(r *http.Request) (runSHA string, err error) {
+	sha, err := ParseSHAParamFull(r)
+	if err != nil || !SHARegex.MatchString(sha) {
+		return sha, err
+	}
+	return sha[:10], nil
+}
+
+// ParseSHAParamFull parses and validates the 'sha' param for the request.
+// It returns "latest" by default (and in error cases).
+func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	// Get the SHA for the run being loaded (the first part of the path.)
 	runSHA = "latest"
 	params, err := url.ParseQuery(r.URL.RawQuery)
@@ -40,10 +50,10 @@ func ParseSHAParam(r *http.Request) (runSHA string, err error) {
 
 	runParam := params.Get("sha")
 	if runParam != "" && runParam != "latest" {
+		runSHA = runParam
 		if !SHARegex.MatchString(runParam) {
-			return "", fmt.Errorf("Invalid sha param value: %s", runParam)
+			return "latest", fmt.Errorf("Invalid sha param value: %s", runParam)
 		}
-		runSHA = runParam[:10]
 	}
 	return runSHA, err
 }
@@ -100,7 +110,7 @@ func GetBrowsersForRequest(r *http.Request) (browsers []string, err error) {
 	}
 	labels := ParseLabelsParam(r)
 	if labels != nil {
-		experimental := labels.Contains(experimentalLabel)
+		experimental := labels.Contains(ExperimentalLabel)
 		browserNames, err := GetBrowserNames()
 		if err != nil {
 			return nil, err
@@ -121,13 +131,13 @@ func GetBrowsersForRequest(r *http.Request) (browsers []string, err error) {
 			// For a browser label (e.g. "chrome"), we also include experimental, unless we explicitly only
 			// want experimental, which is handled below.
 			if !experimental {
-				browsers = append(browsers, name+"-"+experimentalLabel)
+				browsers = append(browsers, name+"-"+ExperimentalLabel)
 			}
 		}
 
 		if experimental {
 			for i := range browsers {
-				browsers[i] = browsers[i] + "-" + experimentalLabel
+				browsers[i] = browsers[i] + "-" + ExperimentalLabel
 			}
 		}
 	}

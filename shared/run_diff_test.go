@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package shared
 
 import (
 	"strings"
@@ -77,9 +77,9 @@ func TestDiffResults_Filtered(t *testing.T) {
 		changedPath: {3, 5},
 		addedPath:   {1, 3},
 	}
-	assert.Equal(t, map[string][]int{changedPath: {1, 5}}, getResultsDiff(before, after, changedFilter))
-	assert.Equal(t, map[string][]int{addedPath: {3, 3}}, getResultsDiff(before, after, addedFilter))
-	assert.Equal(t, map[string][]int{removedPath: {2, 2}}, getResultsDiff(before, after, deletedFilter))
+	assert.Equal(t, map[string][]int{changedPath: {1, 5}}, GetResultsDiff(before, after, changedFilter))
+	assert.Equal(t, map[string][]int{addedPath: {3, 3}}, GetResultsDiff(before, after, addedFilter))
+	assert.Equal(t, map[string][]int{removedPath: {2, 2}}, GetResultsDiff(before, after, deletedFilter))
 
 	// Test filtering by each /, /mock/, and /mock/path.html
 	pieces := strings.SplitAfter(mockTestPath, "/")
@@ -92,7 +92,7 @@ func TestDiffResults_Filtered(t *testing.T) {
 	// Filter where none match
 	rBefore, rAfter := getDeltaResultsMaps([]int{0, 5}, []int{5, 5})
 	filter := DiffFilterParam{Changed: true, Paths: mapset.NewSet("/different/path/")}
-	assert.Empty(t, getResultsDiff(rBefore, rAfter, filter))
+	assert.Empty(t, GetResultsDiff(rBefore, rAfter, filter))
 
 	// Filter where one matches
 	mockPath1, mockPath2 := "/mock/path-1.html", "/mock/path-2.html"
@@ -105,7 +105,7 @@ func TestDiffResults_Filtered(t *testing.T) {
 		mockPath2: {2, 2},
 	}
 	filter.Paths = mapset.NewSet(mockPath1)
-	delta := getResultsDiff(rBefore, rAfter, filter)
+	delta := GetResultsDiff(rBefore, rAfter, filter)
 	assert.NotContains(t, delta, mockPath2)
 	assert.Contains(t, delta, mockPath1)
 	assert.Equal(t, []int{2, 2}, delta[mockPath1])
@@ -117,7 +117,7 @@ func assertNoDeltaDifferences(t *testing.T, before []int, after []int) {
 
 func assertNoDeltaDifferencesWithFilter(t *testing.T, before []int, after []int, filter DiffFilterParam) {
 	rBefore, rAfter := getDeltaResultsMaps(before, after)
-	assert.Equal(t, map[string][]int{}, getResultsDiff(rBefore, rAfter, filter))
+	assert.Equal(t, map[string][]int{}, GetResultsDiff(rBefore, rAfter, filter))
 }
 
 func assertDelta(t *testing.T, before []int, after []int, delta []int) {
@@ -129,7 +129,7 @@ func assertDeltaWithFilter(t *testing.T, before []int, after []int, delta []int,
 	assert.Equal(
 		t,
 		map[string][]int{mockTestPath: delta},
-		getResultsDiff(rBefore, rAfter, filter))
+		GetResultsDiff(rBefore, rAfter, filter))
 }
 
 func getDeltaResultsMaps(before []int, after []int) (map[string][]int, map[string][]int) {

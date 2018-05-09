@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package shared
 
 import (
 	"net/http/httptest"
@@ -142,7 +142,7 @@ func TestGetBrowsersForRequest_ExperimentalLabel(t *testing.T) {
 	assert.Nil(t, err)
 	names, _ := GetBrowserNames()
 	for i := range names {
-		names[i] = names[i] + "-" + experimentalLabel
+		names[i] = names[i] + "-" + ExperimentalLabel
 	}
 	assert.Equal(t, names, browsers)
 }
