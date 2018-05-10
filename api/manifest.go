@@ -26,9 +26,10 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := appengine.NewContext(r)
-	if manifest, err := getManifestForSHA(ctx, sha); err != nil {
+	if sha, manifest, err := getManifestForSHA(ctx, sha); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 	} else {
+		w.Header().Add("x-wpt-sha", sha)
 		w.Header().Add("content-type", "application/json")
 		w.Write(manifest)
 	}
@@ -48,7 +49,7 @@ type gitHubClient interface {
 	fetch(url string) ([]byte, error)
 }
 
-func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err error) {
+func getManifestForSHA(ctx context.Context, sha string) (fetchedSHA string, manifest []byte, err error) {
 	// Fetch shared.Token entity for GitHub API Token.
 	tokenKey := datastore.NewKey(ctx, "Token", "github-api-token", 0, nil)
 	var token shared.Token
@@ -61,91 +62,93 @@ func getManifestForSHA(ctx context.Context, sha string) (manifest []byte, err er
 	return getGitHubReleaseAssetForSHA(&client, sha)
 }
 
-func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (manifest []byte, err error) {
+func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (fetchedSHA string, manifest []byte, err error) {
 	var releaseBody []byte
 	var releaseTag string
+	fetchedSHA = sha
 	if sha == "" || sha == "latest" {
 		// Use GitHub's API for latest release.
 		releaseTag = "lastest"
 		url := gitHubLatestReleaseURL
 		if releaseBody, err = client.fetch(url); err != nil {
-			return nil, err
+			return fetchedSHA, nil, err
 		}
 	} else {
 		// Search for the PR associated with the SHA.
 		url := gitHubSHASearchURL(sha)
 		var body []byte
 		if body, err = client.fetch(url); err != nil {
-			return nil, err
+			return fetchedSHA, nil, err
 		}
 
 		var queryResults map[string]*json.RawMessage
 		if err = json.Unmarshal(body, &queryResults); err != nil {
-			return nil, err
+			return fetchedSHA, nil, err
 		}
 		var issues []map[string]*json.RawMessage
 		if err = json.Unmarshal(*queryResults["items"], &issues); err != nil {
-			return nil, err
+			return fetchedSHA, nil, err
 		}
 		if len(issues) < 1 {
-			return nil, fmt.Errorf("No search results found for SHA %s", sha)
+			return fetchedSHA, nil, fmt.Errorf("No search results found for SHA %s", sha)
 		}
 
 		// Load the release by the presumed tag name merge_pr_*
 		var prNumber int
 		if err = json.Unmarshal(*issues[0]["number"], &prNumber); err != nil {
-			return nil, err
+			return fetchedSHA, nil, err
 		}
 
 		releaseTag = fmt.Sprintf("merge_pr_%d", prNumber)
 		url = gitHubReleaseURL(releaseTag)
 		if releaseBody, err = client.fetch(url); err != nil {
-			return nil, err
+			return fetchedSHA, nil, err
 		}
 	}
 
 	var release map[string]*json.RawMessage
 	if err = json.Unmarshal(releaseBody, &release); err != nil {
-		return nil, err
+		return fetchedSHA, nil, err
 	}
 
 	var assets []map[string]*json.RawMessage
 	if err = json.Unmarshal(*release["assets"], &assets); err != nil {
-		return nil, err
+		return fetchedSHA, nil, err
 	}
 	if len(assets) < 1 {
-		return nil, fmt.Errorf("No assets found for %s release", releaseTag)
+		return fetchedSHA, nil, fmt.Errorf("No assets found for %s release", releaseTag)
 	}
 	// Get (and unzip) the asset with name "MANIFEST-{sha}.json.gz"
 	shaMatch := sha
 	if sha == "" || sha == "latest" {
 		shaMatch = "[0-9a-f]{40}"
 	}
-	assetRegex := regexp.MustCompile(fmt.Sprintf("MANIFEST-%s.json.gz", shaMatch))
+	assetRegex := regexp.MustCompile(fmt.Sprintf("MANIFEST-(%s).json.gz", shaMatch))
 	for _, asset := range assets {
 		var url string
 		var name string
 		var body []byte
 		if err = json.Unmarshal(*asset["name"], &name); err != nil {
-			return nil, err
+			return fetchedSHA, nil, err
 		}
 		if assetRegex.MatchString(name) {
+			fetchedSHA = assetRegex.FindStringSubmatch(name)[1]
 			if err = json.Unmarshal(*asset["browser_download_url"], &url); err != nil {
-				return nil, err
+				return fetchedSHA, nil, err
 			}
 
 			if body, err = client.fetch(url); err != nil {
-				return nil, err
+				return fetchedSHA, nil, err
 			}
 			gzReader, err := gzip.NewReader(bytes.NewReader(body))
 			if err != nil {
-				return nil, err
+				return fetchedSHA, nil, err
 			}
 			if body, err = ioutil.ReadAll(gzReader); err != nil {
-				return nil, err
+				return fetchedSHA, nil, err
 			}
-			return body, nil
+			return fetchedSHA, body, nil
 		}
 	}
-	return nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
+	return fetchedSHA, nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
 }
