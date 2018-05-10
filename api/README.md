@@ -65,6 +65,15 @@ __`sha`__ : SHA[0:10] of the TestRun to fetch, or the keyword `latest`. Defaults
 
 Gets the JSON of the WPT manifest GitHub release asset, for a given sha (defaults to latest).
 
+__Parameters__
+
+__`sha`__ : SHA of the [WPT](https://github.com/w3c/web-platform-tests) repo PR for which to fetch,
+    the manifest, or the keyword `latest`. (Defaults to `latest`.)
+
+NOTE: The full SHA of the fetched manifest is returned in the HTTP response header `x-wpt-sha`, e.g.
+
+    x-wpt-sha: abcdef0123456789abcdef0123456789abcdef01
+
 The high-level structure of the `v4` manifest is as follows:
 
     {
