@@ -131,8 +131,10 @@ found in the LICENSE file.
     <template is="dom-if" if="{{ pathIsATestFile }}">
       <div class="links">
         <ul>
-          <li><a href$="https://github.com/w3c/web-platform-tests/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
-          <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+          <li><a href$="https://github.com/w3c/web-platform-tests/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
+          <template is="dom-if" if="{{ testCanRunOnW3C }}">
+            <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+          </template>
         </ul>
       </div>
 
@@ -179,6 +181,9 @@ found in the LICENSE file.
   </template>
 
   <script>
+
+    const TEST_TYPES = ["manual", "reftest", "testharness", "wdspec"];
+    
     /* global TestRunsBase */
     class WPTResults extends TestRunsBase {
       static get is() {
@@ -206,10 +211,19 @@ found in the LICENSE file.
           path: {
             type: String,
             value: '/',
+            observer: 'fetchManifest',
           },
           pathIsATestFile: {
             type: Boolean,
             computed: 'computePathIsATestFile(path)'
+          },
+          sourcePath: {
+            type: String,
+            computed: 'computeSourcePath(path, manifest)',
+          },
+          testCanRunOnW3C: {
+            type: Boolean,
+            computed: 'computeTestCanBeRunOnW3C(path, manifest)',
           },
           testFiles: {
             type: Object,
@@ -256,6 +270,35 @@ found in the LICENSE file.
 
       computePathIsATestFile(path) {
         return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
+      }
+
+      computeSourcePath(path, manifest) {
+        if (!this.computePathIsATestFile(path) || !manifest) {
+          return path;
+        }
+        const itemSets = TEST_TYPES.map(t => manifest.items[t]).filter(i => i);
+        for (const items of itemSets) {
+          const key = Object.keys(items).find(k => items[k].find(i => i[0] === path));
+          if (key) {
+            // Ensure leading slash.
+            return key.indexOf('/') === 0 ? key : `/${key}`;
+          }
+        }
+        return null;
+      }
+
+      computeTestCanBeRunOnW3C(path, manifest) {
+        if (!this.computePathIsATestFile(path) || !manifest) {
+          return true;
+        }
+        for (const type of TEST_TYPES) {
+          const items = manifest.items[type];
+          const test = Object.keys(items).find(k => items[k].find(i => i[0] === path));
+          if (test && type == "wdspec") {
+            return false;
+          }
+        }
+        return true;
       }
 
       urlToResultsPath(location) {
@@ -324,6 +367,17 @@ found in the LICENSE file.
         await this.fetchResults([diffRun]);
         this.push('testRuns', diffRun);
         this.refreshDisplayedNodes();
+      }
+
+      async fetchManifest(path) {
+        if (!this.computePathIsATestFile(path)) {
+          return;
+        }
+        this.manifest = null;
+        const that = this;
+        fetch(`/api/manifest?path=${path}`).then(async r => {
+            that.manifest = await r.json()
+        });
       }
 
       nodeSort(a, b) {
