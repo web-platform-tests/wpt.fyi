@@ -1,0 +1,4 @@
+queue:
+- name: results-arrival
+  target: processor
+  rate: 1/m
