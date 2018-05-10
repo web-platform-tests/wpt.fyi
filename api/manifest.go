@@ -84,7 +84,7 @@ func loadOrFetchManifestForSHA(ctx context.Context, client gitHubClient, sha str
 		}
 		// Shorter expiry for latest SHA, to keep it current.
 		if sha == "latest" || sha == "" {
-			item.Expiration = time.Minute * 20
+			item.Expiration = time.Minute * 5
 		}
 		memcache.Set(ctx, item)
 	}
