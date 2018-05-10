@@ -1,0 +1,3 @@
+Flask
+google-cloud-storage
+gunicorn

@@ -32,11 +32,16 @@ GO_FILES := $(wildcard $(WPTD_PATH)**/*.go)
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_FILES))
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_FILES))
 
-build: go_deps
+build: go_build
 
 test: go_test
 
 lint: go_lint eslint
+
+prepush: build test lint
+
+go_build: go_deps
+	cd $(WPTD_GO_PATH); go build ./...
 
 go_lint: go_deps
 	cd $(WPTD_GO_PATH); golint -set_exit_status $(GO_FILES)
