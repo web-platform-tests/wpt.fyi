@@ -60,6 +60,9 @@ func (m Manifest) FilterByPath(paths mapset.Set) (result Manifest, err error) {
 	if result.Items.TestHarness, err = m.Items.TestHarness.FilterByPath(paths); err != nil {
 		return result, err
 	}
+	if result.Items.WDSpec, err = m.Items.WDSpec.FilterByPath(paths); err != nil {
+		return result, err
+	}
 	return result, nil
 }
 
@@ -67,6 +70,7 @@ type ManifestItems struct {
 	Manual      *ManifestItem `json:"manual,omitempty"`
 	Reftest     *ManifestItem `json:"reftest,omitempty"`
 	TestHarness *ManifestItem `json:"testharness,omitempty"`
+	WDSpec      *ManifestItem `json:"wdspec,omitempty"`
 }
 
 type ManifestItem map[string][][]*json.RawMessage
