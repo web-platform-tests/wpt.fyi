@@ -27,12 +27,12 @@ func frameBufferDefault() bool {
 // FirefoxWebDriver starts up a Firefox WebDriver.
 // Make sure to close both the service and the WebDriver instances, e.g.
 //
-// s, d, e := FirefoxWebDriver()
-// if e != nil {
+// server, driver, err := FirefoxWebDriver()
+// if err != nil {
 //   panic(e)
 // }
-// defer s.Stop()
-// defer wd.Quit()
+// defer server.Stop()
+// defer driver.Quit()
 func FirefoxWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	if *seleniumPath == "" {
 		panic("--selenium_path not specified")
