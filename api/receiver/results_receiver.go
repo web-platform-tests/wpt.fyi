@@ -2,109 +2,29 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package receiver
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/taskqueue"
-	"google.golang.org/appengine/urlfetch"
-	"google.golang.org/appengine/user"
 
 	"github.com/google/uuid"
 )
 
-const bufferBucket = "wptd-results-buffer"
-const resultsQueue = "results-arrival"
-const resultsTarget = "/api/results/process"
+// BufferBucket is the GCS bucket to temporarily store results until they are proccessed.
+const BufferBucket = "wptd-results-buffer"
 
-type aeAPI interface {
-	isAdmin() bool
-	uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error)
-	scheduleResultsTask(uploader string, gcsPaths []string, payloadType string) (*taskqueue.Task, error)
-	fetchURL(url string) (*http.Response, error)
-}
+// ResultsQueue is the name of the results proccessing TaskQueue.
+const ResultsQueue = "results-arrival"
 
-type aeAPIImpl struct {
-	ctx    context.Context
-	u      *user.User
-	client *http.Client
-	gcs    gcs
-	queue  string
-}
+// ResultsTarget is the target URL for results proccessing tasks.
+const ResultsTarget = "/api/results/process"
 
-func (a *aeAPIImpl) isAdmin() bool {
-	return a.u != nil && a.u.Admin
-}
-
-func (a *aeAPIImpl) uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error) {
-	if a.gcs == nil {
-		a.gcs = &gcsImpl{ctx: a.ctx}
-	}
-
-	encoding := ""
-	if gzipped {
-		encoding = "gzip"
-	}
-	// We don't defer wc.Close() here so that the file is only closed (and
-	// hence saved) if nothing fails.
-	w, err := a.gcs.NewWriter(bufferBucket, fileName, "application/json", encoding)
-	if err != nil {
-		return "", err
-	}
-	_, err = io.Copy(w, f)
-	if err != nil {
-		return "", err
-	}
-	w.Close()
-
-	gcsPath = fmt.Sprintf("/%s/%s", bufferBucket, fileName)
-	return gcsPath, nil
-}
-
-func (a *aeAPIImpl) scheduleResultsTask(
-	uploader string, gcsPaths []string, payloadType string) (*taskqueue.Task, error) {
-	t := taskqueue.NewPOSTTask(resultsTarget, url.Values{
-		"uploader": []string{uploader},
-		"gcs":      gcsPaths,
-		"type":     []string{payloadType},
-	})
-	t, err := taskqueue.Add(a.ctx, t, a.queue)
-	return t, err
-}
-
-func (a *aeAPIImpl) fetchURL(url string) (*http.Response, error) {
-	if a.client == nil {
-		a.client = urlfetch.Client(a.ctx)
-	}
-	return a.client.Get(url)
-}
-
-func apiResultsReceiveHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-	a := &aeAPIImpl{
-		ctx:   ctx,
-		u:     user.Current(ctx),
-		queue: resultsQueue,
-	}
-	switch r.Method {
-	case "GET":
-		showResultsUploadForm(a, w, r)
-	case "POST":
-		handleResultsUpload(a, w, r)
-	default:
-		http.Error(w, "Only POST and GET are supported", http.StatusMethodNotAllowed)
-	}
-}
-
-// Debug only
-func showResultsUploadForm(a aeAPI, w http.ResponseWriter, r *http.Request) {
+// ShowResultsUploadForm displays a simple upload form to admins.
+func ShowResultsUploadForm(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	if a.isAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)
 		return
@@ -112,7 +32,8 @@ func showResultsUploadForm(a aeAPI, w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, uploadForm)
 }
 
-func handleResultsUpload(a aeAPI, w http.ResponseWriter, r *http.Request) {
+// HandleResultsUpload handles a POST results upload request.
+func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	var uploader string
 	if a.isAdmin() {
 		// TODO check username, password against datastore
@@ -154,10 +75,10 @@ func handleResultsUpload(a aeAPI, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	fmt.Printf("Task %s added to %s\n", t.Name, resultsQueue)
+	fmt.Printf("Task %s added to queue\n", t.Name)
 }
 
-func handleFilePayload(a aeAPI, uploader string, f multipart.File) (*taskqueue.Task, error) {
+func handleFilePayload(a AppEngineAPI, uploader string, f multipart.File) (*taskqueue.Task, error) {
 	fileName := fmt.Sprintf("%s/%s.json", uploader, uuid.New().String())
 
 	gcsPath, err := a.uploadToGCS(fileName, f, true)
@@ -167,7 +88,7 @@ func handleFilePayload(a aeAPI, uploader string, f multipart.File) (*taskqueue.T
 	return a.scheduleResultsTask(uploader, []string{gcsPath}, "single")
 }
 
-func handleURLPayload(a aeAPI, uploader string, urls []string) (*taskqueue.Task, error) {
+func handleURLPayload(a AppEngineAPI, uploader string, urls []string) (*taskqueue.Task, error) {
 	id := uuid.New()
 
 	var payloadType string
@@ -176,14 +97,14 @@ func handleURLPayload(a aeAPI, uploader string, urls []string) (*taskqueue.Task,
 	if len(urls) > 1 {
 		payloadType = "multiple"
 		for i, u := range urls {
-			resp, err := a.fetchURL(u)
+			f, err := a.fetchURL(u)
 			if err != nil {
 				return nil, err
 			}
+			defer f.Close()
 			fileName := fmt.Sprintf("%s/%s/%d.json", uploader, id, i)
 			// TODO: Detect whether the fetched blob is gzipped.
-			gcsPath, err := a.uploadToGCS(fileName, resp.Body, true)
-			resp.Body.Close()
+			gcsPath, err := a.uploadToGCS(fileName, f, true)
 			if err != nil {
 				return nil, err
 			}
@@ -191,14 +112,14 @@ func handleURLPayload(a aeAPI, uploader string, urls []string) (*taskqueue.Task,
 		}
 	} else {
 		payloadType = "single"
-		resp, err := a.fetchURL(urls[0])
+		f, err := a.fetchURL(urls[0])
 		if err != nil {
 			return nil, err
 		}
+		defer f.Close()
 		fileName := fmt.Sprintf("%s/%s.json", uploader, id)
 		// TODO: Detect whether the fetched blob is gzipped.
-		gcsPath, err := a.uploadToGCS(fileName, resp.Body, true)
-		resp.Body.Close()
+		gcsPath, err := a.uploadToGCS(fileName, f, true)
 		if err != nil {
 			return nil, err
 		}

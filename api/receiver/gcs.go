@@ -1,4 +1,8 @@
-package api
+// Copyright 2018 The WPT Dashboard Project. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+package receiver
 
 import (
 	"context"
@@ -6,6 +10,8 @@ import (
 
 	"cloud.google.com/go/storage"
 )
+
+// TODO: This interface might also be useful to other APIs.
 
 type gcs interface {
 	NewWriter(bucketName, fileName, contentType, contentEncoding string) (io.WriteCloser, error)
