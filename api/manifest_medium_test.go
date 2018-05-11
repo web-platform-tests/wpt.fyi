@@ -38,13 +38,17 @@ func TestGetGitHubReleaseAsset_Caches(t *testing.T) {
 	}
 
 	// Should be added to cache
-	latestManifest, _ := loadOrFetchManifestForSHA(ctx, &client, "latest")
-	cached, _ := memcache.Get(ctx, "latest")
-	assert.Equal(t, data, cached.Value)
+	_, latestManifest, _ := loadOrFetchManifestForSHA(ctx, &client, "latest")
 	assert.Equal(t, []byte(content), latestManifest)
+	cached, _ := memcache.Get(ctx, manifestCacheKey("latest"))
+	assert.Equal(t, fullSHA, string(cached.Value))
+	cached, _ = memcache.Get(ctx, manifestCacheKey(fullSHA))
+	assert.Equal(t, data, cached.Value)
 
 	// Should be loaded from cache
-	client.Responses = map[string][]byte{} // No responses.
-	latestManifest, _ = loadOrFetchManifestForSHA(ctx, &client, "latest")
+	client.Responses = map[string][]byte{} // No HTTP responses.
+	_, latestManifest, _ = loadOrFetchManifestForSHA(ctx, &client, "latest")
+	assert.Equal(t, []byte(content), latestManifest)
+	_, latestManifest, _ = loadOrFetchManifestForSHA(ctx, &client, fullSHA)
 	assert.Equal(t, []byte(content), latestManifest)
 }
