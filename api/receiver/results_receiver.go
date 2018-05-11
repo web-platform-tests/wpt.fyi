@@ -25,7 +25,12 @@ const ResultsTarget = "/api/results/process"
 
 // ShowResultsUploadForm displays a simple upload form to admins.
 func ShowResultsUploadForm(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	if a.isAdmin() {
+	loggedIn, loginURL := a.login("/api/results/upload")
+	if !loggedIn {
+		http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
+		return
+	}
+	if !a.isAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)
 		return
 	}
@@ -35,7 +40,7 @@ func ShowResultsUploadForm(a AppEngineAPI, w http.ResponseWriter, r *http.Reques
 // HandleResultsUpload handles a POST results upload request.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	var uploader string
-	if a.isAdmin() {
+	if !a.isAdmin() {
 		// TODO check username, password against datastore
 		// username, password, ok := r.BasicAuth()
 		// uploader = username

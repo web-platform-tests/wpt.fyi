@@ -19,6 +19,7 @@ import (
 // AppEngineAPI abstracts all AppEngine APIs used by the results receiver.
 type AppEngineAPI interface {
 	isAdmin() bool
+	login(url string) (loggedIn bool, loginURL string)
 	uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error)
 	scheduleResultsTask(uploader string, gcsPaths []string, payloadType string) (*taskqueue.Task, error)
 	fetchURL(url string) (io.ReadCloser, error)
@@ -38,6 +39,14 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 		ctx:   ctx,
 		queue: ResultsQueue,
 	}
+}
+
+func (a *appEngineAPIImpl) login(url string) (loggedIn bool, loginURL string) {
+	if user.Current(a.ctx) == nil {
+		loginURL, _ = user.LoginURL(a.ctx, url)
+		return false, loginURL
+	}
+	return true, ""
 }
 
 func (a *appEngineAPIImpl) isAdmin() bool {

@@ -46,6 +46,19 @@ func (mr *MockAppEngineAPIMockRecorder) isAdmin() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "isAdmin", reflect.TypeOf((*MockAppEngineAPI)(nil).isAdmin))
 }
 
+// login mocks base method
+func (m *MockAppEngineAPI) login(url string) (bool, string) {
+	ret := m.ctrl.Call(m, "login", url)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(string)
+	return ret0, ret1
+}
+
+// login indicates an expected call of login
+func (mr *MockAppEngineAPIMockRecorder) login(url interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "login", reflect.TypeOf((*MockAppEngineAPI)(nil).login), url)
+}
+
 // uploadToGCS mocks base method
 func (m *MockAppEngineAPI) uploadToGCS(fileName string, f io.Reader, gzipped bool) (string, error) {
 	ret := m.ctrl.Call(m, "uploadToGCS", fileName, f, gzipped)

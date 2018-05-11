@@ -5,11 +5,76 @@
 package receiver
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestShowResultsUploadForm_not_logged_in(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	req := httptest.NewRequest("GET", "/api/results/upload", new(strings.Reader))
+	resp := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().login("/api/results/upload").Return(false, "http://wpt.fyi/login")
+
+	ShowResultsUploadForm(mockAE, resp, req)
+
+	assert.Equal(t, resp.Code, http.StatusTemporaryRedirect)
+	assert.Equal(t, resp.Header().Get("Location"), "http://wpt.fyi/login")
+}
+
+func TestShowResultsUploadForm_not_admin(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	req := httptest.NewRequest("GET", "/api/results/upload", new(strings.Reader))
+	resp := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().login("/api/results/upload").Return(true, "")
+	mockAE.EXPECT().isAdmin().Return(false)
+
+	ShowResultsUploadForm(mockAE, resp, req)
+
+	assert.Equal(t, resp.Code, http.StatusUnauthorized)
+	assert.NotContains(t, resp.Body.String(), "form")
+}
+
+func TestShowResultsUploadForm_admin(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	req := httptest.NewRequest("GET", "/api/results/upload", new(strings.Reader))
+	resp := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().login("/api/results/upload").Return(true, "")
+	mockAE.EXPECT().isAdmin().Return(true)
+
+	ShowResultsUploadForm(mockAE, resp, req)
+
+	assert.Equal(t, resp.Code, http.StatusOK)
+	assert.Contains(t, resp.Body.String(), "form")
+}
+
+func TestHandleResultsUpload_not_admin(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	req := httptest.NewRequest("POST", "/api/results/upload", new(strings.Reader))
+	resp := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().isAdmin().Return(false)
+
+	HandleResultsUpload(mockAE, resp, req)
+
+	assert.Equal(t, resp.Code, http.StatusUnauthorized)
+}
 
 func TestHandleFilePayload(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
