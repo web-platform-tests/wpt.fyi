@@ -2,32 +2,35 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package shared
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"sort"
 	"strings"
-
-	models "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // All errors are considered fatal
 var browserNames, browserNamesAlphabetical = loadBrowsers()
 
+// ExperimentalLabel is the implicit label present for runs marked 'experimental'.
+const ExperimentalLabel = `experimental`
+
 // GetBrowserNames returns an alphabetically-ordered array of the names
 // of the browsers which are to be included (flagged as initially_loaded in the
 // JSON).
 func GetBrowserNames() ([]string, error) {
-	return browserNamesAlphabetical, nil
+	// Slice to make source immutable
+	tmp := make([]string, len(browserNamesAlphabetical))
+	copy(tmp, browserNamesAlphabetical)
+	return tmp, nil
 }
 
 // IsBrowserName determines whether the given name string is a valid browser name.
 // Used for validating user-input params for browsers.
 func IsBrowserName(name string) bool {
-	if strings.HasSuffix(name, "-"+experimentalLabel) {
-		name = name[0 : len(name)-1-len(experimentalLabel)] // Trim suffix.
+	if strings.HasSuffix(name, "-"+ExperimentalLabel) {
+		name = name[0 : len(name)-1-len(ExperimentalLabel)] // Trim suffix.
 	}
 	_, ok := browserNames[name]
 	return ok
@@ -36,17 +39,12 @@ func IsBrowserName(name string) bool {
 // loadBrowsers loads, parses and returns the set of names of browsers which
 // are to be included (flagged as initially_loaded in the JSON).
 func loadBrowsers() (map[string]bool, []string) {
-	var browsers map[string]models.Browser
+	var browsers map[string]Browser
 	var err error
-	var bytes []byte
 	var browserNames map[string]bool
 	var browserNamesAlphabetical []string
 
-	if bytes, err = ioutil.ReadFile("browsers.json"); err != nil {
-		panic(err)
-	}
-
-	if err = json.Unmarshal(bytes, &browsers); err != nil {
+	if err = json.Unmarshal([]byte(browsersJSON), &browsers); err != nil {
 		panic(err)
 	}
 
@@ -60,17 +58,4 @@ func loadBrowsers() (map[string]bool, []string) {
 	sort.Strings(browserNamesAlphabetical)
 
 	return browserNames, browserNamesAlphabetical
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-func max(x int, y int) int {
-	if x < y {
-		return y
-	}
-	return x
 }

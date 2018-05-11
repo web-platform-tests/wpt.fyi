@@ -33,11 +33,10 @@ function fatal() {
 }
 
 function confirm() {
-  warn "${1} (Y/n)"
+  warn "${1}"
   exec < /dev/tty
-  read -n 1 CH
-
-  if [ "${CH}" == "y" ] || [ "${CH}" == "Y" ]; then
+  read -p "Confirm (y/N): " response
+  if [ "${response}" == "y" ] || [ "${response}" == "Y" ]; then
     return 0
   else
     return 1
