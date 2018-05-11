@@ -31,6 +31,9 @@ PROTOS=$(wildcard $(PB_LOCAL_LIB_DIR)/*.proto)
 GO_FILES := $(wildcard $(WPTD_PATH)**/*.go)
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_FILES))
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_FILES))
+GO_TEST_FILES := $(wildcard $(WPTD_PATH)**/*_test.go)
+GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_TEST_FILES))
+GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_TEST_FILES))
 
 build: go_build
 
@@ -43,13 +46,26 @@ prepush: build test lint
 go_build: go_deps
 	cd $(WPTD_GO_PATH); go build ./...
 
-go_lint: go_deps
-	cd $(WPTD_GO_PATH); golint -set_exit_status $(GO_FILES)
+go_lint: go_deps go_test_tag_lint
+	@cd $(WPTD_GO_PATH); golint -set_exit_status $(GO_FILES)
 	# Print differences between current/gofmt'd output, check empty.
-	cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read
+	@cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read
 
-go_test: go_deps
+go_test_tag_lint:
+  # Print list of test files without +build tag, check empty.
+	@TAGLESS=$$(grep -PL '\/\/ \+build !?(small|medium|large)' $(GO_TEST_FILES) | tr " " "\n"); \
+			if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
+
+go_test: go_small_test go_medium_test
+
+go_small_test: go_deps
+	cd $(WPTD_GO_PATH); go test -tags=small -v ./...
+
+go_medium_test: go_deps
 	cd $(WPTD_GO_PATH); go test -tags=medium -v ./...
+
+go_large_test: go_deps
+	cd $(WPTD_GO_PATH); go test -tags=large -v ./...
 
 go_deps: $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
 	cd $(WPTD_GO_PATH); go get -t ./...
