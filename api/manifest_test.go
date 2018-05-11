@@ -37,7 +37,7 @@ func unsafeMarshal(i interface{}) []byte {
 
 func TestGetGitHubReleaseAssetForSHA_SHANotFound(t *testing.T) {
 	client := mockGitHubClient{}
-	manifest, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
+	_, manifest, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, manifest)
 	assert.NotNil(t, err)
 }
@@ -74,7 +74,7 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 	}
 
 	// 1) Data is unzipped.
-	manifest, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
+	_, manifest, err := getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, err)
 	assert.Equal(t, []byte(content), manifest)
 
@@ -87,14 +87,14 @@ func TestGetGitHubReleaseAssetForSHA(t *testing.T) {
 		releaseJSON["assets"].([]object)[0],
 	}
 	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
-	manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
+	_, manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.Nil(t, err)
 	assert.Equal(t, []byte(content), manifest)
 
 	// 3) Error when no matching asset found.
 	releaseJSON["assets"] = releaseJSON["assets"].([]object)[0:1] // Just the other asset
 	client.Responses[gitHubReleaseURL("merge_pr_123")] = unsafeMarshal(releaseJSON)
-	manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
+	_, manifest, err = getGitHubReleaseAssetForSHA(&client, fullSHA)
 	assert.NotNil(t, err)
 	assert.Nil(t, manifest)
 }
@@ -120,10 +120,12 @@ func TestGetGitHubReleaseAssetLatest(t *testing.T) {
 	}
 
 	// Release by empty SHA or "latest" match.
-	latestManifest, _ := getGitHubReleaseAssetForSHA(&client, "")
+	sha, latestManifest, _ := getGitHubReleaseAssetForSHA(&client, "")
 	assert.Equal(t, []byte(content), latestManifest)
-	latestManifest, _ = getGitHubReleaseAssetForSHA(&client, "latest")
+	assert.Equal(t, fullSHA, sha)
+	sha, latestManifest, _ = getGitHubReleaseAssetForSHA(&client, "latest")
 	assert.Equal(t, []byte(content), latestManifest)
+	assert.Equal(t, fullSHA, sha)
 }
 
 func getManifestPayload(data string) []byte {
