@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 
@@ -13,42 +12,13 @@ import (
 )
 
 var (
-	homeDir      = userHomeDir()
-	seleniumPath = flag.String(
-		"selenium_path",
-		path.Join(homeDir, "browsers", "selenium-server-standalone-3.8.1.jar"),
-		"Path to the selenium standalone binary.")
-	geckoDriverPath = flag.String(
-		"geckodriver_path",
-		path.Join(homeDir, "browsers", "geckodriver-v0.19.1"),
-		"Path to the geckodriver binary")
-	firefoxPath = flag.String(
-		"firefox_path",
-		path.Join(homeDir, "browsers", firefoxPathDefault()),
-		"Path to the firefox binary")
+	seleniumPath     = flag.String("selenium_path", "", "Path to the selenium standalone binary.")
+	geckoDriverPath  = flag.String("geckodriver_path", "", "Path to the geckodriver binary")
+	firefoxPath      = flag.String("firefox_path", "", "Path to the firefox binary")
 	startFrameBuffer = flag.Bool("frame_buffer", frameBufferDefault(), "Whether to use a frame buffer")
 	seleniumHost     = flag.String("selenium_host", "localhost", "Host to run selenium on")
 	seleniumPort     = flag.Int("selenium_port", 8888, "Port to run selenium on")
 )
-
-func userHomeDir() string {
-	if runtime.GOOS == "windows" {
-		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
-		if home == "" {
-			home = os.Getenv("USERPROFILE")
-		}
-		return home
-	}
-	return os.Getenv("HOME")
-}
-
-func firefoxPathDefault() string {
-	internalPath := "firefox"
-	if runtime.GOOS == "darwin" {
-		internalPath = "Contents/MacOS/firefox"
-	}
-	return fmt.Sprintf("firefox-58.0/%s", internalPath)
-}
 
 func frameBufferDefault() bool {
 	return runtime.GOOS != "darwin"
@@ -64,6 +34,14 @@ func frameBufferDefault() bool {
 // defer s.Stop()
 // defer wd.Quit()
 func FirefoxWebDriver() (*selenium.Service, selenium.WebDriver, error) {
+	if *seleniumPath == "" {
+		panic("--selenium_path not specified")
+	} else if *firefoxPath == "" {
+		panic("--firefox_path not specified")
+	} else if *geckoDriverPath == "" {
+		panic("--geckodriver_path not specified")
+	}
+
 	var options []selenium.ServiceOption
 	// Start an X frame buffer for the browser to run in.
 	if *startFrameBuffer {

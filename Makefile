@@ -17,6 +17,10 @@ export GOPATH=$(shell go env GOPATH)
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPTD_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests/wpt.fyi
 WEBDRIVER_PATH ?= $(WPTD_GO_PATH)/webdriver
+BROWSERS_PATH ?= $(HOME)/browsers
+SELENIUM_PATH ?= $(BROWSERS_PATH)/selenium-server-standalone-3.8.1.jar
+FIREFOX_PATH ?= $(BROWSERS_PATH)/firefox-58.0/firefox
+GECKODRIVER_PATH ?= $(BROWSERS_PATH)/geckodriver-v0.19.1
 
 BQ_LIB_REPO ?= github.com/GoogleCloudPlatform/protoc-gen-bq-schema
 PB_LIB_DIR ?= ../protobuf/src
@@ -52,13 +56,16 @@ go_lint: go_deps
 go_test: go_deps
 	cd $(WPTD_GO_PATH); go test -v ./...
 
-go_webdriver_test: go_deps webdriver_deps
-	cd $(WEBDRIVER_PATH); go test -v -tags=large
+go_webdriver_test: go_webdriver_deps
+	cd $(WEBDRIVER_PATH); go test -v -tags=large \
+			--selenium_path=$(SELENIUM_PATH) \
+			--firefox_path=$(FIREFOX_PATH) \
+			--geckodriver_path=$(GECKODRIVER_PATH)
 
 go_webdriver_deps: go_deps webdriver_deps
 
 webdriver_deps:
-	cd $(WEBDRIVER_PATH); ./install.sh
+	cd $(WEBDRIVER_PATH); ./install.sh $(BROWSERS_PATH)
 
 go_deps: $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
 	cd $(WPTD_GO_PATH); go get -t ./...
