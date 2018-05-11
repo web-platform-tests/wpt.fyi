@@ -45,20 +45,30 @@ fi
 cd ${INSTALL_DIR}
 
 # Selenium standalone.
-SELENIUM_STANDALONE="selenium-server-standalone-3.8.1.jar"
+SELENIUM="selenium"
+SELENIUM_STANDALONE="${SELENIUM}-server-standalone-3.8.1.jar"
 SELENIUM_STANDALONE_URL="http://selenium-release.storage.googleapis.com/3.8/${SELENIUM_STANDALONE}"
 
 info "Getting ${SELENIUM_STANDALONE} binary..."
-fetch "${SELENIUM_STANDALONE_URL}" "${SELENIUM_STANDALONE}"
+
+if [[ ! -e ${SELENIUM} || "${REINSTALL}" == "true" ]]
+then
+    info "Downloading ${SELENIUM_STANDALONE_URL}..."
+    fetch "${SELENIUM_STANDALONE_URL}" "${SELENIUM}"
+
+    debug "Renaming to ${SELENIUM}..."
+    mv ${SELENIUM_STANDALONE} ${SELENIUM}
+fi
 
 # Gecko driver
-GECKO_DRIVER="geckodriver-v0.19.1"
+GECKO_DRIVER="geckodriver"
+GECKO_DRIVER="geckodriver"
 UNAME_OUT="$(uname -s)"
 case "${UNAME_OUT}" in
     Darwin*)   GECKO_DRIVER_OS="macos";;
     Linux*|*)  GECKO_DRIVER_OS="linux64";;
 esac
-GECKO_DRIVER_TAR="${GECKO_DRIVER}-${GECKO_DRIVER_OS}.tar"
+GECKO_DRIVER_TAR="${GECKO_DRIVER}-v0.19.1-${GECKO_DRIVER_OS}.tar"
 GECKO_DRIVER_GZ="${GECKO_DRIVER_TAR}.gz"
 GECKO_DRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/v0.19.1/${GECKO_DRIVER_GZ}"
 
@@ -73,19 +83,10 @@ then
 
     debug "Unzipping ${GECKO_DRIVER_TAR}..."
     if [[ ! -e geckodriver || "${REINSTALL}" == "true" ]]; then tar -xf ${GECKO_DRIVER_TAR}; fi
-
-    if [[ -e "${GECKO_DRIVER}" && "${REINSTALL}" == "true" ]]
-    then
-        info "Removing existing ${GECKO_DRIVER}..."
-        rm ${GECKO_DRIVER}
-    fi
-
-    debug "Renaming to ${GECKO_DRIVER}..."
-    mv geckodriver ${GECKO_DRIVER}
 fi
 
 # Firefox 58
-FIREFOX="firefox-58.0"
+FIREFOX="firefox"
 case "${UNAME_OUT}" in
     Darwin*)
         FIREFOX_OS="mac"
@@ -94,7 +95,7 @@ case "${UNAME_OUT}" in
         ;;
     Linux*|*)
         FIREFOX_OS="linux-x86_64"
-        FIREFOX_TAR="${FIREFOX}.tar"
+        FIREFOX_TAR="${FIREFOX}-58.0.tar"
         FIREFOX_BZ="${FIREFOX_TAR}.bz2"
         FIREFOX_SRC="${FIREFOX_BZ}"
         ;;
@@ -127,8 +128,5 @@ then
 
         debug "Unzipping ${FIREFOX_TAR}..."
         if [[ ! -e firefox || "${REINSTALL}" == "true" ]]; then tar -xf ${FIREFOX_TAR}; fi
-
-        debug "Renaming to ${FIREFOX}..."
-        mv firefox ${FIREFOX}
     fi
 fi

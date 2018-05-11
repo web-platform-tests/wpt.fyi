@@ -18,9 +18,9 @@ WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPTD_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests/wpt.fyi
 WEBDRIVER_PATH ?= $(WPTD_GO_PATH)/webdriver
 BROWSERS_PATH ?= $(HOME)/browsers
-SELENIUM_PATH ?= $(BROWSERS_PATH)/selenium-server-standalone-3.8.1.jar
-FIREFOX_PATH ?= $(BROWSERS_PATH)/firefox-58.0/firefox
-GECKODRIVER_PATH ?= $(BROWSERS_PATH)/geckodriver-v0.19.1
+SELENIUM_PATH ?= $(BROWSERS_PATH)/selenium
+FIREFOX_PATH ?= $(BROWSERS_PATH)/firefox/firefox
+GECKODRIVER_PATH ?= $(BROWSERS_PATH)/geckodriver
 
 BQ_LIB_REPO ?= github.com/GoogleCloudPlatform/protoc-gen-bq-schema
 PB_LIB_DIR ?= ../protobuf/src
