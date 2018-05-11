@@ -36,7 +36,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Add("x-wpt-sha", sha)
-	w.Header().Add("content-type", "application/json")
+	w.Header().Add("Content-Type", "application/json")
 	if paths != nil {
 		if manifestBytes, err = filterManifest(manifestBytes, paths); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

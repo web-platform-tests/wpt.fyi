@@ -45,12 +45,15 @@ type Token struct {
 	Secret string `json:"secret"`
 }
 
+// Manifest represents a JSON blob of all the WPT tests.
 type Manifest struct {
 	Items   ManifestItems `json:"items,omitempty"`
 	Version *int          `json:"version,omitempty"`
 }
 
+// FilterByPath filters all the manifest items by path.
 func (m Manifest) FilterByPath(paths mapset.Set) (result Manifest, err error) {
+	result = m
 	if result.Items.Manual, err = m.Items.Manual.FilterByPath(paths); err != nil {
 		return result, err
 	}
@@ -66,21 +69,25 @@ func (m Manifest) FilterByPath(paths mapset.Set) (result Manifest, err error) {
 	return result, nil
 }
 
+// ManifestItems groups the different manifest item types.
 type ManifestItems struct {
-	Manual      *ManifestItem `json:"manual,omitempty"`
-	Reftest     *ManifestItem `json:"reftest,omitempty"`
-	TestHarness *ManifestItem `json:"testharness,omitempty"`
-	WDSpec      *ManifestItem `json:"wdspec,omitempty"`
+	Manual      ManifestItem `json:"manual"`
+	Reftest     ManifestItem `json:"reftest"`
+	TestHarness ManifestItem `json:"testharness"`
+	WDSpec      ManifestItem `json:"wdspec"`
 }
 
+// ManifestItem represents a map of files to item details, for a specific test type.
 type ManifestItem map[string][][]*json.RawMessage
 
-func (m *ManifestItem) FilterByPath(paths mapset.Set) (item *ManifestItem, err error) {
+// FilterByPath culls out entries in the ManifestItem that don't have any items with
+// a URL that starts with the given path.
+func (m ManifestItem) FilterByPath(paths mapset.Set) (item ManifestItem, err error) {
 	if m == nil {
 		return nil, nil
 	}
 	filtered := make(ManifestItem)
-	for path, items := range *m {
+	for path, items := range m {
 		match := false
 		for _, item := range items {
 			var url string
@@ -99,5 +106,5 @@ func (m *ManifestItem) FilterByPath(paths mapset.Set) (item *ManifestItem, err e
 		}
 		filtered[path] = items
 	}
-	return &filtered, nil
+	return filtered, nil
 }

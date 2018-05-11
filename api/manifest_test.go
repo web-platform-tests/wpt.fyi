@@ -158,7 +158,7 @@ func TestFilterManifest_Reftest(t *testing.T) {
 	unmarshalled := shared.Manifest{}
 	json.Unmarshal(filtered, &unmarshalled)
 	assert.NotNil(t, unmarshalled.Items.Reftest)
-	assert.Equal(t, 1, len(*unmarshalled.Items.Reftest))
+	assert.Equal(t, 1, len(unmarshalled.Items.Reftest))
 
 	// Prefix
 	filtered, err = filterManifest(bytes, mapset.NewSet("/css/css-images/"))
@@ -166,15 +166,14 @@ func TestFilterManifest_Reftest(t *testing.T) {
 	unmarshalled = shared.Manifest{}
 	json.Unmarshal(filtered, &unmarshalled)
 	assert.NotNil(t, unmarshalled.Items.Reftest)
-	assert.Equal(t, 2, len(*unmarshalled.Items.Reftest))
+	assert.Equal(t, 2, len(unmarshalled.Items.Reftest))
 
 	// No matches
 	filtered, err = filterManifest(bytes, mapset.NewSet("/not-a-folder/test.html"))
 	assert.Nil(t, err)
 	unmarshalled = shared.Manifest{}
 	json.Unmarshal(filtered, &unmarshalled)
-	assert.NotNil(t, unmarshalled.Items.Reftest)
-	assert.Equal(t, 0, len(*unmarshalled.Items.Reftest))
+	assert.Equal(t, 0, len(unmarshalled.Items.Reftest))
 }
 
 func getManifestPayload(data string) []byte {
