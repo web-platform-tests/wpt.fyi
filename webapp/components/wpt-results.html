@@ -275,12 +275,13 @@ found in the LICENSE file.
         if (!this.computePathIsATestFile(path) || !manifest) {
           return path;
         }
+        // Filter in case any types are fully missing.
         const itemSets = TEST_TYPES.map(t => manifest.items[t]).filter(i => i);
         for (const items of itemSets) {
           const key = Object.keys(items).find(k => items[k].find(i => i[0] === path));
           if (key) {
             // Ensure leading slash.
-            return key.indexOf('/') === 0 ? key : `/${key}`;
+            return key.startsWith('/') ? key : `/${key}`;
           }
         }
         return null;
@@ -292,9 +293,11 @@ found in the LICENSE file.
         }
         for (const type of TEST_TYPES) {
           const items = manifest.items[type];
-          const test = Object.keys(items).find(k => items[k].find(i => i[0] === path));
-          if (test && type === 'wdspec') {
-            return false;
+          if (items) {
+            const test = Object.keys(items).find(k => items[k].find(i => i[0] === path));
+            if (test && type === 'wdspec') {
+              return false;
+            }
           }
         }
         return true;
@@ -372,11 +375,8 @@ found in the LICENSE file.
         if (!this.computePathIsATestFile(path)) {
           return;
         }
-        this.manifest = null;
-        const that = this;
-        fetch(`/api/manifest?path=${path}`).then(async r => {
-          that.manifest = await r.json();
-        });
+        this.manifest = null; // Clear ASAP.
+        this.manifest = await fetch(`/api/manifest?path=${path}`).then(r => r.json());
       }
 
       nodeSort(a, b) {
