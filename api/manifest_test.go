@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 const fullSHA = "abcdef0123456789abcdef0123456789abcdef01"
@@ -126,6 +128,52 @@ func TestGetGitHubReleaseAssetLatest(t *testing.T) {
 	sha, manifestGZIP, _ = getGitHubReleaseAssetForSHA(&client, "latest")
 	assert.Equal(t, data, manifestGZIP)
 	assert.Equal(t, fullSHA, sha)
+}
+
+func TestFilterManifest_Reftest(t *testing.T) {
+	bytes := []byte(`{
+	"items": {
+		"reftest": {
+      "css/css-images/linear-gradient-2.html": [
+        [
+					"/css/css-images/linear-gradient-2.html",
+					[ ["/css/css-images/linear-gradient-ref.html","=="] ],
+          {}
+        ]
+      ],
+      "css/css-images/tiled-gradients.html": [
+        [
+					"/css/css-images/tiled-gradients.html",
+					[ ["/css/css-images/tiled-gradients-ref.html","=="] ],
+          {}
+        ]
+			]
+		}
+	}
+}`)
+
+	// Specific file
+	filtered, err := filterManifest(bytes, mapset.NewSet("/css/css-images/tiled-gradients.html"))
+	assert.Nil(t, err)
+	unmarshalled := shared.Manifest{}
+	json.Unmarshal(filtered, &unmarshalled)
+	assert.NotNil(t, unmarshalled.Items.Reftest)
+	assert.Equal(t, 1, len(unmarshalled.Items.Reftest))
+
+	// Prefix
+	filtered, err = filterManifest(bytes, mapset.NewSet("/css/css-images/"))
+	assert.Nil(t, err)
+	unmarshalled = shared.Manifest{}
+	json.Unmarshal(filtered, &unmarshalled)
+	assert.NotNil(t, unmarshalled.Items.Reftest)
+	assert.Equal(t, 2, len(unmarshalled.Items.Reftest))
+
+	// No matches
+	filtered, err = filterManifest(bytes, mapset.NewSet("/not-a-folder/test.html"))
+	assert.Nil(t, err)
+	unmarshalled = shared.Manifest{}
+	json.Unmarshal(filtered, &unmarshalled)
+	assert.Equal(t, 0, len(unmarshalled.Items.Reftest))
 }
 
 func getManifestPayload(data string) []byte {

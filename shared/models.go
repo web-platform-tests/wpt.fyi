@@ -5,7 +5,11 @@
 package shared
 
 import (
+	"encoding/json"
+	"strings"
 	"time"
+
+	mapset "github.com/deckarep/golang-set"
 )
 
 // TestRun stores metadata for a test run (produced by run/run.py)
@@ -39,4 +43,68 @@ type Browser struct {
 // Token is used for test result uploads.
 type Token struct {
 	Secret string `json:"secret"`
+}
+
+// Manifest represents a JSON blob of all the WPT tests.
+type Manifest struct {
+	Items   ManifestItems `json:"items,omitempty"`
+	Version *int          `json:"version,omitempty"`
+}
+
+// FilterByPath filters all the manifest items by path.
+func (m Manifest) FilterByPath(paths mapset.Set) (result Manifest, err error) {
+	result = m
+	if result.Items.Manual, err = m.Items.Manual.FilterByPath(paths); err != nil {
+		return result, err
+	}
+	if result.Items.Reftest, err = m.Items.Reftest.FilterByPath(paths); err != nil {
+		return result, err
+	}
+	if result.Items.TestHarness, err = m.Items.TestHarness.FilterByPath(paths); err != nil {
+		return result, err
+	}
+	if result.Items.WDSpec, err = m.Items.WDSpec.FilterByPath(paths); err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// ManifestItems groups the different manifest item types.
+type ManifestItems struct {
+	Manual      ManifestItem `json:"manual"`
+	Reftest     ManifestItem `json:"reftest"`
+	TestHarness ManifestItem `json:"testharness"`
+	WDSpec      ManifestItem `json:"wdspec"`
+}
+
+// ManifestItem represents a map of files to item details, for a specific test type.
+type ManifestItem map[string][][]*json.RawMessage
+
+// FilterByPath culls out entries in the ManifestItem that don't have any items with
+// a URL that starts with the given path.
+func (m ManifestItem) FilterByPath(paths mapset.Set) (item ManifestItem, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	filtered := make(ManifestItem)
+	for path, items := range m {
+		match := false
+		for _, item := range items {
+			var url string
+			if err = json.Unmarshal(*item[0], &url); err != nil {
+				return nil, err
+			}
+			for prefix := range paths.Iter() {
+				if strings.Index(url, prefix.(string)) == 0 {
+					match = true
+					break
+				}
+			}
+		}
+		if !match {
+			continue
+		}
+		filtered[path] = items
+	}
+	return filtered, nil
 }

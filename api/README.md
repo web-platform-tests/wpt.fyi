@@ -60,3 +60,41 @@ __Parameters__
 __`browser`__ : Browser to fetch the results for, e.g. `chrome`
 
 __`sha`__ : SHA[0:10] of the TestRun to fetch, or the keyword `latest`. Defaults to `latest`.
+
+### /api/manifest
+
+Gets the JSON of the WPT manifest GitHub release asset, for a given sha (defaults to latest).
+
+__Parameters__
+
+__`sha`__ : SHA of the [WPT](https://github.com/w3c/web-platform-tests) repo PR for which to fetch,
+    the manifest, or the keyword `latest`. (Defaults to `latest`.)
+
+NOTE: The full SHA of the fetched manifest is returned in the HTTP response header `x-wpt-sha`, e.g.
+
+    x-wpt-sha: abcdef0123456789abcdef0123456789abcdef01
+
+The high-level structure of the `v4` manifest is as follows:
+
+    {
+      "items": {
+        "manual": {
+            "file/path": [
+              manifest_item,
+              ...
+            ],
+            ...
+        },
+        "reftest": {...},
+        "testharness": {...},
+        "wdspec": {...},
+      },
+    }
+
+`manifest_item` is an **array** (nested in the map's `"file/path"` value's array) with varying contents. Loosely,
+
+- For `testharness` entries: `[url, extras]`
+  - `extras` example: `{"timeout": "long", "testdriver": True}`
+- For `reftest` entries: `[url, references, extras]`
+  - `references` example: `[[reference_url1, "=="], [reference_url2, "!="], ...]`
+  - `extras` example: `{"timeout": "long", "viewport_size": ..., "dpi": ...}`
