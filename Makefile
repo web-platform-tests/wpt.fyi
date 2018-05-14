@@ -32,11 +32,16 @@ GO_FILES := $(wildcard $(WPTD_PATH)**/*.go)
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_FILES))
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_FILES))
 
-build: go_deps
+build: go_build
 
 test: go_test
 
-lint: go_lint
+lint: go_lint eslint
+
+prepush: build test lint
+
+go_build: go_deps
+	cd $(WPTD_GO_PATH); go build ./...
 
 go_lint: go_deps
 	cd $(WPTD_GO_PATH); golint -set_exit_status $(GO_FILES)
@@ -44,14 +49,17 @@ go_lint: go_deps
 	cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read
 
 go_test: go_deps
-	cd $(WPTD_GO_PATH); go test -v ./...
+	cd $(WPTD_GO_PATH); go test -tags=medium -v ./...
 
 go_deps: $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
 	cd $(WPTD_GO_PATH); go get -t ./...
 
+eslint:
+	cd $(WPTD_PATH)webapp; npm run lint
+
 dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
-	go run util/populate_dev_data.go
+	go run util/populate_dev_data.go $(FLAGS)
 
 webapp_deploy_staging: env-BRANCH_NAME
 	gcloud config set project wptdashboard
