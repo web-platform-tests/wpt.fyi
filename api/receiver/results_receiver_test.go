@@ -22,7 +22,8 @@ func TestShowResultsUploadForm_not_logged_in(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/results/upload", new(strings.Reader))
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().login("/api/results/upload").Return(false, "/login")
+	mockAE.EXPECT().isLoggedIn().Return(false)
+	mockAE.EXPECT().loginURL("/api/results/upload").Return("/login", nil)
 
 	ShowResultsUploadForm(mockAE, resp, req)
 
@@ -37,7 +38,7 @@ func TestShowResultsUploadForm_not_admin(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/results/upload", new(strings.Reader))
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().login("/api/results/upload").Return(true, "")
+	mockAE.EXPECT().isLoggedIn().Return(true)
 	mockAE.EXPECT().isAdmin().Return(false)
 
 	ShowResultsUploadForm(mockAE, resp, req)
@@ -53,7 +54,7 @@ func TestShowResultsUploadForm_admin(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/results/upload", new(strings.Reader))
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().login("/api/results/upload").Return(true, "")
+	mockAE.EXPECT().isLoggedIn().Return(true)
 	mockAE.EXPECT().isAdmin().Return(true)
 
 	ShowResultsUploadForm(mockAE, resp, req)

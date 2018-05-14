@@ -34,6 +34,18 @@ func (m *MockAppEngineAPI) EXPECT() *MockAppEngineAPIMockRecorder {
 	return m.recorder
 }
 
+// isLoggedIn mocks base method
+func (m *MockAppEngineAPI) isLoggedIn() bool {
+	ret := m.ctrl.Call(m, "isLoggedIn")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// isLoggedIn indicates an expected call of isLoggedIn
+func (mr *MockAppEngineAPIMockRecorder) isLoggedIn() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "isLoggedIn", reflect.TypeOf((*MockAppEngineAPI)(nil).isLoggedIn))
+}
+
 // isAdmin mocks base method
 func (m *MockAppEngineAPI) isAdmin() bool {
 	ret := m.ctrl.Call(m, "isAdmin")
@@ -46,17 +58,17 @@ func (mr *MockAppEngineAPIMockRecorder) isAdmin() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "isAdmin", reflect.TypeOf((*MockAppEngineAPI)(nil).isAdmin))
 }
 
-// login mocks base method
-func (m *MockAppEngineAPI) login(url string) (bool, string) {
-	ret := m.ctrl.Call(m, "login", url)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(string)
+// loginURL mocks base method
+func (m *MockAppEngineAPI) loginURL(redirect string) (string, error) {
+	ret := m.ctrl.Call(m, "loginURL", redirect)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// login indicates an expected call of login
-func (mr *MockAppEngineAPIMockRecorder) login(url interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "login", reflect.TypeOf((*MockAppEngineAPI)(nil).login), url)
+// loginURL indicates an expected call of loginURL
+func (mr *MockAppEngineAPIMockRecorder) loginURL(redirect interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "loginURL", reflect.TypeOf((*MockAppEngineAPI)(nil).loginURL), redirect)
 }
 
 // uploadToGCS mocks base method

@@ -25,8 +25,12 @@ const ResultsTarget = "/api/results/process"
 
 // ShowResultsUploadForm displays a simple upload form to admins.
 func ShowResultsUploadForm(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	loggedIn, loginURL := a.login("/api/results/upload")
-	if !loggedIn {
+	if !a.isLoggedIn() {
+		loginURL, err := a.loginURL("/api/results/upload")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
 		return
 	}
