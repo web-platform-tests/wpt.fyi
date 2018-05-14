@@ -23,28 +23,10 @@ const ResultsQueue = "results-arrival"
 // ResultsTarget is the target URL for results proccessing tasks.
 const ResultsTarget = "/api/results/process"
 
-// ShowResultsUploadForm displays a simple upload form to admins.
-func ShowResultsUploadForm(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	if !a.isLoggedIn() {
-		loginURL, err := a.loginURL("/api/results/upload")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
-		return
-	}
-	if !a.isAdmin() {
-		http.Error(w, "Admin only", http.StatusUnauthorized)
-		return
-	}
-	fmt.Fprintln(w, uploadForm)
-}
-
 // HandleResultsUpload handles a POST results upload request.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	var uploader string
-	if !a.isAdmin() {
+	if !a.IsAdmin() {
 		// TODO check username, password against datastore
 		// username, password, ok := r.BasicAuth()
 		// uploader = username
@@ -138,20 +120,3 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string) (*taskqueu
 
 	return a.scheduleResultsTask(uploader, gcs, payloadType)
 }
-
-// This is a debug/admin-only page to manually upload results.
-const uploadForm = `<html>
-<h2>File payload</h2>
-<form method="POST" enctype="multipart/form-data">
-<label> user <input name="user"></label><br>
-<label> result_file <input type="file" name="result_file"></label><br>
-<input type="submit">
-</form>
-
-<h2>URL payload</h2>
-<form method="POST">
-<label> user <input name="user"></label><br>
-<label> result_url <input name="result_url"></label><br>
-<input type="submit">
-</form>
-</html>`

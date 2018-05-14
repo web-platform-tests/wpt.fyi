@@ -7,9 +7,10 @@ package webapp
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLandingPageBound(t *testing.T) {
@@ -55,8 +56,16 @@ func TestApiRunBound(t *testing.T) {
 	assertBound(t, "/api/run")
 }
 
+func TestApiResultsUploadBound(t *testing.T) {
+	assertBound(t, "/api/results/upload")
+}
+
 func TestResultsBound(t *testing.T) {
 	assertBound(t, "/results")
+}
+
+func TestAdminResultsUploadBound(t *testing.T) {
+	assertBound(t, "/admin/results/upload")
 }
 
 func assertBound(t *testing.T, path string) {

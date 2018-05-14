@@ -13,14 +13,12 @@ import (
 )
 
 func apiResultsReceiveHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
+		return
+	}
+
 	ctx := appengine.NewContext(r)
 	a := receiver.NewAppEngineAPI(ctx)
-	switch r.Method {
-	case "GET":
-		receiver.ShowResultsUploadForm(a, w, r)
-	case "POST":
-		receiver.HandleResultsUpload(a, w, r)
-	default:
-		http.Error(w, "Only POST and GET are supported", http.StatusMethodNotAllowed)
-	}
+	receiver.HandleResultsUpload(a, w, r)
 }
