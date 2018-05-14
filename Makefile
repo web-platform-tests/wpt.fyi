@@ -54,7 +54,7 @@ go_lint: go_deps
 	cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read
 
 go_test: go_deps
-	cd $(WPTD_GO_PATH); go test -v ./...
+	cd $(WPTD_GO_PATH); go test -tags=medium -v ./...
 
 go_webdriver_test: go_webdriver_deps
 	cd $(WEBDRIVER_PATH); go test -v -tags=large \

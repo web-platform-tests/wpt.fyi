@@ -13,10 +13,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"time"
 
+	"github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/memcache"
 )
 
 func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,14 +28,22 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	paths := shared.ParsePathsParam(r)
 	ctx := appengine.NewContext(r)
-	if sha, manifest, err := getManifestForSHA(ctx, sha); err != nil {
+	sha, manifestBytes, err := getManifestForSHA(ctx, sha)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
-	} else {
-		w.Header().Add("x-wpt-sha", sha)
-		w.Header().Add("content-type", "application/json")
-		w.Write(manifest)
+		return
 	}
+	w.Header().Add("x-wpt-sha", sha)
+	w.Header().Add("Content-Type", "application/json")
+	if paths != nil {
+		if manifestBytes, err = filterManifest(manifestBytes, paths); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+	w.Write(manifestBytes)
 }
 
 func gitHubSHASearchURL(sha string) string {
@@ -49,6 +60,8 @@ type gitHubClient interface {
 	fetch(url string) ([]byte, error)
 }
 
+// getManifestForSHA loads the contents of the manifest JSON for the release associated with
+// the given SHA, if any.
 func getManifestForSHA(ctx context.Context, sha string) (fetchedSHA string, manifest []byte, err error) {
 	// Fetch shared.Token entity for GitHub API Token.
 	tokenKey := datastore.NewKey(ctx, "Token", "github-api-token", 0, nil)
@@ -59,9 +72,60 @@ func getManifestForSHA(ctx context.Context, sha string) (fetchedSHA string, mani
 		Token:   &token,
 		Context: ctx,
 	}
-	return getGitHubReleaseAssetForSHA(&client, sha)
+	return loadOrFetchManifestForSHA(ctx, &client, sha)
 }
 
+// loadOrFetchManifestForSHA gets the bytes for the SHA's release's manifest json asset (unzipped).
+// The gzipped Value is stored in / loaded from memcache, to avoid unnecessary round-trips.
+func loadOrFetchManifestForSHA(ctx context.Context, client gitHubClient, sha string) (fetchedSHA string, manifest []byte, err error) {
+	var body []byte
+	if sha == "" {
+		sha = "latest"
+	}
+	fetchedSHA = sha
+	cached, err := memcache.Get(ctx, manifestCacheKey(sha))
+	if err != nil && err != memcache.ErrCacheMiss {
+		return "", nil, err
+	} else if cached != nil {
+		body = cached.Value
+		if sha == "latest" {
+			return loadOrFetchManifestForSHA(ctx, client, string(body))
+		}
+	} else {
+		if fetchedSHA, body, err = getGitHubReleaseAssetForSHA(client, sha); err != nil {
+			return fetchedSHA, nil, err
+		}
+		item := &memcache.Item{
+			Key:   manifestCacheKey(fetchedSHA),
+			Value: body,
+		}
+		memcache.Set(ctx, item)
+
+		// Shorter expiry for latest SHA, to keep it current.
+		if sha == "latest" {
+			latestSHAItem := &memcache.Item{
+				Key:        manifestCacheKey("latest"),
+				Value:      []byte(fetchedSHA),
+				Expiration: time.Minute * 5,
+			}
+			memcache.Set(ctx, latestSHAItem)
+		}
+	}
+
+	gzReader, err := gzip.NewReader(bytes.NewReader(body))
+	if err != nil {
+		return fetchedSHA, nil, err
+	}
+	manifest, err = ioutil.ReadAll(gzReader)
+	return fetchedSHA, manifest, err
+}
+
+func manifestCacheKey(sha string) string {
+	return fmt.Sprintf("MANIFEST-%s", sha)
+}
+
+// getGitHubReleaseAssetForSHA gets the bytes for the SHA's release's manifest json gzip asset.
+// This is done using a few hops on the GitHub API, so should be cached afterward.
 func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (fetchedSHA string, manifest []byte, err error) {
 	var releaseBody []byte
 	var releaseTag string
@@ -140,15 +204,21 @@ func getGitHubReleaseAssetForSHA(client gitHubClient, sha string) (fetchedSHA st
 			if body, err = client.fetch(url); err != nil {
 				return fetchedSHA, nil, err
 			}
-			gzReader, err := gzip.NewReader(bytes.NewReader(body))
-			if err != nil {
-				return fetchedSHA, nil, err
-			}
-			if body, err = ioutil.ReadAll(gzReader); err != nil {
-				return fetchedSHA, nil, err
-			}
-			return fetchedSHA, body, nil
+			return fetchedSHA, body, err
 		}
 	}
 	return fetchedSHA, nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
+}
+
+// filterManifest filters items in the the given manifest JSON, omitting anything that isn't an
+// item which has a URL beginning with one of the given paths.
+func filterManifest(manifestBytes []byte, paths mapset.Set) (result []byte, err error) {
+	var manifest shared.Manifest
+	if err = json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return nil, err
+	}
+	if manifest, err = manifest.FilterByPath(paths); err != nil {
+		return nil, err
+	}
+	return json.Marshal(manifest)
 }
