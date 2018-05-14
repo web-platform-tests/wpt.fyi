@@ -44,7 +44,7 @@ func TestUploadToGCS(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, path, fmt.Sprintf("/%s/test.json", BufferBucket))
-	assert.Equal(t, bytes.Compare(mGcs.mockWriter.finalContent, []byte("test content")), 0)
+	assert.Equal(t, string(mGcs.mockWriter.finalContent), "test content", 0)
 }
 
 func TestScheduleResultsTask(t *testing.T) {

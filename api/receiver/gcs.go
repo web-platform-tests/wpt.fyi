@@ -40,5 +40,3 @@ func (g *gcsImpl) NewWriter(bucketName, fileName, contentType, contentEncoding s
 	}
 	return w, nil
 }
-
-var _ gcs = (*gcsImpl)(nil)

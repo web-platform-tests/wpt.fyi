@@ -79,8 +79,9 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	fmt.Printf("Task %s added to queue\n", t.Name)
+	fmt.Fprintf(w, "Task %s added to queue\n", t.Name)
 }
 
 func handleFilePayload(a AppEngineAPI, uploader string, f multipart.File) (*taskqueue.Task, error) {

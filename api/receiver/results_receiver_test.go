@@ -22,12 +22,12 @@ func TestShowResultsUploadForm_not_logged_in(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/results/upload", new(strings.Reader))
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().login("/api/results/upload").Return(false, "http://wpt.fyi/login")
+	mockAE.EXPECT().login("/api/results/upload").Return(false, "/login")
 
 	ShowResultsUploadForm(mockAE, resp, req)
 
 	assert.Equal(t, resp.Code, http.StatusTemporaryRedirect)
-	assert.Equal(t, resp.Header().Get("Location"), "http://wpt.fyi/login")
+	assert.Equal(t, resp.Header().Get("Location"), "/login")
 }
 
 func TestShowResultsUploadForm_not_admin(t *testing.T) {
