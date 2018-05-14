@@ -11,3 +11,7 @@ If you want to actually see the tests in action, disable the frame buffer.
 
     make webdriver_deps
     go test --frame_buffer=false -tags=large ./webdriver
+
+If you want to use a custom installed location of selenium / browser / driver
+binaries, the required flags are shown in [the Makefile](../Makefile)
+`go_webdriver_test' rule.
