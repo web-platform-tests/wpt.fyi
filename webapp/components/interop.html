@@ -176,8 +176,8 @@ found in the LICENSE file.
             <path-part path="{{ node.dir }}" is-dir="{{ !computePathIsATestFile(node.dir) }}" prefix="/interop" navigate="{{ bindNavigate() }}"></path-part>
           </td>
 
-          <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate">
-            <td style="{{ passRateStyle(node.total, passRate) }}">{{ passRate }} / {{ node.total }}</td>
+          <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
+            <td style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
           </template>
         </tr>
       </template>
@@ -201,6 +201,13 @@ found in the LICENSE file.
     }
     return window.decodeURIComponent(match[1]);
   };
+  const INTEROP_COLORS = [
+    [158, 158, 158], // Grey
+    [219,  68,  55], // Red
+    [255,  87,  34], // Light-orange
+    [255, 152,   0], // Orange
+    [139, 195,  74], // Green
+  ];
 
   const queryTimeoutId = Symbol('queryTimeoutId');
 
@@ -386,10 +393,10 @@ found in the LICENSE file.
         (!subdir.includes('/') && test(subdir));
     }
 
-    passRateStyle(total, passRate) {
+    passRateStyle(total, passRate, browserCount) {
       const fraction = passRate / total;
-      const rounded = Math.round(fraction * 1000) / 1000;
-      return `background-color: rgba(170, 136, 255, ${rounded})`;
+      const alpha = Math.round(fraction * 1000) / 1000;
+      return `background-color: rgba(${INTEROP_COLORS[browserCount].join(', ')}, ${alpha})`;
     }
 
     queryChanged(_, oldQuery) {
