@@ -43,10 +43,28 @@ const browsersJSON = `
         "os_version": "*"
     },
     "edge-15-windows-10-sauce": {
+        "initially_loaded": false,
+        "currently_run": false,
+        "browser_name": "edge",
+        "browser_version": "15",
+        "os_name": "windows",
+        "os_version": "10",
+        "sauce": true
+    },
+    "edge-16-windows-10-sauce": {
         "initially_loaded": true,
         "currently_run": true,
         "browser_name": "edge",
-        "browser_version": "15",
+        "browser_version": "16",
+        "os_name": "windows",
+        "os_version": "10",
+        "sauce": true
+    },
+    "edge-17-windows-10-sauce": {
+        "initially_loaded": false,
+        "currently_run": false,
+        "browser_name": "edge",
+        "browser_version": "17",
         "os_name": "windows",
         "os_version": "10",
         "sauce": true

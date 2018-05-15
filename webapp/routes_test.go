@@ -58,8 +58,16 @@ func TestApiRunBound(t *testing.T) {
 	assertBound(t, "/api/run")
 }
 
+func TestApiResultsUploadBound(t *testing.T) {
+	assertBound(t, "/api/results/upload")
+}
+
 func TestResultsBound(t *testing.T) {
 	assertBound(t, "/results")
+}
+
+func TestAdminResultsUploadBound(t *testing.T) {
+	assertBound(t, "/admin/results/upload")
 }
 
 func assertBound(t *testing.T, path string) {
