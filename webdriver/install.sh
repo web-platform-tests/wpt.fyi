@@ -62,14 +62,12 @@ fi
 
 # Gecko driver
 GECKO_DRIVER="geckodriver"
-GECKO_DRIVER="geckodriver"
 UNAME_OUT="$(uname -s)"
 case "${UNAME_OUT}" in
     Darwin*)   GECKO_DRIVER_OS="macos";;
     Linux*|*)  GECKO_DRIVER_OS="linux64";;
 esac
-GECKO_DRIVER_TAR="${GECKO_DRIVER}-v0.19.1-${GECKO_DRIVER_OS}.tar"
-GECKO_DRIVER_GZ="${GECKO_DRIVER_TAR}.gz"
+GECKO_DRIVER_TGZ="${GECKO_DRIVER}-v0.19.1-${GECKO_DRIVER_OS}.tar.gz"
 GECKO_DRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/v0.19.1/${GECKO_DRIVER_GZ}"
 
 info "Getting ${GECKO_DRIVER} binary..."
@@ -78,11 +76,8 @@ then
     info "Downloading ${GECKO_DRIVER_URL}..."
     fetch "${GECKO_DRIVER_URL}" "${GECKO_DRIVER_GZ}"
 
-    debug "Unzipping ${GECKO_DRIVER_GZ}..."
-    if [[ ! -e ${GECKO_DRIVER_TAR} ]]; then gunzip -k ${GECKO_DRIVER_GZ}; fi
-
-    debug "Unzipping ${GECKO_DRIVER_TAR}..."
-    if [[ ! -e geckodriver || "${REINSTALL}" == "true" ]]; then tar -xf ${GECKO_DRIVER_TAR}; fi
+    debug "Unzipping ${GECKO_DRIVER_TGZ}..."
+    if [[ ! -e geckodriver || "${REINSTALL}" == "true" ]]; then tar -xzf ${GECKO_DRIVER_TGZ}; fi
 fi
 
 # Firefox 58
@@ -95,9 +90,8 @@ case "${UNAME_OUT}" in
         ;;
     Linux*|*)
         FIREFOX_OS="linux-x86_64"
-        FIREFOX_TAR="${FIREFOX}-58.0.tar"
-        FIREFOX_BZ="${FIREFOX_TAR}.bz2"
-        FIREFOX_SRC="${FIREFOX_BZ}"
+        FIREFOX_TBZ="${FIREFOX}-58.0.tar.bz2"
+        FIREFOX_SRC="${FIREFOX_TBZ}"
         ;;
 esac
 FIREFOX_URL="https://releases.mozilla.org/pub/firefox/releases/58.0/${FIREFOX_OS}/en-US/${FIREFOX_SRC}"
@@ -121,12 +115,9 @@ then
         debug "${FIREFOX_CP_CMD}"
         ${FIREFOX_CP_CMD}
         hdiutil detach "/Volumes/Firefox"
-    elif [[ "${FIREFOX_BZ}" != "" ]]
+    elif [[ "${FIREFOX_TBZ}" != "" ]]
     then
-        debug "Unzipping ${FIREFOX_BZ}..."
-        if [[ ! -e ${FIREFOX_TAR} || "${REINSTALL}" == "true" ]]; then bzip2 -dkf ${FIREFOX_BZ}; fi
-
-        debug "Unzipping ${FIREFOX_TAR}..."
-        if [[ ! -e firefox || "${REINSTALL}" == "true" ]]; then tar -xf ${FIREFOX_TAR}; fi
+        debug "Unzipping ${FIREFOX_TBZ}..."
+        if [[ ! -e firefox || "${REINSTALL}" == "true" ]]; then tar -xjf ${FIREFOX_TBZ}; fi
     fi
 fi
