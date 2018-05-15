@@ -106,7 +106,7 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			return nil, nil, errors.New("before param provided, but after param missing")
 		}
 
-		const singleRunURL = `/api/run?sha=%s&browser=%s`
+		const singleRunURL = `/api/run?sha=%s&platform=%s`
 
 		if beforeDecoded, err := base64.URLEncoding.DecodeString(before); err == nil {
 			var run shared.TestRun

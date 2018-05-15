@@ -64,21 +64,22 @@ func TestParseBrowserParam(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	browser, err := ParseBrowserParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, "", browser)
+	assert.Nil(t, browser)
 }
 
 func TestParseBrowserParam_Chrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=chrome", nil)
 	browser, err := ParseBrowserParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, "chrome", browser)
+	assert.NotNil(t, browser)
+	assert.Equal(t, "chrome", browser.BrowserName)
 }
 
 func TestParseBrowserParam_Invalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=invalid", nil)
 	browser, err := ParseBrowserParam(r)
 	assert.NotNil(t, err)
-	assert.Equal(t, "", browser)
+	assert.Nil(t, browser)
 }
 
 func TestGetPlatformsForRequest_Default(t *testing.T) {

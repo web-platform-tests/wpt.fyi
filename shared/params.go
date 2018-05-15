@@ -127,17 +127,32 @@ func ParseVersion(version string) (result *Version, err error) {
 	return result, nil
 }
 
+// ParsePlatformParam parses and validates the 'platform' param for the request.
+func ParsePlatformParam(r *http.Request) (platform *Platform, err error) {
+	platformParam := r.URL.Query().Get("platform")
+	if "" == platformParam {
+		return nil, nil
+	}
+	parsed, err := ParsePlatform(platformParam)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
+}
+
 // ParseBrowserParam parses and validates the 'browser' param for the request.
 // It returns "" by default (and in error cases).
-func ParseBrowserParam(r *http.Request) (browser string, err error) {
-	browser = r.URL.Query().Get("browser")
+func ParseBrowserParam(r *http.Request) (platform *Platform, err error) {
+	browser := r.URL.Query().Get("browser")
 	if "" == browser {
-		return "", nil
+		return nil, nil
 	}
 	if IsBrowserName(browser) {
-		return browser, nil
+		return &Platform{
+			BrowserName: browser,
+		}, nil
 	}
-	return "", fmt.Errorf("Invalid browser param value: %s", browser)
+	return nil, fmt.Errorf("Invalid browser param value: %s", browser)
 }
 
 // ParseBrowsersParam returns a sorted list of browser params for the request.

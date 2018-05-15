@@ -40,13 +40,22 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var browserName string
-	browserName, err = shared.ParseBrowserParam(r)
+	var browser, platform *shared.Platform
+	platform, err = shared.ParsePlatformParam(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Invalid 'platform' param", http.StatusBadRequest)
 		return
-	} else if browserName == "" {
+	}
+	browser, err = shared.ParseBrowserParam(r)
+	if err != nil {
 		http.Error(w, "Invalid 'browser' param", http.StatusBadRequest)
+		return
+	}
+	if platform == nil && browser != nil {
+		platform = browser
+	}
+	if platform == nil {
+		http.Error(w, "Missing required 'platform' param", http.StatusBadRequest)
 		return
 	}
 
@@ -56,7 +65,10 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		NewQuery("TestRun").
 		Order("-CreatedAt").
 		Limit(1).
-		Filter("BrowserName =", browserName)
+		Filter("BrowserName =", platform.BrowserName)
+	if platform.BrowserVersion != "" {
+		query = query.Filter("BrowserVersion =", platform.BrowserVersion)
+	}
 	if runSHA != "" && runSHA != "latest" {
 		query = query.Filter("Revision =", runSHA)
 	}
