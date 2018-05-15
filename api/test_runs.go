@@ -38,8 +38,8 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var platforms []shared.Platform
-	if platforms, err = shared.GetPlatformsForRequest(r); err != nil {
+	var products []shared.Product
+	if products, err = shared.GetProductsForRequest(r); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -55,11 +55,11 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		Order("-CreatedAt").
 		Limit(limit)
 
-	for _, platform := range platforms {
+	for _, product := range products {
 		var testRunResults []shared.TestRun
-		query := baseQuery.Filter("BrowserName =", platform.BrowserName)
-		if platform.BrowserVersion != "" {
-			query = query.Filter("BrowserVersion =", platform.BrowserVersion)
+		query := baseQuery.Filter("BrowserName =", product.BrowserName)
+		if product.BrowserVersion != "" {
+			query = query.Filter("BrowserVersion =", product.BrowserVersion)
 		}
 		// TODO(lukebjerring): Indexes + filtering for OS + version.
 		if runSHA != "" && runSHA != "latest" {

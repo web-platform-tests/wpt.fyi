@@ -23,12 +23,12 @@ type AnomalyData struct {
 // anomalyHandler handles the view of test results showing which tests pass in
 // some, but not all, browsers.
 func anomalyHandler(w http.ResponseWriter, r *http.Request) {
-	platform, err := shared.ParseBrowserParam(r)
+	product, err := shared.ParseBrowserParam(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	} else if platform != nil {
-		browserAnomalyHandler(w, r, platform.BrowserName)
+	} else if product != nil {
+		browserAnomalyHandler(w, r, product.BrowserName)
 		return
 	}
 

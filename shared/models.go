@@ -13,15 +13,15 @@ import (
 	mapset "github.com/deckarep/golang-set"
 )
 
-// Platform uniquely defines a browser version, running on an OS version.
-type Platform struct {
+// Product uniquely defines a browser version, running on an OS version.
+type Product struct {
 	BrowserName    string `json:"browser_name"`
 	BrowserVersion string `json:"browser_version"`
 	OSName         string `json:"os_name"`
 	OSVersion      string `json:"os_version"`
 }
 
-func (p Platform) String() string {
+func (p Product) String() string {
 	s := p.BrowserName
 	if p.BrowserVersion != "" {
 		s = fmt.Sprintf("%s-%s", s, p.BrowserVersion)
@@ -42,22 +42,22 @@ type Version struct {
 	Revision string
 }
 
-// PlatformAtRevision defines a WPT run for a specific platform, at a
+// ProductAtRevision defines a WPT run for a specific product, at a
 // specific hash of the WPT repo.
-type PlatformAtRevision struct {
-	Platform
+type ProductAtRevision struct {
+	Product
 
 	// The first 10 characters of the SHA1 of the tested WPT revision
 	Revision string `json:"revision"`
 }
 
-func (p PlatformAtRevision) String() string {
-	return fmt.Sprintf("%s@%s", p.Platform.String(), p.Revision)
+func (p ProductAtRevision) String() string {
+	return fmt.Sprintf("%s@%s", p.Product.String(), p.Revision)
 }
 
 // TestRun stores metadata for a test run (produced by run/run.py)
 type TestRun struct {
-	PlatformAtRevision
+	ProductAtRevision
 
 	// Results URL
 	ResultsURL string `json:"results_url"`

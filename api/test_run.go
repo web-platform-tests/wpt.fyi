@@ -28,7 +28,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // apiTestRunGetHandler is responsible for emitting the test-run JSON a specific run,
-// identified by a named browser (platform) at a given SHA.
+// identified by a named browser (product) at a given SHA.
 //
 // URL Params:
 //     sha: SHA[0:10] of the repo when the test was executed (or 'latest')
@@ -40,10 +40,10 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var browser, platform *shared.Platform
-	platform, err = shared.ParsePlatformParam(r)
+	var browser, product *shared.Product
+	product, err = shared.ParseProductParam(r)
 	if err != nil {
-		http.Error(w, "Invalid 'platform' param", http.StatusBadRequest)
+		http.Error(w, "Invalid 'product' param", http.StatusBadRequest)
 		return
 	}
 	browser, err = shared.ParseBrowserParam(r)
@@ -51,11 +51,11 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid 'browser' param", http.StatusBadRequest)
 		return
 	}
-	if platform == nil && browser != nil {
-		platform = browser
+	if product == nil && browser != nil {
+		product = browser
 	}
-	if platform == nil {
-		http.Error(w, "Missing required 'platform' param", http.StatusBadRequest)
+	if product == nil {
+		http.Error(w, "Missing required 'product' param", http.StatusBadRequest)
 		return
 	}
 
@@ -65,9 +65,9 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		NewQuery("TestRun").
 		Order("-CreatedAt").
 		Limit(1).
-		Filter("BrowserName =", platform.BrowserName)
-	if platform.BrowserVersion != "" {
-		query = query.Filter("BrowserVersion =", platform.BrowserVersion)
+		Filter("BrowserName =", product.BrowserName)
+	if product.BrowserVersion != "" {
+		query = query.Filter("BrowserVersion =", product.BrowserVersion)
 	}
 	if runSHA != "" && runSHA != "latest" {
 		query = query.Filter("Revision =", runSHA)

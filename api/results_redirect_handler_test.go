@@ -18,15 +18,15 @@ type Case struct {
 
 const shortSHA = "abcdef0123"
 const resultsURLBase = "https://storage.googleapis.com/wptd/" + shortSHA + "/"
-const platform = "chrome-63.0-linux"
-const resultsURL = resultsURLBase + "/" + platform + "-summary.json.gz"
+const product = "chrome-63.0-linux"
+const resultsURL = resultsURLBase + "/" + product + "-summary.json.gz"
 
 func TestGetResultsURL_EmptyFile(t *testing.T) {
 	checkResult(
 		t,
 		Case{
 			shared.TestRun{
-				PlatformAtRevision: shared.PlatformAtRevision{
+				ProductAtRevision: shared.ProductAtRevision{
 					Revision: shortSHA,
 				},
 				ResultsURL: resultsURL,
@@ -42,13 +42,13 @@ func TestGetResultsURL_TestFile(t *testing.T) {
 		t,
 		Case{
 			shared.TestRun{
-				PlatformAtRevision: shared.PlatformAtRevision{
+				ProductAtRevision: shared.ProductAtRevision{
 					Revision: shortSHA,
 				},
 				ResultsURL: resultsURL,
 			},
 			file,
-			resultsURLBase + platform + "/" + file,
+			resultsURLBase + product + "/" + file,
 		})
 }
 
@@ -57,7 +57,7 @@ func TestGetResultsURL_TrailingSlash(t *testing.T) {
 		t,
 		Case{
 			shared.TestRun{
-				PlatformAtRevision: shared.PlatformAtRevision{
+				ProductAtRevision: shared.ProductAtRevision{
 					Revision: shortSHA,
 				},
 				ResultsURL: resultsURL,

@@ -59,31 +59,31 @@ func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	return runSHA, err
 }
 
-// ParsePlatformAtRevision parses a test-run spec into a PlatformAtRevision struct.
-func ParsePlatformAtRevision(spec string) (platformAtRevision PlatformAtRevision, err error) {
+// ParseProductAtRevision parses a test-run spec into a ProductAtRevision struct.
+func ParseProductAtRevision(spec string) (productAtRevision ProductAtRevision, err error) {
 	pieces := strings.Split(spec, "@")
 	if len(pieces) > 2 {
-		return platformAtRevision, errors.New("invalid platform@revision spec: " + spec)
+		return productAtRevision, errors.New("invalid product@revision spec: " + spec)
 	}
-	if platformAtRevision.Platform, err = ParsePlatform(pieces[0]); err != nil {
-		return platformAtRevision, err
+	if productAtRevision.Product, err = ParseProduct(pieces[0]); err != nil {
+		return productAtRevision, err
 	}
 	if len(pieces) < 2 {
-		// No @ is assumed to be the platform only.
-		platformAtRevision.Revision = "latest"
+		// No @ is assumed to be the product only.
+		productAtRevision.Revision = "latest"
 	} else {
-		platformAtRevision.Revision = pieces[1]
+		productAtRevision.Revision = pieces[1]
 	}
-	return platformAtRevision, nil
+	return productAtRevision, nil
 }
 
-// ParsePlatform parses the `browser-version-os-version` input as a Platform struct.
-func ParsePlatform(platform string) (result Platform, err error) {
-	pieces := strings.Split(platform, "-")
+// ParseProduct parses the `browser-version-os-version` input as a Product struct.
+func ParseProduct(product string) (result Product, err error) {
+	pieces := strings.Split(product, "-")
 	if len(pieces) > 4 {
-		return result, fmt.Errorf("invalid platform: %s", platform)
+		return result, fmt.Errorf("invalid product: %s", product)
 	}
-	result = Platform{
+	result = Product{
 		BrowserName: pieces[0],
 	}
 	if !IsBrowserName(result.BrowserName) {
@@ -127,13 +127,13 @@ func ParseVersion(version string) (result *Version, err error) {
 	return result, nil
 }
 
-// ParsePlatformParam parses and validates the 'platform' param for the request.
-func ParsePlatformParam(r *http.Request) (platform *Platform, err error) {
-	platformParam := r.URL.Query().Get("platform")
-	if "" == platformParam {
+// ParseProductParam parses and validates the 'product' param for the request.
+func ParseProductParam(r *http.Request) (product *Product, err error) {
+	productParam := r.URL.Query().Get("product")
+	if "" == productParam {
 		return nil, nil
 	}
-	parsed, err := ParsePlatform(platformParam)
+	parsed, err := ParseProduct(productParam)
 	if err != nil {
 		return nil, err
 	}
@@ -142,13 +142,13 @@ func ParsePlatformParam(r *http.Request) (platform *Platform, err error) {
 
 // ParseBrowserParam parses and validates the 'browser' param for the request.
 // It returns "" by default (and in error cases).
-func ParseBrowserParam(r *http.Request) (platform *Platform, err error) {
+func ParseBrowserParam(r *http.Request) (product *Product, err error) {
 	browser := r.URL.Query().Get("browser")
 	if "" == browser {
 		return nil, nil
 	}
 	if IsBrowserName(browser) {
-		return &Platform{
+		return &Product{
 			BrowserName: browser,
 		}, nil
 	}
@@ -181,28 +181,28 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 	return browsers, nil
 }
 
-// ParsePlatformsParam returns a sorted list of platform params for the request.
-// It parses the 'platforms' parameter, split on commas, and also checks for the (repeatable)
-// 'platform' params.
-func ParsePlatformsParam(r *http.Request) (platforms []Platform, err error) {
-	platformParams := ParseRepeatedParam(r, "platform", "platforms")
-	if platformParams == nil {
+// ParseProductsParam returns a sorted list of product params for the request.
+// It parses the 'products' parameter, split on commas, and also checks for the (repeatable)
+// 'product' params.
+func ParseProductsParam(r *http.Request) (products []Product, err error) {
+	productParams := ParseRepeatedParam(r, "product", "products")
+	if productParams == nil {
 		return nil, nil
 	}
-	for p := range platformParams.Iter() {
-		platform, err := ParsePlatform(p.(string))
+	for p := range productParams.Iter() {
+		product, err := ParseProduct(p.(string))
 		if err != nil {
 			return nil, err
 		}
-		platforms = append(platforms, platform)
+		products = append(products, product)
 	}
-	return platforms, nil
+	return products, nil
 }
 
-// GetPlatformsForRequest parses the 'platforms' (and legacy 'browsers') params, returning
-// the sorted list of platforms to include, or a default list.
-func GetPlatformsForRequest(r *http.Request) (platforms []Platform, err error) {
-	if platforms, err = ParsePlatformsParam(r); err != nil {
+// GetProductsForRequest parses the 'products' (and legacy 'browsers') params, returning
+// the sorted list of products to include, or a default list.
+func GetProductsForRequest(r *http.Request) (products []Product, err error) {
+	if products, err = ParseProductsParam(r); err != nil {
 		return nil, err
 	}
 	// Handle legacy browser param.
@@ -211,16 +211,16 @@ func GetPlatformsForRequest(r *http.Request) (platforms []Platform, err error) {
 		return nil, err
 	}
 	for _, browser := range browserParams {
-		platforms = append(platforms, Platform{
+		products = append(products, Product{
 			BrowserName: browser,
 		})
 	}
 
 	browserNames, err := GetBrowserNames()
 	// Fall back to default browser set.
-	if platforms == nil && browserParams == nil {
+	if products == nil && browserParams == nil {
 		for _, name := range browserNames {
-			platforms = append(platforms, Platform{
+			products = append(products, Product{
 				BrowserName: name,
 			})
 		}
@@ -240,32 +240,32 @@ func GetPlatformsForRequest(r *http.Request) (platforms []Platform, err error) {
 			}
 			// If we already encountered a browser name, nothing is two browsers (return empty set).
 			if browserLabel != "" {
-				platforms = nil
+				products = nil
 				break
 			}
 			browserLabel = name
-			platforms = []Platform{
-				Platform{
+			products = []Product{
+				Product{
 					BrowserName: name,
 				},
 			}
 			// For a browser label (e.g. "chrome"), we also include experimental, unless we explicitly only
 			// want experimental, which is handled below.
 			if !experimental {
-				platforms = append(platforms, Platform{
+				products = append(products, Product{
 					BrowserName: name + "-" + ExperimentalLabel,
 				})
 			}
 		}
 
 		if experimental {
-			for i := range platforms {
-				platforms[i].BrowserName = platforms[i].BrowserName + "-" + ExperimentalLabel
+			for i := range products {
+				products[i].BrowserName = products[i].BrowserName + "-" + ExperimentalLabel
 			}
 		}
 	}
 
-	return platforms, nil
+	return products, nil
 }
 
 // ParseMaxCountParam parses the 'max-count' parameter as an integer, or returns 1 if no param

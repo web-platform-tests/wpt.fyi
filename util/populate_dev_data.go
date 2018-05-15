@@ -49,8 +49,8 @@ func main() {
 	const summaryURLFmtString = "/static/" + staticRunSHA + "/%s"
 	staticTestRuns := []shared.TestRun{
 		{
-			PlatformAtRevision: shared.PlatformAtRevision{
-				Platform: shared.Platform{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
 					BrowserName:    "chrome",
 					BrowserVersion: "63.0",
 					OSName:         "linux",
@@ -62,8 +62,8 @@ func main() {
 			CreatedAt:  staticDataTime,
 		},
 		{
-			PlatformAtRevision: shared.PlatformAtRevision{
-				Platform: shared.Platform{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
 					BrowserName:    "edge",
 					BrowserVersion: "15",
 					OSName:         "windows",
@@ -75,8 +75,8 @@ func main() {
 			CreatedAt:  staticDataTime,
 		},
 		{
-			PlatformAtRevision: shared.PlatformAtRevision{
-				Platform: shared.Platform{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
 					BrowserName:    "firefox",
 					BrowserVersion: "57.0",
 					OSName:         "linux",
@@ -88,8 +88,8 @@ func main() {
 			CreatedAt:  staticDataTime,
 		},
 		{
-			PlatformAtRevision: shared.PlatformAtRevision{
-				Platform: shared.Platform{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
 					BrowserName:    "safari",
 					BrowserVersion: "10",
 					OSName:         "macos",

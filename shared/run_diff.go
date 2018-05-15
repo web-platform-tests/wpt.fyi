@@ -28,15 +28,15 @@ func FetchRunResultsJSONForParam(
 		}
 		return FetchRunResultsJSON(ctx, r, run)
 	}
-	var spec PlatformAtRevision
-	if spec, err = ParsePlatformAtRevision(param); err != nil {
+	var spec ProductAtRevision
+	if spec, err = ParseProductAtRevision(param); err != nil {
 		return nil, err
 	}
 	return FetchRunResultsJSONForSpec(ctx, r, spec)
 }
 
 func FetchRunResultsJSONForSpec(
-	ctx context.Context, r *http.Request, revision PlatformAtRevision) (results map[string][]int, err error) {
+	ctx context.Context, r *http.Request, revision ProductAtRevision) (results map[string][]int, err error) {
 	var run TestRun
 	if run, err = FetchRunForSpec(ctx, revision); err != nil {
 		return nil, err
@@ -46,16 +46,18 @@ func FetchRunResultsJSONForSpec(
 	return FetchRunResultsJSON(ctx, r, run)
 }
 
-func FetchRunForSpec(ctx context.Context, revision PlatformAtRevision) (TestRun, error) {
+func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (TestRun, error) {
 	baseQuery := datastore.
 		NewQuery("TestRun").
 		Order("-CreatedAt").
 		Limit(1)
 
 	var results []TestRun
-	// TODO(lukebjerring): Handle actual platforms (split out version + os)
-	query := baseQuery.
-		Filter("BrowserName =", revision.Platform)
+	// TODO(lukebjerring): Handle OS of products (split out version + os)
+	query := baseQuery.Filter("BrowserName =", revision.BrowserName)
+	if revision.BrowserVersion != "" {
+		query = query.Filter("BrowserVersion =", revision.BrowserVersion)
+	}
 	if revision.Revision != "latest" {
 		query = query.Filter("Revision = ", revision.Revision)
 	}
