@@ -47,12 +47,17 @@ go_build: go_deps
 	cd $(WPTD_GO_PATH); go build ./...
 
 go_lint: go_deps go_test_tag_lint
-	@cd $(WPTD_GO_PATH); golint -set_exit_status $(GO_FILES)
-	@# Print differences between current/gofmt'd output, check empty.
-	@cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read
+	@echo "# Linting the go packages..."
+	@cd $(WPTD_GO_PATH); golint -set_exit_status api/
+	@cd $(WPTD_GO_PATH); golint -set_exit_status revisions/
+	@cd $(WPTD_GO_PATH); golint -set_exit_status shared/
+	@cd $(WPTD_GO_PATH); golint -set_exit_status util/
+	@cd $(WPTD_GO_PATH); golint -set_exit_status webapp/
+	# Printing files with differences between current/gofmt'd output, asserting empty...
+	@cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read || ! echo $$(gofmt -l $(GO_FILES))
 
 go_test_tag_lint:
-	@# Print list of test files without +build tag, check empty.
+	# Printing a list of test files without +build tag, asserting empty...
 	@TAGLESS=$$(grep -PL '\/\/ \+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 			if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
