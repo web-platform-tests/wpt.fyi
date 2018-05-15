@@ -28,10 +28,10 @@ PB_GO_PKG_MAP ?= Mbq_table_name.proto=$(BQ_LIB_REPO)/protos
 
 PROTOS=$(wildcard $(PB_LOCAL_LIB_DIR)/*.proto)
 
-GO_FILES := $(wildcard $(WPTD_PATH)**/*.go)
+GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_FILES))
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_FILES))
-GO_TEST_FILES := $(wildcard $(WPTD_PATH)**/*_test.go)
+GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_TEST_FILES))
 GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_TEST_FILES))
 
@@ -48,12 +48,12 @@ go_build: go_deps
 
 go_lint: go_deps go_test_tag_lint
 	@cd $(WPTD_GO_PATH); golint -set_exit_status $(GO_FILES)
-	# Print differences between current/gofmt'd output, check empty.
+	@# Print differences between current/gofmt'd output, check empty.
 	@cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read
 
 go_test_tag_lint:
-	# Print list of test files without +build tag, check empty.
-	@TAGLESS=$$(grep -PL '\/\/ \+build !?(small|medium|large)' $(GO_TEST_FILES) | tr " " "\n"); \
+	@# Print list of test files without +build tag, check empty.
+	@TAGLESS=$$(grep -PL '\/\/ \+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 			if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
 go_test: go_small_test go_medium_test
