@@ -52,7 +52,7 @@ go_lint: go_deps go_test_tag_lint
 	@cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read
 
 go_test_tag_lint:
-  # Print list of test files without +build tag, check empty.
+	# Print list of test files without +build tag, check empty.
 	@TAGLESS=$$(grep -PL '\/\/ \+build !?(small|medium|large)' $(GO_TEST_FILES) | tr " " "\n"); \
 			if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
