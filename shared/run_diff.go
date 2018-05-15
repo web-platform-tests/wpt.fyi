@@ -7,7 +7,6 @@ package shared
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -18,36 +17,6 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 )
-
-// PlatformAtRevision is represents a test-run spec, of [platform]@[SHA],
-// e.g. 'chrome@latest' or 'safari-10@abcdef1234'
-type PlatformAtRevision struct {
-	// Platform is the string representing browser (+ version), and OS (+ version).
-	Platform string
-
-	// Revision is the SHA[0:10] of the git repo.
-	Revision string
-}
-
-// ParsePlatformAtRevisionSpec parses a test-run spec into a PlatformAtRevision struct.
-func ParsePlatformAtRevisionSpec(spec string) (platformAtRevision PlatformAtRevision, err error) {
-	pieces := strings.Split(spec, "@")
-	if len(pieces) > 2 {
-		return platformAtRevision, errors.New("invalid platform@revision spec: " + spec)
-	}
-	platformAtRevision.Platform = pieces[0]
-	if len(pieces) < 2 {
-		// No @ is assumed to be the platform only.
-		platformAtRevision.Revision = "latest"
-	} else {
-		platformAtRevision.Revision = pieces[1]
-	}
-	// TODO(lukebjerring): Also handle actual platforms (with version + os)
-	if IsBrowserName(platformAtRevision.Platform) {
-		return platformAtRevision, nil
-	}
-	return platformAtRevision, errors.New("Platform " + platformAtRevision.Platform + " not found")
-}
 
 func FetchRunResultsJSONForParam(
 	ctx context.Context, r *http.Request, param string) (results map[string][]int, err error) {
@@ -60,7 +29,7 @@ func FetchRunResultsJSONForParam(
 		return FetchRunResultsJSON(ctx, r, run)
 	}
 	var spec PlatformAtRevision
-	if spec, err = ParsePlatformAtRevisionSpec(param); err != nil {
+	if spec, err = ParsePlatformAtRevision(param); err != nil {
 		return nil, err
 	}
 	return FetchRunResultsJSONForSpec(ctx, r, spec)

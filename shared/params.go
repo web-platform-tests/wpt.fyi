@@ -5,6 +5,7 @@
 package shared
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -58,6 +59,74 @@ func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	return runSHA, err
 }
 
+// ParsePlatformAtRevision parses a test-run spec into a PlatformAtRevision struct.
+func ParsePlatformAtRevision(spec string) (platformAtRevision PlatformAtRevision, err error) {
+	pieces := strings.Split(spec, "@")
+	if len(pieces) > 2 {
+		return platformAtRevision, errors.New("invalid platform@revision spec: " + spec)
+	}
+	if platformAtRevision.Platform, err = ParsePlatform(pieces[0]); err != nil {
+		return platformAtRevision, err
+	}
+	if len(pieces) < 2 {
+		// No @ is assumed to be the platform only.
+		platformAtRevision.Revision = "latest"
+	} else {
+		platformAtRevision.Revision = pieces[1]
+	}
+	return platformAtRevision, nil
+}
+
+// ParsePlatform parses the `browser-version-os-version` input as a Platform struct.
+func ParsePlatform(platform string) (result Platform, err error) {
+	pieces := strings.Split(platform, "-")
+	if len(pieces) > 4 {
+		return result, fmt.Errorf("invalid platform: %s", platform)
+	}
+	result = Platform{
+		BrowserName: pieces[0],
+	}
+	if !IsBrowserName(result.BrowserName) {
+		return result, fmt.Errorf("invalid browser name: %s", result.BrowserName)
+	}
+	if len(pieces) > 1 {
+		if _, err := ParseVersion(pieces[1]); err != nil {
+			return result, fmt.Errorf("invalid browser version: %s", pieces[1])
+		}
+		result.BrowserVersion = pieces[1]
+	}
+	if len(pieces) > 2 {
+		result.OSName = pieces[2]
+	}
+	if len(pieces) > 3 {
+		if _, err := ParseVersion(pieces[3]); err != nil {
+			return result, fmt.Errorf("invalid OS version: %s", pieces[3])
+		}
+		result.OSVersion = pieces[3]
+	}
+	return result, nil
+}
+
+// ParseVersion parses the given version as a semantically versioned string.
+func ParseVersion(version string) (result *Version, err error) {
+	pieces := strings.Split(version, ".")
+	for i, piece := range pieces {
+		if _, err := strconv.ParseInt(piece, 10, 0); i > 3 || err != nil {
+			return nil, fmt.Errorf("Invalid version: %s", version)
+		}
+	}
+	result = &Version{
+		Major: pieces[0],
+	}
+	if len(pieces) > 1 {
+		result.Minor = pieces[1]
+	}
+	if len(pieces) > 2 {
+		result.Revision = pieces[2]
+	}
+	return result, nil
+}
+
 // ParseBrowserParam parses and validates the 'browser' param for the request.
 // It returns "" by default (and in error cases).
 func ParseBrowserParam(r *http.Request) (browser string, err error) {
@@ -97,21 +166,54 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 	return browsers, nil
 }
 
-// GetBrowsersForRequest parses the 'browsers' param, returning the sorted list of browsers
-// to include, or a default list.
-func GetBrowsersForRequest(r *http.Request) (browsers []string, err error) {
-	if browsers, err = ParseBrowsersParam(r); err != nil {
-		return browsers, err
+// ParsePlatformsParam returns a sorted list of platform params for the request.
+// It parses the 'platforms' parameter, split on commas, and also checks for the (repeatable)
+// 'platform' params.
+func ParsePlatformsParam(r *http.Request) (platforms []Platform, err error) {
+	platformParams := ParseRepeatedParam(r, "platform", "platforms")
+	if platformParams == nil {
+		return nil, nil
 	}
-	if browsers == nil || len(browsers) == 0 {
-		if browsers, err = GetBrowserNames(); err != nil {
-			return browsers, err
+	for p := range platformParams.Iter() {
+		platform, err := ParsePlatform(p.(string))
+		if err != nil {
+			return nil, err
+		}
+		platforms = append(platforms, platform)
+	}
+	return platforms, nil
+}
+
+// GetPlatformsForRequest parses the 'platforms' (and legacy 'browsers') params, returning
+// the sorted list of platforms to include, or a default list.
+func GetPlatformsForRequest(r *http.Request) (platforms []Platform, err error) {
+	if platforms, err = ParsePlatformsParam(r); err != nil {
+		return nil, err
+	}
+	// Handle legacy browser param.
+	browserParams, err := ParseBrowsersParam(r)
+	if err != nil {
+		return nil, err
+	}
+	for _, browser := range browserParams {
+		platforms = append(platforms, Platform{
+			BrowserName: browser,
+		})
+	}
+
+	browserNames, err := GetBrowserNames()
+	// Fall back to default browser set.
+	if platforms == nil && browserParams == nil {
+		for _, name := range browserNames {
+			platforms = append(platforms, Platform{
+				BrowserName: name,
+			})
 		}
 	}
+
 	labels := ParseLabelsParam(r)
 	if labels != nil {
 		experimental := labels.Contains(ExperimentalLabel)
-		browserNames, err := GetBrowserNames()
 		if err != nil {
 			return nil, err
 		}
@@ -123,25 +225,32 @@ func GetBrowsersForRequest(r *http.Request) (browsers []string, err error) {
 			}
 			// If we already encountered a browser name, nothing is two browsers (return empty set).
 			if browserLabel != "" {
-				browsers = nil
+				platforms = nil
 				break
 			}
 			browserLabel = name
-			browsers = []string{name}
+			platforms = []Platform{
+				Platform{
+					BrowserName: name,
+				},
+			}
 			// For a browser label (e.g. "chrome"), we also include experimental, unless we explicitly only
 			// want experimental, which is handled below.
 			if !experimental {
-				browsers = append(browsers, name+"-"+ExperimentalLabel)
+				platforms = append(platforms, Platform{
+					BrowserName: name + "-" + ExperimentalLabel,
+				})
 			}
 		}
 
 		if experimental {
-			for i := range browsers {
-				browsers[i] = browsers[i] + "-" + ExperimentalLabel
+			for i := range platforms {
+				platforms[i].BrowserName = platforms[i].BrowserName + "-" + ExperimentalLabel
 			}
 		}
 	}
-	return browsers, nil
+
+	return platforms, nil
 }
 
 // ParseMaxCountParam parses the 'max-count' parameter as an integer, or returns 1 if no param

@@ -116,10 +116,10 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			testRuns = append(testRuns, run)
 		} else {
 			var beforeSpec shared.PlatformAtRevision
-			if beforeSpec, err = shared.ParsePlatformAtRevisionSpec(before); err != nil {
+			if beforeSpec, err = shared.ParsePlatformAtRevision(before); err != nil {
 				return nil, nil, errors.New("invalid before param")
 			}
-			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, beforeSpec.Revision, beforeSpec.Platform))
+			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, beforeSpec.Revision, beforeSpec.Platform.String()))
 		}
 
 		if afterDecoded, err := base64.URLEncoding.DecodeString(after); err == nil {
@@ -130,10 +130,10 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			testRuns = append(testRuns, run)
 		} else {
 			var afterSpec shared.PlatformAtRevision
-			if afterSpec, err = shared.ParsePlatformAtRevisionSpec(after); err != nil {
+			if afterSpec, err = shared.ParsePlatformAtRevision(after); err != nil {
 				return nil, nil, errors.New("invalid after param")
 			}
-			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Platform))
+			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Platform.String()))
 		}
 	} else {
 		var sourceURL = `/api/runs?sha=%s`

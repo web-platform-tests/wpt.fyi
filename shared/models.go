@@ -6,22 +6,58 @@ package shared
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
 )
 
-// TestRun stores metadata for a test run (produced by run/run.py)
-type TestRun struct {
-	// Platform information
+// Platform uniquely defines a browser version, running on an OS version.
+type Platform struct {
 	BrowserName    string `json:"browser_name"`
 	BrowserVersion string `json:"browser_version"`
 	OSName         string `json:"os_name"`
 	OSVersion      string `json:"os_version"`
+}
+
+func (p Platform) String() string {
+	s := p.BrowserName
+	if p.BrowserVersion != "" {
+		s = fmt.Sprintf("%s-%s", s, p.BrowserVersion)
+	}
+	if p.OSName != "" {
+		s = fmt.Sprintf("%s-%s", s, p.OSName)
+		if p.OSVersion != "" {
+			s = fmt.Sprintf("%s-%s", s, p.OSVersion)
+		}
+	}
+	return s
+}
+
+// Version is a struct for a parsed semantic version string.
+type Version struct {
+	Major    string
+	Minor    string
+	Revision string
+}
+
+// PlatformAtRevision defines a WPT run for a specific platform, at a
+// specific hash of the WPT repo.
+type PlatformAtRevision struct {
+	Platform
 
 	// The first 10 characters of the SHA1 of the tested WPT revision
 	Revision string `json:"revision"`
+}
+
+func (p PlatformAtRevision) String() string {
+	return fmt.Sprintf("%s@%s", p.Platform.String(), p.Revision)
+}
+
+// TestRun stores metadata for a test run (produced by run/run.py)
+type TestRun struct {
+	PlatformAtRevision
 
 	// Results URL
 	ResultsURL string `json:"results_url"`

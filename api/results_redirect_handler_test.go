@@ -7,11 +7,11 @@ package api
 import (
 	"testing"
 
-	base "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 type Case struct {
-	testRun  base.TestRun
+	testRun  shared.TestRun
 	testFile string
 	expected string
 }
@@ -25,9 +25,11 @@ func TestGetResultsURL_EmptyFile(t *testing.T) {
 	checkResult(
 		t,
 		Case{
-			base.TestRun{
+			shared.TestRun{
+				PlatformAtRevision: shared.PlatformAtRevision{
+					Revision: shortSHA,
+				},
 				ResultsURL: resultsURL,
-				Revision:   shortSHA,
 			},
 			"",
 			resultsURL,
@@ -39,9 +41,11 @@ func TestGetResultsURL_TestFile(t *testing.T) {
 	checkResult(
 		t,
 		Case{
-			base.TestRun{
+			shared.TestRun{
+				PlatformAtRevision: shared.PlatformAtRevision{
+					Revision: shortSHA,
+				},
 				ResultsURL: resultsURL,
-				Revision:   shortSHA,
 			},
 			file,
 			resultsURLBase + platform + "/" + file,
@@ -52,9 +56,11 @@ func TestGetResultsURL_TrailingSlash(t *testing.T) {
 	checkResult(
 		t,
 		Case{
-			base.TestRun{
+			shared.TestRun{
+				PlatformAtRevision: shared.PlatformAtRevision{
+					Revision: shortSHA,
+				},
 				ResultsURL: resultsURL,
-				Revision:   shortSHA,
 			},
 			"/",
 			resultsURL,
