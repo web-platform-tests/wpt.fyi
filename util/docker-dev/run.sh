@@ -52,7 +52,7 @@ set -e
 
 info "Starting docker instance wptd-dev-instance..."
 docker run -t -d --entrypoint /bin/bash \
-    -v "${WPTD_PATH}":/home/jenkins/wpt.fyi \
+    -v "${WPTD_PATH}":/home/user/wpt.fyi \
     -u $(id -u $USER):$(id -g $USER) \
     -p "${WPTD_HOST_WEB_PORT}:8080" \
     -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
@@ -61,7 +61,7 @@ docker run -t -d --entrypoint /bin/bash \
 DOCKER_INSTANCE_PID="${!}"
 
 info "Ensuring the home directory is owned by the user..."
-wptd_chown "/home/jenkins"
+wptd_chown "/home/user"
 
 info "Instance wptd-dev-instance started."
 

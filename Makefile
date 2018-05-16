@@ -13,7 +13,7 @@ SHELL := /bin/bash
 
 export GOPATH=$(shell go env GOPATH)
 
-# WPTD_PATH will have a trailing slash, e.g. /home/jenkins/wpt.fyi/
+# WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPTD_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests/wpt.fyi
 WEBDRIVER_PATH ?= $(WPTD_GO_PATH)/webdriver
@@ -21,17 +21,6 @@ BROWSERS_PATH ?= $(HOME)/browsers
 SELENIUM_PATH ?= $(BROWSERS_PATH)/selenium
 FIREFOX_PATH ?= $(BROWSERS_PATH)/firefox/firefox
 GECKODRIVER_PATH ?= $(BROWSERS_PATH)/geckodriver
-
-BQ_LIB_REPO ?= github.com/GoogleCloudPlatform/protoc-gen-bq-schema
-PB_LIB_DIR ?= ../protobuf/src
-PB_BQ_LIB_DIR ?= $(WPTD_PATH)vendor/$(BQ_LIB_REPO)
-PB_LOCAL_LIB_DIR ?= protos
-PB_BQ_OUT_DIR ?= bq-schema
-PB_PY_OUT_DIR ?= run/protos
-PB_GO_OUT_DIR ?= generated
-PB_GO_PKG_MAP ?= Mbq_table_name.proto=$(BQ_LIB_REPO)/protos
-
-PROTOS=$(wildcard $(PB_LOCAL_LIB_DIR)/*.proto)
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_FILES))
