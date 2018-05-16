@@ -9,27 +9,29 @@ package api
 import (
 	"testing"
 
-	base "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 type Case struct {
-	testRun  base.TestRun
+	testRun  shared.TestRun
 	testFile string
 	expected string
 }
 
 const shortSHA = "abcdef0123"
 const resultsURLBase = "https://storage.googleapis.com/wptd/" + shortSHA + "/"
-const platform = "chrome-63.0-linux"
-const resultsURL = resultsURLBase + "/" + platform + "-summary.json.gz"
+const product = "chrome-63.0-linux"
+const resultsURL = resultsURLBase + "/" + product + "-summary.json.gz"
 
 func TestGetResultsURL_EmptyFile(t *testing.T) {
 	checkResult(
 		t,
 		Case{
-			base.TestRun{
+			shared.TestRun{
+				ProductAtRevision: shared.ProductAtRevision{
+					Revision: shortSHA,
+				},
 				ResultsURL: resultsURL,
-				Revision:   shortSHA,
 			},
 			"",
 			resultsURL,
@@ -41,12 +43,14 @@ func TestGetResultsURL_TestFile(t *testing.T) {
 	checkResult(
 		t,
 		Case{
-			base.TestRun{
+			shared.TestRun{
+				ProductAtRevision: shared.ProductAtRevision{
+					Revision: shortSHA,
+				},
 				ResultsURL: resultsURL,
-				Revision:   shortSHA,
 			},
 			file,
-			resultsURLBase + platform + "/" + file,
+			resultsURLBase + product + "/" + file,
 		})
 }
 
@@ -54,9 +58,11 @@ func TestGetResultsURL_TrailingSlash(t *testing.T) {
 	checkResult(
 		t,
 		Case{
-			base.TestRun{
+			shared.TestRun{
+				ProductAtRevision: shared.ProductAtRevision{
+					Revision: shortSHA,
+				},
 				ResultsURL: resultsURL,
-				Revision:   shortSHA,
 			},
 			"/",
 			resultsURL,

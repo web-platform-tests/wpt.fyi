@@ -66,94 +66,131 @@ func TestParseBrowserParam(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	browser, err := ParseBrowserParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, "", browser)
+	assert.Nil(t, browser)
 }
 
 func TestParseBrowserParam_Chrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=chrome", nil)
 	browser, err := ParseBrowserParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, "chrome", browser)
+	assert.NotNil(t, browser)
+	assert.Equal(t, "chrome", browser.BrowserName)
 }
 
 func TestParseBrowserParam_Invalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=invalid", nil)
 	browser, err := ParseBrowserParam(r)
 	assert.NotNil(t, err)
-	assert.Equal(t, "", browser)
+	assert.Nil(t, browser)
 }
 
-func TestGetBrowsersForRequest(t *testing.T) {
+func TestGetProductsForRequest_Default(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
-	browsers, err := GetBrowsersForRequest(r)
+	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
 	defaultBrowsers, err := GetBrowserNames()
-	assert.Equal(t, defaultBrowsers, browsers)
+	assert.Equal(t, len(defaultBrowsers), len(products))
+	for i := range defaultBrowsers {
+		assert.Equal(t, defaultBrowsers[i], products[i].BrowserName)
+	}
 }
 
-func TestGetBrowsersForRequest_ChromeSafari(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_ChromeSafari(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=chrome,safari", nil)
-	browsers, err := GetBrowsersForRequest(r)
+	browsers, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
-	assert.Equal(t, []string{"chrome", "safari"}, browsers)
+	assert.Equal(t, 2, len(browsers))
+	assert.Equal(t, "chrome", browsers[0].BrowserName)
+	assert.Equal(t, "safari", browsers[1].BrowserName)
 }
 
-func TestGetBrowsersForRequest_ChromeInvalid(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_ChromeInvalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=chrome,invalid", nil)
-	_, err := GetBrowsersForRequest(r)
+	_, err := GetProductsForRequest(r)
 	assert.NotNil(t, err)
 }
 
-func TestGetBrowsersForRequest_EmptyCommas(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_EmptyCommas(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=,chrome,,,,safari,,", nil)
-	browsers, err := GetBrowsersForRequest(r)
+	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
-	assert.Equal(t, []string{"chrome", "safari"}, browsers)
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
+	assert.Equal(t, "safari", products[1].BrowserName)
 }
 
-func TestGetBrowsersForRequest_SafariChrome(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_SafariChrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=safari,chrome", nil)
-	browsers, err := GetBrowsersForRequest(r)
+	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
-	assert.Equal(t, []string{"chrome", "safari"}, browsers) // Alphabetical
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
+	assert.Equal(t, "safari", products[1].BrowserName)
 }
 
-func TestGetBrowsersForRequest_MultiBrowserParam_SafariChrome(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_MultiBrowserParam_SafariChrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=safari&browser=chrome", nil)
-	browsers, err := GetBrowsersForRequest(r)
+	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
-	assert.Equal(t, []string{"chrome", "safari"}, browsers)
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
+	assert.Equal(t, "safari", products[1].BrowserName)
 }
 
-func TestGetBrowsersForRequest_MultiBrowserParam_SafariInvalid(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_MultiBrowserParam_SafariInvalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=safari&browser=invalid", nil)
-	_, err := GetBrowsersForRequest(r)
+	_, err := GetProductsForRequest(r)
 	assert.NotNil(t, err)
 }
 
-func TestGetBrowsersForRequest_ChromeLabel(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_ChromeLabel(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?label=chrome", nil)
-	browsers, err := GetBrowsersForRequest(r)
+	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
-	assert.Equal(t, []string{"chrome", "chrome-experimental"}, browsers)
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "chrome", products[0].BrowserName)
+	assert.Equal(t, "chrome-experimental", products[1].BrowserName)
 }
 
-func TestGetBrowsersForRequest_ExperimentalLabel(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_ExperimentalLabel(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=experimental", nil)
-	browsers, err := GetBrowsersForRequest(r)
+	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
 	names, _ := GetBrowserNames()
+	assert.Equal(t, len(names), len(products))
 	for i := range names {
-		names[i] = names[i] + "-" + ExperimentalLabel
+		assert.Equal(t, names[i]+"-"+ExperimentalLabel, products[i].BrowserName)
 	}
-	assert.Equal(t, names, browsers)
 }
 
-func TestGetBrowsersForRequest_ChromeAndExperimentalLabel(t *testing.T) {
+func TestGetProductsForRequest_BrowserParam_ChromeAndExperimentalLabel(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=chrome,experimental", nil)
-	browsers, err := GetBrowsersForRequest(r)
+	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
-	assert.Equal(t, []string{"chrome-experimental"}, browsers)
+	assert.Equal(t, 1, len(products))
+	assert.Equal(t, "chrome-experimental", products[0].BrowserName)
+}
+
+func TestGetProductsForRequest_BrowserAndProductParam(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?product=edge-16&browser=chrome", nil)
+	products, err := GetProductsForRequest(r)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "edge", products[0].BrowserName)
+	assert.Equal(t, "16", products[0].BrowserVersion)
+	assert.Equal(t, "chrome", products[1].BrowserName)
+}
+
+func TestGetProductsForRequest_BrowsersAndProductsParam(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?products=edge-16,safari&browsers=chrome,firefox", nil)
+	products, err := GetProductsForRequest(r)
+	assert.Nil(t, err)
+	assert.Equal(t, 4, len(products))
+	assert.Equal(t, "edge", products[0].BrowserName)
+	assert.Equal(t, "16", products[0].BrowserVersion)
+	assert.Equal(t, "safari", products[1].BrowserName)
+	assert.Equal(t, "chrome", products[2].BrowserName)
+	assert.Equal(t, "firefox", products[3].BrowserName)
 }
 
 func TestParseMaxCountParam_Missing(t *testing.T) {
@@ -310,4 +347,38 @@ func TestParseLabelsParam_LabelsAndLabel_Duplicate(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=experimental&label=experimental", nil)
 	labels := ParseLabelsParam(r)
 	assert.Equal(t, 1, labels.Cardinality())
+}
+
+func TestParseProductAtRevision(t *testing.T) {
+	productAtRevision, err := ParseProductAtRevision("chrome@latest")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome", productAtRevision.BrowserName)
+	assert.Equal(t, "latest", productAtRevision.Revision)
+}
+
+func TestParseProductAtRevision_BrowserVersion(t *testing.T) {
+	productAtRevision, err := ParseProductAtRevision("chrome-63.0@latest")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome", productAtRevision.BrowserName)
+	assert.Equal(t, "63.0", productAtRevision.BrowserVersion)
+	assert.Equal(t, "latest", productAtRevision.Revision)
+}
+
+func TestParseProductAtRevision_OS(t *testing.T) {
+	productAtRevision, err := ParseProductAtRevision("chrome-63.0-linux@latest")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome", productAtRevision.BrowserName)
+	assert.Equal(t, "63.0", productAtRevision.BrowserVersion)
+	assert.Equal(t, "linux", productAtRevision.OSName)
+	assert.Equal(t, "latest", productAtRevision.Revision)
+}
+
+func TestParseProductAtRevision_OSVersion(t *testing.T) {
+	productAtRevision, err := ParseProductAtRevision("chrome-63.0-linux-4.4@latest")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome", productAtRevision.BrowserName)
+	assert.Equal(t, "63.0", productAtRevision.BrowserVersion)
+	assert.Equal(t, "linux", productAtRevision.OSName)
+	assert.Equal(t, "4.4", productAtRevision.OSVersion)
+	assert.Equal(t, "latest", productAtRevision.Revision)
 }
