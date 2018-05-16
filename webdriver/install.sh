@@ -12,7 +12,7 @@ usage() {
   USAGE="Usage: install.sh [-r] [path]
     -r   - Reinstall
     path - Path to install (default: ~/browsers)"
-  info ${USAGE}
+  info "${USAGE}"
 }
 
 INSTALL_DIR=${1:-~/browsers}
