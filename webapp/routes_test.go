@@ -1,3 +1,5 @@
+// +build small
+
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -7,9 +9,10 @@ package webapp
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLandingPageBound(t *testing.T) {
@@ -55,8 +58,16 @@ func TestApiRunBound(t *testing.T) {
 	assertBound(t, "/api/run")
 }
 
+func TestApiResultsUploadBound(t *testing.T) {
+	assertBound(t, "/api/results/upload")
+}
+
 func TestResultsBound(t *testing.T) {
 	assertBound(t, "/results")
+}
+
+func TestAdminResultsUploadBound(t *testing.T) {
+	assertBound(t, "/admin/results/upload")
 }
 
 func assertBound(t *testing.T, path string) {

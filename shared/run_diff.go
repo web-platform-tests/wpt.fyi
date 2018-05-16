@@ -18,6 +18,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
+// FetchRunResultsJSONForParam fetches the results JSON blob for the given [product]@[SHA] param.
 func FetchRunResultsJSONForParam(
 	ctx context.Context, r *http.Request, param string) (results map[string][]int, err error) {
 	afterDecoded, err := base64.URLEncoding.DecodeString(param)
@@ -35,6 +36,7 @@ func FetchRunResultsJSONForParam(
 	return FetchRunResultsJSONForSpec(ctx, r, spec)
 }
 
+// FetchRunResultsJSONForSpec fetches the result JSON blob for the given spec.
 func FetchRunResultsJSONForSpec(
 	ctx context.Context, r *http.Request, revision ProductAtRevision) (results map[string][]int, err error) {
 	var run TestRun
@@ -46,6 +48,7 @@ func FetchRunResultsJSONForSpec(
 	return FetchRunResultsJSON(ctx, r, run)
 }
 
+// FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
 func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (TestRun, error) {
 	baseQuery := datastore.
 		NewQuery("TestRun").
@@ -70,7 +73,7 @@ func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (TestRun, 
 	return results[0], nil
 }
 
-// fetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
+// FetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
 // a full run can span 20k files).
 func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (results map[string][]int, err error) {
 	client := urlfetch.Client(ctx)

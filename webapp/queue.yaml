@@ -1,0 +1,4 @@
+queue:
+- name: results-arrival
+  target: processor
+  max_concurrent_requests: 1
