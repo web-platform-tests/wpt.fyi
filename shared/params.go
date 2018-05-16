@@ -155,7 +155,7 @@ func ParseBrowserParam(r *http.Request) (product *Product, err error) {
 	return nil, fmt.Errorf("Invalid browser param value: %s", browser)
 }
 
-// ParseBrowsersParam returns a sorted list of browser params for the request.
+// ParseBrowsersParam returns a list of browser params for the request.
 // It parses the 'browsers' parameter, split on commas, and also checks for the (repeatable)
 // 'browser' params.
 func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
@@ -181,7 +181,7 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 	return browsers, nil
 }
 
-// ParseProductsParam returns a sorted list of product params for the request.
+// ParseProductsParam returns a list of product params for the request.
 // It parses the 'products' parameter, split on commas, and also checks for the (repeatable)
 // 'product' params.
 func ParseProductsParam(r *http.Request) (products []Product, err error) {
@@ -200,7 +200,7 @@ func ParseProductsParam(r *http.Request) (products []Product, err error) {
 }
 
 // GetProductsForRequest parses the 'products' (and legacy 'browsers') params, returning
-// the sorted list of products to include, or a default list.
+// the list of products to include, or a default list.
 func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 	if products, err = ParseProductsParam(r); err != nil {
 		return nil, err
