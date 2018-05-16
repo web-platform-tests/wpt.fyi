@@ -7,7 +7,6 @@ package shared
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -18,36 +17,6 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 )
-
-// PlatformAtRevision is represents a test-run spec, of [platform]@[SHA],
-// e.g. 'chrome@latest' or 'safari-10@abcdef1234'
-type PlatformAtRevision struct {
-	// Platform is the string representing browser (+ version), and OS (+ version).
-	Platform string
-
-	// Revision is the SHA[0:10] of the git repo.
-	Revision string
-}
-
-// ParsePlatformAtRevisionSpec parses a test-run spec into a PlatformAtRevision struct.
-func ParsePlatformAtRevisionSpec(spec string) (platformAtRevision PlatformAtRevision, err error) {
-	pieces := strings.Split(spec, "@")
-	if len(pieces) > 2 {
-		return platformAtRevision, errors.New("invalid platform@revision spec: " + spec)
-	}
-	platformAtRevision.Platform = pieces[0]
-	if len(pieces) < 2 {
-		// No @ is assumed to be the platform only.
-		platformAtRevision.Revision = "latest"
-	} else {
-		platformAtRevision.Revision = pieces[1]
-	}
-	// TODO(lukebjerring): Also handle actual platforms (with version + os)
-	if IsBrowserName(platformAtRevision.Platform) {
-		return platformAtRevision, nil
-	}
-	return platformAtRevision, errors.New("Platform " + platformAtRevision.Platform + " not found")
-}
 
 // FetchRunResultsJSONForParam fetches the results JSON blob for the given [product]@[SHA] param.
 func FetchRunResultsJSONForParam(
@@ -60,8 +29,8 @@ func FetchRunResultsJSONForParam(
 		}
 		return FetchRunResultsJSON(ctx, r, run)
 	}
-	var spec PlatformAtRevision
-	if spec, err = ParsePlatformAtRevisionSpec(param); err != nil {
+	var spec ProductAtRevision
+	if spec, err = ParseProductAtRevision(param); err != nil {
 		return nil, err
 	}
 	return FetchRunResultsJSONForSpec(ctx, r, spec)
@@ -69,7 +38,7 @@ func FetchRunResultsJSONForParam(
 
 // FetchRunResultsJSONForSpec fetches the result JSON blob for the given spec.
 func FetchRunResultsJSONForSpec(
-	ctx context.Context, r *http.Request, revision PlatformAtRevision) (results map[string][]int, err error) {
+	ctx context.Context, r *http.Request, revision ProductAtRevision) (results map[string][]int, err error) {
 	var run TestRun
 	if run, err = FetchRunForSpec(ctx, revision); err != nil {
 		return nil, err
@@ -80,16 +49,18 @@ func FetchRunResultsJSONForSpec(
 }
 
 // FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
-func FetchRunForSpec(ctx context.Context, revision PlatformAtRevision) (TestRun, error) {
+func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (TestRun, error) {
 	baseQuery := datastore.
 		NewQuery("TestRun").
 		Order("-CreatedAt").
 		Limit(1)
 
 	var results []TestRun
-	// TODO(lukebjerring): Handle actual platforms (split out version + os)
-	query := baseQuery.
-		Filter("BrowserName =", revision.Platform)
+	// TODO(lukebjerring): Handle OS of products (split out version + os)
+	query := baseQuery.Filter("BrowserName =", revision.BrowserName)
+	if revision.BrowserVersion != "" {
+		query = query.Filter("BrowserVersion =", revision.BrowserVersion)
+	}
 	if revision.Revision != "latest" {
 		query = query.Filter("Revision = ", revision.Revision)
 	}

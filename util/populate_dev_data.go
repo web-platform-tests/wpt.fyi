@@ -13,7 +13,7 @@ import (
 	"github.com/deckarep/golang-set"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
-	base "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/datastore"
@@ -41,48 +41,64 @@ func main() {
 		log.Fatal(err)
 	}
 
-	emptySecretToken := &base.Token{}
+	emptySecretToken := &shared.Token{}
 	staticDataTime, _ := time.Parse(time.RFC3339, "2017-10-18T00:00:00Z")
 
 	// Follow pattern established in run/*.py data collection code.
 	const staticRunSHA = "b952881825"
 	const summaryURLFmtString = "/static/" + staticRunSHA + "/%s"
-	staticTestRuns := []base.TestRun{
+	staticTestRuns := []shared.TestRun{
 		{
-			BrowserName:    "chrome",
-			BrowserVersion: "63.0",
-			OSName:         "linux",
-			OSVersion:      "3.16",
-			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
-			CreatedAt:      staticDataTime,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "chrome",
+					BrowserVersion: "63.0",
+					OSName:         "linux",
+					OSVersion:      "3.16",
+				},
+				Revision: staticRunSHA,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
+			CreatedAt:  staticDataTime,
 		},
 		{
-			BrowserName:    "edge",
-			BrowserVersion: "15",
-			OSName:         "windows",
-			OSVersion:      "10",
-			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
-			CreatedAt:      staticDataTime,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "edge",
+					BrowserVersion: "15",
+					OSName:         "windows",
+					OSVersion:      "10",
+				},
+				Revision: staticRunSHA,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
+			CreatedAt:  staticDataTime,
 		},
 		{
-			BrowserName:    "firefox",
-			BrowserVersion: "57.0",
-			OSName:         "linux",
-			OSVersion:      "*",
-			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
-			CreatedAt:      staticDataTime,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "firefox",
+					BrowserVersion: "57.0",
+					OSName:         "linux",
+					OSVersion:      "*",
+				},
+				Revision: staticRunSHA,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
+			CreatedAt:  staticDataTime,
 		},
 		{
-			BrowserName:    "safari",
-			BrowserVersion: "10",
-			OSName:         "macos",
-			OSVersion:      "10.12",
-			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
-			CreatedAt:      staticDataTime,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "safari",
+					BrowserVersion: "10",
+					OSName:         "macos",
+					OSVersion:      "10.12",
+				},
+				Revision: staticRunSHA,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
+			CreatedAt:  staticDataTime,
 		},
 	}
 
@@ -150,7 +166,7 @@ func main() {
 	addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 
 	log.Print("Adding latest production TestRun data...")
-	prodTestRuns := base.FetchLatestRuns(*host)
+	prodTestRuns := shared.FetchLatestRuns(*host)
 	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
@@ -158,7 +174,7 @@ func main() {
 	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
 
 	log.Print("Adding latest experimental TestRun data...")
-	prodTestRuns = base.FetchRuns(*host, "latest", mapset.NewSet("experimental"))
+	prodTestRuns = shared.FetchRuns(*host, "latest", mapset.NewSet("experimental"))
 	latestProductionTestRunMetadata = make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]

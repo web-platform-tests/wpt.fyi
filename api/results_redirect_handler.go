@@ -24,7 +24,7 @@ import (
 // /results
 //
 // Params:
-//   platform: Browser (and OS) of the run, e.g. "chrome-63.0" or "safari"
+//   product: Browser (and OS) of the run, e.g. "chrome-63.0" or "safari"
 //   (optional) run: SHA[0:10] of the test run, or "latest" (latest is the default)
 //   (optional) test: Path of the test, e.g. "/css/css-images-3/gradient-button.html"
 func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,9 +34,9 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	platform := params.Get("platform")
-	if platform == "" {
-		http.Error(w, "Param 'platform' missing", http.StatusBadRequest)
+	product := params.Get("product")
+	if product == "" {
+		http.Error(w, "Param 'product' missing", http.StatusBadRequest)
 		return
 	}
 
@@ -49,7 +49,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		runSHA = "latest"
 	}
 
-	run, err := getRun(r, runSHA, platform)
+	run, err := getRun(r, runSHA, product)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -65,9 +65,9 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, resultsURL, http.StatusFound)
 }
 
-func getRun(r *http.Request, run string, platform string) (latest models.TestRun, err error) {
-	platformPieces := strings.Split(platform, "-")
-	if len(platformPieces) < 1 || len(platformPieces) > 4 {
+func getRun(r *http.Request, run string, product string) (latest models.TestRun, err error) {
+	productPieces := strings.Split(product, "-")
+	if len(productPieces) < 1 || len(productPieces) > 4 {
 		err = errors.New("Invalid path")
 		return
 	}
@@ -76,18 +76,18 @@ func getRun(r *http.Request, run string, platform string) (latest models.TestRun
 	baseQuery := datastore.NewQuery("TestRun").Order("-CreatedAt").Limit(1)
 
 	var testRunResults []models.TestRun
-	query := baseQuery.Filter("BrowserName =", platformPieces[0])
+	query := baseQuery.Filter("BrowserName =", productPieces[0])
 	if run != "" && run != "latest" {
 		query = query.Filter("Revision =", run)
 	}
-	if len(platformPieces) > 1 {
-		query = query.Filter("BrowserVersion =", platformPieces[1])
+	if len(productPieces) > 1 {
+		query = query.Filter("BrowserVersion =", productPieces[1])
 	}
-	if len(platformPieces) > 2 {
-		query = query.Filter("OSName =", platformPieces[2])
+	if len(productPieces) > 2 {
+		query = query.Filter("OSName =", productPieces[2])
 	}
-	if len(platformPieces) > 3 {
-		query = query.Filter("OSVersion =", platformPieces[3])
+	if len(productPieces) > 3 {
+		query = query.Filter("OSVersion =", productPieces[3])
 	}
 	_, err = query.GetAll(ctx, &testRunResults)
 	if err != nil {
@@ -106,8 +106,8 @@ func getResultsURL(run models.TestRun, testFile string) (resultsURL string) {
 		resultsBase := strings.SplitAfter(resultsURL, "/"+run.Revision)[0]
 		resultsPieces := strings.Split(resultsURL, "/")
 		re := regexp.MustCompile("(-summary)?\\.json\\.gz$")
-		platform := re.ReplaceAllString(resultsPieces[len(resultsPieces)-1], "")
-		resultsURL = fmt.Sprintf("%s/%s/%s", resultsBase, platform, testFile)
+		product := re.ReplaceAllString(resultsPieces[len(resultsPieces)-1], "")
+		resultsURL = fmt.Sprintf("%s/%s/%s", resultsBase, product, testFile)
 	}
 	return resultsURL
 }

@@ -5,6 +5,7 @@
 package shared
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -58,20 +59,103 @@ func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	return runSHA, err
 }
 
-// ParseBrowserParam parses and validates the 'browser' param for the request.
-// It returns "" by default (and in error cases).
-func ParseBrowserParam(r *http.Request) (browser string, err error) {
-	browser = r.URL.Query().Get("browser")
-	if "" == browser {
-		return "", nil
+// ParseProductAtRevision parses a test-run spec into a ProductAtRevision struct.
+func ParseProductAtRevision(spec string) (productAtRevision ProductAtRevision, err error) {
+	pieces := strings.Split(spec, "@")
+	if len(pieces) > 2 {
+		return productAtRevision, errors.New("invalid product@revision spec: " + spec)
 	}
-	if IsBrowserName(browser) {
-		return browser, nil
+	if productAtRevision.Product, err = ParseProduct(pieces[0]); err != nil {
+		return productAtRevision, err
 	}
-	return "", fmt.Errorf("Invalid browser param value: %s", browser)
+	if len(pieces) < 2 {
+		// No @ is assumed to be the product only.
+		productAtRevision.Revision = "latest"
+	} else {
+		productAtRevision.Revision = pieces[1]
+	}
+	return productAtRevision, nil
 }
 
-// ParseBrowsersParam returns a sorted list of browser params for the request.
+// ParseProduct parses the `browser-version-os-version` input as a Product struct.
+func ParseProduct(product string) (result Product, err error) {
+	pieces := strings.Split(product, "-")
+	if len(pieces) > 4 {
+		return result, fmt.Errorf("invalid product: %s", product)
+	}
+	result = Product{
+		BrowserName: pieces[0],
+	}
+	if !IsBrowserName(result.BrowserName) {
+		return result, fmt.Errorf("invalid browser name: %s", result.BrowserName)
+	}
+	if len(pieces) > 1 {
+		if _, err := ParseVersion(pieces[1]); err != nil {
+			return result, fmt.Errorf("invalid browser version: %s", pieces[1])
+		}
+		result.BrowserVersion = pieces[1]
+	}
+	if len(pieces) > 2 {
+		result.OSName = pieces[2]
+	}
+	if len(pieces) > 3 {
+		if _, err := ParseVersion(pieces[3]); err != nil {
+			return result, fmt.Errorf("invalid OS version: %s", pieces[3])
+		}
+		result.OSVersion = pieces[3]
+	}
+	return result, nil
+}
+
+// ParseVersion parses the given version as a semantically versioned string.
+func ParseVersion(version string) (result *Version, err error) {
+	pieces := strings.Split(version, ".")
+	for i, piece := range pieces {
+		if _, err := strconv.ParseInt(piece, 10, 0); i > 3 || err != nil {
+			return nil, fmt.Errorf("Invalid version: %s", version)
+		}
+	}
+	result = &Version{
+		Major: pieces[0],
+	}
+	if len(pieces) > 1 {
+		result.Minor = pieces[1]
+	}
+	if len(pieces) > 2 {
+		result.Revision = pieces[2]
+	}
+	return result, nil
+}
+
+// ParseProductParam parses and validates the 'product' param for the request.
+func ParseProductParam(r *http.Request) (product *Product, err error) {
+	productParam := r.URL.Query().Get("product")
+	if "" == productParam {
+		return nil, nil
+	}
+	parsed, err := ParseProduct(productParam)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
+}
+
+// ParseBrowserParam parses and validates the 'browser' param for the request.
+// It returns "" by default (and in error cases).
+func ParseBrowserParam(r *http.Request) (product *Product, err error) {
+	browser := r.URL.Query().Get("browser")
+	if "" == browser {
+		return nil, nil
+	}
+	if IsBrowserName(browser) {
+		return &Product{
+			BrowserName: browser,
+		}, nil
+	}
+	return nil, fmt.Errorf("Invalid browser param value: %s", browser)
+}
+
+// ParseBrowsersParam returns a list of browser params for the request.
 // It parses the 'browsers' parameter, split on commas, and also checks for the (repeatable)
 // 'browser' params.
 func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
@@ -97,21 +181,54 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 	return browsers, nil
 }
 
-// GetBrowsersForRequest parses the 'browsers' param, returning the sorted list of browsers
-// to include, or a default list.
-func GetBrowsersForRequest(r *http.Request) (browsers []string, err error) {
-	if browsers, err = ParseBrowsersParam(r); err != nil {
-		return browsers, err
+// ParseProductsParam returns a list of product params for the request.
+// It parses the 'products' parameter, split on commas, and also checks for the (repeatable)
+// 'product' params.
+func ParseProductsParam(r *http.Request) (products []Product, err error) {
+	productParams := ParseRepeatedParam(r, "product", "products")
+	if productParams == nil {
+		return nil, nil
 	}
-	if browsers == nil || len(browsers) == 0 {
-		if browsers, err = GetBrowserNames(); err != nil {
-			return browsers, err
+	for p := range productParams.Iter() {
+		product, err := ParseProduct(p.(string))
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+	return products, nil
+}
+
+// GetProductsForRequest parses the 'products' (and legacy 'browsers') params, returning
+// the list of products to include, or a default list.
+func GetProductsForRequest(r *http.Request) (products []Product, err error) {
+	if products, err = ParseProductsParam(r); err != nil {
+		return nil, err
+	}
+	// Handle legacy browser param.
+	browserParams, err := ParseBrowsersParam(r)
+	if err != nil {
+		return nil, err
+	}
+	for _, browser := range browserParams {
+		products = append(products, Product{
+			BrowserName: browser,
+		})
+	}
+
+	browserNames, err := GetBrowserNames()
+	// Fall back to default browser set.
+	if products == nil && browserParams == nil {
+		for _, name := range browserNames {
+			products = append(products, Product{
+				BrowserName: name,
+			})
 		}
 	}
+
 	labels := ParseLabelsParam(r)
 	if labels != nil {
 		experimental := labels.Contains(ExperimentalLabel)
-		browserNames, err := GetBrowserNames()
 		if err != nil {
 			return nil, err
 		}
@@ -123,25 +240,32 @@ func GetBrowsersForRequest(r *http.Request) (browsers []string, err error) {
 			}
 			// If we already encountered a browser name, nothing is two browsers (return empty set).
 			if browserLabel != "" {
-				browsers = nil
+				products = nil
 				break
 			}
 			browserLabel = name
-			browsers = []string{name}
+			products = []Product{
+				Product{
+					BrowserName: name,
+				},
+			}
 			// For a browser label (e.g. "chrome"), we also include experimental, unless we explicitly only
 			// want experimental, which is handled below.
 			if !experimental {
-				browsers = append(browsers, name+"-"+ExperimentalLabel)
+				products = append(products, Product{
+					BrowserName: name + "-" + ExperimentalLabel,
+				})
 			}
 		}
 
 		if experimental {
-			for i := range browsers {
-				browsers[i] = browsers[i] + "-" + ExperimentalLabel
+			for i := range products {
+				products[i].BrowserName = products[i].BrowserName + "-" + ExperimentalLabel
 			}
 		}
 	}
-	return browsers, nil
+
+	return products, nil
 }
 
 // ParseMaxCountParam parses the 'max-count' parameter as an integer, or returns 1 if no param
