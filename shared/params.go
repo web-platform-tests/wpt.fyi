@@ -200,7 +200,7 @@ func ParseProductsParam(r *http.Request) (products []Product, err error) {
 }
 
 // GetProductsForRequest parses the 'products' (and legacy 'browsers') params, returning
-// the list of products to include, or a default list.
+// the sorted list of products to include, or a default list.
 func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 	if products, err = ParseProductsParam(r); err != nil {
 		return nil, err
@@ -265,6 +265,7 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 		}
 	}
 
+	sort.Sort(ByBrowserName(products))
 	return products, nil
 }
 
