@@ -80,7 +80,9 @@ install:
     fi
 
 script:
-  - | # Deploy PR to staging environment (only when Travis secrets are available)
+  - |
+    # Deploy PR to staging environment (only when Travis secrets are available).
+    # Note: Travis 'deploy' task is skipped for PRs, so can't be used for this.
     if [ "${MAKE_DEPLOY_TARGET}" != "" ] \
         && [ "${TRAVIS_SECURE_ENV_VARS}" != "false" ] \
         && [ "${TRAVIS_PULL_REQUEST_BRANCH}" != "" ];
@@ -106,3 +108,13 @@ script:
     if [ "${WCT}" == "1" ]; then
       cd webapp && npm test
     fi
+
+# Continuously deploy master to staging.
+deploy:
+  provider: script
+  on:
+    branch: master
+    repo: web-platform-tests/wpt.fyi
+    condition: -n "${TRAVIS_PULL_REQUEST_BRANCH}" && "${TRAVIS_SECURE_ENV_VARS}" == "true"
+  script: |
+    docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make webapp_deploy_staging BRANCH_NAME=master

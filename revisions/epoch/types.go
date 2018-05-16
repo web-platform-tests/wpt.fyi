@@ -19,10 +19,14 @@ type Epoch interface {
 // ByMaxDuration is a []Epoch sortable by GetMaxDuration() values.
 type ByMaxDuration []Epoch
 
-func (e ByMaxDuration) Len() int { return len(e) }
+func (e ByMaxDuration) Len() int      { return len(e) }
 func (e ByMaxDuration) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
 func (e ByMaxDuration) Less(i, j int) bool {
-	if e[i] == nil { return false }
-	if e[j] == nil { return true }
+	if e[i] == nil {
+		return false
+	}
+	if e[j] == nil {
+		return true
+	}
 	return e[i].GetData().MaxDuration < e[j].GetData().MaxDuration
 }

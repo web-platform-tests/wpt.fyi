@@ -29,4 +29,7 @@ func init() {
 
 	// List of all test runs, by SHA[0:10]
 	http.HandleFunc("/test-runs", testRunsHandler)
+
+	// Admin-only manual results upload.
+	http.HandleFunc("/admin/results/upload", adminUploadHandler)
 }

@@ -23,4 +23,7 @@ func init() {
 
 	// API endpoint for redirecting to a run's summary JSON blob.
 	http.HandleFunc("/api/results", apiResultsRedirectHandler)
+
+	// API endpoint for receiving test results (wptreport) from runners.
+	http.HandleFunc("/api/results/upload", apiResultsReceiveHandler)
 }
