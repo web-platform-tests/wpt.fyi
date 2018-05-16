@@ -2,16 +2,67 @@
 <meta charset="utf-8">
 <title>Results upload</title>
 
+<link rel="import" href="/bower_components/polymer/lib/elements/custom-style.html">
+<link rel="import" href="/bower_components/iron-form/iron-form.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/paper-styles/color.html">
+
+<custom-style>
+  <style>
+    form, iron-form {
+      max-width: 100%;
+      width: 480px;
+    }
+    input {
+      background-color: red;
+      @apply --paper-input-container-shared-input-style;
+    }
+    button[type="submit"] {
+      float: right;
+      background: none;
+      border: none;
+    }
+    paper-button.blue {
+      background: var(--paper-blue-500);
+      color: white;
+    }
+  </style>
+</custom-style>
+
 <h2>File payload</h2>
-<form method="POST" enctype="multipart/form-data">
-<label> user <input name="user"></label><br>
-<label> result_file <input type="file" name="result_file"></label><br>
-<input type="submit">
+<!-- iron-form doesn't support multipart/form-data -->
+<form method="POST" action="/api/results/upload" enctype="multipart/form-data">
+  <paper-input-container>
+    <label slot="label">Name</label>
+    <iron-input slot="input" class="input-element">
+      <input name="user">
+    </iron-input>
+  </paper-input-container>
+  <paper-input-container>
+    <label slot="label">Results file</label>
+    <iron-input slot="input" class="input-element">
+      <input name="result_file" type="file">
+    </iron-input>
+  </paper-input-container>
+
+  <button type="submit">
+    <paper-button class="blue" raised>
+      Submit
+    </paper-button>
+  </button>
 </form>
 
 <h2>URL payload</h2>
-<form method="POST">
-<label> user <input name="user"></label><br>
-<label> result_url <input name="result_url"></label><br>
-<input type="submit">
-</form>
+<iron-form id='url-upload'>
+  <form method="POST" action="/api/results/upload">
+    <paper-input label="User" name="user"></paper-input>
+    <paper-input label="Result URL" name="result_url"></paper-input>
+
+    <button type="submit">
+      <paper-button class="blue" raised>
+        Submit
+      </paper-button>
+    </button>
+  </form>
+</iron-form>

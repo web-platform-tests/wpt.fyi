@@ -1,0 +1,288 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <title>iron-form</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../../polymer/polymer.html">
+  <link rel="import" href="../../paper-checkbox/paper-checkbox.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../iron-form.html">
+
+</head>
+<body>
+  <dom-module id="x-input-wrapper">
+    <template>
+      <input name="check_wrapped" value="foo"/>
+    </template>
+    <script>
+      HTMLImports.whenReady(function() {
+        Polymer({is: 'x-input-wrapper'});
+      });
+      </script>
+  </dom-module>
+
+  <dom-module id="container-slot">
+    <template>
+      <slot></slot>
+    </template>
+    <script>
+    HTMLImports.whenReady(function() {
+      Polymer({is: 'container-slot'});
+    });
+    </script>
+  </dom-module>
+
+  <dom-module id="slotted-form">
+    <template>
+      <iron-form id="form">
+        <form action="/get" method="get">
+          <input name="original" value="works" />
+          <slot></slot>
+        </form>
+      </iron-form>
+    </template>
+    <script>
+    HTMLImports.whenReady(function() {
+      Polymer({is: 'slotted-form'});
+    });
+    </script>
+  </dom-module>
+
+  <dom-module id="slotted-slotted-form">
+    <template>
+      <slotted-form id="form">
+         <input name="slotted" value="works too" />
+         <slot></slot>
+      </slotted-form>
+    </template>
+    <script>
+    HTMLImports.whenReady(function() {
+      Polymer({is: 'slotted-slotted-form'});
+    });
+    </script>
+  </dom-module>
+
+  <test-fixture id="slotted">
+    <template>
+      <slotted-form>
+        <div>
+          <paper-checkbox name="checkbox" checked></paper-checkbox>
+          <div>
+            <input name="input" value="some" />
+          </div>
+        </div>
+        <x-input-wrapper></x-input-wrapper>
+      </slotted-form>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="slotted-validation">
+    <template>
+      <slotted-form>
+        <div>
+          <paper-checkbox required></paper-checkbox>
+        </div>
+      </slotted-form>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="slotted-reset">
+    <template>
+      <slotted-form>
+        <div id="inputs">
+          <input type="input" name="input1" value="input1">
+          <input type="input" name="input2">
+          <input type="checkbox" name="check1" checked>
+          <input type="checkbox" name="check2">
+          <input type="radio" name="radio1" checked>
+          <input type="radio" name="radio2">
+          <paper-checkbox name="papercheck1" checked></paper-checkbox>
+          <paper-checkbox name="papercheck2"></paper-checkbox>
+          <paper-input name="paper1" value="paper1"></paper-input>
+          <paper-input name="paper2" value=""></paper-input>
+          <input type="reset">
+        </div>
+      </slotted-form>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="nested-slotted">
+    <template>
+      <slotted-slotted-form>
+         <input name="input" value="some" />
+      </slotted-slotted-form>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="nested-slotted-with-container">
+    <template>
+      <iron-form>
+        <form>
+          <container-slot>
+            <paper-checkbox name="papercheck" checked></paper-checkbox>
+          </container-slot>
+        </form>
+      </iron-form>
+    </template>
+  </test-fixture>
+
+  <script>
+    'use strict';
+    suite('slotted', function() {
+      var form;
+      var server;
+
+      setup(function() {
+        server = sinon.fakeServer.create();
+        server.respondWith(
+          'GET',
+          /\/get.*/,
+          [
+            200,
+            '{"Content-Type":"application/json"}',
+            '{"success":true}'
+          ]
+        );
+      });
+
+      teardown(function() {
+        server.restore();
+      });
+
+      suite('serialization', function() {
+        setup(function() {
+          form = fixture('slotted').$.form;
+        });
+        test('serializes both normal and distributed nodes', function(done) {
+          form.addEventListener('iron-form-response', function(event) {
+            var expectedUrl = encodeURI('/get?original=works&checkbox=on&input=some&check_wrapped=foo');
+            expect(event.detail.url).to.equal(expectedUrl);
+            expect(event.detail.response.success).to.be.equal(true);
+            done();
+          });
+
+          // Wait one tick for observeNodes.
+          Polymer.Base.async(function() {
+            form.submit();
+            server.respond();
+          }, 1);
+        });
+
+        suite('can work with nested slots', function(done) {
+          setup(function() {
+            form = fixture('nested-slotted').$.form.$.form;
+          });
+          test('serializes both normal and distributed nodes', function(done) {
+            form.addEventListener('iron-form-response', function(event) {
+              var expectedUrl = encodeURI('/get?original=works&slotted=works too&input=some');
+              expect(event.detail.url).to.equal(expectedUrl);
+              expect(event.detail.response.success).to.be.equal(true);
+              done();
+            });
+
+            // Wait one tick for observeNodes.
+            Polymer.Base.async(function() {
+              form.submit();
+              server.respond();
+            }, 1);
+          });
+
+          suite('with a non-participating container', function() {
+            setup(function() {
+              form = fixture('nested-slotted-with-container');
+            });
+            test('does not serialize components twice', function(done) {
+              // Wait one tick for observeNodes.
+              Polymer.Base.async(function() {
+                var serialized = form.serializeForm();
+                expect(form.serializeForm()).to.deep.equal({papercheck: 'on'});
+                done();
+              }, 1);
+            });
+          })
+        });
+      });
+
+      suite('validation', function() {
+        setup(function() {
+          form = fixture('slotted-validation').$.form;
+        });
+        test('<paper-checkbox required> is validated and does not submit the form', function(done) {
+          var responses = 0;
+          form.addEventListener('iron-form-response', function(event) {
+            responses++;
+          });
+
+          // Wait one tick for observeNodes.
+          Polymer.Base.async(function() {
+            expect(form.validate()).to.be.equal(false);
+            form.submit();
+            server.respond();
+          }, 1);
+
+          setTimeout(function() {
+            expect(responses).to.be.equal(0);
+            done();
+          },  200);
+        });
+      });
+    });
+
+    suite('resetting', function() {
+      var inputs;
+      var form;
+      setup(function() {
+        form = fixture('slotted-reset').$.form;
+        var slot = form.querySelector('slot,content');
+        if (slot) {
+          inputs = Polymer.dom(slot).getDistributedNodes()[1];
+        } else {
+          inputs = form.querySelector('[id="inputs"]');
+        }
+      });
+
+      test('can reset a form', function(done) {
+        // Wait one tick for observeNodes.
+        Polymer.Base.async(function() {
+          var initial = form.serializeForm();
+          expect(JSON.stringify(initial)).to.be.equal('{"original":"works","input1":"input1","input2":"","check1":"on","radio1":"on","papercheck1":"on","paper1":"paper1","paper2":""}');
+
+          // Modify all the values, flip all the inputs.
+          form.querySelector('[name=original]').value = 'works++';
+          inputs.querySelector('[name=input1]').value = 'input1++';
+          inputs.querySelector('[name=input2]').value = 'input2++';
+          inputs.querySelector('[name=check1]').checked = false;
+          inputs.querySelector('[name=check2]').checked = true;
+          inputs.querySelector('[name=radio1]').checked = false;
+          inputs.querySelector('[name=radio2]').checked = true;
+          inputs.querySelector('[name=papercheck1]').checked = false;
+          inputs.querySelector('[name=papercheck2]').checked = true;
+          inputs.querySelector('[name=paper1]').value = 'paper1++';
+          inputs.querySelector('[name=paper2]').value = 'paper2++';
+
+          var updated = form.serializeForm();
+          expect(JSON.stringify(updated)).to.not.be.equal(initial);
+
+          form.reset();
+
+          var final = form.serializeForm();
+          expect(JSON.stringify(final)).to.be.equal(JSON.stringify(initial));
+          done();
+        }, 1);
+      });
+    });
+
+  </script>
+</body>
