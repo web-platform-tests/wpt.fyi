@@ -68,7 +68,7 @@ case "${UNAME_OUT}" in
     Linux*|*)  GECKO_DRIVER_OS="linux64";;
 esac
 GECKO_DRIVER_TGZ="${GECKO_DRIVER}-v0.19.1-${GECKO_DRIVER_OS}.tar.gz"
-GECKO_DRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/v0.19.1/${GECKO_DRIVER_GZ}"
+GECKO_DRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/v0.19.1/${GECKO_DRIVER_TGZ}"
 
 info "Getting ${GECKO_DRIVER} binary..."
 if [[ ! -e ${GECKO_DRIVER} || "${REINSTALL}" == "true" ]]
