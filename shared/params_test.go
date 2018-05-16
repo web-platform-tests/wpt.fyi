@@ -169,6 +169,28 @@ func TestGetProductsForRequest_BrowserParam_ChromeAndExperimentalLabel(t *testin
 	assert.Equal(t, "chrome-experimental", products[0].BrowserName)
 }
 
+func TestGetProductsForRequest_BrowserAndProductParam(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?product=edge-16&browser=chrome", nil)
+	products, err := GetProductsForRequest(r)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "edge", products[0].BrowserName)
+	assert.Equal(t, "16", products[0].BrowserVersion)
+	assert.Equal(t, "chrome", products[1].BrowserName)
+}
+
+func TestGetProductsForRequest_BrowsersAndProductsParam(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?products=edge-16,safari&browsers=chrome,firefox", nil)
+	products, err := GetProductsForRequest(r)
+	assert.Nil(t, err)
+	assert.Equal(t, 4, len(products))
+	assert.Equal(t, "edge", products[0].BrowserName)
+	assert.Equal(t, "16", products[0].BrowserVersion)
+	assert.Equal(t, "safari", products[1].BrowserName)
+	assert.Equal(t, "chrome", products[2].BrowserName)
+	assert.Equal(t, "firefox", products[3].BrowserName)
+}
+
 func TestParseMaxCountParam_Missing(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	count, err := ParseMaxCountParam(r)
