@@ -76,6 +76,14 @@ sys_update: sys_deps
 go_webdriver_deps: go_deps webdriver_deps
 
 webdriver_deps:
+	if [[ "$$(which wget)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests wget; \
+	fi
+	if [[ "$$(which Xvfb)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
+	fi
 	cd $(WPTD_PATH)webapp; npm install web-component-tester --unsafe-perm
 	cd $(WEBDRIVER_PATH); ./install.sh $(BROWSERS_PATH)
 
@@ -93,10 +101,6 @@ sys_deps:
 	if [[ "$$(which curl)" == "" ]]; \
 		then \
 		sudo apt-get install --assume-yes --no-install-suggests curl; \
-	fi
-	if [[ "$$(which wget)" == "" ]]; \
-		then \
-		sudo apt-get install --assume-yes --no-install-suggests wget; \
 	fi
 	if [[ "$$(which git)" == "" ]]; \
 		then \
