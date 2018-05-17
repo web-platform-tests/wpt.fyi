@@ -94,7 +94,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // getTestRunsAndSources gets the arrays of source urls and placeholder-TestRun-shared from the parameters for the
-// current request. When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [platform]@[sha]), or
+// current request. When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [product]@[sha]), or
 // base64 encoded TestRun JSON blobs for the results summaries.
 func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []string, testRuns []shared.TestRun, err error) {
 	before := r.URL.Query().Get("before")
@@ -106,7 +106,7 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			return nil, nil, errors.New("before param provided, but after param missing")
 		}
 
-		const singleRunURL = `/api/run?sha=%s&browser=%s`
+		const singleRunURL = `/api/run?sha=%s&product=%s`
 
 		if beforeDecoded, err := base64.URLEncoding.DecodeString(before); err == nil {
 			var run shared.TestRun
@@ -115,11 +115,11 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			}
 			testRuns = append(testRuns, run)
 		} else {
-			var beforeSpec shared.PlatformAtRevision
-			if beforeSpec, err = shared.ParsePlatformAtRevisionSpec(before); err != nil {
+			var beforeSpec shared.ProductAtRevision
+			if beforeSpec, err = shared.ParseProductAtRevision(before); err != nil {
 				return nil, nil, errors.New("invalid before param")
 			}
-			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, beforeSpec.Revision, beforeSpec.Platform))
+			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, beforeSpec.Revision, beforeSpec.Product.String()))
 		}
 
 		if afterDecoded, err := base64.URLEncoding.DecodeString(after); err == nil {
@@ -129,11 +129,11 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			}
 			testRuns = append(testRuns, run)
 		} else {
-			var afterSpec shared.PlatformAtRevision
-			if afterSpec, err = shared.ParsePlatformAtRevisionSpec(after); err != nil {
+			var afterSpec shared.ProductAtRevision
+			if afterSpec, err = shared.ParseProductAtRevision(after); err != nil {
 				return nil, nil, errors.New("invalid after param")
 			}
-			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Platform))
+			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Product.String()))
 		}
 	} else {
 		var sourceURL = `/api/runs?sha=%s`

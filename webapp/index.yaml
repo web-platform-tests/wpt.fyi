@@ -52,7 +52,7 @@ indexes:
   - name: CreatedAt
     direction: desc
   - name: Revision
-- kind: github.com.w3c.wptdashboard.metrics.FailuresMetadata
+- kind: github.com.web-platform-tests.results-analysis.metrics.FailuresMetadata
   properties:
   - name: BrowserName
   - name: StartTime
