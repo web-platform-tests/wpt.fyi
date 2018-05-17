@@ -108,8 +108,10 @@ sys_deps:
 	fi
 	if [[ "$$(which gcloud)" == "" ]]; \
 		then \
-		curl -s https://sdk.cloud.google.com > /tmp/install-gcloud.sh; \
-		bash /tmp/install-gcloud.sh --disable-prompts --install-dir=$(HOME); \
+		TMP_FILE=$$(mktemp); \
+		echo "Using temporary file: ${TMP_FILE}"; \
+		curl -s https://sdk.cloud.google.com > "${TMP_FILE}"; \
+		bash "${TMP_FILE}" --disable-prompts --install-dir=$(HOME); \
 		gcloud components install --quiet \
 			app-engine-go \
 			core \
