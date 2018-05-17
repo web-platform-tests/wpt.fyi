@@ -32,7 +32,7 @@ GO_FILES := $(wildcard $(WPTD_PATH)**/*.go)
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_FILES))
 GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_FILES))
 
-build: go_build
+build: go_build bower_components
 
 test: go_test
 
