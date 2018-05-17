@@ -17,13 +17,17 @@ PR=""
 
 function usage() {
   USAGE="USAGE: $(basename ${0}) [-q]
+    -d  daemon mode: Run in the background rather than blocking then cleaning up
     -q  quiet mode: Assume default for all prompts"
   >&2 echo "${USAGE}"
 }
 
+DAEMON="false"
 QUIET="false"
-while getopts ':hq' FLAG; do
+while getopts ':dhq' FLAG; do
   case "${FLAG}" in
+    d)
+      DAEMON="true" ;;
     q)
       QUIET="true" ;;
     h|*) usage && exit 0 ;;
@@ -80,8 +84,6 @@ fi
 
 set -e
 
-
-
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]] || [[ "${PR}" == "R" ]]; then
   info "Starting docker instance wptd-dev-instance..."
   docker run -t -d --entrypoint /bin/bash \
@@ -107,7 +109,9 @@ else
   exit 0
 fi
 
-
+if [[ "${DAEMON}" == "true" ]]; then
+  exit 0
+fi
 
 trap quit INT
 

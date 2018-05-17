@@ -44,14 +44,7 @@ before_install: |
   openssl aes-256-cbc -K $encrypted_c8659b25fe66_key -iv $encrypted_c8659b25fe66_iv -in client-secret.json.enc -out client-secret.json -d
 
   docker build -t "${DOCKER_IMAGE}" .
-  docker run -t -d \
-      --entrypoint /bin/bash \
-      -v /etc/group:/etc/group:ro \
-      -v /etc/passwd:/etc/passwd:ro \
-      -v "$(pwd)":/home/user/wpt.fyi \
-      -u $(id -u $USER):$(id -g $USER) \
-      --name "${DOCKER_INSTANCE}" \
-      "${DOCKER_IMAGE}"
+  bash ./util/docker-dev/run.sh -d -q
 
 
 install:
