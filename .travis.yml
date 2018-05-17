@@ -109,6 +109,7 @@ script:
 
 # Continuously deploy master to staging.
 deploy:
+  skip_cleanup: true
   provider: script
   on:
     branch: master
