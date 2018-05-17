@@ -84,6 +84,10 @@ webdriver_deps:
 		then \
 		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
 	fi
+	if [[ "$$(which java)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests default-jdk; \
+	fi
 	cd $(WPTD_PATH)webapp; npm install web-component-tester --unsafe-perm
 	cd $(WEBDRIVER_PATH); ./install.sh $(BROWSERS_PATH)
 
