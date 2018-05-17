@@ -7,6 +7,8 @@ source "${REPO_DIR}/util/path.sh"
 source "${REPO_DIR}/util/commands.sh"
 WPTD_PATH=${WPTD_PATH:-$(absdir "${REPO_DIR}")}
 
+DOCKER_INSTANCE="${DOCKER_INSTANCE:-wptd-dev-instance}"
+
 info "Checking where we're pushing..."
 IS_MASTER="false"
 while read local_ref local_sha remote_ref remote_sha
@@ -36,24 +38,24 @@ if [ "${DIFF_STATUS}" != "0" ]; then
 fi
 
 info "Running pre-push checks in docker..."
-docker inspect wptd-dev-instance > /dev/null 2>&1
+docker inspect "${DOCKER_INSTANCE}" > /dev/null 2>&1
 INSPECT_STATUS="${?}"
 
 DOCKER_INSTANCE_PID=""
 if [ "${INSPECT_STATUS}" != "0" ]; then
-  info "Docker instance wptd-dev-instance not found. Starting it..."
+  info "Docker instance ${DOCKER_INSTANCE} not found. Starting it..."
   docker run -t -d --entrypoint /bin/bash \
       -v "${WPTD_PATH}":/home/user/wpt.fyi \
       -u $(id -u $USER):$(id -g $USER) \
-      --name wptd-dev-instance wptd-dev &
+      --name "${DOCKER_INSTANCE}" wptd-dev &
   DOCKER_INSTANCE_PID="${!}"
 else
-  info "Found existing docker instance wptd-dev-instance"
+  info "Found existing docker instance ${DOCKER_INSTANCE}"
 fi
 # Ensure rights.
 wptd_chown "/home/user"
 
-docker exec -t -u $(id -u $USER):$(id -g $USER) wptd-dev-instance make prepush
+docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make prepush
 LINT_STATUS="${?}"
 FINAL_STATUS="${LINT_STATUS}"
 if [ "${LINT_STATUS}" != "0" ]; then
