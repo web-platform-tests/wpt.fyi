@@ -90,7 +90,6 @@ go_deps: sys_deps $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
 sys_deps:
-	which curl
 	if [[ "$$(which curl)" == "" ]]; \
 		then \
 		sudo apt-get install --assume-yes --no-install-suggests curl; \
@@ -102,6 +101,10 @@ sys_deps:
 	if [[ "$$(which python)" == "" ]]; \
 		then \
 		sudo apt-get install --assume-yes --no-install-suggests python; \
+	fi
+	if [[ "$$(which gpg)" == "" ]]; \
+	then \
+		sudo apt-get install --assume-yes --no-install-suggests gnupg; \
 	fi
 	if [[ "$$(which gcloud)" == "" ]]; \
 		then \

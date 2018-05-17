@@ -1,4 +1,4 @@
-FROM gcr.io/google-appengine/golang
+FROM gcr.io/gcp-runtimes/go1-builder:1.10
 
 #
 # Dockerfile suitable for development and continuous integration of all wpt.fyi
