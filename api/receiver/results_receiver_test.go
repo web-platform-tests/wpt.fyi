@@ -31,6 +31,24 @@ func TestHandleResultsUpload_not_admin(t *testing.T) {
 	assert.Equal(t, resp.Code, http.StatusUnauthorized)
 }
 
+func TestHandleResultsUpload_http_basic_auth_invalid(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	req := httptest.NewRequest("POST", "/api/results/upload", new(strings.Reader))
+	req.SetBasicAuth("not_a_user", "123")
+	resp := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	gomock.InOrder(
+		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().AuthenticateUploader("not_a_user", "123").Return(false),
+	)
+
+	HandleResultsUpload(mockAE, resp, req)
+
+	assert.Equal(t, resp.Code, http.StatusUnauthorized)
+}
+
 func TestHandleFilePayload(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
