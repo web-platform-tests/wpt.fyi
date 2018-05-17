@@ -61,10 +61,16 @@ dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run util/populate_dev_data.go $(FLAGS)
 
-webapp_deploy_staging: env-BRANCH_NAME
+webapp_deploy_staging: bower_components env-BRANCH_NAME
 	gcloud config set project wptdashboard
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME)
+
+bower_components: bower
+	cd $(WPTDPATH)webapp; npm run bower-components
+
+bower:
+	cd $(WPTDPATH)webapp; npm install bower
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
