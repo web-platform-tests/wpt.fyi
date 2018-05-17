@@ -11,8 +11,8 @@
 
 SHELL := /bin/bash
 
-export GOPATH=$$(go env GOPATH)
-export PATH=$(HOME)/google-cloud-sdk/bin:$(PATH)
+export GOPATH=$(shell go env GOPATH)
+export PATH:=$(HOME)/google-cloud-sdk/bin:$(PATH)
 
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
