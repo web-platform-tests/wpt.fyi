@@ -94,6 +94,10 @@ sys_deps:
 		then \
 		sudo apt-get install --assume-yes --no-install-suggests curl; \
 	fi
+	if [[ "$$(which wget)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests wget; \
+	fi
 	if [[ "$$(which git)" == "" ]]; \
 		then \
 		sudo apt-get install --assume-yes --no-install-suggests git; \
