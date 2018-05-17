@@ -60,6 +60,9 @@ docker run -t -d --entrypoint /bin/bash \
     --name wptd-dev-instance wptd-dev
 DOCKER_INSTANCE_PID="${!}"
 
+info "Setting up local user"
+wptd_useradd
+
 info "Ensuring the home directory is owned by the user..."
 wptd_chown "/home/user"
 

@@ -1,16 +1,16 @@
 {
   "name": "wptdashboard",
   "devDependencies": {
-    "babel-eslint": "^8.1.2",
-    "eslint": "^4.14.0",
+    "babel-eslint": "^8.2.3",
+    "eslint": "^4.19.1",
     "eslint-plugin-html": "^3.2.2",
     "web-component-tester": "^6.4.3"
   },
   "scripts": {
     "test": "npm run lint && npm run wct",
-    "lint": "./node_modules/.bin/eslint --plugin html components/*.html test/*.html",
-    "lint-fix": "./node_modules/.bin/eslint --plugin html components/*.html test/*.html --fix",
-    "wctp": "./node_modules/.bin/wct -p",
-    "wct": "./node_modules/.bin/wct"
+    "lint": "eslint --plugin html components/*.html test/*.html",
+    "lint-fix": "eslint --plugin html components/*.html test/*.html --fix",
+    "wctp": "wct -p",
+    "wct": "wct"
   }
 }

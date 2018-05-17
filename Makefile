@@ -23,11 +23,7 @@ FIREFOX_PATH ?= $(BROWSERS_PATH)/firefox/firefox
 GECKODRIVER_PATH ?= $(BROWSERS_PATH)/geckodriver
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
-GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_FILES))
-GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_FILES))
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
-GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_TEST_FILES))
-GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_TEST_FILES))
 
 build: go_build
 
@@ -71,15 +67,65 @@ go_webdriver_test: go_webdriver_deps
 			--firefox_path=$(FIREFOX_PATH) \
 			--geckodriver_path=$(GECKODRIVER_PATH)
 
+sys_update: sys_deps
+	sudo apt-get update
+	gcloud components update
+	npm install -g npm
+
 go_webdriver_deps: go_deps webdriver_deps
 
 webdriver_deps:
+	cd $(WPTD_PATH)webapp; npm install web-component-tester --unsafe-perm
 	cd $(WEBDRIVER_PATH); ./install.sh $(BROWSERS_PATH)
 
-go_deps: $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
+go_deps: sys_deps $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
+	# Manual git clone + install is a workaround for #85.
+	if [ "$$(which golint)" == "" ]; \
+		then \
+		mkdir -p "$(GOPATH)/src/golang.org/x"; \
+		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint; \
+		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...; \
+	fi
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
+sys_deps:
+	which curl
+	if [[ "$$(which curl)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests curl; \
+	fi
+	if [[ "$$(which git)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests git; \
+	fi
+	if [[ "$$(which python)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests python; \
+	fi
+	if [[ "$$(which gcloud)" == "" ]]; \
+		then \
+		curl -s https://sdk.cloud.google.com > /tmp/install-gcloud.sh; \
+		bash /tmp/install-gcloud.sh --disable-prompts --install-dir=$(HOME); \
+		gcloud components install --quiet \
+			app-engine-go \
+			core \
+			gsutil \
+			app-engine-python; \
+		gcloud config set disable_usage_reporting false; \
+	fi
+	if [[ "$$(which nodejs)" == "" ]]; \
+	then \
+		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
+		sudo apt-get install --assume-yes --no-install-suggests nodejs; \
+	fi
+	if [[ "$$(which npm)" == "" ]]; \
+	then \
+		sudo apt-get install --assume-yes --no-install-suggests npm; \
+		npm install -g npm; \
+	fi
+
 eslint:
+	cd $(WPTD_PATH)webapp; npm install eslint babel-eslint eslint-plugin-html
 	cd $(WPTD_PATH)webapp; npm run lint
 
 dev_data:
