@@ -111,10 +111,11 @@ script:
 
 # Continuously deploy master to staging.
 deploy:
+  skip_cleanup: true
   provider: script
   on:
     branch: master
     repo: web-platform-tests/wpt.fyi
-    condition: "${TRAVIS_SECURE_ENV_VARS}" == "true"
+    condition: ${TRAVIS_SECURE_ENV_VARS} == true
   script: |
     docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make webapp_deploy_staging BRANCH_NAME=master

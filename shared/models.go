@@ -35,6 +35,13 @@ func (p Product) String() string {
 	return s
 }
 
+// ByBrowserName is a []Product sortable by BrowserName values.
+type ByBrowserName []Product
+
+func (e ByBrowserName) Len() int           { return len(e) }
+func (e ByBrowserName) Swap(i, j int)      { e[i], e[j] = e[j], e[i] }
+func (e ByBrowserName) Less(i, j int) bool { return e[i].BrowserName < e[j].BrowserName }
+
 // Version is a struct for a parsed semantic version string.
 type Version struct {
 	Major    string
