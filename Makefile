@@ -73,10 +73,10 @@ go_small_test: go_deps
 
 go_medium_test: go_deps
 	cd $(WPTD_GO_PATH); go test -tags=medium -v ./...
-	
+
 go_large_test: go_webdriver_test
 
-go_webdriver_test: go_webdriver_deps
+go_webdriver_test: go_webdriver_deps bower_components
 	cd $(WEBDRIVER_PATH); go test -v -tags=large \
 			--selenium_path=$(SELENIUM_PATH) \
 			--firefox_path=$(FIREFOX_PATH) \
