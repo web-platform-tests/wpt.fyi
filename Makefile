@@ -40,7 +40,7 @@ GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_TEST_FILES))
 GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_TEST_FILES))
 
-build: go_build
+build: go_build bower_components
 
 test: go_test
 
@@ -76,7 +76,7 @@ go_medium_test: go_deps
 
 go_large_test: go_webdriver_test
 
-go_webdriver_test: go_webdriver_deps
+go_webdriver_test: go_webdriver_deps bower_components
 	cd $(WEBDRIVER_PATH); go test -v -tags=large \
 			--selenium_path=$(SELENIUM_PATH) \
 			--firefox_path=$(FIREFOX_PATH) \
@@ -97,10 +97,16 @@ dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run util/populate_dev_data.go $(FLAGS)
 
-deploy_staging: env-BRANCH_NAME env-APP_PATH
+deploy_staging: bower_components env-BRANCH_NAME env-APP_PATH
 	gcloud config set project wptdashboard
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
+
+bower_components: bower
+	cd $(WPTDPATH)webapp; npm run bower-components
+
+bower:
+	cd $(WPTDPATH)webapp; npm install bower
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
