@@ -176,9 +176,9 @@ func TestGetProductsForRequest_BrowserAndProductParam(t *testing.T) {
 	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
-	assert.Equal(t, "edge", products[0].BrowserName)
-	assert.Equal(t, "16", products[0].BrowserVersion)
-	assert.Equal(t, "chrome", products[1].BrowserName)
+	assert.Equal(t, "chrome", products[0].BrowserName)
+	assert.Equal(t, "edge", products[1].BrowserName)
+	assert.Equal(t, "16", products[1].BrowserVersion)
 }
 
 func TestGetProductsForRequest_BrowsersAndProductsParam(t *testing.T) {
@@ -186,11 +186,11 @@ func TestGetProductsForRequest_BrowsersAndProductsParam(t *testing.T) {
 	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
 	assert.Equal(t, 4, len(products))
-	assert.Equal(t, "edge", products[0].BrowserName)
-	assert.Equal(t, "16", products[0].BrowserVersion)
-	assert.Equal(t, "safari", products[1].BrowserName)
-	assert.Equal(t, "chrome", products[2].BrowserName)
-	assert.Equal(t, "firefox", products[3].BrowserName)
+	assert.Equal(t, "chrome", products[0].BrowserName)
+	assert.Equal(t, "edge", products[1].BrowserName)
+	assert.Equal(t, "16", products[1].BrowserVersion)
+	assert.Equal(t, "firefox", products[2].BrowserName)
+	assert.Equal(t, "safari", products[3].BrowserName)
 }
 
 func TestParseMaxCountParam_Missing(t *testing.T) {
