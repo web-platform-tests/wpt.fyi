@@ -7,6 +7,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="path-part.html">
 <link rel="import" href="runs.html">
 <link rel="import" href="test-run.html">
@@ -43,13 +44,13 @@ found in the LICENSE file.
 
     a {
       text-decoration: none;
-      color: #0d5de6;
+      color: var(--paper-blue-500);
       font-family: monospace;
     }
 
     a:hover {
       cursor: pointer;
-      color: #226ff3;
+      color: var(--paper-blue-700);
     }
 
     table {
@@ -63,7 +64,7 @@ found in the LICENSE file.
     }
 
     tr.spec {
-      background-color: #eee;
+      background-color: var(--paper-grey-200);
     }
 
     tr td {
@@ -72,7 +73,7 @@ found in the LICENSE file.
 
     tr.spec td {
       padding: 0.2em 0.5em;
-      border: solid 1px #ccc;
+      border: solid 1px var(--paper-grey-300);
     }
 
     .path-separator {
@@ -85,10 +86,10 @@ found in the LICENSE file.
 
     .info {
       padding: 0.5em;
-      background-color: #e2e3fd;
+      background-color: var(--paper-blue-100);
       margin-bottom: 1em;
       margin-top: 2em;
-      border-left: solid 4px #7477f4;
+      border-left: solid 4px var(--paper-blue-300);
     }
 
     .info small {
@@ -206,7 +207,7 @@ found in the LICENSE file.
     [255,  87,  34], // --paper-deep-orange-500
     [255, 152,   0], // --paper-orange-500
     [255, 235,  59], // --paper-yellow-500
-    [139, 195,  74], // --paper-light-green-500
+    [118, 255,   3], // --paper-light-green-a200
   ];
 
   const queryTimeoutId = Symbol('queryTimeoutId');
