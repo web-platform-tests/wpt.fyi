@@ -73,7 +73,7 @@ go_small_test: go_deps
 
 go_medium_test: go_deps
 	cd $(WPTD_GO_PATH); go test -tags=medium -v ./...
-	
+
 go_large_test: go_webdriver_test
 
 go_webdriver_test: go_webdriver_deps
@@ -97,10 +97,10 @@ dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run util/populate_dev_data.go $(FLAGS)
 
-webapp_deploy_staging: env-BRANCH_NAME
+deploy_staging: env-BRANCH_NAME env-APP_PATH
 	gcloud config set project wptdashboard
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
-	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME)
+	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
