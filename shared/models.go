@@ -70,8 +70,8 @@ type TestRun struct {
 	ResultsURL string `json:"results_url"`
 
 	CreatedAt     time.Time `json:"created_at"`
-	RevisionHash  *string   `json:"revision_hash"`
-	RawResultsURL *string   `json:"raw_results_url"`
+	RevisionHash  string    `json:"revision_hash"`
+	RawResultsURL string    `json:"raw_results_url"`
 }
 
 // Browser holds objects that appear in browsers.json
