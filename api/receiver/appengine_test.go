@@ -13,7 +13,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine"
 	"google.golang.org/appengine/aetest"
+	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
 )
 
@@ -66,4 +69,22 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 1)
 
+}
+
+func TestAuthenticateUploader(t *testing.T) {
+	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	assert.Nil(t, err)
+	r, err := i.NewRequest("POST", "/api/admin/upload", nil)
+	assert.Nil(t, err)
+	ctx := appengine.NewContext(r)
+
+	assert.Nil(t, err)
+	defer i.Close()
+
+	a := appEngineAPIImpl{ctx: ctx}
+	assert.False(t, a.AuthenticateUploader("user", "123"))
+
+	key := datastore.NewKey(ctx, "Uploader", "user", 0, nil)
+	datastore.Put(ctx, key, &shared.Uploader{Username: "user", Password: "123"})
+	assert.True(t, a.AuthenticateUploader("user", "123"))
 }

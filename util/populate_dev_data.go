@@ -160,6 +160,11 @@ func main() {
 	addSecretToken(ctx, "upload-token", emptySecretToken)
 	addSecretToken(ctx, "github-api-token", emptySecretToken)
 
+	log.Print("Adding uploader \"test\"...")
+	addData(ctx, "Uploader", []interface{}{
+		&shared.Uploader{Username: "test", Password: "123"},
+	})
+
 	log.Print("Adding local mock data (static/)...")
 	addData(ctx, testRunKindName, staticTestRunMetadata)
 	addData(ctx, passRateMetadataKindName, staticPassRateMetadata)

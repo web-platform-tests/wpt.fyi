@@ -151,3 +151,10 @@ func (m ManifestItem) FilterByPath(paths mapset.Set) (item ManifestItem, err err
 	}
 	return filtered, nil
 }
+
+// Uploader is a username/password combo accepted by
+// the results receiver.
+type Uploader struct {
+	Username string
+	Password string
+}
