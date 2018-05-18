@@ -82,7 +82,7 @@ sys_update: sys_deps
 
 go_webdriver_deps: go_deps webdriver_deps
 
-webdriver_deps: browser_deps bower_components web_component_tester
+webdriver_deps: xvfb browser_deps bower_components web_component_tester
 
 chrome: browser_deps
 	if [[ -z "$$(which google-chrome)" ]]; then \
@@ -99,8 +99,7 @@ firefox: browser_deps
 	fi
 
 browser_deps:
-	sudo apt-get install --assume-yes --no-install-suggests default-jdk wget xvfb $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
-
+	sudo apt-get install --assume-yes --no-install-suggests default-jdk wget $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 go_deps: sys_deps $(GO_FILES)
 	# Manual git clone + install is a workaround for #85.
@@ -179,6 +178,9 @@ node: nvm
 
 nvm:
 	if [[ ! -e $$HOME/.nvm/nvm.sh ]];	then wget -qO- $(NVM_URL) | bash;	fi
+
+xvfb: apt-get-xvfb
+	export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
