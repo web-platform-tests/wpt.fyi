@@ -80,7 +80,7 @@ webdriver_deps:
 	cd $(WPTD_PATH)webapp; npm install web-component-tester --unsafe-perm
 	cd $(WEBDRIVER_PATH); ./install.sh $(BROWSERS_PATH)
 
-go_deps: sys_deps $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
+go_deps: sys_deps $(GO_FILES)
 	# Manual git clone + install is a workaround for #85.
 	if [ "$$(which golint)" == "" ]; \
 		then \
@@ -123,11 +123,6 @@ sys_deps:
 	then \
 		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
 		sudo apt-get install --assume-yes --no-install-suggests nodejs; \
-	fi
-	if [[ "$$(which npm)" == "" ]]; \
-	then \
-		sudo apt-get install --assume-yes --no-install-suggests npm; \
-		npm install -g npm; \
 	fi
 
 eslint:
