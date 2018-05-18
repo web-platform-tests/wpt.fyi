@@ -11,8 +11,7 @@ A dashboard of cross-browser results for [web-platform-tests](https://github.com
 You'll need [Docker](https://www.docker.com/). With Docker installed, build the base image and development image, and start a development server instance:
 
 ```sh
-docker build -t wptd-base -f Dockerfile.base .
-docker build -t wptd-dev -f Dockerfile.dev .
+docker build -t wptd-dev .
 ./util/docker-dev/run.sh
 ```
 

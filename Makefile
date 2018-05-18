@@ -12,8 +12,9 @@
 SHELL := /bin/bash
 
 export GOPATH=$(shell go env GOPATH)
+export PATH:=$(HOME)/google-cloud-sdk/bin:$(PATH)
 
-# WPTD_PATH will have a trailing slash, e.g. /home/jenkins/wpt.fyi/
+# WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPTD_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests/wpt.fyi
 WEBDRIVER_PATH ?= $(WPTD_GO_PATH)/webdriver
@@ -22,23 +23,8 @@ SELENIUM_PATH ?= $(BROWSERS_PATH)/selenium
 FIREFOX_PATH ?= $(BROWSERS_PATH)/firefox/firefox
 GECKODRIVER_PATH ?= $(BROWSERS_PATH)/geckodriver
 
-BQ_LIB_REPO ?= github.com/GoogleCloudPlatform/protoc-gen-bq-schema
-PB_LIB_DIR ?= ../protobuf/src
-PB_BQ_LIB_DIR ?= $(WPTD_PATH)vendor/$(BQ_LIB_REPO)
-PB_LOCAL_LIB_DIR ?= protos
-PB_BQ_OUT_DIR ?= bq-schema
-PB_PY_OUT_DIR ?= run/protos
-PB_GO_OUT_DIR ?= generated
-PB_GO_PKG_MAP ?= Mbq_table_name.proto=$(BQ_LIB_REPO)/protos
-
-PROTOS=$(wildcard $(PB_LOCAL_LIB_DIR)/*.proto)
-
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
-GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_FILES))
-GO_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_FILES))
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
-GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)generated/**/*.go), $(GO_TEST_FILES))
-GO_TEST_FILES := $(filter-out $(wildcard $(WPTD_PATH)vendor/**/*.go), $(GO_TEST_FILES))
 
 build: go_build bower_components
 
@@ -82,15 +68,65 @@ go_webdriver_test: go_webdriver_deps bower_components
 			--firefox_path=$(FIREFOX_PATH) \
 			--geckodriver_path=$(GECKODRIVER_PATH)
 
+sys_update: sys_deps
+	sudo apt-get update
+	gcloud components update
+	npm install -g npm
+
 go_webdriver_deps: go_deps webdriver_deps
 
 webdriver_deps:
+	sudo apt-get install --assume-yes --no-install-suggests default-jdk wget xvfb $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+	cd $(WPTD_PATH)webapp; npm install web-component-tester --unsafe-perm
 	cd $(WEBDRIVER_PATH); ./install.sh $(BROWSERS_PATH)
 
-go_deps: $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
+go_deps: sys_deps $(GO_FILES)
+	# Manual git clone + install is a workaround for #85.
+	if [ "$$(which golint)" == "" ]; \
+		then \
+		mkdir -p "$(GOPATH)/src/golang.org/x"; \
+		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint; \
+		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...; \
+	fi
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
+sys_deps:
+	if [[ "$$(which curl)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests curl; \
+	fi
+	if [[ "$$(which git)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests git; \
+	fi
+	if [[ "$$(which python)" == "" ]]; \
+		then \
+		sudo apt-get install --assume-yes --no-install-suggests python; \
+	fi
+	if [[ "$$(which gpg)" == "" ]]; \
+	then \
+		sudo apt-get install --assume-yes --no-install-suggests gnupg; \
+	fi
+	if [[ "$$(which gcloud)" == "" ]]; \
+		then \
+		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh; \
+		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME); \
+		rm -f ./install-gcloud.sh; \
+		gcloud components install --quiet \
+			app-engine-go \
+			core \
+			gsutil \
+			app-engine-python; \
+		gcloud config set disable_usage_reporting false; \
+	fi
+	if [[ "$$(which nodejs)" == "" ]]; \
+	then \
+		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
+		sudo apt-get install --assume-yes --no-install-suggests nodejs; \
+	fi
+
 eslint:
+	cd $(WPTD_PATH)webapp; npm install eslint babel-eslint eslint-plugin-html
 	cd $(WPTD_PATH)webapp; npm run lint
 
 dev_data:
