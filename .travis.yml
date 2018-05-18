@@ -30,30 +30,21 @@ matrix:
         - MAKE_TEST_TARGET=go_test
     - language: go
       env:
-        - MAKE_DEPS_TARGET=go_deps
-        - MAKE_TEST_TARGET=go_webdriver_test
-    - language: go
-      env:
         - secure: "UuTZnGD+HSB+EYQFg2+lKhDwxlDUtU/uz4XdUG8/8F7Us9G7e7w/DL0jhnzpHjK13ig7Yafj83zZmNszpfaXhNdNp2glhiIeuupODODd24tRA4e9DBIoEToJEyjkXD7RttK4H7SaRp12yVEnE+gnUTiDCOJQHmkDl6DHwwUfeTG3P+dKgHsybdrXcUZG+ff4DPrwq9B6NU7izKC3QqByfcxhfxv+SE9e6vi8LKs6qdRbg4PnPEOc85kiqMmtqNHQ7hph3Np3oEaEeZqMylo2hKh/gXxWgNjH3uFwEtJx7sWYL/c3HpiNRMTPUFVJmGaU/xQqH3gGqEbt0QIjrQVFGJZ0wjJoha1+TigIB9LjJ3eSJCtUwj6naWwi0laOZJyR4L/+XCWpNRH2SjLvakIjims7ZEKbE3rVA/Vr0mY67NLnEm0fh6xglN2Jlm5Mag5hw3bHcOi72sQthjQofEtUE0fElAEGc4wBVCd87LzcLyCvZhg6VeJ/M+kC4uJuiMQJ6qkO92UDaV0bvY9svLlGBuBbd/PH0YPh0kkTUlH5IzJx/wymE2mSwtP8af1n0IBIItVfq6uuzct5IhEZvMoZsDv1pU5pqM/ucRuuvb6rtZedGpGjBZacM1uNa/MbvnF5imAHxfY7783saGaIpdNr6k4cxmHglelxwSR0zqujU2Q="
         - DEPLOY_STAGING=true
+    - language: go
+      env:
+        - MAKE_DEPS_TARGET=go_deps
+        - MAKE_TEST_TARGET=go_webdriver_test
 
 before_install: |
-  export DOCKER_FILE=Dockerfile.dev
   export DOCKER_IMAGE=wptd-dev
   export DOCKER_INSTANCE=wptd-dev-${RANDOM}
   # Decrypt client-secret.json for Appengine.
   openssl aes-256-cbc -K $encrypted_c8659b25fe66_key -iv $encrypted_c8659b25fe66_iv -in client-secret.json.enc -out client-secret.json -d
 
-  docker build -t wptd-base -f Dockerfile.base .
-  docker build -t "${DOCKER_IMAGE}" -f "${DOCKER_FILE}" .
-  docker run -t -d \
-      --entrypoint /bin/bash \
-      -v /etc/group:/etc/group:ro \
-      -v /etc/passwd:/etc/passwd:ro \
-      -v "$(pwd)":/home/jenkins/wpt.fyi \
-      -u $(id -u $USER):$(id -g $USER) \
-      --name "${DOCKER_INSTANCE}" \
-      "${DOCKER_IMAGE}"
+  docker build -t "${DOCKER_IMAGE}" .
+  bash ./util/docker-dev/run.sh -d -q
 
 
 install:
@@ -73,7 +64,7 @@ install:
       sh -e /etc/init.d/xvfb start
     fi
   - | # Set the user as home dir owner in the docker instance
-    docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) /home/jenkins
+    docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) /home/user
   - | # Install any dependencies
     if [ "${MAKE_DEPS_TARGET}" != "" ]; then
       docker exec -t -u 0:0 "${DOCKER_INSTANCE}" make "${MAKE_DEPS_TARGET}" || exit $?
@@ -104,4 +95,4 @@ deploy:
     branch: master
     repo: web-platform-tests/wpt.fyi
     condition: ${TRAVIS_SECURE_ENV_VARS} == true
-  script: docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make webapp_deploy_staging BRANCH_NAME=master
+  script: docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make deploy_staging BRANCH_NAME=master APP_PATH="webapp results-processor"
