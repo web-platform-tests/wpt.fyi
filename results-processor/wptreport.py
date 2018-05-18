@@ -8,9 +8,15 @@ import argparse
 import gzip
 import io
 import json
+import logging
 import os
 import subprocess
 import tempfile
+
+import requests
+
+_log = logging.getLogger(__name__)
+_log.setLevel(logging.INFO)
 
 
 class MissingMetadataError(Exception):
@@ -33,6 +39,8 @@ class WPTReport(object):
     def __init__(self):
         self._report = dict()
         self._summary = dict()
+        # A relative path: short_sha/browser-summary.json.gz
+        self.sha_summary_path = ''
 
     def load_json(self, fileobj):
         """Loads wptreport from a JSON file.
@@ -187,8 +195,7 @@ class WPTReport(object):
         """
         try:
             if not revision:
-                # TODO(Hexcles): Switch to full SHA.
-                revision = self.run_info['revision'][:10]
+                revision = self.run_info['revision']
             if not browser:
                 # TODO(Hexcles): Switch to the new naming convention.
                 browser = "{}-{}-{}".format(self.run_info['product'],
@@ -199,17 +206,61 @@ class WPTReport(object):
 
         if not output_dir:
             output_dir = tempfile.mkdtemp()
-        sha_dir = os.path.join(output_dir, revision[:10])
-        self.write_summary(os.path.join(sha_dir, browser + '-summary.json.gz'))
-        self.write_result_directory(os.path.join(sha_dir, browser))
+
+        # TODO(Hexcles): Switch to full SHA.
+        short_sha = revision[:10]
+        summary_filename = browser + '-summary.json.gz'
+        self.sha_summary_path = os.path.join(short_sha, summary_filename)
+        self.write_summary(os.path.join(output_dir, self.sha_summary_path))
+        self.write_result_directory(
+            os.path.join(output_dir, short_sha, browser))
         return output_dir
+
+    @property
+    def test_run_metadata(self):
+        # Required fields:
+        try:
+            payload = {
+                'browser_name': self.run_info['product'],
+                'browser_version': self.run_info['browser_version'],
+                'os_name': self.run_info['os'],
+                'revision': self.run_info['revision'][:10],
+                'full_revision': self.run_info['revision'],
+            }
+        except KeyError as e:
+            raise MissingMetadataError(str(e)) from e
+
+        # Optional fields:
+        if self.run_info.get('os_version'):
+            payload['os_version'] = self.run_info['os_version']
 
 
 def gcs_upload(local_path, gcs_path):
-    subprocess.check_call([
+    assert gcs_path.startswith('gs://')
+    command = [
         'gsutil', '-m', '-h', 'Content-Encoding:gzip', 'rsync', '-r',
         local_path, gcs_path
-    ])
+    ]
+    _log.info(' '.join(command))
+    subprocess.check_call(command)
+    return gcs_path.replace('gs://', 'https://storage.googleapis.com/', 1)
+
+
+def create_test_run(report, secret):
+    if not report.sha_summary_path:
+        raise MissingMetadataError('results_url')
+
+    # TODO(Hexcles): Do not hardcode the URLs.
+    payload = report.test_run_metadata
+    payload['results_url'] = "https://storage.googleapis.com/wptd/%s".format(
+        report.sha_summary_path
+    )
+    response = requests.post(
+        "https://wpt.fyi/api/run",
+        params={'secret': secret},
+        data=json.dumps(payload)
+    )
+    response.raise_for_status()
 
 
 def main():
@@ -232,7 +283,7 @@ def main():
     parser.add_argument('--browser', type=str,
                         help='the browser of the test run (overrides the '
                         'browser info included in the REPORT)')
-    parser.add_argument('--upload', type=bool, default=False,
+    parser.add_argument('--upload', default=False, action='store_true',
                         help='upload the results to GCS')
     args = parser.parse_args()
 
@@ -253,7 +304,8 @@ def main():
             output_dir=args.output_dir
         )
     if args.upload:
-        gcs_upload(upload_dir, 'gs://wptd')
+        public_url = gcs_upload(upload_dir, 'gs://wptd')
+        _log.info('Uploaded to: %s', public_url)
 
 
 if __name__ == '__main__':

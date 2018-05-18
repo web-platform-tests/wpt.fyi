@@ -2,3 +2,4 @@ Flask
 google-cloud-storage
 gunicorn
 flake8
+requests
