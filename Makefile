@@ -32,7 +32,7 @@ test: go_test
 
 lint: go_lint eslint
 
-prepush: build test lint
+prepush: go_build test lint
 
 go_build: go_deps
 	cd $(WPTD_GO_PATH); go build ./...
