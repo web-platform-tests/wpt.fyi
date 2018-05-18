@@ -116,7 +116,8 @@ bower_components: node-bower
 	cd $(WPTD_PATH)webapp; npm run bower-components
 
 node-%: node
-	cd $(WPTD_PATH)webapp; if [[ "$$(node -p "require('$*/package.json').version")" == "" ]]; then npm install $*; fi
+	@ echo "# Installing $*..."
+	@ cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install $*
 
 node: nvm
 	if [[ "$$(which node)" == "" ]]; then source $$HOME/.nvm/nvm.sh; nvm install 6 && node --version; fi
