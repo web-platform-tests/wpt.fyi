@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
 	"google.golang.org/appengine/urlfetch"
 	"google.golang.org/appengine/user"
@@ -22,6 +24,8 @@ type AppEngineAPI interface {
 	IsLoggedIn() bool
 	IsAdmin() bool
 	LoginURL(redirect string) (string, error)
+	Context() context.Context
+	AuthenticateUploader(username, password string) bool
 
 	uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error)
 	scheduleResultsTask(uploader string, gcsPaths []string, payloadType string) (*taskqueue.Task, error)
@@ -42,6 +46,19 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 		ctx:   ctx,
 		queue: ResultsQueue,
 	}
+}
+
+func (a *appEngineAPIImpl) Context() context.Context {
+	return a.ctx
+}
+
+func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool {
+	key := datastore.NewKey(a.ctx, "Uploader", username, 0, nil)
+	var uploader shared.Uploader
+	if err := datastore.Get(a.ctx, key, &uploader); err != nil || uploader.Password != password {
+		return false
+	}
+	return true
 }
 
 func (a *appEngineAPIImpl) IsLoggedIn() bool {
