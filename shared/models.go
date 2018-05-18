@@ -54,8 +54,13 @@ type Version struct {
 type ProductAtRevision struct {
 	Product
 
-	// The first 10 characters of the SHA1 of the tested WPT revision
+	// The first 10 characters of the SHA1 of the tested WPT revision.
+	//
+	// Deprecated: The authoritative git revision indicator is FullRevisionHash.
 	Revision string `json:"revision"`
+
+	// The complete SHA1 hash of the tested WPT revision.
+	FullRevisionHash string `json:"full_revision_hash"`
 }
 
 func (p ProductAtRevision) String() string {
@@ -66,10 +71,15 @@ func (p ProductAtRevision) String() string {
 type TestRun struct {
 	ProductAtRevision
 
-	// Results URL
+	// URL for summary of results, which is derived from raw results.
 	ResultsURL string `json:"results_url"`
 
+	// Time when the test run metadata was first created.
 	CreatedAt time.Time `json:"created_at"`
+
+	// URL for raw results JSON object. Resembles the JSON output of the
+	// wpt report tool.
+	RawResultsURL string `json:"raw_results_url"`
 }
 
 // Browser holds objects that appear in browsers.json
