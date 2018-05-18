@@ -8,7 +8,7 @@ APP_PATH=$1
 UTIL_DIR="$(dirname $0)"
 source "${UTIL_DIR}/logging.sh"
 
-if [ ${TRAVIS_SECURE_ENV_VARS} == false ]; then
+if [ "${TRAVIS_SECURE_ENV_VARS}" == "false" ]; then
   info "Travis secrets unavaible. Skipping ${APP_PATH} deployment."
   exit 0
 fi
