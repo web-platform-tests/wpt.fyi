@@ -16,11 +16,12 @@ export GOPATH=$(shell go env GOPATH)
 # WPTD_PATH will have a trailing slash, e.g. /home/jenkins/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPTD_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests/wpt.fyi
-WEBDRIVER_PATH ?= $(WPTD_GO_PATH)/webdriver
-BROWSERS_PATH ?= $(HOME)/browsers
-SELENIUM_PATH ?= $(BROWSERS_PATH)/selenium
-FIREFOX_PATH ?= $(BROWSERS_PATH)/firefox/firefox
-GECKODRIVER_PATH ?= $(BROWSERS_PATH)/geckodriver
+NODE_SELENIUM_PATH=$(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
+SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.8.1-server.jar
+GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.0-x64-geckodriver
+FIREFOX_PATH ?= $$(which firefox)
+USE_FRAME_BUFFER ?= true
+NVM_URL=https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh
 
 BQ_LIB_REPO ?= github.com/GoogleCloudPlatform/protoc-gen-bq-schema
 PB_LIB_DIR ?= ../protobuf/src
@@ -76,22 +77,29 @@ go_medium_test: go_deps
 
 go_large_test: go_webdriver_test
 
-go_webdriver_test: go_webdriver_deps bower_components
-	cd $(WEBDRIVER_PATH); go test -v -tags=large \
-			--selenium_path=$(SELENIUM_PATH) \
+integration_test: go_webdriver_test web_components_test
+
+go_webdriver_test: go_webdriver_deps
+	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
+			--selenium_path=$(SELENIUM_SERVER_PATH) \
 			--firefox_path=$(FIREFOX_PATH) \
-			--geckodriver_path=$(GECKODRIVER_PATH)
+			--geckodriver_path=$(GECKODRIVER_PATH) \
+			--frame_buffer=$(USE_FRAME_BUFFER)
+
+web_components_test: webdriver_deps web_component_tester
+	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
 
 go_webdriver_deps: go_deps webdriver_deps
 
-webdriver_deps:
-	cd $(WEBDRIVER_PATH); ./install.sh $(BROWSERS_PATH)
+webdriver_deps: bower_components xvfb web_component_tester
 
 go_deps: $(find .  -type f | grep '\.go$' | grep -v '\.pb.go$')
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
-eslint:
+eslint: eslint_node_modules
 	cd $(WPTD_PATH)webapp; npm run lint
+
+eslint_node_modules: node-babel-eslint node-eslint node-eslint-plugin-html
 
 dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
@@ -102,11 +110,22 @@ webapp_deploy_staging: bower_components env-BRANCH_NAME
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME)
 
-bower_components: bower
-	cd $(WPTDPATH)webapp; npm run bower-components
+web_component_tester: node-web-component-tester bower_components
 
-bower:
-	cd $(WPTDPATH)webapp; npm install bower
+bower_components: node-bower
+	cd $(WPTD_PATH)webapp; npm run bower-components
+
+node-%: node
+	cd $(WPTD_PATH)webapp; if [[ "$$(node -p "require('$*/package.json').version")" == "" ]]; then npm install $*; fi
+
+node: nvm
+	if [[ "$$(which node)" == "" ]]; then source $$HOME/.nvm/nvm.sh; nvm install 6 && node --version; fi
+
+nvm:
+	if [[ ! -e $$HOME/.nvm/nvm.sh ]];	then wget -qO- $(NVM_URL) | bash;	fi
+
+xvfb: node
+	if [[ "$$(which Xvfb)" == "" ]]; then cd $(WPTD_PATH)webapp; npm install xvfb; fi
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
