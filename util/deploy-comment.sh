@@ -5,7 +5,7 @@
 
 STAGING_URL="$1"
 
-UTIL_DIR="$(dirname $0)"
+UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
 if [[ -z "${STAGING_URL}" ]];

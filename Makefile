@@ -108,5 +108,11 @@ bower_components: bower
 bower:
 	cd $(WPTDPATH)webapp; npm install bower
 
+bower_components: bower
+	cd $(WPTDPATH)webapp; npm run bower-components
+
+bower:
+	cd $(WPTDPATH)webapp; npm install bower
+
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi

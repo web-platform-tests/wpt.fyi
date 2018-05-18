@@ -5,7 +5,7 @@
 
 APP_PATH=$1
 
-UTIL_DIR="$(dirname $0)"
+UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
 if [ "${TRAVIS_SECURE_ENV_VARS}" == "false" ]; then
@@ -19,7 +19,7 @@ if [ -z "${TRAVIS_PULL_REQUEST_BRANCH}"]; then
 fi
 
 # Skip if webapp isn't modified.
-git diff --name-only FETCH_HEAD...${TRAVIS_PULL_REQUEST_BRANCH} | grep ^$APP_PATH/ || {
+git diff --name-only FETCH_HEAD...${TRAVIS_PULL_REQUEST_BRANCH} | grep "^$APP_PATH/" || {
   info "No changes detected under ${APP_PATH}. Skipping deployment."
   exit 0
 }

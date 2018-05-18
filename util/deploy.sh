@@ -2,7 +2,7 @@
 
 # Helper script for using a standardized version flag when deploying.
 
-REPO_DIR="$(dirname "$0")/.."
+REPO_DIR="$(dirname "${BASH_SOURCE[0]}")/.."
 source "${REPO_DIR}/util/logging.sh"
 source "${REPO_DIR}/util/path.sh"
 WPTD_PATH=${WPTD_PATH:-$(absdir ${REPO_DIR})}
