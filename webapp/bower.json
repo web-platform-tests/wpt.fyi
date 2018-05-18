@@ -4,9 +4,17 @@
   "dependencies": {
     "polymer": "Polymer/polymer#2",
     "paper-styles": "PolymerElements/paper-styles#^2.1.0",
-    "paper-toast": "PolymerElements/paper-toast#2.1.1"
+    "paper-toast": "PolymerElements/paper-toast#2.1.1",
+    "paper-input": "PolymerElements/paper-input#^2.2.2",
+    "iron-form": "PolymerElements/iron-form#^2.3.0",
+    "paper-button": "PolymerElements/paper-button#^2.1.1",
+    "paper-card": "PolymerElements/paper-card#^2.1.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^2.0.0"
   },
   "devDependencies": {
     "web-component-tester": "^6.4.3"
+  },
+  "resolutions": {
+    "webcomponentsjs": "^2.0.0"
   }
 }

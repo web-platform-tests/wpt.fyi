@@ -7,7 +7,6 @@ package shared
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,36 +18,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
-// PlatformAtRevision is represents a test-run spec, of [platform]@[SHA],
-// e.g. 'chrome@latest' or 'safari-10@abcdef1234'
-type PlatformAtRevision struct {
-	// Platform is the string representing browser (+ version), and OS (+ version).
-	Platform string
-
-	// Revision is the SHA[0:10] of the git repo.
-	Revision string
-}
-
-// ParsePlatformAtRevisionSpec parses a test-run spec into a PlatformAtRevision struct.
-func ParsePlatformAtRevisionSpec(spec string) (platformAtRevision PlatformAtRevision, err error) {
-	pieces := strings.Split(spec, "@")
-	if len(pieces) > 2 {
-		return platformAtRevision, errors.New("invalid platform@revision spec: " + spec)
-	}
-	platformAtRevision.Platform = pieces[0]
-	if len(pieces) < 2 {
-		// No @ is assumed to be the platform only.
-		platformAtRevision.Revision = "latest"
-	} else {
-		platformAtRevision.Revision = pieces[1]
-	}
-	// TODO(lukebjerring): Also handle actual platforms (with version + os)
-	if IsBrowserName(platformAtRevision.Platform) {
-		return platformAtRevision, nil
-	}
-	return platformAtRevision, errors.New("Platform " + platformAtRevision.Platform + " not found")
-}
-
+// FetchRunResultsJSONForParam fetches the results JSON blob for the given [product]@[SHA] param.
 func FetchRunResultsJSONForParam(
 	ctx context.Context, r *http.Request, param string) (results map[string][]int, err error) {
 	afterDecoded, err := base64.URLEncoding.DecodeString(param)
@@ -59,15 +29,16 @@ func FetchRunResultsJSONForParam(
 		}
 		return FetchRunResultsJSON(ctx, r, run)
 	}
-	var spec PlatformAtRevision
-	if spec, err = ParsePlatformAtRevisionSpec(param); err != nil {
+	var spec ProductAtRevision
+	if spec, err = ParseProductAtRevision(param); err != nil {
 		return nil, err
 	}
 	return FetchRunResultsJSONForSpec(ctx, r, spec)
 }
 
+// FetchRunResultsJSONForSpec fetches the result JSON blob for the given spec.
 func FetchRunResultsJSONForSpec(
-	ctx context.Context, r *http.Request, revision PlatformAtRevision) (results map[string][]int, err error) {
+	ctx context.Context, r *http.Request, revision ProductAtRevision) (results map[string][]int, err error) {
 	var run TestRun
 	if run, err = FetchRunForSpec(ctx, revision); err != nil {
 		return nil, err
@@ -77,16 +48,19 @@ func FetchRunResultsJSONForSpec(
 	return FetchRunResultsJSON(ctx, r, run)
 }
 
-func FetchRunForSpec(ctx context.Context, revision PlatformAtRevision) (TestRun, error) {
+// FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
+func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (TestRun, error) {
 	baseQuery := datastore.
 		NewQuery("TestRun").
 		Order("-CreatedAt").
 		Limit(1)
 
 	var results []TestRun
-	// TODO(lukebjerring): Handle actual platforms (split out version + os)
-	query := baseQuery.
-		Filter("BrowserName =", revision.Platform)
+	// TODO(lukebjerring): Handle OS of products (split out version + os)
+	query := baseQuery.Filter("BrowserName =", revision.BrowserName)
+	if revision.BrowserVersion != "" {
+		query = query.Filter("BrowserVersion =", revision.BrowserVersion)
+	}
 	if revision.Revision != "latest" {
 		query = query.Filter("Revision = ", revision.Revision)
 	}
@@ -99,7 +73,7 @@ func FetchRunForSpec(ctx context.Context, revision PlatformAtRevision) (TestRun,
 	return results[0], nil
 }
 
-// fetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
+// FetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
 // a full run can span 20k files).
 func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (results map[string][]int, err error) {
 	client := urlfetch.Client(ctx)
