@@ -15,13 +15,20 @@ WPTD_HOST_WEB_PORT=${WPTD_HOST_WEB_PORT:-"8080"}
 WPTD_HOST_ADMIN_WEB_PORT=${WPTD_HOST_ADMIN_WEB_PORT:-"8000"}
 WPTD_HOST_API_WEB_PORT=${WPTD_HOST_API_WEB_PORT:-"9999"}
 
-PR=""
-
 function usage() {
   USAGE="USAGE: $(basename ${0}) [-q]
     -d  daemon mode: Run in the background rather than blocking then cleaning up
     -q  quiet mode: Assume default for all prompts"
   >&2 echo "${USAGE}"
+}
+
+PR=""
+function confirm_preserve_remove() {
+  if confirm "${1}. Remove?"; then
+    PR="r"
+  else
+    PR="p"
+  fi
 }
 
 DAEMON="false"
@@ -55,14 +62,13 @@ docker inspect "${DOCKER_INSTANCE}" | grep '"Running": true' | read
 RUNNING_STATUS="${?}"
 
 function stop() {
-  warn "run.sh: Recieved interrupt. Exiting..."
   info "Stopping ${DOCKER_INSTANCE}..."
   wptd_stop
   info ""${DOCKER_INSTANCE}" stopped."
-  if [[ "${QUIET}" != "true" ]]; then
-    read -p "Docker instance ${DOCKER_INSTANCE}: (p)reserve or (r)emove (P/r): " PR
+  if [[ "${QUIET}" != "true" ]] && [[ "${PR}" != "r" ]]; then
+    confirm_preserve_remove "Docker instance ${DOCKER_INSTANCE} still exists"
   fi
-  if [[ "${PR}" == "r" ]] || [[ "${PR}" == "R" ]]; then
+  if [[ "${PR}" == "r" ]]; then
     info "Removing ${DOCKER_INSTANCE}..."
     wptd_rm
     info "${DOCKER_INSTANCE} removed."
@@ -70,23 +76,21 @@ function stop() {
 }
 
 function quit() {
+  warn "run.sh: Recieved interrupt. Exiting..."
   stop
   exit 0
 }
 
 if [ "${INSPECT_STATUS}" == "0" ]; then
-  info "Found existing docker instance ${DOCKER_INSTANCE}."
-  if [[ "${QUIET}" != "true" ]]; then
-    read -p "Docker instance ${DOCKER_INSTANCE}: (p)reserve or (r)emove (P/r): " PR
-  fi
-  if [[ "${PR}" == "r" ]] || [[ "${PR}" == "R" ]]; then
+  confirm_preserve_remove "Found existing docker instance ${DOCKER_INSTANCE}"
+  if [[ "${PR}" == "r" ]]; then
     stop
   fi
 fi
 
 set -e
 
-if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]] || [[ "${PR}" == "R" ]]; then
+if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
   docker run -t -d --entrypoint /bin/bash \
       -v "${WPTD_PATH}":/home/user/wpt.fyi \
