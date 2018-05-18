@@ -77,7 +77,7 @@ script:
     fi
   - | # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
-      fi [ ${OUTSIDE_DOCKER} == true ]; then
+      if [ ${OUTSIDE_DOCKER} == true ]; then
         make "${MAKE_TEST_TARGET}"
       else
         docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}"
