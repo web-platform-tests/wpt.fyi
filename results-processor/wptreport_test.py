@@ -9,7 +9,7 @@ import shutil
 import tempfile
 import unittest
 
-from wptreport import WPTReport, InsufficientData
+from wptreport import WPTReport, InsufficientDataError
 
 
 class WPTReportTest(unittest.TestCase):
@@ -20,16 +20,26 @@ class WPTReportTest(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
 
     def test_write_json(self):
+        obj = {'results': [{'test': 'foo'}]}
+        tmp_path = os.path.join(self.tmp_dir, 'test.json')
+        with open(tmp_path, 'wb') as f:
+            WPTReport.write_json(f, obj)
+        with open(tmp_path, 'rt') as f:
+            round_trip = json.load(f)
+        self.assertDictEqual(obj, round_trip)
+
+    def test_write_gzip_json(self):
         obj = {'results': [{
             'test': 'ABC~‾¥≈¤･・•∙·☼★星🌟星★☼·∙•・･¤≈¥‾~XYZ',
             'message': None,
             'status': 'PASS'
         }]}
-        tmp_path = os.path.join(self.tmp_dir, 'foo', 'bar.json')
-        WPTReport.write_json(tmp_path, obj)
-        with open(tmp_path, 'r') as f:
-            round_trip = json.load(f)
-        self.assertDictEqual(obj, round_trip)
+        tmp_path = os.path.join(self.tmp_dir, 'foo', 'bar.json.gz')
+        WPTReport.write_gzip_json(tmp_path, obj)
+        r = WPTReport()
+        with open(tmp_path, 'rb') as f:
+            r.load_gzip_json(f)
+        self.assertDictEqual(obj, r._report)
 
     def test_load_json_binary_mode(self):
         tmp_path = os.path.join(self.tmp_dir, 'test.json')
@@ -55,7 +65,7 @@ class WPTReportTest(unittest.TestCase):
             f.write('{}')
         r = WPTReport()
         with open(tmp_path, 'rt') as f:
-            with self.assertRaises(InsufficientData):
+            with self.assertRaises(InsufficientDataError):
                 r.load_json(f)
 
     def test_load_gzip_json(self):
@@ -107,7 +117,7 @@ class WPTReportTest(unittest.TestCase):
 
     def test_summarize_zero_results(self):
         r = WPTReport()
-        with self.assertRaises(InsufficientData):
+        with self.assertRaises(InsufficientDataError):
             r.summarize()
 
     def test_summarize_duplicate_results(self):
