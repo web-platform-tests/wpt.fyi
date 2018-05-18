@@ -4,7 +4,7 @@
     "babel-eslint": "^8.2.3",
     "eslint": "^4.19.1",
     "eslint-plugin-html": "^3.2.2",
-    "web-component-tester": "^6.4.3"
+    "web-component-tester": "^6.6.0"
   },
   "scripts": {
     "test": "npm run lint && npm run wct",
