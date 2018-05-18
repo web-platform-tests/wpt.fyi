@@ -76,6 +76,7 @@ sys_update: sys_deps
 go_webdriver_deps: go_deps webdriver_deps
 
 webdriver_deps:
+	sudo apt-get install --assume-yes --no-install-suggests default-jdk wget xvfb $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 	cd $(WPTD_PATH)webapp; npm install web-component-tester --unsafe-perm
 	cd $(WEBDRIVER_PATH); ./install.sh $(BROWSERS_PATH)
 
