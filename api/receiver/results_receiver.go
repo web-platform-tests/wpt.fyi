@@ -27,11 +27,11 @@ const ResultsTarget = "/api/results/process"
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	var uploader string
 	if !a.IsAdmin() {
-		// TODO check username, password against datastore
-		// username, password, ok := r.BasicAuth()
-		// uploader = username
-		http.Error(w, "Authentication error", http.StatusUnauthorized)
-		return
+		username, password, ok := r.BasicAuth()
+		if !ok || !a.AuthenticateUploader(username, password) {
+			http.Error(w, "Authentication error", http.StatusUnauthorized)
+			return
+		}
 	}
 
 	// Most form methods (e.g. PostFormValue, FormFile) will call
