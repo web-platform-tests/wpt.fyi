@@ -11,15 +11,15 @@ WPTD_PATH=${WPTD_PATH:-$(absdir ${DOCKER_DIR}/../..)}
 
 
 info "Selecting gcloud project: wptdashboard"
-wptd_exec "gcloud config set project wptdashboard"
+wptd_exec gcloud config set project wptdashboard
 
 info "Checking application default credentials"
-wptd_exec "gcloud auth application-default print-access-token"
+wptd_exec gcloud auth application-default print-access-token
 
 DOCKER_STATUS="${?}"
 if [ "${DOCKER_STATUS}" != "0" ]; then
   warn "No credentials yet. Logging in..."
-  wptd_exec_it "gcloud auth application-default login"
+  wptd_exec_it gcloud auth application-default login
 
   DOCKER_STATUS="${?}"
   if [ "${DOCKER_STATUS}" != "0" ]; then
