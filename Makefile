@@ -161,8 +161,11 @@ web_component_tester: chrome firefox node-web-component-tester bower_components
 bower_components: node-bower
 	cd $(WPTD_PATH)webapp; npm run bower-components
 
-xvfb: apt-get-xvfb
-	export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
+xvfb:
+	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
+		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
+		export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset & \
+	fi
 
 gcloud-%: gcloud
 	gcloud components install --quiet $*
