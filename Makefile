@@ -67,10 +67,10 @@ go_large_test: go_webdriver_test
 integration_test: go_webdriver_test web_components_test
 
 go_webdriver_test: go_webdriver_deps
-	cd $(WPTD_PATH)webdriver; go test -v -tags=large
-			--selenium_path=$(SELENIUM_SERVER_PATH)
-			--firefox_path=$(FIREFOX_PATH)
-			--geckodriver_path=$(GECKODRIVER_PATH)
+	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
+			--selenium_path=$(SELENIUM_SERVER_PATH) \
+			--firefox_path=$(FIREFOX_PATH) \
+			--geckodriver_path=$(GECKODRIVER_PATH) \
 			--frame_buffer=$(USE_FRAME_BUFFER)
 
 web_components_test: webdriver_deps web_component_tester
