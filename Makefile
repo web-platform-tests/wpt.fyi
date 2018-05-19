@@ -9,8 +9,6 @@
 # the correct version of tools are installed and environment variables are
 # set appropriately.
 
-.ONESHELL:
-
 SHELL := /bin/bash
 
 export GOPATH=$(shell go env GOPATH)
@@ -91,17 +89,17 @@ webserver_deps: build bower_components dev_appserver_deps
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go
 
 chrome: browser_deps
-	if [[ -z "$$(which google-chrome)" ]]; then
-		if [[ -z "$$(which chromium)" ]]; then
-			make apt-get-chromium;
-		fi;
-		sudo ln -s "$$(which chromium)" /usr/bin/google-chrome;
+	if [[ -z "$$(which google-chrome)" ]]; then \
+		if [[ -z "$$(which chromium)" ]]; then \
+			make apt-get-chromium; \
+		fi; \
+		sudo ln -s "$$(which chromium)" /usr/bin/google-chrome; \
 	fi
 
 firefox: browser_deps
-	if [[ "$$(which firefox)" == "" ]]; then
-	  $(WPTD_PATH)webdriver/install.sh $$HOME/browsers;
-		sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox;
+	if [[ "$$(which firefox)" == "" ]]; then \
+	  $(WPTD_PATH)webdriver/install.sh $$HOME/browsers; \
+		sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox; \
 	fi
 
 browser_deps: wget
@@ -112,11 +110,10 @@ go_deps: gcloud $(GO_FILES)
 
 golint_deps: git go_deps
 	# Manual git clone + install is a workaround for #85.
-	if [ "$$(which golint)" == "" ];
-		then
-		mkdir -p "$(GOPATH)/src/golang.org/x";
-		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint;
-		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...;
+	if [ "$$(which golint)" == "" ]; then \
+		mkdir -p "$(GOPATH)/src/golang.org/x"; \
+		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint; \
+		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...; \
 	fi
 
 sys_deps: curl gpg node gcloud git
@@ -128,26 +125,23 @@ wget: apt-get-wget
 
 gpg:
 	@ # gpg has a different apt-get package name.
-	if [[ "$$(which gpg)" == "" ]];
-		then
-		sudo apt-get install --assume-yes --no-install-suggests gnupg;
+	if [[ "$$(which gpg)" == "" ]]; then \
+		sudo apt-get install --assume-yes --no-install-suggests gnupg; \
 	fi
 
 node: curl
-	if [[ "$$(which node)" == "" ]];
-		then
-		curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-		sudo apt-get install -y nodejs
+	if [[ "$$(which node)" == "" ]]; then \
+		curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -; \
+		sudo apt-get install -y nodejs; \
 	fi
 
 gcloud: python curl
-	if [[ "$$(which gcloud)" == "" ]];
-	then
-		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh
-		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME)
-		rm -f ./install-gcloud.sh
-		gcloud components install --quiet core gsutil
-		gcloud config set disable_usage_reporting false
+	if [[ "$$(which gcloud)" == "" ]]; then \
+		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh; \
+		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME); \
+		rm -f ./install-gcloud.sh; \
+		gcloud components install --quiet core gsutil; \
+		gcloud config set disable_usage_reporting false; \
 	fi
 
 eslint: node-babel-eslint node-eslint node-eslint-plugin-html
@@ -178,9 +172,7 @@ node-%: node
 	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
 
 apt-get-%:
-	@if [[ "$$(which $*)" == "" ]]; then
-		sudo apt-get install --assume-yes --no-install-suggests $*;
-	fi
+	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install --assume-yes --no-install-suggests $*; fi
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
