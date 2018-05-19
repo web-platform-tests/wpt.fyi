@@ -108,8 +108,9 @@ browser_deps: wget
 	sudo apt-get install --assume-yes --no-install-suggests default-jdk $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 go_deps: gcloud $(GO_FILES)
+	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
-golint_deps: git
+golint_deps: git go_deps
 	# Manual git clone + install is a workaround for #85.
 	if [ "$$(which golint)" == "" ];
 		then
@@ -117,7 +118,6 @@ golint_deps: git
 		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint;
 		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...;
 	fi
-	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
 sys_deps: curl gpg node gcloud git
 
