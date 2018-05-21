@@ -33,18 +33,6 @@ func init() {
 
 		// Admin-only manual results upload.
 		"/admin/results/upload": adminUploadHandler,
-
-		// API endpoint for diff of two test run summary JSON blobs.
-		"/api/diff": apiDiffHandler,
-
-		// API endpoint for listing all test runs for a given SHA.
-		"/api/runs": apiTestRunsHandler,
-
-		// API endpoint for a single test run.
-		"/api/run": apiTestRunHandler,
-
-		// API endpoint for redirecting to a run's summary JSON blob.
-		"/api/results": apiResultsRedirectHandler,
 	}
 
 	for route, handler := range routes {
