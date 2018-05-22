@@ -15,6 +15,6 @@
     "web-component-tester": "^6.4.3"
   },
   "resolutions": {
-    "webcomponentsjs": "^2.0.0"
+    "webcomponentsjs": "^1.1.0"
   }
 }
