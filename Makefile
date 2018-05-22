@@ -86,7 +86,10 @@ webdriver_deps: xvfb browser_deps webserver_deps web_component_tester
 # Dependencies for running dev_appserver.py.
 webserver_deps: build bower_components dev_appserver_deps
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go
+dev_appserver_deps:
+	if [[ "$$(which dev_appserver.py)" == "" ]]; then \
+		gcloud components install --quiet app-engine-python app-engine-go; \
+	fi
 
 chrome: browser_deps
 	if [[ -z "$$(which google-chrome)" ]]; then \
@@ -168,9 +171,6 @@ xvfb:
 		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
 		export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset & \
 	fi
-
-gcloud-%: gcloud
-	gcloud components install --quiet $*
 
 node-%: node npm
 	@ echo "# Installing $*..."

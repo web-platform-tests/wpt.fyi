@@ -17,8 +17,8 @@ usage() {
   echo "${USAGE}"
 }
 
-APP_PATH=$1
-while getopts ':b:dphqr:i:g:' flag; do
+APP_PATH=${@: -1}
+while getopts ':b:phq:g:' flag; do
   case "${flag}" in
     b) BRANCH_NAME="${OPTARG}" ;;
     p) PRODUCTION='true' ;;
@@ -27,9 +27,16 @@ while getopts ':b:dphqr:i:g:' flag; do
   esac
 done
 
+if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
+if [[ "${APP_PATH}" != "webapp" && "${APP_PATH}" != "results-processor" ]];
+then
+  fatal "Unrecognized app path \"${APP_PATH}\"."
+fi
+
 # Ensure dependencies are installed.
 if [[ -z "${QUIET}" ]]; then info "Installing dependencies..."; fi
-cd ${WPTD_PATH}; make go_deps;
+cd ${WPTD_PATH}
+make webserver_deps || fatal "Error installing deps"
 
 # Create a name for this version
 BRANCH_NAME=${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"}
@@ -42,7 +49,7 @@ PROMOTE="--no-promote"
 if [[ -n ${PRODUCTION} ]]
 then
   if [[ -z "${QUIET}" ]]; then debug "Producing production configuration..."; fi
-  if [[ "${USER}" != "web-platform-tests" ]]
+  if [[ "${USER}" != "" ]]
   then
     if [[ -z "${QUIET}" ]]
     then
@@ -73,7 +80,7 @@ fi
 set -e
 
 if [[ -z "${QUIET}" ]]; then info "Executing..."; fi
-${COMMAND}
+${COMMAND} || fatal "Deploy returned non-zero exit code $?"
 
 # Comment on the PR if running from Travis.
 DEPLOYED_URL=$(gcloud app versions describe ${VERSION} -s default | grep -Po 'versionUrl: \K.*$')
