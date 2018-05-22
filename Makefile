@@ -158,12 +158,6 @@ deploy_staging: bower_components env-BRANCH_NAME env-APP_PATH
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 
-bower_components: bower
-	cd $(WPTDPATH)webapp; npm run bower-components
-
-bower:
-	cd $(WPTDPATH)webapp; npm install bower
-
 web_component_tester: chrome firefox node-web-component-tester bower_components
 
 bower_components: node-bower
