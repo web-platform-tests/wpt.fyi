@@ -137,7 +137,7 @@ node: curl
 
 npm: apt-get-npm
 
-gcloud: python curl
+gcloud: python curl gpg
 	if [[ "$$(which gcloud)" == "" ]]; then \
 		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh; \
 		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME); \
