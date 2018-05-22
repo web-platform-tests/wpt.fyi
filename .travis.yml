@@ -19,7 +19,6 @@ matrix:
   include:
     - language: go
       env:
-        - OUTSIDE_DOCKER=true
         - MAKE_TEST_TARGET=integration_test
     - language: go
       env:
@@ -55,11 +54,7 @@ script:
     fi
   - | # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
-      if [ ${OUTSIDE_DOCKER} == true ]; then
-        make "${MAKE_TEST_TARGET}"
-      else
-        docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}"
-      fi
+      docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}"
     fi
 
 # Continuously deploy master to staging.
