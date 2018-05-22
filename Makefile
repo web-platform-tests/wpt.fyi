@@ -103,7 +103,7 @@ firefox: browser_deps
 	fi
 
 browser_deps: wget
-	sudo apt-get install --assume-yes --no-install-suggests default-jdk $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+	sudo apt-get install --assume-yes --no-install-suggests openjdk-8-jdk $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 go_deps: git gcloud $(GO_FILES)
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
