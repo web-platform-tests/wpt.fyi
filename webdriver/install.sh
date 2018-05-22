@@ -44,42 +44,6 @@ then
 fi
 cd ${INSTALL_DIR}
 
-# Selenium standalone.
-SELENIUM="selenium"
-SELENIUM_STANDALONE="${SELENIUM}-server-standalone-3.8.1.jar"
-SELENIUM_STANDALONE_URL="http://selenium-release.storage.googleapis.com/3.8/${SELENIUM_STANDALONE}"
-
-info "Getting ${SELENIUM_STANDALONE} binary..."
-
-if [[ ! -e ${SELENIUM} || "${REINSTALL}" == "true" ]]
-then
-    info "Downloading ${SELENIUM_STANDALONE_URL}..."
-    fetch "${SELENIUM_STANDALONE_URL}" "${SELENIUM}"
-
-    debug "Renaming to ${SELENIUM}..."
-    mv ${SELENIUM_STANDALONE} ${SELENIUM}
-fi
-
-# Gecko driver
-GECKO_DRIVER="geckodriver"
-UNAME_OUT="$(uname -s)"
-case "${UNAME_OUT}" in
-    Darwin*)   GECKO_DRIVER_OS="macos";;
-    Linux*|*)  GECKO_DRIVER_OS="linux64";;
-esac
-GECKO_DRIVER_TGZ="${GECKO_DRIVER}-v0.19.1-${GECKO_DRIVER_OS}.tar.gz"
-GECKO_DRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/v0.19.1/${GECKO_DRIVER_TGZ}"
-
-info "Getting ${GECKO_DRIVER} binary..."
-if [[ ! -e ${GECKO_DRIVER} || "${REINSTALL}" == "true" ]]
-then
-    info "Downloading ${GECKO_DRIVER_URL}..."
-    fetch "${GECKO_DRIVER_URL}" "${GECKO_DRIVER_GZ}"
-
-    debug "Unzipping ${GECKO_DRIVER_TGZ}..."
-    if [[ ! -e geckodriver || "${REINSTALL}" == "true" ]]; then tar -xzf ${GECKO_DRIVER_TGZ}; fi
-fi
-
 # Firefox 58
 FIREFOX="firefox"
 case "${UNAME_OUT}" in

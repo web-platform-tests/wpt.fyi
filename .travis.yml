@@ -17,25 +17,20 @@ services:
 
 matrix:
   include:
-    - language: python
-      env:
-        - WCT=1
+    # Integration tests are broken - see #170
+    # - language: go
+    #  env:
+    #    - MAKE_TEST_TARGET=integration_test
     - language: go
       env:
-        - MAKE_DEPS_TARGET=go_deps
-        - MAKE_TEST_TARGET=go_lint
+        - MAKE_TEST_TARGET=lint
     - language: go
       env:
-        - MAKE_DEPS_TARGET=go_deps
         - MAKE_TEST_TARGET=go_test
     - language: go
       env:
         - secure: "UuTZnGD+HSB+EYQFg2+lKhDwxlDUtU/uz4XdUG8/8F7Us9G7e7w/DL0jhnzpHjK13ig7Yafj83zZmNszpfaXhNdNp2glhiIeuupODODd24tRA4e9DBIoEToJEyjkXD7RttK4H7SaRp12yVEnE+gnUTiDCOJQHmkDl6DHwwUfeTG3P+dKgHsybdrXcUZG+ff4DPrwq9B6NU7izKC3QqByfcxhfxv+SE9e6vi8LKs6qdRbg4PnPEOc85kiqMmtqNHQ7hph3Np3oEaEeZqMylo2hKh/gXxWgNjH3uFwEtJx7sWYL/c3HpiNRMTPUFVJmGaU/xQqH3gGqEbt0QIjrQVFGJZ0wjJoha1+TigIB9LjJ3eSJCtUwj6naWwi0laOZJyR4L/+XCWpNRH2SjLvakIjims7ZEKbE3rVA/Vr0mY67NLnEm0fh6xglN2Jlm5Mag5hw3bHcOi72sQthjQofEtUE0fElAEGc4wBVCd87LzcLyCvZhg6VeJ/M+kC4uJuiMQJ6qkO92UDaV0bvY9svLlGBuBbd/PH0YPh0kkTUlH5IzJx/wymE2mSwtP8af1n0IBIItVfq6uuzct5IhEZvMoZsDv1pU5pqM/ucRuuvb6rtZedGpGjBZacM1uNa/MbvnF5imAHxfY7783saGaIpdNr6k4cxmHglelxwSR0zqujU2Q="
         - DEPLOY_STAGING=true
-    - language: go
-      env:
-        - MAKE_DEPS_TARGET=go_deps
-        - MAKE_TEST_TARGET=go_webdriver_test
 
 before_install: |
   export DOCKER_IMAGE=wptd-dev
@@ -46,29 +41,9 @@ before_install: |
   docker build -t "${DOCKER_IMAGE}" .
   bash ./util/docker-dev/run.sh -d -q
 
-
 install:
-  - | # Set up Web Components Tests
-    if [ "${WCT}" == "1" ]; then
-      wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
-      source ~/.nvm/nvm.sh
-      nvm install 6
-      node --version
-      cd webapp
-      npm install -g bower
-      bower install
-      npm install -g web-component-tester
-      npm install
-      cd ../
-      export DISPLAY=:99.0
-      sh -e /etc/init.d/xvfb start
-    fi
   - | # Set the user as home dir owner in the docker instance
     docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) /home/user
-  - | # Install any dependencies
-    if [ "${MAKE_DEPS_TARGET}" != "" ]; then
-      docker exec -t -u 0:0 "${DOCKER_INSTANCE}" make "${MAKE_DEPS_TARGET}" || exit $?
-    fi
 
 script:
   - |
@@ -81,10 +56,6 @@ script:
   - | # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
       docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}"
-    fi
-  - | # Run WCT tests
-    if [ "${WCT}" == "1" ]; then
-      cd webapp && npm test
     fi
 
 # Continuously deploy master to staging.

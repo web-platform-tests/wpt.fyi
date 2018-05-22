@@ -7,6 +7,7 @@
     "eslint-plugin-html": "^3.2.2",
     "web-component-tester": "^6.6.0"
   },
+  "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
     "bower-components": "bower install",
     "test": "npm run lint && npm run wct",

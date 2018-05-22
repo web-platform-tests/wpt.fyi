@@ -28,7 +28,7 @@ while getopts ':rh' flag; do
 done
 
 info "Installing web server code dependencies"
-wptd_exec "make build"
+wptd_exec make webserver_deps
 
 DOCKER_STATUS="${?}"
 if [ "${DOCKER_STATUS}" != "0" ]; then
@@ -37,13 +37,13 @@ if [ "${DOCKER_STATUS}" != "0" ]; then
 fi
 
 info "Starting web server. Port forwarded from wptd-dev-instance: 8080"
-wptd_exec_it "dev_appserver.py
-   --enable_host_checking $HOST_CHECKING
-   --host $WPTD_CONTAINER_HOST
-   --port=8080
-   --admin_host=$WPTD_CONTAINER_HOST
-   --admin_port=8000
-   --api_host=$WPTD_CONTAINER_HOST
-   --api_port=9999
-   -A=wptdashboard
-   webapp"
+wptd_exec_it dev_appserver.py \
+   --enable_host_checking $HOST_CHECKING \
+   --host $WPTD_CONTAINER_HOST \
+   --port=8080 \
+   --admin_host=$WPTD_CONTAINER_HOST \
+   --admin_port=8000 \
+   --api_host=$WPTD_CONTAINER_HOST \
+   --api_port=9999 \
+   -A=wptdashboard \
+   webapp
