@@ -13,13 +13,13 @@ if [ "${TRAVIS_SECURE_ENV_VARS}" == "false" ]; then
   exit 0
 fi
 
-if [ -z "${TRAVIS_PULL_REQUEST_BRANCH}"]; then
+if [ -z "${TRAVIS_PULL_REQUEST_BRANCH}" ]; then
   info "Not on a PR. Skipping ${APP_PATH} deployment."
   exit 0
 fi
 
 # Skip if webapp isn't modified.
-git diff --name-only FETCH_HEAD...${TRAVIS_PULL_REQUEST_BRANCH} | grep "^$APP_PATH/" || {
+git diff --name-only FETCH_HEAD...${TRAVIS_BRANCH} | grep "^$APP_PATH/" || {
   info "No changes detected under ${APP_PATH}. Skipping deployment."
   exit 0
 }
