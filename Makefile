@@ -16,12 +16,12 @@ export GOPATH=$(shell go env GOPATH)
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPTD_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests/wpt.fyi
-NODE_SELENIUM_PATH=$(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
+NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.8.1-server.jar
 GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.0-x64-geckodriver
 FIREFOX_PATH ?= $$HOME/browsers/firefox/firefox
 USE_FRAME_BUFFER ?= true
-NVM_URL=https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh
+NVM_URL ?= https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
