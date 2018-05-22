@@ -2,20 +2,22 @@
 
 # Helper script for using a standardized version flag when deploying.
 
-REPO_DIR="$(dirname "$0")/.."
+REPO_DIR="$(dirname "${BASH_SOURCE[0]}")/.."
 source "${REPO_DIR}/util/logging.sh"
 source "${REPO_DIR}/util/path.sh"
 WPTD_PATH=${WPTD_PATH:-$(absdir ${REPO_DIR})}
 
 usage() {
-  USAGE="Usage: deploy.sh [-p] [-q] [-b] [-h]
-    -p Production deploy
-    -q Quiet (no user prompts, debugging off)
-    -b Branch name - defaults to current Git branch
-    -h Show (this) help information"
+  USAGE="Usage: deploy.sh [-p] [-q] [-b] [-h] [app path]
+    -p : Production deploy
+    -q : Quiet (no user prompts, debugging off)
+    -b : Branch name - defaults to current Git branch
+    -h : Show (this) help information
+    app path: wpt.fyi relative path for the app, e.g. \"webapp\""
   echo "${USAGE}"
 }
 
+APP_PATH=$1
 while getopts ':b:dphqr:i:g:' flag; do
   case "${flag}" in
     b) BRANCH_NAME="${OPTARG}" ;;
@@ -59,7 +61,7 @@ then
 else
     QUIET_FLAG=""
 fi
-COMMAND="gcloud app deploy ${PROMOTE} ${QUIET_FLAG} --version=${VERSION} ${WPTD_PATH}/webapp"
+COMMAND="gcloud app deploy ${PROMOTE} ${QUIET_FLAG} --version=${VERSION} ${APP_PATH}"
 
 if [[ -z "${QUIET}" ]]
 then
