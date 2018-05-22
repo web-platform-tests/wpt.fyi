@@ -174,6 +174,7 @@ gcloud-%: gcloud
 
 node-%: node npm
 	@ echo "# Installing $*..."
+	# Hack to (more quickly) detect whether a package is already installed (available in node).
 	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
 
 apt-get-%:
