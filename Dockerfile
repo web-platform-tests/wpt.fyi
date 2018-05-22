@@ -23,12 +23,13 @@ ENV WPT_PATH="${USER_HOME}/web-platform-tests"
 ENV WPTD_OUT_PATH="${USER_HOME}/wptdout"
 
 # Setup go environment
-RUN mkdir -p "${USER_HOME}/go"
 ENV GOPATH="${USER_HOME}/go"
+RUN mkdir -p "${GOPATH}"
+ENV GCLOUD_PATH="${USER_HOME}/google-cloud-sdk"
 ENV WPTD_GO_PATH="${GOPATH}/src/github.com/web-platform-tests/wpt.fyi"
 
 # Setup go + python binaries path
-ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:${USER_HOME}/.local/bin
+ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:${USER_HOME}/.local/bin:${GCLOUD_PATH}/bin
 
 # Install sudo so that unpriv'd dev user can "sudo apt-get install ..." in from
 # Makefile.
