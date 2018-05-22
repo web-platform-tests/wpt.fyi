@@ -135,6 +135,8 @@ node: curl
 		sudo apt-get install -y nodejs; \
 	fi
 
+npm: apt-get-npm
+
 gcloud: python curl
 	if [[ "$$(which gcloud)" == "" ]]; then \
 		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh; \
@@ -170,7 +172,7 @@ xvfb:
 gcloud-%: gcloud
 	gcloud components install --quiet $*
 
-node-%: node
+node-%: node npm
 	@ echo "# Installing $*..."
 	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
 
