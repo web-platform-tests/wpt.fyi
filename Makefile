@@ -176,7 +176,8 @@ xvfb:
 	export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
 
 gcloud-%: gcloud
-	gcloud components list | grep " $* " || gcloud components install --quiet $*
+	gcloud components list --filter="state[name]=Installed AND id=$*" | grep " $* " \
+		|| gcloud components install --quiet $*
 
 node-%: node npm
 	@ echo "# Installing $*..."
