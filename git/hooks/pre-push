@@ -53,6 +53,7 @@ else
   info "Found existing docker instance ${DOCKER_INSTANCE}"
 fi
 # Ensure rights.
+wptd_useradd
 wptd_chown "/home/user"
 
 docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make prepush
