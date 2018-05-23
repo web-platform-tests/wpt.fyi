@@ -9,18 +9,18 @@ source "${SCRIPT_DIR}/../util/path.sh"
 set -e
 
 usage() {
-  USAGE="Usage: install.sh [-r] [path]
+  USAGE="Usage: install.sh [-r] [-p PATH]
     -r   - Reinstall
-    path - Path to install (default: ~/browsers)"
+    -p   - Path to install (default: ~/browsers)"
   info "${USAGE}"
 }
 
-INSTALL_DIR=${1:-~/browsers}
-
+INSTALL_DIR=~/browsers
 REINSTALL="false"
-while getopts ':r' flag; do
+while getopts ':rp:' flag; do
   case "${flag}" in
     r) REINSTALL='true' ;;
+    p) INSTALL_DIR="${OPTARG}" ;;
     h|*) usage && exit 0;;
   esac
 done
@@ -44,21 +44,21 @@ then
 fi
 cd ${INSTALL_DIR}
 
-# Firefox 58
+# Firefox 60
 FIREFOX="firefox"
 case "${UNAME_OUT}" in
     Darwin*)
         FIREFOX_OS="mac"
-        FIREFOX_DMG="Firefox 58.0.dmg"
+        FIREFOX_DMG="Firefox 60.0.dmg"
         FIREFOX_SRC="${FIREFOX_DMG}"
         ;;
     Linux*|*)
         FIREFOX_OS="linux-x86_64"
-        FIREFOX_TBZ="${FIREFOX}-58.0.tar.bz2"
+        FIREFOX_TBZ="${FIREFOX}-60.0.tar.bz2"
         FIREFOX_SRC="${FIREFOX_TBZ}"
         ;;
 esac
-FIREFOX_URL="https://releases.mozilla.org/pub/firefox/releases/58.0/${FIREFOX_OS}/en-US/${FIREFOX_SRC}"
+FIREFOX_URL="https://releases.mozilla.org/pub/firefox/releases/60.0/${FIREFOX_OS}/en-US/${FIREFOX_SRC}"
 
 info "Getting ${FIREFOX} binary..."
 if [[ ! -e ${FIREFOX} || "${REINSTALL}" == "true" ]]

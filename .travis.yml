@@ -17,10 +17,9 @@ services:
 
 matrix:
   include:
-    # Integration tests are broken - see #170
-    # - language: go
-    #  env:
-    #    - MAKE_TEST_TARGET=integration_test
+    - language: go
+      env:
+        - MAKE_TEST_TARGET=integration_test
     - language: go
       env:
         - MAKE_TEST_TARGET=lint
