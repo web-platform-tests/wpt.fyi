@@ -12,14 +12,32 @@ information on using pull requests.
 
 # Local Development
 
-## Run the front-end lint
+## Linting your code
 
-You'll need NodeJS installed locally.
+There is a `make` rule for linting. Requirements for it are included in the docker image.
 
+```sh
+docker exec -t -u $(id -u $USER):$(id -g $USER) wptd-dev-instance make lint
+```
+
+To run outside docker, you'll need to install `golint` and `eslint`.
+
+Globally (in `wpt.fyi` root):
+```sh
+npm install -g eslint babel-eslint eslint-plugin-html
+make test
+```
+
+Locally (in `webapp/` dir):
 ```sh
 npm install
 npm test
 ```
+
+## Git prepush
+
+You should set up your repo to run `make prepush` in docker when you're pushing, to help catch trivial build/lint errors.
+See [the git hooks folder](/web-platform-tests/wpt.fyi/tree/master/git/hooks) for instructions.
 
 # Coding Guidelines
 

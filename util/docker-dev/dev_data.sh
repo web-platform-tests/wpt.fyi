@@ -12,7 +12,7 @@ WPTD_PATH=${WPTD_PATH:-$(absdir ${DOCKER_DIR}/../..)}
 # environment variable across to the docker instance, and sets the instance's
 # same environment variable to point to the copy.
 
-DOCKER_INSTANCE=wptd-dev-instance
+DOCKER_INSTANCE="${DOCKER_INSTANCE:-wptd-dev-instance}"
 DEFAULT_CREDS_FILE=/home/application_default_credentials.json
 COPY_COMMAND="docker cp ${GOOGLE_APPLICATION_CREDENTIALS} ${DOCKER_INSTANCE}:${DEFAULT_CREDS_FILE}"
 ENVIRONMENT_VAR="-e GOOGLE_APPLICATION_CREDENTIALS=${DEFAULT_CREDS_FILE}"
@@ -27,4 +27,4 @@ else
     ${COPY_COMMAND}
 fi
 
-wptd_exec "make dev_data"
+wptd_exec make dev_data FLAGS="$@"

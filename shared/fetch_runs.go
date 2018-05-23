@@ -7,16 +7,32 @@ package shared
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/deckarep/golang-set"
 )
 
 // FetchLatestRuns fetches the TestRun metadata for the latest runs, using the
 // API on the given host.
 func FetchLatestRuns(wptdHost string) []TestRun {
+	return FetchRuns(wptdHost, "latest", nil)
+}
+
+// FetchRuns fetches the TestRun metadata for the given sha / labels, using the
+// API on the given host.
+func FetchRuns(wptdHost, sha string, labels mapset.Set) []TestRun {
 	url := "https://" + wptdHost + "/api/runs?complete=true"
+	if labels != nil && labels.Cardinality() > 0 {
+		for label := range labels.Iter() {
+			url += fmt.Sprintf("&label=%s", label.(string))
+		}
+	}
+	log.Printf("Fetching %s...", url)
+
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)

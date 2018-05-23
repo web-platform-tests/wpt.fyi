@@ -9,10 +9,12 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
+// AnomalyData is a view model for the interop anomalies view.
 type AnomalyData struct {
 	Metadata string
 	Browser  string
@@ -21,12 +23,12 @@ type AnomalyData struct {
 // anomalyHandler handles the view of test results showing which tests pass in
 // some, but not all, browsers.
 func anomalyHandler(w http.ResponseWriter, r *http.Request) {
-	browser, err := ParseBrowserParam(r)
+	product, err := shared.ParseBrowserParam(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	} else if browser != "" {
-		browserAnomalyHandler(w, r, browser)
+	} else if product != nil {
+		browserAnomalyHandler(w, r, product.BrowserName)
 		return
 	}
 

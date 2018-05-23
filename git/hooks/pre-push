@@ -7,38 +7,60 @@ source "${REPO_DIR}/util/path.sh"
 source "${REPO_DIR}/util/commands.sh"
 WPTD_PATH=${WPTD_PATH:-$(absdir "${REPO_DIR}")}
 
+DOCKER_INSTANCE="${DOCKER_INSTANCE:-wptd-dev-instance}"
+
+info "Checking where we're pushing..."
+IS_MASTER="false"
+while read local_ref local_sha remote_ref remote_sha
+do
+  debug "$local_ref $local_sha $remote_ref $remote_sha"
+  if [[ -n "$remote_ref" ]];
+  then
+    if [[ "$(echo $remote_ref | sed -e 's,.*/\(.*\),\1,')" == "master" ]]
+    then
+      IS_MASTER="true"
+    fi
+  fi
+done
+
+if [[ "${IS_MASTER}" == "true" ]]
+then
+  confirm "Are you sure you want to push master?" || fatal "User cancelled the push"
+fi
+
 # Check for uncommitted changes.
+info "Checking for uncommitted changes..."
 ! git diff . 2>&1 | read > /dev/null 2>&1
 DIFF_STATUS="${?}"
 if [ "${DIFF_STATUS}" != "0" ]; then
-  confirm "You have uncommitted local changes. Push committed changes anyway?"
-  if [ "${?}" != "0" ]; then exit "${?}"; fi
+  confirm "You have uncommitted local changes. Push committed changes anyway?" \
+      || fatal "User cancelled the push"
 fi
 
-docker inspect wptd-dev-instance > /dev/null 2>&1
+info "Running pre-push checks in docker..."
+docker inspect "${DOCKER_INSTANCE}" > /dev/null 2>&1
 INSPECT_STATUS="${?}"
 
 DOCKER_INSTANCE_PID=""
 if [ "${INSPECT_STATUS}" != "0" ]; then
-  info "Docker instance wptd-dev-instance not found. Starting it..."
+  info "Docker instance ${DOCKER_INSTANCE} not found. Starting it..."
   docker run -t -d --entrypoint /bin/bash \
-      -v "${WPTD_PATH}":/home/jenkins/wpt.fyi \
+      -v "${WPTD_PATH}":/home/user/wpt.fyi \
       -u $(id -u $USER):$(id -g $USER) \
-      --name wptd-dev-instance wptd-dev &
+      --name "${DOCKER_INSTANCE}" wptd-dev &
   DOCKER_INSTANCE_PID="${!}"
+  # Ensure rights.
+  wptd_useradd
+  wptd_chown "/home/user"
 else
-  info "Found existing docker instance wptd-dev-instance"
+  info "Found existing docker instance ${DOCKER_INSTANCE}"
 fi
-# Ensure rights.
-wptd_chown "/home/jenkins"
 
-docker exec -t -u $(id -u $USER):$(id -g $USER) wptd-dev-instance make lint
+docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make prepush
 LINT_STATUS="${?}"
 FINAL_STATUS="${LINT_STATUS}"
 if [ "${LINT_STATUS}" != "0" ]; then
-  confirm "Lint failed. Push anyway?"
-  if [ "${?}" != "0" ]; then exit "${?}"; fi
-
+  confirm "Lint failed. Push anyway?" || fatal "User cancelled the push"
   info "Pushing in spite of lint errors..."
   FINAL_STATUS="0"
 fi

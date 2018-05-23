@@ -8,6 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/web-platform-tests/wpt.fyi/api"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // testRunsHandler handles GET/POST requests to /test-runs
@@ -15,7 +18,7 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		// TODO(#251): Move consumers of old endpoint.
 		// /test-runs is the legacy POST endpoint, migrated to /api/run, and left to avoid breakages
-		apiTestRunPostHandler(w, r)
+		api.TestRunPostHandler(w, r)
 	} else if r.Method == "GET" {
 		handleTestRunGet(w, r)
 	} else {
@@ -24,14 +27,14 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTestRunGet(w http.ResponseWriter, r *http.Request) {
-	maxCount, err := ParseMaxCountParamWithDefault(r, 100)
+	maxCount, err := shared.ParseMaxCountParamWithDefault(r, 100)
 	if err != nil {
 		http.Error(w, "Invalid max-count param: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	sourceURL := fmt.Sprintf(`/api/runs?max-count=%d`, maxCount)
 
-	labels := ParseLabelsParam(r)
+	labels := shared.ParseLabelsParam(r)
 	if labels != nil {
 		for label := range labels.Iterator().C {
 			sourceURL = sourceURL + "&label=" + label.(string)

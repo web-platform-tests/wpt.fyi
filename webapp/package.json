@@ -2,15 +2,18 @@
   "name": "wptdashboard",
   "devDependencies": {
     "babel-eslint": "^8.1.2",
+    "bower": "^1.8.4",
     "eslint": "^4.14.0",
     "eslint-plugin-html": "^3.2.2",
-    "web-component-tester": "^6.4.3"
+    "web-component-tester": "^6.6.0"
   },
+  "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
+    "bower-components": "bower install",
     "test": "npm run lint && npm run wct",
-    "lint": "./node_modules/.bin/eslint --plugin html components/*.html test/*.html",
-    "lint-fix": "./node_modules/.bin/eslint --plugin html components/*.html test/*.html --fix",
-    "wctp": "./node_modules/.bin/wct -p",
-    "wct": "./node_modules/.bin/wct"
+    "lint": "eslint --plugin html components/*.html test/*.html",
+    "lint-fix": "eslint --plugin html components/*.html test/*.html --fix",
+    "wctp": "wct -p",
+    "wct": "wct"
   }
 }

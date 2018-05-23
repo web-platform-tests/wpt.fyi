@@ -5,16 +5,23 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/deckarep/golang-set"
+
 	"github.com/web-platform-tests/results-analysis/metrics"
-	base "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
+)
+
+var (
+	host = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -27,60 +34,78 @@ import (
 // Usage (from util/):
 // go run populate_dev_data.go
 func main() {
-	ctx, err := getRemoteApiContext()
+	flag.Parse()
+
+	ctx, err := getRemoteAPIContext()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	emptySecretToken := []interface{}{&base.Token{}}
+	emptySecretToken := &shared.Token{}
 	staticDataTime, _ := time.Parse(time.RFC3339, "2017-10-18T00:00:00Z")
 
 	// Follow pattern established in run/*.py data collection code.
 	const staticRunSHA = "b952881825"
-	const summaryUrlFmtString = "/static/" + staticRunSHA + "/%s"
-	staticTestRuns := []base.TestRun{
+	const summaryURLFmtString = "/static/" + staticRunSHA + "/%s"
+	staticTestRuns := []shared.TestRun{
 		{
-			BrowserName:    "chrome",
-			BrowserVersion: "63.0",
-			OSName:         "linux",
-			OSVersion:      "3.16",
-			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryUrlFmtString, "chrome-63.0-linux-summary.json.gz"),
-			CreatedAt:      staticDataTime,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "chrome",
+					BrowserVersion: "63.0",
+					OSName:         "linux",
+					OSVersion:      "3.16",
+				},
+				Revision: staticRunSHA,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
+			CreatedAt:  staticDataTime,
 		},
 		{
-			BrowserName:    "edge",
-			BrowserVersion: "15",
-			OSName:         "windows",
-			OSVersion:      "10",
-			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryUrlFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
-			CreatedAt:      staticDataTime,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "edge",
+					BrowserVersion: "15",
+					OSName:         "windows",
+					OSVersion:      "10",
+				},
+				Revision: staticRunSHA,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
+			CreatedAt:  staticDataTime,
 		},
 		{
-			BrowserName:    "firefox",
-			BrowserVersion: "57.0",
-			OSName:         "linux",
-			OSVersion:      "*",
-			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryUrlFmtString, "firefox-57.0-linux-summary.json.gz"),
-			CreatedAt:      staticDataTime,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "firefox",
+					BrowserVersion: "57.0",
+					OSName:         "linux",
+					OSVersion:      "*",
+				},
+				Revision: staticRunSHA,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
+			CreatedAt:  staticDataTime,
 		},
 		{
-			BrowserName:    "safari",
-			BrowserVersion: "10",
-			OSName:         "macos",
-			OSVersion:      "10.12",
-			Revision:       staticRunSHA,
-			ResultsURL:     fmt.Sprintf(summaryUrlFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
-			CreatedAt:      staticDataTime,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "safari",
+					BrowserVersion: "10",
+					OSName:         "macos",
+					OSVersion:      "10.12",
+				},
+				Revision: staticRunSHA,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
+			CreatedAt:  staticDataTime,
 		},
 	}
 
 	timeZero := time.Unix(0, 0)
 	// Follow pattern established in metrics/run/*.go data collection code.
 	// Use unzipped JSON for local dev.
-	const metricsUrlFmtString = "/static/wptd-metrics/0-0/%s.json"
+	const metricsURLFmtString = "/static/wptd-metrics/0-0/%s.json"
 	staticTestRunMetadata := make([]interface{}, len(staticTestRuns))
 	for i := range staticTestRuns {
 		staticTestRunMetadata[i] = &staticTestRuns[i]
@@ -90,7 +115,7 @@ func main() {
 			StartTime: timeZero,
 			EndTime:   timeZero,
 			TestRuns:  staticTestRuns,
-			DataURL:   fmt.Sprintf(metricsUrlFmtString, "pass-rates"),
+			DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
 		},
 	}
 
@@ -99,52 +124,75 @@ func main() {
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataURL:     fmt.Sprintf(metricsUrlFmtString, "chrome-failures"),
+			DataURL:     fmt.Sprintf(metricsURLFmtString, "chrome-failures"),
 			BrowserName: "chrome",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataURL:     fmt.Sprintf(metricsUrlFmtString, "edge-failures"),
+			DataURL:     fmt.Sprintf(metricsURLFmtString, "edge-failures"),
 			BrowserName: "edge",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataURL:     fmt.Sprintf(metricsUrlFmtString, "firefox-failures"),
+			DataURL:     fmt.Sprintf(metricsURLFmtString, "firefox-failures"),
 			BrowserName: "firefox",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
 			TestRuns:    staticTestRuns,
-			DataURL:     fmt.Sprintf(metricsUrlFmtString, "safari-failures"),
+			DataURL:     fmt.Sprintf(metricsURLFmtString, "safari-failures"),
 			BrowserName: "safari",
 		},
 	}
 
-	tokenKindName := "Token"
 	testRunKindName := "TestRun"
 	passRateMetadataKindName := metrics.GetDatastoreKindName(
 		metrics.PassRateMetadata{})
 	failuresMetadataKindName := metrics.GetDatastoreKindName(
 		metrics.FailuresMetadata{})
 
+	log.Print("Adding local (empty) secrets...")
+	addSecretToken(ctx, "upload-token", emptySecretToken)
+	addSecretToken(ctx, "github-api-token", emptySecretToken)
+
+	log.Print("Adding uploader \"test\"...")
+	addData(ctx, "Uploader", []interface{}{
+		&shared.Uploader{Username: "test", Password: "123"},
+	})
+
 	log.Print("Adding local mock data (static/)...")
-	addData(ctx, tokenKindName, emptySecretToken)
 	addData(ctx, testRunKindName, staticTestRunMetadata)
 	addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
 	addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 
 	log.Print("Adding latest production TestRun data...")
-	prodTestRuns := base.FetchLatestRuns("wpt.fyi")
+	prodTestRuns := shared.FetchLatestRuns(*host)
 	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
 	}
 	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
+
+	log.Print("Adding latest experimental TestRun data...")
+	prodTestRuns = shared.FetchRuns(*host, "latest", mapset.NewSet("experimental"))
+	latestProductionTestRunMetadata = make([]interface{}, len(prodTestRuns))
+	for i := range prodTestRuns {
+		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
+	}
+	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
+}
+
+func addSecretToken(ctx context.Context, id string, data interface{}) {
+	key := datastore.NewKey(ctx, "Token", id, 0, nil)
+	if _, err := datastore.Put(ctx, key, data); err != nil {
+		log.Fatalf("Failed to add %s secret: %s", id, err.Error())
+	}
+	log.Printf("Added %s secret", id)
 }
 
 func addData(ctx context.Context, kindName string, data []interface{}) {
@@ -158,7 +206,7 @@ func addData(ctx context.Context, kindName string, data []interface{}) {
 	log.Printf("Added %v %s entities", len(data), kindName)
 }
 
-func getRemoteApiContext() (context.Context, error) {
+func getRemoteAPIContext() (context.Context, error) {
 	const host = "localhost:9999"
 	ctx := context.Background()
 
