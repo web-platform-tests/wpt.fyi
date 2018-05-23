@@ -67,7 +67,7 @@ func TestApiRunBound(t *testing.T) {
 }
 
 func TestApiResultsUploadBound(t *testing.T) {
-	assertBound(t, "/api/results/upload")
+	assertHSTS(t, "/api/results/upload")
 }
 
 func TestResultsBound(t *testing.T) {
@@ -75,7 +75,7 @@ func TestResultsBound(t *testing.T) {
 }
 
 func TestAdminResultsUploadBound(t *testing.T) {
-	assertBound(t, "/admin/results/upload")
+	assertHSTS(t, "/admin/results/upload")
 }
 
 func assertBound(t *testing.T, path string) {
