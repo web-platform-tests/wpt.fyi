@@ -105,8 +105,8 @@ firefox: browser_deps
 		sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox; \
 	fi
 
-browser_deps: wget
-	sudo apt-get install --assume-yes --no-install-suggests openjdk-8-jdk $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+browser_deps: wget java
+	sudo apt-get install --assume-yes --no-install-suggests $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 go_deps: git gcloud $(GO_FILES)
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
@@ -125,6 +125,12 @@ curl: apt-get-curl
 python: apt-get-python
 git: apt-get-git
 wget: apt-get-wget
+
+java:
+	@ # java has a different apt-get package name.
+	if [[ "$$(which java)" == "" ]]; then \
+		sudo apt-get install --assume-yes --no-install-suggests openjdk-8-jdk; \
+	fi
 
 gpg:
 	@ # gpg has a different apt-get package name.
@@ -169,8 +175,8 @@ bower_components: node-bower
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
 		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
-		export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset & \
 	fi
+	export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
 
 node-%: node npm
 	@ echo "# Installing $*..."

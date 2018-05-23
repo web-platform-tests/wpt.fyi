@@ -9,18 +9,18 @@ source "${SCRIPT_DIR}/../util/path.sh"
 set -e
 
 usage() {
-  USAGE="Usage: install.sh [-r] [path]
+  USAGE="Usage: install.sh [-r] [-p PATH]
     -r   - Reinstall
-    path - Path to install (default: ~/browsers)"
+    -p   - Path to install (default: ~/browsers)"
   info "${USAGE}"
 }
 
-INSTALL_DIR=${1:-~/browsers}
-
+INSTALL_DIR=~/browsers
 REINSTALL="false"
-while getopts ':r' flag; do
+while getopts ':rp:' flag; do
   case "${flag}" in
     r) REINSTALL='true' ;;
+    p) INSTALL_DIR="${OPTARG}" ;;
     h|*) usage && exit 0;;
   esac
 done
