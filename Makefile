@@ -11,6 +11,9 @@
 
 SHELL := /bin/bash
 
+START_XVFB = export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
+STOP_XVFB = killall Xvfb
+
 export GOPATH=$(shell go env GOPATH)
 
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
@@ -65,14 +68,18 @@ go_large_test: go_webdriver_test
 integration_test: go_webdriver_test web_components_test
 
 go_webdriver_test: go_webdriver_deps
+	$(START_XVFB)
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
 			--firefox_path=$(FIREFOX_PATH) \
 			--geckodriver_path=$(GECKODRIVER_PATH) \
 			--frame_buffer=$(USE_FRAME_BUFFER)
+	$(STOP_XVFB)
 
 web_components_test: webdriver_deps web_component_tester
+	$(START_XVFB)
 	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
+	$(STOP_XVFB)
 
 sys_update: sys_deps
 	sudo apt-get update
@@ -86,10 +93,7 @@ webdriver_deps: xvfb browser_deps webserver_deps web_component_tester
 # Dependencies for running dev_appserver.py.
 webserver_deps: build bower_components dev_appserver_deps
 
-dev_appserver_deps:
-	if [[ "$$(which dev_appserver.py)" == "" ]]; then \
-		gcloud components install --quiet app-engine-python app-engine-go; \
-	fi
+dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go
 
 chrome: browser_deps
 	if [[ -z "$$(which google-chrome)" ]]; then \
@@ -105,8 +109,8 @@ firefox: browser_deps
 		sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox; \
 	fi
 
-browser_deps: wget
-	sudo apt-get install --assume-yes --no-install-suggests openjdk-8-jdk $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+browser_deps: wget java
+	sudo apt-get install --assume-yes --no-install-suggests $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 go_deps: git gcloud $(GO_FILES)
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
@@ -126,6 +130,12 @@ python: apt-get-python
 git: apt-get-git
 wget: apt-get-wget
 
+java:
+	@ # java has a different apt-get package name.
+	if [[ "$$(which java)" == "" ]]; then \
+		sudo apt-get install --assume-yes --no-install-suggests openjdk-8-jdk; \
+	fi
+
 gpg:
 	@ # gpg has a different apt-get package name.
 	if [[ "$$(which gpg)" == "" ]]; then \
@@ -134,13 +144,14 @@ gpg:
 
 node: curl
 	if [[ "$$(which node)" == "" ]]; then \
-		curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -; \
+		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
 		sudo apt-get install -y nodejs; \
 	fi
 
 npm: apt-get-npm
 
 gcloud: python curl gpg
+	@ echo "travis_fold:start:gcloud_install"
 	if [[ "$$(which gcloud)" == "" ]]; then \
 		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh; \
 		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME); \
@@ -148,6 +159,7 @@ gcloud: python curl gpg
 		gcloud components install --quiet core gsutil; \
 		gcloud config set disable_usage_reporting false; \
 	fi
+	@ echo "travis_fold:end:gcloud_install"
 
 eslint: node-babel-eslint node-eslint node-eslint-plugin-html
 	cd $(WPTD_PATH)webapp; npm run lint
@@ -169,8 +181,11 @@ bower_components: node-bower
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
 		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
-		export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset & \
 	fi
+
+gcloud-%: gcloud
+	gcloud components list --filter="state[name]=Installed AND id=$*" | grep " $* " \
+		|| gcloud components install --quiet $*
 
 node-%: node npm
 	@ echo "# Installing $*..."
