@@ -49,12 +49,12 @@ if [ "${INSPECT_STATUS}" != "0" ]; then
       -u $(id -u $USER):$(id -g $USER) \
       --name "${DOCKER_INSTANCE}" wptd-dev &
   DOCKER_INSTANCE_PID="${!}"
+  # Ensure rights.
+  wptd_useradd
+  wptd_chown "/home/user"
 else
   info "Found existing docker instance ${DOCKER_INSTANCE}"
 fi
-# Ensure rights.
-wptd_useradd
-wptd_chown "/home/user"
 
 docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make prepush
 LINT_STATUS="${?}"
