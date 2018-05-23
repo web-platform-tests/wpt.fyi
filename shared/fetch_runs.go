@@ -25,12 +25,10 @@ func FetchLatestRuns(wptdHost string) []TestRun {
 // FetchRuns fetches the TestRun metadata for the given sha / labels, using the
 // API on the given host.
 func FetchRuns(wptdHost, sha string, labels mapset.Set) []TestRun {
-	url := "https://" + wptdHost + "/api/runs"
+	url := "https://" + wptdHost + "/api/runs?complete=true"
 	if labels != nil && labels.Cardinality() > 0 {
-		sep := "?"
 		for label := range labels.Iter() {
-			url += sep + fmt.Sprintf("label=%s", label.(string))
-			sep = "&"
+			url += fmt.Sprintf("&label=%s", label.(string))
 		}
 	}
 	log.Printf("Fetching %s...", url)
