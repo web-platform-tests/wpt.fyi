@@ -4,26 +4,24 @@
 
 package api
 
-import (
-	"net/http"
-)
+import "github.com/web-platform-tests/wpt.fyi/shared"
 
 func init() {
 	// API endpoint for diff of two test run summary JSON blobs.
-	http.HandleFunc("/api/diff", apiDiffHandler)
+	shared.AddRoute("/api/diff", apiDiffHandler)
 
 	// API endpoint for fetching a manifest for a commit SHA.
-	http.HandleFunc("/api/manifest", apiManifestHandler)
+	shared.AddRoute("/api/manifest", apiManifestHandler)
 
 	// API endpoint for listing all test runs for a given SHA.
-	http.HandleFunc("/api/runs", apiTestRunsHandler)
+	shared.AddRoute("/api/runs", apiTestRunsHandler)
 
 	// API endpoint for a single test run.
-	http.HandleFunc("/api/run", apiTestRunHandler)
+	shared.AddRoute("/api/run", apiTestRunHandler)
 
 	// API endpoint for redirecting to a run's summary JSON blob.
-	http.HandleFunc("/api/results", apiResultsRedirectHandler)
+	shared.AddRoute("/api/results", apiResultsRedirectHandler)
 
 	// API endpoint for receiving test results (wptreport) from runners.
-	http.HandleFunc("/api/results/upload", apiResultsReceiveHandler)
+	shared.AddRoute("/api/results/upload", apiResultsReceiveHandler)
 }
