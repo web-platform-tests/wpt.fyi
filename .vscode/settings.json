@@ -1,0 +1,3 @@
+{
+  "go.buildTags": "small medium large"
+}

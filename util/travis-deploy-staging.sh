@@ -3,7 +3,7 @@
 # Helper script for posting a GitHub comment pointing to the deployed environment,
 # from Travis CI. Also see deploy.sh
 
-APP_PATH=$1
+APP_PATH="$@"
 
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
@@ -19,7 +19,7 @@ if [ -z "${TRAVIS_PULL_REQUEST_BRANCH}" ]; then
 fi
 
 # Skip if webapp isn't modified.
-git diff --name-only FETCH_HEAD...${TRAVIS_BRANCH} | grep "^$APP_PATH/" || {
+git diff --name-only HEAD...${TRAVIS_BRANCH} | grep "^$APP_PATH/" || {
   info "No changes detected under ${APP_PATH}. Skipping deployment."
   exit 0
 }
