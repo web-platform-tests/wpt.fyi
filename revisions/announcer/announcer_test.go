@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/revisions/announcer"
 	"github.com/web-platform-tests/wpt.fyi/revisions/epoch"
@@ -25,39 +26,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage"
 )
 
-type Fake struct{}
-
 var errFake = errors.New("Implementation is fake")
-
-func (iter Fake) Next() (ref *plumbing.Reference, err error) {
-	return nil, errFake
-}
-
-func (iter Fake) ForEach(f func(*plumbing.Reference) error) error {
-	return errFake
-}
-
-func (iter Fake) Close() {}
-
-func (Fake) CommitObject(h plumbing.Hash) (*object.Commit, error) {
-	return nil, errFake
-}
-
-func (Fake) Tags() (storer.ReferenceIter, error) {
-	return nil, errFake
-}
-
-func (Fake) Fetch(o *git.FetchOptions) error {
-	return errFake
-}
-
-func (Fake) Clone(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (agit.Repository, error) {
-	return nil, errFake
-}
-
-func (Fake) GetIter(repo agit.Repository, limits announcer.Limits) (storer.ReferenceIter, error) {
-	return nil, errFake
-}
 
 var factory = announcer.NewBoundedMergedPRIterFactory()
 
@@ -68,7 +37,13 @@ func TestBoundedMergedPRIterFactory_GetIter_NilRepo(t *testing.T) {
 }
 
 func TestBoundedMergedPRIterFactory_GetIter_Fake(t *testing.T) {
-	iter, err := factory.GetIter(Fake{}, announcer.Limits{})
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	repo := agit.NewMockRepository(mockCtrl)
+	repo.EXPECT().Tags().Return(nil, errFake)
+
+	iter, err := factory.GetIter(repo, announcer.Limits{})
 	assert.True(t, iter == nil)
 	assert.True(t, err == errFake)
 }
@@ -122,8 +97,14 @@ func TestBoundedMergedPRIterFactory_GetIter(t *testing.T) {
 }
 
 func TestGitRemoteAnnouncer_Init_FakeGit(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockGit := agit.NewMockGit(mockCtrl)
+	mockGit.EXPECT().Clone(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errFake)
+
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
-		Git: Fake{},
+		Git: mockGit,
 	})
 	assert.True(t, a == nil)
 	assert.True(t, err == errFake)
@@ -148,11 +129,17 @@ func (NilRepoProducer) Clone(s storage.Storer, worktree billy.Filesystem, o *git
 }
 
 func TestGitRemoteAnnouncer_Init_NilRepo(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockGit := agit.NewMockGit(mockCtrl)
+	mockGit.EXPECT().Clone(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errFake)
+
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
-		Git: NilRepoProducer{},
+		Git: mockGit,
 	})
 	assert.True(t, a == nil)
-	assert.True(t, err == announcer.GetErrNilRepo())
+	assert.True(t, err == errFake)
 }
 
 func TestGitRemoteAnnouncer_Init_OK(t *testing.T) {
@@ -201,9 +188,16 @@ func (f SliceReferenceIterFactory) GetIter(repo agit.Repository, limits announce
 }
 
 func TestGitRemoteAnnouncer_GetRevisions_ErrFake(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	repo := test.NewMockRepository([]test.Tag{}, test.NilFetchImpl)
+	mockFactory := announcer.NewMockEpochReferenceIterFactory(mockCtrl)
+	mockFactory.EXPECT().GetIter(repo, gomock.Any()).Return(nil, errFake)
+
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
-		EpochReferenceIterFactory: Fake{},
-		Git: test.NewMockRepository([]test.Tag{}, test.NilFetchImpl),
+		EpochReferenceIterFactory: mockFactory,
+		Git: repo,
 	})
 	assert.True(t, a != nil)
 	assert.True(t, err == nil)
@@ -213,7 +207,7 @@ func TestGitRemoteAnnouncer_GetRevisions_ErrFake(t *testing.T) {
 	assert.True(t, err == errFake)
 }
 
-func TestGitRemoteAnnouncer_GetRevisions_ErrVacuousEpochs(t *testing.T) {
+func TestGitRemoteAnnouncer_GetRevisions_ErrEmptyEpochs(t *testing.T) {
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		EpochReferenceIterFactory: SliceReferenceIterFactory{
 			&SliceReferenceIter{},
@@ -225,7 +219,7 @@ func TestGitRemoteAnnouncer_GetRevisions_ErrVacuousEpochs(t *testing.T) {
 
 	revs, err := a.GetRevisions(make(map[epoch.Epoch]int), announcer.Limits{})
 	assert.True(t, revs == nil)
-	assert.True(t, err == announcer.GetErrVacuousEpochs())
+	assert.True(t, err == announcer.GetErrEmptyEpochs())
 }
 
 func TestGitRemoteAnnouncer_GetRevisions_ErrNotAllEpochsConsumed(t *testing.T) {
@@ -591,7 +585,7 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 	assert.True(t, revs != nil)
 	assert.True(t, err == announcer.GetErrNotAllEpochsConsumed())
 
-	err = a.Update()
+	err = a.Fetch()
 	assert.True(t, err == fetchErr)
 	revs, err = getRevisions()
 	assert.True(t, revs != nil)

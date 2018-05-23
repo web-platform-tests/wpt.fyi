@@ -25,7 +25,7 @@ const mergedPrTagPrefix = "refs/tags/merge_pr_"
 
 var errNotAllEpochsConsumed = errors.New("Not all epochs consumed")
 var errNilRepo = errors.New("Repository may not be nil")
-var errVacuousEpochs = errors.New("[]epoch.Epoch slice is vacuous: contains no epochs")
+var errEmptyEpochs = errors.New("[]epoch.Epoch slice is empty")
 
 // Limits defines the start-time (lower bound) and now-time (upper bound) on a commit time-bounded query for revisions.
 type Limits struct {
@@ -62,9 +62,9 @@ func GetErrNilRepo() error {
 	return errNilRepo
 }
 
-// GetErrVacuousEpochs the canonical error for a vacuous computation over epochs; i.e., passing an empty slice of epochs which would yield an empty output.
-func GetErrVacuousEpochs() error {
-	return errVacuousEpochs
+// GetErrEmptyEpochs the canonical error for a Empty computation over epochs; i.e., passing an empty slice of epochs which would yield an empty output.
+func GetErrEmptyEpochs() error {
+	return errEmptyEpochs
 }
 
 // EpochReferenceIterFactory is an interface for instantiating appropriate storer.ReferenceIter implementations for an announcer configuration.
@@ -97,7 +97,7 @@ func (f boundedMergedPRIterFactory) GetIter(repo agit.Repository, limits Limits)
 		return nil, err
 	}
 
-	return agit.NewStopReferenceIter(agit.NewStartReferenceIter(prIter, func(ref *plumbing.Reference) bool {
+	startIter := agit.NewStartReferenceIter(prIter, func(ref *plumbing.Reference) bool {
 		if ref == nil {
 			log.Printf("WARN: Announcer iter.StartAt(): Reference is nil; skipping...")
 			return false
@@ -108,7 +108,8 @@ func (f boundedMergedPRIterFactory) GetIter(repo agit.Repository, limits Limits)
 			return false
 		}
 		return commit.Committer.When.Before(limits.Now)
-	}), func(ref *plumbing.Reference) bool {
+	})
+	stopAt := func(ref *plumbing.Reference) bool {
 		if ref == nil {
 			log.Printf("WARN: Announcer iter.StopAt(): Reference is nil; not stopping...")
 		}
@@ -118,7 +119,8 @@ func (f boundedMergedPRIterFactory) GetIter(repo agit.Repository, limits Limits)
 			return false
 		}
 		return commit.Committer.When.Before(limits.Start)
-	}), nil
+	}
+	return agit.NewStopReferenceIter(startIter, stopAt), nil
 }
 
 // NewBoundedMergedPRIterFactory produces an EpochReferenceIterFactory for time-bounded commits that constitute merged PRs in the web-platform-tests repository.
@@ -131,8 +133,8 @@ type Announcer interface {
 	// GetRevisions computes epochal revisions based on current local announcer state.
 	GetRevisions(epochs map[epoch.Epoch]int, limits Limits) (map[epoch.Epoch][]agit.Revision, error)
 
-	// Update applies an incremental update to announcer state; e.g., an Announcer bound to a repository may have a local clone and perform an incremental fetch.
-	Update() error
+	// Fetch applies an incremental update to announcer state; e.g., an Announcer bound to a repository may have a local clone and perform an incremental fetch.
+	Fetch() error
 
 	// Reset abandons current announcer state and reloads a valid initial announcer state.
 	Reset() error
@@ -196,7 +198,7 @@ func (a *gitRemoteAnnouncer) GetRevisions(epochs map[epoch.Epoch]int, limits Lim
 	}
 
 	if numChanges == 0 {
-		return nil, errVacuousEpochs
+		return nil, errEmptyEpochs
 	}
 
 	// iter presents potential revisions in reverse chronological order.
@@ -245,8 +247,8 @@ func (a *gitRemoteAnnouncer) GetRevisions(epochs map[epoch.Epoch]int, limits Lim
 	return revs, nil
 }
 
-// Update performs a fetch on the underlying repository. Subsequent calls to GetRevisions() will incorporate any newly fetched revisions.
-func (a *gitRemoteAnnouncer) Update() (err error) {
+// Fetch performs a fetch on the underlying repository. Subsequent calls to GetRevisions() will incorporate any newly fetched revisions.
+func (a *gitRemoteAnnouncer) Fetch() (err error) {
 	if a.repo == nil {
 		err = GetErrNilRepo()
 		log.Printf("ERRO: %v", err)
