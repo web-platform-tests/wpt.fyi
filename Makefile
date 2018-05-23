@@ -11,6 +11,9 @@
 
 SHELL := /bin/bash
 
+START_XVFB = export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
+STOP_XVFB = killall Xvfb
+
 export GOPATH=$(shell go env GOPATH)
 
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
@@ -65,14 +68,18 @@ go_large_test: go_webdriver_test
 integration_test: go_webdriver_test web_components_test
 
 go_webdriver_test: go_webdriver_deps
+	$(START_XVFB)
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
 			--firefox_path=$(FIREFOX_PATH) \
 			--geckodriver_path=$(GECKODRIVER_PATH) \
 			--frame_buffer=$(USE_FRAME_BUFFER)
+	$(STOP_XVFB)
 
 web_components_test: webdriver_deps web_component_tester
+	$(START_XVFB)
 	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
+	$(STOP_XVFB)
 
 sys_update: sys_deps
 	sudo apt-get update
@@ -175,7 +182,6 @@ xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
 		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
 	fi
-	export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
 
 gcloud-%: gcloud
 	gcloud components list --filter="state[name]=Installed AND id=$*" | grep " $* " \
