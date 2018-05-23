@@ -12,24 +12,38 @@ import (
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 
 func init() {
-	// Test run results, viewed by browser (default view)
-	// For run results diff view, 'before' and 'after' params can be given.
-	http.HandleFunc("/", testResultsHandler)
-	http.HandleFunc("/results", testResultsHandler) // Prevent default redirect
-	http.HandleFunc("/results/", testResultsHandler)
+	routes := map[string]http.HandlerFunc{
+		// Test run results, viewed by browser (default view)
+		// For run results diff view, 'before' and 'after' params can be given.
+		"/": testResultsHandler,
+		"/results": testResultsHandler, // Prevent default redirect
+		"/results/": testResultsHandler,
 
-	// About wpt.fyi
-	http.HandleFunc("/about", aboutHandler)
+		// About wpt.fyi
+		"/about": aboutHandler,
 
-	// Test run results, viewed by pass-rate across the browsers
-	http.HandleFunc("/interop/", interopHandler)
+		// Test run results, viewed by pass-rate across the browsers
+		"/interop/": interopHandler,
 
-	// Lists of test run results which have poor interoperability
-	http.HandleFunc("/interop/anomalies", anomalyHandler)
+		// Lists of test run results which have poor interoperability
+		"/interop/anomalies": anomalyHandler,
 
-	// List of all test runs, by SHA[0:10]
-	http.HandleFunc("/test-runs", testRunsHandler)
+		// List of all test runs, by SHA[0:10]
+		"/test-runs": testRunsHandler,
 
-	// Admin-only manual results upload.
-	http.HandleFunc("/admin/results/upload", adminUploadHandler)
+		// Admin-only manual results upload.
+		"/admin/results/upload": adminUploadHandler,
+	}
+
+	for route, handler := range routes {
+		http.HandleFunc(route, wrapHSTS(handler))
+	}
+}
+
+func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		value := "max-age=31536000; preload"
+		w.Header().Add("Strict-Transport-Security", value)
+		h(w, r)
+	})
 }
