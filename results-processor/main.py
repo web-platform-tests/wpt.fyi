@@ -3,25 +3,36 @@ import re
 import shutil
 import tempfile
 
-from flask import Flask, request
+import flask
 from google.cloud import storage
 
 import wptreport
 
 
-app = Flask(__name__)
+APPENGINE_INTERNAL_IP = '10.0.0.1'
+
+
+app = flask.Flask(__name__)
 
 
 @app.route('/api/results/process', methods=['POST'])
 def task_handler():
-    params = request.get_json() if request.is_json else request.form
+    if flask.request.remote_addr != APPENGINE_INTERNAL_IP:
+        return 'External requests not allowed', 403
+
+    params = flask.request.form
+    # Mandatory fields:
     # uploader = params['uploader']
     gcs_path = params['gcs']
     result_type = params['type']
     # TODO(Hexcles): Support multiple results.
     assert result_type == 'single'
+    # Optional fields (to be deprecated once everyone has embedded metadata):
+    browser = params.get('browser')
+    revision = params.get('revision')
 
     match = re.match(r'/([^/]+)/(.*)', gcs_path)
+    assert match
     bucket_name, blob_path = match.groups()
 
     gcs = storage.Client()
@@ -36,7 +47,8 @@ def task_handler():
 
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
 
-    tempdir = report.populate_upload_directory()
+    tempdir = report.populate_upload_directory(
+        browser=browser, revision=revision)
     # TODO(Hexcles): Switch to prod.
     wptreport.gcs_upload(tempdir, 'gs://robertma-wptd-dev/')
     # TODO(Hexcles): Get secret from Datastore and create the test run.
