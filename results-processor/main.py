@@ -57,8 +57,10 @@ def task_handler():
 
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
 
-    gsutil.copy(gcs_path, 'gs://wptd-results/{}/{}/report.json'.format(
-        revision, browser))
+    gsutil.copy(
+        'gs:/' + gcs_path,
+        'gs://wptd-results/{}/{}/report.json'.format(revision, browser)
+    )
 
     tempdir = report.populate_upload_directory(
         browser=browser, revision=revision)
