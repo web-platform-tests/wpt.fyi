@@ -20,6 +20,7 @@ import (
 func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
 	assert.Nil(t, err)
+	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
 	assert.Nil(t, err)
 
@@ -48,30 +49,27 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	chrome.BrowserVersion = "68.0.3432.3"
 	datastore.Put(ctx, key, &chrome)
 
-	r, err = i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
+	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
 	resp := httptest.NewRecorder()
 	apiTestRunGetHandler(resp, r)
-	body, err := ioutil.ReadAll(resp.Result().Body)
-	assert.Nil(t, err)
+	body, _ := ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, resp.Code, http.StatusOK)
 	var result shared.TestRun
 	json.Unmarshal(body, &result)
 	assert.Equal(t, "66.0.3359.181", result.BrowserVersion)
 
-	r, err = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.139", nil)
-	assert.Nil(t, err)
+	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.139", nil)
 	resp = httptest.NewRecorder()
-	body, err = ioutil.ReadAll(resp.Result().Body)
-	assert.Nil(t, err)
+	apiTestRunGetHandler(resp, r)
+	body, _ = ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, resp.Code, http.StatusOK)
 	json.Unmarshal(body, &result)
 	assert.Equal(t, "66.0.3359.139", result.BrowserVersion)
 
-	r, err = i.NewRequest("GET", "/api/run?product=chrome-68", nil)
-	assert.Nil(t, err)
+	r, _ = i.NewRequest("GET", "/api/run?product=chrome-68", nil)
 	resp = httptest.NewRecorder()
-	body, err = ioutil.ReadAll(resp.Result().Body)
-	assert.Nil(t, err)
+	apiTestRunGetHandler(resp, r)
+	body, _ = ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, resp.Code, http.StatusOK)
 	json.Unmarshal(body, &result)
 	assert.Equal(t, "68.0.3432.3", result.BrowserVersion)
