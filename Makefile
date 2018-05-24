@@ -67,7 +67,7 @@ go_large_test: go_webdriver_test
 
 integration_test: go_webdriver_test web_components_test
 
-go_webdriver_test: go_webdriver_deps
+go_webdriver_test: go_deps xvfb firefox web_component_tester webserver_deps
 	$(START_XVFB)
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
@@ -76,7 +76,7 @@ go_webdriver_test: go_webdriver_deps
 			--frame_buffer=$(USE_FRAME_BUFFER)
 	$(STOP_XVFB)
 
-web_components_test: web_component_tester
+web_components_test: xvfb firefox chrome web_component_tester webserver_deps
 	$(START_XVFB)
 	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
 	$(STOP_XVFB)
@@ -85,10 +85,6 @@ sys_update: sys_deps
 	sudo apt-get update
 	gcloud components update
 	npm install -g npm
-
-go_webdriver_deps: webdriver_deps webserver_deps
-
-webdriver_deps: xvfb browser_deps web_component_tester
 
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
@@ -172,8 +168,6 @@ deploy_staging: gcloud bower_components env-BRANCH_NAME env-APP_PATH $(WPTD_PATH
 	gcloud config set project wptdashboard
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
-
-web_component_tester: chrome firefox webdriver_deps node-web-component-tester bower_components
 
 bower_components: git node-bower
 	cd $(WPTD_PATH)webapp; npm run bower-components
