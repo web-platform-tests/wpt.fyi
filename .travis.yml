@@ -49,8 +49,12 @@ script:
     # Deploy PR to staging environment (only when Travis secrets are available).
     # Note: Travis 'deploy' task is skipped for PRs, so can't be used for this.
     if [ ${DEPLOY_STAGING} == true ]; then
-      bash util/travis-deploy-staging.sh webapp
-      bash util/travis-deploy-staging.sh results-processor
+      if [ -z "${TRAVIS_PULL_REQUEST_BRANCH}" ];
+      then info "Not on a PR. Skipping ${APP_PATH} deployment.";
+      else
+        bash util/travis-deploy-staging.sh webapp;
+        bash util/travis-deploy-staging.sh results-processor;
+      fi;
     fi
   - | # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
