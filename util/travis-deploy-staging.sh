@@ -42,7 +42,7 @@ echo "Copying output to ${TEMP_FILE:=$(mktemp)}"
 docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
     make deploy_staging \
         APP_PATH=${APP_PATH} \
-        BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH:-TRAVIS_BRANCH} 2>&1 \
+        BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} 2>&1 \
             | tee ${TEMP_FILE}
 if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
 DEPLOYED_URL="$(grep -Po 'Deployed to \K[^\s]+' ${TEMP_FILE} | tr -d '\n')"
