@@ -18,8 +18,12 @@ app = flask.Flask(__name__)
 
 @app.route('/api/results/process', methods=['POST'])
 def task_handler():
-    if flask.request.remote_addr != APPENGINE_INTERNAL_IP:
-        return 'External requests not allowed', 403
+    if not app.debug:
+        # Only allow access from other services.
+        # https://cloud.google.com/appengine/docs/standard/python/creating-firewalls#allowing_requests_from_your_services
+        remote_ip = flask.request.access_route[0]
+        if remote_ip != APPENGINE_INTERNAL_IP:
+            return 'External requests not allowed', 403
 
     params = flask.request.form
     # Mandatory fields:
