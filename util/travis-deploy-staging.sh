@@ -37,7 +37,7 @@ then
   }
 fi
 
-echo "Copying output to ${TEMP_FILE:=$(mktemp)}"
+debug "Copying output to ${TEMP_FILE:=$(mktemp)}"
 # NOTE: Most gcloud output is stderr, so need to redirect it to stdout.
 docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
     make deploy_staging \
@@ -46,4 +46,9 @@ docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
             | tee ${TEMP_FILE}
 if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
 DEPLOYED_URL="$(grep -Po 'Deployed to \K[^\s]+' ${TEMP_FILE} | tr -d '\n')"
-${UTIL_DIR}/deploy-comment.sh "${DEPLOYED_URL}"
+
+# Add a GitHub comment to the PR (if there is a PR).
+if [[ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]];
+then
+  ${UTIL_DIR}/deploy-comment.sh "${DEPLOYED_URL}";
+fi
