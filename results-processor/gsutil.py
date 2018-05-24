@@ -10,23 +10,29 @@ _log = logging.getLogger(__name__)
 _log.setLevel(logging.INFO)
 
 
+def _call(command, quiet=False):
+    _log.info(' '.join(command))
+    if quiet:
+        subprocess.check_call(command, stdout=subprocess.DEVNULL)
+    else:
+        subprocess.check_call(command)
+
+
 def gs_to_public_url(gcs_path):
     assert gcs_path.startswith('gs://')
     return gcs_path.replace('gs://', 'https://storage.googleapis.com/', 1)
 
 
-def rsync(path1, path2):
+def rsync(path1, path2, quiet=False):
     command = [
         'gsutil', '-m', '-h', 'Content-Encoding:gzip', 'rsync', '-r',
         path1, path2
     ]
-    _log.info(' '.join(command))
-    subprocess.check_call(command)
+    _call(command, quiet)
 
 
-def copy(path1, path2):
+def copy(path1, path2, quiet=False):
     command = [
         'gsutil', '-m', 'cp', '-r', path1, path2
     ]
-    _log.info(' '.join(command))
-    subprocess.check_call(command)
+    _call(command, quiet)

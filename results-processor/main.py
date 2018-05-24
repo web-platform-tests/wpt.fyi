@@ -65,7 +65,7 @@ def task_handler():
     tempdir = report.populate_upload_directory(
         browser=browser, revision=revision)
     # TODO(Hexcles): Switch to prod.
-    gsutil.rsync(tempdir, 'gs://robertma-wptd-dev/')
+    gsutil.rsync(tempdir, 'gs://robertma-wptd-dev/', quiet=True)
     # TODO(Hexcles): Get secret from Datastore and create the test run.
     # wptreport.create_test_run(report, secret)
     shutil.rmtree(tempdir)
