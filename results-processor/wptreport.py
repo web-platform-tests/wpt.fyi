@@ -16,8 +16,8 @@ import requests
 
 import gsutil
 
+
 _log = logging.getLogger(__name__)
-_log.setLevel(logging.INFO)
 
 
 class MissingMetadataError(Exception):
@@ -307,4 +307,5 @@ def main():
 
 
 if __name__ == '__main__':
+    _log.setLevel(logging.INFO)
     main()

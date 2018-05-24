@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 import re
 import shutil
 import tempfile
@@ -13,6 +14,7 @@ import gsutil
 APPENGINE_INTERNAL_IP = '10.0.0.1'
 
 
+logging.basicConfig(level=logging.INFO)
 app = flask.Flask(__name__)
 
 
@@ -75,4 +77,5 @@ def task_handler():
 
 # Run the script directly locally to start Flask dev server.
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     app.run(debug=True)

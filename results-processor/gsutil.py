@@ -7,13 +7,16 @@ import subprocess
 
 
 _log = logging.getLogger(__name__)
-_log.setLevel(logging.INFO)
 
 
 def _call(command, quiet=False):
-    _log.info(' '.join(command))
+    _log.info('EXEC%s: %s',
+              '(quiet)' if quiet else '',
+              ' '.join(command))
     if quiet:
-        subprocess.check_call(command, stdout=subprocess.DEVNULL)
+        subprocess.check_call(command,
+                              stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL)
     else:
         subprocess.check_call(command)
 
