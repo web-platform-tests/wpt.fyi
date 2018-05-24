@@ -19,7 +19,7 @@ if [ -z "${TRAVIS_PULL_REQUEST_BRANCH}" ]; then
 fi
 
 # Skip if webapp isn't modified.
-git diff --name-only HEAD...${TRAVIS_BRANCH} | grep "^$APP_PATH/" || {
+git diff --name-only ${TRAVIS_BRANCH}..HEAD | grep "^$APP_PATH/" || {
   info "No changes detected under ${APP_PATH}. Skipping deployment."
   exit 0
 }
