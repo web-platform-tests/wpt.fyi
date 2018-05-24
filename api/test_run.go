@@ -63,15 +63,14 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	query := datastore.
 		NewQuery("TestRun").
-		Order("-CreatedAt").
-		Limit(1).
 		Filter("BrowserName =", product.BrowserName)
 	if product.BrowserVersion != "" {
-		query = shared.QueryPrefix(query, "BrowserVersion", product.BrowserVersion)
+		query = shared.QueryPrefix(query, "BrowserVersion", product.BrowserVersion, true)
 	}
 	if runSHA != "" && runSHA != "latest" {
 		query = query.Filter("Revision =", runSHA)
 	}
+	query = query.Order("-CreatedAt").Limit(1)
 
 	var testRuns []shared.TestRun
 	if _, err := query.GetAll(ctx, &testRuns); err != nil {

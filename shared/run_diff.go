@@ -59,7 +59,7 @@ func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (TestRun, 
 	// TODO(lukebjerring): Handle OS of products (split out version + os)
 	query := baseQuery.Filter("BrowserName =", revision.BrowserName)
 	if revision.BrowserVersion != "" {
-		query = QueryPrefix(query, "BrowserVersion", revision.BrowserVersion)
+		query = QueryPrefix(query, "BrowserVersion", revision.BrowserVersion, true)
 	}
 	if revision.Revision != "latest" {
 		query = query.Filter("Revision = ", revision.Revision)

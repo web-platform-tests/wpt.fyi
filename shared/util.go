@@ -79,10 +79,17 @@ func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 
 // QueryPrefix returns the given query with a prefix filter on the given
 // field name, using the >= and < filters.
-func QueryPrefix(query *datastore.Query, fieldName, prefix string) *datastore.Query {
+func QueryPrefix(query *datastore.Query, fieldName, prefix string, desc bool) *datastore.Query {
 	prefixBound := prefix
 	last := len(prefixBound) - 1
 	lastChar := prefix[last]
 	prefixBound = prefixBound[:last] + string(byte(lastChar)+1)
-	return query.Filter(fieldName+" >=", prefix).Filter(fieldName+" <", prefixBound)
+	order := fieldName
+	if desc {
+		order = "-" + order
+	}
+	return query.
+		Order(order).
+		Filter(fieldName+" >=", prefix).
+		Filter(fieldName+" <", prefixBound)
 }

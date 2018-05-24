@@ -81,13 +81,13 @@ func getRun(r *http.Request, run string, product string) (latest shared.TestRun,
 		query = query.Filter("Revision =", run)
 	}
 	if len(productPieces) > 1 {
-		query = shared.QueryPrefix(query, "BrowserVersion", productPieces[1])
+		query = shared.QueryPrefix(query, "BrowserVersion", productPieces[1], true)
 	}
 	if len(productPieces) > 2 {
 		query = query.Filter("OSName =", productPieces[2])
 	}
 	if len(productPieces) > 3 {
-		query = shared.QueryPrefix(query, "OSVersion", productPieces[3])
+		query = shared.QueryPrefix(query, "OSVersion", productPieces[3], true)
 	}
 	_, err = query.GetAll(ctx, &testRunResults)
 	if err != nil {

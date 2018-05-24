@@ -50,17 +50,15 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid 'max-count' param: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	baseQuery := datastore.
-		NewQuery("TestRun").
-		Order("-CreatedAt").
-		Limit(limit)
+	baseQuery := datastore.NewQuery("TestRun")
 
 	for _, product := range products {
 		var testRunResults []shared.TestRun
 		query := baseQuery.Filter("BrowserName =", product.BrowserName)
 		if product.BrowserVersion != "" {
-			query = shared.QueryPrefix(query, "BrowserVersion", product.BrowserVersion)
+			query = shared.QueryPrefix(query, "BrowserVersion", product.BrowserVersion, true)
 		}
+		query = query.Order("-CreatedAt").Limit(limit)
 		// TODO(lukebjerring): Indexes + filtering for OS + version.
 		if runSHA != "" && runSHA != "latest" {
 			query = query.Filter("Revision =", runSHA)
