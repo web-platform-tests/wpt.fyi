@@ -36,7 +36,7 @@ fi
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];
 then
-  git diff --name-only HEAD...${TRAVIS_BRANCH} | grep "^${APP_PATH}/" || {
+  git diff --name-only ${TRAVIS_BRANCH}..HEAD | grep "^${APP_PATH}/" || {
     info "No changes detected under ${APP_PATH}. Skipping deployment."
     exit 0
   }
