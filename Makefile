@@ -67,7 +67,7 @@ go_large_test: go_webdriver_test
 
 integration_test: go_webdriver_test web_components_test
 
-go_webdriver_test: go_deps xvfb firefox web_component_tester webserver_deps
+go_webdriver_test: go_deps xvfb firefox node-web-component-tester webserver_deps
 	$(START_XVFB)
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
@@ -76,12 +76,10 @@ go_webdriver_test: go_deps xvfb firefox web_component_tester webserver_deps
 			--frame_buffer=$(USE_FRAME_BUFFER)
 	$(STOP_XVFB)
 
-web_components_test: xvfb firefox chrome web_component_tester webserver_deps
+web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
 	$(START_XVFB)
 	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
 	$(STOP_XVFB)
-
-web_component_tester: node-web-component-tester
 
 sys_update: sys_deps
 	sudo apt-get update
