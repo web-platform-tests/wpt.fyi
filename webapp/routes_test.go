@@ -21,6 +21,10 @@ func TestLandingPageBound(t *testing.T) {
 	assertHandlerMatch(t, "/2dcontext", "/")
 }
 
+func TestLandingPageHSTS(t *testing.T) {
+	assertHSTS(t, "/")
+}
+
 func TestAboutBound(t *testing.T) {
 	assertBound(t, "/about")
 	assertHandlerMatch(t, "/about", "/about")
@@ -46,6 +50,10 @@ func TestRunsBound(t *testing.T) {
 	assertBound(t, "/test-runs")
 }
 
+func TestRunsBoundHSTS(t *testing.T) {
+	assertHSTS(t, "/test-runs")
+}
+
 func TestApiDiffBound(t *testing.T) {
 	assertBound(t, "/api/diff")
 }
@@ -59,7 +67,7 @@ func TestApiRunBound(t *testing.T) {
 }
 
 func TestApiResultsUploadBound(t *testing.T) {
-	assertBound(t, "/api/results/upload")
+	assertHSTS(t, "/api/results/upload")
 }
 
 func TestResultsBound(t *testing.T) {
@@ -67,7 +75,7 @@ func TestResultsBound(t *testing.T) {
 }
 
 func TestAdminResultsUploadBound(t *testing.T) {
-	assertBound(t, "/admin/results/upload")
+	assertHSTS(t, "/admin/results/upload")
 }
 
 func assertBound(t *testing.T, path string) {
@@ -81,4 +89,13 @@ func assertHandlerMatch(t *testing.T, path string, pattern string) {
 	handler, handlerPattern := http.DefaultServeMux.Handler(req)
 	assert.NotNil(t, handler)
 	assert.Equal(t, pattern, handlerPattern)
+}
+
+func assertHSTS(t *testing.T, path string) {
+	req := httptest.NewRequest("GET", path, nil)
+	rr := httptest.NewRecorder()
+	handler, _ := http.DefaultServeMux.Handler(req)
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, "max-age=31536000; preload",
+		rr.HeaderMap["Strict-Transport-Security"][0])
 }
