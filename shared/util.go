@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+
+	"google.golang.org/appengine/datastore"
 )
 
 // All errors are considered fatal
@@ -73,4 +75,14 @@ func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 		w.Header().Add("Strict-Transport-Security", value)
 		h(w, r)
 	})
+}
+
+// QueryPrefix returns the given query with a prefix filter on the given
+// field name, using the >= and < filters.
+func QueryPrefix(query *datastore.Query, fieldName, prefix string) *datastore.Query {
+	prefixBound := prefix
+	last := len(prefixBound) - 1
+	lastChar := prefix[last]
+	prefixBound = prefixBound[:last] + string(byte(lastChar)+1)
+	return query.Filter(fieldName+" >=", prefix).Filter(fieldName+" <", prefixBound)
 }

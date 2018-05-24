@@ -67,7 +67,7 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		Limit(1).
 		Filter("BrowserName =", product.BrowserName)
 	if product.BrowserVersion != "" {
-		query = query.Filter("BrowserVersion =", product.BrowserVersion)
+		query = shared.QueryPrefix(query, "BrowserVersion", product.BrowserVersion)
 	}
 	if runSHA != "" && runSHA != "latest" {
 		query = query.Filter("Revision =", runSHA)

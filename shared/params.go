@@ -110,19 +110,28 @@ func ParseProduct(product string) (result Product, err error) {
 // ParseVersion parses the given version as a semantically versioned string.
 func ParseVersion(version string) (result *Version, err error) {
 	pieces := strings.Split(version, ".")
+	if len(pieces) > 4 {
+		return nil, fmt.Errorf("Invalid version: %s", version)
+	}
+	numbers := make([]int, len(pieces))
 	for i, piece := range pieces {
-		if _, err := strconv.ParseInt(piece, 10, 0); i > 3 || err != nil {
+		n, err := strconv.ParseInt(piece, 10, 0)
+		if err != nil {
 			return nil, fmt.Errorf("Invalid version: %s", version)
 		}
+		numbers[i] = int(n)
 	}
 	result = &Version{
-		Major: pieces[0],
+		Major: numbers[0],
 	}
-	if len(pieces) > 1 {
-		result.Minor = pieces[1]
+	if len(numbers) > 1 {
+		result.Minor = numbers[1]
 	}
-	if len(pieces) > 2 {
-		result.Revision = pieces[2]
+	if len(numbers) > 2 {
+		result.Build = numbers[2]
+	}
+	if len(numbers) > 3 {
+		result.Revision = numbers[3]
 	}
 	return result, nil
 }

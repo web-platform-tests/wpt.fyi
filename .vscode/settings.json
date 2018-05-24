@@ -1,3 +1,6 @@
 {
-  "go.buildTags": "small medium large"
+  "go.buildTags": "small medium large",
+  "go.testFlags": [
+    "-tags=small medium large"
+  ],
 }
