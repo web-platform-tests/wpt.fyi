@@ -7,6 +7,7 @@ import flask
 from google.cloud import storage
 
 import wptreport
+import gsutil
 
 
 APPENGINE_INTERNAL_IP = '10.0.0.1'
@@ -45,12 +46,20 @@ def task_handler():
         report = wptreport.WPTReport()
         report.load_json(temp)
 
+    if not revision:
+        revision = report.run_info['revision']
+    if not browser:
+        browser = report.product_id()
+
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
+
+    gsutil.copy(gcs_path, 'gs://wptd-results/{}/{}/report.json'.format(
+        revision, browser))
 
     tempdir = report.populate_upload_directory(
         browser=browser, revision=revision)
     # TODO(Hexcles): Switch to prod.
-    wptreport.gcs_upload(tempdir, 'gs://robertma-wptd-dev/')
+    gsutil.rsync(tempdir, 'gs://robertma-wptd-dev/')
     # TODO(Hexcles): Get secret from Datastore and create the test run.
     # wptreport.create_test_run(report, secret)
     shutil.rmtree(tempdir)

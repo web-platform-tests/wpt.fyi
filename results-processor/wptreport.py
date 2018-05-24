@@ -10,10 +10,11 @@ import io
 import json
 import logging
 import os
-import subprocess
 import tempfile
 
 import requests
+
+import gsutil
 
 _log = logging.getLogger(__name__)
 _log.setLevel(logging.INFO)
@@ -174,6 +175,15 @@ class WPTReport(object):
             filepath = directory + test_file
             self.write_gzip_json(filepath, result)
 
+    def product_id(self):
+        name = '{}-{}-{}'.format(self.run_info['product'],
+                                 self.run_info['browser_version'],
+                                 self.run_info['os'])
+        if self.run_info.get('os_version'):
+            name += '-' + self.run_info['os_version']
+        # TODO(Hexcles): Append a short random string at the end.
+        return name
+
     def populate_upload_directory(
             self, revision=None, browser=None, output_dir=None):
         """Populates a directory suitable for uploading to GCS.
@@ -187,7 +197,8 @@ class WPTReport(object):
 
         Args:
             revision: If given, overrides the revision included in the report.
-            browser: If given, overrides the browser included in the report.
+            browser: A string containing the name and version of the browser
+                and the OS. If given, overrides the info in the report.
             output_dir: A given output directory instead of a temporary one.
 
         Returns:
@@ -197,10 +208,7 @@ class WPTReport(object):
             if not revision:
                 revision = self.run_info['revision']
             if not browser:
-                # TODO(Hexcles): Switch to the new naming convention.
-                browser = "{}-{}-{}".format(self.run_info['product'],
-                                            self.run_info['browser_version'],
-                                            self.run_info['os'])
+                browser = self.product_id()
         except KeyError as e:
             raise MissingMetadataError(str(e)) from e
 
@@ -233,17 +241,6 @@ class WPTReport(object):
         # Optional fields:
         if self.run_info.get('os_version'):
             payload['os_version'] = self.run_info['os_version']
-
-
-def gcs_upload(local_path, gcs_path):
-    assert gcs_path.startswith('gs://')
-    command = [
-        'gsutil', '-m', '-h', 'Content-Encoding:gzip', 'rsync', '-r',
-        local_path, gcs_path
-    ]
-    _log.info(' '.join(command))
-    subprocess.check_call(command)
-    return gcs_path.replace('gs://', 'https://storage.googleapis.com/', 1)
 
 
 def create_test_run(report, secret):
@@ -304,8 +301,9 @@ def main():
             output_dir=args.output_dir
         )
     if args.upload:
-        public_url = gcs_upload(upload_dir, 'gs://wptd')
-        _log.info('Uploaded to: %s', public_url)
+        gsutil.rsync(upload_dir, 'gs://wptd')
+        _log.info('Uploaded to: https://storage.googleapis.com/wptd/%s',
+                  report.sha_summary_path)
 
 
 if __name__ == '__main__':
