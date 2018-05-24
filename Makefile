@@ -31,11 +31,14 @@ GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 
 build: go_build
 
-test: go_test
+test: go_test python_test
 
 lint: go_lint eslint
 
 prepush: go_build test lint
+
+python_test: python3 tox
+	cd $(WPTD_PATH)results-processor; tox
 
 go_build: go_deps
 	cd $(WPTD_GO_PATH); go build ./...
@@ -124,8 +127,10 @@ golint_deps: git go_deps
 sys_deps: curl gpg node gcloud git
 
 curl: apt-get-curl
-python: apt-get-python
 git: apt-get-git
+python3: apt-get-python3
+python: apt-get-python
+tox: apt-get-tox
 wget: apt-get-wget
 
 java:

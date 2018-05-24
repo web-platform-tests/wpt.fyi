@@ -17,17 +17,15 @@ services:
 
 matrix:
   include:
-    - language: go
-      env:
+    - env:
+        - MAKE_TEST_TARGET=python_test
+    - env:
         - MAKE_TEST_TARGET=integration_test
-    - language: go
-      env:
+    - env:
         - MAKE_TEST_TARGET=lint
-    - language: go
-      env:
+    - env:
         - MAKE_TEST_TARGET=go_test
-    - language: go
-      env:
+    - env:
         - secure: "UuTZnGD+HSB+EYQFg2+lKhDwxlDUtU/uz4XdUG8/8F7Us9G7e7w/DL0jhnzpHjK13ig7Yafj83zZmNszpfaXhNdNp2glhiIeuupODODd24tRA4e9DBIoEToJEyjkXD7RttK4H7SaRp12yVEnE+gnUTiDCOJQHmkDl6DHwwUfeTG3P+dKgHsybdrXcUZG+ff4DPrwq9B6NU7izKC3QqByfcxhfxv+SE9e6vi8LKs6qdRbg4PnPEOc85kiqMmtqNHQ7hph3Np3oEaEeZqMylo2hKh/gXxWgNjH3uFwEtJx7sWYL/c3HpiNRMTPUFVJmGaU/xQqH3gGqEbt0QIjrQVFGJZ0wjJoha1+TigIB9LjJ3eSJCtUwj6naWwi0laOZJyR4L/+XCWpNRH2SjLvakIjims7ZEKbE3rVA/Vr0mY67NLnEm0fh6xglN2Jlm5Mag5hw3bHcOi72sQthjQofEtUE0fElAEGc4wBVCd87LzcLyCvZhg6VeJ/M+kC4uJuiMQJ6qkO92UDaV0bvY9svLlGBuBbd/PH0YPh0kkTUlH5IzJx/wymE2mSwtP8af1n0IBIItVfq6uuzct5IhEZvMoZsDv1pU5pqM/ucRuuvb6rtZedGpGjBZacM1uNa/MbvnF5imAHxfY7783saGaIpdNr6k4cxmHglelxwSR0zqujU2Q="
         - DEPLOY_STAGING=true
 
