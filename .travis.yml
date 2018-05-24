@@ -65,4 +65,4 @@ deploy:
     branch: master
     repo: web-platform-tests/wpt.fyi
     condition: ${TRAVIS_SECURE_ENV_VARS} == true
-  script: docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make deploy_staging BRANCH_NAME=master APP_PATH="webapp results-processor"
+  script: bash util/travis-deploy-staging.sh -f "webapp results-processor"

@@ -5,6 +5,21 @@
 
 APP_PATH="$@"
 
+usage() {
+  USAGE="Usage: travis-staging-deploy.sh [-f] [app path]
+    -f : Always deploy (even if no changes detected)
+    app path: wpt.fyi relative path for the app, e.g. \"webapp\""
+  echo "${USAGE}"
+}
+
+APP_PATH=${@: -1}
+while getopts ':fhq' flag; do
+  case "${flag}" in
+    f) FORCE_PUSH='true' ;;
+    h|*) usage && exit 0;;
+  esac
+done
+
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
@@ -18,11 +33,14 @@ if [ -z "${TRAVIS_PULL_REQUEST_BRANCH}" ]; then
   exit 0
 fi
 
-# Skip if webapp isn't modified.
-git diff --name-only HEAD...${TRAVIS_BRANCH} | grep "^$APP_PATH/" || {
-  info "No changes detected under ${APP_PATH}. Skipping deployment."
-  exit 0
-}
+# Skip if nothing under $APP_PATH was modified.
+if [ "${FORCE_PUSH}" != "true" ];
+then
+  git diff --name-only HEAD...${TRAVIS_BRANCH} | grep "^${APP_PATH}/" || {
+    info "No changes detected under ${APP_PATH}. Skipping deployment."
+    exit 0
+  }
+fi
 
 echo "Copying output to ${TEMP_FILE:=$(mktemp)}"
 # NOTE: Most gcloud output is stderr, so need to redirect it to stdout.
