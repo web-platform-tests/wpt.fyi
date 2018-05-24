@@ -68,5 +68,5 @@ deploy:
   on:
     branch: master
     repo: web-platform-tests/wpt.fyi
-    condition: ${TRAVIS_SECURE_ENV_VARS} == true
+    condition: ${TRAVIS_SECURE_ENV_VARS} == true && ${DEPLOY_STAGING} == true
   script: bash util/travis-deploy-staging.sh -f "webapp results-processor"
