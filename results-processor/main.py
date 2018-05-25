@@ -40,12 +40,9 @@ def liveness_check():
 
 
 @app.route('/_ah/readiness_check')
+@_serial_task
 def readiness_check():
-    lock = filelock.FileLock(LOCK_FILE)
-    if lock.is_locked:
-        return 'A result is currently being processed.', 503
-    else:
-        return 'Ready to process results'
+    return 'Ready to process results'
 
 
 @app.route('/api/results/process', methods=['POST'])
