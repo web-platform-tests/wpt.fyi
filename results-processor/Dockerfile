@@ -20,4 +20,5 @@ ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 
 ADD . /app/
-CMD exec gunicorn -b :$PORT -t 3600 main:app
+# We must have max_concurrent_requests(queue.yaml)+1 workers to respond to the health check.
+CMD exec gunicorn --bind :$PORT --timeout 3600 --workers 2 main:app
