@@ -31,11 +31,14 @@ GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 
 build: go_build
 
-test: go_test
+test: go_test python_test
 
 lint: go_lint eslint
 
 prepush: go_build test lint
+
+python_test: python3 tox
+	cd $(WPTD_PATH)results-processor; tox
 
 go_build: go_deps
 	cd $(WPTD_GO_PATH); go build ./...
@@ -67,7 +70,7 @@ go_large_test: go_webdriver_test
 
 integration_test: go_webdriver_test web_components_test
 
-go_webdriver_test: go_webdriver_deps
+go_webdriver_test: go_deps xvfb firefox node-web-component-tester webserver_deps
 	$(START_XVFB)
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
@@ -76,7 +79,7 @@ go_webdriver_test: go_webdriver_deps
 			--frame_buffer=$(USE_FRAME_BUFFER)
 	$(STOP_XVFB)
 
-web_components_test: webdriver_deps web_component_tester
+web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
 	$(START_XVFB)
 	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
 	$(STOP_XVFB)
@@ -86,12 +89,10 @@ sys_update: sys_deps
 	gcloud components update
 	npm install -g npm
 
-go_webdriver_deps: go_deps webdriver_deps webserver_deps
-
-webdriver_deps: xvfb browser_deps webserver_deps web_component_tester
-
 # Dependencies for running dev_appserver.py.
-webserver_deps: build bower_components dev_appserver_deps
+webserver_deps: webapp_deps dev_appserver_deps
+
+webapp_deps: go_deps bower_components
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go
 
@@ -126,8 +127,10 @@ golint_deps: git go_deps
 sys_deps: curl gpg node gcloud git
 
 curl: apt-get-curl
-python: apt-get-python
 git: apt-get-git
+python3: apt-get-python3
+python: apt-get-python
+tox: apt-get-tox
 wget: apt-get-wget
 
 java:
@@ -142,13 +145,11 @@ gpg:
 		sudo apt-get install --assume-yes --no-install-suggests gnupg; \
 	fi
 
-node: curl
+node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
 		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
 		sudo apt-get install -y nodejs; \
 	fi
-
-npm: apt-get-npm
 
 gcloud: python curl gpg
 	@ echo "travis_fold:start:gcloud_install"
@@ -168,14 +169,12 @@ dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run util/populate_dev_data.go $(FLAGS)
 
-deploy_staging: bower_components env-BRANCH_NAME env-APP_PATH
+deploy_staging: gcloud webapp_deps env-BRANCH_NAME env-APP_PATH $(WPTD_PATH)client-secret.json
 	gcloud config set project wptdashboard
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 
-web_component_tester: chrome firefox node-web-component-tester bower_components
-
-bower_components: node-bower
+bower_components: git node-bower
 	cd $(WPTD_PATH)webapp; npm run bower-components
 
 xvfb:
@@ -187,13 +186,13 @@ gcloud-%: gcloud
 	gcloud components list --filter="state[name]=Installed AND id=$*" | grep " $* " \
 		|| gcloud components install --quiet $*
 
-node-%: node npm
+node-%: node
 	@ echo "# Installing $*..."
 	# Hack to (more quickly) detect whether a package is already installed (available in node).
 	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
 
 apt-get-%:
-	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install --assume-yes --no-install-suggests $*; fi
+	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install --quiet --assume-yes --no-install-suggests $*; fi
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi

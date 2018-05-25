@@ -6,7 +6,8 @@ package webapp
 
 import (
 	"html/template"
-	"net/http"
+
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 var templates = template.Must(template.ParseGlob("templates/*.html"))
@@ -14,22 +15,22 @@ var templates = template.Must(template.ParseGlob("templates/*.html"))
 func init() {
 	// Test run results, viewed by browser (default view)
 	// For run results diff view, 'before' and 'after' params can be given.
-	http.HandleFunc("/", testResultsHandler)
-	http.HandleFunc("/results", testResultsHandler) // Prevent default redirect
-	http.HandleFunc("/results/", testResultsHandler)
+	shared.AddRoute("/", testResultsHandler)
+	shared.AddRoute("/results", testResultsHandler) // Prevent default redirect
+	shared.AddRoute("/results/", testResultsHandler)
 
 	// About wpt.fyi
-	http.HandleFunc("/about", aboutHandler)
+	shared.AddRoute("/about", aboutHandler)
 
 	// Test run results, viewed by pass-rate across the browsers
-	http.HandleFunc("/interop/", interopHandler)
+	shared.AddRoute("/interop/", interopHandler)
 
 	// Lists of test run results which have poor interoperability
-	http.HandleFunc("/interop/anomalies", anomalyHandler)
+	shared.AddRoute("/interop/anomalies", anomalyHandler)
 
 	// List of all test runs, by SHA[0:10]
-	http.HandleFunc("/test-runs", testRunsHandler)
+	shared.AddRoute("/test-runs", testRunsHandler)
 
 	// Admin-only manual results upload.
-	http.HandleFunc("/admin/results/upload", adminUploadHandler)
+	shared.AddRoute("/admin/results/upload", adminUploadHandler)
 }

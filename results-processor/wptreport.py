@@ -8,13 +8,30 @@ import argparse
 import gzip
 import io
 import json
+import logging
 import os
+import tempfile
+
+import requests
+
+import gsutil
 
 
-class InsufficientData(Exception):
+_log = logging.getLogger(__name__)
+
+
+class MissingMetadataError(Exception):
+    def __init__(self, key):
+        super(MissingMetadataError, self).__init__(
+            "Metadata %s isn't provided and can't be found in the report." %
+            (key,)
+        )
+
+
+class InsufficientDataError(Exception):
     """Execption for empty/incomplete WPTReport."""
     def __init__(self):
-        super(InsufficientData, self).__init__("Zero results available")
+        super(InsufficientDataError, self).__init__("Zero results available")
 
 
 class WPTReport(object):
@@ -23,6 +40,8 @@ class WPTReport(object):
     def __init__(self):
         self._report = dict()
         self._summary = dict()
+        # A relative path: short_sha/browser-summary.json.gz
+        self.sha_summary_path = ''
 
     def load_json(self, fileobj):
         """Loads wptreport from a JSON file.
@@ -39,7 +58,7 @@ class WPTReport(object):
                 self._report = json.load(text_file, strict=False)
         # Raise when 'results' is either not found or empty.
         if not self._report.get('results'):
-            raise InsufficientData
+            raise InsufficientDataError
 
     def load_gzip_json(self, fileobj):
         """Loads wptreport from a gzipped JSON file.
@@ -52,7 +71,22 @@ class WPTReport(object):
             self.load_json(gzip_file)
 
     @staticmethod
-    def write_json(filepath, payload):
+    def write_json(fileobj, payload):
+        """Encode an object to JSON and writes it to disk.
+
+        Args:
+            fileobj: A file object to write to.
+            payload: An object that can be JSON encoded.
+        """
+        # json.dump only produces ASCII characters by default.
+        if isinstance(fileobj, io.TextIOBase):
+            json.dump(payload, fileobj)
+        else:
+            with io.TextIOWrapper(fileobj, encoding='ascii') as text_file:
+                json.dump(payload, text_file)
+
+    @staticmethod
+    def write_gzip_json(filepath, payload):
         """Encode an object to JSON and writes it to disk.
 
         Args:
@@ -62,19 +96,19 @@ class WPTReport(object):
         """
         if os.path.dirname(filepath):
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        # json.dump only produces ASCII characters by default.
-        with io.open(filepath, 'w', encoding='ascii') as json_file:
-            json.dump(payload, json_file)
+        with open(filepath, 'wb') as f:
+            with gzip.GzipFile(fileobj=f, mode='wb') as gz:
+                WPTReport.write_json(gz, payload)
 
     @property
     def results(self):
-        """The 'results' field of the report, or None if it doesn't exists."""
-        return self._report.get('results')
+        """The 'results' field of the report, or [] if it doesn't exists."""
+        return self._report.get('results', [])
 
     @property
     def run_info(self):
-        """The 'run_info' field of the report, or None if it doesn't exists."""
-        return self._report.get('run_info')
+        """The 'run_info' field of the report, or {} if it doesn't exists."""
+        return self._report.get('run_info', {})
 
     def summarize(self):
         """Creates a summary of all the test results.
@@ -85,13 +119,13 @@ class WPTReport(object):
             A summary dictionary.
 
         Raises:
-            InsufficientData if the dataset contains zero test results.
+            InsufficientDataError if the dataset contains zero test results.
         """
         if self._summary:
             return self._summary
 
         if not self.results:
-            raise InsufficientData
+            raise InsufficientDataError
 
         for result in self.results:
             test_file = result['test']
@@ -125,7 +159,7 @@ class WPTReport(object):
         Args:
             filepath: A file path to write to.
         """
-        self.write_json(filepath, self.summarize())
+        self.write_gzip_json(filepath, self.summarize())
 
     def write_result_directory(self, directory):
         """Writes individual test results to a directory.
@@ -139,7 +173,91 @@ class WPTReport(object):
             test_file = result['test']
             assert test_file.startswith('/')
             filepath = directory + test_file
-            self.write_json(filepath, result)
+            self.write_gzip_json(filepath, result)
+
+    def product_id(self):
+        name = '{}-{}-{}'.format(self.run_info['product'],
+                                 self.run_info['browser_version'],
+                                 self.run_info['os'])
+        if self.run_info.get('os_version'):
+            name += '-' + self.run_info['os_version']
+        # TODO(Hexcles): Append a short random string at the end.
+        return name
+
+    def populate_upload_directory(
+            self, revision=None, browser=None, output_dir=None):
+        """Populates a directory suitable for uploading to GCS.
+
+        The directory structure is as follows:
+        [output_dir]:
+            - [sha][:10]:
+                - [browser]-summary.json.gz
+                - [browser]:
+                    - (per-test results produced by write_result_directory)
+
+        Args:
+            revision: If given, overrides the revision included in the report.
+            browser: A string containing the name and version of the browser
+                and the OS. If given, overrides the info in the report.
+            output_dir: A given output directory instead of a temporary one.
+
+        Returns:
+            The output directory.
+        """
+        try:
+            if not revision:
+                revision = self.run_info['revision']
+            if not browser:
+                browser = self.product_id()
+        except KeyError as e:
+            raise MissingMetadataError(str(e)) from e
+
+        if not output_dir:
+            output_dir = tempfile.mkdtemp()
+
+        # TODO(Hexcles): Switch to full SHA.
+        short_sha = revision[:10]
+        summary_filename = browser + '-summary.json.gz'
+        self.sha_summary_path = os.path.join(short_sha, summary_filename)
+        self.write_summary(os.path.join(output_dir, self.sha_summary_path))
+        self.write_result_directory(
+            os.path.join(output_dir, short_sha, browser))
+        return output_dir
+
+    @property
+    def test_run_metadata(self):
+        # Required fields:
+        try:
+            payload = {
+                'browser_name': self.run_info['product'],
+                'browser_version': self.run_info['browser_version'],
+                'os_name': self.run_info['os'],
+                'revision': self.run_info['revision'][:10],
+                'full_revision': self.run_info['revision'],
+            }
+        except KeyError as e:
+            raise MissingMetadataError(str(e)) from e
+
+        # Optional fields:
+        if self.run_info.get('os_version'):
+            payload['os_version'] = self.run_info['os_version']
+
+
+def create_test_run(report, secret):
+    if not report.sha_summary_path:
+        raise MissingMetadataError('results_url')
+
+    # TODO(Hexcles): Do not hardcode the URLs.
+    payload = report.test_run_metadata
+    payload['results_url'] = "https://storage.googleapis.com/wptd/%s".format(
+        report.sha_summary_path
+    )
+    response = requests.post(
+        "https://wpt.fyi/api/run",
+        params={'secret': secret},
+        data=json.dumps(payload)
+    )
+    response.raise_for_status()
 
 
 def main():
@@ -149,10 +267,21 @@ def main():
                         help='path to a JSON wptreport (gzipped files are '
                         'supported as long as the extension is .gz)')
     parser.add_argument('--summary', type=str,
-                        help='if specified, write a JSON summary to this file')
-    parser.add_argument('--results-directory', type=str,
-                        help='if specified, split the full report into tests '
-                        'and write individual results to this directory')
+                        help='if specified, write a gzipped JSON summary to '
+                        'this file path')
+    parser.add_argument('--output-dir', type=str,
+                        help='if specified, write both the summary and '
+                        'per-test results (all gzipped) to OUTPUT_DIR/SHA/ ,'
+                        'suitable for uploading to GCS (please use an '
+                        'empty directory)')
+    parser.add_argument('--revision', type=str,
+                        help='the WPT revision of the test run (overrides the '
+                        'revision included in the REPORT)')
+    parser.add_argument('--browser', type=str,
+                        help='the browser of the test run (overrides the '
+                        'browser info included in the REPORT)')
+    parser.add_argument('--upload', default=False, action='store_true',
+                        help='upload the results to GCS')
     args = parser.parse_args()
 
     report = WPTReport()
@@ -162,11 +291,21 @@ def main():
     else:
         with open(args.report, 'rt') as f:
             report.load_json(f)
+
     if args.summary:
         report.write_summary(args.summary)
-    if args.results_directory:
-        report.write_result_directory(args.results_directory)
+    if args.output_dir or args.upload:
+        upload_dir = report.populate_upload_directory(
+            revision=args.revision,
+            browser=args.browser,
+            output_dir=args.output_dir
+        )
+    if args.upload:
+        gsutil.rsync(upload_dir, 'gs://wptd')
+        _log.info('Uploaded to: https://storage.googleapis.com/wptd/%s',
+                  report.sha_summary_path)
 
 
 if __name__ == '__main__':
+    _log.setLevel(logging.INFO)
     main()
