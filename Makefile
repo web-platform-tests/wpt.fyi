@@ -61,6 +61,8 @@ go_small_test: go_deps
 	cd $(WPTD_GO_PATH); go test -tags=small -v ./...
 
 go_medium_test: go_deps dev_appserver_deps
+	# Hack to work around https://github.com/golang/appengine/issues/136
+	cd $(GOPATH)/src/github.com/golang/protobuf; git checkout ac606b1
 	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
 
 go_large_test: go_webdriver_test
