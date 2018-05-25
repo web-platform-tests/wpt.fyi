@@ -6,9 +6,11 @@ package shared
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"google.golang.org/appengine/datastore"
 )
@@ -80,10 +82,6 @@ func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 // QueryPrefix returns the given query with a prefix filter on the given
 // field name, using the >= and < filters.
 func QueryPrefix(query *datastore.Query, fieldName, prefix string, desc bool) *datastore.Query {
-	prefixBound := prefix
-	last := len(prefixBound) - 1
-	lastChar := prefix[last]
-	prefixBound = prefixBound[:last] + string(byte(lastChar)+1)
 	order := fieldName
 	if desc {
 		order = "-" + order
@@ -91,5 +89,5 @@ func QueryPrefix(query *datastore.Query, fieldName, prefix string, desc bool) *d
 	return query.
 		Order(order).
 		Filter(fieldName+" >=", prefix).
-		Filter(fieldName+" <", prefixBound)
+		Filter(fieldName+" <=", fmt.Sprintf("%s%c", prefix, utf8.MaxRune))
 }
