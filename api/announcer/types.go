@@ -17,10 +17,12 @@ import (
 
 var errMissingRevision = errors.New("Missing required revision")
 
+// GetErMissingRevision produces the error produced when a required revision is not provided.
 func GetErMissingRevision() error {
 	return errMissingRevision
 }
 
+// Epoch is the representation of an epoch exposed via the public API.
 type Epoch struct {
 	ID          string  `json:"id"`
 	Label       string  `json:"label"`
@@ -29,6 +31,7 @@ type Epoch struct {
 	MaxDuration float32 `json:"max_duration_sec"`
 }
 
+// FromEpoch converts an epoch.Epoch to an epoch exposed via the public API.
 func FromEpoch(e epoch.Epoch) Epoch {
 	t := reflect.TypeOf(e)
 	v := reflect.ValueOf(e)
@@ -49,11 +52,13 @@ func FromEpoch(e epoch.Epoch) Epoch {
 	}
 }
 
+// Revision is the representation of a git revision exposed via the public API.
 type Revision struct {
 	Hash       string    `json:"hash"`
 	CommitTime time.Time `json:"commit_time"`
 }
 
+// FromRevision converts an agit.Revision to a revision exposed via the public API.
 func FromRevision(rev agit.Revision) Revision {
 	return Revision{
 		Hash:       rev.GetHash().String(),
@@ -66,7 +71,7 @@ type LatestRequest struct{}
 
 // LatestResponse models a response for the latest announced revisions.
 type LatestResponse struct {
-	Revisions map[string]Revision `json:"revisions"'`
+	Revisions map[string]Revision `json:"revisions"`
 	Epochs    []Epoch             `json:"epochs"`
 }
 
