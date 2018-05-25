@@ -4,6 +4,7 @@ import re
 import shutil
 import tempfile
 
+import filelock
 import flask
 from google.cloud import storage
 
@@ -12,13 +13,43 @@ import gsutil
 
 
 APPENGINE_INTERNAL_IP = '10.0.0.1'
+LOCK_FILE = '/tmp/results-processor.lock'
 
 
 logging.basicConfig(level=logging.INFO)
 app = flask.Flask(__name__)
 
 
+def _serial_task(func):
+    lock = filelock.FileLock(LOCK_FILE)
+
+    def decorated_func(*args, **kwargs):
+        try:
+            with lock.acquire(timeout=1):
+                return func(*args, **kwargs)
+        except filelock.Timeout:
+            # 503 Service Unavailable
+            return 'A result is currently being processed.', 503
+
+    return decorated_func
+
+
+@app.route('/_ah/liveness_check')
+def liveness_check():
+    return 'Service alive'
+
+
+@app.route('/_ah/readiness_check')
+def readiness_check():
+    lock = filelock.FileLock(LOCK_FILE)
+    if lock.is_locked:
+        return 'A result is currently being processed.', 503
+    else:
+        return 'Ready to process results'
+
+
 @app.route('/api/results/process', methods=['POST'])
+@_serial_task
 def task_handler():
     if not app.debug:
         # Only allow access from other services.
