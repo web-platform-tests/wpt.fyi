@@ -34,9 +34,6 @@ def task_handler():
     result_type = params['type']
     # TODO(Hexcles): Support multiple results.
     assert result_type == 'single'
-    # Optional fields (to be deprecated once everyone has embedded metadata):
-    browser = params.get('browser')
-    revision = params.get('revision')
 
     match = re.match(r'/([^/]+)/(.*)', gcs_path)
     assert match
@@ -52,20 +49,26 @@ def task_handler():
         report = wptreport.WPTReport()
         report.load_json(temp)
 
-    if not revision:
-        revision = report.run_info['revision']
-    if not browser:
-        browser = report.product_id()
+    # To be deprecated once all reports have all the required metadata.
+    report.update_metadata(
+        revision=params.get('revision'),
+        browser_name=params.get('browser_name'),
+        browser_version=params.get('browser_version'),
+        os_name=params.get('os_name'),
+        os_version=params.get('os_version'),
+    )
+
+    revision = report.run_info['revision']
+    product = report.product_id()
 
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
 
     gsutil.copy(
         'gs:/' + gcs_path,
-        'gs://wptd-results/{}/{}/report.json'.format(revision, browser)
+        'gs://wptd-results/{}/{}/report.json'.format(revision, product)
     )
 
-    tempdir = report.populate_upload_directory(
-        browser=browser, revision=revision)
+    tempdir = report.populate_upload_directory()
     # TODO(Hexcles): Switch to prod.
     gsutil.rsync(tempdir, 'gs://robertma-wptd-dev/', quiet=True)
     # TODO(Hexcles): Get secret from Datastore and create the test run.

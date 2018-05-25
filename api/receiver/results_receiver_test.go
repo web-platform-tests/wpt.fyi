@@ -54,13 +54,17 @@ func TestHandleFilePayload(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	f := &os.File{}
+	extraParams := map[string]string{
+		"browser_name": "firefox",
+	}
+
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single"),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", extraParams),
 	)
 
-	handleFilePayload(mockAE, "blade-runner", f)
+	handleFilePayload(mockAE, "blade-runner", f, extraParams)
 }
 
 func TestHandleURLPayload_single(t *testing.T) {
@@ -68,32 +72,36 @@ func TestHandleURLPayload_single(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	f := &os.File{}
+	extraParams := map[string]string{
+		"browser_name": "firefox",
+	}
+
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().fetchURL("http://wpt.fyi/test.json.gz").Return(f, nil),
 		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single"),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", extraParams),
 	)
 
-	handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"})
+	handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"}, extraParams)
 }
 
 func TestHandleURLPayload_multiple(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
+	f := &os.File{}
 	urls := []string{"http://wpt.fyi/foo.json.gz", "http://wpt.fyi/bar.json.gz"}
 	gcs := []string{"/blade-runner/foo.json", "/blade-runner/bar.json"}
 
-	f := &os.File{}
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().fetchURL(urls[0]).Return(f, nil),
 		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return(gcs[0], nil),
 		mockAE.EXPECT().fetchURL(urls[1]).Return(f, nil),
 		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return(gcs[1], nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", gcs, "multiple"),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", gcs, "multiple", nil),
 	)
 
-	handleURLPayload(mockAE, "blade-runner", urls)
+	handleURLPayload(mockAE, "blade-runner", urls, nil)
 }
