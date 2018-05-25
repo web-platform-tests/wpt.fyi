@@ -32,8 +32,8 @@ var factory = announcer.NewBoundedMergedPRIterFactory()
 
 func TestBoundedMergedPRIterFactory_GetIter_NilRepo(t *testing.T) {
 	iter, err := factory.GetIter(nil, announcer.Limits{})
-	assert.True(t, iter == nil)
-	assert.True(t, err == announcer.GetErrNilRepo())
+	assert.Nil(t, iter)
+	assert.Equal(t, announcer.GetErrNilRepo(), err)
 }
 
 func TestBoundedMergedPRIterFactory_GetIter_Fake(t *testing.T) {
@@ -44,8 +44,8 @@ func TestBoundedMergedPRIterFactory_GetIter_Fake(t *testing.T) {
 	repo.EXPECT().Tags().Return(nil, errFake)
 
 	iter, err := factory.GetIter(repo, announcer.Limits{})
-	assert.True(t, iter == nil)
-	assert.True(t, err == errFake)
+	assert.Nil(t, iter)
+	assert.Equal(t, errFake, err)
 }
 
 func TestBoundedMergedPRIterFactory_GetIter(t *testing.T) {
@@ -85,15 +85,15 @@ func TestBoundedMergedPRIterFactory_GetIter(t *testing.T) {
 		Now:   time.Date(2018, 4, 5, 0, 0, 0, 1, time.UTC),
 		Start: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 	})
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	refNames := []string{"refs/tags/merge_pr_5", "refs/tags/merge_pr_4"}
 	i := 0
 	var ref *plumbing.Reference
 	for ref, err = iter.Next(); ref != nil && err == nil; ref, err = iter.Next() {
-		assert.True(t, ref.Name().String() == refNames[i])
+		assert.Equal(t, refNames[i], ref.Name().String())
 		i++
 	}
-	assert.True(t, err == io.EOF)
+	assert.Equal(t, io.EOF, err)
 }
 
 func TestGitRemoteAnnouncer_Init_FakeGit(t *testing.T) {
@@ -106,8 +106,8 @@ func TestGitRemoteAnnouncer_Init_FakeGit(t *testing.T) {
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		Git: mockGit,
 	})
-	assert.True(t, a == nil)
-	assert.True(t, err == errFake)
+	assert.Nil(t, a)
+	assert.Equal(t, errFake, err)
 }
 
 type NilRepoProducer struct{}
@@ -138,16 +138,16 @@ func TestGitRemoteAnnouncer_Init_NilRepo(t *testing.T) {
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		Git: mockGit,
 	})
-	assert.True(t, a == nil)
-	assert.True(t, err == errFake)
+	assert.Nil(t, a)
+	assert.Equal(t, errFake, err)
 }
 
 func TestGitRemoteAnnouncer_Init_OK(t *testing.T) {
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		Git: test.NewMockRepository([]test.Tag{}, test.NilFetchImpl),
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 }
 
 type SliceReferenceIter struct {
@@ -199,12 +199,12 @@ func TestGitRemoteAnnouncer_GetRevisions_ErrFake(t *testing.T) {
 		EpochReferenceIterFactory: mockFactory,
 		Git: repo,
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 
 	revs, err := a.GetRevisions(make(map[epoch.Epoch]int), announcer.Limits{})
-	assert.True(t, revs == nil)
-	assert.True(t, err == errFake)
+	assert.Nil(t, revs)
+	assert.Equal(t, errFake, err)
 }
 
 func TestGitRemoteAnnouncer_GetRevisions_ErrEmptyEpochs(t *testing.T) {
@@ -214,12 +214,12 @@ func TestGitRemoteAnnouncer_GetRevisions_ErrEmptyEpochs(t *testing.T) {
 		},
 		Git: test.NewMockRepository([]test.Tag{}, test.NilFetchImpl),
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 
 	revs, err := a.GetRevisions(make(map[epoch.Epoch]int), announcer.Limits{})
-	assert.True(t, revs == nil)
-	assert.True(t, err == announcer.GetErrEmptyEpochs())
+	assert.Nil(t, revs)
+	assert.Equal(t, announcer.GetErrEmptyEpochs(), err)
 }
 
 func TestGitRemoteAnnouncer_GetRevisions_ErrNotAllEpochsConsumed(t *testing.T) {
@@ -229,14 +229,14 @@ func TestGitRemoteAnnouncer_GetRevisions_ErrNotAllEpochsConsumed(t *testing.T) {
 		},
 		Git: test.NewMockRepository([]test.Tag{}, test.NilFetchImpl),
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 
 	epochs := make(map[epoch.Epoch]int)
 	epochs[epoch.Hourly{}] = 1
 	revs, err := a.GetRevisions(epochs, announcer.Limits{})
-	assert.True(t, revs != nil)
-	assert.True(t, err == announcer.GetErrNotAllEpochsConsumed())
+	assert.NotNil(t, revs)
+	assert.Equal(t, announcer.GetErrNotAllEpochsConsumed(), err)
 }
 
 func TestGitRemoteAnnouncer_GetRevisions_Single(t *testing.T) {
@@ -256,8 +256,8 @@ func TestGitRemoteAnnouncer_GetRevisions_Single(t *testing.T) {
 		},
 		Git: test.NewMockRepository(tags, test.NilFetchImpl),
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 
 	epochs := make(map[epoch.Epoch]int)
 	epochs[epoch.Daily{}] = 1
@@ -267,15 +267,15 @@ func TestGitRemoteAnnouncer_GetRevisions_Single(t *testing.T) {
 		// Time of tag.
 		Start: time.Date(2018, 4, 1, 23, 59, 59, 999999999, time.UTC),
 	})
-	assert.True(t, revs != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, revs)
+	assert.Nil(t, err)
 	dailyRevs, ok := revs[epoch.Daily{}]
 	assert.True(t, ok)
-	assert.True(t, len(dailyRevs) == 1)
-	assert.True(t, dailyRevs[0] == agit.RevisionData{
+	assert.Equal(t, 1, len(dailyRevs))
+	assert.Equal(t, agit.RevisionData{
 		Hash:       tags[0].GetHash(),
 		CommitTime: tags[0].GetCommitTime(),
-	})
+	}, dailyRevs[0])
 }
 
 func TestGitRemoteAnnouncer_GetRevisions_MultiSameEpoch(t *testing.T) {
@@ -315,8 +315,8 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiSameEpoch(t *testing.T) {
 		},
 		Git: test.NewMockRepository(tags, test.NilFetchImpl),
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 
 	epochs := make(map[epoch.Epoch]int)
 	// All three days included in commit history.
@@ -327,11 +327,11 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiSameEpoch(t *testing.T) {
 		// Way before first tag.
 		Start: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 	})
-	assert.True(t, revs != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, revs)
+	assert.Nil(t, err)
 	dailyRevs, ok := revs[epoch.Daily{}]
 	assert.True(t, ok)
-	assert.True(t, len(dailyRevs) == 3)
+	assert.Equal(t, 3, len(dailyRevs))
 
 	// Last commit from previous day chosen for each:
 	// "three" [0], "two-two" [1], "one-one" [3].
@@ -350,7 +350,7 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiSameEpoch(t *testing.T) {
 		},
 	}
 	for i := 0; i < 3; i++ {
-		assert.True(t, dailyRevs[i] == expected[i])
+		assert.Equal(t, expected[i], dailyRevs[i])
 	}
 }
 
@@ -381,8 +381,8 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiEpochs(t *testing.T) {
 		},
 		Git: test.NewMockRepository(tags, test.NilFetchImpl),
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 
 	epochs := make(map[epoch.Epoch]int)
 	epochs[epoch.Hourly{}] = 1
@@ -394,32 +394,32 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiEpochs(t *testing.T) {
 		// Way before first tag.
 		Start: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 	})
-	assert.True(t, revs != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, revs)
+	assert.Nil(t, err)
 
 	hourlyRevs, ok := revs[epoch.Hourly{}]
 	assert.True(t, ok)
-	assert.True(t, len(hourlyRevs) == 1)
-	assert.True(t, hourlyRevs[0] == agit.RevisionData{
+	assert.Equal(t, 1, len(hourlyRevs))
+	assert.Equal(t, agit.RevisionData{
 		Hash:       tags[0].GetHash(),
 		CommitTime: tags[0].GetCommitTime(),
-	})
+	}, hourlyRevs[0])
 
 	twoHourlyRevs, ok := revs[epoch.TwoHourly{}]
 	assert.True(t, ok)
-	assert.True(t, len(twoHourlyRevs) == 1)
-	assert.True(t, twoHourlyRevs[0] == agit.RevisionData{
+	assert.Equal(t, 1, len(twoHourlyRevs))
+	assert.Equal(t, agit.RevisionData{
 		Hash:       tags[1].GetHash(),
 		CommitTime: tags[1].GetCommitTime(),
-	})
+	}, twoHourlyRevs[0])
 
 	dailyRevs, ok := revs[epoch.Daily{}]
 	assert.True(t, ok)
-	assert.True(t, len(dailyRevs) == 1)
-	assert.True(t, dailyRevs[0] == agit.RevisionData{
+	assert.Equal(t, 1, len(dailyRevs))
+	assert.Equal(t, agit.RevisionData{
 		Hash:       tags[2].GetHash(),
 		CommitTime: tags[2].GetCommitTime(),
-	})
+	}, dailyRevs[0])
 }
 
 func TestGitRemoteAnnouncer_GetRevisions_MultiMultiEpochs(t *testing.T) {
@@ -449,8 +449,8 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiMultiEpochs(t *testing.T) {
 		},
 		Git: test.NewMockRepository(tags, test.NilFetchImpl),
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 
 	epochs := make(map[epoch.Epoch]int)
 	epochs[epoch.Hourly{}] = 2
@@ -462,36 +462,36 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiMultiEpochs(t *testing.T) {
 		// Way before first tag.
 		Start: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 	})
-	assert.True(t, revs != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, revs)
+	assert.Nil(t, err)
 
 	hourlyRevs, ok := revs[epoch.Hourly{}]
 	assert.True(t, ok)
-	assert.True(t, len(hourlyRevs) == 2)
-	assert.True(t, hourlyRevs[0] == agit.RevisionData{
+	assert.Equal(t, 2, len(hourlyRevs))
+	assert.Equal(t, agit.RevisionData{
 		Hash:       tags[0].GetHash(),
 		CommitTime: tags[0].GetCommitTime(),
-	})
-	assert.True(t, hourlyRevs[1] == agit.RevisionData{
+	}, hourlyRevs[0])
+	assert.Equal(t, agit.RevisionData{
 		Hash:       tags[1].GetHash(),
 		CommitTime: tags[1].GetCommitTime(),
-	})
+	}, hourlyRevs[1])
 
 	twoHourlyRevs, ok := revs[epoch.TwoHourly{}]
 	assert.True(t, ok)
-	assert.True(t, len(twoHourlyRevs) == 1)
-	assert.True(t, twoHourlyRevs[0] == agit.RevisionData{
+	assert.Equal(t, 1, len(twoHourlyRevs))
+	assert.Equal(t, agit.RevisionData{
 		Hash:       tags[1].GetHash(),
 		CommitTime: tags[1].GetCommitTime(),
-	})
+	}, twoHourlyRevs[0])
 
 	dailyRevs, ok := revs[epoch.Daily{}]
 	assert.True(t, ok)
-	assert.True(t, len(dailyRevs) == 1)
-	assert.True(t, dailyRevs[0] == agit.RevisionData{
+	assert.Equal(t, 1, len(dailyRevs))
+	assert.Equal(t, agit.RevisionData{
 		Hash:       tags[2].GetHash(),
 		CommitTime: tags[2].GetCommitTime(),
-	})
+	}, dailyRevs[0])
 }
 
 type MockRepositoryProducer struct {
@@ -509,12 +509,12 @@ func TestGitRemoteAnnouncer_Reset(t *testing.T) {
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		Git: &g,
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 	prevClones := g.clones
 	err = a.Reset()
-	assert.True(t, err == nil)
-	assert.True(t, g.clones == prevClones+1)
+	assert.Nil(t, err)
+	assert.Equal(t, prevClones+1, g.clones)
 }
 
 type ProxyRepository struct {
@@ -567,8 +567,8 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 		EpochReferenceIterFactory: pRepo,
 		Git: pRepo,
 	})
-	assert.True(t, a != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, a)
+	assert.Nil(t, err)
 
 	epochs := make(map[epoch.Epoch]int)
 	epochs[epoch.Daily{}] = 1
@@ -582,19 +582,19 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 		return a.GetRevisions(epochs, limits)
 	}
 	revs, err := getRevisions()
-	assert.True(t, revs != nil)
-	assert.True(t, err == announcer.GetErrNotAllEpochsConsumed())
+	assert.NotNil(t, revs)
+	assert.Equal(t, announcer.GetErrNotAllEpochsConsumed(), err)
 
 	err = a.Fetch()
-	assert.True(t, err == fetchErr)
+	assert.Equal(t, fetchErr, err)
 	revs, err = getRevisions()
-	assert.True(t, revs != nil)
-	assert.True(t, err == nil)
+	assert.NotNil(t, revs)
+	assert.Nil(t, err)
 	dailyRevs, ok := revs[epoch.Daily{}]
 	assert.True(t, ok)
-	assert.True(t, len(dailyRevs) == 1)
-	assert.True(t, dailyRevs[0] == agit.RevisionData{
+	assert.Equal(t, 1, len(dailyRevs))
+	assert.Equal(t, agit.RevisionData{
 		Hash:       updatedTag.GetHash(),
 		CommitTime: updatedTag.GetCommitTime(),
-	})
+	}, dailyRevs[0])
 }
