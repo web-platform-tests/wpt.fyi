@@ -20,5 +20,7 @@ ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 
 ADD . /app/
-# We must have max_concurrent_requests(queue.yaml)+1 workers to respond to the health check.
+# The number of workers should always be 2: one for processing tasks, the other
+# for responding health checks. Scale the service by increasing the number of
+# instances instead.
 CMD exec gunicorn --bind :$PORT --timeout 3600 --workers 2 main:app
