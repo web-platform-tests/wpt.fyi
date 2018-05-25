@@ -20,4 +20,4 @@ ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 
 ADD . /app/
-CMD exec gunicorn -b :$PORT test:app
+CMD exec gunicorn -b :$PORT -t 3600 main:app
