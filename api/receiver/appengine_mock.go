@@ -110,16 +110,16 @@ func (mr *MockAppEngineAPIMockRecorder) uploadToGCS(fileName, f, gzipped interfa
 }
 
 // scheduleResultsTask mocks base method
-func (m *MockAppEngineAPI) scheduleResultsTask(uploader string, gcsPaths []string, payloadType string) (*taskqueue.Task, error) {
-	ret := m.ctrl.Call(m, "scheduleResultsTask", uploader, gcsPaths, payloadType)
+func (m *MockAppEngineAPI) scheduleResultsTask(uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (*taskqueue.Task, error) {
+	ret := m.ctrl.Call(m, "scheduleResultsTask", uploader, gcsPaths, payloadType, extraParams)
 	ret0, _ := ret[0].(*taskqueue.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // scheduleResultsTask indicates an expected call of scheduleResultsTask
-func (mr *MockAppEngineAPIMockRecorder) scheduleResultsTask(uploader, gcsPaths, payloadType interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "scheduleResultsTask", reflect.TypeOf((*MockAppEngineAPI)(nil).scheduleResultsTask), uploader, gcsPaths, payloadType)
+func (mr *MockAppEngineAPIMockRecorder) scheduleResultsTask(uploader, gcsPaths, payloadType, extraParams interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "scheduleResultsTask", reflect.TypeOf((*MockAppEngineAPI)(nil).scheduleResultsTask), uploader, gcsPaths, payloadType, extraParams)
 }
 
 // fetchURL mocks base method

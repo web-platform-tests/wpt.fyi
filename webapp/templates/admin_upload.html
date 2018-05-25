@@ -8,8 +8,16 @@
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/paper-styles/color.html">
 
+<style>
+  h2 { clear: both; }
+</style>
+
 <custom-style>
   <style>
+    div.note {
+      background-color: var(--paper-blue-100);
+      padding: 5px;
+    }
     form, iron-form {
       max-width: 100%;
       width: 480px;
@@ -34,7 +42,7 @@
 <!-- iron-form doesn't support multipart/form-data -->
 <form method="POST" action="/api/results/upload" enctype="multipart/form-data">
   <paper-input-container>
-    <label slot="label">Name</label>
+    <label slot="label">Uploader</label>
     <iron-input slot="input" class="input-element">
       <input name="user">
     </iron-input>
@@ -43,6 +51,40 @@
     <label slot="label">Results file</label>
     <iron-input slot="input" class="input-element">
       <input name="result_file" type="file">
+    </iron-input>
+  </paper-input-container>
+  <div class="note">
+    The following fields override the metadata included in the report. Generally
+    speaking, you should only fill these fields if the report doesn't have them.
+  </div>
+  <paper-input-container>
+    <label slot="label">Revision</label>
+    <iron-input slot="input" class="input-element">
+      <input name="revision">
+    </iron-input>
+  </paper-input-container>
+  <paper-input-container>
+    <label slot="label">Browser name</label>
+    <iron-input slot="input" class="input-element">
+      <input name="browser_name">
+    </iron-input>
+  </paper-input-container>
+  <paper-input-container>
+    <label slot="label">Browser version</label>
+    <iron-input slot="input" class="input-element">
+      <input name="browser_version">
+    </iron-input>
+  </paper-input-container>
+  <paper-input-container>
+    <label slot="label">OS name</label>
+    <iron-input slot="input" class="input-element">
+      <input name="os_name">
+    </iron-input>
+  </paper-input-container>
+  <paper-input-container>
+    <label slot="label">OS version</label>
+    <iron-input slot="input" class="input-element">
+      <input name="os_version">
     </iron-input>
   </paper-input-container>
 
