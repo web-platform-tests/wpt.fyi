@@ -6,7 +6,7 @@ FROM gcr.io/google-appengine/python
 RUN apt-get update -q
 RUN apt-get install -qy curl
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
-RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt
+RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null
 ENV PATH=/opt/google-cloud-sdk/bin:$PATH
 RUN gcloud config set disable_usage_reporting false
 
