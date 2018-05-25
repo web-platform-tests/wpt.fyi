@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/revisions/api"
 	"github.com/web-platform-tests/wpt.fyi/revisions/epoch"
 	agit "github.com/web-platform-tests/wpt.fyi/revisions/git"
 	"github.com/web-platform-tests/wpt.fyi/revisions/test"
