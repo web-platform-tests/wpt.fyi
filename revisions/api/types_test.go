@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package announcer_test
+package api_test
 
 import (
 	"errors"
@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/api/announcer"
 	"github.com/web-platform-tests/wpt.fyi/revisions/epoch"
 	agit "github.com/web-platform-tests/wpt.fyi/revisions/git"
 	"github.com/web-platform-tests/wpt.fyi/revisions/test"
@@ -25,7 +24,7 @@ func TestFromEpoch(t *testing.T) {
 	epochIn := epoch.Daily{}
 	dataIn := epochIn.GetData()
 
-	epochOut := announcer.FromEpoch(epochIn)
+	epochOut := api.FromEpoch(epochIn)
 
 	assert.Equal(t, dataIn.Description, epochOut.Description)
 	assert.Equal(t, dataIn.Label, epochOut.Label)
@@ -49,7 +48,7 @@ func TestFromEpoch_ID(t *testing.T) {
 				continue
 			}
 
-			assert.NotEqual(t, announcer.FromEpoch(e1).ID, announcer.FromEpoch(e2).ID)
+			assert.NotEqual(t, api.FromEpoch(e1).ID, api.FromEpoch(e2).ID)
 		}
 	}
 }
@@ -64,8 +63,8 @@ func TestLatestFromEpochs_missing(t *testing.T) {
 		epoch.TwoHourly{}: []agit.Revision{},
 	}
 
-	_, err := announcer.LatestFromEpochs(revs)
-	assert.Equal(t, announcer.GetErMissingRevision(), err)
+	_, err := api.LatestFromEpochs(revs)
+	assert.Equal(t, api.GetErMissingRevision(), err)
 }
 
 func TestLatestFromEpochs(t *testing.T) {
@@ -99,29 +98,29 @@ func TestLatestFromEpochs(t *testing.T) {
 		epoch.EightHourly{}: []agit.Revision{f},
 		epoch.TwoHourly{}:   []agit.Revision{c},
 	}
-	expected := announcer.LatestResponse{
-		Revisions: map[string]announcer.Revision{
-			announcer.FromEpoch(epoch.Hourly{}).ID:      announcer.FromRevision(a),
-			announcer.FromEpoch(epoch.TwoHourly{}).ID:   announcer.FromRevision(c),
-			announcer.FromEpoch(epoch.FourHourly{}).ID:  announcer.FromRevision(d),
-			announcer.FromEpoch(epoch.EightHourly{}).ID: announcer.FromRevision(f),
+	expected := api.LatestResponse{
+		Revisions: map[string]api.Revision{
+			api.FromEpoch(epoch.Hourly{}).ID:      api.FromRevision(a),
+			api.FromEpoch(epoch.TwoHourly{}).ID:   api.FromRevision(c),
+			api.FromEpoch(epoch.FourHourly{}).ID:  api.FromRevision(d),
+			api.FromEpoch(epoch.EightHourly{}).ID: api.FromRevision(f),
 		},
-		Epochs: []announcer.Epoch{
-			announcer.FromEpoch(epoch.Hourly{}),
-			announcer.FromEpoch(epoch.TwoHourly{}),
-			announcer.FromEpoch(epoch.FourHourly{}),
-			announcer.FromEpoch(epoch.EightHourly{}),
+		Epochs: []api.Epoch{
+			api.FromEpoch(epoch.Hourly{}),
+			api.FromEpoch(epoch.TwoHourly{}),
+			api.FromEpoch(epoch.FourHourly{}),
+			api.FromEpoch(epoch.EightHourly{}),
 		},
 	}
 
-	actual, err := announcer.LatestFromEpochs(revs)
+	actual, err := api.LatestFromEpochs(revs)
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func TestRevisionsFromEpochs_err(t *testing.T) {
 	err := errors.New("Announcer error")
-	response := announcer.RevisionsFromEpochs(map[epoch.Epoch][]agit.Revision{}, err)
+	response := api.RevisionsFromEpochs(map[epoch.Epoch][]agit.Revision{}, err)
 	assert.Equal(t, err.Error(), response.Error)
 }
 
@@ -157,32 +156,32 @@ func TestRevisionsFromEpochs_several(t *testing.T) {
 		epoch.TwoHourly{}:   []agit.Revision{c},
 	}
 
-	expected := announcer.RevisionsResponse{
-		Revisions: map[string][]announcer.Revision{
-			announcer.FromEpoch(epoch.Hourly{}).ID: []announcer.Revision{
-				announcer.FromRevision(a),
-				announcer.FromRevision(b),
+	expected := api.RevisionsResponse{
+		Revisions: map[string][]api.Revision{
+			api.FromEpoch(epoch.Hourly{}).ID: []api.Revision{
+				api.FromRevision(a),
+				api.FromRevision(b),
 			},
-			announcer.FromEpoch(epoch.TwoHourly{}).ID: []announcer.Revision{
-				announcer.FromRevision(c),
+			api.FromEpoch(epoch.TwoHourly{}).ID: []api.Revision{
+				api.FromRevision(c),
 			},
-			announcer.FromEpoch(epoch.FourHourly{}).ID: []announcer.Revision{
-				announcer.FromRevision(d),
-				announcer.FromRevision(e),
+			api.FromEpoch(epoch.FourHourly{}).ID: []api.Revision{
+				api.FromRevision(d),
+				api.FromRevision(e),
 			},
-			announcer.FromEpoch(epoch.EightHourly{}).ID: []announcer.Revision{
-				announcer.FromRevision(f),
+			api.FromEpoch(epoch.EightHourly{}).ID: []api.Revision{
+				api.FromRevision(f),
 			},
 		},
-		Epochs: []announcer.Epoch{
-			announcer.FromEpoch(epoch.Hourly{}),
-			announcer.FromEpoch(epoch.TwoHourly{}),
-			announcer.FromEpoch(epoch.FourHourly{}),
-			announcer.FromEpoch(epoch.EightHourly{}),
+		Epochs: []api.Epoch{
+			api.FromEpoch(epoch.Hourly{}),
+			api.FromEpoch(epoch.TwoHourly{}),
+			api.FromEpoch(epoch.FourHourly{}),
+			api.FromEpoch(epoch.EightHourly{}),
 		},
 	}
 
-	actual := announcer.RevisionsFromEpochs(revs, nil)
+	actual := api.RevisionsFromEpochs(revs, nil)
 
 	assert.Equal(t, expected, actual)
 }
@@ -220,33 +219,33 @@ func TestRevisionsFromEpochs_several_err(t *testing.T) {
 	}
 	err := errors.New("Announcer error")
 
-	expected := announcer.RevisionsResponse{
-		Revisions: map[string][]announcer.Revision{
-			announcer.FromEpoch(epoch.Hourly{}).ID: []announcer.Revision{
-				announcer.FromRevision(a),
-				announcer.FromRevision(b),
+	expected := api.RevisionsResponse{
+		Revisions: map[string][]api.Revision{
+			api.FromEpoch(epoch.Hourly{}).ID: []api.Revision{
+				api.FromRevision(a),
+				api.FromRevision(b),
 			},
-			announcer.FromEpoch(epoch.TwoHourly{}).ID: []announcer.Revision{
-				announcer.FromRevision(c),
+			api.FromEpoch(epoch.TwoHourly{}).ID: []api.Revision{
+				api.FromRevision(c),
 			},
-			announcer.FromEpoch(epoch.FourHourly{}).ID: []announcer.Revision{
-				announcer.FromRevision(d),
-				announcer.FromRevision(e),
+			api.FromEpoch(epoch.FourHourly{}).ID: []api.Revision{
+				api.FromRevision(d),
+				api.FromRevision(e),
 			},
-			announcer.FromEpoch(epoch.EightHourly{}).ID: []announcer.Revision{
-				announcer.FromRevision(f),
+			api.FromEpoch(epoch.EightHourly{}).ID: []api.Revision{
+				api.FromRevision(f),
 			},
 		},
-		Epochs: []announcer.Epoch{
-			announcer.FromEpoch(epoch.Hourly{}),
-			announcer.FromEpoch(epoch.TwoHourly{}),
-			announcer.FromEpoch(epoch.FourHourly{}),
-			announcer.FromEpoch(epoch.EightHourly{}),
+		Epochs: []api.Epoch{
+			api.FromEpoch(epoch.Hourly{}),
+			api.FromEpoch(epoch.TwoHourly{}),
+			api.FromEpoch(epoch.FourHourly{}),
+			api.FromEpoch(epoch.EightHourly{}),
 		},
 		Error: err.Error(),
 	}
 
-	actual := announcer.RevisionsFromEpochs(revs, err)
+	actual := api.RevisionsFromEpochs(revs, err)
 
 	assert.Equal(t, expected, actual)
 }
