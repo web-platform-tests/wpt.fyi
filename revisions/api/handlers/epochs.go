@@ -14,7 +14,7 @@ import (
 func EpochsHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	bytes, err := a.Marshal(a.GetAPIEpochs())
 	if err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(a.ErrorJSON("Failed to marshal epochs JSON"))
 		return
 	}

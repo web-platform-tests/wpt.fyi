@@ -123,7 +123,7 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	}
 
 	revs, err := ancr.GetRevisions(getRevisions, announcer.Limits{
-		Now:   now,
+		At:    now,
 		Start: start,
 	})
 	if revs == nil && err != nil {
