@@ -48,8 +48,18 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	var t *taskqueue.Task
 	f, _, err := r.FormFile("result_file")
+	// Non-existent keys will have empty values, which will later be
+	// filtered out by scheduleResultsTask.
+	extraParams := map[string]string{
+		"revision":        r.PostFormValue("revision"),
+		"browser_name":    r.PostFormValue("browser_name"),
+		"browser_version": r.PostFormValue("browser_version"),
+		"os_name":         r.PostFormValue("os_name"),
+		"os_version":      r.PostFormValue("os_version"),
+	}
+
+	var t *taskqueue.Task
 	if err != nil {
 		urls := r.PostForm["result_url"]
 		if len(urls) == 0 {
@@ -57,11 +67,11 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 			return
 		}
 		// result_url[] payload
-		t, err = handleURLPayload(a, uploader, urls)
+		t, err = handleURLPayload(a, uploader, urls, extraParams)
 	} else {
 		// result_file payload
 		defer f.Close()
-		t, err = handleFilePayload(a, uploader, f)
+		t, err = handleFilePayload(a, uploader, f, extraParams)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -70,17 +80,17 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	fmt.Fprintf(w, "Task %s added to queue\n", t.Name)
 }
 
-func handleFilePayload(a AppEngineAPI, uploader string, f multipart.File) (*taskqueue.Task, error) {
+func handleFilePayload(a AppEngineAPI, uploader string, f multipart.File, extraParams map[string]string) (*taskqueue.Task, error) {
 	fileName := fmt.Sprintf("%s/%s.json", uploader, uuid.New().String())
 
 	gcsPath, err := a.uploadToGCS(fileName, f, true)
 	if err != nil {
 		return nil, err
 	}
-	return a.scheduleResultsTask(uploader, []string{gcsPath}, "single")
+	return a.scheduleResultsTask(uploader, []string{gcsPath}, "single", extraParams)
 }
 
-func handleURLPayload(a AppEngineAPI, uploader string, urls []string) (*taskqueue.Task, error) {
+func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParams map[string]string) (*taskqueue.Task, error) {
 	id := uuid.New()
 
 	var payloadType string
@@ -118,5 +128,5 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string) (*taskqueu
 		gcs = append(gcs, gcsPath)
 	}
 
-	return a.scheduleResultsTask(uploader, gcs, payloadType)
+	return a.scheduleResultsTask(uploader, gcs, payloadType, extraParams)
 }
