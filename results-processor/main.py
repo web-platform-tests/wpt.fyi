@@ -78,7 +78,7 @@ def _internal_only(func):
 def liveness_check():
     lock = filelock.FileLock(LOCK_FILE)
     try:
-        lock.acquire(timeout=1)
+        lock.acquire(timeout=0.1)
         lock.release()
     except filelock.Timeout:
         try:
@@ -93,9 +93,14 @@ def liveness_check():
 
 
 @app.route('/_ah/readiness_check')
-@_serial_task
 def readiness_check():
-    return 'Ready to process results'
+    lock = filelock.FileLock(LOCK_FILE)
+    try:
+        lock.acquire(timeout=0.1)
+        lock.release()
+    except filelock.Timeout:
+        return 'A result is currently being processed.', 503
+    return 'Service alive'
 
 
 # Check request origins before acquiring the lock.
