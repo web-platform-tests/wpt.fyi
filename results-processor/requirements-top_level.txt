@@ -1,5 +1,6 @@
 Flask
+filelock
+flake8
 google-cloud-storage
 gunicorn
-flake8
 requests

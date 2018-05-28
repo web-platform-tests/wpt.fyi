@@ -20,4 +20,7 @@ ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 
 ADD . /app/
-CMD exec gunicorn -b :$PORT -t 3600 main:app
+# The number of workers should always be 2: one for processing tasks, the other
+# for responding health checks. Scale the service by increasing the number of
+# instances instead.
+CMD exec gunicorn --bind :$PORT --timeout 3600 --workers 2 main:app
