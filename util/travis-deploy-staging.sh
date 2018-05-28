@@ -21,8 +21,10 @@ while getopts ':fhq' flag; do
 done
 
 if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
-APP_DEPS_REGEX="^${APP_PATH}/"
-if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS_REGEX="^(${APP_PATH}|api)/"; fi
+
+APP_DEPS="${APP_PATH}|shared"
+if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api"; fi
+APP_DEPS_REGEX="^(${APP_DEPS})/"
 
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
