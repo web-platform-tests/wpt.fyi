@@ -3,6 +3,7 @@ import logging
 import re
 import shutil
 import tempfile
+import time
 
 import filelock
 import flask
@@ -14,6 +15,7 @@ import gsutil
 
 APPENGINE_INTERNAL_IP = '10.0.0.1'
 LOCK_FILE = '/tmp/results-processor.lock'
+TIMEOUT = 3600  # Timeout in seconds.
 
 
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +28,11 @@ def _serial_task(func):
     def decorated_func(*args, **kwargs):
         try:
             with lock.acquire(timeout=1):
+                # Write the current UNIX timestamp to the lock file for the
+                # liveness check. We can't use mtime or ctime because failed
+                # attempts of acquring the lock will also change them.
+                with open(lock.lock_file, 'wt') as f:
+                    f.write(u'%f' % time.time())
                 return func(*args, **kwargs)
         except filelock.Timeout:
             # 503 Service Unavailable
@@ -36,6 +43,15 @@ def _serial_task(func):
 
 @app.route('/_ah/liveness_check')
 def liveness_check():
+    lock = filelock.FileLock(LOCK_FILE)
+    try:
+        lock.acquire(timeout=1)
+        lock.release()
+    except filelock.Timeout:
+        with open(lock.lock_file, 'rt') as f:
+            last_locked = float(f.readline().strip())
+        if time.time() - last_locked > TIMEOUT:
+            return 'The current result processing has taken too long.', 500
     return 'Service alive'
 
 
