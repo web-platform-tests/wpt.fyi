@@ -20,6 +20,12 @@ while getopts ':fhq' flag; do
   esac
 done
 
+if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
+
+APP_DEPS="${APP_PATH}|shared"
+if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api"; fi
+APP_DEPS_REGEX="^(${APP_DEPS})/"
+
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
@@ -31,7 +37,7 @@ fi
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];
 then
-  git diff --name-only ${TRAVIS_BRANCH}..HEAD | grep "^${APP_PATH}/" || {
+  git diff --name-only ${TRAVIS_BRANCH}..HEAD | grep "${APP_DEPS_REGEX}" || {
     info "No changes detected under ${APP_PATH}. Skipping deployment."
     exit 0
   }
