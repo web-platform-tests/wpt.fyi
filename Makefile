@@ -169,8 +169,8 @@ dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run util/populate_dev_data.go $(FLAGS)
 
-deploy_staging: gcloud webapp_deps env-BRANCH_NAME env-APP_PATH $(WPTD_PATH)client-secret.json
-	gcloud config set project wptdashboard
+deploy_staging: gcloud webapp_deps var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
+	gcloud config set project $(PROJECT)
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 
@@ -196,3 +196,6 @@ apt-get-%:
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
+
+var-%:
+	@ if [[ "$($*)" = "" ]]; then echo "Make variable $* not set"; exit 1; fi

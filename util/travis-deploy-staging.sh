@@ -47,6 +47,7 @@ debug "Copying output to ${TEMP_FILE:=$(mktemp)}"
 # NOTE: Most gcloud output is stderr, so need to redirect it to stdout.
 docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
     make deploy_staging \
+        PROJECT=wptdashboard-staging \
         APP_PATH=${APP_PATH} \
         BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} 2>&1 \
             | tee ${TEMP_FILE}
