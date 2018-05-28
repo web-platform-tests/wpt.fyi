@@ -30,7 +30,7 @@ var errEmptyEpochs = errors.New("[]epoch.Epoch slice is empty")
 // Limits defines the start-time (lower bound) and now-time (upper bound) on a commit time-bounded query for revisions.
 type Limits struct {
 	Start time.Time
-	Now   time.Time
+	At    time.Time
 }
 
 // ByCommitTimeDesc implements ordering object.Commit pointers by commit time, descending.
@@ -82,7 +82,7 @@ func (f boundedMergedPRIterFactory) GetIter(repo agit.Repository, limits Limits)
 	// (1) Start with all tags                                         [tagsIter]
 	// (2) Filter tags to included nothing but "merge_pr_*" tags, and  [prIter]
 	//     order by descending commit time                             [prIter]
-	// (3) Skip tags after basis.Now, and                              [return]
+	// (3) Skip tags after basis.At, and                              [return]
 	// (4) Stop iteration when commit time is before basis.Start       [return]
 
 	tagsIter, err := repo.Tags()
@@ -107,7 +107,7 @@ func (f boundedMergedPRIterFactory) GetIter(repo agit.Repository, limits Limits)
 			log.Printf("WARN: Announcer iter.StartAt(): Error getting commit; skipping...")
 			return false
 		}
-		return commit.Committer.When.Before(limits.Now)
+		return commit.Committer.When.Before(limits.At)
 	})
 	stopAt := func(ref *plumbing.Reference) bool {
 		if ref == nil {
@@ -204,7 +204,7 @@ func (a *gitRemoteAnnouncer) GetRevisions(epochs map[epoch.Epoch]int, limits Lim
 	// iter presents potential revisions in reverse chronological order.
 	// Scan for first epochal changes between nextTime and prevTime.
 	numChangesFound := 0
-	prevTime := limits.Now
+	prevTime := limits.At
 	for ref, err := iter.Next(); ref != nil && err == nil; ref, err = iter.Next() {
 		c, err := a.repo.CommitObject(ref.Hash())
 		if err != nil {
