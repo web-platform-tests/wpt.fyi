@@ -6,6 +6,7 @@ package receiver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,7 +29,9 @@ type AppEngineAPI interface {
 	AuthenticateUploader(username, password string) bool
 
 	uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error)
-	scheduleResultsTask(uploader string, gcsPaths []string, payloadType string) (*taskqueue.Task, error)
+	scheduleResultsTask(
+		uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (
+		*taskqueue.Task, error)
 	fetchURL(url string) (io.ReadCloser, error)
 }
 
@@ -99,12 +102,28 @@ func (a *appEngineAPIImpl) uploadToGCS(fileName string, f io.Reader, gzipped boo
 }
 
 func (a *appEngineAPIImpl) scheduleResultsTask(
-	uploader string, gcsPaths []string, payloadType string) (*taskqueue.Task, error) {
-	t := taskqueue.NewPOSTTask(ResultsTarget, url.Values{
+	uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (*taskqueue.Task, error) {
+	if uploader == "" {
+		return nil, errors.New("empty uploader")
+	}
+	if len(gcsPaths) == 0 || gcsPaths[0] == "" {
+		return nil, errors.New("empty GCS paths")
+	}
+	if payloadType == "" {
+		return nil, errors.New("empty payloadType")
+	}
+
+	payload := url.Values{
 		"uploader": []string{uploader},
 		"gcs":      gcsPaths,
 		"type":     []string{payloadType},
-	})
+	}
+	for k, v := range extraParams {
+		if v != "" {
+			payload.Set(k, v)
+		}
+	}
+	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
 	t, err := taskqueue.Add(a.ctx, t, a.queue)
 	return t, err
 }

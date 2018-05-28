@@ -109,9 +109,6 @@ func LatestFromEpochs(revs map[epoch.Epoch][]agit.Revision) (LatestResponse, err
 	return latest, nil
 }
 
-// EpochsRequest models a request for the epochs supported by the service.
-type EpochsRequest struct{}
-
 // EpochsResponse models a response for the epochs supported by the service.
 type EpochsResponse []Epoch
 
@@ -119,7 +116,7 @@ type EpochsResponse []Epoch
 type RevisionsRequest struct {
 	Epochs       []epoch.Epoch `json:"epochs,omitempty"`
 	NumRevisions int           `json:"num_revisions,omitempty"`
-	Now          time.Time     `json:"now,omitempty"`
+	At           time.Time     `json:"at,omitempty"`
 	Start        time.Time     `json:"start,omitempty"`
 }
 
