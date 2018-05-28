@@ -7,8 +7,10 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
@@ -45,15 +47,26 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var testRuns []shared.TestRun
-	var limit int
+	var limit *int
 	if limit, err = shared.ParseMaxCountParam(r); err != nil {
 		http.Error(w, "Invalid 'max-count' param: "+err.Error(), http.StatusBadRequest)
 		return
 	}
+	var from *time.Time
+	if from, err = shared.ParseFromParam(r); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid 'from' param: %s", err.Error()), http.StatusBadRequest)
+		return
+	}
 	baseQuery := datastore.
 		NewQuery("TestRun").
-		Order("-CreatedAt").
-		Limit(limit)
+		Order("-CreatedAt")
+
+	if from != nil {
+		baseQuery = baseQuery.Filter("CreatedAt >", *from)
+	}
+	if limit != nil {
+		baseQuery = baseQuery.Limit(*limit)
+	}
 
 	for _, product := range products {
 		var testRunResults []shared.TestRun

@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/deckarep/golang-set"
 )
@@ -269,19 +270,12 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 	return products, nil
 }
 
-// ParseMaxCountParam parses the 'max-count' parameter as an integer, or returns 1 if no param
-// is present, or on error.
-func ParseMaxCountParam(r *http.Request) (count int, err error) {
-	return ParseMaxCountParamWithDefault(r, MaxCountDefaultValue)
-}
-
-// ParseMaxCountParamWithDefault parses the 'max-count' parameter as an integer, or returns the
-// default when no param is present, or on error.
-func ParseMaxCountParamWithDefault(r *http.Request, defaultValue int) (count int, err error) {
-	count = defaultValue
+// ParseMaxCountParam parses the 'max-count' parameter as an integer
+func ParseMaxCountParam(r *http.Request) (*int, error) {
 	if maxCountParam := r.URL.Query().Get("max-count"); maxCountParam != "" {
-		if count, err = strconv.Atoi(maxCountParam); err != nil {
-			return defaultValue, err
+		count, err := strconv.Atoi(maxCountParam)
+		if err != nil {
+			return nil, err
 		}
 		if count < MaxCountMinValue {
 			count = MaxCountMinValue
@@ -289,8 +283,30 @@ func ParseMaxCountParamWithDefault(r *http.Request, defaultValue int) (count int
 		if count > MaxCountMaxValue {
 			count = MaxCountMaxValue
 		}
+		return &count, nil
 	}
-	return count, err
+	return nil, nil
+}
+
+// ParseMaxCountParamWithDefault parses the 'max-count' parameter as an integer, or returns the
+// default when no param is present, or on error.
+func ParseMaxCountParamWithDefault(r *http.Request, defaultValue int) (count int, err error) {
+	if maxCountParam, err := ParseMaxCountParam(r); maxCountParam != nil || err != nil {
+		return *maxCountParam, err
+	}
+	return defaultValue, nil
+}
+
+// ParseFromParam parses the "from" param as a timestamp.
+func ParseFromParam(r *http.Request) (*time.Time, error) {
+	if fromParam := r.URL.Query().Get("from"); fromParam != "" {
+		parsed, err := time.Parse(time.RFC3339, fromParam)
+		if err != nil {
+			return nil, err
+		}
+		return &parsed, nil
+	}
+	return nil, nil
 }
 
 // DiffFilterParam represents the types of changed test paths to include.
