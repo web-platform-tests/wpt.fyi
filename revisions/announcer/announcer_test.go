@@ -82,7 +82,7 @@ func TestBoundedMergedPRIterFactory_GetIter(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
 		},
 	}, test.NilFetchImpl), announcer.Limits{
-		Now:   time.Date(2018, 4, 5, 0, 0, 0, 1, time.UTC),
+		At:    time.Date(2018, 4, 5, 0, 0, 0, 1, time.UTC),
 		Start: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 	})
 	assert.Nil(t, err)
@@ -263,7 +263,7 @@ func TestGitRemoteAnnouncer_GetRevisions_Single(t *testing.T) {
 	epochs[epoch.Daily{}] = 1
 	revs, err := a.GetRevisions(epochs, announcer.Limits{
 		// Start of next day after tag.
-		Now: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
+		At: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
 		// Time of tag.
 		Start: time.Date(2018, 4, 1, 23, 59, 59, 999999999, time.UTC),
 	})
@@ -323,7 +323,7 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiSameEpoch(t *testing.T) {
 	epochs[epoch.Daily{}] = 3
 	revs, err := a.GetRevisions(epochs, announcer.Limits{
 		// A day after last tag.
-		Now: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
+		At: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 		// Way before first tag.
 		Start: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 	})
@@ -390,7 +390,7 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiEpochs(t *testing.T) {
 	epochs[epoch.Daily{}] = 1
 	revs, err := a.GetRevisions(epochs, announcer.Limits{
 		// An hour after latest commit.
-		Now: time.Date(2018, 4, 2, 3, 0, 0, 0, time.UTC),
+		At: time.Date(2018, 4, 2, 3, 0, 0, 0, time.UTC),
 		// Way before first tag.
 		Start: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 	})
@@ -458,7 +458,7 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiMultiEpochs(t *testing.T) {
 	epochs[epoch.Daily{}] = 1
 	revs, err := a.GetRevisions(epochs, announcer.Limits{
 		// An hour after latest commit.
-		Now: time.Date(2018, 4, 2, 3, 0, 0, 0, time.UTC),
+		At: time.Date(2018, 4, 2, 3, 0, 0, 0, time.UTC),
 		// Way before first tag.
 		Start: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 	})
@@ -574,7 +574,7 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 	epochs[epoch.Daily{}] = 1
 	limits := announcer.Limits{
 		// Day after tag in updated pRepo->bRepo.
-		Now: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
+		At: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
 		// Long before any tags.
 		Start: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 	}

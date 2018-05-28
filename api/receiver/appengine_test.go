@@ -62,13 +62,31 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Equal(t, stats[0].Tasks, 0)
 
 	a := appEngineAPIImpl{ctx: ctx}
-	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single")
+	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.Nil(t, err)
 
 	stats, err = taskqueue.QueueStats(ctx, []string{""})
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 1)
+}
 
+func TestScheduleResultsTask_error(t *testing.T) {
+	ctx, done, err := aetest.NewContext()
+	assert.Nil(t, err)
+	defer done()
+	a := appEngineAPIImpl{ctx: ctx}
+
+	_, err = a.scheduleResultsTask("", []string{"/blade-runner/test.json"}, "single", nil)
+	assert.NotNil(t, err)
+
+	_, err = a.scheduleResultsTask("blade-runner", []string{""}, "single", nil)
+	assert.NotNil(t, err)
+
+	_, err = a.scheduleResultsTask("blade-runner", nil, "single", nil)
+	assert.NotNil(t, err)
+
+	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "", nil)
+	assert.NotNil(t, err)
 }
 
 func TestAuthenticateUploader(t *testing.T) {

@@ -70,6 +70,24 @@ class WPTReport(object):
         with gzip.GzipFile(fileobj=fileobj, mode='rb') as gzip_file:
             self.load_json(gzip_file)
 
+    def update_metadata(self, revision='', browser_name='', browser_version='',
+                        os_name='', os_version=''):
+        # Don't use self.run_info here because it doesn't insert an empty dict
+        # to self._report['run_info'] if it doesn't already exist.
+        if 'run_info' not in self._report:
+            self._report['run_info'] = {}
+        # Unfortunately, the names of the keys don't exactly match.
+        if revision:
+            self._report['run_info']['revision'] = revision
+        if browser_name:
+            self._report['run_info']['product'] = browser_name
+        if browser_version:
+            self._report['run_info']['browser_version'] = browser_version
+        if os_name:
+            self._report['run_info']['os'] = os_name
+        if os_version:
+            self._report['run_info']['os_version'] = os_version
+
     @staticmethod
     def write_json(fileobj, payload):
         """Encode an object to JSON and writes it to disk.
@@ -176,39 +194,35 @@ class WPTReport(object):
             self.write_gzip_json(filepath, result)
 
     def product_id(self):
+        """Returns an ID string for the product configuration."""
         name = '{}-{}-{}'.format(self.run_info['product'],
                                  self.run_info['browser_version'],
                                  self.run_info['os'])
+        # os_version isn't required.
         if self.run_info.get('os_version'):
             name += '-' + self.run_info['os_version']
         # TODO(Hexcles): Append a short random string at the end.
         return name
 
-    def populate_upload_directory(
-            self, revision=None, browser=None, output_dir=None):
+    def populate_upload_directory(self, output_dir=None):
         """Populates a directory suitable for uploading to GCS.
 
         The directory structure is as follows:
         [output_dir]:
             - [sha][:10]:
-                - [browser]-summary.json.gz
-                - [browser]:
+                - [product]-summary.json.gz
+                - [product]:
                     - (per-test results produced by write_result_directory)
 
         Args:
-            revision: If given, overrides the revision included in the report.
-            browser: A string containing the name and version of the browser
-                and the OS. If given, overrides the info in the report.
             output_dir: A given output directory instead of a temporary one.
 
         Returns:
             The output directory.
         """
         try:
-            if not revision:
-                revision = self.run_info['revision']
-            if not browser:
-                browser = self.product_id()
+            revision = self.run_info['revision']
+            product = self.product_id()
         except KeyError as e:
             raise MissingMetadataError(str(e)) from e
 
@@ -217,11 +231,11 @@ class WPTReport(object):
 
         # TODO(Hexcles): Switch to full SHA.
         short_sha = revision[:10]
-        summary_filename = browser + '-summary.json.gz'
+        summary_filename = product + '-summary.json.gz'
         self.sha_summary_path = os.path.join(short_sha, summary_filename)
         self.write_summary(os.path.join(output_dir, self.sha_summary_path))
         self.write_result_directory(
-            os.path.join(output_dir, short_sha, browser))
+            os.path.join(output_dir, short_sha, product))
         return output_dir
 
     @property
@@ -274,14 +288,9 @@ def main():
                         'per-test results (all gzipped) to OUTPUT_DIR/SHA/ ,'
                         'suitable for uploading to GCS (please use an '
                         'empty directory)')
-    parser.add_argument('--revision', type=str,
-                        help='the WPT revision of the test run (overrides the '
-                        'revision included in the REPORT)')
-    parser.add_argument('--browser', type=str,
-                        help='the browser of the test run (overrides the '
-                        'browser info included in the REPORT)')
-    parser.add_argument('--upload', default=False, action='store_true',
-                        help='upload the results to GCS')
+    parser.add_argument('--upload', type=str,
+                        help='upload the results to this GCS path '
+                        '(e.g. gs://wptd)')
     args = parser.parse_args()
 
     report = WPTReport()
@@ -296,12 +305,10 @@ def main():
         report.write_summary(args.summary)
     if args.output_dir or args.upload:
         upload_dir = report.populate_upload_directory(
-            revision=args.revision,
-            browser=args.browser,
-            output_dir=args.output_dir
-        )
+            output_dir=args.output_dir)
     if args.upload:
-        gsutil.rsync(upload_dir, 'gs://wptd')
+        assert args.upload.startswith('gs://')
+        gsutil.rsync(upload_dir, args.upload)
         _log.info('Uploaded to: https://storage.googleapis.com/wptd/%s',
                   report.sha_summary_path)
 
