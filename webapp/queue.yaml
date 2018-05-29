@@ -2,3 +2,4 @@ queue:
 - name: results-arrival
   target: processor
   max_concurrent_requests: 1
+  rate: 1/m
