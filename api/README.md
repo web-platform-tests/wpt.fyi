@@ -30,6 +30,8 @@ __Parameters__
 
 __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
 
+__`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
+
 __`max-count`__ : Maximum number of runs to get (for each browser). Only relevant when `sha` is `latest`. Maximum of 500.
 
 ### /api/diff
