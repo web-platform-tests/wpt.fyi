@@ -3,8 +3,6 @@
 # Helper script for posting a GitHub comment pointing to the deployed environment,
 # from Travis CI. Also see deploy.sh
 
-APP_PATH="$@"
-
 usage() {
   USAGE="Usage: travis-staging-deploy.sh [-f] [app path]
     -f : Always deploy (even if no changes detected)
@@ -37,7 +35,7 @@ fi
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];
 then
-  git diff --name-only ${TRAVIS_BRANCH}..HEAD | grep "${APP_DEPS_REGEX}" || {
+  git diff --name-only ${TRAVIS_BRANCH}..HEAD | egrep "${APP_DEPS_REGEX}" || {
     info "No changes detected under ${APP_PATH}. Skipping deployment."
     exit 0
   }
