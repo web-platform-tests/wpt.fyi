@@ -47,7 +47,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func gitHubSHASearchURL(sha string) string {
-	return fmt.Sprintf(`https://api.github.com/search/issues?q=SHA:%s+user:w3c+repo:web-platform-tests`, sha)
+	return fmt.Sprintf(`https://api.github.com/search/issues?q=SHA:%s+user:web-platform-tests+repo:wpt`, sha)
 }
 
 func gitHubReleaseURL(tag string) string {
