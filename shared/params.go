@@ -291,8 +291,10 @@ func ParseMaxCountParam(r *http.Request) (*int, error) {
 // ParseMaxCountParamWithDefault parses the 'max-count' parameter as an integer, or returns the
 // default when no param is present, or on error.
 func ParseMaxCountParamWithDefault(r *http.Request, defaultValue int) (count int, err error) {
-	if maxCountParam, err := ParseMaxCountParam(r); maxCountParam != nil || err != nil {
+	if maxCountParam, err := ParseMaxCountParam(r); maxCountParam != nil {
 		return *maxCountParam, err
+	} else if err != nil {
+		return defaultValue, err
 	}
 	return defaultValue, nil
 }
