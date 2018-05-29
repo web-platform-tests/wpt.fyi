@@ -66,6 +66,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if limit != nil {
 		baseQuery = baseQuery.Limit(*limit)
+	} else if from == nil {
+		// Default to a single, latest run when from & max-count both empty.
+		baseQuery = baseQuery.Limit(1)
 	}
 
 	for _, product := range products {
