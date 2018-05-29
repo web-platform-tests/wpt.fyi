@@ -17,6 +17,7 @@ import requests
 import gsutil
 
 
+DEFAULT_PROJECT = 'wptdashboard'
 GCS_PUBLIC_DOMAIN = 'https://storage.googleapis.com'
 
 _log = logging.getLogger(__name__)
@@ -262,7 +263,7 @@ class WPTReport(object):
 def create_test_run(report, secret, results_gcs_path, raw_results_gcs_path):
     """Creates a TestRun on the dashboard.
 
-    By posting to the https://wpt.fyi/api/run endpoint.
+    By posting to the /api/run endpoint.
 
     Args:
         report: A WPTReport.
@@ -279,8 +280,11 @@ def create_test_run(report, secret, results_gcs_path, raw_results_gcs_path):
     payload['results_url'] = GCS_PUBLIC_DOMAIN + results_gcs_path
     payload['raw_results_url'] = GCS_PUBLIC_DOMAIN + raw_results_gcs_path
 
+    # If we are running in cloud, post to the current project.
+    project = os.getenv('GOOGLE_CLOUD_PROJECT') or DEFAULT_PROJECT
+
     response = requests.post(
-        "https://wpt.fyi/api/run",
+        "https://%s.appspot.com/api/run" % project,
         params={'secret': secret},
         data=json.dumps(payload)
     )
