@@ -115,7 +115,7 @@ exhaustive search is the only way to do that (see issue [#73](https://github.com
 
 - Chromium: [`src/third_party/WebKit/LayoutTests/external/wpt`](https://cs.chromium.org/chromium/src/third_party/WebKit/LayoutTests/external/wpt/)
 - Firefox: [`testing/web-platform/tests`](https://dxr.mozilla.org/mozilla-central/source/testing/web-platform/tests)
-- WebKit: [`LayoutTests/imported/web-platform-tests/wpt`](https://trac.webkit.org/browser/trunk/LayoutTests/imported/web-platform-tests/wpt)
+- WebKit: [`LayoutTests/imported/w3c/web-platform-tests`](https://trac.webkit.org/browser/trunk/LayoutTests/imported/web-platform-tests/wpt)
 
 #### You can run almost any WPT test on w3c-test.org
 
