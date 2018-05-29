@@ -1,6 +1,6 @@
 # [web-platform-tests dashboard](https://wpt.fyi/) 📈 [![Build Status](https://travis-ci.org/web-platform-tests/wpt.fyi.svg?branch=master)](https://travis-ci.org/web-platform-tests/wpt.fyi)
 
-A dashboard of cross-browser results for [web-platform-tests](https://github.com/w3c/web-platform-tests).
+A dashboard of cross-browser results for [web-platform-tests](https://github.com/web-platform-tests/wpt).
 
 **Backend**: An [App Engine app](webapp/main.go) for storing test run metadata and serving HTML
 
@@ -115,7 +115,7 @@ exhaustive search is the only way to do that (see issue [#73](https://github.com
 
 - Chromium: [`src/third_party/WebKit/LayoutTests/external/wpt`](https://cs.chromium.org/chromium/src/third_party/WebKit/LayoutTests/external/wpt/)
 - Firefox: [`testing/web-platform/tests`](https://dxr.mozilla.org/mozilla-central/source/testing/web-platform/tests)
-- WebKit: [`LayoutTests/imported/w3c/web-platform-tests`](https://trac.webkit.org/browser/trunk/LayoutTests/imported/w3c/web-platform-tests)
+- WebKit: [`LayoutTests/imported/web-platform-tests/wpt`](https://trac.webkit.org/browser/trunk/LayoutTests/imported/web-platform-tests/wpt)
 
 #### You can run almost any WPT test on w3c-test.org
 

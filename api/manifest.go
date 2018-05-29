@@ -51,10 +51,10 @@ func gitHubSHASearchURL(sha string) string {
 }
 
 func gitHubReleaseURL(tag string) string {
-	return fmt.Sprintf(`https://api.github.com/repos/w3c/web-platform-tests/releases/tags/%s`, tag)
+	return fmt.Sprintf(`https://api.github.com/repos/web-platform-tests/wpt/releases/tags/%s`, tag)
 }
 
-const gitHubLatestReleaseURL = `https://api.github.com/repos/w3c/web-platform-tests/releases/latest`
+const gitHubLatestReleaseURL = `https://api.github.com/repos/web-platform-tests/wpt/releases/latest`
 
 type gitHubClient interface {
 	fetch(url string) ([]byte, error)
