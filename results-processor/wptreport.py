@@ -259,6 +259,8 @@ class WPTReport(object):
         if self.run_info.get('os_version'):
             payload['os_version'] = self.run_info['os_version']
 
+        return payload
+
 
 def create_test_run(report, secret, results_gcs_path, raw_results_gcs_path):
     """Creates a TestRun on the dashboard.
