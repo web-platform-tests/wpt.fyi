@@ -11,6 +11,7 @@ import filelock
 import flask
 from google.cloud import datastore, storage
 
+import config
 import wptreport
 import gsutil
 
@@ -146,13 +147,15 @@ def task_handler():
 
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
 
-    raw_results_gcs_path = '/wptd-results/{}/{}/report.json'.format(
-        revision, product)
+    raw_results_gcs_path = '/{}/{}/{}/report.json'.format(
+        config.raw_results_bucket(), revision, product)
     gsutil.copy('gs:/' + gcs_path, 'gs:/' + raw_results_gcs_path)
 
     tempdir = report.populate_upload_directory()
-    results_gcs_path = '/wptd/' + report.sha_summary_path
-    gsutil.rsync(tempdir, 'gs://wptd/', quiet=True)
+    results_gcs_path = '/{}/{}'.format(
+        config.results_bucket(), report.sha_summary_path)
+    gsutil.rsync(tempdir, 'gs://{}/'.format(config.results_bucket()),
+                 quiet=True)
     shutil.rmtree(tempdir)
 
     ds = datastore.Client()
