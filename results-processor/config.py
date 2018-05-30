@@ -17,3 +17,11 @@ def results_bucket():
     if _is_prod():
         return 'wptd'
     return 'wptd-staging'
+
+
+def project_baseurl():
+    """Returns the base URL of the current project."""
+    # Defaults to staging to prevent accidental access of prod.
+    # TODO(Hexcles): Support local dev_appserver.
+    project = os.getenv('GOOGLE_CLOUD_PROJECT') or 'wptdashboard-staging'
+    return 'https://%s.appspot.com' % project

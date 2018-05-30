@@ -14,6 +14,7 @@ import tempfile
 
 import requests
 
+import config
 import gsutil
 
 
@@ -282,11 +283,8 @@ def create_test_run(report, secret, results_gcs_path, raw_results_gcs_path):
     payload['results_url'] = GCS_PUBLIC_DOMAIN + results_gcs_path
     payload['raw_results_url'] = GCS_PUBLIC_DOMAIN + raw_results_gcs_path
 
-    # If we are running in cloud, post to the current project.
-    project = os.getenv('GOOGLE_CLOUD_PROJECT') or DEFAULT_PROJECT
-
     response = requests.post(
-        "https://%s.appspot.com/api/run" % project,
+        config.project_baseurl() + '/api/run',
         params={'secret': secret},
         data=json.dumps(payload)
     )
