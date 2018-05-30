@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/deckarep/golang-set"
 )
 
 // All errors are considered fatal
@@ -73,4 +75,17 @@ func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 		w.Header().Add("Strict-Transport-Security", value)
 		h(w, r)
 	})
+}
+
+// ToStringSlice converts a set to a typed string slice.
+func ToStringSlice(set mapset.Set) []string {
+	if set == nil {
+		return nil
+	}
+	slice := set.ToSlice()
+	result := make([]string, len(slice))
+	for i, item := range slice {
+		result[i] = item.(string)
+	}
+	return result
 }

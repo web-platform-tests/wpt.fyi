@@ -196,9 +196,7 @@ found in the LICENSE file.
             value: '',
             observer: 'refreshDisplayedNodes'
           },
-          sha: {
-            type: String
-          },
+          sha: String,
           isLatest: {
             type: Boolean,
             computed: 'computeIsLatest(sha)'
@@ -459,17 +457,22 @@ found in the LICENSE file.
         }
         this.path = path;
         this.refreshDisplayedNodes();
+        let sep = !path.startsWith('?') ? '?' : '&';
         if (this.sha && this.sha !== '' && this.sha !== 'latest') {
-          path += !path.startsWith('?') ? '?' : '&';
-          path += 'sha=' + this.sha;
+          path += `${sep}sha=${this.sha}`;
+          sep = '&';
         }
+        this.labels && this.labels.forEach(label => {
+          path += `${sep}label=${label}`;
+          sep = '&';
+        });
         let diffRuns = this.testRuns.filter(r => r.revision === 'diff');
         if (diffRuns.length > 0) {
-          path += !path.startsWith('?') ? '?' : '&';
           let [before, after] = this.testRuns.slice(0, 2)
             .map(JSON.stringify)
             .map(btoa);
-          path += `before=${before}&after=${after}`;
+          path += `${sep}before=${before}&after=${after}`;
+          sep = '&';
         }
         window.history.pushState({}, '', `/results${path}`);
 
