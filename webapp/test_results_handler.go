@@ -60,10 +60,22 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		SHA            string
 		Diff           bool
 		Filter         string
+		Labels         string
 	}{
 		SHA:    runSHA,
 		Filter: r.URL.Query().Get("filter"),
 	}
+
+	labels := shared.ToStringSlice(shared.ParseLabelsParam(r))
+	if labels != nil {
+		var marshaled []byte
+		if marshaled, err = json.Marshal(labels); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		data.Labels = string(marshaled)
+	}
+
 	_, diff := query["diff"]
 	data.Diff = diff || query.Get("before") != "" || query.Get("after") != ""
 

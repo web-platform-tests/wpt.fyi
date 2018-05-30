@@ -225,15 +225,26 @@ class WPTReportTest(unittest.TestCase):
             self.tmp_dir, short_sha, 'firefox-59.0-linux', 'foo', 'bar.html'
         )))
 
-    def test_populate_upload_directory_overrides(self):
+    def test_update_metadata(self):
+        r = WPTReport()
+        r.update_metadata(
+            revision='0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+            browser_name='firefox',
+            browser_version='59.0',
+            os_name='linux',
+            os_version='4.4'
+        )
+        self.assertDictEqual(r.run_info, {
+            'revision': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+            'product': 'firefox',
+            'browser_version': '59.0',
+            'os': 'linux',
+            'os_version': '4.4'
+        })
+
+    def test_test_run_metadata(self):
         r = WPTReport()
         r._report = {
-            'results': [{
-                'test': '/foo/bar.html',
-                'status': 'PASS',
-                'message': None,
-                'subtests': []
-            }],
             'run_info': {
                 'revision': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
                 'product': 'firefox',
@@ -241,16 +252,24 @@ class WPTReportTest(unittest.TestCase):
                 'os': 'linux'
             }
         }
-        short_sha = '0123456789'
-        r.populate_upload_directory(
-            revision=short_sha,
-            browser='chrome-60-macos',
-            output_dir=self.tmp_dir
-        )
+        self.assertDictEqual(r.test_run_metadata, {
+            'browser_name': 'firefox',
+            'browser_version': '59.0',
+            'os_name': 'linux',
+            'revision': '0bdaaf9c16',
+            'full_revision_hash': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+        })
 
-        self.assertTrue(os.path.isfile(os.path.join(
-            self.tmp_dir, short_sha, 'chrome-60-macos-summary.json.gz'
-        )))
-        self.assertTrue(os.path.isfile(os.path.join(
-            self.tmp_dir, short_sha, 'chrome-60-macos', 'foo', 'bar.html'
-        )))
+    def test_product_id(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'firefox',
+                'browser_version': '59.0',
+                'os': 'linux',
+            }
+        }
+        self.assertEqual(r.product_id('-'), 'firefox-59.0-linux')
+
+        r._report['run_info']['os_version'] = '4.4'
+        self.assertEqual(r.product_id('_'), 'firefox_59.0_linux_4.4')

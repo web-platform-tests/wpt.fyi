@@ -131,7 +131,7 @@ found in the LICENSE file.
     <template is="dom-if" if="{{ pathIsATestFile }}">
       <div class="links">
         <ul>
-          <li><a href$="https://github.com/w3c/web-platform-tests/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
+          <li><a href$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
           <template is="dom-if" if="{{ testCanRunOnW3C }}">
             <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
           </template>
@@ -196,9 +196,7 @@ found in the LICENSE file.
             value: '',
             observer: 'refreshDisplayedNodes'
           },
-          sha: {
-            type: String
-          },
+          sha: String,
           isLatest: {
             type: Boolean,
             computed: 'computeIsLatest(sha)'
@@ -262,8 +260,8 @@ found in the LICENSE file.
 
       computeTestScheme(path) {
         // This should (close enough) match up with the logic in:
-        // https://github.com/w3c/web-platform-tests/blob/master/tools/manifest/item.py
-        // https://github.com/w3c/web-platform-tests/blob/master/tools/wptrunner/wptrunner/wpttest.py
+        // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
+        // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
         return (path || '').indexOf('.https.') !== -1 ? 'https' : 'http';
       }
 
@@ -459,17 +457,22 @@ found in the LICENSE file.
         }
         this.path = path;
         this.refreshDisplayedNodes();
+        let sep = !path.startsWith('?') ? '?' : '&';
         if (this.sha && this.sha !== '' && this.sha !== 'latest') {
-          path += !path.startsWith('?') ? '?' : '&';
-          path += 'sha=' + this.sha;
+          path += `${sep}sha=${this.sha}`;
+          sep = '&';
         }
+        this.labels && this.labels.forEach(label => {
+          path += `${sep}label=${label}`;
+          sep = '&';
+        });
         let diffRuns = this.testRuns.filter(r => r.revision === 'diff');
         if (diffRuns.length > 0) {
-          path += !path.startsWith('?') ? '?' : '&';
           let [before, after] = this.testRuns.slice(0, 2)
             .map(JSON.stringify)
             .map(btoa);
-          path += `before=${before}&after=${after}`;
+          path += `${sep}before=${before}&after=${after}`;
+          sep = '&';
         }
         window.history.pushState({}, '', `/results${path}`);
 

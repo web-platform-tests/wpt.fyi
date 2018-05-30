@@ -8,3 +8,10 @@ resources:
   cpu: 1
   memory_gb: 4
   disk_size_gb: 10
+
+liveness_check:
+  path: "/_ah/liveness_check"
+
+readiness_check:
+  path: "/_ah/readiness_check"
+  app_start_timeout_sec: 60

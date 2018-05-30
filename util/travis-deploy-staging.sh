@@ -3,8 +3,6 @@
 # Helper script for posting a GitHub comment pointing to the deployed environment,
 # from Travis CI. Also see deploy.sh
 
-APP_PATH="$@"
-
 usage() {
   USAGE="Usage: travis-staging-deploy.sh [-f] [app path]
     -f : Always deploy (even if no changes detected)
@@ -20,6 +18,12 @@ while getopts ':fhq' flag; do
   esac
 done
 
+if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
+
+APP_DEPS="${APP_PATH}|shared"
+if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api"; fi
+APP_DEPS_REGEX="^(${APP_DEPS})/"
+
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
@@ -31,7 +35,7 @@ fi
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];
 then
-  git diff --name-only ${TRAVIS_BRANCH}..HEAD | grep "^${APP_PATH}/" || {
+  git diff --name-only ${TRAVIS_BRANCH}..HEAD | egrep "${APP_DEPS_REGEX}" || {
     info "No changes detected under ${APP_PATH}. Skipping deployment."
     exit 0
   }
@@ -41,6 +45,7 @@ debug "Copying output to ${TEMP_FILE:=$(mktemp)}"
 # NOTE: Most gcloud output is stderr, so need to redirect it to stdout.
 docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
     make deploy_staging \
+        PROJECT=wptdashboard-staging \
         APP_PATH=${APP_PATH} \
         BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} 2>&1 \
             | tee ${TEMP_FILE}

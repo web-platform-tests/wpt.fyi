@@ -30,6 +30,8 @@ __Parameters__
 
 __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
 
+__`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
+
 __`max-count`__ : Maximum number of runs to get (for each browser). Only relevant when `sha` is `latest`. Maximum of 500.
 
 ### /api/diff
@@ -67,7 +69,7 @@ Gets the JSON of the WPT manifest GitHub release asset, for a given sha (default
 
 __Parameters__
 
-__`sha`__ : SHA of the [WPT](https://github.com/w3c/web-platform-tests) repo PR for which to fetch,
+__`sha`__ : SHA of the [WPT](https://github.com/web-platform-tests/wpt) repo PR for which to fetch,
     the manifest, or the keyword `latest`. (Defaults to `latest`.)
 
 NOTE: The full SHA of the fetched manifest is returned in the HTTP response header `x-wpt-sha`, e.g.

@@ -1,31 +1,115 @@
 #!/usr/bin/env python3
+import functools
 import logging
+import os
 import re
 import shutil
 import tempfile
+import time
 
+import filelock
 import flask
-from google.cloud import storage
+from google.cloud import datastore, storage
 
+import config
 import wptreport
 import gsutil
 
 
+# All the AppEngine internal requests (including other services and TaskQueue)
+# come from this IP address.
+# https://cloud.google.com/appengine/docs/standard/python/creating-firewalls#allowing_requests_from_your_services
 APPENGINE_INTERNAL_IP = '10.0.0.1'
+# The file will be flock()'ed if a report is being processed.
+LOCK_FILE = '/tmp/results-processor.lock'
+# If the file above is locked, this timestamp file contains the UNIX timestamp
+# (a float in seconds) for when the current task start. A separate file is used
+# because the attempts to acquire a file lock invoke open() in truncate mode.
+TIMESTAMP_FILE = '/tmp/results-processor.last'
+# If the processing takes more than this timeout (in seconds), the instance is
+# considered unhealthy and will be restarted by AppEngine.
+TIMEOUT = 3600
 
 
 logging.basicConfig(level=logging.INFO)
+# Suppress the lock acquire/release logs from filelock.
+logging.getLogger('filelock').setLevel(logging.WARNING)
 app = flask.Flask(__name__)
 
 
+def _atomic_write(path, content):
+    # Do not auto-delete the file because we will move it after closing it.
+    temp = tempfile.NamedTemporaryFile(mode='wt', delete=False)
+    temp.write(content)
+    temp.close()
+    # Atomic on POSIX: https://docs.python.org/3/library/os.html#os.replace
+    os.replace(temp.name, path)
+
+
+def _serial_task(func):
+    lock = filelock.FileLock(LOCK_FILE)
+
+    # It is important to use wraps() to preserve the original name & docstring.
+    @functools.wraps(func)
+    def decorated_func(*args, **kwargs):
+        try:
+            with lock.acquire(timeout=1):
+                return func(*args, **kwargs)
+        except filelock.Timeout:
+            app.logger.info('%s unable to acquire lock.', func.__name__)
+            # 503 Service Unavailable
+            return 'A result is currently being processed.', 503
+
+    return decorated_func
+
+
+def _internal_only(func):
+    @functools.wraps(func)
+    def decorated_func(*args, **kwargs):
+        if not app.debug:
+            remote_ip = flask.request.access_route[0]
+            if remote_ip != APPENGINE_INTERNAL_IP:
+                return 'External requests not allowed', 403
+        return func(*args, **kwargs)
+
+    return decorated_func
+
+
+@app.route('/_ah/liveness_check')
+def liveness_check():
+    lock = filelock.FileLock(LOCK_FILE)
+    try:
+        lock.acquire(timeout=0.1)
+        lock.release()
+    except filelock.Timeout:
+        try:
+            with open(TIMESTAMP_FILE, 'rt') as f:
+                last_locked = float(f.readline().strip())
+            assert time.time() - last_locked <= TIMEOUT
+        # Respectively: file not found, invalid content, old timestamp.
+        except (IOError, ValueError, AssertionError):
+            app.logger.warn('Liveness check failed.')
+            return 'The current task has taken too long.', 500
+    return 'Service alive'
+
+
+@app.route('/_ah/readiness_check')
+def readiness_check():
+    lock = filelock.FileLock(LOCK_FILE)
+    try:
+        lock.acquire(timeout=0.1)
+        lock.release()
+    except filelock.Timeout:
+        return 'A result is currently being processed.', 503
+    return 'Service alive'
+
+
+# Check request origins before acquiring the lock.
 @app.route('/api/results/process', methods=['POST'])
+@_internal_only
+@_serial_task
 def task_handler():
-    if not app.debug:
-        # Only allow access from other services.
-        # https://cloud.google.com/appengine/docs/standard/python/creating-firewalls#allowing_requests_from_your_services
-        remote_ip = flask.request.access_route[0]
-        if remote_ip != APPENGINE_INTERNAL_IP:
-            return 'External requests not allowed', 403
+    _atomic_write(TIMESTAMP_FILE, str(time.time()))
 
     params = flask.request.form
     # Mandatory fields:
@@ -34,9 +118,6 @@ def task_handler():
     result_type = params['type']
     # TODO(Hexcles): Support multiple results.
     assert result_type == 'single'
-    # Optional fields (to be deprecated once everyone has embedded metadata):
-    browser = params.get('browser')
-    revision = params.get('revision')
 
     match = re.match(r'/([^/]+)/(.*)', gcs_path)
     assert match
@@ -52,25 +133,36 @@ def task_handler():
         report = wptreport.WPTReport()
         report.load_json(temp)
 
-    if not revision:
-        revision = report.run_info['revision']
-    if not browser:
-        browser = report.product_id()
+    # To be deprecated once all reports have all the required metadata.
+    report.update_metadata(
+        revision=params.get('revision'),
+        browser_name=params.get('browser_name'),
+        browser_version=params.get('browser_version'),
+        os_name=params.get('os_name'),
+        os_version=params.get('os_version'),
+    )
+
+    revision = report.run_info['revision']
+    # For consistency, use underscores in wptd-results.
+    product = report.product_id('_')
 
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
 
-    gsutil.copy(
-        'gs:/' + gcs_path,
-        'gs://wptd-results/{}/{}/report.json'.format(revision, browser)
-    )
+    raw_results_gcs_path = '/{}/{}/{}/report.json'.format(
+        config.raw_results_bucket(), revision, product)
+    gsutil.copy('gs:/' + gcs_path, 'gs:/' + raw_results_gcs_path)
 
-    tempdir = report.populate_upload_directory(
-        browser=browser, revision=revision)
-    # TODO(Hexcles): Switch to prod.
-    gsutil.rsync(tempdir, 'gs://robertma-wptd-dev/', quiet=True)
-    # TODO(Hexcles): Get secret from Datastore and create the test run.
-    # wptreport.create_test_run(report, secret)
+    tempdir = report.populate_upload_directory()
+    results_gcs_path = '/{}/{}'.format(
+        config.results_bucket(), report.sha_summary_path)
+    gsutil.rsync(tempdir, 'gs://{}/'.format(config.results_bucket()),
+                 quiet=True)
     shutil.rmtree(tempdir)
+
+    ds = datastore.Client()
+    upload_token = ds.get(ds.key('Token', 'upload-token'))['Secret']
+    wptreport.create_test_run(report, upload_token,
+                              results_gcs_path, raw_results_gcs_path)
 
     return resp
 

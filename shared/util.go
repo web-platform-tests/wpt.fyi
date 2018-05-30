@@ -12,6 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/deckarep/golang-set"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -90,4 +91,17 @@ func QueryPrefix(query *datastore.Query, fieldName, prefix string, desc bool) *d
 		Order(order).
 		Filter(fieldName+" >=", prefix).
 		Filter(fieldName+" <=", fmt.Sprintf("%s%c", prefix, utf8.MaxRune))
+}
+
+// ToStringSlice converts a set to a typed string slice.
+func ToStringSlice(set mapset.Set) []string {
+	if set == nil {
+		return nil
+	}
+	slice := set.ToSlice()
+	result := make([]string, len(slice))
+	for i, item := range slice {
+		result[i] = item.(string)
+	}
+	return result
 }
