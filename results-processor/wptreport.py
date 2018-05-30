@@ -14,8 +14,12 @@ import tempfile
 
 import requests
 
+import config
 import gsutil
 
+
+DEFAULT_PROJECT = 'wptdashboard'
+GCS_PUBLIC_DOMAIN = 'https://storage.googleapis.com'
 
 _log = logging.getLogger(__name__)
 
@@ -247,7 +251,7 @@ class WPTReport(object):
                 'browser_version': self.run_info['browser_version'],
                 'os_name': self.run_info['os'],
                 'revision': self.run_info['revision'][:10],
-                'full_revision': self.run_info['revision'],
+                'full_revision_hash': self.run_info['revision'],
             }
         except KeyError as e:
             raise MissingMetadataError(str(e)) from e
@@ -256,18 +260,31 @@ class WPTReport(object):
         if self.run_info.get('os_version'):
             payload['os_version'] = self.run_info['os_version']
 
+        return payload
 
-def create_test_run(report, secret):
-    if not report.sha_summary_path:
-        raise MissingMetadataError('results_url')
 
-    # TODO(Hexcles): Do not hardcode the URLs.
+def create_test_run(report, secret, results_gcs_path, raw_results_gcs_path):
+    """Creates a TestRun on the dashboard.
+
+    By posting to the /api/run endpoint.
+
+    Args:
+        report: A WPTReport.
+        secret: An upload token.
+        results_gcs_path: The GCS path to the gzipped summary file.
+            (e.g. '/wptd/0123456789/chrome-62.0-linux-summary.json.gz')
+        raw_results_gcs_path: The GCS path to the raw full report.
+            (e.g. '/wptd-results/[full SHA]/chrome-62.0-linux/report.json')
+    """
+    assert results_gcs_path.startswith('/')
+    assert raw_results_gcs_path.startswith('/')
+
     payload = report.test_run_metadata
-    payload['results_url'] = "https://storage.googleapis.com/wptd/%s".format(
-        report.sha_summary_path
-    )
+    payload['results_url'] = GCS_PUBLIC_DOMAIN + results_gcs_path
+    payload['raw_results_url'] = GCS_PUBLIC_DOMAIN + raw_results_gcs_path
+
     response = requests.post(
-        "https://wpt.fyi/api/run",
+        config.project_baseurl() + '/api/run',
         params={'secret': secret},
         data=json.dumps(payload)
     )
@@ -309,8 +326,7 @@ def main():
     if args.upload:
         assert args.upload.startswith('gs://')
         gsutil.rsync(upload_dir, args.upload)
-        _log.info('Uploaded to: https://storage.googleapis.com/wptd/%s',
-                  report.sha_summary_path)
+        _log.info('Uploaded to: %s/%s', args.upload, report.sha_summary_path)
 
 
 if __name__ == '__main__':

@@ -9,8 +9,9 @@ import time
 
 import filelock
 import flask
-from google.cloud import storage
+from google.cloud import datastore, storage
 
+import config
 import wptreport
 import gsutil
 
@@ -146,17 +147,21 @@ def task_handler():
 
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
 
-    gsutil.copy(
-        'gs:/' + gcs_path,
-        'gs://wptd-results/{}/{}/report.json'.format(revision, product)
-    )
+    raw_results_gcs_path = '/{}/{}/{}/report.json'.format(
+        config.raw_results_bucket(), revision, product)
+    gsutil.copy('gs:/' + gcs_path, 'gs:/' + raw_results_gcs_path)
 
     tempdir = report.populate_upload_directory()
-    # TODO(Hexcles): Switch to prod.
-    gsutil.rsync(tempdir, 'gs://robertma-wptd-dev/', quiet=True)
-    # TODO(Hexcles): Get secret from Datastore and create the test run.
-    # wptreport.create_test_run(report, secret)
+    results_gcs_path = '/{}/{}'.format(
+        config.results_bucket(), report.sha_summary_path)
+    gsutil.rsync(tempdir, 'gs://{}/'.format(config.results_bucket()),
+                 quiet=True)
     shutil.rmtree(tempdir)
+
+    ds = datastore.Client()
+    upload_token = ds.get(ds.key('Token', 'upload-token'))['Secret']
+    wptreport.create_test_run(report, upload_token,
+                              results_gcs_path, raw_results_gcs_path)
 
     return resp
 

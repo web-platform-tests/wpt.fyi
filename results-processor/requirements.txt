@@ -8,9 +8,11 @@ Flask==1.0.2
 google-api-core==1.1.2
 google-auth==1.4.1
 google-cloud-core==0.28.1
+google-cloud-datastore==1.6.0
 google-cloud-storage==1.10.0
 google-resumable-media==0.3.1
 googleapis-common-protos==1.5.3
+grpcio==1.12.0
 gunicorn==19.8.1
 idna==2.6
 itsdangerous==0.24
