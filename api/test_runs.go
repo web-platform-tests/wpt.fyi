@@ -46,47 +46,27 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var testRuns []shared.TestRun
 	var limit *int
 	if limit, err = shared.ParseMaxCountParam(r); err != nil {
 		http.Error(w, "Invalid 'max-count' param: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	baseQuery := datastore.NewQuery("TestRun")
 	var from *time.Time
 	if from, err = shared.ParseFromParam(r); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid 'from' param: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
-
-	if from != nil {
-		baseQuery = baseQuery.Filter("CreatedAt >", *from)
-	}
-	if limit != nil {
-		baseQuery = baseQuery.Limit(*limit)
-	} else if from == nil {
+	if limit == nil && from == nil {
 		// Default to a single, latest run when from & max-count both empty.
-		baseQuery = baseQuery.Limit(1)
+		one := 1
+		limit = &one
 	}
 
-	for _, product := range products {
-		var testRunResults []shared.TestRun
-		query := baseQuery.Filter("BrowserName =", product.BrowserName)
-		if product.BrowserVersion != "" {
-			query = shared.QueryPrefix(query, "BrowserVersion", product.BrowserVersion, true)
-		}
-		query = query.Order("-CreatedAt").Limit(limit)
-		// TODO(lukebjerring): Indexes + filtering for OS + version.
-		if runSHA != "" && runSHA != "latest" {
-			query = query.Filter("Revision =", runSHA)
-		}
-		if _, err := query.GetAll(ctx, &testRunResults); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		testRuns = append(testRuns, testRunResults...)
+	testRuns, err := shared.LoadTestRuns(ctx, products, runSHA, from, limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-
 	testRunsBytes, err := json.Marshal(testRuns)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

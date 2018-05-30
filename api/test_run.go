@@ -60,20 +60,9 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := appengine.NewContext(r)
-
-	query := datastore.
-		NewQuery("TestRun").
-		Filter("BrowserName =", product.BrowserName)
-	if product.BrowserVersion != "" {
-		query = shared.QueryPrefix(query, "BrowserVersion", product.BrowserVersion, true)
-	}
-	if runSHA != "" && runSHA != "latest" {
-		query = query.Filter("Revision =", runSHA)
-	}
-	query = query.Order("-CreatedAt").Limit(1)
-
-	var testRuns []shared.TestRun
-	if _, err := query.GetAll(ctx, &testRuns); err != nil {
+	limit := 1
+	testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, runSHA, nil, &limit)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

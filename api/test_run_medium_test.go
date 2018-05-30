@@ -48,28 +48,35 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	chrome.BrowserVersion = "68.0.3432.3"
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
 
-	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
+	r, _ = i.NewRequest("GET", "/api/run?product=chrome-6", nil)
 	resp := httptest.NewRecorder()
+	apiTestRunGetHandler(resp, r)
+	assert.Equal(t, http.StatusNotFound, resp.Code)
+
+	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
+	resp = httptest.NewRecorder()
 	apiTestRunGetHandler(resp, r)
 	body, _ := ioutil.ReadAll(resp.Result().Body)
 	assert.Equalf(t, http.StatusOK, resp.Code, string(body))
-	var result shared.TestRun
-	json.Unmarshal(body, &result)
-	assert.Equal(t, "66.0.3359.181", result.BrowserVersion)
+	var result66 shared.TestRun
+	json.Unmarshal(body, &result66)
+	assert.Equal(t, "66.0.3359.181", result66.BrowserVersion)
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.139", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunGetHandler(resp, r)
 	body, _ = ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
-	json.Unmarshal(body, &result)
-	assert.Equal(t, "66.0.3359.139", result.BrowserVersion)
+	var result66139 shared.TestRun
+	json.Unmarshal(body, &result66139)
+	assert.Equal(t, "66.0.3359.139", result66139.BrowserVersion)
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-68", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunGetHandler(resp, r)
 	body, _ = ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
-	json.Unmarshal(body, &result)
-	assert.Equal(t, "68.0.3432.3", result.BrowserVersion)
+	var result68 shared.TestRun
+	json.Unmarshal(body, &result68)
+	assert.Equal(t, "68.0.3432.3", result68.BrowserVersion)
 }

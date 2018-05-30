@@ -34,6 +34,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO(lukebjerring): Consolidate with shared.ParseProductParam & shared.LoadTestRuns
 	product := params.Get("product")
 	if product == "" {
 		http.Error(w, "Param 'product' missing", http.StatusBadRequest)
