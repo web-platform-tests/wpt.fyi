@@ -259,3 +259,17 @@ class WPTReportTest(unittest.TestCase):
             'revision': '0bdaaf9c16',
             'full_revision_hash': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
         })
+
+    def test_product_id(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'firefox',
+                'browser_version': '59.0',
+                'os': 'linux',
+            }
+        }
+        self.assertEqual(r.product_id('-'), 'firefox-59.0-linux')
+
+        r._report['run_info']['os_version'] = '4.4'
+        self.assertEqual(r.product_id('_'), 'firefox_59.0_linux_4.4')

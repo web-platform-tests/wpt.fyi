@@ -197,15 +197,21 @@ class WPTReport(object):
             filepath = directory + test_file
             self.write_gzip_json(filepath, result)
 
-    def product_id(self):
-        """Returns an ID string for the product configuration."""
-        name = '{}-{}-{}'.format(self.run_info['product'],
-                                 self.run_info['browser_version'],
-                                 self.run_info['os'])
+    def product_id(self, separator):
+        """Returns an ID string for the product configuration.
+
+        Args:
+            separator: A character to separate fields in the ID string.
+
+        Returns:
+            A string, the product ID of this run.
+        """
+        name = separator.join([self.run_info['product'],
+                               self.run_info['browser_version'],
+                               self.run_info['os']])
         # os_version isn't required.
         if self.run_info.get('os_version'):
-            name += '-' + self.run_info['os_version']
-        # TODO(Hexcles): Append a short random string at the end.
+            name += separator + self.run_info['os_version']
         return name
 
     def populate_upload_directory(self, output_dir=None):
@@ -226,7 +232,8 @@ class WPTReport(object):
         """
         try:
             revision = self.run_info['revision']
-            product = self.product_id()
+            # For consistency, use dashes in the wptd bucket.
+            product = self.product_id('-')
         except KeyError as e:
             raise MissingMetadataError(str(e)) from e
 
@@ -274,7 +281,7 @@ def create_test_run(report, secret, results_gcs_path, raw_results_gcs_path):
         results_gcs_path: The GCS path to the gzipped summary file.
             (e.g. '/wptd/0123456789/chrome-62.0-linux-summary.json.gz')
         raw_results_gcs_path: The GCS path to the raw full report.
-            (e.g. '/wptd-results/[full SHA]/chrome-62.0-linux/report.json')
+            (e.g. '/wptd-results/[full SHA]/chrome_62.0_linux/report.json')
     """
     assert results_gcs_path.startswith('/')
     assert raw_results_gcs_path.startswith('/')
