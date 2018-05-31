@@ -1,3 +1,8 @@
 {
-  "go.buildTags": "small medium large"
+  "go.buildTags": "small medium large",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "webapp/static": true,
+  }
 }

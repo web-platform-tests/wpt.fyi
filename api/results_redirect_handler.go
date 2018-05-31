@@ -12,13 +12,13 @@ import (
 	"regexp"
 	"strings"
 
-	models "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
 // apiResultsRedirectHandler is responsible for redirecting to the Google Cloud Storage API
-// JSON blob for the given SHA (or latest) models.TestRun for the given browser.
+// JSON blob for the given SHA (or latest) shared.TestRun for the given browser.
 //
 // URL format:
 // /results
@@ -34,6 +34,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO(lukebjerring): Consolidate with shared.ParseProductParam & shared.LoadTestRuns
 	product := params.Get("product")
 	if product == "" {
 		http.Error(w, "Param 'product' missing", http.StatusBadRequest)
@@ -54,7 +55,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if (models.TestRun{}) == run {
+	if (shared.TestRun{}) == run {
 		http.Error(w, fmt.Sprintf("404 - Test run '%s' not found", runSHA), http.StatusNotFound)
 		return
 	}
@@ -65,7 +66,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, resultsURL, http.StatusFound)
 }
 
-func getRun(r *http.Request, run string, product string) (latest models.TestRun, err error) {
+func getRun(r *http.Request, run string, product string) (latest shared.TestRun, err error) {
 	productPieces := strings.Split(product, "-")
 	if len(productPieces) < 1 || len(productPieces) > 4 {
 		err = errors.New("Invalid path")
@@ -75,19 +76,19 @@ func getRun(r *http.Request, run string, product string) (latest models.TestRun,
 	ctx := appengine.NewContext(r)
 	baseQuery := datastore.NewQuery("TestRun").Order("-CreatedAt").Limit(1)
 
-	var testRunResults []models.TestRun
+	var testRunResults []shared.TestRun
 	query := baseQuery.Filter("BrowserName =", productPieces[0])
 	if run != "" && run != "latest" {
 		query = query.Filter("Revision =", run)
 	}
 	if len(productPieces) > 1 {
-		query = query.Filter("BrowserVersion =", productPieces[1])
+		query = shared.VersionPrefix(query, "BrowserVersion", productPieces[1], true)
 	}
 	if len(productPieces) > 2 {
 		query = query.Filter("OSName =", productPieces[2])
 	}
 	if len(productPieces) > 3 {
-		query = query.Filter("OSVersion =", productPieces[3])
+		query = shared.VersionPrefix(query, "OSVersion", productPieces[3], true)
 	}
 	_, err = query.GetAll(ctx, &testRunResults)
 	if err != nil {
@@ -99,7 +100,7 @@ func getRun(r *http.Request, run string, product string) (latest models.TestRun,
 	return
 }
 
-func getResultsURL(run models.TestRun, testFile string) (resultsURL string) {
+func getResultsURL(run shared.TestRun, testFile string) (resultsURL string) {
 	resultsURL = run.ResultsURL
 	if testFile != "" && testFile != "/" {
 		// Assumes that result files are under a directory named SHA[0:10].

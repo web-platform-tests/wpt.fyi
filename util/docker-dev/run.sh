@@ -93,7 +93,7 @@ set -e
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
   docker run -t -d --entrypoint /bin/bash \
-      -v "${WPTD_PATH}":/home/user/wpt.fyi \
+      -v "${WPTD_PATH}:/home/user/wpt.fyi" \
       -u $(id -u $USER):$(id -g $USER) \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
