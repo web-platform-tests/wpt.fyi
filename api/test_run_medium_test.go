@@ -24,7 +24,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
 	assert.Nil(t, err)
 
-	// Yesterday, earlier version.
+	// 'Yesterday', v66...139 earlier version.
 	ctx := appengine.NewContext(r)
 	now := time.Now()
 	chrome := shared.TestRun{
@@ -39,12 +39,12 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	}
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
 
-	// Today, revision increased and an experimental run
+	// 'Today', v66...181 (revision increased)
 	chrome.BrowserVersion = "66.0.3359.181"
 	chrome.CreatedAt = now
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
 
-	// Also today, a v68 run.
+	// Also 'today', a v68 run.
 	chrome.BrowserVersion = "68.0.3432.3"
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
 
