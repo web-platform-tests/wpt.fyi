@@ -46,20 +46,21 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var limit *int
-	if limit, err = shared.ParseMaxCountParam(r); err != nil {
+	var limit int
+	if parsed, err := shared.ParseMaxCountParam(r); err != nil {
 		http.Error(w, "Invalid 'max-count' param: "+err.Error(), http.StatusBadRequest)
 		return
+	} else if parsed != nil {
+		limit = *parsed
 	}
 	var from *time.Time
 	if from, err = shared.ParseFromParam(r); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid 'from' param: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
-	if limit == nil && from == nil {
+	if limit == 0 && from == nil {
 		// Default to a single, latest run when from & max-count both empty.
-		one := 1
-		limit = &one
+		limit = 1
 	}
 
 	testRuns, err := shared.LoadTestRuns(ctx, products, runSHA, from, limit)

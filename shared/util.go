@@ -6,14 +6,11 @@ package shared
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sort"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/deckarep/golang-set"
-	"google.golang.org/appengine/datastore"
 )
 
 // All errors are considered fatal
@@ -78,19 +75,6 @@ func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 		w.Header().Add("Strict-Transport-Security", value)
 		h(w, r)
 	})
-}
-
-// QueryPrefix returns the given query with a prefix filter on the given
-// field name, using the >= and < filters.
-func QueryPrefix(query *datastore.Query, fieldName, prefix string, desc bool) *datastore.Query {
-	order := fieldName
-	if desc {
-		order = "-" + order
-	}
-	return query.
-		Order(order).
-		Filter(fieldName+" >=", prefix).
-		Filter(fieldName+" <=", fmt.Sprintf("%s%c", prefix, utf8.MaxRune))
 }
 
 // ToStringSlice converts a set to a typed string slice.

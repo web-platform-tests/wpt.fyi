@@ -14,7 +14,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 )
 
@@ -39,38 +38,25 @@ func FetchRunResultsJSONForParam(
 // FetchRunResultsJSONForSpec fetches the result JSON blob for the given spec.
 func FetchRunResultsJSONForSpec(
 	ctx context.Context, r *http.Request, revision ProductAtRevision) (results map[string][]int, err error) {
-	var run TestRun
+	var run *TestRun
 	if run, err = FetchRunForSpec(ctx, revision); err != nil {
 		return nil, err
-	} else if (run == TestRun{}) {
+	} else if run == nil {
 		return nil, nil
 	}
-	return FetchRunResultsJSON(ctx, r, run)
+	return FetchRunResultsJSON(ctx, r, *run)
 }
 
 // FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
-func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (TestRun, error) {
-	baseQuery := datastore.
-		NewQuery("TestRun").
-		Order("-CreatedAt").
-		Limit(1)
-
-	var results []TestRun
-	// TODO(lukebjerring): Handle OS of products (split out version + os)
-	query := baseQuery.Filter("BrowserName =", revision.BrowserName)
-	if revision.BrowserVersion != "" {
-		query = QueryPrefix(query, "BrowserVersion", revision.BrowserVersion, true)
+func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (*TestRun, error) {
+	testRuns, err := LoadTestRuns(ctx, []Product{revision.Product}, revision.Revision, nil, 1)
+	if err != nil {
+		return nil, err
 	}
-	if revision.Revision != "latest" {
-		query = query.Filter("Revision = ", revision.Revision)
+	if len(testRuns) < 1 {
+		return nil, nil
 	}
-	if _, err := query.GetAll(ctx, &results); err != nil {
-		return TestRun{}, err
-	}
-	if len(results) < 1 {
-		return TestRun{}, nil
-	}
-	return results[0], nil
+	return &testRuns[0], nil
 }
 
 // FetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since

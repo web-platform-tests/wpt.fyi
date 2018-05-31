@@ -60,8 +60,7 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := appengine.NewContext(r)
-	limit := 1
-	testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, runSHA, nil, &limit)
+	testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, runSHA, nil, 1)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
