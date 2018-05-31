@@ -20,14 +20,14 @@ import (
 func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	ancr := a.GetAnnouncer()
 	if ancr == nil {
-		w.WriteHeader(503)
+		w.WriteHeader(http.StatusServiceUnavailable)
 		w.Write(a.ErrorJSON("Announcer not yet initialized"))
 		return
 	}
 
 	epochs := a.GetEpochs()
 	if len(epochs) == 0 {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(a.ErrorJSON("No epochs"))
 		return
 	}
@@ -37,19 +37,19 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	numRevisions := 1
 	if nr, ok := q["num_revisions"]; ok {
 		if len(nr) > 1 {
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write(a.ErrorJSON("Multiple num_revisions values"))
 			return
 		}
 		if len(nr) == 0 {
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write(a.ErrorJSON("Empty num_revisions value"))
 			return
 		}
 		var err error
 		numRevisions, err = strconv.Atoi(nr[0])
 		if err != nil {
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write(a.ErrorJSON(fmt.Sprintf("Invalid num_revisions value: %s", nr[0])))
 			return
 		}
@@ -62,7 +62,7 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 			if e, ok := epochsMap[eStr]; ok {
 				getRevisions[e] = numRevisions
 			} else {
-				w.WriteHeader(500)
+				w.WriteHeader(http.StatusBadRequest)
 				w.Write(a.ErrorJSON(fmt.Sprintf("Unknown epoch: %s", eStr)))
 				return
 			}
@@ -80,54 +80,60 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Sort(epoch.ByMaxDuration(es))
 
-	now := time.Now()
-	if tStrs, ok := q["now"]; ok {
+	at := time.Now()
+	if tStrs, ok := q["at"]; ok {
 		if len(tStrs) > 1 {
-			w.WriteHeader(500)
-			w.Write(a.ErrorJSON("Multiple now values"))
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(a.ErrorJSON("Multiple at values"))
 			return
 		}
 		if len(tStrs) == 0 {
-			w.WriteHeader(500)
-			w.Write(a.ErrorJSON("Empty now value"))
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(a.ErrorJSON("Empty at value"))
 			return
 		}
 		var err error
-		now, err = time.Parse("", tStrs[0])
+		at, err = time.Parse(time.RFC3339, tStrs[0])
 		if err != nil {
-			w.WriteHeader(500)
-			w.Write(a.ErrorJSON(fmt.Sprintf("Invalid now value: %s", tStrs[0])))
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(a.ErrorJSON(fmt.Sprintf("Invalid at value: %s", tStrs[0])))
 			return
 		}
 	}
 
-	start := now.Add(time.Duration(-1-numRevisions) * epochs[0].GetData().MaxDuration)
+	start := at.Add(time.Duration(-1-numRevisions) * epochs[0].GetData().MaxDuration)
 	if tStrs, ok := q["start"]; ok {
 		if len(tStrs) > 1 {
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write(a.ErrorJSON("Multiple start values"))
 			return
 		}
 		if len(tStrs) == 0 {
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write(a.ErrorJSON("Empty start value"))
 			return
 		}
 		var err error
-		now, err = time.Parse("", tStrs[0])
+		start, err = time.Parse(time.RFC3339, tStrs[0])
 		if err != nil {
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write(a.ErrorJSON(fmt.Sprintf("Invalid start value: %s", tStrs[0])))
 			return
 		}
 	}
 
+	if at.Before(start) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(a.ErrorJSON(fmt.Sprintf("At parameter (%v) occurs before start parameter (%v)", at, start)))
+		return
+	}
+
 	revs, err := ancr.GetRevisions(getRevisions, announcer.Limits{
-		At:    now,
+		At:    at,
 		Start: start,
 	})
 	if revs == nil && err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(a.ErrorJSON(err.Error()))
 		return
 	}
