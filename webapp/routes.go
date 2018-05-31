@@ -20,7 +20,6 @@ func init() {
 	shared.AddRoute("/anomalies", "anomaly", anomalyHandler)
 
 	// Test run results, viewed by pass-rate across the browsers
-	shared.AddRoute("/interop", "interop", interopHandler)
 	shared.AddRoute("/interop/", "interop", interopHandler)
 	shared.AddRoute("/interop/{path}", "interop", interopHandler)
 

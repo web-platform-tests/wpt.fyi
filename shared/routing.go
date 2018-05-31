@@ -13,6 +13,7 @@ import (
 var globalRouter = mux.NewRouter()
 
 func init() {
+	globalRouter.StrictSlash(true)
 	http.Handle("/", globalRouter)
 }
 
