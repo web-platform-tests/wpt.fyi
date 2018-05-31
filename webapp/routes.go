@@ -13,24 +13,28 @@ import (
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 
 func init() {
-	// Test run results, viewed by browser (default view)
-	// For run results diff view, 'before' and 'after' params can be given.
-	shared.AddRoute("/", testResultsHandler)
-	shared.AddRoute("/results", testResultsHandler) // Prevent default redirect
-	shared.AddRoute("/results/", testResultsHandler)
-
 	// About wpt.fyi
-	shared.AddRoute("/about", aboutHandler)
-
-	// Test run results, viewed by pass-rate across the browsers
-	shared.AddRoute("/interop/", interopHandler)
+	shared.AddRoute("/about", "about", aboutHandler)
 
 	// Lists of test run results which have poor interoperability
-	shared.AddRoute("/interop/anomalies", anomalyHandler)
+	shared.AddRoute("/anomalies", "anomaly", anomalyHandler)
+
+	// Test run results, viewed by pass-rate across the browsers
+	shared.AddRoute("/interop", "interop", interopHandler)
+	shared.AddRoute("/interop/", "interop", interopHandler)
+	shared.AddRoute("/interop/{path}", "interop", interopHandler)
 
 	// List of all test runs, by SHA[0:10]
-	shared.AddRoute("/test-runs", testRunsHandler)
+	shared.AddRoute("/test-runs", "test-runs", testRunsHandler)
 
 	// Admin-only manual results upload.
-	shared.AddRoute("/admin/results/upload", adminUploadHandler)
+	shared.AddRoute("/admin/results/upload", "upload", adminUploadHandler)
+
+	// Test run results, viewed by browser (default view)
+	// For run results diff view, 'before' and 'after' params can be given.
+	shared.AddRoute("/results/{path}", "results", testResultsHandler)
+
+	// Legacy wildcard match
+	shared.AddRoute("/", "results-legacy", testResultsHandler)
+	shared.AddRoute("/{path}", "results-legacy", testResultsHandler)
 }
