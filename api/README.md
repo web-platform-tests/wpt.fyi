@@ -7,20 +7,11 @@ document covers usage and parameters of those endpoints.
 
 An exhaustive list of the endpoints can be found in `routes.go`.
 
- - [/api/run](#apirun)
  - [/api/runs](#apiruns)
+ - [/api/runs/{id}](#apirunsid)
+ - [/api/run](#apirun)
  - [/api/diff](#apidiff)
  - [/results](#results)
-
-### /api/run
-
-Gets a specific (single) TestRun metadata, for a given SHA[0:10] and platform.
-
-__Parameters__
-
-__`sha`__ :  SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
-
-__`platform`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 
 ### /api/runs
 
@@ -33,6 +24,20 @@ __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `
 __`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
 
 __`max-count`__ : Maximum number of runs to get (for each browser). Only relevant when `sha` is `latest`. Maximum of 500.
+
+### /api/runs/{id}
+
+Gets a specific (single) TestRun metadata by its datastore ID.
+
+### /api/run
+
+Gets a specific (single) TestRun metadata by product and revision (SHA[0:10]).
+
+__Parameters__
+
+__`sha`__ :  SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
+
+__`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 
 ### /api/diff
 

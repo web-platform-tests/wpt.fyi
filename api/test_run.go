@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
@@ -27,51 +29,66 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// apiTestRunGetHandler is responsible for emitting the test-run JSON a specific run,
-// identified by a named browser (product) at a given SHA.
-//
-// URL Params:
-//     sha: SHA[0:10] of the repo when the test was executed (or 'latest')
-//     browser: Browser for the run (e.g. 'chrome', 'safari-10')
+// apiTestRunGetHandler is responsible for emitting the test-run JSON for a specific run.
 func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
-	runSHA, err := shared.ParseSHAParam(r)
-	if err != nil {
-		http.Error(w, "Invalid query params", http.StatusBadRequest)
-		return
-	}
-
-	var browser, product *shared.Product
-	product, err = shared.ParseProductParam(r)
-	if err != nil {
-		http.Error(w, "Invalid 'product' param", http.StatusBadRequest)
-		return
-	}
-	browser, err = shared.ParseBrowserParam(r)
-	if err != nil {
-		http.Error(w, "Invalid 'browser' param", http.StatusBadRequest)
-		return
-	}
-	if product == nil && browser != nil {
-		product = browser
-	}
-	if product == nil {
-		http.Error(w, "Missing required 'product' param", http.StatusBadRequest)
-		return
-	}
-
+	vars := mux.Vars(r)
+	idParam := vars["id"]
 	ctx := appengine.NewContext(r)
-	testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, runSHA, nil, 1)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	var testRun shared.TestRun
+	if idParam != "" {
+		id, err := strconv.ParseInt(idParam, 10, 0)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid id '%s'", idParam), http.StatusBadRequest)
+			return
+		}
+		key := datastore.NewKey(ctx, "TestRun", "", id, nil)
+		if err = datastore.Get(ctx, key, &testRun); err != nil {
+			if err == datastore.ErrNoSuchEntity {
+				http.NotFound(w, r)
+				return
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		runSHA, err := shared.ParseSHAParam(r)
+		if err != nil {
+			http.Error(w, "Invalid query params", http.StatusBadRequest)
+			return
+		}
+
+		var browser, product *shared.Product
+		product, err = shared.ParseProductParam(r)
+		if err != nil {
+			http.Error(w, "Invalid 'product' param", http.StatusBadRequest)
+			return
+		}
+		browser, err = shared.ParseBrowserParam(r)
+		if err != nil {
+			http.Error(w, "Invalid 'browser' param", http.StatusBadRequest)
+			return
+		}
+		if product == nil && browser != nil {
+			product = browser
+		}
+		if product == nil {
+			http.Error(w, "Missing required 'product' param", http.StatusBadRequest)
+			return
+		}
+		testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, runSHA, nil, 1)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if len(testRuns) == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		testRun = testRuns[0]
 	}
 
-	if len(testRuns) == 0 {
-		http.NotFound(w, r)
-		return
-	}
-
-	testRunsBytes, err := json.Marshal(testRuns[0])
+	testRunsBytes, err := json.Marshal(testRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

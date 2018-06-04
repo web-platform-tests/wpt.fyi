@@ -56,6 +56,7 @@ func TestApiRunsBound(t *testing.T) {
 
 func TestApiRunBound(t *testing.T) {
 	assertBound(t, "/api/run")
+	assertHandlerIs(t, "/api/runs/123", "api-test-run")
 }
 
 func TestApiResultsUploadBound(t *testing.T) {
