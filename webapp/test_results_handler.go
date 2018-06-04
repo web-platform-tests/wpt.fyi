@@ -29,7 +29,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	var redir string
 	if path == "results" {
 		redir = "/results/"
-	} else if path != "" && strings.Index(r.URL.Path, "/results/") != 0 {
+	} else if strings.Index(r.URL.Path, "/results/") != 0 {
 		redir = fmt.Sprintf("/results/%s", path)
 	}
 	if redir != "" {

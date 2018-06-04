@@ -67,7 +67,7 @@ func TestResultsBound(t *testing.T) {
 }
 
 func TestAdminResultsUploadBound(t *testing.T) {
-	assertHandlerIs(t, "/admin/results/upload", "upload")
+	assertHandlerIs(t, "/admin/results/upload", "admin-results-upload")
 	assertHSTS(t, "/admin/results/upload")
 }
 

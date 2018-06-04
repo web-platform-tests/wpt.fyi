@@ -6,7 +6,8 @@ package api
 
 import "github.com/web-platform-tests/wpt.fyi/shared"
 
-func init() {
+// RegisterRoutes adds all the api route handlers.
+func RegisterRoutes() {
 	// API endpoint for diff of two test run summary JSON blobs.
 	shared.AddRoute("/api/diff", "api-diff", apiDiffHandler)
 
