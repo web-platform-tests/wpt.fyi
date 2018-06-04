@@ -6,7 +6,6 @@ package shared
 
 import (
 	"encoding/json"
-	"net/http"
 	"sort"
 	"strings"
 
@@ -61,20 +60,6 @@ func loadBrowsers() (map[string]bool, []string) {
 	sort.Strings(browserNamesAlphabetical)
 
 	return browserNames, browserNamesAlphabetical
-}
-
-// AddRoute registers a handler for an http path (route).
-// Note that it adds an HSTS header to the response.
-func AddRoute(route string, handler func(http.ResponseWriter, *http.Request)) {
-	http.HandleFunc(route, wrapHSTS(handler))
-}
-
-func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		value := "max-age=31536000; preload"
-		w.Header().Add("Strict-Transport-Security", value)
-		h(w, r)
-	})
 }
 
 // ToStringSlice converts a set to a typed string slice.
