@@ -8,7 +8,8 @@ document covers usage and parameters of those endpoints.
 An exhaustive list of the endpoints can be found in `routes.go`.
 
  - [/api/runs](#apiruns)
- - [/api/runs/{id}](#apirun)
+ - [/api/runs/{id}](#apirunsid)
+ - [/api/run](#apirun)
  - [/api/diff](#apidiff)
  - [/results](#results)
 
