@@ -90,14 +90,18 @@ func getRun(r *http.Request, run string, product string) (latest shared.TestRun,
 	if len(productPieces) > 3 {
 		query = shared.VersionPrefix(query, "OSVersion", productPieces[3], true)
 	}
-	_, err = query.GetAll(ctx, &testRunResults)
+	keys, err := query.GetAll(ctx, &testRunResults)
 	if err != nil {
 		return
+	}
+	// Append the keys as ID
+	for i, key := range keys {
+		testRunResults[i].ID = key.IntID()
 	}
 	if len(testRunResults) > 0 {
 		latest = testRunResults[0]
 	}
-	return
+	return latest, err
 }
 
 func getResultsURL(run shared.TestRun, testFile string) (resultsURL string) {
