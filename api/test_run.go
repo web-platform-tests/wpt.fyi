@@ -43,6 +43,10 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		key := datastore.NewKey(ctx, "TestRun", "", id, nil)
 		if err = datastore.Get(ctx, key, &testRun); err != nil {
+			if err == datastore.ErrNoSuchEntity {
+				http.NotFound(w, r)
+				return
+			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
