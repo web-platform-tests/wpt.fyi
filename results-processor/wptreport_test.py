@@ -41,7 +41,7 @@ class WPTReportTest(unittest.TestCase):
             r.load_gzip_json(f)
         self.assertDictEqual(obj, r._report)
 
-    def test_load_json_binary_mode(self):
+    def test_load_json(self):
         tmp_path = os.path.join(self.tmp_dir, 'test.json')
         with open(tmp_path, 'wt') as f:
             f.write('{"results": [{"test": "foo"}]}')
@@ -49,22 +49,15 @@ class WPTReportTest(unittest.TestCase):
         with open(tmp_path, 'rb') as f:
             r.load_json(f)
         self.assertEqual(len(r.results), 1)
-
-    def test_load_json_text_mode(self):
-        tmp_path = os.path.join(self.tmp_dir, 'test.json')
-        with open(tmp_path, 'wt') as f:
-            f.write('{"results": [{"test": "foo"}]}')
-        r = WPTReport()
-        with open(tmp_path, 'rt') as f:
-            r.load_json(f)
-        self.assertEqual(len(r.results), 1)
+        # This is the sha1sum of the string written above.
+        self.assertEqual(r.hashsum, 'afa59408e1797c7091d7e89de5561612f7da440d')
 
     def test_load_json_empty_report(self):
         tmp_path = os.path.join(self.tmp_dir, 'test.json')
         with open(tmp_path, 'wt') as f:
             f.write('{}')
         r = WPTReport()
-        with open(tmp_path, 'rt') as f:
+        with open(tmp_path, 'rb') as f:
             with self.assertRaises(InsufficientDataError):
                 r.load_json(f)
 
@@ -200,6 +193,7 @@ class WPTReportTest(unittest.TestCase):
 
     def test_populate_upload_directory(self):
         # This also tests write_summary() and write_result_directory().
+        revision = '0bdaaf9c1622ca49eb140381af1ece6d8001c934'
         r = WPTReport()
         r._report = {
             'results': [{
@@ -209,20 +203,22 @@ class WPTReportTest(unittest.TestCase):
                 'subtests': []
             }],
             'run_info': {
-                'revision': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+                'revision': revision,
                 'product': 'firefox',
                 'browser_version': '59.0',
                 'os': 'linux'
             }
         }
+        r.hashsum = '0123456789'
         r.populate_upload_directory(output_dir=self.tmp_dir)
 
-        short_sha = '0bdaaf9c16'
         self.assertTrue(os.path.isfile(os.path.join(
-            self.tmp_dir, short_sha, 'firefox-59.0-linux-summary.json.gz'
+            self.tmp_dir, revision,
+            'firefox-59.0-linux-0123456789-summary.json.gz'
         )))
         self.assertTrue(os.path.isfile(os.path.join(
-            self.tmp_dir, short_sha, 'firefox-59.0-linux', 'foo', 'bar.html'
+            self.tmp_dir, revision,
+            'firefox-59.0-linux-0123456789', 'foo', 'bar.html'
         )))
 
     def test_update_metadata(self):
@@ -269,7 +265,39 @@ class WPTReportTest(unittest.TestCase):
                 'os': 'linux',
             }
         }
-        self.assertEqual(r.product_id('-'), 'firefox-59.0-linux')
+        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        self.assertEqual(r.product_id('-'), 'firefox-59.0-linux-afa59408e1')
 
         r._report['run_info']['os_version'] = '4.4'
-        self.assertEqual(r.product_id('_'), 'firefox_59.0_linux_4.4')
+        self.assertEqual(r.product_id('_'),
+                         'firefox_59.0_linux_4.4_afa59408e1')
+
+    def test_sha_product_path(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'revision': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+                'product': 'firefox',
+                'browser_version': '59.0',
+                'os': 'linux'
+            }
+        }
+        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        self.assertEqual(r.sha_product_path,
+                         '0bdaaf9c1622ca49eb140381af1ece6d8001c934/'
+                         'firefox-59.0-linux-afa59408e1')
+
+    def test_sha_summary_path(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'revision': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+                'product': 'firefox',
+                'browser_version': '59.0',
+                'os': 'linux'
+            }
+        }
+        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        self.assertEqual(r.sha_summary_path,
+                         '0bdaaf9c1622ca49eb140381af1ece6d8001c934/'
+                         'firefox-59.0-linux-afa59408e1-summary.json.gz')

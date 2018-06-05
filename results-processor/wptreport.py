@@ -6,6 +6,7 @@
 
 import argparse
 import gzip
+import hashlib
 import io
 import json
 import logging
@@ -38,28 +39,55 @@ class InsufficientDataError(Exception):
         super(InsufficientDataError, self).__init__("Zero results available")
 
 
+class BufferedHashsum(object):
+    """A simple buffered hash calculator."""
+
+    def __init__(self, hash_ctor=hashlib.sha1, block_size=1024*1024):
+        assert block_size > 0
+        self._hash_ctor = hash_ctor
+        self._block_size = block_size
+
+    def hash_file(self, fileobj):
+        """Hashes a given file.
+
+        Args:
+            fileobj: A file object to hash (must be in binary mode).
+
+        Returns:
+            A string, the hexadecimal digest of the file.
+        """
+        assert not isinstance(fileobj, io.TextIOBase)
+        h = self._hash_ctor()
+        buf = fileobj.read(self._block_size)
+        while len(buf) > 0:
+            h.update(buf)
+            buf = fileobj.read(self._block_size)
+        return h.hexdigest()
+
+
 class WPTReport(object):
     """An abstraction of wptreport.json with some transformation features."""
 
     def __init__(self):
         self._report = dict()
         self._summary = dict()
-        # A relative path: short_sha/browser-summary.json.gz
-        self.sha_summary_path = ''
+        # The hexadecimal sha1sum of the (decompressed) report.
+        self.hashsum = ''
 
     def load_json(self, fileobj):
         """Loads wptreport from a JSON file.
 
         Args:
-            fileobj: A JSON file object.
+            fileobj: A JSON file object (must be in binary mode).
         """
-        if isinstance(fileobj, io.TextIOBase):
-            self._report = json.load(fileobj, strict=False)
-        else:
-            # Wrap the fileobj in case it's in binary mode.
-            # JSON files are always encoded in UTF-8 (RFC 8529).
-            with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:
-                self._report = json.load(text_file, strict=False)
+        assert not isinstance(fileobj, io.TextIOBase)
+
+        self.hashsum = BufferedHashsum().hash_file(fileobj)
+        fileobj.seek(0)
+
+        # JSON files are always encoded in UTF-8 (RFC 8529).
+        with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:
+            self._report = json.load(text_file, strict=False)
         # Raise when 'results' is either not found or empty.
         if not self._report.get('results'):
             raise InsufficientDataError
@@ -212,6 +240,8 @@ class WPTReport(object):
         # os_version isn't required.
         if self.run_info.get('os_version'):
             name += separator + self.run_info['os_version']
+        assert len(self.hashsum) > 0, 'Missing hashsum of the report'
+        name += separator + self.hashsum[:10]
         return name
 
     def populate_upload_directory(self, output_dir=None):
@@ -230,24 +260,27 @@ class WPTReport(object):
         Returns:
             The output directory.
         """
-        try:
-            revision = self.run_info['revision']
-            # For consistency, use dashes in the wptd bucket.
-            product = self.product_id('-')
-        except KeyError as e:
-            raise MissingMetadataError(str(e)) from e
-
         if not output_dir:
             output_dir = tempfile.mkdtemp()
 
-        # TODO(Hexcles): Switch to full SHA.
-        short_sha = revision[:10]
-        summary_filename = product + '-summary.json.gz'
-        self.sha_summary_path = os.path.join(short_sha, summary_filename)
         self.write_summary(os.path.join(output_dir, self.sha_summary_path))
         self.write_result_directory(
-            os.path.join(output_dir, short_sha, product))
+            os.path.join(output_dir, self.sha_product_path))
         return output_dir
+
+    @property
+    def sha_product_path(self):
+        """A relative path: sha/product_id"""
+        try:
+            return os.path.join(self.run_info['revision'],
+                                self.product_id('-'))
+        except KeyError as e:
+            raise MissingMetadataError(str(e)) from e
+
+    @property
+    def sha_summary_path(self):
+        """A relative path: sha/product_id-summary.json.gz"""
+        return self.sha_product_path + '-summary.json.gz'
 
     @property
     def test_run_metadata(self):
@@ -318,11 +351,10 @@ def main():
     args = parser.parse_args()
 
     report = WPTReport()
-    if args.report.endswith('.gz'):
-        with open(args.report, 'rb') as f:
+    with open(args.report, 'rb') as f:
+        if args.report.endswith('.gz'):
             report.load_gzip_json(f)
-    else:
-        with open(args.report, 'rt') as f:
+        else:
             report.load_json(f)
 
     if args.summary:
