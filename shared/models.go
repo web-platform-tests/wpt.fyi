@@ -85,6 +85,18 @@ type TestRun struct {
 	RawResultsURL string `json:"raw_results_url"`
 }
 
+// TestRuns is a helper type for an array of TestRun entities.
+type TestRuns []TestRun
+
+// GetTestRunIDs gets an array of the IDs for the TestRun entities in the array.
+func (runs TestRuns) GetTestRunIDs() []int64 {
+	ids := make([]int64, len(runs))
+	for i, run := range runs {
+		ids[i] = run.ID
+	}
+	return ids
+}
+
 // Browser holds objects that appear in browsers.json
 type Browser struct {
 	InitiallyLoaded bool   `json:"initially_loaded"`
