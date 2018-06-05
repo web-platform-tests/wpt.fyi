@@ -36,7 +36,7 @@ ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:${USER_HOME}/.local/bin:${GCLOUD_PA
 RUN apt-get update && apt-get install sudo make
 
 # Put wpt.fyi code in GOPATH
-RUN mkdir -p "${GOPATH}/src/github.com/web-platform-tests"
+RUN mkdir -p "${GOPATH}/src/github.com"
 RUN ln -s "${WPT_PATH}" "${GOPATH}/src/github.com/web-platform-tests"
 
 RUN mkdir -p "${WPT_PATH}"
