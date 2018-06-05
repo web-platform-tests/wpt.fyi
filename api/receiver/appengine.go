@@ -132,7 +132,12 @@ func (a *appEngineAPIImpl) fetchURL(url string) (io.ReadCloser, error) {
 	if a.client == nil {
 		a.client = urlfetch.Client(a.ctx)
 	}
-	resp, err := a.client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Accept-Encoding", "gzip")
+	resp, err := a.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
