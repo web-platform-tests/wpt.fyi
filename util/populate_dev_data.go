@@ -47,7 +47,7 @@ func main() {
 	// Follow pattern established in run/*.py data collection code.
 	const staticRunSHA = "b952881825"
 	const summaryURLFmtString = "/static/" + staticRunSHA + "/%s"
-	staticTestRuns := []shared.TestRun{
+	staticTestRuns := shared.TestRuns{
 		{
 			ProductAtRevision: shared.ProductAtRevision{
 				Product: shared.Product{
@@ -114,7 +114,6 @@ func main() {
 		&metrics.PassRateMetadata{
 			StartTime: timeZero,
 			EndTime:   timeZero,
-			TestRuns:  staticTestRuns,
 			DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
 		},
 	}
@@ -123,28 +122,24 @@ func main() {
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
-			TestRuns:    staticTestRuns,
 			DataURL:     fmt.Sprintf(metricsURLFmtString, "chrome-failures"),
 			BrowserName: "chrome",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
-			TestRuns:    staticTestRuns,
 			DataURL:     fmt.Sprintf(metricsURLFmtString, "edge-failures"),
 			BrowserName: "edge",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
-			TestRuns:    staticTestRuns,
 			DataURL:     fmt.Sprintf(metricsURLFmtString, "firefox-failures"),
 			BrowserName: "firefox",
 		},
 		&metrics.FailuresMetadata{
 			StartTime:   timeZero,
 			EndTime:     timeZero,
-			TestRuns:    staticTestRuns,
 			DataURL:     fmt.Sprintf(metricsURLFmtString, "safari-failures"),
 			BrowserName: "safari",
 		},
@@ -166,7 +161,18 @@ func main() {
 	})
 
 	log.Print("Adding local mock data (static/)...")
-	addData(ctx, testRunKindName, staticTestRunMetadata)
+	testRunKeys := addData(ctx, testRunKindName, staticTestRunMetadata)
+	for i, key := range testRunKeys {
+		staticTestRuns[i].ID = key.IntID()
+	}
+	for i := range staticPassRateMetadata {
+		md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
+		md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+	}
+	for i := range staticFailuresMetadata {
+		md := staticFailuresMetadata[i].(*metrics.FailuresMetadata)
+		md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+	}
 	addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
 	addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 
@@ -195,15 +201,17 @@ func addSecretToken(ctx context.Context, id string, data interface{}) {
 	log.Printf("Added %s secret", id)
 }
 
-func addData(ctx context.Context, kindName string, data []interface{}) {
-	keys := make([]*datastore.Key, len(data))
+func addData(ctx context.Context, kindName string, data []interface{}) (keys []*datastore.Key) {
+	keys = make([]*datastore.Key, len(data))
 	for i := range data {
 		keys[i] = datastore.NewIncompleteKey(ctx, kindName, nil)
 	}
-	if _, err := datastore.PutMulti(ctx, keys, data); err != nil {
+	var err error
+	if keys, err = datastore.PutMulti(ctx, keys, data); err != nil {
 		log.Fatalf("Failed to add %s entities: %s", kindName, err.Error())
 	}
 	log.Printf("Added %v %s entities", len(data), kindName)
+	return keys
 }
 
 func getRemoteAPIContext() (context.Context, error) {
