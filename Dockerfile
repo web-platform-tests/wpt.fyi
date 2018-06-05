@@ -38,8 +38,9 @@ RUN apt-get update && apt-get install sudo make
 
 # Put wpt.fyi code in GOPATH
 RUN mkdir -p "${GOPATH}/src/github.com/web-platform-tests"
+RUN mkdir -p "${GOPATH}/src/github.com/web-platform-tests/results-analysis"
 RUN ln -s "${WPTD_PATH}" "${GOPATH}/src/github.com/web-platform-tests/wpt.fyi"
-RUN ln -s "${WPT_PATH}/result-analysis" "${GOPATH}/src/github.com/web-platform-tests/results-analysis"
+RUN ln -s "${WPT_PATH}/results-analysis/metrics" "${GOPATH}/src/github.com/web-platform-tests/results-analysis/metrics"
 
 RUN mkdir -p "${WPT_PATH}"
 RUN mkdir -p "${WPTD_PATH}"
