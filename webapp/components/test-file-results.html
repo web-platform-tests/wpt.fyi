@@ -142,15 +142,9 @@ found in the LICENSE file.
         if (testRun.revision === 'diff') {
           return `${testRun.results_url}&path=${encodeURI(testFile)}`;
         }
-        // This is relying on the assumption that result files are under a directory named SHA[0:10].
-        const resultsBase = testRun.results_url.split('/' + testRun.revision)[0];
-        // This is currently a hack to extract the platform ID from the summary URL.
-        // A platform ID is any valid key from browsers.json.
-        const platformID = testRun.results_url.split('/').pop().replace('-summary.json.gz', '');
-        // Test file results are currently stored as JSON files with the following scheme:
-        // {GS bucket}/{WPT SHA[0:10]}/{platform ID}/{test file path}
-
-        return `${resultsBase}/${testRun.revision}/${platformID}${testFile}`;
+        // This is relying on the assumption that result files end with '-summary.json.gz'.
+        const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
+        return `${resultsBase}${testFile}`;
       }
 
       subtestResultForTestRun(testRun, subtestName) {
