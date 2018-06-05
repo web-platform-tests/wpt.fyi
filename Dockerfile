@@ -17,6 +17,7 @@ FROM gcr.io/gcp-runtimes/go1-builder:1.10
 
 USER root
 
+# Expected layout: /home/user/web-platform-tests/{wpt.fyi,other_repos...}
 ENV USER_HOME="/home/user"
 ENV WPT_PATH="${USER_HOME}/web-platform-tests"
 ENV WPTD_PATH="${WPT_PATH}/wpt.fyi"
