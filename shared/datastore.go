@@ -53,6 +53,10 @@ func LoadTestRuns(
 		if err = datastore.GetMulti(ctx, keys, testRunResults); err != nil {
 			return nil, err
 		}
+		// Append the keys as ID
+		for i, key := range keys {
+			testRunResults[i].ID = key.IntID()
+		}
 		testRuns = append(testRuns, testRunResults...)
 	}
 	return testRuns, nil

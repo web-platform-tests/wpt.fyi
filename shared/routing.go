@@ -10,22 +10,22 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var globalRouter = mux.NewRouter()
-
-func init() {
-	globalRouter.StrictSlash(true)
-	http.Handle("/", globalRouter)
-}
+var globalRouter *mux.Router
 
 // Router returns the global mux.Router used for handling all requests.
 func Router() *mux.Router {
+	if globalRouter == nil {
+		globalRouter = mux.NewRouter()
+		globalRouter.StrictSlash(true)
+		http.Handle("/", globalRouter)
+	}
 	return globalRouter
 }
 
 // AddRoute is a helper for registering a handler for an http path (route).
 // Note that it adds an HSTS header to the response.
 func AddRoute(route, name string, handler func(http.ResponseWriter, *http.Request)) *mux.Route {
-	return globalRouter.HandleFunc(route, WrapHSTS(handler)).Name(name)
+	return Router().HandleFunc(route, WrapHSTS(handler)).Name(name)
 }
 
 // WrapHSTS wraps the given handler func in one that sets the

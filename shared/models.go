@@ -70,6 +70,8 @@ func (p ProductAtRevision) String() string {
 
 // TestRun stores metadata for a test run (produced by run/run.py)
 type TestRun struct {
+	ID int64 `json:"id" datastore:"-"`
+
 	ProductAtRevision
 
 	// URL for summary of results, which is derived from raw results.
