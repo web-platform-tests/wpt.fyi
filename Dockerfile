@@ -8,8 +8,8 @@ FROM gcr.io/gcp-runtimes/go1-builder:1.10
 # See Dockerfiles in sub-directories for individual service deployments.
 #
 # Caveats:
-# - AppEngine Standard uses golang 1.8, whereas AppEngine Flex defaults to 
-#   golang 1.10. This development environment uses the base image recommended 
+# - AppEngine Standard uses golang 1.8, whereas AppEngine Flex defaults to
+#   golang 1.10. This development environment uses the base image recommended
 #   for AppEngine Flex custom golang runtime, hence golang 1.10 is the default
 #   golang toolchain. However, when using the gcloud dev_appserver toolchain,
 #   it will internally use a custom golang 1.8 environment.
@@ -17,9 +17,10 @@ FROM gcr.io/gcp-runtimes/go1-builder:1.10
 
 USER root
 
+# Expected layout: /home/user/web-platform-tests/{wpt.fyi,other_repos...}
 ENV USER_HOME="/home/user"
-ENV WPTD_PATH="${USER_HOME}/wpt.fyi"
 ENV WPT_PATH="${USER_HOME}/web-platform-tests"
+ENV WPTD_PATH="${WPT_PATH}/wpt.fyi"
 ENV WPTD_OUT_PATH="${USER_HOME}/wptdout"
 
 # Setup go environment
@@ -37,10 +38,13 @@ RUN apt-get update && apt-get install sudo make
 
 # Put wpt.fyi code in GOPATH
 RUN mkdir -p "${GOPATH}/src/github.com/web-platform-tests"
+RUN mkdir -p "${GOPATH}/src/github.com/web-platform-tests/results-analysis"
 RUN ln -s "${WPTD_PATH}" "${GOPATH}/src/github.com/web-platform-tests/wpt.fyi"
+RUN ln -s "${WPT_PATH}/results-analysis/metrics" "${GOPATH}/src/github.com/web-platform-tests/results-analysis/metrics"
 
-RUN mkdir -p "${WPTD_PATH}"
 RUN mkdir -p "${WPT_PATH}"
+RUN mkdir -p "${WPTD_PATH}"
+RUN mkdir -p "${WPT_PATH}/results-analysis"
 
 # Drop dev environment into source path
 WORKDIR "${WPTD_PATH}"

@@ -7,7 +7,7 @@ DOCKER_DIR=$(dirname $0)
 source "${DOCKER_DIR}/../commands.sh"
 source "${DOCKER_DIR}/../logging.sh"
 source "${DOCKER_DIR}/../path.sh"
-WPTD_PATH=${WPTD_PATH:-$(absdir ${DOCKER_DIR}/../..)}
+WPT_PATH=${WPT_PATH:-$(absdir ${DOCKER_DIR}/../../..)}
 
 DOCKER_INSTANCE="${DOCKER_INSTANCE:-wptd-dev-instance}"
 
@@ -45,15 +45,17 @@ done
 
 # Create a docker instance:
 #
-# --rm                                      Auto-remove when stopped
-# -it                                       Interactive mode (Ctrl+c will halt
-#                                           instance)
-# -v "${WPTD_PATH}":/wpt.fyi                Mount the repository
-# -u $(id -u $USER):$(id -g $USER)          Run as current user and group
-# -p "${WPTD_HOST_WEB_PORT}:8080"           Expose web server port
-# --name "${DOCKER_INSTANCE}"               Name the instance
-# wptd-dev                                  Identify image to use
-# /wpt.fyi/util/docker/inner/watch.sh       Identify code to execute
+# --rm                                                    Auto-remove when stopped
+# -it                                                     Interactive mode (Ctrl+c will halt instance)
+#                                                         Mount the wpt.fyi repository
+# -v "${WPT_PATH}/wpt.fyi":/home/user/web-platform-tests/wpt.fyi
+#                                                         Mount the results-analysis repository
+# -v "${WPT_PATH}/results-analysis":/home/user/web-platform-tests/results-analysis
+# -u $(id -u $USER):$(id -g $USER)                        Run as current user and group
+# -p "${WPTD_HOST_WEB_PORT}:8080"                         Expose web server port
+# --name "${DOCKER_INSTANCE}"                             Name the instance
+# wptd-dev                                                Identify image to use
+# /wpt.fyi/util/docker/inner/watch.sh                     Identify code to execute
 
 info "Creating docker instance for dev server. Instance name: wptd-dev-instance"
 docker inspect "${DOCKER_INSTANCE}" > /dev/null 2>&1
@@ -93,7 +95,8 @@ set -e
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
   docker run -t -d --entrypoint /bin/bash \
-      -v "${WPTD_PATH}:/home/user/wpt.fyi" \
+      -v "${WPT_PATH}/wpt.fyi:/home/user/web-platform-tests/wpt.fyi" \
+      -v "${WPT_PATH}/results-analysis:/home/user/web-platform-tests/results-analysis" \
       -u $(id -u $USER):$(id -g $USER) \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
