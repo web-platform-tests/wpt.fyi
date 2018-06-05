@@ -158,15 +158,13 @@ node: curl gpg
 	fi
 
 gcloud: python curl gpg
-	@ echo "travis_fold:start:gcloud_install"
 	if [[ "$$(which gcloud)" == "" ]]; then \
 		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh; \
-		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME); \
+		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME) > /dev/null; \
 		rm -f ./install-gcloud.sh; \
 		gcloud components install --quiet core gsutil; \
 		gcloud config set disable_usage_reporting false; \
 	fi
-	@ echo "travis_fold:end:gcloud_install"
 
 eslint: node-babel-eslint node-eslint node-eslint-plugin-html
 	cd $(WPTD_PATH)webapp; npm run lint
