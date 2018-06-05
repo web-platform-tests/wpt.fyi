@@ -112,35 +112,45 @@ func main() {
 	}
 	staticPassRateMetadata := []interface{}{
 		&metrics.PassRateMetadata{
-			StartTime: timeZero,
-			EndTime:   timeZero,
-			DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
+			},
 		},
 	}
 
 	staticFailuresMetadata := []interface{}{
 		&metrics.FailuresMetadata{
-			StartTime:   timeZero,
-			EndTime:     timeZero,
-			DataURL:     fmt.Sprintf(metricsURLFmtString, "chrome-failures"),
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "chrome-failures"),
+			},
 			BrowserName: "chrome",
 		},
 		&metrics.FailuresMetadata{
-			StartTime:   timeZero,
-			EndTime:     timeZero,
-			DataURL:     fmt.Sprintf(metricsURLFmtString, "edge-failures"),
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "edge-failures"),
+			},
 			BrowserName: "edge",
 		},
 		&metrics.FailuresMetadata{
-			StartTime:   timeZero,
-			EndTime:     timeZero,
-			DataURL:     fmt.Sprintf(metricsURLFmtString, "firefox-failures"),
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "firefox-failures"),
+			},
 			BrowserName: "firefox",
 		},
 		&metrics.FailuresMetadata{
-			StartTime:   timeZero,
-			EndTime:     timeZero,
-			DataURL:     fmt.Sprintf(metricsURLFmtString, "safari-failures"),
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "safari-failures"),
+			},
 			BrowserName: "safari",
 		},
 	}
