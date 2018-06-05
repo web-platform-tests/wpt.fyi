@@ -43,6 +43,7 @@ RUN ln -s "${WPT_PATH}/result-analysis" "${GOPATH}/src/github.com/web-platform-t
 
 RUN mkdir -p "${WPT_PATH}"
 RUN mkdir -p "${WPTD_PATH}"
+RUN mkdir -p "${WPT_PATH}/results-analysis"
 
 # Drop dev environment into source path
 WORKDIR "${WPTD_PATH}"
