@@ -16,6 +16,7 @@ import (
 func LoadTestRuns(
 	ctx context.Context,
 	products []Product,
+	labels mapset.Set,
 	sha string,
 	from *time.Time,
 	limit int) (result []TestRun, err error) {
@@ -23,6 +24,15 @@ func LoadTestRuns(
 	baseQuery := datastore.NewQuery("TestRun")
 	if sha != "" && sha != "latest" {
 		baseQuery = baseQuery.Filter("Revision =", sha)
+	}
+	if labels != nil {
+		for i := range labels.Iter() {
+			label := i.(string)
+			if label == "experimental" || IsBrowserName(label) {
+				continue // Special-cased in GetProductsForRequest
+			}
+			baseQuery = baseQuery.Filter("Labels =", label)
+		}
 	}
 	for _, product := range products {
 		var prefiltered *mapset.Set

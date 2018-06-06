@@ -101,6 +101,7 @@ func main() {
 			CreatedAt:  staticDataTime,
 		},
 	}
+	labelRuns(staticTestRuns, "test", "static")
 
 	timeZero := time.Unix(0, 0)
 	// Follow pattern established in metrics/run/*.go data collection code.
@@ -188,6 +189,7 @@ func main() {
 
 	log.Print("Adding latest production TestRun data...")
 	prodTestRuns := shared.FetchLatestRuns(*host)
+	labelRuns(prodTestRuns, "prod")
 	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
@@ -196,11 +198,21 @@ func main() {
 
 	log.Print("Adding latest experimental TestRun data...")
 	prodTestRuns = shared.FetchRuns(*host, "latest", mapset.NewSet("experimental"))
+	labelRuns(prodTestRuns, "prod")
+
 	latestProductionTestRunMetadata = make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
 	}
 	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
+}
+
+func labelRuns(runs []shared.TestRun, labels ...string) {
+	for i := range runs {
+		for _, label := range labels {
+			runs[i].Labels = append(runs[i].Labels, label)
+		}
+	}
 }
 
 func addSecretToken(ctx context.Context, id string, data interface{}) {

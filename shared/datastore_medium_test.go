@@ -39,7 +39,7 @@ func TestLoadTestRuns(t *testing.T) {
 	key, _ = datastore.Put(ctx, key, &testRun)
 
 	chrome, _ := ParseProduct("chrome")
-	loaded, err := LoadTestRuns(ctx, []Product{chrome}, "latest", nil, 1)
+	loaded, err := LoadTestRuns(ctx, []Product{chrome}, nil, "latest", nil, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(loaded))
 	assert.Equalf(t, key.IntID(), loaded[0].ID, "ID field should be populated.")

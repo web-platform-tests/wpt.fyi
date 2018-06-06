@@ -62,8 +62,8 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		// Default to a single, latest run when from & max-count both empty.
 		limit = 1
 	}
-
-	testRuns, err := shared.LoadTestRuns(ctx, products, runSHA, from, limit)
+	labels := shared.ParseLabelsParam(r)
+	testRuns, err := shared.LoadTestRuns(ctx, products, labels, runSHA, from, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
