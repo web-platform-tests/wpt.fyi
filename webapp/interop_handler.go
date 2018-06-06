@@ -19,8 +19,8 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
-	var metadataSlice []metrics.PassRateMetadata
 
+	var metadataSlice []metrics.PassRateMetadataLegacy
 	if _, err := query.GetAll(ctx, &metadataSlice); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
