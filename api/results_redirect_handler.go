@@ -55,18 +55,18 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if (shared.TestRun{}) == run {
+	if run == nil {
 		http.Error(w, fmt.Sprintf("404 - Test run '%s' not found", runSHA), http.StatusNotFound)
 		return
 	}
 
 	test := params.Get("test")
-	resultsURL := getResultsURL(run, test)
+	resultsURL := getResultsURL(*run, test)
 
 	http.Redirect(w, r, resultsURL, http.StatusFound)
 }
 
-func getRun(r *http.Request, run string, product string) (latest shared.TestRun, err error) {
+func getRun(r *http.Request, run string, product string) (latest *shared.TestRun, err error) {
 	productPieces := strings.Split(product, "-")
 	if len(productPieces) < 1 || len(productPieces) > 4 {
 		err = errors.New("Invalid path")
@@ -99,7 +99,7 @@ func getRun(r *http.Request, run string, product string) (latest shared.TestRun,
 		testRunResults[i].ID = key.IntID()
 	}
 	if len(testRunResults) > 0 {
-		latest = testRunResults[0]
+		latest = &testRunResults[0]
 	}
 	return latest, err
 }

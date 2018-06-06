@@ -85,6 +85,9 @@ type TestRun struct {
 	// URL for raw results JSON object. Resembles the JSON output of the
 	// wpt report tool.
 	RawResultsURL string `json:"raw_results_url"`
+
+	// Labels for the test run.
+	Labels []string `json:"labels"`
 }
 
 // TestRuns is a helper type for an array of TestRun entities.

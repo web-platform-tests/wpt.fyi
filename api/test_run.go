@@ -56,7 +56,6 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid query params", http.StatusBadRequest)
 			return
 		}
-
 		var browser, product *shared.Product
 		product, err = shared.ParseProductParam(r)
 		if err != nil {
@@ -75,7 +74,8 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Missing required 'product' param", http.StatusBadRequest)
 			return
 		}
-		testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, runSHA, nil, 1)
+		labels := shared.ParseLabelsParam(r)
+		testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, labels, runSHA, nil, 1)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
