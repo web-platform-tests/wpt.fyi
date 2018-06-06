@@ -113,7 +113,7 @@ def task_handler():
 
     params = flask.request.form
     # Mandatory fields:
-    # uploader = params['uploader']
+    uploader = params['uploader']
     gcs_path = params['gcs']
     result_type = params['type']
     # TODO(Hexcles): Support multiple results.
@@ -161,7 +161,7 @@ def task_handler():
 
     ds = datastore.Client()
     upload_token = ds.get(ds.key('Token', 'upload-token'))['Secret']
-    wptreport.create_test_run(report, upload_token,
+    wptreport.create_test_run(report, uploader, upload_token,
                               results_gcs_path, raw_results_gcs_path)
 
     return resp

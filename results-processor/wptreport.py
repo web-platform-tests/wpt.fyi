@@ -303,13 +303,15 @@ class WPTReport(object):
         return payload
 
 
-def create_test_run(report, secret, results_gcs_path, raw_results_gcs_path):
+def create_test_run(report, uploader, secret,
+                    results_gcs_path, raw_results_gcs_path):
     """Creates a TestRun on the dashboard.
 
     By posting to the /api/run endpoint.
 
     Args:
         report: A WPTReport.
+        uploader: The name of the uploader.
         secret: An upload token.
         results_gcs_path: The GCS path to the gzipped summary file.
             (e.g. '/wptd/0123456789/chrome-62.0-linux-summary.json.gz')
@@ -322,6 +324,7 @@ def create_test_run(report, secret, results_gcs_path, raw_results_gcs_path):
     payload = report.test_run_metadata
     payload['results_url'] = GCS_PUBLIC_DOMAIN + results_gcs_path
     payload['raw_results_url'] = GCS_PUBLIC_DOMAIN + raw_results_gcs_path
+    payload['labels'] = [uploader]
 
     response = requests.post(
         config.project_baseurl() + '/api/run',
