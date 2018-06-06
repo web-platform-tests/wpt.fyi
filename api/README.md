@@ -13,6 +13,10 @@ An exhaustive list of the endpoints can be found in `routes.go`.
  - [/api/diff](#apidiff)
  - [/results](#results)
 
+## TestRun entities
+
+`TestRun` entities represent metadata about an execution of the [wpt](https://github.com/web-platform-tests/wpt) test suite, on a particular product. Tests are run on a regular basis, and each entry in `/api/runs` annotates when the tests were executed, which product they were executed on, and the where the results are stored.
+
 ### /api/runs
 
 Gets the TestRun metadata for all runs for a given SHA[0:10].
@@ -21,23 +25,84 @@ __Parameters__
 
 __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
 
+__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`
+
 __`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
 
-__`max-count`__ : Maximum number of runs to get (for each browser). Only relevant when `sha` is `latest`. Maximum of 500.
+__`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
+
+#### Examples
+
+- https://wpt.fyi/api/runs?product=chrome&product=safari
+- https://wpt.fyi/api/runs?product=chrome&from=2018-01-01T00:00:00Z&max-count=10
+
+__Example JSON__
+
+    [
+      {
+        "browser_name": "chrome",
+        "browser_version": "67.0.3396.62",
+        "os_name": "linux",
+        "os_version": "4.4",
+        "revision": "2bd11b91d4",
+        "full_revision_hash": "2bd11b91d490ddd5237bcb6d8149a7f25faaa101",
+        "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary.json.gz",
+        "created_at": "2018-06-05T08:27:30.627865Z",
+        "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
+      }
+    ]
 
 ### /api/runs/{id}
 
 Gets a specific (single) TestRun metadata by its datastore ID.
 
+#### Example
+
+https://wpt.fyi/api/runs/5164888561287168
+
+__Example JSON__
+
+    {
+      "id": "5164888561287168",
+      "browser_name": "chrome",
+      "browser_version": "67.0.3396.62",
+      "os_name": "linux",
+      "os_version": "4.4",
+      "revision": "2bd11b91d4",
+      "full_revision_hash": "2bd11b91d490ddd5237bcb6d8149a7f25faaa101",
+      "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary.json.gz",
+      "created_at": "2018-06-05T08:27:30.627865Z",
+      "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
+    }
+
 ### /api/run
 
-Gets a specific (single) TestRun metadata by product and revision (SHA[0:10]).
+Gets a specific (single) TestRun metadata by `product` and `sha`.
 
 __Parameters__
 
 __`sha`__ :  SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
 
 __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
+
+#### Example
+
+https://wpt.fyi/api/run?sha=latest&product=chrome
+
+__Example JSON__
+
+    {
+      "id": "5164888561287168",
+      "browser_name": "chrome",
+      "browser_version": "67.0.3396.62",
+      "os_name": "linux",
+      "os_version": "4.4",
+      "revision": "2bd11b91d4",
+      "full_revision_hash": "2bd11b91d490ddd5237bcb6d8149a7f25faaa101",
+      "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary.json.gz",
+      "created_at": "2018-06-05T08:27:30.627865Z",
+      "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
+    }
 
 ### /api/diff
 
@@ -46,9 +111,9 @@ summary blobs.
 
 __Parameters__
 
-__`before`__ : [browser]@[sha] spec for the TestRun to use as the before state.
+__`before`__ : [product]@[sha] spec for the TestRun to use as the before state.
 
-__`after`__ : [browser]@[sha] spec for the TestRun to use as the after state.
+__`after`__ : [product]@[sha] spec for the TestRun to use as the after state.
 
 __`path`__ : Test path to filter by. `path` is a repeatable query parameter.
 
@@ -62,15 +127,37 @@ __`filter`__ : Differences to include in the summary.
 
 Performs an HTTP redirect for the results summary JSON blob of the given TestRun.
 
+__Response format__
+
+The summary JSON is in the format
+
+    {
+      "/path/to/test.html": [1, 1],
+    }
+
+Where the array contains [`number of passes`, `total tests`].
+
 __Parameters__
 
-__`browser`__ : Browser to fetch the results for, e.g. `chrome`
+__`product`__ : Product to fetch the results for, e.g. `chrome-66`
 
 __`sha`__ : SHA[0:10] of the TestRun to fetch, or the keyword `latest`. Defaults to `latest`.
 
+#### Example
+
+https://wpt.fyi/api/results?product=chrome
+
+__Example JSON__ (from the summary.json.gz output):
+
+    {
+      "/css/css-text/i18n/css3-text-line-break-opclns-213.html": [1, 1],
+      "/css/css-writing-modes/table-progression-vrl-001.html": [1, 1],
+      // ...
+    }
+
 ### /api/manifest
 
-Gets the JSON of the WPT manifest GitHub release asset, for a given sha (defaults to latest).
+Gets the JSON of the WPT manifest GitHub release asset, for a given `sha` (defaults to latest).
 
 __Parameters__
 
@@ -80,6 +167,8 @@ __`sha`__ : SHA of the [WPT](https://github.com/web-platform-tests/wpt) repo PR 
 NOTE: The full SHA of the fetched manifest is returned in the HTTP response header `x-wpt-sha`, e.g.
 
     x-wpt-sha: abcdef0123456789abcdef0123456789abcdef01
+
+__Response format__
 
 The high-level structure of the `v4` manifest is as follows:
 
