@@ -82,8 +82,4 @@ set -e
 if [[ -z "${QUIET}" ]]; then info "Executing..."; fi
 ${COMMAND} || fatal "Deploy returned non-zero exit code $?"
 
-# Comment on the PR if running from Travis.
-DEPLOYED_URL=$(gcloud app versions describe ${VERSION} -s default | grep -Po 'versionUrl: \K.*$')
-echo "Deployed to ${DEPLOYED_URL}"
-
 exit 0

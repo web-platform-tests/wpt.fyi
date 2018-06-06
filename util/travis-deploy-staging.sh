@@ -50,7 +50,7 @@ docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
         BRANCH_NAME="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}" 2>&1 \
             | tee ${TEMP_FILE}
 if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
-DEPLOYED_URL="$(grep -Po 'Deployed to \K[^\s]+' ${TEMP_FILE} | tr -d '\n')"
+DEPLOYED_URL="$(grep 'Deployed.*to' ${TEMP_FILE} | sed -e 's/Deployed.*to \[\(.*\)\]/\1/')"
 
 # Add a GitHub comment to the PR (if there is a PR).
 if [[ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]];
