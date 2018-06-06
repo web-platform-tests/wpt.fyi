@@ -36,7 +36,7 @@ fi
 if [ "${FORCE_PUSH}" != "true" ];
 then
   git diff --name-only ${TRAVIS_BRANCH}..HEAD | egrep "${APP_DEPS_REGEX}" || {
-    info "No changes detected under ${APP_PATH}. Skipping deployment."
+    info "No changes detected under ${APP_DEPS}. Skipping deploying ${APP_PATH}."
     exit 0
   }
 fi
