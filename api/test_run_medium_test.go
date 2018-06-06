@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-func TestTestRunHandler(t *testing.T) {
+func TestGetTestRuns(t *testing.T) {
 	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
 	assert.Nil(t, err)
 	defer i.Close()
@@ -108,4 +109,32 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	var result68 shared.TestRun
 	json.Unmarshal(body, &result68)
 	assert.Equal(t, "68.0.3432.3", result68.BrowserVersion)
+}
+
+func TestTestRunPostHandler(t *testing.T) {
+	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	assert.Nil(t, err)
+	defer i.Close()
+	payload := map[string]string{
+		"browser_name":    "firefox",
+		"browser_version": "59.0",
+		"os_name":         "linux",
+		"os_version":      "4.4",
+		"revision":        "0123456789",
+		// Intentionally missing full_revision_hash; no error should be raised.
+		// Unknown parameters should be ignored.
+		"_random_extra_key_": "some_value",
+	}
+	body, err := json.Marshal(payload)
+	assert.Nil(t, err)
+	r, err := i.NewRequest("POST", "/api/runs?secret=secret-token", strings.NewReader(string(body)))
+	assert.Nil(t, err)
+
+	ctx := appengine.NewContext(r)
+	token := &shared.Token{Secret: "secret-token"}
+	datastore.Put(ctx, datastore.NewKey(ctx, "Token", "upload-token", 0, nil), token)
+	resp := httptest.NewRecorder()
+
+	TestRunPostHandler(resp, r)
+	assert.Equal(t, http.StatusOK, resp.Code)
 }
