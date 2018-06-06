@@ -18,7 +18,9 @@ export GOPATH=$(shell go env GOPATH)
 
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-WPTD_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests/wpt.fyi
+WPT_PATH := $(dir $(WPTD_PATH)/../)
+WPT_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests
+WPTD_GO_PATH ?= $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.8.1-server.jar
 GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.0-x64-geckodriver
@@ -184,6 +186,27 @@ bower_components: git node-bower
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
 		sudo apt-get install -qy --no-install-suggests xvfb; \
+	fi
+
+# symlinks the Go folder for the wpt.fyi project to (this) folder.
+wpt_fyi_symlink:
+	@if [[ -L $(WPTD_GO_PATH) && -d $(WPTD_GO_PATH) ]]; \
+	then echo "Already a symlink"; \
+	else \
+		if [ -e $(WPTD_GO_PATH) ]; then rm -r $(WPTD_GO_PATH); fi; \
+		ln -s $(WPTD_PATH) $(WPTD_GO_PATH); \
+	fi
+
+# symlinks the Go folder for the results-analysis project to (this) wpt.fyi folder's
+# sibling results-analysis folder.
+results_analysis_symlink: RESULTS_ANALYSIS_PATH := $(WPT_PATH)/results-analysis
+results_analysis_symlink: RESULTS_ANALYSIS_GO_PATH := $(WPT_GO_PATH)/results-analysis
+results_analysis_symlink:
+	@if [[ -L $(RESULTS_ANALYSIS_GO_PATH) && -d $(RESULTS_ANALYSIS_GO_PATH) ]]; \
+	then echo "Already a symlink"; \
+	else \
+		if [ -e $(RESULTS_ANALYSIS_GO_PATH) ]; then rm -r $(RESULTS_ANALYSIS_GO_PATH); fi; \
+		ln -s $(RESULTS_ANALYSIS_PATH) $(RESULTS_ANALYSIS_GO_PATH); \
 	fi
 
 gcloud-%: gcloud
