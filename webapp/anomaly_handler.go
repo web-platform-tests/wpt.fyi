@@ -33,23 +33,23 @@ func anomalyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := appengine.NewContext(r)
-	query := datastore.
-		NewQuery(metrics.GetDatastoreKindName(
-			metrics.PassRateMetadata{})).
-		Order("-StartTime").Limit(1)
-	var metadataSlice []metrics.PassRateMetadata
+	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
+	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
 
+	var metadataSlice []metrics.PassRateMetadata
 	if _, err := query.GetAll(ctx, &metadataSlice); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if len(metadataSlice) != 1 {
-		http.Error(w, "No metrics runs found",
-			http.StatusInternalServerError)
+		http.Error(w, "No metrics runs found", http.StatusNotFound)
 		return
 	}
 
-	metadataBytes, err := json.Marshal(metadataSlice[0])
+	metadata := &metadataSlice[0]
+	metadata.LoadTestRuns(ctx)
+
+	metadataBytes, err := json.Marshal(*metadata)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -86,7 +86,10 @@ func browserAnomalyHandler(w http.ResponseWriter, r *http.Request, browser strin
 		return
 	}
 
-	metadataBytes, err := json.Marshal(metadataSlice[0])
+	metadata := &metadataSlice[0]
+	metadata.LoadTestRuns(ctx)
+
+	metadataBytes, err := json.Marshal(*metadata)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
