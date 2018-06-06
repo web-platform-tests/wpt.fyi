@@ -13,6 +13,10 @@ An exhaustive list of the endpoints can be found in `routes.go`.
  - [/api/diff](#apidiff)
  - [/results](#results)
 
+## TestRun entities
+
+`TestRun` entities represent metadata about an execution of the [wpt](https://github.com/web-platform-tests/wpt) test suite, on a particular product. Tests are run on a regular basis, and each entry in `/api/runs` annotates when the tests were executed, which product they were executed on, and the where the results are stored.
+
 ### /api/runs
 
 Gets the TestRun metadata for all runs for a given SHA[0:10].
