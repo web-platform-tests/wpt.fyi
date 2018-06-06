@@ -54,7 +54,7 @@ script:
     # Deploy PR to staging environment (only when Travis secrets are available).
     # Note: Done here (in 'script', not 'deploy') because we need deploy to happen before staging webdriver test.
     if [ ${DEPLOY_STAGING} == true ]; then
-      if [ "${TRAVIS_BRANCH}" == "master" ]; then
+      if [ "${TRAVIS_PULL_REQUEST}" == "false" -a "${TRAVIS_BRANCH}" == "master" ]; then
         bash util/travis-deploy-staging.sh -f "webapp results-processor";
       elif [ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]; then
         bash util/travis-deploy-staging.sh webapp;
