@@ -21,11 +21,11 @@ __Parameters__
 
 __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
 
-__`product`__ : Product to include (repeated param), e.g. `chrome` or `firefox-60`
+__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`
 
 __`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
 
-__`max-count`__ : Maximum number of runs to get (for each browser). Only relevant when `sha` is `latest`. Maximum of 500.
+__`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
 
 #### Examples
 
@@ -73,7 +73,7 @@ __Example JSON__
 
 ### /api/run
 
-Gets a specific (single) TestRun metadata by product and revision (SHA[0:10]).
+Gets a specific (single) TestRun metadata by `product` and `sha`.
 
 __Parameters__
 
@@ -107,9 +107,9 @@ summary blobs.
 
 __Parameters__
 
-__`before`__ : [browser]@[sha] spec for the TestRun to use as the before state.
+__`before`__ : [product]@[sha] spec for the TestRun to use as the before state.
 
-__`after`__ : [browser]@[sha] spec for the TestRun to use as the after state.
+__`after`__ : [product]@[sha] spec for the TestRun to use as the after state.
 
 __`path`__ : Test path to filter by. `path` is a repeatable query parameter.
 
@@ -153,7 +153,7 @@ __Example JSON__ (from the summary.json.gz output):
 
 ### /api/manifest
 
-Gets the JSON of the WPT manifest GitHub release asset, for a given sha (defaults to latest).
+Gets the JSON of the WPT manifest GitHub release asset, for a given `sha` (defaults to latest).
 
 __Parameters__
 
