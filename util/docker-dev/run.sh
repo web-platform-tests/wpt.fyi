@@ -117,7 +117,6 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   if [[ "${RESULTS_ANALYSIS}" == "true" ]]
   then
     info "Symlinking results-analysis..."
-    RA_GOPATH="/home/user/go/src/github.com/web-platform-tests/results-analysis"
     wptd_exec make results_analysis_symlink
   fi
 
