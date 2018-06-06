@@ -9,19 +9,21 @@ package receiver
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/appengine/taskqueue"
 )
 
 func TestHandleResultsUpload_not_admin(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	req := httptest.NewRequest("POST", "/api/results/upload", new(strings.Reader))
+	req := httptest.NewRequest("POST", "/api/results/upload", nil)
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().IsAdmin().Return(false)
@@ -35,7 +37,7 @@ func TestHandleResultsUpload_http_basic_auth_invalid(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	req := httptest.NewRequest("POST", "/api/results/upload", new(strings.Reader))
+	req := httptest.NewRequest("POST", "/api/results/upload", nil)
 	req.SetBasicAuth("not_a_user", "123")
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
@@ -47,6 +49,32 @@ func TestHandleResultsUpload_http_basic_auth_invalid(t *testing.T) {
 	HandleResultsUpload(mockAE, resp, req)
 
 	assert.Equal(t, resp.Code, http.StatusUnauthorized)
+}
+
+func TestHandleResultsUpload_success(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	payload := url.Values{
+		"result_url": {"http://wpt.fyi/test.json.gz"},
+	}
+	req := httptest.NewRequest("POST", "/api/results/upload", strings.NewReader(payload.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth("blade-runner", "123")
+	resp := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	f := &os.File{}
+	task := &taskqueue.Task{Name: "task"}
+	gomock.InOrder(
+		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().AuthenticateUploader("blade-runner", "123").Return(true),
+		mockAE.EXPECT().fetchURL("http://wpt.fyi/test.json.gz").Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", gomock.Any()).Return(task, nil),
+	)
+
+	HandleResultsUpload(mockAE, resp, req)
+	assert.Equal(t, resp.Code, http.StatusOK)
 }
 
 func TestHandleFilePayload(t *testing.T) {

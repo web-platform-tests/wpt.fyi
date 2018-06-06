@@ -32,6 +32,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 			http.Error(w, "Authentication error", http.StatusUnauthorized)
 			return
 		}
+		uploader = username
 	}
 
 	// Most form methods (e.g. PostFormValue, FormFile) will call
