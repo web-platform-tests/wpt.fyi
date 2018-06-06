@@ -11,6 +11,8 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
 )
 
 // Product uniquely defines a browser version, running on an OS version.
@@ -89,12 +91,31 @@ type TestRun struct {
 type TestRuns []TestRun
 
 // GetTestRunIDs gets an array of the IDs for the TestRun entities in the array.
-func (runs TestRuns) GetTestRunIDs() []int64 {
+func (runs TestRuns) GetTestRunIDs() TestRunIDs {
 	ids := make([]int64, len(runs))
 	for i, run := range runs {
 		ids[i] = run.ID
 	}
 	return ids
+}
+
+// TestRunIDs is a helper for an array of TestRun IDs.
+type TestRunIDs []int64
+
+// LoadTestRuns is a helper for fetching the TestRuns from the datastore,
+// for the gives TestRunIDs.
+func (ids TestRunIDs) LoadTestRuns(ctx context.Context) (testRuns TestRuns, err error) {
+	if len(ids) > 0 {
+		keys := make([]*datastore.Key, len(ids))
+		for i, id := range ids {
+			keys[i] = datastore.NewKey(ctx, "TestRun", "", id, nil)
+		}
+		testRuns = make(TestRuns, len(keys))
+		if err = datastore.GetMulti(ctx, keys, testRuns); err != nil {
+			return testRuns, err
+		}
+	}
+	return nil, err
 }
 
 // Browser holds objects that appear in browsers.json
