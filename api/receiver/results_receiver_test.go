@@ -7,7 +7,6 @@
 package receiver
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/appengine/taskqueue"
 )
 
 func TestHandleResultsUpload_not_admin(t *testing.T) {
@@ -64,16 +64,16 @@ func TestHandleResultsUpload_success(t *testing.T) {
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	f := &os.File{}
+	task := &taskqueue.Task{Name: "task"}
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
 		mockAE.EXPECT().AuthenticateUploader("blade-runner", "123").Return(true),
 		mockAE.EXPECT().fetchURL("http://wpt.fyi/test.json.gz").Return(f, nil),
 		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", gomock.Any()),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", gomock.Any()).Return(task, nil),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
-	fmt.Print(resp.Body)
 	assert.Equal(t, resp.Code, http.StatusOK)
 }
 
