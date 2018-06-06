@@ -47,7 +47,7 @@ then
     curl -H "Authorization: token ${GITHUB_TOKEN}" \
           -X "POST" \
           -d "${POST_BODY}" \
-          -vv \
+          -s \
           "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments"
 else
     info "Found existing comment mentioning link:\n${STAGING_URL}"

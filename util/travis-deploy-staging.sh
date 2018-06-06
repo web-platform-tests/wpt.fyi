@@ -27,7 +27,7 @@ APP_DEPS_REGEX="^(${APP_DEPS})/"
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
-if [ "${TRAVIS_SECURE_ENV_VARS}" == "false" ]; then
+if [ "${TRAVIS_SECURE_ENV_VARS}" != "true" ]; then
   info "Travis secrets unavaible. Skipping ${APP_PATH} deployment."
   exit 0
 fi
