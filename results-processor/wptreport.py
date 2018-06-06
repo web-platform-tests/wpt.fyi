@@ -324,7 +324,7 @@ def create_test_run(report, uploader, secret,
     payload = report.test_run_metadata
     payload['results_url'] = GCS_PUBLIC_DOMAIN + results_gcs_path
     payload['raw_results_url'] = GCS_PUBLIC_DOMAIN + raw_results_gcs_path
-    payload['labels'] = [uploader]
+    payload['labels'] = [uploader, report.run_info['product']]
 
     response = requests.post(
         config.project_baseurl() + '/api/run',
