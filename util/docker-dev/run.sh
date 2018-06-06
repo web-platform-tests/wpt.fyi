@@ -7,7 +7,8 @@ DOCKER_DIR=$(dirname $0)
 source "${DOCKER_DIR}/../commands.sh"
 source "${DOCKER_DIR}/../logging.sh"
 source "${DOCKER_DIR}/../path.sh"
-WPTD_PATH=${WPTD_PATH:-$(absdir ${DOCKER_DIR}/../..)}
+WPT_PATH=${WPT_PATH:-$(absdir ${DOCKER_DIR}/../../..)}
+WPTD_PATH="${WPT_PATH}/wpt.fyi"
 
 DOCKER_INSTANCE="${DOCKER_INSTANCE:-wptd-dev-instance}"
 
@@ -16,7 +17,8 @@ WPTD_HOST_ADMIN_WEB_PORT=${WPTD_HOST_ADMIN_WEB_PORT:-"8000"}
 WPTD_HOST_API_WEB_PORT=${WPTD_HOST_API_WEB_PORT:-"9999"}
 
 function usage() {
-  USAGE="USAGE: $(basename ${0}) [-q]
+  USAGE="USAGE: $(basename ${0}) [-q] [-a] [-d]
+    -a  all: Also mount + symlink the sibling results-analysis directory
     -d  daemon mode: Run in the background rather than blocking then cleaning up
     -q  quiet mode: Assume default for all prompts"
   >&2 echo "${USAGE}"
@@ -33,12 +35,14 @@ function confirm_preserve_remove() {
 
 DAEMON="false"
 QUIET="false"
-while getopts ':dhq' FLAG; do
+while getopts ':dhaq' FLAG; do
   case "${FLAG}" in
     d)
       DAEMON="true" ;;
     q)
       QUIET="true" ;;
+    a)
+      RESULTS_ANALYSIS="true" ;;
     h|*) usage && exit 0 ;;
   esac
 done
@@ -90,10 +94,15 @@ fi
 
 set -e
 
+VOLUMES="-v ${WPTD_PATH}:/home/user/wpt.fyi"
+if [[ "${RESULTS_ANALYSIS}" == "true" ]]; then
+  VOLUMES="${VOLUMES} -v ${WPT_PATH}/results-analysis:/home/user/web-platform-tests/results-analysis"
+fi
+
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
   docker run -t -d --entrypoint /bin/bash \
-      -v "${WPTD_PATH}:/home/user/wpt.fyi" \
+      ${VOLUMES} \
       -u $(id -u $USER):$(id -g $USER) \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
@@ -104,6 +113,13 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
 
   info "Ensuring the home directory is owned by the user..."
   wptd_chown "/home/user"
+
+  if [[ "${RESULTS_ANALYSIS}" == "true" ]]
+  then
+    info "Symlinking results-analysis..."
+    RA_GOPATH="/home/user/go/src/github.com/web-platform-tests/results-analysis"
+    wptd_exec make results_analysis_symlink
+  fi
 
   info "Instance ${DOCKER_INSTANCE} started."
 elif [[ "${RUNNING_STATUS}" != "0" ]]; then
