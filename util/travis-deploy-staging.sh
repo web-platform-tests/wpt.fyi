@@ -27,7 +27,7 @@ APP_DEPS_REGEX="^(${APP_DEPS})/"
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
-if [ "${TRAVIS_SECURE_ENV_VARS}" == "false" ]; then
+if [ "${TRAVIS_SECURE_ENV_VARS}" != "true" ]; then
   info "Travis secrets unavaible. Skipping ${APP_PATH} deployment."
   exit 0
 fi
@@ -36,7 +36,7 @@ fi
 if [ "${FORCE_PUSH}" != "true" ];
 then
   git diff --name-only ${TRAVIS_BRANCH}..HEAD | egrep "${APP_DEPS_REGEX}" || {
-    info "No changes detected under ${APP_PATH}. Skipping deployment."
+    info "No changes detected under ${APP_DEPS}. Skipping deploying ${APP_PATH}."
     exit 0
   }
 fi
@@ -46,8 +46,8 @@ debug "Copying output to ${TEMP_FILE:=$(mktemp)}"
 docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
     make deploy_staging \
         PROJECT=wptdashboard-staging \
-        APP_PATH=${APP_PATH} \
-        BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} 2>&1 \
+        APP_PATH="${APP_PATH}" \
+        BRANCH_NAME="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}" 2>&1 \
             | tee ${TEMP_FILE}
 if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
 DEPLOYED_URL="$(grep -Po 'Deployed to \K[^\s]+' ${TEMP_FILE} | tr -d '\n')"

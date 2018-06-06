@@ -89,7 +89,7 @@ web_components_test: xvfb firefox chrome node-web-component-tester webserver_dep
 	$(STOP_XVFB)
 
 sys_update: sys_deps
-	sudo apt-get update
+	sudo apt-get --quiet update
 	gcloud components update
 	npm install -g npm
 
@@ -115,7 +115,7 @@ firefox: browser_deps
 	fi
 
 browser_deps: wget java
-	sudo apt-get install --assume-yes --no-install-suggests $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+	sudo apt-get install -qy --no-install-suggests $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 go_deps: gcloud go_packages $(GO_FILES)
 
@@ -142,19 +142,19 @@ wget: apt-get-wget
 java:
 	@ # java has a different apt-get package name.
 	if [[ "$$(which java)" == "" ]]; then \
-		sudo apt-get install --assume-yes --no-install-suggests openjdk-8-jdk; \
+		sudo apt-get install -qy --no-install-suggests openjdk-8-jdk; \
 	fi
 
 gpg:
 	@ # gpg has a different apt-get package name.
 	if [[ "$$(which gpg)" == "" ]]; then \
-		sudo apt-get install --assume-yes --no-install-suggests gnupg; \
+		sudo apt-get install -qy --no-install-suggests gnupg; \
 	fi
 
 node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
 		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
-		sudo apt-get install -y nodejs; \
+		sudo apt-get install -qy nodejs; \
 	fi
 
 gcloud: python curl gpg
@@ -183,7 +183,7 @@ bower_components: git node-bower
 
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
-		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
+		sudo apt-get install -qy --no-install-suggests xvfb; \
 	fi
 
 gcloud-%: gcloud
