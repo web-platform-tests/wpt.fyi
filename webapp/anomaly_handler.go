@@ -42,7 +42,7 @@ func anomalyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(metadataSlice) != 1 {
-		http.Error(w, "No metrics runs found", http.StatusInternalServerError)
+		http.Error(w, "No metrics runs found", http.StatusNotFound)
 		return
 	}
 
