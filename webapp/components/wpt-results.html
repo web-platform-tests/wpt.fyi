@@ -14,6 +14,7 @@ found in the LICENSE file.
 <link rel="import" href="runs.html">
 <link rel="import" href="test-file-results.html">
 <link rel="import" href="test-run.html">
+<link rel="import" href="self-navigator.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -184,7 +185,7 @@ found in the LICENSE file.
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'wdspec'];
 
     /* global TestRunsBase */
-    class WPTResults extends TestRunsBase {
+    class WPTResults extends SelfNavigation(TestRunsBase) {
       static get is() {
         return 'wpt-results';
       }
@@ -204,11 +205,6 @@ found in the LICENSE file.
           scheme: {
             type: String,
             computed: 'computeTestScheme(path)'
-          },
-          path: {
-            type: String,
-            value: '/',
-            observer: 'fetchManifest',
           },
           pathIsATestFile: {
             type: Boolean,
@@ -301,7 +297,7 @@ found in the LICENSE file.
         return true;
       }
 
-      urlToResultsPath(location) {
+      urlToPath(location) {
         return location.pathname
           .replace(/^\/results\/(.+)?$/, '/$1') // Strip '/results' prefix
           .replace(/.+\/$/, ''); // Strip trailing slash
@@ -367,6 +363,11 @@ found in the LICENSE file.
         await this.fetchResults([diffRun]);
         this.push('testRuns', diffRun);
         this.refreshDisplayedNodes();
+      }
+
+      pathUpdated(path) {
+        this.refreshDisplayedNodes();
+        this.fetchManifest(path);
       }
 
       async fetchManifest(path) {
@@ -449,37 +450,23 @@ found in the LICENSE file.
         return this.navigate.bind(this);
       }
 
-      navigate(event) {
-        event.preventDefault();
-        let path = this.urlToResultsPath(event.target);
-        if (path === this.path) {
-          return;
-        }
-        this.path = path;
-        this.refreshDisplayedNodes();
-        let sep = !path.startsWith('?') ? '?' : '&';
+      navigationQueryParams() {
+        let params = {};
         if (this.sha && this.sha !== '' && this.sha !== 'latest') {
-          path += `${sep}sha=${this.sha}`;
-          sep = '&';
+          params['sha'] = this.sha;
         }
-        this.labels && this.labels.forEach(label => {
-          path += `${sep}label=${label}`;
-          sep = '&';
-        });
+        if (this.labels && this.labels.length) {
+          params['labels'] = this.labels;
+        }
         let diffRuns = this.testRuns.filter(r => r.revision === 'diff');
         if (diffRuns.length > 0) {
           let [before, after] = this.testRuns.slice(0, 2)
             .map(JSON.stringify)
             .map(btoa);
-          path += `${sep}before=${before}&after=${after}`;
-          sep = '&';
+          params['before'] = before;
+          params['after'] = after;
         }
-        window.history.pushState({}, '', `/results${path}`);
-
-        // Send Google Analytics pageview event
-        if ('ga' in window) {
-          window.ga('send', 'pageview', path);
-        }
+        return params;
       }
 
       splitPathIntoLinkedParts(input) {
