@@ -235,11 +235,6 @@ found in the LICENSE file.
         };
       }
 
-      ready() {
-        super.ready();
-        this.path = this.urlToResultsPath(window.location);
-      }
-
       isInvalidDiffUse(diff, testRuns) {
         return diff
             && testRuns
@@ -305,12 +300,6 @@ found in the LICENSE file.
 
       async connectedCallback() {
         await super.connectedCallback();
-
-        const that = this;
-        window.onpopstate = () => {
-          this.path = that.urlToResultsPath(window.location);
-          this.refreshDisplayedNodes();
-        };
 
         // Add a diff testRun spoof, if needed.
         if (this.diff && this.testRuns && this.testRuns.length === 2) {
@@ -448,6 +437,10 @@ found in the LICENSE file.
 
       bindNavigate() {
         return this.navigate.bind(this);
+      }
+
+      navigationPathPrefix() {
+        return '/results';
       }
 
       navigationQueryParams() {
