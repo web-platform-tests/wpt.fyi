@@ -2,6 +2,7 @@
 
 <dom-module id='self-navigator'>
   <script>
+    // eslint-disable-next-line no-unused-vars
     const SelfNavigation = (superClass) => class extends superClass {
       static get properties() {
         return {
@@ -10,7 +11,7 @@
             value: '/',
             observer: 'pathUpdated',
           }
-        }
+        };
       }
 
       ready() {
@@ -22,7 +23,7 @@
         await super.connectedCallback();
         window.onpopstate = () => {
           this.path = this.urlToPath(window.location);
-        }
+        };
       }
 
       urlToPath(location) {
@@ -62,20 +63,20 @@
         let sep = path.indexOf('?') < 0 ? '?' : '&';
         let params = '';
         Object.entries(this.navigationQueryParams()).forEach((k, v) => {
-          const list = (value instanceof Array) ? value : [value];
+          const list = (v instanceof Array) ? v : [v];
           list.forEach(item => {
             params += `${sep}${k}=${item}`;
             sep = '&';
           });
         });
         window.history.pushState(
-            {}, '', `${this.navigationPathPrefix()}${path}${params}`);
+          {}, '', `${this.navigationPathPrefix()}${path}${params}`);
 
         // Send Google Analytics pageview event
         if ('ga' in window) {
           window.ga('send', 'pageview', path);
         }
       }
-    }
+    };
   </script>
 </dom-module>
