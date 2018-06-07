@@ -231,7 +231,6 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 
 	labels := ParseLabelsParam(r)
 	if labels != nil {
-		experimental := labels.Contains(ExperimentalLabel)
 		if err != nil {
 			return nil, err
 		}
@@ -252,19 +251,13 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 					BrowserName: name,
 				},
 			}
-			// For a browser label (e.g. "chrome"), we also include experimental, unless we explicitly only
-			// want experimental, which is handled below.
-			if !experimental {
-				products = append(products, Product{
-					BrowserName: name + "-" + ExperimentalLabel,
-				})
-			}
-		}
-
-		if experimental {
-			for i := range products {
-				products[i].BrowserName = products[i].BrowserName + "-" + ExperimentalLabel
-			}
+			// For a browser label (e.g. "chrome"), we also include its -experimental variant because
+			// we used to spoof the experimental label by adding it as a suffix to browser names.
+			// The experimental label filtering will happen later in datastore.go.
+			// TODO(Hexcles): remove this once we convert all history -experimental runs.
+			products = append(products, Product{
+				BrowserName: name + "-" + ExperimentalLabel,
+			})
 		}
 	}
 
