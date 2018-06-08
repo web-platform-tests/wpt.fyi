@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 )
 
 // MaxCountDefaultValue is the default value returned by ParseMaxCountParam for the max-count param.
@@ -137,19 +137,6 @@ func ParseVersion(version string) (result *Version, err error) {
 	return result, nil
 }
 
-// ParseProductParam parses and validates the 'product' param for the request.
-func ParseProductParam(r *http.Request) (product *Product, err error) {
-	productParam := r.URL.Query().Get("product")
-	if "" == productParam {
-		return nil, nil
-	}
-	parsed, err := ParseProduct(productParam)
-	if err != nil {
-		return nil, err
-	}
-	return &parsed, nil
-}
-
 // ParseBrowserParam parses and validates the 'browser' param for the request.
 // It returns "" by default (and in error cases).
 func ParseBrowserParam(r *http.Request) (product *Product, err error) {
@@ -169,26 +156,31 @@ func ParseBrowserParam(r *http.Request) (product *Product, err error) {
 // It parses the 'browsers' parameter, split on commas, and also checks for the (repeatable)
 // 'browser' params.
 func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
-	browsers = r.URL.Query()["browser"]
-	if browsersParam := r.URL.Query().Get("browsers"); browsersParam != "" {
-		browsers = append(browsers, strings.Split(browsersParam, ",")...)
+	browserParams := ParseRepeatedParam(r, "browser", "browsers")
+	if browserParams == nil {
+		return nil, nil
 	}
-	// Validate browser names.
-	for i := 0; i < len(browsers); {
-		if !IsBrowserName(browsers[i]) {
-			if browsers[i] == "" {
-				// 'Remove' empty browser by switching to end and cropping.
-				browsers[len(browsers)-1], browsers[i] = browsers[i], browsers[len(browsers)-1]
-				browsers = browsers[:len(browsers)-1]
-				continue
-			} else {
-				return nil, fmt.Errorf("Invalid browser param value %s", browsers[i])
-			}
+	for b := range browserParams.Iter() {
+		if !IsBrowserName(b.(string)) {
+			return nil, fmt.Errorf("Invalid browser param value %s", b.(string))
 		}
-		i++
+		browsers = append(browsers, b.(string))
 	}
 	sort.Strings(browsers)
 	return browsers, nil
+}
+
+// ParseProductParam parses and validates the 'product' param for the request.
+func ParseProductParam(r *http.Request) (product *Product, err error) {
+	productParam := r.URL.Query().Get("product")
+	if "" == productParam {
+		return nil, nil
+	}
+	parsed, err := ParseProduct(productParam)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
 }
 
 // ParseProductsParam returns a list of product params for the request.
@@ -206,6 +198,7 @@ func ParseProductsParam(r *http.Request) (products []Product, err error) {
 		}
 		products = append(products, product)
 	}
+	sort.Sort(ByBrowserName(products))
 	return products, nil
 }
 
@@ -238,7 +231,6 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 
 	labels := ParseLabelsParam(r)
 	if labels != nil {
-		experimental := labels.Contains(ExperimentalLabel)
 		if err != nil {
 			return nil, err
 		}
@@ -259,19 +251,13 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 					BrowserName: name,
 				},
 			}
-			// For a browser label (e.g. "chrome"), we also include experimental, unless we explicitly only
-			// want experimental, which is handled below.
-			if !experimental {
-				products = append(products, Product{
-					BrowserName: name + "-" + ExperimentalLabel,
-				})
-			}
-		}
-
-		if experimental {
-			for i := range products {
-				products[i].BrowserName = products[i].BrowserName + "-" + ExperimentalLabel
-			}
+			// For a browser label (e.g. "chrome"), we also include its -experimental variant because
+			// we used to spoof the experimental label by adding it as a suffix to browser names.
+			// The experimental label filtering will happen later in datastore.go.
+			// TODO(Hexcles): remove this once we convert all history -experimental runs.
+			products = append(products, Product{
+				BrowserName: name + "-" + ExperimentalLabel,
+			})
 		}
 	}
 

@@ -152,23 +152,14 @@ func TestGetProductsForRequest_BrowserParam_ChromeLabel(t *testing.T) {
 	assert.Equal(t, "chrome-experimental", products[1].BrowserName)
 }
 
-func TestGetProductsForRequest_BrowserParam_ExperimentalLabel(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=experimental", nil)
-	products, err := GetProductsForRequest(r)
-	assert.Nil(t, err)
-	names, _ := GetBrowserNames()
-	assert.Equal(t, len(names), len(products))
-	for i := range names {
-		assert.Equal(t, names[i]+"-"+ExperimentalLabel, products[i].BrowserName)
-	}
-}
-
 func TestGetProductsForRequest_BrowserParam_ChromeAndExperimentalLabel(t *testing.T) {
+	// The experimental label is no longer handled in params.go.
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=chrome,experimental", nil)
 	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(products))
-	assert.Equal(t, "chrome-experimental", products[0].BrowserName)
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "chrome", products[0].BrowserName)
+	assert.Equal(t, "chrome-experimental", products[1].BrowserName)
 }
 
 func TestGetProductsForRequest_BrowserAndProductParam(t *testing.T) {
