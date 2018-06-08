@@ -66,7 +66,8 @@
 
         let sep = path.indexOf('?') < 0 ? '?' : '&';
         let params = '';
-        Object.entries(this.navigationQueryParams()).forEach((k, v) => {
+        Object.entries(this.navigationQueryParams()).forEach(e => {
+          const [k, v] = e;
           const list = (v instanceof Array) ? v : [v];
           list.forEach(item => {
             params += `${sep}${k}=${item}`;

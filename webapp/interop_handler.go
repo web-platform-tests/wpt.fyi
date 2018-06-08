@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
@@ -30,6 +31,12 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sha, err := shared.ParseSHAParam(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	metadata := &metadataSlice[0]
 	if err := metadata.LoadTestRuns(ctx); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -43,8 +50,10 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	data := struct {
 		Metadata string
+		SHA      string
 	}{
 		string(metadataBytes),
+		sha,
 	}
 
 	if err := templates.ExecuteTemplate(w, "interoperability.html", data); err != nil {
