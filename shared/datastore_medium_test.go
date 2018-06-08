@@ -31,7 +31,8 @@ func TestLoadTestRuns(t *testing.T) {
 	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
 	assert.Nil(t, err)
 	defer i.Close()
-	r, err := i.NewRequest("GET", "/api/run?product=chrome", nil)
+	// URL is a placeholder and is not used in this test.
+	r, err := i.NewRequest("GET", "/api/run", nil)
 	assert.Nil(t, err)
 
 	ctx := appengine.NewContext(r)
@@ -89,7 +90,8 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
 	assert.Nil(t, err)
 	defer i.Close()
-	r, err := i.NewRequest("GET", "/api/run?product=chrome-66.0&labels=experimental", nil)
+	// URL is a placeholder and is not used in this test.
+	r, err := i.NewRequest("GET", "/api/run", nil)
 	assert.Nil(t, err)
 
 	ctx := appengine.NewContext(r)
