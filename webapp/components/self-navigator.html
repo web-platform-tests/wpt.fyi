@@ -48,6 +48,10 @@
         return {};
       }
 
+      bindNavigate() {
+        return this.navigate.bind(this);
+      }
+
       navigate(event) {
         event.preventDefault();
         this.navigateToLocation(event.target);

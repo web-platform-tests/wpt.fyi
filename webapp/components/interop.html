@@ -11,6 +11,7 @@ found in the LICENSE file.
 <link rel="import" href="path-part.html">
 <link rel="import" href="runs.html">
 <link rel="import" href="test-run.html">
+<link rel="import" href="self-navigator.html">
 
 <dom-module id="wpt-interop">
 <template>
@@ -189,7 +190,6 @@ found in the LICENSE file.
 
 <script>
 
-  const urlToMetricsPath = location => location.pathname.replace(/\/interop(.+)(\/)?$/, '$1');
   const urlToQuery = location => {
     // Drop initial "?" from url.search.
     const search = location.search;
@@ -212,7 +212,8 @@ found in the LICENSE file.
 
   const queryTimeoutId = Symbol('queryTimeoutId');
 
-  class WPTInterop extends window.Polymer.Element {
+  /* global SelfNavigation */
+  class WPTInterop extends SelfNavigation(window.Polymer.Element) {
     static get is() {
       return 'wpt-interop';
     }
@@ -227,10 +228,6 @@ found in the LICENSE file.
         scheme: {
           type: String,
           computed: 'computeTestScheme(path)'
-        },
-        path: {
-          type: String,
-          value: urlToMetricsPath(window.location)
         },
         currentNode: {
           type: Object,
@@ -262,12 +259,6 @@ found in the LICENSE file.
 
     async connectedCallback() {
       await super.connectedCallback();
-      window.onpopstate = (event) => {
-        const state = event.state;
-        this.path = state.path || '/';
-        this.query = state.query || '';
-      };
-      this.initState({path: this.path, query: this.query});
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
     }
 
@@ -297,43 +288,28 @@ found in the LICENSE file.
       });
     }
 
-    bindNavigate() {
-      return this.navigate.bind(this);
-    }
-
     navigate(event) {
-      event.preventDefault();
-      let path = urlToMetricsPath(event.target);
-      if (this.path === path) {
-        return;
-      }
-      this.path = path;
-      // Clear query when navigating to a new path.
       this.query = '';
-      this.navigateState({path: this.path, query: this.query});
-      // Send Google Analytics pageview event
-      if ('ga' in window) {
-        window.ga('send', 'pageview', path);
+      super.navigate(event);
+    }
+
+    urlToPath(location) {
+      return location.pathname.replace(/\/interop(.+)(\/)?$/, '$1');
+    }
+
+    navigationPathPrefix() {
+      return '/interop';
+    }
+
+    navigationQueryParams() {
+      let params = {};
+      if (this.sha && this.sha !== '' && this.sha !== 'latest') {
+        params['sha'] = this.sha;
       }
-    }
-
-    initState(state) {
-      this.doState(window.history.replaceState.bind(window.history), state);
-    }
-
-    navigateState(state) {
-      this.doState(window.history.pushState.bind(window.history), state);
-    }
-
-    doState(stateFunc, state) {
-      const path = state.path;
-      const query = state.query;
-      if (!query) {
-        stateFunc(state, '', `/interop${path}`);
-        return;
+      if (this.query) {
+        params['q'] = window.encodeURIComponent(this.query);
       }
-      const encodedQuery = window.encodeURIComponent(query);
-      stateFunc(state, '', `/interop${path}?q=${encodedQuery}`);
+      return params;
     }
 
     computeTestScheme(path) {
@@ -409,10 +385,6 @@ found in the LICENSE file.
         window.clearTimeout(this[queryTimeoutId]);
       }
       this[queryTimeoutId] = window.setTimeout(this.updateQueryState.bind(this), 500);
-    }
-
-    updateQueryState() {
-      this.navigateState({path: this.path, query: this.query});
     }
 
     computeQueryPlaceholder() {
