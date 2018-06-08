@@ -96,7 +96,7 @@ set -e
 
 VOLUMES="-v ${WPTD_PATH}:/home/user/wpt.fyi"
 if [[ "${RESULTS_ANALYSIS}" == "true" ]]; then
-  VOLUMES="${VOLUMES} -v ${WPT_PATH}/results-analysis:/home/user/web-platform-tests/results-analysis"
+  VOLUMES="${VOLUMES} -v ${WPT_PATH}/results-analysis:/home/user/results-analysis"
 fi
 
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
