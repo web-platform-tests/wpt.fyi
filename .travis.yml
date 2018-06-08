@@ -28,7 +28,7 @@ matrix:
     - if: type = pull_request
       env:
         - secure: "UuTZnGD+HSB+EYQFg2+lKhDwxlDUtU/uz4XdUG8/8F7Us9G7e7w/DL0jhnzpHjK13ig7Yafj83zZmNszpfaXhNdNp2glhiIeuupODODd24tRA4e9DBIoEToJEyjkXD7RttK4H7SaRp12yVEnE+gnUTiDCOJQHmkDl6DHwwUfeTG3P+dKgHsybdrXcUZG+ff4DPrwq9B6NU7izKC3QqByfcxhfxv+SE9e6vi8LKs6qdRbg4PnPEOc85kiqMmtqNHQ7hph3Np3oEaEeZqMylo2hKh/gXxWgNjH3uFwEtJx7sWYL/c3HpiNRMTPUFVJmGaU/xQqH3gGqEbt0QIjrQVFGJZ0wjJoha1+TigIB9LjJ3eSJCtUwj6naWwi0laOZJyR4L/+XCWpNRH2SjLvakIjims7ZEKbE3rVA/Vr0mY67NLnEm0fh6xglN2Jlm5Mag5hw3bHcOi72sQthjQofEtUE0fElAEGc4wBVCd87LzcLyCvZhg6VeJ/M+kC4uJuiMQJ6qkO92UDaV0bvY9svLlGBuBbd/PH0YPh0kkTUlH5IzJx/wymE2mSwtP8af1n0IBIItVfq6uuzct5IhEZvMoZsDv1pU5pqM/ucRuuvb6rtZedGpGjBZacM1uNa/MbvnF5imAHxfY7783saGaIpdNr6k4cxmHglelxwSR0zqujU2Q="
-        - DEPLOY_STAGING=true
+        - DEPLOY_PR_STAGING=true
     - if: (type = push) AND (branch = master)
       env:
         - secure: "UuTZnGD+HSB+EYQFg2+lKhDwxlDUtU/uz4XdUG8/8F7Us9G7e7w/DL0jhnzpHjK13ig7Yafj83zZmNszpfaXhNdNp2glhiIeuupODODd24tRA4e9DBIoEToJEyjkXD7RttK4H7SaRp12yVEnE+gnUTiDCOJQHmkDl6DHwwUfeTG3P+dKgHsybdrXcUZG+ff4DPrwq9B6NU7izKC3QqByfcxhfxv+SE9e6vi8LKs6qdRbg4PnPEOc85kiqMmtqNHQ7hph3Np3oEaEeZqMylo2hKh/gXxWgNjH3uFwEtJx7sWYL/c3HpiNRMTPUFVJmGaU/xQqH3gGqEbt0QIjrQVFGJZ0wjJoha1+TigIB9LjJ3eSJCtUwj6naWwi0laOZJyR4L/+XCWpNRH2SjLvakIjims7ZEKbE3rVA/Vr0mY67NLnEm0fh6xglN2Jlm5Mag5hw3bHcOi72sQthjQofEtUE0fElAEGc4wBVCd87LzcLyCvZhg6VeJ/M+kC4uJuiMQJ6qkO92UDaV0bvY9svLlGBuBbd/PH0YPh0kkTUlH5IzJx/wymE2mSwtP8af1n0IBIItVfq6uuzct5IhEZvMoZsDv1pU5pqM/ucRuuvb6rtZedGpGjBZacM1uNa/MbvnF5imAHxfY7783saGaIpdNr6k4cxmHglelxwSR0zqujU2Q="
@@ -53,15 +53,14 @@ script:
   - |
     # Deploy PR to staging environment (only when Travis secrets are available).
     # Note: Done here (in 'script', not 'deploy') because we need deploy to happen before staging webdriver test.
-    if [ ${DEPLOY_STAGING} == true ]; then
-      if [ "${TRAVIS_PULL_REQUEST}" == "false" -a "${TRAVIS_BRANCH}" == "master" ]; then
-        bash util/travis-deploy-staging.sh -f "webapp results-processor";
-      elif [ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]; then
-        bash util/travis-deploy-staging.sh webapp;
-        bash util/travis-deploy-staging.sh results-processor;
-      else
-        echo "Not on master or a PR. Skipping deployment.";
-      fi;
+    if [ "${DEPLOY_STAGING}" == "true" ]; then
+      bash util/travis-deploy-staging.sh -f webapp;
+      bash util/travis-deploy-staging.sh -f results-processor;
+    elif [ "${DEPLOY_PR_STAGING}" == "true" ]; then
+      bash util/travis-deploy-staging.sh webapp;
+      bash util/travis-deploy-staging.sh results-processor;
+    else
+      echo "Not on master or a PR. Skipping deployment.";
     fi
   - | # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
