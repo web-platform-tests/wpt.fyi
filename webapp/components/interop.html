@@ -143,7 +143,7 @@ found in the LICENSE file.
     <div class="links">
       <ul>
         <li>
-          <a href$="https://github.com/w3c/web-platform-tests/blob/master[[path]]"
+          <a href$="https://github.com/web-platform-tests/wpt/blob/master[[path]]"
              target="_blank">View source on GitHub</a></li>
         <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
           browser on w3c-test.org</a></li>
@@ -156,7 +156,7 @@ found in the LICENSE file.
       <tr>
         <th>Path</th>
         <template is="dom-if" if="{{ thLabels.length }}">
-          <th colspan="100">Browsers Passing</th>
+          <th colspan="100">Tests Passing in <var>X</var> / 4 Browsers</th>
           <!--
           <th colspan="100">Browsers Passing, out of {{ allMetrics.metadata.test_runs.length }}</th>
           -->
@@ -338,8 +338,8 @@ found in the LICENSE file.
 
     computeTestScheme(path) {
       // This should (close enough) match up with the logic in:
-      // https://github.com/w3c/web-platform-tests/blob/master/tools/manifest/item.py
-      // https://github.com/w3c/web-platform-tests/blob/master/tools/wptrunner/wptrunner/wpttest.py
+      // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
+      // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
       return path.indexOf('.https.') !== -1 ? 'https' : 'http';
     }
 

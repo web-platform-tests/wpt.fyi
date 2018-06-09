@@ -11,6 +11,8 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
 )
 
 // Product uniquely defines a browser version, running on an OS version.
@@ -42,11 +44,12 @@ func (e ByBrowserName) Len() int           { return len(e) }
 func (e ByBrowserName) Swap(i, j int)      { e[i], e[j] = e[j], e[i] }
 func (e ByBrowserName) Less(i, j int) bool { return e[i].BrowserName < e[j].BrowserName }
 
-// Version is a struct for a parsed semantic version string.
+// Version is a struct for a parsed version string.
 type Version struct {
-	Major    string
-	Minor    string
-	Revision string
+	Major    int
+	Minor    int
+	Build    int
+	Revision int
 }
 
 // ProductAtRevision defines a WPT run for a specific product, at a
@@ -69,6 +72,8 @@ func (p ProductAtRevision) String() string {
 
 // TestRun stores metadata for a test run (produced by run/run.py)
 type TestRun struct {
+	ID int64 `json:"id" datastore:"-"`
+
 	ProductAtRevision
 
 	// URL for summary of results, which is derived from raw results.
@@ -80,6 +85,40 @@ type TestRun struct {
 	// URL for raw results JSON object. Resembles the JSON output of the
 	// wpt report tool.
 	RawResultsURL string `json:"raw_results_url"`
+
+	// Labels for the test run.
+	Labels []string `json:"labels"`
+}
+
+// TestRuns is a helper type for an array of TestRun entities.
+type TestRuns []TestRun
+
+// GetTestRunIDs gets an array of the IDs for the TestRun entities in the array.
+func (runs TestRuns) GetTestRunIDs() TestRunIDs {
+	ids := make([]int64, len(runs))
+	for i, run := range runs {
+		ids[i] = run.ID
+	}
+	return ids
+}
+
+// TestRunIDs is a helper for an array of TestRun IDs.
+type TestRunIDs []int64
+
+// LoadTestRuns is a helper for fetching the TestRuns from the datastore,
+// for the gives TestRunIDs.
+func (ids TestRunIDs) LoadTestRuns(ctx context.Context) (testRuns TestRuns, err error) {
+	if len(ids) > 0 {
+		keys := make([]*datastore.Key, len(ids))
+		for i, id := range ids {
+			keys[i] = datastore.NewKey(ctx, "TestRun", "", id, nil)
+		}
+		testRuns = make(TestRuns, len(keys))
+		if err = datastore.GetMulti(ctx, keys, testRuns); err != nil {
+			return testRuns, err
+		}
+	}
+	return nil, err
 }
 
 // Browser holds objects that appear in browsers.json

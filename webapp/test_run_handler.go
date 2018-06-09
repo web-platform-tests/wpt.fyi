@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -27,12 +28,17 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTestRunGet(w http.ResponseWriter, r *http.Request) {
-	maxCount, err := shared.ParseMaxCountParamWithDefault(r, 100)
+	from, err := shared.ParseFromParam(r)
 	if err != nil {
 		http.Error(w, "Invalid max-count param: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	sourceURL := fmt.Sprintf(`/api/runs?max-count=%d`, maxCount)
+	// Get runs from 3 months ago onward.
+	if from == nil {
+		threeMonthsAgo := time.Now().Truncate(time.Hour*24).AddDate(0, -3, 0)
+		from = &threeMonthsAgo
+	}
+	sourceURL := fmt.Sprintf(`/api/runs?from=%s`, from.Format(time.RFC3339))
 
 	labels := shared.ParseLabelsParam(r)
 	if labels != nil {

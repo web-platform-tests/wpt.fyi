@@ -18,7 +18,9 @@ export GOPATH=$(shell go env GOPATH)
 
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-WPTD_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests/wpt.fyi
+WPT_PATH := $(dir $(WPTD_PATH)/../)
+WPT_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests
+WPTD_GO_PATH ?= $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.8.1-server.jar
 GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.0-x64-geckodriver
@@ -64,20 +66,24 @@ go_small_test: go_deps
 	cd $(WPTD_GO_PATH); go test -tags=small -v ./...
 
 go_medium_test: go_deps dev_appserver_deps
-	cd $(WPTD_GO_PATH); go test -tags=medium -v ./...
+	# Hack to work around https://github.com/golang/appengine/issues/136
+	cd $(GOPATH)/src/github.com/golang/protobuf; git checkout ac606b1
+	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
 
 go_large_test: go_webdriver_test
 
 integration_test: go_webdriver_test web_components_test
 
+go_webdriver_test: STAGING := false
 go_webdriver_test: go_deps xvfb firefox node-web-component-tester webserver_deps
-	$(START_XVFB)
+	if [ "$(USE_FRAME_BUFFER)" == "true" ]; then ($(START_XVFB)); fi
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
 			--firefox_path=$(FIREFOX_PATH) \
 			--geckodriver_path=$(GECKODRIVER_PATH) \
-			--frame_buffer=$(USE_FRAME_BUFFER)
-	$(STOP_XVFB)
+			--frame_buffer=$(USE_FRAME_BUFFER) \
+			--staging=$(STAGING)
+	if [[ "$(USE_FRAME_BUFFER)" == "true" ]]; then $(STOP_XVFB); fi
 
 web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
 	$(START_XVFB)
@@ -85,7 +91,7 @@ web_components_test: xvfb firefox chrome node-web-component-tester webserver_dep
 	$(STOP_XVFB)
 
 sys_update: sys_deps
-	sudo apt-get update
+	sudo apt-get --quiet update
 	gcloud components update
 	npm install -g npm
 
@@ -111,9 +117,11 @@ firefox: browser_deps
 	fi
 
 browser_deps: wget java
-	sudo apt-get install --assume-yes --no-install-suggests $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+	sudo apt-get install -qy --no-install-suggests $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
-go_deps: git gcloud $(GO_FILES)
+go_deps: gcloud go_packages $(GO_FILES)
+
+go_packages: git
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
 golint_deps: git go_deps
@@ -136,31 +144,29 @@ wget: apt-get-wget
 java:
 	@ # java has a different apt-get package name.
 	if [[ "$$(which java)" == "" ]]; then \
-		sudo apt-get install --assume-yes --no-install-suggests openjdk-8-jdk; \
+		sudo apt-get install -qy --no-install-suggests openjdk-8-jdk; \
 	fi
 
 gpg:
 	@ # gpg has a different apt-get package name.
 	if [[ "$$(which gpg)" == "" ]]; then \
-		sudo apt-get install --assume-yes --no-install-suggests gnupg; \
+		sudo apt-get install -qy --no-install-suggests gnupg; \
 	fi
 
 node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
 		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
-		sudo apt-get install -y nodejs; \
+		sudo apt-get install -qy nodejs; \
 	fi
 
 gcloud: python curl gpg
-	@ echo "travis_fold:start:gcloud_install"
 	if [[ "$$(which gcloud)" == "" ]]; then \
 		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh; \
-		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME); \
+		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME) > /dev/null; \
 		rm -f ./install-gcloud.sh; \
 		gcloud components install --quiet core gsutil; \
 		gcloud config set disable_usage_reporting false; \
 	fi
-	@ echo "travis_fold:end:gcloud_install"
 
 eslint: node-babel-eslint node-eslint node-eslint-plugin-html
 	cd $(WPTD_PATH)webapp; npm run lint
@@ -169,8 +175,8 @@ dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run util/populate_dev_data.go $(FLAGS)
 
-deploy_staging: gcloud webapp_deps env-BRANCH_NAME env-APP_PATH $(WPTD_PATH)client-secret.json
-	gcloud config set project wptdashboard
+deploy_staging: gcloud webapp_deps var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
+	gcloud config set project $(PROJECT)
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 
@@ -179,7 +185,28 @@ bower_components: git node-bower
 
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
-		sudo apt-get install --assume-yes --no-install-suggests xvfb; \
+		sudo apt-get install -qy --no-install-suggests xvfb; \
+	fi
+
+# symlinks the Go folder for the wpt.fyi project to (this) folder.
+wpt_fyi_symlink:
+	@if [[ -L $(WPTD_GO_PATH) && -d $(WPTD_GO_PATH) ]]; \
+	then echo "Already a symlink"; \
+	else \
+		if [ -e $(WPTD_GO_PATH) ]; then rm -r $(WPTD_GO_PATH); fi; \
+		ln -s $(WPTD_PATH) $(WPTD_GO_PATH); \
+	fi
+
+# symlinks the Go folder for the results-analysis project to (this) wpt.fyi folder's
+# sibling results-analysis folder.
+results_analysis_symlink: RESULTS_ANALYSIS_PATH := $(WPT_PATH)/results-analysis
+results_analysis_symlink: RESULTS_ANALYSIS_GO_PATH := $(WPT_GO_PATH)/results-analysis
+results_analysis_symlink:
+	@if [[ -L $(RESULTS_ANALYSIS_GO_PATH) && -d $(RESULTS_ANALYSIS_GO_PATH) ]]; \
+	then echo "Already a symlink"; \
+	else \
+		if [ -e $(RESULTS_ANALYSIS_GO_PATH) ]; then rm -r $(RESULTS_ANALYSIS_GO_PATH); fi; \
+		ln -s $(RESULTS_ANALYSIS_PATH) $(RESULTS_ANALYSIS_GO_PATH); \
 	fi
 
 gcloud-%: gcloud
@@ -196,3 +223,6 @@ apt-get-%:
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
+
+var-%:
+	@ if [[ "$($*)" = "" ]]; then echo "Make variable $* not set"; exit 1; fi

@@ -18,13 +18,13 @@ import (
 
 // FetchLatestRuns fetches the TestRun metadata for the latest runs, using the
 // API on the given host.
-func FetchLatestRuns(wptdHost string) []TestRun {
+func FetchLatestRuns(wptdHost string) TestRuns {
 	return FetchRuns(wptdHost, "latest", nil)
 }
 
 // FetchRuns fetches the TestRun metadata for the given sha / labels, using the
 // API on the given host.
-func FetchRuns(wptdHost, sha string, labels mapset.Set) []TestRun {
+func FetchRuns(wptdHost, sha string, labels mapset.Set) TestRuns {
 	url := "https://" + wptdHost + "/api/runs?complete=true"
 	if labels != nil && labels.Cardinality() > 0 {
 		for label := range labels.Iter() {
@@ -46,7 +46,7 @@ func FetchRuns(wptdHost, sha string, labels mapset.Set) []TestRun {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var runs []TestRun
+	var runs TestRuns
 	if err := json.Unmarshal(body, &runs); err != nil {
 		log.Fatal(err)
 	}

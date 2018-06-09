@@ -36,10 +36,10 @@ fi
 # Ensure dependencies are installed.
 if [[ -z "${QUIET}" ]]; then info "Installing dependencies..."; fi
 cd ${WPTD_PATH}
-make webserver_deps || fatal "Error installing deps"
+make webapp_deps || fatal "Error installing deps"
 
 # Create a name for this version
-BRANCH_NAME=${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"}
+BRANCH_NAME=${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD | tr /_ - | cut -c 1-63)"}
 USER="$(git remote -v get-url origin | sed -E 's#(https?:\/\/|git@)github.com(\/|:)##' | sed 's#/.*$##')-"
 if [[ "${USER}" == "web-platform-tests-" ]]; then USER=""; fi
 
@@ -81,9 +81,5 @@ set -e
 
 if [[ -z "${QUIET}" ]]; then info "Executing..."; fi
 ${COMMAND} || fatal "Deploy returned non-zero exit code $?"
-
-# Comment on the PR if running from Travis.
-DEPLOYED_URL=$(gcloud app versions describe ${VERSION} -s default | grep -Po 'versionUrl: \K.*$')
-echo "Deployed to ${DEPLOYED_URL}"
 
 exit 0

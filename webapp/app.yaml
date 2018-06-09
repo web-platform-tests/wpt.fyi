@@ -4,6 +4,7 @@
 
 runtime: go
 api_version: go1
+instance_class: F4_1G
 
 builtins:
 - remote_api: on

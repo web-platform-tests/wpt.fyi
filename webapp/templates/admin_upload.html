@@ -2,104 +2,70 @@
 <meta charset="utf-8">
 <title>Results upload</title>
 
-<link rel="import" href="/bower_components/polymer/lib/elements/custom-style.html">
-<link rel="import" href="/bower_components/iron-form/iron-form.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/paper-styles/color.html">
 
 <style>
   h2 { clear: both; }
+  div.row { display: flex; }
+  div.column { margin-right: 100px; }
+  div.note {
+    background-color: var(--paper-blue-100);
+    padding: 5px;
+  }
+  form {
+    max-width: 100%;
+    width: 480px;
+  }
+  button[type="submit"] {
+    float: right;
+    background: none;
+    border: none;
+  }
+  paper-button.blue {
+    background: var(--paper-blue-500);
+    color: white;
+  }
 </style>
 
-<custom-style>
-  <style>
-    div.note {
-      background-color: var(--paper-blue-100);
-      padding: 5px;
-    }
-    form, iron-form {
-      max-width: 100%;
-      width: 480px;
-    }
-    input {
-      background-color: red;
-      @apply --paper-input-container-shared-input-style;
-    }
-    button[type="submit"] {
-      float: right;
-      background: none;
-      border: none;
-    }
-    paper-button.blue {
-      background: var(--paper-blue-500);
-      color: white;
-    }
-  </style>
-</custom-style>
+<div class="row">
 
-<h2>File payload</h2>
-<!-- iron-form doesn't support multipart/form-data -->
-<form method="POST" action="/api/results/upload" enctype="multipart/form-data">
-  <paper-input-container>
-    <label slot="label">Uploader</label>
-    <iron-input slot="input" class="input-element">
-      <input name="user">
-    </iron-input>
-  </paper-input-container>
-  <paper-input-container>
-    <label slot="label">Results file</label>
-    <iron-input slot="input" class="input-element">
-      <input name="result_file" type="file">
-    </iron-input>
-  </paper-input-container>
-  <div class="note">
-    The following fields override the metadata included in the report. Generally
-    speaking, you should only fill these fields if the report doesn't have them.
-  </div>
-  <paper-input-container>
-    <label slot="label">Revision</label>
-    <iron-input slot="input" class="input-element">
-      <input name="revision">
-    </iron-input>
-  </paper-input-container>
-  <paper-input-container>
-    <label slot="label">Browser name</label>
-    <iron-input slot="input" class="input-element">
-      <input name="browser_name">
-    </iron-input>
-  </paper-input-container>
-  <paper-input-container>
-    <label slot="label">Browser version</label>
-    <iron-input slot="input" class="input-element">
-      <input name="browser_version">
-    </iron-input>
-  </paper-input-container>
-  <paper-input-container>
-    <label slot="label">OS name</label>
-    <iron-input slot="input" class="input-element">
-      <input name="os_name">
-    </iron-input>
-  </paper-input-container>
-  <paper-input-container>
-    <label slot="label">OS version</label>
-    <iron-input slot="input" class="input-element">
-      <input name="os_version">
-    </iron-input>
-  </paper-input-container>
-
-  <button type="submit">
-    <paper-button class="blue" raised>
-      Submit
-    </paper-button>
-  </button>
-</form>
-
-<h2>URL payload</h2>
-<iron-form id='url-upload'>
-  <form method="POST" action="/api/results/upload">
-    <paper-input label="User" name="user"></paper-input>
-    <paper-input label="Result URL" name="result_url"></paper-input>
+<div class="column">
+  <h2>File payload</h2>
+  <form method="POST" action="/api/results/upload" enctype="multipart/form-data">
+    <paper-input-container>
+      <label slot="label">Uploader</label>
+      <input name="user" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">Results file</label>
+      <input name="result_file" type="file" slot="input">
+    </paper-input-container>
+    <div class="note">
+      The following fields override the metadata included in the report. Generally
+      speaking, you should only fill these fields if the report doesn't have them.
+    </div>
+    <paper-input-container>
+      <label slot="label">Revision</label>
+      <input name="revision" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">Browser name</label>
+      <input name="browser_name" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">Browser version</label>
+      <input name="browser_version" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">OS name</label>
+      <input name="os_name" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">OS version</label>
+      <input name="os_version" slot="input">
+    </paper-input-container>
 
     <button type="submit">
       <paper-button class="blue" raised>
@@ -107,4 +73,48 @@
       </paper-button>
     </button>
   </form>
-</iron-form>
+</div>
+
+<div class="column">
+  <h2>URL payload</h2>
+  <form method="POST" action="/api/results/upload">
+    <paper-input-container>
+      <label slot="label">Uploader</label>
+      <input name="user" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">Results URL</label>
+      <input name="result_url" slot="input">
+    </paper-input-container>
+    <div class="note">
+      The following fields override the metadata included in the report. Generally
+      speaking, you should only fill these fields if the report doesn't have them.
+    </div>
+    <paper-input-container>
+      <label slot="label">Revision</label>
+      <input name="revision" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">Browser name</label>
+      <input name="browser_name" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">Browser version</label>
+      <input name="browser_version" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">OS name</label>
+      <input name="os_name" slot="input">
+    </paper-input-container>
+    <paper-input-container>
+      <label slot="label">OS version</label>
+      <input name="os_version" slot="input">
+    </paper-input-container>
+
+    <button type="submit">
+      <paper-button class="blue" raised>
+        Submit
+      </paper-button>
+    </button>
+  </form>
+</div>

@@ -6,9 +6,10 @@ package shared
 
 import (
 	"encoding/json"
-	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/deckarep/golang-set"
 )
 
 // All errors are considered fatal
@@ -61,16 +62,15 @@ func loadBrowsers() (map[string]bool, []string) {
 	return browserNames, browserNamesAlphabetical
 }
 
-// AddRoute registers a handler for an http path (route).
-// Note that it adds an HSTS header to the response.
-func AddRoute(route string, handler func(http.ResponseWriter, *http.Request)) {
-	http.HandleFunc(route, wrapHSTS(handler))
-}
-
-func wrapHSTS(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		value := "max-age=31536000; preload"
-		w.Header().Add("Strict-Transport-Security", value)
-		h(w, r)
-	})
+// ToStringSlice converts a set to a typed string slice.
+func ToStringSlice(set mapset.Set) []string {
+	if set == nil {
+		return nil
+	}
+	slice := set.ToSlice()
+	result := make([]string, len(slice))
+	for i, item := range slice {
+		result[i] = item.(string)
+	}
+	return result
 }
