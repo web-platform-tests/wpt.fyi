@@ -7,8 +7,10 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
@@ -44,34 +46,28 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var testRuns []shared.TestRun
 	var limit int
-	if limit, err = shared.ParseMaxCountParam(r); err != nil {
+	if parsed, err := shared.ParseMaxCountParam(r); err != nil {
 		http.Error(w, "Invalid 'max-count' param: "+err.Error(), http.StatusBadRequest)
 		return
+	} else if parsed != nil {
+		limit = *parsed
 	}
-	baseQuery := datastore.
-		NewQuery("TestRun").
-		Order("-CreatedAt").
-		Limit(limit)
-
-	for _, product := range products {
-		var testRunResults []shared.TestRun
-		query := baseQuery.Filter("BrowserName =", product.BrowserName)
-		if product.BrowserVersion != "" {
-			query = query.Filter("BrowserVersion =", product.BrowserVersion)
-		}
-		// TODO(lukebjerring): Indexes + filtering for OS + version.
-		if runSHA != "" && runSHA != "latest" {
-			query = query.Filter("Revision =", runSHA)
-		}
-		if _, err := query.GetAll(ctx, &testRunResults); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		testRuns = append(testRuns, testRunResults...)
+	var from *time.Time
+	if from, err = shared.ParseFromParam(r); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid 'from' param: %s", err.Error()), http.StatusBadRequest)
+		return
 	}
-
+	if limit == 0 && from == nil {
+		// Default to a single, latest run when from & max-count both empty.
+		limit = 1
+	}
+	labels := shared.ParseLabelsParam(r)
+	testRuns, err := shared.LoadTestRuns(ctx, products, labels, runSHA, from, limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	testRunsBytes, err := json.Marshal(testRuns)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

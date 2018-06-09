@@ -7,43 +7,37 @@
 package webapp
 
 import (
-	"testing"
-
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 func TestLandingPageBound(t *testing.T) {
 	// Note that init() is always called by the Golang runtime.
-	assertBound(t, "/")
-	assertHandlerMatch(t, "/2dcontext", "/")
-}
-
-func TestLandingPageHSTS(t *testing.T) {
+	assertHandlerIs(t, "/", "results-legacy")
 	assertHSTS(t, "/")
+	assertHandlerIs(t, "/2dcontext", "results-legacy")
+	assertHandlerIs(t, "/BackgroundSync/interfaces.any.html", "results-legacy")
 }
 
 func TestAboutBound(t *testing.T) {
-	assertBound(t, "/about")
-	assertHandlerMatch(t, "/about", "/about")
+	assertHandlerIs(t, "/about", "about")
 }
 
 func TestInteropBound(t *testing.T) {
-	const pattern = "/interop/"
-	assertBound(t, pattern)
-	assertHandlerMatch(t, pattern, pattern)
-	assertHandlerMatch(t, "/interop/2dcontext", pattern)
-	// NOTE(lukebjerring): Trailing slash makes it a path.
-	assertHandlerMatch(t, "/interop/anomalies/", pattern)
-	assertHandlerMatch(t, "/interop/anomalies/2dcontext", pattern)
+	assertHandlerIs(t, "/interop", "interop")
+	assertHandlerIs(t, "/interop/", "interop")
+	assertHandlerIs(t, "/interop/2dcontext", "interop")
+	assertHandlerIs(t, "/interop/BackgroundSync/interfaces.any.html", "interop")
 }
 
 func TestInteropAnomaliesBound(t *testing.T) {
-	const pattern = "/interop/anomalies"
-	assertBound(t, pattern)
-	assertHandlerMatch(t, pattern, pattern)
+	assertHandlerIs(t, "/anomalies", "anomaly")
 }
 
 func TestRunsBound(t *testing.T) {
@@ -64,6 +58,7 @@ func TestApiRunsBound(t *testing.T) {
 
 func TestApiRunBound(t *testing.T) {
 	assertBound(t, "/api/run")
+	assertHandlerIs(t, "/api/runs/123", "api-test-run")
 }
 
 func TestApiResultsUploadBound(t *testing.T) {
@@ -72,23 +67,30 @@ func TestApiResultsUploadBound(t *testing.T) {
 
 func TestResultsBound(t *testing.T) {
 	assertBound(t, "/results")
+	assertHandlerIs(t, "/results", "results")
+	assertHandlerIs(t, "/results/", "results")
+	assertHandlerIs(t, "/results/2dcontext", "results")
+	assertHandlerIs(t, "/results/BackgroundSync/interfaces.any.html", "results")
 }
 
 func TestAdminResultsUploadBound(t *testing.T) {
+	assertHandlerIs(t, "/admin/results/upload", "admin-results-upload")
 	assertHSTS(t, "/admin/results/upload")
 }
 
-func assertBound(t *testing.T, path string) {
+func assertBound(t *testing.T, path string) mux.RouteMatch {
 	req := httptest.NewRequest("GET", path, nil)
-	handler, _ := http.DefaultServeMux.Handler(req)
-	assert.NotNil(t, handler)
+	router := shared.Router()
+	match := mux.RouteMatch{}
+	assert.Truef(t, router.Match(req, &match), "%s should match a route", path)
+	return match
 }
 
-func assertHandlerMatch(t *testing.T, path string, pattern string) {
-	req := httptest.NewRequest("GET", path, nil)
-	handler, handlerPattern := http.DefaultServeMux.Handler(req)
-	assert.NotNil(t, handler)
-	assert.Equal(t, pattern, handlerPattern)
+func assertHandlerIs(t *testing.T, path string, name string) {
+	match := assertBound(t, path)
+	if match.Route != nil {
+		assert.Equal(t, name, match.Route.GetName())
+	}
 }
 
 func assertHSTS(t *testing.T, path string) {
@@ -96,6 +98,8 @@ func assertHSTS(t *testing.T, path string) {
 	rr := httptest.NewRecorder()
 	handler, _ := http.DefaultServeMux.Handler(req)
 	handler.ServeHTTP(rr, req)
-	assert.Equal(t, "max-age=31536000; preload",
-		rr.HeaderMap["Strict-Transport-Security"][0])
+	assert.Equal(
+		t,
+		"[max-age=31536000; preload]",
+		fmt.Sprintf("%s", rr.HeaderMap["Strict-Transport-Security"]))
 }

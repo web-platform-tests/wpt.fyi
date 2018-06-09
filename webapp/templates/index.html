@@ -9,7 +9,8 @@
         test-runs="{{ .TestRuns }}"
         test-run-resources="{{ .TestRunSources }}"
         sha="{{ .SHA }}"
-         {{if .Diff}}diff{{end}}></wpt-results>
+        {{- if .Labels}}labels="{{ .Labels }}"{{end}}
+         {{- if .Diff}}diff{{end}}></wpt-results>
   </div>
 </div>
 {{ template "_ga.html" }}

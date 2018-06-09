@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -24,19 +25,19 @@ import (
 // The JSON property "initially_loaded" is what controls this.
 func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect legacy paths.
-	testPath := ""
-	if r.URL.Path == "/" || r.URL.Path == "/results" {
-		testPath = "/"
+	path := mux.Vars(r)["path"]
+	var redir string
+	if path == "results" {
+		redir = "/results/"
 	} else if strings.Index(r.URL.Path, "/results/") != 0 {
-		testPath = r.URL.Path
+		redir = fmt.Sprintf("/results/%s", path)
 	}
-	if testPath != "" {
+	if redir != "" {
 		params := ""
 		if r.URL.RawQuery != "" {
 			params = "?" + r.URL.RawQuery
 		}
-		url := fmt.Sprintf("/results%s%s", testPath, params)
-		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, redir+params, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -60,10 +61,22 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		SHA            string
 		Diff           bool
 		Filter         string
+		Labels         string
 	}{
 		SHA:    runSHA,
 		Filter: r.URL.Query().Get("filter"),
 	}
+
+	labels := shared.ToStringSlice(shared.ParseLabelsParam(r))
+	if labels != nil {
+		var marshaled []byte
+		if marshaled, err = json.Marshal(labels); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		data.Labels = string(marshaled)
+	}
+
 	_, diff := query["diff"]
 	data.Diff = diff || query.Get("before") != "" || query.Get("after") != ""
 

@@ -13,8 +13,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 )
 
 // MaxCountDefaultValue is the default value returned by ParseMaxCountParam for the max-count param.
@@ -110,34 +111,30 @@ func ParseProduct(product string) (result Product, err error) {
 // ParseVersion parses the given version as a semantically versioned string.
 func ParseVersion(version string) (result *Version, err error) {
 	pieces := strings.Split(version, ".")
+	if len(pieces) > 4 {
+		return nil, fmt.Errorf("Invalid version: %s", version)
+	}
+	numbers := make([]int, len(pieces))
 	for i, piece := range pieces {
-		if _, err := strconv.ParseInt(piece, 10, 0); i > 3 || err != nil {
+		n, err := strconv.ParseInt(piece, 10, 0)
+		if err != nil {
 			return nil, fmt.Errorf("Invalid version: %s", version)
 		}
+		numbers[i] = int(n)
 	}
 	result = &Version{
-		Major: pieces[0],
+		Major: numbers[0],
 	}
-	if len(pieces) > 1 {
-		result.Minor = pieces[1]
+	if len(numbers) > 1 {
+		result.Minor = numbers[1]
 	}
-	if len(pieces) > 2 {
-		result.Revision = pieces[2]
+	if len(numbers) > 2 {
+		result.Build = numbers[2]
+	}
+	if len(numbers) > 3 {
+		result.Revision = numbers[3]
 	}
 	return result, nil
-}
-
-// ParseProductParam parses and validates the 'product' param for the request.
-func ParseProductParam(r *http.Request) (product *Product, err error) {
-	productParam := r.URL.Query().Get("product")
-	if "" == productParam {
-		return nil, nil
-	}
-	parsed, err := ParseProduct(productParam)
-	if err != nil {
-		return nil, err
-	}
-	return &parsed, nil
 }
 
 // ParseBrowserParam parses and validates the 'browser' param for the request.
@@ -159,26 +156,31 @@ func ParseBrowserParam(r *http.Request) (product *Product, err error) {
 // It parses the 'browsers' parameter, split on commas, and also checks for the (repeatable)
 // 'browser' params.
 func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
-	browsers = r.URL.Query()["browser"]
-	if browsersParam := r.URL.Query().Get("browsers"); browsersParam != "" {
-		browsers = append(browsers, strings.Split(browsersParam, ",")...)
+	browserParams := ParseRepeatedParam(r, "browser", "browsers")
+	if browserParams == nil {
+		return nil, nil
 	}
-	// Validate browser names.
-	for i := 0; i < len(browsers); {
-		if !IsBrowserName(browsers[i]) {
-			if browsers[i] == "" {
-				// 'Remove' empty browser by switching to end and cropping.
-				browsers[len(browsers)-1], browsers[i] = browsers[i], browsers[len(browsers)-1]
-				browsers = browsers[:len(browsers)-1]
-				continue
-			} else {
-				return nil, fmt.Errorf("Invalid browser param value %s", browsers[i])
-			}
+	for b := range browserParams.Iter() {
+		if !IsBrowserName(b.(string)) {
+			return nil, fmt.Errorf("Invalid browser param value %s", b.(string))
 		}
-		i++
+		browsers = append(browsers, b.(string))
 	}
 	sort.Strings(browsers)
 	return browsers, nil
+}
+
+// ParseProductParam parses and validates the 'product' param for the request.
+func ParseProductParam(r *http.Request) (product *Product, err error) {
+	productParam := r.URL.Query().Get("product")
+	if "" == productParam {
+		return nil, nil
+	}
+	parsed, err := ParseProduct(productParam)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
 }
 
 // ParseProductsParam returns a list of product params for the request.
@@ -196,6 +198,7 @@ func ParseProductsParam(r *http.Request) (products []Product, err error) {
 		}
 		products = append(products, product)
 	}
+	sort.Sort(ByBrowserName(products))
 	return products, nil
 }
 
@@ -228,7 +231,6 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 
 	labels := ParseLabelsParam(r)
 	if labels != nil {
-		experimental := labels.Contains(ExperimentalLabel)
 		if err != nil {
 			return nil, err
 		}
@@ -249,19 +251,13 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 					BrowserName: name,
 				},
 			}
-			// For a browser label (e.g. "chrome"), we also include experimental, unless we explicitly only
-			// want experimental, which is handled below.
-			if !experimental {
-				products = append(products, Product{
-					BrowserName: name + "-" + ExperimentalLabel,
-				})
-			}
-		}
-
-		if experimental {
-			for i := range products {
-				products[i].BrowserName = products[i].BrowserName + "-" + ExperimentalLabel
-			}
+			// For a browser label (e.g. "chrome"), we also include its -experimental variant because
+			// we used to spoof the experimental label by adding it as a suffix to browser names.
+			// The experimental label filtering will happen later in datastore.go.
+			// TODO(Hexcles): remove this once we convert all history -experimental runs.
+			products = append(products, Product{
+				BrowserName: name + "-" + ExperimentalLabel,
+			})
 		}
 	}
 
@@ -269,19 +265,12 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 	return products, nil
 }
 
-// ParseMaxCountParam parses the 'max-count' parameter as an integer, or returns 1 if no param
-// is present, or on error.
-func ParseMaxCountParam(r *http.Request) (count int, err error) {
-	return ParseMaxCountParamWithDefault(r, MaxCountDefaultValue)
-}
-
-// ParseMaxCountParamWithDefault parses the 'max-count' parameter as an integer, or returns the
-// default when no param is present, or on error.
-func ParseMaxCountParamWithDefault(r *http.Request, defaultValue int) (count int, err error) {
-	count = defaultValue
+// ParseMaxCountParam parses the 'max-count' parameter as an integer
+func ParseMaxCountParam(r *http.Request) (*int, error) {
 	if maxCountParam := r.URL.Query().Get("max-count"); maxCountParam != "" {
-		if count, err = strconv.Atoi(maxCountParam); err != nil {
-			return defaultValue, err
+		count, err := strconv.Atoi(maxCountParam)
+		if err != nil {
+			return nil, err
 		}
 		if count < MaxCountMinValue {
 			count = MaxCountMinValue
@@ -289,8 +278,32 @@ func ParseMaxCountParamWithDefault(r *http.Request, defaultValue int) (count int
 		if count > MaxCountMaxValue {
 			count = MaxCountMaxValue
 		}
+		return &count, nil
 	}
-	return count, err
+	return nil, nil
+}
+
+// ParseMaxCountParamWithDefault parses the 'max-count' parameter as an integer, or returns the
+// default when no param is present, or on error.
+func ParseMaxCountParamWithDefault(r *http.Request, defaultValue int) (count int, err error) {
+	if maxCountParam, err := ParseMaxCountParam(r); maxCountParam != nil {
+		return *maxCountParam, err
+	} else if err != nil {
+		return defaultValue, err
+	}
+	return defaultValue, nil
+}
+
+// ParseFromParam parses the "from" param as a timestamp.
+func ParseFromParam(r *http.Request) (*time.Time, error) {
+	if fromParam := r.URL.Query().Get("from"); fromParam != "" {
+		parsed, err := time.Parse(time.RFC3339, fromParam)
+		if err != nil {
+			return nil, err
+		}
+		return &parsed, nil
+	}
+	return nil, nil
 }
 
 // DiffFilterParam represents the types of changed test paths to include.
