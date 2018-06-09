@@ -3,8 +3,6 @@
 # Helper script for posting a GitHub comment pointing to the deployed environment,
 # from Travis CI. Also see deploy.sh
 
-APP_PATH="$@"
-
 usage() {
   USAGE="Usage: travis-staging-deploy.sh [-f] [app path]
     -f : Always deploy (even if no changes detected)
@@ -20,10 +18,16 @@ while getopts ':fhq' flag; do
   esac
 done
 
+if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
+
+APP_DEPS="${APP_PATH}|shared"
+if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api"; fi
+APP_DEPS_REGEX="^(${APP_DEPS})/"
+
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
-if [ "${TRAVIS_SECURE_ENV_VARS}" == "false" ]; then
+if [ "${TRAVIS_SECURE_ENV_VARS}" != "true" ]; then
   info "Travis secrets unavaible. Skipping ${APP_PATH} deployment."
   exit 0
 fi
@@ -31,8 +35,8 @@ fi
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];
 then
-  git diff --name-only ${TRAVIS_BRANCH}..HEAD | grep "^${APP_PATH}/" || {
-    info "No changes detected under ${APP_PATH}. Skipping deployment."
+  git diff --name-only ${TRAVIS_BRANCH}..HEAD | egrep "${APP_DEPS_REGEX}" || {
+    info "No changes detected under ${APP_DEPS}. Skipping deploying ${APP_PATH}."
     exit 0
   }
 fi
@@ -41,11 +45,12 @@ debug "Copying output to ${TEMP_FILE:=$(mktemp)}"
 # NOTE: Most gcloud output is stderr, so need to redirect it to stdout.
 docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
     make deploy_staging \
-        APP_PATH=${APP_PATH} \
-        BRANCH_NAME=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} 2>&1 \
+        PROJECT=wptdashboard-staging \
+        APP_PATH="${APP_PATH}" \
+        BRANCH_NAME="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}" 2>&1 \
             | tee ${TEMP_FILE}
 if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
-DEPLOYED_URL="$(grep -Po 'Deployed to \K[^\s]+' ${TEMP_FILE} | tr -d '\n')"
+DEPLOYED_URL="$(grep 'Deployed.*to' ${TEMP_FILE} | sed -e 's/Deployed.*to \[\(.*\)\]/\1/')"
 
 # Add a GitHub comment to the PR (if there is a PR).
 if [[ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]];

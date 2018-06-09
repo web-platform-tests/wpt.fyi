@@ -81,6 +81,9 @@ func NewAPI(epochs []epoch.Epoch) API {
 	var a api
 	a.announcer = nil
 	a.epochs = epochs
+	a.apiEpochs = make([]Epoch, 0, len(epochs))
+	a.epochsMap = make(map[string]epoch.Epoch)
+	a.latestGetRevisionsInput = make(map[epoch.Epoch]int)
 	for _, e := range a.epochs {
 		apiEpoch := FromEpoch(e)
 		a.apiEpochs = append(a.apiEpochs, apiEpoch)

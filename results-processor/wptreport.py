@@ -6,6 +6,7 @@
 
 import argparse
 import gzip
+import hashlib
 import io
 import json
 import logging
@@ -14,8 +15,12 @@ import tempfile
 
 import requests
 
+import config
 import gsutil
 
+
+DEFAULT_PROJECT = 'wptdashboard'
+GCS_PUBLIC_DOMAIN = 'https://storage.googleapis.com'
 
 _log = logging.getLogger(__name__)
 
@@ -34,28 +39,55 @@ class InsufficientDataError(Exception):
         super(InsufficientDataError, self).__init__("Zero results available")
 
 
+class BufferedHashsum(object):
+    """A simple buffered hash calculator."""
+
+    def __init__(self, hash_ctor=hashlib.sha1, block_size=1024*1024):
+        assert block_size > 0
+        self._hash_ctor = hash_ctor
+        self._block_size = block_size
+
+    def hash_file(self, fileobj):
+        """Hashes a given file.
+
+        Args:
+            fileobj: A file object to hash (must be in binary mode).
+
+        Returns:
+            A string, the hexadecimal digest of the file.
+        """
+        assert not isinstance(fileobj, io.TextIOBase)
+        h = self._hash_ctor()
+        buf = fileobj.read(self._block_size)
+        while len(buf) > 0:
+            h.update(buf)
+            buf = fileobj.read(self._block_size)
+        return h.hexdigest()
+
+
 class WPTReport(object):
     """An abstraction of wptreport.json with some transformation features."""
 
     def __init__(self):
         self._report = dict()
         self._summary = dict()
-        # A relative path: short_sha/browser-summary.json.gz
-        self.sha_summary_path = ''
+        # The hexadecimal sha1sum of the (decompressed) report.
+        self.hashsum = ''
 
     def load_json(self, fileobj):
         """Loads wptreport from a JSON file.
 
         Args:
-            fileobj: A JSON file object.
+            fileobj: A JSON file object (must be in binary mode).
         """
-        if isinstance(fileobj, io.TextIOBase):
-            self._report = json.load(fileobj, strict=False)
-        else:
-            # Wrap the fileobj in case it's in binary mode.
-            # JSON files are always encoded in UTF-8 (RFC 8529).
-            with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:
-                self._report = json.load(text_file, strict=False)
+        assert not isinstance(fileobj, io.TextIOBase)
+
+        self.hashsum = BufferedHashsum().hash_file(fileobj)
+        fileobj.seek(0)
+
+        # JSON files are always encoded in UTF-8 (RFC 8529).
+        with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:
+            self._report = json.load(text_file, strict=False)
         # Raise when 'results' is either not found or empty.
         if not self._report.get('results'):
             raise InsufficientDataError
@@ -193,15 +225,23 @@ class WPTReport(object):
             filepath = directory + test_file
             self.write_gzip_json(filepath, result)
 
-    def product_id(self):
-        """Returns an ID string for the product configuration."""
-        name = '{}-{}-{}'.format(self.run_info['product'],
-                                 self.run_info['browser_version'],
-                                 self.run_info['os'])
+    def product_id(self, separator):
+        """Returns an ID string for the product configuration.
+
+        Args:
+            separator: A character to separate fields in the ID string.
+
+        Returns:
+            A string, the product ID of this run.
+        """
+        name = separator.join([self.run_info['product'],
+                               self.run_info['browser_version'],
+                               self.run_info['os']])
         # os_version isn't required.
         if self.run_info.get('os_version'):
-            name += '-' + self.run_info['os_version']
-        # TODO(Hexcles): Append a short random string at the end.
+            name += separator + self.run_info['os_version']
+        assert len(self.hashsum) > 0, 'Missing hashsum of the report'
+        name += separator + self.hashsum[:10]
         return name
 
     def populate_upload_directory(self, output_dir=None):
@@ -220,23 +260,27 @@ class WPTReport(object):
         Returns:
             The output directory.
         """
-        try:
-            revision = self.run_info['revision']
-            product = self.product_id()
-        except KeyError as e:
-            raise MissingMetadataError(str(e)) from e
-
         if not output_dir:
             output_dir = tempfile.mkdtemp()
 
-        # TODO(Hexcles): Switch to full SHA.
-        short_sha = revision[:10]
-        summary_filename = product + '-summary.json.gz'
-        self.sha_summary_path = os.path.join(short_sha, summary_filename)
         self.write_summary(os.path.join(output_dir, self.sha_summary_path))
         self.write_result_directory(
-            os.path.join(output_dir, short_sha, product))
+            os.path.join(output_dir, self.sha_product_path))
         return output_dir
+
+    @property
+    def sha_product_path(self):
+        """A relative path: sha/product_id"""
+        try:
+            return os.path.join(self.run_info['revision'],
+                                self.product_id('-'))
+        except KeyError as e:
+            raise MissingMetadataError(str(e)) from e
+
+    @property
+    def sha_summary_path(self):
+        """A relative path: sha/product_id-summary.json.gz"""
+        return self.sha_product_path + '-summary.json.gz'
 
     @property
     def test_run_metadata(self):
@@ -247,7 +291,7 @@ class WPTReport(object):
                 'browser_version': self.run_info['browser_version'],
                 'os_name': self.run_info['os'],
                 'revision': self.run_info['revision'][:10],
-                'full_revision': self.run_info['revision'],
+                'full_revision_hash': self.run_info['revision'],
             }
         except KeyError as e:
             raise MissingMetadataError(str(e)) from e
@@ -256,18 +300,34 @@ class WPTReport(object):
         if self.run_info.get('os_version'):
             payload['os_version'] = self.run_info['os_version']
 
+        return payload
 
-def create_test_run(report, secret):
-    if not report.sha_summary_path:
-        raise MissingMetadataError('results_url')
 
-    # TODO(Hexcles): Do not hardcode the URLs.
+def create_test_run(report, uploader, secret,
+                    results_gcs_path, raw_results_gcs_path):
+    """Creates a TestRun on the dashboard.
+
+    By posting to the /api/run endpoint.
+
+    Args:
+        report: A WPTReport.
+        uploader: The name of the uploader.
+        secret: An upload token.
+        results_gcs_path: The GCS path to the gzipped summary file.
+            (e.g. '/wptd/0123456789/chrome-62.0-linux-summary.json.gz')
+        raw_results_gcs_path: The GCS path to the raw full report.
+            (e.g. '/wptd-results/[full SHA]/chrome_62.0_linux/report.json')
+    """
+    assert results_gcs_path.startswith('/')
+    assert raw_results_gcs_path.startswith('/')
+
     payload = report.test_run_metadata
-    payload['results_url'] = "https://storage.googleapis.com/wptd/%s".format(
-        report.sha_summary_path
-    )
+    payload['results_url'] = GCS_PUBLIC_DOMAIN + results_gcs_path
+    payload['raw_results_url'] = GCS_PUBLIC_DOMAIN + raw_results_gcs_path
+    payload['labels'] = [uploader, report.run_info['product']]
+
     response = requests.post(
-        "https://wpt.fyi/api/run",
+        config.project_baseurl() + '/api/run',
         params={'secret': secret},
         data=json.dumps(payload)
     )
@@ -294,11 +354,10 @@ def main():
     args = parser.parse_args()
 
     report = WPTReport()
-    if args.report.endswith('.gz'):
-        with open(args.report, 'rb') as f:
+    with open(args.report, 'rb') as f:
+        if args.report.endswith('.gz'):
             report.load_gzip_json(f)
-    else:
-        with open(args.report, 'rt') as f:
+        else:
             report.load_json(f)
 
     if args.summary:
@@ -309,8 +368,7 @@ def main():
     if args.upload:
         assert args.upload.startswith('gs://')
         gsutil.rsync(upload_dir, args.upload)
-        _log.info('Uploaded to: https://storage.googleapis.com/wptd/%s',
-                  report.sha_summary_path)
+        _log.info('Uploaded to: %s/%s', args.upload, report.sha_summary_path)
 
 
 if __name__ == '__main__':

@@ -57,3 +57,8 @@ indexes:
   - name: BrowserName
   - name: StartTime
     direction: desc
+- kind: TestRun
+  properties:
+  - name: BrowserName
+  - name: BrowserVersion
+    direction: desc

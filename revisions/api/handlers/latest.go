@@ -16,25 +16,25 @@ import (
 func LatestHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	ancr := a.GetAnnouncer()
 	if ancr == nil {
-		w.WriteHeader(503)
+		w.WriteHeader(http.StatusServiceUnavailable)
 		w.Write(a.ErrorJSON("Announcer not yet initialized"))
 		return
 	}
 
 	epochs := a.GetEpochs()
 	if len(epochs) == 0 {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(a.ErrorJSON("No epochs"))
 		return
 	}
 
 	now := time.Now()
 	revs, err := ancr.GetRevisions(a.GetLatestGetRevisionsInput(), announcer.Limits{
-		Now:   now,
+		At:    now,
 		Start: now.Add(-2 * epochs[0].GetData().MaxDuration),
 	})
 	if err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(a.ErrorJSON(err.Error()))
 		return
 	}

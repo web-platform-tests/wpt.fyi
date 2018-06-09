@@ -152,23 +152,14 @@ func TestGetProductsForRequest_BrowserParam_ChromeLabel(t *testing.T) {
 	assert.Equal(t, "chrome-experimental", products[1].BrowserName)
 }
 
-func TestGetProductsForRequest_BrowserParam_ExperimentalLabel(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=experimental", nil)
-	products, err := GetProductsForRequest(r)
-	assert.Nil(t, err)
-	names, _ := GetBrowserNames()
-	assert.Equal(t, len(names), len(products))
-	for i := range names {
-		assert.Equal(t, names[i]+"-"+ExperimentalLabel, products[i].BrowserName)
-	}
-}
-
 func TestGetProductsForRequest_BrowserParam_ChromeAndExperimentalLabel(t *testing.T) {
+	// The experimental label is no longer handled in params.go.
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=chrome,experimental", nil)
 	products, err := GetProductsForRequest(r)
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(products))
-	assert.Equal(t, "chrome-experimental", products[0].BrowserName)
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "chrome", products[0].BrowserName)
+	assert.Equal(t, "chrome-experimental", products[1].BrowserName)
 }
 
 func TestGetProductsForRequest_BrowserAndProductParam(t *testing.T) {
@@ -197,38 +188,42 @@ func TestParseMaxCountParam_Missing(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	count, err := ParseMaxCountParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, MaxCountDefaultValue, count)
+	assert.Nil(t, count)
+
+	d, err := ParseMaxCountParamWithDefault(r, 5)
+	assert.Nil(t, err)
+	assert.Equal(t, 5, d)
 }
 
 func TestParseMaxCountParam_TooSmall(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?max-count=0", nil)
 	count, err := ParseMaxCountParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, MaxCountMinValue, count)
+	assert.Equal(t, MaxCountMinValue, *count)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?max-count=-1", nil)
 	count, err = ParseMaxCountParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, MaxCountMinValue, count)
+	assert.Equal(t, MaxCountMinValue, *count)
 }
 
 func TestParseMaxCountParam_TooLarge(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?max-count=123456789", nil)
 	count, err := ParseMaxCountParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, MaxCountMaxValue, count)
+	assert.Equal(t, MaxCountMaxValue, *count)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?max-count=100000000", nil)
 	count, err = ParseMaxCountParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, MaxCountMaxValue, count)
+	assert.Equal(t, MaxCountMaxValue, *count)
 }
 
 func TestParseMaxCountParam(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?max-count=2", nil)
 	count, err := ParseMaxCountParam(r)
 	assert.Nil(t, err)
-	assert.Equal(t, 2, count)
+	assert.Equal(t, 2, *count)
 }
 
 func TestParsePathsParam_Missing(t *testing.T) {
