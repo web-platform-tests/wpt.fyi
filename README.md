@@ -51,14 +51,12 @@ All test result data is public. There are two types of gzipped JSON data files w
 
 ### Test run summary files
 
-These are of the pattern: `{sha[0:10]}/{platform_id}-summary.json.gz`
+These are of the pattern: `https://wpt.fyi/api/results?sha={sha[0:10]}&product={product}`
 
 - `sha[0:10]`: the first 10 characters of the WPT commit hash that run was tested against
-- `platform_id`: the key of the platform configuration in `webapp/browsers.json`
+- `product`: one of `chrome`, `firefox`, `safari` or `edge`
 
-Example: https://storage.googleapis.com/wptd/791e95323d/firefox-56.0-linux-summary.json.gz
-
-(Note that `wptd` is the bucket name)
+Example: https://wpt.fyi/api/results?sha=2d0250896e&product=chrome
 
 Structure:
 An object where the key is the test file name and the value is a list of the type
