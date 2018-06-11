@@ -20,8 +20,8 @@ type API interface {
 	GetEpochsMap() map[string]epoch.Epoch
 	GetLatestGetRevisionsInput() map[epoch.Epoch]int
 	Marshal(interface{}) ([]byte, error)
-	DefaultErrorJSON() []byte
-	ErrorJSON(string) []byte
+	DefaultErrorJSON() string
+	ErrorJSON(string) string
 }
 
 type api struct {
@@ -60,19 +60,19 @@ func (a *api) Marshal(data interface{}) ([]byte, error) {
 	return json.MarshalIndent(data, "", "\t")
 }
 
-var defaultErrorJSON = []byte("{\n\t\"error\": \"Unknown error\"\n}")
+var defaultErrorJSON = "{\n\t\"error\": \"Unknown error\"\n}"
 
-func (a *api) ErrorJSON(str string) []byte {
+func (a *api) ErrorJSON(str string) string {
 	payload := make(map[string]string)
 	payload["error"] = str
 	bytes, err := a.Marshal(payload)
 	if err != nil {
 		return defaultErrorJSON
 	}
-	return bytes
+	return string(bytes)
 }
 
-func (a *api) DefaultErrorJSON() []byte {
+func (a *api) DefaultErrorJSON() string {
 	return defaultErrorJSON
 }
 

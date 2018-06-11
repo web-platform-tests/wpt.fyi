@@ -39,12 +39,12 @@ func TestNewAPI(t *testing.T) {
 	assert.Equal(t, epochsMap, a.GetEpochsMap())
 	assert.Equal(t, latestGetRevisionsInput, a.GetLatestGetRevisionsInput())
 
-	errJSONBytes := a.ErrorJSON("An error")
+	errJSONBytes := []byte(a.ErrorJSON("An error"))
 	var errJSONData interface{}
 	errJSONUnmarshalErr := json.Unmarshal(errJSONBytes, &errJSONData)
 	assert.Nil(t, errJSONUnmarshalErr)
 
-	defaultErrJSONBytes := a.DefaultErrorJSON()
+	defaultErrJSONBytes := []byte(a.DefaultErrorJSON())
 	var defaultErrJSONData interface{}
 	defaultErrJSONUnmarshalErr := json.Unmarshal(defaultErrJSONBytes, &defaultErrJSONData)
 	assert.Nil(t, defaultErrJSONUnmarshalErr)

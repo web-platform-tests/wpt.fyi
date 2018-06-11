@@ -21,7 +21,7 @@ func TestEpochsHandler_Error(t *testing.T) {
 
 	err := errors.New("Marshal error")
 	a.EXPECT().GetAPIEpochs().Return([]api.Epoch{})
-	a.EXPECT().ErrorJSON(gomock.Any()).Return([]byte("{\"error\": \"Internal server error\"}"))
+	a.EXPECT().ErrorJSON(gomock.Any()).Return("{\"error\": \"Internal server error\"}")
 	a.EXPECT().Marshal(gomock.Any()).Return([]byte{}, err)
 
 	req := httptest.NewRequest("GET", "/api/revisions/epochs", new(strings.Reader))
