@@ -35,9 +35,9 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // DefaultErrorJSON mocks base method
-func (m *MockAPI) DefaultErrorJSON() []byte {
+func (m *MockAPI) DefaultErrorJSON() string {
 	ret := m.ctrl.Call(m, "DefaultErrorJSON")
-	ret0, _ := ret[0].([]byte)
+	ret0, _ := ret[0].(string)
 	return ret0
 }
 
@@ -47,9 +47,9 @@ func (mr *MockAPIMockRecorder) DefaultErrorJSON() *gomock.Call {
 }
 
 // ErrorJSON mocks base method
-func (m *MockAPI) ErrorJSON(arg0 string) []byte {
+func (m *MockAPI) ErrorJSON(arg0 string) string {
 	ret := m.ctrl.Call(m, "ErrorJSON", arg0)
-	ret0, _ := ret[0].([]byte)
+	ret0, _ := ret[0].(string)
 	return ret0
 }
 

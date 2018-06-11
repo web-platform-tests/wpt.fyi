@@ -39,7 +39,7 @@ func TestLatestHandler_NoAnnouncer(t *testing.T) {
 	a := api.NewMockAPI(mockCtrl)
 
 	a.EXPECT().GetAnnouncer().Return(nil)
-	a.EXPECT().ErrorJSON(icMatcher{"announcer"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"announcer"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/latest", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -58,7 +58,7 @@ func TestLatestHandler_NoEpochs(t *testing.T) {
 
 	a.EXPECT().GetAnnouncer().Return(ancr)
 	a.EXPECT().GetEpochs().Return([]epoch.Epoch{})
-	a.EXPECT().ErrorJSON(icMatcher{"epochs"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"epochs"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/latest", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -82,7 +82,7 @@ func TestLatestHandler_FailedGetRevisions(t *testing.T) {
 	a.EXPECT().GetEpochs().Return(epochs)
 	a.EXPECT().GetLatestGetRevisionsInput().Return(latestInput)
 	ancr.EXPECT().GetRevisions(latestInput, gomock.Any()).Return(nil, err)
-	a.EXPECT().ErrorJSON(icMatcher{"getrevisions"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"getrevisions"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/latest", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -115,7 +115,7 @@ func TestLatestHandler_FailedLatestFromEpochs(t *testing.T) {
 	a.EXPECT().GetLatestGetRevisionsInput().Return(latestInput)
 
 	ancr.EXPECT().GetRevisions(latestInput, gomock.Any()).Return(revs, nil)
-	a.EXPECT().ErrorJSON(icMatcher{"missing"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"missing"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/latest", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -150,7 +150,7 @@ func TestLatestHandler_FailedMarshal(t *testing.T) {
 
 	ancr.EXPECT().GetRevisions(latestInput, gomock.Any()).Return(revs, nil)
 	a.EXPECT().Marshal(gomock.Any()).Return(nil, err)
-	a.EXPECT().ErrorJSON(icMatcher{"marshal"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"marshal"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/latest", new(strings.Reader))
 	resp := httptest.NewRecorder()
