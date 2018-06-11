@@ -16,15 +16,13 @@ import (
 func LatestHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	ancr := a.GetAnnouncer()
 	if ancr == nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write(a.ErrorJSON("Announcer not yet initialized"))
+		http.Error(w, a.ErrorJSON("Announcer not yet initialized"), http.StatusServiceUnavailable)
 		return
 	}
 
 	epochs := a.GetEpochs()
 	if len(epochs) == 0 {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(a.ErrorJSON("No epochs"))
+		http.Error(w, a.ErrorJSON("No epochs"), http.StatusInternalServerError)
 		return
 	}
 
@@ -34,22 +32,19 @@ func LatestHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 		Start: now.Add(-2 * epochs[0].GetData().MaxDuration),
 	})
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(a.ErrorJSON(err.Error()))
+		http.Error(w, a.ErrorJSON(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response, err := api.LatestFromEpochs(revs)
 	if err != nil {
-		w.WriteHeader(500)
-		w.Write(a.ErrorJSON(err.Error()))
+		http.Error(w, string(a.ErrorJSON(err.Error())), http.StatusInternalServerError)
 		return
 	}
 
 	bytes, err := a.Marshal(response)
 	if err != nil {
-		w.WriteHeader(500)
-		w.Write(a.ErrorJSON("Failed to marshal latest epochal revisions JSON"))
+		http.Error(w, a.ErrorJSON("Failed to marshal latest epochal revisions JSON"), http.StatusInternalServerError)
 		return
 	}
 

@@ -25,7 +25,7 @@ func TestListHandler_NoAnnouncer(t *testing.T) {
 	a := api.NewMockAPI(mockCtrl)
 
 	a.EXPECT().GetAnnouncer().Return(nil)
-	a.EXPECT().ErrorJSON(icMatcher{"announcer"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"announcer"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -44,7 +44,7 @@ func TestListHandler_NoEpochs(t *testing.T) {
 
 	a.EXPECT().GetAnnouncer().Return(ancr)
 	a.EXPECT().GetEpochs().Return([]epoch.Epoch{})
-	a.EXPECT().ErrorJSON(icMatcher{"epochs"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"epochs"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -65,7 +65,7 @@ func TestListHandler_MultiNumRevision(t *testing.T) {
 	a.EXPECT().GetEpochs().Return([]epoch.Epoch{
 		epoch.Hourly{},
 	})
-	a.EXPECT().ErrorJSON(icMatcher{"num_revisions"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"num_revisions"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list?num_revisions=1&num_revisions=1", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -86,7 +86,7 @@ func TestListHandler_NumRevisionNaN(t *testing.T) {
 	a.EXPECT().GetEpochs().Return([]epoch.Epoch{
 		epoch.Hourly{},
 	})
-	a.EXPECT().ErrorJSON(icMatcher{"num_revisions"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"num_revisions"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list?num_revisions=NaN", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -110,7 +110,7 @@ func TestListHandler_BadEpoch(t *testing.T) {
 	a.EXPECT().GetEpochsMap().Return(map[string]epoch.Epoch{
 		"hourly": epoch.Hourly{},
 	})
-	a.EXPECT().ErrorJSON(icMatcher{"epoch"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"epoch"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list?epochs=annually", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -134,7 +134,7 @@ func TestListHandler_MultiAt(t *testing.T) {
 	a.EXPECT().GetEpochsMap().Return(map[string]epoch.Epoch{
 		"hourly": epoch.Hourly{},
 	})
-	a.EXPECT().ErrorJSON(icMatcher{"at"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"at"}).Return("")
 
 	now := time.Now()
 	yesterday := now.Add(-25 * time.Hour)
@@ -163,7 +163,7 @@ func TestListHandler_BadAt(t *testing.T) {
 	a.EXPECT().GetEpochsMap().Return(map[string]epoch.Epoch{
 		"hourly": epoch.Hourly{},
 	})
-	a.EXPECT().ErrorJSON(icMatcher{"at"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"at"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list?epochs=hourly&at=NotADate", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -187,7 +187,7 @@ func TestListHandler_MultiStart(t *testing.T) {
 	a.EXPECT().GetEpochsMap().Return(map[string]epoch.Epoch{
 		"hourly": epoch.Hourly{},
 	})
-	a.EXPECT().ErrorJSON(icMatcher{"start"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"start"}).Return("")
 
 	now := time.Now()
 	yesterday := now.Add(-25 * time.Hour)
@@ -216,7 +216,7 @@ func TestListHandler_BadStart(t *testing.T) {
 	a.EXPECT().GetEpochsMap().Return(map[string]epoch.Epoch{
 		"hourly": epoch.Hourly{},
 	})
-	a.EXPECT().ErrorJSON(icMatcher{"start"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"start"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list?epochs=hourly&start=NotADate", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -240,7 +240,7 @@ func TestListHandler_AtBeforeStart(t *testing.T) {
 	a.EXPECT().GetEpochsMap().Return(map[string]epoch.Epoch{
 		"hourly": epoch.Hourly{},
 	})
-	a.EXPECT().ErrorJSON(icMatcher{"before"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"before"}).Return("")
 
 	today := time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC)
 	yesterday := time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -269,7 +269,7 @@ func TestListHandler_FailedGetRevisions(t *testing.T) {
 	a.EXPECT().GetEpochs().Return(epochs)
 	a.EXPECT().GetLatestGetRevisionsInput().Return(latestInput)
 	ancr.EXPECT().GetRevisions(latestInput, gomock.Any()).Return(nil, err)
-	a.EXPECT().ErrorJSON(icMatcher{"getrevisions"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"getrevisions"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list", new(strings.Reader))
 	resp := httptest.NewRecorder()
@@ -297,7 +297,7 @@ func TestListHandler_FailedMarshal(t *testing.T) {
 	a.EXPECT().GetLatestGetRevisionsInput().Return(latestInput)
 	ancr.EXPECT().GetRevisions(latestInput, gomock.Any()).Return(revs, err)
 	a.EXPECT().Marshal(gomock.Any()).Return(nil, err)
-	a.EXPECT().ErrorJSON(icMatcher{"marshal"}).Return([]byte{})
+	a.EXPECT().ErrorJSON(icMatcher{"marshal"}).Return("")
 
 	req := httptest.NewRequest("GET", "/api/revisions/list", new(strings.Reader))
 	resp := httptest.NewRecorder()

@@ -20,15 +20,13 @@ import (
 func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	ancr := a.GetAnnouncer()
 	if ancr == nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write(a.ErrorJSON("Announcer not yet initialized"))
+		http.Error(w, a.ErrorJSON("Announcer not yet initialized"), http.StatusServiceUnavailable)
 		return
 	}
 
 	epochs := a.GetEpochs()
 	if len(epochs) == 0 {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(a.ErrorJSON("No epochs"))
+		http.Error(w, a.ErrorJSON("No epochs"), http.StatusInternalServerError)
 		return
 	}
 
@@ -37,20 +35,17 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	numRevisions := 1
 	if nr, ok := q["num_revisions"]; ok {
 		if len(nr) > 1 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON("Multiple num_revisions values"))
+			http.Error(w, a.ErrorJSON("Multiple num_revisions values"), http.StatusBadRequest)
 			return
 		}
 		if len(nr) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON("Empty num_revisions value"))
+			http.Error(w, a.ErrorJSON("Empty num_revisions value"), http.StatusBadRequest)
 			return
 		}
 		var err error
 		numRevisions, err = strconv.Atoi(nr[0])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON(fmt.Sprintf("Invalid num_revisions value: %s", nr[0])))
+			http.Error(w, a.ErrorJSON(fmt.Sprintf("Invalid num_revisions value: %s", nr[0])), http.StatusBadRequest)
 			return
 		}
 	}
@@ -62,8 +57,7 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 			if e, ok := epochsMap[eStr]; ok {
 				getRevisions[e] = numRevisions
 			} else {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write(a.ErrorJSON(fmt.Sprintf("Unknown epoch: %s", eStr)))
+				http.Error(w, a.ErrorJSON(fmt.Sprintf("Unknown epoch: %s", eStr)), http.StatusBadRequest)
 				return
 			}
 		}
@@ -83,20 +77,17 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	at := time.Now()
 	if tStrs, ok := q["at"]; ok {
 		if len(tStrs) > 1 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON("Multiple at values"))
+			http.Error(w, a.ErrorJSON("Multiple at values"), http.StatusBadRequest)
 			return
 		}
 		if len(tStrs) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON("Empty at value"))
+			http.Error(w, a.ErrorJSON("Empty at value"), http.StatusBadRequest)
 			return
 		}
 		var err error
 		at, err = time.Parse(time.RFC3339, tStrs[0])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON(fmt.Sprintf("Invalid at value: %s", tStrs[0])))
+			http.Error(w, a.ErrorJSON(fmt.Sprintf("Invalid at value: %s", tStrs[0])), http.StatusBadRequest)
 			return
 		}
 	}
@@ -104,27 +95,23 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	start := at.Add(time.Duration(-1-numRevisions) * epochs[0].GetData().MaxDuration)
 	if tStrs, ok := q["start"]; ok {
 		if len(tStrs) > 1 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON("Multiple start values"))
+			http.Error(w, a.ErrorJSON("Multiple start values"), http.StatusBadRequest)
 			return
 		}
 		if len(tStrs) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON("Empty start value"))
+			http.Error(w, a.ErrorJSON("Empty start value"), http.StatusBadRequest)
 			return
 		}
 		var err error
 		start, err = time.Parse(time.RFC3339, tStrs[0])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(a.ErrorJSON(fmt.Sprintf("Invalid start value: %s", tStrs[0])))
+			http.Error(w, a.ErrorJSON(fmt.Sprintf("Invalid start value: %s", tStrs[0])), http.StatusBadRequest)
 			return
 		}
 	}
 
 	if at.Before(start) {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(a.ErrorJSON(fmt.Sprintf("At parameter (%v) occurs before start parameter (%v)", at, start)))
+		http.Error(w, a.ErrorJSON(fmt.Sprintf("At parameter (%v) occurs before start parameter (%v)", at, start)), http.StatusBadRequest)
 		return
 	}
 
@@ -133,16 +120,14 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 		Start: start,
 	})
 	if revs == nil && err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(a.ErrorJSON(err.Error()))
+		http.Error(w, a.ErrorJSON(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := api.RevisionsFromEpochs(revs, err)
 	bytes, err := a.Marshal(response)
 	if err != nil {
-		w.WriteHeader(500)
-		w.Write(a.ErrorJSON("Failed to marshal latest epochal revisions JSON"))
+		http.Error(w, a.ErrorJSON("Failed to marshal latest epochal revisions JSON"), 500)
 		return
 	}
 
