@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/deckarep/golang-set"
@@ -45,7 +44,7 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	var shas []string
-	if complete, err := strconv.ParseBool(r.URL.Query().Get("complete")); err == nil && complete {
+	if complete, err := shared.ParseCompleteParam(r); err != nil && complete {
 		if shas, err = getCompleteRunSHAs(ctx, from, limit); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -103,7 +102,7 @@ func getCompleteRunSHAs(ctx context.Context, from *time.Time, limit *int) (shas 
 			break
 		} else if err != nil {
 			return nil, err
-		} else if !shared.IsBrowserName(testRun.BrowserName) {
+		} else if !shared.IsStableBrowserName(testRun.BrowserName) {
 			continue
 		}
 		set, ok := bySHA[testRun.Revision]

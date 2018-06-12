@@ -34,6 +34,12 @@ func IsBrowserName(name string) bool {
 	if strings.HasSuffix(name, "-"+ExperimentalLabel) {
 		name = name[0 : len(name)-1-len(ExperimentalLabel)] // Trim suffix.
 	}
+	return IsStableBrowserName(name)
+}
+
+// IsStableBrowserName determines whether the given name string is a valid browser name
+// of a stable browser (i.e. not using the -experimental suffix).
+func IsStableBrowserName(name string) bool {
 	_, ok := browserNames[name]
 	return ok
 }

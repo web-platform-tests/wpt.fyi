@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -53,7 +52,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
 
-	if complete, err := strconv.ParseBool(r.URL.Query().Get("complete")); err == nil && complete {
+	if complete, err := shared.ParseCompleteParam(r); err == nil && complete {
 		if runSHA == "latest" {
 			shas, err = getCompleteRunSHAs(ctx, from, limit)
 			if err != nil {

@@ -2,7 +2,6 @@ package shared
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -32,7 +31,7 @@ func LoadTestRuns(
 	if labels != nil {
 		for i := range labels.Iter() {
 			label := i.(string)
-			if IsBrowserName(label) {
+			if IsStableBrowserName(label) {
 				// Browser name labels are already handled in GetProductsForRequest (which produces `products`).
 				continue
 			}
@@ -87,9 +86,7 @@ func LoadTestRuns(
 			// label; instead, their browser names have the suffix. We'd
 			// like to support both the suffix and the label.
 			// TODO(Hexcles): Remove this once we convert history runs.
-			if experimentalOnly &&
-				!contains(testRun.Labels, ExperimentalLabel) &&
-				!strings.HasSuffix(testRun.BrowserName, "-"+ExperimentalLabel) {
+			if experimentalOnly && !testRun.IsExperimental() {
 				continue
 			}
 			if len(shas) > 1 && !contains(shas, testRun.Revision) {

@@ -68,3 +68,8 @@ indexes:
     direction: desc
   - name: BrowserName
   - name: Revision
+- kind: TestRun
+  properties:
+  - name: Labels
+  - name: CreatedAt
+    direction: desc

@@ -415,3 +415,17 @@ func ParseQueryParamInt(r *http.Request, key string) (int, error) {
 	}
 	return i, err
 }
+
+// ParseCompleteParam parses the "complete" param, returning
+// true if it's present with no value, otherwise the parsed
+// bool value.
+func ParseCompleteParam(r *http.Request) (bool, error) {
+	q := r.URL.Query()
+	if _, ok := q["complete"]; !ok {
+		return false, nil
+	} else if val := q.Get("complete"); val == "" {
+		return true, nil
+	} else {
+		return strconv.ParseBool(val)
+	}
+}
