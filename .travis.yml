@@ -56,9 +56,11 @@ script:
     if [ "${DEPLOY_STAGING}" == "true" ]; then
       bash util/travis-deploy-staging.sh -f webapp;
       bash util/travis-deploy-staging.sh -f results-processor;
+      bash util/travis-deploy-staging.sh -f revisions/service;
     elif [ "${DEPLOY_PR_STAGING}" == "true" ]; then
       bash util/travis-deploy-staging.sh webapp;
       bash util/travis-deploy-staging.sh results-processor;
+      bash util/travis-deploy-staging.sh revisions/service;
     else
       echo "Not on master or a PR. Skipping deployment.";
     fi

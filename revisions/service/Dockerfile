@@ -3,9 +3,12 @@
 # Base golang 1.10 image.
 FROM gcr.io/gcp-runtimes/go1-builder:1.10 as builder
 
+RUN apt-get update
+RUN apt-get install -qy --no-install-suggests git
 WORKDIR /go/src/app
 COPY main.go .
 
+RUN /usr/local/go/bin/go get -d .
 RUN /usr/local/go/bin/go build -o app .
 
 # Application image.
