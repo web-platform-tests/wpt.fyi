@@ -74,3 +74,9 @@ func ToStringSlice(set mapset.Set) []string {
 	}
 	return result
 }
+
+// IsLatest returns whether a SHA[0:10] is empty or "latest", both
+// of which are treated as looking up the latest run for each browser.
+func IsLatest(sha string) bool {
+	return sha == "" || sha == "latest"
+}

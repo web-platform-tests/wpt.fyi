@@ -18,13 +18,15 @@ func LoadTestRuns(
 	ctx context.Context,
 	products []Product,
 	labels mapset.Set,
-	sha string,
+	shas []string,
 	from *time.Time,
-	limit int) (result []TestRun, err error) {
+	limit *int) (result []TestRun, err error) {
 	var testRuns []TestRun
 	baseQuery := datastore.NewQuery("TestRun")
-	if sha != "" && sha != "latest" {
-		baseQuery = baseQuery.Filter("Revision =", sha)
+	// NOTE(lukebjerring): While we can't filter on multiple SHAs, it's still much more efficient
+	// to (pre-)filter for a single SHA during the query.
+	if len(shas) == 1 && !IsLatest(shas[0]) {
+		baseQuery = baseQuery.Filter("Revision =", shas[0])
 	}
 	experimentalOnly := false
 	if labels != nil {
@@ -64,8 +66,10 @@ func LoadTestRuns(
 		}
 		var keys []*datastore.Key
 		for _, key := range fetched {
-			if (limit == 0 || limit > len(keys)) && (prefiltered == nil || (*prefiltered).Contains(key.String())) {
-				keys = append(keys, key)
+			if len(shas) > 1 || limit == nil || *limit > len(keys) {
+				if prefiltered == nil || (*prefiltered).Contains(key.String()) {
+					keys = append(keys, key)
+				}
 			}
 		}
 		testRunResults := make(TestRuns, len(keys))
@@ -76,16 +80,25 @@ func LoadTestRuns(
 		for i, key := range keys {
 			testRunResults[i].ID = key.IntID()
 		}
-		// Handle the "experimental" label specially.
-		// Some history experimental runs don't have the experimental
-		// label; instead, their browser names have the suffix. We'd
-		// like to support both the suffix and the label.
-		// TODO(Hexcles): Remove this once we convert history runs.
+		appended := 0
 		for _, testRun := range testRunResults {
-			if !experimentalOnly ||
-				contains(testRun.Labels, ExperimentalLabel) ||
-				strings.HasSuffix(testRun.BrowserName, "-"+ExperimentalLabel) {
-				testRuns = append(testRuns, testRun)
+			// Handle the "experimental" label specially.
+			// Some history experimental runs don't have the experimental
+			// label; instead, their browser names have the suffix. We'd
+			// like to support both the suffix and the label.
+			// TODO(Hexcles): Remove this once we convert history runs.
+			if experimentalOnly &&
+				!contains(testRun.Labels, ExperimentalLabel) &&
+				!strings.HasSuffix(testRun.BrowserName, "-"+ExperimentalLabel) {
+				continue
+			}
+			if len(shas) > 1 && !contains(shas, testRun.Revision) {
+				continue
+			}
+			testRuns = append(testRuns, testRun)
+			appended++
+			if limit != nil && appended >= *limit {
+				break
 			}
 		}
 	}
