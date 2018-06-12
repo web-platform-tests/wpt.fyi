@@ -39,7 +39,7 @@ cd ${WPTD_PATH}
 make webapp_deps || fatal "Error installing deps"
 
 # Create a name for this version
-VERSION_BRANCH_NAME="$(${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"} | tr /_ - | cut -c 1-63)"
+VERSION_BRANCH_NAME="$(echo ${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"} | tr /_ - | cut -c 1-63)"
 USER="$(git remote -v get-url origin | sed -E 's#(https?:\/\/|git@)github.com(\/|:)##' | sed 's#/.*$##')-"
 if [[ "${USER}" == "web-platform-tests-" ]]; then USER=""; fi
 
