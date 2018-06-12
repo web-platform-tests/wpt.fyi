@@ -272,6 +272,19 @@ class WPTReportTest(unittest.TestCase):
         self.assertEqual(r.product_id('_'),
                          'firefox_59.0_linux_4.4_afa59408e1')
 
+    def test_product_id_sanitize(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'chrome!',
+                'browser_version': '1.2.3 dev-1',
+                'os': 'linux',
+            }
+        }
+        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        self.assertEqual(r.product_id('-', sanitize=True),
+                         'chrome_-1.2.3_dev-1-linux-afa59408e1')
+
     def test_sha_product_path(self):
         r = WPTReport()
         r._report = {
