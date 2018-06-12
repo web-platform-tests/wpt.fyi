@@ -14,4 +14,4 @@ liveness_check:
 
 readiness_check:
   path: "/_ah/readiness_check"
-  app_start_timeout_sec: 120
+  app_start_timeout_sec: 240
