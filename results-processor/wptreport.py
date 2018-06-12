@@ -303,7 +303,39 @@ class WPTReport(object):
         return payload
 
 
-def create_test_run(report, uploader, secret,
+def prepare_labels(report, labels_str, uploader):
+    """Prepares the list of labels for a test run.
+
+    The following labels will be automatically added:
+    * The name of the uploader
+    * The name of the browser
+    * "stable" (as in release channels), if neither "stable" or "experimental"
+      is provided by the uploader.
+
+    Args:
+        report: A WPTReport.
+        labels_str: A comma-separated string of labels from the uploader.
+        uploader: The name of the uploader.
+
+    Returns:
+        A sorted list of unique strings.
+    """
+    labels = set()
+    labels.add(report.run_info['product'])
+    labels.add(uploader)
+    # Empty labels may be generated here, but they will be removed later.
+    for label in labels_str.split(','):
+        labels.add(label.strip())
+    # Set the default channel to stable.
+    if ('stable' not in labels) and ('experimental' not in labels):
+        labels.add('stable')
+    # Remove any empty labels.
+    if '' in labels:
+        labels.remove('')
+    return sorted(labels)
+
+
+def create_test_run(report, labels_str, uploader, secret,
                     results_gcs_path, raw_results_gcs_path):
     """Creates a TestRun on the dashboard.
 
@@ -311,6 +343,7 @@ def create_test_run(report, uploader, secret,
 
     Args:
         report: A WPTReport.
+        labels_str: A comma-separated string of labels from the uploader.
         uploader: The name of the uploader.
         secret: An upload token.
         results_gcs_path: The GCS path to the gzipped summary file.
@@ -321,10 +354,13 @@ def create_test_run(report, uploader, secret,
     assert results_gcs_path.startswith('/')
     assert raw_results_gcs_path.startswith('/')
 
+    labels = prepare_labels(report, labels_str, uploader)
+    assert len(labels) > 0
+
     payload = report.test_run_metadata
     payload['results_url'] = GCS_PUBLIC_DOMAIN + results_gcs_path
     payload['raw_results_url'] = GCS_PUBLIC_DOMAIN + raw_results_gcs_path
-    payload['labels'] = [uploader, report.run_info['product']]
+    payload['labels'] = labels
 
     response = requests.post(
         config.project_baseurl() + '/api/run',
