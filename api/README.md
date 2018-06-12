@@ -212,6 +212,9 @@ __Parameters__
 
 __`result_file`__: A gzipped JSON file produced by `wpt run --log-wptreport`.
 
+__`labels`__: (Optional) A comma-separated string of labels for this test run. Currently recognized
+labels are "experimental" and "stable" (the release channel of the tested browser).
+
 The JSON file roughly looks like this:
 
 ```json
