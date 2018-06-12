@@ -54,27 +54,6 @@ func TestListHandler_NoEpochs(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, resp.Code)
 }
 
-func TestListHandler_MultiNumRevision(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	a := api.NewMockAPI(mockCtrl)
-	ancr := announcer.NewMockAnnouncer(mockCtrl)
-
-	a.EXPECT().GetAnnouncer().Return(ancr)
-	a.EXPECT().GetEpochs().Return([]epoch.Epoch{
-		epoch.Hourly{},
-	})
-	a.EXPECT().ErrorJSON(icMatcher{"num_revisions"}).Return("")
-
-	req := httptest.NewRequest("GET", "/api/revisions/list?num_revisions=1&num_revisions=1", new(strings.Reader))
-	resp := httptest.NewRecorder()
-
-	handlers.ListHandler(a, resp, req)
-
-	assert.Equal(t, http.StatusBadRequest, resp.Code)
-}
-
 func TestListHandler_NumRevisionNaN(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()

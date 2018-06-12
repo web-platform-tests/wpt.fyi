@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/revisions/announcer"
 	"github.com/web-platform-tests/wpt.fyi/revisions/api"
 	"github.com/web-platform-tests/wpt.fyi/revisions/epoch"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // ListHandler handles HTTP requests for listing epochal revisions.
@@ -32,22 +32,12 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 
 	q := r.URL.Query()
 
-	numRevisions := 1
-	if nr, ok := q["num_revisions"]; ok {
-		if len(nr) > 1 {
-			http.Error(w, a.ErrorJSON("Multiple num_revisions values"), http.StatusBadRequest)
-			return
-		}
-		if len(nr) == 0 {
-			http.Error(w, a.ErrorJSON("Empty num_revisions value"), http.StatusBadRequest)
-			return
-		}
-		var err error
-		numRevisions, err = strconv.Atoi(nr[0])
-		if err != nil {
-			http.Error(w, a.ErrorJSON(fmt.Sprintf("Invalid num_revisions value: %s", nr[0])), http.StatusBadRequest)
-			return
-		}
+	numRevisions, err := shared.ParseQueryParamInt(r, "num_revisions")
+	if err == shared.ErrMissing {
+		numRevisions = 1
+	} else if err != nil {
+		http.Error(w, a.ErrorJSON(err.Error()), http.StatusBadRequest)
+		return
 	}
 
 	getRevisions := make(map[epoch.Epoch]int)
