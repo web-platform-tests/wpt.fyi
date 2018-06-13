@@ -256,7 +256,8 @@ func (a *gitRemoteAnnouncer) Fetch() (err error) {
 	}
 
 	name := a.cfg.BranchName
-	refSpec := config.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/remotes/origin/%s", name, name))
+	updateSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/origin/%s", name, name)
+	refSpec := config.RefSpec(updateSpec)
 	if err = a.repo.Fetch(&git.FetchOptions{
 		RemoteName: a.cfg.RemoteName,
 		RefSpecs:   []config.RefSpec{refSpec},
@@ -264,13 +265,14 @@ func (a *gitRemoteAnnouncer) Fetch() (err error) {
 		Tags:       a.cfg.Tags,
 	}); err != nil {
 		if err == git.NoErrAlreadyUpToDate {
-			log.Printf("INFO: Already up-to-date")
+			log.Printf("INFO: Already up-to-date: %s", updateSpec)
 			return nil
 		}
 
 		log.Printf("ERRO: %v", err)
 		return err
 	}
+	log.Printf("INFO: Updated %s", updateSpec)
 
 	return nil
 }
