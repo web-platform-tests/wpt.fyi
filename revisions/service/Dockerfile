@@ -6,9 +6,11 @@ FROM gcr.io/gcp-runtimes/go1-builder:1.10 as builder
 RUN apt-get update
 RUN apt-get install -qy --no-install-suggests git
 WORKDIR /go/src/app
-COPY main.go .
+COPY *.go .
 
 RUN /usr/local/go/bin/go get -d .
+RUN rm -rf /root/go/src/github.com/web-platform-tests/wpt.fyi/*
+COPY wpt.fyi /root/go/src/github.com/web-platform-tests/wpt.fyi/
 RUN /usr/local/go/bin/go build -o app .
 
 # Application image.
