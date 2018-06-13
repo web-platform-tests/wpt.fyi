@@ -19,9 +19,6 @@ import (
 )
 
 // apiSHAsHandler is responsible for emitting just the revision SHAs for test runs.
-//
-// URL Params:
-//     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	var products []shared.Product
 	var err error

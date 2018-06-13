@@ -24,7 +24,6 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	shas := []string{runSHA}
 
 	var products []shared.Product
 	if products, err = shared.GetProductsForRequest(r); err != nil {
@@ -52,6 +51,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
 
+	var shas []string
 	if complete, err := shared.ParseCompleteParam(r); err == nil && complete {
 		if runSHA == "latest" {
 			shas, err = getCompleteRunSHAs(ctx, from, limit)
@@ -65,6 +65,8 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+	} else if !shared.IsLatest(runSHA) {
+		shas = []string{runSHA}
 	}
 	labels := shared.ParseLabelsParam(r)
 	testRuns, err := shared.LoadTestRuns(ctx, products, labels, shas, from, limit)
