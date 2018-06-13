@@ -127,6 +127,10 @@ go_packages: git
 golint_deps: git go_deps
 	# Manual git clone + install is a workaround for #85.
 	if [ "$$(which golint)" == "" ]; then \
+		mkdir -p $(GOPATH)/src/golang.org/x/tools; \
+    git clone https://go.googlesource.com/tools $(GOPATH)/src/golang.org/x/tools; \
+    cd $(GOPATH)/src/golang.org/x/tools; \
+    git checkout release-branch.go1.10; \
 		mkdir -p "$(GOPATH)/src/golang.org/x"; \
 		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint; \
 		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...; \
