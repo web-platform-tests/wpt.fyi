@@ -28,7 +28,7 @@ while getopts ':b:phq:g:' flag; do
 done
 
 if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
-if [[ "${APP_PATH}" != "webapp" && "${APP_PATH}" != "results-processor" ]];
+if [[ "${APP_PATH}" != "webapp" && "${APP_PATH}" != "results-processor" && "${APP_PATH}" != "revisions/service" ]];
 then
   fatal "Unrecognized app path \"${APP_PATH}\"."
 fi
@@ -36,10 +36,12 @@ fi
 # Ensure dependencies are installed.
 if [[ -z "${QUIET}" ]]; then info "Installing dependencies..."; fi
 cd ${WPTD_PATH}
-make webapp_deps || fatal "Error installing deps"
+if [[ "${APP_PATH}" == "webapp" ]]; then
+  make webapp_deps || fatal "Error installing deps"
+fi
 
 # Create a name for this version
-VERSION_BRANCH_NAME="$(echo ${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"} | tr /_ - | cut -c 1-63)"
+VERSION_BRANCH_NAME="$(echo ${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"} | tr /_ - | cut -c 1-28)"
 USER="$(git remote -v get-url origin | sed -E 's#(https?:\/\/|git@)github.com(\/|:)##' | sed 's#/.*$##')-"
 if [[ "${USER}" == "web-platform-tests-" ]]; then USER=""; fi
 
