@@ -189,11 +189,11 @@ func TestLatestHandler_Success(t *testing.T) {
 		Revisions: map[string]api.Revision{
 			api.FromEpoch(epoch.Hourly{}).ID: api.Revision{
 				Hash:       test.NewHash("01").String(),
-				CommitTime: now,
+				CommitTime: api.UTCTime(now),
 			},
 			api.FromEpoch(epoch.Daily{}).ID: api.Revision{
 				Hash:       test.NewHash("02").String(),
-				CommitTime: yesterday,
+				CommitTime: api.UTCTime(yesterday),
 			},
 		},
 		Epochs: []api.Epoch{

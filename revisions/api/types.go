@@ -6,6 +6,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"time"
@@ -20,6 +21,12 @@ var errMissingRevision = errors.New("Missing required revision")
 // GetErMissingRevision produces the error produced when a required revision is not provided.
 func GetErMissingRevision() error {
 	return errMissingRevision
+}
+
+type UTCTime time.Time
+
+func (t UTCTime) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", time.Time(t).UTC().Format(time.RFC3339))), nil
 }
 
 // Epoch is the representation of an epoch exposed via the public API.
@@ -54,15 +61,15 @@ func FromEpoch(e epoch.Epoch) Epoch {
 
 // Revision is the representation of a git revision exposed via the public API.
 type Revision struct {
-	Hash       string    `json:"hash"`
-	CommitTime time.Time `json:"commit_time"`
+	Hash       string  `json:"hash"`
+	CommitTime UTCTime `json:"commit_time"`
 }
 
 // FromRevision converts an agit.Revision to a revision exposed via the public API.
 func FromRevision(rev agit.Revision) Revision {
 	return Revision{
 		Hash:       rev.GetHash().String(),
-		CommitTime: rev.GetCommitTime(),
+		CommitTime: UTCTime(rev.GetCommitTime()),
 	}
 }
 
@@ -150,7 +157,7 @@ func RevisionsFromEpochs(revs map[epoch.Epoch][]agit.Revision, apiErr error) Rev
 		for _, rev := range revs {
 			apiRevs = append(apiRevs, Revision{
 				Hash:       rev.GetHash().String(),
-				CommitTime: rev.GetCommitTime(),
+				CommitTime: UTCTime(rev.GetCommitTime()),
 			})
 		}
 		rs[es[i].ID] = apiRevs
