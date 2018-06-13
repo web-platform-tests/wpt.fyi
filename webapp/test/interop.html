@@ -48,7 +48,6 @@
       setup(done => {
         sandbox = sinon.sandbox.create();
 
-
         let prfetch = Promise.resolve();
 
         if (!fetches.length) {
@@ -102,12 +101,6 @@
           assert.equal(WPTInterop.properties.metrics.computed,
             'computeMetrics(path, query, allMetrics)');
         });
-        test('path', () => {
-          assert.property(WPTInterop.properties.path, 'type');
-          assert.equal(WPTInterop.properties.path.type, String);
-          // console.log(WPTInterop.properties.path.value, window.location.pathname);
-          // assert.ok(WPTInterop.properties.path.value.includes(window.location.pathname));
-        });
         test('currentNode', () => {
           assert.property(WPTInterop.properties.currentNode, 'type');
           assert.equal(WPTInterop.properties.currentNode.type, Object);
@@ -153,7 +146,6 @@
           sandbox.stub(window.Polymer.Element.prototype, 'connectedCallback')
             .returns(superConnectedCallback);
 
-          sandbox.spy(WPTInterop.prototype, 'initState');
           sandbox.spy(WPTInterop.prototype, 'fetchMetrics');
 
           wpti = fixture('wpt-interop-fixture');
@@ -167,43 +159,27 @@
 
         suite('async connectedCallback()', () => {
           test('super.connectedCallback()', (done) => {
-            superConnectedCallback.then(() => (assert.ok(true),done()));
+            waitingOn(() => window.Polymer.Element.prototype.connectedCallback.called)
+              .then(() => done());
           });
+
           test('Sets window.onpopstate', (done) => {
             let onpopstate = window.onpopstate;
             window.onpopstate = null;
-            superConnectedCallback
-              .then(() => waitingOn(() => window.fetch.called))
+            waitingOn(() => window.fetch.called)
               .then(() => {
                 // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
                 assert.isTrue(typeof window.onpopstate === 'function');
                 assert.notEqual(window.onpopstate, onpopstate);
-
-                window.onpopstate({
-                  state: {}
-                });
-                assert.equal(wpti.path, '/');
-                assert.equal(wpti.query, '');
-
-                window.onpopstate({
-                  state: {
-                    path: 'foo/bar/baz',
-                    query: 'whatever',
-                  }
-                });
-                assert.equal(wpti.path, 'foo/bar/baz');
-                assert.equal(wpti.query, 'whatever');
               })
               .then(done);
           });
           test('Calls fetchMetrics(url)', (done) => {
-            superConnectedCallback
-              .then(() => waitingOn(() => window.fetch.called))
+            waitingOn(() => window.fetch.called)
               .then(() => {
                 // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
                 assert.equal(wpti.fetchMetrics.callCount, 1);
                 assert.isTrue(wpti.fetchMetrics.firstCall.args[0].endsWith('pass-rates.json.gz'));
-
               })
               .then(done);
           });
@@ -211,8 +187,7 @@
 
         suite('async fetchMetrics()', () => {
           test('Calls window.fetch(...)', (done) => {
-            superConnectedCallback
-              .then(() => waitingOn(() => window.fetch.called))
+            waitingOn(() => window.fetch.called)
               .then(() => {
                 // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
                 assert.equal(window.fetch.callCount, 1);
