@@ -183,6 +183,7 @@ The high-level structure of the `v4` manifest is as follows:
         },
         "reftest": {...},
         "testharness": {...},
+        "visual", {...},
         "wdspec": {...},
       },
     }

@@ -2,9 +2,10 @@ package shared
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
@@ -25,11 +26,19 @@ func LoadTestRuns(
 	if sha != "" && sha != "latest" {
 		baseQuery = baseQuery.Filter("Revision =", sha)
 	}
+	experimentalOnly := false
 	if labels != nil {
 		for i := range labels.Iter() {
 			label := i.(string)
-			if label == "experimental" || IsBrowserName(label) {
-				continue // Special-cased in GetProductsForRequest
+			if IsBrowserName(label) {
+				// Browser name labels are already handled in GetProductsForRequest (which produces `products`).
+				continue
+			}
+			if label == ExperimentalLabel {
+				// The "experimental" label is handled specially at the end of the function.
+				// TODO(Hexcles): Remove this once we convert all history runs.
+				experimentalOnly = true
+				continue
 			}
 			baseQuery = baseQuery.Filter("Labels =", label)
 		}
@@ -59,7 +68,7 @@ func LoadTestRuns(
 				keys = append(keys, key)
 			}
 		}
-		testRunResults := make([]TestRun, len(keys))
+		testRunResults := make(TestRuns, len(keys))
 		if err = datastore.GetMulti(ctx, keys, testRunResults); err != nil {
 			return nil, err
 		}
@@ -67,9 +76,29 @@ func LoadTestRuns(
 		for i, key := range keys {
 			testRunResults[i].ID = key.IntID()
 		}
-		testRuns = append(testRuns, testRunResults...)
+		// Handle the "experimental" label specially.
+		// Some history experimental runs don't have the experimental
+		// label; instead, their browser names have the suffix. We'd
+		// like to support both the suffix and the label.
+		// TODO(Hexcles): Remove this once we convert history runs.
+		for _, testRun := range testRunResults {
+			if !experimentalOnly ||
+				contains(testRun.Labels, ExperimentalLabel) ||
+				strings.HasSuffix(testRun.BrowserName, "-"+ExperimentalLabel) {
+				testRuns = append(testRuns, testRun)
+			}
+		}
 	}
 	return testRuns, nil
+}
+
+func contains(s []string, x string) bool {
+	for _, v := range s {
+		if v == x {
+			return true
+		}
+	}
+	return false
 }
 
 // Loads any keys for a full string match or a version prefix (Between [version].* and [version].9*)

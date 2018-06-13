@@ -22,6 +22,7 @@ func TestLandingPageBound(t *testing.T) {
 	assertHandlerIs(t, "/", "results-legacy")
 	assertHSTS(t, "/")
 	assertHandlerIs(t, "/2dcontext", "results-legacy")
+	assertHandlerIs(t, "/BackgroundSync/interfaces.any.html", "results-legacy")
 }
 
 func TestAboutBound(t *testing.T) {
@@ -32,6 +33,7 @@ func TestInteropBound(t *testing.T) {
 	assertHandlerIs(t, "/interop", "interop")
 	assertHandlerIs(t, "/interop/", "interop")
 	assertHandlerIs(t, "/interop/2dcontext", "interop")
+	assertHandlerIs(t, "/interop/BackgroundSync/interfaces.any.html", "interop")
 }
 
 func TestInteropAnomaliesBound(t *testing.T) {
@@ -65,6 +67,10 @@ func TestApiResultsUploadBound(t *testing.T) {
 
 func TestResultsBound(t *testing.T) {
 	assertBound(t, "/results")
+	assertHandlerIs(t, "/results", "results")
+	assertHandlerIs(t, "/results/", "results")
+	assertHandlerIs(t, "/results/2dcontext", "results")
+	assertHandlerIs(t, "/results/BackgroundSync/interfaces.any.html", "results")
 }
 
 func TestAdminResultsUploadBound(t *testing.T) {
