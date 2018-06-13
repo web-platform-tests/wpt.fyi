@@ -81,6 +81,16 @@ func main() {
 	http.HandleFunc("/api/revisions/latest", latestHandler)
 	http.HandleFunc("/api/revisions/list", listHandler)
 
+	http.HandleFunc("/_ah/liveness_check", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Alive"))
+	})
+	http.HandleFunc("/_ah/readiness_check", func(w http.ResponseWriter, r *http.Request) {
+		if a.GetAnnouncer() == nil {
+			http.Error(w, "Announcer not yet initialized", http.StatusServiceUnavailable)
+		}
+		w.Write([]byte("Ready"))
+	})
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 

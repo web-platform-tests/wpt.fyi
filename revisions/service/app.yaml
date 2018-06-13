@@ -1,0 +1,17 @@
+runtime: custom
+env: flex
+service: announcer
+
+resources:
+  cpu: 2
+  memory_gb: 12
+
+manual_scaling:
+  instances: 1
+
+liveness_check:
+  path: "/_ah/liveness_check"
+
+readiness_check:
+  path: "/_ah/readiness_check"
+  app_start_timeout_sec: 480
