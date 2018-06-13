@@ -33,7 +33,7 @@ func (EightHourly) GetData() Data {
 
 // IsEpochal indicates whether or not an every-eight-hours epochal change occur between prev and next.
 func (e EightHourly) IsEpochal(prev time.Time, next time.Time) bool {
-	return nHourly(e, 8, prev, next)
+	return nHourly(e, 8, prev.UTC(), next.UTC())
 }
 
 // FourHourly models an epoch that changes every four hours.
@@ -51,7 +51,7 @@ func (FourHourly) GetData() Data {
 
 // IsEpochal indicates whether or not an every-four-hours epochal change occur between prev and next.
 func (e FourHourly) IsEpochal(prev time.Time, next time.Time) bool {
-	return nHourly(e, 4, prev, next)
+	return nHourly(e, 4, prev.UTC(), next.UTC())
 }
 
 // TwoHourly models an epoch that changes every two hours.
@@ -69,5 +69,5 @@ func (TwoHourly) GetData() Data {
 
 // IsEpochal indicates whether or not an every-two-hours epochal change occur between prev and next.
 func (e TwoHourly) IsEpochal(prev time.Time, next time.Time) bool {
-	return nHourly(e, 2, prev, next)
+	return nHourly(e, 2, prev.UTC(), next.UTC())
 }
