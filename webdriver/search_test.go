@@ -11,18 +11,23 @@ import (
 )
 
 func TestSearch(t *testing.T) {
-	devAppserverInstance, err := NewWebserver()
+	app, err := NewWebserver()
 	if err != nil {
 		panic(err)
 	}
-	defer devAppserverInstance.Close()
+	defer app.Close()
 
 	service, wd, err := FirefoxWebDriver()
 	defer service.Stop()
 	defer wd.Quit()
 
+	testSearch(t, wd, app, "/")
+	testSearch(t, wd, app, "/interop/")
+}
+
+func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string) {
 	// Navigate to the wpt.fyi homepage.
-	if err := wd.Get(devAppserverInstance.GetWebappURL("/")); err != nil {
+	if err := wd.Get(app.GetWebappURL(path)); err != nil {
 		panic(err)
 	}
 

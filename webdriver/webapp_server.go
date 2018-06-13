@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
@@ -253,7 +254,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	// Follow pattern established in run/*.py data collection code.
 	const sha = "b952881825"
 	const summaryURLFmtString = "/static/" + sha + "/%s"
-	staticTestRuns := []shared.TestRun{
+	staticTestRuns := shared.TestRuns{
 		{
 			ProductAtRevision: shared.ProductAtRevision{
 				Product: shared.Product{
@@ -311,10 +312,83 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	log.Println("Adding static TestRun data...")
 	for i := range staticTestRuns {
 		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-		if _, err := datastore.Put(ctx, key, &staticTestRuns[i]); err != nil {
+		if key, err = datastore.Put(ctx, key, &staticTestRuns[i]); err != nil {
 			return err
 		}
+		staticTestRuns[i].ID = key.IntID()
 		fmt.Printf("Added static run for %s\n", staticTestRuns[i].BrowserName)
 	}
+
+	log.Println("Adding static interop data...")
+	timeZero := time.Unix(0, 0)
+	// Follow pattern established in metrics/run/*.go data collection code.
+	// Use unzipped JSON for local dev.
+	const metricsURLFmtString = "/static/wptd-metrics/0-0/%s.json"
+	staticTestRunMetadata := make([]interface{}, len(staticTestRuns))
+	for i := range staticTestRuns {
+		staticTestRunMetadata[i] = &staticTestRuns[i]
+	}
+	staticPassRateMetadata := []interface{}{
+		&metrics.PassRateMetadata{
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
+			},
+		},
+	}
+	for i := range staticPassRateMetadata {
+		md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
+		md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+		key := datastore.NewIncompleteKey(ctx, metrics.GetDatastoreKindName(metrics.PassRateMetadata{}), nil)
+		if _, err := datastore.Put(ctx, key, md); err != nil {
+			return err
+		}
+	}
+
+	log.Println("Adding static anomalies data...")
+	staticFailuresMetadata := []interface{}{
+		&metrics.FailuresMetadata{
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "chrome-failures"),
+			},
+			BrowserName: "chrome",
+		},
+		&metrics.FailuresMetadata{
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "edge-failures"),
+			},
+			BrowserName: "edge",
+		},
+		&metrics.FailuresMetadata{
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "firefox-failures"),
+			},
+			BrowserName: "firefox",
+		},
+		&metrics.FailuresMetadata{
+			TestRunsMetadata: metrics.TestRunsMetadata{
+				StartTime: timeZero,
+				EndTime:   timeZero,
+				DataURL:   fmt.Sprintf(metricsURLFmtString, "safari-failures"),
+			},
+			BrowserName: "safari",
+		},
+	}
+	for i := range staticFailuresMetadata {
+		md := staticFailuresMetadata[i].(*metrics.FailuresMetadata)
+		md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+		key := datastore.NewIncompleteKey(ctx, metrics.GetDatastoreKindName(metrics.FailuresMetadata{}), nil)
+		if _, err := datastore.Put(ctx, key, md); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
