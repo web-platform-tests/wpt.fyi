@@ -7,30 +7,30 @@ import (
 	"path/filepath"
 
 	"github.com/tebeka/selenium"
-	"github.com/tebeka/selenium/firefox"
+	"github.com/tebeka/selenium/chrome"
 )
 
 var (
-	geckoDriverPath = flag.String("geckodriver_path", "", "Path to the geckodriver binary")
-	firefoxPath     = flag.String("firefox_path", "", "Path to the firefox binary")
+	chromeDriverPath = flag.String("chromedriver_path", "", "Path to the chromedriver binary")
+	chromePath       = flag.String("chrome_path", "", "Path to the chrome binary")
 )
 
-// FirefoxWebDriver starts up a Firefox WebDriver.
+// ChromeWebDriver starts up a Chrome WebDriver.
 // Make sure to close both the service and the WebDriver instances, e.g.
 //
-// server, driver, err := FirefoxWebDriver()
+// server, driver, err := ChromeWebDriver()
 // if err != nil {
 //   panic(e)
 // }
 // defer server.Stop()
 // defer driver.Quit()
-func FirefoxWebDriver() (*selenium.Service, selenium.WebDriver, error) {
+func ChromeWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	if *seleniumPath == "" {
 		panic("--selenium_path not specified")
-	} else if *firefoxPath == "" {
-		panic("--firefox_path not specified")
-	} else if *geckoDriverPath == "" {
-		panic("--geckodriver_path not specified")
+	} else if *chromePath == "" {
+		panic("--chrome_path not specified")
+	} else if *chromeDriverPath == "" {
+		panic("--chromedriver_path not specified")
 	}
 
 	var options []selenium.ServiceOption
@@ -38,8 +38,7 @@ func FirefoxWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	if *startFrameBuffer {
 		options = append(options, selenium.StartFrameBuffer())
 	}
-	// Specify the path to GeckoDriver in order to use Firefox.
-	options = append(options, selenium.GeckoDriver(*geckoDriverPath))
+	// Specify the path to ChromeDriver in order to use Chrome.
 	// Output debug information to STDERR.
 	options = append(options, selenium.Output(os.Stderr))
 
@@ -51,18 +50,18 @@ func FirefoxWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 
 	// Connect to the WebDriver instance running locally.
 	seleniumCapabilities := selenium.Capabilities{
-		"browserName": "firefox",
+		"browserName": "Chrome",
 	}
 
-	firefoxCapabilities := firefox.Capabilities{}
-	// Selenium 2 uses this option to specify the path to the Firefox binary.
-	// seleniumCapabilities["firefox_binary"] = c.path
-	firefoxAbsPath, err := filepath.Abs(*firefoxPath)
+	ChromeCapabilities := chrome.Capabilities{}
+	// Selenium 2 uses this option to specify the path to the Chrome binary.
+	// seleniumCapabilities["Chrome_binary"] = c.path
+	chromeAbsPath, err := filepath.Abs(*chromePath)
 	if err != nil {
 		panic(err)
 	}
-	firefoxCapabilities.Binary = firefoxAbsPath
-	seleniumCapabilities.AddFirefox(firefoxCapabilities)
+	ChromeCapabilities.Path = chromeAbsPath
+	seleniumCapabilities.AddChrome(ChromeCapabilities)
 
 	wd, err := selenium.NewRemote(
 		seleniumCapabilities,

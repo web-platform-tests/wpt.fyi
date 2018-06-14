@@ -17,15 +17,15 @@ func TestSearch(t *testing.T) {
 	}
 	defer app.Close()
 
-	service, wd, err := FirefoxWebDriver()
+	service, wd, err := GetWebDriver()
 	defer service.Stop()
 	defer wd.Quit()
 
-	testSearch(t, wd, app, "/")
-	testSearch(t, wd, app, "/interop/")
+	testSearch(t, wd, app, "/", "wpt-results")
+	testSearch(t, wd, app, "/interop/", "wpt-interop")
 }
 
-func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string) {
+func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string, elementName string) {
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL(path)); err != nil {
 		panic(err)
@@ -33,16 +33,16 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string)
 
 	// Wait for the results view to load.
 	runsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
-		results, err := wd.FindElements(selenium.ByCSSSelector, "path-part")
+		pathParts, err := getPathPartElements(wd, elementName)
 		if err != nil {
 			return false, err
 		}
-		return len(results) > 0, nil
+		return len(pathParts) > 0, nil
 	}
 	wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
 
 	// Run the search
-	searchBox, err := wd.FindElement(selenium.ByCSSSelector, "input.query")
+	searchBox, err := getSearchElement(wd, elementName)
 	if err != nil {
 		panic(err)
 	}
@@ -52,14 +52,47 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string)
 		panic(err)
 	}
 
-	results, err := wd.FindElements(selenium.ByCSSSelector, "path-part")
+	pathParts, err := getPathPartElements(wd, elementName)
 	if err != nil {
 		panic(err)
 	}
-	assert.Lenf(t, results, 1, "Expected exactly 1 '%s' search result.", query)
-	text, err := results[0].Text()
+	assert.Lenf(t, pathParts, 1, "Expected exactly 1 '%s' search result.", query)
+	text, err := pathParts[0].Text()
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
 	assert.Equal(t, "2dcontext/", text)
+}
+
+// NOTE(lukebjerring): Firefox, annoyingly, throws a TypeError querying shadowRoot because of a
+// circular reference when it tries to serialize to JSON. Also, selecting by 'path-part' directly
+// works, so, whatever.
+func getSearchElement(wd selenium.WebDriver, element string) (selenium.WebElement, error) {
+	switch *browser {
+	case "firefox":
+		return wd.FindElement(selenium.ByCSSSelector, "input.query")
+	default:
+		e, err := wd.FindElement(selenium.ByCSSSelector, element)
+		if err != nil {
+			return nil, err
+		}
+		inputs, err := FindShadowElements(wd, e, "input.query")
+		if err != nil {
+			return nil, err
+		}
+		return inputs[0], err
+	}
+}
+
+func getPathPartElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
+	switch *browser {
+	case "firefox":
+		return wd.FindElements(selenium.ByCSSSelector, "path-part")
+	default:
+		e, err := wd.FindElement(selenium.ByCSSSelector, element)
+		if err != nil {
+			return nil, err
+		}
+		return FindShadowElements(wd, e, "path-part")
+	}
 }
