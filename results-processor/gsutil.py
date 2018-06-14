@@ -27,8 +27,12 @@ def gs_to_public_url(gcs_path):
 
 
 def rsync(path1, path2, quiet=False):
+    # Use parallel processes and no multithreading to avoid Python GIL.
+    # https://cloud.google.com/storage/docs/gsutil/commands/rsync#options
     command = [
-        'gsutil', '-m', '-h', 'Content-Encoding:gzip', 'rsync', '-r',
+        'gsutil', '-o', 'GSUtil:parallel_process_count=10',
+        '-o', 'GSUtil:parallel_thread_count=1',
+        '-m', '-h', 'Content-Encoding:gzip', 'rsync', '-r',
         path1, path2
     ]
     _call(command, quiet)

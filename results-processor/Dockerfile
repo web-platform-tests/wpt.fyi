@@ -28,4 +28,8 @@ ADD . /app/
 # The number of workers should always be 2: one for processing tasks, the other
 # for responding health checks. Scale the service by increasing the number of
 # instances instead.
-CMD exec gunicorn --bind :$PORT --timeout 3600 --workers 2 main:app
+# The timeout for gunicorn should be significantly longer than the timeout in
+# main.py for liveness checks, because when things go wrong we'd like AppEngine
+# to restart a fresh Docker instance instead of having gunicorn to restart the
+# worker (which would require extra cleanup/recovery logic).
+CMD exec gunicorn --bind :$PORT --timeout 7200 --workers 2 main:app

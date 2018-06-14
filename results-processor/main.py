@@ -28,7 +28,7 @@ LOCK_FILE = '/tmp/results-processor.lock'
 TIMESTAMP_FILE = '/tmp/results-processor.last'
 # If the processing takes more than this timeout (in seconds), the instance is
 # considered unhealthy and will be restarted by AppEngine.
-TIMEOUT = 3600
+TIMEOUT = 5400
 
 
 logging.basicConfig(level=logging.INFO)
