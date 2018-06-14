@@ -147,7 +147,7 @@ def task_handler():
 
     revision = report.run_info['revision']
     # For consistency, use underscores in wptd-results.
-    product = report.product_id('_')
+    product = report.product_id('_', sanitize=True)
 
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
 

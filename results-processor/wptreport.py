@@ -11,6 +11,7 @@ import io
 import json
 import logging
 import os
+import re
 import tempfile
 
 import requests
@@ -225,11 +226,13 @@ class WPTReport(object):
             filepath = directory + test_file
             self.write_gzip_json(filepath, result)
 
-    def product_id(self, separator):
+    def product_id(self, separator, sanitize=False):
         """Returns an ID string for the product configuration.
 
         Args:
             separator: A character to separate fields in the ID string.
+            sanitize: Whether to sanitize (replace them with underscores)
+                characters in the product ID that are not URL-safe.
 
         Returns:
             A string, the product ID of this run.
@@ -242,6 +245,10 @@ class WPTReport(object):
             name += separator + self.run_info['os_version']
         assert len(self.hashsum) > 0, 'Missing hashsum of the report'
         name += separator + self.hashsum[:10]
+
+        if sanitize:
+            name = re.sub('[^A-Za-z0-9._-]', '_', name)
+
         return name
 
     def populate_upload_directory(self, output_dir=None):
@@ -273,7 +280,7 @@ class WPTReport(object):
         """A relative path: sha/product_id"""
         try:
             return os.path.join(self.run_info['revision'],
-                                self.product_id('-'))
+                                self.product_id('-', sanitize=True))
         except KeyError as e:
             raise MissingMetadataError(str(e)) from e
 
