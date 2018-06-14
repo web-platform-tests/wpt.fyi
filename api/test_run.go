@@ -75,7 +75,12 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		labels := shared.ParseLabelsParam(r)
-		testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, labels, runSHA, nil, 1)
+		var shas []string
+		if runSHA != "" && runSHA != "latest" {
+			shas = []string{runSHA}
+		}
+		one := 1
+		testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, labels, shas, nil, &one)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

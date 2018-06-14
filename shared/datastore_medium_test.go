@@ -3,6 +3,8 @@
 package shared
 
 import (
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -40,7 +42,7 @@ func TestLoadTestRuns(t *testing.T) {
 	key, _ = datastore.Put(ctx, key, &testRun)
 
 	chrome, _ := ParseProduct("chrome")
-	loaded, err := LoadTestRuns(ctx, []Product{chrome}, nil, "latest", nil, 1)
+	loaded, err := LoadTestRuns(ctx, []Product{chrome}, nil, nil, nil, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(loaded))
 	assert.Equalf(t, key.IntID(), loaded[0].ID, "ID field should be populated.")
@@ -105,9 +107,43 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	products := []Product{Product{BrowserName: "chrome"}, Product{BrowserName: "chrome-experimental"}}
 	labels := mapset.NewSet()
 	labels.Add("experimental")
-	loaded, err := LoadTestRuns(ctx, products, labels, "latest", nil, 10)
+	ten := 10
+	loaded, err := LoadTestRuns(ctx, products, labels, nil, nil, &ten)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(loaded))
 	assert.Equal(t, "experimental", loaded[0].Labels[0])
 	assert.Equal(t, "chrome-experimental", loaded[1].BrowserName)
+}
+
+func TestLoadTestRuns_MultipleSHAs(t *testing.T) {
+	var testRuns TestRuns
+	for i := 0; i < 3; i++ {
+		testRun := TestRun{}
+		testRun.BrowserName = "chrome"
+		testRun.Revision = strings.Repeat(strconv.FormatInt(int64(i), 10), 10)
+		testRuns = append(testRuns, testRun)
+	}
+
+	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	assert.Nil(t, err)
+	defer i.Close()
+	// URL is a placeholder and is not used in this test.
+	r, err := i.NewRequest("GET", "/api/runs", nil)
+	assert.Nil(t, err)
+
+	ctx := appengine.NewContext(r)
+	keys := make([]*datastore.Key, len(testRuns))
+	for i := range testRuns {
+		keys[i] = datastore.NewIncompleteKey(ctx, "TestRun", nil)
+	}
+	keys, err = datastore.PutMulti(ctx, keys, testRuns)
+	assert.Nil(t, err)
+
+	products := []Product{Product{BrowserName: "chrome"}}
+	shas := []string{"1111111111", "2222222222"}
+	loaded, err := LoadTestRuns(ctx, products, nil, shas, nil, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(loaded))
+	assert.Equal(t, shas[0], loaded[0].Revision)
+	assert.Equal(t, shas[1], loaded[1].Revision)
 }

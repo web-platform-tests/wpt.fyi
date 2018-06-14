@@ -9,7 +9,7 @@ import shutil
 import tempfile
 import unittest
 
-from wptreport import WPTReport, InsufficientDataError
+from wptreport import WPTReport, InsufficientDataError, prepare_labels
 
 
 class WPTReportTest(unittest.TestCase):
@@ -272,6 +272,19 @@ class WPTReportTest(unittest.TestCase):
         self.assertEqual(r.product_id('_'),
                          'firefox_59.0_linux_4.4_afa59408e1')
 
+    def test_product_id_sanitize(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'chrome!',
+                'browser_version': '1.2.3 dev-1',
+                'os': 'linux',
+            }
+        }
+        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        self.assertEqual(r.product_id('-', sanitize=True),
+                         'chrome_-1.2.3_dev-1-linux-afa59408e1')
+
     def test_sha_product_path(self):
         r = WPTReport()
         r._report = {
@@ -301,3 +314,29 @@ class WPTReportTest(unittest.TestCase):
         self.assertEqual(r.sha_summary_path,
                          '0bdaaf9c1622ca49eb140381af1ece6d8001c934/'
                          'firefox-59.0-linux-afa59408e1-summary.json.gz')
+
+
+class HelpersTest(unittest.TestCase):
+    def test_prepare_labels_from_empty_str(self):
+        r = WPTReport()
+        r.update_metadata(browser_name='firefox')
+        self.assertListEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            ['blade-runner', 'firefox', 'stable']
+        )
+
+    def test_prepare_labels_from_custom_labels(self):
+        r = WPTReport()
+        r.update_metadata(browser_name='firefox')
+        self.assertListEqual(
+            prepare_labels(r, 'foo,bar', 'blade-runner'),
+            ['bar', 'blade-runner', 'firefox', 'foo', 'stable']
+        )
+
+    def test_prepare_labels_from_experimental_label(self):
+        r = WPTReport()
+        r.update_metadata(browser_name='firefox')
+        self.assertListEqual(
+            prepare_labels(r, 'experimental', 'blade-runner'),
+            ['blade-runner', 'experimental', 'firefox']
+        )

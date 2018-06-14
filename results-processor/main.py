@@ -116,6 +116,9 @@ def task_handler():
     uploader = params['uploader']
     gcs_path = params['gcs']
     result_type = params['type']
+    # Optional fields:
+    labels = params.get('labels', '')
+
     # TODO(Hexcles): Support multiple results.
     assert result_type == 'single'
 
@@ -144,7 +147,7 @@ def task_handler():
 
     revision = report.run_info['revision']
     # For consistency, use underscores in wptd-results.
-    product = report.product_id('_')
+    product = report.product_id('_', sanitize=True)
 
     resp = "{} results loaded from {}".format(len(report.results), gcs_path)
 
@@ -161,7 +164,7 @@ def task_handler():
 
     ds = datastore.Client()
     upload_token = ds.get(ds.key('Token', 'upload-token'))['Secret']
-    wptreport.create_test_run(report, uploader, upload_token,
+    wptreport.create_test_run(report, labels, uploader, upload_token,
                               results_gcs_path, raw_results_gcs_path)
 
     return resp

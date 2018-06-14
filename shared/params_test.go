@@ -377,3 +377,17 @@ func TestParseProductAtRevision_OSVersion(t *testing.T) {
 	assert.Equal(t, "4.4", productAtRevision.OSVersion)
 	assert.Equal(t, "latest", productAtRevision.Revision)
 }
+
+func TestParseComplete(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete", nil)
+	complete, _ := ParseCompleteParam(r)
+	assert.True(t, complete)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete=true", nil)
+	complete, _ = ParseCompleteParam(r)
+	assert.True(t, complete)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete=false", nil)
+	complete, _ = ParseCompleteParam(r)
+	assert.False(t, complete)
+}
