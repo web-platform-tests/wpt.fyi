@@ -53,6 +53,8 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	// Non-existent keys will have empty values, which will later be
 	// filtered out by scheduleResultsTask.
 	extraParams := map[string]string{
+		"labels": r.PostFormValue("labels"),
+		// The following fields will be deprecated when all runners embed metadata in the report.
 		"revision":        r.PostFormValue("revision"),
 		"browser_name":    r.PostFormValue("browser_name"),
 		"browser_version": r.PostFormValue("browser_version"),

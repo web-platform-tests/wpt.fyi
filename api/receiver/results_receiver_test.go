@@ -77,6 +77,43 @@ func TestHandleResultsUpload_success(t *testing.T) {
 	assert.Equal(t, resp.Code, http.StatusOK)
 }
 
+func TestHandleResultsUpload_extra_params(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	payload := url.Values{
+		"result_url":    {"http://wpt.fyi/test.json.gz"},
+		"browser_name":  {"firefox"},
+		"labels":        {"stable"},
+		"invalid_param": {"should be ignored"},
+	}
+	req := httptest.NewRequest("POST", "/api/results/upload", strings.NewReader(payload.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth("blade-runner", "123")
+	resp := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	f := &os.File{}
+	extraParams := map[string]string{
+		"browser_name":    "firefox",
+		"labels":          "stable",
+		"revision":        "",
+		"browser_version": "",
+		"os_name":         "",
+		"os_version":      "",
+	}
+	task := &taskqueue.Task{Name: "task"}
+	gomock.InOrder(
+		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().AuthenticateUploader("blade-runner", "123").Return(true),
+		mockAE.EXPECT().fetchURL("http://wpt.fyi/test.json.gz").Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", extraParams).Return(task, nil),
+	)
+
+	HandleResultsUpload(mockAE, resp, req)
+	assert.Equal(t, resp.Code, http.StatusOK)
+}
+
 func TestHandleFilePayload(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
