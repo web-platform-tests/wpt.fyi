@@ -4,7 +4,10 @@ FROM gcr.io/google-appengine/python
 
 # Install curl & gcloud SDK.
 RUN apt-get update -q
-RUN apt-get install -qy curl
+# curl needed by install-gcloud.sh
+# python-crcmod for faster gsutil checksum
+# https://cloud.google.com/storage/docs/gsutil/commands/rsync#slow-checksums
+RUN apt-get install -qy curl python-crcmod
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
 RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null
 ENV PATH=/opt/google-cloud-sdk/bin:$PATH
@@ -28,4 +31,8 @@ ADD . /app/
 # The number of workers should always be 2: one for processing tasks, the other
 # for responding health checks. Scale the service by increasing the number of
 # instances instead.
-CMD exec gunicorn --bind :$PORT --timeout 3600 --workers 2 main:app
+# The timeout for gunicorn should be significantly longer than the timeout in
+# main.py for liveness checks, because when things go wrong we'd like AppEngine
+# to restart a fresh Docker instance instead of having gunicorn to restart the
+# worker (which would require extra cleanup/recovery logic).
+CMD exec gunicorn --bind :$PORT --timeout 7200 --workers 2 main:app

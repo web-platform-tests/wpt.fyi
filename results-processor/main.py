@@ -27,8 +27,9 @@ LOCK_FILE = '/tmp/results-processor.lock'
 # because the attempts to acquire a file lock invoke open() in truncate mode.
 TIMESTAMP_FILE = '/tmp/results-processor.last'
 # If the processing takes more than this timeout (in seconds), the instance is
-# considered unhealthy and will be restarted by AppEngine.
-TIMEOUT = 3600
+# considered unhealthy and will be restarted by AppEngine. We set it to be
+# smaller than the 60-minute timeout of AppEngine to give a safe margin.
+TIMEOUT = 3500
 
 
 logging.basicConfig(level=logging.INFO)
@@ -158,7 +159,12 @@ def task_handler():
     tempdir = report.populate_upload_directory()
     results_gcs_path = '/{}/{}'.format(
         config.results_bucket(), report.sha_summary_path)
-    gsutil.rsync(tempdir, 'gs://{}/'.format(config.results_bucket()),
+    gsutil.copy(os.path.join(tempdir, report.sha_summary_path),
+                'gs://{}/{}'.format(config.results_bucket(),
+                                    report.sha_summary_path))
+    gsutil.rsync(os.path.join(tempdir, report.sha_product_path),
+                 'gs://{}/{}'.format(config.results_bucket(),
+                                     report.sha_product_path),
                  quiet=True)
     shutil.rmtree(tempdir)
 
