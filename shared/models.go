@@ -125,7 +125,7 @@ func (ids TestRunIDs) LoadTestRuns(ctx context.Context) (testRuns TestRuns, err 
 			return testRuns, err
 		}
 	}
-	return nil, err
+	return testRuns, err
 }
 
 // Browser holds objects that appear in browsers.json
