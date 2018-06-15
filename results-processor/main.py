@@ -150,23 +150,27 @@ def task_handler():
     # For consistency, use underscores in wptd-results.
     product = report.product_id('_', sanitize=True)
 
-    resp = "{} results loaded from {}".format(len(report.results), gcs_path)
+    resp = "{} results loaded from {}\n".format(len(report.results), gcs_path)
 
     raw_results_gcs_path = '/{}/{}/{}/report.json'.format(
         config.raw_results_bucket(), revision, product)
     gsutil.copy('gs:/' + gcs_path, 'gs:/' + raw_results_gcs_path)
 
-    tempdir = report.populate_upload_directory()
-    results_gcs_path = '/{}/{}'.format(
-        config.results_bucket(), report.sha_summary_path)
-    gsutil.copy(os.path.join(tempdir, report.sha_summary_path),
-                'gs://{}/{}'.format(config.results_bucket(),
-                                    report.sha_summary_path))
-    gsutil.rsync(os.path.join(tempdir, report.sha_product_path),
-                 'gs://{}/{}'.format(config.results_bucket(),
-                                     report.sha_product_path),
-                 quiet=True)
-    shutil.rmtree(tempdir)
+    tempdir = tempfile.mkdtemp()
+    try:
+        report.populate_upload_directory(output_dir=tempdir)
+        results_gcs_path = '/{}/{}'.format(
+            config.results_bucket(), report.sha_summary_path)
+        gsutil.copy(os.path.join(tempdir, report.sha_summary_path),
+                    'gs:/' + results_gcs_path)
+        gsutil.rsync(os.path.join(tempdir, report.sha_product_path),
+                     # The trailing slash is crucial.
+                     'gs://{}/{}/'.format(config.results_bucket(),
+                                          report.sha_product_path),
+                     quiet=True)
+        resp += "Uploaded to gs:/{}\n".format(results_gcs_path)
+    finally:
+        shutil.rmtree(tempdir)
 
     ds = datastore.Client()
     upload_token = ds.get(ds.key('Token', 'upload-token'))['Secret']
