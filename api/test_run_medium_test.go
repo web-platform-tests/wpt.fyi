@@ -19,7 +19,7 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-func TestGetTestRuns(t *testing.T) {
+func TestGetTestRunByID(t *testing.T) {
 	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
 	assert.Nil(t, err)
 	defer i.Close()
@@ -45,6 +45,10 @@ func TestGetTestRuns(t *testing.T) {
 	resp = httptest.NewRecorder()
 	apiTestRunGetHandler(resp, r)
 	assert.Equal(t, http.StatusOK, resp.Code)
+	var bodyTestRun shared.TestRun
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &bodyTestRun)
+	assert.Equal(t, int64(123), bodyTestRun.ID)
 }
 
 func TestGetTestRuns_VersionPrefix(t *testing.T) {

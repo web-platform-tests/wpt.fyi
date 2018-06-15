@@ -10,6 +10,17 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+// LoadTestRun loads the TestRun entity for the given key.
+func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
+	var testRun TestRun
+	key := datastore.NewKey(ctx, "TestRun", "", id, nil)
+	if err := datastore.Get(ctx, key, &testRun); err != nil {
+		return nil, err
+	}
+	testRun.ID = key.IntID()
+	return &testRun, nil
+}
+
 // LoadTestRuns loads the TestRun entities for the given parameters.
 // It is encapsulated because we cannot run single queries with multiple inequality
 // filters, so must load the keys and merge the results.
