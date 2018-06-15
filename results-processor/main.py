@@ -161,13 +161,16 @@ def task_handler():
         report.populate_upload_directory(output_dir=tempdir)
         results_gcs_path = '/{}/{}'.format(
             config.results_bucket(), report.sha_summary_path)
-        gsutil.copy(os.path.join(tempdir, report.sha_summary_path),
-                    'gs:/' + results_gcs_path)
-        gsutil.rsync(os.path.join(tempdir, report.sha_product_path),
-                     # The trailing slash is crucial.
-                     'gs://{}/{}/'.format(config.results_bucket(),
-                                          report.sha_product_path),
-                     quiet=True)
+        gsutil.copy(
+            os.path.join(tempdir, report.sha_summary_path),
+            'gs:/' + results_gcs_path,
+            gzipped=True)
+        gsutil.rsync_gzip(
+            os.path.join(tempdir, report.sha_product_path),
+            # The trailing slash is crucial (wpt.fyi#275).
+            'gs://{}/{}/'.format(config.results_bucket(),
+                                 report.sha_product_path),
+            quiet=True)
         resp += "Uploaded to gs:/{}\n".format(results_gcs_path)
     finally:
         shutil.rmtree(tempdir)
