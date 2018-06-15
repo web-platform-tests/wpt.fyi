@@ -72,9 +72,9 @@ go_medium_test: go_deps dev_appserver_deps
 	cd $(GOPATH)/src/github.com/golang/protobuf; git checkout ac606b1
 	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
 
-go_large_test: go_webdriver_test
+go_large_test: go_all_browsers_test
 
-integration_test: go_webdriver_test web_components_test
+integration_test: go_all_browsers_test web_components_test
 
 go_all_browsers_test: go_firefox_test go_chrome_test
 
