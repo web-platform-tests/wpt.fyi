@@ -4,7 +4,10 @@ FROM gcr.io/google-appengine/python
 
 # Install curl & gcloud SDK.
 RUN apt-get update -q
-RUN apt-get install -qy curl
+# curl needed by install-gcloud.sh
+# python-crcmod for faster gsutil checksum
+# https://cloud.google.com/storage/docs/gsutil/commands/rsync#slow-checksums
+RUN apt-get install -qy curl python-crcmod
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
 RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null
 ENV PATH=/opt/google-cloud-sdk/bin:$PATH
