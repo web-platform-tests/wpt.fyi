@@ -41,8 +41,8 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Invalid id '%s'", idParam), http.StatusBadRequest)
 			return
 		}
-		key := datastore.NewKey(ctx, "TestRun", "", id, nil)
-		if err = datastore.Get(ctx, key, &testRun); err != nil {
+		run, err := shared.LoadTestRun(ctx, id)
+		if err != nil {
 			if err == datastore.ErrNoSuchEntity {
 				http.NotFound(w, r)
 				return
@@ -50,6 +50,7 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		testRun = *run
 	} else {
 		runSHA, err := shared.ParseSHAParam(r)
 		if err != nil {
