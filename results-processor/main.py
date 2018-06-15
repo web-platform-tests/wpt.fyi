@@ -27,8 +27,9 @@ LOCK_FILE = '/tmp/results-processor.lock'
 # because the attempts to acquire a file lock invoke open() in truncate mode.
 TIMESTAMP_FILE = '/tmp/results-processor.last'
 # If the processing takes more than this timeout (in seconds), the instance is
-# considered unhealthy and will be restarted by AppEngine.
-TIMEOUT = 5400
+# considered unhealthy and will be restarted by AppEngine. We set it to be
+# smaller than the 60-minute timeout of AppEngine to give a safe margin.
+TIMEOUT = 3500
 
 
 logging.basicConfig(level=logging.INFO)
