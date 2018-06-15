@@ -158,7 +158,12 @@ def task_handler():
     tempdir = report.populate_upload_directory()
     results_gcs_path = '/{}/{}'.format(
         config.results_bucket(), report.sha_summary_path)
-    gsutil.rsync(tempdir, 'gs://{}/'.format(config.results_bucket()),
+    gsutil.copy(os.path.join(tempdir, report.sha_summary_path),
+                'gs://{}/{}'.format(config.results_bucket(),
+                                    report.sha_summary_path))
+    gsutil.rsync(os.path.join(tempdir, report.sha_product_path),
+                 'gs://{}/{}'.format(config.results_bucket(),
+                                     report.sha_product_path),
                  quiet=True)
     shutil.rmtree(tempdir)
 
