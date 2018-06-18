@@ -25,7 +25,12 @@ __Parameters__
 
 __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
 
-__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`
+__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`.
+
+__`labels`__: A comma-separated list of labels, e.g. `firefox,stable`; only runs with all
+the given labels will be returned. There are currently two kinds of labels supported,
+browser names (`chrome`, `edge`, `firefox`, `safari`) and release channels (`experimental`
+or `stable`).
 
 __`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
 
