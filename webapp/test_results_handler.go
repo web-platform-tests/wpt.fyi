@@ -149,14 +149,17 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Product.String()))
 		}
 	} else {
-		var sourceURL = `/api/runs?sha=%s&complete=true`
+		var sourceURL = `/api/runs?complete=true`
+		if !shared.IsLatest(runSHA) {
+			sourceURL = fmt.Sprintf(`/api/runs?sha=%s`, runSHA)
+		}
 		labels := shared.ParseLabelsParam(r)
 		if labels != nil {
 			for label := range labels.Iterator().C {
 				sourceURL = sourceURL + "&label=" + label.(string)
 			}
 		}
-		testRunSources = []string{fmt.Sprintf(sourceURL, runSHA)}
+		testRunSources = []string{sourceURL}
 	}
 	return testRunSources, testRuns, nil
 }
