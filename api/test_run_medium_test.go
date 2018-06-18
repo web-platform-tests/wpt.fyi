@@ -140,5 +140,5 @@ func TestTestRunPostHandler(t *testing.T) {
 	resp := httptest.NewRecorder()
 
 	TestRunPostHandler(resp, r)
-	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Equal(t, http.StatusCreated, resp.Code)
 }
