@@ -85,7 +85,7 @@ go_chrome_test: BROWSER = chrome
 go_chrome_test: go_webdriver_test
 
 go_webdriver_test: STAGING := false
-go_webdriver_test: var-BROWSER $(BROWSER) go_deps xvfb node-web-component-tester webserver_deps
+go_webdriver_test: var-BROWSER $(BROWSER) java go_deps xvfb node-web-component-tester webserver_deps
 	if [ "$(USE_FRAME_BUFFER)" == "true" ]; then ($(START_XVFB)); fi
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
