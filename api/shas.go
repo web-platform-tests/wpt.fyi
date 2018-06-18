@@ -41,7 +41,10 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	var shas []string
-	if complete, err := shared.ParseCompleteParam(r); err != nil && complete {
+	if complete, err := shared.ParseCompleteParam(r); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid 'complete' param: %s", r.URL.Query().Get("complete")), http.StatusBadRequest)
+		return
+	} else if complete {
 		if shas, err = getCompleteRunSHAs(ctx, from, limit); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
