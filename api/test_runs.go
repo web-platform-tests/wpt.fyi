@@ -52,7 +52,10 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
 
 	var shas []string
-	if complete, err := shared.ParseCompleteParam(r); err == nil && complete {
+	if complete, err := shared.ParseCompleteParam(r); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid 'complete' param: %s", r.URL.Query().Get("complete")), http.StatusBadRequest)
+		return
+	} else if complete {
 		if runSHA == "latest" {
 			shas, err = getCompleteRunSHAs(ctx, from, limit)
 			if err != nil {
