@@ -15,6 +15,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/revisions/epoch"
 	agit "github.com/web-platform-tests/wpt.fyi/revisions/git"
 	"golang.org/x/time/rate"
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 var epochs = []epoch.Epoch{
@@ -66,7 +67,7 @@ func init() {
 
 			log.Print("INFO: Periodic announcer update: Updating...")
 			err = ancr.Fetch()
-			if err != nil {
+			if err != nil && err != git.NoErrAlreadyUpToDate {
 				log.Printf("ERRO: Error updating announcer: %v", err)
 			}
 			log.Print("INFO: Update complete")
