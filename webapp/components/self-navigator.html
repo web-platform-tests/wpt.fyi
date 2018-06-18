@@ -1,0 +1,87 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<dom-module id='self-navigator'>
+  <script>
+    // eslint-disable-next-line no-unused-vars
+    const SelfNavigation = (superClass) => class extends superClass {
+      static get properties() {
+        return {
+          path: {
+            type: String,
+            value: '/',
+            observer: 'pathUpdated',
+          }
+        };
+      }
+
+      ready() {
+        super.ready();
+        this.path = this.urlToPath(window.location);
+      }
+
+      async connectedCallback() {
+        await super.connectedCallback();
+        window.onpopstate = () => {
+          this.path = this.urlToPath(window.location);
+        };
+      }
+
+      urlToPath(location) {
+        return location.pathname;
+      }
+
+      pathUpdated() {
+        // Default: Do nothing.
+      }
+
+      /**
+       * Get the path prefix when creating history.
+       */
+      navigationPathPrefix() {
+        return '';
+      }
+
+      /**
+       * Get query params to persist when creating history.
+       */
+      navigationQueryParams() {
+        return {};
+      }
+
+      bindNavigate() {
+        return this.navigate.bind(this);
+      }
+
+      navigate(event) {
+        event.preventDefault();
+        this.navigateToLocation(event.target);
+      }
+
+      navigateToLocation(location) {
+        let path = this.urlToPath(location);
+        if (path === this.path) {
+          return;
+        }
+        this.path = path;
+
+        let sep = path.indexOf('?') < 0 ? '?' : '&';
+        let params = '';
+        Object.entries(this.navigationQueryParams()).forEach(e => {
+          const [k, v] = e;
+          const list = (v instanceof Array) ? v : [v];
+          list.forEach(item => {
+            params += `${sep}${k}=${item}`;
+            sep = '&';
+          });
+        });
+        window.history.pushState(
+          {}, '', `${this.navigationPathPrefix()}${path}${params}`);
+
+        // Send Google Analytics pageview event
+        if ('ga' in window) {
+          window.ga('send', 'pageview', path);
+        }
+      }
+    };
+  </script>
+</dom-module>

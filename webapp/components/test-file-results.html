@@ -104,14 +104,14 @@ found in the LICENSE file.
         resultPerTestRun.forEach((resultData, i) => {
           if (!resultData) {
             this.testRuns[i].subtests = {};
-            this.testRuns[i].subtests['Test file'] = { status: '(results not found)' };
+            this.testRuns[i].subtests['Harness status'] = { status: '(results not found)' };
             return;
           }
           this.testRuns[i].subtests = {};
-          this.testRuns[i].subtests['Test file'] = { status: resultData.status };
+          this.testRuns[i].subtests['Harness status'] = { status: resultData.status };
 
-          if (!this.subtestNames.includes('Test file')) {
-            this.subtestNames = this.subtestNames.concat(['Test file']);
+          if (!this.subtestNames.includes('Harness status')) {
+            this.subtestNames = this.subtestNames.concat(['Harness status']);
           }
 
           for (let subtestResult of resultData.subtests) {

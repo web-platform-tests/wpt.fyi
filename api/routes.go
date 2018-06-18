@@ -17,6 +17,9 @@ func RegisterRoutes() {
 	// API endpoint for listing all test runs for a given SHA.
 	shared.AddRoute("/api/runs", "api-test-runs", apiTestRunsHandler)
 
+	// API endpoint for listing SHAs for the test runs.
+	shared.AddRoute("/api/shas", "api-shas", apiSHAsHandler)
+
 	// API endpoints for a single test run, by
 	// ID:
 	shared.AddRoute("/api/runs/{id}", "api-test-run", apiTestRunHandler)

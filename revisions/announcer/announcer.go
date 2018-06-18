@@ -146,7 +146,6 @@ type GitRemoteAnnouncerConfig struct {
 	RemoteName string
 	BranchName string
 	Depth      int
-	Tags       git.TagMode
 	EpochReferenceIterFactory
 	agit.Git
 }
@@ -256,23 +255,28 @@ func (a *gitRemoteAnnouncer) Fetch() (err error) {
 	}
 
 	name := a.cfg.BranchName
-	refSpec := config.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/remotes/origin/%s", name, name))
+	updateSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/origin/%s", name, name)
+	refSpec := config.RefSpec(updateSpec)
 	if err = a.repo.Fetch(&git.FetchOptions{
 		RemoteName: a.cfg.RemoteName,
 		RefSpecs:   []config.RefSpec{refSpec},
 		Depth:      a.cfg.Depth,
-		Tags:       a.cfg.Tags,
 	}); err != nil {
-		if err == git.NoErrAlreadyUpToDate {
-			log.Printf("INFO: Already up-to-date")
-			return nil
+		if err != git.NoErrAlreadyUpToDate {
+
+			log.Printf("ERRO: %v", err)
+			return err
 		}
-
-		log.Printf("ERRO: %v", err)
-		return err
+		log.Printf("INFO: Branch already up-to-date: %s", updateSpec)
 	}
+	log.Printf("INFO: Updated branch %s", updateSpec)
 
-	return nil
+	// go-git will only fetch tags when:
+	// 1. FetchOptions.Tags == TagFollowing (the default);
+	// 2. **All** RefSpecs being fetched contain a wildcard.
+	//
+	// Hence, separate fetch for tags when initial fetch contained no wildcards.
+	return a.fetchTags()
 }
 
 // Reset drops reference to the current repository (if any) and performs creates a new clone according to a.cfg.
@@ -284,12 +288,33 @@ func (a *gitRemoteAnnouncer) Reset() error {
 		RemoteName:    cfg.RemoteName,
 		ReferenceName: refName,
 		Depth:         cfg.Depth,
-		Tags:          cfg.Tags,
 	})
 	if err != nil {
 		log.Printf("ERRO: Error creating git clone: %v", err)
 		return err
 	}
 	a.repo = repo
+
+	return a.fetchTags()
+}
+
+func (a *gitRemoteAnnouncer) fetchTags() error {
+	updateSpec := fmt.Sprintf("+refs/tags/*:refs/remotes/origin/tags/*")
+	refSpec := config.RefSpec(updateSpec)
+	if err := a.repo.Fetch(&git.FetchOptions{
+		RemoteName: a.cfg.RemoteName,
+		RefSpecs:   []config.RefSpec{refSpec},
+		Depth:      a.cfg.Depth,
+	}); err != nil {
+		if err == git.NoErrAlreadyUpToDate {
+			log.Printf("INFO: Tags already up-to-date: %s", updateSpec)
+			return nil
+		}
+
+		log.Printf("ERRO: %v", err)
+		return err
+	}
+	log.Printf("INFO: Updated tags %s", updateSpec)
+
 	return nil
 }

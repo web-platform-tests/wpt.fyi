@@ -558,7 +558,17 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 	bRepo := test.NewMockRepository([]test.Tag{updatedTag}, test.NilFetchImpl)
 	pValue := ProxyRepository{}
 	pRepo := &pValue
+
+	// TODO(markdittmer): This is brittle; it depends on the implementation detail
+	// that aRepo setup will invoke Fetch() exactly once to ensure that its tags
+	// are fetched. Consider switching to mockgen mocks for Repository objects.
+	aFetchCount := 0
 	aRepo := test.NewMockRepository([]test.Tag{}, func(mr *test.MockRepository, o *git.FetchOptions) error {
+		aFetchCount++
+		if aFetchCount == 1 {
+			return nil
+		}
+
 		pRepo.Set(bRepo)
 		return fetchErr
 	})

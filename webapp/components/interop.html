@@ -11,6 +11,7 @@ found in the LICENSE file.
 <link rel="import" href="path-part.html">
 <link rel="import" href="runs.html">
 <link rel="import" href="test-run.html">
+<link rel="import" href="self-navigator.html">
 
 <dom-module id="wpt-interop">
 <template>
@@ -112,7 +113,7 @@ found in the LICENSE file.
     <table>
       <thead>
       <tr>
-        <template is="dom-repeat" items="{{ allMetrics.metadata.test_runs }}"
+        <template is="dom-repeat" items="{{ passRateMetadata.test_runs }}"
                   as="testRun">
           <th>
             <test-run test-run="[[testRun]]"></test-run>
@@ -157,15 +158,12 @@ found in the LICENSE file.
         <th>Path</th>
         <template is="dom-if" if="{{ thLabels.length }}">
           <th colspan="100">Tests Passing in <var>X</var> / 4 Browsers</th>
-          <!--
-          <th colspan="100">Browsers Passing, out of {{ allMetrics.metadata.test_runs.length }}</th>
-          -->
         </template>
       </tr>
       <tr>
         <th>&nbsp;</th>
+        <!-- Repeats for as many different browser test runs are available, plus one -->
         <template is="dom-repeat" items="{{ thLabels }}" as="label">
-          <!-- Repeats for as many different browser test runs are available, plus one -->
           <th class="th-label">{{ label }}</th>
         </template>
       </tr>
@@ -189,7 +187,6 @@ found in the LICENSE file.
 
 <script>
 
-  const urlToMetricsPath = location => location.pathname.replace(/\/interop(.+)(\/)?$/, '$1');
   const urlToQuery = location => {
     // Drop initial "?" from url.search.
     const search = location.search;
@@ -212,12 +209,14 @@ found in the LICENSE file.
 
   const queryTimeoutId = Symbol('queryTimeoutId');
 
-  class WPTInterop extends window.Polymer.Element {
+  /* global SelfNavigation */
+  class WPTInterop extends SelfNavigation(window.Polymer.Element) {
     static get is() {
       return 'wpt-interop';
     }
     static get properties() {
       return {
+        sha: String,
         passRateMetadata: Object,
         allMetrics: Object,
         metrics: {
@@ -227,10 +226,6 @@ found in the LICENSE file.
         scheme: {
           type: String,
           computed: 'computeTestScheme(path)'
-        },
-        path: {
-          type: String,
-          value: urlToMetricsPath(window.location)
         },
         currentNode: {
           type: Object,
@@ -247,7 +242,7 @@ found in the LICENSE file.
         },
         thLabels: {
           type: Array,
-          computed: 'computeThLabels(allMetrics)'
+          computed: 'computeThLabels(passRateMetadata)'
         },
         queryPlaceholder: {
           type: String,
@@ -262,12 +257,6 @@ found in the LICENSE file.
 
     async connectedCallback() {
       await super.connectedCallback();
-      window.onpopstate = (event) => {
-        const state = event.state;
-        this.path = state.path || '/';
-        this.query = state.query || '';
-      };
-      this.initState({path: this.path, query: this.query});
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
     }
 
@@ -297,43 +286,28 @@ found in the LICENSE file.
       });
     }
 
-    bindNavigate() {
-      return this.navigate.bind(this);
-    }
-
     navigate(event) {
-      event.preventDefault();
-      let path = urlToMetricsPath(event.target);
-      if (this.path === path) {
-        return;
-      }
-      this.path = path;
-      // Clear query when navigating to a new path.
       this.query = '';
-      this.navigateState({path: this.path, query: this.query});
-      // Send Google Analytics pageview event
-      if ('ga' in window) {
-        window.ga('send', 'pageview', path);
+      super.navigate(event);
+    }
+
+    urlToPath(location) {
+      return location.pathname.replace(/\/interop(.+)(\/)?$/, '$1');
+    }
+
+    navigationPathPrefix() {
+      return '/interop';
+    }
+
+    navigationQueryParams() {
+      let params = {};
+      if (this.sha && this.sha !== '' && this.sha !== 'latest') {
+        params['sha'] = this.sha;
       }
-    }
-
-    initState(state) {
-      this.doState(window.history.replaceState.bind(window.history), state);
-    }
-
-    navigateState(state) {
-      this.doState(window.history.pushState.bind(window.history), state);
-    }
-
-    doState(stateFunc, state) {
-      const path = state.path;
-      const query = state.query;
-      if (!query) {
-        stateFunc(state, '', `/interop${path}`);
-        return;
+      if (this.query) {
+        params['q'] = window.encodeURIComponent(this.query);
       }
-      const encodedQuery = window.encodeURIComponent(query);
-      stateFunc(state, '', `/interop${path}?q=${encodedQuery}`);
+      return params;
     }
 
     computeTestScheme(path) {
@@ -347,8 +321,11 @@ found in the LICENSE file.
       return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
     }
 
-    computeThLabels(allMetrics) {
-      const numLabels = allMetrics.metadata.test_runs.length + 1;
+    computeThLabels(metadata) {
+      if (!metadata || !metadata.test_runs) {
+        return;
+      }
+      const numLabels = metadata.test_runs.length + 1;
       let labels = [];
       for (let i = 0; i < numLabels; i++) {
         labels[i] = `${i} / ${numLabels - 1}`;
@@ -409,10 +386,6 @@ found in the LICENSE file.
         window.clearTimeout(this[queryTimeoutId]);
       }
       this[queryTimeoutId] = window.setTimeout(this.updateQueryState.bind(this), 500);
-    }
-
-    updateQueryState() {
-      this.navigateState({path: this.path, query: this.query});
     }
 
     computeQueryPlaceholder() {

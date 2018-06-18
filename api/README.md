@@ -25,7 +25,12 @@ __Parameters__
 
 __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
 
-__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`
+__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`.
+
+__`labels`__: A comma-separated list of labels, e.g. `firefox,stable`; only runs with all
+the given labels will be returned. There are currently two kinds of labels supported,
+browser names (`chrome`, `edge`, `firefox`, `safari`) and release channels (`experimental`
+or `stable`).
 
 __`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
 
@@ -104,24 +109,36 @@ __Example JSON__
       "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
     }
 
-### /api/diff
+### /api/shas
 
-Computes a TestRun summary JSON blob of the differences between two TestRun
-summary blobs.
+Gets an array of revisions (SHA[0:10]), in reverse chronological order.
+This method behaves similarly to [/api/runs](#apiruns) above, but projects the `revision` field's value.
 
 __Parameters__
 
-__`before`__ : [product]@[sha] spec for the TestRun to use as the before state.
+__`complete`__ : boolean for whether to get only SHAs which were executed across all four of the default (stable) browsers. Not compatible with `product`.
 
-__`after`__ : [product]@[sha] spec for the TestRun to use as the after state.
+__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`
 
-__`path`__ : Test path to filter by. `path` is a repeatable query parameter.
+__`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
 
-__`filter`__ : Differences to include in the summary.
- - `A` : Added - tests which are present after, but not before.
- - `D` : Deleted - tests which are present before, but not after.
- - `C` : Changed - tests which are present before and after, but the results summary is different.
- - `U` : Unchanged - tests which are present before and after, and the results summary count is not different.
+__`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
+
+#### Example
+
+https://wpt.fyi/api/shas?product=chrome
+
+__Example JSON__
+
+    [
+      "98530fb944",
+      "2bd11b91d4"//, ...
+    ]
+
+## Results summaries
+
+The following methods apply to the results summaries JSON blobs, which are linked to from
+[TestRun entities](#test-run-entities).
 
 ### /results
 
@@ -154,6 +171,30 @@ __Example JSON__ (from the summary.json.gz output):
       "/css/css-writing-modes/table-progression-vrl-001.html": [1, 1],
       // ...
     }
+
+### /api/diff
+
+Computes a TestRun summary JSON blob of the differences between two TestRun
+summary blobs.
+
+__Parameters__
+
+__`before`__ : [product]@[sha] spec for the TestRun to use as the before state.
+
+__`after`__ : [product]@[sha] spec for the TestRun to use as the after state.
+
+__`path`__ : Test path to filter by. `path` is a repeatable query parameter.
+
+__`filter`__ : Differences to include in the summary.
+ - `A` : Added - tests which are present after, but not before.
+ - `D` : Deleted - tests which are present before, but not after.
+ - `C` : Changed - tests which are present before and after, but the results summary is different.
+ - `U` : Unchanged - tests which are present before and after, and the results summary count is not different.
+
+## Test Manifest
+
+The following methods apply to the retrieval and filtering of the Test Manifest in [WPT](https://github.com/web-platform-tests/wpt),
+which contains metadata about each test.
 
 ### /api/manifest
 
@@ -211,6 +252,9 @@ __Content type__: `multipart/form-data`
 __Parameters__
 
 __`result_file`__: A gzipped JSON file produced by `wpt run --log-wptreport`.
+
+__`labels`__: (Optional) A comma-separated string of labels for this test run. Currently recognized
+labels are "experimental" and "stable" (the release channel of the tested browser).
 
 The JSON file roughly looks like this:
 

@@ -22,6 +22,7 @@ if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
 
 APP_DEPS="${APP_PATH}|shared"
 if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api"; fi
+if [[ "${APP_PATH}" == "revisions/service" ]]; then APP_DEPS="${APP_DEPS}|revisions"; fi
 APP_DEPS_REGEX="^(${APP_DEPS})/"
 
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"

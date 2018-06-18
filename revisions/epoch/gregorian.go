@@ -23,10 +23,12 @@ func (Monthly) GetData() Data {
 
 // IsEpochal indicates whether or not a monthly epochal change occur between prev and next.
 func (Monthly) IsEpochal(prev time.Time, next time.Time) bool {
-	if prev.Year() != next.Year() {
+	pu := prev.UTC()
+	pn := next.UTC()
+	if pu.Year() != pn.Year() {
 		return true
 	}
-	return prev.Month() != next.Month()
+	return pu.Month() != pn.Month()
 }
 
 // Weekly models an epoch that changes at the beginning of every week. Weeks begin on Sundays.
@@ -44,13 +46,15 @@ func (Weekly) GetData() Data {
 
 // IsEpochal indicates whether or not a weekly epochal change occur between prev and next.
 func (e Weekly) IsEpochal(prev time.Time, next time.Time) bool {
-	if prev.After(next) {
-		return e.IsEpochal(next, prev)
+	pu := prev.UTC()
+	pn := next.UTC()
+	if pu.After(pn) {
+		return e.IsEpochal(pn, pu)
 	}
-	if next.Sub(prev).Hours() >= 24*7 {
+	if pn.Sub(pu).Hours() >= 24*7 {
 		return true
 	}
-	return prev.Weekday() > next.Weekday()
+	return pu.Weekday() > pn.Weekday()
 }
 
 // Daily models an epoch that changes at the beginning of every day.
@@ -68,13 +72,15 @@ func (Daily) GetData() Data {
 
 // IsEpochal indicates whether or not a daily epochal change occur between prev and next.
 func (e Daily) IsEpochal(prev time.Time, next time.Time) bool {
-	if prev.After(next) {
-		return e.IsEpochal(next, prev)
+	pu := prev.UTC()
+	pn := next.UTC()
+	if pu.After(pn) {
+		return e.IsEpochal(pn, pu)
 	}
-	if next.Sub(prev).Hours() >= 24 {
+	if pn.Sub(pu).Hours() >= 24 {
 		return true
 	}
-	return prev.Day() != next.Day()
+	return pu.Day() != pn.Day()
 }
 
 // Hourly models an epoch that changes at the beginning of every hour.
@@ -92,11 +98,13 @@ func (Hourly) GetData() Data {
 
 // IsEpochal indicates whether or not an hourly epochal change occur between prev and next.
 func (e Hourly) IsEpochal(prev time.Time, next time.Time) bool {
-	if prev.After(next) {
-		return e.IsEpochal(next, prev)
+	pu := prev.UTC()
+	pn := next.UTC()
+	if pu.After(pn) {
+		return e.IsEpochal(pn, pu)
 	}
-	if next.Sub(prev).Hours() >= 1 {
+	if pn.Sub(pu).Hours() >= 1 {
 		return true
 	}
-	return prev.Hour() != next.Hour()
+	return pu.Hour() != pn.Hour()
 }

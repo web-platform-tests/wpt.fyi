@@ -140,9 +140,23 @@ go_packages: git
 golint_deps: git go_deps
 	# Manual git clone + install is a workaround for #85.
 	if [ "$$(which golint)" == "" ]; then \
+		mkdir -p $(GOPATH)/src/golang.org/x/tools; \
+    git clone https://go.googlesource.com/tools $(GOPATH)/src/golang.org/x/tools; \
+    cd $(GOPATH)/src/golang.org/x/tools; \
+    git checkout release-branch.go1.10; \
 		mkdir -p "$(GOPATH)/src/golang.org/x"; \
 		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint; \
 		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...; \
+	fi
+
+package_announcer: var-APP_PATH
+	if [[ "$(APP_PATH)" == "revisions/service" ]]; then \
+		export TMP_DIR=$$(mktemp -d); \
+		rm -rf $(WPTD_PATH)revisions/service/wpt.fyi; \
+		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
+		mkdir $(WPTD_PATH)revisions/service/wpt.fyi; \
+		cp -r $${TMP_DIR}/* $(WPTD_PATH)revisions/service/wpt.fyi/; \
+		rm -rf $${TMP_DIR}; \
 	fi
 
 sys_deps: curl gpg node gcloud git
@@ -189,10 +203,11 @@ dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run util/populate_dev_data.go $(FLAGS)
 
-deploy_staging: gcloud webapp_deps var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
+deploy_staging: gcloud webapp_deps package_announcer var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
 	gcloud config set project $(PROJECT)
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
+	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 
 bower_components: git node-bower
 	cd $(WPTD_PATH)webapp; npm run bower-components

@@ -27,8 +27,9 @@ LOCK_FILE = '/tmp/results-processor.lock'
 # because the attempts to acquire a file lock invoke open() in truncate mode.
 TIMESTAMP_FILE = '/tmp/results-processor.last'
 # If the processing takes more than this timeout (in seconds), the instance is
-# considered unhealthy and will be restarted by AppEngine.
-TIMEOUT = 3600
+# considered unhealthy and will be restarted by AppEngine. We set it to be
+# smaller than the 60-minute timeout of AppEngine to give a safe margin.
+TIMEOUT = 3500
 
 
 logging.basicConfig(level=logging.INFO)
@@ -116,6 +117,9 @@ def task_handler():
     uploader = params['uploader']
     gcs_path = params['gcs']
     result_type = params['type']
+    # Optional fields:
+    labels = params.get('labels', '')
+
     # TODO(Hexcles): Support multiple results.
     assert result_type == 'single'
 
@@ -144,24 +148,36 @@ def task_handler():
 
     revision = report.run_info['revision']
     # For consistency, use underscores in wptd-results.
-    product = report.product_id('_')
+    product = report.product_id('_', sanitize=True)
 
-    resp = "{} results loaded from {}".format(len(report.results), gcs_path)
+    resp = "{} results loaded from {}\n".format(len(report.results), gcs_path)
 
     raw_results_gcs_path = '/{}/{}/{}/report.json'.format(
         config.raw_results_bucket(), revision, product)
     gsutil.copy('gs:/' + gcs_path, 'gs:/' + raw_results_gcs_path)
 
-    tempdir = report.populate_upload_directory()
-    results_gcs_path = '/{}/{}'.format(
-        config.results_bucket(), report.sha_summary_path)
-    gsutil.rsync(tempdir, 'gs://{}/'.format(config.results_bucket()),
-                 quiet=True)
-    shutil.rmtree(tempdir)
+    tempdir = tempfile.mkdtemp()
+    try:
+        report.populate_upload_directory(output_dir=tempdir)
+        results_gcs_path = '/{}/{}'.format(
+            config.results_bucket(), report.sha_summary_path)
+        gsutil.copy(
+            os.path.join(tempdir, report.sha_summary_path),
+            'gs:/' + results_gcs_path,
+            gzipped=True)
+        gsutil.rsync_gzip(
+            os.path.join(tempdir, report.sha_product_path),
+            # The trailing slash is crucial (wpt.fyi#275).
+            'gs://{}/{}/'.format(config.results_bucket(),
+                                 report.sha_product_path),
+            quiet=True)
+        resp += "Uploaded to gs:/{}\n".format(results_gcs_path)
+    finally:
+        shutil.rmtree(tempdir)
 
     ds = datastore.Client()
     upload_token = ds.get(ds.key('Token', 'upload-token'))['Secret']
-    wptreport.create_test_run(report, uploader, upload_token,
+    wptreport.create_test_run(report, labels, uploader, upload_token,
                               results_gcs_path, raw_results_gcs_path)
 
     return resp

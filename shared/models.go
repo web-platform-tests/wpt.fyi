@@ -90,6 +90,13 @@ type TestRun struct {
 	Labels []string `json:"labels"`
 }
 
+// IsExperimental returns whether the run is experimental, for both the legacy
+// behaviour (-experimental suffix on browser name) and the new behaviour
+// (experimental label).
+func (run TestRun) IsExperimental() bool {
+	return contains(run.Labels, ExperimentalLabel) || strings.HasSuffix(run.BrowserName, "-"+ExperimentalLabel)
+}
+
 // TestRuns is a helper type for an array of TestRun entities.
 type TestRuns []TestRun
 
@@ -118,7 +125,7 @@ func (ids TestRunIDs) LoadTestRuns(ctx context.Context) (testRuns TestRuns, err 
 			return testRuns, err
 		}
 	}
-	return nil, err
+	return testRuns, err
 }
 
 // Browser holds objects that appear in browsers.json
