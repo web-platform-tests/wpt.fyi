@@ -27,11 +27,18 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	labels := shared.ParseLabelsParam(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	// Try load by SHA, otherwise fall back to latest.
 	if !shared.IsLatest(sha) {
 		// Load default browser runs for SHA.
+		one := 1
 		runs, err := shared.LoadTestRuns(
-			ctx, shared.GetDefaultProducts(), nil, []string{sha}, nil, nil)
+			ctx, shared.GetDefaultProducts(), labels, []string{sha}, nil, &one)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
