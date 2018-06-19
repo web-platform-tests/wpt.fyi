@@ -11,7 +11,7 @@ An exhaustive list of the endpoints can be found in `routes.go`.
  - [/api/runs/{id}](#apirunsid)
  - [/api/run](#apirun)
  - [/api/diff](#apidiff)
- - [/results](#results)
+ - [/api/results](#apiresults)
 
 ## TestRun entities
 
