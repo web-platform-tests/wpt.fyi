@@ -28,6 +28,17 @@ func GetBrowserNames() ([]string, error) {
 	return tmp, nil
 }
 
+// GetDefaultProducts returns the default set of products to show on wpt.fyi
+func GetDefaultProducts() []Product {
+	products := make([]Product, len(browserNamesAlphabetical))
+	for i, name := range browserNamesAlphabetical {
+		products[i] = Product{
+			BrowserName: name,
+		}
+	}
+	return products
+}
+
 // IsBrowserName determines whether the given name string is a valid browser name.
 // Used for validating user-input params for browsers.
 func IsBrowserName(name string) bool {

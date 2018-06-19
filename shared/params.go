@@ -225,11 +225,7 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 	browserNames, err := GetBrowserNames()
 	// Fall back to default browser set.
 	if products == nil && browserParams == nil {
-		for _, name := range browserNames {
-			products = append(products, Product{
-				BrowserName: name,
-			})
-		}
+		products = GetDefaultProducts()
 	}
 
 	labels := ParseLabelsParam(r)
