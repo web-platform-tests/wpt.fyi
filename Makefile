@@ -124,7 +124,7 @@ chrome: browser_deps
 		sudo ln -s "$$(which chromium)" /usr/bin/google-chrome; \
 	fi
 
-firefox: browser_deps bzip
+firefox: browser_deps bzip2
 	if [[ "$$(which firefox)" == "" ]]; then \
 	  $(WPTD_PATH)webdriver/install.sh $$HOME/browsers; \
 		sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox; \
@@ -168,7 +168,7 @@ python3: apt-get-python3
 python: apt-get-python
 tox: apt-get-tox
 wget: apt-get-wget
-bzip: apt-get-bzip2
+bzip2: apt-get-bzip2
 
 java:
 	@ # java has a different apt-get package name.
