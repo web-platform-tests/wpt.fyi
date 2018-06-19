@@ -140,7 +140,7 @@ __Example JSON__
 The following methods apply to the results summaries JSON blobs, which are linked to from
 [TestRun entities](#test-run-entities).
 
-### /results
+### /api/results
 
 Performs an HTTP redirect for the results summary JSON blob of the given TestRun.
 
