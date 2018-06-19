@@ -76,6 +76,7 @@ go_large_test: go_all_browsers_test
 
 integration_test: go_all_browsers_test web_components_test
 
+.NOTPARALLEL: go_all_browsers_test
 go_all_browsers_test: go_firefox_test go_chrome_test
 
 go_firefox_test: BROWSER = firefox
