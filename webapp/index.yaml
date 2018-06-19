@@ -73,3 +73,8 @@ indexes:
   - name: Labels
   - name: CreatedAt
     direction: desc
+- kind: github.com.web-platform-tests.results-analysis.metrics.PassRateMetadata
+  properties:
+  - name: TestRunIDs
+  - name: StartTime
+    direction: desc
