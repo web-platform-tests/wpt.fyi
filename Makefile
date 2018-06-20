@@ -22,13 +22,12 @@ WPT_PATH := $(dir $(WPTD_PATH)/../)
 WPT_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests
 WPTD_GO_PATH ?= $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
-SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.8.1-server.jar
-GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.0-x64-geckodriver
-CHROMEDRIVER_PATH ?= $(NODE_SELENIUM_PATH)chromedriver/2.37-x64-chromedriver
+SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.12.0-server.jar
+GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.1-x64-geckodriver
+CHROMEDRIVER_PATH ?= $(NODE_SELENIUM_PATH)chromedriver/2.40-x64-chromedriver
 FIREFOX_PATH ?= $$HOME/browsers/firefox/firefox
 CHROME_PATH ?= /usr/bin/google-chrome
 USE_FRAME_BUFFER ?= true
-NVM_URL ?= https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
