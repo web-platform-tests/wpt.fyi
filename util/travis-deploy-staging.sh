@@ -20,9 +20,9 @@ done
 
 if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
 
-APP_DEPS="${APP_PATH}|shared"
-if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api"; fi
-if [[ "${APP_PATH}" == "revisions/service" ]]; then APP_DEPS="${APP_DEPS}|revisions"; fi
+APP_DEPS="${APP_PATH}"
+if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api|shared"; fi
+if [[ "${APP_PATH}" == "revisions/service" ]]; then APP_DEPS="${APP_DEPS}|revisions|shared"; fi
 APP_DEPS_REGEX="^(${APP_DEPS})/"
 
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
@@ -51,7 +51,7 @@ docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
         BRANCH_NAME="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}" 2>&1 \
             | tee ${TEMP_FILE}
 if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
-DEPLOYED_URL="$(grep 'Deployed.*to' ${TEMP_FILE} | sed -e 's/Deployed.*to \[\(.*\)\]/\1/')"
+DEPLOYED_URL=$(tr -d "\r" < ${TEMP_FILE} | sed -ne 's/^Deployed service.*to \[\(.*\)\]$/\1/p')
 
 # Add a GitHub comment to the PR (if there is a PR).
 if [[ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]];
