@@ -33,7 +33,7 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Try load by SHA, otherwise fall back to latest.
+	// We 'load by SHA' by fetching any interop result with all TestRunIDs for that SHA.
 	if !shared.IsLatest(sha) {
 		// Load default browser runs for SHA.
 		one := 1
