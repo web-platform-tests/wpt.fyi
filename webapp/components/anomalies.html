@@ -79,7 +79,7 @@ found in the LICENSE file.
           anomalies = anomalies.filter(d => isTestFile(d.dir));
         }
 
-        const totalBrowsers = metrics.metadata.test_runs.length;
+        const totalBrowsers = this.passRateMetadata.test_runs.length;
 
         // For each pass-rate (browser count), build a tree of tests + directories.
         let anomalyGroups = [];

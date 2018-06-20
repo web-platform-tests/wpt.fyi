@@ -24,7 +24,9 @@ WPTD_GO_PATH ?= $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.8.1-server.jar
 GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.0-x64-geckodriver
+CHROMEDRIVER_PATH ?= $(NODE_SELENIUM_PATH)chromedriver/2.37-x64-chromedriver
 FIREFOX_PATH ?= $$HOME/browsers/firefox/firefox
+CHROME_PATH ?= /usr/bin/google-chrome
 USE_FRAME_BUFFER ?= true
 NVM_URL ?= https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh
 
@@ -70,19 +72,31 @@ go_medium_test: go_deps dev_appserver_deps
 	cd $(GOPATH)/src/github.com/golang/protobuf; git checkout ac606b1
 	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
 
-go_large_test: go_webdriver_test
+go_large_test: go_all_browsers_test
 
-integration_test: go_webdriver_test web_components_test
+integration_test: go_all_browsers_test web_components_test
+
+.NOTPARALLEL: go_all_browsers_test
+go_all_browsers_test: go_firefox_test go_chrome_test
+
+go_firefox_test: BROWSER = firefox
+go_firefox_test: firefox | go_webdriver_test
+
+go_chrome_test: BROWSER = chrome
+go_chrome_test: chrome | go_webdriver_test
 
 go_webdriver_test: STAGING := false
-go_webdriver_test: go_deps xvfb firefox node-web-component-tester webserver_deps
+go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
 	if [ "$(USE_FRAME_BUFFER)" == "true" ]; then ($(START_XVFB)); fi
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
 			--firefox_path=$(FIREFOX_PATH) \
 			--geckodriver_path=$(GECKODRIVER_PATH) \
+			--chrome_path=$(CHROME_PATH) \
+			--chromedriver_path=$(CHROMEDRIVER_PATH) \
 			--frame_buffer=$(USE_FRAME_BUFFER) \
-			--staging=$(STAGING)
+			--staging=$(STAGING) \
+			--browser=$(BROWSER)
 	if [[ "$(USE_FRAME_BUFFER)" == "true" ]]; then $(STOP_XVFB); fi
 
 web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
@@ -110,7 +124,7 @@ chrome: browser_deps
 		sudo ln -s "$$(which chromium)" /usr/bin/google-chrome; \
 	fi
 
-firefox: browser_deps
+firefox: browser_deps bzip2
 	if [[ "$$(which firefox)" == "" ]]; then \
 	  $(WPTD_PATH)webdriver/install.sh $$HOME/browsers; \
 		sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox; \
@@ -154,6 +168,7 @@ python3: apt-get-python3
 python: apt-get-python
 tox: apt-get-tox
 wget: apt-get-wget
+bzip2: apt-get-bzip2
 
 java:
 	@ # java has a different apt-get package name.

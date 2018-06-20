@@ -81,8 +81,8 @@ func TestIsNotMonthly_TZ(t *testing.T) {
 //
 
 func TestIsWeekly_Close(t *testing.T) {
-	justPrior := time.Date(2018, 3, 31, 23, 59, 59, 999999999, time.UTC)
-	justAfter := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
+	justPrior := time.Date(2018, 4, 1, 23, 59, 59, 999999999, time.UTC)
+	justAfter := time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC)
 	assert.True(t, weekly.IsEpochal(justPrior, justAfter))
 	assert.True(t, weekly.IsEpochal(justAfter, justPrior))
 }
@@ -95,8 +95,8 @@ func TestIsWeekly_Far(t *testing.T) {
 }
 
 func TestIsWeekly_TZ(t *testing.T) {
-	justPrior := time.Date(2018, 3, 31, 23, 59, 59, 999999999, time.UTC)
-	justAfter := time.Date(2018, 3, 31, 23, 59, 59, 999999999, oneHourWestOfUTC)
+	justPrior := time.Date(2018, 4, 1, 23, 59, 59, 999999999, time.UTC)
+	justAfter := time.Date(2018, 4, 1, 23, 59, 59, 999999999, oneHourWestOfUTC)
 	assert.True(t, weekly.IsEpochal(justPrior, justAfter))
 	assert.True(t, weekly.IsEpochal(justAfter, justPrior))
 }
@@ -109,15 +109,15 @@ func TestIsNotWeekly_Close(t *testing.T) {
 }
 
 func TestIsNotWeekly_Far(t *testing.T) {
-	weekStart := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
-	weekEnd := time.Date(2018, 4, 7, 23, 59, 59, 999999999, time.UTC)
+	weekStart := time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC)
+	weekEnd := time.Date(2018, 4, 8, 23, 59, 59, 999999999, time.UTC)
 	assert.False(t, weekly.IsEpochal(weekStart, weekEnd))
 	assert.False(t, weekly.IsEpochal(weekEnd, weekStart))
 }
 
 func TestIsNotWeekly_TZ(t *testing.T) {
-	weekStart := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
-	weekEnd := time.Date(2018, 4, 8, 0, 0, 0, 0, oneHourEastOfUTC)
+	weekStart := time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC)
+	weekEnd := time.Date(2018, 4, 9, 0, 0, 0, 0, oneHourEastOfUTC)
 	assert.False(t, weekly.IsEpochal(weekStart, weekEnd))
 	assert.False(t, weekly.IsEpochal(weekEnd, weekStart))
 }

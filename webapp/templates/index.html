@@ -6,11 +6,11 @@
   {{ template "_header.html" }}
   <div>
     <wpt-results
-        test-runs="{{ .TestRuns }}"
-        test-run-resources="{{ .TestRunSources }}"
-        sha="{{ .SHA }}"
-        {{- if .Labels}}labels="{{ .Labels }}"{{end}}
-         {{- if .Diff}}diff{{end}}></wpt-results>
+        {{- if .TestRuns}} test-runs="{{ .TestRuns }}"{{end}}
+        {{- if .TestRunSources}} test-run-resources="{{ .TestRunSources }}"{{end}}
+        {{- if .SHA}} sha="{{ .SHA }}" {{end}}
+        {{- if .Labels}} labels="{{ .Labels }}"{{end}}
+        {{- if .Diff}} diff{{end}}></wpt-results>
   </div>
 </div>
 {{ template "_ga.html" }}

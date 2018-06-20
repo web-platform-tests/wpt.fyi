@@ -3,6 +3,16 @@
 # found in the LICENSE file.
 
 indexes:
+- kind: github.com.web-platform-tests.results-analysis.metrics.PassRateMetadata
+  properties:
+  - name: TestRunIDs
+  - name: StartTime
+    direction: desc
+- kind: github.com.web-platform-tests.results-analysis.metrics.FailuresMetadata
+  properties:
+  - name: BrowserName
+  - name: StartTime
+    direction: desc
 - kind: TestRun
   properties:
   - name: BrowserName
@@ -52,11 +62,6 @@ indexes:
   - name: CreatedAt
     direction: desc
   - name: Revision
-- kind: github.com.web-platform-tests.results-analysis.metrics.FailuresMetadata
-  properties:
-  - name: BrowserName
-  - name: StartTime
-    direction: desc
 - kind: TestRun
   properties:
   - name: BrowserName
@@ -73,8 +78,8 @@ indexes:
   - name: Labels
   - name: CreatedAt
     direction: desc
-- kind: github.com.web-platform-tests.results-analysis.metrics.PassRateMetadata
+- kind: TestRun
   properties:
-  - name: TestRunIDs
-  - name: StartTime
+  - name: Revision
+  - name: BrowserVersion
     direction: desc

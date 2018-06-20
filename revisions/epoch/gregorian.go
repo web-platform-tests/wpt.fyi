@@ -31,17 +31,21 @@ func (Monthly) IsEpochal(prev time.Time, next time.Time) bool {
 	return pu.Month() != pn.Month()
 }
 
-// Weekly models an epoch that changes at the beginning of every week. Weeks begin on Sundays.
+// Weekly models an epoch that changes at the beginning of every week. Weeks begin on Mondays.
 type Weekly struct{}
 
 // GetData exposes data for weekly epoch.
 func (Weekly) GetData() Data {
 	return Data{
 		"Once per week (weekly)",
-		"The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Sunday.",
+		"The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Monday.",
 		time.Hour * 24 * 7,
 		time.Hour * 24 * 7,
 	}
+}
+
+func weekday(t time.Time) int {
+	return (int(t.Weekday()) + 6) % 7
 }
 
 // IsEpochal indicates whether or not a weekly epochal change occur between prev and next.
@@ -54,7 +58,7 @@ func (e Weekly) IsEpochal(prev time.Time, next time.Time) bool {
 	if pn.Sub(pu).Hours() >= 24*7 {
 		return true
 	}
-	return pu.Weekday() > pn.Weekday()
+	return weekday(pu) > weekday(pn)
 }
 
 // Daily models an epoch that changes at the beginning of every day.
