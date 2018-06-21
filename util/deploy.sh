@@ -9,7 +9,7 @@ WPTD_PATH=${WPTD_PATH:-$(absdir ${REPO_DIR})}
 
 usage() {
   USAGE="Usage: deploy.sh [-p] [-q] [-b] [-h] [app path]
-    -p : Production deploy
+    -p : Production deploy (to wptdashboard, no-promote)
     -q : Quiet (no user prompts, debugging off)
     -b : Branch name - defaults to current Git branch
     -h : Show (this) help information
@@ -61,7 +61,6 @@ then
   fi
   # Use SHA for prod-pushes.
   VERSION="$(git rev-parse --short HEAD)"
-  PROMOTE="--promote"
 fi
 
 if [[ -n "${QUIET}" ]]
