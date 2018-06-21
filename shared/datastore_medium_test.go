@@ -63,6 +63,8 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 			CreatedAt:  time.Now(),
 		},
 		TestRun{
+			// We no longer have runs like this (with the "-experimental" suffix but without
+			// the "experimental" label; and it should no longer be considered experimental.
 			ProductAtRevision: ProductAtRevision{
 				Product: Product{
 					BrowserName:    "chrome-experimental",
@@ -84,6 +86,19 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 				Revision: "1234567890",
 			},
 			ResultsURL: "/static/chrome-64.0-linux-summary.json.gz",
+			CreatedAt:  time.Now(),
+			Labels:     []string{"experimental"},
+		},
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product: Product{
+					BrowserName:    "chrome-experimental",
+					BrowserVersion: "65.0",
+					OSName:         "linux",
+				},
+				Revision: "1234567890",
+			},
+			ResultsURL: "/static/chrome-experimental-65.0-linux-summary.json.gz",
 			CreatedAt:  time.Now(),
 			Labels:     []string{"experimental"},
 		},
@@ -111,8 +126,8 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	loaded, err := LoadTestRuns(ctx, products, labels, nil, nil, &ten)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(loaded))
-	assert.Equal(t, "experimental", loaded[0].Labels[0])
-	assert.Equal(t, "chrome-experimental", loaded[1].BrowserName)
+	assert.Equal(t, "64.0", loaded[0].BrowserVersion)
+	assert.Equal(t, "65.0", loaded[1].BrowserVersion)
 }
 
 func TestLoadTestRuns_MultipleSHAs(t *testing.T) {

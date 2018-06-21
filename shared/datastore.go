@@ -38,18 +38,11 @@ func LoadTestRuns(
 	if len(shas) == 1 && !IsLatest(shas[0]) {
 		baseQuery = baseQuery.Filter("Revision =", shas[0])
 	}
-	experimentalOnly := false
 	if labels != nil {
 		for i := range labels.Iter() {
 			label := i.(string)
 			if IsStableBrowserName(label) {
 				// Browser name labels are already handled in GetProductsForRequest (which produces `products`).
-				continue
-			}
-			if label == ExperimentalLabel {
-				// The "experimental" label is handled specially at the end of the function.
-				// TODO(Hexcles): Remove this once we convert all history runs.
-				experimentalOnly = true
 				continue
 			}
 			baseQuery = baseQuery.Filter("Labels =", label)
@@ -92,14 +85,6 @@ func LoadTestRuns(
 		}
 		appended := 0
 		for _, testRun := range testRunResults {
-			// Handle the "experimental" label specially.
-			// Some history experimental runs don't have the experimental
-			// label; instead, their browser names have the suffix. We'd
-			// like to support both the suffix and the label.
-			// TODO(Hexcles): Remove this once we convert history runs.
-			if experimentalOnly && !testRun.IsExperimental() {
-				continue
-			}
 			if len(shas) > 1 && !contains(shas, testRun.Revision) {
 				continue
 			}
