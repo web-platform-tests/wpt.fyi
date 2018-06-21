@@ -146,14 +146,10 @@ def task_handler():
         os_version=params.get('os_version'),
     )
 
-    revision = report.run_info['revision']
-    # For consistency, use underscores in wptd-results.
-    product = report.product_id('_', sanitize=True)
-
     resp = "{} results loaded from {}\n".format(len(report.results), gcs_path)
 
-    raw_results_gcs_path = '/{}/{}/{}/report.json'.format(
-        config.raw_results_bucket(), revision, product)
+    raw_results_gcs_path = '/{}/{}/report.json'.format(
+        config.raw_results_bucket(), report.sha_product_path)
     gsutil.copy('gs:/' + gcs_path, 'gs:/' + raw_results_gcs_path)
 
     tempdir = tempfile.mkdtemp()

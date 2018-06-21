@@ -266,10 +266,10 @@ class WPTReportTest(unittest.TestCase):
             }
         }
         r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
-        self.assertEqual(r.product_id('-'), 'firefox-59.0-linux-afa59408e1')
+        self.assertEqual(r.product_id(), 'firefox-59.0-linux-afa59408e1')
 
         r._report['run_info']['os_version'] = '4.4'
-        self.assertEqual(r.product_id('_'),
+        self.assertEqual(r.product_id(separator='_'),
                          'firefox_59.0_linux_4.4_afa59408e1')
 
     def test_product_id_sanitize(self):
@@ -282,7 +282,7 @@ class WPTReportTest(unittest.TestCase):
             }
         }
         r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
-        self.assertEqual(r.product_id('-', sanitize=True),
+        self.assertEqual(r.product_id(separator='-', sanitize=True),
                          'chrome_-1.2.3_dev-1-linux-afa59408e1')
 
     def test_sha_product_path(self):

@@ -226,7 +226,7 @@ class WPTReport(object):
             filepath = directory + test_file
             self.write_gzip_json(filepath, result)
 
-    def product_id(self, separator, sanitize=False):
+    def product_id(self, separator='-', sanitize=False):
         """Returns an ID string for the product configuration.
 
         Args:
@@ -280,7 +280,7 @@ class WPTReport(object):
         """A relative path: sha/product_id"""
         try:
             return os.path.join(self.run_info['revision'],
-                                self.product_id('-', sanitize=True))
+                                self.product_id(separator='-', sanitize=True))
         except KeyError as e:
             raise MissingMetadataError(str(e)) from e
 
@@ -356,7 +356,7 @@ def create_test_run(report, labels_str, uploader, secret,
         results_gcs_path: The GCS path to the gzipped summary file.
             (e.g. '/wptd/0123456789/chrome-62.0-linux-summary.json.gz')
         raw_results_gcs_path: The GCS path to the raw full report.
-            (e.g. '/wptd-results/[full SHA]/chrome_62.0_linux/report.json')
+            (e.g. '/wptd-results/[full SHA]/chrome-62.0-linux/report.json')
     """
     assert results_gcs_path.startswith('/')
     assert raw_results_gcs_path.startswith('/')
