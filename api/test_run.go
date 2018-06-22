@@ -137,10 +137,13 @@ func TestRunPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use 'now' as created time, unless flagged as retroactive.
-	if retro, err := strconv.ParseBool(r.URL.Query().Get("retroactive")); err != nil || !retro {
-		testRun.CreatedAt = time.Now()
+	if testRun.TimeStart.IsZero() {
+		testRun.TimeStart = time.Now()
 	}
+	if testRun.TimeEnd.IsZero() {
+		testRun.TimeEnd = testRun.TimeStart
+	}
+	testRun.CreatedAt = time.Now()
 
 	// Create a new shared.TestRun out of the JSON body of the request.
 	key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
