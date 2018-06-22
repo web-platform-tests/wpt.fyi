@@ -82,6 +82,12 @@ type TestRun struct {
 	// Time when the test run metadata was first created.
 	CreatedAt time.Time `json:"created_at"`
 
+	// Time when the test run started.
+	TimeStart time.Time `json:"time_start"`
+
+	// Time when the test run ended.
+	TimeEnd time.Time `json:"time_end"`
+
 	// URL for raw results JSON object. Resembles the JSON output of the
 	// wpt report tool.
 	RawResultsURL string `json:"raw_results_url"`

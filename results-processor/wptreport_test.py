@@ -238,7 +238,7 @@ class WPTReportTest(unittest.TestCase):
             'os_version': '4.4'
         })
 
-    def test_test_run_metadata(self):
+    def test_test_run_metadata_required_fields(self):
         r = WPTReport()
         r._report = {
             'run_info': {
@@ -254,6 +254,30 @@ class WPTReportTest(unittest.TestCase):
             'os_name': 'linux',
             'revision': '0bdaaf9c16',
             'full_revision_hash': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+        })
+
+    def test_test_run_metadata_optional_fields(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'revision': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+                'product': 'firefox',
+                'browser_version': '59.0',
+                'os': 'windows',
+                'os_version': '10'
+            },
+            'time_start': 1529606394218,
+            'time_end': 1529611429000,
+        }
+        self.assertDictEqual(r.test_run_metadata, {
+            'browser_name': 'firefox',
+            'browser_version': '59.0',
+            'os_name': 'windows',
+            'os_version': '10',
+            'revision': '0bdaaf9c16',
+            'full_revision_hash': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+            'time_start': '2018-06-21T18:39:54.218000+00:00',
+            'time_end': '2018-06-21T20:03:49+00:00',
         })
 
     def test_product_id(self):

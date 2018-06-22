@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import tempfile
+from datetime import datetime, timezone
 
 import requests
 
@@ -304,8 +305,20 @@ class WPTReport(object):
             raise MissingMetadataError(str(e)) from e
 
         # Optional fields:
+
         if self.run_info.get('os_version'):
             payload['os_version'] = self.run_info['os_version']
+
+        def microseconds_to_iso(ms_since_epoch):
+            dt = datetime.fromtimestamp(ms_since_epoch / 1000, timezone.utc)
+            return dt.isoformat()
+
+        if self._report.get('time_start'):
+            payload['time_start'] = microseconds_to_iso(
+                self._report['time_start'])
+        if self._report.get('time_end'):
+            payload['time_end'] = microseconds_to_iso(
+                self._report['time_end'])
 
         return payload
 
