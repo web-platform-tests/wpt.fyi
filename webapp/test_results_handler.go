@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -149,17 +150,13 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Product.String()))
 		}
 	} else {
-		var sourceURL = `/api/runs?complete=true`
-		if !shared.IsLatest(runSHA) {
-			sourceURL = fmt.Sprintf(`/api/runs?sha=%s`, runSHA)
+		sourceURL, _ := url.Parse("/api/runs")
+		f, err := shared.ParseTestRunFilterParams(r)
+		if err != nil {
+			return nil, nil, err
 		}
-		labels := shared.ParseLabelsParam(r)
-		if labels != nil {
-			for label := range labels.Iterator().C {
-				sourceURL = sourceURL + "&label=" + label.(string)
-			}
-		}
-		testRunSources = []string{sourceURL}
+		sourceURL.RawQuery = f.ToQuery(true).Encode()
+		testRunSources = []string{sourceURL.String()}
 	}
 	return testRunSources, testRuns, nil
 }

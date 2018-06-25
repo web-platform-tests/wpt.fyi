@@ -391,3 +391,17 @@ func TestParseComplete(t *testing.T) {
 	complete, _ = ParseCompleteParam(r)
 	assert.False(t, complete)
 }
+
+func TestParseTestRunFilterParams(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
+	filter, _ := ParseTestRunFilterParams(r)
+	assert.False(t, filter.Complete)
+	assert.Equal(t, "?complete=true", filter.ToQuery(true).Encode())
+	assert.Equal(t, "", filter.ToQuery(false).Encode())
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/?label=stable", nil)
+	filter, _ = ParseTestRunFilterParams(r)
+	assert.False(t, filter.Complete)
+	assert.Equal(t, "label=stable", filter.ToQuery(true).Encode())
+	assert.Equal(t, "label=stable", filter.ToQuery(false).Encode())
+}
