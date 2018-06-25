@@ -1,3 +1,5 @@
+// +build small
+
 package handlers_test
 
 import (

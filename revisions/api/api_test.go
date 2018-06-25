@@ -1,3 +1,5 @@
+// +build small
+
 package api_test
 
 import (
