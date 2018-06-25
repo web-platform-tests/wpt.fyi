@@ -254,7 +254,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	// Follow pattern established in run/*.py data collection code.
 	const sha = "b952881825"
 	const summaryURLFmtString = "/static/" + sha + "/%s"
-	staticTestRuns := shared.TestRuns{
+	stableTestRuns := shared.TestRuns{
 		{
 			ProductAtRevision: shared.ProductAtRevision{
 				Product: shared.Product{
@@ -267,6 +267,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			CreatedAt:  staticDataTime,
+			Labels:     []string{"chrome", "linux", "stable"},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -280,6 +281,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
 			CreatedAt:  staticDataTime,
+			Labels:     []string{"edge", "windows", "stable"},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -293,6 +295,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			CreatedAt:  staticDataTime,
+			Labels:     []string{"firefox", "linux", "stable"},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -306,17 +309,50 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10.0-macos-10.12-sauce-summary.json.gz"),
 			CreatedAt:  staticDataTime,
+			Labels:     []string{"safari", "macos", "stable"},
+		},
+	}
+	experimentalTestRuns := shared.TestRuns{
+		// TODO: Use a separate run summary data for the experimental runs? (re-using stable for now).
+		{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "chrome",
+					BrowserVersion: "69.0",
+					OSName:         "linux",
+					OSVersion:      "*",
+				},
+				Revision: sha,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
+			CreatedAt:  staticDataTime,
+			Labels:     []string{"chrome", "linux", "experimental"},
+		},
+		{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "firefox",
+					BrowserVersion: "60.0",
+					OSName:         "linux",
+					OSVersion:      "*",
+				},
+				Revision: sha,
+			},
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
+			CreatedAt:  staticDataTime,
+			Labels:     []string{"firefox", "linux", "experimental"},
 		},
 	}
 
 	log.Println("Adding static TestRun data...")
-	for i := range staticTestRuns {
+	for i, run := range append(stableTestRuns, experimentalTestRuns...) {
 		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-		if key, err = datastore.Put(ctx, key, &staticTestRuns[i]); err != nil {
+		if key, err = datastore.Put(ctx, key, &run); err != nil {
 			return err
 		}
-		staticTestRuns[i].ID = key.IntID()
-		fmt.Printf("Added static run for %s\n", staticTestRuns[i].BrowserName)
+		if i < len(stableTestRuns) {
+			stableTestRuns[i].ID = key.IntID()
+		}
 	}
 
 	log.Println("Adding static interop data...")
@@ -324,9 +360,9 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	// Follow pattern established in metrics/run/*.go data collection code.
 	// Use unzipped JSON for local dev.
 	const metricsURLFmtString = "/static/wptd-metrics/0-0/%s.json"
-	staticTestRunMetadata := make([]interface{}, len(staticTestRuns))
-	for i := range staticTestRuns {
-		staticTestRunMetadata[i] = &staticTestRuns[i]
+	staticTestRunMetadata := make([]interface{}, len(stableTestRuns))
+	for i := range stableTestRuns {
+		staticTestRunMetadata[i] = &stableTestRuns[i]
 	}
 	staticPassRateMetadata := []interface{}{
 		&metrics.PassRateMetadata{
@@ -339,7 +375,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	}
 	for i := range staticPassRateMetadata {
 		md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
-		md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+		md.TestRunIDs = stableTestRuns.GetTestRunIDs()
 		key := datastore.NewIncompleteKey(ctx, metrics.GetDatastoreKindName(metrics.PassRateMetadata{}), nil)
 		if _, err := datastore.Put(ctx, key, md); err != nil {
 			return err
@@ -383,7 +419,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	}
 	for i := range staticFailuresMetadata {
 		md := staticFailuresMetadata[i].(*metrics.FailuresMetadata)
-		md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+		md.TestRunIDs = stableTestRuns.GetTestRunIDs()
 		key := datastore.NewIncompleteKey(ctx, metrics.GetDatastoreKindName(metrics.FailuresMetadata{}), nil)
 		if _, err := datastore.Put(ctx, key, md); err != nil {
 			return err

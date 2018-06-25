@@ -22,9 +22,9 @@ WPT_PATH := $(dir $(WPTD_PATH)/../)
 WPT_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests
 WPTD_GO_PATH ?= $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
-SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.12.0-server.jar
-GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.1-x64-geckodriver
-CHROMEDRIVER_PATH ?= $(NODE_SELENIUM_PATH)chromedriver/2.40-x64-chromedriver
+SELENIUM_SERVER_PATH ?= $(shell find $(NODE_SELENIUM_PATH)selenium-server/ -type f -name '*server.jar')
+GECKODRIVER_PATH ?= $(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')
+CHROMEDRIVER_PATH ?= $(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')
 FIREFOX_PATH ?= $$HOME/browsers/firefox/firefox
 CHROME_PATH ?= /usr/bin/google-chrome
 USE_FRAME_BUFFER ?= true
@@ -85,7 +85,7 @@ go_chrome_test: BROWSER = chrome
 go_chrome_test: chrome | go_webdriver_test
 
 go_webdriver_test: STAGING := false
-go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
+go_webdriver_test: var-BROWSER java go_deps xvfb web_component_tester webserver_deps
 	if [ "$(USE_FRAME_BUFFER)" == "true" ]; then ($(START_XVFB)); fi
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$(SELENIUM_SERVER_PATH) \
@@ -95,13 +95,19 @@ go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webse
 			--chromedriver_path=$(CHROMEDRIVER_PATH) \
 			--frame_buffer=$(USE_FRAME_BUFFER) \
 			--staging=$(STAGING) \
-			--browser=$(BROWSER)
+			--browser=$(BROWSER) \
+			$(FLAGS)
 	if [[ "$(USE_FRAME_BUFFER)" == "true" ]]; then $(STOP_XVFB); fi
 
-web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
+web_components_test: xvfb firefox chrome web_component_tester webserver_deps
 	$(START_XVFB)
 	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
 	$(STOP_XVFB)
+
+web_component_tester: node-web-component-tester
+	export SELENIUM_SERVER_PATH=$(shell find $(NODE_SELENIUM_PATH)selenium-server/ -type f -name '*server.jar')
+	export GECKODRIVER_PATH=$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')
+	export CHROMEDRIVER_PATH=$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')
 
 sys_update: sys_deps
 	sudo apt-get --quiet update
