@@ -156,6 +156,8 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 		if err != nil {
 			return nil, nil, err
 		}
+		// max-count doesn't make sense in the results UI.
+		f.MaxCount = nil
 		sourceURL.RawQuery = f.ToQuery(true).Encode()
 		testRunSources = []string{sourceURL.String()}
 	}
