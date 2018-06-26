@@ -413,4 +413,10 @@ func TestParseTestRunFilterParams(t *testing.T) {
 	assert.False(t, filter.Complete)
 	assert.Equal(t, "label=stable", filter.ToQuery(true).Encode())
 	assert.Equal(t, "label=stable", filter.ToQuery(false).Encode())
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/?from=2018-01-01T00%3A00%3A00Z", nil)
+	filter, _ = ParseTestRunFilterParams(r)
+	assert.False(t, filter.Complete)
+	assert.Equal(t, "complete=true&from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(true).Encode())
+	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(false).Encode())
 }

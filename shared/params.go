@@ -55,7 +55,7 @@ func (filter TestRunFilter) ToQuery(completeIfDefault bool) (q url.Values) {
 		q.Set("max-count", fmt.Sprintf("%v", *filter.MaxCount))
 	}
 	if filter.From != nil {
-		q.Set("from", fmt.Sprintf("%v", *filter.From))
+		q.Set("from", filter.From.Format(time.RFC3339))
 	}
 	return q
 }
