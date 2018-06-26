@@ -22,9 +22,6 @@ WPT_PATH := $(dir $(WPTD_PATH)/../)
 WPT_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests
 WPTD_GO_PATH ?= $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
-SELENIUM_SERVER_PATH ?= $(NODE_SELENIUM_PATH)selenium-server/3.12.0-server.jar
-GECKODRIVER_PATH ?= $(NODE_SELENIUM_PATH)geckodriver/0.20.1-x64-geckodriver
-CHROMEDRIVER_PATH ?= $(NODE_SELENIUM_PATH)chromedriver/2.40-x64-chromedriver
 FIREFOX_PATH ?= $$HOME/browsers/firefox/firefox
 CHROME_PATH ?= /usr/bin/google-chrome
 USE_FRAME_BUFFER ?= true
@@ -84,15 +81,19 @@ go_firefox_test: firefox | go_webdriver_test
 go_chrome_test: BROWSER = chrome
 go_chrome_test: chrome | go_webdriver_test
 
+.ONESHELL: go_webdriver_test
 go_webdriver_test: STAGING := false
 go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
+	export SELENIUM_SERVER_PATH="$(shell find $(NODE_SELENIUM_PATH)selenium-server/ -type f -name '*server.jar')"
+	export GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"
+	export CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"
 	if [ "$(USE_FRAME_BUFFER)" == "true" ]; then ($(START_XVFB)); fi
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
-			--selenium_path=$(SELENIUM_SERVER_PATH) \
+			--selenium_path=$$SELENIUM_SERVER_PATH \
 			--firefox_path=$(FIREFOX_PATH) \
-			--geckodriver_path=$(GECKODRIVER_PATH) \
+			--geckodriver_path=$$GECKODRIVER_PATH \
 			--chrome_path=$(CHROME_PATH) \
-			--chromedriver_path=$(CHROMEDRIVER_PATH) \
+			--chromedriver_path=$$CHROMEDRIVER_PATH \
 			--frame_buffer=$(USE_FRAME_BUFFER) \
 			--staging=$(STAGING) \
 			--browser=$(BROWSER)
