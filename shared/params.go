@@ -29,9 +29,9 @@ type TestRunFilter struct {
 }
 
 // ToQuery converts the filter set to a url.Values (set of query params).
-// defaultQuery is whether the params should fall back to the default query
-// (on the homepage).
-func (filter TestRunFilter) ToQuery(defaultQuery bool) (q url.Values) {
+// complete is whether the params should fall back to a complete run
+// (the default on the homepage).
+func (filter TestRunFilter) ToQuery(complete bool) (q url.Values) {
 	u := url.URL{}
 	q = u.Query()
 	if !IsLatest(filter.SHA) {
@@ -47,7 +47,7 @@ func (filter TestRunFilter) ToQuery(defaultQuery bool) (q url.Values) {
 			q.Add("product", p.String())
 		}
 	}
-	if filter.Complete || (defaultQuery && len(q) == 0) {
+	if filter.Complete || (complete && len(q) == 0) {
 		q.Set("complete", "true")
 	}
 	if filter.MaxCount != nil {
@@ -55,9 +55,6 @@ func (filter TestRunFilter) ToQuery(defaultQuery bool) (q url.Values) {
 	}
 	return q
 }
-
-// MaxCountDefaultValue is the default value returned by ParseMaxCountParam for the max-count param.
-const MaxCountDefaultValue = 1
 
 // MaxCountMaxValue is the maximum allowed value for the max-count param.
 const MaxCountMaxValue = 500

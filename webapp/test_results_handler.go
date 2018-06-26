@@ -107,9 +107,10 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getTestRunsAndSources gets the arrays of source urls and placeholder-TestRun-shared from the parameters for the
-// current request. When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [product]@[sha]), or
-// base64 encoded TestRun JSON blobs for the results summaries.
+// getTestRunsAndSources gets source urls (api endpoints), and any placeholder TestRun entities from the parameters
+// for the current request.
+// When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [product]@[sha]), or base64 encoded
+// TestRun JSON blobs for the results summaries.
 func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []string, testRuns []shared.TestRun, err error) {
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")
