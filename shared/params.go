@@ -18,8 +18,43 @@ import (
 	mapset "github.com/deckarep/golang-set"
 )
 
-// MaxCountDefaultValue is the default value returned by ParseMaxCountParam for the max-count param.
-const MaxCountDefaultValue = 1
+// TestRunFilter represents the ways TestRun entities can be filtered in
+// the webapp and api.
+type TestRunFilter struct {
+	SHA      string
+	Labels   mapset.Set
+	Complete bool
+	MaxCount *int
+	Products []Product
+}
+
+// ToQuery converts the filter set to a url.Values (set of query params).
+// complete is whether the params should fall back to a complete run
+// (the default on the homepage).
+func (filter TestRunFilter) ToQuery(complete bool) (q url.Values) {
+	u := url.URL{}
+	q = u.Query()
+	if !IsLatest(filter.SHA) {
+		q.Set("sha", filter.SHA)
+	}
+	if filter.Labels != nil && filter.Labels.Cardinality() > 0 {
+		for label := range filter.Labels.Iter() {
+			q.Add("label", label.(string))
+		}
+	}
+	if len(filter.Products) > 0 {
+		for _, p := range filter.Products {
+			q.Add("product", p.String())
+		}
+	}
+	if filter.Complete || (complete && len(q) == 0) {
+		q.Set("complete", "true")
+	}
+	if filter.MaxCount != nil {
+		q.Set("max-count", fmt.Sprintf("%v", *filter.MaxCount))
+	}
+	return q
+}
 
 // MaxCountMaxValue is the maximum allowed value for the max-count param.
 const MaxCountMaxValue = 500
@@ -205,9 +240,9 @@ func ParseProductsParam(r *http.Request) (products []Product, err error) {
 	return products, nil
 }
 
-// GetProductsForRequest parses the 'products' (and legacy 'browsers') params, returning
-// the sorted list of products to include, or a default list.
-func GetProductsForRequest(r *http.Request) (products []Product, err error) {
+// ParseProductOrBrowserParams parses the product (or, browser) params present in the given
+// request.
+func ParseProductOrBrowserParams(r *http.Request) (products []Product, err error) {
 	if products, err = ParseProductsParam(r); err != nil {
 		return nil, err
 	}
@@ -221,10 +256,19 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 			BrowserName: browser,
 		})
 	}
+	return products, nil
+}
 
+// GetProductsForRequest parses the 'products' (and legacy 'browsers') params, returning
+// the sorted list of products to include, or a default list.
+func GetProductsForRequest(r *http.Request) (products []Product, err error) {
+	products, err = ParseProductOrBrowserParams(r)
+	if err != nil {
+		return nil, err
+	}
 	browserNames, err := GetBrowserNames()
 	// Fall back to default browser set.
-	if products == nil && browserParams == nil {
+	if products == nil {
 		products = GetDefaultProducts()
 	}
 
@@ -424,4 +468,21 @@ func ParseCompleteParam(r *http.Request) (bool, error) {
 	} else {
 		return strconv.ParseBool(val)
 	}
+}
+
+// ParseTestRunFilterParams parses all of the filter params for a TestRun query.
+func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error) {
+	runSHA, err := ParseSHAParam(r)
+	if err != nil {
+		return filter, err
+	}
+	filter.SHA = runSHA
+	filter.Labels = ParseLabelsParam(r)
+	if filter.Complete, err = ParseCompleteParam(r); err != nil {
+		return filter, err
+	}
+	if filter.Products, err = ParseProductOrBrowserParams(r); err != nil {
+		return filter, err
+	}
+	return filter, nil
 }

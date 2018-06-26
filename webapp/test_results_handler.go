@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -106,9 +107,10 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getTestRunsAndSources gets the arrays of source urls and placeholder-TestRun-shared from the parameters for the
-// current request. When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [product]@[sha]), or
-// base64 encoded TestRun JSON blobs for the results summaries.
+// getTestRunsAndSources gets source urls (api endpoints), and any placeholder TestRun entities from the parameters
+// for the current request.
+// When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [product]@[sha]), or base64 encoded
+// TestRun JSON blobs for the results summaries.
 func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []string, testRuns []shared.TestRun, err error) {
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")
@@ -149,17 +151,13 @@ func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []str
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Product.String()))
 		}
 	} else {
-		var sourceURL = `/api/runs?complete=true`
-		if !shared.IsLatest(runSHA) {
-			sourceURL = fmt.Sprintf(`/api/runs?sha=%s`, runSHA)
+		sourceURL, _ := url.Parse("/api/runs")
+		f, err := shared.ParseTestRunFilterParams(r)
+		if err != nil {
+			return nil, nil, err
 		}
-		labels := shared.ParseLabelsParam(r)
-		if labels != nil {
-			for label := range labels.Iterator().C {
-				sourceURL = sourceURL + "&label=" + label.(string)
-			}
-		}
-		testRunSources = []string{sourceURL}
+		sourceURL.RawQuery = f.ToQuery(true).Encode()
+		testRunSources = []string{sourceURL.String()}
 	}
 	return testRunSources, testRuns, nil
 }
