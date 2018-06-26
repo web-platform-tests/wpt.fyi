@@ -24,14 +24,15 @@ type TestRunFilter struct {
 	SHA      string
 	Labels   mapset.Set
 	Complete bool
+	From     *time.Time
 	MaxCount *int
 	Products []Product
 }
 
 // ToQuery converts the filter set to a url.Values (set of query params).
-// complete is whether the params should fall back to a complete run
-// (the default on the homepage).
-func (filter TestRunFilter) ToQuery(complete bool) (q url.Values) {
+// completeIfDefault is whether the params should fall back to a complete run
+// (the default on the homepage) if no conflicting params are used.
+func (filter TestRunFilter) ToQuery(completeIfDefault bool) (q url.Values) {
 	u := url.URL{}
 	q = u.Query()
 	if !IsLatest(filter.SHA) {
@@ -47,11 +48,14 @@ func (filter TestRunFilter) ToQuery(complete bool) (q url.Values) {
 			q.Add("product", p.String())
 		}
 	}
-	if filter.Complete || (complete && len(q) == 0) {
+	if filter.Complete || (completeIfDefault && len(q) == 0) {
 		q.Set("complete", "true")
 	}
 	if filter.MaxCount != nil {
 		q.Set("max-count", fmt.Sprintf("%v", *filter.MaxCount))
+	}
+	if filter.From != nil {
+		q.Set("from", fmt.Sprintf("%v", *filter.From))
 	}
 	return q
 }
@@ -259,28 +263,23 @@ func ParseProductOrBrowserParams(r *http.Request) (products []Product, err error
 	return products, nil
 }
 
-// GetProductsForRequest parses the 'products' (and legacy 'browsers') params, returning
+// GetProductsOrDefault parses the 'products' (and legacy 'browsers') params, returning
 // the sorted list of products to include, or a default list.
-func GetProductsForRequest(r *http.Request) (products []Product, err error) {
-	products, err = ParseProductOrBrowserParams(r)
-	if err != nil {
-		return nil, err
-	}
+func (filter TestRunFilter) GetProductsOrDefault() (products []Product) {
+	products = filter.Products
 	browserNames, err := GetBrowserNames()
+	if err != nil {
+		panic("Failed to load browser names")
+	}
 	// Fall back to default browser set.
 	if products == nil {
 		products = GetDefaultProducts()
 	}
 
-	labels := ParseLabelsParam(r)
-	if labels != nil {
-		if err != nil {
-			return nil, err
-		}
-
+	if filter.Labels != nil {
 		browserLabel := ""
 		for _, name := range browserNames {
-			if !labels.Contains(name) {
+			if !filter.Labels.Contains(name) {
 				continue
 			}
 			// If we already encountered a browser name, nothing is two browsers (return empty set).
@@ -305,7 +304,7 @@ func GetProductsForRequest(r *http.Request) (products []Product, err error) {
 	}
 
 	sort.Sort(ByBrowserName(products))
-	return products, nil
+	return products
 }
 
 // ParseMaxCountParam parses the 'max-count' parameter as an integer
@@ -482,6 +481,12 @@ func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error)
 		return filter, err
 	}
 	if filter.Products, err = ParseProductOrBrowserParams(r); err != nil {
+		return filter, err
+	}
+	if filter.MaxCount, err = ParseMaxCountParam(r); err != nil {
+		return filter, err
+	}
+	if filter.From, err = ParseFromParam(r); err != nil {
 		return filter, err
 	}
 	return filter, nil

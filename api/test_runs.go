@@ -6,9 +6,7 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
@@ -19,29 +17,14 @@ import (
 // URL Params:
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
-	runSHA, err := shared.ParseSHAParam(r)
+	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var products []shared.Product
-	if products, err = shared.GetProductsForRequest(r); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	limit, err := shared.ParseMaxCountParam(r)
-	if err != nil {
-		http.Error(w, "Invalid 'max-count' param: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	var from *time.Time
-	if from, err = shared.ParseFromParam(r); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid 'from' param: %s", err.Error()), http.StatusBadRequest)
-		return
-	}
-
+	limit := filters.MaxCount
+	from := filters.From
 	if limit == nil && from == nil {
 		// Default to a single, latest run when from & max-count both empty.
 		one := 1
@@ -50,13 +33,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := appengine.NewContext(r)
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
-
 	var shas []string
-	if complete, err := shared.ParseCompleteParam(r); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid 'complete' param: %s", r.URL.Query().Get("complete")), http.StatusBadRequest)
-		return
-	} else if complete {
-		if runSHA == "latest" {
+	if filters.Complete {
+		if shared.IsLatest(filters.SHA) {
 			shas, err = getCompleteRunSHAs(ctx, from, limit)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -68,11 +47,11 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-	} else if !shared.IsLatest(runSHA) {
-		shas = []string{runSHA}
+	} else if !shared.IsLatest(filters.SHA) {
+		shas = []string{filters.SHA}
 	}
-	labels := shared.ParseLabelsParam(r)
-	testRuns, err := shared.LoadTestRuns(ctx, products, labels, shas, from, limit)
+	products := filters.GetProductsOrDefault()
+	testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, shas, from, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
