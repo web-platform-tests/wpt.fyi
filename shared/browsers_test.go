@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetBrowserNames(t *testing.T) {
-	names, _ := GetBrowserNames()
+func TestGetDefaultBrowserNames(t *testing.T) {
+	names := GetDefaultBrowserNames()
 	assert.True(t, sort.StringsAreSorted(names))
 }
 
@@ -27,7 +27,7 @@ func TestIsBrowserName(t *testing.T) {
 }
 
 func TestIsBrowserName_Names(t *testing.T) {
-	names, _ := GetBrowserNames()
+	names := GetDefaultBrowserNames()
 	for _, name := range names {
 		assert.True(t, IsBrowserName(name))
 	}

@@ -10,8 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/deckarep/golang-set"
-
+	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
@@ -59,7 +58,7 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // getCompleteRunSHAs returns an array of the SHA[0:10] for runs that
-// exists for all initially-loaded browser names (see GetBrowserNames),
+// exists for all initially-loaded browser names (see GetDefaultBrowserNames),
 // ordered by most-recent.
 func getCompleteRunSHAs(ctx context.Context, from *time.Time, limit *int) (shas []string, err error) {
 	query := datastore.
@@ -67,10 +66,7 @@ func getCompleteRunSHAs(ctx context.Context, from *time.Time, limit *int) (shas 
 		Order("-CreatedAt").
 		Project("Revision", "BrowserName")
 
-	var browserNames []string
-	if browserNames, err = shared.GetBrowserNames(); err != nil {
-		return nil, err
-	}
+	browserNames := shared.GetDefaultBrowserNames()
 
 	if from != nil {
 		query = query.Filter("CreatedAt >=", *from)

@@ -89,7 +89,7 @@ func TestGetProductsOrDefault_Default(t *testing.T) {
 	filters, err := ParseTestRunFilterParams(r)
 	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
-	defaultBrowsers, err := GetBrowserNames()
+	defaultBrowsers := GetDefaultBrowserNames()
 	assert.Equal(t, len(defaultBrowsers), len(products))
 	for i := range defaultBrowsers {
 		assert.Equal(t, defaultBrowsers[i], products[i].BrowserName)

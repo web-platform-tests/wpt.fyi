@@ -269,14 +269,11 @@ func ParseProductOrBrowserParams(r *http.Request) (products []Product, err error
 // the sorted list of products to include, or a default list.
 func (filter TestRunFilter) GetProductsOrDefault() (products []Product) {
 	products = filter.Products
-	browserNames, err := GetBrowserNames()
-	if err != nil {
-		panic("Failed to load browser names")
-	}
 	// Fall back to default browser set.
 	if products == nil {
 		products = GetDefaultProducts()
 	}
+	browserNames := GetDefaultBrowserNames()
 
 	if filter.Labels != nil {
 		browserLabel := ""

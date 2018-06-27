@@ -1,123 +1,52 @@
 package shared
 
-const browsersJSON = `
-{
-    "chrome-64.0-linux": {
-        "initially_loaded": true,
-        "currently_run": true,
-        "browser_name": "chrome",
-        "browser_version": "64.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "chrome-63.0-linux": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "chrome",
-        "browser_version": "63.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "chrome-62.0-linux": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "chrome",
-        "browser_version": "62.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "chrome-61.0-linux": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "chrome",
-        "browser_version": "61.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "chrome-60.0-linux": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "chrome",
-        "browser_version": "60.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "edge-15-windows-10-sauce": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "edge",
-        "browser_version": "15",
-        "os_name": "windows",
-        "os_version": "10",
-        "sauce": true
-    },
-    "edge-16-windows-10-sauce": {
-        "initially_loaded": true,
-        "currently_run": true,
-        "browser_name": "edge",
-        "browser_version": "16",
-        "os_name": "windows",
-        "os_version": "10",
-        "sauce": true
-    },
-    "edge-17-windows-10-sauce": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "edge",
-        "browser_version": "17",
-        "os_name": "windows",
-        "os_version": "10",
-        "sauce": true
-    },
-    "firefox-59.0-linux": {
-        "initially_loaded": true,
-        "currently_run": true,
-        "browser_name": "firefox",
-        "browser_version": "59.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "firefox-58.0-linux": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "firefox",
-        "browser_version": "58.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "firefox-57.0-linux": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "firefox",
-        "browser_version": "57.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "firefox-56.0-linux": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "firefox",
-        "browser_version": "56.0",
-        "os_name": "linux",
-        "os_version": "*"
-    },
-    "safari-11.0-macos-10.12-sauce": {
-        "initially_loaded": true,
-        "currently_run": true,
-        "browser_name": "safari",
-        "browser_version": "11.0",
-        "os_name": "macos",
-        "os_version": "10.12",
-        "sauce": true
-    },
-    "safari-10-macos-10.12-sauce": {
-        "initially_loaded": false,
-        "currently_run": false,
-        "browser_name": "safari",
-        "browser_version": "10",
-        "os_name": "macos",
-        "os_version": "10.12",
-        "sauce": true
-    }
+import (
+	"strings"
+
+	mapset "github.com/deckarep/golang-set"
+)
+
+// A list of browsers that are shown on the homepage by default.
+// (Must be sorted alphabetically!)
+var defaultBrowsers = []string{
+	"chrome", "edge", "firefox", "safari",
 }
-`
+
+// An extra list of known browsers.
+var extraBrowsers = []string{
+	"uc",
+}
+
+var allBrowsers mapset.Set
+
+func init() {
+	allBrowsers = mapset.NewSet()
+	for _, b := range defaultBrowsers {
+		allBrowsers.Add(b)
+	}
+	for _, b := range extraBrowsers {
+		allBrowsers.Add(b)
+	}
+}
+
+// GetDefaultBrowserNames returns an alphabetically-ordered array of the names
+// of the browsers which are to be included by default.
+func GetDefaultBrowserNames() []string {
+	// Slice to make source immutable
+	tmp := make([]string, len(defaultBrowsers))
+	copy(tmp, defaultBrowsers)
+	return tmp
+}
+
+// IsBrowserName determines whether the given name string is a valid browser name.
+// Used for validating user-input params for browsers.
+func IsBrowserName(name string) bool {
+	name = strings.TrimSuffix(name, "-"+ExperimentalLabel)
+	return IsStableBrowserName(name)
+}
+
+// IsStableBrowserName determines whether the given name string is a valid browser name
+// of a stable browser (i.e. not using the -experimental suffix).
+func IsStableBrowserName(name string) bool {
+	return allBrowsers.Contains(name)
+}
