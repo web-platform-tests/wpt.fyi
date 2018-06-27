@@ -42,7 +42,8 @@ func LoadTestRuns(
 		for i := range labels.Iter() {
 			label := i.(string)
 			if IsStableBrowserName(label) {
-				// Browser name labels are already handled in GetProductsForRequest (which produces `products`).
+				// Browser name labels are already handled in TestRunFilter.GetProductsOrDefault
+				// (which produces `products`).
 				continue
 			}
 			baseQuery = baseQuery.Filter("Labels =", label)

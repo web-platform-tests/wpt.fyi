@@ -84,9 +84,10 @@ func TestParseBrowserParam_Invalid(t *testing.T) {
 	assert.Nil(t, browser)
 }
 
-func TestGetProductsForRequest_Default(t *testing.T) {
+func TestGetProductsOrDefault_Default(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
-	products, err := GetProductsForRequest(r)
+	filters, err := ParseTestRunFilterParams(r)
+	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	defaultBrowsers, err := GetBrowserNames()
 	assert.Equal(t, len(defaultBrowsers), len(products))
@@ -95,76 +96,83 @@ func TestGetProductsForRequest_Default(t *testing.T) {
 	}
 }
 
-func TestGetProductsForRequest_BrowserParam_ChromeSafari(t *testing.T) {
+func TestGetProductsOrDefault_BrowserParam_ChromeSafari(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=chrome,safari", nil)
-	browsers, err := GetProductsForRequest(r)
+	filter, err := ParseTestRunFilterParams(r)
+	browsers := filter.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(browsers))
 	assert.Equal(t, "chrome", browsers[0].BrowserName)
 	assert.Equal(t, "safari", browsers[1].BrowserName)
 }
 
-func TestGetProductsForRequest_BrowserParam_ChromeInvalid(t *testing.T) {
+func TestGetProductsOrDefault_BrowserParam_ChromeInvalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=chrome,invalid", nil)
-	_, err := GetProductsForRequest(r)
+	_, err := ParseTestRunFilterParams(r)
 	assert.NotNil(t, err)
 }
 
-func TestGetProductsForRequest_BrowserParam_EmptyCommas(t *testing.T) {
+func TestGetProductsOrDefault_BrowserParam_EmptyCommas(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=,chrome,,,,safari,,", nil)
-	products, err := GetProductsForRequest(r)
+	filters, err := ParseTestRunFilterParams(r)
+	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
 	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
 	assert.Equal(t, "safari", products[1].BrowserName)
 }
 
-func TestGetProductsForRequest_BrowserParam_SafariChrome(t *testing.T) {
+func TestGetProductsOrDefault_BrowserParam_SafariChrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=safari,chrome", nil)
-	products, err := GetProductsForRequest(r)
+	filters, err := ParseTestRunFilterParams(r)
+	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
 	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
 	assert.Equal(t, "safari", products[1].BrowserName)
 }
 
-func TestGetProductsForRequest_BrowserParam_MultiBrowserParam_SafariChrome(t *testing.T) {
+func TestGetProductsOrDefault_BrowserParam_MultiBrowserParam_SafariChrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=safari&browser=chrome", nil)
-	products, err := GetProductsForRequest(r)
+	filters, err := ParseTestRunFilterParams(r)
+	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
 	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
 	assert.Equal(t, "safari", products[1].BrowserName)
 }
 
-func TestGetProductsForRequest_BrowserParam_MultiBrowserParam_SafariInvalid(t *testing.T) {
+func TestGetProductsOrDefault_BrowserParam_MultiBrowserParam_SafariInvalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=safari&browser=invalid", nil)
-	_, err := GetProductsForRequest(r)
+	_, err := ParseTestRunFilterParams(r)
 	assert.NotNil(t, err)
 }
 
-func TestGetProductsForRequest_BrowserParam_ChromeLabel(t *testing.T) {
+func TestGetProductsOrDefault_BrowserParam_ChromeLabel(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?label=chrome", nil)
-	products, err := GetProductsForRequest(r)
+	filters, err := ParseTestRunFilterParams(r)
+	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
 	assert.Equal(t, "chrome", products[0].BrowserName)
 	assert.Equal(t, "chrome-experimental", products[1].BrowserName)
 }
 
-func TestGetProductsForRequest_BrowserParam_ChromeAndExperimentalLabel(t *testing.T) {
+func TestGetProductsOrDefault_BrowserParam_ChromeAndExperimentalLabel(t *testing.T) {
 	// The experimental label is no longer handled in params.go.
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?labels=chrome,experimental", nil)
-	products, err := GetProductsForRequest(r)
+	filters, err := ParseTestRunFilterParams(r)
+	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
 	assert.Equal(t, "chrome", products[0].BrowserName)
 	assert.Equal(t, "chrome-experimental", products[1].BrowserName)
 }
 
-func TestGetProductsForRequest_BrowserAndProductParam(t *testing.T) {
+func TestGetProductsOrDefault_BrowserAndProductParam(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?product=edge-16&browser=chrome", nil)
-	products, err := GetProductsForRequest(r)
+	filters, err := ParseTestRunFilterParams(r)
+	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
 	assert.Equal(t, "chrome", products[0].BrowserName)
@@ -172,9 +180,10 @@ func TestGetProductsForRequest_BrowserAndProductParam(t *testing.T) {
 	assert.Equal(t, "16", products[1].BrowserVersion)
 }
 
-func TestGetProductsForRequest_BrowsersAndProductsParam(t *testing.T) {
+func TestGetProductsOrDefault_BrowsersAndProductsParam(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?products=edge-16,safari&browsers=chrome,firefox", nil)
-	products, err := GetProductsForRequest(r)
+	filters, err := ParseTestRunFilterParams(r)
+	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 4, len(products))
 	assert.Equal(t, "chrome", products[0].BrowserName)
@@ -379,29 +388,37 @@ func TestParseProductAtRevision_OSVersion(t *testing.T) {
 }
 
 func TestParseComplete(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete", nil)
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs", nil)
 	complete, _ := ParseCompleteParam(r)
-	assert.True(t, complete)
+	assert.Nil(t, complete)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete", nil)
+	complete, _ = ParseCompleteParam(r)
+	assert.True(t, *complete)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete=true", nil)
 	complete, _ = ParseCompleteParam(r)
-	assert.True(t, complete)
+	assert.True(t, *complete)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete=false", nil)
 	complete, _ = ParseCompleteParam(r)
-	assert.False(t, complete)
+	assert.False(t, *complete)
 }
 
 func TestParseTestRunFilterParams(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	filter, _ := ParseTestRunFilterParams(r)
-	assert.False(t, filter.Complete)
+	assert.Nil(t, filter.Complete)
 	assert.Equal(t, "complete=true", filter.ToQuery(true).Encode())
 	assert.Equal(t, "", filter.ToQuery(false).Encode())
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?label=stable", nil)
 	filter, _ = ParseTestRunFilterParams(r)
-	assert.False(t, filter.Complete)
 	assert.Equal(t, "label=stable", filter.ToQuery(true).Encode())
 	assert.Equal(t, "label=stable", filter.ToQuery(false).Encode())
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/?from=2018-01-01T00%3A00%3A00Z", nil)
+	filter, _ = ParseTestRunFilterParams(r)
+	assert.Equal(t, "complete=true&from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(true).Encode())
+	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(false).Encode())
 }
