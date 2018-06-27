@@ -34,7 +34,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
 	var shas []string
-	if filters.Complete != nil && *filters.Complete {
+	if !shared.IsLatest(filters.SHA) {
+		shas = []string{filters.SHA}
+	} else if filters.Complete != nil && *filters.Complete {
 		if shared.IsLatest(filters.SHA) {
 			shas, err = getCompleteRunSHAs(ctx, from, limit)
 			if err != nil {
@@ -43,24 +45,27 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			if len(shas) < 1 {
 				// Bail out early - can't find any complete runs.
+				w.WriteHeader(http.StatusNotFound)
 				w.Write([]byte("[]"))
 				return
 			}
 		}
-	} else if !shared.IsLatest(filters.SHA) {
-		shas = []string{filters.SHA}
 	}
 	products := filters.GetProductsOrDefault()
 	testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, shas, from, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	} else if len(testRuns) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("[]"))
+		return
 	}
+
 	testRunsBytes, err := json.Marshal(testRuns)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Write(testRunsBytes)
 }
