@@ -55,11 +55,14 @@ found in the LICENSE file.
 
     .th-label {
       padding: 0.2em 0.5em;
-      text-align: left;
     }
 
     tr.spec {
       background-color: var(--paper-grey-200);
+    }
+
+    td.score {
+      text-align: center;
     }
 
     tr td {
@@ -176,7 +179,7 @@ found in the LICENSE file.
           </td>
 
           <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
-            <td style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+            <td class='score' style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
           </template>
         </tr>
       </template>
