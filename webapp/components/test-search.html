@@ -71,31 +71,9 @@ found in the LICENSE file.
         q = q.toLowerCase();
         const results = this.items.filter(t => {
           let v = this.itemKey ? t[this.itemKey] : t;
-          return this.fuzzysearch(q, v.toLowerCase());
+          return v.toLowerCase().includes(q);
         });
         this.results = results;
-      }
-
-      // Extracted from nodejs fuzzysearch module.
-      fuzzysearch(needle, haystack) {
-        var tlen = haystack.length;
-        var qlen = needle.length;
-        if (qlen > tlen) {
-          return false;
-        }
-        if (qlen === tlen) {
-          return needle === haystack;
-        }
-        outer: for (var i = 0, j = 0; i < qlen; i++) {
-          var nch = needle.charCodeAt(i);
-          while (j < tlen) {
-            if (haystack.charCodeAt(j++) === nch) {
-              continue outer;
-            }
-          }
-          return false;
-        }
-        return true;
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);
