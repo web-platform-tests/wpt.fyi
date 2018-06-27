@@ -73,6 +73,9 @@ found in the LICENSE file.
       }
 
       computedDisplayableRelativePath(path) {
+        if (!this.isDir) {
+          return path.substr(path.lastIndexOf('/') + 1);
+        }
         const windowPath = window.location.pathname.replace(`${this.prefix || ''}`, '');
         const pathPrefix = new RegExp(`^${windowPath}${windowPath.endsWith('/') ? '' : '/'}`);
         return `${path.replace(pathPrefix, '')}${this.isDir ? '/' : ''}`;

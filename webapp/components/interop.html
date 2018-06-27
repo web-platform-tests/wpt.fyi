@@ -12,6 +12,7 @@ found in the LICENSE file.
 <link rel="import" href="runs.html">
 <link rel="import" href="test-run.html">
 <link rel="import" href="self-navigator.html">
+<link rel="import" href="test-search.html">
 
 <dom-module id="wpt-interop">
 <template>
@@ -36,13 +37,6 @@ found in the LICENSE file.
       margin-top: 1em;
     }
 
-    input.query {
-      font-size: 16px;
-      display: block;
-      padding: 0.5em 0;
-      width: 100%;
-    }
-
     a {
       text-decoration: none;
       color: var(--paper-blue-500);
@@ -61,11 +55,14 @@ found in the LICENSE file.
 
     .th-label {
       padding: 0.2em 0.5em;
-      text-align: left;
     }
 
     tr.spec {
       background-color: var(--paper-grey-200);
+    }
+
+    td.score {
+      text-align: center;
     }
 
     tr td {
@@ -75,6 +72,10 @@ found in the LICENSE file.
     tr.spec td {
       padding: 0.2em 0.5em;
       border: solid 1px var(--paper-grey-300);
+    }
+
+    .path {
+      margin-bottom: 16px;
     }
 
     .path-separator {
@@ -109,6 +110,36 @@ found in the LICENSE file.
 
   <h2>Interoperability</h2>
 
+  <section class="search">
+    <div class="path">
+      <a href="/interop/" on-click="navigate">WPT</a>
+      <template is="dom-repeat" items="{{ splitIntoLinkedParts(path) }}" as="part">
+        <span class="path-separator">/</span>
+        <a href="/interop{{ part.path }}" on-click="navigate">{{ part.name }}</a>
+      </template>
+    </div>
+
+    <template is="dom-if" if="{{ !pathIsATestFile }}">
+      <test-search query='{{query}}'
+                   items='[[allMetrics.data]]'
+                   item-key='dir'
+                   results='{{searchResults}}'
+                   placeholder='[[queryPlaceholder]]'></test-search>
+    </template>
+
+    <template is="dom-if" if="{{ pathIsATestFile }}">
+      <div class="links">
+        <ul>
+          <li>
+            <a href$="https://github.com/web-platform-tests/wpt/blob/master[[path]]"
+              target="_blank">View source on GitHub</a></li>
+          <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
+            browser on w3c-test.org</a></li>
+        </ul>
+      </div>
+    </template>
+  </section>
+
   <section class="runs">
     <table>
       <thead>
@@ -123,34 +154,6 @@ found in the LICENSE file.
       </head>
     </table>
   </section>
-
-  <section class="search">
-    <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <input value="{{ query::input }}"
-             class="query"
-             placeholder="{{ queryPlaceholder }}"
-             data-foo="bar">
-    </template>
-    <div class="path">
-      <a href="/interop/" on-click="navigate">WPT</a>
-      <template is="dom-repeat" items="{{ splitIntoLinkedParts(path) }}" as="part">
-        <span class="path-separator">/</span>
-        <a href="/interop{{ part.path }}" on-click="navigate">{{ part.name }}</a>
-      </template>
-    </div>
-  </section>
-
-  <template is="dom-if" if="{{ pathIsATestFile }}">
-    <div class="links">
-      <ul>
-        <li>
-          <a href$="https://github.com/web-platform-tests/wpt/blob/master[[path]]"
-             target="_blank">View source on GitHub</a></li>
-        <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
-          browser on w3c-test.org</a></li>
-      </ul>
-    </div>
-  </template>
 
   <table>
     <thead>
@@ -169,14 +172,14 @@ found in the LICENSE file.
       </tr>
     </thead>
     <tbody>
-      <template is="dom-repeat" items="{{ metrics.data }}" as="node">
+      <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
         <tr>
           <td>
             <path-part path="{{ node.dir }}" is-dir="{{ !computePathIsATestFile(node.dir) }}" prefix="/interop" navigate="{{ bindNavigate() }}"></path-part>
           </td>
 
           <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
-            <td style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+            <td class='score' style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
           </template>
         </tr>
       </template>
@@ -207,8 +210,6 @@ found in the LICENSE file.
     [118, 255,   3], // --paper-light-green-a200
   ];
 
-  const queryTimeoutId = Symbol('queryTimeoutId');
-
   /* global SelfNavigation */
   class WPTInterop extends SelfNavigation(window.Polymer.Element) {
     static get is() {
@@ -219,9 +220,13 @@ found in the LICENSE file.
         sha: String,
         passRateMetadata: Object,
         allMetrics: Object,
-        metrics: {
+        displayedNodes: {
           type: Object,
-          computed: 'computeMetrics(path, query, allMetrics)'
+          computed: 'computeDisplayedNodes(path, searchResults, allMetrics)'
+        },
+        testFileNames: {
+          type: Array,
+          value: [],
         },
         scheme: {
           type: String,
@@ -248,16 +253,16 @@ found in the LICENSE file.
           type: String,
           computed: 'computeQueryPlaceholder()'
         },
-        queryTimeoutId: {
-          type: Number,
-          value: 0
-        },
+        searchResults: Array,
       };
     }
 
     async connectedCallback() {
       await super.connectedCallback();
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
+      if (this.allMetrics && this.allMetrics.data) {
+        this.testFileNames = Array.from(Object.keys(this.allMetrics.data));
+      }
     }
 
     async fetchMetrics(url) {
@@ -333,59 +338,35 @@ found in the LICENSE file.
       return labels;
     }
 
-    computeMetrics(path, query, allMetrics) {
+    computeDisplayedNodes(path, searchResults, allMetrics) {
       if (!path || !allMetrics) {
         return null;
       }
-      let { data, metadata } = allMetrics;
 
+      let data = this.searchResults || allMetrics.data;
       if (this.computePathIsATestFile(path)) {
         data = data.filter(node => node.dir === path);
       } else {
-        data = data.filter(node => this.filterNode(path === '/' ? path : `${this.path}/`, query, node));
+        data = data.filter(node => {
+          return this.filterNode(path === '/' ? path : `${this.path}/`, node);
+        });
       }
 
-      return {
-        metadata, data
-      };
+      return data;
     }
 
-    filterNode(path, query, node) {
+    filterNode(path, node) {
       if (!node.dir.startsWith(path)) {
         return false;
       }
       const subdir = node.dir.substr(path.length);
-      if (!query) {
-        return !subdir.includes('/');
-      }
-      let test;
-      try {
-        const re = new RegExp(query.replace(/\//g, '\\/'), 'i');
-        test = re.test.bind(re);
-      } catch (e) {
-        test = str => str.includes(query);
-      }
-
-      return this.shouldQueryAll() ?
-        test(subdir) :
-        (!subdir.includes('/') && test(subdir));
+      return !subdir.includes('/');
     }
 
     passRateStyle(total, passRate, browserCount) {
       const fraction = passRate / total;
       const alpha = Math.round(fraction * 1000) / 1000;
       return `background-color: rgba(${INTEROP_COLORS[browserCount].join(', ')}, ${alpha})`;
-    }
-
-    queryChanged(_, oldQuery) {
-      // Debounce first initialization.
-      if (oldQuery === undefined) {
-        return;
-      }
-      if (this[queryTimeoutId]) {
-        window.clearTimeout(this[queryTimeoutId]);
-      }
-      this[queryTimeoutId] = window.setTimeout(this.updateQueryState.bind(this), 500);
     }
 
     computeQueryPlaceholder() {
@@ -400,8 +381,7 @@ found in the LICENSE file.
       if (!allMetrics || !path || path === '/') {
         return null;
       }
-      const currentNode = allMetrics.data.filter(node => node.dir === path)[0];
-      return currentNode || null;
+      return allMetrics.data.some(node => node.dir === path);
     }
 
     shouldQueryAll() {

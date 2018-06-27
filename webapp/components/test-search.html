@@ -1,0 +1,81 @@
+<!--
+Copyright 2017 The WPT Dashboard Project. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<dom-module id="test-search">
+  <template>
+    <style>
+      input.query {
+        font-size: 16px;
+        display: block;
+        padding: 0.5em 0;
+        width: 100%;
+      }
+    </style>
+
+    <input value="{{ query::input }}" class="query" placeholder="[[placeholder]]">
+  </template>
+
+  <script>
+    const QUERY_DEBOUNCE_ID = Symbol('query_debounce_timeout');
+
+    class TestSearch extends window.Polymer.Element {
+      static get is() {
+        return 'test-search';
+      }
+      static get properties() {
+        return {
+          placeholder: {
+            type: String,
+            value: 'Search test files, like \'cors/allow-headers.htm\'',
+          },
+          items: Array,
+          itemKey: String,
+          query: {
+            type: String,
+            notify: true,
+            observer: 'queryChanged'
+          },
+          results: {
+            type: Array,
+            notify: true,
+          },
+          queryPlaceholder: {
+            type: String,
+            computed: 'computeQueryPlaceholder()'
+          },
+        };
+      }
+
+      queryChanged(_, oldQuery) {
+        // Debounce first initialization.
+        if (typeof(oldQuery) === 'undefined') {
+          return;
+        }
+        if (this[QUERY_DEBOUNCE_ID]) {
+          window.clearTimeout(this[QUERY_DEBOUNCE_ID]);
+        }
+        this[QUERY_DEBOUNCE_ID] = window.setTimeout(this.executeSearch.bind(this), 500);
+      }
+
+      executeSearch() {
+        let q = this.query;
+        if (!q || q.length < 1) {
+          this.results = this.items;
+          return;
+        }
+        q = q.toLowerCase();
+        const results = this.items.filter(t => {
+          let v = this.itemKey ? t[this.itemKey] : t;
+          return v.toLowerCase().includes(q);
+        });
+        this.results = results;
+      }
+    }
+    window.customElements.define(TestSearch.is, TestSearch);
+  </script>
+</dom-module>
