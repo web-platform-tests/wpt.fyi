@@ -210,6 +210,12 @@ deploy_staging: gcloud webapp_deps package_announcer var-BRANCH_NAME var-APP_PAT
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 
+deploy_production: gcloud webapp_deps package_announcer var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
+	gcloud config set project $(PROJECT)
+	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
+	cd $(WPTD_PATH); util/deploy.sh -p $(APP_PATH)
+	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
+
 bower_components: git node-bower
 	cd $(WPTD_PATH)webapp; npm run bower-components
 
