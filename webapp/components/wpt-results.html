@@ -15,6 +15,7 @@ found in the LICENSE file.
 <link rel="import" href="test-file-results.html">
 <link rel="import" href="test-run.html">
 <link rel="import" href="self-navigator.html">
+<link rel="import" href="test-search.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -31,12 +32,6 @@ found in the LICENSE file.
       section.search .path {
         margin-top: 1em;
       }
-      input.query {
-        font-size: 16px;
-        display: block;
-        padding: 0.5em 0;
-        width: 100%;
-      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -50,6 +45,9 @@ found in the LICENSE file.
       tr.spec td {
         padding: 0.2em 0.5em;
         border: solid 1px var(--paper-grey-300);
+      }
+      .path {
+        margin-bottom: 16px;
       }
       .path-separator {
         padding: 0 0.1em;
@@ -102,25 +100,38 @@ found in the LICENSE file.
       }
     </style>
 
+    <h2>Test results</h2>
+
     <section class="search">
-      <input
-        value="{{query::input}}"
-        class="query"
-        placeholder="Search test files, like cors/allow-headers.htm">
       <div class="path">
         <a href="/" onclick="{{ bindNavigate() }}">WPT</a>
         <template is="dom-repeat" items="{{ splitPathIntoLinkedParts(path) }}" as="part">
           <span class="path-separator">/</span>
           <a href="{{ part.path }}" on-click="navigate">{{ part.name }}</a>
         </template>
-
-        <template is="dom-if" if="{{ !isLatest }}">
-          <section class="info">
-            Showing results for run <b>{{ sha }}</b>.
-            <small><a href='?sha=latest'>View latest run</a></small>
-          </section>
-        </template>
       </div>
+
+      <template is="dom-if" if="{{ !pathIsATestFile }}">
+        <test-search  query='{{query}}' items='[[testFileNames]]' results='{{searchResults}}'></test-search>
+      </template>
+
+      <template is="dom-if" if="{{ pathIsATestFile }}">
+        <div class="links">
+          <ul>
+            <li><a href$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
+            <template is="dom-if" if="{{ testCanRunOnW3C }}">
+              <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+            </template>
+          </ul>
+        </div>
+      </template>
+
+      <template is="dom-if" if="{{ !isLatest }}">
+        <section class="info">
+          Showing results for run <b>{{ sha }}</b>.
+          <small><a href='?sha=latest'>View latest run</a></small>
+        </section>
+      </template>
     </section>
 
     <template is='dom-if' if='[[isInvalidDiffUse(diff, testRuns)]]'>
@@ -130,19 +141,10 @@ found in the LICENSE file.
     </template>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
-      <div class="links">
-        <ul>
-          <li><a href$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
-          <template is="dom-if" if="{{ testCanRunOnW3C }}">
-            <li><a href$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
-          </template>
-        </ul>
-      </div>
-
       <test-file-results
-        test-runs="[[testRuns]]"
-        test-run-resources="[[testRunResources]]"
-        test-file="[[path]]">
+          test-runs="[[testRuns]]"
+          test-run-resources="[[testRunResources]]"
+          test-file="[[path]]">
       </test-file-results>
     </template>
 
@@ -195,7 +197,10 @@ found in the LICENSE file.
           query: {
             type: String,
             value: '',
-            observer: 'refreshDisplayedNodes'
+          },
+          searchResults: {
+            type: Array,
+            observer: 'refreshDisplayedNodes',
           },
           sha: String,
           isLatest: {
@@ -221,6 +226,10 @@ found in the LICENSE file.
           testFiles: {
             type: Object,
             value: {}
+          },
+          testFileNames: {
+            type: Array,
+            value: [],
           },
           displayedNodes: {
             type: Array,
@@ -326,6 +335,7 @@ found in the LICENSE file.
             this.testFiles[testFileName][resultsURL] = testFiles[testFileName];
           });
         });
+        this.testFileNames = Array.from(Object.keys(this.testFiles));
       }
 
       async fetchResultsJSON(resultsURL) {
@@ -398,15 +408,10 @@ found in the LICENSE file.
           });
         };
 
-        Object.keys(this.testFiles).forEach(testFileName => {
+        const files = this.searchResults || Array.from(Object.keys(this.testFiles));
+        files.forEach(testFileName => {
           if (this.path !== '/' && !testFileName.startsWith(`${this.path}/`)) {
             return;
-          }
-
-          if (this.query.length > 0) {
-            if (!testFileName.toLowerCase().includes(this.query.toLowerCase())) {
-              return;
-            }
           }
 
           let parts = this.splitPathIntoLinkedParts(testFileName);
