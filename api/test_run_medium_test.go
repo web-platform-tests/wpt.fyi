@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -49,70 +48,6 @@ func TestGetTestRunByID(t *testing.T) {
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &bodyTestRun)
 	assert.Equal(t, int64(123), bodyTestRun.ID)
-}
-
-func TestGetTestRuns_VersionPrefix(t *testing.T) {
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
-	assert.Nil(t, err)
-	defer i.Close()
-	r, err := i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
-	assert.Nil(t, err)
-
-	// 'Yesterday', v66...139 earlier version.
-	ctx := appengine.NewContext(r)
-	now := time.Now()
-	chrome := shared.TestRun{
-		ProductAtRevision: shared.ProductAtRevision{
-			Product: shared.Product{
-				BrowserName:    "chrome",
-				BrowserVersion: "66.0.3359.139",
-			},
-			Revision: "abcdef0123",
-		},
-		CreatedAt: now.AddDate(0, 0, -1),
-	}
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
-
-	// 'Today', v66...181 (revision increased)
-	chrome.BrowserVersion = "66.0.3359.181"
-	chrome.CreatedAt = now
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
-
-	// Also 'today', a v68 run.
-	chrome.BrowserVersion = "68.0.3432.3"
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
-
-	r, _ = i.NewRequest("GET", "/api/run?product=chrome-6", nil)
-	resp := httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
-	assert.Equal(t, http.StatusNotFound, resp.Code)
-
-	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
-	resp = httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
-	body, _ := ioutil.ReadAll(resp.Result().Body)
-	assert.Equalf(t, http.StatusOK, resp.Code, string(body))
-	var result66 shared.TestRun
-	json.Unmarshal(body, &result66)
-	assert.Equal(t, "66.0.3359.181", result66.BrowserVersion)
-
-	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.139", nil)
-	resp = httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
-	assert.Equal(t, http.StatusOK, resp.Code)
-	var result66139 shared.TestRun
-	json.Unmarshal(body, &result66139)
-	assert.Equal(t, "66.0.3359.139", result66139.BrowserVersion)
-
-	r, _ = i.NewRequest("GET", "/api/run?product=chrome-68", nil)
-	resp = httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
-	assert.Equal(t, http.StatusOK, resp.Code)
-	var result68 shared.TestRun
-	json.Unmarshal(body, &result68)
-	assert.Equal(t, "68.0.3432.3", result68.BrowserVersion)
 }
 
 func TestTestRunPostHandler(t *testing.T) {

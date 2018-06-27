@@ -7,7 +7,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -20,38 +19,23 @@ import (
 
 // apiSHAsHandler is responsible for emitting just the revision SHAs for test runs.
 func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
-	var products []shared.Product
-	var err error
-	if products, err = shared.GetProductsForRequest(r); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	limit, err := shared.ParseMaxCountParam(r)
+	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
-		http.Error(w, "Invalid 'max-count' param: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	var from *time.Time
-	if from, err = shared.ParseFromParam(r); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid 'from' param: %s", err.Error()), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	ctx := appengine.NewContext(r)
 
 	var shas []string
-	if complete, err := shared.ParseCompleteParam(r); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid 'complete' param: %s", r.URL.Query().Get("complete")), http.StatusBadRequest)
-		return
-	} else if complete {
-		if shas, err = getCompleteRunSHAs(ctx, from, limit); err != nil {
+	if filters.Complete != nil && *filters.Complete {
+		if shas, err = getCompleteRunSHAs(ctx, filters.From, filters.MaxCount); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} else {
-		labels := shared.ParseLabelsParam(r)
-		testRuns, err := shared.LoadTestRuns(ctx, products, labels, shas, from, limit)
+		products := filters.GetProductsOrDefault()
+		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, nil, filters.From, filters.MaxCount)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

@@ -52,36 +52,19 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		testRun = *run
 	} else {
-		runSHA, err := shared.ParseSHAParam(r)
+		filters, err := shared.ParseTestRunFilterParams(r)
 		if err != nil {
-			http.Error(w, "Invalid query params", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
-		}
-		var browser, product *shared.Product
-		product, err = shared.ParseProductParam(r)
-		if err != nil {
-			http.Error(w, "Invalid 'product' param", http.StatusBadRequest)
+		} else if len(filters.Products) == 0 {
+			http.Error(w, fmt.Sprintf("Missing required 'product' param"), http.StatusBadRequest)
 			return
-		}
-		browser, err = shared.ParseBrowserParam(r)
-		if err != nil {
-			http.Error(w, "Invalid 'browser' param", http.StatusBadRequest)
+		} else if len(filters.Products) > 1 {
+			http.Error(w, fmt.Sprintf("Only one 'product' param value is allowed"), http.StatusBadRequest)
 			return
-		}
-		if product == nil && browser != nil {
-			product = browser
-		}
-		if product == nil {
-			http.Error(w, "Missing required 'product' param", http.StatusBadRequest)
-			return
-		}
-		labels := shared.ParseLabelsParam(r)
-		var shas []string
-		if runSHA != "" && runSHA != "latest" {
-			shas = []string{runSHA}
 		}
 		one := 1
-		testRuns, err := shared.LoadTestRuns(ctx, []shared.Product{*product}, labels, shas, nil, &one)
+		testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, []string{filters.SHA}, nil, &one)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

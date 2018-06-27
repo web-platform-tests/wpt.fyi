@@ -51,7 +51,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var testRunSources []string
 	var testRuns []shared.TestRun
-	if testRunSources, testRuns, err = getTestRunsAndSources(r, runSHA); err != nil {
+	if testRunSources, testRuns, err = getTestRunsAndSources(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -111,7 +111,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 // for the current request.
 // When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [product]@[sha]), or base64 encoded
 // TestRun JSON blobs for the results summaries.
-func getTestRunsAndSources(r *http.Request, runSHA string) (testRunSources []string, testRuns []shared.TestRun, err error) {
+func getTestRunsAndSources(r *http.Request) (testRunSources []string, testRuns []shared.TestRun, err error) {
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")
 	if before != "" || after != "" {
