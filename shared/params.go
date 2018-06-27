@@ -23,7 +23,7 @@ import (
 type TestRunFilter struct {
 	SHA      string
 	Labels   mapset.Set
-	Complete bool
+	Complete *bool
 	From     *time.Time
 	MaxCount *int
 	Products []Product
@@ -48,7 +48,9 @@ func (filter TestRunFilter) ToQuery(completeIfDefault bool) (q url.Values) {
 			q.Add("product", p.String())
 		}
 	}
-	if filter.Complete || (completeIfDefault && len(q) == 0) {
+	if filter.Complete != nil {
+		q.Set("complete", strconv.FormatBool(*filter.Complete))
+	} else if completeIfDefault && len(q) == 0 {
 		q.Set("complete", "true")
 	}
 	if filter.MaxCount != nil {
@@ -458,15 +460,17 @@ func ParseQueryParamInt(r *http.Request, key string) (int, error) {
 // ParseCompleteParam parses the "complete" param, returning
 // true if it's present with no value, otherwise the parsed
 // bool value.
-func ParseCompleteParam(r *http.Request) (bool, error) {
+func ParseCompleteParam(r *http.Request) (complete *bool, err error) {
 	q := r.URL.Query()
+	b := false
 	if _, ok := q["complete"]; !ok {
-		return false, nil
+		return nil, nil
 	} else if val := q.Get("complete"); val == "" {
-		return true, nil
+		b = true
 	} else {
-		return strconv.ParseBool(val)
+		b, err = strconv.ParseBool(val)
 	}
+	return &b, err
 }
 
 // ParseTestRunFilterParams parses all of the filter params for a TestRun query.

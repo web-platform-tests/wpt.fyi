@@ -28,7 +28,7 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	var shas []string
-	if filters.Complete {
+	if filters.Complete != nil && *filters.Complete {
 		if shas, err = getCompleteRunSHAs(ctx, filters.From, filters.MaxCount); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

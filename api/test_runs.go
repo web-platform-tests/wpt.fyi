@@ -34,7 +34,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
 	var shas []string
-	if filters.Complete {
+	if filters.Complete != nil && *filters.Complete {
 		if shared.IsLatest(filters.SHA) {
 			shas, err = getCompleteRunSHAs(ctx, from, limit)
 			if err != nil {

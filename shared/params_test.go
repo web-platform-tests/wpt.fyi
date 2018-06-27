@@ -388,35 +388,37 @@ func TestParseProductAtRevision_OSVersion(t *testing.T) {
 }
 
 func TestParseComplete(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete", nil)
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs", nil)
 	complete, _ := ParseCompleteParam(r)
-	assert.True(t, complete)
+	assert.Nil(t, complete)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete", nil)
+	complete, _ = ParseCompleteParam(r)
+	assert.True(t, *complete)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete=true", nil)
 	complete, _ = ParseCompleteParam(r)
-	assert.True(t, complete)
+	assert.True(t, *complete)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete=false", nil)
 	complete, _ = ParseCompleteParam(r)
-	assert.False(t, complete)
+	assert.False(t, *complete)
 }
 
 func TestParseTestRunFilterParams(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	filter, _ := ParseTestRunFilterParams(r)
-	assert.False(t, filter.Complete)
+	assert.Nil(t, filter.Complete)
 	assert.Equal(t, "complete=true", filter.ToQuery(true).Encode())
 	assert.Equal(t, "", filter.ToQuery(false).Encode())
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?label=stable", nil)
 	filter, _ = ParseTestRunFilterParams(r)
-	assert.False(t, filter.Complete)
 	assert.Equal(t, "label=stable", filter.ToQuery(true).Encode())
 	assert.Equal(t, "label=stable", filter.ToQuery(false).Encode())
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?from=2018-01-01T00%3A00%3A00Z", nil)
 	filter, _ = ParseTestRunFilterParams(r)
-	assert.False(t, filter.Complete)
 	assert.Equal(t, "complete=true&from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(true).Encode())
 	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(false).Encode())
 }
