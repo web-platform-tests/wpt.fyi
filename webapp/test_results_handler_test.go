@@ -15,8 +15,14 @@ import (
 
 func TestGetTestRunsAndSources(t *testing.T) {
 	r := httptest.NewRequest("GET", "/results/?max-count=3", nil)
-	srcs, runs, err := getTestRunsAndSources(r, "latest")
+	srcs, runs, err := getTestRunsAndSources(r)
 	assert.Nil(t, err)
 	assert.Nil(t, runs)
-	assert.Equal(t, []string{"/api/runs?complete=true"}, srcs)
+	assert.Equal(t, []string{"/api/runs?complete=true&max-count=3"}, srcs)
+
+	r = httptest.NewRequest("GET", "/results/?max-count=5&product=chrome-69&sha=abcdef0123", nil)
+	srcs, runs, err = getTestRunsAndSources(r)
+	assert.Nil(t, err)
+	assert.Nil(t, runs)
+	assert.Equal(t, []string{"/api/runs?max-count=5&product=chrome-69&sha=abcdef0123"}, srcs)
 }
