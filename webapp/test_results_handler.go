@@ -130,8 +130,8 @@ func getTestRunsAndSources(r *http.Request) (testRunSources []string, testRuns [
 			}
 			testRuns = append(testRuns, run)
 		} else {
-			var beforeSpec shared.ProductAtRevision
-			if beforeSpec, err = shared.ParseProductAtRevision(before); err != nil {
+			beforeSpec, err := shared.ParseProductSpec(before)
+			if err != nil {
 				return nil, nil, errors.New("invalid before param")
 			}
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, beforeSpec.Revision, beforeSpec.Product.String()))
@@ -144,8 +144,8 @@ func getTestRunsAndSources(r *http.Request) (testRunSources []string, testRuns [
 			}
 			testRuns = append(testRuns, run)
 		} else {
-			var afterSpec shared.ProductAtRevision
-			if afterSpec, err = shared.ParseProductAtRevision(after); err != nil {
+			afterSpec, err := shared.ParseProductSpec(after)
+			if err != nil {
 				return nil, nil, errors.New("invalid after param")
 			}
 			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Product.String()))

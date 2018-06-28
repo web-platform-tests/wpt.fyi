@@ -26,8 +26,44 @@ type TestRunFilter struct {
 	Complete *bool
 	From     *time.Time
 	MaxCount *int
-	Products []Product
+	Products ProductSpecs
 }
+
+// ProductSpec is a struct representing a parsed product spec string.
+type ProductSpec struct {
+	ProductAtRevision
+
+	Labels mapset.Set
+}
+
+// ProductSpecs is a helper type for a slice of ProductSpec structs.
+type ProductSpecs []ProductSpec
+
+// Products gets the slice of products specified in the ProductSpecs slice.
+func (p ProductSpecs) Products() []Product {
+	result := make([]Product, len(p))
+	for i, spec := range p {
+		result[i] = spec.Product
+	}
+	return result
+}
+
+func (p ProductSpec) String() string {
+	s := p.Product.String()
+	if p.Labels != nil && p.Labels.Cardinality() > 0 {
+		s += "["
+		for label := range p.Labels.Iter() {
+			s += label.(string) + ","
+		}
+		s = s[:len(s)-1]
+		s += "]"
+	}
+	return s
+}
+
+func (p ProductSpecs) Len() int           { return len(p) }
+func (p ProductSpecs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p ProductSpecs) Less(i, j int) bool { return p[i].String() < p[j].String() }
 
 // ToQuery converts the filter set to a url.Values (set of query params).
 // completeIfDefault is whether the params should fall back to a complete run
@@ -104,22 +140,42 @@ func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	return runSHA, err
 }
 
-// ParseProductAtRevision parses a test-run spec into a ProductAtRevision struct.
-func ParseProductAtRevision(spec string) (productAtRevision ProductAtRevision, err error) {
-	pieces := strings.Split(spec, "@")
-	if len(pieces) > 2 {
-		return productAtRevision, errors.New("invalid product@revision spec: " + spec)
+// ParseProductSpec parses a test-run spec into a ProductAtRevision struct.
+func ParseProductSpec(spec string) (productSpec ProductSpec, err error) {
+	errMsg := "invalid product spec: " + spec
+	productSpec.Revision = "latest"
+	name := spec
+	// @sha (optional)
+	atSHAPieces := strings.Split(spec, "@")
+	if len(atSHAPieces) > 2 {
+		return productSpec, errors.New(errMsg)
+	} else if len(atSHAPieces) == 2 {
+		name = atSHAPieces[0]
+		productSpec.Revision = atSHAPieces[1]
 	}
-	if productAtRevision.Product, err = ParseProduct(pieces[0]); err != nil {
-		return productAtRevision, err
+	// [foo,bar] labels syntax (optional)
+	labelPieces := strings.Split(name, "[")
+	if len(labelPieces) > 2 {
+		return productSpec, errors.New(errMsg)
+	} else if len(labelPieces) == 2 {
+		name = labelPieces[0]
+		labels := labelPieces[1]
+		if labels[len(labels)-1:] != "]" || strings.Index(labels, "]") < len(labels)-1 {
+			return productSpec, errors.New(errMsg)
+		}
+		labels = labels[:len(labels)-1]
+		productSpec.Labels = mapset.NewSet()
+		for _, label := range strings.Split(labels, ",") {
+			if label != "" {
+				productSpec.Labels.Add(label)
+			}
+		}
 	}
-	if len(pieces) < 2 {
-		// No @ is assumed to be the product only.
-		productAtRevision.Revision = "latest"
-	} else {
-		productAtRevision.Revision = pieces[1]
+	// Product (required)
+	if productSpec.Product, err = ParseProduct(name); err != nil {
+		return productSpec, err
 	}
-	return productAtRevision, nil
+	return productSpec, nil
 }
 
 // ParseProduct parses the `browser-version-os-version` input as a Product struct.
@@ -230,25 +286,25 @@ func ParseProductParam(r *http.Request) (product *Product, err error) {
 // ParseProductsParam returns a list of product params for the request.
 // It parses the 'products' parameter, split on commas, and also checks for the (repeatable)
 // 'product' params.
-func ParseProductsParam(r *http.Request) (products []Product, err error) {
+func ParseProductsParam(r *http.Request) (products ProductSpecs, err error) {
 	productParams := ParseRepeatedParam(r, "product", "products")
 	if productParams == nil {
 		return nil, nil
 	}
 	for p := range productParams.Iter() {
-		product, err := ParseProduct(p.(string))
+		product, err := ParseProductSpec(p.(string))
 		if err != nil {
 			return nil, err
 		}
 		products = append(products, product)
 	}
-	sort.Sort(ByBrowserName(products))
+	sort.Sort(ProductSpecs(products))
 	return products, nil
 }
 
 // ParseProductOrBrowserParams parses the product (or, browser) params present in the given
 // request.
-func ParseProductOrBrowserParams(r *http.Request) (products []Product, err error) {
+func ParseProductOrBrowserParams(r *http.Request) (products ProductSpecs, err error) {
 	if products, err = ParseProductsParam(r); err != nil {
 		return nil, err
 	}
@@ -258,16 +314,16 @@ func ParseProductOrBrowserParams(r *http.Request) (products []Product, err error
 		return nil, err
 	}
 	for _, browser := range browserParams {
-		products = append(products, Product{
-			BrowserName: browser,
-		})
+		spec := ProductSpec{}
+		spec.BrowserName = browser
+		products = append(products, spec)
 	}
 	return products, nil
 }
 
 // GetProductsOrDefault parses the 'products' (and legacy 'browsers') params, returning
 // the sorted list of products to include, or a default list.
-func (filter TestRunFilter) GetProductsOrDefault() (products []Product) {
+func (filter TestRunFilter) GetProductsOrDefault() (products ProductSpecs) {
 	products = filter.Products
 	// Fall back to default browser set.
 	if products == nil {
@@ -287,22 +343,18 @@ func (filter TestRunFilter) GetProductsOrDefault() (products []Product) {
 				break
 			}
 			browserLabel = name
-			products = []Product{
-				Product{
-					BrowserName: name,
-				},
-			}
+			products = make(ProductSpecs, 1)
+			products[0].BrowserName = name
 			// For a browser label (e.g. "chrome"), we also include its -experimental variant because
 			// we used to spoof the experimental label by adding it as a suffix to browser names.
 			// The experimental label filtering will happen later in datastore.go.
 			// TODO(Hexcles): remove this once we convert all history -experimental runs.
-			products = append(products, Product{
-				BrowserName: name + "-" + ExperimentalLabel,
-			})
+			products = append(products, ProductSpec{})
+			products[1].BrowserName = name + "-" + ExperimentalLabel
 		}
 	}
 
-	sort.Sort(ByBrowserName(products))
+	sort.Sort(ProductSpecs(products))
 	return products
 }
 

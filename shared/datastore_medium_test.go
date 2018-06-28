@@ -41,8 +41,8 @@ func TestLoadTestRuns(t *testing.T) {
 	key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
 	key, _ = datastore.Put(ctx, key, &testRun)
 
-	chrome, _ := ParseProduct("chrome")
-	loaded, err := LoadTestRuns(ctx, []Product{chrome}, nil, nil, nil, nil)
+	chrome, _ := ParseProductSpec("chrome")
+	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, nil, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(loaded))
 	assert.Equalf(t, key.IntID(), loaded[0].ID, "ID field should be populated.")
@@ -119,7 +119,10 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	keys, err = datastore.PutMulti(ctx, keys, testRuns)
 	assert.Nil(t, err)
 
-	products := []Product{Product{BrowserName: "chrome"}, Product{BrowserName: "chrome-experimental"}}
+	chrome, chromeExperimental := ProductSpec{}, ProductSpec{}
+	chrome.BrowserName = "chrome"
+	chromeExperimental.BrowserName = "chrome-experimental"
+	products := ProductSpecs{chrome, chromeExperimental}
 	labels := mapset.NewSet()
 	labels.Add("experimental")
 	ten := 10
@@ -154,7 +157,8 @@ func TestLoadTestRuns_MultipleSHAs(t *testing.T) {
 	keys, err = datastore.PutMulti(ctx, keys, testRuns)
 	assert.Nil(t, err)
 
-	products := []Product{Product{BrowserName: "chrome"}}
+	products := make([]ProductSpec, 1)
+	products[0].BrowserName = "chrome"
 	shas := []string{"1111111111", "2222222222"}
 	loaded, err := LoadTestRuns(ctx, products, nil, shas, nil, nil)
 	assert.Nil(t, err)

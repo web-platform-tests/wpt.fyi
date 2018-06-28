@@ -192,7 +192,7 @@ func main() {
 	addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 
 	log.Print("Adding latest production TestRun data...")
-	prodTestRuns := shared.FetchLatestRuns(*host)
+	prodTestRuns := shared.FetchRuns(*host, "latest", mapset.NewSetWith("stable"))
 	labelRuns(prodTestRuns, "prod")
 	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
@@ -201,7 +201,7 @@ func main() {
 	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
 
 	log.Print("Adding latest experimental TestRun data...")
-	prodTestRuns = shared.FetchRuns(*host, "latest", mapset.NewSet("experimental"))
+	prodTestRuns = shared.FetchRuns(*host, "latest", mapset.NewSetWith("experimental"))
 	labelRuns(prodTestRuns, "prod")
 
 	latestProductionTestRunMetadata = make([]interface{}, len(prodTestRuns))

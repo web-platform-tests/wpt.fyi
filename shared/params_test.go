@@ -353,38 +353,59 @@ func TestParseLabelsParam_LabelsAndLabel_Duplicate(t *testing.T) {
 	assert.Equal(t, 1, labels.Cardinality())
 }
 
-func TestParseProductAtRevision(t *testing.T) {
-	productAtRevision, err := ParseProductAtRevision("chrome@latest")
+func TestParseProductSpec(t *testing.T) {
+	productSpec, err := ParseProductSpec("chrome@latest")
 	assert.Nil(t, err)
-	assert.Equal(t, "chrome", productAtRevision.BrowserName)
-	assert.Equal(t, "latest", productAtRevision.Revision)
+	assert.Equal(t, "chrome", productSpec.BrowserName)
+	assert.Equal(t, "latest", productSpec.Revision)
 }
 
-func TestParseProductAtRevision_BrowserVersion(t *testing.T) {
-	productAtRevision, err := ParseProductAtRevision("chrome-63.0@latest")
+func TestParseProductSpec_BrowserVersion(t *testing.T) {
+	productSpec, err := ParseProductSpec("chrome-63.0@latest")
 	assert.Nil(t, err)
-	assert.Equal(t, "chrome", productAtRevision.BrowserName)
-	assert.Equal(t, "63.0", productAtRevision.BrowserVersion)
-	assert.Equal(t, "latest", productAtRevision.Revision)
+	assert.Equal(t, "chrome", productSpec.BrowserName)
+	assert.Equal(t, "63.0", productSpec.BrowserVersion)
+	assert.Equal(t, "latest", productSpec.Revision)
 }
 
-func TestParseProductAtRevision_OS(t *testing.T) {
-	productAtRevision, err := ParseProductAtRevision("chrome-63.0-linux@latest")
+func TestParseProductSpec_OS(t *testing.T) {
+	productSpec, err := ParseProductSpec("chrome-63.0-linux@latest")
 	assert.Nil(t, err)
-	assert.Equal(t, "chrome", productAtRevision.BrowserName)
-	assert.Equal(t, "63.0", productAtRevision.BrowserVersion)
-	assert.Equal(t, "linux", productAtRevision.OSName)
-	assert.Equal(t, "latest", productAtRevision.Revision)
+	assert.Equal(t, "chrome", productSpec.BrowserName)
+	assert.Equal(t, "63.0", productSpec.BrowserVersion)
+	assert.Equal(t, "linux", productSpec.OSName)
+	assert.Equal(t, "latest", productSpec.Revision)
 }
 
-func TestParseProductAtRevision_OSVersion(t *testing.T) {
-	productAtRevision, err := ParseProductAtRevision("chrome-63.0-linux-4.4@latest")
+func TestParseProductSpec_OSVersion(t *testing.T) {
+	productSpec, err := ParseProductSpec("chrome-63.0-linux-4.4@latest")
 	assert.Nil(t, err)
-	assert.Equal(t, "chrome", productAtRevision.BrowserName)
-	assert.Equal(t, "63.0", productAtRevision.BrowserVersion)
-	assert.Equal(t, "linux", productAtRevision.OSName)
-	assert.Equal(t, "4.4", productAtRevision.OSVersion)
-	assert.Equal(t, "latest", productAtRevision.Revision)
+	assert.Equal(t, "chrome", productSpec.BrowserName)
+	assert.Equal(t, "63.0", productSpec.BrowserVersion)
+	assert.Equal(t, "linux", productSpec.OSName)
+	assert.Equal(t, "4.4", productSpec.OSVersion)
+	assert.Equal(t, "latest", productSpec.Revision)
+}
+
+func TestParseProductSpec_Labels(t *testing.T) {
+	productSpec, err := ParseProductSpec("chrome[foo,bar]")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome", productSpec.BrowserName)
+	assert.True(t, productSpec.Labels.Contains("foo"))
+	assert.True(t, productSpec.Labels.Contains("bar"))
+
+	productSpec, err = ParseProductSpec("chrome[foo]@1234512345")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome", productSpec.BrowserName)
+	assert.True(t, productSpec.Labels.Contains("foo"))
+	assert.Equal(t, "1234512345", productSpec.Revision)
+
+	_, err = ParseProductSpec("chrome[foo")
+	assert.NotNil(t, err)
+	_, err = ParseProductSpec("chrome[foo][bar]")
+	assert.NotNil(t, err)
+	_, err = ParseProductSpec("[foo]")
+	assert.NotNil(t, err)
 }
 
 func TestParseComplete(t *testing.T) {

@@ -28,8 +28,8 @@ func FetchRunResultsJSONForParam(
 		}
 		return FetchRunResultsJSON(ctx, r, run)
 	}
-	var spec ProductAtRevision
-	if spec, err = ParseProductAtRevision(param); err != nil {
+	var spec ProductSpec
+	if spec, err = ParseProductSpec(param); err != nil {
 		return nil, err
 	}
 	return FetchRunResultsJSONForSpec(ctx, r, spec)
@@ -37,9 +37,9 @@ func FetchRunResultsJSONForParam(
 
 // FetchRunResultsJSONForSpec fetches the result JSON blob for the given spec.
 func FetchRunResultsJSONForSpec(
-	ctx context.Context, r *http.Request, revision ProductAtRevision) (results map[string][]int, err error) {
+	ctx context.Context, r *http.Request, spec ProductSpec) (results map[string][]int, err error) {
 	var run *TestRun
-	if run, err = FetchRunForSpec(ctx, revision); err != nil {
+	if run, err = FetchRunForSpec(ctx, spec); err != nil {
 		return nil, err
 	} else if run == nil {
 		return nil, nil
@@ -48,9 +48,9 @@ func FetchRunResultsJSONForSpec(
 }
 
 // FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
-func FetchRunForSpec(ctx context.Context, revision ProductAtRevision) (*TestRun, error) {
+func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 	one := 1
-	testRuns, err := LoadTestRuns(ctx, []Product{revision.Product}, nil, []string{revision.Revision}, nil, &one)
+	testRuns, err := LoadTestRuns(ctx, []ProductSpec{spec}, nil, []string{spec.Revision}, nil, &one)
 	if err != nil {
 		return nil, err
 	}

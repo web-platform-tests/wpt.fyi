@@ -26,7 +26,7 @@ func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
 // filters, so must load the keys and merge the results.
 func LoadTestRuns(
 	ctx context.Context,
-	products []Product,
+	products []ProductSpec,
 	labels mapset.Set,
 	shas []string,
 	from *time.Time,
@@ -40,18 +40,17 @@ func LoadTestRuns(
 	}
 	if labels != nil {
 		for i := range labels.Iter() {
-			label := i.(string)
-			if IsStableBrowserName(label) {
-				// Browser name labels are already handled in TestRunFilter.GetProductsOrDefault
-				// (which produces `products`).
-				continue
-			}
-			baseQuery = baseQuery.Filter("Labels =", label)
+			baseQuery = baseQuery.Filter("Labels =", i.(string))
 		}
 	}
 	for _, product := range products {
 		var prefiltered *mapset.Set
 		query := baseQuery.Filter("BrowserName =", product.BrowserName)
+		if product.Labels != nil {
+			for i := range product.Labels.Iter() {
+				query = query.Filter("Labels =", i.(string))
+			}
+		}
 		if product.BrowserVersion != "" {
 			if prefiltered, err = loadKeysForBrowserVersion(ctx, query, product.BrowserVersion); err != nil {
 				return nil, err
