@@ -16,6 +16,7 @@ found in the LICENSE file.
 <link rel="import" href="test-run.html">
 <link rel="import" href="self-navigator.html">
 <link rel="import" href="test-search.html">
+<link rel="import" href="results-navigation.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -23,15 +24,6 @@ found in the LICENSE file.
       :host {
         display: block;
         font-size: 15px;
-      }
-      a {
-        text-decoration: none;
-        color: var(--paper-blue-500);
-        font-family: monospace;
-      }
-      a:hover {
-        cursor: pointer;
-        color: var(--paper-blue-700);
       }
       section.search {
         border-bottom: solid 1px var(--paper-grey-300);
@@ -109,7 +101,7 @@ found in the LICENSE file.
       }
     </style>
 
-    <h2>Test results</h2>
+    <results-navigation tab="results"></results-navigation>
 
     <section class="search">
       <div class="path">
