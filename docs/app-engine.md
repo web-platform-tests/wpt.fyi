@@ -25,10 +25,11 @@ make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
 make deploy_production PROJECT=wptdashboard APP_PATH=revisions/service
 ```
 
-If you've updated [`index.yaml`](../webapp/index.yaml) or
-[`queue.yaml`](../webapp/queue.yaml) you must also deploy them manually.
+If you've updated [`index.yaml`](../webapp/index.yaml),
+[`queue.yaml`](../webapp/queue.yaml), or
+[`dispatch.yaml`](../webapp/dispatch.yaml) you must also deploy them manually.
 
 ```sh
 cd webapp
-gcloud app deploy --project=wptdashboard index.yaml queue.yaml
+gcloud app deploy --project=wptdashboard index.yaml queue.yaml dispatch.yaml
 ```
