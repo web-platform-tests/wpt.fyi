@@ -5,78 +5,22 @@
 package shared
 
 import (
-	"encoding/json"
-	"sort"
-	"strings"
-
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 )
 
-// All errors are considered fatal
-var browserNames, browserNamesAlphabetical = loadBrowsers()
-
 // ExperimentalLabel is the implicit label present for runs marked 'experimental'.
-const ExperimentalLabel = `experimental`
-
-// GetBrowserNames returns an alphabetically-ordered array of the names
-// of the browsers which are to be included (flagged as initially_loaded in the
-// JSON).
-func GetBrowserNames() ([]string, error) {
-	// Slice to make source immutable
-	tmp := make([]string, len(browserNamesAlphabetical))
-	copy(tmp, browserNamesAlphabetical)
-	return tmp, nil
-}
+const ExperimentalLabel = "experimental"
 
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
 func GetDefaultProducts() []Product {
-	products := make([]Product, len(browserNamesAlphabetical))
-	for i, name := range browserNamesAlphabetical {
+	browserNames := GetDefaultBrowserNames()
+	products := make([]Product, len(browserNames))
+	for i, name := range browserNames {
 		products[i] = Product{
 			BrowserName: name,
 		}
 	}
 	return products
-}
-
-// IsBrowserName determines whether the given name string is a valid browser name.
-// Used for validating user-input params for browsers.
-func IsBrowserName(name string) bool {
-	if strings.HasSuffix(name, "-"+ExperimentalLabel) {
-		name = name[0 : len(name)-1-len(ExperimentalLabel)] // Trim suffix.
-	}
-	return IsStableBrowserName(name)
-}
-
-// IsStableBrowserName determines whether the given name string is a valid browser name
-// of a stable browser (i.e. not using the -experimental suffix).
-func IsStableBrowserName(name string) bool {
-	_, ok := browserNames[name]
-	return ok
-}
-
-// loadBrowsers loads, parses and returns the set of names of browsers which
-// are to be included (flagged as initially_loaded in the JSON).
-func loadBrowsers() (map[string]bool, []string) {
-	var browsers map[string]Browser
-	var err error
-	var browserNames map[string]bool
-	var browserNamesAlphabetical []string
-
-	if err = json.Unmarshal([]byte(browsersJSON), &browsers); err != nil {
-		panic(err)
-	}
-
-	browserNames = make(map[string]bool)
-	for _, browser := range browsers {
-		if browser.InitiallyLoaded {
-			browserNamesAlphabetical = append(browserNamesAlphabetical, browser.BrowserName)
-			browserNames[browser.BrowserName] = true
-		}
-	}
-	sort.Strings(browserNamesAlphabetical)
-
-	return browserNames, browserNamesAlphabetical
 }
 
 // ToStringSlice converts a set to a typed string slice.

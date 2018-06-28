@@ -136,8 +136,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
 	run.Revision = "1111111111"
-	browserNames, _ := shared.GetBrowserNames()
-	for _, name := range browserNames {
+	for _, name := range shared.GetDefaultBrowserNames() {
 		run.BrowserName = name
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}

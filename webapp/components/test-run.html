@@ -62,11 +62,13 @@ See models.go for more details.
     const DISPLAY_NAMES = (() => {
       let m = new Map();
       ['chrome', 'chrome-experimental'].forEach(n => m.set(n, 'Chrome'));
-      ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
       ['edge', 'edge-experimental'].forEach(n => m.set(n, 'Edge'));
+      ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
+      ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
+      m.set('uc', 'UC Browser');
+      m.set('android', 'Android');
       m.set('linux', 'Linux');
       m.set('macos', 'macOS');
-      ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
       m.set('windows', 'Windows');
       return m;
     })();

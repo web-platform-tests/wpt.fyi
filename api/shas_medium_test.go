@@ -25,7 +25,7 @@ func TestCompleteSHAs(t *testing.T) {
 	assert.Nil(t, err)
 
 	ctx := appengine.NewContext(r)
-	browserNames, _ := shared.GetBrowserNames()
+	browserNames := shared.GetDefaultBrowserNames()
 
 	// Nothing in datastore.
 	shas, _ := getCompleteRunSHAs(ctx, nil, nil)
