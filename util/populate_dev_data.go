@@ -60,6 +60,7 @@ func main() {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			CreatedAt:  staticDataTime,
+			Labels:     []string{"chrome"},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -73,6 +74,7 @@ func main() {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
 			CreatedAt:  staticDataTime,
+			Labels:     []string{"edge"},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -86,6 +88,7 @@ func main() {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			CreatedAt:  staticDataTime,
+			Labels:     []string{"firefox"},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -99,6 +102,7 @@ func main() {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
 			CreatedAt:  staticDataTime,
+			Labels:     []string{"safari"},
 		},
 	}
 	labelRuns(staticTestRuns, "test", "static")
