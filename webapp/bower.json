@@ -9,7 +9,8 @@
     "iron-form": "PolymerElements/iron-form#^2.3.0",
     "paper-button": "PolymerElements/paper-button#^2.1.1",
     "paper-card": "PolymerElements/paper-card#^2.1.0",
-    "webcomponentsjs": "webcomponents/webcomponentsjs#^2.0.0"
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^2.0.0",
+    "paper-tabs": "@Polymer/paper-tabs#^2.1.1"
   },
   "devDependencies": {
     "web-component-tester": "^6.4.3"
