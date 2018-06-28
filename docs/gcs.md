@@ -37,8 +37,8 @@ where
 * `[product-id] := [browser]-[version]-[os]{-[os_version]}{-[checksum]}`
 * `[browser] := {chrome, edge, firefox, safari, …}`
 * `[version]`, a version string, preferably output by `browser-binary --version`,
-   with anything other than [A-Za-z0-9_.-] replaced by underscores (e.g.
-   “61.0a1”, “68.0.3409.2_dev”)
+   with anything other than `[A-Za-z0-9_.-]` replaced by underscores (e.g.
+   "61.0a1", "68.0.3409.2_dev")
 * `[os] := {linux, windows, macos, android, ios}`
 * `[os_version]`, a version string similarly sanitized as `[version]`
 * `[checksum]`, some checksum of the wptreport.json served as a UID to
