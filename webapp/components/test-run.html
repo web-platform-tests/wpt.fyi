@@ -48,7 +48,7 @@ See models.go for more details.
     </style>
 
     <div>
-      <div><img src="{{displayLogo(testRun.browser_name, testRun.labels)}}" /></div>
+      <div><img src="{{displayLogo(testRun)}}" /></div>
       <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
       <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
         <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
@@ -102,8 +102,9 @@ See models.go for more details.
         return DISPLAY_NAMES.get(name) || name;
       }
 
-      displayLogo(name, labels) {
-        if (labels.includes('experimental') && !name.endsWith('-experimental')) {
+      displayLogo(testRun) {
+        let name = testRun.browser_name;
+        if (testRun.labels.includes('experimental') && !name.endsWith('-experimental')) {
           name += '-experimental';
         }
         return `/static/${name}_64x64.png`
