@@ -104,7 +104,8 @@ See models.go for more details.
 
       displayLogo(testRun) {
         let name = testRun.browser_name;
-        if (testRun.labels.includes('experimental') && !name.endsWith('-experimental')) {
+        const exp = testRun.labels && testRun.labels.includes('experimental');
+        if (exp && !name.endsWith('-experimental')) {
           name += '-experimental';
         }
         return `/static/${name}_64x64.png`;
