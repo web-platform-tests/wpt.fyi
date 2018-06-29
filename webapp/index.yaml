@@ -83,3 +83,8 @@ indexes:
   - name: Revision
   - name: BrowserVersion
     direction: desc
+- kind: TestRun
+  properties:
+  - name: Labels
+  - name: BrowserVersion
+    direction: desc
