@@ -12,13 +12,12 @@ import (
 const ExperimentalLabel = "experimental"
 
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
-func GetDefaultProducts() []Product {
+func GetDefaultProducts() []ProductSpec {
 	browserNames := GetDefaultBrowserNames()
-	products := make([]Product, len(browserNames))
+	products := make([]ProductSpec, len(browserNames))
 	for i, name := range browserNames {
-		products[i] = Product{
-			BrowserName: name,
-		}
+		products[i] = ProductSpec{}
+		products[i].BrowserName = name
 	}
 	return products
 }
