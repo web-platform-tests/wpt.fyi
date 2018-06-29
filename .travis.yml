@@ -53,6 +53,7 @@ script:
   - |
     # Deploy PR to staging environment (only when Travis secrets are available).
     # Note: Done here (in 'script', not 'deploy') because we need deploy to happen before staging webdriver test.
+    set -e
     if [ "${DEPLOY_STAGING}" == "true" ]; then
       bash util/travis-deploy-staging.sh -f webapp;
       bash util/travis-deploy-staging.sh -f results-processor;

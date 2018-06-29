@@ -298,7 +298,7 @@ func ParseProductsParam(r *http.Request) (products ProductSpecs, err error) {
 		}
 		products = append(products, product)
 	}
-	sort.Sort(ProductSpecs(products))
+	sort.Sort(products)
 	return products, nil
 }
 
@@ -329,32 +329,7 @@ func (filter TestRunFilter) GetProductsOrDefault() (products ProductSpecs) {
 	if products == nil {
 		products = GetDefaultProducts()
 	}
-	browserNames := GetDefaultBrowserNames()
-
-	if filter.Labels != nil {
-		browserLabel := ""
-		for _, name := range browserNames {
-			if !filter.Labels.Contains(name) {
-				continue
-			}
-			// If we already encountered a browser name, nothing is two browsers (return empty set).
-			if browserLabel != "" {
-				products = nil
-				break
-			}
-			browserLabel = name
-			products = make(ProductSpecs, 1)
-			products[0].BrowserName = name
-			// For a browser label (e.g. "chrome"), we also include its -experimental variant because
-			// we used to spoof the experimental label by adding it as a suffix to browser names.
-			// The experimental label filtering will happen later in datastore.go.
-			// TODO(Hexcles): remove this once we convert all history -experimental runs.
-			products = append(products, ProductSpec{})
-			products[1].BrowserName = name + "-" + ExperimentalLabel
-		}
-	}
-
-	sort.Sort(ProductSpecs(products))
+	sort.Sort(products)
 	return products
 }
 
