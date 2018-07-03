@@ -1,0 +1,5 @@
+dispatch:
+  - url: "*wpt.fyi/api/revisions/*"
+    service: announcer
+  - url: "*.appspot.com/api/revisions/*"
+    service: announcer
