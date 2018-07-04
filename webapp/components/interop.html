@@ -139,20 +139,22 @@ found in the LICENSE file.
     </template>
   </section>
 
-  <section class="runs">
-    <table>
-      <thead>
-      <tr>
-        <template is="dom-repeat" items="{{ passRateMetadata.test_runs }}"
-                  as="testRun">
-          <th>
-            <test-run test-run="[[testRun]]"></test-run>
-          </th>
-        </template>
-      </tr>
-      </head>
-    </table>
-  </section>
+  <template is="dom-if" if="{{ !pathIsATestFile }}">
+    <section class="runs">
+      <table>
+        <thead>
+        <tr>
+          <template is="dom-repeat" items="{{ passRateMetadata.test_runs }}"
+                    as="testRun">
+            <th>
+              <test-run test-run="[[testRun]]"></test-run>
+            </th>
+          </template>
+        </tr>
+        </head>
+      </table>
+    </section>
+  </template>
 
   <table>
     <thead>
