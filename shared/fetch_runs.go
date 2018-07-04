@@ -7,7 +7,6 @@ package shared
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -25,12 +24,13 @@ func FetchLatestRuns(wptdHost string) TestRuns {
 // FetchRuns fetches the TestRun metadata for the given sha / labels, using the
 // API on the given host.
 func FetchRuns(wptdHost, sha string, labels mapset.Set) TestRuns {
-	url := "https://" + wptdHost + "/api/runs?complete=true"
-	if labels != nil && labels.Cardinality() > 0 {
-		for label := range labels.Iter() {
-			url += fmt.Sprintf("&label=%s", label.(string))
-		}
+	url := "https://" + wptdHost + "/api/runs"
+
+	filters := TestRunFilter{
+		Labels: labels,
+		SHA:    sha,
 	}
+	url += "?" + filters.ToQuery(true).Encode()
 	log.Printf("Fetching %s...", url)
 
 	resp, err := http.Get(url)
