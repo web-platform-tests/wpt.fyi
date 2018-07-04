@@ -42,9 +42,9 @@ found in the LICENSE file.
     <table>
       <thead>
         <tr>
-          <th>Subtest</th>
+          <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
           <template is="dom-repeat" items="[[testRuns]]" as="testRun">
-            <th><test-run test-run="[[testRun]]"></test-run></th>
+            <th width="[[computeRunThWidth(testRuns)]]"><test-run test-run="[[testRun]]"></test-run></th>
           </template>
         </tr>
       </thead>
@@ -167,6 +167,14 @@ found in the LICENSE file.
           return `Failure message: ${testRun.subtests[subtestName].message}`;
         }
         return testRun.subtests[subtestName].status;
+      }
+
+      computeSubtestThWidth(testRuns) {
+        return `${200 / (testRuns.length + 2)}%`;
+      }
+      
+      computeRunThWidth(testRuns) {
+        return `${100 / (testRuns.length + 2)}%`;
       }
     }
 
