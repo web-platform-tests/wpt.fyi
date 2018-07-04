@@ -63,7 +63,7 @@
             e.preventDefault();
             const a = t.querySelector('a');
             window.setTimeout(() => {
-              window.location = a.href;
+              window.location = a.href + window.location.search;
             }, 300);
           };
         }
