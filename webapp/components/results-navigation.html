@@ -26,12 +26,12 @@
     </style>
     <paper-tabs selected='[[selected]]'>
       <paper-tab>
-        <a href="/results/">
+        <a href="/results/[[query]]">
           <h2>Test Results</h2>
         </a>
       </paper-tab>
       <paper-tab>
-        <a href="/interop/">
+        <a href="/interop/[[query]]">
           <h2>Interoperability</h2>
         </a>
       </paper-tab>
@@ -51,6 +51,10 @@
             type: Number,
             computed: 'computeSelectedTab(tab)',
             value: 0,
+          },
+          query: {
+            type: String,
+            value: window.location.search,
           }
         };
       }
@@ -63,7 +67,7 @@
             e.preventDefault();
             const a = t.querySelector('a');
             window.setTimeout(() => {
-              window.location = a.href + window.location.search;
+              window.location = a.href;
             }, 300);
           };
         }
