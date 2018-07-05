@@ -10,7 +10,8 @@
             type: String,
             value: '/',
             observer: 'pathUpdated',
-          }
+          },
+          onpathupdated: Function,
         };
       }
 
@@ -30,8 +31,10 @@
         return location.pathname;
       }
 
-      pathUpdated() {
-        // Default: Do nothing.
+      pathUpdated(path) {
+        if (this.onpathupdated) {
+          this.onpathupdated(path);
+        }
       }
 
       /**

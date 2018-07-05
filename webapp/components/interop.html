@@ -252,7 +252,6 @@ found in the LICENSE file.
         query: {
           type: String,
           value: urlToQuery(window.location),
-          observer: 'queryChanged'
         },
         pathIsATestFile: {
           type: Boolean,
@@ -276,6 +275,14 @@ found in the LICENSE file.
       if (this.allMetrics && this.allMetrics.data) {
         this.testFileNames = Array.from(Object.keys(this.allMetrics.data));
       }
+    }
+
+    ready() {
+      super.ready();
+      const tabs = this.shadowRoot.querySelector('results-navigation');
+      this.onpathupdated = path => {
+        tabs.path = path;
+      };
     }
 
     async fetchMetrics(url) {

@@ -26,12 +26,12 @@
     </style>
     <paper-tabs selected='[[selected]]'>
       <paper-tab>
-        <a href="/results/[[query]]">
+        <a href="/results[[path]][[query]]">
           <h2>Test Results</h2>
         </a>
       </paper-tab>
       <paper-tab>
-        <a href="/interop/[[query]]">
+        <a href="/interop[[path]][[query]]">
           <h2>Interoperability</h2>
         </a>
       </paper-tab>
@@ -51,6 +51,10 @@
             type: Number,
             computed: 'computeSelectedTab(tab)',
             value: 0,
+          },
+          path: {
+            type: String,
+            value: window.location.pathname.replace(/^\/(interop|results)/, ''),
           },
           query: {
             type: String,
