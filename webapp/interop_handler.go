@@ -30,8 +30,10 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	// We 'load by SHA' by fetching any interop result with all TestRunIDs for that SHA.
 	if !filters.IsDefaultQuery() {
 		// Load default browser runs for SHA.
+		// Ignore any max-count; makes no sense for a interop run.
+		one := 1
 		runs, err := shared.LoadTestRuns(
-			ctx, filters.GetProductsOrDefault(), filters.Labels, []string{filters.SHA}, filters.From, filters.MaxCount)
+			ctx, filters.GetProductsOrDefault(), filters.Labels, []string{filters.SHA}, filters.From, &one)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
