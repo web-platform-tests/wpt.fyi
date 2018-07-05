@@ -123,6 +123,9 @@ func (ids TestRunIDs) LoadTestRuns(ctx context.Context) (testRuns TestRuns, err 
 		if err = datastore.GetMulti(ctx, keys, testRuns); err != nil {
 			return testRuns, err
 		}
+		for i, id := range ids {
+			testRuns[i].ID = id
+		}
 	}
 	return testRuns, err
 }

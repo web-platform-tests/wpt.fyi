@@ -10,6 +10,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="path-part.html">
 <link rel="import" href="runs.html">
+<link rel="import" href="test-file-results.html">
 <link rel="import" href="test-run.html">
 <link rel="import" href="self-navigator.html">
 <link rel="import" href="test-search.html">
@@ -41,6 +42,14 @@ found in the LICENSE file.
     table {
       width: 100%;
       border-collapse: collapse;
+    }
+
+
+    hr {
+      margin: 24px 0;
+      height: 1px;
+      border: 0;
+      background-color: #ccc;
     }
 
     .th-label {
@@ -130,20 +139,22 @@ found in the LICENSE file.
     </template>
   </section>
 
-  <section class="runs">
-    <table>
-      <thead>
-      <tr>
-        <template is="dom-repeat" items="{{ passRateMetadata.test_runs }}"
-                  as="testRun">
-          <th>
-            <test-run test-run="[[testRun]]"></test-run>
-          </th>
-        </template>
-      </tr>
-      </head>
-    </table>
-  </section>
+  <template is="dom-if" if="{{ !pathIsATestFile }}">
+    <section class="runs">
+      <table>
+        <thead>
+        <tr>
+          <template is="dom-repeat" items="{{ passRateMetadata.test_runs }}"
+                    as="testRun">
+            <th>
+              <test-run test-run="[[testRun]]"></test-run>
+            </th>
+          </template>
+        </tr>
+        </head>
+      </table>
+    </section>
+  </template>
 
   <table>
     <thead>
@@ -175,6 +186,14 @@ found in the LICENSE file.
       </template>
     </tbody>
   </table>
+
+  <template is="dom-if" if="{{ pathIsATestFile }}">
+    <hr>
+    <test-file-results
+        test-runs="[[passRateMetadata.test_runs]]"
+        test-file="[[path]]">
+    </test-file-results>
+  </template>
 
 </template>
 
