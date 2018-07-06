@@ -111,9 +111,6 @@ found in the LICENSE file.
           if (!resultData) {
             this.testRuns[i].subtests = {};
             this.testRuns[i].subtests['Harness status'] = { status: '(results not found)' };
-
-            // HACK: Force notifications on testRuns.
-            this.testRuns = Array.from(this.testRuns);
             return;
           }
           this.testRuns[i].subtests = {};
@@ -130,9 +127,6 @@ found in the LICENSE file.
             }
           }
         });
-        
-        // HACK: Force notifications on testRuns.
-        this.testRuns = Array.from(this.testRuns);
       }
 
       async loadResultFile(testRun) {
