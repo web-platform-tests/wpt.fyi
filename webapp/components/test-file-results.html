@@ -55,7 +55,7 @@ found in the LICENSE file.
 
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
               <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
-                [[ subtestResultForTestRun(testRun, subtestName) ]]
+                <code>[[ subtestMessageForTestRun(testRun, subtestName) ]]</code>
               </td>
             </template>
           </tr>
@@ -121,6 +121,9 @@ found in the LICENSE file.
             }
           }
         });
+
+        // HACK: Force notifications on testRuns.
+        this.testRuns = Array.from(this.testRuns);
       }
 
       async loadResultFile(testRun) {
@@ -157,6 +160,19 @@ found in the LICENSE file.
         if (!testRun.subtests[subtestName]) {
           return null;
         }
+        return testRun.subtests[subtestName].status;
+      }
+
+      subtestMessageForTestRun(testRun, subtestName) {
+        if (!testRun) {
+          return null;
+        }
+        if (!testRun.subtests) {
+          return null;
+        }
+        if (!testRun.subtests[subtestName]) {
+          return null;
+        }
         if (testRun.subtests[subtestName].status === 'OK') {
           return 'OK';
         }
@@ -164,9 +180,18 @@ found in the LICENSE file.
           return 'PASS';
         }
         if (testRun.subtests[subtestName].message) {
-          return `Failure message: ${testRun.subtests[subtestName].message}`;
+          return this.parseFailureMessage(testRun.subtests[subtestName].message);
         }
         return testRun.subtests[subtestName].status;
+      }
+
+      parseFailureMessage(m) {
+        const match = m.match(/^assert_equals:.* expected ("(\\"|[^"])*"|[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/);
+        if (match === null) {
+          return`Failure message: ${m}`;
+        }
+
+        return `!EQ(${match[1]}, ${match[3]})`;
       }
 
       computeSubtestThWidth(testRuns) {
