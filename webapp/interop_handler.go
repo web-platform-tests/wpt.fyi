@@ -21,24 +21,19 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
 
-	sha, err := shared.ParseSHAParam(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	labels := shared.ParseLabelsParam(r)
+	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// We 'load by SHA' by fetching any interop result with all TestRunIDs for that SHA.
-	if !shared.IsLatest(sha) {
+	if !filters.IsDefaultQuery() {
 		// Load default browser runs for SHA.
+		// Ignore any max-count; makes no sense for a interop run.
 		one := 1
 		runs, err := shared.LoadTestRuns(
-			ctx, shared.GetDefaultProducts(), labels, []string{sha}, nil, &one)
+			ctx, filters.GetProductsOrDefault(), filters.Labels, []string{filters.SHA}, filters.From, &one)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -73,8 +68,8 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		Metadata string
 		SHA      string
 	}{
-		string(metadataBytes),
-		sha,
+		Metadata: string(metadataBytes),
+		SHA:      filters.SHA,
 	}
 
 	if err := templates.ExecuteTemplate(w, "interoperability.html", data); err != nil {

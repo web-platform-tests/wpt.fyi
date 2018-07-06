@@ -29,6 +29,17 @@ type TestRunFilter struct {
 	Products ProductSpecs
 }
 
+// IsDefaultQuery returns whether the params are just an empty query (or,
+// the equivalent defaults of an empty query).
+func (f TestRunFilter) IsDefaultQuery() bool {
+	return IsLatest(f.SHA) &&
+		(f.Labels == nil || f.Labels.Cardinality() < 1) &&
+		(f.Complete == nil || *f.Complete) &&
+		(f.From == nil) &&
+		(f.MaxCount == nil || *f.MaxCount == 1) &&
+		(len(f.Products) < 1)
+}
+
 // ProductSpec is a struct representing a parsed product spec string.
 type ProductSpec struct {
 	ProductAtRevision

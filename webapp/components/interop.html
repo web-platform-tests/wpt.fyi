@@ -160,8 +160,8 @@ found in the LICENSE file.
     <thead>
       <tr>
         <th>Path</th>
-        <template is="dom-if" if="{{ thLabels.length }}">
-            <th colspan="100">Tests Passing in <var>X</var> / 4 Browsers</th>
+        <template is="dom-if" if="{{ testRuns }}">
+          <th colspan="100">Tests Passing in <var>X</var> / [[testRuns.length]] Browsers</th>
         </template>
       </tr>
       <tr>
@@ -228,6 +228,10 @@ found in the LICENSE file.
       return {
         sha: String,
         passRateMetadata: Object,
+        testRuns: {
+          type: Array,
+          computed: 'computeTestRuns(passRateMetadata)',
+        },
         allMetrics: Object,
         displayedNodes: {
           type: Object,
@@ -248,7 +252,6 @@ found in the LICENSE file.
         query: {
           type: String,
           value: urlToQuery(window.location),
-          observer: 'queryChanged'
         },
         pathIsATestFile: {
           type: Boolean,
@@ -256,7 +259,7 @@ found in the LICENSE file.
         },
         thLabels: {
           type: Array,
-          computed: 'computeThLabels(passRateMetadata)'
+          computed: 'computeThLabels(testRuns)'
         },
         queryPlaceholder: {
           type: String,
@@ -272,6 +275,14 @@ found in the LICENSE file.
       if (this.allMetrics && this.allMetrics.data) {
         this.testFileNames = Array.from(Object.keys(this.allMetrics.data));
       }
+    }
+
+    ready() {
+      super.ready();
+      const tabs = this.shadowRoot.querySelector('results-navigation');
+      this.onpathupdated = path => {
+        tabs.path = path;
+      };
     }
 
     async fetchMetrics(url) {
@@ -335,16 +346,20 @@ found in the LICENSE file.
       return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
     }
 
-    computeThLabels(metadata) {
-      if (!metadata || !metadata.test_runs) {
+    computeThLabels(testRuns) {
+      if (!testRuns) {
         return;
       }
-      const numLabels = metadata.test_runs.length + 1;
+      const numLabels = testRuns.length + 1;
       let labels = [];
       for (let i = 0; i < numLabels; i++) {
         labels[i] = `${i} / ${numLabels - 1}`;
       }
       return labels;
+    }
+
+    computeTestRuns(metadata) {
+      return metadata && metadata.test_runs;
     }
 
     computeDisplayedNodes(path, searchResults, allMetrics) {

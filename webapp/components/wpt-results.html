@@ -320,6 +320,13 @@ found in the LICENSE file.
         this.refreshDisplayedNodes();
       }
 
+      ready() {
+        super.ready();
+        const tabs = this.shadowRoot.querySelector('results-navigation');
+        this.onpathupdated = path => {
+          tabs.path = path;
+        };
+      }
 
       async fetchResults(testRuns) {
         const testFileResults = await Promise.all(
@@ -366,6 +373,7 @@ found in the LICENSE file.
       }
 
       pathUpdated(path) {
+        super.pathUpdated(path);
         this.refreshDisplayedNodes();
         this.fetchManifest(path);
       }
