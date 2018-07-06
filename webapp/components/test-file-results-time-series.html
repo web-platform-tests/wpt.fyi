@@ -59,6 +59,7 @@ found in the LICENSE file.
     <pre id="status">&nbsp;</pre>
   </template>
   <script>
+    /* global TestRunsBase */
     class TestFileResultsTimeSeries extends TestRunsBase {
       static get is() {
         return 'test-file-results-time-series';
@@ -66,9 +67,6 @@ found in the LICENSE file.
 
       static get properties() {
         return {
-          path: {
-            type: String,
-          },
           maxCount: {
             type: Number,
             value: 20,
@@ -86,114 +84,46 @@ found in the LICENSE file.
 
       static get observers() {
         return [
+          // Observe testRuns bound to component. Expect each to have its
+          // subtests property eventually filled out (as in TestFileResults)
+          // logic).
           'onTestRuns(testRuns)',
         ];
       }
 
+      // on-status-box-hover: Update status tag with summary of source run+test.
       bindResultHover(run, subTestName) {
         return () => {
           let statusElement = this.shadowRoot.querySelector('#status');
           statusElement.textContent =
               `${run.browser_name} ${run.browser_version} ${run.os_name} ${run.os_version} @ ${run.time_start} : ${subTestName}`;
 
-        }
-      }
-
-      async connectedCallbacke() {
-        const resp = await window.fetch(`/api/runs?complete=true&max-count=${this.maxCount}&labels=${this.labels.join(',')}`);
-        if (!resp.ok) throw resp;
-        const runs = await resp.json();
-        this.results = runs.reduce((acc, run) => {
-          const browserResultsIdx = acc
-              .findIndex(br => br.browserName === run.browser_name);
-          let browserResults = acc[browserResultsIdx];
-          if (!browserResults) {
-            browserResults = {
-              browserName: run.browser_name, 
-              runResults: [],
-            };
-            acc.push(browserResults);
-            // this.results.push(browserResults);
-            // this.notifyPath('results');
-            // this.push('results', browserResults);
-          }
-          browserResults.runResults.push({run, results: []});
-          // this.push(`results.${browserResultsIdx}.runResults`,
-          //     runResult);
-          
-          return acc;
-        }, []);
-        this.results.forEach((browserResults, i) => {
-          browserResults.runResults.forEach((runResult, j) => {
-            this.loadRun({
-              runResult,
-              j,
-              browserResults,
-              i,
-            });
-          });
-        });
-      }
-
-      async loadRun(data) {
-        const resp = await window.fetch(this.resultsURL(data.runResult.run));
-        if (!resp.ok) throw resp;
-        const results = await resp.json();
-        let newResults = [];
-        for (const r of results.results) {
-          if (r.test === this.path) {
-            newResults.push({status: r.status});
-            data.runResult.results.push({status: r.status});
-            if (r.subtests && r.subtests.length > 0) {
-              for (const sub of r.subtests) {
-                newResults.push({name: sub.name, status: sub.status});
-              }
-            }
-            break;
-          }
-        }
-        // this.results[data.i].runResults[data.j].results = newResults;
-        // this.notifyPath(`results[${data.i}].runResults[${data.j}]`);
-        this.splice.apply(this, [
-          `results.${data.i}.runResults.${data.j}.results`, 
-          0, 
-          0,
-        ].concat(newResults));
-
-        console.log(`results[${data.i}].runResults[${data.j}]`, this.results);
-      }
-
-      resultsURL(run) {
-        // This is relying on the assumption that result files end with '-summary.json.gz'.
-        const resultsBase = run.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
-        return `${resultsBase}${this.path}`;
+        };
       }
 
       onTestRuns(testRuns) {
+        // Reduce this.testRuns, which may have testRun.subtests filled out
+        // (or may not) to browserName grouped structure:
+        // [{browserName, runResults: [{run, results: [resultStatus]}]}].
         this.results = testRuns.reduce((acc, run) => {
           const browserResultsIdx = acc
-              .findIndex(br => br.browserName === run.browser_name);
+            .findIndex(br => br.browserName === run.browser_name);
           let browserResults = acc[browserResultsIdx];
           if (!browserResults) {
             browserResults = {
-              browserName: run.browser_name, 
+              browserName: run.browser_name,
               runResults: [],
             };
             acc.push(browserResults);
-            // this.results.push(browserResults);
-            // this.notifyPath('results');
-            // this.push('results', browserResults);
           }
           browserResults.runResults.push({
-            run, 
+            run,
             results: run.subtests ? Object.keys(run.subtests)
-                .map(name => {
-                  return {name, status: run.subtests[name].status};
-                }) : [],
+              .map(name => {
+                return {name, status: run.subtests[name].status};
+              }) : [],
           });
-          // this.push(`results.${browserResultsIdx}.runResults`,
-          //     runResult);
-          
+
           return acc;
         }, []);
         console.log('testRuns', testRuns);
