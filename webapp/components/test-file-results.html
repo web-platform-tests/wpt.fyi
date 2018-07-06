@@ -24,9 +24,30 @@ found in the LICENSE file.
         width: 100%;
         border-collapse: collapse;
       }
+      td {
+        height: 1.5em;
+        position: relative;
+      }
       td.sub-test-name {
-        font-family: monospace;
-        font-size: 0.9em;
+        background-color: white;
+      }
+      td code {
+        top: 0;
+        left: 0;
+        padding: 4px;
+        position: absolute;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+      }
+      td code:hover {
+        z-index: 1;
+        text-overflow: initial;
+        background-color: inherit;
+        width: max-content;
       }
       td.result {
         background-color: #eee;
@@ -51,7 +72,7 @@ found in the LICENSE file.
       <tbody>
         <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
           <tr>
-            <td class="sub-test-name">[[subtestName]]</td>
+            <td class="sub-test-name"><code>[[subtestName]]</code></td>
 
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
               <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
@@ -81,7 +102,59 @@ found in the LICENSE file.
           subtestNames: {
             type: Array,
             value: []
-          }
+          },
+          matchers: {
+            type: Array,
+            value: [
+              {
+                re: /^assert_equals:.* expected ("(\\"|[^"])*"|[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/,
+                getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert_approx_equals:.* expected ("(\\"|[^"])*"|[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/,
+                getMessage: match => `!~EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert ("(\\"|[^"])*"|[^ ]*) == ("(\\"|[^"])*"|[^ ]*)$/,
+                getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert_array_equals:.*$/,
+                getMessage: match => `!ARRAY_EQ(a, b)`,
+              },
+              {
+                re: /^Uncaught [^ ]*Error:.*$/,
+                getMessage: match => `UNCAUGHT_ERROR`,
+              },
+              {
+                re: /^([^ ]*) is not([a-zA-Z0-9 ]*)$/,
+                getMessage: match => `NOT_${match[2].toUpperCase().replace(' ', '_')}(${match[1]})`,
+              },
+              {
+                re: /^promise_test: Unhandled rejection with value: (.*)$/,
+                getMessage: match => `PROMISE_REJECT(${match[1]})`,
+              },
+              {
+                re: /^assert_true: .*$/,
+                getMessage: match => `!TRUE`,
+              },
+              {
+                re: /^assert_own_property: [^"]*"([^"]*)".*$/,
+                getMessage: match => `!OWN_PROPERTY(${match[1]})`,
+              },
+              {
+                re: /^assert_inherits: [^"]*"([^"]*)".*$/,
+                getMessage: match => `!INHERITS(${match[1]})`,
+              },
+            ],
+          },
+        };
+      }
+
+      static get matchers() {
+        return {
+          re: /^/,
+          getMsg: () => '',
         };
       }
 
@@ -185,13 +258,16 @@ found in the LICENSE file.
         return testRun.subtests[subtestName].status;
       }
 
-      parseFailureMessage(m) {
-        const match = m.match(/^assert_equals:.* expected ("(\\"|[^"])*"|[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/);
-        if (match === null) {
-          return`Failure message: ${m}`;
+      parseFailureMessage(msg) {
+        let matchedMsg = '';
+        for (const matcher of this.matchers) {
+          const match = msg.match(matcher.re);
+          if (match !== null) {
+            matchedMsg = matcher.getMessage(match);
+            break;
+          }
         }
-
-        return `!EQ(${match[1]}, ${match[3]})`;
+        return matchedMsg ? matchedMsg : `Failure message: ${msg}`;
       }
 
       computeSubtestThWidth(testRuns) {
