@@ -86,6 +86,12 @@ found in the LICENSE file.
         };
       }
 
+      static get observers() {
+        return [
+          'onPathChanged(path)',
+        ];
+      }
+
       bindResultHover(run, subTestName) {
         return () => {
           let statusElement = this.shadowRoot.querySelector('#status');
@@ -95,7 +101,7 @@ found in the LICENSE file.
         }
       }
 
-      async connectedCallback() {
+      async onPathChanged(path) {
         const resp = await window.fetch(`/api/runs?complete=true&max-count=${this.maxCount}&labels=${this.labels.join(',')}`);
         if (!resp.ok) throw resp;
         const runs = await resp.json();
@@ -116,39 +122,34 @@ found in the LICENSE file.
         }, []);
         this.results.forEach((browserResults, i) => {
           browserResults.runResults.forEach((runResult, j) => {
-            this.loadRun({
-              runResult,
-              j,
-              browserResults,
-              i,
-            });
+            this.loadRun(runResult, j, browserResults, i, path);
           });
         });
       }
 
-      async loadRun(data) {
-        const resp = await window.fetch(this.resultsURL(data.runResult.run));
+      async loadRun(runResult, j, browserResults, i, path) {
+        const resp = await window.fetch(this.resultsURL(runResult.run, path));
         if (!resp.ok) throw resp;
         const r = await resp.json();
         let newResults = [];
         newResults.push({status: r.status});
-        data.runResult.results.push({status: r.status});
+        runResult.results.push({status: r.status});
         if (r.subtests && r.subtests.length > 0) {
           for (const sub of r.subtests) {
             newResults.push({name: sub.name, status: sub.status});
           }
         }
         this.splice.apply(this, [
-          `results.${data.i}.runResults.${data.j}.results`, 
+          `results.${i}.runResults.${j}.results`, 
           0, 
           0,
         ].concat(newResults));
       }
 
-      resultsURL(run) {
+      resultsURL(run, path) {
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = run.results_url.slice(0, run.results_url.lastIndexOf('-summary.json.gz'));
-        return `${resultsBase}${this.path}`;
+        return `${resultsBase}${path}`;
       }
     }
 
