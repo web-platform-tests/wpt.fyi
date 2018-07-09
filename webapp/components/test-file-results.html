@@ -32,16 +32,16 @@ found in the LICENSE file.
         background-color: white;
       }
       td code {
-        top: 0;
+        box-sizing: border-box;
+        height: 100%;
         left: 0;
+        overflow: hidden;
         padding: 4px;
         position: absolute;
-        white-space: nowrap;
-        overflow: hidden;
         text-overflow: ellipsis;
+        top: 0;
+        white-space: nowrap;
         width: 100%;
-        height: 100%;
-        box-sizing: border-box;
       }
       td code:hover {
         z-index: 1;
@@ -111,7 +111,7 @@ found in the LICENSE file.
                 getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
               },
               {
-                re: /^assert_approx_equals:.* expected ("(\\"|[^"])*"| [+][/][-] |[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/,
+                re: /^assert_approx_equals:.* expected ("(\\"|[^"])*"| [+][/][-] |[^:]*) but got ("(\\"|[^"])*"| [+][/][-] |[^:]*):.*$/,
                 getMessage: match => `!~EQ(${match[1]}, ${match[3]})`,
               },
               {
