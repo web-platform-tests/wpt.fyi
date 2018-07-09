@@ -34,8 +34,6 @@ execute the script which leverages `util/populate_dev_data.go` by running:
 ./util/docker-dev/dev_data.sh
 ```
 
-**IMPORTANT:** If this command fails, you may need to authorize your development environment by running `./util/docker-dev/dev_auth.sh` and following the instructions. Once complete, rerun `./util/docker-dev/dev_data.sh`.
-
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for more information on local development.
 
 # Filesystem and network output
