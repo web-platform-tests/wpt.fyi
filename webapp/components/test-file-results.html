@@ -127,8 +127,8 @@ found in the LICENSE file.
                 getMessage: () => 'UNCAUGHT_ERROR',
               },
               {
-                re: /^([^ ]*) is not([a-zA-Z0-9 ]*)$/,
-                getMessage: match => `NOT_${match[2].toUpperCase().replace(' ', '_')}(${match[1]})`,
+                re: /^([^ ]*) is not ([a-zA-Z0-9 ]*)$/,
+                getMessage: match => `NOT_${match[2].toUpperCase().replace(/\s/g, '_')}(${match[1]})`,
               },
               {
                 re: /^promise_test: Unhandled rejection with value: (.*)$/,
