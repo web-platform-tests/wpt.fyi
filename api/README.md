@@ -333,7 +333,7 @@ __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 5
 - https://wpt.fyi/api/interop?product=chrome-67
 - https://wpt.fyi/api/interop?label=experimental
 
-__Example JSON__
+__Example response JSON__
 
     {
       "test_runs": [
