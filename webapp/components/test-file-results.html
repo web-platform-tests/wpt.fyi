@@ -25,9 +25,30 @@ found in the LICENSE file.
         width: 100%;
         border-collapse: collapse;
       }
+      td {
+        height: 1.5em;
+        position: relative;
+      }
       td.sub-test-name {
-        font-family: monospace;
-        font-size: 0.9em;
+        background-color: white;
+      }
+      td code {
+        box-sizing: border-box;
+        height: 100%;
+        left: 0;
+        overflow: hidden;
+        padding: 4px;
+        position: absolute;
+        text-overflow: ellipsis;
+        top: 0;
+        white-space: nowrap;
+        width: 100%;
+      }
+      td code:hover {
+        z-index: 1;
+        text-overflow: initial;
+        background-color: inherit;
+        width: max-content;
       }
       td.result {
         background-color: #eee;
@@ -57,11 +78,11 @@ found in the LICENSE file.
       <tbody>
         <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
           <tr>
-            <td class="sub-test-name">[[subtestName]]</td>
+            <td class="sub-test-name"><code>[[subtestName]]</code></td>
 
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
               <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
-                [[ subtestResultForTestRun(testRun, subtestName) ]]
+                <code>[[ subtestMessageForTestRun(testRun, subtestName) ]]</code>
               </td>
             </template>
           </tr>
@@ -87,7 +108,59 @@ found in the LICENSE file.
           subtestNames: {
             type: Array,
             value: []
-          }
+          },
+          matchers: {
+            type: Array,
+            value: [
+              {
+                re: /^assert_equals:.* expected ("(\\"|[^"])*"|[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/,
+                getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert_approx_equals:.* expected ("(\\"|[^"])*"| [+][/][-] |[^:]*) but got ("(\\"|[^"])*"| [+][/][-] |[^:]*):.*$/,
+                getMessage: match => `!~EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert ("(\\"|[^"])*"|[^ ]*) == ("(\\"|[^"])*"|[^ ]*)$/,
+                getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert_array_equals:.*$/,
+                getMessage: () => '!ARRAY_EQ(a, b)',
+              },
+              {
+                re: /^Uncaught [^ ]*Error:.*$/,
+                getMessage: () => 'UNCAUGHT_ERROR',
+              },
+              {
+                re: /^([^ ]*) is not ([a-zA-Z0-9 ]*)$/,
+                getMessage: match => `NOT_${match[2].toUpperCase().replace(/\s/g, '_')}(${match[1]})`,
+              },
+              {
+                re: /^promise_test: Unhandled rejection with value: (.*)$/,
+                getMessage: match => `PROMISE_REJECT(${match[1]})`,
+              },
+              {
+                re: /^assert_true: .*$/,
+                getMessage: () => '!TRUE',
+              },
+              {
+                re: /^assert_own_property: [^"]*"([^"]*)".*$/,
+                getMessage: match => `!OWN_PROPERTY(${match[1]})`,
+              },
+              {
+                re: /^assert_inherits: [^"]*"([^"]*)".*$/,
+                getMessage: match => `!INHERITS(${match[1]})`,
+              },
+            ],
+          },
+        };
+      }
+
+      static get matchers() {
+        return {
+          re: /^/,
+          getMsg: () => '',
         };
       }
 
@@ -127,6 +200,9 @@ found in the LICENSE file.
             }
           }
         });
+
+        // HACK: Force notifications on testRuns.
+        this.testRuns = Array.from(this.testRuns);
       }
 
       async loadResultFile(testRun) {
@@ -163,6 +239,19 @@ found in the LICENSE file.
         if (!testRun.subtests[subtestName]) {
           return null;
         }
+        return testRun.subtests[subtestName].status;
+      }
+
+      subtestMessageForTestRun(testRun, subtestName) {
+        if (!testRun) {
+          return null;
+        }
+        if (!testRun.subtests) {
+          return null;
+        }
+        if (!testRun.subtests[subtestName]) {
+          return null;
+        }
         if (testRun.subtests[subtestName].status === 'OK') {
           return 'OK';
         }
@@ -170,9 +259,21 @@ found in the LICENSE file.
           return 'PASS';
         }
         if (testRun.subtests[subtestName].message) {
-          return `Failure message: ${testRun.subtests[subtestName].message}`;
+          return this.parseFailureMessage(testRun.subtests[subtestName].message);
         }
         return testRun.subtests[subtestName].status;
+      }
+
+      parseFailureMessage(msg) {
+        let matchedMsg = '';
+        for (const matcher of this.matchers) {
+          const match = msg.match(matcher.re);
+          if (match !== null) {
+            matchedMsg = matcher.getMessage(match);
+            break;
+          }
+        }
+        return matchedMsg ? matchedMsg : `Failure message: ${msg}`;
       }
 
       computeSubtestThWidth(testRuns) {
