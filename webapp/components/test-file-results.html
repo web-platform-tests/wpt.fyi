@@ -111,7 +111,7 @@ found in the LICENSE file.
                 getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
               },
               {
-                re: /^assert_approx_equals:.* expected ("(\\"|[^"])*"|[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/,
+                re: /^assert_approx_equals:.* expected ("(\\"|[^"])*"| [+][/][-] |[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/,
                 getMessage: match => `!~EQ(${match[1]}, ${match[3]})`,
               },
               {
