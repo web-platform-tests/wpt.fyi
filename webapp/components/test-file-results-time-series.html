@@ -98,26 +98,28 @@ found in the LICENSE file.
           statusElement.textContent =
               `${run.browser_name} ${run.browser_version} ${run.os_name} ${run.os_version} @ ${run.time_start} : ${subTestName}`;
 
-        }
+        };
       }
 
       async onPathChanged(path) {
         const resp = await window.fetch(`/api/runs?complete=true&max-count=${this.maxCount}&labels=${this.labels.join(',')}`);
-        if (!resp.ok) throw resp;
+        if (!resp.ok) {
+          throw resp;
+        }
         const runs = await resp.json();
         this.results = runs.reduce((acc, run) => {
           const browserResultsIdx = acc
-              .findIndex(br => br.browserName === run.browser_name);
+            .findIndex(br => br.browserName === run.browser_name);
           let browserResults = acc[browserResultsIdx];
           if (!browserResults) {
             browserResults = {
-              browserName: run.browser_name, 
+              browserName: run.browser_name,
               runResults: [],
             };
             acc.push(browserResults);
           }
           browserResults.runResults.push({run, results: []});
-          
+
           return acc;
         }, []);
         this.results.forEach((browserResults, i) => {
@@ -129,7 +131,9 @@ found in the LICENSE file.
 
       async loadRun(runResult, j, browserResults, i, path) {
         const resp = await window.fetch(this.resultsURL(runResult.run, path));
-        if (!resp.ok) throw resp;
+        if (!resp.ok) {
+          throw resp;
+        }
         const r = await resp.json();
         let newResults = [];
         newResults.push({status: r.status});
@@ -140,8 +144,8 @@ found in the LICENSE file.
           }
         }
         this.splice.apply(this, [
-          `results.${i}.runResults.${j}.results`, 
-          0, 
+          `results.${i}.runResults.${j}.results`,
+          0,
           0,
         ].concat(newResults));
       }
