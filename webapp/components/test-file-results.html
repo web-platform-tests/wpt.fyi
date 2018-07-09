@@ -120,11 +120,11 @@ found in the LICENSE file.
               },
               {
                 re: /^assert_array_equals:.*$/,
-                getMessage: match => `!ARRAY_EQ(a, b)`,
+                getMessage: () => '!ARRAY_EQ(a, b)',
               },
               {
                 re: /^Uncaught [^ ]*Error:.*$/,
-                getMessage: match => `UNCAUGHT_ERROR`,
+                getMessage: () => 'UNCAUGHT_ERROR',
               },
               {
                 re: /^([^ ]*) is not([a-zA-Z0-9 ]*)$/,
@@ -136,7 +136,7 @@ found in the LICENSE file.
               },
               {
                 re: /^assert_true: .*$/,
-                getMessage: match => `!TRUE`,
+                getMessage: () => '!TRUE',
               },
               {
                 re: /^assert_own_property: [^"]*"([^"]*)".*$/,
