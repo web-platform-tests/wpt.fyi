@@ -8,6 +8,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="runs.html">
 <link rel="import" href="test-run.html">
+<link rel="import" href="test-file-results-time-series.html">
 
 <dom-module id="test-file-results">
   <template>
@@ -38,6 +39,11 @@ found in the LICENSE file.
         background-color: rgb(242, 90, 90);
       }
     </style>
+
+    <test-file-results-time-series
+        path="[[testFile]]"
+        test-runs="[[testRuns]]">
+    </test-file-results-time-series>
 
     <table>
       <thead>
@@ -76,7 +82,7 @@ found in the LICENSE file.
         return {
           testFile: {
             type: String,
-            observer: 'testFileChanged'
+            observer: 'testFileChanged',
           },
           subtestNames: {
             type: Array,
