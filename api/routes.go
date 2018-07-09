@@ -11,6 +11,9 @@ func RegisterRoutes() {
 	// API endpoint for diff of two test run summary JSON blobs.
 	shared.AddRoute("/api/diff", "api-diff", apiDiffHandler)
 
+	// API endpoint for fetching interoperability metadata.
+	shared.AddRoute("/api/interop", "api-interop", apiInteropHandler)
+
 	// API endpoint for fetching a manifest for a commit SHA.
 	shared.AddRoute("/api/manifest", "api-manifest", apiManifestHandler)
 

@@ -12,6 +12,7 @@ An exhaustive list of the endpoints can be found in `routes.go`.
  - [/api/run](#apirun)
  - [/api/diff](#apidiff)
  - [/api/results](#apiresults)
+ - [/api/interop](#apiinterop)
 
 ## TestRun entities
 
@@ -299,3 +300,58 @@ __Content type__: `application/x-www-form-urlencoded`
 __Parameters__
 
 TODO
+
+### /api/interop
+
+Gets TestRun interoperability metadata, for the runs that would be fetched
+using the same params calling [/api/runs](#apiruns).
+
+Note that if a subset of browsers are selected, the most recent interoperability
+metadata that includes all of the browsers is return (which may have been
+computed from more than the returned browsers). For example,
+`/api/interop?product=chrome-67` will return interoperability metadata that
+includes the results from the latest run of Chrome 67.0.
+
+__Parameters__
+
+__`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
+
+__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`.
+
+__`labels`__: A comma-separated list of labels, e.g. `firefox,stable`; only runs with all
+the given labels will be returned. There are currently two kinds of labels supported,
+browser names (`chrome`, `edge`, `firefox`, `safari`) and release channels (`experimental`
+or `stable`).
+
+__`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
+
+__`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
+
+#### Examples
+
+- https://wpt.fyi/api/interop
+- https://wpt.fyi/api/interop?product=chrome-67
+- https://wpt.fyi/api/interop?label=experimental
+
+__Example response JSON__
+
+    {
+      "test_runs": [
+        {
+          "id": 4829365045035008,
+          "browser_name": "chrome",
+          "browser_version": "69.0.3472.3 dev",
+          "os_name": "linux",
+          "os_version": "16.04",
+          "revision": "9f00a60d91",
+          "full_revision_hash": "9f00a60d91ba84e52dac35d6e08da2050774811d",
+          "results_url": "https://storage.googleapis.com/wptd-staging/9f00a60d91ba84e52dac35d6e08da2050774811d/chrome-69.0.3472.3_dev-linux-16.04-904a25b130-summary.json.gz",
+          "created_at": "2018-07-06T15:58:24.377035Z",
+          "raw_results_url": "https://storage.googleapis.com/wptd-results-staging/9f00a60d91ba84e52dac35d6e08da2050774811d/chrome-69.0.3472.3_dev-linux-16.04-904a25b130/report.json",
+          "labels": ["buildbot", "chrome", "experimental"]
+        } //, ...
+      ],
+      "start_time": "2018-07-06T18:42:27.478781Z",
+      "end_time": "2018-07-06T18:42:36.658149Z",
+      "url": "https://storage.googleapis.com/wptd-metrics-staging/1530902547-1530902556/pass-rates.json.gz"
+    }
