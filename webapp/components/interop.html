@@ -247,10 +247,12 @@ found in the LICENSE file.
 
       if (this.passRateMetadataSrc) {
         this.passRateMetadata = await fetch(this.passRateMetadataSrc).then(
-            r => {
-              if (!r.ok) return Promise.reject('Failed to fetch interop data');
-              return r.json();
-            });
+          function(r) {
+            if (!r.ok) {
+              return Promise.reject('Failed to fetch interop data');
+            }
+            return r.json();
+          });
       }
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
       if (this.allMetrics && this.allMetrics.data) {
