@@ -8,16 +8,16 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/remote_api"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/net/context"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/remote_api"
 )
 
 var (
@@ -27,13 +27,10 @@ var (
 // populate_dev_data.go populates a local running webapp instance with some
 // of the latest production entities, so that there's data to view.
 //
-// It uses the AppEngine Remote API, which requires credentials; see:
-// https://cloud.google.com/appengine/docs/standard/go/tools/remoteapi/
-// https://developers.google.com/identity/protocols/application-default-credentials
-//
 // Usage (from util/):
 // go run populate_dev_data.go
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 
 	ctx, err := getRemoteAPIContext()
@@ -241,16 +238,7 @@ func addData(ctx context.Context, kindName string, data []interface{}) (keys []*
 }
 
 func getRemoteAPIContext() (context.Context, error) {
-	const host = "localhost:9999"
-	ctx := context.Background()
-
-	hc, err := google.DefaultClient(ctx,
-		"https://www.googleapis.com/auth/appengine.apis",
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var remoteContext context.Context
-	remoteContext, err = remote_api.NewRemoteContext(host, hc)
+	const localhost = "localhost:9999"
+	remoteContext, err := remote_api.NewRemoteContext(localhost, http.DefaultClient)
 	return remoteContext, err
 }
