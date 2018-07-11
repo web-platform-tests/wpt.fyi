@@ -5,16 +5,13 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
 )
 
 // apiResultsRedirectHandler is responsible for redirecting to the Google Cloud Storage API
@@ -28,80 +25,28 @@ import (
 //   (optional) run: SHA[0:10] of the test run, or "latest" (latest is the default)
 //   (optional) test: Path of the test, e.g. "/css/css-images-3/gradient-button.html"
 func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
-	params, err := url.ParseQuery(r.URL.RawQuery)
+	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
-		http.Error(w, "Invalid path", http.StatusBadRequest)
-		return
-	}
-
-	// TODO(lukebjerring): Consolidate with shared.ParseProductParam & shared.LoadTestRuns
-	product := params.Get("product")
-	if product == "" {
-		http.Error(w, "Param 'product' missing", http.StatusBadRequest)
-		return
-	}
-
-	runSHA := params.Get("sha")
-	if runSHA == "" {
-		// Legacy name, in case still present in scripts/local stores.
-		runSHA = params.Get("run")
-	}
-	if runSHA == "" {
-		runSHA = "latest"
-	}
-
-	run, err := getRun(r, runSHA, product)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if run == nil {
-		http.Error(w, fmt.Sprintf("404 - Test run '%s' not found", runSHA), http.StatusNotFound)
-		return
-	}
-
-	test := params.Get("test")
-	resultsURL := getResultsURL(*run, test)
-
-	http.Redirect(w, r, resultsURL, http.StatusFound)
-}
-
-func getRun(r *http.Request, run string, product string) (latest *shared.TestRun, err error) {
-	productPieces := strings.Split(product, "-")
-	if len(productPieces) < 1 || len(productPieces) > 4 {
-		err = errors.New("Invalid path")
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	ctx := appengine.NewContext(r)
-	baseQuery := datastore.NewQuery("TestRun").Order("-CreatedAt").Limit(1)
-
-	var testRunResults []shared.TestRun
-	query := baseQuery.Filter("BrowserName =", productPieces[0])
-	if run != "" && run != "latest" {
-		query = query.Filter("Revision =", run)
-	}
-	if len(productPieces) > 1 {
-		query = shared.VersionPrefix(query, "BrowserVersion", productPieces[1], true)
-	}
-	if len(productPieces) > 2 {
-		query = query.Filter("OSName =", productPieces[2])
-	}
-	if len(productPieces) > 3 {
-		query = shared.VersionPrefix(query, "OSVersion", productPieces[3], true)
-	}
-	keys, err := query.GetAll(ctx, &testRunResults)
+	one := 1
+	testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, []string{filters.SHA}, nil, &one)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Append the keys as ID
-	for i, key := range keys {
-		testRunResults[i].ID = key.IntID()
+	if len(testRuns) == 0 {
+		http.Error(w, fmt.Sprintf("404 - Test run '%s' not found", filters.SHA), http.StatusNotFound)
+		return
 	}
-	if len(testRunResults) > 0 {
-		latest = &testRunResults[0]
-	}
-	return latest, err
+
+	test := r.URL.Query().Get("test")
+	resultsURL := getResultsURL(testRuns[0], test)
+
+	http.Redirect(w, r, resultsURL, http.StatusFound)
 }
 
 func getResultsURL(run shared.TestRun, testFile string) (resultsURL string) {
