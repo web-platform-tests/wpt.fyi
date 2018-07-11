@@ -359,13 +359,13 @@ def create_test_run(report, labels_str, uploader, secret,
                     results_gcs_path, raw_results_gcs_path):
     """Creates a TestRun on the dashboard.
 
-    By posting to the /api/run endpoint.
+    By posting to the /api/results/create endpoint.
 
     Args:
         report: A WPTReport.
         labels_str: A comma-separated string of labels from the uploader.
         uploader: The name of the uploader.
-        secret: An upload token.
+        secret: A secret token.
         results_gcs_path: The GCS path to the gzipped summary file.
             (e.g. '/wptd/0123456789/chrome-62.0-linux-summary.json.gz')
         raw_results_gcs_path: The GCS path to the raw full report.
@@ -383,8 +383,8 @@ def create_test_run(report, labels_str, uploader, secret,
     payload['labels'] = labels
 
     response = requests.post(
-        config.project_baseurl() + '/api/run',
-        params={'secret': secret},
+        config.project_baseurl() + '/api/results/create',
+        auth=('_processor', secret),
         data=json.dumps(payload)
     )
     response.raise_for_status()
