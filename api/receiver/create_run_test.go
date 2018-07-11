@@ -19,7 +19,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func TestTestRunPostHandler(t *testing.T) {
+func TestHandleResultsCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -61,7 +61,7 @@ func TestTestRunPostHandler(t *testing.T) {
 	assert.False(t, testRun.TimeEnd.IsZero())
 }
 
-func TestTestRunPostHandler_NoTimestamps(t *testing.T) {
+func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -95,7 +95,7 @@ func TestTestRunPostHandler_NoTimestamps(t *testing.T) {
 	assert.Equal(t, testRun.TimeStart, testRun.TimeEnd)
 }
 
-func TestTestRunPostHandler_NoBasicAuth(t *testing.T) {
+func TestHandleResultsCreate_NoBasicAuth(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -107,7 +107,7 @@ func TestTestRunPostHandler_NoBasicAuth(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
-func TestTestRunPostHandler_WrongUser(t *testing.T) {
+func TestHandleResultsCreate_WrongUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -120,7 +120,7 @@ func TestTestRunPostHandler_WrongUser(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
-func TestTestRunPostHandler_WrongPassword(t *testing.T) {
+func TestHandleResultsCreate_WrongPassword(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
