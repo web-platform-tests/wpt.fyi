@@ -23,7 +23,7 @@ const ResultsQueue = "results-arrival"
 // ResultsTarget is the target URL for results proccessing tasks.
 const ResultsTarget = "/api/results/process"
 
-// HandleResultsUpload handles a POST results upload request.
+// HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	var uploader string
 	if !a.IsAdmin() {

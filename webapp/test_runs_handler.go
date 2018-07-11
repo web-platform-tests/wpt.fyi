@@ -10,16 +10,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // testRunsHandler handles GET/POST requests to /test-runs
 func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		// TODO(#251): Move consumers of old endpoint.
-		// /test-runs is the legacy POST endpoint, migrated to /api/run, and left to avoid breakages
-		api.TestRunPostHandler(w, r)
+		http.Error(w, "POST /test-runs is no longer supported.", http.StatusMethodNotAllowed)
 	} else if r.Method == "GET" {
 		handleTestRunGet(w, r)
 	} else {

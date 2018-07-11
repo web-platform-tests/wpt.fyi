@@ -21,11 +21,11 @@ import (
 
 func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		TestRunPostHandler(w, r)
+		http.Error(w, "POST /api/run is no longer supported.", http.StatusMethodNotAllowed)
 	} else if r.Method == "GET" {
 		apiTestRunGetHandler(w, r)
 	} else {
-		http.Error(w, "This endpoint only supports GET and POST.", http.StatusMethodNotAllowed)
+		http.Error(w, "Unknown methods.", http.StatusMethodNotAllowed)
 	}
 }
 

@@ -89,15 +89,39 @@ func TestScheduleResultsTask_error(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestAddTestRun(t *testing.T) {
+	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	assert.Nil(t, err)
+	// The URL is a placeholder and not used in the test.
+	r, err := i.NewRequest("POST", "/api/results/create", nil)
+	assert.Nil(t, err)
+	defer i.Close()
+	ctx := appengine.NewContext(r)
+
+	testRun := shared.TestRun{
+		ProductAtRevision: shared.ProductAtRevision{
+			Revision: "0123456789",
+		},
+	}
+
+	a := appEngineAPIImpl{ctx: ctx}
+	key, err := a.AddTestRun(&testRun)
+	assert.Nil(t, err)
+	assert.Equal(t, "TestRun", key.Kind())
+
+	var testRun2 shared.TestRun
+	datastore.Get(ctx, key, &testRun2)
+	assert.Equal(t, testRun, testRun2)
+}
+
 func TestAuthenticateUploader(t *testing.T) {
 	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
 	assert.Nil(t, err)
-	r, err := i.NewRequest("POST", "/api/admin/upload", nil)
-	assert.Nil(t, err)
-	ctx := appengine.NewContext(r)
-
+	// The URL is a placeholder and not used in the test.
+	r, err := i.NewRequest("POST", "/admin/results/upload", nil)
 	assert.Nil(t, err)
 	defer i.Close()
+	ctx := appengine.NewContext(r)
 
 	a := appEngineAPIImpl{ctx: ctx}
 	assert.False(t, a.AuthenticateUploader("user", "123"))
