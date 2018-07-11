@@ -27,7 +27,7 @@ func TestGetTestRunByID(t *testing.T) {
 
 	ctx := appengine.NewContext(r)
 	resp := httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
+	apiTestRunHandler(resp, r)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
 	chrome := shared.TestRun{
@@ -41,7 +41,7 @@ func TestGetTestRunByID(t *testing.T) {
 
 	datastore.Put(ctx, datastore.NewKey(ctx, "TestRun", "", 123, nil), &chrome)
 	resp = httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
+	apiTestRunHandler(resp, r)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var bodyTestRun shared.TestRun
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)

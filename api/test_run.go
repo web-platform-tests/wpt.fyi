@@ -17,18 +17,12 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+// apiTestRunHandler is responsible for emitting the test-run JSON for a specific run.
 func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		http.Error(w, "POST /api/run is no longer supported.", http.StatusMethodNotAllowed)
-	} else if r.Method == "GET" {
-		apiTestRunGetHandler(w, r)
-	} else {
-		http.Error(w, "Unknown methods.", http.StatusMethodNotAllowed)
+	if r.Method != "GET" {
+		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
 	}
-}
 
-// apiTestRunGetHandler is responsible for emitting the test-run JSON for a specific run.
-func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idParam := vars["id"]
 	ctx := appengine.NewContext(r)
