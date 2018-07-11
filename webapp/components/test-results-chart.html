@@ -1,0 +1,206 @@
+<!--
+Copyright 2018 The WPT Dashboard Project. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/google-chart/google-chart.html">
+
+<dom-module id="test-results-chart">
+  <style>
+    google-chart.false {
+      display: none;
+    }
+  </style>
+  <template>
+    <google-chart class$="[[_isFeasible]]" type="line" cols="[[cols]]" rows="[[rows]]"></google-chart>
+  </template>
+  <script>
+    class TestResultsChart extends window.Polymer.Element {
+      static get is() {
+        return 'test-results-chart';
+      }
+
+      static get properties() {
+        return {
+          labels: {
+            type: Array,
+          },
+          latest: {
+            type: Date,
+          },
+          tests: {
+            type: Array,
+          },
+          chunkSize: {
+            type: Number,
+            value: 5,
+          },
+          maxReqs: {
+            type: Number,
+            value: 200,
+          },
+          browserNames: {
+            type: Array,
+            value: [
+              'chrome',
+              'edge',
+              'firefox',
+              'safari',
+            ],
+          },
+          cols: {
+            type: Array,
+            computed: '_computeCols(browserNames)',
+          },
+          rows: {
+            type: Array,
+            value: [],
+          },
+          _to: {
+            type: Date,
+            value: new Date(),
+          },
+          _tests: {
+            type: Array,
+          },
+          _isFeasible: {
+            type: Boolean,
+            computed: '_computeIsFeasible(tests, chunkSize, maxReqs)'
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          '_loadNext(tests, chunkSize, labels, _to, _isFeasible)',
+        ];
+      }
+
+      _computeLabels(labels) {
+        return labels ? labels : [];
+      }
+
+      _computeCols(browserNames) {
+        return [{label: 'Run time', type: 'datetime'}]
+          .concat(browserNames.map(label => {
+            return {label, type: 'number'};
+          }));
+      }
+
+      _computeIsFeasible(tests, chunkSize, maxReqs) {
+        if (!tests) {
+          console.log('isFeasible: No tests');
+          return false;
+        }
+
+        console.log('isFeasible:', `4 * ${tests.length} * ${chunkSize} <= ${maxReqs}`);
+        console.log('isFeasible:', 4 * tests.length * chunkSize <= maxReqs);
+        return 4 * tests.length * chunkSize <= maxReqs;
+      }
+
+      async _loadNext(tests, chunkSize, labels, _to, _isFeasible) {
+        if (!_isFeasible || tests.length === 0) return;
+        if (this._tests !== tests) this._reset();
+        this._tests = tests;
+        labels = labels || [];
+
+        console.log('_loadNext', tests, chunkSize, labels, _to, _isFeasible);
+
+        const resp = await window.fetch(`/api/runs?complete=true&to=${_to.toISOString()}&max-count=${chunkSize}&labels=${labels.join(',')}`);
+        const runs = await resp.json();
+
+        if (runs.length === 0) return;
+
+        const latch = () => this._to = this._getDT(runs[runs.length - 1])
+        return Promise.all(runs.map(run => this._loadRun(this._tests, run)))
+          .then(latch, latch);
+      }
+
+      async _loadRun(tests, run) {
+        if (this.tests !== tests) return;
+
+        let num = 0;
+        let denom = 0;
+        await Promise.all(tests.map(async path => {
+          const resp = await window.fetch(this._resultsURL(run, path));
+          const r = await resp.json();
+          if (this.tests !== tests) return;
+
+          if (r.status === 'OK'|| r.status === 'PASS') {
+            num++;
+          }
+          denom++;
+
+          if (r.subtests && r.subtests.length > 0) {
+            for (const sub of r.subtests) {
+              if (sub.status === 'PASS') {
+                num++;
+              }
+              denom++;
+            }
+          }
+        }));
+        if (this.tests !== tests) return;
+
+        const dt = this._getDT(run);
+        let row = this.rows
+          .find(array => array[0].getTime() === dt.getTime());
+        if (row) {
+          this._updateRow(row, run.browser_name, num / denom);
+          this.rows = Array.from(this.rows);
+        } else {
+          row = this._mkRow(dt, run.browser_name, num / denom);
+          this.rows = this.rows.concat([row]).sort((array1, array2) => {
+            return array1[0].getTime() - array2[0].getTime();
+          });
+        }
+
+        return row;
+      }
+
+      _mkRow(dt, label, value) {
+        let row = new Array(this.cols.length);
+        row[0] = dt;
+        return this._updateRow(row, label, value);
+      }
+
+      _updateRow(row, label, value) {
+        const labels = this.cols.map(col => col.label);
+        for (let i = 0; i < labels.length; i++) {
+          if (labels[i] === label) {
+            row[i] = value;
+            break;
+          }
+          if (i === labels.length - 1) {
+            throw new Error(`Unknown label: ${label} (not on of ${labels.join(',')})`);
+          }
+        }
+
+        return row;
+      }
+
+      _resultsURL(run, path) {
+        // This is relying on the assumption that result files end with '-summary.json.gz'.
+        const resultsBase = run.results_url.slice(0, run.results_url.lastIndexOf('-summary.json.gz'));
+        return `${resultsBase}${path}`;
+      }
+
+      _reset() {
+        this.rows = [];
+      }
+
+      _getDT(run) {
+        return this._dateFromString(run.start_time);
+      }
+
+      _dateFromString(str) {
+        const b = str.split(/\D+/);
+        return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
+      }
+    }
+
+    window.customElements.define(TestResultsChart.is, TestResultsChart);
+  </script>
+</dom-module>

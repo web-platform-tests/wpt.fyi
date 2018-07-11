@@ -28,13 +28,13 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var shas []string
 	if filters.Complete != nil && *filters.Complete {
-		if shas, err = getCompleteRunSHAs(ctx, filters.From, filters.MaxCount); err != nil {
+		if shas, err = getCompleteRunSHAs(ctx, filters.From, filters.To, filters.MaxCount); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} else {
 		products := filters.GetProductsOrDefault()
-		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, nil, filters.From, filters.MaxCount)
+		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, nil, filters.From, filters.To, filters.MaxCount)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -60,7 +60,7 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 // getCompleteRunSHAs returns an array of the SHA[0:10] for runs that
 // exists for all initially-loaded browser names (see GetDefaultBrowserNames),
 // ordered by most-recent.
-func getCompleteRunSHAs(ctx context.Context, from *time.Time, limit *int) (shas []string, err error) {
+func getCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (shas []string, err error) {
 	query := datastore.
 		NewQuery("TestRun").
 		Order("-CreatedAt").
@@ -70,6 +70,9 @@ func getCompleteRunSHAs(ctx context.Context, from *time.Time, limit *int) (shas 
 
 	if from != nil {
 		query = query.Filter("CreatedAt >=", *from)
+	}
+	if to != nil {
+		query = query.Filter("CreatedAt <", *to)
 	}
 
 	bySHA := make(map[string]mapset.Set)

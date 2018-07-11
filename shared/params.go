@@ -25,6 +25,7 @@ type TestRunFilter struct {
 	Labels   mapset.Set
 	Complete *bool
 	From     *time.Time
+	To       *time.Time
 	MaxCount *int
 	Products ProductSpecs
 }
@@ -373,9 +374,9 @@ func ParseMaxCountParamWithDefault(r *http.Request, defaultValue int) (count int
 	return defaultValue, nil
 }
 
-// ParseFromParam parses the "from" param as a timestamp.
-func ParseFromParam(r *http.Request) (*time.Time, error) {
-	if fromParam := r.URL.Query().Get("from"); fromParam != "" {
+// ParseDTParam parses the date/time param named "name" as a timestamp.
+func ParseDTParam(r *http.Request, name string) (*time.Time, error) {
+	if fromParam := r.URL.Query().Get(name); fromParam != "" {
 		parsed, err := time.Parse(time.RFC3339, fromParam)
 		if err != nil {
 			return nil, err
@@ -525,7 +526,10 @@ func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error)
 	if filter.MaxCount, err = ParseMaxCountParam(r); err != nil {
 		return filter, err
 	}
-	if filter.From, err = ParseFromParam(r); err != nil {
+	if filter.From, err = ParseDTParam(r, "from"); err != nil {
+		return filter, err
+	}
+	if filter.To, err = ParseDTParam(r, "to"); err != nil {
 		return filter, err
 	}
 	return filter, nil

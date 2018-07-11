@@ -28,9 +28,9 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTestRunGet(w http.ResponseWriter, r *http.Request) {
-	from, err := shared.ParseFromParam(r)
+	from, err := shared.ParseDTParam(r, "from")
 	if err != nil {
-		http.Error(w, "Invalid max-count param: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid from param: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	// Get runs from 3 months ago onward.

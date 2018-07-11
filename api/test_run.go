@@ -64,7 +64,7 @@ func apiTestRunGetHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		one := 1
-		testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, []string{filters.SHA}, nil, &one)
+		testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, []string{filters.SHA}, nil, nil, &one)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

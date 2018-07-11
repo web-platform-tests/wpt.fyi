@@ -33,7 +33,7 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 		// Ignore any max-count; makes no sense for a interop run.
 		one := 1
 		runs, err := shared.LoadTestRuns(
-			ctx, filters.GetProductsOrDefault(), filters.Labels, []string{filters.SHA}, filters.From, &one)
+			ctx, filters.GetProductsOrDefault(), filters.Labels, []string{filters.SHA}, filters.From, filters.To, &one)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
