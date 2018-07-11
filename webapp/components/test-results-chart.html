@@ -183,7 +183,7 @@ found in the LICENSE file.
         let labelIdx;
         for (let labelIdx = 0; labelIdx < labels.length; labelIdx++) {
           if (labels[labelIdx] === label) {
-            row[labelIdx] = value;
+            rows[rowIdx][labelIdx] = value;
             break;
           }
         }
@@ -198,7 +198,7 @@ found in the LICENSE file.
           rows[i][labelIdx] = value;
         }
 
-        return row;
+        return rows[rowIdx];
       }
 
       resultsURL(run, path) {
