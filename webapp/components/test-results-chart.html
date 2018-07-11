@@ -157,10 +157,10 @@ found in the LICENSE file.
         }
 
         const dt = this.getDT(run);
-        let row = this.rows
-          .find(array => array[0].getTime() === dt.getTime());
-        if (row) {
-          this.updateRow(row, run.browser_name, num / denom);
+        const rowIdx = this.rows
+          .findIndex(array => array[0].getTime() === dt.getTime());
+        if (rowIdx >= 0) {
+          this.updateRow(rows, rowIdx, run.browser_name, num / denom);
           this.rows = Array.from(this.rows);
         } else {
           row = this.mkRow(dt, run.browser_name, num / denom);
@@ -175,19 +175,27 @@ found in the LICENSE file.
       mkRow(dt, label, value) {
         let row = new Array(this.cols.length);
         row[0] = dt;
-        return this.updateRow(row, label, value);
+        return this.updateRow([row], 0, label, value);
       }
 
-      updateRow(row, label, value) {
+      updateRow(rows, rowIdx, label, value) {
         const labels = this.cols.map(col => col.label);
-        for (let i = 0; i < labels.length; i++) {
-          if (labels[i] === label) {
-            row[i] = value;
+        let labelIdx;
+        for (let labelIdx = 0; labelIdx < labels.length; labelIdx++) {
+          if (labels[labelIdx] === label) {
+            row[labelIdx] = value;
             break;
           }
-          if (i === labels.length - 1) {
-            throw new Error(`Unknown label: ${label} (not on of ${labels.join(',')})`);
+        }
+        if (labelIdx == labels.length) {
+          throw new Error(`Unknown label: ${label} (not one of ${labels.join(', ')})`);
+        }
+
+        for (let i = rowIdx; i < rows.length; i++) {
+          if (rows[i] !== undefined) {
+            break;
           }
+          rows[i][labelIdx] = value;
         }
 
         return row;
