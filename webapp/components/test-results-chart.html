@@ -58,6 +58,10 @@ found in the LICENSE file.
             type: Array,
             value: [],
           },
+          values: {
+            type: Array,
+            value: [],
+          },
           to: {
             type: Date,
             value: new Date(),
@@ -157,33 +161,65 @@ found in the LICENSE file.
         }
 
         const dt = this.getDT(run);
-        const rowIdx = this.rows
+        let values = this.values;
+        const vIdx = values
           .findIndex(array => array[0].getTime() === dt.getTime());
-        if (rowIdx >= 0) {
-          this.updateRow(rows, rowIdx, run.browser_name, num / denom);
-          this.rows = Array.from(this.rows);
+        if (vIdx >= 0) {
+          this.updateValue(values, vIdx, run.browser_name, num / denom);
         } else {
-          row = this.mkRow(dt, run.browser_name, num / denom);
-          this.rows = this.rows.concat([row]).sort((array1, array2) => {
+          const value = this.mkValue(dt, run.browser_name, num / denom);
+          values = this.values.concat([value]).sort((array1, array2) => {
             return array1[0].getTime() - array2[0].getTime();
           });
+          const vIdx = values
+            .findIndex(array => array[0].getTime() === dt.getTime());
+          this.updateValue(values, vIdx, run.browser_name, num / denom);
         }
 
+        let latest = new Array(values[0].length + 1);
+        let rows = new Array(values.length);
+        for (let i = 0; i < values.length; i++) {
+          rows[i] = new Array(values[i].length);
+          rows[i][0] = values[i][0];
+          for (let j = 1; j < latest.length; j++) {
+            const value = values[i][j];
+
+            // Feed latest values forward when no value in place.
+            if (value === undefined && latest[j] !== undefined) {
+              rows[i][j] = latest[j];
+            }
+
+            if (value !== undefined ) {
+              rows[i][j] = value;
+
+              // Backfill when label finds first value.
+              if (latest[j] === undefined) {
+                for (let k = i - 1; k >= 0; k--) {
+                  rows[k][j] = value;
+                }
+              }
+
+              latest[j] = value;
+            }
+          }
+        }
+
+        this.values = values;
+        this.rows = rows;
+      }
+
+      mkValue(dt, label) {
+        let row = new Array(this.cols.length);
+        row[0] = dt;
         return row;
       }
 
-      mkRow(dt, label, value) {
-        let row = new Array(this.cols.length);
-        row[0] = dt;
-        return this.updateRow([row], 0, label, value);
-      }
-
-      updateRow(rows, rowIdx, label, value) {
+      updateValue(rows, vIdx, label, value) {
         const labels = this.cols.map(col => col.label);
         let labelIdx;
-        for (let labelIdx = 0; labelIdx < labels.length; labelIdx++) {
+        for (labelIdx = 0; labelIdx < labels.length; labelIdx++) {
           if (labels[labelIdx] === label) {
-            rows[rowIdx][labelIdx] = value;
+            rows[vIdx][labelIdx] = value;
             break;
           }
         }
@@ -191,14 +227,31 @@ found in the LICENSE file.
           throw new Error(`Unknown label: ${label} (not one of ${labels.join(', ')})`);
         }
 
-        for (let i = rowIdx; i < rows.length; i++) {
+/*
+        // Copy label's value in this row forward until another value is found.
+        for (let i = vIdx; i < rows.length; i++) {
           if (rows[i] !== undefined) {
             break;
           }
           rows[i][labelIdx] = value;
         }
 
-        return rows[rowIdx];
+        // Copy closest previous values from other labels' values into this row.
+        for (let i = 1; i < labels.length; i++) {
+          if (i === labelIdx) {
+            continue;
+          }
+
+          for (let j = vIdx - 1; j >= 0; j--) {
+            if (rows[j][i] !== undefined) {
+              rows[vIdx][i] = rows[j][i];
+              break;
+            }
+          }
+        }
+        */
+
+        return rows[vIdx];
       }
 
       resultsURL(run, path) {
