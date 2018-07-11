@@ -64,7 +64,7 @@ func LoadTestRuns(
 			query = query.Filter("TimeStart >=", *from)
 		}
 		if to != nil {
-			query = query.Filter("CreatedAt <", *to)
+			query = query.Filter("TimeStart <", *to)
 		}
 
 		fetched, err := query.KeysOnly().GetAll(ctx, nil)

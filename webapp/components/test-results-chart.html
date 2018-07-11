@@ -167,7 +167,7 @@ found in the LICENSE file.
         if (vIdx >= 0) {
           this.updateValue(values, vIdx, run.browser_name, num / denom);
         } else {
-          const value = this.mkValue(dt, run.browser_name, num / denom);
+          const value = this.mkValue(dt);
           values = this.values.concat([value]).sort((array1, array2) => {
             return array1[0].getTime() - array2[0].getTime();
           });
@@ -208,7 +208,7 @@ found in the LICENSE file.
         this.rows = rows;
       }
 
-      mkValue(dt, label) {
+      mkValue(dt) {
         let row = new Array(this.cols.length);
         row[0] = dt;
         return row;
@@ -223,33 +223,9 @@ found in the LICENSE file.
             break;
           }
         }
-        if (labelIdx == labels.length) {
+        if (labelIdx === labels.length) {
           throw new Error(`Unknown label: ${label} (not one of ${labels.join(', ')})`);
         }
-
-/*
-        // Copy label's value in this row forward until another value is found.
-        for (let i = vIdx; i < rows.length; i++) {
-          if (rows[i] !== undefined) {
-            break;
-          }
-          rows[i][labelIdx] = value;
-        }
-
-        // Copy closest previous values from other labels' values into this row.
-        for (let i = 1; i < labels.length; i++) {
-          if (i === labelIdx) {
-            continue;
-          }
-
-          for (let j = vIdx - 1; j >= 0; j--) {
-            if (rows[j][i] !== undefined) {
-              rows[vIdx][i] = rows[j][i];
-              break;
-            }
-          }
-        }
-        */
 
         return rows[vIdx];
       }

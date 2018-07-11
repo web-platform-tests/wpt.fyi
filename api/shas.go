@@ -72,7 +72,7 @@ func getCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (s
 		query = query.Filter("TimeStart >=", *from)
 	}
 	if to != nil {
-		query = query.Filter("CreatedAt <", *to)
+		query = query.Filter("TimeStart <", *to)
 	}
 
 	bySHA := make(map[string]mapset.Set)
