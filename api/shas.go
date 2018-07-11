@@ -63,13 +63,13 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 func getCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (shas []string, err error) {
 	query := datastore.
 		NewQuery("TestRun").
-		Order("-CreatedAt").
+		Order("-TimeStart").
 		Project("Revision", "BrowserName")
 
 	browserNames := shared.GetDefaultBrowserNames()
 
 	if from != nil {
-		query = query.Filter("CreatedAt >=", *from)
+		query = query.Filter("TimeStart >=", *from)
 	}
 	if to != nil {
 		query = query.Filter("CreatedAt <", *to)

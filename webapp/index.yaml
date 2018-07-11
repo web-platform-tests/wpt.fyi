@@ -16,37 +16,37 @@ indexes:
 - kind: TestRun
   properties:
   - name: BrowserName
-  - name: CreatedAt
+  - name: TimeStart
     direction: desc
 - kind: TestRun
   properties:
   - name: Revision
-  - name: CreatedAt
+  - name: TimeStart
     direction: desc
 - kind: TestRun
   properties:
   - name: Browser
   - name: Revision
-  - name: CreatedAt
+  - name: TimeStart
     direction: desc
 - kind: TestRun
   properties:
   - name: BrowserName
   - name: Revision
-  - name: CreatedAt
+  - name: TimeStart
     direction: desc
 - kind: TestRun
   properties:
   - name: BrowserName
   - name: BrowserVersion
-  - name: CreatedAt
+  - name: TimeStart
     direction: desc
 - kind: TestRun
   properties:
   - name: BrowserName
   - name: BrowserVersion
   - name: OSName
-  - name: CreatedAt
+  - name: TimeStart
     direction: desc
 - kind: TestRun
   properties:
@@ -54,29 +54,23 @@ indexes:
   - name: BrowserVersion
   - name: OSName
   - name: OSVersion
-  - name: CreatedAt
+  - name: TimeStart
     direction: desc
 - kind: TestRun
   properties:
-  - name: BrowserName
-  - name: CreatedAt
+  - name: Labels
+  - name: TimeStart
     direction: desc
+- kind: TestRun
+  properties:
+  - name: TimeStart
+    direction: desc
+  - name: BrowserName
   - name: Revision
 - kind: TestRun
   properties:
   - name: BrowserName
   - name: BrowserVersion
-    direction: desc
-- kind: TestRun
-  properties:
-  - name: CreatedAt
-    direction: desc
-  - name: BrowserName
-  - name: Revision
-- kind: TestRun
-  properties:
-  - name: Labels
-  - name: CreatedAt
     direction: desc
 - kind: TestRun
   properties:

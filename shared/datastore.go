@@ -58,10 +58,10 @@ func LoadTestRuns(
 			}
 		}
 		// TODO(lukebjerring): Indexes + filtering for OS + version.
-		query = query.Order("-CreatedAt")
+		query = query.Order("-TimeStart")
 
 		if from != nil {
-			query = query.Filter("CreatedAt >", *from)
+			query = query.Filter("TimeStart >=", *from)
 		}
 		if to != nil {
 			query = query.Filter("CreatedAt <", *to)
