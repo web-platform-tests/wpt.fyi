@@ -14,7 +14,7 @@ found in the LICENSE file.
     }
   </style>
   <template>
-    <google-chart class$="[[_isFeasible]]" type="line" cols="[[cols]]" rows="[[rows]]"></google-chart>
+    <google-chart class$="[[isFeasible]]" type="line" cols="[[cols]]" rows="[[rows]]"></google-chart>
   </template>
   <script>
     class TestResultsChart extends window.Polymer.Element {
@@ -58,14 +58,14 @@ found in the LICENSE file.
             type: Array,
             value: [],
           },
-          _to: {
+          to: {
             type: Date,
             value: new Date(),
           },
-          _tests: {
+          currentTests: {
             type: Array,
           },
-          _isFeasible: {
+          isFeasible: {
             type: Boolean,
             computed: '_computeIsFeasible(tests, chunkSize, maxReqs)'
           },
@@ -74,7 +74,7 @@ found in the LICENSE file.
 
       static get observers() {
         return [
-          '_loadNext(tests, chunkSize, labels, _to, _isFeasible)',
+          'loadNext(tests, chunkSize, labels, to, isFeasible)',
         ];
       }
 
@@ -100,33 +100,43 @@ found in the LICENSE file.
         return 4 * tests.length * chunkSize <= maxReqs;
       }
 
-      async _loadNext(tests, chunkSize, labels, _to, _isFeasible) {
-        if (!_isFeasible || tests.length === 0) return;
-        if (this._tests !== tests) this._reset();
-        this._tests = tests;
+      async loadNext(tests, chunkSize, labels, to, isFeasible) {
+        if (!isFeasible || tests.length === 0) {
+          return;
+        }
+        if (this.currentTests !== tests) {
+          this.reset();
+        }
+        this.currentTests = tests;
         labels = labels || [];
 
-        console.log('_loadNext', tests, chunkSize, labels, _to, _isFeasible);
+        console.log('loadNext', tests, chunkSize, labels, to, isFeasible);
 
-        const resp = await window.fetch(`/api/runs?complete=true&to=${_to.toISOString()}&max-count=${chunkSize}&labels=${labels.join(',')}`);
+        const resp = await window.fetch(`/api/runs?complete=true&to=${to.toISOString()}&max-count=${chunkSize}&labels=${labels.join(',')}`);
         const runs = await resp.json();
 
-        if (runs.length === 0) return;
+        if (runs.length === 0) {
+          return;
+        }
 
-        const latch = () => this._to = this._getDT(runs[runs.length - 1])
-        return Promise.all(runs.map(run => this._loadRun(this._tests, run)))
+        const latch = () => this.to = this.getDT(runs[runs.length - 1]);
+        return Promise.all(runs.map(run => this.loadRun(this.currentTests, run)))
           .then(latch, latch);
       }
 
-      async _loadRun(tests, run) {
-        if (this.tests !== tests) return;
+      async loadRun(tests, run) {
+        if (this.tests !== tests) {
+          return;
+        }
 
         let num = 0;
         let denom = 0;
         await Promise.all(tests.map(async path => {
-          const resp = await window.fetch(this._resultsURL(run, path));
+          const resp = await window.fetch(this.resultsURL(run, path));
           const r = await resp.json();
-          if (this.tests !== tests) return;
+          if (this.tests !== tests) {
+            return;
+          }
 
           if (r.status === 'OK'|| r.status === 'PASS') {
             num++;
@@ -142,16 +152,18 @@ found in the LICENSE file.
             }
           }
         }));
-        if (this.tests !== tests) return;
+        if (this.tests !== tests) {
+          return;
+        }
 
-        const dt = this._getDT(run);
+        const dt = this.getDT(run);
         let row = this.rows
           .find(array => array[0].getTime() === dt.getTime());
         if (row) {
-          this._updateRow(row, run.browser_name, num / denom);
+          this.updateRow(row, run.browser_name, num / denom);
           this.rows = Array.from(this.rows);
         } else {
-          row = this._mkRow(dt, run.browser_name, num / denom);
+          row = this.mkRow(dt, run.browser_name, num / denom);
           this.rows = this.rows.concat([row]).sort((array1, array2) => {
             return array1[0].getTime() - array2[0].getTime();
           });
@@ -160,13 +172,13 @@ found in the LICENSE file.
         return row;
       }
 
-      _mkRow(dt, label, value) {
+      mkRow(dt, label, value) {
         let row = new Array(this.cols.length);
         row[0] = dt;
-        return this._updateRow(row, label, value);
+        return this.updateRow(row, label, value);
       }
 
-      _updateRow(row, label, value) {
+      updateRow(row, label, value) {
         const labels = this.cols.map(col => col.label);
         for (let i = 0; i < labels.length; i++) {
           if (labels[i] === label) {
@@ -181,21 +193,21 @@ found in the LICENSE file.
         return row;
       }
 
-      _resultsURL(run, path) {
+      resultsURL(run, path) {
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = run.results_url.slice(0, run.results_url.lastIndexOf('-summary.json.gz'));
         return `${resultsBase}${path}`;
       }
 
-      _reset() {
+      reset() {
         this.rows = [];
       }
 
-      _getDT(run) {
-        return this._dateFromString(run.start_time || run.created_at);
+      getDT(run) {
+        return this.dateFromString(run.start_time || run.created_at);
       }
 
-      _dateFromString(str) {
+      dateFromString(str) {
         const b = str.split(/\D+/);
         return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
       }
