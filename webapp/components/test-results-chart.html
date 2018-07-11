@@ -192,7 +192,7 @@ found in the LICENSE file.
       }
 
       _getDT(run) {
-        return this._dateFromString(run.start_time);
+        return this._dateFromString(run.start_time || run.created_at);
       }
 
       _dateFromString(str) {
