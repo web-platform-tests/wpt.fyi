@@ -10,12 +10,22 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
+
+type testRunsUIFilter struct {
+	Products      string
+	Labels        string
+	SHA           string
+	BeforeSpec    *shared.ProductSpec
+	AfterSpec     *shared.ProductSpec
+	Diff          bool
+	BeforeTestRun *shared.TestRun
+	AfterTestRun  *shared.TestRun
+}
 
 // This handler is responsible for all pages that display test results.
 // It fetches the latest TestRun for each browser then renders the HTML
@@ -42,83 +52,56 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := r.URL.Query()
-	runSHA, err := shared.ParseSHAParam(r)
+	filter, err := parseTestRunUIFilter(r)
 	if err != nil {
-		http.Error(w, "Invalid query params", http.StatusBadRequest)
-		return
-	}
-
-	var testRunSources []string
-	var testRuns []shared.TestRun
-	if testRunSources, testRuns, err = getTestRunsAndSources(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	data := struct {
-		TestRuns       string
-		TestRunSources string
-		SHA            string
-		Diff           bool
-		Filter         string
-		Labels         string
+		TestRuns      string
+		TestRunFilter testRunsUIFilter
 	}{
-		SHA:    runSHA,
-		Filter: r.URL.Query().Get("filter"),
-	}
-
-	labels := shared.ToStringSlice(shared.ParseLabelsParam(r))
-	if labels != nil {
-		var marshaled []byte
-		if marshaled, err = json.Marshal(labels); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		data.Labels = string(marshaled)
-	}
-
-	_, diff := query["diff"]
-	data.Diff = diff || query.Get("before") != "" || query.Get("after") != ""
-
-	// Run source URLs
-	if testRunSources != nil && len(testRunSources) > 0 {
-		var marshaled []byte
-		if marshaled, err = json.Marshal(testRunSources); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		data.TestRunSources = string(marshaled)
+		TestRunFilter: filter,
 	}
 
 	// Runs by base64-encoded param or spec param.
-	if testRuns != nil && len(testRuns) > 0 {
+	if filter.BeforeTestRun != nil && filter.AfterTestRun != nil {
+		runs := []shared.TestRun{
+			*(filter.BeforeTestRun),
+			*(filter.AfterTestRun),
+		}
+		filter.Diff = true
+
 		var marshaled []byte
-		if marshaled, err = json.Marshal(testRuns); err != nil {
+		if marshaled, err = json.Marshal(runs); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		data.TestRuns = string(marshaled)
 	}
 
-	if err := templates.ExecuteTemplate(w, "index.html", data); err != nil {
+	if err := templates.ExecuteTemplate(w, "results.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-// getTestRunsAndSources gets source urls (api endpoints), and any placeholder TestRun entities from the parameters
-// for the current request.
-// When diffing, 'before' and 'after' parameters can be test-run specs (i.e. [product]@[sha]), or base64 encoded
-// TestRun JSON blobs for the results summaries.
-func getTestRunsAndSources(r *http.Request) (testRunSources []string, testRuns []shared.TestRun, err error) {
+// parseTestRunUIFilter parses the standard TestRunFilter, as well as the extra
+// diff params (diff, before, after).
+func parseTestRunUIFilter(r *http.Request) (filter testRunsUIFilter, err error) {
+	testRunFilter, err := shared.ParseTestRunFilterParams(r)
+	if err != nil {
+		return filter, err
+	}
+
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")
 	if before != "" || after != "" {
 		if before == "" {
-			return nil, nil, errors.New("after param provided, but before param missing")
+			return filter, errors.New("after param provided, but before param missing")
 		} else if after == "" {
-			return nil, nil, errors.New("before param provided, but after param missing")
+			return filter, errors.New("before param provided, but after param missing")
 		}
 
 		const singleRunURL = `/api/run?sha=%s&product=%s`
@@ -126,38 +109,48 @@ func getTestRunsAndSources(r *http.Request) (testRunSources []string, testRuns [
 		if beforeDecoded, err := base64.URLEncoding.DecodeString(before); err == nil {
 			var run shared.TestRun
 			if err = json.Unmarshal([]byte(beforeDecoded), &run); err != nil {
-				return nil, nil, err
+				return filter, err
 			}
-			testRuns = append(testRuns, run)
+			filter.BeforeTestRun = &run
 		} else {
 			beforeSpec, err := shared.ParseProductSpec(before)
 			if err != nil {
-				return nil, nil, errors.New("invalid before param")
+				return filter, errors.New("invalid before param")
 			}
-			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, beforeSpec.Revision, beforeSpec.Product.String()))
+			filter.BeforeSpec = &beforeSpec
 		}
 
 		if afterDecoded, err := base64.URLEncoding.DecodeString(after); err == nil {
 			var run shared.TestRun
 			if err = json.Unmarshal([]byte(afterDecoded), &run); err != nil {
-				return nil, nil, err
+				return filter, err
 			}
-			testRuns = append(testRuns, run)
+			filter.AfterTestRun = &run
 		} else {
 			afterSpec, err := shared.ParseProductSpec(after)
 			if err != nil {
-				return nil, nil, errors.New("invalid after param")
+				return filter, errors.New("invalid after param")
 			}
-			testRunSources = append(testRunSources, fmt.Sprintf(singleRunURL, afterSpec.Revision, afterSpec.Product.String()))
+			filter.AfterSpec = &afterSpec
 		}
-	} else {
-		sourceURL, _ := url.Parse("/api/runs")
-		f, err := shared.ParseTestRunFilterParams(r)
-		if err != nil {
-			return nil, nil, err
-		}
-		sourceURL.RawQuery = f.ToQuery(true).Encode()
-		testRunSources = []string{sourceURL.String()}
 	}
-	return testRunSources, testRuns, nil
+
+	if testRunFilter.Labels != nil {
+		data, _ := json.Marshal(testRunFilter.Labels.ToSlice())
+		filter.Labels = string(data)
+	}
+	if !shared.IsLatest(testRunFilter.SHA) {
+		filter.SHA = testRunFilter.SHA
+	}
+	if !testRunFilter.IsDefaultProducts() {
+		data, _ := json.Marshal(testRunFilter.Products.Strings())
+		filter.Products = string(data)
+	}
+
+	diff, err := shared.ParseBooleanParam(r, "diff")
+	if err != nil {
+		return filter, err
+	}
+	filter.Diff = diff != nil && *diff
+	return filter, nil
 }

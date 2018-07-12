@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+{{ template "_head.html" }}
+<body>
+<div id="content">
+  {{ template "_header.html" }}
+  <div>
+    <wpt-results
+        {{- if .TestRuns}} test-runs="{{ .TestRuns }}"{{end}}
+        {{- with .TestRunFilter}}
+          {{- if .Products}} products="{{ .Products }}"{{end}}
+          {{- if .SHA}} sha="{{ .SHA }}" {{end}}
+          {{- if .Labels}} labels="{{ .Labels }}"{{end}}
+          {{- if .Diff}} diff{{end}}
+        {{- end}}></wpt-results>
+  </div>
+</div>
+{{ template "_ga.html" }}
+</body>
+</html>
