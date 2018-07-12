@@ -205,10 +205,99 @@ func TestLoadTestRuns_Ordering(t *testing.T) {
 	}
 
 	chrome, _ := ParseProductSpec("chrome")
-	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, nil, nil)
+	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, nil, nil, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(loaded))
 	// Runs should be ordered descendingly by TimeStart.
 	assert.Equal(t, "0987654321", loaded[0].Revision)
 	assert.Equal(t, "1234567890", loaded[1].Revision)
+}
+
+func TestLoadTestRuns_From(t *testing.T) {
+	now := time.Now()
+	yesterday := now.AddDate(0, 0, -1)
+	lastWeek := now.AddDate(0, 0, -7)
+	testRuns := []TestRun{
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product: Product{
+					BrowserName: "chrome",
+				},
+				Revision: "1234567890",
+			},
+			TimeStart: now,
+		},
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product: Product{
+					BrowserName: "chrome",
+				},
+				Revision: "0987654321",
+			},
+			TimeStart: lastWeek,
+		},
+	}
+
+	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	assert.Nil(t, err)
+	defer i.Close()
+	// URL is a placeholder and is not used in this test.
+	r, err := i.NewRequest("GET", "/api/run?from", nil)
+	assert.Nil(t, err)
+
+	ctx := appengine.NewContext(r)
+	for _, testRun := range testRuns {
+		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
+		datastore.Put(ctx, key, &testRun)
+	}
+
+	chrome, _ := ParseProductSpec("chrome")
+	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, &yesterday, nil, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(loaded))
+	assert.Equal(t, "1234567890", loaded[0].Revision)
+}
+
+func TestLoadTestRuns_To(t *testing.T) {
+	now := time.Now()
+	yesterday := now.AddDate(0, 0, -1)
+	testRuns := []TestRun{
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product: Product{
+					BrowserName: "chrome",
+				},
+				Revision: "1234567890",
+			},
+			TimeStart: now,
+		},
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product: Product{
+					BrowserName: "chrome",
+				},
+				Revision: "0987654321",
+			},
+			TimeStart: yesterday,
+		},
+	}
+
+	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	assert.Nil(t, err)
+	defer i.Close()
+	// URL is a placeholder and is not used in this test.
+	r, err := i.NewRequest("GET", "/api/run?from", nil)
+	assert.Nil(t, err)
+
+	ctx := appengine.NewContext(r)
+	for _, testRun := range testRuns {
+		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
+		datastore.Put(ctx, key, &testRun)
+	}
+
+	chrome, _ := ParseProductSpec("chrome")
+	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, nil, &now, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(loaded))
+	assert.Equal(t, "0987654321", loaded[0].Revision)
 }
