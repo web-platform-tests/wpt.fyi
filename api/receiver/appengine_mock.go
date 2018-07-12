@@ -7,6 +7,8 @@ package receiver
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	datastore "google.golang.org/appengine/datastore"
 	taskqueue "google.golang.org/appengine/taskqueue"
 	io "io"
 	reflect "reflect"
@@ -33,6 +35,43 @@ func NewMockAppEngineAPI(ctrl *gomock.Controller) *MockAppEngineAPI {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockAppEngineAPI) EXPECT() *MockAppEngineAPIMockRecorder {
 	return m.recorder
+}
+
+// Context mocks base method
+func (m *MockAppEngineAPI) Context() context.Context {
+	ret := m.ctrl.Call(m, "Context")
+	ret0, _ := ret[0].(context.Context)
+	return ret0
+}
+
+// Context indicates an expected call of Context
+func (mr *MockAppEngineAPIMockRecorder) Context() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockAppEngineAPI)(nil).Context))
+}
+
+// AddTestRun mocks base method
+func (m *MockAppEngineAPI) AddTestRun(testRun *shared.TestRun) (*datastore.Key, error) {
+	ret := m.ctrl.Call(m, "AddTestRun", testRun)
+	ret0, _ := ret[0].(*datastore.Key)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddTestRun indicates an expected call of AddTestRun
+func (mr *MockAppEngineAPIMockRecorder) AddTestRun(testRun interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTestRun", reflect.TypeOf((*MockAppEngineAPI)(nil).AddTestRun), testRun)
+}
+
+// AuthenticateUploader mocks base method
+func (m *MockAppEngineAPI) AuthenticateUploader(username, password string) bool {
+	ret := m.ctrl.Call(m, "AuthenticateUploader", username, password)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// AuthenticateUploader indicates an expected call of AuthenticateUploader
+func (mr *MockAppEngineAPIMockRecorder) AuthenticateUploader(username, password interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticateUploader", reflect.TypeOf((*MockAppEngineAPI)(nil).AuthenticateUploader), username, password)
 }
 
 // IsLoggedIn mocks base method
@@ -70,30 +109,6 @@ func (m *MockAppEngineAPI) LoginURL(redirect string) (string, error) {
 // LoginURL indicates an expected call of LoginURL
 func (mr *MockAppEngineAPIMockRecorder) LoginURL(redirect interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAppEngineAPI)(nil).LoginURL), redirect)
-}
-
-// Context mocks base method
-func (m *MockAppEngineAPI) Context() context.Context {
-	ret := m.ctrl.Call(m, "Context")
-	ret0, _ := ret[0].(context.Context)
-	return ret0
-}
-
-// Context indicates an expected call of Context
-func (mr *MockAppEngineAPIMockRecorder) Context() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockAppEngineAPI)(nil).Context))
-}
-
-// AuthenticateUploader mocks base method
-func (m *MockAppEngineAPI) AuthenticateUploader(username, password string) bool {
-	ret := m.ctrl.Call(m, "AuthenticateUploader", username, password)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// AuthenticateUploader indicates an expected call of AuthenticateUploader
-func (mr *MockAppEngineAPIMockRecorder) AuthenticateUploader(username, password interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticateUploader", reflect.TypeOf((*MockAppEngineAPI)(nil).AuthenticateUploader), username, password)
 }
 
 // uploadToGCS mocks base method
