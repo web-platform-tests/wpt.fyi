@@ -4,6 +4,7 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 
@@ -54,6 +55,11 @@ See models.go for more details.
         <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
         <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
         <div>{{dateFormat(testRun.created_at)}}</div>
+        <paper-tooltip offset=0>
+          {{displayName(testRun.browser_name)}} {{testRun.browser_version}}<br>
+          Labels: {{displayLabels(testRun.labels)}}<br>
+          {{moreTooltip(testRun)}}
+        </paper-tooltip>
       </template>
     </div>
   </template>
@@ -102,6 +108,13 @@ See models.go for more details.
         return DISPLAY_NAMES.get(name) || name;
       }
 
+      displayLabels(labels) {
+        if (labels && labels instanceof Array) {
+          return labels.join(', ');
+        }
+        return '';
+      }
+
       displayLogo(testRun) {
         let name = testRun.browser_name;
         const exp = testRun.labels && testRun.labels.includes('experimental');
@@ -129,6 +142,16 @@ See models.go for more details.
         }
 
         return match[1];
+      }
+
+      moreTooltip(testRun) {
+        if (testRun.browser_name.startsWith('chrome') && testRun.labels.includes('experimental')) {
+          return 'With --enable-experimental-web-platform-features';
+        }
+        if (testRun.browser_name.startsWith('firefox')) {
+          return 'Using prefs in /testing/profiles/; some experimental features enabled';
+        }
+        return '';
       }
     }
 

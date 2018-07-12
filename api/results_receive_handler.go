@@ -12,7 +12,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 )
 
-func apiResultsReceiveHandler(w http.ResponseWriter, r *http.Request) {
+func apiResultsUploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
 		return
@@ -21,4 +21,15 @@ func apiResultsReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	a := receiver.NewAppEngineAPI(ctx)
 	receiver.HandleResultsUpload(a, w, r)
+}
+
+func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := appengine.NewContext(r)
+	a := receiver.NewAppEngineAPI(ctx)
+	receiver.HandleResultsCreate(a, w, r)
 }

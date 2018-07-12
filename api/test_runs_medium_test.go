@@ -50,12 +50,12 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-6", nil)
 	resp := httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
+	apiTestRunHandler(resp, r)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
 	resp = httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
+	apiTestRunHandler(resp, r)
 	body, _ := ioutil.ReadAll(resp.Result().Body)
 	assert.Equalf(t, http.StatusOK, resp.Code, string(body))
 	var result66 shared.TestRun
@@ -64,7 +64,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.139", nil)
 	resp = httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
+	apiTestRunHandler(resp, r)
 	body, _ = ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var result66139 shared.TestRun
@@ -73,7 +73,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-68", nil)
 	resp = httptest.NewRecorder()
-	apiTestRunGetHandler(resp, r)
+	apiTestRunHandler(resp, r)
 	body, _ = ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var result68 shared.TestRun

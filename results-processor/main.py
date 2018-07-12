@@ -172,8 +172,8 @@ def task_handler():
         shutil.rmtree(tempdir)
 
     ds = datastore.Client()
-    upload_token = ds.get(ds.key('Token', 'upload-token'))['Secret']
-    wptreport.create_test_run(report, labels, uploader, upload_token,
+    secret = ds.get(ds.key('Uploader', '_processor'))['Password']
+    wptreport.create_test_run(report, labels, uploader, secret,
                               results_gcs_path, raw_results_gcs_path)
 
     return resp

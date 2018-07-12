@@ -21,12 +21,13 @@ import (
 
 // AppEngineAPI abstracts all AppEngine APIs used by the results receiver.
 type AppEngineAPI interface {
-	// The three methods below are exported for webapp.routes.
+	Context() context.Context
+	AddTestRun(testRun *shared.TestRun) (*datastore.Key, error)
+	AuthenticateUploader(username, password string) bool
+	// The three methods below are exported for webapp.admin_handler.
 	IsLoggedIn() bool
 	IsAdmin() bool
 	LoginURL(redirect string) (string, error)
-	Context() context.Context
-	AuthenticateUploader(username, password string) bool
 
 	uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error)
 	scheduleResultsTask(
@@ -53,6 +54,11 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 
 func (a *appEngineAPIImpl) Context() context.Context {
 	return a.ctx
+}
+
+func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*datastore.Key, error) {
+	key := datastore.NewIncompleteKey(a.ctx, "TestRun", nil)
+	return datastore.Put(a.ctx, key, testRun)
 }
 
 func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool {
