@@ -25,9 +25,9 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTestRunGet(w http.ResponseWriter, r *http.Request) {
-	from, err := shared.ParseFromParam(r)
+	from, err := shared.ParseDateTimeParam(r, "from")
 	if err != nil {
-		http.Error(w, "Invalid max-count param: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid from param: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	// Get runs from 3 months ago onward.
@@ -36,6 +36,15 @@ func handleTestRunGet(w http.ResponseWriter, r *http.Request) {
 		from = &threeMonthsAgo
 	}
 	sourceURL := fmt.Sprintf(`/api/runs?from=%s`, from.Format(time.RFC3339))
+
+	to, err := shared.ParseDateTimeParam(r, "to")
+	if err != nil {
+		http.Error(w, "Invalid to param: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	if to != nil {
+		sourceURL = sourceURL + "&to=" + to.Format(time.RFC3339)
+	}
 
 	labels := shared.ParseLabelsParam(r)
 	if labels != nil {

@@ -30,6 +30,7 @@ func LoadTestRuns(
 	labels mapset.Set,
 	shas []string,
 	from *time.Time,
+	to *time.Time,
 	limit *int) (result []TestRun, err error) {
 	var testRuns []TestRun
 	baseQuery := datastore.NewQuery("TestRun")
@@ -61,6 +62,9 @@ func LoadTestRuns(
 
 		if from != nil {
 			query = query.Filter("TimeStart >=", *from)
+		}
+		if to != nil {
+			query = query.Filter("TimeStart <", *to)
 		}
 
 		fetched, err := query.KeysOnly().GetAll(ctx, nil)

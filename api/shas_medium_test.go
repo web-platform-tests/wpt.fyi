@@ -28,7 +28,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 	browserNames := shared.GetDefaultBrowserNames()
 
 	// Nothing in datastore.
-	shas, _ := getCompleteRunSHAs(ctx, nil, nil)
+	shas, _ := getCompleteRunSHAs(ctx, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// Only 3 browsers.
@@ -42,7 +42,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = getCompleteRunSHAs(ctx, nil, nil)
+	shas, _ = getCompleteRunSHAs(ctx, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// All 4 browsers, but experimental.
@@ -52,7 +52,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser + "-" + shared.ExperimentalLabel
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = getCompleteRunSHAs(ctx, nil, nil)
+	shas, _ = getCompleteRunSHAs(ctx, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// 2 browsers, and other 2, but experimental.
@@ -65,7 +65,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		}
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = getCompleteRunSHAs(ctx, nil, nil)
+	shas, _ = getCompleteRunSHAs(ctx, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// All 4 browsers.
@@ -75,7 +75,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = getCompleteRunSHAs(ctx, nil, nil)
+	shas, _ = getCompleteRunSHAs(ctx, nil, nil, nil)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 
 	// Another (earlier) run, also all 4 browsers.
@@ -85,15 +85,15 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = getCompleteRunSHAs(ctx, nil, nil)
+	shas, _ = getCompleteRunSHAs(ctx, nil, nil, nil)
 	assert.Equal(t, []string{"abcdef0123", "abcdef9999"}, shas)
 	// Limit 1
 	one := 1
-	shas, _ = getCompleteRunSHAs(ctx, nil, &one)
+	shas, _ = getCompleteRunSHAs(ctx, nil, nil, &one)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 	// From 4 days ago @ midnight.
 	from := time.Now().AddDate(0, 0, -4).Truncate(24 * time.Hour)
-	shas, _ = getCompleteRunSHAs(ctx, &from, nil)
+	shas, _ = getCompleteRunSHAs(ctx, &from, nil, nil)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 }
 
