@@ -37,6 +37,15 @@ func handleTestRunGet(w http.ResponseWriter, r *http.Request) {
 	}
 	sourceURL := fmt.Sprintf(`/api/runs?from=%s`, from.Format(time.RFC3339))
 
+	to, err := shared.ParseDateTimeParam(r, "to")
+	if err != nil {
+		http.Error(w, "Invalid to param: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	if to != nil {
+		sourceURL = sourceURL + "&to=" + to.Format(time.RFC3339)
+	}
+
 	labels := shared.ParseLabelsParam(r)
 	if labels != nil {
 		for label := range labels.Iterator().C {
