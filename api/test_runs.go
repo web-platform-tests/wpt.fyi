@@ -15,7 +15,7 @@ import (
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
 //
 // URL Params:
-//     sha: SHA[0:10] of the repo when the testsn the tests were executed (or 'latest')
+//     sha: SHA[0:10] of the repo when the tests the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
