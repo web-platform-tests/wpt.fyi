@@ -306,11 +306,11 @@ found in the LICENSE file.
         super.ready();
         this.loadRuns().then(async runs => {
           // Add a diff testRun spoof, if needed.
-          if (this.diff && this.testRuns && this.testRuns.length === 2) {
-            this.fetchDiff(this.testRuns);
+          if (this.diff && runs && runs.length === 2) {
+            this.fetchDiff(runs);
           }
           // Fetch the results JSON for the TestRuns
-          await this.fetchResults(this.testRuns);
+          await this.fetchResults(runs);
           this.refreshDisplayedNodes();
         });
         const tabs = this.shadowRoot.querySelector('results-navigation');
@@ -516,7 +516,7 @@ found in the LICENSE file.
 
       testRunQueryParams(sha, labels, products, maxCount, diff) {
         const params = super.testRunQueryParams(sha, labels, products, maxCount);
-        if (this.diff) {
+        if (diff || this.diff) {
           params.diff = true;
         }
         return params;

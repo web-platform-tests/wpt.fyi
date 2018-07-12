@@ -57,18 +57,19 @@ found in the LICENSE file.
         const preloaded = this.testRuns;
         const runs = [];
         if (preloaded) {
-            runs.push(...preloaded);
+          runs.push(...preloaded);
         }
-        // Fetch by products (or default, if nothing else is present).
-        if (this.products && this.products.length
-            || !preloaded && !this.testRunResources) {
-          const byProduct = fetch(`/api/runs${this.query}`)
-              .then(r => r.ok && r.json())
+        // Fetch by products (or default products, if nothing else is present).
+        if ((this.products && this.products.length)
+          || (!preloaded && !this.testRunResources)) {
+          const byProduct =
+            fetch(`/api/runs${this.query}`).then(r => r.ok && r.json());
           runs.push(byProduct);
         }
+        // Fetch by specific URLs (legacy behaviour)
         if (this.testRunResources) {
           const byUrl = this.testRunResources
-              .map(url => fetch(url).then(r => r.ok && r.json()));
+            .map(url => fetch(url).then(r => r.ok && r.json()));
           runs.push(...byUrl);
         }
         const fetches = await Promise.all(runs);
