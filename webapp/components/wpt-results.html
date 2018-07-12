@@ -142,7 +142,10 @@ found in the LICENSE file.
     </template>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
-      <test-file-results test-runs="[[testRuns]]" test-file="[[path]]">
+      <test-file-results test-runs="[[testRuns]]"
+                         test-file="[[path]]"
+                         labels="[[labels]]"
+                         products="[[products]]">
       </test-file-results>
     </template>
 

@@ -11,6 +11,7 @@
           {{- if .Products}} products="{{ .Products }}"{{end}}
           {{- if .SHA}} sha="{{ .SHA }}" {{end}}
           {{- if .Labels}} labels="{{ .Labels }}"{{end}}
+          {{- if .MaxCount}} max-count="{{ .MaxCount }}"{{end}}
           {{- if .Diff}} diff{{end}}
         {{- end}}></wpt-results>
   </div>
