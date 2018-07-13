@@ -18,17 +18,18 @@ import (
 // FetchLatestRuns fetches the TestRun metadata for the latest runs, using the
 // API on the given host.
 func FetchLatestRuns(wptdHost string) TestRuns {
-	return FetchRuns(wptdHost, "latest", nil)
+	return FetchRuns(wptdHost, "latest", nil, nil)
 }
 
 // FetchRuns fetches the TestRun metadata for the given sha / labels, using the
 // API on the given host.
-func FetchRuns(wptdHost, sha string, labels mapset.Set) TestRuns {
+func FetchRuns(wptdHost, sha string, maxCount *int, labels mapset.Set) TestRuns {
 	url := "https://" + wptdHost + "/api/runs"
 
 	filters := TestRunFilter{
-		Labels: labels,
-		SHA:    sha,
+		Labels:   labels,
+		SHA:      sha,
+		MaxCount: maxCount,
 	}
 	url += "?" + filters.ToQuery(true).Encode()
 	log.Printf("Fetching %s...", url)

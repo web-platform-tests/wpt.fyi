@@ -12,10 +12,10 @@ function wptd_useradd() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "%user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers'
 }
 function wptd_exec() {
-  docker exec -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" "$@"
+  docker exec -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" sh -c "$*"
 }
 function wptd_exec_it() {
-  docker exec -it -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" "$@"
+  docker exec -it -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" sh -c "$*"
 }
 # function wptd_run() {}
 function wptd_stop() {
