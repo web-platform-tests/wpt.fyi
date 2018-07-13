@@ -21,6 +21,7 @@ import (
 func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
+		return
 	}
 
 	vars := mux.Vars(r)
