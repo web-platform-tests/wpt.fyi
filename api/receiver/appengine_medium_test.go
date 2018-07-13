@@ -14,8 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/aetest"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
 )
@@ -53,7 +52,7 @@ func TestUploadToGCS(t *testing.T) {
 }
 
 func TestScheduleResultsTask(t *testing.T) {
-	ctx, done, err := aetest.NewContext()
+	ctx, done, err := sharedtest.NewAEContext(false)
 	assert.Nil(t, err)
 	defer done()
 
@@ -71,7 +70,7 @@ func TestScheduleResultsTask(t *testing.T) {
 }
 
 func TestScheduleResultsTask_error(t *testing.T) {
-	ctx, done, err := aetest.NewContext()
+	ctx, done, err := sharedtest.NewAEContext(false)
 	assert.Nil(t, err)
 	defer done()
 	a := appEngineAPIImpl{ctx: ctx}
@@ -90,13 +89,10 @@ func TestScheduleResultsTask_error(t *testing.T) {
 }
 
 func TestAddTestRun(t *testing.T) {
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	// The URL is a placeholder and not used in the test.
-	r, err := i.NewRequest("POST", "/api/results/create", nil)
-	assert.Nil(t, err)
-	defer i.Close()
-	ctx := appengine.NewContext(r)
+	defer done()
+	a := appEngineAPIImpl{ctx: ctx}
 
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
@@ -104,7 +100,6 @@ func TestAddTestRun(t *testing.T) {
 		},
 	}
 
-	a := appEngineAPIImpl{ctx: ctx}
 	key, err := a.AddTestRun(&testRun)
 	assert.Nil(t, err)
 	assert.Equal(t, "TestRun", key.Kind())
@@ -115,15 +110,11 @@ func TestAddTestRun(t *testing.T) {
 }
 
 func TestAuthenticateUploader(t *testing.T) {
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	// The URL is a placeholder and not used in the test.
-	r, err := i.NewRequest("POST", "/admin/results/upload", nil)
-	assert.Nil(t, err)
-	defer i.Close()
-	ctx := appengine.NewContext(r)
-
+	defer done()
 	a := appEngineAPIImpl{ctx: ctx}
+
 	assert.False(t, a.AuthenticateUploader("user", "123"))
 
 	key := datastore.NewKey(ctx, "Uploader", "user", 0, nil)

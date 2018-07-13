@@ -12,13 +12,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/aetest"
 	"google.golang.org/appengine/datastore"
 )
 
 func TestGetTestRuns_VersionPrefix(t *testing.T) {
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	i, err := sharedtest.NewAEInstance(true)
 	assert.Nil(t, err)
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
@@ -82,7 +82,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 }
 
 func TestGetTestRuns_SHA(t *testing.T) {
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	i, err := sharedtest.NewAEInstance(true)
 	assert.Nil(t, err)
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/runs", nil)

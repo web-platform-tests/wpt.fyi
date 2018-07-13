@@ -12,19 +12,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/aetest"
 	"google.golang.org/appengine/datastore"
 )
 
 func TestGetCompleteRunSHAs(t *testing.T) {
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	defer i.Close()
-	r, err := i.NewRequest("GET", "/api/shas?complete", nil)
-	assert.Nil(t, err)
+	defer done()
 
-	ctx := appengine.NewContext(r)
 	browserNames := shared.GetDefaultBrowserNames()
 
 	// Nothing in datastore.
@@ -98,7 +95,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 }
 
 func TestApiSHAsHandler(t *testing.T) {
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	i, err := sharedtest.NewAEInstance(true)
 	assert.Nil(t, err)
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/shas", nil)

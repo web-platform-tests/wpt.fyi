@@ -7,15 +7,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/appengine/aetest"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/memcache"
 )
 
 func TestGetGitHubReleaseAsset_Caches(t *testing.T) {
-	ctx, done, err := aetest.NewContext()
-	if err != nil {
-		t.Fatal(err)
-	}
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
 	defer done()
 
 	downloadURL := "http://gith1ub.com/magic_url"
