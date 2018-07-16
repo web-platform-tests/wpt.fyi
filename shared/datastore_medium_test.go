@@ -9,10 +9,9 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/aetest"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -30,14 +29,10 @@ func TestLoadTestRuns(t *testing.T) {
 		CreatedAt:  time.Now(),
 	}
 
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	defer i.Close()
-	// URL is a placeholder and is not used in this test.
-	r, err := i.NewRequest("GET", "/api/run", nil)
-	assert.Nil(t, err)
+	defer done()
 
-	ctx := appengine.NewContext(r)
 	key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
 	key, _ = datastore.Put(ctx, key, &testRun)
 
@@ -104,14 +99,10 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 		},
 	}
 
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	defer i.Close()
-	// URL is a placeholder and is not used in this test.
-	r, err := i.NewRequest("GET", "/api/run", nil)
-	assert.Nil(t, err)
+	defer done()
 
-	ctx := appengine.NewContext(r)
 	keys := make([]*datastore.Key, len(testRuns))
 	for i := range testRuns {
 		keys[i] = datastore.NewIncompleteKey(ctx, "TestRun", nil)
@@ -142,14 +133,10 @@ func TestLoadTestRuns_MultipleSHAs(t *testing.T) {
 		testRuns = append(testRuns, testRun)
 	}
 
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	defer i.Close()
-	// URL is a placeholder and is not used in this test.
-	r, err := i.NewRequest("GET", "/api/runs", nil)
-	assert.Nil(t, err)
+	defer done()
 
-	ctx := appengine.NewContext(r)
 	keys := make([]*datastore.Key, len(testRuns))
 	for i := range testRuns {
 		keys[i] = datastore.NewIncompleteKey(ctx, "TestRun", nil)
@@ -191,14 +178,10 @@ func TestLoadTestRuns_Ordering(t *testing.T) {
 		},
 	}
 
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	defer i.Close()
-	// URL is a placeholder and is not used in this test.
-	r, err := i.NewRequest("GET", "/api/run", nil)
-	assert.Nil(t, err)
+	defer done()
 
-	ctx := appengine.NewContext(r)
 	for _, testRun := range testRuns {
 		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
 		datastore.Put(ctx, key, &testRun)
@@ -238,14 +221,10 @@ func TestLoadTestRuns_From(t *testing.T) {
 		},
 	}
 
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	defer i.Close()
-	// URL is a placeholder and is not used in this test.
-	r, err := i.NewRequest("GET", "/api/run?from", nil)
-	assert.Nil(t, err)
+	defer done()
 
-	ctx := appengine.NewContext(r)
 	for _, testRun := range testRuns {
 		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
 		datastore.Put(ctx, key, &testRun)
@@ -282,14 +261,10 @@ func TestLoadTestRuns_To(t *testing.T) {
 		},
 	}
 
-	i, err := aetest.NewInstance(&aetest.Options{StronglyConsistentDatastore: true})
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
-	defer i.Close()
-	// URL is a placeholder and is not used in this test.
-	r, err := i.NewRequest("GET", "/api/run?from", nil)
-	assert.Nil(t, err)
+	defer done()
 
-	ctx := appengine.NewContext(r)
 	for _, testRun := range testRuns {
 		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
 		datastore.Put(ctx, key, &testRun)
