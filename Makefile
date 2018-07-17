@@ -202,7 +202,7 @@ eslint: node-babel-eslint node-eslint node-eslint-plugin-html
 
 dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
-	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS) "-static_dir=$(WPTD_GO_PATH)/webapp/static"
+	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS) " -static_dir=$(WPTD_GO_PATH)/webapp/static"
 
 deploy_staging: gcloud webapp_deps package_announcer var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
 	gcloud config set project $(PROJECT)
