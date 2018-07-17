@@ -7,7 +7,7 @@
   <div>
     <wpt-results
         {{- if .TestRuns}} test-runs="{{ .TestRuns }}"{{end}}
-        {{- with .TestRunFilter}}
+        {{- with .Filter}}
           {{- if .Products}} products="{{ .Products }}"{{end}}
           {{- if .SHA}} sha="{{ .SHA }}" {{end}}
           {{- if .Labels}} labels="{{ .Labels }}"{{end}}

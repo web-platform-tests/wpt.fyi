@@ -16,7 +16,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-type testRunsUIFilter struct {
+type testRunUIFilter struct {
 	Products      string
 	Labels        string
 	SHA           string
@@ -60,10 +60,12 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		TestRuns      string
-		TestRunFilter testRunsUIFilter
+		// TestRuns are inlined marshalled JSON for arbitrary test runs (e.g. when
+		// diffing), for runs which aren't fetchable via a URL or the api.
+		TestRuns string
+		Filter   testRunUIFilter
 	}{
-		TestRunFilter: filter,
+		Filter: filter,
 	}
 
 	// Runs by base64-encoded param or spec param.
@@ -90,7 +92,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 // parseTestRunUIFilter parses the standard TestRunFilter, as well as the extra
 // diff params (diff, before, after).
-func parseTestRunUIFilter(r *http.Request) (filter testRunsUIFilter, err error) {
+func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 	testRunFilter, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		return filter, err
