@@ -41,6 +41,24 @@ func (f TestRunFilter) IsDefaultQuery() bool {
 		(len(f.Products) < 1)
 }
 
+// IsDefaultProducts returns whether the params products are empty, or the
+// equivalent of the default product set.
+func (f TestRunFilter) IsDefaultProducts() bool {
+	if len(f.Products) == 0 {
+		return true
+	}
+	def := GetDefaultProducts()
+	if len(f.Products) != len(def) {
+		return false
+	}
+	for i := range def {
+		if def[i] != f.Products[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // ProductSpec is a struct representing a parsed product spec string.
 type ProductSpec struct {
 	ProductAtRevision
@@ -56,6 +74,16 @@ func (p ProductSpecs) Products() []Product {
 	result := make([]Product, len(p))
 	for i, spec := range p {
 		result[i] = spec.Product
+	}
+	return result
+}
+
+// Strings returns the array of the ProductSpec items as their string
+// representations.
+func (p ProductSpecs) Strings() []string {
+	result := make([]string, len(p))
+	for i, spec := range p {
+		result[i] = spec.String()
 	}
 	return result
 }
@@ -493,15 +521,20 @@ func ParseQueryParamInt(r *http.Request, key string) (int, error) {
 	return i, err
 }
 
-// ParseCompleteParam parses the "complete" param, returning
-// true if it's present with no value, otherwise the parsed
-// bool value.
+// ParseCompleteParam parses the "complete" param. See ParseBooleanParam.
 func ParseCompleteParam(r *http.Request) (complete *bool, err error) {
+	return ParseBooleanParam(r, "complete")
+}
+
+// ParseBooleanParam parses the given param name as a bool.
+// Return nil if the param is missing, true if if it's present with no value,
+// otherwise the parsed boolean value of the param's value.
+func ParseBooleanParam(r *http.Request, name string) (result *bool, err error) {
 	q := r.URL.Query()
 	b := false
-	if _, ok := q["complete"]; !ok {
+	if _, ok := q[name]; !ok {
 		return nil, nil
-	} else if val := q.Get("complete"); val == "" {
+	} else if val := q.Get(name); val == "" {
 		b = true
 	} else {
 		b, err = strconv.ParseBool(val)

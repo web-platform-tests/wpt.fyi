@@ -13,16 +13,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetTestRunsAndSources(t *testing.T) {
+func TestParseTestRunUIFilter(t *testing.T) {
 	r := httptest.NewRequest("GET", "/results/?max-count=3", nil)
-	srcs, runs, err := getTestRunsAndSources(r)
+	f, err := parseTestRunUIFilter(r)
 	assert.Nil(t, err)
-	assert.Nil(t, runs)
-	assert.Equal(t, []string{"/api/runs?complete=true&max-count=3"}, srcs)
+	assert.True(t, f.MaxCount != nil && *f.MaxCount == 3)
 
-	r = httptest.NewRequest("GET", "/results/?max-count=5&product=chrome-69&sha=abcdef0123", nil)
-	srcs, runs, err = getTestRunsAndSources(r)
+	r = httptest.NewRequest("GET", "/results/?products=chrome,safari&diff", nil)
+	f, err = parseTestRunUIFilter(r)
 	assert.Nil(t, err)
-	assert.Nil(t, runs)
-	assert.Equal(t, []string{"/api/runs?max-count=5&product=chrome-69&sha=abcdef0123"}, srcs)
+	assert.Equal(t, f.Products, "[\"chrome\",\"safari\"]")
+	assert.Equal(t, f.Diff, true)
 }

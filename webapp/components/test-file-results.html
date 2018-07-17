@@ -6,7 +6,7 @@ found in the LICENSE file.
 
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="runs.html">
+<link rel="import" href="test-runs.html">
 <link rel="import" href="test-run.html">
 <link rel="import" href="test-file-results-time-series.html">
 
@@ -61,9 +61,9 @@ found in the LICENSE file.
       }
     </style>
 
-    <test-file-results-time-series
-        path="[[testFile]]"
-        test-runs="[[testRuns]]">
+    <test-file-results-time-series path="[[testFile]]"
+        products="[[products]]"
+        labels="[[labels]]">
     </test-file-results-time-series>
 
     <table>
@@ -101,10 +101,7 @@ found in the LICENSE file.
 
       static get properties() {
         return {
-          testFile: {
-            type: String,
-            observer: 'testFileChanged',
-          },
+          testFile: String,
           subtestNames: {
             type: Array,
             value: []
@@ -168,41 +165,40 @@ found in the LICENSE file.
         await super.connectedCallback();
         console.assert(this.testFile);
         console.assert(this.testFile[0] === '/');
-        console.assert(this.testRuns);
-        console.assert(this.testRuns.length > 0);
-
-        this.fetchTestFile();
       }
 
-      async fetchTestFile() {
-        if (!this.testRuns) {
+      static get observers() {
+        return ['fetchTestFile(testFile, testRuns)'];
+      }
+
+      async fetchTestFile(testFile, testRuns) {
+        this.subtestNames = [];
+        if (!testFile || !testRuns) {
           return;
         }
-        const resultPerTestRun = await Promise.all(this.testRuns.map(tr => this.loadResultFile(tr)));
+        const resultPerTestRun = await Promise.all(
+          testRuns.map(tr => this.loadResultFile(tr)));
 
         resultPerTestRun.forEach((resultData, i) => {
           if (!resultData) {
-            this.testRuns[i].subtests = {};
-            this.testRuns[i].subtests['Harness status'] = { status: '(results not found)' };
+            testRuns[i].subtests = {};
+            testRuns[i].subtests['Harness status'] = { status: '(results not found)' };
             return;
           }
-          this.testRuns[i].subtests = {};
-          this.testRuns[i].subtests['Harness status'] = { status: resultData.status };
+          testRuns[i].subtests = {};
+          testRuns[i].subtests['Harness status'] = { status: resultData.status };
 
           if (!this.subtestNames.includes('Harness status')) {
             this.subtestNames = this.subtestNames.concat(['Harness status']);
           }
 
           for (let subtestResult of resultData.subtests) {
-            this.testRuns[i].subtests[subtestResult.name] = subtestResult;
+            testRuns[i].subtests[subtestResult.name] = subtestResult;
             if (!this.subtestNames.includes(subtestResult.name)) {
               this.subtestNames = this.subtestNames.concat([subtestResult.name]);
             }
           }
         });
-
-        // HACK: Force notifications on testRuns.
-        this.testRuns = Array.from(this.testRuns);
       }
 
       async loadResultFile(testRun) {
@@ -213,11 +209,6 @@ found in the LICENSE file.
           return null;
         }
         return response.json();
-      }
-
-      testFileChanged() {
-        this.subtestNames = [];
-        this.fetchTestFile();
       }
 
       resultsURL(testRun, testFile) {

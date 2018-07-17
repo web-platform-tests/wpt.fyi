@@ -9,7 +9,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="path-part.html">
-<link rel="import" href="runs.html">
+<link rel="import" href="test-runs.html">
 <link rel="import" href="test-file-results.html">
 <link rel="import" href="test-run.html">
 <link rel="import" href="self-navigator.html">
@@ -269,16 +269,13 @@ found in the LICENSE file.
       };
     }
 
-    async connectedCallback() {
-      await super.connectedCallback();
+    async ready() {
+      super.ready();
+
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
       if (this.allMetrics && this.allMetrics.data) {
         this.testFileNames = Array.from(Object.keys(this.allMetrics.data));
       }
-    }
-
-    ready() {
-      super.ready();
       const tabs = this.shadowRoot.querySelector('results-navigation');
       this.onpathupdated = path => {
         tabs.path = path;
