@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	host = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
+	host          = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
+	numRemoteRuns = flag.Int("num_remote_runs", 1, "number of remote runs to copy from host to local environment")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -189,7 +190,8 @@ func main() {
 	addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 
 	log.Print("Adding latest production TestRun data...")
-	prodTestRuns := shared.FetchRuns(*host, "latest", mapset.NewSetWith("stable"))
+	maxCount := *numRemoteRuns
+	prodTestRuns := shared.FetchRuns(*host, "latest", &maxCount, mapset.NewSetWith("stable"))
 	labelRuns(prodTestRuns, "prod")
 	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
@@ -198,7 +200,7 @@ func main() {
 	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
 
 	log.Print("Adding latest experimental TestRun data...")
-	prodTestRuns = shared.FetchRuns(*host, "latest", mapset.NewSetWith("experimental"))
+	prodTestRuns = shared.FetchRuns(*host, "latest", &maxCount, mapset.NewSetWith("experimental"))
 	labelRuns(prodTestRuns, "prod")
 
 	latestProductionTestRunMetadata = make([]interface{}, len(prodTestRuns))
