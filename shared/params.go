@@ -32,27 +32,27 @@ type TestRunFilter struct {
 
 // IsDefaultQuery returns whether the params are just an empty query (or,
 // the equivalent defaults of an empty query).
-func (f TestRunFilter) IsDefaultQuery() bool {
-	return IsLatest(f.SHA) &&
-		(f.Labels == nil || f.Labels.Cardinality() < 1) &&
-		(f.Complete == nil || *f.Complete) &&
-		(f.From == nil) &&
-		(f.MaxCount == nil || *f.MaxCount == 1) &&
-		(len(f.Products) < 1)
+func (filter TestRunFilter) IsDefaultQuery() bool {
+	return IsLatest(filter.SHA) &&
+		(filter.Labels == nil || filter.Labels.Cardinality() < 1) &&
+		(filter.Complete == nil || *filter.Complete) &&
+		(filter.From == nil) &&
+		(filter.MaxCount == nil || *filter.MaxCount == 1) &&
+		(len(filter.Products) < 1)
 }
 
 // IsDefaultProducts returns whether the params products are empty, or the
 // equivalent of the default product set.
-func (f TestRunFilter) IsDefaultProducts() bool {
-	if len(f.Products) == 0 {
+func (filter TestRunFilter) IsDefaultProducts() bool {
+	if len(filter.Products) == 0 {
 		return true
 	}
 	def := GetDefaultProducts()
-	if len(f.Products) != len(def) {
+	if len(filter.Products) != len(def) {
 		return false
 	}
 	for i := range def {
-		if def[i] != f.Products[i] {
+		if def[i] != filter.Products[i] {
 			return false
 		}
 	}
