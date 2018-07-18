@@ -104,10 +104,12 @@ web_components_test: xvfb firefox chrome node-web-component-tester webserver_dep
 	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
 	$(STOP_XVFB)
 
-sys_update: sys_deps
-	sudo apt-get --quiet update
+sys_update: sys_deps apt_update
 	gcloud components update
-	npm install -g npm
+	sudo npm install -g npm
+
+apt_update:
+	sudo apt-get --quiet update
 
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
@@ -131,7 +133,7 @@ firefox: browser_deps bzip2
 	fi
 
 browser_deps: wget java
-	sudo apt-get install -qy --no-install-suggests $$(apt-cache depends firefox-esr chromedriver |  grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+	sudo apt-get install -qy --no-install-suggests $$(apt-cache depends firefox-esr chromedriver | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 go_deps: gcloud go_packages $(GO_FILES)
 
