@@ -91,12 +91,14 @@ func (p ProductSpecs) Strings() []string {
 func (p ProductSpec) String() string {
 	s := p.Product.String()
 	if p.Labels != nil && p.Labels.Cardinality() > 0 {
-		s += "["
-		for label := range p.Labels.Iter() {
-			s += label.(string) + ","
+		labels := make([]string, 0, p.Labels.Cardinality())
+		for l := range p.Labels.Iter() {
+			labels = append(labels, l.(string))
 		}
-		s = s[:len(s)-1]
-		s += "]"
+		s += "[" + strings.Join(labels, ",") + "]"
+	}
+	if p.Revision != "" {
+		s += "@" + p.Revision
 	}
 	return s
 }
