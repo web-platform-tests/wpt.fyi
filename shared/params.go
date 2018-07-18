@@ -97,7 +97,7 @@ func (p ProductSpec) String() string {
 		}
 		s += "[" + strings.Join(labels, ",") + "]"
 	}
-	if p.Revision != "" {
+	if !IsLatest(p.Revision) {
 		s += "@" + p.Revision
 	}
 	return s
