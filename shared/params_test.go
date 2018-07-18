@@ -387,6 +387,12 @@ func TestParseProductSpec_Labels(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestParseProductSpec_String(t *testing.T) {
+	productSpec, err := ParseProductSpec("chrome-64[foo,bar]@1234512345")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome-64[foo,bar]@1234512345", productSpec.String())
+}
+
 func TestParseComplete(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs", nil)
 	complete, _ := ParseCompleteParam(r)

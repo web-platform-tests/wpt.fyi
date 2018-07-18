@@ -52,8 +52,8 @@ func LoadTestRuns(
 				query = query.Filter("Labels =", i.(string))
 			}
 		}
-		if product.Revision != "" {
-			query.Filter("Revision = ", product.Revision)
+		if !IsLatest(product.Revision) {
+			query = query.Filter("Revision = ", product.Revision)
 		}
 		if product.BrowserVersion != "" {
 			if prefiltered, err = loadKeysForBrowserVersion(ctx, query, product.BrowserVersion); err != nil {
