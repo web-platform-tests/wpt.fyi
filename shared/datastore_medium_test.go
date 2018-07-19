@@ -124,6 +124,78 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	assert.Equal(t, "65.0", loaded[1].BrowserVersion)
 }
 
+func TestLoadTestRuns_LabelinProductSpec(t *testing.T) {
+	testRuns := []TestRun{
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product: Product{BrowserName: "chrome"},
+			},
+			Labels: []string{"foo"},
+		},
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product: Product{BrowserName: "chrome"},
+			},
+			Labels: []string{"bar"},
+		},
+	}
+
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+
+	keys := make([]*datastore.Key, len(testRuns))
+	for i := range testRuns {
+		keys[i] = datastore.NewIncompleteKey(ctx, "TestRun", nil)
+	}
+	keys, err = datastore.PutMulti(ctx, keys, testRuns)
+	assert.Nil(t, err)
+
+	products := make([]ProductSpec, 1)
+	products[0].BrowserName = "chrome"
+	products[0].Labels = mapset.NewSetWith("foo")
+	loaded, err := LoadTestRuns(ctx, products, nil, nil, nil, nil, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(loaded))
+	assert.Equal(t, "foo", loaded[0].Labels[0])
+}
+
+func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
+	testRuns := []TestRun{
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product:  Product{BrowserName: "chrome"},
+				Revision: "0000000000",
+			},
+		},
+		TestRun{
+			ProductAtRevision: ProductAtRevision{
+				Product:  Product{BrowserName: "chrome"},
+				Revision: "1111111111",
+			},
+		},
+	}
+
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+
+	keys := make([]*datastore.Key, len(testRuns))
+	for i := range testRuns {
+		keys[i] = datastore.NewIncompleteKey(ctx, "TestRun", nil)
+	}
+	keys, err = datastore.PutMulti(ctx, keys, testRuns)
+	assert.Nil(t, err)
+
+	products := make([]ProductSpec, 1)
+	products[0].BrowserName = "chrome"
+	products[0].Revision = "1111111111"
+	loaded, err := LoadTestRuns(ctx, products, nil, nil, nil, nil, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(loaded))
+	assert.Equal(t, "1111111111", loaded[0].Revision)
+}
+
 func TestLoadTestRuns_MultipleSHAs(t *testing.T) {
 	var testRuns TestRuns
 	for i := 0; i < 3; i++ {

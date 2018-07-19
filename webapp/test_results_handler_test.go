@@ -22,6 +22,6 @@ func TestParseTestRunUIFilter(t *testing.T) {
 	r = httptest.NewRequest("GET", "/results/?products=chrome,safari&diff", nil)
 	f, err = parseTestRunUIFilter(r)
 	assert.Nil(t, err)
-	assert.Equal(t, f.Products, "[\"chrome\",\"safari\"]")
-	assert.Equal(t, f.Diff, true)
+	assert.Equal(t, "[\"chrome\",\"safari\"]", f.Products)
+	assert.Equal(t, true, f.Diff)
 }
