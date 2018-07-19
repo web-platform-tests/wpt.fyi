@@ -131,8 +131,9 @@ found in the LICENSE file.
         return date && date.toDateString();
       }
 
-      async connectedCallback() {
-        await super.connectedCallback();
+      async ready() {
+        super.ready();
+        await this.loadRuns();
 
         let browsers = new Set();
         // Group the runs by their revision/SHA
