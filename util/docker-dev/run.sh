@@ -130,6 +130,9 @@ else
   exit 0
 fi
 
+info "Updating system/packages..."
+wptd_exec make sys_update
+
 if [[ "${DAEMON}" == "true" ]]; then
   exit 0
 fi
