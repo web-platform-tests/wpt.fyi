@@ -39,7 +39,8 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string,
 		}
 		return len(pathParts) > 0, nil
 	}
-	wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
+	err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
+	assert.Nil(t, err)
 
 	// Run the search
 	searchBox, err := getSearchElement(wd, elementName)

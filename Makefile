@@ -96,7 +96,8 @@ go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webse
 			--chromedriver_path=$$CHROMEDRIVER_PATH \
 			--frame_buffer=$(USE_FRAME_BUFFER) \
 			--staging=$(STAGING) \
-			--browser=$(BROWSER)
+			--browser=$(BROWSER) \
+			$(FLAGS)
 	if [[ "$(USE_FRAME_BUFFER)" == "true" ]]; then $(STOP_XVFB); fi
 
 web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
@@ -202,7 +203,7 @@ eslint: node-babel-eslint node-eslint node-eslint-plugin-html
 
 dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
-	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS) -static_dir="$(WPTD_GO_PATH)/webapp/static"
+	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
 
 deploy_staging: gcloud webapp_deps package_announcer var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
 	gcloud config set project $(PROJECT)
