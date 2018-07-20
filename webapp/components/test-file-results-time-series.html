@@ -163,7 +163,7 @@ found in the LICENSE file.
       resultsURL(run, path) {
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = run.results_url.slice(0, run.results_url.lastIndexOf('-summary.json.gz'));
-        return `${resultsBase}${path}`;
+        return `${resultsBase}${this.encodeTestPath(path)}`;
       }
     }
 
