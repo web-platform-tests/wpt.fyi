@@ -95,6 +95,7 @@ func (p ProductSpec) String() string {
 		for l := range p.Labels.Iter() {
 			labels = append(labels, l.(string))
 		}
+		sort.Strings(labels)
 		s += "[" + strings.Join(labels, ",") + "]"
 	}
 	if !IsLatest(p.Revision) {
