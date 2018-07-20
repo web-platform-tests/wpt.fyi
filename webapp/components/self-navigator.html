@@ -11,23 +11,23 @@
             value: '/',
             observer: 'pathUpdated',
           },
+          encodedPath: {
+            type: String,
+            computed: 'computeEncodedPath(path)'
+          },
           onpathupdated: Function,
+          encodeTestPath: Function,
+          decodeTestPath: Function,
         };
       }
 
       ready() {
         super.ready();
         this.path = this.urlToPath(window.location);
-      }
-
-      async connectedCallback() {
-        await super.connectedCallback();
         window.onpopstate = () => {
           this.path = this.urlToPath(window.location);
         };
       }
-
-      // encodeTestPath and decodeTestPath are to be implemented by subclasses.
 
       urlToPath(location) {
         let path = location.pathname;
@@ -37,11 +37,19 @@
           path = path.replace(prefixRe, '/$1');
         }
         path = path.replace(/.+\/$/, ''); // Strip trailing slash
-        return this.decodeTestPath(path);
+        if (this.decodeTestPath) {
+          return this.decodeTestPath(path);
+        } else {
+          return path;
+        }
       }
 
-      pathToUrl(path) {
-        return this.encodeTestPath(path);
+      computeEncodedPath(path) {
+        if (this.encodeTestPath) {
+          return this.encodeTestPath(path);
+        } else {
+          return path;
+        }
       }
 
       pathUpdated(path) {
@@ -80,7 +88,7 @@
         }
         this.path = path;
 
-        let sep = location.pathname.indexOf('?') < 0 ? '?' : '&';
+        let sep = this.encodedPath.indexOf('?') < 0 ? '?' : '&';
         let params = '';
         Object.entries(this.navigationQueryParams()).forEach(e => {
           const [k, v] = e;
@@ -91,7 +99,7 @@
           });
         });
         window.history.pushState(
-          {}, '', `${this.navigationPathPrefix()}${this.pathToUrl(path)}${params}`);
+          {}, '', `${this.navigationPathPrefix()}${this.encodedPath}${params}`);
 
         // Send Google Analytics pageview event
         if ('ga' in window) {

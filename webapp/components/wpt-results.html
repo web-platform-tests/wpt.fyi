@@ -107,7 +107,7 @@ found in the LICENSE file.
       tests="[[displayedTests]]"
     ></test-results-chart>
 
-    <results-navigation tab="results"></results-navigation>
+    <results-navigation tab="results" path="[[encodedPath]]"></results-navigation>
 
     <section class="search">
       <div class="path">
@@ -299,10 +299,6 @@ found in the LICENSE file.
           await this.fetchResults(runs);
           this.refreshDisplayedNodes();
         });
-        const tabs = this.shadowRoot.querySelector('results-navigation');
-        this.onpathupdated = path => {
-          tabs.path = path;
-        };
       }
 
       async fetchResults(testRuns) {
