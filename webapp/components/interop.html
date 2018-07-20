@@ -112,7 +112,7 @@ found in the LICENSE file.
   <section class="search">
     <div class="path">
       <a href="/interop/" on-click="navigate">WPT</a>
-      <template is="dom-repeat" items="{{ splitIntoLinkedParts(path) }}" as="part">
+      <template is="dom-repeat" items="{{ splitPathIntoLinkedParts(path) }}" as="part">
         <span class="path-separator">/</span>
         <a href="/interop{{ part.path }}" on-click="navigate">{{ part.name }}</a>
       </template>
@@ -195,18 +195,6 @@ found in the LICENSE file.
 
 <script>
 
-  const urlToQuery = location => {
-    // Drop initial "?" from url.search.
-    const search = location.search;
-    if (!search) {
-      return '';
-    }
-    const match = search.match(/[^a-zA-Z0-9%]q=([^&]+)/);
-    if (!match) {
-      return '';
-    }
-    return window.decodeURIComponent(match[1]);
-  };
   const INTEROP_COLORS = [
     [219,  68,  55], // --paper-red-500
     [255,  87,  34], // --paper-deep-orange-500
@@ -222,7 +210,6 @@ found in the LICENSE file.
     }
     static get properties() {
       return {
-        sha: String,
         passRateMetadata: Object,
         testRuns: {
           type: Array,
@@ -240,10 +227,6 @@ found in the LICENSE file.
         currentNode: {
           type: Object,
           computed: 'computeCurrentNode(allMetrics, path)'
-        },
-        query: {
-          type: String,
-          value: urlToQuery(window.location),
         },
         thLabels: {
           type: Array,
@@ -275,45 +258,12 @@ found in the LICENSE file.
       return await response.json();
     }
 
-    displayableRelativePath(node) {
-      const prefix = this.path === '/' ? '/' : `${this.path}/`;
-      const isDir = !this.computePathIsATestFile(node.dir);
-      return `${node.dir.replace(prefix, '')}${isDir ? '/' : ''}`;
-    }
-
-    relativePathStyle(node) {
-      return !this.computePathIsATestFile(node.dir) ? 'font-weight: bold;' : '';
-    }
-
-    splitIntoLinkedParts(input) {
-      const parts = input.split('/').slice(1);
-      let path = '';
-      return parts.map(name => {
-        path += `/${name}`;
-        return {
-          name, path
-        };
-      });
-    }
-
-    navigate(event) {
-      this.query = '';
-      super.navigate(event);
-    }
-
     navigationPathPrefix() {
       return '/interop';
     }
 
     navigationQueryParams() {
-      let params = {};
-      if (this.sha && this.sha !== '' && this.sha !== 'latest') {
-        params['sha'] = this.sha;
-      }
-      if (this.query) {
-        params['q'] = window.encodeURIComponent(this.query);
-      }
-      return params;
+      return this.queryParams;
     }
 
     computeThLabels(testRuns) {

@@ -111,10 +111,10 @@ found in the LICENSE file.
 
     <section class="search">
       <div class="path">
-        <a href="/" onclick="{{ bindNavigate() }}">WPT</a>
+        <a href="/results/" on-click="navigate">WPT</a>
         <template is="dom-repeat" items="{{ splitPathIntoLinkedParts(path) }}" as="part">
           <span class="path-separator">/</span>
-          <a href="{{ part.path }}" on-click="navigate">{{ part.name }}</a>
+          <a href="/results{{ part.path }}" on-click="navigate">{{ part.name }}</a>
         </template>
       </div>
 
@@ -234,6 +234,7 @@ found in the LICENSE file.
           },
           // Show a diff column (if there are 2 testRuns).
           diff: Boolean,
+          // Override TestRunsBase to add diff.
           queryParams: {
             type: Object,
             computed: 'testRunQueryParams(sha, labels, products, maxCount, diff)',
@@ -437,17 +438,6 @@ found in the LICENSE file.
 
       navigationQueryParams() {
         return this.queryParams;
-      }
-
-      splitPathIntoLinkedParts(input) {
-        const parts = (input || '').split('/').slice(1);
-        let path = '';
-        return parts.map(name => {
-          path += `/${name}`;
-          return {
-            name, path
-          };
-        });
       }
 
       testResultClass(node, testRun, prop) {

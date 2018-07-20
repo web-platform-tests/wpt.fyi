@@ -69,7 +69,9 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		SHA      string
 	}{
 		Metadata: string(metadataBytes),
-		SHA:      filters.SHA,
+	}
+	if !shared.IsLatest(filters.SHA) {
+		data.SHA = filters.SHA
 	}
 
 	if err := templates.ExecuteTemplate(w, "interoperability.html", data); err != nil {

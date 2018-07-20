@@ -217,7 +217,7 @@ found in the LICENSE file.
         }
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
-        return `${resultsBase}${this.encodeTestPath(testFile)}`;
+        return `${resultsBase}${testFile}`;
       }
 
       subtestResultForTestRun(testRun, subtestName) {

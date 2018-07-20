@@ -27,8 +27,6 @@
         };
       }
 
-      // encodeTestPath and decodeTestPath are to be implemented by subclasses.
-
       urlToPath(location) {
         let path = location.pathname;
         if (this.navigationPathPrefix() != '') {
@@ -37,11 +35,11 @@
           path = path.replace(prefixRe, '/$1');
         }
         path = path.replace(/.+\/$/, ''); // Strip trailing slash
-        return this.decodeTestPath(path);
+        return path;
       }
 
       pathToUrl(path) {
-        return this.encodeTestPath(path);
+        return path;
       }
 
       pathUpdated(path) {
