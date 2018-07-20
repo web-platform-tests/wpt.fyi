@@ -403,13 +403,11 @@ found in the LICENSE file.
           }
 
           let parts = this.splitPathIntoLinkedParts(testFileName);
-          // Add test files in current directory
           if (parts.length === partCountIfTestFile) {
-            let path = parts[parts.length - 1].path;
-            updateResults(testFileName, path, false);
-
-            // Add subdirectories in current directory
+            // Add test files in current directory
+            updateResults(testFileName, testFileName, false);
           } else if (parts.length > partCountIfTestFile) {
+            // Add subdirectories in current directory
             let dirPath = parts[nextSubdirIndex].path;
             updateResults(testFileName, dirPath, true);
           }
