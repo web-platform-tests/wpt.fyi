@@ -119,11 +119,7 @@ found in the LICENSE file.
     </div>
 
     <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <test-search query='{{query}}'
-                   items='[[allMetrics.data]]'
-                   item-key='dir'
-                   results='{{searchResults}}'
-                   placeholder='[[queryPlaceholder]]'></test-search>
+      <test-search query='{{search}}' items='[[allMetrics.data]]' item-key='dir' results='{{searchResults}}'></test-search>
     </template>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -220,7 +216,7 @@ found in the LICENSE file.
   ];
 
   /* global SelfNavigation */
-  class WPTInterop extends SelfNavigation(window.Polymer.Element) {
+  class WPTInterop extends SelfNavigation(TestRunsBase) {
     static get is() {
       return 'wpt-interop';
     }
@@ -241,10 +237,6 @@ found in the LICENSE file.
           type: Array,
           value: [],
         },
-        scheme: {
-          type: String,
-          computed: 'computeTestScheme(path)'
-        },
         currentNode: {
           type: Object,
           computed: 'computeCurrentNode(allMetrics, path)'
@@ -253,17 +245,13 @@ found in the LICENSE file.
           type: String,
           value: urlToQuery(window.location),
         },
-        pathIsATestFile: {
-          type: Boolean,
-          computed: 'computePathIsATestFile(path)'
-        },
         thLabels: {
           type: Array,
           computed: 'computeThLabels(testRuns)'
         },
-        queryPlaceholder: {
+        search: {
           type: String,
-          computed: 'computeQueryPlaceholder()'
+          value: '',
         },
         searchResults: Array,
       };
@@ -313,10 +301,6 @@ found in the LICENSE file.
       super.navigate(event);
     }
 
-    urlToPath(location) {
-      return location.pathname.replace(/\/interop(.+)(\/)?$/, '$1');
-    }
-
     navigationPathPrefix() {
       return '/interop';
     }
@@ -330,17 +314,6 @@ found in the LICENSE file.
         params['q'] = window.encodeURIComponent(this.query);
       }
       return params;
-    }
-
-    computeTestScheme(path) {
-      // This should (close enough) match up with the logic in:
-      // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
-      // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
-      return path.indexOf('.https.') !== -1 ? 'https' : 'http';
-    }
-
-    computePathIsATestFile(path) {
-      return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
     }
 
     computeThLabels(testRuns) {
@@ -388,14 +361,6 @@ found in the LICENSE file.
       const fraction = passRate / total;
       const alpha = Math.round(fraction * 1000) / 1000;
       return `background-color: rgba(${INTEROP_COLORS[browserCount].join(', ')}, ${alpha})`;
-    }
-
-    computeQueryPlaceholder() {
-      if (this.shouldQueryAll()) {
-        return 'Search test files, like cors/allow-headers.htm';
-      } else {
-        return 'Search direct sub-folders and test files';
-      }
     }
 
     computeCurrentNode(allMetrics, path) {

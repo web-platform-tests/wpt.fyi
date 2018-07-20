@@ -208,14 +208,6 @@ found in the LICENSE file.
             type: Array,
             observer: 'refreshDisplayedNodes',
           },
-          scheme: {
-            type: String,
-            computed: 'computeTestScheme(path)'
-          },
-          pathIsATestFile: {
-            type: Boolean,
-            computed: 'computePathIsATestFile(path)'
-          },
           sourcePath: {
             type: String,
             computed: 'computeSourcePath(path, manifest)',
@@ -263,17 +255,6 @@ found in the LICENSE file.
         this.shadowRoot.querySelector('#diffInvalid').toggle();
       }
 
-      computeTestScheme(path) {
-        // This should (close enough) match up with the logic in:
-        // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
-        // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
-        return (path || '').indexOf('.https.') !== -1 ? 'https' : 'http';
-      }
-
-      computePathIsATestFile(path) {
-        return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
-      }
-
       computeSourcePath(path, manifest) {
         if (!this.computePathIsATestFile(path) || !manifest) {
           return path;
@@ -304,12 +285,6 @@ found in the LICENSE file.
           }
         }
         return true;
-      }
-
-      urlToPath(location) {
-        return location.pathname
-          .replace(/^\/results\/(.+)?$/, '/$1') // Strip '/results' prefix
-          .replace(/.+\/$/, ''); // Strip trailing slash
       }
 
       ready() {

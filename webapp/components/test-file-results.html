@@ -213,11 +213,11 @@ found in the LICENSE file.
 
       resultsURL(testRun, testFile) {
         if (testRun.revision === 'diff') {
-          return `${testRun.results_url}&path=${encodeURI(testFile)}`;
+          return `${testRun.results_url}&path=${encodeURIComponent(testFile)}`;
         }
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
-        return `${resultsBase}${testFile}`;
+        return `${resultsBase}${this.encodeTestPath(testFile)}`;
       }
 
       subtestResultForTestRun(testRun, subtestName) {

@@ -28,6 +28,14 @@ found in the LICENSE file.
             type: Array,
             notify: true,
           },
+          scheme: {
+            type: String,
+            computed: 'computeTestScheme(path)'
+          },
+          pathIsATestFile: {
+            type: Boolean,
+            computed: 'computePathIsATestFile(path)'
+          },
           products: {
             type: Array,
             value: null
@@ -51,6 +59,17 @@ found in the LICENSE file.
             computed: 'computeQuery(queryParams)',
           }
         };
+      }
+
+      computeTestScheme(path) {
+        // This should (close enough) match up with the logic in:
+        // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
+        // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
+        return (path || '').indexOf('.https.') !== -1 ? 'https' : 'http';
+      }
+
+      computePathIsATestFile(path) {
+        return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
       }
 
       async loadRuns() {
@@ -119,6 +138,25 @@ found in the LICENSE file.
           params['max-count'] = maxCount;
         }
         return params;
+      }
+
+      // These are two helper functions to encode/decode the LAST component of
+      // the test path, which may contain query strings (because of test
+      // variants), e.g. "/dom/interfaces.html?exclude=Node" <-->
+      // "/dom/interfaces.html%3Fexclude%3DNode".
+
+      encodeTestPath(path) {
+        console.assert(path.startsWith('/'));
+        let parts = path.split('/').slice(1);
+        parts.push(encodeURIComponent(parts.pop()));
+        return '/' + parts.join('/');
+      }
+
+      decodeTestPath(path) {
+        console.assert(path.startsWith('/'));
+        let parts = path.split('/').slice(1);
+        parts.push(decodeURIComponent(parts.pop()));
+        return '/' + parts.join('/');
       }
     }
 
