@@ -70,9 +70,7 @@ found in the LICENSE file.
       }
 
       computeHref(prefix, path) {
-        let parts = path.split('/');
-        parts.push(encodeURIComponent(parts.pop()));
-        return `${prefix || ''}${parts.join('/')}`;
+        return `${prefix || ''}${path}`;
       }
 
       computedDisplayableRelativePath(path) {

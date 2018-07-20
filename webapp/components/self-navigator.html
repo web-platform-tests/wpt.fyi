@@ -38,10 +38,6 @@
         return path;
       }
 
-      pathToUrl(path) {
-        return path;
-      }
-
       pathUpdated(path) {
         if (this.onpathupdated) {
           this.onpathupdated(path);
@@ -78,7 +74,7 @@
         }
         this.path = path;
 
-        let sep = location.pathname.indexOf('?') < 0 ? '?' : '&';
+        let sep = path.indexOf('?') < 0 ? '?' : '&';
         let params = '';
         Object.entries(this.navigationQueryParams()).forEach(e => {
           const [k, v] = e;
@@ -89,7 +85,7 @@
           });
         });
         window.history.pushState(
-          {}, '', `${this.navigationPathPrefix()}${this.pathToUrl(path)}${params}`);
+          {}, '', `${this.navigationPathPrefix()}${path}${params}`);
 
         // Send Google Analytics pageview event
         if ('ga' in window) {
