@@ -112,18 +112,14 @@ found in the LICENSE file.
   <section class="search">
     <div class="path">
       <a href="/interop/" on-click="navigate">WPT</a>
-      <template is="dom-repeat" items="{{ splitIntoLinkedParts(path) }}" as="part">
+      <template is="dom-repeat" items="{{ splitPathIntoLinkedParts(path) }}" as="part">
         <span class="path-separator">/</span>
         <a href="/interop{{ part.path }}" on-click="navigate">{{ part.name }}</a>
       </template>
     </div>
 
     <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <test-search query='{{query}}'
-                   items='[[allMetrics.data]]'
-                   item-key='dir'
-                   results='{{searchResults}}'
-                   placeholder='[[queryPlaceholder]]'></test-search>
+      <test-search query='{{search}}' items='[[allMetrics.data]]' item-key='dir' results='{{searchResults}}'></test-search>
     </template>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -199,18 +195,6 @@ found in the LICENSE file.
 
 <script>
 
-  const urlToQuery = location => {
-    // Drop initial "?" from url.search.
-    const search = location.search;
-    if (!search) {
-      return '';
-    }
-    const match = search.match(/[^a-zA-Z0-9%]q=([^&]+)/);
-    if (!match) {
-      return '';
-    }
-    return window.decodeURIComponent(match[1]);
-  };
   const INTEROP_COLORS = [
     [219,  68,  55], // --paper-red-500
     [255,  87,  34], // --paper-deep-orange-500
@@ -219,14 +203,13 @@ found in the LICENSE file.
     [118, 255,   3], // --paper-light-green-a200
   ];
 
-  /* global SelfNavigation */
-  class WPTInterop extends SelfNavigation(window.Polymer.Element) {
+  /* global TestRunsBase, SelfNavigation */
+  class WPTInterop extends SelfNavigation(TestRunsBase) {
     static get is() {
       return 'wpt-interop';
     }
     static get properties() {
       return {
-        sha: String,
         passRateMetadata: Object,
         testRuns: {
           type: Array,
@@ -241,29 +224,17 @@ found in the LICENSE file.
           type: Array,
           value: [],
         },
-        scheme: {
-          type: String,
-          computed: 'computeTestScheme(path)'
-        },
         currentNode: {
           type: Object,
           computed: 'computeCurrentNode(allMetrics, path)'
-        },
-        query: {
-          type: String,
-          value: urlToQuery(window.location),
-        },
-        pathIsATestFile: {
-          type: Boolean,
-          computed: 'computePathIsATestFile(path)'
         },
         thLabels: {
           type: Array,
           computed: 'computeThLabels(testRuns)'
         },
-        queryPlaceholder: {
+        search: {
           type: String,
-          computed: 'computeQueryPlaceholder()'
+          value: '',
         },
         searchResults: Array,
       };
@@ -287,60 +258,12 @@ found in the LICENSE file.
       return await response.json();
     }
 
-    displayableRelativePath(node) {
-      const prefix = this.path === '/' ? '/' : `${this.path}/`;
-      const isDir = !this.computePathIsATestFile(node.dir);
-      return `${node.dir.replace(prefix, '')}${isDir ? '/' : ''}`;
-    }
-
-    relativePathStyle(node) {
-      return !this.computePathIsATestFile(node.dir) ? 'font-weight: bold;' : '';
-    }
-
-    splitIntoLinkedParts(input) {
-      const parts = input.split('/').slice(1);
-      let path = '';
-      return parts.map(name => {
-        path += `/${name}`;
-        return {
-          name, path
-        };
-      });
-    }
-
-    navigate(event) {
-      this.query = '';
-      super.navigate(event);
-    }
-
-    urlToPath(location) {
-      return location.pathname.replace(/\/interop(.+)(\/)?$/, '$1');
-    }
-
     navigationPathPrefix() {
       return '/interop';
     }
 
     navigationQueryParams() {
-      let params = {};
-      if (this.sha && this.sha !== '' && this.sha !== 'latest') {
-        params['sha'] = this.sha;
-      }
-      if (this.query) {
-        params['q'] = window.encodeURIComponent(this.query);
-      }
-      return params;
-    }
-
-    computeTestScheme(path) {
-      // This should (close enough) match up with the logic in:
-      // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
-      // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
-      return path.indexOf('.https.') !== -1 ? 'https' : 'http';
-    }
-
-    computePathIsATestFile(path) {
-      return /(\.(html|htm|py|svg|xhtml|xht|xml)$)/.test(path);
+      return this.queryParams;
     }
 
     computeThLabels(testRuns) {
@@ -388,14 +311,6 @@ found in the LICENSE file.
       const fraction = passRate / total;
       const alpha = Math.round(fraction * 1000) / 1000;
       return `background-color: rgba(${INTEROP_COLORS[browserCount].join(', ')}, ${alpha})`;
-    }
-
-    computeQueryPlaceholder() {
-      if (this.shouldQueryAll()) {
-        return 'Search test files, like cors/allow-headers.htm';
-      } else {
-        return 'Search direct sub-folders and test files';
-      }
     }
 
     computeCurrentNode(allMetrics, path) {

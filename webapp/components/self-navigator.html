@@ -28,7 +28,14 @@
       }
 
       urlToPath(location) {
-        return location.pathname;
+        let path = location.pathname;
+        if (this.navigationPathPrefix() !== '') {
+          // Strip prefix
+          let prefixRe = RegExp(`^${this.navigationPathPrefix()}/(.+)?$`);
+          path = path.replace(prefixRe, '/$1');
+        }
+        path = path.replace(/.+\/$/, ''); // Strip trailing slash
+        return path;
       }
 
       pathUpdated(path) {

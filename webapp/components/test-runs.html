@@ -28,6 +28,14 @@ found in the LICENSE file.
             type: Array,
             notify: true,
           },
+          scheme: {
+            type: String,
+            computed: 'computeTestScheme(path)'
+          },
+          pathIsATestFile: {
+            type: Boolean,
+            computed: 'computePathIsATestFile(path)'
+          },
           products: {
             type: Array,
             value: null
@@ -51,6 +59,17 @@ found in the LICENSE file.
             computed: 'computeQuery(queryParams)',
           }
         };
+      }
+
+      computeTestScheme(path) {
+        // This should (close enough) match up with the logic in:
+        // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
+        // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
+        return (path || '').indexOf('.https.') !== -1 ? 'https' : 'http';
+      }
+
+      computePathIsATestFile(path) {
+        return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
       }
 
       async loadRuns() {
@@ -119,6 +138,17 @@ found in the LICENSE file.
           params['max-count'] = maxCount;
         }
         return params;
+      }
+
+      splitPathIntoLinkedParts(inputPath) {
+        const parts = (inputPath || '').split('/').slice(1);
+        let path = '';
+        return parts.map(name => {
+          path += `/${name}`;
+          return {
+            name, path
+          };
+        });
       }
     }
 
