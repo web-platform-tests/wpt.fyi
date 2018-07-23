@@ -105,7 +105,7 @@ web_components_test: xvfb firefox chrome node-web-component-tester webserver_dep
 	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
 	$(STOP_XVFB)
 
-sys_update: sys_deps apt_update
+sys_update: apt_update | sys_deps
 	gcloud components update
 	sudo npm install -g npm
 
