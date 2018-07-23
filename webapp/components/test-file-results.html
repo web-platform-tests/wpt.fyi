@@ -226,7 +226,7 @@ found in the LICENSE file.
         }
         for (let tr of this.testRuns) {
           // "OK"/"ERROR" are testharness-specific statuses.
-          if (tr.subtests['STATUS'].status === 'OK' || tr.subtests['STATUS'].status === 'ERROR') {
+          if (['OK', 'ERROR'].includes(tr.subtests['STATUS'].status)) {
             return 'Harness status';
           }
         }
