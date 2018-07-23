@@ -10,14 +10,16 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="path-part.html">
+<link rel="import" href="results-navigation.html">
+<link rel="import" href="self-navigator.html">
+<link rel="import" href="test-run.html">
 <link rel="import" href="test-runs.html">
 <link rel="import" href="test-file-results.html">
-<link rel="import" href="test-run.html">
-<link rel="import" href="self-navigator.html">
-<link rel="import" href="test-search.html">
-<link rel="import" href="results-navigation.html">
+<link rel="import" href="test-file-results-time-series.html">
 <link rel="import" href="test-results-chart.html">
+<link rel="import" href="test-search.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -102,12 +104,7 @@ found in the LICENSE file.
       }
     </style>
 
-    <test-results-chart
-      labels="[[labels]]"
-      tests="[[displayedTests]]"
-    ></test-results-chart>
-
-    <results-navigation tab="results" path="[[encodedPath]]"></results-navigation>
+    <results-navigation tab="results"></results-navigation>
 
     <section class="search">
       <div class="path">
@@ -188,6 +185,27 @@ found in the LICENSE file.
       </table>
     </template>
 
+    <template is="dom-if" if="[[!showHistory]]">
+      <paper-button onclick="[[showHistoryClicked()]]">
+        Show history
+      </paper-button>
+    </template>
+    <template is="dom-if" if="[[showHistory]]">
+      <test-file-results-time-series
+          path="[[encodedPath]]"
+          products="[[products]]"
+          labels="[[labels]]">
+      </test-file-results-time-series>
+
+      <template is="dom-if" if="[[pathIsATestFile]]">
+        <test-results-chart
+            path="[[encodedPath]]"
+            labels="[[labels]]"
+            tests="[[displayedTests]]">
+        </test-results-chart>
+      </template>
+    </template>
+
   </template>
 
   <script>
@@ -243,6 +261,10 @@ found in the LICENSE file.
           filter: {
             type: String,
             value: 'ADCU', // Added, Deleted, Changed, Unchanged
+          },
+          showHistory: {
+            type: Boolean,
+            value: false,
           },
         };
       }
@@ -536,6 +558,12 @@ found in the LICENSE file.
         })));
 
         console.log('JSON version:', JSON.stringify(totals));
+      }
+
+      showHistoryClicked() {
+        return () => {
+          this.showHistory = true;
+        }
       }
     }
 
