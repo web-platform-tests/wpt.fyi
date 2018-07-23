@@ -78,7 +78,7 @@ found in the LICENSE file.
       <tbody>
         <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
           <tr>
-            <td class="sub-test-name"><code>[[subtestName]]</code></td>
+            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName) ]]</code></td>
 
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
               <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
@@ -182,20 +182,20 @@ found in the LICENSE file.
         resultPerTestRun.forEach((resultData, i) => {
           if (!resultData) {
             testRuns[i].subtests = {};
-            testRuns[i].subtests['Harness status'] = { status: '(results not found)' };
+            testRuns[i].subtests['STATUS'] = { status: '(results not found)' };
             return;
           }
           testRuns[i].subtests = {};
-          testRuns[i].subtests['Harness status'] = { status: resultData.status };
+          testRuns[i].subtests['STATUS'] = { status: resultData.status };
 
-          if (!this.subtestNames.includes('Harness status')) {
-            this.subtestNames = this.subtestNames.concat(['Harness status']);
+          if (!this.subtestNames.includes('STATUS')) {
+            this.subtestNames = this.subtestNames.concat(['STATUS']);
           }
 
           for (let subtestResult of resultData.subtests) {
             testRuns[i].subtests[subtestResult.name] = subtestResult;
             if (!this.subtestNames.includes(subtestResult.name)) {
-              this.subtestNames = this.subtestNames.concat([subtestResult.name]);
+              this.subtestNames.push(subtestResult.name);
             }
           }
         });
@@ -218,6 +218,19 @@ found in the LICENSE file.
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
         return `${resultsBase}${testFile}`;
+      }
+
+      subtestNameForDisplay(subtestName) {
+        if (subtestName !== 'STATUS') {
+          return subtestName;
+        }
+        for (let tr of this.testRuns) {
+          // "OK"/"ERROR" are testharness-specific statuses.
+          if (['OK', 'ERROR'].includes(tr.subtests['STATUS'].status)) {
+            return 'Harness status';
+          }
+        }
+        return 'File status';
       }
 
       subtestResultForTestRun(testRun, subtestName) {
