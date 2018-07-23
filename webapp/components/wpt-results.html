@@ -93,6 +93,14 @@ found in the LICENSE file.
         color: var(--paper-yellow-500);
         margin-left: 32px;
       }
+      .history {
+        margin: 32px 0;
+        text-align: center;
+      }
+      #show-history {
+        background: var(--paper-blue-500);
+        color: white;
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -185,25 +193,30 @@ found in the LICENSE file.
       </table>
     </template>
 
-    <template is="dom-if" if="[[!showHistory]]">
-      <paper-button onclick="[[showHistoryClicked()]]">
-        Show history
-      </paper-button>
-    </template>
-    <template is="dom-if" if="[[showHistory]]">
-      <test-file-results-time-series
-          path="[[encodedPath]]"
-          products="[[products]]"
-          labels="[[labels]]">
-      </test-file-results-time-series>
+    <template is="dom-if" if="[[isSubfolder]]">
+      <div class='history'>
+        <template is="dom-if" if="[[!showHistory]]">
+          <paper-button onclick="[[showHistoryClicked()]]">
+            Show history
+          </paper-button>
+        </template>
+        <template is="dom-if" if="[[showHistory]]">
+          <h3>History</h3>
+          <test-file-results-time-series
+              path="[[encodedPath]]"
+              products="[[products]]"
+              labels="[[labels]]">
+          </test-file-results-time-series>
 
-      <template is="dom-if" if="[[pathIsATestFile]]">
-        <test-results-chart
-            path="[[encodedPath]]"
-            labels="[[labels]]"
-            tests="[[displayedTests]]">
-        </test-results-chart>
-      </template>
+          <template is="dom-if" if="[[pathIsATestFile]]">
+            <test-results-chart
+                path="[[encodedPath]]"
+                labels="[[labels]]"
+                tests="[[displayedTests]]">
+            </test-results-chart>
+          </template>
+        </template>
+      </div>
     </template>
 
   </template>
@@ -563,7 +576,7 @@ found in the LICENSE file.
       showHistoryClicked() {
         return () => {
           this.showHistory = true;
-        }
+        };
       }
     }
 

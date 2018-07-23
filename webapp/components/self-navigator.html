@@ -11,9 +11,15 @@
             value: '/',
             observer: 'pathUpdated',
           },
+<<<<<<< HEAD
           encodedPath: {
             type: String,
             computed: 'encodeTestPath(path)'
+=======
+          isSubfolder: {
+            type: Boolean,
+            computed: '_computeIsSubfolder(path)',
+>>>>>>> Style button, wrap in div
           },
           onpathupdated: Function,
         };
@@ -61,6 +67,10 @@
         if (this.onpathupdated) {
           this.onpathupdated(path);
         }
+      }
+
+      _computeIsSubfolder(path) {
+        return path && path !== '/';
       }
 
       /**
