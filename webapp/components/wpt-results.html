@@ -107,7 +107,7 @@ found in the LICENSE file.
       tests="[[displayedTests]]"
     ></test-results-chart>
 
-    <results-navigation tab="results"></results-navigation>
+    <results-navigation tab="results" path="[[encodedPath]]"></results-navigation>
 
     <section class="search">
       <div class="path">
@@ -150,6 +150,7 @@ found in the LICENSE file.
     <template is="dom-if" if="{{ pathIsATestFile }}">
       <test-file-results test-runs="[[testRuns]]"
                          test-file="[[path]]"
+                         encoded-test-file="[[encodedPath]]"
                          labels="[[labels]]"
                          products="[[products]]">
       </test-file-results>
@@ -299,10 +300,6 @@ found in the LICENSE file.
           await this.fetchResults(runs);
           this.refreshDisplayedNodes();
         });
-        const tabs = this.shadowRoot.querySelector('results-navigation');
-        this.onpathupdated = path => {
-          tabs.path = path;
-        };
       }
 
       async fetchResults(testRuns) {
@@ -406,13 +403,11 @@ found in the LICENSE file.
           }
 
           let parts = this.splitPathIntoLinkedParts(testFileName);
-          // Add test files in current directory
           if (parts.length === partCountIfTestFile) {
-            let path = parts[parts.length - 1].path;
-            updateResults(testFileName, path, false);
-
-            // Add subdirectories in current directory
+            // Add test files in current directory
+            updateResults(testFileName, testFileName, false);
           } else if (parts.length > partCountIfTestFile) {
+            // Add subdirectories in current directory
             let dirPath = parts[nextSubdirIndex].path;
             updateResults(testFileName, dirPath, true);
           }

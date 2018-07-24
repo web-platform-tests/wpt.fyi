@@ -142,13 +142,17 @@ found in the LICENSE file.
 
       splitPathIntoLinkedParts(inputPath) {
         const parts = (inputPath || '').split('/').slice(1);
+        const lastPart = parts.pop();
         let path = '';
-        return parts.map(name => {
+        const linkedParts = parts.map(name => {
           path += `/${name}`;
           return {
             name, path
           };
         });
+        path += `/${encodeURIComponent(lastPart)}`;
+        linkedParts.push({name: lastPart, path: path});
+        return linkedParts;
       }
     }
 

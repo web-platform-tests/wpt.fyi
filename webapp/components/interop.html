@@ -107,7 +107,7 @@ found in the LICENSE file.
     }
   </style>
 
-  <results-navigation tab="interop"></results-navigation>
+  <results-navigation tab="interop" path="[[encodedPath]]"></results-navigation>
 
   <section class="search">
     <div class="path">
@@ -187,7 +187,8 @@ found in the LICENSE file.
     <hr>
     <test-file-results
         test-runs="[[passRateMetadata.test_runs]]"
-        test-file="[[path]]">
+        test-file="[[path]]"
+        encoded-test-file="[[encodedPath]]">
     </test-file-results>
   </template>
 
@@ -247,10 +248,6 @@ found in the LICENSE file.
       if (this.allMetrics && this.allMetrics.data) {
         this.testFileNames = Array.from(Object.keys(this.allMetrics.data));
       }
-      const tabs = this.shadowRoot.querySelector('results-navigation');
-      this.onpathupdated = path => {
-        tabs.path = path;
-      };
     }
 
     async fetchMetrics(url) {
