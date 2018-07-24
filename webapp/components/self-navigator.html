@@ -13,7 +13,7 @@
           },
           encodedPath: {
             type: String,
-            computed: 'computeEncodedPath(path)'
+            computed: 'encodeTestPath(path)'
           },
           onpathupdated: Function,
         };
@@ -36,10 +36,6 @@
         }
         path = path.replace(/.+\/$/, ''); // Strip trailing slash
         return this.decodeTestPath(path);
-      }
-
-      computeEncodedPath(path) {
-        return this.encodeTestPath(path);
       }
 
       // These are two helper functions to encode/decode the LAST component of
