@@ -9,6 +9,7 @@
           path: {
             type: String,
             value: '/',
+            observer: 'pathUpdated',
           },
           encodedPath: {
             type: String,
@@ -20,10 +21,6 @@
           },
           onpathupdated: Function,
         };
-      }
-
-      static get observers() {
-        return ['pathUpdated(path)'];
       }
 
       ready() {
