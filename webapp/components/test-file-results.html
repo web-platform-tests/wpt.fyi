@@ -65,7 +65,9 @@ found in the LICENSE file.
         <tr>
           <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
           <template is="dom-repeat" items="[[testRuns]]" as="testRun">
-            <th width="[[computeRunThWidth(testRuns)]]"><test-run test-run="[[testRun]]"></test-run></th>
+            <th width="[[computeRunThWidth(testRuns)]]">
+              <test-run test-run="[[testRun]]"></test-run>
+            </th>
           </template>
         </tr>
       </thead>

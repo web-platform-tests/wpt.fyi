@@ -5,7 +5,7 @@ found in the LICENSE file.
 -->
 
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="test-runs.html">
+<link rel="import" href="test-file-results.html">
 
 <dom-module id="test-file-results-time-series">
   <template>
@@ -61,17 +61,14 @@ found in the LICENSE file.
     <pre id="status">&nbsp;</pre>
   </template>
   <script>
-    /* global TestRunsBase */
-    class TestFileResultsTimeSeries extends TestRunsBase {
+    /* global TestFileResults */
+    class TestFileResultsTimeSeries extends TestFileResults {
       static get is() {
         return 'test-file-results-time-series';
       }
 
       static get properties() {
         return {
-          path: {
-            type: String,
-          },
           defaultMaxCount: {
             type: Number,
             value: 20,
@@ -146,7 +143,10 @@ found in the LICENSE file.
         }
         const r = await resp.json();
         let newResults = [];
-        newResults.push({status: r.status});
+        newResults.push({
+            name: 'Harness status',
+            status: r.status
+        });
         runResult.results.push({status: r.status});
         if (r.subtests && r.subtests.length > 0) {
           for (const sub of r.subtests) {
