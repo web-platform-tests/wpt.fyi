@@ -143,15 +143,14 @@ found in the LICENSE file.
         if (!resp.ok) {
           throw resp;
         }
-        const r = await resp.json();
+        const resultsJSON = await resp.json();
         let newResults = [];
         newResults.push({
-            name: 'Harness status',
-            status: r.status
+          name: this.subtestNameForDisplay('STATUS', [resultsJSON]),
+          status: resultsJSON.status
         });
-        runResult.results.push({status: r.status});
-        if (r.subtests && r.subtests.length > 0) {
-          for (const sub of r.subtests) {
+        if (resultsJSON.subtests && resultsJSON.subtests.length > 0) {
+          for (const sub of resultsJSON.subtests) {
             newResults.push({name: sub.name, status: sub.status});
           }
         }

@@ -74,7 +74,7 @@ found in the LICENSE file.
       <tbody>
         <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
           <tr>
-            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName) ]]</code></td>
+            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName, isTestHarness) ]]</code></td>
 
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
               <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
@@ -99,7 +99,11 @@ found in the LICENSE file.
         return {
           subtestNames: {
             type: Array,
-            value: []
+            value: [],
+          },
+          isTestHarness: {
+            type: Boolean,
+            value: false,
           },
           matchers: {
             type: Array,
@@ -167,13 +171,14 @@ found in the LICENSE file.
       }
 
       async fetchTestFile(path, testRuns) {
-        this.subtestNames = [];
+        this.subtestNames = []; // Clear any existing rows.
         if (!path || !testRuns) {
           return;
         }
         const resultPerTestRun = await Promise.all(
           testRuns.map(tr => this.loadResultFile(tr)));
 
+        const subtestNames = ['STATUS'];
         resultPerTestRun.forEach((resultData, i) => {
           if (!resultData) {
             testRuns[i].subtests = {};
@@ -183,17 +188,17 @@ found in the LICENSE file.
           testRuns[i].subtests = {};
           testRuns[i].subtests['STATUS'] = { status: resultData.status };
 
-          if (!this.subtestNames.includes('STATUS')) {
-            this.subtestNames = this.subtestNames.concat(['STATUS']);
-          }
-
           for (let subtestResult of resultData.subtests) {
             testRuns[i].subtests[subtestResult.name] = subtestResult;
-            if (!this.subtestNames.includes(subtestResult.name)) {
-              this.subtestNames.push(subtestResult.name);
+            if (!subtestNames.includes(subtestResult.name)) {
+              subtestNames.push(subtestResult.name);
             }
           }
         });
+
+        this.isTestHarness =
+          resultPerTestRun.some(r => ['OK', 'ERROR'].includes(r.status));
+        this.subtestNames = subtestNames;
       }
 
       async loadResultFile(testRun) {
@@ -215,17 +220,11 @@ found in the LICENSE file.
         return `${resultsBase}${this.encodedPath}`;
       }
 
-      subtestNameForDisplay(subtestName) {
+      subtestNameForDisplay(subtestName, isTestHarness) {
         if (subtestName !== 'STATUS') {
           return subtestName;
         }
-        for (let tr of this.testRuns) {
-          // "OK"/"ERROR" are testharness-specific statuses.
-          if (['OK', 'ERROR'].includes(tr.subtests['STATUS'].status)) {
-            return 'Harness status';
-          }
-        }
-        return 'File status';
+        return isTestHarness ? 'Harness status' : 'File status';
       }
 
       subtestResultForTestRun(testRun, subtestName) {
