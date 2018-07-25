@@ -3,6 +3,7 @@
 package webdriver
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -21,13 +22,19 @@ func TestLabelParam(t *testing.T) {
 	defer service.Stop()
 	defer wd.Quit()
 
-	testLabel(t, wd, app, "/?label=experimental", "wpt-results", 2)
-	testLabel(t, wd, app, "/interop/?label=stable", "wpt-interop", 4)
+	testLabel(t, wd, app, "/", "experimental", "wpt-results", 2)
+	testLabel(t, wd, app, "/interop", "stable", "wpt-interop", 4)
 }
 
-func testLabel(t *testing.T, wd selenium.WebDriver, app AppServer, path string, elementName string, runs int) {
+func testLabel(
+	t *testing.T,
+	wd selenium.WebDriver,
+	app AppServer,
+	path, label, elementName string,
+	runs int) {
 	// Navigate to the wpt.fyi homepage.
-	if err := wd.Get(app.GetWebappURL(path)); err != nil {
+	url := fmt.Sprintf("%s?label=%s", path, label)
+	if err := wd.Get(app.GetWebappURL(url)); err != nil {
 		panic(err)
 	}
 
@@ -41,12 +48,24 @@ func testLabel(t *testing.T, wd selenium.WebDriver, app AppServer, path string, 
 	}
 	wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
 
-	// Run the search
+	// Check loaded test runs
 	testRuns, err := getTestRunElements(wd, elementName)
 	if err != nil {
 		panic(err)
 	}
 	assert.Lenf(t, testRuns, runs, "Expected exactly %v TestRuns search result.", runs)
+
+	// Check tab URLs propagate label
+	tabs, err := getTabElements(wd, elementName)
+	assert.Len(t, tabs, 2)
+	for _, tab := range tabs {
+		a, err := tab.FindElement(selenium.ByTagName, "a")
+		assert.Nil(t, err)
+		assert.NotNil(t, a)
+		href, err := a.GetAttribute("href")
+		assert.Nil(t, err)
+		assert.Contains(t, href, "label="+label)
+	}
 }
 
 func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
@@ -59,5 +78,18 @@ func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebEl
 			return nil, err
 		}
 		return FindShadowElements(wd, e, "test-run")
+	}
+}
+
+func getTabElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
+	switch *browser {
+	case "firefox":
+		return wd.FindElements(selenium.ByCSSSelector, "results-navigation paper-tab")
+	default:
+		e, err := wd.FindElement(selenium.ByCSSSelector, element)
+		if err != nil {
+			return nil, err
+		}
+		return FindShadowElements(wd, e, "results-navigation", "paper-tab")
 	}
 }

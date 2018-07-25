@@ -30,15 +30,41 @@ func GetWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	panic("Invalid --browser value specified")
 }
 
-func FindShadowElements(d selenium.WebDriver, e selenium.WebElement, selector string) ([]selenium.WebElement, error) {
-	i := []interface{}{e}
-	result, err := d.ExecuteScriptRaw(fmt.Sprintf("return arguments[0].shadowRoot.querySelectorAll('%s')", selector), i)
-	if err != nil {
-		panic(err.Error())
-	}
-	elements, err := d.DecodeElements(result)
-	if err != nil {
-		return nil, err
+func FindShadowElements(
+	d selenium.WebDriver,
+	e selenium.WebElement,
+	selectors ...string) ([]selenium.WebElement, error) {
+	elements := []selenium.WebElement{e}
+	for _, selector := range selectors {
+		interfaces := make([]interface{}, len(elements))
+		for i, e := range elements {
+			interfaces[i] = e
+		}
+		result, err := d.ExecuteScriptRaw(
+			fmt.Sprintf(`return Array.from(arguments)
+				.reduce((s, e) => {
+					return s.concat(Array.from(e.shadowRoot.querySelectorAll('%s')))
+				}, [])`,
+				selector),
+			interfaces)
+		if err != nil {
+			panic(err.Error())
+		}
+		elements, err = d.DecodeElements(result)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return elements, nil
+}
+
+func FindShadowElement(
+	d selenium.WebDriver,
+	e selenium.WebElement,
+	selectors ...string) (selenium.WebElement, error) {
+	elements, err := FindShadowElements(d, e, selectors...)
+	if err != nil || len(elements) < 1 {
+		return nil, err
+	}
+	return elements[0], nil
 }
