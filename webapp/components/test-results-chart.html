@@ -17,7 +17,11 @@ found in the LICENSE file.
         display: initial;
       }
     </style>
-    <google-chart class$="chart [[isFeasible]]" type="line" cols="[[cols]]" rows="[[rows]]"></google-chart>
+    <google-chart class$="chart [[isFeasible]]"
+                  type="line"
+                  cols="[[cols]]"
+                  rows="[[rows]]"
+                  options="[[chartOptions]]"></google-chart>
   </template>
   <script>
     class TestResultsChart extends window.Polymer.Element {
@@ -77,6 +81,15 @@ found in the LICENSE file.
             computed: 'computeIsFeasible(tests, chunkSize, maxReqs)',
             value: false,
           },
+          chartOptions: {
+            type: Object,
+            value: {
+              vAxis: {
+                minValue: 0,
+                maxValue: 1,
+              }
+            }
+          }
         };
       }
 

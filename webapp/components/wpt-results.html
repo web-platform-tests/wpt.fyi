@@ -17,7 +17,7 @@ found in the LICENSE file.
 <link rel="import" href="test-run.html">
 <link rel="import" href="test-runs.html">
 <link rel="import" href="test-file-results.html">
-<link rel="import" href="test-file-results-time-series.html">
+<link rel="import" href="test-results-history-grid.html">
 <link rel="import" href="test-results-chart.html">
 <link rel="import" href="test-search.html">
 
@@ -97,6 +97,9 @@ found in the LICENSE file.
         margin: 32px 0;
         text-align: center;
       }
+      .history h3 span {
+        color: var(--paper-red-500);
+      }
       #show-history {
         background: var(--paper-blue-500);
         color: white;
@@ -154,8 +157,7 @@ found in the LICENSE file.
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
       <test-file-results test-runs="[[testRuns]]"
-                         test-file="[[path]]"
-                         encoded-test-file="[[encodedPath]]"
+                         path="[[path]]"
                          labels="[[labels]]"
                          products="[[products]]">
       </test-file-results>
@@ -196,12 +198,14 @@ found in the LICENSE file.
     <template is="dom-if" if="[[isSubfolder]]">
       <div class='history'>
         <template is="dom-if" if="[[!showHistory]]">
-          <paper-button onclick="[[showHistoryClicked()]]">
+          <paper-button id='show-history' onclick="[[showHistoryClicked()]]" raised>
             Show history
           </paper-button>
         </template>
         <template is="dom-if" if="[[showHistory]]">
-          <h3>History</h3>
+          <h3>
+            History <span>(Experimental)</span>
+          </h3>
           <test-results-chart
               path="[[encodedPath]]"
               labels="[[labels]]"
@@ -209,11 +213,11 @@ found in the LICENSE file.
           </test-results-chart>
 
           <template is="dom-if" if="[[pathIsATestFile]]">
-            <test-results-chart
-                path="[[encodedPath]]"
+            <test-results-history-grid
+                path="[[path]]"
                 labels="[[labels]]"
                 tests="[[displayedTests]]">
-            </test-results-chart>
+            </test-results-history-grid>
           </template>
         </template>
       </div>
@@ -335,6 +339,14 @@ found in the LICENSE file.
           await this.fetchResults(runs);
           this.refreshDisplayedNodes();
         });
+
+        // NOTE(lukebjerring): Overriding the pathUpdated method doesn't get
+        // called, so we wrap any given onpathupdated methd here.
+        const onpathupdated = this.onpathupdated;
+        this.onpathupdated = path => {
+          onpathupdated && onpathupdated(path);
+          this.showHistory = false;
+        }
       }
 
       async fetchResults(testRuns) {

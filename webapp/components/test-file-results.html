@@ -97,14 +97,6 @@ found in the LICENSE file.
 
       static get properties() {
         return {
-          testFile: {
-            type: String,
-            value: '',
-          },
-          encodedTestFile: {
-            type: String,
-            value: '',
-          },
           subtestNames: {
             type: Array,
             value: []
@@ -166,17 +158,17 @@ found in the LICENSE file.
 
       async connectedCallback() {
         await super.connectedCallback();
-        console.assert(this.testFile);
-        console.assert(this.testFile[0] === '/');
+        console.assert(this.path);
+        console.assert(this.path[0] === '/');
       }
 
       static get observers() {
-        return ['fetchTestFile(testFile, testRuns)'];
+        return ['fetchTestFile(path, testRuns)'];
       }
 
-      async fetchTestFile(testFile, testRuns) {
+      async fetchTestFile(path, testRuns) {
         this.subtestNames = [];
-        if (!testFile || !testRuns) {
+        if (!path || !testRuns) {
           return;
         }
         const resultPerTestRun = await Promise.all(
@@ -216,11 +208,11 @@ found in the LICENSE file.
 
       resultsURL(testRun) {
         if (testRun.revision === 'diff') {
-          return `${testRun.results_url}&path=${encodeURIComponent(this.testFile)}`;
+          return `${testRun.results_url}&path=${this.encodedPath}`;
         }
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
-        return `${resultsBase}${this.encodedTestFile}`;
+        return `${resultsBase}${this.encodedPath}`;
       }
 
       subtestNameForDisplay(subtestName) {
