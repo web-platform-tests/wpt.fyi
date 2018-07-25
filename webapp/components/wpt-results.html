@@ -202,11 +202,11 @@ found in the LICENSE file.
         </template>
         <template is="dom-if" if="[[showHistory]]">
           <h3>History</h3>
-          <test-file-results-time-series
+          <test-results-chart
               path="[[encodedPath]]"
-              products="[[products]]"
-              labels="[[labels]]">
-          </test-file-results-time-series>
+              labels="[[labels]]"
+              tests="[[displayedTests]]">
+          </test-results-chart>
 
           <template is="dom-if" if="[[pathIsATestFile]]">
             <test-results-chart
