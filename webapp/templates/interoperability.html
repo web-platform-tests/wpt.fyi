@@ -8,7 +8,7 @@
 <div id="content">
   {{ template "_header.html" }}
   <div>
-    <wpt-interop pass-rate-metadata="{{ .Metadata }}" sha="{{ .SHA }}"></wpt-interop>
+    <wpt-interop pass-rate-metadata-src="{{ .MetadataSources }}" sha="{{ .SHA }}"></wpt-interop>
   </div>
 </div>
 {{ template "_ga.html" }}
