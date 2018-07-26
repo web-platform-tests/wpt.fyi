@@ -19,6 +19,11 @@ found in the LICENSE file.
 
       static get properties() {
         return {
+          path: String,
+          encodedPath: {
+            type: String,
+            computed: 'encodeTestPath(path)'
+          },
           // URLs for TestRuns to load.
           testRunResources: {
             type: Array
@@ -70,6 +75,13 @@ found in the LICENSE file.
 
       computePathIsATestFile(path) {
         return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
+      }
+
+      encodeTestPath(path) {
+        console.assert(path.startsWith('/'));
+        let parts = path.split('/').slice(1);
+        parts.push(encodeURIComponent(parts.pop()));
+        return '/' + parts.join('/');
       }
 
       async loadRuns() {

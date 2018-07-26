@@ -8,7 +8,6 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="test-runs.html">
 <link rel="import" href="test-run.html">
-<link rel="import" href="test-file-results-time-series.html">
 
 <dom-module id="test-file-results">
   <template>
@@ -61,25 +60,21 @@ found in the LICENSE file.
       }
     </style>
 
-    <test-file-results-time-series
-        path="[[encodedTestFile]]"
-        products="[[products]]"
-        labels="[[labels]]">
-    </test-file-results-time-series>
-
     <table>
       <thead>
         <tr>
           <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
           <template is="dom-repeat" items="[[testRuns]]" as="testRun">
-            <th width="[[computeRunThWidth(testRuns)]]"><test-run test-run="[[testRun]]"></test-run></th>
+            <th width="[[computeRunThWidth(testRuns)]]">
+              <test-run test-run="[[testRun]]"></test-run>
+            </th>
           </template>
         </tr>
       </thead>
       <tbody>
         <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
           <tr>
-            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName) ]]</code></td>
+            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName, isTestHarness) ]]</code></td>
 
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
               <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
@@ -102,17 +97,13 @@ found in the LICENSE file.
 
       static get properties() {
         return {
-          testFile: {
-            type: String,
-            value: '',
-          },
-          encodedTestFile: {
-            type: String,
-            value: '',
-          },
           subtestNames: {
             type: Array,
-            value: []
+            value: [],
+          },
+          isTestHarness: {
+            type: Boolean,
+            value: false,
           },
           matchers: {
             type: Array,
@@ -171,22 +162,23 @@ found in the LICENSE file.
 
       async connectedCallback() {
         await super.connectedCallback();
-        console.assert(this.testFile);
-        console.assert(this.testFile[0] === '/');
+        console.assert(this.path);
+        console.assert(this.path[0] === '/');
       }
 
       static get observers() {
-        return ['fetchTestFile(testFile, testRuns)'];
+        return ['fetchTestFile(path, testRuns)'];
       }
 
-      async fetchTestFile(testFile, testRuns) {
-        this.subtestNames = [];
-        if (!testFile || !testRuns) {
+      async fetchTestFile(path, testRuns) {
+        this.subtestNames = []; // Clear any existing rows.
+        if (!path || !testRuns) {
           return;
         }
         const resultPerTestRun = await Promise.all(
           testRuns.map(tr => this.loadResultFile(tr)));
 
+        const subtestNames = ['STATUS'];
         resultPerTestRun.forEach((resultData, i) => {
           if (!resultData) {
             testRuns[i].subtests = {};
@@ -196,17 +188,17 @@ found in the LICENSE file.
           testRuns[i].subtests = {};
           testRuns[i].subtests['STATUS'] = { status: resultData.status };
 
-          if (!this.subtestNames.includes('STATUS')) {
-            this.subtestNames = this.subtestNames.concat(['STATUS']);
-          }
-
           for (let subtestResult of resultData.subtests) {
             testRuns[i].subtests[subtestResult.name] = subtestResult;
-            if (!this.subtestNames.includes(subtestResult.name)) {
-              this.subtestNames.push(subtestResult.name);
+            if (!subtestNames.includes(subtestResult.name)) {
+              subtestNames.push(subtestResult.name);
             }
           }
         });
+
+        this.isTestHarness =
+          resultPerTestRun.some(r => ['OK', 'ERROR'].includes(r.status));
+        this.subtestNames = subtestNames;
       }
 
       async loadResultFile(testRun) {
@@ -221,24 +213,18 @@ found in the LICENSE file.
 
       resultsURL(testRun) {
         if (testRun.revision === 'diff') {
-          return `${testRun.results_url}&path=${encodeURIComponent(this.testFile)}`;
+          return `${testRun.results_url}&path=${encodeURIComponent(this.path)}`;
         }
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
         return `${resultsBase}${this.encodedTestFile}`;
       }
 
-      subtestNameForDisplay(subtestName) {
+      subtestNameForDisplay(subtestName, isTestHarness) {
         if (subtestName !== 'STATUS') {
           return subtestName;
         }
-        for (let tr of this.testRuns) {
-          // "OK"/"ERROR" are testharness-specific statuses.
-          if (['OK', 'ERROR'].includes(tr.subtests['STATUS'].status)) {
-            return 'Harness status';
-          }
-        }
-        return 'File status';
+        return isTestHarness ? 'Harness status' : 'File status';
       }
 
       subtestResultForTestRun(testRun, subtestName) {

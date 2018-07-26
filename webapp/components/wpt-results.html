@@ -10,14 +10,16 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="path-part.html">
+<link rel="import" href="results-navigation.html">
+<link rel="import" href="self-navigator.html">
+<link rel="import" href="test-run.html">
 <link rel="import" href="test-runs.html">
 <link rel="import" href="test-file-results.html">
-<link rel="import" href="test-run.html">
-<link rel="import" href="self-navigator.html">
-<link rel="import" href="test-search.html">
-<link rel="import" href="results-navigation.html">
+<link rel="import" href="test-results-history-grid.html">
 <link rel="import" href="test-results-chart.html">
+<link rel="import" href="test-search.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -91,6 +93,17 @@ found in the LICENSE file.
         color: var(--paper-yellow-500);
         margin-left: 32px;
       }
+      .history {
+        margin: 32px 0;
+        text-align: center;
+      }
+      .history h3 span {
+        color: var(--paper-red-500);
+      }
+      #show-history {
+        background: var(--paper-blue-500);
+        color: white;
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -102,12 +115,10 @@ found in the LICENSE file.
       }
     </style>
 
-    <test-results-chart
-      labels="[[labels]]"
-      tests="[[displayedTests]]"
-    ></test-results-chart>
-
-    <results-navigation tab="results" path="[[encodedPath]]"></results-navigation>
+    <results-navigation tab="results"
+                        path="[[encodedPath]]"
+                        query="[[query]]">
+    </results-navigation>
 
     <section class="search">
       <div class="path">
@@ -149,8 +160,7 @@ found in the LICENSE file.
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
       <test-file-results test-runs="[[testRuns]]"
-                         test-file="[[path]]"
-                         encoded-test-file="[[encodedPath]]"
+                         path="[[path]]"
                          labels="[[labels]]"
                          products="[[products]]">
       </test-file-results>
@@ -186,6 +196,34 @@ found in the LICENSE file.
           </template>
         </tbody>
       </table>
+    </template>
+
+    <template is="dom-if" if="[[isSubfolder]]">
+      <div class='history'>
+        <template is="dom-if" if="[[!showHistory]]">
+          <paper-button id='show-history' onclick="[[showHistoryClicked()]]" raised>
+            Show history
+          </paper-button>
+        </template>
+        <template is="dom-if" if="[[showHistory]]">
+          <h3>
+            History <span>(Experimental)</span>
+          </h3>
+          <test-results-chart
+              path="[[encodedPath]]"
+              labels="[[labels]]"
+              tests="[[displayedTests]]">
+          </test-results-chart>
+
+          <template is="dom-if" if="[[pathIsATestFile]]">
+            <test-results-history-grid
+                path="[[path]]"
+                labels="[[labels]]"
+                tests="[[displayedTests]]">
+            </test-results-history-grid>
+          </template>
+        </template>
+      </div>
     </template>
 
   </template>
@@ -244,6 +282,10 @@ found in the LICENSE file.
             type: String,
             value: 'ADCU', // Added, Deleted, Changed, Unchanged
           },
+          showHistory: {
+            type: Boolean,
+            value: false,
+          },
         };
       }
 
@@ -300,6 +342,14 @@ found in the LICENSE file.
           await this.fetchResults(runs);
           this.refreshDisplayedNodes();
         });
+
+        // NOTE(lukebjerring): Overriding the pathUpdated method doesn't get
+        // called, so we wrap any given onpathupdated methd here.
+        const onpathupdated = this.onpathupdated;
+        this.onpathupdated = path => {
+          onpathupdated && onpathupdated(path);
+          this.showHistory = false;
+        };
       }
 
       async fetchResults(testRuns) {
@@ -536,6 +586,12 @@ found in the LICENSE file.
         })));
 
         console.log('JSON version:', JSON.stringify(totals));
+      }
+
+      showHistoryClicked() {
+        return () => {
+          this.showHistory = true;
+        };
       }
     }
 

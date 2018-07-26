@@ -15,6 +15,10 @@
             type: String,
             computed: 'encodeTestPath(path)'
           },
+          isSubfolder: {
+            type: Boolean,
+            computed: 'computeIsSubfolder(path)',
+          },
           onpathupdated: Function,
         };
       }
@@ -61,6 +65,10 @@
         if (this.onpathupdated) {
           this.onpathupdated(path);
         }
+      }
+
+      computeIsSubfolder(path) {
+        return path && path !== '/';
       }
 
       /**

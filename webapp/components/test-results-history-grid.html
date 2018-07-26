@@ -5,9 +5,9 @@ found in the LICENSE file.
 -->
 
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="test-runs.html">
+<link rel="import" href="test-file-results.html">
 
-<dom-module id="test-file-results-time-series">
+<dom-module id="test-results-history-grid">
   <template>
     <style>
       .browser {
@@ -61,17 +61,14 @@ found in the LICENSE file.
     <pre id="status">&nbsp;</pre>
   </template>
   <script>
-    /* global TestRunsBase */
-    class TestFileResultsTimeSeries extends TestRunsBase {
+    /* global TestFileResults */
+    class TestFileResultsTimeSeries extends TestFileResults {
       static get is() {
-        return 'test-file-results-time-series';
+        return 'test-results-history-grid';
       }
 
       static get properties() {
         return {
-          path: {
-            type: String,
-          },
           defaultMaxCount: {
             type: Number,
             value: 20,
@@ -93,7 +90,9 @@ found in the LICENSE file.
       testRunQueryParams(sha, labels, products, maxCount) {
         sha = null;
         const params = super.testRunQueryParams(sha, labels, products, maxCount);
-        params.complete = true;
+        if (!labels || !labels.length) {
+          params.complete = true;
+        }
         return params;
       }
 
@@ -144,12 +143,14 @@ found in the LICENSE file.
         if (!resp.ok) {
           throw resp;
         }
-        const r = await resp.json();
+        const resultsJSON = await resp.json();
         let newResults = [];
-        newResults.push({status: r.status});
-        runResult.results.push({status: r.status});
-        if (r.subtests && r.subtests.length > 0) {
-          for (const sub of r.subtests) {
+        newResults.push({
+          name: this.subtestNameForDisplay('STATUS', [resultsJSON]),
+          status: resultsJSON.status
+        });
+        if (resultsJSON.subtests && resultsJSON.subtests.length > 0) {
+          for (const sub of resultsJSON.subtests) {
             newResults.push({name: sub.name, status: sub.status});
           }
         }
@@ -158,12 +159,6 @@ found in the LICENSE file.
           0,
           0,
         ].concat(newResults));
-      }
-
-      resultsURL(run, path) {
-        // This is relying on the assumption that result files end with '-summary.json.gz'.
-        const resultsBase = run.results_url.slice(0, run.results_url.lastIndexOf('-summary.json.gz'));
-        return `${resultsBase}${path}`;
       }
     }
 
