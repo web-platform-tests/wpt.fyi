@@ -2,7 +2,6 @@
 
 DOCKER_DIR=$(dirname $0)
 source "${DOCKER_DIR}/../commands.sh"
-source "${DOCKER_DIR}/../path.sh"
 
 # Run util/populate_dev_data.go (via make) in the docker environment.
 wptd_exec make dev_data FLAGS=\"$@\"
