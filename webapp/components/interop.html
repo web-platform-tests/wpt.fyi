@@ -244,8 +244,14 @@ found in the LICENSE file.
     }
 
     async ready() {
-      super.ready();
-
+      await super.ready();
+      this.passRateMetadata = await fetch(`/api/interop${this.query}`).then(
+        function(r) {
+          if (!r.ok) {
+            return Promise.reject('Failed to fetch interop data');
+          }
+          return r.json();
+        });
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
       if (this.allMetrics && this.allMetrics.data) {
         this.testFileNames = Array.from(Object.keys(this.allMetrics.data));

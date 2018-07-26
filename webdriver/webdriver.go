@@ -30,15 +30,48 @@ func GetWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	panic("Invalid --browser value specified")
 }
 
-func FindShadowElements(d selenium.WebDriver, e selenium.WebElement, selector string) ([]selenium.WebElement, error) {
-	i := []interface{}{e}
-	result, err := d.ExecuteScriptRaw(fmt.Sprintf("return arguments[0].shadowRoot.querySelectorAll('%s')", selector), i)
-	if err != nil {
-		panic(err.Error())
-	}
-	elements, err := d.DecodeElements(result)
-	if err != nil {
-		return nil, err
+// FindShadowElements finds the shadow DOM children via the given query
+// selectors, recursively.
+// e.g. FindShadowElements(wd, foo, "bar", "baz") would be similar to
+// A "foo bar baz" CSS selector, except it crosses the shadow boundaries for
+// each separate selector.
+func FindShadowElements(
+	d selenium.WebDriver,
+	e selenium.WebElement,
+	selectors ...string) ([]selenium.WebElement, error) {
+	elements := []selenium.WebElement{e}
+	for _, selector := range selectors {
+		interfaces := make([]interface{}, len(elements))
+		for i, e := range elements {
+			interfaces[i] = e
+		}
+		result, err := d.ExecuteScriptRaw(
+			fmt.Sprintf(`return Array.from(arguments)
+				.reduce((s, e) => {
+					return s.concat(Array.from(e.shadowRoot.querySelectorAll('%s')))
+				}, [])`,
+				selector),
+			interfaces)
+		if err != nil {
+			panic(err.Error())
+		}
+		elements, err = d.DecodeElements(result)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return elements, nil
+}
+
+// FindShadowElement returns the first element found by an equivalent call to
+// FindShadowElements.
+func FindShadowElement(
+	d selenium.WebDriver,
+	e selenium.WebElement,
+	selectors ...string) (selenium.WebElement, error) {
+	elements, err := FindShadowElements(d, e, selectors...)
+	if err != nil || len(elements) < 1 {
+		return nil, err
+	}
+	return elements[0], nil
 }
