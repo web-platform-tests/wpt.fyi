@@ -191,7 +191,11 @@ func main() {
 
 	log.Print("Adding latest production TestRun data...")
 	maxCount := *numRemoteRuns
-	prodTestRuns := shared.FetchRuns(*host, "latest", &maxCount, mapset.NewSetWith("stable"))
+	filters := shared.TestRunFilter{
+		MaxCount: &maxCount,
+		Labels:   mapset.NewSetWith("stable"),
+	}
+	prodTestRuns := shared.FetchRuns(*host, filters)
 	labelRuns(prodTestRuns, "prod")
 	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
 	for i := range prodTestRuns {
@@ -200,7 +204,8 @@ func main() {
 	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
 
 	log.Print("Adding latest experimental TestRun data...")
-	prodTestRuns = shared.FetchRuns(*host, "latest", &maxCount, mapset.NewSetWith("experimental"))
+	filters.Labels = mapset.NewSetWith("experimental")
+	prodTestRuns = shared.FetchRuns(*host, filters)
 	labelRuns(prodTestRuns, "prod")
 
 	latestProductionTestRunMetadata = make([]interface{}, len(prodTestRuns))
