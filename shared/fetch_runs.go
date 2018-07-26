@@ -11,27 +11,19 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/deckarep/golang-set"
 )
 
 // FetchLatestRuns fetches the TestRun metadata for the latest runs, using the
 // API on the given host.
 func FetchLatestRuns(wptdHost string) TestRuns {
-	return FetchRuns(wptdHost, "latest", nil, nil)
+	return FetchRuns(wptdHost, TestRunFilter{})
 }
 
 // FetchRuns fetches the TestRun metadata for the given sha / labels, using the
 // API on the given host.
-func FetchRuns(wptdHost, sha string, maxCount *int, labels mapset.Set) TestRuns {
+func FetchRuns(wptdHost string, filter TestRunFilter) TestRuns {
 	url := "https://" + wptdHost + "/api/runs"
-
-	filters := TestRunFilter{
-		Labels:   labels,
-		SHA:      sha,
-		MaxCount: maxCount,
-	}
-	url += "?" + filters.ToQuery(true).Encode()
+	url += "?" + filter.ToQuery(true).Encode()
 	log.Printf("Fetching %s...", url)
 
 	resp, err := http.Get(url)
