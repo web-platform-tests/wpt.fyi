@@ -17,7 +17,7 @@
           },
           isSubfolder: {
             type: Boolean,
-            computed: '_computeIsSubfolder(path)',
+            computed: 'computeIsSubfolder(path)',
           },
           onpathupdated: Function,
         };
@@ -67,7 +67,7 @@
         }
       }
 
-      _computeIsSubfolder(path) {
+      computeIsSubfolder(path) {
         return path && path !== '/';
       }
 
