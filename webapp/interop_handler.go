@@ -59,6 +59,12 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uiFilters, err := parseTestRunUIFilter(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	metadataBytes, err := json.Marshal(*metadata)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -66,12 +72,10 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	data := struct {
 		Metadata string
-		SHA      string
+		Filter   testRunUIFilter
 	}{
 		Metadata: string(metadataBytes),
-	}
-	if !shared.IsLatest(filters.SHA) {
-		data.SHA = filters.SHA
+		Filter:   uiFilters,
 	}
 
 	if err := templates.ExecuteTemplate(w, "interoperability.html", data); err != nil {
