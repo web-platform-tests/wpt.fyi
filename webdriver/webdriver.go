@@ -30,6 +30,11 @@ func GetWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	panic("Invalid --browser value specified")
 }
 
+// FindShadowElements finds the shadow DOM children via the given query
+// selectors, recursively.
+// e.g. FindShadowElements(wd, foo, "bar", "baz") would be similar to
+// A "foo bar baz" CSS selector, except it crosses the shadow boundaries for
+// each separate selector.
 func FindShadowElements(
 	d selenium.WebDriver,
 	e selenium.WebElement,
@@ -58,6 +63,8 @@ func FindShadowElements(
 	return elements, nil
 }
 
+// FindShadowElement returns the first element found by an equivalent call to
+// FindShadowElements.
 func FindShadowElement(
 	d selenium.WebDriver,
 	e selenium.WebElement,
