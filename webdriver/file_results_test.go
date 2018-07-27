@@ -20,8 +20,8 @@ func TestFileResults(t *testing.T) {
 	defer service.Stop()
 	defer wd.Quit()
 
-	// Navigate to the wpt.fyi homepage.
-	url := "2dcontext/building-paths/canvas_complexshapes_arcto_001.htm"
+	// Navigate to an individual test file result.
+	url := "results/infrastructure/assumptions/ahem.html"
 	if err := wd.Get(app.GetWebappURL(url)); err != nil {
 		panic(err)
 	}
