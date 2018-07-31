@@ -90,6 +90,10 @@
       }
 
       navigate(event) {
+        // Don't intercept ctrl+click.
+        if (event.ctrlKey) {
+          return;
+        }
         event.preventDefault();
         this.navigateToLocation(event.target);
       }
