@@ -269,7 +269,7 @@ found in the LICENSE file.
           },
           displayedTests: {
             type: Array,
-            value: [],
+            value: 'computeDisplayedTests(displayedNodes)',
           },
           // Show a diff column (if there are 2 testRuns).
           diff: Boolean,
@@ -430,9 +430,7 @@ found in the LICENSE file.
         const partCountIfTestFile = this.path === '/' ? 1 : currentPathParts.length + 1;
         const nextSubdirIndex = this.path === '/' ? 0 : currentPathParts.length;
 
-        let displayedTests = [];
         const updateResults = (testFileName, dirPath, isDir) => {
-          displayedTests.push(testFileName);
           if (!displayedNodeMap.has(dirPath)) {
             displayedNodeMap.set(dirPath, {isDir: isDir, results: {}});
           }
@@ -470,7 +468,14 @@ found in the LICENSE file.
         }));
 
         this.displayedNodes.sort(this.nodeSort);
-        this.displayedTests = displayedTests;
+      }
+
+      computeDisplayedTests(nodes) {
+        let displayedTests = (nodes || []).map(n => n.path);
+        if (!displayedTests.length && this.computePathIsATestFile(this.path)) {
+          return [this.path];
+        }
+        return displayedTests;
       }
 
       platformID({browser_name, browser_version, os_name, os_version}) {
