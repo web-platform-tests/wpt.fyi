@@ -22,7 +22,7 @@ import (
 
 var (
 	host          = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
-	numRemoteRuns = flag.Int("num_remote_runs", 1, "number of remote runs to copy from host to local environment")
+	numRemoteRuns = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
 	staticRuns    = flag.Bool("static_runs", false, "Include runs in the /static dir")
 )
 
