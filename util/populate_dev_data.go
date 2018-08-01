@@ -23,6 +23,7 @@ import (
 var (
 	host          = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
 	numRemoteRuns = flag.Int("num_remote_runs", 1, "number of remote runs to copy from host to local environment")
+	staticRuns    = flag.Bool("static_runs", false, "Include runs in the /static dir")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -173,21 +174,23 @@ func main() {
 		&shared.Uploader{Username: "test", Password: "123"},
 	})
 
-	log.Print("Adding local mock data (static/)...")
-	testRunKeys := addData(ctx, testRunKindName, staticTestRunMetadata)
-	for i, key := range testRunKeys {
-		staticTestRuns[i].ID = key.IntID()
+	if *staticRuns {
+		log.Print("Adding local mock data (static/)...")
+		testRunKeys := addData(ctx, testRunKindName, staticTestRunMetadata)
+		for i, key := range testRunKeys {
+			staticTestRuns[i].ID = key.IntID()
+		}
+		for i := range staticPassRateMetadata {
+			md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
+			md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+		}
+		for i := range staticFailuresMetadata {
+			md := staticFailuresMetadata[i].(*metrics.FailuresMetadata)
+			md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+		}
+		addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
+		addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 	}
-	for i := range staticPassRateMetadata {
-		md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
-		md.TestRunIDs = staticTestRuns.GetTestRunIDs()
-	}
-	for i := range staticFailuresMetadata {
-		md := staticFailuresMetadata[i].(*metrics.FailuresMetadata)
-		md.TestRunIDs = staticTestRuns.GetTestRunIDs()
-	}
-	addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
-	addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 
 	log.Print("Adding latest production TestRun data...")
 	maxCount := *numRemoteRuns
