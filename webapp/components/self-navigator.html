@@ -90,8 +90,8 @@
       }
 
       navigate(event) {
-        // Don't intercept ctrl+click.
-        if (event.ctrlKey) {
+        // Don't intercept Ctrl+click or Meta(Win/Command)+click (open new tabs).
+        if (event.ctrlKey || event.metaKey) {
           return;
         }
         event.preventDefault();
