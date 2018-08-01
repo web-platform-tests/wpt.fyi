@@ -6,6 +6,8 @@ import re
 import shutil
 import tempfile
 import time
+import traceback
+from http import HTTPStatus
 
 import filelock
 import flask
@@ -58,8 +60,8 @@ def _serial_task(func):
                 return func(*args, **kwargs)
         except filelock.Timeout:
             app.logger.info('%s unable to acquire lock.', func.__name__)
-            # 503 Service Unavailable
-            return 'A result is currently being processed.', 503
+            return ('A result is currently being processed.',
+                    HTTPStatus.SERVICE_UNAVAILABLE)
 
     return decorated_func
 
@@ -70,7 +72,8 @@ def _internal_only(func):
         if not app.debug:
             remote_ip = flask.request.access_route[0]
             if remote_ip != APPENGINE_INTERNAL_IP:
-                return 'External requests not allowed', 403
+                return ('External requests not allowed',
+                        HTTPStatus.FORBIDDEN)
         return func(*args, **kwargs)
 
     return decorated_func
@@ -90,7 +93,8 @@ def liveness_check():
         # Respectively: file not found, invalid content, old timestamp.
         except (IOError, ValueError, AssertionError):
             app.logger.warn('Liveness check failed.')
-            return 'The current task has taken too long.', 500
+            return ('The current task has taken too long.',
+                    HTTPStatus.INTERNAL_SERVER_ERROR)
     return 'Service alive'
 
 
@@ -101,8 +105,30 @@ def readiness_check():
         lock.acquire(timeout=0.1)
         lock.release()
     except filelock.Timeout:
-        return 'A result is currently being processed.', 503
+        return ('A result is currently being processed.',
+                HTTPStatus.SERVICE_UNAVAILABLE)
     return 'Service alive'
+
+
+def _process_chunk(report, gcs_path):
+    match = re.match(r'/([^/]+)/(.*)', gcs_path)
+    assert match
+    bucket_name, blob_path = match.groups()
+
+    gcs = storage.Client()
+    bucket = gcs.get_bucket(bucket_name)
+    blob = bucket.blob(blob_path)
+
+    with tempfile.NamedTemporaryFile(suffix='.json') as temp:
+        blob.download_to_file(temp)
+        temp.seek(0)
+        try:
+            report.load_json(temp)
+        except wptreport.WPTReportError as e:
+            traceback.print_exc()
+            return False
+
+    return True
 
 
 # Check request origins before acquiring the lock.
@@ -115,27 +141,21 @@ def task_handler():
     params = flask.request.form
     # Mandatory fields:
     uploader = params['uploader']
-    gcs_path = params['gcs']
+    gcs_paths = params.getlist('gcs')
     result_type = params['type']
     # Optional fields:
     labels = params.get('labels', '')
 
-    # TODO(Hexcles): Support multiple results.
-    assert result_type == 'single'
+    assert (
+        (result_type == 'single' and len(gcs_paths) == 1) or
+        (result_type == 'multiple' and len(gcs_paths) > 1)
+    )
 
-    match = re.match(r'/([^/]+)/(.*)', gcs_path)
-    assert match
-    bucket_name, blob_path = match.groups()
-
-    gcs = storage.Client()
-    bucket = gcs.get_bucket(bucket_name)
-    blob = bucket.blob(blob_path)
-
-    with tempfile.NamedTemporaryFile(suffix='.json') as temp:
-        blob.download_to_file(temp)
-        temp.seek(0)
-        report = wptreport.WPTReport()
-        report.load_json(temp)
+    report = wptreport.WPTReport()
+    for gcs_path in gcs_paths:
+        if not _process_chunk(report, gcs_path):
+            # The chunk is invalid; return 2XX to prevent retry.
+            return ('', HTTPStatus.NO_CONTENT)
 
     # To be deprecated once all reports have all the required metadata.
     report.update_metadata(
@@ -145,6 +165,12 @@ def task_handler():
         os_name=params.get('os_name'),
         os_version=params.get('os_version'),
     )
+
+    try:
+        report.finalize()
+    except wptreport.WPTReportError as e:
+        traceback.print_exc()
+        return ('', HTTPStatus.NO_CONTENT)
 
     resp = "{} results loaded from {}\n".format(len(report.results), gcs_path)
 
@@ -161,6 +187,7 @@ def task_handler():
             os.path.join(tempdir, report.sha_summary_path),
             'gs:/' + results_gcs_path,
             gzipped=True)
+        # TODO(Hexcles): Consider switching to gsutil.copy.
         gsutil.rsync_gzip(
             os.path.join(tempdir, report.sha_product_path),
             # The trailing slash is crucial (wpt.fyi#275).
@@ -176,7 +203,7 @@ def task_handler():
     wptreport.create_test_run(report, labels, uploader, secret,
                               results_gcs_path, raw_results_gcs_path)
 
-    return resp
+    return (resp, HTTPStatus.CREATED)
 
 
 # Run the script directly locally to start Flask dev server.
