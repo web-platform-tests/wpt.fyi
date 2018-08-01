@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import shutil
+import sys
 import tempfile
 import time
 import traceback
@@ -122,13 +123,7 @@ def _process_chunk(report, gcs_path):
     with tempfile.NamedTemporaryFile(suffix='.json') as temp:
         blob.download_to_file(temp)
         temp.seek(0)
-        try:
-            report.load_json(temp)
-        except wptreport.WPTReportError as e:
-            traceback.print_exc()
-            return False
-
-    return True
+        report.load_json(temp)
 
 
 # Check request origins before acquiring the lock.
@@ -152,24 +147,25 @@ def task_handler():
     )
 
     report = wptreport.WPTReport()
-    for gcs_path in gcs_paths:
-        if not _process_chunk(report, gcs_path):
-            # The chunk is invalid; return 2XX to prevent retry.
-            return ('', HTTPStatus.NO_CONTENT)
-
-    # To be deprecated once all reports have all the required metadata.
-    report.update_metadata(
-        revision=params.get('revision'),
-        browser_name=params.get('browser_name'),
-        browser_version=params.get('browser_version'),
-        os_name=params.get('os_name'),
-        os_version=params.get('os_version'),
-    )
-
     try:
+        for gcs_path in gcs_paths:
+            _process_chunk(report, gcs_path)
+        # To be deprecated once all reports have all the required metadata.
+        report.update_metadata(
+            revision=params.get('revision'),
+            browser_name=params.get('browser_name'),
+            browser_version=params.get('browser_version'),
+            os_name=params.get('os_name'),
+            os_version=params.get('os_version'),
+        )
         report.finalize()
-    except wptreport.WPTReportError as e:
-        traceback.print_exc()
+    except wptreport.WPTReportError:
+        etype, e, tb = sys.exc_info()
+        e.path = str(gcs_paths)
+        # This will register an error in Stackdriver.
+        traceback.print_exception(etype, e, tb)
+        # The input is invalid and there is no point to retry, so we return 2XX
+        # to tell TaskQueue to drop the task.
         return ('', HTTPStatus.NO_CONTENT)
 
     resp = "{} results loaded from {}\n".format(len(report.results), gcs_path)
