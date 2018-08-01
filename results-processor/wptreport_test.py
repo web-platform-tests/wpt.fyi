@@ -13,6 +13,7 @@ import unittest
 from wptreport import (
     ConflictingDataError,
     InsufficientDataError,
+    InvalidJSONError,
     MissingMetadataError,
     WPTReport,
     prepare_labels
@@ -69,6 +70,15 @@ class WPTReportTest(unittest.TestCase):
         r = WPTReport()
         with open(tmp_path, 'rb') as f:
             with self.assertRaises(InsufficientDataError):
+                r.load_json(f)
+
+    def test_load_json_invalid_json(self):
+        tmp_path = os.path.join(self.tmp_dir, 'test.json')
+        with open(tmp_path, 'wt') as f:
+            f.write('{[')
+        r = WPTReport()
+        with open(tmp_path, 'rb') as f:
+            with self.assertRaises(InvalidJSONError):
                 r.load_json(f)
 
     def test_load_json_multiple_chunks(self):

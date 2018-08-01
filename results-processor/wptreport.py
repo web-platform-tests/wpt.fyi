@@ -29,13 +29,26 @@ _log = logging.getLogger(__name__)
 
 class WPTReportError(Exception):
     """Base class for all input-related exceptions."""
-    pass
+    def __init__(self, message, path=None):
+        self.message = message
+        self.path = path
+
+    def __str__(self):
+        message = self.message
+        if self.path:
+            message += " (%s)" % self.path
+        return message
+
+
+class InvalidJSONError(WPTReportError):
+    def __init__(self):
+        super(InvalidJSONError, self).__init__("Invalid JSON")
 
 
 class MissingMetadataError(WPTReportError):
     def __init__(self, key):
         super(MissingMetadataError, self).__init__(
-            "Metadata '%s' isn't provided and can't be found in the report." %
+            "Missing required metadata '%s'" %
             (key,)
         )
 
@@ -79,6 +92,7 @@ class BufferedHashsum(object):
             buf = fileobj.read(self._block_size)
 
     def hashsum(self):
+        """Returns the hexadecimal digest of the current hash."""
         return self._hash.hexdigest()
 
 
@@ -127,6 +141,11 @@ class WPTReport(object):
 
         Args:
             fileobj: A JSON file object (must be in binary mode).
+
+        Raises:
+            InsufficientDataError if the dataset contains zero test results;
+            ConflictingDataError if the current file contains information
+            conflicting with existing data (from previous files).
         """
         assert not isinstance(fileobj, io.TextIOBase)
         self._hash.hash_file(fileobj)
@@ -134,7 +153,10 @@ class WPTReport(object):
 
         # JSON files are always encoded in UTF-8 (RFC 8529).
         with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:
-            report = json.load(text_file, strict=False)
+            try:
+                report = json.load(text_file, strict=False)
+            except json.JSONDecodeError as e:
+                raise InvalidJSONError from e
             # Raise when 'results' is either not found or empty.
             if 'results' not in report:
                 raise InsufficientDataError
@@ -152,6 +174,7 @@ class WPTReport(object):
 
     def update_metadata(self, revision='', browser_name='', browser_version='',
                         os_name='', os_version=''):
+        """Overwrites metadata of the report."""
         # Unfortunately, the names of the keys don't exactly match.
         if revision:
             self._report['run_info']['revision'] = revision
@@ -217,7 +240,8 @@ class WPTReport(object):
             A summary dictionary.
 
         Raises:
-            InsufficientDataError if the dataset contains zero test results.
+            InsufficientDataError if the dataset contains zero test results;
+            ConflictingDataError if a test appears multiple times in results.
         """
         if self._summary:
             return self._summary
@@ -330,6 +354,7 @@ class WPTReport(object):
             return os.path.join(self.run_info['revision'],
                                 self.product_id(separator='-', sanitize=True))
         except KeyError as e:
+            # str(e) gives the name of the key.
             raise MissingMetadataError(str(e)) from e
 
     @property
@@ -339,6 +364,13 @@ class WPTReport(object):
 
     @property
     def test_run_metadata(self):
+        """Returns a dict of metadata.
+
+        The dict can be used as the payload for the test run creation API.
+
+        Raises:
+            MissingMetadataError if any required metadata is missing.
+        """
         # Required fields:
         try:
             payload = {
@@ -349,10 +381,10 @@ class WPTReport(object):
                 'full_revision_hash': self.run_info['revision'],
             }
         except KeyError as e:
+            # str(e) gives the name of the key.
             raise MissingMetadataError(str(e)) from e
 
         # Optional fields:
-
         if self.run_info.get('os_version'):
             payload['os_version'] = self.run_info['os_version']
 
@@ -368,6 +400,19 @@ class WPTReport(object):
                 self._report['time_end'])
 
         return payload
+
+    def finalize(self):
+        """Checks and finalizes the report.
+
+        Populates all in-memory states (summary & metadata) and raises
+        exceptions if any check fails.
+
+        Raises:
+            Exceptions inherited from WPTReportError.
+        """
+        self.summarize()
+        self.sha_product_path
+        self.test_run_metadata
 
 
 def prepare_labels(report, labels_str, uploader):
