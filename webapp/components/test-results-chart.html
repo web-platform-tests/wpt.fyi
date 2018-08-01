@@ -131,7 +131,9 @@ found in the LICENSE file.
         const url = new URL('/api/runs', window.location);
         url.searchParams.append('complete', true);
         url.searchParams.append('max-count', chunkSize);
-        url.searchParams.append('labels', labels.join(','));
+        if (labels && labels.length) {
+          url.searchParams.append('labels', labels.join(','));
+        }
         const resp = await window.fetch(url.toString());
         const runs = await resp.json();
 
@@ -160,8 +162,7 @@ found in the LICENSE file.
         let num = 0;
         let denom = 0;
         await Promise.all(tests.map(async path => {
-          let resp;
-          let r;
+          let resp, r;
           // Not all runs contain all tests.
           try {
             resp = await window.fetch(this.resultsURL(run, path));
