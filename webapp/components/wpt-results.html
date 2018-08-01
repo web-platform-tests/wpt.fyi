@@ -269,7 +269,8 @@ found in the LICENSE file.
           },
           displayedTests: {
             type: Array,
-            value: 'computeDisplayedTests(displayedNodes)',
+            value: [],
+            computed: 'computeDisplayedTests(displayedNodes)',
           },
           // Show a diff column (if there are 2 testRuns).
           diff: Boolean,
