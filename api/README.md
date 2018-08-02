@@ -361,7 +361,11 @@ __Content type__: `application/x-www-form-urlencoded`
 
 __Parameters__
 
-TODO
+__`result_url`__: A URL to a **gzipped** JSON file produced by `wpt run --log-wptreport` (see above
+for its format). This field can be repeated to include multiple links (for chunked reports).
+
+__`labels`__: (Optional) A comma-separated string of labels for this test run. Currently recognized
+labels are "experimental" and "stable" (the release channel of the tested browser).
 
 ### /api/results/create
 
