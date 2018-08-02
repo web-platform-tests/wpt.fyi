@@ -79,7 +79,7 @@ found in the LICENSE file.
   </template>
 
   <script>
-    /* global AbstractTestFileResultsTable */
+    /* global AbstractTestFileResultsTable, TestRunsBase */
     class TestFileResultsTableTerse extends AbstractTestFileResultsTable(TestRunsBase) {
       static get is() {
         return 'test-file-results-table-terse';
@@ -171,6 +171,6 @@ found in the LICENSE file.
     }
 
     window.customElements.define(
-        TestFileResultsTableTerse.is, TestFileResultsTableTerse);
+      TestFileResultsTableTerse.is, TestFileResultsTableTerse);
   </script>
 </dom-module>

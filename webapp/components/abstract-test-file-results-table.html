@@ -6,7 +6,8 @@ found in the LICENSE file.
 
 <dom-module id="abstract-test-file-results-table">
   <script>
-    const AbstractTestFileResultsTable = (superclass) => class extends superclass {
+    // eslint-disable-next-line no-unused-vars
+    const AbstractTestFileResultsTable = superClass => class extends superClass {
       static get is() {
         return 'abstract-test-file-results-table';
       }
@@ -40,6 +41,7 @@ found in the LICENSE file.
         return testRun.subtests[subtestName].status;
       }
 
+      // eslint-disable-next-line no-unused-vars
       subtestMessageForTestRun(testRun, subtestName) {
         return 'NOT IMPLEMENTED';
       }
@@ -51,6 +53,6 @@ found in the LICENSE file.
       computeRunThWidth(testRuns) {
         return `${100 / (testRuns.length + 2)}%`;
       }
-    }
+    };
   </script>
 </dom-module>

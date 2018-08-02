@@ -57,7 +57,7 @@ found in the LICENSE file.
   </template>
 
   <script>
-    /* global AbstractTestFileResultsTable */
+    /* global AbstractTestFileResultsTable, TestRunsBase */
     class TestFileResultsTableVerbose extends AbstractTestFileResultsTable(TestRunsBase) {
       static get is() {
         return 'test-file-results-table-verbose';
@@ -87,6 +87,6 @@ found in the LICENSE file.
     }
 
     window.customElements.define(
-        TestFileResultsTableVerbose.is, TestFileResultsTableVerbose);
+      TestFileResultsTableVerbose.is, TestFileResultsTableVerbose);
   </script>
 </dom-module>
