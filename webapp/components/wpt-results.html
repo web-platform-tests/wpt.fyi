@@ -269,7 +269,7 @@ found in the LICENSE file.
           },
           displayedTests: {
             type: Array,
-            value: [],
+            value: []
           },
           // Show a diff column (if there are 2 testRuns).
           diff: Boolean,
@@ -409,6 +409,7 @@ found in the LICENSE file.
         if (!this.computePathIsATestFile(path)) {
           return;
         }
+        path = this.encodeTestPath(path);
         this.manifest = null; // Clear ASAP.
         this.manifest = await fetch(`/api/manifest?path=${path}`).then(r => r.json());
       }
@@ -426,12 +427,30 @@ found in the LICENSE file.
       refreshDisplayedNodes() {
         /* Recomputes the list of displayed directories and test files. */
         const displayedNodeMap = new Map();
+        const displayedTests = [];
         const currentPathParts = this.splitPathIntoLinkedParts(this.path);
         const partCountIfTestFile = this.path === '/' ? 1 : currentPathParts.length + 1;
         const nextSubdirIndex = this.path === '/' ? 0 : currentPathParts.length;
 
-        let displayedTests = [];
-        const updateResults = (testFileName, dirPath, isDir) => {
+        let files = this.searchResults || Array.from(Object.keys(this.testFiles));
+        if (this.path !== '/') {
+          files = files.filter(
+            testFileName => testFileName.startsWith(`${this.path}/`));
+        }
+
+        for (const testFileName of files) {
+          let parts = this.splitPathIntoLinkedParts(testFileName);
+          let isDir, dirPath;
+          if (parts.length === partCountIfTestFile) {
+            // Add test files in current directory
+            dirPath = testFileName;
+            isDir = false;
+          } else if (parts.length > partCountIfTestFile) {
+            // Add subdirectories in current directory
+            dirPath = parts[nextSubdirIndex].path;
+            isDir = true;
+          }
+
           displayedTests.push(testFileName);
           if (!displayedNodeMap.has(dirPath)) {
             displayedNodeMap.set(dirPath, {isDir: isDir, results: {}});
@@ -444,24 +463,7 @@ found in the LICENSE file.
             displayedNodeMap.get(dirPath).results[resultURL].passing += results[resultURL][0];
             displayedNodeMap.get(dirPath).results[resultURL].total += results[resultURL][1];
           });
-        };
-
-        const files = this.searchResults || Array.from(Object.keys(this.testFiles));
-        files.forEach(testFileName => {
-          if (this.path !== '/' && !testFileName.startsWith(`${this.path}/`)) {
-            return;
-          }
-
-          let parts = this.splitPathIntoLinkedParts(testFileName);
-          if (parts.length === partCountIfTestFile) {
-            // Add test files in current directory
-            updateResults(testFileName, testFileName, false);
-          } else if (parts.length > partCountIfTestFile) {
-            // Add subdirectories in current directory
-            let dirPath = parts[nextSubdirIndex].path;
-            updateResults(testFileName, dirPath, true);
-          }
-        });
+        }
 
         this.displayedNodes = Array.from(displayedNodeMap.keys()).map(key => ({
           path: key,
@@ -470,6 +472,11 @@ found in the LICENSE file.
         }));
 
         this.displayedNodes.sort(this.nodeSort);
+
+        if (!displayedTests.length && this.computePathIsATestFile(this.path)) {
+          displayedTests.push(this.path);
+        }
+        displayedTests.sort();
         this.displayedTests = displayedTests;
       }
 
