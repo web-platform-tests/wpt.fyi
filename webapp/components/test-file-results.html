@@ -214,10 +214,10 @@ found in the LICENSE file.
       }
 
       resultsURL(testRun, path) {
-        path = this.encodeTestPath(path);
         if (testRun.revision === 'diff') {
           return `${testRun.results_url}&path=${encodeURIComponent(path)}`;
         }
+        path = this.encodeTestPath(path);
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
         return `${resultsBase}${path}`;
