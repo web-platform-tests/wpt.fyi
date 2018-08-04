@@ -97,13 +97,6 @@ found in the LICENSE file.
         return params;
       }
 
-      subtestNameForDisplay(subtestName, isTestHarness) {
-        if (subtestName !== 'STATUS') {
-          return subtestName;
-        }
-        return isTestHarness ? 'Harness status' : 'File status';
-      }
-
       bindResultHover(run, subTestName) {
         return () => {
           let statusElement = this.shadowRoot.querySelector('#status');
