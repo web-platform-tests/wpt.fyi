@@ -61,17 +61,17 @@ func (r byName) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
 func (r byName) Less(i, j int) bool { return r[i].Name < r[j].Name }
 
 type readable interface {
-	Get(ctx context.Context, id string) ([]byte, error)
+	Get(string) ([]byte, error)
 }
 
 type readWritable interface {
 	readable
-	Put(context.Context, string, []byte) error
+	Put(string, []byte) error
 }
 
 type httpReadable struct{}
 
-func (httpReadable) Get(ctx context.Context, url string) ([]byte, error) {
+func (hr httpReadable) Get(url string) ([]byte, error) {
 	r, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -90,10 +90,12 @@ func (httpReadable) Get(ctx context.Context, url string) ([]byte, error) {
 	return data, nil
 }
 
-type memcacheReadWritable struct{}
+type memcacheReadWritable struct {
+	ctx context.Context
+}
 
-func (mc memcacheReadWritable) Get(ctx context.Context, key string) ([]byte, error) {
-	item, err := memcache.Get(ctx, key)
+func (mc memcacheReadWritable) Get(key string) ([]byte, error) {
+	item, err := memcache.Get(mc.ctx, key)
 	if item == nil {
 		return nil, err
 	}
@@ -101,8 +103,8 @@ func (mc memcacheReadWritable) Get(ctx context.Context, key string) ([]byte, err
 	return item.Value, err
 }
 
-func (mc memcacheReadWritable) Put(ctx context.Context, key string, value []byte) error {
-	return memcache.Add(ctx, &memcache.Item{
+func (mc memcacheReadWritable) Put(key string, value []byte) error {
+	return memcache.Add(mc.ctx, &memcache.Item{
 		Key:   key,
 		Value: value,
 	})
@@ -110,22 +112,24 @@ func (mc memcacheReadWritable) Put(ctx context.Context, key string, value []byte
 
 type sharedImpl interface {
 	ParseSearchFilterParams(*http.Request) (shared.SearchFilter, error)
-	LoadTestRuns(context.Context, []shared.ProductSpec, mapset.Set, []string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
-	LoadTestRun(context.Context, int64) (*shared.TestRun, error)
+	LoadTestRuns([]shared.ProductSpec, mapset.Set, []string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
+	LoadTestRun(int64) (*shared.TestRun, error)
 }
 
-type defaultSharedImpl struct{}
+type defaultSharedImpl struct {
+	ctx context.Context
+}
 
 func (defaultSharedImpl) ParseSearchFilterParams(r *http.Request) (shared.SearchFilter, error) {
 	return shared.ParseSearchFilterParams(r)
 }
 
-func (defaultSharedImpl) LoadTestRuns(ctx context.Context, ps []shared.ProductSpec, ls mapset.Set, shas []string, from *time.Time, to *time.Time, limit *int) ([]shared.TestRun, error) {
-	return shared.LoadTestRuns(ctx, ps, ls, shas, from, to, limit)
+func (simpl defaultSharedImpl) LoadTestRuns(ps []shared.ProductSpec, ls mapset.Set, shas []string, from *time.Time, to *time.Time, limit *int) ([]shared.TestRun, error) {
+	return shared.LoadTestRuns(simpl.ctx, ps, ls, shas, from, to, limit)
 }
 
-func (defaultSharedImpl) LoadTestRun(ctx context.Context, id int64) (*shared.TestRun, error) {
-	return shared.LoadTestRun(ctx, id)
+func (simpl defaultSharedImpl) LoadTestRun(id int64) (*shared.TestRun, error) {
+	return shared.LoadTestRun(simpl.ctx, id)
 }
 
 type searchHandler struct {
@@ -134,28 +138,37 @@ type searchHandler struct {
 	store readable
 }
 
-func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func handleSearch(w http.ResponseWriter, r *http.Request) {
 	// Parse query params.
 	ctx := appengine.NewContext(r)
+	sh := searchHandler{
+		simpl: defaultSharedImpl{ctx},
+		cache: memcacheReadWritable{ctx},
+		store: httpReadable{},
+	}
+	sh.ServeHTTP(w, r)
+}
+
+func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters, err := sh.simpl.ParseSearchFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	testRuns, filters, err := sh.getRunsAndFilters(ctx, filters)
+	testRuns, filters, err := sh.getRunsAndFilters(filters)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	summaries, err := sh.loadSummaries(ctx, testRuns)
+	summaries, err := sh.loadSummaries(testRuns)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	resp := sh.prepareResponse(filters, testRuns, summaries)
+	resp := prepareResponse(filters, testRuns, summaries)
 
 	// Send response.
 	data, err := json.Marshal(resp)
@@ -165,7 +178,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func (sh searchHandler) getRunsAndFilters(ctx context.Context, in shared.SearchFilter) ([]shared.TestRun, shared.SearchFilter, error) {
+func (sh searchHandler) getRunsAndFilters(in shared.SearchFilter) ([]shared.TestRun, shared.SearchFilter, error) {
 	filters := in
 	var testRuns []shared.TestRun
 
@@ -175,7 +188,7 @@ func (sh searchHandler) getRunsAndFilters(ctx context.Context, in shared.SearchF
 		var err error
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
-		testRuns, err = sh.simpl.LoadTestRuns(ctx, products, runFilters.Labels, shas, runFilters.From, runFilters.To, &limit)
+		testRuns, err = sh.simpl.LoadTestRuns(products, runFilters.Labels, shas, runFilters.From, runFilters.To, &limit)
 		if err != nil {
 			return testRuns, filters, err
 		}
@@ -194,7 +207,7 @@ func (sh searchHandler) getRunsAndFilters(ctx context.Context, in shared.SearchF
 				defer wg.Done()
 
 				var testRun *shared.TestRun
-				testRun, err = sh.simpl.LoadTestRun(ctx, id)
+				testRun, err = sh.simpl.LoadTestRun(id)
 				if err == nil {
 					testRuns[i] = *testRun
 				}
@@ -210,7 +223,7 @@ func (sh searchHandler) getRunsAndFilters(ctx context.Context, in shared.SearchF
 	return testRuns, filters, nil
 }
 
-func (sh searchHandler) loadSummaries(ctx context.Context, testRuns []shared.TestRun) ([]summary, error) {
+func (sh searchHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, error) {
 	var err error
 	summaries := make([]summary, len(testRuns))
 
@@ -223,12 +236,14 @@ func (sh searchHandler) loadSummaries(ctx context.Context, testRuns []shared.Tes
 
 			var data []byte
 			s := make(summary)
-			data, err = sh.loadSummary(ctx, testRun)
-			if err != nil {
+			data, loadErr := sh.loadSummary(testRun)
+			if err == nil && loadErr != nil {
+				err = loadErr
 				return
 			}
-			err = json.Unmarshal(data, &s)
-			if err != nil {
+			marshalErr := json.Unmarshal(data, &s)
+			if err == nil && marshalErr != nil {
+				err = marshalErr
 				return
 			}
 			summaries[i] = s
@@ -239,9 +254,9 @@ func (sh searchHandler) loadSummaries(ctx context.Context, testRuns []shared.Tes
 	return summaries, err
 }
 
-func (sh searchHandler) loadSummary(ctx context.Context, testRun shared.TestRun) ([]byte, error) {
+func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	mkey := getMemcacheKey(testRun)
-	cached, err := sh.cache.Get(ctx, mkey)
+	cached, err := sh.cache.Get(mkey)
 	if cached != nil && err == nil {
 		return cached, nil
 	}
@@ -252,14 +267,14 @@ func (sh searchHandler) loadSummary(ctx context.Context, testRun shared.TestRun)
 	}
 
 	url := getResultsURL(testRun, "")
-	data, err := sh.store.Get(ctx, url)
+	data, err := sh.store.Get(url)
 	if err != nil {
 		return nil, err
 	}
 
 	// Cache summary.
 	go func() {
-		if err := sh.cache.Put(ctx, mkey, data); err != nil {
+		if err := sh.cache.Put(mkey, data); err != nil {
 			log.Printf("WARNING: Failed to write TestRun summary to memcache key %s", mkey)
 		}
 	}()
@@ -267,7 +282,7 @@ func (sh searchHandler) loadSummary(ctx context.Context, testRun shared.TestRun)
 	return data, nil
 }
 
-func (sh searchHandler) prepareResponse(filters shared.SearchFilter, testRuns []shared.TestRun, summaries []summary) SearchResponse {
+func prepareResponse(filters shared.SearchFilter, testRuns []shared.TestRun, summaries []summary) SearchResponse {
 	resp := SearchResponse{
 		Runs: testRuns,
 	}

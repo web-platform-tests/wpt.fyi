@@ -13,7 +13,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/memcache"
 )
 
@@ -26,10 +25,6 @@ func TestGetMemcacheKey(t *testing.T) {
 func TestLoadSummary_cacheMiss(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
 
 	url := "https://example.com/1-summary.json.gz"
 	testRun := shared.TestRun{
@@ -44,27 +39,31 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 		cache: cache,
 		store: store,
 	}
-	summary := []byte("{}")
+	smry := []byte("{}")
 
-	cache.EXPECT().Get(ctx, key).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().Get(ctx, url).Return(summary, nil)
-	cache.EXPECT().Put(ctx, key, summary).Return(nil)
+	// Use channel to synchronize with expected async cache.Put().
+	c := make(chan bool)
+	cache.EXPECT().Get(key).Return(nil, memcache.ErrCacheMiss)
+	store.EXPECT().Get(url).Return(smry, nil)
+	cache.EXPECT().Put(key, smry).DoAndReturn(func(key string, smry []byte) error {
+		c <- true
+		return nil
+	})
 
-	s, err := sh.loadSummary(ctx, shared.TestRun{
+	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
 		ResultsURL: url,
 	})
 	assert.Nil(t, err)
-	assert.Equal(t, summary, s)
+	assert.Equal(t, smry, s)
+
+	b := <-c
+	assert.Equal(t, true, b)
 }
 
 func TestLoadSummary_cacheHit(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
 
 	url := "https://example.com/1-summary.json.gz"
 	testRun := shared.TestRun{
@@ -79,9 +78,9 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 	}
 	summary := []byte("{}")
 
-	cache.EXPECT().Get(ctx, key).Return(summary, nil)
+	cache.EXPECT().Get(key).Return(summary, nil)
 
-	s, err := sh.loadSummary(ctx, shared.TestRun{
+	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
 		ResultsURL: url,
 	})
@@ -92,10 +91,6 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 func TestLoadSummary_missing(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
 
 	url := "https://example.com/1-summary.json.gz"
 	testRun := shared.TestRun{
@@ -112,10 +107,10 @@ func TestLoadSummary_missing(t *testing.T) {
 	}
 	storeMiss := errors.New("No such summary file")
 
-	cache.EXPECT().Get(ctx, key).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().Get(ctx, url).Return(nil, storeMiss)
+	cache.EXPECT().Get(key).Return(nil, memcache.ErrCacheMiss)
+	store.EXPECT().Get(url).Return(nil, storeMiss)
 
-	s, err := sh.loadSummary(ctx, shared.TestRun{
+	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
 		ResultsURL: url,
 	})
@@ -126,10 +121,6 @@ func TestLoadSummary_missing(t *testing.T) {
 func TestLoadSummaries_success(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
 
 	urls := []string{
 		"https://example.com/1-summary.json.gz",
@@ -163,10 +154,10 @@ func TestLoadSummaries_success(t *testing.T) {
 		map[string][]int{"/x/y/z": []int{3, 4}},
 	}
 
-	cache.EXPECT().Get(ctx, keys[0]).Return(summaryBytes[0], nil)
-	cache.EXPECT().Get(ctx, keys[1]).Return(summaryBytes[1], nil)
+	cache.EXPECT().Get(keys[0]).Return(summaryBytes[0], nil)
+	cache.EXPECT().Get(keys[1]).Return(summaryBytes[1], nil)
 
-	ss, err := sh.loadSummaries(ctx, testRuns)
+	ss, err := sh.loadSummaries(testRuns)
 	assert.Nil(t, err)
 	assert.Equal(t, summaries[0], ss[0])
 	assert.Equal(t, summaries[1], ss[1])
@@ -175,10 +166,6 @@ func TestLoadSummaries_success(t *testing.T) {
 func TestLoadSummaries_fail(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
 
 	urls := []string{
 		"https://example.com/1-summary.json.gz",
@@ -210,21 +197,17 @@ func TestLoadSummaries_fail(t *testing.T) {
 	}
 	storeMiss := errors.New("No such summary file")
 
-	cache.EXPECT().Get(ctx, keys[0]).Return(summaryBytes[0], nil)
-	cache.EXPECT().Get(ctx, keys[1]).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().Get(ctx, urls[1]).Return(nil, storeMiss)
+	cache.EXPECT().Get(keys[0]).Return(summaryBytes[0], nil)
+	cache.EXPECT().Get(keys[1]).Return(nil, memcache.ErrCacheMiss)
+	store.EXPECT().Get(urls[1]).Return(nil, storeMiss)
 
-	_, err = sh.loadSummaries(ctx, testRuns)
+	_, err := sh.loadSummaries(testRuns)
 	assert.Equal(t, storeMiss, err)
 }
 
 func TestGetRunsAndFilters_default(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
 
 	simpl := NewMocksharedImpl(mockCtrl)
 	sh := searchHandler{
@@ -248,12 +231,116 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	}
 	filters := shared.SearchFilter{}
 
-	simpl.EXPECT().LoadTestRuns(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
+	simpl.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
 
-	trs, fs, err := sh.getRunsAndFilters(ctx, filters)
+	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)
 	assert.Equal(t, testRuns, trs)
 	assert.Equal(t, shared.SearchFilter{
 		RunIDs: runIDs,
 	}, fs)
+}
+
+func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	simpl := NewMocksharedImpl(mockCtrl)
+	sh := searchHandler{
+		simpl: simpl,
+	}
+
+	runIDs := []int64{1, 2}
+	urls := []string{
+		"https://example.com/1-summary.json.gz",
+		"https://example.com/2-summary.json.gz",
+	}
+	testRuns := []shared.TestRun{
+		shared.TestRun{
+			ID:         runIDs[0],
+			ResultsURL: urls[0],
+		},
+		shared.TestRun{
+			ID:         runIDs[1],
+			ResultsURL: urls[1],
+		},
+	}
+	filters := shared.SearchFilter{
+		RunIDs: runIDs,
+	}
+
+	simpl.EXPECT().LoadTestRun(testRuns[0].ID).Return(&testRuns[0], nil)
+	simpl.EXPECT().LoadTestRun(testRuns[1].ID).Return(&testRuns[1], nil)
+
+	trs, fs, err := sh.getRunsAndFilters(filters)
+	assert.Nil(t, err)
+	assert.Equal(t, testRuns, trs)
+	assert.Equal(t, filters, fs)
+}
+
+func TestPrepareResponse(t *testing.T) {
+	runIDs := []int64{1, 2}
+	testRuns := []shared.TestRun{
+		shared.TestRun{
+			ID:         runIDs[0],
+			ResultsURL: "https://example.com/1-summary.json.gz",
+		},
+		shared.TestRun{
+			ID:         runIDs[1],
+			ResultsURL: "https://example.com/2-summary.json.gz",
+		},
+	}
+	filters := shared.SearchFilter{
+		RunIDs: runIDs,
+		Q:      "/b/",
+	}
+	summaries := []summary{
+		map[string][]int{
+			"/a/b/c": []int{1, 2},
+			"/b/c":   []int{9, 9},
+		},
+		map[string][]int{
+			"/z/b/c": []int{0, 8},
+			"/x/y/z": []int{3, 4},
+			"/b/c":   []int{5, 9},
+		},
+	}
+
+	resp := prepareResponse(filters, testRuns, summaries)
+	assert.Equal(t, testRuns, resp.Runs)
+	assert.Equal(t, []SearchResult{
+		SearchResult{
+			Name: "/a/b/c",
+			Status: []SearchRunResult{
+				SearchRunResult{
+					Passes: 1,
+					Total:  2,
+				},
+				SearchRunResult{},
+			},
+		},
+		SearchResult{
+			Name: "/b/c",
+			Status: []SearchRunResult{
+				SearchRunResult{
+					Passes: 9,
+					Total:  9,
+				},
+				SearchRunResult{
+					Passes: 5,
+					Total:  9,
+				},
+			},
+		},
+		SearchResult{
+			Name: "/z/b/c",
+			Status: []SearchRunResult{
+				SearchRunResult{},
+				SearchRunResult{
+					Passes: 0,
+					Total:  8,
+				},
+			},
+		},
+	}, resp.Results)
 }

@@ -5,7 +5,6 @@
 package api
 
 import (
-	context "context"
 	golang_set "github.com/deckarep/golang-set"
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
@@ -38,16 +37,16 @@ func (m *Mockreadable) EXPECT() *MockreadableMockRecorder {
 }
 
 // Get mocks base method
-func (m *Mockreadable) Get(ctx context.Context, id string) ([]byte, error) {
-	ret := m.ctrl.Call(m, "Get", ctx, id)
+func (m *Mockreadable) Get(arg0 string) ([]byte, error) {
+	ret := m.ctrl.Call(m, "Get", arg0)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get
-func (mr *MockreadableMockRecorder) Get(ctx, id interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*Mockreadable)(nil).Get), ctx, id)
+func (mr *MockreadableMockRecorder) Get(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*Mockreadable)(nil).Get), arg0)
 }
 
 // MockreadWritable is a mock of readWritable interface
@@ -74,28 +73,28 @@ func (m *MockreadWritable) EXPECT() *MockreadWritableMockRecorder {
 }
 
 // Get mocks base method
-func (m *MockreadWritable) Get(ctx context.Context, id string) ([]byte, error) {
-	ret := m.ctrl.Call(m, "Get", ctx, id)
+func (m *MockreadWritable) Get(arg0 string) ([]byte, error) {
+	ret := m.ctrl.Call(m, "Get", arg0)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get
-func (mr *MockreadWritableMockRecorder) Get(ctx, id interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockreadWritable)(nil).Get), ctx, id)
+func (mr *MockreadWritableMockRecorder) Get(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockreadWritable)(nil).Get), arg0)
 }
 
 // Put mocks base method
-func (m *MockreadWritable) Put(arg0 context.Context, arg1 string, arg2 []byte) error {
-	ret := m.ctrl.Call(m, "Put", arg0, arg1, arg2)
+func (m *MockreadWritable) Put(arg0 string, arg1 []byte) error {
+	ret := m.ctrl.Call(m, "Put", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put
-func (mr *MockreadWritableMockRecorder) Put(arg0, arg1, arg2 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockreadWritable)(nil).Put), arg0, arg1, arg2)
+func (mr *MockreadWritableMockRecorder) Put(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockreadWritable)(nil).Put), arg0, arg1)
 }
 
 // MocksharedImpl is a mock of sharedImpl interface
@@ -135,27 +134,27 @@ func (mr *MocksharedImplMockRecorder) ParseSearchFilterParams(arg0 interface{}) 
 }
 
 // LoadTestRuns mocks base method
-func (m *MocksharedImpl) LoadTestRuns(arg0 context.Context, arg1 []shared.ProductSpec, arg2 golang_set.Set, arg3 []string, arg4, arg5 *time.Time, arg6 *int) ([]shared.TestRun, error) {
-	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+func (m *MocksharedImpl) LoadTestRuns(arg0 []shared.ProductSpec, arg1 golang_set.Set, arg2 []string, arg3, arg4 *time.Time, arg5 *int) ([]shared.TestRun, error) {
+	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].([]shared.TestRun)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // LoadTestRuns indicates an expected call of LoadTestRuns
-func (mr *MocksharedImplMockRecorder) LoadTestRuns(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRuns", reflect.TypeOf((*MocksharedImpl)(nil).LoadTestRuns), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+func (mr *MocksharedImplMockRecorder) LoadTestRuns(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRuns", reflect.TypeOf((*MocksharedImpl)(nil).LoadTestRuns), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // LoadTestRun mocks base method
-func (m *MocksharedImpl) LoadTestRun(arg0 context.Context, arg1 int64) (*shared.TestRun, error) {
-	ret := m.ctrl.Call(m, "LoadTestRun", arg0, arg1)
+func (m *MocksharedImpl) LoadTestRun(arg0 int64) (*shared.TestRun, error) {
+	ret := m.ctrl.Call(m, "LoadTestRun", arg0)
 	ret0, _ := ret[0].(*shared.TestRun)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // LoadTestRun indicates an expected call of LoadTestRun
-func (mr *MocksharedImplMockRecorder) LoadTestRun(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRun", reflect.TypeOf((*MocksharedImpl)(nil).LoadTestRun), arg0, arg1)
+func (mr *MocksharedImplMockRecorder) LoadTestRun(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRun", reflect.TypeOf((*MocksharedImpl)(nil).LoadTestRun), arg0)
 }
