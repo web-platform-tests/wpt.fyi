@@ -115,7 +115,7 @@ webserver_deps: webapp_deps dev_appserver_deps
 
 webapp_deps: go_deps bower_components
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go
+dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
 chrome: browser_deps
 	if [[ -z "$$(which google-chrome)" ]]; then \
