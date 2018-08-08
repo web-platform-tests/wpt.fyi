@@ -18,6 +18,13 @@ import (
 	mapset "github.com/deckarep/golang-set"
 )
 
+// SearchFilter represents the ways search results can be filtered in the webapp
+// search API.
+type SearchFilter struct {
+	RunIDs []int64
+	Q      string
+}
+
 // TestRunFilter represents the ways TestRun entities can be filtered in
 // the webapp and api.
 type TestRunFilter struct {
@@ -543,6 +550,31 @@ func ParseBooleanParam(r *http.Request, name string) (result *bool, err error) {
 		b, err = strconv.ParseBool(val)
 	}
 	return &b, err
+}
+
+func ParseRunIDsParam(r *http.Request) (ids []int64, err error) {
+	idStrs := strings.Split(r.URL.Query().Get("run_ids"), ",")
+	ids = make([]int64, 0, len(idStrs))
+	for _, idStr := range idStrs {
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, err
+}
+
+func ParseSearchFilterParams(r *http.Request) (filter SearchFilter, err error) {
+	keys, err := ParseRunIDsParam(r)
+	if err != nil {
+		return filter, err
+	}
+	filter.RunIDs = keys
+
+	filter.Q = r.URL.Query().Get("q")
+
+	return filter, nil
 }
 
 // ParseTestRunFilterParams parses all of the filter params for a TestRun query.
