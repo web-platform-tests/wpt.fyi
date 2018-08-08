@@ -1,0 +1,92 @@
+<!--
+Copyright 2018 The WPT Dashboard Project. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="abstract-test-file-results-table.html">
+
+<dom-module id="test-file-results-table-verbose">
+  <template>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td.sub-test-name {
+        font-family: monospace;
+        font-size: 0.9em;
+      }
+      td.result {
+        background-color: #eee;
+      }
+      td.result.OK, td.result.PASS {
+        background-color: rgb(90, 242, 113);
+      }
+      td.result.FAIL {
+        background-color: rgb(242, 90, 90);
+      }
+    </style>
+
+    <table>
+      <thead>
+        <tr>
+          <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
+          <template is="dom-repeat" items="[[testRuns]]" as="testRun">
+            <th width="[[computeRunThWidth(testRuns)]]">
+              <test-run test-run="[[testRun]]"></test-run>
+            </th>
+          </template>
+        </tr>
+      </thead>
+      <tbody>
+        <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
+          <tr>
+            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName, isTestHarness) ]]</code></td>
+
+            <template is="dom-repeat" items="{{testRuns}}" as="testRun">
+              <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
+                <code>[[ subtestMessageForTestRun(testRun, subtestName) ]]</code>
+              </td>
+            </template>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </template>
+
+  <script>
+    /* global AbstractTestFileResultsTable, TestRunsBase */
+    class TestFileResultsTableVerbose extends AbstractTestFileResultsTable(TestRunsBase) {
+      static get is() {
+        return 'test-file-results-table-verbose';
+      }
+
+      subtestMessageForTestRun(testRun, subtestName) {
+        if (!testRun) {
+          return null;
+        }
+        if (!testRun.subtests) {
+          return null;
+        }
+        if (!testRun.subtests[subtestName]) {
+          return null;
+        }
+        if (testRun.subtests[subtestName].status === 'OK') {
+          return 'OK';
+        }
+        if (testRun.subtests[subtestName].status === 'PASS') {
+          return 'PASS';
+        }
+        if (testRun.subtests[subtestName].message) {
+          return `Failure message: ${testRun.subtests[subtestName].message}`;
+        }
+        return testRun.subtests[subtestName].status;
+      }
+    }
+
+    window.customElements.define(
+      TestFileResultsTableVerbose.is, TestFileResultsTableVerbose);
+  </script>
+</dom-module>
