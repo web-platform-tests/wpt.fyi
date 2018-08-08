@@ -30,12 +30,7 @@ func RegisterRoutes() {
 	shared.AddRoute("/api/run", "api-test-run", apiTestRunHandler)
 
 	// API endpoint for searching results over given runs.
-	searchAPI := searchHandler{
-		simpl: defaultSharedImpl{},
-		cache: memcacheReadWritable{},
-		store: httpReadable{},
-	}
-	shared.AddRoute("/api/search", "api-search", searchAPI.ServeHTTP)
+	shared.AddRoute("/api/search", "api-search", handleSearch)
 
 	// API endpoint for redirecting to a run's summary JSON blob.
 	shared.AddRoute("/api/results", "api-results", apiResultsRedirectHandler)
