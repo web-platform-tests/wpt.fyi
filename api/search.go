@@ -180,7 +180,7 @@ func (sh searchHandler) getRunsAndFilters(ctx context.Context, in shared.SearchF
 			return testRuns, filters, err
 		}
 
-		filters.RunIDs = make([]int64, len(testRuns))
+		filters.RunIDs = make([]int64, 0, len(testRuns))
 		for _, testRun := range testRuns {
 			filters.RunIDs = append(filters.RunIDs, testRun.ID)
 		}
@@ -219,6 +219,8 @@ func (sh searchHandler) loadSummaries(ctx context.Context, testRuns []shared.Tes
 		wg.Add(1)
 
 		go func(i int, testRun shared.TestRun) {
+			defer wg.Done()
+
 			var data []byte
 			s := make(summary)
 			data, err = sh.loadSummary(ctx, testRun)
@@ -246,6 +248,7 @@ func (sh searchHandler) loadSummary(ctx context.Context, testRun shared.TestRun)
 
 	if err != nil {
 		log.Printf("WARNING: Error fetching cache key %s: %v", mkey, err)
+		err = nil
 	}
 
 	url := getResultsURL(testRun, "")
