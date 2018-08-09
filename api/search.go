@@ -148,7 +148,7 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 	sh := searchHandler{
 		simpl: defaultSharedImpl{ctx},
 		cache: memcacheReadWritable{ctx},
-		store: httpReadable{},
+		store: httpReadable{ctx},
 	}
 	sh.ServeHTTP(w, r)
 }
