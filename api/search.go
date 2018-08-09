@@ -107,29 +107,33 @@ func (gz gzipReadWritable) Get(key string) ([]byte, error) {
 		return nil, err
 	}
 
-	reader, err := gzip.NewReader(bytes.NewReader(zipped))
+	return gunzipData(zipped)
+}
+
+func gunzipData(zipped []byte) ([]byte, error) {
+	gzReader, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer gzReader.Close()
 
-	return ioutil.ReadAll(reader)
+	return ioutil.ReadAll(gzReader)
 }
 
 func (gz gzipReadWritable) Put(key string, unzipped []byte) error {
 	var buf bytes.Buffer
-
-	{
-		gzWriter := gzip.NewWriter(bufio.NewWriter(&buf))
-		defer gzWriter.Close()
-
-		_, err := gzWriter.Write(unzipped)
-		if err != nil {
-			return err
-		}
-	}
-
+	gzipData(unzipped, &buf)
 	return gz.delegate.Put(key, buf.Bytes())
+}
+
+func gzipData(unzipped []byte, zipped *bytes.Buffer) error {
+	bufWriter := bufio.NewWriter(zipped)
+	defer bufWriter.Flush()
+	gzWriter := gzip.NewWriter(bufWriter)
+	defer gzWriter.Close()
+
+	_, err := gzWriter.Write(unzipped)
+	return err
 }
 
 type memcacheReadWritable struct {
@@ -148,8 +152,9 @@ func (mc memcacheReadWritable) Get(key string) ([]byte, error) {
 func (mc memcacheReadWritable) Put(key string, value []byte) error {
 	log.Printf("Writing %d-bytes to memcache object: %s", len(value), key)
 	return memcache.Set(mc.ctx, &memcache.Item{
-		Key:   key,
-		Value: value,
+		Key:        key,
+		Value:      value,
+		Expiration: 48 * time.Hour,
 	})
 }
 
@@ -320,7 +325,9 @@ func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	// Cache summary.
 	go func() {
 		if err := sh.cache.Put(mkey, data); err != nil {
-			log.Printf("WARNING: Failed to write TestRun summary to memcache key %s: %v", mkey, err)
+			log.Printf("WARNING: Failed to write TestRun summary to cache key %s: %v", mkey, err)
+		} else {
+			log.Printf("INFO: Wrote TestRun summary to cache key %s", mkey)
 		}
 	}()
 
