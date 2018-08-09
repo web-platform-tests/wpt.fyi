@@ -20,6 +20,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/memcache"
+	"google.golang.org/appengine/urlfetch"
 )
 
 // SearchRunResult is the metadata associated with a particular
@@ -69,10 +70,13 @@ type readWritable interface {
 	Put(string, []byte) error
 }
 
-type httpReadable struct{}
+type httpReadable struct {
+	ctx context.Context
+}
 
 func (hr httpReadable) Get(url string) ([]byte, error) {
-	r, err := http.Get(url)
+	client := urlfetch.Client(hr.ctx)
+	r, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
