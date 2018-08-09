@@ -5,6 +5,9 @@
 package api
 
 import (
+	"bufio"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -94,6 +97,41 @@ func (hr httpReadable) Get(url string) ([]byte, error) {
 	return data, nil
 }
 
+type gzipReadWritable struct {
+	delegate readWritable
+}
+
+func (gz gzipReadWritable) Get(key string) ([]byte, error) {
+	zipped, err := gz.delegate.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := gzip.NewReader(bytes.NewReader(zipped))
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	return ioutil.ReadAll(reader)
+}
+
+func (gz gzipReadWritable) Put(key string, unzipped []byte) error {
+	var buf bytes.Buffer
+
+	{
+		gzWriter := gzip.NewWriter(bufio.NewWriter(&buf))
+		defer gzWriter.Close()
+
+		_, err := gzWriter.Write(unzipped)
+		if err != nil {
+			return err
+		}
+	}
+
+	return gz.delegate.Put(key, buf.Bytes())
+}
+
 type memcacheReadWritable struct {
 	ctx context.Context
 }
@@ -108,7 +146,8 @@ func (mc memcacheReadWritable) Get(key string) ([]byte, error) {
 }
 
 func (mc memcacheReadWritable) Put(key string, value []byte) error {
-	return memcache.Add(mc.ctx, &memcache.Item{
+	log.Printf("Writing %d-bytes to memcache object: %s", len(value), key)
+	return memcache.Set(mc.ctx, &memcache.Item{
 		Key:   key,
 		Value: value,
 	})
@@ -147,7 +186,7 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	sh := searchHandler{
 		simpl: defaultSharedImpl{ctx},
-		cache: memcacheReadWritable{ctx},
+		cache: gzipReadWritable{memcacheReadWritable{ctx}},
 		store: httpReadable{ctx},
 	}
 	sh.ServeHTTP(w, r)
@@ -262,6 +301,7 @@ func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	mkey := getMemcacheKey(testRun)
 	cached, err := sh.cache.Get(mkey)
 	if cached != nil && err == nil {
+		log.Printf("INFO: Serving summary from cache: %s", mkey)
 		return cached, nil
 	}
 
@@ -271,6 +311,7 @@ func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	}
 
 	url := getResultsURL(testRun, "")
+	log.Printf("INFO: Loading summary from store: %s", url)
 	data, err := sh.store.Get(url)
 	if err != nil {
 		return nil, err
@@ -279,7 +320,7 @@ func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	// Cache summary.
 	go func() {
 		if err := sh.cache.Put(mkey, data); err != nil {
-			log.Printf("WARNING: Failed to write TestRun summary to memcache key %s", mkey)
+			log.Printf("WARNING: Failed to write TestRun summary to memcache key %s: %v", mkey, err)
 		}
 	}()
 
