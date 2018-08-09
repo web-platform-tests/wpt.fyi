@@ -1,0 +1,58 @@
+<!--
+Copyright 2018 The WPT Dashboard Project. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<dom-module id="abstract-test-file-results-table">
+  <script>
+    // eslint-disable-next-line no-unused-vars
+    const AbstractTestFileResultsTable = superClass => class extends superClass {
+      static get is() {
+        return 'abstract-test-file-results-table';
+      }
+
+      static get properties() {
+        return {
+          subtestNames: {
+            type: Array,
+            value: [],
+          },
+        };
+      }
+
+      subtestNameForDisplay(subtestName, isTestHarness) {
+        if (subtestName !== 'STATUS') {
+          return subtestName;
+        }
+        return isTestHarness ? 'Harness status' : 'File status';
+      }
+
+      subtestResultForTestRun(testRun, subtestName) {
+        if (!testRun) {
+          return null;
+        }
+        if (!testRun.subtests) {
+          return null;
+        }
+        if (!testRun.subtests[subtestName]) {
+          return null;
+        }
+        return testRun.subtests[subtestName].status;
+      }
+
+      // eslint-disable-next-line no-unused-vars
+      subtestMessageForTestRun(testRun, subtestName) {
+        return 'NOT IMPLEMENTED';
+      }
+
+      computeSubtestThWidth(testRuns) {
+        return `${200 / (testRuns.length + 2)}%`;
+      }
+
+      computeRunThWidth(testRuns) {
+        return `${100 / (testRuns.length + 2)}%`;
+      }
+    };
+  </script>
+</dom-module>
