@@ -2,28 +2,30 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package query
 
 import (
-	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
+	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/memcache"
-	"google.golang.org/appengine/urlfetch"
 )
 
 // SearchRunResult is the metadata associated with a particular
@@ -65,140 +67,130 @@ func (r byName) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
 func (r byName) Less(i, j int) bool { return r[i].Name < r[j].Name }
 
 type readable interface {
-	Get(string) ([]byte, error)
+	NewReader(string) (io.Reader, error)
 }
 
 type readWritable interface {
 	readable
-	Put(string, []byte) error
+	NewWriteCloser(string) (io.WriteCloser, error)
 }
 
 type httpReadable struct {
 	ctx context.Context
 }
 
-func (hr httpReadable) Get(url string) ([]byte, error) {
-	client := urlfetch.Client(hr.ctx)
-	r, err := client.Get(url)
+func (hr httpReadable) NewReader(url string) (io.Reader, error) {
+	r, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	defer r.Body.Close()
 
-	if r.StatusCode != 200 {
+	if r.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Unexpected status code from %s: %d", url, r.StatusCode)
 	}
 
-	var data []byte
-	if data, err = ioutil.ReadAll(r.Body); err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return r.Body, nil
 }
 
 type gzipReadWritable struct {
 	delegate readWritable
 }
 
-func (gz gzipReadWritable) Get(key string) ([]byte, error) {
-	zipped, err := gz.delegate.Get(key)
+func (gz gzipReadWritable) NewReader(id string) (io.Reader, error) {
+	r, err := gz.delegate.NewReader(id)
 	if err != nil {
 		return nil, err
 	}
-
-	return gunzipData(zipped)
+	return gzip.NewReader(r)
 }
 
-func gunzipData(zipped []byte) ([]byte, error) {
-	gzReader, err := gzip.NewReader(bytes.NewReader(zipped))
+func (gz gzipReadWritable) NewWriteCloser(id string) (io.WriteCloser, error) {
+	w, err := gz.delegate.NewWriteCloser(id)
 	if err != nil {
 		return nil, err
 	}
-	defer gzReader.Close()
-
-	return ioutil.ReadAll(gzReader)
-}
-
-func (gz gzipReadWritable) Put(key string, unzipped []byte) error {
-	var buf bytes.Buffer
-	gzipData(unzipped, &buf)
-	return gz.delegate.Put(key, buf.Bytes())
-}
-
-func gzipData(unzipped []byte, zipped *bytes.Buffer) error {
-	bufWriter := bufio.NewWriter(zipped)
-	defer bufWriter.Flush()
-	gzWriter := gzip.NewWriter(bufWriter)
-	defer gzWriter.Close()
-
-	_, err := gzWriter.Write(unzipped)
-	return err
+	return gzip.NewWriter(w), nil
 }
 
 type memcacheReadWritable struct {
 	ctx context.Context
 }
 
-func (mc memcacheReadWritable) Get(key string) ([]byte, error) {
-	item, err := memcache.Get(mc.ctx, key)
-	if item == nil {
-		return nil, err
-	}
-
-	return item.Value, err
+type memcacheWriteCloser struct {
+	memcacheReadWritable
+	key      string
+	b        bytes.Buffer
+	isClosed bool
 }
 
-func (mc memcacheReadWritable) Put(key string, value []byte) error {
-	log.Printf("Writing %d-bytes to memcache object: %s", len(value), key)
-	return memcache.Set(mc.ctx, &memcache.Item{
-		Key:        key,
-		Value:      value,
+var errMemcacheReaderReadAfterClose = errors.New("memcacheReader: Read() after Close()")
+
+func (mc memcacheReadWritable) NewReader(key string) (io.Reader, error) {
+	item, err := memcache.Get(mc.ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(item.Value), nil
+}
+
+func (mc memcacheReadWritable) NewWriteCloser(key string) (io.WriteCloser, error) {
+	return memcacheWriteCloser{mc, key, bytes.Buffer{}, false}, nil
+}
+
+func (mw memcacheWriteCloser) Write(p []byte) (n int, err error) {
+	return mw.b.Write(p)
+}
+
+func (mw memcacheWriteCloser) Close() error {
+	mw.isClosed = true
+	return memcache.Set(mw.ctx, &memcache.Item{
+		Key:        mw.key,
+		Value:      mw.b.Bytes(),
 		Expiration: 48 * time.Hour,
 	})
 }
 
-type sharedImpl interface {
+type sharedInterface interface {
 	ParseSearchFilterParams(*http.Request) (shared.SearchFilter, error)
 	LoadTestRuns([]shared.ProductSpec, mapset.Set, []string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
 	LoadTestRun(int64) (*shared.TestRun, error)
 }
 
-type defaultSharedImpl struct {
+type defaultShared struct {
 	ctx context.Context
 }
 
-func (defaultSharedImpl) ParseSearchFilterParams(r *http.Request) (shared.SearchFilter, error) {
+func (defaultShared) ParseSearchFilterParams(r *http.Request) (shared.SearchFilter, error) {
 	return shared.ParseSearchFilterParams(r)
 }
 
-func (simpl defaultSharedImpl) LoadTestRuns(ps []shared.ProductSpec, ls mapset.Set, shas []string, from *time.Time, to *time.Time, limit *int) ([]shared.TestRun, error) {
-	return shared.LoadTestRuns(simpl.ctx, ps, ls, shas, from, to, limit)
+func (sharedImpl defaultShared) LoadTestRuns(ps []shared.ProductSpec, ls mapset.Set, shas []string, from *time.Time, to *time.Time, limit *int) ([]shared.TestRun, error) {
+	return shared.LoadTestRuns(sharedImpl.ctx, ps, ls, shas, from, to, limit)
 }
 
-func (simpl defaultSharedImpl) LoadTestRun(id int64) (*shared.TestRun, error) {
-	return shared.LoadTestRun(simpl.ctx, id)
+func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
+	return shared.LoadTestRun(sharedImpl.ctx, id)
 }
 
 type searchHandler struct {
-	simpl sharedImpl
-	cache readWritable
-	store readable
+	sharedImpl sharedInterface
+	cache      readWritable
+	store      readable
 }
 
-func handleSearch(w http.ResponseWriter, r *http.Request) {
+func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse query params.
 	ctx := appengine.NewContext(r)
 	sh := searchHandler{
-		simpl: defaultSharedImpl{ctx},
-		cache: gzipReadWritable{memcacheReadWritable{ctx}},
-		store: httpReadable{ctx},
+		sharedImpl: defaultShared{ctx},
+		cache:      gzipReadWritable{memcacheReadWritable{ctx}},
+		store:      httpReadable{ctx},
 	}
 	sh.ServeHTTP(w, r)
 }
 
 func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	filters, err := sh.simpl.ParseSearchFilterParams(r)
+	filters, err := sh.sharedImpl.ParseSearchFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -236,7 +228,7 @@ func (sh searchHandler) getRunsAndFilters(in shared.SearchFilter) ([]shared.Test
 		var err error
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
-		testRuns, err = sh.simpl.LoadTestRuns(products, runFilters.Labels, shas, runFilters.From, runFilters.To, &limit)
+		testRuns, err = sh.sharedImpl.LoadTestRuns(products, runFilters.Labels, shas, runFilters.From, runFilters.To, &limit)
 		if err != nil {
 			return testRuns, filters, err
 		}
@@ -255,7 +247,7 @@ func (sh searchHandler) getRunsAndFilters(in shared.SearchFilter) ([]shared.Test
 				defer wg.Done()
 
 				var testRun *shared.TestRun
-				testRun, err = sh.simpl.LoadTestRun(id)
+				testRun, err = sh.sharedImpl.LoadTestRun(id)
 				if err == nil {
 					testRuns[i] = *testRun
 				}
@@ -304,30 +296,45 @@ func (sh searchHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, err
 
 func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	mkey := getMemcacheKey(testRun)
-	cached, err := sh.cache.Get(mkey)
-	if cached != nil && err == nil {
-		log.Printf("INFO: Serving summary from cache: %s", mkey)
-		return cached, nil
+	r, err := sh.cache.NewReader(mkey)
+	if err == nil {
+		cached, err := ioutil.ReadAll(r)
+		if err == nil {
+			log.Printf("INFO: Serving summary from cache: %s", mkey)
+			return cached, nil
+		}
 	}
 
-	if err != nil {
-		log.Printf("WARNING: Error fetching cache key %s: %v", mkey, err)
-		err = nil
-	}
+	log.Printf("WARNING: Error fetching cache key %s: %v", mkey, err)
+	err = nil
 
-	url := getResultsURL(testRun, "")
+	url := api.GetResultsURL(testRun, "")
 	log.Printf("INFO: Loading summary from store: %s", url)
-	data, err := sh.store.Get(url)
+	r, err = sh.store.NewReader(url)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Cache summary.
 	go func() {
-		if err := sh.cache.Put(mkey, data); err != nil {
-			log.Printf("WARNING: Failed to write TestRun summary to cache key %s: %v", mkey, err)
-		} else {
-			log.Printf("INFO: Wrote TestRun summary to cache key %s", mkey)
+		w, err := sh.cache.NewWriteCloser(mkey)
+		if err != nil {
+			log.Printf("WARNING: Error cache writer for key %s: %v", mkey, err)
+			return
+		}
+		defer func() {
+			if err := w.Close(); err != nil {
+				log.Printf("WARNING: Error cache writer for key %s: %v", mkey, err)
+			}
+		}()
+		if _, err := w.Write(data); err != nil {
+			log.Printf("WARNING: Failed to write to cache key %s: %v", mkey, err)
+			return
 		}
 	}()
 
@@ -370,5 +377,5 @@ func prepareResponse(filters shared.SearchFilter, testRuns []shared.TestRun, sum
 }
 
 func getMemcacheKey(testRun shared.TestRun) string {
-	return "RESULTS_SUMMARY-" + getResultsURL(testRun, "")
+	return "RESULTS_SUMMARY-" + strconv.FormatInt(testRun.ID, 10)
 }

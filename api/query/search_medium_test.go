@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package query
 
 import (
 	"encoding/json"
@@ -67,8 +67,8 @@ func TestSearchHandler(t *testing.T) {
 
 	store := NewMockreadable(mockCtrl)
 
-	store.EXPECT().Get(urls[0]).Return(summaryBytes[0], nil)
-	store.EXPECT().Get(urls[1]).Return(summaryBytes[1], nil)
+	store.MockSuccessfulRead(t, mockCtrl, urls[0], summaryBytes[0])
+	store.MockSuccessfulRead(t, mockCtrl, urls[1], summaryBytes[1])
 
 	// Same params as TestGetRunsAndFilters_specificRunIDs.
 	q := "/b/"
@@ -82,9 +82,9 @@ func TestSearchHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	sh := searchHandler{
-		simpl: defaultSharedImpl{ctx},
-		cache: memcacheReadWritable{ctx},
-		store: store,
+		sharedImpl: defaultShared{ctx},
+		cache:      memcacheReadWritable{ctx},
+		store:      store,
 	}
 
 	sh.ServeHTTP(w, r)

@@ -4,10 +4,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package query
 
 import (
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -15,6 +16,32 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/memcache"
 )
+
+func (mr *Mockreadable) MockSuccessfulRead(t *testing.T, ctrl *gomock.Controller, id string, v []byte) {
+	r := NewMockReader(ctrl)
+	mr.EXPECT().NewReader(id).Return(r, nil)
+	r.EXPECT().Read(gomock.Any()).DoAndReturn(func(p []byte) (int, error) {
+		assert.True(t, len(p) >= len(v))
+		for i := range v {
+			p[i] = v[i]
+		}
+		return len(v), nil
+	})
+	r.EXPECT().Read(gomock.Any()).Return(0, io.EOF)
+}
+
+func (mrw *MockreadWritable) MockSuccessfulRead(t *testing.T, ctrl *gomock.Controller, id string, v []byte) {
+	r := NewMockReader(ctrl)
+	mrw.EXPECT().NewReader(id).Return(r, nil)
+	r.EXPECT().Read(gomock.Any()).DoAndReturn(func(p []byte) (int, error) {
+		assert.True(t, len(p) >= len(v))
+		for i := range v {
+			p[i] = v[i]
+		}
+		return len(v), nil
+	})
+	r.EXPECT().Read(gomock.Any()).Return(0, io.EOF)
+}
 
 func TestGetMemcacheKey(t *testing.T) {
 	assert.Equal(t, "RESULTS_SUMMARY-https://example.com/some-summary.json.gz", getMemcacheKey(shared.TestRun{
@@ -43,9 +70,12 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 
 	// Use channel to synchronize with expected async cache.Put().
 	c := make(chan bool)
-	cache.EXPECT().Get(key).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().Get(url).Return(smry, nil)
-	cache.EXPECT().Put(key, smry).DoAndReturn(func(key string, smry []byte) error {
+	w := NewMockWriteCloser(mockCtrl)
+	cache.EXPECT().NewReader(key).Return(nil, memcache.ErrCacheMiss)
+	store.MockSuccessfulRead(t, mockCtrl, url, smry)
+	cache.EXPECT().NewWriteCloser(key).Return(w, nil)
+	w.EXPECT().Write(smry).Return(len(smry), nil)
+	w.EXPECT().Close().DoAndReturn(func() error {
 		c <- true
 		return nil
 	})
@@ -76,16 +106,16 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 	sh := searchHandler{
 		cache: cache,
 	}
-	summary := []byte("{}")
+	smry := []byte("{}")
 
-	cache.EXPECT().Get(key).Return(summary, nil)
+	cache.MockSuccessfulRead(t, mockCtrl, key, smry)
 
 	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
 		ResultsURL: url,
 	})
 	assert.Nil(t, err)
-	assert.Equal(t, summary, s)
+	assert.Equal(t, smry, s)
 }
 
 func TestLoadSummary_missing(t *testing.T) {
@@ -107,8 +137,8 @@ func TestLoadSummary_missing(t *testing.T) {
 	}
 	storeMiss := errors.New("No such summary file")
 
-	cache.EXPECT().Get(key).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().Get(url).Return(nil, storeMiss)
+	cache.EXPECT().NewReader(key).Return(nil, memcache.ErrCacheMiss)
+	store.EXPECT().NewReader(url).Return(nil, storeMiss)
 
 	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
@@ -154,8 +184,8 @@ func TestLoadSummaries_success(t *testing.T) {
 		map[string][]int{"/x/y/z": []int{3, 4}},
 	}
 
-	cache.EXPECT().Get(keys[0]).Return(summaryBytes[0], nil)
-	cache.EXPECT().Get(keys[1]).Return(summaryBytes[1], nil)
+	cache.MockSuccessfulRead(t, mockCtrl, keys[0], summaryBytes[0])
+	cache.MockSuccessfulRead(t, mockCtrl, keys[1], summaryBytes[1])
 
 	ss, err := sh.loadSummaries(testRuns)
 	assert.Nil(t, err)
@@ -197,9 +227,9 @@ func TestLoadSummaries_fail(t *testing.T) {
 	}
 	storeMiss := errors.New("No such summary file")
 
-	cache.EXPECT().Get(keys[0]).Return(summaryBytes[0], nil)
-	cache.EXPECT().Get(keys[1]).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().Get(urls[1]).Return(nil, storeMiss)
+	cache.MockSuccessfulRead(t, mockCtrl, keys[0], summaryBytes[0])
+	cache.EXPECT().NewReader(keys[1]).Return(nil, memcache.ErrCacheMiss)
+	store.EXPECT().NewReader(urls[1]).Return(nil, storeMiss)
 
 	_, err := sh.loadSummaries(testRuns)
 	assert.Equal(t, storeMiss, err)
@@ -209,9 +239,9 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	simpl := NewMocksharedImpl(mockCtrl)
+	si := NewMocksharedInterface(mockCtrl)
 	sh := searchHandler{
-		simpl: simpl,
+		sharedImpl: si,
 	}
 
 	runIDs := []int64{1, 2}
@@ -231,7 +261,7 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	}
 	filters := shared.SearchFilter{}
 
-	simpl.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
+	si.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)
@@ -245,9 +275,9 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	simpl := NewMocksharedImpl(mockCtrl)
+	si := NewMocksharedInterface(mockCtrl)
 	sh := searchHandler{
-		simpl: simpl,
+		sharedImpl: si,
 	}
 
 	runIDs := []int64{1, 2}
@@ -269,8 +299,8 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 		RunIDs: runIDs,
 	}
 
-	simpl.EXPECT().LoadTestRun(testRuns[0].ID).Return(&testRuns[0], nil)
-	simpl.EXPECT().LoadTestRun(testRuns[1].ID).Return(&testRuns[1], nil)
+	si.EXPECT().LoadTestRun(testRuns[0].ID).Return(&testRuns[0], nil)
+	si.EXPECT().LoadTestRun(testRuns[1].ID).Return(&testRuns[1], nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)
