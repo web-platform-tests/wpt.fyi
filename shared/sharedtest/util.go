@@ -16,7 +16,6 @@ import (
 func NewAEInstance(stronglyConsistentDatastore bool) (aetest.Instance, error) {
 	return aetest.NewInstance(&aetest.Options{
 		StronglyConsistentDatastore: stronglyConsistentDatastore,
-		SuppressDevAppServerLog:     true,
 	})
 }
 
