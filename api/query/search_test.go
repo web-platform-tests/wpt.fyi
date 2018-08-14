@@ -66,8 +66,10 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
 	sh := searchHandler{
-		cache: cache,
-		store: store,
+		dataSource: cachedStore{
+			cache: cache,
+			store: store,
+		},
 	}
 	smry := []byte("{}")
 
@@ -102,7 +104,7 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	sh := searchHandler{
-		cache: cache,
+		dataSource: cachedStore{cache: cache},
 	}
 	smry := []byte("{}")
 
@@ -130,8 +132,10 @@ func TestLoadSummary_missing(t *testing.T) {
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
 	sh := searchHandler{
-		cache: cache,
-		store: store,
+		dataSource: cachedStore{
+			cache: cache,
+			store: store,
+		},
 	}
 	storeMiss := errors.New("No such summary file")
 
@@ -171,7 +175,7 @@ func TestLoadSummaries_success(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	sh := searchHandler{
-		cache: cache,
+		dataSource: cachedStore{cache: cache},
 	}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),
@@ -217,8 +221,10 @@ func TestLoadSummaries_fail(t *testing.T) {
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
 	sh := searchHandler{
-		cache: cache,
-		store: store,
+		dataSource: cachedStore{
+			cache: cache,
+			store: store,
+		},
 	}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),

@@ -84,8 +84,10 @@ func TestSearchHandler(t *testing.T) {
 
 	sh := searchHandler{
 		sharedImpl: defaultShared{ctx},
-		cache:      memcacheReadWritable{ctx},
-		store:      store,
+		dataSource: cachedStore{
+			cache: memcacheReadWritable{ctx},
+			store: store,
+		},
 	}
 
 	sh.ServeHTTP(w, r)

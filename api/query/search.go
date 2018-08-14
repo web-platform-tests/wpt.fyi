@@ -177,10 +177,59 @@ func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
 	return shared.LoadTestRun(sharedImpl.ctx, id)
 }
 
+type cachedStore struct {
+	cache readWritable
+	store readable
+}
+
+func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
+	r, err := cs.cache.NewReader(cacheID)
+	if err == nil {
+		cached, err := ioutil.ReadAll(r)
+		if err == nil {
+			log.Printf("INFO: Serving summary from cache: %s", cacheID)
+			return cached, nil
+		}
+	}
+
+	log.Printf("WARNING: Error fetching cache key %s: %v", cacheID, err)
+	err = nil
+
+	log.Printf("INFO: Loading summary from store: %s", storeID)
+	r, err = cs.store.NewReader(storeID)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache summary.
+	go func() {
+		w, err := cs.cache.NewWriteCloser(cacheID)
+		if err != nil {
+			log.Printf("WARNING: Error cache writer for key %s: %v", cacheID, err)
+			return
+		}
+		defer func() {
+			if err := w.Close(); err != nil {
+				log.Printf("WARNING: Error cache writer for key %s: %v", cacheID, err)
+			}
+		}()
+		if _, err := w.Write(data); err != nil {
+			log.Printf("WARNING: Failed to write to cache key %s: %v", cacheID, err)
+			return
+		}
+	}()
+
+	return data, nil
+}
+
 type searchHandler struct {
 	sharedImpl sharedInterface
-	cache      readWritable
-	store      readable
+	dataSource cachedStore
 }
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -188,8 +237,10 @@ func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	sh := searchHandler{
 		sharedImpl: defaultShared{ctx},
-		cache:      gzipReadWritable{memcacheReadWritable{ctx}},
-		store:      httpReadable{ctx},
+		dataSource: cachedStore{
+			cache: gzipReadWritable{memcacheReadWritable{ctx}},
+			store: httpReadable{ctx},
+		},
 	}
 	sh.ServeHTTP(w, r)
 }
@@ -301,49 +352,8 @@ func (sh searchHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, err
 
 func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	mkey := getMemcacheKey(testRun)
-	r, err := sh.cache.NewReader(mkey)
-	if err == nil {
-		cached, err := ioutil.ReadAll(r)
-		if err == nil {
-			log.Printf("INFO: Serving summary from cache: %s", mkey)
-			return cached, nil
-		}
-	}
-
-	log.Printf("WARNING: Error fetching cache key %s: %v", mkey, err)
-	err = nil
-
 	url := api.GetResultsURL(testRun, "")
-	log.Printf("INFO: Loading summary from store: %s", url)
-	r, err = sh.store.NewReader(url)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-
-	// Cache summary.
-	go func() {
-		w, err := sh.cache.NewWriteCloser(mkey)
-		if err != nil {
-			log.Printf("WARNING: Error cache writer for key %s: %v", mkey, err)
-			return
-		}
-		defer func() {
-			if err := w.Close(); err != nil {
-				log.Printf("WARNING: Error cache writer for key %s: %v", mkey, err)
-			}
-		}()
-		if _, err := w.Write(data); err != nil {
-			log.Printf("WARNING: Failed to write to cache key %s: %v", mkey, err)
-			return
-		}
-	}()
-
-	return data, nil
+	return sh.dataSource.Get(mkey, url)
 }
 
 func prepareResponse(filters shared.SearchFilter, testRuns []shared.TestRun, summaries []summary) SearchResponse {
