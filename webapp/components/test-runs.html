@@ -70,7 +70,8 @@ found in the LICENSE file.
         // This should (close enough) match up with the logic in:
         // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
         // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
-        return (path || '').indexOf('.https.') !== -1 ? 'https' : 'http';
+        path = path || '';
+        return ['.https.', '.serviceworker.'].some(x => path.includes(x)) ? 'https' : 'http';
       }
 
       computePathIsATestFile(path) {
