@@ -26,6 +26,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/memcache"
+	"google.golang.org/appengine/urlfetch"
 )
 
 // SearchRunResult is the metadata associated with a particular
@@ -80,7 +81,8 @@ type httpReadable struct {
 }
 
 func (hr httpReadable) NewReader(url string) (io.Reader, error) {
-	r, err := http.Get(url)
+	client := urlfetch.Client(hr.ctx)
+	r, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +125,7 @@ type memcacheWriteCloser struct {
 	isClosed bool
 }
 
-var errMemcacheReaderReadAfterClose = errors.New("memcacheReader: Read() after Close()")
+var errMemcacheWriteCloserWriteAfterClose = errors.New("memcacheWriteCloser: Write() after Close()")
 
 func (mc memcacheReadWritable) NewReader(key string) (io.Reader, error) {
 	item, err := memcache.Get(mc.ctx, key)
@@ -138,6 +140,9 @@ func (mc memcacheReadWritable) NewWriteCloser(key string) (io.WriteCloser, error
 }
 
 func (mw memcacheWriteCloser) Write(p []byte) (n int, err error) {
+	if mw.isClosed {
+		return 0, errMemcacheWriteCloserWriteAfterClose
+	}
 	return mw.b.Write(p)
 }
 

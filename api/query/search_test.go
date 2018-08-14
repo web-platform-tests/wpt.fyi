@@ -7,8 +7,8 @@
 package query
 
 import (
+	"bytes"
 	"errors"
-	"io"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -17,35 +17,38 @@ import (
 	"google.golang.org/appengine/memcache"
 )
 
-func (mr *Mockreadable) MockSuccessfulRead(t *testing.T, ctrl *gomock.Controller, id string, v []byte) {
-	r := NewMockReader(ctrl)
-	mr.EXPECT().NewReader(id).Return(r, nil)
-	r.EXPECT().Read(gomock.Any()).DoAndReturn(func(p []byte) (int, error) {
-		assert.True(t, len(p) >= len(v))
-		for i := range v {
-			p[i] = v[i]
-		}
-		return len(v), nil
-	})
-	r.EXPECT().Read(gomock.Any()).Return(0, io.EOF)
+type MockWriteCloser struct {
+	b      bytes.Buffer
+	closed bool
+	t      *testing.T
+	c      chan bool
 }
 
-func (mrw *MockreadWritable) MockSuccessfulRead(t *testing.T, ctrl *gomock.Controller, id string, v []byte) {
-	r := NewMockReader(ctrl)
-	mrw.EXPECT().NewReader(id).Return(r, nil)
-	r.EXPECT().Read(gomock.Any()).DoAndReturn(func(p []byte) (int, error) {
-		assert.True(t, len(p) >= len(v))
-		for i := range v {
-			p[i] = v[i]
-		}
-		return len(v), nil
-	})
-	r.EXPECT().Read(gomock.Any()).Return(0, io.EOF)
+func (mcw *MockWriteCloser) Write(p []byte) (n int, err error) {
+	assert.False(mcw.t, mcw.closed)
+	return mcw.b.Write(p)
+}
+
+func (mcw *MockWriteCloser) Close() error {
+	mcw.closed = true
+	if mcw.c != nil {
+		mcw.c <- true
+	}
+	return nil
+}
+
+func NewMockWriteCloser(t *testing.T, c chan bool) *MockWriteCloser {
+	return &MockWriteCloser{
+		b:      bytes.Buffer{},
+		closed: false,
+		t:      t,
+		c:      c,
+	}
 }
 
 func TestGetMemcacheKey(t *testing.T) {
-	assert.Equal(t, "RESULTS_SUMMARY-https://example.com/some-summary.json.gz", getMemcacheKey(shared.TestRun{
-		ResultsURL: "https://example.com/some-summary.json.gz",
+	assert.Equal(t, "RESULTS_SUMMARY-1", getMemcacheKey(shared.TestRun{
+		ID: 1,
 	}))
 }
 
@@ -70,15 +73,10 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 
 	// Use channel to synchronize with expected async cache.Put().
 	c := make(chan bool)
-	w := NewMockWriteCloser(mockCtrl)
+	w := NewMockWriteCloser(t, c)
 	cache.EXPECT().NewReader(key).Return(nil, memcache.ErrCacheMiss)
-	store.MockSuccessfulRead(t, mockCtrl, url, smry)
+	store.EXPECT().NewReader(url).Return(bytes.NewReader(smry), nil)
 	cache.EXPECT().NewWriteCloser(key).Return(w, nil)
-	w.EXPECT().Write(smry).Return(len(smry), nil)
-	w.EXPECT().Close().DoAndReturn(func() error {
-		c <- true
-		return nil
-	})
 
 	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
@@ -108,7 +106,7 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 	}
 	smry := []byte("{}")
 
-	cache.MockSuccessfulRead(t, mockCtrl, key, smry)
+	cache.EXPECT().NewReader(key).Return(bytes.NewReader(smry), nil)
 
 	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
@@ -184,8 +182,8 @@ func TestLoadSummaries_success(t *testing.T) {
 		map[string][]int{"/x/y/z": []int{3, 4}},
 	}
 
-	cache.MockSuccessfulRead(t, mockCtrl, keys[0], summaryBytes[0])
-	cache.MockSuccessfulRead(t, mockCtrl, keys[1], summaryBytes[1])
+	cache.EXPECT().NewReader(keys[0]).Return(bytes.NewReader(summaryBytes[0]), nil)
+	cache.EXPECT().NewReader(keys[1]).Return(bytes.NewReader(summaryBytes[1]), nil)
 
 	ss, err := sh.loadSummaries(testRuns)
 	assert.Nil(t, err)
@@ -227,7 +225,7 @@ func TestLoadSummaries_fail(t *testing.T) {
 	}
 	storeMiss := errors.New("No such summary file")
 
-	cache.MockSuccessfulRead(t, mockCtrl, keys[0], summaryBytes[0])
+	cache.EXPECT().NewReader(keys[0]).Return(bytes.NewReader(summaryBytes[0]), nil)
 	cache.EXPECT().NewReader(keys[1]).Return(nil, memcache.ErrCacheMiss)
 	store.EXPECT().NewReader(urls[1]).Return(nil, storeMiss)
 

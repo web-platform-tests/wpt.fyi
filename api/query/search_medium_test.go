@@ -7,6 +7,7 @@
 package query
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -67,8 +68,8 @@ func TestSearchHandler(t *testing.T) {
 
 	store := NewMockreadable(mockCtrl)
 
-	store.MockSuccessfulRead(t, mockCtrl, urls[0], summaryBytes[0])
-	store.MockSuccessfulRead(t, mockCtrl, urls[1], summaryBytes[1])
+	store.EXPECT().NewReader(urls[0]).Return(bytes.NewReader(summaryBytes[0]), nil)
+	store.EXPECT().NewReader(urls[01]).Return(bytes.NewReader(summaryBytes[1]), nil)
 
 	// Same params as TestGetRunsAndFilters_specificRunIDs.
 	q := "/b/"
