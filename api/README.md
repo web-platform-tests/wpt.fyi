@@ -374,6 +374,12 @@ labels are "experimental" and "stable" (the release channel of the tested browse
 
 This is an *internal* endpoint used by the results processor.
 
+## Announcement of revisions-of-interest
+
+The `/api/revisions` namespace contains APIs for accessing WPT
+_revisions-of-interest_. The primary use case for this API is synchronizing the
+WPT revision used by active test runners.
+
 ### /api/revisions/epochs
 
 Get the collection of epochs over which revisions are announced. For example,
