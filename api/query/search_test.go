@@ -65,12 +65,12 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		dataSource: cachedStore{
 			cache: cache,
 			store: store,
 		},
-	}
+	}}
 	smry := []byte("{}")
 
 	// Use channel to synchronize with expected async cache.Put().
@@ -103,9 +103,9 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 	key := getMemcacheKey(testRun)
 
 	cache := NewMockreadWritable(mockCtrl)
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		dataSource: cachedStore{cache: cache},
-	}
+	}}
 	smry := []byte("{}")
 
 	cache.EXPECT().NewReader(key).Return(bytes.NewReader(smry), nil)
@@ -131,12 +131,12 @@ func TestLoadSummary_missing(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		dataSource: cachedStore{
 			cache: cache,
 			store: store,
 		},
-	}
+	}}
 	storeMiss := errors.New("No such summary file")
 
 	cache.EXPECT().NewReader(key).Return(nil, memcache.ErrCacheMiss)
@@ -174,9 +174,9 @@ func TestLoadSummaries_success(t *testing.T) {
 	}
 
 	cache := NewMockreadWritable(mockCtrl)
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		dataSource: cachedStore{cache: cache},
-	}
+	}}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),
 		[]byte(`{"/x/y/z":[3,4]}`),
@@ -220,12 +220,12 @@ func TestLoadSummaries_fail(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		dataSource: cachedStore{
 			cache: cache,
 			store: store,
 		},
-	}
+	}}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),
 	}
@@ -244,9 +244,9 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	si := NewMocksharedInterface(mockCtrl)
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		sharedImpl: si,
-	}
+	}}
 
 	runIDs := []int64{1, 2}
 	urls := []string{
@@ -263,14 +263,14 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 			ResultsURL: urls[1],
 		},
 	}
-	filters := shared.SearchFilter{}
+	filters := shared.QueryFilter{}
 
 	si.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)
 	assert.Equal(t, testRuns, trs)
-	assert.Equal(t, shared.SearchFilter{
+	assert.Equal(t, shared.QueryFilter{
 		RunIDs: runIDs,
 	}, fs)
 }
@@ -280,9 +280,9 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	si := NewMocksharedInterface(mockCtrl)
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		sharedImpl: si,
-	}
+	}}
 
 	runIDs := []int64{1, 2}
 	urls := []string{
@@ -299,7 +299,7 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 			ResultsURL: urls[1],
 		},
 	}
-	filters := shared.SearchFilter{
+	filters := shared.QueryFilter{
 		RunIDs: runIDs,
 	}
 
@@ -324,7 +324,7 @@ func TestPrepareResponse(t *testing.T) {
 			ResultsURL: "https://example.com/2-summary.json.gz",
 		},
 	}
-	filters := shared.SearchFilter{
+	filters := shared.QueryFilter{
 		RunIDs: runIDs,
 		Q:      "/b/",
 	}
@@ -340,7 +340,7 @@ func TestPrepareResponse(t *testing.T) {
 		},
 	}
 
-	resp := prepareResponse(filters, testRuns, summaries)
+	resp := prepareSearchResponse(&filters, testRuns, summaries)
 	assert.Equal(t, testRuns, resp.Runs)
 	assert.Equal(t, []SearchResult{
 		SearchResult{

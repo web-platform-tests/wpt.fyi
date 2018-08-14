@@ -82,13 +82,13 @@ func TestSearchHandler(t *testing.T) {
 	ctx := appengine.NewContext(r)
 	w := httptest.NewRecorder()
 
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
 			cache: memcacheReadWritable{ctx},
 			store: store,
 		},
-	}
+	}}
 
 	sh.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
