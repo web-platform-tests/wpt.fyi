@@ -89,21 +89,23 @@ go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webse
 	export GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	export CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
 	$(START_XVFB); \
-	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
-			--selenium_path=$$SELENIUM_SERVER_PATH \
-			--firefox_path=$(FIREFOX_PATH) \
-			--geckodriver_path=$$GECKODRIVER_PATH \
-			--chrome_path=$(CHROME_PATH) \
-			--chromedriver_path=$$CHROMEDRIVER_PATH \
-			--frame_buffer=$(USE_FRAME_BUFFER) \
-			--staging=$(STAGING) \
-			--browser=$(BROWSER) \
-			$(FLAGS); \
+	cd $(WPTD_PATH)webdriver; \
+	go test -v -tags=large \
+		--selenium_path=$$SELENIUM_SERVER_PATH \
+		--firefox_path=$(FIREFOX_PATH) \
+		--geckodriver_path=$$GECKODRIVER_PATH \
+		--chrome_path=$(CHROME_PATH) \
+		--chromedriver_path=$$CHROMEDRIVER_PATH \
+		--frame_buffer=$(USE_FRAME_BUFFER) \
+		--staging=$(STAGING) \
+		--browser=$(BROWSER) \
+		$(FLAGS) || (($(STOP_XVFB)) && exit 1); \
 	$(STOP_XVFB)
 
 web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
 	$(START_XVFB); \
-	cd $(WPTD_PATH)webapp && npm test; \
+	cd $(WPTD_PATH)webapp; \
+	npm test || (($(STOP_XVFB)) && exit 1); \
 	$(STOP_XVFB)
 
 sys_update: apt_update | sys_deps
