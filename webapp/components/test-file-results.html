@@ -65,14 +65,6 @@ found in the LICENSE file.
 
       static get properties() {
         return {
-          subtestNames: {
-            type: Array,
-            value: [],
-          },
-          isTestHarness: {
-            type: Boolean,
-            value: false,
-          },
           isVerbose: {
             type: Boolean,
             value: false,
@@ -84,60 +76,6 @@ found in the LICENSE file.
         await super.connectedCallback();
         console.assert(this.path);
         console.assert(this.path[0] === '/');
-      }
-
-      static get observers() {
-        return ['fetchTestFile(path, testRuns)'];
-      }
-
-      async fetchTestFile(path, testRuns) {
-        this.subtestNames = []; // Clear any existing rows.
-        if (!path || !testRuns) {
-          return;
-        }
-        const resultPerTestRun = await Promise.all(
-          testRuns.map(tr => this.loadResultFile(tr)));
-
-        let isTestHarness = false;
-        const subtestNames = ['STATUS'];
-        resultPerTestRun.forEach((resultData, i) => {
-          if (!resultData) {
-            testRuns[i].subtests = {};
-            testRuns[i].subtests['STATUS'] = { status: '(results not found)' };
-            return;
-          }
-          testRuns[i].subtests = {};
-          testRuns[i].subtests['STATUS'] = { status: resultData.status };
-          if (['OK', 'ERROR'].includes(resultData.status)) {
-            isTestHarness = true;
-          }
-
-          for (let subtestResult of resultData.subtests) {
-            testRuns[i].subtests[subtestResult.name] = subtestResult;
-            if (!subtestNames.includes(subtestResult.name)) {
-              subtestNames.push(subtestResult.name);
-            }
-          }
-        });
-
-        this.isTestHarness = isTestHarness;
-        this.subtestNames = subtestNames;
-      }
-
-      async loadResultFile(testRun) {
-        const url = this.resultsURL(testRun, this.path);
-        const response = await window.fetch(url);
-        if (!response.ok) {
-          return null;
-        }
-        return response.json();
-      }
-
-      resultsURL(testRun, path) {
-        path = this.encodeTestPath(path);
-        // This is relying on the assumption that result files end with '-summary.json.gz'.
-        const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
-        return `${resultsBase}${path}`;
       }
     }
 
