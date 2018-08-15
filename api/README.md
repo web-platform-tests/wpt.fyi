@@ -537,20 +537,20 @@ __`epochs`__ : A potentially repeated parameter. Each parameter value contains
 the `id` of some epoch known by the announcer. Defaults to all known epochs.
 
 __`num_revision`__: The number of epochal revisions _for each epoch in `epochs`
-values_ to include in the response.
+values_ to include in the response. Defaults to 100. Response will include an
+`error` field when fewer than the requested number could be found for some
+epoch(s).
 
 __`at`__ : An RFC3339-encoded timestamp describing the upper limit on the time
-range for fetching epochal revisions. Default to now.
+range for fetching epochal revisions. Defaults to now.
 
 __`start`__: An RFC3339-encoded timestamp describing the lower limit on the time
-range for fetching epochal revisions. Default to
-`-num_revisions * longest(epochs).max_duration`.
+range for fetching epochal revisions. Defaults to the date which is
+`num_revisions * longest(epochs).max_duration_sec` seconds prior to now.
 
 #### Examples
 
 - https://wpt.fyi/api/revisions/list?epochs=hourly&epochs=two_hourly&num_revisions=10&at=2018-01-10T00:00:00Z&start=2018-01-01T00:00:00Z
-  - _Note_: Best effort to include 100 revisions, and also `error` field notes
-    that fewer than 100 could be found for some epoch(s).
 - https://wpt.fyi/api/revisions/list?epochs=daily&num_revisions=10
 
 __Example JSON__
