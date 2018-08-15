@@ -37,17 +37,17 @@ func (m *Mockreadable) EXPECT() *MockreadableMockRecorder {
 	return m.recorder
 }
 
-// NewReader mocks base method
-func (m *Mockreadable) NewReader(arg0 string) (io.Reader, error) {
-	ret := m.ctrl.Call(m, "NewReader", arg0)
-	ret0, _ := ret[0].(io.Reader)
+// NewReadCloser mocks base method
+func (m *Mockreadable) NewReadCloser(arg0 string) (io.ReadCloser, error) {
+	ret := m.ctrl.Call(m, "NewReadCloser", arg0)
+	ret0, _ := ret[0].(io.ReadCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NewReader indicates an expected call of NewReader
-func (mr *MockreadableMockRecorder) NewReader(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewReader", reflect.TypeOf((*Mockreadable)(nil).NewReader), arg0)
+// NewReadCloser indicates an expected call of NewReadCloser
+func (mr *MockreadableMockRecorder) NewReadCloser(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewReadCloser", reflect.TypeOf((*Mockreadable)(nil).NewReadCloser), arg0)
 }
 
 // MockreadWritable is a mock of readWritable interface
@@ -73,17 +73,17 @@ func (m *MockreadWritable) EXPECT() *MockreadWritableMockRecorder {
 	return m.recorder
 }
 
-// NewReader mocks base method
-func (m *MockreadWritable) NewReader(arg0 string) (io.Reader, error) {
-	ret := m.ctrl.Call(m, "NewReader", arg0)
-	ret0, _ := ret[0].(io.Reader)
+// NewReadCloser mocks base method
+func (m *MockreadWritable) NewReadCloser(arg0 string) (io.ReadCloser, error) {
+	ret := m.ctrl.Call(m, "NewReadCloser", arg0)
+	ret0, _ := ret[0].(io.ReadCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NewReader indicates an expected call of NewReader
-func (mr *MockreadWritableMockRecorder) NewReader(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewReader", reflect.TypeOf((*MockreadWritable)(nil).NewReader), arg0)
+// NewReadCloser indicates an expected call of NewReadCloser
+func (mr *MockreadWritableMockRecorder) NewReadCloser(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewReadCloser", reflect.TypeOf((*MockreadWritable)(nil).NewReadCloser), arg0)
 }
 
 // NewWriteCloser mocks base method

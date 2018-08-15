@@ -69,7 +69,7 @@ func (r byName) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
 func (r byName) Less(i, j int) bool { return r[i].Test < r[j].Test }
 
 type readable interface {
-	NewReader(string) (io.Reader, error)
+	NewReadCloser(string) (io.ReadCloser, error)
 }
 
 type readWritable interface {
@@ -81,7 +81,7 @@ type httpReadable struct {
 	ctx context.Context
 }
 
-func (hr httpReadable) NewReader(url string) (io.Reader, error) {
+func (hr httpReadable) NewReadCloser(url string) (io.ReadCloser, error) {
 	client := urlfetch.Client(hr.ctx)
 	r, err := client.Get(url)
 	if err != nil {
@@ -99,8 +99,8 @@ type gzipReadWritable struct {
 	delegate readWritable
 }
 
-func (gz gzipReadWritable) NewReader(id string) (io.Reader, error) {
-	r, err := gz.delegate.NewReader(id)
+func (gz gzipReadWritable) NewReadCloser(id string) (io.ReadCloser, error) {
+	r, err := gz.delegate.NewReadCloser(id)
 	if err != nil {
 		return nil, err
 	}
@@ -128,12 +128,12 @@ type memcacheWriteCloser struct {
 
 var errMemcacheWriteCloserWriteAfterClose = errors.New("memcacheWriteCloser: Write() after Close()")
 
-func (mc memcacheReadWritable) NewReader(key string) (io.Reader, error) {
+func (mc memcacheReadWritable) NewReadCloser(key string) (io.ReadCloser, error) {
 	item, err := memcache.Get(mc.ctx, key)
 	if err != nil {
 		return nil, err
 	}
-	return bytes.NewReader(item.Value), nil
+	return ioutil.NopCloser(bytes.NewReader(item.Value)), nil
 }
 
 func (mc memcacheReadWritable) NewWriteCloser(key string) (io.WriteCloser, error) {
@@ -302,7 +302,7 @@ func (sh searchHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, err
 
 func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	mkey := getMemcacheKey(testRun)
-	r, err := sh.cache.NewReader(mkey)
+	r, err := sh.cache.NewReadCloser(mkey)
 	if err == nil {
 		cached, err := ioutil.ReadAll(r)
 		if err == nil {
@@ -316,7 +316,7 @@ func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 
 	url := api.GetResultsURL(testRun, "")
 	log.Printf("INFO: Loading summary from store: %s", url)
-	r, err = sh.store.NewReader(url)
+	r, err = sh.store.NewReadCloser(url)
 	if err != nil {
 		return nil, err
 	}

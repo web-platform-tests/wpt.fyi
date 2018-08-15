@@ -9,6 +9,7 @@ package query
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -74,8 +75,8 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 	// Use channel to synchronize with expected async cache.Put().
 	c := make(chan bool)
 	w := NewMockWriteCloser(t, c)
-	cache.EXPECT().NewReader(key).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().NewReader(url).Return(bytes.NewReader(smry), nil)
+	cache.EXPECT().NewReadCloser(key).Return(nil, memcache.ErrCacheMiss)
+	store.EXPECT().NewReadCloser(url).Return(ioutil.NopCloser(bytes.NewReader(smry)), nil)
 	cache.EXPECT().NewWriteCloser(key).Return(w, nil)
 
 	s, err := sh.loadSummary(shared.TestRun{
@@ -106,7 +107,7 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 	}
 	smry := []byte("{}")
 
-	cache.EXPECT().NewReader(key).Return(bytes.NewReader(smry), nil)
+	cache.EXPECT().NewReadCloser(key).Return(ioutil.NopCloser(bytes.NewReader(smry)), nil)
 
 	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
@@ -135,8 +136,8 @@ func TestLoadSummary_missing(t *testing.T) {
 	}
 	storeMiss := errors.New("No such summary file")
 
-	cache.EXPECT().NewReader(key).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().NewReader(url).Return(nil, storeMiss)
+	cache.EXPECT().NewReadCloser(key).Return(nil, memcache.ErrCacheMiss)
+	store.EXPECT().NewReadCloser(url).Return(nil, storeMiss)
 
 	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
@@ -182,8 +183,8 @@ func TestLoadSummaries_success(t *testing.T) {
 		map[string][]int{"/x/y/z": []int{3, 4}},
 	}
 
-	cache.EXPECT().NewReader(keys[0]).Return(bytes.NewReader(summaryBytes[0]), nil)
-	cache.EXPECT().NewReader(keys[1]).Return(bytes.NewReader(summaryBytes[1]), nil)
+	cache.EXPECT().NewReadCloser(keys[0]).Return(ioutil.NopCloser(bytes.NewReader(summaryBytes[0])), nil)
+	cache.EXPECT().NewReadCloser(keys[1]).Return(ioutil.NopCloser(bytes.NewReader(summaryBytes[1])), nil)
 
 	ss, err := sh.loadSummaries(testRuns)
 	assert.Nil(t, err)
@@ -225,9 +226,9 @@ func TestLoadSummaries_fail(t *testing.T) {
 	}
 	storeMiss := errors.New("No such summary file")
 
-	cache.EXPECT().NewReader(keys[0]).Return(bytes.NewReader(summaryBytes[0]), nil)
-	cache.EXPECT().NewReader(keys[1]).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().NewReader(urls[1]).Return(nil, storeMiss)
+	cache.EXPECT().NewReadCloser(keys[0]).Return(ioutil.NopCloser(bytes.NewReader(summaryBytes[0])), nil)
+	cache.EXPECT().NewReadCloser(keys[1]).Return(nil, memcache.ErrCacheMiss)
+	store.EXPECT().NewReadCloser(urls[1]).Return(nil, storeMiss)
 
 	_, err := sh.loadSummaries(testRuns)
 	assert.Equal(t, storeMiss, err)
