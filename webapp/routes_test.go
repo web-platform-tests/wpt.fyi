@@ -79,11 +79,13 @@ func TestApiResultsBoundCORS(t *testing.T) {
 func TestApiResultsUploadBoundHSTS(t *testing.T) {
 	assertHandlerIs(t, "/api/results/upload", "api-results-upload")
 	assertHSTS(t, "/api/results/upload")
+	assertNoCORS(t, "/api/results/upload")
 }
 
 func TestApiResultsCreateBoundHSTS(t *testing.T) {
 	assertHandlerIs(t, "/api/results/create", "api-results-create")
 	assertHSTS(t, "/api/results/create")
+	assertNoCORS(t, "/api/results/create")
 }
 
 func TestResultsBound(t *testing.T) {
@@ -118,10 +120,11 @@ func assertHSTS(t *testing.T, path string) {
 	rr := httptest.NewRecorder()
 	handler, _ := http.DefaultServeMux.Handler(req)
 	handler.ServeHTTP(rr, req)
+	res := rr.Result()
 	assert.Equal(
 		t,
 		"[max-age=31536000; preload]",
-		fmt.Sprintf("%s", rr.HeaderMap["Strict-Transport-Security"]))
+		fmt.Sprintf("%s", res.Header["Strict-Transport-Security"]))
 }
 
 func assertCORS(t *testing.T, path string) {
@@ -129,8 +132,18 @@ func assertCORS(t *testing.T, path string) {
 	rr := httptest.NewRecorder()
 	handler, _ := http.DefaultServeMux.Handler(req)
 	handler.ServeHTTP(rr, req)
+	res := rr.Result()
 	assert.Equal(
 		t,
 		"[*]",
-		fmt.Sprintf("%s", rr.HeaderMap["Access-Control-Allow-Origin"]))
+		fmt.Sprintf("%s", res.Header["Access-Control-Allow-Origin"]))
+}
+
+func assertNoCORS(t *testing.T, path string) {
+	req := httptest.NewRequest("GET", path, nil)
+	rr := httptest.NewRecorder()
+	handler, _ := http.DefaultServeMux.Handler(req)
+	handler.ServeHTTP(rr, req)
+	res := rr.Result()
+	assert.Equal(t, "", res.Header.Get("Access-Control-Allow-Origin"))
 }
