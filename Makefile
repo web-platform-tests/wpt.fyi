@@ -64,7 +64,7 @@ go_small_test: go_deps
 	cd $(WPTD_GO_PATH); go test -tags=small -v ./...
 
 go_medium_test: go_deps dev_appserver_deps
-	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./... || true
+	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
 
 go_large_test: go_all_browsers_test
 
