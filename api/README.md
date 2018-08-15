@@ -545,8 +545,8 @@ __`at`__ : An RFC3339-encoded timestamp describing the upper limit on the time
 range for fetching epochal revisions. Defaults to now.
 
 __`start`__: An RFC3339-encoded timestamp describing the lower limit on the time
-range for fetching epochal revisions. Default to
-`-num_revisions * longest(epochs).max_duration`.
+range for fetching epochal revisions. Defaults to the date which is
+`num_revisions * longest(epochs).max_duration_sec` seconds prior to now.
 
 #### Examples
 
