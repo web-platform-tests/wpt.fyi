@@ -42,8 +42,9 @@ type SearchRunResult struct {
 // of runs. The runs are identified externally in a parallel slice (see
 // SearchResponse).
 type SearchResult struct {
-	// Name is the full path of the test file.
-	Name string `json:"name"`
+	// Test is the name of a test; this often corresponds to a test file path in
+	// the WPT source reposiory.
+	Test string `json:"test"`
 	// Status is the results data for this file for each relevant run.
 	Status []SearchRunResult `json:"status"`
 }
@@ -65,7 +66,7 @@ type byName []SearchResult
 
 func (r byName) Len() int           { return len(r) }
 func (r byName) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
-func (r byName) Less(i, j int) bool { return r[i].Name < r[j].Name }
+func (r byName) Less(i, j int) bool { return r[i].Test < r[j].Test }
 
 type readable interface {
 	NewReader(string) (io.Reader, error)
@@ -353,19 +354,19 @@ func prepareResponse(filters shared.SearchFilter, testRuns []shared.TestRun, sum
 	// Dedup visited file names via a map of results.
 	resMap := make(map[string]SearchResult)
 	for i, s := range summaries {
-		for filename, passAndTotal := range s {
-			// Exclude filenames that do not match query.
-			if !strings.Contains(filename, filters.Q) {
+		for test, passAndTotal := range s {
+			// Exclude tests that do not match query.
+			if !strings.Contains(test, filters.Q) {
 				continue
 			}
 
-			if _, ok := resMap[filename]; !ok {
-				resMap[filename] = SearchResult{
-					Name:   filename,
+			if _, ok := resMap[test]; !ok {
+				resMap[test] = SearchResult{
+					Test:   test,
 					Status: make([]SearchRunResult, len(testRuns)),
 				}
 			}
-			resMap[filename].Status[i] = SearchRunResult{
+			resMap[test].Status[i] = SearchRunResult{
 				Passes: passAndTotal[0],
 				Total:  passAndTotal[1],
 			}

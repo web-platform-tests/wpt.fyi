@@ -338,7 +338,7 @@ func TestPrepareResponse(t *testing.T) {
 	assert.Equal(t, testRuns, resp.Runs)
 	assert.Equal(t, []SearchResult{
 		SearchResult{
-			Name: "/a/b/c",
+			Test: "/a/b/c",
 			Status: []SearchRunResult{
 				SearchRunResult{
 					Passes: 1,
@@ -348,7 +348,7 @@ func TestPrepareResponse(t *testing.T) {
 			},
 		},
 		SearchResult{
-			Name: "/b/c",
+			Test: "/b/c",
 			Status: []SearchRunResult{
 				SearchRunResult{
 					Passes: 9,
@@ -361,7 +361,7 @@ func TestPrepareResponse(t *testing.T) {
 			},
 		},
 		SearchResult{
-			Name: "/z/b/c",
+			Test: "/z/b/c",
 			Status: []SearchRunResult{
 				SearchRunResult{},
 				SearchRunResult{

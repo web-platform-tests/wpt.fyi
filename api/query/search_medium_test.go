@@ -101,7 +101,7 @@ func TestSearchHandler(t *testing.T) {
 		Runs: testRuns,
 		Results: []SearchResult{
 			SearchResult{
-				Name: "/a/b/c",
+				Test: "/a/b/c",
 				Status: []SearchRunResult{
 					SearchRunResult{
 						Passes: 1,
@@ -111,7 +111,7 @@ func TestSearchHandler(t *testing.T) {
 				},
 			},
 			SearchResult{
-				Name: "/b/c",
+				Test: "/b/c",
 				Status: []SearchRunResult{
 					SearchRunResult{
 						Passes: 9,
@@ -124,7 +124,7 @@ func TestSearchHandler(t *testing.T) {
 				},
 			},
 			SearchResult{
-				Name: "/z/b/c",
+				Test: "/z/b/c",
 				Status: []SearchRunResult{
 					SearchRunResult{},
 					SearchRunResult{
