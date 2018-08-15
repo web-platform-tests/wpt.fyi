@@ -1,1 +1,1 @@
-See [api/README.md](api/README.md).
+See [/api/README.md](/api/README.md).
