@@ -9,28 +9,28 @@ import "github.com/web-platform-tests/wpt.fyi/shared"
 // RegisterRoutes adds all the api route handlers.
 func RegisterRoutes() {
 	// API endpoint for diff of two test run summary JSON blobs.
-	shared.AddRoute("/api/diff", "api-diff", apiDiffHandler)
+	shared.AddRoute("/api/diff", "api-diff", shared.WrapPermissiveCORS(apiDiffHandler))
 
 	// API endpoint for fetching interoperability metadata.
-	shared.AddRoute("/api/interop", "api-interop", apiInteropHandler)
+	shared.AddRoute("/api/interop", "api-interop", shared.WrapPermissiveCORS(apiInteropHandler))
 
 	// API endpoint for fetching a manifest for a commit SHA.
-	shared.AddRoute("/api/manifest", "api-manifest", apiManifestHandler)
+	shared.AddRoute("/api/manifest", "api-manifest", shared.WrapPermissiveCORS(apiManifestHandler))
 
 	// API endpoint for listing all test runs for a given SHA.
-	shared.AddRoute("/api/runs", "api-test-runs", apiTestRunsHandler)
+	shared.AddRoute("/api/runs", "api-test-runs", shared.WrapPermissiveCORS(apiTestRunsHandler))
 
 	// API endpoint for listing SHAs for the test runs.
-	shared.AddRoute("/api/shas", "api-shas", apiSHAsHandler)
+	shared.AddRoute("/api/shas", "api-shas", shared.WrapPermissiveCORS(apiSHAsHandler))
 
 	// API endpoints for a single test run, by
 	// ID:
-	shared.AddRoute("/api/runs/{id}", "api-test-run", apiTestRunHandler)
+	shared.AddRoute("/api/runs/{id}", "api-test-run", shared.WrapPermissiveCORS(apiTestRunHandler))
 	// 'product' param & 'sha' param:
-	shared.AddRoute("/api/run", "api-test-run", apiTestRunHandler)
+	shared.AddRoute("/api/run", "api-test-run", shared.WrapPermissiveCORS(apiTestRunHandler))
 
 	// API endpoint for redirecting to a run's summary JSON blob.
-	shared.AddRoute("/api/results", "api-results", apiResultsRedirectHandler)
+	shared.AddRoute("/api/results", "api-results", shared.WrapPermissiveCORS(apiResultsRedirectHandler))
 
 	// PROTECTED API endpoint for receiving test results (wptreport) from runners.
 	// This API is authenticated. Runners have credentials.

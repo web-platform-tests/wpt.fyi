@@ -40,33 +40,55 @@ func TestInteropAnomaliesBound(t *testing.T) {
 	assertHandlerIs(t, "/anomalies", "anomaly")
 }
 
-func TestRunsBound(t *testing.T) {
-	assertBound(t, "/test-runs")
-}
-
 func TestRunsBoundHSTS(t *testing.T) {
+	assertHandlerIs(t, "/test-runs", "test-runs")
 	assertHSTS(t, "/test-runs")
 }
 
-func TestApiDiffBound(t *testing.T) {
-	assertBound(t, "/api/diff")
+func TestApiDiffBoundCORS(t *testing.T) {
+	assertHandlerIs(t, "/api/diff", "api-diff")
+	assertCORS(t, "/api/diff")
+}
+
+func TestApiInteropBound(t *testing.T) {
+	assertHandlerIs(t, "/api/interop", "api-interop")
+}
+
+func TestApiManifestBound(t *testing.T) {
+	assertHandlerIs(t, "/api/manifest", "api-manifest")
 }
 
 func TestApiRunsBound(t *testing.T) {
-	assertBound(t, "/api/runs")
+	assertHandlerIs(t, "/api/runs", "api-test-runs")
+}
+
+func TestApiShasBound(t *testing.T) {
+	assertHandlerIs(t, "/api/shas", "api-shas")
 }
 
 func TestApiRunBound(t *testing.T) {
-	assertBound(t, "/api/run")
+	assertHandlerIs(t, "/api/run", "api-test-run")
 	assertHandlerIs(t, "/api/runs/123", "api-test-run")
 }
 
-func TestApiResultsUploadBound(t *testing.T) {
+func TestApiResultsBoundCORS(t *testing.T) {
+	assertHandlerIs(t, "/api/results", "api-results")
+	assertCORS(t, "/api/results")
+}
+
+func TestApiResultsUploadBoundHSTS(t *testing.T) {
+	assertHandlerIs(t, "/api/results/upload", "api-results-upload")
 	assertHSTS(t, "/api/results/upload")
+	assertNoCORS(t, "/api/results/upload")
+}
+
+func TestApiResultsCreateBoundHSTS(t *testing.T) {
+	assertHandlerIs(t, "/api/results/create", "api-results-create")
+	assertHSTS(t, "/api/results/create")
+	assertNoCORS(t, "/api/results/create")
 }
 
 func TestResultsBound(t *testing.T) {
-	assertBound(t, "/results")
 	assertHandlerIs(t, "/results", "results")
 	assertHandlerIs(t, "/results/", "results")
 	assertHandlerIs(t, "/results/2dcontext", "results")
@@ -98,8 +120,30 @@ func assertHSTS(t *testing.T, path string) {
 	rr := httptest.NewRecorder()
 	handler, _ := http.DefaultServeMux.Handler(req)
 	handler.ServeHTTP(rr, req)
+	res := rr.Result()
 	assert.Equal(
 		t,
 		"[max-age=31536000; preload]",
-		fmt.Sprintf("%s", rr.HeaderMap["Strict-Transport-Security"]))
+		fmt.Sprintf("%s", res.Header["Strict-Transport-Security"]))
+}
+
+func assertCORS(t *testing.T, path string) {
+	req := httptest.NewRequest("GET", path, nil)
+	rr := httptest.NewRecorder()
+	handler, _ := http.DefaultServeMux.Handler(req)
+	handler.ServeHTTP(rr, req)
+	res := rr.Result()
+	assert.Equal(
+		t,
+		"[*]",
+		fmt.Sprintf("%s", res.Header["Access-Control-Allow-Origin"]))
+}
+
+func assertNoCORS(t *testing.T, path string) {
+	req := httptest.NewRequest("GET", path, nil)
+	rr := httptest.NewRecorder()
+	handler, _ := http.DefaultServeMux.Handler(req)
+	handler.ServeHTTP(rr, req)
+	res := rr.Result()
+	assert.Equal(t, "", res.Header.Get("Access-Control-Allow-Origin"))
 }
