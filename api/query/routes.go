@@ -9,4 +9,6 @@ import "github.com/web-platform-tests/wpt.fyi/shared"
 func RegisterRoutes() {
 	// API endpoint for searching results over given runs.
 	shared.AddRoute("/api/search", "api-search", apiSearchHandler)
+	// API endpoint for search autocomplete.
+	shared.AddRoute("/api/autocomplete", "api-autocomplete", apiAutocompleteHandler)
 }

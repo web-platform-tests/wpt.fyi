@@ -24,7 +24,7 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-func TestSearchHandler(t *testing.T) {
+func TestAutocompleteHandler(t *testing.T) {
 	urls := []string{
 		"https://example.com/1-summary.json.gz",
 		"https://example.com/2-summary.json.gz",
@@ -71,10 +71,10 @@ func TestSearchHandler(t *testing.T) {
 	store.EXPECT().NewReader(urls[0]).Return(bytes.NewReader(summaryBytes[0]), nil)
 	store.EXPECT().NewReader(urls[1]).Return(bytes.NewReader(summaryBytes[1]), nil)
 
-	// Same params as TestGetRunsAndFilters_specificRunIDs.
+	// Same params as TestPrepareAutocompleteResponse_several.
 	q := "/b/"
 	url := fmt.Sprintf(
-		"/api/search?run_ids=%s&q=%s",
+		"/api/autocomplete?run_ids=%s&q=%s",
 		url.QueryEscape(fmt.Sprintf("%d,%d", testRuns[0].ID, testRuns[1].ID)),
 		url.QueryEscape(q))
 	r, err := i.NewRequest("GET", url, nil)
@@ -82,7 +82,7 @@ func TestSearchHandler(t *testing.T) {
 	ctx := appengine.NewContext(r)
 	w := httptest.NewRecorder()
 
-	sh := searchHandler{queryHandler{
+	sh := autocompleteHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
 			cache: memcacheReadWritable{ctx},
@@ -94,47 +94,16 @@ func TestSearchHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	bytes, err := ioutil.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
-	var data SearchResponse
+	var data AutocompleteResponse
 	err = json.Unmarshal(bytes, &data)
 	assert.Nil(t, err)
 
-	// Same result as TestGetRunsAndFilters_specificRunIDs.
-	assert.Equal(t, SearchResponse{
-		Runs: testRuns,
-		Results: []SearchResult{
-			SearchResult{
-				Name: "/a/b/c",
-				Status: []SearchRunResult{
-					SearchRunResult{
-						Passes: 1,
-						Total:  2,
-					},
-					SearchRunResult{},
-				},
-			},
-			SearchResult{
-				Name: "/b/c",
-				Status: []SearchRunResult{
-					SearchRunResult{
-						Passes: 9,
-						Total:  9,
-					},
-					SearchRunResult{
-						Passes: 5,
-						Total:  9,
-					},
-				},
-			},
-			SearchResult{
-				Name: "/z/b/c",
-				Status: []SearchRunResult{
-					SearchRunResult{},
-					SearchRunResult{
-						Passes: 0,
-						Total:  8,
-					},
-				},
-			},
+	// Same result as TestPrepareAutocompleteResponse_several.
+	assert.Equal(t, AutocompleteResponse{
+		Results: []AutocompleteResult{
+			AutocompleteResult{"/b/c"},
+			AutocompleteResult{"/a/b/c"},
+			AutocompleteResult{"/z/b/c"},
 		},
 	}, data)
 }
