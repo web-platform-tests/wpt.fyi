@@ -5,7 +5,7 @@ found in the LICENSE file.
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="imporxzt" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
@@ -88,6 +88,9 @@ found in the LICENSE file.
       }
       td.none {
         visibility: hidden;
+      }
+      td.numbers {
+        white-space: nowrap;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
@@ -175,6 +178,9 @@ found in the LICENSE file.
               <!-- Repeats for as many different browser test runs are available -->
               <th><test-run test-run="[[testRun]]"></test-run></th>
             </template>
+            <template is="dom-if" if="[[diffShown]]">
+              <th><test-run test-run="[[diffRun]]"></test-run></th>
+            </template>
           </tr>
         </thead>
         <tbody>
@@ -186,10 +192,17 @@ found in the LICENSE file.
               </td>
 
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                <td class$="[[ testResultClass(node, index, testRun, 'passes') ]]">
+                <td class$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
                   <span class$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                   /
                   <span class$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                </td>
+              </template>
+              <template is="dom-if" if="[[diffShown]]">
+                <td class$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
+                  <span class$="passing [[ testResultClass(node, index, diffRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'passing') }}</span>
+                  /
+                  <span class$="total [[ testResultClass(node, index, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'total') }}</span>
                 </td>
               </template>
             </tr>
@@ -263,9 +276,17 @@ found in the LICENSE file.
           displayedTests: {
             type: Array,
             computed: 'computeDisplayedTests(searchResults)',
+          },// Users request to show a diff column.
+          diff: Boolean,	          diff: Boolean,
+          diffRun: {
+            type: Object,
+            value: null,
           },
-          // Show a diff column (if there are 2 testRuns).
-          diff: Boolean,
+          // A diff column is shown if requested by users and there are 2 testRuns.
+          diffShown: {
+            type: Boolean,
+            computed: 'isDiffShown(diff, diffRun)',
+          },
           // Override TestRunsBase to add diff.
           queryParams: {
             type: Object,
@@ -286,11 +307,14 @@ found in the LICENSE file.
         };
       }
 
-      isInvalidDiffUse(diff, testRuns) {
-        return diff
-            && testRuns
-            && testRuns.filter(r => r.revision !== 'diff').length !== 2;
+      isDiffShown(diff, diffRun) {
+        return diff && diffRun !== null;
       }
+
+      isInvalidDiffUse(diff, testRuns) {
+        return diff && testRuns && testRuns.length !== 2;
+      }
+
 
       hideDiffInvalidToast() {
         this.shadowRoot.querySelector('#diffInvalid').toggle();
@@ -385,13 +409,12 @@ found in the LICENSE file.
         const b = `${before.browser_name}@${before.revision}`;
         const a = `${after.browser_name}@${after.revision}`;
         const diffRunURL = `/api/diff?before=${b}&after=${a}&filter=${this.filter}`;
-        const diffRun = {
+        this.diffRun = {
           revision: 'diff',
           browser_name: 'diff',
           results_url: diffRunURL,
         };
-        await this.fetchResults([diffRun]);
-        this.push('testRuns', diffRun);
+        await this.fetchResults([this.diffRun]);
         this.refreshDisplayedNodes();
       }
 
