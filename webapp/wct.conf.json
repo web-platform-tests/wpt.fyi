@@ -2,7 +2,8 @@
   "suites": [
     "test/*.html"
   ],
-  "verbose": true,
+  "verbose": false,
+  "expanded": true,
   "plugins": {
     "local": {
       "browsers": ["chrome", "firefox"]
