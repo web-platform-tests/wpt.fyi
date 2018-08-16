@@ -25,7 +25,7 @@ found in the LICENSE file.
         // subtestNames is always updated after testRuns[].subtests are updated,
         // so as long as 'STATUS' exists in subtestNames, we can safely access
         // testRuns[].subtests['STATUS'].
-        if (subtestNames.indexOf('STATUS') === -1) {
+        if (subtestNames.includes('STATUS')) {
           return false;
         }
         const statuses = this.testRuns.map(tr => tr.subtests['STATUS'].status);
