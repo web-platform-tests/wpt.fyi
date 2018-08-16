@@ -9,6 +9,7 @@ package query
 import (
 	"bytes"
 	"errors"
+	"io"
 	"io/ioutil"
 	"testing"
 
@@ -47,6 +48,30 @@ func NewMockWriteCloser(t *testing.T, c chan bool) *MockWriteCloser {
 	}
 }
 
+type MockReadCloser struct {
+	rc     io.ReadCloser
+	closed bool
+	t      *testing.T
+}
+
+func (mrc *MockReadCloser) Read(p []byte) (n int, err error) {
+	assert.False(mrc.t, mrc.closed)
+	return mrc.rc.Read(p)
+}
+
+func (mrc *MockReadCloser) Close() error {
+	mrc.closed = true
+	return nil
+}
+
+func NewMockReadCloser(t *testing.T, data []byte) *MockReadCloser {
+	return &MockReadCloser{
+		rc:     ioutil.NopCloser(bytes.NewReader(data)),
+		closed: false,
+		t:      t,
+	}
+}
+
 func TestGetMemcacheKey(t *testing.T) {
 	assert.Equal(t, "RESULTS_SUMMARY-1", getMemcacheKey(shared.TestRun{
 		ID: 1,
@@ -75,8 +100,9 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 	// Use channel to synchronize with expected async cache.Put().
 	c := make(chan bool)
 	w := NewMockWriteCloser(t, c)
+	r := NewMockReadCloser(t, smry)
 	cache.EXPECT().NewReadCloser(key).Return(nil, memcache.ErrCacheMiss)
-	store.EXPECT().NewReadCloser(url).Return(ioutil.NopCloser(bytes.NewReader(smry)), nil)
+	store.EXPECT().NewReadCloser(url).Return(r, nil)
 	cache.EXPECT().NewWriteCloser(key).Return(w, nil)
 
 	s, err := sh.loadSummary(shared.TestRun{
@@ -87,6 +113,7 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 	assert.Equal(t, smry, s)
 
 	b := <-c
+	assert.True(t, r.closed)
 	assert.Equal(t, true, b)
 }
 
@@ -106,8 +133,9 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 		cache: cache,
 	}
 	smry := []byte("{}")
+	r := NewMockReadCloser(t, smry)
 
-	cache.EXPECT().NewReadCloser(key).Return(ioutil.NopCloser(bytes.NewReader(smry)), nil)
+	cache.EXPECT().NewReadCloser(key).Return(r, nil)
 
 	s, err := sh.loadSummary(shared.TestRun{
 		ID:         1,
@@ -115,6 +143,7 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, smry, s)
+	assert.True(t, r.closed)
 }
 
 func TestLoadSummary_missing(t *testing.T) {
@@ -182,14 +211,20 @@ func TestLoadSummaries_success(t *testing.T) {
 		map[string][]int{"/a/b/c": []int{1, 2}},
 		map[string][]int{"/x/y/z": []int{3, 4}},
 	}
+	rs := []*MockReadCloser{
+		NewMockReadCloser(t, summaryBytes[0]),
+		NewMockReadCloser(t, summaryBytes[1]),
+	}
 
-	cache.EXPECT().NewReadCloser(keys[0]).Return(ioutil.NopCloser(bytes.NewReader(summaryBytes[0])), nil)
-	cache.EXPECT().NewReadCloser(keys[1]).Return(ioutil.NopCloser(bytes.NewReader(summaryBytes[1])), nil)
+	cache.EXPECT().NewReadCloser(keys[0]).Return(rs[0], nil)
+	cache.EXPECT().NewReadCloser(keys[1]).Return(rs[1], nil)
 
 	ss, err := sh.loadSummaries(testRuns)
 	assert.Nil(t, err)
 	assert.Equal(t, summaries[0], ss[0])
 	assert.Equal(t, summaries[1], ss[1])
+	assert.True(t, rs[0].closed)
+	assert.True(t, rs[1].closed)
 }
 
 func TestLoadSummaries_fail(t *testing.T) {
@@ -225,13 +260,15 @@ func TestLoadSummaries_fail(t *testing.T) {
 		[]byte(`{"/a/b/c":[1,2]}`),
 	}
 	storeMiss := errors.New("No such summary file")
+	r := NewMockReadCloser(t, summaryBytes[0])
 
-	cache.EXPECT().NewReadCloser(keys[0]).Return(ioutil.NopCloser(bytes.NewReader(summaryBytes[0])), nil)
+	cache.EXPECT().NewReadCloser(keys[0]).Return(r, nil)
 	cache.EXPECT().NewReadCloser(keys[1]).Return(nil, memcache.ErrCacheMiss)
 	store.EXPECT().NewReadCloser(urls[1]).Return(nil, storeMiss)
 
 	_, err := sh.loadSummaries(testRuns)
 	assert.Equal(t, storeMiss, err)
+	assert.True(t, r.closed)
 }
 
 func TestGetRunsAndFilters_default(t *testing.T) {
