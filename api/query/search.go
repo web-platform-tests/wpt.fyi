@@ -31,7 +31,7 @@ import (
 
 // SearchRunResult is the metadata associated with a particular
 // (test run, test file) pair.
-type SearchRunResult struct {
+type LegacySearchRunResult struct {
 	// Passes is the number of test results in a PASS/OK state.
 	Passes int `json:"passes"`
 	// Total is the total number of test results for this run/file pair.
@@ -45,8 +45,11 @@ type SearchResult struct {
 	// Test is the name of a test; this often corresponds to a test file path in
 	// the WPT source reposiory.
 	Test string `json:"test"`
-	// Status is the results data for this file for each relevant run.
-	Status []SearchRunResult `json:"status"`
+	// LegacyStatus is the results data from legacy test summaries. These
+	// summaries contain a "pass count" and a "total count", where the test itself
+	// counts as 1, and each subtest counts as 1. The "pass count" contains any
+	// status values that are "PASS" or "OK".
+	LegacyStatus []LegacySearchRunResult `json:"status"`
 }
 
 // SearchResponse contains a response to search API calls, including specific
@@ -372,11 +375,11 @@ func prepareResponse(filters shared.SearchFilter, testRuns []shared.TestRun, sum
 
 			if _, ok := resMap[test]; !ok {
 				resMap[test] = SearchResult{
-					Test:   test,
-					Status: make([]SearchRunResult, len(testRuns)),
+					Test:         test,
+					LegacyStatus: make([]LegacySearchRunResult, len(testRuns)),
 				}
 			}
-			resMap[test].Status[i] = SearchRunResult{
+			resMap[test].LegacyStatus[i] = LegacySearchRunResult{
 				Passes: passAndTotal[0],
 				Total:  passAndTotal[1],
 			}

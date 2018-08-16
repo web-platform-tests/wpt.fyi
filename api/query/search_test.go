@@ -377,22 +377,22 @@ func TestPrepareResponse(t *testing.T) {
 	assert.Equal(t, []SearchResult{
 		SearchResult{
 			Test: "/a/b/c",
-			Status: []SearchRunResult{
-				SearchRunResult{
+			LegacyStatus: []LegacySearchRunResult{
+				LegacySearchRunResult{
 					Passes: 1,
 					Total:  2,
 				},
-				SearchRunResult{},
+				LegacySearchRunResult{},
 			},
 		},
 		SearchResult{
 			Test: "/b/c",
-			Status: []SearchRunResult{
-				SearchRunResult{
+			LegacyStatus: []LegacySearchRunResult{
+				LegacySearchRunResult{
 					Passes: 9,
 					Total:  9,
 				},
-				SearchRunResult{
+				LegacySearchRunResult{
 					Passes: 5,
 					Total:  9,
 				},
@@ -400,9 +400,9 @@ func TestPrepareResponse(t *testing.T) {
 		},
 		SearchResult{
 			Test: "/z/b/c",
-			Status: []SearchRunResult{
-				SearchRunResult{},
-				SearchRunResult{
+			LegacyStatus: []LegacySearchRunResult{
+				LegacySearchRunResult{},
+				LegacySearchRunResult{
 					Passes: 0,
 					Total:  8,
 				},
