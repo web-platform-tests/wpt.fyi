@@ -43,7 +43,6 @@ found in the LICENSE file.
 
     <template is="dom-if" if="{{!isVerbose}}">
       <test-file-results-table-terse
-          path="[[path]]"
           test-runs="[[testRuns]]"
           subtest-names="[[subtestNames]]">
       </test-file-results-table-terse>
@@ -51,7 +50,6 @@ found in the LICENSE file.
 
     <template is="dom-if" if="{{isVerbose}}">
         <test-file-results-table-verbose
-            path="[[path]]"
             test-runs="[[testRuns]]"
             subtest-names="[[subtestNames]]">
         </test-file-results-table-verbose>
@@ -70,10 +68,6 @@ found in the LICENSE file.
           subtestNames: {
             type: Array,
             value: [],
-          },
-          isTestHarness: {
-            type: Boolean,
-            value: false,
           },
           isVerbose: {
             type: Boolean,
@@ -100,7 +94,6 @@ found in the LICENSE file.
         const resultPerTestRun = await Promise.all(
           testRuns.map(tr => this.loadResultFile(tr)));
 
-        let isTestHarness = false;
         const subtestNames = ['STATUS'];
         resultPerTestRun.forEach((resultData, i) => {
           if (!resultData) {
@@ -110,10 +103,6 @@ found in the LICENSE file.
           }
           testRuns[i].subtests = {};
           testRuns[i].subtests['STATUS'] = { status: resultData.status };
-          if (['OK', 'ERROR'].includes(resultData.status)) {
-            isTestHarness = true;
-          }
-
           for (let subtestResult of resultData.subtests) {
             testRuns[i].subtests[subtestResult.name] = subtestResult;
             if (!subtestNames.includes(subtestResult.name)) {
@@ -121,8 +110,6 @@ found in the LICENSE file.
             }
           }
         });
-
-        this.isTestHarness = isTestHarness;
         this.subtestNames = subtestNames;
       }
 
