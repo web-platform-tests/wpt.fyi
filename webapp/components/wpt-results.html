@@ -372,7 +372,7 @@ found in the LICENSE file.
       ready() {
         super.ready();
         this.loadRuns().then(async runs => {
-          // Add a diff testRun spoof, if needed.
+          // Load a diff data into this.diffRun, if needed.
           if (this.diff && runs && runs.length === 2) {
             this.fetchDiff(runs);
           }
