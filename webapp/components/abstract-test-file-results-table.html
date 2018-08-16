@@ -14,7 +14,22 @@ found in the LICENSE file.
             type: Array,
             value: [],
           },
+          isTestHarness: {
+            type: Boolean,
+            computed: 'computeIsTestHarness(subtestNames)',
+          },
         };
+      }
+
+      computeIsTestHarness(subtestNames) {
+        // subtestNames is always updated after testRuns[].subtests are updated,
+        // so as long as 'STATUS' exists in subtestNames, we can safely access
+        // testRuns[].subtests['STATUS'].
+        if (subtestNames.indexOf('STATUS') === -1) {
+          return false;
+        }
+        const statuses = this.testRuns.map(tr => tr.subtests['STATUS'].status);
+        return statuses.includes('OK') || statuses.includes('ERROR');
       }
 
       subtestNameForDisplay(subtestName, isTestHarness) {
