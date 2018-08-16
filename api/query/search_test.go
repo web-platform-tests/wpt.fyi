@@ -45,33 +45,33 @@ func TestPrepareSearchResponse(t *testing.T) {
 	assert.Equal(t, testRuns, resp.Runs)
 	assert.Equal(t, []SearchResult{
 		SearchResult{
-			Name: "/a/b/c",
-			Status: []SearchRunResult{
-				SearchRunResult{
+			Test: "/a/b/c",
+			LegacyStatus: []LegacySearchRunResult{
+				LegacySearchRunResult{
 					Passes: 1,
 					Total:  2,
 				},
-				SearchRunResult{},
+				LegacySearchRunResult{},
 			},
 		},
 		SearchResult{
-			Name: "/b/c",
-			Status: []SearchRunResult{
-				SearchRunResult{
+			Test: "/b/c",
+			LegacyStatus: []LegacySearchRunResult{
+				LegacySearchRunResult{
 					Passes: 9,
 					Total:  9,
 				},
-				SearchRunResult{
+				LegacySearchRunResult{
 					Passes: 5,
 					Total:  9,
 				},
 			},
 		},
 		SearchResult{
-			Name: "/z/b/c",
-			Status: []SearchRunResult{
-				SearchRunResult{},
-				SearchRunResult{
+			Test: "/z/b/c",
+			LegacyStatus: []LegacySearchRunResult{
+				LegacySearchRunResult{},
+				LegacySearchRunResult{
 					Passes: 0,
 					Total:  8,
 				},

@@ -14,9 +14,11 @@ import (
 	"google.golang.org/appengine"
 )
 
-// SearchRunResult is the metadata associated with a particular
-// (test run, test file) pair.
-type SearchRunResult struct {
+// LegacySearchRunResult is the results data from legacy test summarys.  These
+// summaries contain a "pass count" and a "total count", where the test itself
+// counts as 1, and each subtest counts as 1. The "pass count" contains any
+// status values that are "PASS" or "OK".
+type LegacySearchRunResult struct {
 	// Passes is the number of test results in a PASS/OK state.
 	Passes int `json:"passes"`
 	// Total is the total number of test results for this run/file pair.
@@ -27,10 +29,11 @@ type SearchRunResult struct {
 // of runs. The runs are identified externally in a parallel slice (see
 // SearchResponse).
 type SearchResult struct {
-	// Name is the full path of the test file.
-	Name string `json:"name"`
-	// Status is the results data for this file for each relevant run.
-	Status []SearchRunResult `json:"status"`
+	// Test is the name of a test; this often corresponds to a test file path in
+	// the WPT source reposiory.
+	Test string `json:"test"`
+	// LegacyStatus is the results data from legacy test summaries.
+	LegacyStatus []LegacySearchRunResult `json:"status"`
 }
 
 // SearchResponse contains a response to search API calls, including specific
@@ -47,7 +50,7 @@ type byName []SearchResult
 
 func (r byName) Len() int           { return len(r) }
 func (r byName) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
-func (r byName) Less(i, j int) bool { return r[i].Name < r[j].Name }
+func (r byName) Less(i, j int) bool { return r[i].Test < r[j].Test }
 
 type searchHandler struct {
 	queryHandler
@@ -97,11 +100,11 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 
 			if _, ok := resMap[filename]; !ok {
 				resMap[filename] = SearchResult{
-					Name:   filename,
-					Status: make([]SearchRunResult, len(testRuns)),
+					Test:         filename,
+					LegacyStatus: make([]LegacySearchRunResult, len(testRuns)),
 				}
 			}
-			resMap[filename].Status[i] = SearchRunResult{
+			resMap[filename].LegacyStatus[i] = LegacySearchRunResult{
 				Passes: passAndTotal[0],
 				Total:  passAndTotal[1],
 			}

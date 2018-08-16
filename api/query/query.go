@@ -30,7 +30,7 @@ import (
 type summary map[string][]int
 
 type readable interface {
-	NewReader(string) (io.Reader, error)
+	NewReadCloser(string) (io.ReadCloser, error)
 }
 
 type readWritable interface {
@@ -42,7 +42,7 @@ type httpReadable struct {
 	ctx context.Context
 }
 
-func (hr httpReadable) NewReader(url string) (io.Reader, error) {
+func (hr httpReadable) NewReadCloser(url string) (io.ReadCloser, error) {
 	client := urlfetch.Client(hr.ctx)
 	r, err := client.Get(url)
 	if err != nil {
@@ -60,8 +60,8 @@ type gzipReadWritable struct {
 	delegate readWritable
 }
 
-func (gz gzipReadWritable) NewReader(id string) (io.Reader, error) {
-	r, err := gz.delegate.NewReader(id)
+func (gz gzipReadWritable) NewReadCloser(id string) (io.ReadCloser, error) {
+	r, err := gz.delegate.NewReadCloser(id)
 	if err != nil {
 		return nil, err
 	}
@@ -89,12 +89,12 @@ type memcacheWriteCloser struct {
 
 var errMemcacheWriteCloserWriteAfterClose = errors.New("memcacheWriteCloser: Write() after Close()")
 
-func (mc memcacheReadWritable) NewReader(key string) (io.Reader, error) {
+func (mc memcacheReadWritable) NewReadCloser(key string) (io.ReadCloser, error) {
 	item, err := memcache.Get(mc.ctx, key)
 	if err != nil {
 		return nil, err
 	}
-	return bytes.NewReader(item.Value), nil
+	return ioutil.NopCloser(bytes.NewReader(item.Value)), nil
 }
 
 func (mc memcacheReadWritable) NewWriteCloser(key string) (io.WriteCloser, error) {
@@ -145,9 +145,14 @@ type cachedStore struct {
 }
 
 func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
-	r, err := cs.cache.NewReader(cacheID)
+	cr, err := cs.cache.NewReadCloser(cacheID)
 	if err == nil {
-		cached, err := ioutil.ReadAll(r)
+		defer func() {
+			if err := cr.Close(); err != nil {
+				log.Printf("WARNING: Error closing cache reader for key %s: %v", cacheID, err)
+			}
+		}()
+		cached, err := ioutil.ReadAll(cr)
 		if err == nil {
 			log.Printf("INFO: Serving summary from cache: %s", cacheID)
 			return cached, nil
@@ -158,12 +163,17 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 	err = nil
 
 	log.Printf("INFO: Loading summary from store: %s", storeID)
-	r, err = cs.store.NewReader(storeID)
+	sr, err := cs.store.NewReadCloser(storeID)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := sr.Close(); err != nil {
+			log.Printf("WARNING: Error closing store reader for key %s: %v", storeID, err)
+		}
+	}()
 
-	data, err := ioutil.ReadAll(r)
+	data, err := ioutil.ReadAll(sr)
 	if err != nil {
 		return nil, err
 	}

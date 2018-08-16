@@ -7,7 +7,6 @@
 package query
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -67,9 +66,13 @@ func TestAutocompleteHandler(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	store := NewMockreadable(mockCtrl)
+	rs := []*MockReadCloser{
+		NewMockReadCloser(t, summaryBytes[0]),
+		NewMockReadCloser(t, summaryBytes[1]),
+	}
 
-	store.EXPECT().NewReader(urls[0]).Return(bytes.NewReader(summaryBytes[0]), nil)
-	store.EXPECT().NewReader(urls[1]).Return(bytes.NewReader(summaryBytes[1]), nil)
+	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
+	store.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
 
 	// Same params as TestPrepareAutocompleteResponse_several.
 	q := "/b/"
@@ -106,4 +109,6 @@ func TestAutocompleteHandler(t *testing.T) {
 			AutocompleteResult{"/z/b/c"},
 		},
 	}, data)
+	assert.True(t, rs[0].closed)
+	assert.True(t, rs[1].closed)
 }

@@ -7,7 +7,6 @@
 package query
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -67,9 +66,13 @@ func TestSearchHandler(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	store := NewMockreadable(mockCtrl)
+	rs := []*MockReadCloser{
+		NewMockReadCloser(t, summaryBytes[0]),
+		NewMockReadCloser(t, summaryBytes[1]),
+	}
 
-	store.EXPECT().NewReader(urls[0]).Return(bytes.NewReader(summaryBytes[0]), nil)
-	store.EXPECT().NewReader(urls[1]).Return(bytes.NewReader(summaryBytes[1]), nil)
+	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
+	store.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
 
 	// Same params as TestGetRunsAndFilters_specificRunIDs.
 	q := "/b/"
@@ -103,33 +106,33 @@ func TestSearchHandler(t *testing.T) {
 		Runs: testRuns,
 		Results: []SearchResult{
 			SearchResult{
-				Name: "/a/b/c",
-				Status: []SearchRunResult{
-					SearchRunResult{
+				Test: "/a/b/c",
+				LegacyStatus: []LegacySearchRunResult{
+					LegacySearchRunResult{
 						Passes: 1,
 						Total:  2,
 					},
-					SearchRunResult{},
+					LegacySearchRunResult{},
 				},
 			},
 			SearchResult{
-				Name: "/b/c",
-				Status: []SearchRunResult{
-					SearchRunResult{
+				Test: "/b/c",
+				LegacyStatus: []LegacySearchRunResult{
+					LegacySearchRunResult{
 						Passes: 9,
 						Total:  9,
 					},
-					SearchRunResult{
+					LegacySearchRunResult{
 						Passes: 5,
 						Total:  9,
 					},
 				},
 			},
 			SearchResult{
-				Name: "/z/b/c",
-				Status: []SearchRunResult{
-					SearchRunResult{},
-					SearchRunResult{
+				Test: "/z/b/c",
+				LegacyStatus: []LegacySearchRunResult{
+					LegacySearchRunResult{},
+					LegacySearchRunResult{
 						Passes: 0,
 						Total:  8,
 					},
@@ -137,4 +140,7 @@ func TestSearchHandler(t *testing.T) {
 			},
 		},
 	}, data)
+
+	assert.True(t, rs[0].closed)
+	assert.True(t, rs[1].closed)
 }
