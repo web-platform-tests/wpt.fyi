@@ -302,9 +302,14 @@ func (sh searchHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, err
 
 func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	mkey := getMemcacheKey(testRun)
-	r, err := sh.cache.NewReadCloser(mkey)
+	cr, err := sh.cache.NewReadCloser(mkey)
 	if err == nil {
-		cached, err := ioutil.ReadAll(r)
+		defer func() {
+			if err := cr.Close(); err != nil {
+				log.Printf("WARNING: Error closing cache reader for key %s: %v", mkey, err)
+			}
+		}()
+		cached, err := ioutil.ReadAll(cr)
 		if err == nil {
 			log.Printf("INFO: Serving summary from cache: %s", mkey)
 			return cached, nil
@@ -316,12 +321,17 @@ func (sh searchHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 
 	url := api.GetResultsURL(testRun, "")
 	log.Printf("INFO: Loading summary from store: %s", url)
-	r, err = sh.store.NewReadCloser(url)
+	sr, err := sh.store.NewReadCloser(url)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := sr.Close(); err != nil {
+			log.Printf("WARNING: Error closing store reader for key %s: %v", url, err)
+		}
+	}()
 
-	data, err := ioutil.ReadAll(r)
+	data, err := ioutil.ReadAll(sr)
 	if err != nil {
 		return nil, err
 	}
