@@ -41,9 +41,9 @@ func FirefoxWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	// Specify the path to GeckoDriver in order to use Firefox.
 	options = append(options, selenium.GeckoDriver(*geckoDriverPath))
 	// Output debug information to STDERR.
+	// TODO(Hexcles): Add a flag for selenium.SetDebug().
 	options = append(options, selenium.Output(os.Stderr))
 
-	selenium.SetDebug(true)
 	service, err := selenium.NewSeleniumService(*seleniumPath, *seleniumPort, options...)
 	if err != nil {
 		panic(err)
