@@ -70,7 +70,7 @@ func TestGetResultsURL_TrailingSlash(t *testing.T) {
 }
 
 func checkResult(t *testing.T, c Case) {
-	got := getResultsURL(c.testRun, c.testFile)
+	got := GetResultsURL(c.testRun, c.testFile)
 	if got != c.expected {
 		t.Errorf("\nGot:\n%q\nExpected:\n%q", got, c.expected)
 	}
