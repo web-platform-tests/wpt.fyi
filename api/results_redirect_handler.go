@@ -49,6 +49,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, resultsURL, http.StatusFound)
 }
 
+// GetResultsURL constructs the URL to the result of a single test file in the given run.
 func GetResultsURL(run shared.TestRun, testFile string) (resultsURL string) {
 	resultsURL = run.ResultsURL
 	if testFile != "" && testFile != "/" {
