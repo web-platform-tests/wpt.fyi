@@ -468,10 +468,10 @@ found in the LICENSE file.
                 acc.push({
                   path: `${prefix}${name}`,
                   isDir,
-                  results: Array.from(r.status),
+                  results: Array.from(r.legacy_status),
                 });
               } else {
-                const rs = r.status;
+                const rs = r.legacy_status;
                 const nrs = acc[nodes[name]].results;
 
                 for (let i = 0; i < rs.length; i++) {
