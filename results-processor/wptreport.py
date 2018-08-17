@@ -27,18 +27,42 @@ GCS_PUBLIC_DOMAIN = 'https://storage.googleapis.com'
 _log = logging.getLogger(__name__)
 
 
-class MissingMetadataError(Exception):
+class WPTReportError(Exception):
+    """Base class for all input-related exceptions."""
+    def __init__(self, message, path=None):
+        self.message = message
+        self.path = path
+
+    def __str__(self):
+        message = self.message
+        if self.path:
+            message += " (%s)" % self.path
+        return message
+
+
+class InvalidJSONError(WPTReportError):
+    def __init__(self):
+        super(InvalidJSONError, self).__init__("Invalid JSON")
+
+
+class MissingMetadataError(WPTReportError):
     def __init__(self, key):
         super(MissingMetadataError, self).__init__(
-            "Metadata %s isn't provided and can't be found in the report." %
+            "Missing required metadata '%s'" %
             (key,)
         )
 
 
-class InsufficientDataError(Exception):
-    """Execption for empty/incomplete WPTReport."""
+class InsufficientDataError(WPTReportError):
     def __init__(self):
         super(InsufficientDataError, self).__init__("Zero results available")
+
+
+class ConflictingDataError(WPTReportError):
+    def __init__(self, key):
+        super(ConflictingDataError, self).__init__(
+            "Conflicting '%s' found in the merged report" % (key,)
+        )
 
 
 class BufferedHashsum(object):
@@ -46,11 +70,14 @@ class BufferedHashsum(object):
 
     def __init__(self, hash_ctor=hashlib.sha1, block_size=1024*1024):
         assert block_size > 0
-        self._hash_ctor = hash_ctor
+        self._hash = hash_ctor()
         self._block_size = block_size
 
     def hash_file(self, fileobj):
-        """Hashes a given file.
+        """Updates the hashsum from a given file.
+
+        Calling this method on multiple files is equivalent to computing the
+        hash of all the files concatenated together.
 
         Args:
             fileobj: A file object to hash (must be in binary mode).
@@ -59,40 +86,81 @@ class BufferedHashsum(object):
             A string, the hexadecimal digest of the file.
         """
         assert not isinstance(fileobj, io.TextIOBase)
-        h = self._hash_ctor()
         buf = fileobj.read(self._block_size)
         while len(buf) > 0:
-            h.update(buf)
+            self._hash.update(buf)
             buf = fileobj.read(self._block_size)
-        return h.hexdigest()
+
+    def hashsum(self):
+        """Returns the hexadecimal digest of the current hash."""
+        return self._hash.hexdigest()
 
 
 class WPTReport(object):
     """An abstraction of wptreport.json with some transformation features."""
 
     def __init__(self):
-        self._report = dict()
+        self._hash = BufferedHashsum()
+        self._report = {
+            'results': [],
+            'run_info': {},
+        }
         self._summary = dict()
-        # The hexadecimal sha1sum of the (decompressed) report.
-        self.hashsum = ''
+
+    def _add_chunk(self, chunk):
+        self._report['results'].extend(chunk['results'])
+
+        def update_property(key, source, target, conflict_func=None):
+            """Updates target[key] if source[key] is set.
+
+            If target[key] is already set, use conflict_func to resolve the
+            conflict or raise an exception if conflict_func is None.
+            """
+            if key not in source:
+                return
+            if key in target and source[key] != target[key]:
+                if conflict_func:
+                    target[key] = conflict_func(source[key], target[key])
+                else:
+                    raise ConflictingDataError(key)
+            else:
+                target[key] = source[key]
+
+        if 'run_info' in chunk:
+            for key in chunk['run_info']:
+                update_property(
+                    key, chunk['run_info'], self._report['run_info'])
+
+        update_property('time_start', chunk, self._report, min)
+        update_property('time_end', chunk, self._report, max)
 
     def load_json(self, fileobj):
         """Loads wptreport from a JSON file.
 
+        This method can be called multiple times to load and merge new chunks.
+
         Args:
             fileobj: A JSON file object (must be in binary mode).
+
+        Raises:
+            InsufficientDataError if the dataset contains zero test results;
+            ConflictingDataError if the current file contains information
+            conflicting with existing data (from previous files).
         """
         assert not isinstance(fileobj, io.TextIOBase)
-
-        self.hashsum = BufferedHashsum().hash_file(fileobj)
+        self._hash.hash_file(fileobj)
         fileobj.seek(0)
 
         # JSON files are always encoded in UTF-8 (RFC 8529).
         with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:
-            self._report = json.load(text_file, strict=False)
-        # Raise when 'results' is either not found or empty.
-        if not self._report.get('results'):
-            raise InsufficientDataError
+            try:
+                report = json.load(text_file, strict=False)
+            except json.JSONDecodeError as e:
+                raise InvalidJSONError from e
+            # Raise when 'results' is either not found or empty.
+            if 'results' not in report:
+                raise InsufficientDataError
+            self._add_chunk(report)
 
     def load_gzip_json(self, fileobj):
         """Loads wptreport from a gzipped JSON file.
@@ -106,10 +174,7 @@ class WPTReport(object):
 
     def update_metadata(self, revision='', browser_name='', browser_version='',
                         os_name='', os_version=''):
-        # Don't use self.run_info here because it doesn't insert an empty dict
-        # to self._report['run_info'] if it doesn't already exist.
-        if 'run_info' not in self._report:
-            self._report['run_info'] = {}
+        """Overwrites metadata of the report."""
         # Unfortunately, the names of the keys don't exactly match.
         if revision:
             self._report['run_info']['revision'] = revision
@@ -154,13 +219,17 @@ class WPTReport(object):
 
     @property
     def results(self):
-        """The 'results' field of the report, or [] if it doesn't exists."""
-        return self._report.get('results', [])
+        """The 'results' field of the report."""
+        return self._report['results']
 
     @property
     def run_info(self):
-        """The 'run_info' field of the report, or {} if it doesn't exists."""
-        return self._report.get('run_info', {})
+        """The 'run_info' field of the report."""
+        return self._report['run_info']
+
+    def hashsum(self):
+        """Hex checksum of the decompressed, concatenated report."""
+        return self._hash.hashsum()
 
     def summarize(self):
         """Creates a summary of all the test results.
@@ -171,7 +240,8 @@ class WPTReport(object):
             A summary dictionary.
 
         Raises:
-            InsufficientDataError if the dataset contains zero test results.
+            InsufficientDataError if the dataset contains zero test results;
+            ConflictingDataError if a test appears multiple times in results.
         """
         if self._summary:
             return self._summary
@@ -182,8 +252,8 @@ class WPTReport(object):
         for result in self.results:
             test_file = result['test']
 
-            assert test_file not in self._summary, (
-                'Found duplicate entries for %s' % test_file)
+            if test_file in self._summary:
+                raise ConflictingDataError(test_file)
 
             if result['status'] in ('OK', 'PASS'):
                 self._summary[test_file] = [1, 1]
@@ -244,8 +314,9 @@ class WPTReport(object):
         # os_version isn't required.
         if self.run_info.get('os_version'):
             name += separator + self.run_info['os_version']
-        assert len(self.hashsum) > 0, 'Missing hashsum of the report'
-        name += separator + self.hashsum[:10]
+        hashsum = self.hashsum()
+        assert len(hashsum) > 0, 'Missing hashsum of the report'
+        name += separator + hashsum[:10]
 
         if sanitize:
             name = re.sub('[^A-Za-z0-9._-]', '_', name)
@@ -283,6 +354,7 @@ class WPTReport(object):
             return os.path.join(self.run_info['revision'],
                                 self.product_id(separator='-', sanitize=True))
         except KeyError as e:
+            # str(e) gives the name of the key.
             raise MissingMetadataError(str(e)) from e
 
     @property
@@ -292,6 +364,13 @@ class WPTReport(object):
 
     @property
     def test_run_metadata(self):
+        """Returns a dict of metadata.
+
+        The dict can be used as the payload for the test run creation API.
+
+        Raises:
+            MissingMetadataError if any required metadata is missing.
+        """
         # Required fields:
         try:
             payload = {
@@ -302,10 +381,10 @@ class WPTReport(object):
                 'full_revision_hash': self.run_info['revision'],
             }
         except KeyError as e:
+            # str(e) gives the name of the key.
             raise MissingMetadataError(str(e)) from e
 
         # Optional fields:
-
         if self.run_info.get('os_version'):
             payload['os_version'] = self.run_info['os_version']
 
@@ -321,6 +400,19 @@ class WPTReport(object):
                 self._report['time_end'])
 
         return payload
+
+    def finalize(self):
+        """Checks and finalizes the report.
+
+        Populates all in-memory states (summary & metadata) and raises
+        exceptions if any check fails.
+
+        Raises:
+            Exceptions inherited from WPTReportError.
+        """
+        self.summarize()
+        self.sha_product_path
+        self.test_run_metadata
 
 
 def prepare_labels(report, labels_str, uploader):

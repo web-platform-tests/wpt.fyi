@@ -3,13 +3,21 @@
 # found in the LICENSE file.
 
 import gzip
+import io
 import json
 import os
 import shutil
 import tempfile
 import unittest
 
-from wptreport import WPTReport, InsufficientDataError, prepare_labels
+from wptreport import (
+    ConflictingDataError,
+    InsufficientDataError,
+    InvalidJSONError,
+    MissingMetadataError,
+    WPTReport,
+    prepare_labels
+)
 
 
 class WPTReportTest(unittest.TestCase):
@@ -29,6 +37,7 @@ class WPTReportTest(unittest.TestCase):
         self.assertDictEqual(obj, round_trip)
 
     def test_write_gzip_json(self):
+        # This case also covers the Unicode testing of write_json().
         obj = {'results': [{
             'test': 'ABC~‾¥≈¤･・•∙·☼★星🌟星★☼·∙•・･¤≈¥‾~XYZ',
             'message': None,
@@ -36,10 +45,11 @@ class WPTReportTest(unittest.TestCase):
         }]}
         tmp_path = os.path.join(self.tmp_dir, 'foo', 'bar.json.gz')
         WPTReport.write_gzip_json(tmp_path, obj)
-        r = WPTReport()
         with open(tmp_path, 'rb') as f:
-            r.load_gzip_json(f)
-        self.assertDictEqual(obj, r._report)
+            with gzip.GzipFile(fileobj=f, mode='rb') as gf:
+                with io.TextIOWrapper(gf, encoding='utf-8') as tf:
+                    round_trip = json.load(tf)
+        self.assertDictEqual(obj, round_trip)
 
     def test_load_json(self):
         tmp_path = os.path.join(self.tmp_dir, 'test.json')
@@ -50,7 +60,8 @@ class WPTReportTest(unittest.TestCase):
             r.load_json(f)
         self.assertEqual(len(r.results), 1)
         # This is the sha1sum of the string written above.
-        self.assertEqual(r.hashsum, 'afa59408e1797c7091d7e89de5561612f7da440d')
+        self.assertEqual(r.hashsum(),
+                         'afa59408e1797c7091d7e89de5561612f7da440d')
 
     def test_load_json_empty_report(self):
         tmp_path = os.path.join(self.tmp_dir, 'test.json')
@@ -61,13 +72,106 @@ class WPTReportTest(unittest.TestCase):
             with self.assertRaises(InsufficientDataError):
                 r.load_json(f)
 
+    def test_load_json_invalid_json(self):
+        tmp_path = os.path.join(self.tmp_dir, 'test.json')
+        with open(tmp_path, 'wt') as f:
+            f.write('{[')
+        r = WPTReport()
+        with open(tmp_path, 'rb') as f:
+            with self.assertRaises(InvalidJSONError):
+                r.load_json(f)
+
+    def test_load_json_multiple_chunks(self):
+        tmp_path = os.path.join(self.tmp_dir, 'test.json')
+        r = WPTReport()
+
+        with open(tmp_path, 'wt') as f:
+            f.write('{"results": [{"test1": "foo"}]}\n')
+        with open(tmp_path, 'rb') as f:
+            r.load_json(f)
+
+        with open(tmp_path, 'wt') as f:
+            f.write('{"results": [{"test2": "bar"}]}\n')
+        with open(tmp_path, 'rb') as f:
+            r.load_json(f)
+
+        self.assertEqual(len(r.results), 2)
+        # This is the sha1sum of the two strings above concatenated.
+        self.assertEqual(r.hashsum(),
+                         '3aa5e332b892025bc6c301e6578ae0d54375351d')
+
+    def test_load_json_multiple_chunks_metadata(self):
+        tmp_path = os.path.join(self.tmp_dir, 'test.json')
+        r = WPTReport()
+
+        # Load a report with no metadata first to test the handling of None.
+        with open(tmp_path, 'wt') as f:
+            f.write('{"results": [{"test": "foo"}]}\n')
+        with open(tmp_path, 'rb') as f:
+            r.load_json(f)
+
+        with open(tmp_path, 'wt') as f:
+            json.dump({
+                'results': [{'test1': 'foo'}],
+                'run_info': {'product': 'firefox', 'os': 'linux'},
+                'time_start': 100,
+                'time_end': 200,
+            }, f)
+        with open(tmp_path, 'rb') as f:
+            r.load_json(f)
+
+        with open(tmp_path, 'wt') as f:
+            json.dump({
+                'results': [{'test2': 'bar'}],
+                'run_info': {'product': 'firefox', 'browser_version': '59.0'},
+                'time_start': 10,
+                'time_end': 500,
+            }, f)
+        with open(tmp_path, 'rb') as f:
+            r.load_json(f)
+
+        self.assertEqual(len(r.results), 3)
+        # run_info should be the union of all run_info.
+        self.assertDictEqual(r.run_info, {
+            'product': 'firefox',
+            'browser_version': '59.0',
+            'os': 'linux'
+        })
+        # The smallest time_start should be kept.
+        self.assertEqual(r._report['time_start'], 10)
+        # The largest time_end should be kept.
+        self.assertEqual(r._report['time_end'], 500)
+
+    def test_load_json_multiple_chunks_conflicting_data(self):
+        tmp_path = os.path.join(self.tmp_dir, 'test.json')
+        r = WPTReport()
+        with open(tmp_path, 'wt') as f:
+            json.dump({
+                'results': [{'test1': 'foo'}],
+                'run_info': {'product': 'firefox'},
+            }, f)
+        with open(tmp_path, 'rb') as f:
+            r.load_json(f)
+
+        with open(tmp_path, 'wt') as f:
+            json.dump({
+                'results': [{'test2': 'bar'}],
+                'run_info': {'product': 'chrome'},
+            }, f)
+        with open(tmp_path, 'rb') as f:
+            with self.assertRaises(ConflictingDataError):
+                r.load_json(f)
+
     def test_load_gzip_json(self):
         # This case also covers the Unicode testing of load_json().
-        obj = {'results': [{
-            'test': 'ABC~‾¥≈¤･・•∙·☼★星🌟星★☼·∙•・･¤≈¥‾~XYZ',
-            'message': None,
-            'status': 'PASS'
-        }]}
+        obj = {
+            'results': [{
+                'test': 'ABC~‾¥≈¤･・•∙·☼★星🌟星★☼·∙•・･¤≈¥‾~XYZ',
+                'message': None,
+                'status': 'PASS'
+            }],
+            'run_info': {},
+        }
         json_s = json.dumps(obj, ensure_ascii=False)
         tmp_path = os.path.join(self.tmp_dir, 'test.json.gz')
         with open(tmp_path, 'wb') as f:
@@ -137,7 +241,7 @@ class WPTReportTest(unittest.TestCase):
                 ]
             }
         ]}
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ConflictingDataError):
             r.summarize()
 
     def test_each_result(self):
@@ -209,7 +313,7 @@ class WPTReportTest(unittest.TestCase):
                 'os': 'linux'
             }
         }
-        r.hashsum = '0123456789'
+        r.hashsum = lambda: '0123456789'
         r.populate_upload_directory(output_dir=self.tmp_dir)
 
         self.assertTrue(os.path.isfile(os.path.join(
@@ -238,7 +342,7 @@ class WPTReportTest(unittest.TestCase):
             'os_version': '4.4'
         })
 
-    def test_test_run_metadata_required_fields(self):
+    def test_test_run_metadata(self):
         r = WPTReport()
         r._report = {
             'run_info': {
@@ -255,6 +359,17 @@ class WPTReportTest(unittest.TestCase):
             'revision': '0bdaaf9c16',
             'full_revision_hash': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
         })
+
+    def test_test_run_metadata_missing_required_fields(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'firefox',
+                'os': 'linux'
+            }
+        }
+        with self.assertRaises(MissingMetadataError):
+            r.test_run_metadata
 
     def test_test_run_metadata_optional_fields(self):
         r = WPTReport()
@@ -289,7 +404,7 @@ class WPTReportTest(unittest.TestCase):
                 'os': 'linux',
             }
         }
-        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        r.hashsum = lambda: 'afa59408e1797c7091d7e89de5561612f7da440d'
         self.assertEqual(r.product_id(), 'firefox-59.0-linux-afa59408e1')
 
         r._report['run_info']['os_version'] = '4.4'
@@ -305,7 +420,7 @@ class WPTReportTest(unittest.TestCase):
                 'os': 'linux',
             }
         }
-        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        r.hashsum = lambda: 'afa59408e1797c7091d7e89de5561612f7da440d'
         self.assertEqual(r.product_id(separator='-', sanitize=True),
                          'chrome_-1.2.3_dev-1-linux-afa59408e1')
 
@@ -319,7 +434,7 @@ class WPTReportTest(unittest.TestCase):
                 'os': 'linux'
             }
         }
-        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        r.hashsum = lambda: 'afa59408e1797c7091d7e89de5561612f7da440d'
         self.assertEqual(r.sha_product_path,
                          '0bdaaf9c1622ca49eb140381af1ece6d8001c934/'
                          'firefox-59.0-linux-afa59408e1')
@@ -334,7 +449,7 @@ class WPTReportTest(unittest.TestCase):
                 'os': 'linux'
             }
         }
-        r.hashsum = 'afa59408e1797c7091d7e89de5561612f7da440d'
+        r.hashsum = lambda: 'afa59408e1797c7091d7e89de5561612f7da440d'
         self.assertEqual(r.sha_summary_path,
                          '0bdaaf9c1622ca49eb140381af1ece6d8001c934/'
                          'firefox-59.0-linux-afa59408e1-summary.json.gz')

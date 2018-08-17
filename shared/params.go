@@ -18,7 +18,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 )
 
-// SearchFilter represents the ways search results can be filtered in the webapp
+// QueryFilter represents the ways search results can be filtered in the webapp
 // search API.
 type QueryFilter struct {
 	RunIDs []int64

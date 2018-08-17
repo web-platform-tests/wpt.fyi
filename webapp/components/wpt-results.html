@@ -89,6 +89,9 @@ found in the LICENSE file.
       td.none {
         visibility: hidden;
       }
+      td.numbers {
+        white-space: nowrap;
+      }
       .yellow-button {
         color: var(--paper-yellow-500);
         margin-left: 32px;
@@ -172,8 +175,10 @@ found in the LICENSE file.
           <tr>
             <th>Path</th>
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-              <!-- Repeats for as many different browser test runs are available -->
               <th><test-run test-run="[[testRun]]"></test-run></th>
+            </template>
+            <template is="dom-if" if="[[diffShown]]">
+              <th><test-run test-run="[[diffRun]]"></test-run></th>
             </template>
           </tr>
         </thead>
@@ -186,10 +191,17 @@ found in the LICENSE file.
               </td>
 
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                <td class$="[[ testResultClass(node, testRun, 'passing') ]]">
+                <td class$="numbers [[ testResultClass(node, testRun, 'passing') ]]">
                   <span class$="passing [[ testResultClass(node, testRun, 'passing') ]]">{{ getNodeResultDataByPropertyName(node, testRun, 'passing') }}</span>
                   /
                   <span class$="total [[ testResultClass(node, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, testRun, 'total') }}</span>
+                </td>
+              </template>
+              <template is="dom-if" if="[[diffShown]]">
+                <td class$="numbers [[ testResultClass(node, diffRun, 'passing') ]]">
+                  <span class$="passing [[ testResultClass(node, diffRun, 'passing') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'passing') }}</span>
+                  /
+                  <span class$="total [[ testResultClass(node, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'total') }}</span>
                 </td>
               </template>
             </tr>
@@ -271,8 +283,17 @@ found in the LICENSE file.
             type: Array,
             value: []
           },
-          // Show a diff column (if there are 2 testRuns).
+          // Users request to show a diff column.
           diff: Boolean,
+          diffRun: {
+            type: Object,
+            value: null,
+          },
+          // A diff column is shown if requested by users and there are 2 testRuns.
+          diffShown: {
+            type: Boolean,
+            computed: 'isDiffShown(diff, diffRun)',
+          },
           // Override TestRunsBase to add diff.
           queryParams: {
             type: Object,
@@ -289,10 +310,12 @@ found in the LICENSE file.
         };
       }
 
+      isDiffShown(diff, diffRun) {
+        return diff && diffRun !== null;
+      }
+
       isInvalidDiffUse(diff, testRuns) {
-        return diff
-            && testRuns
-            && testRuns.filter(r => r.revision !== 'diff').length !== 2;
+        return diff && testRuns && testRuns.length !== 2;
       }
 
       hideDiffInvalidToast() {
@@ -334,7 +357,6 @@ found in the LICENSE file.
       ready() {
         super.ready();
         this.loadRuns().then(async runs => {
-          // Add a diff testRun spoof, if needed.
           if (this.diff && runs && runs.length === 2) {
             this.fetchDiff(runs);
           }
@@ -389,13 +411,12 @@ found in the LICENSE file.
         const b = `${before.browser_name}@${before.revision}`;
         const a = `${after.browser_name}@${after.revision}`;
         const diffRunURL = `/api/diff?before=${b}&after=${a}&filter=${this.filter}`;
-        const diffRun = {
+        this.diffRun = {
           revision: 'diff',
           browser_name: 'diff',
           results_url: diffRunURL,
         };
-        await this.fetchResults([diffRun]);
-        this.push('testRuns', diffRun);
+        await this.fetchResults([this.diffRun]);
         this.refreshDisplayedNodes();
       }
 
