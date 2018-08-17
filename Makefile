@@ -11,7 +11,7 @@
 
 SHELL := /bin/bash
 
-export GOPATH=$(shell go env GOPATH)
+GOPATH := $(shell go env GOPATH)
 
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -120,7 +120,7 @@ webapp_deps: go_deps bower_components
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
-chrome: browser_deps
+chrome:
 	if [[ -z "$$(which google-chrome)" ]]; then \
 		if [[ -z "$$(which chromium)" ]]; then \
 			make apt-get-chromium; \
@@ -128,14 +128,17 @@ chrome: browser_deps
 		sudo ln -s "$$(which chromium)" /usr/bin/google-chrome; \
 	fi
 
-firefox: browser_deps bzip2
-	if [[ "$$(which firefox)" == "" ]]; then \
-	  $(WPTD_PATH)webdriver/install.sh $$HOME/browsers; \
-		sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox; \
+firefox:
+	if [[ -z "$$(which firefox)" ]]; then \
+		make firefox_install; \
 	fi
 
-browser_deps: wget java
-	sudo apt-get install -qy --no-install-suggests $$(apt-cache depends firefox-esr chromedriver | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+firefox_install: firefox_deps bzip2 wget java
+	$(WPTD_PATH)webdriver/install.sh $$HOME/browsers
+	sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox
+
+firefox_deps:
+	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox-esr | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 go_deps: gcloud go_packages $(GO_FILES)
 
@@ -177,19 +180,19 @@ bzip2: apt-get-bzip2
 java:
 	@ # java has a different apt-get package name.
 	if [[ "$$(which java)" == "" ]]; then \
-		sudo apt-get install -qy --no-install-suggests openjdk-8-jdk; \
+		sudo apt-get install -qqy --no-install-suggests openjdk-8-jdk; \
 	fi
 
 gpg:
 	@ # gpg has a different apt-get package name.
 	if [[ "$$(which gpg)" == "" ]]; then \
-		sudo apt-get install -qy --no-install-suggests gnupg; \
+		sudo apt-get install -qqy --no-install-suggests gnupg; \
 	fi
 
 node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
 		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
-		sudo apt-get install -qy nodejs; \
+		sudo apt-get install -qqy nodejs; \
 	fi
 
 gcloud: python curl gpg
@@ -224,7 +227,7 @@ bower_components: git node-bower
 
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
-		sudo apt-get install -qy --no-install-suggests xvfb; \
+		sudo apt-get install -qqy --no-install-suggests xvfb; \
 	fi
 
 # symlinks the Go folder for the wpt.fyi project to (this) folder.
@@ -258,7 +261,7 @@ node-%: node
 	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
 
 apt-get-%:
-	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install --quiet --assume-yes --no-install-suggests $*; fi
+	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi
 
 env-%:
 	@ if [[ "${${*}}" = "" ]]; then echo "Environment variable $* not set"; exit 1; fi
