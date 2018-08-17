@@ -37,12 +37,12 @@ type byQueryIndex struct {
 func (r byQueryIndex) Len() int      { return len(r.rs) }
 func (r byQueryIndex) Swap(i, j int) { r.rs[i], r.rs[j] = r.rs[j], r.rs[i] }
 func (r byQueryIndex) Less(i, j int) bool {
-	a := strings.Index(r.rs[i].String, r.q)
-	b := strings.Index(r.rs[j].String, r.q)
+	a := strings.Index(r.rs[i].QueryString, r.q)
+	b := strings.Index(r.rs[j].QueryString, r.q)
 	if a == b {
-		return r.rs[i].String < r.rs[j].String
+		return r.rs[i].QueryString < r.rs[j].QueryString
 	}
-	return strings.Index(r.rs[i].String, r.q) < strings.Index(r.rs[j].String, r.q)
+	return strings.Index(r.rs[i].QueryString, r.q) < strings.Index(r.rs[j].QueryString, r.q)
 }
 
 type autocompleteHandler struct {
