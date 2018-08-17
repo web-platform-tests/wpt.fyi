@@ -352,7 +352,7 @@ found in the LICENSE file.
       }
 
       computeDisplayedTests(searchResults) {
-        return searchResults.map(r => r.name);
+        return searchResults.map(r => r.test);
       }
 
       computeSearchURL(testRuns, search) {
@@ -448,7 +448,7 @@ found in the LICENSE file.
         const pLen = prefix.length;
         this.displayedNodes = this.searchResults
           // Filter out files not in this directory.
-          .filter(r => r.name.startsWith(prefix))
+          .filter(r => r.test.startsWith(prefix))
           // Accumulate displayedNodes from remaining files.
           .reduce((() => {
             // Bookkeeping of the form:
@@ -456,7 +456,7 @@ found in the LICENSE file.
             let nodes = {};
             return (acc, r) => {
               // Compute dir/file name that is direct descendant of this.path.
-              const suffix = r.name.substring(pLen);
+              const suffix = r.test.substring(pLen);
               const slashIdx = suffix.indexOf('/');
               const isDir = slashIdx !== -1;
               const name = isDir ? suffix.substring(0, slashIdx): suffix;
