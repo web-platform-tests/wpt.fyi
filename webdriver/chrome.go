@@ -39,10 +39,11 @@ func ChromeWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 		options = append(options, selenium.StartFrameBuffer())
 	}
 	// Specify the path to ChromeDriver in order to use Chrome.
+	// FIXME: chromeDriverPath seems to be ignored?
 	// Output debug information to STDERR.
+	// TODO(Hexcles): Add a flag for selenium.SetDebug().
 	options = append(options, selenium.Output(os.Stderr))
 
-	selenium.SetDebug(true)
 	service, err := selenium.NewSeleniumService(*seleniumPath, *seleniumPort, options...)
 	if err != nil {
 		panic(err)
