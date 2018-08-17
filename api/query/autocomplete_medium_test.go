@@ -103,7 +103,7 @@ func TestAutocompleteHandler(t *testing.T) {
 
 	// Same result as TestPrepareAutocompleteResponse_several.
 	assert.Equal(t, AutocompleteResponse{
-		Results: []AutocompleteResult{
+		Suggestions: []AutocompleteResult{
 			AutocompleteResult{"/b/c"},
 			AutocompleteResult{"/a/b/c"},
 			AutocompleteResult{"/z/b/c"},

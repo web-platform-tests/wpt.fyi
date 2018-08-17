@@ -25,8 +25,8 @@ type AutocompleteResult struct {
 
 // AutocompleteResponse contains a response to autocmplete API calls.
 type AutocompleteResponse struct {
-	// Results is the collection of test results, grouped by test file name.
-	Results []AutocompleteResult `json:"results"`
+	// Suggestions is the collection of autocomplete suggestions.
+	Suggestions []AutocompleteResult `json:"results"`
 }
 
 type byQueryIndex struct {

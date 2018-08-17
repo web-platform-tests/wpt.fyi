@@ -42,7 +42,7 @@ func TestPrepareAutocompleteResponse_none(t *testing.T) {
 	}
 
 	resp := prepareAutocompleteResponse(&filters, testRuns, summaries)
-	assert.Equal(t, []AutocompleteResult{}, resp.Results)
+	assert.Equal(t, []AutocompleteResult{}, resp.Suggestions)
 }
 
 func TestPrepareAutocompleteResponse_several(t *testing.T) {
@@ -78,5 +78,5 @@ func TestPrepareAutocompleteResponse_several(t *testing.T) {
 		AutocompleteResult{"/b/c"},
 		AutocompleteResult{"/a/b/c"},
 		AutocompleteResult{"/z/b/c"},
-	}, resp.Results)
+	}, resp.Suggestions)
 }
