@@ -54,8 +54,8 @@ go_lint: go_deps golint_deps go_test_tag_lint
 	cd $(WPTD_GO_PATH); golint -set_exit_status shared/
 	cd $(WPTD_GO_PATH); golint -set_exit_status util/
 	cd $(WPTD_GO_PATH); golint -set_exit_status webapp/
-	# Printing files with differences between current/gofmt'd output, asserting empty...
-	cd $(WPTD_GO_PATH); ! gofmt -d $(GO_FILES) 2>&1 | read || ! echo $$(gofmt -l $(GO_FILES))
+	# Print out gofmt diff and fail if `gofmt -l` gives non-empty output.
+	cd $(WPTD_GO_PATH); ! (gofmt -l ./ | read && echo "Found gofmt issues:" && gofmt -d ./)
 
 go_test_tag_lint:
 	@ echo "# Printing a list of test files without +build tag, asserting empty..."
