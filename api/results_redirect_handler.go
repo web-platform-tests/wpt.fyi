@@ -44,12 +44,12 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	test := r.URL.Query().Get("test")
-	resultsURL := getResultsURL(testRuns[0], test)
+	resultsURL := GetResultsURL(testRuns[0], test)
 
 	http.Redirect(w, r, resultsURL, http.StatusFound)
 }
 
-func getResultsURL(run shared.TestRun, testFile string) (resultsURL string) {
+func GetResultsURL(run shared.TestRun, testFile string) (resultsURL string) {
 	resultsURL = run.ResultsURL
 	if testFile != "" && testFile != "/" {
 		// Assumes that result files are under a directory named SHA[0:10].

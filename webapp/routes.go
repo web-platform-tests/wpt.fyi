@@ -8,6 +8,7 @@ import (
 	"html/template"
 
 	"github.com/web-platform-tests/wpt.fyi/api"
+	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -16,6 +17,7 @@ var templates = template.Must(template.ParseGlob("templates/*.html"))
 func init() {
 	// webapp.RegisterRoutes has a catch-all, so needs to go last.
 	api.RegisterRoutes()
+	query.RegisterRoutes()
 	RegisterRoutes()
 }
 
