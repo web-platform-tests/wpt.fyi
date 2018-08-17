@@ -552,6 +552,8 @@ func ParseBooleanParam(r *http.Request, name string) (result *bool, err error) {
 	return &b, err
 }
 
+// ParseRunIDsParam parses the "run_ids" parameter. If the ID is not a valid
+// int64, an error will be returned.
 func ParseRunIDsParam(r *http.Request) (ids []int64, err error) {
 	idStrs := strings.Split(r.URL.Query().Get("run_ids"), ",")
 	ids = make([]int64, 0, len(idStrs))
@@ -565,6 +567,8 @@ func ParseRunIDsParam(r *http.Request) (ids []int64, err error) {
 	return ids, err
 }
 
+// ParseSearchFilterParams parses the search parameters, including both
+// "run_ids" and "q" (query).
 func ParseSearchFilterParams(r *http.Request) (filter SearchFilter, err error) {
 	keys, err := ParseRunIDsParam(r)
 	if err != nil {
