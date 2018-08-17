@@ -411,6 +411,68 @@ func TestParseComplete(t *testing.T) {
 	assert.False(t, *complete)
 }
 
+func TestParseRunIDsParam_nil(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search", nil)
+	runIDs, err := ParseRunIDsParam(r)
+	assert.Nil(t, runIDs)
+	assert.Nil(t, err)
+}
+
+func TestParseRunIDsParam_ok(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_ids=1,2,3", nil)
+	runIDs, err := ParseRunIDsParam(r)
+	assert.Equal(t, []int64{1, 2, 3}, runIDs)
+	assert.Nil(t, err)
+}
+
+func TestParseRunIDsParam_err(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_ids=1,notanumber,3", nil)
+	runIDs, err := ParseRunIDsParam(r)
+	assert.Nil(t, runIDs)
+	assert.NotNil(t, err)
+}
+
+func TestParseQueryFilterParams_nil(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search", nil)
+	filter, err := ParseQueryFilterParams(r)
+	assert.Equal(t, QueryFilter{}, filter)
+	assert.Nil(t, err)
+}
+
+func TestParseQueryFilterParams_runIDs(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_ids=1,2,3", nil)
+	filter, err := ParseQueryFilterParams(r)
+	assert.Equal(t, QueryFilter{
+		RunIDs: []int64{1, 2, 3},
+	}, filter)
+	assert.Nil(t, err)
+}
+
+func TestParseQueryFilterParams_q(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?q=abcd", nil)
+	filter, err := ParseQueryFilterParams(r)
+	assert.Equal(t, QueryFilter{
+		Q: "abcd",
+	}, filter)
+	assert.Nil(t, err)
+}
+
+func TestParseQueryFilterParams_complete(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_ids=1,2,3&q=abcd", nil)
+	filter, err := ParseQueryFilterParams(r)
+	assert.Equal(t, QueryFilter{
+		RunIDs: []int64{1, 2, 3},
+		Q:      "abcd",
+	}, filter)
+	assert.Nil(t, err)
+}
+
+func TestParseQueryFilterParams_err(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_ids=1,notanumber,3&q=abcd", nil)
+	_, err := ParseQueryFilterParams(r)
+	assert.NotNil(t, err)
+}
+
 func TestParseTestRunFilterParams(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	filter, _ := ParseTestRunFilterParams(r)
