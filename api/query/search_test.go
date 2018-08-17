@@ -7,10 +7,7 @@
 package query
 
 import (
-	"bytes"
 	"errors"
-	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -18,59 +15,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/memcache"
 )
-
-type MockWriteCloser struct {
-	b      bytes.Buffer
-	closed bool
-	t      *testing.T
-	c      chan bool
-}
-
-func (mcw *MockWriteCloser) Write(p []byte) (n int, err error) {
-	assert.False(mcw.t, mcw.closed)
-	return mcw.b.Write(p)
-}
-
-func (mcw *MockWriteCloser) Close() error {
-	mcw.closed = true
-	if mcw.c != nil {
-		mcw.c <- true
-	}
-	return nil
-}
-
-func NewMockWriteCloser(t *testing.T, c chan bool) *MockWriteCloser {
-	return &MockWriteCloser{
-		b:      bytes.Buffer{},
-		closed: false,
-		t:      t,
-		c:      c,
-	}
-}
-
-type MockReadCloser struct {
-	rc     io.ReadCloser
-	closed bool
-	t      *testing.T
-}
-
-func (mrc *MockReadCloser) Read(p []byte) (n int, err error) {
-	assert.False(mrc.t, mrc.closed)
-	return mrc.rc.Read(p)
-}
-
-func (mrc *MockReadCloser) Close() error {
-	mrc.closed = true
-	return nil
-}
-
-func NewMockReadCloser(t *testing.T, data []byte) *MockReadCloser {
-	return &MockReadCloser{
-		rc:     ioutil.NopCloser(bytes.NewReader(data)),
-		closed: false,
-		t:      t,
-	}
-}
 
 func TestGetMemcacheKey(t *testing.T) {
 	assert.Equal(t, "RESULTS_SUMMARY-1", getMemcacheKey(shared.TestRun{
