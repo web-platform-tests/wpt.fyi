@@ -17,10 +17,10 @@ import (
 
 // AutocompleteResult contains a single autocomplete suggestion.
 type AutocompleteResult struct {
-	// String represents the most basic form of an autocomplete result. It is the
-	// complete string being recommended. The client is responsibile for fitting
-	// it to any substring(s) already appearing in a search UI.
-	String string `json:"string"`
+	// QueryString represents the most basic form of an autocomplete result. It is
+	// the complete query string being recommended. The client is responsibile for
+	// fitting it to any substring(s) already appearing in a search UI.
+	QueryString string `json:"query_string"`
 }
 
 // AutocompleteResponse contains a response to autocmplete API calls.
