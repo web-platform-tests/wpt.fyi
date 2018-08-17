@@ -11,9 +11,6 @@
 
 SHELL := /bin/bash
 
-START_XVFB = export DISPLAY=99; Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
-STOP_XVFB = killall Xvfb
-
 export GOPATH=$(shell go env GOPATH)
 
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
@@ -25,6 +22,13 @@ NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selen
 FIREFOX_PATH ?= $$HOME/browsers/firefox/firefox
 CHROME_PATH ?= /usr/bin/google-chrome
 USE_FRAME_BUFFER ?= true
+
+# Recursively expanded variables so that USE_FRAME_BUFFER can be expanded.
+# These two macros are intended to run in the same shell as the test runners,
+# which means they need to be in the same (continued) line.
+START_XVFB = if [ "$(USE_FRAME_BUFFER)" == "true" ]; then \
+	export DISPLAY=:99; (Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &); fi
+STOP_XVFB = if [ "$(USE_FRAME_BUFFER)" == "true" ]; then killall Xvfb; fi
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
@@ -73,19 +77,18 @@ integration_test: go_all_browsers_test web_components_test
 .NOTPARALLEL: go_all_browsers_test
 go_all_browsers_test: go_firefox_test go_chrome_test
 
-go_firefox_test: BROWSER = firefox
+go_firefox_test: BROWSER := firefox
 go_firefox_test: firefox | go_webdriver_test
 
-go_chrome_test: BROWSER = chrome
+go_chrome_test: BROWSER := chrome
 go_chrome_test: chrome | go_webdriver_test
 
-.ONESHELL: go_webdriver_test
 go_webdriver_test: STAGING := false
 go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
-	export SELENIUM_SERVER_PATH="$(shell find $(NODE_SELENIUM_PATH)selenium-server/ -type f -name '*server.jar')"
-	export GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"
-	export CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"
-	if [ "$(USE_FRAME_BUFFER)" == "true" ]; then ($(START_XVFB)); fi
+	export SELENIUM_SERVER_PATH="$(shell find $(NODE_SELENIUM_PATH)selenium-server/ -type f -name '*server.jar')"; \
+	export GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
+	export CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
+	$(START_XVFB); \
 	cd $(WPTD_PATH)webdriver; go test -v -tags=large \
 			--selenium_path=$$SELENIUM_SERVER_PATH \
 			--firefox_path=$(FIREFOX_PATH) \
@@ -95,12 +98,12 @@ go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webse
 			--frame_buffer=$(USE_FRAME_BUFFER) \
 			--staging=$(STAGING) \
 			--browser=$(BROWSER) \
-			$(FLAGS)
-	if [[ "$(USE_FRAME_BUFFER)" == "true" ]]; then $(STOP_XVFB); fi
+			$(FLAGS); \
+	$(STOP_XVFB)
 
 web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
-	$(START_XVFB)
-	cd $(WPTD_PATH)webapp; export DISPLAY=:99.0; npm test
+	$(START_XVFB); \
+	cd $(WPTD_PATH)webapp && npm test; \
 	$(STOP_XVFB)
 
 sys_update: apt_update | sys_deps
@@ -143,9 +146,9 @@ golint_deps: git go_deps
 	# Manual git clone + install is a workaround for #85.
 	if [ "$$(which golint)" == "" ]; then \
 		mkdir -p $(GOPATH)/src/golang.org/x/tools; \
-    git clone https://go.googlesource.com/tools $(GOPATH)/src/golang.org/x/tools; \
-    cd $(GOPATH)/src/golang.org/x/tools; \
-    git checkout release-branch.go1.10; \
+		git clone https://go.googlesource.com/tools $(GOPATH)/src/golang.org/x/tools; \
+		cd $(GOPATH)/src/golang.org/x/tools; \
+		git checkout release-branch.go1.10; \
 		mkdir -p "$(GOPATH)/src/golang.org/x"; \
 		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint; \
 		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...; \
