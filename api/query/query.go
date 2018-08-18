@@ -118,6 +118,7 @@ func (mw memcacheWriteCloser) Close() error {
 }
 
 type sharedInterface interface {
+	ParseQueryParamInt(r *http.Request, key string) (int, error)
 	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
 	LoadTestRuns([]shared.ProductSpec, mapset.Set, []string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
 	LoadTestRun(int64) (*shared.TestRun, error)
@@ -125,6 +126,10 @@ type sharedInterface interface {
 
 type defaultShared struct {
 	ctx context.Context
+}
+
+func (defaultShared) ParseQueryParamInt(r *http.Request, key string) (int, error) {
+	return shared.ParseQueryParamInt(r, key)
 }
 
 func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter, error) {

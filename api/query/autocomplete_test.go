@@ -7,11 +7,47 @@
 package query
 
 import (
+	"fmt"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
+
+func TestParseLimit_none(t *testing.T) {
+	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	limit, err := ah.parseLimit(httptest.NewRequest("GET", "/api/autocomplete", nil))
+	assert.Equal(t, autocompleteDefaultLimit, limit)
+	assert.Nil(t, err)
+}
+
+func TestParseLimit_tooSmall(t *testing.T) {
+	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	limit, err := ah.parseLimit(httptest.NewRequest("GET", fmt.Sprintf("/api/autocomplete?limit=%d", autocompleteMinLimit-1), nil))
+	assert.Equal(t, autocompleteMinLimit, limit)
+	assert.Nil(t, err)
+}
+
+func TestParseLimit_tooBig(t *testing.T) {
+	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	limit, err := ah.parseLimit(httptest.NewRequest("GET", fmt.Sprintf("/api/autocomplete?limit=%d", autocompleteMaxLimit+1), nil))
+	assert.Equal(t, autocompleteMaxLimit, limit)
+	assert.Nil(t, err)
+}
+
+func TestParseLimit_bad(t *testing.T) {
+	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	_, err := ah.parseLimit(httptest.NewRequest("GET", "/api/autocomplete?limit=notanumber", nil))
+	assert.NotNil(t, err)
+}
+
+func TestParseLimit_ok(t *testing.T) {
+	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	limit, err := ah.parseLimit(httptest.NewRequest("GET", fmt.Sprintf("/api/autocomplete?limit=%d", autocompleteMaxLimit-1), nil))
+	assert.Equal(t, autocompleteMaxLimit-1, limit)
+	assert.Nil(t, err)
+}
 
 func TestPrepareAutocompleteResponse_none(t *testing.T) {
 	runIDs := []int64{1, 2}
@@ -41,7 +77,7 @@ func TestPrepareAutocompleteResponse_none(t *testing.T) {
 		},
 	}
 
-	resp := prepareAutocompleteResponse(&filters, testRuns, summaries)
+	resp := prepareAutocompleteResponse(50, &filters, testRuns, summaries)
 	assert.Equal(t, []AutocompleteResult{}, resp.Suggestions)
 }
 
@@ -73,10 +109,45 @@ func TestPrepareAutocompleteResponse_several(t *testing.T) {
 		},
 	}
 
-	resp := prepareAutocompleteResponse(&filters, testRuns, summaries)
+	resp := prepareAutocompleteResponse(50, &filters, testRuns, summaries)
 	assert.Equal(t, []AutocompleteResult{
 		AutocompleteResult{"/b/c"},
 		AutocompleteResult{"/a/b/c"},
 		AutocompleteResult{"/z/b/c"},
+	}, resp.Suggestions)
+}
+
+func TestPrepareAutocompleteResponse_limited(t *testing.T) {
+	runIDs := []int64{1, 2}
+	testRuns := []shared.TestRun{
+		shared.TestRun{
+			ID:         runIDs[0],
+			ResultsURL: "https://example.com/1-summary.json.gz",
+		},
+		shared.TestRun{
+			ID:         runIDs[1],
+			ResultsURL: "https://example.com/2-summary.json.gz",
+		},
+	}
+	filters := shared.QueryFilter{
+		RunIDs: runIDs,
+		Q:      "/b/",
+	}
+	summaries := []summary{
+		map[string][]int{
+			"/a/b/c": []int{1, 2},
+			"/b/c":   []int{9, 9},
+		},
+		map[string][]int{
+			"/z/b/c": []int{0, 8},
+			"/x/y/z": []int{3, 4},
+			"/b/c":   []int{5, 9},
+		},
+	}
+
+	resp := prepareAutocompleteResponse(2, &filters, testRuns, summaries)
+	assert.Equal(t, []AutocompleteResult{
+		AutocompleteResult{"/b/c"},
+		AutocompleteResult{"/a/b/c"},
 	}, resp.Suggestions)
 }

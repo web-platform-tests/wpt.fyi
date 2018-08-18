@@ -15,6 +15,12 @@ import (
 	"google.golang.org/appengine"
 )
 
+var (
+	autocompleteDefaultLimit = 1
+	autocompleteMinLimit     = 1
+	autocompleteMaxLimit     = 50
+)
+
 // AutocompleteResult contains a single autocomplete suggestion.
 type AutocompleteResult struct {
 	// QueryString represents the most basic form of an autocomplete result. It is
@@ -62,13 +68,13 @@ func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah autocompleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	filters, testRuns, summaries, err := ah.processInput(w, r)
+	limit, filters, testRuns, summaries, err := ah.processInput(w, r)
 	// processInput handles writing any error to w.
 	if err != nil {
 		return
 	}
 
-	resp := prepareAutocompleteResponse(filters, testRuns, summaries)
+	resp := prepareAutocompleteResponse(limit, filters, testRuns, summaries)
 
 	data, err := json.Marshal(resp)
 	if err != nil {
@@ -77,7 +83,36 @@ func (ah autocompleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	w.Write(data)
 }
 
-func prepareAutocompleteResponse(filters *shared.QueryFilter, testRuns []shared.TestRun, summaries []summary) AutocompleteResponse {
+func (ah autocompleteHandler) processInput(w http.ResponseWriter, r *http.Request) (int, *shared.QueryFilter, []shared.TestRun, []summary, error) {
+	limit, err := ah.parseLimit(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return 0, nil, nil, nil, err
+	}
+
+	filter, testRuns, summaries, err := ah.queryHandler.processInput(w, r)
+	return limit, filter, testRuns, summaries, err
+}
+
+func (ah autocompleteHandler) parseLimit(r *http.Request) (int, error) {
+	limit, err := ah.sharedImpl.ParseQueryParamInt(r, "limit")
+	if err == shared.ErrMissing {
+		return autocompleteDefaultLimit, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+
+	if limit < autocompleteMinLimit {
+		return autocompleteMinLimit, nil
+	}
+	if limit > autocompleteMaxLimit {
+		return autocompleteMaxLimit, nil
+	}
+	return limit, nil
+}
+
+func prepareAutocompleteResponse(limit int, filters *shared.QueryFilter, testRuns []shared.TestRun, summaries []summary) AutocompleteResponse {
 	fileSet := mapset.NewSet()
 	for _, smry := range summaries {
 		for file := range smry {
@@ -98,5 +133,8 @@ func prepareAutocompleteResponse(filters *shared.QueryFilter, testRuns []shared.
 		rs: files,
 	}
 	sort.Sort(sortable)
+	if len(sortable.rs) > limit {
+		sortable.rs = sortable.rs[:limit]
+	}
 	return AutocompleteResponse{sortable.rs}
 }

@@ -74,12 +74,12 @@ func TestAutocompleteHandler(t *testing.T) {
 	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
 	store.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
 
-	// Same params as TestPrepareAutocompleteResponse_several.
 	q := "/b/"
 	url := fmt.Sprintf(
-		"/api/autocomplete?run_ids=%s&q=%s",
+		"/api/autocomplete?run_ids=%s&q=%s&limit=%s",
 		url.QueryEscape(fmt.Sprintf("%d,%d", testRuns[0].ID, testRuns[1].ID)),
-		url.QueryEscape(q))
+		url.QueryEscape(q),
+		url.QueryEscape("2"))
 	r, err := i.NewRequest("GET", url, nil)
 	assert.Nil(t, err)
 	ctx := appengine.NewContext(r)
@@ -101,12 +101,10 @@ func TestAutocompleteHandler(t *testing.T) {
 	err = json.Unmarshal(bytes, &data)
 	assert.Nil(t, err)
 
-	// Same result as TestPrepareAutocompleteResponse_several.
 	assert.Equal(t, AutocompleteResponse{
 		Suggestions: []AutocompleteResult{
 			AutocompleteResult{"/b/c"},
 			AutocompleteResult{"/a/b/c"},
-			AutocompleteResult{"/z/b/c"},
 		},
 	}, data)
 	assert.True(t, rs[0].closed)
