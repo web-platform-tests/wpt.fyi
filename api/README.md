@@ -637,71 +637,66 @@ empty string, which will yield all test results for the selected runs.
 
 - https://staging.wpt.fyi/api/search?run_ids=6311104602963968,5132783244541952&q=xyz
 
-<details>
-  <summary>
+<details><summary><b>Example JSON</b></summary>
 
-    __Example JSON__
-
-  </summary>
-
-  ```json
-  {
-    "runs": [
-      {
-        "id": 6.311104602964e+15,
-        "browser_name": "chrome",
-        "browser_version": "68.0.3440.106",
-        "os_name": "linux",
-        "os_version": "16.04",
-        "revision": "2dda7b8c10",
-        "full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
-        "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e-summary.json.gz",
-        "created_at": "2018-08-17T08:12:29.219847Z",
-        "time_start": "2018-08-17T06:26:52.33Z",
-        "time_end": "2018-08-17T07:50:09.155Z",
-        "raw_results_url": "https:\/\/storage.googleapis.com\/wptd-results-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e\/report.json",
-        "labels": [
-          "buildbot",
-          "chrome",
-          "stable"
-        ]
-      },
-      {
-        "id": 5.132783244542e+15,
-        "browser_name": "firefox",
-        "browser_version": "61.0.2",
-        "os_name": "linux",
-        "os_version": "16.04",
-        "revision": "2dda7b8c10",
-        "full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
-        "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43-summary.json.gz",
-        "created_at": "2018-08-17T08:31:38.580221Z",
-        "time_start": "2018-08-17T06:47:29.643Z",
-        "time_end": "2018-08-17T08:15:18.612Z",
-        "raw_results_url": "https:\/\/storage.googleapis.com\/wptd-results-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43\/report.json",
-        "labels": [
-          "buildbot",
-          "firefox",
-          "stable"
-        ]
-      }
-    ],
-    "results": [
-      {
-        "test": "\/html\/dom\/elements\/global-attributes\/lang-xyzzy.html",
-        "legacy_status": [
-          {
-            "passes": 1,
-            "total": 1
-          },
-          {
-            "passes": 1,
-            "total": 1
-          }
-        ]
-      }
-    ]
-  }
-  ```
+```json
+{
+"runs": [
+	{
+		"id": 6.311104602964e+15,
+		"browser_name": "chrome",
+		"browser_version": "68.0.3440.106",
+		"os_name": "linux",
+		"os_version": "16.04",
+		"revision": "2dda7b8c10",
+		"full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
+		"results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e-summary.json.gz",
+		"created_at": "2018-08-17T08:12:29.219847Z",
+		"time_start": "2018-08-17T06:26:52.33Z",
+		"time_end": "2018-08-17T07:50:09.155Z",
+		"raw_results_url": "https:\/\/storage.googleapis.com\/wptd-results-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e\/report.json",
+		"labels": [
+			"buildbot",
+			"chrome",
+			"stable"
+		]
+	},
+	{
+		"id": 5.132783244542e+15,
+		"browser_name": "firefox",
+		"browser_version": "61.0.2",
+		"os_name": "linux",
+		"os_version": "16.04",
+		"revision": "2dda7b8c10",
+		"full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
+		"results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43-summary.json.gz",
+		"created_at": "2018-08-17T08:31:38.580221Z",
+		"time_start": "2018-08-17T06:47:29.643Z",
+		"time_end": "2018-08-17T08:15:18.612Z",
+		"raw_results_url": "https:\/\/storage.googleapis.com\/wptd-results-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43\/report.json",
+		"labels": [
+			"buildbot",
+			"firefox",
+			"stable"
+		]
+	}
+],
+"results": [
+	{
+		"test": "\/html\/dom\/elements\/global-attributes\/lang-xyzzy.html",
+		"legacy_status": [
+			{
+				"passes": 1,
+				"total": 1
+			},
+			{
+				"passes": 1,
+				"total": 1
+			}
+		]
+	}
+]
+}
+```
 
 </details>
