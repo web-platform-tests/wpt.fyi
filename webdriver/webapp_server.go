@@ -14,13 +14,10 @@ import (
 	"time"
 
 	"net/http"
-	"path/filepath"
-	"syscall"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/net/context"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
 )
@@ -221,26 +218,8 @@ func (i *devAppServerInstance) AwaitReady() error {
 
 func (i *devAppServerInstance) NewContext() (ctx context.Context, err error) {
 	ctx = context.Background()
-	var clientSecretPath string
-	if clientSecretPath, err = filepath.Abs("../client-secret.json"); err != nil {
-		return nil, err
-	}
-	// Set GOOGLE_APPLICATION_CREDENTIALS if unset.
-	if _, found := syscall.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); !found {
-		if err = syscall.Setenv("GOOGLE_APPLICATION_CREDENTIALS", clientSecretPath); err != nil {
-			return nil, err
-		}
-	}
-
-	hc, err := google.DefaultClient(ctx,
-		"https://www.googleapis.com/auth/appengine.apis",
-	)
-	if err != nil {
-		return nil, err
-	}
-	var remoteContext context.Context
 	host := fmt.Sprintf("%s:%d", i.host, i.apiPort)
-	remoteContext, err = remote_api.NewRemoteContext(host, hc)
+	remoteContext, err := remote_api.NewRemoteContext(host, http.DefaultClient)
 	return remoteContext, err
 }
 
