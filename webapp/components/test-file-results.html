@@ -44,16 +44,18 @@ found in the LICENSE file.
     <template is="dom-if" if="{{!isVerbose}}">
       <test-file-results-table-terse
           test-runs="[[testRuns]]"
+          has-subtests="[[hasSubtests]]"
           subtest-names="[[subtestNames]]">
       </test-file-results-table-terse>
     </template>
 
     <template is="dom-if" if="{{isVerbose}}">
-        <test-file-results-table-verbose
-            test-runs="[[testRuns]]"
-            subtest-names="[[subtestNames]]">
-        </test-file-results-table-verbose>
-      </template>
+      <test-file-results-table-verbose
+          test-runs="[[testRuns]]"
+          has-subtests="[[hasSubtests]]"
+          subtest-names="[[subtestNames]]">
+      </test-file-results-table-verbose>
+    </template>
   </template>
 
   <script>
@@ -68,6 +70,10 @@ found in the LICENSE file.
           subtestNames: {
             type: Array,
             value: [],
+          },
+          hasSubtests: {
+            type: Boolean,
+            value: false,
           },
           isVerbose: {
             type: Boolean,
@@ -95,6 +101,7 @@ found in the LICENSE file.
           testRuns.map(tr => this.loadResultFile(tr)));
 
         const subtestNames = ['STATUS'];
+        let hasSubtests = false;
         resultPerTestRun.forEach((resultData, i) => {
           if (!resultData) {
             testRuns[i].subtests = {};
@@ -103,13 +110,19 @@ found in the LICENSE file.
           }
           testRuns[i].subtests = {};
           testRuns[i].subtests['STATUS'] = { status: resultData.status };
-          for (let subtestResult of resultData.subtests) {
-            testRuns[i].subtests[subtestResult.name] = subtestResult;
-            if (!subtestNames.includes(subtestResult.name)) {
-              subtestNames.push(subtestResult.name);
+          if (resultData.subtests && resultData.subtests.length > 0) {
+            // Since we spoof the file-level status also as a "subtest", we
+            // store whether the test originally has subtests here.
+            hasSubtests = true;
+            for (let subtestResult of resultData.subtests) {
+              testRuns[i].subtests[subtestResult.name] = subtestResult;
+              if (!subtestNames.includes(subtestResult.name)) {
+                subtestNames.push(subtestResult.name);
+              }
             }
           }
         });
+        this.hasSubtests = true;
         this.subtestNames = subtestNames;
       }
 
