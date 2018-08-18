@@ -396,48 +396,48 @@ __Example JSON__
 
 ```json
 [
-	{
-		"id": "weekly",
-		"label": "Once per week (weekly)",
-		"description": "The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Monday.",
-		"min_duration_sec": 604800,
-		"max_duration_sec": 604800
-	},
-	{
-		"id": "daily",
-		"label": "Once per day (daily)",
-		"description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
-		"min_duration_sec": 86400,
-		"max_duration_sec": 86400
-	},
-	{
-		"id": "eight_hourly",
-		"label": "Once every eight hours",
-		"description": "The last PR merge commit of eight-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
-		"min_duration_sec": 28800,
-		"max_duration_sec": 28800
-	},
-	{
-		"id": "four_hourly",
-		"label": "Once every four hours",
-		"description": "The last PR merge commit of four-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:04:00, etc..",
-		"min_duration_sec": 14400,
-		"max_duration_sec": 14400
-	},
-	{
-		"id": "two_hourly",
-		"label": "Once every two hours",
-		"description": "The last PR merge commit of two-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:02:00, etc..",
-		"min_duration_sec": 7200,
-		"max_duration_sec": 7200
-	},
-	{
-		"id": "hourly",
-		"label": "Once per hour (hourly)",
-		"description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
-		"min_duration_sec": 3600,
-		"max_duration_sec": 3600
-	}
+  {
+    "id": "weekly",
+    "label": "Once per week (weekly)",
+    "description": "The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Monday.",
+    "min_duration_sec": 604800,
+    "max_duration_sec": 604800
+  },
+  {
+    "id": "daily",
+    "label": "Once per day (daily)",
+    "description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
+    "min_duration_sec": 86400,
+    "max_duration_sec": 86400
+  },
+  {
+    "id": "eight_hourly",
+    "label": "Once every eight hours",
+    "description": "The last PR merge commit of eight-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
+    "min_duration_sec": 28800,
+    "max_duration_sec": 28800
+  },
+  {
+    "id": "four_hourly",
+    "label": "Once every four hours",
+    "description": "The last PR merge commit of four-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:04:00, etc..",
+    "min_duration_sec": 14400,
+    "max_duration_sec": 14400
+  },
+  {
+    "id": "two_hourly",
+    "label": "Once every two hours",
+    "description": "The last PR merge commit of two-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:02:00, etc..",
+    "min_duration_sec": 7200,
+    "max_duration_sec": 7200
+  },
+  {
+    "id": "hourly",
+    "label": "Once per hour (hourly)",
+    "description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
+    "min_duration_sec": 3600,
+    "max_duration_sec": 3600
+  }
 ]
 ```
 
@@ -454,76 +454,76 @@ __Example JSON__
 
 ```json
 {
-	"revisions": {
-		"daily": {
-			"hash": "5462552a420cba8886cf50bb9d9674d7a79fdc4e",
-			"commit_time": "2018-08-13T23:36:57Z"
-		},
-		"eight_hourly": {
-			"hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-			"commit_time": "2018-08-14T15:14:39Z"
-		},
-		"four_hourly": {
-			"hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-			"commit_time": "2018-08-14T15:14:39Z"
-		},
-		"hourly": {
-			"hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-			"commit_time": "2018-08-14T15:14:39Z"
-		},
-		"two_hourly": {
-			"hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-			"commit_time": "2018-08-14T15:14:39Z"
-		},
-		"weekly": {
-			"hash": "d31eacaff0c4d96f8c125c21faac6e0f75dd683c",
-			"commit_time": "2018-08-11T18:20:16Z"
-		}
-	},
-	"epochs": [
-		{
-			"id": "hourly",
-			"label": "Once per hour (hourly)",
-			"description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
-			"min_duration_sec": 3600,
-			"max_duration_sec": 3600
-		},
-		{
-			"id": "two_hourly",
-			"label": "Once every two hours",
-			"description": "The last PR merge commit of two-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:02:00, etc..",
-			"min_duration_sec": 7200,
-			"max_duration_sec": 7200
-		},
-		{
-			"id": "four_hourly",
-			"label": "Once every four hours",
-			"description": "The last PR merge commit of four-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:04:00, etc..",
-			"min_duration_sec": 14400,
-			"max_duration_sec": 14400
-		},
-		{
-			"id": "eight_hourly",
-			"label": "Once every eight hours",
-			"description": "The last PR merge commit of eight-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
-			"min_duration_sec": 28800,
-			"max_duration_sec": 28800
-		},
-		{
-			"id": "daily",
-			"label": "Once per day (daily)",
-			"description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
-			"min_duration_sec": 86400,
-			"max_duration_sec": 86400
-		},
-		{
-			"id": "weekly",
-			"label": "Once per week (weekly)",
-			"description": "The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Monday.",
-			"min_duration_sec": 604800,
-			"max_duration_sec": 604800
-		}
-	]
+  "revisions": {
+    "daily": {
+      "hash": "5462552a420cba8886cf50bb9d9674d7a79fdc4e",
+      "commit_time": "2018-08-13T23:36:57Z"
+    },
+    "eight_hourly": {
+      "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
+      "commit_time": "2018-08-14T15:14:39Z"
+    },
+    "four_hourly": {
+      "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
+      "commit_time": "2018-08-14T15:14:39Z"
+    },
+    "hourly": {
+      "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
+      "commit_time": "2018-08-14T15:14:39Z"
+    },
+    "two_hourly": {
+      "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
+      "commit_time": "2018-08-14T15:14:39Z"
+    },
+    "weekly": {
+      "hash": "d31eacaff0c4d96f8c125c21faac6e0f75dd683c",
+      "commit_time": "2018-08-11T18:20:16Z"
+    }
+  },
+  "epochs": [
+    {
+      "id": "hourly",
+      "label": "Once per hour (hourly)",
+      "description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
+      "min_duration_sec": 3600,
+      "max_duration_sec": 3600
+    },
+    {
+      "id": "two_hourly",
+      "label": "Once every two hours",
+      "description": "The last PR merge commit of two-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:02:00, etc..",
+      "min_duration_sec": 7200,
+      "max_duration_sec": 7200
+    },
+    {
+      "id": "four_hourly",
+      "label": "Once every four hours",
+      "description": "The last PR merge commit of four-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:04:00, etc..",
+      "min_duration_sec": 14400,
+      "max_duration_sec": 14400
+    },
+    {
+      "id": "eight_hourly",
+      "label": "Once every eight hours",
+      "description": "The last PR merge commit of eight-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
+      "min_duration_sec": 28800,
+      "max_duration_sec": 28800
+    },
+    {
+      "id": "daily",
+      "label": "Once per day (daily)",
+      "description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
+      "min_duration_sec": 86400,
+      "max_duration_sec": 86400
+    },
+    {
+      "id": "weekly",
+      "label": "Once per week (weekly)",
+      "description": "The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Monday.",
+      "min_duration_sec": 604800,
+      "max_duration_sec": 604800
+    }
+  ]
 }
 ```
 
@@ -558,60 +558,60 @@ __Example JSON__
 
 ```json
 {
-	"revisions": {
-		"daily": [
-			{
-				"hash": "5462552a420cba8886cf50bb9d9674d7a79fdc4e",
-				"commit_time": "2018-08-13T23:36:57Z"
-			},
-			{
-				"hash": "d31eacaff0c4d96f8c125c21faac6e0f75dd683c",
-				"commit_time": "2018-08-11T18:20:16Z"
-			},
-			{
-				"hash": "b382ac7192087da0a7439902e20be76ab7587ee8",
-				"commit_time": "2018-08-10T21:32:20Z"
-			},
-			{
-				"hash": "9f51afc215d4f882a7ae069494ed37ea2c9503b1",
-				"commit_time": "2018-08-09T22:03:24Z"
-			}
-		],
-		"hourly": [
-			{
-				"hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-				"commit_time": "2018-08-14T15:14:39Z"
-			},
-			{
-				"hash": "39aac0cde328471b8a97b136c26a5293f55771b3",
-				"commit_time": "2018-08-14T14:56:57Z"
-			},
-			{
-				"hash": "c02862684bb2faac9000b1ec1ad785464c97f5d9",
-				"commit_time": "2018-08-14T13:19:39Z"
-			},
-			{
-				"hash": "a20165544242305af9b699fbe5d1be2ec78243cd",
-				"commit_time": "2018-08-14T10:12:12Z"
-			}
-		]
-	},
-	"epochs": [
-		{
-			"id": "hourly",
-			"label": "Once per hour (hourly)",
-			"description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
-			"min_duration_sec": 3600,
-			"max_duration_sec": 3600
-		},
-		{
-			"id": "daily",
-			"label": "Once per day (daily)",
-			"description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
-			"min_duration_sec": 86400,
-			"max_duration_sec": 86400
-		}
-	]
+  "revisions": {
+    "daily": [
+      {
+        "hash": "5462552a420cba8886cf50bb9d9674d7a79fdc4e",
+        "commit_time": "2018-08-13T23:36:57Z"
+      },
+      {
+        "hash": "d31eacaff0c4d96f8c125c21faac6e0f75dd683c",
+        "commit_time": "2018-08-11T18:20:16Z"
+      },
+      {
+        "hash": "b382ac7192087da0a7439902e20be76ab7587ee8",
+        "commit_time": "2018-08-10T21:32:20Z"
+      },
+      {
+        "hash": "9f51afc215d4f882a7ae069494ed37ea2c9503b1",
+        "commit_time": "2018-08-09T22:03:24Z"
+      }
+    ],
+    "hourly": [
+      {
+        "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
+        "commit_time": "2018-08-14T15:14:39Z"
+      },
+      {
+        "hash": "39aac0cde328471b8a97b136c26a5293f55771b3",
+        "commit_time": "2018-08-14T14:56:57Z"
+      },
+      {
+        "hash": "c02862684bb2faac9000b1ec1ad785464c97f5d9",
+        "commit_time": "2018-08-14T13:19:39Z"
+      },
+      {
+        "hash": "a20165544242305af9b699fbe5d1be2ec78243cd",
+        "commit_time": "2018-08-14T10:12:12Z"
+      }
+    ]
+  },
+  "epochs": [
+    {
+      "id": "hourly",
+      "label": "Once per hour (hourly)",
+      "description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
+      "min_duration_sec": 3600,
+      "max_duration_sec": 3600
+    },
+    {
+      "id": "daily",
+      "label": "Once per day (daily)",
+      "description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
+      "min_duration_sec": 86400,
+      "max_duration_sec": 86400
+    }
+  ]
 }
 ```
 
@@ -637,66 +637,71 @@ empty string, which will yield all test results for the selected runs.
 
 - https://staging.wpt.fyi/api/search?run_ids=6311104602963968,5132783244541952&q=xyz
 
-__Example JSON__
-
 <details>
-```json
-{
-  "runs": [
-    {
-      "id": 6.311104602964e+15,
-      "browser_name": "chrome",
-      "browser_version": "68.0.3440.106",
-      "os_name": "linux",
-      "os_version": "16.04",
-      "revision": "2dda7b8c10",
-      "full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
-      "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e-summary.json.gz",
-      "created_at": "2018-08-17T08:12:29.219847Z",
-      "time_start": "2018-08-17T06:26:52.33Z",
-      "time_end": "2018-08-17T07:50:09.155Z",
-      "raw_results_url": "https:\/\/storage.googleapis.com\/wptd-results-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e\/report.json",
-      "labels": [
-        "buildbot",
-        "chrome",
-        "stable"
-      ]
-    },
-    {
-      "id": 5.132783244542e+15,
-      "browser_name": "firefox",
-      "browser_version": "61.0.2",
-      "os_name": "linux",
-      "os_version": "16.04",
-      "revision": "2dda7b8c10",
-      "full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
-      "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43-summary.json.gz",
-      "created_at": "2018-08-17T08:31:38.580221Z",
-      "time_start": "2018-08-17T06:47:29.643Z",
-      "time_end": "2018-08-17T08:15:18.612Z",
-      "raw_results_url": "https:\/\/storage.googleapis.com\/wptd-results-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43\/report.json",
-      "labels": [
-        "buildbot",
-        "firefox",
-        "stable"
-      ]
-    }
-  ],
-  "results": [
-    {
-      "test": "\/html\/dom\/elements\/global-attributes\/lang-xyzzy.html",
-      "legacy_status": [
-        {
-          "passes": 1,
-          "total": 1
-        },
-        {
-          "passes": 1,
-          "total": 1
-        }
-      ]
-    }
-  ]
-}
-```
+  <summary>
+
+    __Example JSON__
+
+  </summary>
+
+  ```json
+  {
+    "runs": [
+      {
+        "id": 6.311104602964e+15,
+        "browser_name": "chrome",
+        "browser_version": "68.0.3440.106",
+        "os_name": "linux",
+        "os_version": "16.04",
+        "revision": "2dda7b8c10",
+        "full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
+        "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e-summary.json.gz",
+        "created_at": "2018-08-17T08:12:29.219847Z",
+        "time_start": "2018-08-17T06:26:52.33Z",
+        "time_end": "2018-08-17T07:50:09.155Z",
+        "raw_results_url": "https:\/\/storage.googleapis.com\/wptd-results-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e\/report.json",
+        "labels": [
+          "buildbot",
+          "chrome",
+          "stable"
+        ]
+      },
+      {
+        "id": 5.132783244542e+15,
+        "browser_name": "firefox",
+        "browser_version": "61.0.2",
+        "os_name": "linux",
+        "os_version": "16.04",
+        "revision": "2dda7b8c10",
+        "full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
+        "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43-summary.json.gz",
+        "created_at": "2018-08-17T08:31:38.580221Z",
+        "time_start": "2018-08-17T06:47:29.643Z",
+        "time_end": "2018-08-17T08:15:18.612Z",
+        "raw_results_url": "https:\/\/storage.googleapis.com\/wptd-results-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43\/report.json",
+        "labels": [
+          "buildbot",
+          "firefox",
+          "stable"
+        ]
+      }
+    ],
+    "results": [
+      {
+        "test": "\/html\/dom\/elements\/global-attributes\/lang-xyzzy.html",
+        "legacy_status": [
+          {
+            "passes": 1,
+            "total": 1
+          },
+          {
+            "passes": 1,
+            "total": 1
+          }
+        ]
+      }
+    ]
+  }
+  ```
+
 </details>
