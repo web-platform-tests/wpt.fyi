@@ -85,22 +85,24 @@ go_chrome_test: chrome | go_webdriver_test
 
 go_webdriver_test: STAGING := false
 go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
-	export SELENIUM_SERVER_PATH="$(shell find $(NODE_SELENIUM_PATH)selenium-server/ -type f -name '*server.jar')"; \
-	export GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
-	export CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
-	$(START_XVFB); \
+	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
+	# The following variables are defined here because we don't know the
+	# paths before installing node-web-component-tester as the paths
+	# include version strings.
+	SELENIUM_SERVER_PATH="$(shell find $(NODE_SELENIUM_PATH)selenium-server/ -type f -name '*server.jar')"; \
+	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
+	CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
 	cd $(WPTD_PATH)webdriver; \
-	go test -v -tags=large \
-		--selenium_path=$$SELENIUM_SERVER_PATH \
-		--firefox_path=$(FIREFOX_PATH) \
-		--geckodriver_path=$$GECKODRIVER_PATH \
-		--chrome_path=$(CHROME_PATH) \
-		--chromedriver_path=$$CHROMEDRIVER_PATH \
-		--frame_buffer=$(USE_FRAME_BUFFER) \
-		--staging=$(STAGING) \
-		--browser=$(BROWSER) \
-		$(FLAGS) || (($(STOP_XVFB)) && exit 1); \
-	$(STOP_XVFB)
+	go test -v -tags=large -args \
+		-selenium_path=$$SELENIUM_SERVER_PATH \
+		-firefox_path=$(FIREFOX_PATH) \
+		-geckodriver_path=$$GECKODRIVER_PATH \
+		-chrome_path=$(CHROME_PATH) \
+		-chromedriver_path=$$CHROMEDRIVER_PATH \
+		-frame_buffer=$(USE_FRAME_BUFFER) \
+		-staging=$(STAGING) \
+		-browser=$(BROWSER) \
+		$(FLAGS)
 
 web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
 	$(START_XVFB); \
