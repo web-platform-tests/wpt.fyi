@@ -81,10 +81,14 @@ func GetWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 }
 
 // FindShadowElements finds the shadow DOM children via the given query
-// selectors, recursively.
-// e.g. FindShadowElements(wd, foo, "bar", "baz") would be similar to
-// A "foo bar baz" CSS selector, except it crosses the shadow boundaries for
-// each separate selector.
+// selectors, recursively. The function takes a variable number of selectors;
+// the selectors are combined together similar to CSS descendant combinators.
+// However, all but the the last selector are expected to match to hosts of
+// shadow DOM, and the shadow DOM boundaries will be crossed.
+//
+// e.g. FindShadowElements(wd, node, "bar", "baz blah"). All matches of "bar"
+// must have shadow roots, and the function finds all "baz blah" within each
+// shadow DOM.
 func FindShadowElements(
 	d selenium.WebDriver,
 	e selenium.WebElement,
