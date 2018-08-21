@@ -11,8 +11,6 @@ import (
 )
 
 func TestTestRuns(t *testing.T) {
-	// TODO(Hexcles): Re-enable this test.
-	t.SkipNow()
 	app, err := NewWebserver()
 	if err != nil {
 		panic(err)

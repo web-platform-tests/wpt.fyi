@@ -232,7 +232,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 		return err
 	}
 
-	staticDataTime, _ := time.Parse(time.RFC3339, "2017-10-18T00:00:00Z")
+	staticDataTime := time.Now()
 	// Follow pattern established in run/*.py data collection code.
 	const sha = "b952881825"
 	const summaryURLFmtString = "/static/" + sha + "/%s"
@@ -248,7 +248,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"chrome", "linux", "stable"},
 		},
 		{
@@ -262,7 +262,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"edge", "windows", "stable"},
 		},
 		{
@@ -276,7 +276,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"firefox", "linux", "stable"},
 		},
 		{
@@ -290,7 +290,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10.0-macos-10.12-sauce-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"safari", "macos", "stable"},
 		},
 	}
@@ -307,7 +307,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"chrome", "linux", "experimental"},
 		},
 		{
@@ -321,7 +321,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"firefox", "linux", "experimental"},
 		},
 	}
