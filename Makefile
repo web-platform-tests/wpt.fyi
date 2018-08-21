@@ -54,6 +54,7 @@ go_lint: go_deps golint_deps go_test_tag_lint
 	cd $(WPTD_GO_PATH); golint -set_exit_status shared/
 	cd $(WPTD_GO_PATH); golint -set_exit_status util/
 	cd $(WPTD_GO_PATH); golint -set_exit_status webapp/
+	cd $(WPTD_GO_PATH); golint -set_exit_status webdriver/
 	# Print out gofmt diff and fail if `gofmt -l` gives non-empty output.
 	cd $(WPTD_GO_PATH); ! (gofmt -l ./ | read && echo "Found gofmt issues:" && gofmt -d ./)
 
