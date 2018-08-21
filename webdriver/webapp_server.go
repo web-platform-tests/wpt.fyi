@@ -2,22 +2,21 @@ package webdriver
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"regexp"
 	"time"
 
-	"net/http"
-
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
 )
@@ -41,7 +40,8 @@ type remoteAppServer struct {
 }
 
 func (i *remoteAppServer) GetWebappURL(path string) string {
-	return fmt.Sprintf("http://%s%s", i.host, path)
+	// Remote (staging) server has HTTPS.
+	return fmt.Sprintf("https://%s%s", i.host, path)
 }
 
 func (i *remoteAppServer) Close() error {
@@ -66,10 +66,9 @@ type devAppServerInstance struct {
 	stderr         io.Reader
 	startupTimeout time.Duration
 
-	host      string
-	port      int
-	adminPort int
-	apiPort   int
+	host    string
+	port    int
+	apiPort int
 
 	baseURL  *url.URL
 	adminURL *url.URL
@@ -79,6 +78,7 @@ func (i *devAppServerInstance) GetWebappURL(path string) string {
 	if i.baseURL != nil {
 		return fmt.Sprintf("%s%s", i.baseURL.String(), path)
 	}
+	// Local dev server doesn't have HTTPS.
 	return fmt.Sprintf("http://%s:%d%s", i.host, i.port, path)
 }
 
@@ -106,6 +106,8 @@ func (i *devAppServerInstance) Close() error {
 	return err
 }
 
+// NewWebserver creates an AppServer instance, which may be backed by local or
+// remote (staging) servers.
 func NewWebserver() (s AppServer, err error) {
 	if *staging {
 		return &remoteAppServer{
@@ -132,17 +134,18 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 	i := &devAppServerInstance{
 		startupTimeout: 15 * time.Second,
 
-		host:      "localhost",
-		port:      8080,
-		adminPort: 8000,
-		apiPort:   9999,
+		host:    "localhost",
+		port:    pickUnusedPort(),
+		apiPort: pickUnusedPort(),
 	}
 
 	i.cmd = exec.Command(
 		"dev_appserver.py",
 		fmt.Sprintf("--port=%d", i.port),
-		fmt.Sprintf("--admin_port=%d", i.adminPort),
 		fmt.Sprintf("--api_port=%d", i.apiPort),
+		// Let dev_appserver find a free port itself. We don't use the
+		// admin port directly so we don't need to use pickUnusedPort.
+		fmt.Sprintf("--admin_port=%d", 0),
 		"--automatic_restart=false",
 		"--skip_sdk_update_check=true",
 		"--clear_datastore=true",
@@ -164,7 +167,7 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 }
 
 var readyRE = regexp.MustCompile(`Starting module "default" running at: (\S+)`)
-var adminUrlRE = regexp.MustCompile(`Starting admin server at: (\S+)`)
+var adminURLRE = regexp.MustCompile(`Starting admin server at: (\S+)`)
 
 func (i *devAppServerInstance) AwaitReady() error {
 	if err := i.cmd.Start(); err != nil {
@@ -184,7 +187,7 @@ func (i *devAppServerInstance) AwaitReady() error {
 				}
 				i.baseURL = u
 			}
-			if match := adminUrlRE.FindStringSubmatch(s.Text()); match != nil {
+			if match := adminURLRE.FindStringSubmatch(s.Text()); match != nil {
 				u, err := url.Parse(match[1])
 				if err != nil {
 					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
