@@ -32,8 +32,8 @@ function fetch () {
     then
         info "$2 already present."
     else
-        debug "wget $1"
-        wget "$1"
+        debug "wget -q $1"
+        wget -q "$1"
     fi
 }
 

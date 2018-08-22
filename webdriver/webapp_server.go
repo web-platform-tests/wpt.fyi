@@ -2,25 +2,21 @@ package webdriver
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"regexp"
 	"time"
 
-	"net/http"
-	"path/filepath"
-	"syscall"
-
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/net/context"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
 )
@@ -44,7 +40,8 @@ type remoteAppServer struct {
 }
 
 func (i *remoteAppServer) GetWebappURL(path string) string {
-	return fmt.Sprintf("http://%s%s", i.host, path)
+	// Remote (staging) server has HTTPS.
+	return fmt.Sprintf("https://%s%s", i.host, path)
 }
 
 func (i *remoteAppServer) Close() error {
@@ -69,10 +66,9 @@ type devAppServerInstance struct {
 	stderr         io.Reader
 	startupTimeout time.Duration
 
-	host      string
-	port      int
-	adminPort int
-	apiPort   int
+	host    string
+	port    int
+	apiPort int
 
 	baseURL  *url.URL
 	adminURL *url.URL
@@ -82,6 +78,7 @@ func (i *devAppServerInstance) GetWebappURL(path string) string {
 	if i.baseURL != nil {
 		return fmt.Sprintf("%s%s", i.baseURL.String(), path)
 	}
+	// Local dev server doesn't have HTTPS.
 	return fmt.Sprintf("http://%s:%d%s", i.host, i.port, path)
 }
 
@@ -109,6 +106,8 @@ func (i *devAppServerInstance) Close() error {
 	return err
 }
 
+// NewWebserver creates an AppServer instance, which may be backed by local or
+// remote (staging) servers.
 func NewWebserver() (s AppServer, err error) {
 	if *staging {
 		return &remoteAppServer{
@@ -135,17 +134,18 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 	i := &devAppServerInstance{
 		startupTimeout: 15 * time.Second,
 
-		host:      "localhost",
-		port:      8080,
-		adminPort: 8000,
-		apiPort:   9999,
+		host:    "localhost",
+		port:    pickUnusedPort(),
+		apiPort: pickUnusedPort(),
 	}
 
 	i.cmd = exec.Command(
 		"dev_appserver.py",
 		fmt.Sprintf("--port=%d", i.port),
-		fmt.Sprintf("--admin_port=%d", i.adminPort),
 		fmt.Sprintf("--api_port=%d", i.apiPort),
+		// Let dev_appserver find a free port itself. We don't use the
+		// admin port directly so we don't need to use pickUnusedPort.
+		fmt.Sprintf("--admin_port=%d", 0),
 		"--automatic_restart=false",
 		"--skip_sdk_update_check=true",
 		"--clear_datastore=true",
@@ -167,7 +167,7 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 }
 
 var readyRE = regexp.MustCompile(`Starting module "default" running at: (\S+)`)
-var adminUrlRE = regexp.MustCompile(`Starting admin server at: (\S+)`)
+var adminURLRE = regexp.MustCompile(`Starting admin server at: (\S+)`)
 
 func (i *devAppServerInstance) AwaitReady() error {
 	if err := i.cmd.Start(); err != nil {
@@ -187,7 +187,7 @@ func (i *devAppServerInstance) AwaitReady() error {
 				}
 				i.baseURL = u
 			}
-			if match := adminUrlRE.FindStringSubmatch(s.Text()); match != nil {
+			if match := adminURLRE.FindStringSubmatch(s.Text()); match != nil {
 				u, err := url.Parse(match[1])
 				if err != nil {
 					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
@@ -221,26 +221,8 @@ func (i *devAppServerInstance) AwaitReady() error {
 
 func (i *devAppServerInstance) NewContext() (ctx context.Context, err error) {
 	ctx = context.Background()
-	var clientSecretPath string
-	if clientSecretPath, err = filepath.Abs("../client-secret.json"); err != nil {
-		return nil, err
-	}
-	// Set GOOGLE_APPLICATION_CREDENTIALS if unset.
-	if _, found := syscall.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); !found {
-		if err = syscall.Setenv("GOOGLE_APPLICATION_CREDENTIALS", clientSecretPath); err != nil {
-			return nil, err
-		}
-	}
-
-	hc, err := google.DefaultClient(ctx,
-		"https://www.googleapis.com/auth/appengine.apis",
-	)
-	if err != nil {
-		return nil, err
-	}
-	var remoteContext context.Context
 	host := fmt.Sprintf("%s:%d", i.host, i.apiPort)
-	remoteContext, err = remote_api.NewRemoteContext(host, hc)
+	remoteContext, err := remote_api.NewRemoteContext(host, http.DefaultClient)
 	return remoteContext, err
 }
 
@@ -250,7 +232,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 		return err
 	}
 
-	staticDataTime, _ := time.Parse(time.RFC3339, "2017-10-18T00:00:00Z")
+	staticDataTime := time.Now()
 	// Follow pattern established in run/*.py data collection code.
 	const sha = "b952881825"
 	const summaryURLFmtString = "/static/" + sha + "/%s"
@@ -266,7 +248,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"chrome", "linux", "stable"},
 		},
 		{
@@ -280,7 +262,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"edge", "windows", "stable"},
 		},
 		{
@@ -294,7 +276,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"firefox", "linux", "stable"},
 		},
 		{
@@ -308,7 +290,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10.0-macos-10.12-sauce-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"safari", "macos", "stable"},
 		},
 	}
@@ -325,7 +307,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"chrome", "linux", "experimental"},
 		},
 		{
@@ -339,7 +321,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				Revision: sha,
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
+			TimeStart:  staticDataTime,
 			Labels:     []string{"firefox", "linux", "experimental"},
 		},
 	}

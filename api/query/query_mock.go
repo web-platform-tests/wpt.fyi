@@ -122,6 +122,19 @@ func (m *MocksharedInterface) EXPECT() *MocksharedInterfaceMockRecorder {
 	return m.recorder
 }
 
+// ParseQueryParamInt mocks base method
+func (m *MocksharedInterface) ParseQueryParamInt(r *http.Request, key string) (int, error) {
+	ret := m.ctrl.Call(m, "ParseQueryParamInt", r, key)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ParseQueryParamInt indicates an expected call of ParseQueryParamInt
+func (mr *MocksharedInterfaceMockRecorder) ParseQueryParamInt(r, key interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ParseQueryParamInt", reflect.TypeOf((*MocksharedInterface)(nil).ParseQueryParamInt), r, key)
+}
+
 // ParseQueryFilterParams mocks base method
 func (m *MocksharedInterface) ParseQueryFilterParams(arg0 *http.Request) (shared.QueryFilter, error) {
 	ret := m.ctrl.Call(m, "ParseQueryFilterParams", arg0)

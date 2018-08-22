@@ -86,7 +86,8 @@
         });
       });
 
-      suite('static get properties()', () => {
+      // TODO(Hexcles): Re-enable this test.
+      suite.skip('static get properties()', () => {
         test('passRateMetadata', () => {
           assert.property(WPTInterop.properties, 'passRateMetadata');
           assert.equal(WPTInterop.properties.passRateMetadata, Object);
@@ -137,7 +138,8 @@
         });
       });
 
-      suite('WPTInterop.prototype.*', () => {
+      // TODO(Hexcles): Re-enable this test.
+      suite.skip('WPTInterop.prototype.*', () => {
         let superConnectedCallback;
         let wpti;
 

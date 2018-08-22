@@ -42,16 +42,18 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string,
 	err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
 	assert.Nil(t, err)
 
-	// Run the search
+	// Run the search.
 	searchBox, err := getSearchElement(wd, elementName)
 	if err != nil {
 		panic(err)
 	}
-
 	const query = "2dcontext"
 	if err := searchBox.SendKeys(query); err != nil {
 		panic(err)
 	}
+	// Key presses in the search box are debounced by 500ms, so we wait 1
+	// second to make sure search has taken effects.
+	time.Sleep(time.Second)
 
 	pathParts, err := getPathPartElements(wd, elementName)
 	if err != nil {
@@ -65,9 +67,11 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string,
 	assert.Equal(t, "2dcontext/", text)
 }
 
-// NOTE(lukebjerring): Firefox, annoyingly, throws a TypeError querying shadowRoot because of a
-// circular reference when it tries to serialize to JSON. Also, selecting by 'path-part' directly
-// works, so, whatever.
+// NOTE(lukebjerring): Firefox, annoyingly, throws a TypeError querying
+// shadowRoot because of a circular reference when it tries to serialize to
+// JSON. Also, Firefox hasn't enabled shadow DOM by default, so CSS selectors
+// can directly match elements within web components.
+
 func getSearchElement(wd selenium.WebDriver, element string) (selenium.WebElement, error) {
 	switch *browser {
 	case "firefox":
@@ -77,7 +81,7 @@ func getSearchElement(wd selenium.WebDriver, element string) (selenium.WebElemen
 		if err != nil {
 			return nil, err
 		}
-		inputs, err := FindShadowElements(wd, e, "input.query")
+		inputs, err := FindShadowElements(wd, e, "test-search", "input.query")
 		if err != nil {
 			return nil, err
 		}
