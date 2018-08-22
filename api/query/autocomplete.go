@@ -6,12 +6,12 @@ package query
 
 import (
 	"encoding/json"
-	http "net/http"
+	"net/http"
 	"sort"
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
-	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 )
 
