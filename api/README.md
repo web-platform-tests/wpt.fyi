@@ -631,6 +631,8 @@ range for fetching epochal revisions. Defaults to the date which is
 }
 ```
 
+</details>
+
 ## Querying test results
 
 ### /api/search
