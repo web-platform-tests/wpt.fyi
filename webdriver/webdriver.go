@@ -3,6 +3,8 @@ package webdriver
 import (
 	"flag"
 	"fmt"
+	"net"
+	"os"
 	"runtime"
 
 	"github.com/tebeka/selenium"
@@ -13,28 +15,80 @@ var (
 	startFrameBuffer = flag.Bool("frame_buffer", frameBufferDefault(), "Whether to use a frame buffer")
 	seleniumPath     = flag.String("selenium_path", "", "Path to the selenium standalone binary.")
 	seleniumHost     = flag.String("selenium_host", "localhost", "Host to run selenium on")
-	seleniumPort     = flag.Int("selenium_port", 8888, "Port to run selenium on")
+	seleniumPort     = 0
 )
 
 func frameBufferDefault() bool {
 	return runtime.GOOS != "darwin"
 }
 
+// pickUnusedPort asks a free ephemeral port from the kernel. This usually
+// works but it cannot prevent race conditions caused by other processes.
+// Use this only when necessary (e.g. if the subprocess doesn't support
+// binding to free ports itself, or if we need to know the port number).
+// https://eklitzke.org/binding-on-port-zero
+func pickUnusedPort() int {
+	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:0")
+	if err != nil {
+		panic(err)
+	}
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
+	port := l.Addr().(*net.TCPAddr).Port
+	// Closing the socket puts it into TIME_WAIT. Kernel won't reassign the
+	// port until TIME_WAIT times out (default is 2 mins). However, other
+	// processes can still explicitly bind to this port immediately.
+	if err := l.Close(); err != nil {
+		panic(err)
+	}
+	return port
+}
+
+// GetWebDriver starts a WebDriver service (server) and creates a remote
+// (client).
+// Note: Make sure to close the remote first and the service later, e.g.
+//
+// server, driver, err := GetWebDriver()
+// if err != nil {
+//   panic(err)
+// }
+// defer server.Stop()
+// defer driver.Quit()
 func GetWebDriver() (*selenium.Service, selenium.WebDriver, error) {
+	if *seleniumPath == "" {
+		panic("-selenium_path not specified")
+	}
+	if seleniumPort == 0 {
+		seleniumPort = pickUnusedPort()
+	}
+
+	var options []selenium.ServiceOption
+	if *startFrameBuffer {
+		options = append(options, selenium.StartFrameBuffer())
+	}
+	// TODO(Hexcles): Add a flag for selenium.SetDebug().
+	options = append(options, selenium.Output(os.Stderr))
+
 	switch *browser {
 	case "firefox":
-		return FirefoxWebDriver()
+		return FirefoxWebDriver(options)
 	case "chrome":
-		return ChromeWebDriver()
+		return ChromeWebDriver(options)
 	}
-	panic("Invalid --browser value specified")
+	panic("Invalid -browser value specified")
 }
 
 // FindShadowElements finds the shadow DOM children via the given query
-// selectors, recursively.
-// e.g. FindShadowElements(wd, foo, "bar", "baz") would be similar to
-// A "foo bar baz" CSS selector, except it crosses the shadow boundaries for
-// each separate selector.
+// selectors, recursively. The function takes a variable number of selectors;
+// the selectors are combined together similar to CSS descendant combinators.
+// However, all but the the last selector are expected to match to hosts of
+// shadow DOM, and the shadow DOM boundaries will be crossed.
+//
+// e.g. FindShadowElements(wd, node, "bar", "baz blah"). All matches of "bar"
+// must have shadow roots, and the function finds all "baz blah" within each
+// shadow DOM.
 func FindShadowElements(
 	d selenium.WebDriver,
 	e selenium.WebElement,

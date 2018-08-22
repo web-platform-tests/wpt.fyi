@@ -21,7 +21,7 @@ func TestFileResults(t *testing.T) {
 	defer wd.Quit()
 
 	// Navigate to an individual test file result.
-	url := "results/infrastructure/assumptions/ahem.html"
+	url := "/results/infrastructure/assumptions/ahem.html"
 	if err := wd.Get(app.GetWebappURL(url)); err != nil {
 		panic(err)
 	}

@@ -22,7 +22,13 @@ func TestLabelParam(t *testing.T) {
 	defer service.Stop()
 	defer wd.Quit()
 
-	testLabel(t, wd, app, "/", "experimental", "wpt-results", 2)
+	if *staging {
+		// We have all 4 experimental browsers on staging.wpt.fyi.
+		testLabel(t, wd, app, "/", "experimental", "wpt-results", 4)
+	} else {
+		// Local static data only have 2 experimental browsers.
+		testLabel(t, wd, app, "/", "experimental", "wpt-results", 2)
+	}
 	testLabel(t, wd, app, "/interop", "stable", "wpt-interop", 4)
 }
 

@@ -2,9 +2,9 @@
 
 A dashboard of cross-browser results for [web-platform-tests](https://github.com/web-platform-tests/wpt).
 
-**Backend**: An [App Engine app](webapp/main.go) for storing test run metadata and serving HTML
+**Backend**: An [App Engine app](webapp/) for storing test run metadata and serving HTML
 
-**Frontend**: [Polymer elements](webapp/components/wpt-results.html) for loading and visualizing test results
+**Frontend**: [Polymer elements](webapp/components/) for loading and visualizing test results
 
 ## Setting up your environment
 
