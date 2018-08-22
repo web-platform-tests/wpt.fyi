@@ -15,6 +15,47 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+func TestByQueryIndex_standard(t *testing.T) {
+	bqi := byQueryIndex{
+		q: "a",
+		rs: []AutocompleteResult{
+			AutocompleteResult{
+				QueryString: "ab",
+			},
+			AutocompleteResult{
+				QueryString: "ba",
+			},
+		},
+	}
+	assert.Equal(t, 2, bqi.Len())
+	assert.True(t, bqi.Less(0, 1))
+	assert.False(t, bqi.Less(1, 0))
+
+	bqi.Swap(0, 1)
+	assert.Equal(t, AutocompleteResult{
+		QueryString: "ba",
+	}, bqi.rs[0])
+	assert.Equal(t, AutocompleteResult{
+		QueryString: "ab",
+	}, bqi.rs[1])
+}
+
+func TestByQueryIndex_lexFallback(t *testing.T) {
+	bqi := byQueryIndex{
+		q: "a",
+		rs: []AutocompleteResult{
+			AutocompleteResult{
+				QueryString: "xab",
+			},
+			AutocompleteResult{
+				QueryString: "yab",
+			},
+		},
+	}
+	assert.True(t, bqi.Less(0, 1))
+	assert.False(t, bqi.Less(1, 0))
+}
+
 func TestParseLimit_none(t *testing.T) {
 	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
 	limit, err := ah.parseLimit(httptest.NewRequest("GET", "/api/autocomplete", nil))

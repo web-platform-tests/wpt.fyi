@@ -35,6 +35,9 @@ type AutocompleteResponse struct {
 	Suggestions []AutocompleteResult `json:"results"`
 }
 
+// byQueryIndex sorts by strings.Index(r.rs[-].QueryString, r.q). If the
+// substring index of q is the same in both QueryStrings, then sorting falls
+// back on Less(i, j) = r.rs[i].QueryString < r.rs[j].QueryString.
 type byQueryIndex struct {
 	q  string
 	rs []AutocompleteResult
