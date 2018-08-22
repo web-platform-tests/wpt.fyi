@@ -651,11 +651,9 @@ __`q`__: Query string for search. Only results data for tests that contain the
 `q` value as a substring of the test name will be returned. Defaults to the
 empty string, which will yield all test results for the selected runs.
 
-<details><summary><b>Examples</b></summary>
+#### Examples
 
 - https://staging.wpt.fyi/api/search?run_ids=6311104602963968,5132783244541952&q=xyz
-
-</details>
 
 <details><summary><b>Example JSON</b></summary>
 
