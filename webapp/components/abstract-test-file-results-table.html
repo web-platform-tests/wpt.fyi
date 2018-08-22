@@ -8,24 +8,23 @@ found in the LICENSE file.
   <script>
     // eslint-disable-next-line no-unused-vars
     const AbstractTestFileResultsTable = superClass => class extends superClass {
-      static get is() {
-        return 'abstract-test-file-results-table';
-      }
-
       static get properties() {
         return {
           subtestNames: {
             type: Array,
             value: [],
           },
+          hasSubtests: {
+            type: Boolean,
+          },
         };
       }
 
-      subtestNameForDisplay(subtestName, isTestHarness) {
+      subtestNameForDisplay(subtestName, hasSubtests) {
         if (subtestName !== 'STATUS') {
           return subtestName;
         }
-        return isTestHarness ? 'Harness status' : 'File status';
+        return hasSubtests ? 'Harness status' : 'Test status';
       }
 
       subtestResultForTestRun(testRun, subtestName) {
