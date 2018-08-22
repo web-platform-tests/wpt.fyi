@@ -66,7 +66,7 @@ found in the LICENSE file.
       <tbody>
         <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
           <tr>
-            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName, isTestHarness) ]]</code></td>
+            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName, hasSubtests) ]]</code></td>
 
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
               <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">

@@ -51,7 +51,7 @@ __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 5
 - https://wpt.fyi/api/runs?product=chrome&product=safari
 - https://wpt.fyi/api/runs?product=chrome&from=2018-01-01T00:00:00Z&max-count=10
 
-__Example JSON__
+<details><summary><b>Example JSON</b></summary>
 
     [
       {
@@ -67,6 +67,8 @@ __Example JSON__
       }
     ]
 
+</details>
+
 ### /api/runs/{id}
 
 Gets a specific (single) TestRun metadata by its datastore ID.
@@ -75,7 +77,7 @@ Gets a specific (single) TestRun metadata by its datastore ID.
 
 https://wpt.fyi/api/runs/5164888561287168
 
-__Example JSON__
+<details><summary><b>Example JSON</b></summary>
 
     {
       "id": "5164888561287168",
@@ -89,6 +91,8 @@ __Example JSON__
       "created_at": "2018-06-05T08:27:30.627865Z",
       "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
     }
+
+</details>
 
 ### /api/run
 
@@ -104,7 +108,7 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 
 https://wpt.fyi/api/run?sha=latest&product=chrome
 
-__Example JSON__
+<details><summary><b>Example JSON</b></summary>
 
     {
       "id": "5164888561287168",
@@ -118,6 +122,8 @@ __Example JSON__
       "created_at": "2018-06-05T08:27:30.627865Z",
       "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
     }
+
+</details>
 
 ### /api/shas
 
@@ -138,12 +144,14 @@ __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 5
 
 https://wpt.fyi/api/shas?product=chrome
 
-__Example JSON__
+<details><summary><b>Example JSON</b></summary>
 
     [
       "98530fb944",
       "2bd11b91d4"//, ...
     ]
+
+</details>
 
 ## Results summaries
 
@@ -174,13 +182,15 @@ __`sha`__ : SHA[0:10] of the TestRun to fetch, or the keyword `latest`. Defaults
 
 https://wpt.fyi/api/results?product=chrome
 
-__Example JSON__ (from the summary.json.gz output):
+<details><summary><b>Example JSON</b> (from the summary.json.gz output)</summary>
 
     {
       "/css/css-text/i18n/css3-text-line-break-opclns-213.html": [1, 1],
       "/css/css-writing-modes/table-progression-vrl-001.html": [1, 1],
       // ...
     }
+
+</details>
 
 ### /api/diff
 
@@ -233,7 +243,7 @@ __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 5
 - https://wpt.fyi/api/interop?product=chrome-67
 - https://wpt.fyi/api/interop?label=experimental
 
-__Example response JSON__
+<details><summary><b>Example JSON</b></summary>
 
     {
       "test_runs": [
@@ -255,6 +265,8 @@ __Example response JSON__
       "end_time": "2018-07-06T18:42:36.658149Z",
       "url": "https://storage.googleapis.com/wptd-metrics-staging/1530902547-1530902556/pass-rates.json.gz"
     }
+
+</details>
 
 ## Test Manifest
 
@@ -392,7 +404,7 @@ __Parameters__
 
 None
 
-__Example JSON__
+<details><summary><b>Example JSON</b></summary>
 
 ```json
 [
@@ -441,6 +453,8 @@ __Example JSON__
 ]
 ```
 
+</details>
+
 ### /api/revisions/latest
 
 Get the latest announced revision for all epochs. For convenience, the metadata
@@ -450,7 +464,7 @@ __Parameters__
 
 None
 
-__Example JSON__
+<details><summary><b>Example JSON</b></summary>
 
 ```json
 {
@@ -527,6 +541,8 @@ __Example JSON__
 }
 ```
 
+</details>
+
 ### /api/revisions/list
 
 List a particular range of revision. This API allows the client to query for
@@ -554,7 +570,7 @@ range for fetching epochal revisions. Defaults to the date which is
 - https://wpt.fyi/api/revisions/list?epochs=hourly&epochs=two_hourly&num_revisions=10&at=2018-01-10T00:00:00Z&start=2018-01-01T00:00:00Z
 - https://wpt.fyi/api/revisions/list?epochs=daily&num_revisions=10
 
-__Example JSON__
+<details><summary><b>Example JSON</b></summary>
 
 ```json
 {
@@ -633,9 +649,11 @@ __`q`__: Query string for search. Only results data for tests that contain the
 `q` value as a substring of the test name will be returned. Defaults to the
 empty string, which will yield all test results for the selected runs.
 
-#### Examples
+<details><summary><b>Examples</b></summary>
 
 - https://staging.wpt.fyi/api/search?run_ids=6311104602963968,5132783244541952&q=xyz
+
+</details>
 
 <details><summary><b>Example JSON</b></summary>
 
