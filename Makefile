@@ -73,12 +73,11 @@ go_small_test: go_deps
 go_medium_test: go_deps dev_appserver_deps
 	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
 
-go_large_test: go_all_browsers_test
-
-integration_test: go_all_browsers_test web_components_test
-
-.NOTPARALLEL: go_all_browsers_test
-go_all_browsers_test: go_firefox_test go_chrome_test
+# Use sub-make because otherwise make would only execute the first invocation
+# of _go_webdriver_test.
+go_large_test:
+	make go_firefox_test
+	make go_chrome_test
 
 go_firefox_test: BROWSER := firefox
 go_firefox_test: firefox | _go_webdriver_test
@@ -89,10 +88,6 @@ go_chrome_test: chrome chromedriver | _go_webdriver_test
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-# This target has to be explicitly marked as .PHONY; otherwise, make won't
-# execute it twice (with different BROWSER), which would break
-# go_all_browsers_test.
-.PHONY: _go_webdriver_test
 _go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
