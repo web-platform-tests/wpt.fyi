@@ -646,9 +646,10 @@ found in the LICENSE file.
         };
       }
 
-      // Fetch search results when test-search signals that user has committed
-      // to search string (by pressing <Enter>).
-      _handleSearchCommit(e) {
+      /* eslint-disable no-underscore-dangle */
+      _handleSearchCommit() {
+        // Fetch search results when test-search signals that user has committed
+        // to search string (by pressing <Enter>).
         this.fetchResults(this.searchURL);
       }
     }

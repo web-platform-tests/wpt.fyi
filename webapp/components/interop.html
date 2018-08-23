@@ -347,6 +347,7 @@ found in the LICENSE file.
       return (this.currentNode && this.currentNode.total < 10000) || false;
     }
 
+    /* eslint-disable no-underscore-dangle */
     _handleSearchCommit(e) {
       const q = e.detail.query;
       if (!q || q.length < 1) {
