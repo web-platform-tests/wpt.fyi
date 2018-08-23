@@ -235,7 +235,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	staticDataTime := time.Now()
 	// Follow pattern established in run/*.py data collection code.
 	const sha = "b952881825"
-	const summaryURLFmtString = "/static/" + sha + "/%s"
+	var summaryURLFmtString = i.GetWebappURL("/static/" + sha + "/%s")
 	stableTestRuns := shared.TestRuns{
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -289,7 +289,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 				},
 				Revision: sha,
 			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10.0-macos-10.12-sauce-summary.json.gz"),
+			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
 			TimeStart:  staticDataTime,
 			Labels:     []string{"safari", "macos", "stable"},
 		},
@@ -341,7 +341,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	timeZero := time.Unix(0, 0)
 	// Follow pattern established in metrics/run/*.go data collection code.
 	// Use unzipped JSON for local dev.
-	const metricsURLFmtString = "/static/wptd-metrics/0-0/%s.json"
+	var metricsURLFmtString = i.GetWebappURL("/static/wptd-metrics/0-0/%s.json")
 	staticTestRunMetadata := make([]interface{}, len(stableTestRuns))
 	for i := range stableTestRuns {
 		staticTestRunMetadata[i] = &stableTestRuns[i]
