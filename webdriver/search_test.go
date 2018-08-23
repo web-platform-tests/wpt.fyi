@@ -32,11 +32,13 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string,
 	}
 
 	// Wait for the results view to load.
+	numInitialPathParts := 0
 	runsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
 		pathParts, err := getPathPartElements(wd, elementName)
 		if err != nil {
 			return false, err
 		}
+		numInitialPathParts = len(pathParts)
 		return len(pathParts) > 0, nil
 	}
 	err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
@@ -51,9 +53,15 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string,
 	if err := searchBox.SendKeys(query); err != nil {
 		panic(err)
 	}
-	// Key presses in the search box are debounced by 500ms, so we wait 1
-	// second to make sure search has taken effects.
-	time.Sleep(time.Second)
+	filteredPathPartsCondition := func(wd selenium.WebDriver) (bool, error) {
+		pathParts, err := getPathPartElements(wd, elementName)
+		if err != nil {
+			return false, err
+		}
+		return len(pathParts) > 0 && len(pathParts) < numInitialPathParts, nil
+	}
+	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*10)
+	assert.Nil(t, err)
 
 	pathParts, err := getPathPartElements(wd, elementName)
 	if err != nil {
