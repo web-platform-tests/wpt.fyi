@@ -1,10 +1,8 @@
-// +build small medium
-
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package query
+package test
 
 import (
 	"bytes"
@@ -22,15 +20,15 @@ type MockWriteCloser struct {
 	c      chan bool
 }
 
-func (mcw *MockWriteCloser) Write(p []byte) (n int, err error) {
-	assert.False(mcw.t, mcw.closed)
-	return mcw.b.Write(p)
+func (mwc *MockWriteCloser) Write(p []byte) (n int, err error) {
+	assert.False(mwc.t, mwc.closed)
+	return mwc.b.Write(p)
 }
 
-func (mcw *MockWriteCloser) Close() error {
-	mcw.closed = true
-	if mcw.c != nil {
-		mcw.c <- true
+func (mwc *MockWriteCloser) Close() error {
+	mwc.closed = true
+	if mwc.c != nil {
+		mwc.c <- true
 	}
 	return nil
 }
@@ -66,4 +64,8 @@ func NewMockReadCloser(t *testing.T, data []byte) *MockReadCloser {
 		closed: false,
 		t:      t,
 	}
+}
+
+func (mrc *MockReadCloser) IsClosed() bool {
+	return mrc.closed
 }

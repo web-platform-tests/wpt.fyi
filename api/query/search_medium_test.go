@@ -17,6 +17,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/query/test"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine"
@@ -66,9 +67,9 @@ func TestSearchHandler(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	store := NewMockreadable(mockCtrl)
-	rs := []*MockReadCloser{
-		NewMockReadCloser(t, summaryBytes[0]),
-		NewMockReadCloser(t, summaryBytes[1]),
+	rs := []*test.MockReadCloser{
+		test.NewMockReadCloser(t, summaryBytes[0]),
+		test.NewMockReadCloser(t, summaryBytes[1]),
 	}
 
 	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
@@ -85,11 +86,13 @@ func TestSearchHandler(t *testing.T) {
 	ctx := appengine.NewContext(r)
 	w := httptest.NewRecorder()
 
-	sh := searchHandler{
+	sh := searchHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
-		cache:      memcacheReadWritable{ctx},
-		store:      store,
-	}
+		dataSource: cachedStore{
+			cache: memcacheReadWritable{ctx},
+			store: store,
+		},
+	}}
 
 	sh.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -139,6 +142,6 @@ func TestSearchHandler(t *testing.T) {
 		},
 	}, data)
 
-	assert.True(t, rs[0].closed)
-	assert.True(t, rs[1].closed)
+	assert.True(t, rs[0].IsClosed())
+	assert.True(t, rs[1].IsClosed())
 }
