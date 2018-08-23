@@ -314,6 +314,7 @@ found in the LICENSE file.
             type: String,
             computed: 'computeAutocompleteURL(testRuns, search)',
           },
+          onSearchCommit: Function,
         };
       }
 
@@ -401,18 +402,18 @@ found in the LICENSE file.
 
       constructor() {
         super();
-        this.handleSearchCommit = this._handleSearchCommit.bind(this);
+        this.onSearchCommit = this.handleSearchCommit.bind(this);
       }
 
       connectedCallback() {
         super.connectedCallback();
         this.shadowRoot.querySelector('test-search')
-          .addEventListener('commit', this.handleSearchCommit);
+          .addEventListener('commit', this.onSearchCommit);
       }
 
       disconnectedCallback() {
         this.shadowRoot.querySelector('test-search')
-          .removeEventListener('commit', this.handleSearchCommit);
+          .removeEventListener('commit', this.onSearchCommit);
         super.disconnectedCallback();
       }
 
@@ -646,8 +647,7 @@ found in the LICENSE file.
         };
       }
 
-      /* eslint-disable no-underscore-dangle */
-      _handleSearchCommit() {
+      handleSearchCommit() {
         // Fetch search results when test-search signals that user has committed
         // to search string (by pressing <Enter>).
         this.fetchResults(this.searchURL);

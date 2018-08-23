@@ -59,24 +59,24 @@ found in the LICENSE file.
             type: String,
             observer: 'observeAutocompleteURL',
           },
-          handleKeyUp: Function,
+          onKeyUp: Function,
         };
       }
 
       constructor() {
         super();
-        this.handleKeyUp = this._handleKeyUp.bind(this);
+        this.onKeyUp = this.handleKeyUp.bind(this);
       }
 
       connectedCallback() {
         super.connectedCallback();
         this.shadowRoot.querySelector('.query')
-          .addEventListener('keyup', this.handleKeyUp);
+          .addEventListener('keyup', this.onKeyUp);
       }
 
       disconnectedCallback() {
         this.shadowRoot.querySelector('.query')
-          .removeEventListener('keyup', this.handleKeyUp);
+          .removeEventListener('keyup', this.onKeyUp);
         super.disconnectedCallback();
       }
 
@@ -120,8 +120,7 @@ found in the LICENSE file.
         this.query = this.q.toLowerCase();
       }
 
-      /* eslint-disable no-underscore-dangle */
-      _handleKeyUp(e) {
+      handleKeyUp(e) {
         if (e.keyCode !== 13) {
           return;
         }
