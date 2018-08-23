@@ -45,7 +45,7 @@ func main() {
 
 	// Follow pattern established in run/*.py data collection code.
 	const staticRunSHA = "b952881825"
-	const summaryURLFmtString = "/static/" + staticRunSHA + "/%s"
+	const summaryURLFmtString = "http://localhost:8080/static/" + staticRunSHA + "/%s"
 	staticTestRuns := shared.TestRuns{
 		{
 			ProductAtRevision: shared.ProductAtRevision{

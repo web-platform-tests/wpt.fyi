@@ -73,12 +73,12 @@ found in the LICENSE file.
       .delta {
         background-color: var(--paper-grey-200);
       }
-      .passing-0 { background-color: hsl(0, 85%, 65%); }
-      .passing-20 { background-color: hsl(0, 85%, 70%); }
-      .passing-40 { background-color: hsl(0, 85%, 75%); }
-      .passing-60 { background-color: hsl(0, 85%, 80%); }
-      .passing-80 { background-color: hsl(0, 85%, 85%); }
-      .passing-100 { background-color: var(--paper-light-green-a400); }
+      .passes-0 { background-color: hsl(0, 85%, 65%); }
+      .passes-20 { background-color: hsl(0, 85%, 70%); }
+      .passes-40 { background-color: hsl(0, 85%, 75%); }
+      .passes-60 { background-color: hsl(0, 85%, 80%); }
+      .passes-80 { background-color: hsl(0, 85%, 85%); }
+      .passes-100 { background-color: var(--paper-light-green-a400); }
 
       span.delta.negative {
         color: var(--paper-red-700);
@@ -133,7 +133,7 @@ found in the LICENSE file.
       </div>
 
       <template is="dom-if" if="{{ !pathIsATestFile }}">
-        <test-search query='{{search}}' items='[[testFileNames]]' results='{{searchResults}}'></test-search>
+        <test-search query='{{search}}'></test-search>
       </template>
 
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -175,6 +175,7 @@ found in the LICENSE file.
           <tr>
             <th>Path</th>
             <template is="dom-repeat" items="{{testRuns}}" as="testRun">
+              <!-- Repeats for as many different browser test runs are available -->
               <th><test-run test-run="[[testRun]]"></test-run></th>
             </template>
             <template is="dom-if" if="[[diffShown]]">
@@ -191,21 +192,22 @@ found in the LICENSE file.
               </td>
 
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                <td class$="numbers [[ testResultClass(node, testRun, 'passing') ]]">
-                  <span class$="passing [[ testResultClass(node, testRun, 'passing') ]]">{{ getNodeResultDataByPropertyName(node, testRun, 'passing') }}</span>
+                <td class$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
+                  <span class$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                   /
-                  <span class$="total [[ testResultClass(node, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, testRun, 'total') }}</span>
+                  <span class$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
                 </td>
               </template>
               <template is="dom-if" if="[[diffShown]]">
-                <td class$="numbers [[ testResultClass(node, diffRun, 'passing') ]]">
-                  <span class$="passing [[ testResultClass(node, diffRun, 'passing') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'passing') }}</span>
+                <td class$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
+                  <span class$="passing [[ testResultClass(node, index, diffRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'passing') }}</span>
                   /
-                  <span class$="total [[ testResultClass(node, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'total') }}</span>
+                  <span class$="total [[ testResultClass(node, index, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'total') }}</span>
                 </td>
               </template>
             </tr>
           </template>
+
         </tbody>
       </table>
     </template>
@@ -255,10 +257,6 @@ found in the LICENSE file.
             type: String,
             value: '',
           },
-          searchResults: {
-            type: Array,
-            observer: 'refreshDisplayedNodes',
-          },
           sourcePath: {
             type: String,
             computed: 'computeSourcePath(path, manifest)',
@@ -267,11 +265,7 @@ found in the LICENSE file.
             type: Boolean,
             computed: 'computeTestCanBeRunOnW3C(path, manifest)',
           },
-          testFiles: {
-            type: Object,
-            value: {}
-          },
-          testFileNames: {
+          searchResults: {
             type: Array,
             value: [],
           },
@@ -281,7 +275,7 @@ found in the LICENSE file.
           },
           displayedTests: {
             type: Array,
-            value: []
+            computed: 'computeDisplayedTests(searchResults)',
           },
           // Users request to show a diff column.
           diff: Boolean,
@@ -307,7 +301,17 @@ found in the LICENSE file.
             type: Boolean,
             value: false,
           },
+          searchURL: {
+            type: String,
+            computed: 'computeSearchURL(testRuns, search)',
+          },
         };
+      }
+
+      static get observers() {
+        return [
+          'fetchResults(searchURL, diffRun)',
+        ];
       }
 
       isDiffShown(diff, diffRun) {
@@ -354,15 +358,30 @@ found in the LICENSE file.
         return true;
       }
 
+      computeDisplayedTests(searchResults) {
+        return searchResults.map(r => r.test);
+      }
+
+      computeSearchURL(testRuns, search) {
+        let url = '/api/search?';
+        if (testRuns) {
+          url += `run_ids=${
+            window.encodeURIComponent(
+              testRuns.map(r => r.id.toString()).join(','))}&`;
+        }
+        if (search) {
+          url += `q=${window.encodeURIComponent(search)}`;
+        }
+        return url;
+      }
+
       ready() {
         super.ready();
         this.loadRuns().then(async runs => {
+          // Load a diff data into this.diffRun, if needed.
           if (this.diff && runs && runs.length === 2) {
             this.fetchDiff(runs);
           }
-          // Fetch the results JSON for the TestRuns
-          await this.fetchResults(runs);
-          this.refreshDisplayedNodes();
         });
 
         // NOTE(lukebjerring): Overriding the pathUpdated method doesn't get
@@ -374,36 +393,18 @@ found in the LICENSE file.
         };
       }
 
-      async fetchResults(testRuns) {
-        if (!testRuns) {
-          return;
+      // fetchResults should be triggered by changes in searchURL or diffRun,
+      // but diffRun is only used in subroutine: refreshDisplayedNodes.
+      /* eslint-disable no-unused-vars */
+      async fetchResults(searchURL, diffRun) {
+        const response = await window.fetch(searchURL);
+        if (response.status !== 200) {
+          throw response;
         }
-        const testFileResults = await Promise.all(
-          testRuns.map(async json => this.fetchResultsJSON(json.results_url))
-        );
+        const json = await response.json();
 
-        testFileResults.forEach(result => {
-          const { testFiles, resultsURL } = result;
-
-          Object.keys(testFiles).forEach(testFileName => {
-            if (!this.testFiles[testFileName]) {
-              this.testFiles[testFileName] = {};
-            }
-            this.testFiles[testFileName][resultsURL] = testFiles[testFileName];
-          });
-        });
-        this.testFileNames = Array.from(Object.keys(this.testFiles));
-      }
-
-      async fetchResultsJSON(resultsURL) {
-        const response = await window.fetch(resultsURL);
-        let testFiles = {};
-        try {
-          testFiles = response.ok ? await response.json() : {};
-        } catch (e) {
-          // Fall through.
-        }
-        return {testFiles, resultsURL};
+        this.searchResults = json.results;
+        this.refreshDisplayedNodes();
       }
 
       async fetchDiff(testRuns) {
@@ -416,8 +417,6 @@ found in the LICENSE file.
           browser_name: 'diff',
           results_url: diffRunURL,
         };
-        await this.fetchResults([this.diffRun]);
-        this.refreshDisplayedNodes();
       }
 
       pathUpdated(path) {
@@ -446,59 +445,48 @@ found in the LICENSE file.
       }
 
       refreshDisplayedNodes() {
-        /* Recomputes the list of displayed directories and test files. */
-        const displayedNodeMap = new Map();
-        const displayedTests = [];
-        const currentPathParts = this.splitPathIntoLinkedParts(this.path);
-        const partCountIfTestFile = this.path === '/' ? 1 : currentPathParts.length + 1;
-        const nextSubdirIndex = this.path === '/' ? 0 : currentPathParts.length;
+        // Prefix: includes trailing slash.
+        const prefix = this.path === '/' ? '/' : `${this.path}/`;
+        const pLen = prefix.length;
+        this.displayedNodes = this.searchResults
+          // Filter out files not in this directory.
+          .filter(r => r.test.startsWith(prefix))
+          // Accumulate displayedNodes from remaining files.
+          .reduce((() => {
+            // Bookkeeping of the form:
+            //   {<displayed dir/file name>: <index in acc>}.
+            let nodes = {};
+            return (acc, r) => {
+              // Compute dir/file name that is direct descendant of this.path.
+              const suffix = r.test.substring(pLen);
+              const slashIdx = suffix.indexOf('/');
+              const isDir = slashIdx !== -1;
+              const name = isDir ? suffix.substring(0, slashIdx): suffix;
 
-        let files = this.searchResults || Array.from(Object.keys(this.testFiles));
-        if (this.path !== '/') {
-          files = files.filter(
-            testFileName => testFileName.startsWith(`${this.path}/`));
-        }
+              // Either add new node to acc, or add passes, total to an
+              // existing node.
+              if (!nodes.hasOwnProperty(name)) {
+                nodes[name] = acc.length;
+                acc.push({
+                  path: `${prefix}${name}`,
+                  isDir,
+                  results: Array.from(r.legacy_status),
+                });
+              } else {
+                const rs = r.legacy_status;
+                const nrs = acc[nodes[name]].results;
 
-        for (const testFileName of files) {
-          let parts = this.splitPathIntoLinkedParts(testFileName);
-          let isDir, dirPath;
-          if (parts.length === partCountIfTestFile) {
-            // Add test files in current directory
-            dirPath = testFileName;
-            isDir = false;
-          } else if (parts.length > partCountIfTestFile) {
-            // Add subdirectories in current directory
-            dirPath = parts[nextSubdirIndex].path;
-            isDir = true;
-          }
+                for (let i = 0; i < rs.length; i++) {
+                  nrs[i].passes += rs[i].passes;
+                  nrs[i].total += rs[i].total;
+                }
+              }
 
-          displayedTests.push(testFileName);
-          if (!displayedNodeMap.has(dirPath)) {
-            displayedNodeMap.set(dirPath, {isDir: isDir, results: {}});
-          }
-          let results = this.testFiles[testFileName];
-          Object.keys(results).forEach(resultURL => {
-            if (!(resultURL in displayedNodeMap.get(dirPath).results)) {
-              displayedNodeMap.get(dirPath).results[resultURL] = {passing: 0, total: 0};
-            }
-            displayedNodeMap.get(dirPath).results[resultURL].passing += results[resultURL][0];
-            displayedNodeMap.get(dirPath).results[resultURL].total += results[resultURL][1];
-          });
-        }
-
-        this.displayedNodes = Array.from(displayedNodeMap.keys()).map(key => ({
-          path: key,
-          isDir: displayedNodeMap.get(key).isDir,
-          results: displayedNodeMap.get(key).results
-        }));
-
-        this.displayedNodes.sort(this.nodeSort);
-
-        if (!displayedTests.length && this.computePathIsATestFile(this.path)) {
-          displayedTests.push(this.path);
-        }
-        displayedTests.sort();
-        this.displayedTests = displayedTests;
+              return acc;
+            };
+          })(), [])
+          // TODO(markdittmer): Is this still necessary?
+          .sort(this.nodeSort);
       }
 
       platformID({browser_name, browser_version, os_name, os_version}) {
@@ -513,12 +501,12 @@ found in the LICENSE file.
         return this.queryParams;
       }
 
-      testResultClass(node, testRun, prop) {
+      testResultClass(node, index, testRun, prop) {
         if (!node || !testRun) {
           return 'none';
         }
 
-        const result = node.results[testRun.results_url];
+        const result = node.results[index];
         if (typeof result === 'undefined') {
           return 'none';
         }
@@ -536,16 +524,14 @@ found in the LICENSE file.
           }
           return `delta ${delta > 0 ? 'positive' : 'negative'}`;
         } else {
-          const passing = result.passing / result.total;
-          return `passing-${passing * 100 - (passing * 100 % 20)}`;
+          const passes = result.passes / result.total;
+          return `passes-${passes * 100 - (passes * 100 % 20)}`;
         }
       }
 
       getDiffDelta(node, prop) {
-        const [before, after] = this.testRuns.slice(0, 2)
-          .map(r => node.results[r.results_url] || {})
-          .map(r => r[prop || 'passing'] || 0);
-        return after - before;
+        return node.results[1][prop || 'passes'] -
+          node.results[0][prop || 'passes'];
       }
 
       getDiffDeltaStr(node, prop) {
@@ -573,12 +559,12 @@ found in the LICENSE file.
         return params;
       }
 
-      getNodeResultDataByPropertyName(node, testRun, property) {
+      getNodeResultDataByPropertyName(node, index, testRun, property) {
         if (this.isDiff(testRun)) {
           return this.getDiffDeltaStr(node, property);
         }
-        if (testRun.results_url in node.results) {
-          return node.results[testRun.results_url][property];
+        if (index >= 0 && index < node.results.length) {
+          return node.results[index][property];
         }
       }
 
@@ -592,23 +578,23 @@ found in the LICENSE file.
 
         this.testRuns.forEach(testRun => {
           const testRunID = this.platformID(testRun);
-          totals[testRunID] = {passing: 0, total: 0};
+          totals[testRunID] = {passes: 0, total: 0};
 
           Object.keys(this.specDirs).forEach(specKey => {
-            let { passing, total } = this.specDirs[specKey].results[testRun.results_url];
+            let { passes, total } = this.specDirs[specKey].results[testRun.results_url];
 
-            totals[testRunID].passing += passing;
+            totals[testRunID].passes += passes;
             totals[testRunID].total += total;
           });
         });
 
         Object.keys(totals).forEach(key => {
-          totals[key].percent = (totals[key].passing / totals[key].total) * 100;
+          totals[key].percent = (totals[key].passes / totals[key].total) * 100;
         });
 
         console.table(Object.keys(totals).map(k => ({
           platformID: k,
-          passing: totals[k].passing,
+          passes: totals[k].passes,
           total: totals[k].total,
           percent: totals[k].percent
         })));
