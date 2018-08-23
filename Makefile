@@ -9,19 +9,24 @@
 # the correct version of tools are installed and environment variables are
 # set appropriately.
 
+# Prefer simply expanded variables (:=) to avoid confusion caused by recursion.
+# All variables can be overridden in command line by `make target FOO=bar`.
+
 SHELL := /bin/bash
-
 GOPATH := $(shell go env GOPATH)
-
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPT_PATH := $(dir $(WPTD_PATH)/../)
-WPT_GO_PATH ?= $(GOPATH)/src/github.com/web-platform-tests
-WPTD_GO_PATH ?= $(WPT_GO_PATH)/wpt.fyi
-NODE_SELENIUM_PATH ?= $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
-FIREFOX_PATH ?= $$HOME/browsers/firefox/firefox
-CHROME_PATH ?= /usr/bin/google-chrome
-USE_FRAME_BUFFER ?= true
+WPT_GO_PATH := $(GOPATH)/src/github.com/web-platform-tests
+WPTD_GO_PATH := $(WPT_GO_PATH)/wpt.fyi
+NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
+FIREFOX_PATH := /usr/bin/firefox
+CHROME_PATH := /usr/bin/google-chrome
+USE_FRAME_BUFFER := true
+STAGING := false
+
+GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
+GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 
 # Recursively expanded variables so that USE_FRAME_BUFFER can be expanded.
 # These two macros are intended to run in the same shell as the test runners,
@@ -29,9 +34,6 @@ USE_FRAME_BUFFER ?= true
 START_XVFB = if [ "$(USE_FRAME_BUFFER)" == "true" ]; then \
 	export DISPLAY=:99; (Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &); fi
 STOP_XVFB = if [ "$(USE_FRAME_BUFFER)" == "true" ]; then killall Xvfb; fi
-
-GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
-GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 
 build: go_build
 
@@ -71,21 +73,22 @@ go_small_test: go_deps
 go_medium_test: go_deps dev_appserver_deps
 	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
 
-go_large_test: go_all_browsers_test
-
-integration_test: go_all_browsers_test web_components_test
-
-.NOTPARALLEL: go_all_browsers_test
-go_all_browsers_test: go_firefox_test go_chrome_test
+# Use sub-make because otherwise make would only execute the first invocation
+# of _go_webdriver_test. Variables will be passed into sub-make implicitly.
+go_large_test:
+	make go_firefox_test
+	make go_chrome_test
 
 go_firefox_test: BROWSER := firefox
-go_firefox_test: firefox | go_webdriver_test
+go_firefox_test: firefox | _go_webdriver_test
 
+# TODO(Hexcles): Do not depend on chromedriver once we fix #461.
 go_chrome_test: BROWSER := chrome
-go_chrome_test: chrome | go_webdriver_test
+go_chrome_test: chrome chromedriver | _go_webdriver_test
 
-go_webdriver_test: STAGING := false
-go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
+# _go_webdriver_test is not intended to be used directly; use go_firefox_test or
+# go_chrome_test instead.
+_go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
 	# paths before installing node-web-component-tester as the paths
@@ -130,7 +133,13 @@ chrome:
 		if [[ -z "$$(which chromium)" ]]; then \
 			make apt-get-chromium; \
 		fi; \
-		sudo ln -s "$$(which chromium)" /usr/bin/google-chrome; \
+		sudo ln -s "$$(which chromium)" $(CHROME_PATH); \
+	fi
+
+# TODO(Hexcles): This is only a temporary fix for #461.
+chromedriver:
+	if [[ -z "$$(which chromedriver)" ]]; then \
+		make apt-get-chromedriver; \
 	fi
 
 firefox:
@@ -140,7 +149,7 @@ firefox:
 
 firefox_install: firefox_deps bzip2 wget java
 	$(WPTD_PATH)webdriver/install.sh $$HOME/browsers
-	sudo ln -s $(FIREFOX_PATH) /usr/bin/firefox
+	sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH)
 
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox-esr | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')

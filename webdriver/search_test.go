@@ -18,6 +18,9 @@ func TestSearch(t *testing.T) {
 	defer app.Close()
 
 	service, wd, err := GetWebDriver()
+	if err != nil {
+		panic(err)
+	}
 	defer service.Stop()
 	defer wd.Quit()
 
