@@ -10,7 +10,7 @@
 # set appropriately.
 
 # Prefer simply expanded variables (:=) to avoid confusion caused by recursion.
-# All variables can be overridden in command line by `make TARGET FOO=BAR`.
+# All variables can be overridden in command line by `make target FOO=bar`.
 
 SHELL := /bin/bash
 GOPATH := $(shell go env GOPATH)
@@ -74,7 +74,7 @@ go_medium_test: go_deps dev_appserver_deps
 	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
-# of _go_webdriver_test.
+# of _go_webdriver_test. Variables will be passed into sub-make implicitly.
 go_large_test:
 	make go_firefox_test
 	make go_chrome_test
