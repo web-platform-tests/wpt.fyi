@@ -129,6 +129,7 @@ found in the LICENSE file.
         this.dispatchEvent(new CustomEvent('commit', {
           detail: {query: this.query},
         }));
+        this.shadowRoot.querySelector('.query').blur();
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);
