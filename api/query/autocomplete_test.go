@@ -56,6 +56,17 @@ func TestByQueryIndex_lexFallback(t *testing.T) {
 	assert.False(t, bqi.Less(1, 0))
 }
 
+func TestByQueryIndex_same(t *testing.T) {
+	bqi := byQueryIndex{
+		rs: []AutocompleteResult{
+			AutocompleteResult{},
+			AutocompleteResult{},
+		},
+	}
+	assert.False(t, bqi.Less(0, 1))
+	assert.False(t, bqi.Less(1, 0))
+}
+
 func TestParseLimit_none(t *testing.T) {
 	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
 	limit, err := ah.parseLimit(httptest.NewRequest("GET", "/api/autocomplete", nil))
