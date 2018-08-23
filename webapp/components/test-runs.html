@@ -150,12 +150,6 @@ found in the LICENSE file.
         if (maxCount) {
           params['max-count'] = maxCount;
         }
-
-        // Insist on complete runs iff neither sha nor products are specified.
-        if (!sha && (!products || products.length === 0)) {
-          params.complete = true;
-        }
-
         return params;
       }
 
