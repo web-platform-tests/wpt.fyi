@@ -17,7 +17,10 @@ found in the LICENSE file.
       }
     </style>
 
-    <input value="{{ q::input }}" class="query" placeholder="[[placeholder]]">
+    <input value="{{ q::input }}" class="query" placeholder="[[placeholder]]"
+        list="query-list">
+    <!-- TODO(markdittmer): Static id will break multiple search components. -->
+    <datalist id="query-list"></datalist>
   </template>
 
   <script>
@@ -52,12 +55,54 @@ found in the LICENSE file.
             type: String,
             computed: 'computeQueryPlaceholder()'
           },
+          autocompleteURL: {
+            type: String,
+            observer: 'observeAutocompleteURL',
+          },
+          handleKeyUp: Function,
         };
+      }
+
+      constructor() {
+        super();
+        this.handleKeyUp = this._handleKeyUp.bind(this);
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this.shadowRoot.querySelector('.query')
+          .addEventListener('keyup', this.handleKeyUp);
+      }
+
+      disconnectedCallback() {
+        this.shadowRoot.querySelector('.query')
+          .removeEventListener('keyup', this.handleKeyUp);
+        super.disconnectedCallback();
       }
 
       ready() {
         super.ready();
         this.q = this.query;
+      }
+
+      async observeAutocompleteURL(newValue, oldValue) {
+        if (newValue === oldValue || !newValue) {
+          return;
+        }
+
+        const response = await window.fetch(newValue);
+        if (response.status !== 200) {
+          throw response;
+        }
+        const json = await response.json();
+
+        const datalist = this.shadowRoot.querySelector('datalist');
+        datalist.innerHTML = '';
+        for (const result of json.results) {
+          const option = document.createElement('option');
+          option.setAttribute('value', result.query_string);
+          datalist.appendChild(option);
+        }
       }
 
       queryChanged(_, oldQuery) {
@@ -68,23 +113,22 @@ found in the LICENSE file.
         if (this[QUERY_DEBOUNCE_ID]) {
           window.clearTimeout(this[QUERY_DEBOUNCE_ID]);
         }
-        this[QUERY_DEBOUNCE_ID] = window.setTimeout(this.executeSearch.bind(this), 500);
+        this[QUERY_DEBOUNCE_ID] = window.setTimeout(this.latchQuery.bind(this), 500);
       }
 
-      executeSearch() {
-        let q = this.query = this.q.toLowerCase();
-        if (!q || q.length < 1) {
-          this.results = this.items;
+      latchQuery() {
+        this.query = this.q.toLowerCase();
+      }
+
+      _handleKeyUp(e) {
+        if (e.keyCode !== 13) {
           return;
         }
-        if (!this.items) {
-          return;
-        }
-        const results = this.items.filter(t => {
-          let v = this.itemKey ? t[this.itemKey] : t;
-          return v.toLowerCase().includes(q);
-        });
-        this.results = results;
+
+        this.query = this.q;
+        this.dispatchEvent(new CustomEvent('commit', {
+          detail: {query: this.query},
+        }));
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);

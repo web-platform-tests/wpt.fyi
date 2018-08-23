@@ -122,7 +122,7 @@ found in the LICENSE file.
     </div>
 
     <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <test-search query='{{search}}' items='[[allMetrics.data]]' item-key='dir' results='{{searchResults}}'></test-search>
+      <test-search query='[[search]]'></test-search>
     </template>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -240,7 +240,25 @@ found in the LICENSE file.
           value: '',
         },
         searchResults: Array,
+        handleSearchCommit: Function,
       };
+    }
+
+    constructor() {
+      super();
+      this.handleSearchCommit = this._handleSearchCommit.bind(this);
+    }
+
+    connectedCallback() {
+      super.connectedCallback();
+      this.shadowRoot.querySelector('test-search')
+        .addEventListener('commit', this.handleSearchCommit);
+    }
+
+    disconnectedCallback() {
+      this.shadowRoot.querySelector('test-search')
+        .removeEventListener('commit', this.handleSearchCommit);
+      super.disconnectedCallback();
     }
 
     async ready() {
@@ -327,6 +345,19 @@ found in the LICENSE file.
 
     shouldQueryAll() {
       return (this.currentNode && this.currentNode.total < 10000) || false;
+    }
+
+    _handleSearchCommit(e) {
+      const q = e.detail.query;
+      if (!q || q.length < 1) {
+        this.searchResults = this.allMetrics.data;
+        return;
+      }
+      if (!this.allMetrics.data) {
+        return;
+      }
+      this.results = this.allMetrics.data
+        .filter(t => t.dir.toLowerCase().includes(q));
     }
   }
   window.customElements.define(WPTInterop.is, WPTInterop);

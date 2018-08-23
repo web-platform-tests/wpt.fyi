@@ -36,6 +36,11 @@ found in the LICENSE file.
       section.search .path {
         margin-top: 1em;
       }
+      /* Direct access to test-search from local shadowRoot prevents using
+       * `dom-if` for this. */
+      section.search test-search.search-true {
+        display: none;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -132,9 +137,8 @@ found in the LICENSE file.
         </template>
       </div>
 
-      <template is="dom-if" if="{{ !pathIsATestFile }}">
-        <test-search query='{{search}}'></test-search>
-      </template>
+      <test-search class$="search-[[pathIsATestFile]]" query='{{search}}'
+          autocomplete-u-r-l="[[autocompleteURL]]"></test-search>
 
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <div class="links">
@@ -282,6 +286,7 @@ found in the LICENSE file.
           diffRun: {
             type: Object,
             value: null,
+            observer: 'observeDiffRun',
           },
           // A diff column is shown if requested by users and there are 2 testRuns.
           diffShown: {
@@ -305,13 +310,11 @@ found in the LICENSE file.
             type: String,
             computed: 'computeSearchURL(testRuns, search)',
           },
+          autocompleteURL: {
+            type: String,
+            computed: 'computeAutocompleteURL(testRuns, search)',
+          },
         };
-      }
-
-      static get observers() {
-        return [
-          'fetchResults(searchURL, diffRun)',
-        ];
       }
 
       isDiffShown(diff, diffRun) {
@@ -375,6 +378,44 @@ found in the LICENSE file.
         return url;
       }
 
+      computeAutocompleteURL(testRuns, search) {
+        let url = '/api/autocomplete?limit=10&';
+        if (testRuns) {
+          url += `run_ids=${
+            window.encodeURIComponent(
+              testRuns.map(r => r.id.toString()).join(','))}&`;
+        }
+        if (search) {
+          url += `q=${window.encodeURIComponent(search)}`;
+        }
+        return url;
+      }
+
+      observeDiffRun(newValue, oldValue) {
+        if (newValue === oldValue) {
+          return;
+        }
+
+        this.fetchResults(this.searchURL);
+      }
+
+      constructor() {
+        super();
+        this.handleSearchCommit = this._handleSearchCommit.bind(this);
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this.shadowRoot.querySelector('test-search')
+          .addEventListener('commit', this.handleSearchCommit);
+      }
+
+      disconnectedCallback() {
+        this.shadowRoot.querySelector('test-search')
+          .removeEventListener('commit', this.handleSearchCommit);
+        super.disconnectedCallback();
+      }
+
       ready() {
         super.ready();
         this.loadRuns().then(async runs => {
@@ -393,10 +434,7 @@ found in the LICENSE file.
         };
       }
 
-      // fetchResults should be triggered by changes in searchURL or diffRun,
-      // but diffRun is only used in subroutine: refreshDisplayedNodes.
-      /* eslint-disable no-unused-vars */
-      async fetchResults(searchURL, diffRun) {
+      async fetchResults(searchURL) {
         const response = await window.fetch(searchURL);
         if (response.status !== 200) {
           throw response;
@@ -606,6 +644,12 @@ found in the LICENSE file.
         return () => {
           this.showHistory = true;
         };
+      }
+
+      // Fetch search results when test-search signals that user has committed
+      // to search string (by pressing <Enter>).
+      _handleSearchCommit(e) {
+        this.fetchResults(this.searchURL);
       }
     }
 
