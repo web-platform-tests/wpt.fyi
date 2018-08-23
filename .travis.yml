@@ -14,7 +14,11 @@ matrix:
     - env:
         - MAKE_TEST_TARGET=python_test
     - env:
-        - MAKE_TEST_TARGET=integration_test
+        - MAKE_TEST_TARGET=web_components_test
+    - env:
+        - MAKE_TEST_TARGET=go_firefox_test
+    - env:
+        - MAKE_TEST_TARGET=go_chrome_test
     - env:
         - MAKE_TEST_TARGET=lint
     - env:
