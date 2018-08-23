@@ -133,7 +133,7 @@ found in the LICENSE file.
       </div>
 
       <template is="dom-if" if="{{ !pathIsATestFile }}">
-        <test-search query='{{search}}' results='{{searchResults}}'></test-search>
+        <test-search query='{{search}}'></test-search>
       </template>
 
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -307,6 +307,12 @@ found in the LICENSE file.
         };
       }
 
+      static get observers() {
+        return [
+          'fetchResults(searchURL, diffRun)',
+        ];
+      }
+
       isDiffShown(diff, diffRun) {
         return diff && diffRun !== null;
       }
@@ -375,9 +381,6 @@ found in the LICENSE file.
           if (this.diff && runs && runs.length === 2) {
             this.fetchDiff(runs);
           }
-          // Fetch the results JSON for the TestRuns
-          await this.fetchResults(runs);
-          this.refreshDisplayedNodes();
         });
 
         // NOTE(lukebjerring): Overriding the pathUpdated method doesn't get
@@ -389,18 +392,15 @@ found in the LICENSE file.
         };
       }
 
-      async fetchResults(testRuns) {
-        if (!testRuns) {
-          return;
-        }
-
-        const response = await window.fetch(this.searchURL);
+      async fetchResults(searchURL, diffRun) {
+        const response = await window.fetch(searchURL);
         if (response.status !== 200) {
           throw response;
         }
         const json = await response.json();
 
         this.searchResults = json.results;
+        this.refreshDisplayedNodes();
       }
 
       async fetchDiff(testRuns) {
@@ -413,8 +413,6 @@ found in the LICENSE file.
           browser_name: 'diff',
           results_url: diffRunURL,
         };
-        await this.fetchResults([this.diffRun]);
-        this.refreshDisplayedNodes();
       }
 
       pathUpdated(path) {

@@ -17,7 +17,7 @@ found in the LICENSE file.
       }
     </style>
 
-    <input value="{{ query::input }}" class="query" placeholder="[[placeholder]]">
+    <input value="{{ q::input }}" class="query" placeholder="[[placeholder]]">
   </template>
 
   <script>
@@ -35,10 +35,14 @@ found in the LICENSE file.
           },
           items: Array,
           itemKey: String,
-          query: {
+          q: {
             type: String,
             notify: true,
             observer: 'queryChanged'
+          },
+          query: {
+            type: String,
+            notify: true,
           },
           results: {
             type: Array,
@@ -49,6 +53,11 @@ found in the LICENSE file.
             computed: 'computeQueryPlaceholder()'
           },
         };
+      }
+
+      ready() {
+        super.ready();
+        this.q = this.query;
       }
 
       queryChanged(_, oldQuery) {
@@ -63,12 +72,14 @@ found in the LICENSE file.
       }
 
       executeSearch() {
-        let q = this.query;
+        let q = this.query = this.q.toLowerCase();
         if (!q || q.length < 1) {
           this.results = this.items;
           return;
         }
-        q = q.toLowerCase();
+        if (!this.items) {
+          return;
+        }
         const results = this.items.filter(t => {
           let v = this.itemKey ? t[this.itemKey] : t;
           return v.toLowerCase().includes(q);
