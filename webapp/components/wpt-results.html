@@ -393,6 +393,9 @@ found in the LICENSE file.
         };
       }
 
+      // fetchResults should be triggered by changes in searchURL or diffRun,
+      // but diffRun is only used in subroutine: refreshDisplayedNodes.
+      /* eslint-disable no-unused-vars */
       async fetchResults(searchURL, diffRun) {
         const response = await window.fetch(searchURL);
         if (response.status !== 200) {
