@@ -5,13 +5,14 @@
 package query
 
 import (
-	golang_set "github.com/deckarep/golang-set"
-	gomock "github.com/golang/mock/gomock"
-	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	io "io"
 	http "net/http"
 	reflect "reflect"
 	time "time"
+
+	golang_set "github.com/deckarep/golang-set"
+	gomock "github.com/golang/mock/gomock"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // Mockreadable is a mock of readable interface
