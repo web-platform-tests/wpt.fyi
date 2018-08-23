@@ -18,9 +18,9 @@ import (
 	mapset "github.com/deckarep/golang-set"
 )
 
-// SearchFilter represents the ways search results can be filtered in the webapp
+// QueryFilter represents the ways search results can be filtered in the webapp
 // search API.
-type SearchFilter struct {
+type QueryFilter struct {
 	RunIDs []int64
 	Q      string
 }
@@ -567,9 +567,9 @@ func ParseRunIDsParam(r *http.Request) (ids []int64, err error) {
 	return ids, err
 }
 
-// ParseSearchFilterParams parses the search parameters, including both
-// "run_ids" and "q" (query).
-func ParseSearchFilterParams(r *http.Request) (filter SearchFilter, err error) {
+// ParseQueryFilterParams parses shared params for the search and autocomplete
+// APIs.
+func ParseQueryFilterParams(r *http.Request) (filter QueryFilter, err error) {
 	keys, err := ParseRunIDsParam(r)
 	if err != nil {
 		return filter, err
