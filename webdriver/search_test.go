@@ -52,7 +52,7 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string,
 	if err != nil {
 		panic(err)
 	}
-	const query = "2dcontext"
+	const query = "2dcontext" + selenium.EnterKey
 	if err := searchBox.SendKeys(query); err != nil {
 		panic(err)
 	}

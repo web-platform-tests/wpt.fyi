@@ -4,6 +4,7 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 
 <dom-module id="test-search">
@@ -17,7 +18,16 @@ found in the LICENSE file.
       }
     </style>
 
-    <input value="{{ q::input }}" class="query" placeholder="[[placeholder]]">
+    <div>
+      <input value="{{ q::input }}" class="query" placeholder="[[placeholder]]"
+          list="query-list">
+      <!-- TODO(markdittmer): Static id will break multiple search
+        components. -->
+      <datalist id="query-list"></datalist>
+      <paper-tooltip position="top" manual-mode="true">
+        Press &lt;Enter&gt; to commit query
+      </paper-tooltip>
+    </div>
   </template>
 
   <script>
@@ -31,7 +41,7 @@ found in the LICENSE file.
         return {
           placeholder: {
             type: String,
-            value: 'Search test files, like \'cors/allow-headers.htm\'',
+            value: 'Search test files, like \'cors/allow-headers.htm\', then press <Enter>',
           },
           items: Array,
           itemKey: String,
@@ -52,12 +62,66 @@ found in the LICENSE file.
             type: String,
             computed: 'computeQueryPlaceholder()'
           },
+          autocompleteURL: {
+            type: String,
+            observer: 'observeAutocompleteURL',
+          },
+          onKeyUp: Function,
+          onChange: Function,
+          onFocus: Function,
+          onBlur: Function,
         };
+      }
+
+      constructor() {
+        super();
+        this.onKeyUp = this.handleKeyUp.bind(this);
+        this.onChange = this.handleChange.bind(this);
+        this.onFocus = this.handleFocus.bind(this);
+        this.onBlur = this.handleBlur.bind(this);
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        const elem = this.shadowRoot.querySelector('.query');
+        elem.addEventListener('keyup', this.onKeyUp);
+        elem.addEventListener('change', this.onChange);
+        elem.addEventListener('focus', this.onFocus);
+        elem.addEventListener('blur', this.onBlur);
+      }
+
+      disconnectedCallback() {
+        const elem = this.shadowRoot.querySelector('.query');
+        elem.removeEventListener('blur', this.onBlur);
+        elem.removeEventListener('focus', this.onFocus);
+        elem.removeEventListener('change', this.onChange);
+        elem.removeEventListener('keyup', this.onKeyUp);
+        super.disconnectedCallback();
       }
 
       ready() {
         super.ready();
         this.q = this.query;
+      }
+
+      async observeAutocompleteURL(newValue, oldValue) {
+        if (newValue === oldValue || !newValue) {
+          return;
+        }
+
+        const response = await window.fetch(newValue);
+        if (response.status !== 200) {
+          throw response;
+        }
+        const json = await response.json();
+
+        const datalist = this.shadowRoot.querySelector('datalist');
+        datalist.innerHTML = '';
+        for (const result of json.results) {
+          const option = document.createElement('option');
+          option.setAttribute('value', result.query_string);
+          datalist.appendChild(option);
+        }
       }
 
       queryChanged(_, oldQuery) {
@@ -68,23 +132,49 @@ found in the LICENSE file.
         if (this[QUERY_DEBOUNCE_ID]) {
           window.clearTimeout(this[QUERY_DEBOUNCE_ID]);
         }
-        this[QUERY_DEBOUNCE_ID] = window.setTimeout(this.executeSearch.bind(this), 500);
+        this[QUERY_DEBOUNCE_ID] = window.setTimeout(this.latchQuery.bind(this), 500);
       }
 
-      executeSearch() {
-        let q = this.query = this.q.toLowerCase();
-        if (!q || q.length < 1) {
-          this.results = this.items;
+      latchQuery() {
+        this.query = this.q.toLowerCase();
+      }
+
+      commitQuery() {
+        this.query = this.q;
+        this.dispatchEvent(new CustomEvent('commit', {
+          detail: {query: this.query},
+        }));
+        this.shadowRoot.querySelector('.query').blur();
+      }
+
+      handleKeyUp(e) {
+        if (e.keyCode !== 13) {
           return;
         }
-        if (!this.items) {
+
+        this.commitQuery();
+      }
+
+      handleChange(e) {
+        const opts = Array.from(this.shadowRoot.querySelectorAll('option'))
+          .map(elem => elem.getAttribute('value').toLowerCase());
+        if (opts.length === 0) {
           return;
         }
-        const results = this.items.filter(t => {
-          let v = this.itemKey ? t[this.itemKey] : t;
-          return v.toLowerCase().includes(q);
-        });
-        this.results = results;
+
+        const value = e.target.value.toLowerCase();
+
+        if (opts.includes(value)) {
+          this.commitQuery();
+        }
+      }
+
+      handleFocus() {
+        this.shadowRoot.querySelector('paper-tooltip').show();
+      }
+
+      handleBlur() {
+        this.shadowRoot.querySelector('paper-tooltip').hide();
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);

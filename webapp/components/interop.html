@@ -39,6 +39,12 @@ found in the LICENSE file.
       margin-top: 1em;
     }
 
+    /* Direct access to test-search from local shadowRoot prevents using
+     * `dom-if` for this. */
+    section.search test-search.search-true {
+      display: none;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -121,9 +127,8 @@ found in the LICENSE file.
       </template>
     </div>
 
-    <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <test-search query='{{search}}' items='[[allMetrics.data]]' item-key='dir' results='{{searchResults}}'></test-search>
-    </template>
+    <test-search class$="search-[[pathIsATestFile]]" query="[[search]]">
+    </test-search>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
       <div class="links">
@@ -240,7 +245,25 @@ found in the LICENSE file.
           value: '',
         },
         searchResults: Array,
+        onSearchCommit: Function,
       };
+    }
+
+    constructor() {
+      super();
+      this.onSearchCommit = this.handleSearchCommit.bind(this);
+    }
+
+    connectedCallback() {
+      super.connectedCallback();
+      this.shadowRoot.querySelector('test-search')
+        .addEventListener('commit', this.onSearchCommit);
+    }
+
+    disconnectedCallback() {
+      this.shadowRoot.querySelector('test-search')
+        .removeEventListener('commit', this.onSearchCommit);
+      super.disconnectedCallback();
     }
 
     async ready() {
@@ -327,6 +350,19 @@ found in the LICENSE file.
 
     shouldQueryAll() {
       return (this.currentNode && this.currentNode.total < 10000) || false;
+    }
+
+    handleSearchCommit(e) {
+      const q = e.detail.query;
+      if (!q || q.length < 1) {
+        this.searchResults = this.allMetrics.data;
+        return;
+      }
+      if (!this.allMetrics.data) {
+        return;
+      }
+      this.searchResults = this.allMetrics.data
+        .filter(t => t.dir.toLowerCase().includes(q));
     }
   }
   window.customElements.define(WPTInterop.is, WPTInterop);
