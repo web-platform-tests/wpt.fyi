@@ -392,6 +392,10 @@ found in the LICENSE file.
       }
 
       async observeSearchURL(newValue, oldValue) {
+        if (oldValue === newValue || !newValue) {
+          return;
+        }
+
         const response = await window.fetch(newValue);
         if (response.status !== 200) {
           throw response;
