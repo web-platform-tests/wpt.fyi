@@ -213,9 +213,9 @@ found in the LICENSE file.
               </template>
               <template is="dom-if" if="[[diffShown]]">
                 <td class$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
-                  <span class$="passing [[ testResultClass(node, index, diffRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'passing') }}</span>
+                  <span class$="passes [[ testResultClass(node, index, diffRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
                   /
-                  <span class$="total [[ testResultClass(node, index, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, diffRun, 'total') }}</span>
+                  <span class$="total [[ testResultClass(node, index, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'total') }}</span>
                 </td>
               </template>
             </tr>
@@ -295,7 +295,6 @@ found in the LICENSE file.
           diffRun: {
             type: Object,
             value: null,
-            observer: 'observeDiffRun',
           },
           // A diff column is shown if requested by users and there are 2 testRuns.
           diffShown: {
@@ -406,14 +405,6 @@ found in the LICENSE file.
         return url;
       }
 
-      observeDiffRun(newValue, oldValue) {
-        if (newValue === oldValue) {
-          return;
-        }
-
-        this.fetchResults(this.searchURL);
-      }
-
       observeLoadingCount(newValue, oldValue) {
         if (newValue === oldValue) {
           return;
@@ -450,9 +441,14 @@ found in the LICENSE file.
       ready() {
         super.ready();
         this.loadRuns().then(async runs => {
+          this.fetchResults();
+
           // Load a diff data into this.diffRun, if needed.
           if (this.diff && runs && runs.length === 2) {
-            this.fetchDiff(runs);
+            this.diffRun = {
+              revision: 'diff',
+              browser_name: 'diff',
+            };
           }
         });
 
@@ -465,32 +461,19 @@ found in the LICENSE file.
         };
       }
 
-      async fetchResults(searchURL) {
+      async fetchResults() {
         this.loadingCount++;
         try {
-          const response = await window.fetch(searchURL);
+          const response = await window.fetch(this.searchURL);
           if (response.status !== 200) {
             throw response;
           }
           const json = await response.json();
-
           this.searchResults = json.results;
           this.refreshDisplayedNodes();
         } finally {
           this.loadingCount--;
         }
-      }
-
-      async fetchDiff(testRuns) {
-        const [before, after] = testRuns;
-        const b = `${before.browser_name}@${before.revision}`;
-        const a = `${after.browser_name}@${after.revision}`;
-        const diffRunURL = `/api/diff?before=${b}&after=${a}&filter=${this.filter}`;
-        this.diffRun = {
-          revision: 'diff',
-          browser_name: 'diff',
-          results_url: diffRunURL,
-        };
       }
 
       pathUpdated(path) {
@@ -576,28 +559,32 @@ found in the LICENSE file.
       }
 
       testResultClass(node, index, testRun, prop) {
+        // Guard against incomplete data.
         if (!node || !testRun) {
           return 'none';
         }
 
         const result = node.results[index];
-        if (typeof result === 'undefined') {
-          return 'none';
-        }
-
         const isDiff = this.isDiff(testRun);
-        if (this.path === '/' && !isDiff) {
-          // Do not add color to top-level directories
-          return 'top';
-        }
-
         if (isDiff) {
+          // Diff case: 'delta [positive|negative|<nothing>]' based on delta
+          // value;
           const delta = this.getDiffDelta(node, prop);
-          if (!delta) {
-            return 'delta none';
+          if (delta === 0) {
+            return 'delta';
           }
+
           return `delta ${delta > 0 ? 'positive' : 'negative'}`;
         } else {
+          // Non-diff case: total=0 -> 'none'; path='/' -> 'top';
+          // otherwise -> 'passes-[colouring-by-percent]'.
+          if (typeof result === 'undefined' && prop === 'total') {
+            return 'none';
+          }
+          if (this.path === '/') {
+            return 'top';
+          }
+
           const passes = result.passes / result.total;
           return `passes-${passes * 100 - (passes * 100 % 20)}`;
         }
@@ -611,7 +598,7 @@ found in the LICENSE file.
       getDiffDeltaStr(node, prop) {
         const delta = this.getDiffDelta(node, prop);
         if (delta === 0) {
-          return 0;
+          return '0';
         }
         const posOrNeg = delta > 0 ? '+' : '';
         return `${posOrNeg}${delta}`;
@@ -685,7 +672,7 @@ found in the LICENSE file.
       handleSearchCommit() {
         // Fetch search results when test-search signals that user has committed
         // to search string (by pressing <Enter>).
-        this.fetchResults(this.searchURL);
+        this.fetchResults();
       }
     }
 
