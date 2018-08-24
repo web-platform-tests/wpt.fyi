@@ -13,7 +13,8 @@
     "paper-tabs": "@Polymer/paper-tabs#^2.1.1",
     "paper-tooltip": "@Polymer/paper-tooltip#^2.1.1",
     "google-chart": "^2.0.0",
-    "paper-toggle-button": "PolymerElements/paper-toggle-button#^2.1.1"
+    "paper-toggle-button": "PolymerElements/paper-toggle-button#^2.1.1",
+    "paper-spinner": "PolymerElements/paper-spinner#2.1.0"
   },
   "devDependencies": {
     "web-component-tester": "^6.4.3"
