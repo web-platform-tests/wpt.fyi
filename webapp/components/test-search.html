@@ -60,23 +60,27 @@ found in the LICENSE file.
             observer: 'observeAutocompleteURL',
           },
           onKeyUp: Function,
+          onChange: Function,
         };
       }
 
       constructor() {
         super();
         this.onKeyUp = this.handleKeyUp.bind(this);
+        this.onChange = this.handleChange.bind(this);
       }
 
       connectedCallback() {
         super.connectedCallback();
-        this.shadowRoot.querySelector('.query')
-          .addEventListener('keyup', this.onKeyUp);
+        const elem = this.shadowRoot.querySelector('.query');
+        elem.addEventListener('keyup', this.onKeyUp);
+        elem.addEventListener('change', this.onChange);
       }
 
       disconnectedCallback() {
-        this.shadowRoot.querySelector('.query')
-          .removeEventListener('keyup', this.onKeyUp);
+        const elem = this.shadowRoot.querySelector('.query');
+        elem.removeEventListener('change', this.onChange);
+        elem.removeEventListener('keyup', this.onKeyUp);
         super.disconnectedCallback();
       }
 
@@ -120,16 +124,34 @@ found in the LICENSE file.
         this.query = this.q.toLowerCase();
       }
 
-      handleKeyUp(e) {
-        if (e.keyCode !== 13) {
-          return;
-        }
-
+      commitQuery() {
         this.query = this.q;
         this.dispatchEvent(new CustomEvent('commit', {
           detail: {query: this.query},
         }));
         this.shadowRoot.querySelector('.query').blur();
+      }
+
+      handleKeyUp(e) {
+        if (e.keyCode !== 13) {
+          return;
+        }
+
+        this.commitQuery();
+      }
+
+      handleChange(e) {
+        const opts = Array.from(this.shadowRoot.querySelectorAll('option'))
+          .map(elem => elem.getAttribute('value').toLowerCase());
+        if (opts.length === 0) {
+          return;
+        }
+
+        const value = e.target.value.toLowerCase();
+
+        if (opts.includes(value)) {
+          this.commitQuery();
+        }
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);
