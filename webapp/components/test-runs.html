@@ -151,8 +151,9 @@ found in the LICENSE file.
           params['max-count'] = maxCount;
         }
 
-        // Insist on complete runs iff neither sha nor products are specified.
-        if (!sha && (!products || products.length === 0)) {
+        // Insist on complete runs iff there is no other parameter.
+        // This is a temporary hack for https://github.com/web-platform-tests/wpt.fyi/issues/468
+        if (Object.keys(params).length === 0) {
           params.complete = true;
         }
 
