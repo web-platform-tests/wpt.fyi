@@ -68,6 +68,8 @@ found in the LICENSE file.
           },
           onKeyUp: Function,
           onChange: Function,
+          onFocus: Function,
+          onBlur: Function,
         };
       }
 
@@ -75,6 +77,8 @@ found in the LICENSE file.
         super();
         this.onKeyUp = this.handleKeyUp.bind(this);
         this.onChange = this.handleChange.bind(this);
+        this.onFocus = this.handleFocus.bind(this);
+        this.onBlur = this.handleBlur.bind(this);
       }
 
       connectedCallback() {
@@ -82,10 +86,14 @@ found in the LICENSE file.
         const elem = this.shadowRoot.querySelector('.query');
         elem.addEventListener('keyup', this.onKeyUp);
         elem.addEventListener('change', this.onChange);
+        elem.addEventListener('focus', this.onFocus);
+        elem.addEventListener('blur', this.onBlur);
       }
 
       disconnectedCallback() {
         const elem = this.shadowRoot.querySelector('.query');
+        elem.removeEventListener('blur', this.onBlur);
+        elem.removeEventListener('focus', this.onFocus);
         elem.removeEventListener('change', this.onChange);
         elem.removeEventListener('keyup', this.onKeyUp);
         super.disconnectedCallback();
@@ -129,7 +137,6 @@ found in the LICENSE file.
 
       latchQuery() {
         this.query = this.q.toLowerCase();
-        this.shadowRoot.querySelector('paper-tooltip').show();
       }
 
       commitQuery() {
@@ -138,7 +145,6 @@ found in the LICENSE file.
           detail: {query: this.query},
         }));
         this.shadowRoot.querySelector('.query').blur();
-        this.shadowRoot.querySelector('paper-tooltip').hide();
       }
 
       handleKeyUp(e) {
@@ -161,6 +167,14 @@ found in the LICENSE file.
         if (opts.includes(value)) {
           this.commitQuery();
         }
+      }
+
+      handleFocus() {
+        this.shadowRoot.querySelector('paper-tooltip').show();
+      }
+
+      handleBlur() {
+        this.shadowRoot.querySelector('paper-tooltip').hide();
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);
