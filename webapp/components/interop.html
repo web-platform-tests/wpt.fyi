@@ -180,7 +180,7 @@ found in the LICENSE file.
       <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
         <tr>
           <td>
-            <path-part path="{{ node.dir }}" is-dir="{{ !computePathIsATestFile(node.dir) }}" prefix="/interop" navigate="{{ bindNavigate() }}"></path-part>
+            <path-part path="{{ node.path }}" is-dir="{{ !computePathIsATestFile(node.path) }}" prefix="/interop" navigate="{{ bindNavigate() }}"></path-part>
           </td>
 
           <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
@@ -224,17 +224,19 @@ found in the LICENSE file.
           computed: 'computeTestRuns(passRateMetadata)',
         },
         allMetrics: Object,
-        displayedNodes: {
-          type: Object,
-          computed: 'computeDisplayedNodes(path, searchResults, allMetrics)'
-        },
-        testFileNames: {
+        fileMetrics: {
           type: Array,
           value: [],
+          computed: 'computeFileMetrics(allMetrics)',
         },
-        currentNode: {
-          type: Object,
-          computed: 'computeCurrentNode(allMetrics, path)'
+        displayedTests: {
+          type: Array,
+          computed: 'computeDisplayedTests(path, searchResults, fileMetrics)'
+        },
+        displayedNodes: {
+          type: Array,
+          value: [],
+          computed: 'computeDisplayedNodes(path, displayedTests)',
         },
         thLabels: {
           type: Array,
@@ -276,9 +278,6 @@ found in the LICENSE file.
           return r.json();
         });
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
-      if (this.allMetrics && this.allMetrics.data) {
-        this.testFileNames = Array.from(Object.keys(this.allMetrics.data));
-      }
     }
 
     async fetchMetrics(url) {
@@ -310,29 +309,23 @@ found in the LICENSE file.
       return metadata && metadata.test_runs;
     }
 
-    computeDisplayedNodes(path, searchResults, allMetrics) {
-      if (!path || !allMetrics) {
+    computeFileMetrics(allMetrics) {
+      let fileMetrics = [];
+      for (const metric of allMetrics.data) {
+        if (this.computePathIsATestFile(metric.dir)) {
+          fileMetrics.push(metric);
+        }
+      }
+      return fileMetrics;
+    }
+
+    computeDisplayedTests(path, searchResults, fileMetrics) {
+      if (!path || !fileMetrics) {
         return null;
       }
 
-      let data = this.searchResults || allMetrics.data;
-      if (this.computePathIsATestFile(path)) {
-        data = data.filter(node => node.dir === path);
-      } else {
-        data = data.filter(node => {
-          return this.filterNode(path === '/' ? path : `${this.path}/`, node);
-        });
-      }
-
-      return data;
-    }
-
-    filterNode(path, node) {
-      if (!node.dir.startsWith(path)) {
-        return false;
-      }
-      const subdir = node.dir.substr(path.length);
-      return !subdir.includes('/');
+      return (searchResults || fileMetrics)
+        .filter(node => node.dir.includes(path));
     }
 
     passRateStyle(total, passRate, browserCount) {
@@ -341,28 +334,84 @@ found in the LICENSE file.
       return `background-color: rgba(${INTEROP_COLORS[browserCount].join(', ')}, ${alpha})`;
     }
 
-    computeCurrentNode(allMetrics, path) {
-      if (!allMetrics || !path || path === '/') {
-        return null;
-      }
-      return allMetrics.data.some(node => node.dir === path);
-    }
-
-    shouldQueryAll() {
-      return (this.currentNode && this.currentNode.total < 10000) || false;
-    }
-
     handleSearchCommit(e) {
       const q = e.detail.query;
       if (!q || q.length < 1) {
-        this.searchResults = this.allMetrics.data;
+        this.searchResults = this.fileMetrics;
         return;
       }
-      if (!this.allMetrics.data) {
+      if (!this.fileMetrics) {
         return;
       }
-      this.searchResults = this.allMetrics.data
+
+      this.searchResults = this.fileMetrics
         .filter(t => t.dir.toLowerCase().includes(q));
+
+      this.refreshDisplayedNodes();
+    }
+
+    computeDisplayedNodes(path, displayedTests) {
+      if (!displayedTests) {
+        return [];
+      }
+
+      // Prefix: includes trailing slash.
+      const prefix = path === '/' ? '/' : `${path}/`;
+      const pLen = prefix.length;
+
+      return displayedTests
+        // Filter out files not in this directory.
+        .filter(n => n.dir.startsWith(prefix))
+        // Accumulate displayedNodes from remaining files.
+        .reduce((() => {
+          // Bookkeeping of the form:
+          //   {<displayed dir/file name>: <index in acc>}.
+          let nodes = {};
+          return (acc, t) => {
+            // Compute dir/file name that is direct descendant of this.path.
+            const suffix = t.dir.substring(pLen);
+            const slashIdx = suffix.indexOf('/');
+            const isDir = slashIdx !== -1;
+            const name = isDir ? suffix.substring(0, slashIdx): suffix;
+
+            // Either add new node to acc, or add data to an existing node.
+            if (!nodes.hasOwnProperty(name)) {
+              nodes[name] = acc.length;
+              acc.push({
+                path: `${prefix}${name}`,
+                isDir,
+                pass_rates: Array.from(t.pass_rates),
+                total: t.total,
+              });
+            } else {
+              const prs = t.pass_rates;
+              const n = acc[nodes[name]];
+              const nprs = n.pass_rates;
+
+              for (let i = 0; i < prs.length; i++) {
+                if (i < nprs.length) {
+                  nprs[i] += prs[i];
+                } else {
+                  nprs[i] = prs[i];
+                }
+              }
+              n.total += t.total;
+            }
+
+            return acc;
+          };
+        })(), [])
+        .sort(this.nodeSort);
+    }
+
+    nodeSort(a, b) {
+      if (a.path < b.path) {
+        return -1;
+      }
+      if (a.path > b.path) {
+        return 1;
+      }
+      return 0;
     }
   }
   window.customElements.define(WPTInterop.is, WPTInterop);
