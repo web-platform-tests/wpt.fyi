@@ -4,6 +4,7 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 
 <dom-module id="test-search">
@@ -17,10 +18,16 @@ found in the LICENSE file.
       }
     </style>
 
-    <input value="{{ q::input }}" class="query" placeholder="[[placeholder]]"
-        list="query-list">
-    <!-- TODO(markdittmer): Static id will break multiple search components. -->
-    <datalist id="query-list"></datalist>
+    <div>
+      <input value="{{ q::input }}" class="query" placeholder="[[placeholder]]"
+          list="query-list">
+      <!-- TODO(markdittmer): Static id will break multiple search
+        components. -->
+      <datalist id="query-list"></datalist>
+      <paper-tooltip position="top" manual-mode="true">
+        Press &lt;Enter&gt; to commit query
+      </paper-tooltip>
+    </div>
   </template>
 
   <script>
@@ -34,7 +41,7 @@ found in the LICENSE file.
         return {
           placeholder: {
             type: String,
-            value: 'Search test files, like \'cors/allow-headers.htm\'',
+            value: 'Search test files, like \'cors/allow-headers.htm\', then press <Enter>',
           },
           items: Array,
           itemKey: String,
@@ -122,6 +129,7 @@ found in the LICENSE file.
 
       latchQuery() {
         this.query = this.q.toLowerCase();
+        this.shadowRoot.querySelector('paper-tooltip').show();
       }
 
       commitQuery() {
@@ -130,6 +138,7 @@ found in the LICENSE file.
           detail: {query: this.query},
         }));
         this.shadowRoot.querySelector('.query').blur();
+        this.shadowRoot.querySelector('paper-tooltip').hide()
       }
 
       handleKeyUp(e) {
