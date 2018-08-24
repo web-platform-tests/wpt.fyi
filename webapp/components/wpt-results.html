@@ -489,27 +489,32 @@ found in the LICENSE file.
       }
 
       testResultClass(node, index, testRun, prop) {
+        // Guard against incomplete data.
         if (!node || !testRun) {
           return 'none';
         }
 
         const result = node.results[index];
         const isDiff = this.isDiff(testRun);
-        if (!isDiff && typeof result === 'undefined') {
-          return 'none';
-        }
-        if (this.path === '/' && !isDiff) {
-          // Do not add color to top-level directories
-          return 'top';
-        }
-
         if (isDiff) {
+          // Diff case: 'delta [positive|negative|<nothing>]' based on delta
+          // value;
           const delta = this.getDiffDelta(node, prop);
-          if (!delta) {
+          if (delta === 0) {
             return 'delta';
           }
+
           return `delta ${delta > 0 ? 'positive' : 'negative'}`;
         } else {
+          // Non-diff case: total=0 -> 'none'; path='/' -> 'top';
+          // otherwise -> 'passes-[colouring-by-percent]'.
+          if (typeof result === 'undefined' && prop === 'total') {
+            return 'none';
+          }
+          if (this.path === '/') {
+            return 'top';
+          }
+
           const passes = result.passes / result.total;
           return `passes-${passes * 100 - (passes * 100 % 20)}`;
         }
