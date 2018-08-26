@@ -23,7 +23,7 @@ import (
 var (
 	host          = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
 	numRemoteRuns = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
-	staticRuns    = flag.Bool("static_runs", false, "Include runs in the /static dir")
+	staticRuns    = flag.Bool("static_runs", false, "include runs in the /static dir; some views such as /interop only work locally when this value is true")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
