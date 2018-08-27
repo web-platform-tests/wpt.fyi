@@ -112,7 +112,7 @@ found in the LICENSE file.
       td.numbers {
         white-space: nowrap;
       }
-      td path-part {
+      .terse td path-part {
         box-sizing: border-box;
         height: 100%;
         left: 0;
@@ -124,11 +124,14 @@ found in the LICENSE file.
         white-space: nowrap;
         width: 100%;
       }
-      td path-part:hover {
+      .terse td path-part:hover {
         z-index: 1;
         text-overflow: initial;
         background-color: inherit;
         width: max-content;
+      }
+      .verbose td path-part {
+        padding: 0.25em;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
@@ -209,7 +212,7 @@ found in the LICENSE file.
     </template>
 
     <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <table>
+      <table class="terse">
         <thead>
           <tr>
             <th>Path</th>
