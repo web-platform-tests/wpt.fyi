@@ -8,6 +8,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
@@ -79,6 +80,18 @@ found in the LICENSE file.
       }
       .info small {
         float: right;
+      }
+      .right {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .right .pad {
+        padding: 8px;
+      }
+      paper-toggle-button {
+        --paper-toggle-button-checked-bar-color:  var(--paper-blue-500);
+        --paper-toggle-button-checked-button-color:  var(--paper-blue-700);
+        --paper-toggle-button-checked-ink-color: var(--paper-blue-300);
       }
       .top,
       .delta {
@@ -212,7 +225,14 @@ found in the LICENSE file.
     </template>
 
     <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <table class="terse">
+
+      <div class="right">
+        <label class="pad">Expand</label>
+        <paper-toggle-button class="pad" checked="{{isVerbose}}">
+        </paper-toggle-button>
+      </div>
+
+      <table class$="[[tableClass]]">
         <thead>
           <tr>
             <th>Path</th>
@@ -357,6 +377,14 @@ found in the LICENSE file.
             value: 0,
             observer: 'observeLoadingCount',
           },
+          isVerbose: {
+            type: Boolean,
+            value: false,
+          },
+          tableClass: {
+            type: String,
+            computed: 'computeTableClass(isVerbose)',
+          },
           onSearchCommit: Function,
         };
       }
@@ -434,6 +462,10 @@ found in the LICENSE file.
           url += `q=${window.encodeURIComponent(search)}`;
         }
         return url;
+      }
+
+      computeTableClass(isVerbose) {
+        return isVerbose ? 'verbose' : 'terse';
       }
 
       observeLoadingCount(newValue, oldValue) {
