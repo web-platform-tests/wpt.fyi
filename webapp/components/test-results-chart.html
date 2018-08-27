@@ -11,18 +11,30 @@ found in the LICENSE file.
 <dom-module id="test-results-chart">
   <template>
     <style>
-      .chart {
-        display: none;
+      .container, google-chart {
+        height: 100%;
       }
-      .chart.true {
-        display: initial;
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      paper-button {
+        background-color: var(--paper-blue-500);
+        color: white;
       }
     </style>
-    <google-chart class$="chart [[isFeasible]]"
-                  type="line"
-                  cols="[[cols]]"
-                  rows="[[rows]]"
-                  options="[[chartOptions]]"></google-chart>
+    <div class="container">
+      <template is="dom-if" if="{{show}}">
+        <google-chart type="line" cols="[[cols]]" rows="[[rows]]"></google-chart>
+      </template>
+      <template is="dom-if" if="{{!show}}">
+        <p class="caveat">
+          Just the first batch of history for these test results requires [[numReqs]] HTTP requests.
+        </p>
+        <paper-button on-click="setShowForNow">Show anyway</paper-button>
+      </template>
+    </div>
   </template>
   <script>
     /* global TestFileResults */
@@ -49,6 +61,10 @@ found in the LICENSE file.
           maxReqs: {
             type: Number,
             value: 200,
+          },
+          maxRuns: {
+            type: Number,
+            value: 100,
           },
           browserNames: {
             type: Array,
@@ -78,9 +94,22 @@ found in the LICENSE file.
           currentTests: {
             type: Array,
           },
+          numReqs: {
+            type: Number,
+            computed: 'computeNumReqs(tests, chunkSize)',
+          },
           isFeasible: {
             type: Boolean,
-            computed: 'computeIsFeasible(tests, chunkSize, maxReqs)',
+            computed: 'computeIsFeasible(numReqs, maxReqs)',
+            value: false,
+          },
+          showForNow: {
+            type: Boolean,
+            value: false,
+          },
+          show: {
+            type: Boolean,
+            computed: 'computeShow(isFeasible, showForNow)',
             value: false,
           },
           chartOptions: {
@@ -89,17 +118,20 @@ found in the LICENSE file.
               vAxis: {
                 minValue: 0,
                 maxValue: 1,
-              }
-            }
-          }
+              },
+            },
+          },
         };
       }
 
       static get observers() {
         return [
-          'loadNext(tests, chunkSize, labels, to, isFeasible)',
+          'updateShowForNow(tests, chunkSize, labels, isFeasible)',
+          'loadNext(tests, chunkSize, maxRuns, labels, to, show)',
         ];
       }
+
+
 
       computeLabels(labels) {
         return labels ? labels : [];
@@ -112,14 +144,30 @@ found in the LICENSE file.
           }));
       }
 
-      computeIsFeasible(tests, chunkSize, maxReqs) {
-        return tests && tests.length && 4 * tests.length * chunkSize <= maxReqs;
+      computeNumReqs(tests, chunkSize) {
+        return tests && tests.length  ? 4 * tests.length * chunkSize : Infinity;
+      }
+
+      computeIsFeasible(numReqs, maxReqs) {
+        return numReqs <= maxReqs;
+      }
+
+      computeShow(isFeasible, showForNow) {
+        return isFeasible || showForNow;
+      }
+
+      setShowForNow() {
+        this.showForNow = true;
+      }
+
+      updateShowForNow() {
+        this.showForNow = false;
       }
 
       // Load results of `tests` from `chunkSize` runs labeled with `labels`
-      // from prior to `to` iff `isFeasible`.
-      async loadNext(tests, chunkSize, labels, to, isFeasible) {
-        if (!isFeasible || tests.length === 0) {
+      // from prior to `to` iff `show`.
+      async loadNext(tests, chunkSize, maxRuns, labels, to, show) {
+        if (!show || tests.length === 0 || this.values.length >= maxRuns) {
           return;
         }
         if (this.currentTests !== tests) {
