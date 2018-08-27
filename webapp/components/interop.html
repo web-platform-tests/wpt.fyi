@@ -4,10 +4,11 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
-<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="path-part.html">
 <link rel="import" href="test-runs.html">
 <link rel="import" href="test-file-results.html">
@@ -43,6 +44,15 @@ found in the LICENSE file.
      * `dom-if` for this. */
     section.search test-search.search-true {
       display: none;
+    }
+
+    .right {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .right .pad {
+      padding: 8px;
     }
 
     table {
@@ -179,6 +189,12 @@ found in the LICENSE file.
 
   <template is="dom-if" if="{{ !pathIsATestFile }}">
     <section class="runs">
+      <div class="right">
+        <label class="pad">Expand</label>
+        <paper-toggle-button class="pad" checked="{{isVerbose}}">
+        </paper-toggle-button>
+      </div>
+
       <table>
         <thead>
         <tr>
@@ -194,7 +210,7 @@ found in the LICENSE file.
     </section>
   </template>
 
-  <table class="terse">
+  <table class$="[[tableClass]]">
     <thead>
       <tr>
         <th>Path</th>
@@ -281,6 +297,14 @@ found in the LICENSE file.
           value: '',
         },
         searchResults: Array,
+        isVerbose: {
+          type: Boolean,
+          value: false,
+        },
+        tableClass: {
+          type: String,
+          computed: 'computeTableClass(isVerbose)',
+        },
         onSearchCommit: Function,
       };
     }
@@ -360,6 +384,10 @@ found in the LICENSE file.
 
       return (searchResults || fileMetrics)
         .filter(node => node.dir.includes(path));
+    }
+
+    computeTableClass(isVerbose) {
+      return isVerbose ? 'verbose' : 'terse';
     }
 
     passRateStyle(total, passRate, browserCount) {
