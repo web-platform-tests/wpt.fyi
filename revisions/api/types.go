@@ -23,8 +23,10 @@ func GetErMissingRevision() error {
 	return errMissingRevision
 }
 
+// UTCTime is a time.Time converted to the UTC timezone.
 type UTCTime time.Time
 
+// MarshalJSON defines the JSON format used for the UTCTime type.
 func (t UTCTime) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("\"%s\"", time.Time(t).UTC().Format(time.RFC3339))), nil
 }

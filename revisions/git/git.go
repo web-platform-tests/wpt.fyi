@@ -27,26 +27,32 @@ type Git interface {
 	Clone(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (Repository, error)
 }
 
+// GoGit is the Git implementation for src-d/go-git.
 type GoGit struct{}
 
+// Clone creates a clone of a git repository.
 func (GoGit) Clone(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (Repository, error) {
 	return git.Clone(s, worktree, o)
 }
 
+// Revision provides read access to hash and commit time git commit metadata.
 type Revision interface {
 	GetHash() plumbing.Hash
 	GetCommitTime() time.Time
 }
 
+// RevisionData is a vanilla data structure implementation of Revision.
 type RevisionData struct {
 	Hash       plumbing.Hash
 	CommitTime time.Time
 }
 
+// GetHash returns the hash stored in RevisionData.Hash.
 func (d RevisionData) GetHash() plumbing.Hash {
 	return d.Hash
 }
 
+// GetCommitTime returns the commit time stored in RevisionData.CommitTime.
 func (d RevisionData) GetCommitTime() time.Time {
 	return d.CommitTime
 }
