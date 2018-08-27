@@ -97,11 +97,38 @@ found in the LICENSE file.
       span.delta.positive {
         color: var(--paper-green-700);
       }
+      td {
+        height: 1.5em;
+        position: relative;
+        padding: 0;
+      }
+      td.path-part {
+        min-width: 200px;
+        background-color: white;
+      }
       td.none {
         visibility: hidden;
       }
       td.numbers {
         white-space: nowrap;
+      }
+      td path-part {
+        box-sizing: border-box;
+        height: 100%;
+        left: 0;
+        overflow: hidden;
+        padding: 0.25em;
+        position: absolute;
+        text-overflow: ellipsis;
+        top: 0;
+        white-space: nowrap;
+        width: 100%;
+      }
+      td path-part:hover {
+        z-index: 1;
+        text-overflow: initial;
+        background-color: inherit;
+        width: max-content;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
@@ -200,7 +227,7 @@ found in the LICENSE file.
 
           <template is="dom-repeat" items="{{displayedNodes}}" as="node">
             <tr>
-              <td>
+              <td class="path-part">
                 <path-part prefix="/results" path="{{ node.path }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
               </td>
 
