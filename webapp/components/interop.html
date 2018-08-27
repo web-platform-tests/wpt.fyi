@@ -50,7 +50,6 @@ found in the LICENSE file.
       border-collapse: collapse;
     }
 
-
     hr {
       margin: 24px 0;
       height: 1px;
@@ -101,6 +100,37 @@ found in the LICENSE file.
 
     .info small {
       float: right;
+    }
+
+    td {
+      height: 1.5em;
+      position: relative;
+      padding: 0;
+    }
+
+    td.path-part {
+      min-width: 200px;
+      background-color: white;
+    }
+
+    td path-part {
+      box-sizing: border-box;
+      height: 100%;
+      left: 0;
+      overflow: hidden;
+      padding: 0.25em;
+      position: absolute;
+      text-overflow: ellipsis;
+      top: 0;
+      white-space: nowrap;
+      width: 100%;
+    }
+
+    td path-part:hover {
+      z-index: 1;
+      text-overflow: initial;
+      background-color: inherit;
+      width: max-content;
     }
 
     @media (max-width: 800px) {
@@ -179,7 +209,7 @@ found in the LICENSE file.
     <tbody>
       <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
         <tr>
-          <td>
+          <td class="path-part">
             <path-part path="{{ node.path }}" is-dir="{{ !computePathIsATestFile(node.path) }}" prefix="/interop" navigate="{{ bindNavigate() }}"></path-part>
           </td>
 
