@@ -108,12 +108,12 @@ found in the LICENSE file.
       padding: 0;
     }
 
-    td.path-part {
+    .terse td.path-part {
       min-width: 200px;
       background-color: white;
     }
 
-    td path-part {
+    .terse td path-part {
       box-sizing: border-box;
       height: 100%;
       left: 0;
@@ -126,11 +126,15 @@ found in the LICENSE file.
       width: 100%;
     }
 
-    td path-part:hover {
+    .terse td path-part:hover {
       z-index: 1;
       text-overflow: initial;
       background-color: inherit;
       width: max-content;
+    }
+
+    .verbose td path-part {
+      padding: 0.25em;
     }
 
     @media (max-width: 800px) {
@@ -190,7 +194,7 @@ found in the LICENSE file.
     </section>
   </template>
 
-  <table>
+  <table class="terse">
     <thead>
       <tr>
         <th>Path</th>
