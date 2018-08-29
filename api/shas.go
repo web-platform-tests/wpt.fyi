@@ -48,6 +48,12 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	if len(shas) < 1 {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("[]"))
+		return
+	}
+
 	shasBytes, err := json.Marshal(shas)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
