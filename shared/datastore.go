@@ -146,3 +146,51 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 		Filter(fieldName+" >=", fmt.Sprintf("%s.", versionPrefix)).
 		Filter(fieldName+" <=", fmt.Sprintf("%s.%c", versionPrefix, '9'+1))
 }
+
+// GetCompleteRunSHAs returns an array of the SHA[0:10] for runs that
+// exists for all initially-loaded browser names (see GetDefaultBrowserNames),
+// ordered by most-recent.
+func GetCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (shas []string, err error) {
+	query := datastore.
+		NewQuery("TestRun").
+		Order("-TimeStart").
+		Project("Revision", "BrowserName")
+
+	browserNames := GetDefaultBrowserNames()
+
+	if from != nil {
+		query = query.Filter("TimeStart >=", *from)
+	}
+	if to != nil {
+		query = query.Filter("TimeStart <", *to)
+	}
+
+	bySHA := make(map[string]mapset.Set)
+	done := mapset.NewSet()
+	it := query.Run(ctx)
+	for {
+		var testRun TestRun
+		_, err := it.Next(&testRun)
+		if err == datastore.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		} else if !IsStableBrowserName(testRun.BrowserName) {
+			continue
+		}
+		set, ok := bySHA[testRun.Revision]
+		if !ok {
+			bySHA[testRun.Revision] = mapset.NewSetWith(testRun.BrowserName)
+		} else {
+			set.Add(testRun.BrowserName)
+			if set.Cardinality() == len(browserNames) && !done.Contains(testRun.Revision) {
+				done.Add(testRun.Revision)
+				shas = append(shas, testRun.Revision)
+				if limit != nil && len(shas) >= *limit {
+					return shas, nil
+				}
+			}
+		}
+	}
+	return shas, err
+}
