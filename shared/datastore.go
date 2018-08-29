@@ -153,8 +153,7 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 func GetCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (shas []string, err error) {
 	query := datastore.
 		NewQuery("TestRun").
-		Order("-TimeStart").
-		Project("Revision", "BrowserName")
+		Order("-TimeStart")
 
 	// TODO(lukebjerring): Pass in products.
 	products := GetDefaultProducts()
@@ -190,9 +189,9 @@ func GetCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (s
 		}
 		set, ok := bySHA[testRun.Revision]
 		if !ok {
-			bySHA[testRun.Revision] = mapset.NewSetWith(testRun.BrowserName)
+			bySHA[testRun.Revision] = mapset.NewSetWith(*matchingProduct)
 		} else {
-			set.Add(testRun.BrowserName)
+			set.Add(*matchingProduct)
 			if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 				done.Add(testRun.Revision)
 				shas = append(shas, testRun.Revision)
