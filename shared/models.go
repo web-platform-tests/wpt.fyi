@@ -99,7 +99,7 @@ type TestRun struct {
 // LabelsSet creates a set from the run's labels.
 func (run TestRun) LabelsSet() mapset.Set {
 	runLabels := mapset.NewSet()
-	for label := range run.Labels {
+	for _, label := range run.Labels {
 		runLabels.Add(label)
 	}
 	return runLabels

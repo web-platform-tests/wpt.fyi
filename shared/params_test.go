@@ -509,3 +509,14 @@ func TestProductSpecMatches(t *testing.T) {
 	safariRun.BrowserName = "safari"
 	assert.False(t, chrome.Matches(safariRun))
 }
+
+func TestProductSpecMatches_Labels(t *testing.T) {
+	chrome, err := ParseProductSpec("chrome[foo]")
+	assert.Nil(t, err)
+
+	chromeRun := TestRun{}
+	chromeRun.BrowserName = "chrome"
+	// assert.False(t, chrome.Matches(chromeRun))
+	chromeRun.Labels = []string{"bar", "foo"}
+	assert.True(t, chrome.Matches(chromeRun))
+}
