@@ -24,6 +24,15 @@ func FetchLatestRuns(wptdHost string) TestRuns {
 func FetchRuns(wptdHost string, filter TestRunFilter) TestRuns {
 	url := "https://" + wptdHost + "/api/runs"
 	url += "?" + filter.ToQuery(true).Encode()
+
+	var runs TestRuns
+	FetchJSON(url, &runs)
+	return runs
+}
+
+// FetchJSON fetches the given URL, which is expected to be JSON, and unmarshals
+// it into the given value pointer, fatally logging any errors.
+func FetchJSON(url string, value interface{}) {
 	log.Printf("Fetching %s...", url)
 
 	resp, err := http.Get(url)
@@ -39,9 +48,7 @@ func FetchRuns(wptdHost string, filter TestRunFilter) TestRuns {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var runs TestRuns
-	if err := json.Unmarshal(body, &runs); err != nil {
+	if err := json.Unmarshal(body, value); err != nil {
 		log.Fatal(err)
 	}
-	return runs
 }

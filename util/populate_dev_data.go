@@ -176,8 +176,7 @@ func main() {
 
 	if *staticRuns {
 		log.Print("Adding local mock data (static/)...")
-		testRunKeys := addData(ctx, testRunKindName, staticTestRunMetadata)
-		for i, key := range testRunKeys {
+		for i, key := range addData(ctx, testRunKindName, staticTestRunMetadata) {
 			staticTestRuns[i].ID = key.IntID()
 		}
 		for i := range staticPassRateMetadata {
@@ -193,10 +192,9 @@ func main() {
 	}
 
 	log.Print("Adding latest production TestRun data...")
-	maxCount := *numRemoteRuns
 	filters := shared.TestRunFilter{
-		MaxCount: &maxCount,
 		Labels:   mapset.NewSetWith("stable"),
+		MaxCount: numRemoteRuns,
 	}
 	prodTestRuns := shared.FetchRuns(*host, filters)
 	labelRuns(prodTestRuns, "prod")
@@ -205,6 +203,18 @@ func main() {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
 	}
 	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
+
+	log.Print("Adding latest production Interop data...")
+	filters.MaxCount = nil
+	prodPassRateMetadata := FetchInterop(*host, filters)
+	// Update the interop IDs to match the newly-copied local test-run IDs.
+	prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
+	one := 1
+	localRunCopies, err := shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, nil, &one)
+	for i := range prodPassRateMetadata.TestRunIDs {
+		prodPassRateMetadata.TestRunIDs[i] = localRunCopies[i].ID
+	}
+	addData(ctx, passRateMetadataKindName, []interface{}{&prodPassRateMetadata})
 
 	log.Print("Adding latest experimental TestRun data...")
 	filters.Labels = mapset.NewSetWith("experimental")
@@ -251,4 +261,16 @@ func getRemoteAPIContext() (context.Context, error) {
 	const localhost = "localhost:9999"
 	remoteContext, err := remote_api.NewRemoteContext(localhost, http.DefaultClient)
 	return remoteContext, err
+}
+
+// FetchInterop fetches the PassRateMetadata for the given sha / labels, using
+// the API on the given host.
+// TODO(lukebjerring): Migrate to results-analysis
+func FetchInterop(wptdHost string, filter shared.TestRunFilter) metrics.PassRateMetadata {
+	url := "https://" + wptdHost + "/api/interop"
+	url += "?" + filter.ToQuery(true).Encode()
+
+	var interop metrics.PassRateMetadata
+	shared.FetchJSON(url, &interop)
+	return interop
 }
