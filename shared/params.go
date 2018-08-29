@@ -74,22 +74,22 @@ type ProductSpec struct {
 }
 
 // Matches returns whether the spec matches the given run.
-func (productSpec ProductSpec) Matches(run TestRun) bool {
-	if run.BrowserName != productSpec.BrowserName {
+func (p ProductSpec) Matches(run TestRun) bool {
+	if run.BrowserName != p.BrowserName {
 		return false
 	}
-	if !IsLatest(productSpec.Revision) && productSpec.Revision != run.Revision {
+	if !IsLatest(p.Revision) && p.Revision != run.Revision {
 		return false
 	}
-	if productSpec.Labels != nil && productSpec.Labels.Cardinality() > 0 {
+	if p.Labels != nil && p.Labels.Cardinality() > 0 {
 		runLabels := run.LabelsSet()
-		if runLabels.Intersect(productSpec.Labels).Cardinality() < productSpec.Labels.Cardinality() {
+		if runLabels.Intersect(p.Labels).Cardinality() < p.Labels.Cardinality() {
 			return false
 		}
 	}
-	if productSpec.BrowserVersion != "" {
+	if p.BrowserVersion != "" {
 		// Make "6" not match "60.123" by adding trailing dots to both.
-		if strings.Index(run.BrowserVersion+".", productSpec.BrowserVersion+".") != 0 {
+		if strings.Index(run.BrowserVersion+".", p.BrowserVersion+".") != 0 {
 			return false
 		}
 	}
