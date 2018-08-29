@@ -101,6 +101,18 @@ func TestApiSHAsHandler(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/shas", nil)
 	assert.Nil(t, err)
 	ctx := appengine.NewContext(r)
+
+	// No results - empty JSON array, 404
+	var shas []string
+	r, err = i.NewRequest("GET", "/api/shas", nil)
+	w := httptest.NewRecorder()
+	apiSHAsHandler(w, r)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	bytes, _ := ioutil.ReadAll(w.Result().Body)
+	json.Unmarshal(bytes, &shas)
+	assert.Equal(t, []string{}, shas)
+
+	// Add test runs
 	browserNames := shared.GetDefaultBrowserNames()
 	run := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
@@ -113,15 +125,14 @@ func TestApiSHAsHandler(t *testing.T) {
 	}
 	run.Revision = "abcdef0000"
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
-	var shas []string
 
 	// Complete
 	shas = nil
 	r, err = i.NewRequest("GET", "/api/shas?complete", nil)
-	w := httptest.NewRecorder()
+	w = httptest.NewRecorder()
 	apiSHAsHandler(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, _ := ioutil.ReadAll(w.Result().Body)
+	bytes, _ = ioutil.ReadAll(w.Result().Body)
 	json.Unmarshal(bytes, &shas)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 
