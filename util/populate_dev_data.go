@@ -236,7 +236,11 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		var localRunCopies []shared.TestRun
 		localRunCopies, err = shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, shas, nil, nil, &one)
 		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
-			log.Printf("Could not find local copies")
+			sha := "latest"
+			if len(shas) > 0 {
+				sha = shas[0]
+			}
+			log.Printf("Could not find local copies for SHA %s", sha)
 			continue
 		}
 		for i := range prodPassRateMetadata.TestRunIDs {
