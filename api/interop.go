@@ -36,6 +36,9 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		} else if len(runs) < 1 {
+			http.Error(w, "No metrics runs found", http.StatusNotFound)
+			return
 		}
 		for _, run := range runs {
 			query = query.Filter("TestRunIDs =", run.ID)

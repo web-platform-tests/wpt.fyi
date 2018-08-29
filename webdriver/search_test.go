@@ -52,8 +52,8 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string,
 	if err != nil {
 		panic(err)
 	}
-	const query = "2dcontext" + selenium.EnterKey
-	if err := searchBox.SendKeys(query); err != nil {
+	const query = "2dcontext"
+	if err := searchBox.SendKeys(query + selenium.EnterKey); err != nil {
 		panic(err)
 	}
 	filteredPathPartsCondition := func(wd selenium.WebDriver) (bool, error) {
