@@ -31,8 +31,7 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 	if !filters.IsDefaultQuery() {
 		// Load default browser runs for SHA.
 		// Ignore any max-count; makes no sense for a interop run.
-		one := 1
-		filters.MaxCount = &one
+		filters.MaxCount = nil
 		runs, err := LoadTestRunsForFilters(ctx, filters)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -42,7 +42,7 @@ type TestRunFilter struct {
 func (filter TestRunFilter) IsDefaultQuery() bool {
 	return IsLatest(filter.SHA) &&
 		(filter.Labels == nil || filter.Labels.Cardinality() < 1) &&
-		(filter.Complete == nil || *filter.Complete) &&
+		(filter.Complete == nil) &&
 		(filter.From == nil) &&
 		(filter.MaxCount == nil || *filter.MaxCount == 1) &&
 		(len(filter.Products) < 1)
