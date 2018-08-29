@@ -38,7 +38,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		shas = []string{filters.SHA}
 	} else if filters.Complete != nil && *filters.Complete {
 		if shared.IsLatest(filters.SHA) {
-			shas, err = getCompleteRunSHAs(ctx, from, filters.To, limit)
+			shas, err = shared.GetCompleteRunSHAs(ctx, from, filters.To, limit)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
