@@ -7,6 +7,7 @@
 package shared
 
 import (
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -516,7 +517,24 @@ func TestProductSpecMatches_Labels(t *testing.T) {
 
 	chromeRun := TestRun{}
 	chromeRun.BrowserName = "chrome"
-	// assert.False(t, chrome.Matches(chromeRun))
+	assert.False(t, chrome.Matches(chromeRun))
 	chromeRun.Labels = []string{"bar", "foo"}
+	assert.True(t, chrome.Matches(chromeRun))
+}
+
+func TestProductSpecMatches_Revision(t *testing.T) {
+	revision := "abcdef0123"
+	version := "69.1.1.1"
+	chrome, err := ParseProductSpec(fmt.Sprintf("chrome-%s@%s", version, revision))
+	assert.Nil(t, err)
+
+	chromeRun := TestRun{}
+	chromeRun.BrowserName = "chrome"
+	chromeRun.BrowserVersion = "69.1.1.0"
+	chromeRun.Revision = "1234567890"
+	assert.False(t, chrome.Matches(chromeRun))
+	chromeRun.Revision = revision
+	assert.False(t, chrome.Matches(chromeRun)) // Still wrong version
+	chromeRun.BrowserVersion = version
 	assert.True(t, chrome.Matches(chromeRun))
 }
