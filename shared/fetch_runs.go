@@ -26,13 +26,13 @@ func FetchRuns(wptdHost string, filter TestRunFilter) TestRuns {
 	url += "?" + filter.ToQuery(true).Encode()
 
 	var runs TestRuns
-	FetchAPIJSON(url, &runs)
+	FetchJSON(url, &runs)
 	return runs
 }
 
-// FetchAPIJSON fetches the given URL and unmarshals it into the given
-// value pointer, fatally logging any errors.
-func FetchAPIJSON(url string, value interface{}) {
+// FetchJSON fetches the given URL, which is expected to be JSON, and unmarshals
+// it into the given value pointer, fatally logging any errors.
+func FetchJSON(url string, value interface{}) {
 	log.Printf("Fetching %s...", url)
 
 	resp, err := http.Get(url)

@@ -202,9 +202,7 @@ func main() {
 	for i := range prodTestRuns {
 		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
 	}
-	for i, key := range addData(ctx, testRunKindName, latestProductionTestRunMetadata) {
-		prodTestRuns[i].ID = key.IntID()
-	}
+	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
 
 	log.Print("Adding latest production Interop data...")
 	filters.MaxCount = nil
@@ -212,7 +210,7 @@ func main() {
 	// Update the interop IDs to match the newly-copied local test-run IDs.
 	prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
 	one := 1
-	localRunCopies, err := shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), mapset.NewSetWith("stable"), nil, nil, nil, &one)
+	localRunCopies, err := shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, nil, &one)
 	for i := range prodPassRateMetadata.TestRunIDs {
 		prodPassRateMetadata.TestRunIDs[i] = localRunCopies[i].ID
 	}
@@ -273,6 +271,6 @@ func FetchInterop(wptdHost string, filter shared.TestRunFilter) metrics.PassRate
 	url += "?" + filter.ToQuery(true).Encode()
 
 	var interop metrics.PassRateMetadata
-	shared.FetchAPIJSON(url, &interop)
+	shared.FetchJSON(url, &interop)
 	return interop
 }

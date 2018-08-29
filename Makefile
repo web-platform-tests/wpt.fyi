@@ -221,6 +221,7 @@ gcloud: python curl gpg
 eslint: node-babel-eslint node-eslint node-eslint-plugin-html
 	cd $(WPTD_PATH)webapp; npm run lint
 
+dev_data: FLAGS := -host=staging.wpt.fyi
 dev_data:
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
