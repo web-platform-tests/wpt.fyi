@@ -5,6 +5,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -23,36 +24,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit := filters.MaxCount
-	from := filters.From
-	if limit == nil && from == nil {
-		// Default to a single, latest run when from & max-count both empty.
-		one := 1
-		limit = &one
-	}
-
 	ctx := appengine.NewContext(r)
-	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
-	var shas []string
-	if !shared.IsLatest(filters.SHA) {
-		shas = []string{filters.SHA}
-	} else if filters.Complete != nil && *filters.Complete {
-		if shared.IsLatest(filters.SHA) {
-			shas, err = shared.GetCompleteRunSHAs(ctx, from, filters.To, limit)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			if len(shas) < 1 {
-				// Bail out early - can't find any complete runs.
-				w.WriteHeader(http.StatusNotFound)
-				w.Write([]byte("[]"))
-				return
-			}
-		}
-	}
-	products := filters.GetProductsOrDefault()
-	testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, shas, from, filters.To, limit)
+	testRuns, err := LoadTestRunsForFilters(ctx, filters)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -68,4 +42,35 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(testRunsBytes)
+}
+
+// LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
+// the TestRuns.
+func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result []shared.TestRun, err error) {
+	limit := filters.MaxCount
+	from := filters.From
+	if limit == nil && from == nil {
+		// Default to a single, latest run when from & max-count both empty.
+		one := 1
+		limit = &one
+	}
+
+	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
+	var shas []string
+	if !shared.IsLatest(filters.SHA) {
+		shas = []string{filters.SHA}
+	} else if filters.Complete != nil && *filters.Complete {
+		if shared.IsLatest(filters.SHA) {
+			shas, err = shared.GetCompleteRunSHAs(ctx, from, filters.To, limit)
+			if err != nil {
+				return result, err
+			}
+			if len(shas) < 1 {
+				// Bail out early - can't find any complete runs.
+				return result, nil
+			}
+		}
+	}
+	products := filters.GetProductsOrDefault()
+	return shared.LoadTestRuns(ctx, products, filters.Labels, shas, from, filters.To, limit)
 }

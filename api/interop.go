@@ -32,8 +32,8 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 		// Load default browser runs for SHA.
 		// Ignore any max-count; makes no sense for a interop run.
 		one := 1
-		runs, err := shared.LoadTestRuns(
-			ctx, filters.GetProductsOrDefault(), filters.Labels, []string{filters.SHA}, filters.From, filters.To, &one)
+		filters.MaxCount = &one
+		runs, err := LoadTestRunsForFilters(ctx, filters)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
