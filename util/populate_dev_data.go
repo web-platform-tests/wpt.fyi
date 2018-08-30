@@ -204,23 +204,24 @@ func main() {
 }
 
 func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
-	prodTestRuns, err := shared.FetchRuns(*host, filters)
-	if err != nil {
-		log.Fatal(err)
-	}
-	labelRuns(prodTestRuns, "prod")
+	for _, complete := range []bool{false, true} {
+		if complete {
+			filters.Complete = &complete
+		}
+		prodTestRuns, err := shared.FetchRuns(*host, filters)
+		if err != nil {
+			log.Fatal(err)
+		}
+		labelRuns(prodTestRuns, "prod")
 
-	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
-	for i := range prodTestRuns {
-		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
-	}
-	addData(ctx, "TestRun", latestProductionTestRunMetadata)
+		latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
+		for i := range prodTestRuns {
+			latestProductionTestRunMetadata[i] = &prodTestRuns[i]
+		}
+		addData(ctx, "TestRun", latestProductionTestRunMetadata)
 
-	log.Print("Adding interop for the latest of those runs...")
-	passRateMetadataKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	for _, complete := range []bool{true, false} {
+		passRateMetadataKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 		filters.MaxCount = nil
-		filters.Complete = &complete
 		prodPassRateMetadata, err := FetchInterop(*host, filters)
 		if err != nil {
 			log.Printf("Failed to fetch interop (?complete=%v).", complete)
