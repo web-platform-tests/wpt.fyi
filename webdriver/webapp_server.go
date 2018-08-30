@@ -149,6 +149,7 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 		"--automatic_restart=false",
 		"--skip_sdk_update_check=true",
 		"--clear_datastore=true",
+		"--datastore_consistency_policy=consistent",
 		"--clear_search_indexes=true",
 		"-A=wptdashboard",
 		"../webapp",
@@ -304,7 +305,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 					OSName:         "linux",
 					OSVersion:      "*",
 				},
-				Revision: sha,
+				Revision: "0123456789",
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
@@ -318,7 +319,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 					OSName:         "linux",
 					OSVersion:      "*",
 				},
-				Revision: sha,
+				Revision: "0123456789",
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
@@ -327,13 +328,13 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	}
 
 	log.Println("Adding static TestRun data...")
-	for i, run := range append(stableTestRuns, experimentalTestRuns...) {
-		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-		if key, err = datastore.Put(ctx, key, &run); err != nil {
-			return err
-		}
-		if i < len(stableTestRuns) {
-			stableTestRuns[i].ID = key.IntID()
+	for _, runs := range []*shared.TestRuns{&experimentalTestRuns, &stableTestRuns} {
+		for i, run := range *runs {
+			key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
+			if key, err = datastore.Put(ctx, key, &run); err != nil {
+				return err
+			}
+			(*runs)[i].ID = key.IntID()
 		}
 	}
 
@@ -342,24 +343,19 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	// Follow pattern established in metrics/run/*.go data collection code.
 	// Use unzipped JSON for local dev.
 	var metricsURLFmtString = i.GetWebappURL("/static/wptd-metrics/0-0/%s.json")
-	staticTestRunMetadata := make([]interface{}, len(stableTestRuns))
-	for i := range stableTestRuns {
-		staticTestRunMetadata[i] = &stableTestRuns[i]
-	}
 	staticPassRateMetadata := []interface{}{
 		&metrics.PassRateMetadata{
 			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
+				StartTime:  timeZero,
+				EndTime:    timeZero,
+				DataURL:    fmt.Sprintf(metricsURLFmtString, "pass-rates"),
+				TestRunIDs: stableTestRuns.GetTestRunIDs(),
 			},
 		},
 	}
-	for i := range staticPassRateMetadata {
-		md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
-		md.TestRunIDs = stableTestRuns.GetTestRunIDs()
+	for _, interop := range staticPassRateMetadata {
 		key := datastore.NewIncompleteKey(ctx, metrics.GetDatastoreKindName(metrics.PassRateMetadata{}), nil)
-		if _, err := datastore.Put(ctx, key, md); err != nil {
+		if _, err := datastore.Put(ctx, key, interop); err != nil {
 			return err
 		}
 	}
