@@ -20,6 +20,7 @@ type testRunUIFilter struct {
 	Products      string
 	Labels        string
 	SHA           string
+	Complete      bool
 	MaxCount      *int
 	BeforeSpec    *shared.ProductSpec
 	AfterSpec     *shared.ProductSpec
@@ -150,6 +151,7 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 		filter.Products = string(data)
 	}
 	filter.MaxCount = testRunFilter.MaxCount
+	filter.Complete = testRunFilter.Complete != nil && *testRunFilter.Complete
 
 	diff, err := shared.ParseBooleanParam(r, "diff")
 	if err != nil {
