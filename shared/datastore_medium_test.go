@@ -397,6 +397,17 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
+	// 2 browsers which are twice.
+	run.Revision = "abcdef0333"
+	run.TimeStart = time.Now().AddDate(0, 0, -3)
+	for _, browser := range browserNames[:2] {
+		run.BrowserName = browser
+		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	}
+	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, nil)
+	assert.Equal(t, 0, len(shas))
+
 	// All 4 browsers.
 	run.Revision = "abcdef0123"
 	run.TimeStart = time.Now().AddDate(0, 0, -4)

@@ -177,9 +177,9 @@ func GetCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (s
 		} else if err != nil {
 			return nil, err
 		} else {
-			for _, product := range products {
-				if product.Matches(testRun) {
-					matchingProduct = &product
+			for i := range products {
+				if products[i].Matches(testRun) {
+					matchingProduct = &products[i]
 					break
 				}
 			}
