@@ -87,54 +87,49 @@ found in the LICENSE file.
       }
 
       async fetchTestFile(path, testRuns) {
-        this.subtestNames = []; // Clear any existing rows.
+        this.resultsTable = []; // Clear any existing rows.
         if (!path || !testRuns) {
           return;
         }
         const resultsPerTestRun = await Promise.all(
           testRuns.map(tr => this.loadResultFile(tr)));
 
-        // resultsTable[0].name set after discovering subtests. Use "" to
-        // remain first in resultsTable.sort() later.
+        // resultsTable[0].name set after discovering subtests.
         let resultsTable = [{
-          name: '',
           results: resultsPerTestRun.map(data => {
             return {status: data && data.status};
           }),
         }];
 
-        let subtestNamesSet = new Set();
-        resultsPerTestRun
-          .forEach(data => data && data.subtests && data.subtests
-            .forEach(sub => subtestNamesSet.add(sub.name)));
-        for (const subtestName of subtestNamesSet.values()) {
-          resultsTable.push({
-            name: subtestName,
-            results: resultsPerTestRun
-              .map(data => {
-                if (!(data && data.subtests)) {
-                  return {status: null, message: null};
-                }
-                const datum = data.subtests
-                  .find(sub => sub.name === subtestName);
-                if (!datum) {
-                  return {status: null, message: null};
-                }
-                return {status: datum.status, message: datum.message};
-              }),
-          });
+        // Setup test name order according to when they appear in run results.
+        let names = [];
+        for (const runResults of resultsPerTestRun) {
+          if (!(runResults && runResults.subtests)) {
+            continue;
+          }
+
+          for (const subResult of runResults.subtests) {
+            if (!names.includes(subResult.name)) {
+              names.push(subResult.name);
+            }
+          }
         }
 
-        // Sort before setting resultsTable[0].name.
-        resultsTable.sort((a, b) => {
-          if (a.name < b.name) {
-            return -1;
+        // Copy results into resultsTable.
+        for (const name of names) {
+          let results = [];
+          for (const runResults of resultsPerTestRun) {
+            const result = runResults.subtests.find(sub => sub.name === name);
+            results.push(result ? {
+              status: result.status,
+              message: result.message,
+            } : {status: null, message: null});
           }
-          if (a.name > b.name) {
-            return 1;
-          }
-          return 0;
-        });
+          resultsTable.push({
+            name,
+            results,
+          });
+        }
 
         // Set name for test-level status entry after subtests discovered.
         resultsTable[0].name = resultsTable.length > 1 ? 'Harness status' :
