@@ -70,13 +70,8 @@ found in the LICENSE file.
       }
 
       subtestMessage(result) {
-        if (result.status === 'OK' || result.status === 'PASS') {
-          return result.status;
-        }
-        if (!result.message) {
-          return '';
-        }
-        return `Failure message: ${result.message}`;
+        return super.subtestMessage(result)  ||
+          `Failure message: ${result.message}`;
       }
     }
 

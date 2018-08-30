@@ -138,13 +138,8 @@ found in the LICENSE file.
       }
 
       subtestMessage(result) {
-        if (result.status === 'OK' || result.status === 'PASS') {
-          return result.status;
-        }
-        if (!result.message) {
-          return '';
-        }
-        return this.parseFailureMessage(result.message);
+        return super.subtestMessage(result) ||
+          this.parseFailureMessage(result.message);
       }
 
       parseFailureMessage(msg) {
