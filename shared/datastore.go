@@ -153,10 +153,10 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 func GetCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (shas []string, err error) {
 	query := datastore.
 		NewQuery("TestRun").
-		Order("-TimeStart").
-		Project("Revision", "BrowserName")
+		Order("-TimeStart")
 
-	browserNames := GetDefaultBrowserNames()
+	// TODO(lukebjerring): Pass in products.
+	products := GetDefaultProducts()
 
 	if from != nil {
 		query = query.Filter("TimeStart >=", *from)
@@ -170,20 +170,29 @@ func GetCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (s
 	it := query.Run(ctx)
 	for {
 		var testRun TestRun
+		var matchingProduct *ProductSpec
 		_, err := it.Next(&testRun)
 		if err == datastore.Done {
 			break
 		} else if err != nil {
 			return nil, err
-		} else if !IsStableBrowserName(testRun.BrowserName) {
+		} else {
+			for i := range products {
+				if products[i].Matches(testRun) {
+					matchingProduct = &products[i]
+					break
+				}
+			}
+		}
+		if matchingProduct == nil {
 			continue
 		}
 		set, ok := bySHA[testRun.Revision]
 		if !ok {
-			bySHA[testRun.Revision] = mapset.NewSetWith(testRun.BrowserName)
+			bySHA[testRun.Revision] = mapset.NewSetWith(matchingProduct)
 		} else {
-			set.Add(testRun.BrowserName)
-			if set.Cardinality() == len(browserNames) && !done.Contains(testRun.Revision) {
+			set.Add(matchingProduct)
+			if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 				done.Add(testRun.Revision)
 				shas = append(shas, testRun.Revision)
 				if limit != nil && len(shas) >= *limit {

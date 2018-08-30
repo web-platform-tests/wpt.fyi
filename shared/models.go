@@ -96,6 +96,15 @@ type TestRun struct {
 	Labels []string `json:"labels"`
 }
 
+// LabelsSet creates a set from the run's labels.
+func (run TestRun) LabelsSet() mapset.Set {
+	runLabels := mapset.NewSet()
+	for _, label := range run.Labels {
+		runLabels.Add(label)
+	}
+	return runLabels
+}
+
 // TestRuns is a helper type for an array of TestRun entities.
 type TestRuns []TestRun
 

@@ -73,6 +73,29 @@ type ProductSpec struct {
 	Labels mapset.Set
 }
 
+// Matches returns whether the spec matches the given run.
+func (p ProductSpec) Matches(run TestRun) bool {
+	if run.BrowserName != p.BrowserName {
+		return false
+	}
+	if !IsLatest(p.Revision) && p.Revision != run.Revision {
+		return false
+	}
+	if p.Labels != nil && p.Labels.Cardinality() > 0 {
+		runLabels := run.LabelsSet()
+		if !p.Labels.IsSubset(runLabels) {
+			return false
+		}
+	}
+	if p.BrowserVersion != "" {
+		// Make "6" not match "60.123" by adding trailing dots to both.
+		if !strings.HasPrefix(run.BrowserVersion+".", p.BrowserVersion+".") {
+			return false
+		}
+	}
+	return true
+}
+
 // ProductSpecs is a helper type for a slice of ProductSpec structs.
 type ProductSpecs []ProductSpec
 

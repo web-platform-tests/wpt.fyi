@@ -7,6 +7,7 @@
 package shared
 
 import (
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -489,4 +490,51 @@ func TestParseTestRunFilterParams(t *testing.T) {
 	filter, _ = ParseTestRunFilterParams(r)
 	assert.Equal(t, "complete=true&from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(true).Encode())
 	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(false).Encode())
+}
+
+func TestProductSpecMatches(t *testing.T) {
+	chrome, err := ParseProductSpec("chrome")
+	assert.Nil(t, err)
+
+	chromeRun := TestRun{}
+	chromeRun.BrowserName = "chrome"
+	chromeRun.BrowserVersion = "63.123"
+	assert.True(t, chrome.Matches(chromeRun))
+
+	chrome6, err := ParseProductSpec("chrome-6")
+	assert.False(t, chrome6.Matches(chromeRun))
+	chrome63, err := ParseProductSpec("chrome-63")
+	assert.True(t, chrome63.Matches(chromeRun))
+
+	safariRun := TestRun{}
+	safariRun.BrowserName = "safari"
+	assert.False(t, chrome.Matches(safariRun))
+}
+
+func TestProductSpecMatches_Labels(t *testing.T) {
+	chrome, err := ParseProductSpec("chrome[foo]")
+	assert.Nil(t, err)
+
+	chromeRun := TestRun{}
+	chromeRun.BrowserName = "chrome"
+	assert.False(t, chrome.Matches(chromeRun))
+	chromeRun.Labels = []string{"bar", "foo"}
+	assert.True(t, chrome.Matches(chromeRun))
+}
+
+func TestProductSpecMatches_Revision(t *testing.T) {
+	revision := "abcdef0123"
+	version := "69.1.1.1"
+	chrome, err := ParseProductSpec(fmt.Sprintf("chrome-%s@%s", version, revision))
+	assert.Nil(t, err)
+
+	chromeRun := TestRun{}
+	chromeRun.BrowserName = "chrome"
+	chromeRun.BrowserVersion = "69.1.1.0"
+	chromeRun.Revision = "1234567890"
+	assert.False(t, chrome.Matches(chromeRun))
+	chromeRun.Revision = revision
+	assert.False(t, chrome.Matches(chromeRun)) // Still wrong version
+	chromeRun.BrowserVersion = version
+	assert.True(t, chrome.Matches(chromeRun))
 }
