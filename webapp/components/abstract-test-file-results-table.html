@@ -10,6 +10,10 @@ found in the LICENSE file.
     const AbstractTestFileResultsTable = superClass => class extends superClass {
       static get properties() {
         return {
+          statusesAsMessage: {
+            type: Array,
+            value: ['OK', 'PASS', 'TIMEOUT'],
+          },
           resultsTable: {
             type: Array,
             value: [],
@@ -18,8 +22,7 @@ found in the LICENSE file.
       }
 
       subtestMessage(result) {
-        if (result.status === 'OK' || result.status === 'PASS' ||
-          result.status === 'TIMEOUT') {
+        if (this.statusesAsMessage.includes(result.status)) {
           return result.status;
         }
         if (!result.status) {
