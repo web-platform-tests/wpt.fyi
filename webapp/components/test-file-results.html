@@ -97,20 +97,20 @@ found in the LICENSE file.
         // resultsTable[0].name set after discovering subtests.
         let resultsTable = [{
           results: resultsPerTestRun.map(data => {
-            return {status: data.status};
+            return {status: data && data.status};
           }),
         }];
 
         let subtestNamesSet = new Set();
         resultsPerTestRun
-          .forEach(data => data.subtests && data.subtests
+          .forEach(data => data && data.subtests && data.subtests
             .forEach(sub => subtestNamesSet.add(sub.name)));
         for (const subtestName of subtestNamesSet.values()) {
           resultsTable.push({
             name: subtestName,
             results: resultsPerTestRun
               .map(data => {
-                if (!data.subtests) {
+                if (!(data && data.subtests)) {
                   return {status: null, message: null};
                 }
                 const datum = data.subtests
