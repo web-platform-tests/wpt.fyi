@@ -30,12 +30,15 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 	// We 'load by SHA' by fetching any interop result with all TestRunIDs for that SHA.
 	if !filters.IsDefaultQuery() {
 		// Load default browser runs for SHA.
-		// Ignore any max-count; makes no sense for a interop run.
+		// Force any max-count to one; more than one of each product makes no sense for a interop run.
 		one := 1
-		runs, err := shared.LoadTestRuns(
-			ctx, filters.GetProductsOrDefault(), filters.Labels, []string{filters.SHA}, filters.From, filters.To, &one)
+		filters.MaxCount = &one
+		runs, err := LoadTestRunsForFilters(ctx, filters)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else if len(runs) < 1 {
+			http.Error(w, "No metrics runs found", http.StatusNotFound)
 			return
 		}
 		for _, run := range runs {
