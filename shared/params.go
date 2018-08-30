@@ -83,7 +83,7 @@ func (p ProductSpec) Matches(run TestRun) bool {
 	}
 	if p.Labels != nil && p.Labels.Cardinality() > 0 {
 		runLabels := run.LabelsSet()
-		if runLabels.Intersect(p.Labels).Cardinality() < p.Labels.Cardinality() {
+		if !p.Labels.IsSubset(runLabels) {
 			return false
 		}
 	}
