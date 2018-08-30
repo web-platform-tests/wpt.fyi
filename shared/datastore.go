@@ -189,9 +189,9 @@ func GetCompleteRunSHAs(ctx context.Context, from, to *time.Time, limit *int) (s
 		}
 		set, ok := bySHA[testRun.Revision]
 		if !ok {
-			bySHA[testRun.Revision] = mapset.NewSetWith(*matchingProduct)
+			bySHA[testRun.Revision] = mapset.NewSetWith(matchingProduct)
 		} else {
-			set.Add(*matchingProduct)
+			set.Add(matchingProduct)
 			if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 				done.Add(testRun.Revision)
 				shas = append(shas, testRun.Revision)

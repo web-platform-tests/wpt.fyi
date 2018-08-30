@@ -89,7 +89,7 @@ func (p ProductSpec) Matches(run TestRun) bool {
 	}
 	if p.BrowserVersion != "" {
 		// Make "6" not match "60.123" by adding trailing dots to both.
-		if strings.Index(run.BrowserVersion+".", p.BrowserVersion+".") != 0 {
+		if !strings.HasPrefix(run.BrowserVersion+".", p.BrowserVersion+".") {
 			return false
 		}
 	}
