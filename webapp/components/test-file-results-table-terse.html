@@ -64,13 +64,13 @@ found in the LICENSE file.
         </tr>
       </thead>
       <tbody>
-        <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
+        <template is="dom-repeat" items="[[resultsTable]]" as="row">
           <tr>
-            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName, hasSubtests) ]]</code></td>
+            <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
-            <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-              <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
-                <code>[[ subtestMessageForTestRun(testRun, subtestName) ]]</code>
+            <template is="dom-repeat" items="{{row.results}}" as="result">
+              <td class$="result [[ result.status ]]">
+                <code>[[ subtestMessage(result) ]]</code>
               </td>
             </template>
           </tr>
@@ -137,26 +137,9 @@ found in the LICENSE file.
         };
       }
 
-      subtestMessageForTestRun(testRun, subtestName) {
-        if (!testRun) {
-          return null;
-        }
-        if (!testRun.subtests) {
-          return null;
-        }
-        if (!testRun.subtests[subtestName]) {
-          return null;
-        }
-        if (testRun.subtests[subtestName].status === 'OK') {
-          return 'OK';
-        }
-        if (testRun.subtests[subtestName].status === 'PASS') {
-          return 'PASS';
-        }
-        if (testRun.subtests[subtestName].message) {
-          return this.parseFailureMessage(testRun.subtests[subtestName].message);
-        }
-        return testRun.subtests[subtestName].status;
+      subtestMessage(result) {
+        return super.subtestMessage(result) ||
+          this.parseFailureMessage(result.message);
       }
 
       parseFailureMessage(msg) {
