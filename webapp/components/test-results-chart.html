@@ -24,17 +24,15 @@ found in the LICENSE file.
         color: white;
       }
     </style>
-    <div class="container">
-      <template is="dom-if" if="{{show}}">
-        <google-chart type="line" cols="[[cols]]" rows="[[rows]]"></google-chart>
-      </template>
-      <template is="dom-if" if="{{!show}}">
-        <p class="caveat">
-          Just the first batch of history for these test results requires [[numReqs]] HTTP requests.
-        </p>
-        <paper-button on-click="setShowForNow">Show anyway</paper-button>
-      </template>
-    </div>
+    <template is="dom-if" if="{{show}}">
+      <google-chart type="line" cols="[[cols]]" rows="[[rows]]"></google-chart>
+    </template>
+    <template is="dom-if" if="{{!show}}">
+      <p class="caveat">
+        Just the first batch of history for these test results requires [[numReqs]] HTTP requests.
+      </p>
+      <paper-button on-click="setShowForNow">Show anyway</paper-button>
+    </template>
   </template>
   <script>
     /* global TestFileResults */
