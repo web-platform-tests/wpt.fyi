@@ -119,6 +119,10 @@ found in the LICENSE file.
         for (const name of names) {
           let results = [];
           for (const runResults of resultsPerTestRun) {
+            if (!(runResults && runResults.subtests)) {
+              continue;
+            }
+
             const result = runResults.subtests.find(sub => sub.name === name);
             results.push(result ? {
               status: result.status,
