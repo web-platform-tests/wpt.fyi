@@ -47,13 +47,13 @@ found in the LICENSE file.
         </tr>
       </thead>
       <tbody>
-        <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
+        <template is="dom-repeat" items="[[resultsTable]]" as="row">
           <tr>
-            <td class="sub-test-name"><code>[[ subtestNameForDisplay(subtestName, hasSubtests) ]]</code></td>
+            <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
-            <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-              <td class$="result [[ subtestResultForTestRun(testRun, subtestName) ]]">
-                <code>[[ subtestMessageForTestRun(testRun, subtestName) ]]</code>
+            <template is="dom-repeat" items="{{row.results}}" as="result">
+              <td class$="result [[ result.status ]]">
+                <code>[[ subtestMessage(result) ]]</code>
               </td>
             </template>
           </tr>
@@ -69,26 +69,14 @@ found in the LICENSE file.
         return 'test-file-results-table-verbose';
       }
 
-      subtestMessageForTestRun(testRun, subtestName) {
-        if (!testRun) {
-          return null;
+      subtestMessage(result) {
+        if (result.status === 'OK' || result.status === 'PASS') {
+          return result.status;
         }
-        if (!testRun.subtests) {
-          return null;
+        if (!result.message) {
+          return '';
         }
-        if (!testRun.subtests[subtestName]) {
-          return null;
-        }
-        if (testRun.subtests[subtestName].status === 'OK') {
-          return 'OK';
-        }
-        if (testRun.subtests[subtestName].status === 'PASS') {
-          return 'PASS';
-        }
-        if (testRun.subtests[subtestName].message) {
-          return `Failure message: ${testRun.subtests[subtestName].message}`;
-        }
-        return testRun.subtests[subtestName].status;
+        return `Failure message: ${result.message}`;
       }
     }
 
