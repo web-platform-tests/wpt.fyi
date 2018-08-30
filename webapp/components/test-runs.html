@@ -51,6 +51,7 @@ found in the LICENSE file.
           },
           maxCount: Number,
           sha: String,
+          complete: Boolean,
           isLatest: {
             type: Boolean,
             computed: 'computeIsLatest(sha)'
@@ -153,7 +154,7 @@ found in the LICENSE file.
 
         // Insist on complete runs iff there is no other parameter.
         // This is a temporary hack for https://github.com/web-platform-tests/wpt.fyi/issues/468
-        if (Object.keys(params).length === 0) {
+        if (this.complete || Object.keys(params).length === 0) {
           params.complete = true;
         }
 
