@@ -30,6 +30,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		one := 1
 		limit = &one
 	}
+	products := filters.GetProductsOrDefault()
 
 	ctx := appengine.NewContext(r)
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
@@ -38,7 +39,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		shas = []string{filters.SHA}
 	} else if filters.Complete != nil && *filters.Complete {
 		if shared.IsLatest(filters.SHA) {
-			shas, err = shared.GetCompleteRunSHAs(ctx, from, filters.To, limit)
+			shas, err = shared.GetCompleteRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -51,7 +52,6 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	products := filters.GetProductsOrDefault()
 	testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, shas, from, filters.To, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
