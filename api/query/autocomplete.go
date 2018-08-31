@@ -123,7 +123,7 @@ func prepareAutocompleteResponse(limit int, filters *shared.QueryFilter, testRun
 		}
 	}
 
-	files := make([]AutocompleteResult, 0, fileSet.Cardinality()/len(testRuns))
+	var files []AutocompleteResult
 	for fileInterface := range fileSet.Iter() {
 		file := fileInterface.(string)
 		if strings.Contains(file, filters.Q) {

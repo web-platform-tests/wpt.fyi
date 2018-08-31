@@ -20,6 +20,7 @@ found in the LICENSE file.
 <link rel="import" href="test-results-history-grid.html">
 <link rel="import" href="test-results-chart.html">
 <link rel="import" href="test-search.html">
+<link rel="import" href="info-banner.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -69,16 +70,6 @@ found in the LICENSE file.
       }
       .links {
         margin-bottom: 1em;
-      }
-      .info {
-        padding: 0.5em;
-        background-color: var(--paper-blue-100);
-        margin-bottom: 1em;
-        margin-top: 2em;
-        border-left: solid 4px var(--paper-blue-300);
-      }
-      .info small {
-        float: right;
       }
       .top,
       .delta {
@@ -143,7 +134,7 @@ found in the LICENSE file.
         </template>
       </div>
 
-      <paper-spinner-lite class="blue"></paper-spinner-lite>
+      <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
       <test-search class$="search-[[pathIsATestFile]]" query='{{search}}'
           autocomplete-u-r-l="[[autocompleteURL]]"></test-search>
@@ -160,10 +151,10 @@ found in the LICENSE file.
       </template>
 
       <template is="dom-if" if="{{ !isLatest }}">
-        <section class="info">
+        <info-banner type="info">
           Showing results for run <b>{{ sha }}</b>.
-          <small><a href='?sha=latest'>View latest run</a></small>
-        </section>
+          <a slot="small" href='?sha=latest'>View latest run</a></small>
+        </info-banner>
       </template>
     </section>
 
@@ -173,56 +164,64 @@ found in the LICENSE file.
       </paper-toast>
     </template>
 
-    <template is="dom-if" if="{{ pathIsATestFile }}">
-      <test-file-results test-runs="[[testRuns]]"
-                         path="[[path]]"
-                         labels="[[labels]]"
-                         products="[[products]]">
-      </test-file-results>
+    <template is="dom-if" if="[[runsNotFound]]">
+      <info-banner type="error">
+        Failed to fetch test runs.
+      </info-banner>
     </template>
 
-    <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <table>
-        <thead>
-          <tr>
-            <th>Path</th>
-            <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-              <!-- Repeats for as many different browser test runs are available -->
-              <th><test-run test-run="[[testRun]]"></test-run></th>
-            </template>
-            <template is="dom-if" if="[[diffShown]]">
-              <th><test-run test-run="[[diffRun]]"></test-run></th>
-            </template>
-          </tr>
-        </thead>
+    <template is="dom-if" if="[[hasRuns]]">
+      <template is="dom-if" if="{{ pathIsATestFile }}">
+        <test-file-results test-runs="[[testRuns]]"
+                           path="[[path]]"
+                           labels="[[labels]]"
+                           products="[[products]]">
+        </test-file-results>
+      </template>
 
-        <tbody>
-
-          <template is="dom-repeat" items="{{displayedNodes}}" as="node">
+      <template is="dom-if" if="{{ !pathIsATestFile }}">
+        <table>
+          <thead>
             <tr>
-              <td>
-                <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
-              </td>
-
+              <th>Path</th>
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                <td class$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
-                  <span class$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                  /
-                  <span class$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-                </td>
+                <!-- Repeats for as many different browser test runs are available -->
+                <th><test-run test-run="[[testRun]]"></test-run></th>
               </template>
               <template is="dom-if" if="[[diffShown]]">
-                <td class$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
-                  <span class$="passes [[ testResultClass(node, index, diffRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
-                  /
-                  <span class$="total [[ testResultClass(node, index, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'total') }}</span>
-                </td>
+                <th><test-run test-run="[[diffRun]]"></test-run></th>
               </template>
             </tr>
-          </template>
+          </thead>
 
-        </tbody>
-      </table>
+          <tbody>
+
+            <template is="dom-repeat" items="{{displayedNodes}}" as="node">
+              <tr>
+                <td>
+                  <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
+                </td>
+
+                <template is="dom-repeat" items="{{testRuns}}" as="testRun">
+                  <td class$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
+                    <span class$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                    /
+                    <span class$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                  </td>
+                </template>
+                <template is="dom-if" if="[[diffShown]]">
+                  <td class$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
+                    <span class$="passes [[ testResultClass(node, index, diffRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
+                    /
+                    <span class$="total [[ testResultClass(node, index, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'total') }}</span>
+                  </td>
+                </template>
+              </tr>
+            </template>
+
+          </tbody>
+        </table>
+      </template>
     </template>
 
     <template is="dom-if" if="[[isSubfolder]]">
@@ -325,7 +324,14 @@ found in the LICENSE file.
           loadingCount: {
             type: Number,
             value: 0,
-            observer: 'observeLoadingCount',
+          },
+          isLoading: {
+            type: Boolean,
+            computed: 'computeIsLoading(loadingCount)',
+          },
+          runsNotFound: {
+            type: Boolean,
+            computed: 'computeRunsNotFound(isLoading, testRuns)',
           },
           onSearchCommit: Function,
         };
@@ -406,20 +412,12 @@ found in the LICENSE file.
         return url;
       }
 
-      observeLoadingCount(newValue, oldValue) {
-        if (newValue === oldValue) {
-          return;
-        }
-        const elem = this.shadowRoot.querySelector('paper-spinner-lite');
-        if (!elem) {
-          return;
-        }
+      computeIsLoading(loadingCount) {
+        return loadingCount;
+      }
 
-        if (newValue && !oldValue) {
-          elem.setAttribute('active', 'true');
-        } else if (!newValue && oldValue) {
-          elem.removeAttribute('active');
-        }
+      computeRunsNotFound(isLoading, testRuns) {
+        return !isLoading && !(testRuns && testRuns.length);
       }
 
       constructor() {
