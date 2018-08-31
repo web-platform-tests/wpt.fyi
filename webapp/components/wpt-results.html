@@ -8,6 +8,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
@@ -80,6 +81,18 @@ found in the LICENSE file.
       .info small {
         float: right;
       }
+      .right {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .right .pad {
+        padding: 8px;
+      }
+      paper-toggle-button {
+        --paper-toggle-button-checked-bar-color:  var(--paper-blue-500);
+        --paper-toggle-button-checked-button-color:  var(--paper-blue-700);
+        --paper-toggle-button-checked-ink-color: var(--paper-blue-300);
+      }
       .top,
       .delta {
         background-color: var(--paper-grey-200);
@@ -97,11 +110,42 @@ found in the LICENSE file.
       span.delta.positive {
         color: var(--paper-green-700);
       }
+      td {
+        height: 1.5em;
+        position: relative;
+        padding: 0;
+      }
+      td.path-part {
+        min-width: 200px;
+        background-color: white;
+      }
       td.none {
         visibility: hidden;
       }
       td.numbers {
         white-space: nowrap;
+      }
+      .terse td path-part {
+        box-sizing: border-box;
+        height: 100%;
+        left: 0;
+        overflow: hidden;
+        padding: 0.25em;
+        position: absolute;
+        text-overflow: ellipsis;
+        top: 0;
+        white-space: nowrap;
+        width: 100%;
+      }
+      .terse td path-part:hover {
+        z-index: 1;
+        text-overflow: initial;
+        background-color: inherit;
+        width: max-content;
+      }
+      .verbose td path-part {
+        padding: 0.25em;
+        word-break: break-all;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
@@ -182,7 +226,14 @@ found in the LICENSE file.
     </template>
 
     <template is="dom-if" if="{{ !pathIsATestFile }}">
-      <table>
+
+      <div class="right">
+        <label class="pad">Expand</label>
+        <paper-toggle-button class="pad" checked="{{isVerbose}}">
+        </paper-toggle-button>
+      </div>
+
+      <table class$="[[tableClass]]">
         <thead>
           <tr>
             <th>Path</th>
@@ -200,7 +251,7 @@ found in the LICENSE file.
 
           <template is="dom-repeat" items="{{displayedNodes}}" as="node">
             <tr>
-              <td>
+              <td class="path-part">
                 <path-part prefix="/results" path="{{ node.path }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
               </td>
 
@@ -327,6 +378,14 @@ found in the LICENSE file.
             value: 0,
             observer: 'observeLoadingCount',
           },
+          isVerbose: {
+            type: Boolean,
+            value: false,
+          },
+          tableClass: {
+            type: String,
+            computed: 'computeTableClass(isVerbose)',
+          },
           onSearchCommit: Function,
         };
       }
@@ -404,6 +463,10 @@ found in the LICENSE file.
           url += `q=${window.encodeURIComponent(search)}`;
         }
         return url;
+      }
+
+      computeTableClass(isVerbose) {
+        return isVerbose ? 'verbose' : 'terse';
       }
 
       observeLoadingCount(newValue, oldValue) {
