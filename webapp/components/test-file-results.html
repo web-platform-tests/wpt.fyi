@@ -133,8 +133,8 @@ found in the LICENSE file.
         }
 
         // Set name for test-level status entry after subtests discovered.
-        resultsTable[0].name = resultsTable.length > 1 ? 'Harness status' :
-          'Test status';
+        // Parameter is number of subtests.
+        resultsTable[0].name = this.statusName(resultsTable.length - 1);
 
         this.resultsTable = resultsTable;
       }
@@ -153,6 +153,10 @@ found in the LICENSE file.
         // This is relying on the assumption that result files end with '-summary.json.gz'.
         const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
         return `${resultsBase}${path}`;
+      }
+
+      statusName(numSubtests) {
+        return numSubtests > 0 ? 'Harness status' : 'Test status';
       }
     }
 
