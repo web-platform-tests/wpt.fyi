@@ -22,7 +22,9 @@ found in the LICENSE file.
       }
 
       subtestMessage(result) {
-        if (this.statusesAsMessage.includes(result.status)) {
+        // Return status string for messageless status or "status-as-message".
+        if ((result.status && !result.message) ||
+          this.statusesAsMessage.includes(result.status)) {
           return result.status;
         }
         if (!result.status) {
