@@ -148,8 +148,7 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 }
 
 // GetCompleteRunSHAs returns an array of the SHA[0:10] for runs that
-// exists for all initially-loaded browser names (see GetDefaultBrowserNames),
-// ordered by most-recent.
+// exists for all the given products, ordered by most-recent.
 func GetCompleteRunSHAs(
 	ctx context.Context,
 	products ProductSpecs,
