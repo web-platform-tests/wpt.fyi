@@ -136,10 +136,10 @@ found in the LICENSE file.
 
     <section class="search">
       <div class="path">
-        <a href="/results/" on-click="navigate">wpt</a>
-        <template is="dom-repeat" items="{{ splitPathIntoLinkedParts(path) }}" as="part">
+        <a href="/results/[[ query ]]" on-click="navigate">wpt</a>
+        <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
           <span class="path-separator">/</span>
-          <a href="/results{{ part.path }}" on-click="navigate">{{ part.name }}</a>
+          <a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
         </template>
       </div>
 
@@ -201,7 +201,7 @@ found in the LICENSE file.
           <template is="dom-repeat" items="{{displayedNodes}}" as="node">
             <tr>
               <td>
-                <path-part prefix="/results" path="{{ node.path }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
+                <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
               </td>
 
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
