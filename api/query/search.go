@@ -92,12 +92,13 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 	resp := SearchResponse{
 		Runs: testRuns,
 	}
+	q := canonicalizeStr(filters.Q)
 	// Dedup visited file names via a map of results.
 	resMap := make(map[string]SearchResult)
 	for i, s := range summaries {
 		for filename, passAndTotal := range s {
 			// Exclude filenames that do not match query.
-			if !strings.Contains(filename, filters.Q) {
+			if !strings.Contains(canonicalizeStr(filename), q) {
 				continue
 			}
 
