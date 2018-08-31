@@ -10,39 +10,27 @@ found in the LICENSE file.
     const AbstractTestFileResultsTable = superClass => class extends superClass {
       static get properties() {
         return {
-          subtestNames: {
+          statusesAsMessage: {
+            type: Array,
+            value: ['OK', 'PASS', 'TIMEOUT'],
+          },
+          resultsTable: {
             type: Array,
             value: [],
-          },
-          hasSubtests: {
-            type: Boolean,
           },
         };
       }
 
-      subtestNameForDisplay(subtestName, hasSubtests) {
-        if (subtestName !== 'STATUS') {
-          return subtestName;
+      subtestMessage(result) {
+        // Return status string for messageless status or "status-as-message".
+        if ((result.status && !result.message) ||
+          this.statusesAsMessage.includes(result.status)) {
+          return result.status;
         }
-        return hasSubtests ? 'Harness status' : 'Test status';
-      }
-
-      subtestResultForTestRun(testRun, subtestName) {
-        if (!testRun) {
-          return null;
+        if (!result.status) {
+          return 'MISSING';
         }
-        if (!testRun.subtests) {
-          return null;
-        }
-        if (!testRun.subtests[subtestName]) {
-          return null;
-        }
-        return testRun.subtests[subtestName].status;
-      }
-
-      // eslint-disable-next-line no-unused-vars
-      subtestMessageForTestRun(testRun, subtestName) {
-        return 'NOT IMPLEMENTED';
+        return '';
       }
 
       computeSubtestThWidth(testRuns) {

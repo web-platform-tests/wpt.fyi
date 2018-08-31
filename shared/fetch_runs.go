@@ -15,40 +15,38 @@ import (
 
 // FetchLatestRuns fetches the TestRun metadata for the latest runs, using the
 // API on the given host.
-func FetchLatestRuns(wptdHost string) TestRuns {
+func FetchLatestRuns(wptdHost string) (TestRuns, error) {
 	return FetchRuns(wptdHost, TestRunFilter{})
 }
 
 // FetchRuns fetches the TestRun metadata for the given sha / labels, using the
 // API on the given host.
-func FetchRuns(wptdHost string, filter TestRunFilter) TestRuns {
+func FetchRuns(wptdHost string, filter TestRunFilter) (TestRuns, error) {
 	url := "https://" + wptdHost + "/api/runs"
 	url += "?" + filter.ToQuery(true).Encode()
 
 	var runs TestRuns
-	FetchJSON(url, &runs)
-	return runs
+	err := FetchJSON(url, &runs)
+	return runs, err
 }
 
 // FetchJSON fetches the given URL, which is expected to be JSON, and unmarshals
 // it into the given value pointer, fatally logging any errors.
-func FetchJSON(url string, value interface{}) {
+func FetchJSON(url string, value interface{}) error {
 	log.Printf("Fetching %s...", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	if resp.StatusCode != 200 {
-		log.Fatal(errors.New("Bad response code from " + url + ": " +
-			strconv.Itoa(resp.StatusCode)))
+		return errors.New("Bad response code from " + url + ": " +
+			strconv.Itoa(resp.StatusCode))
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	if err := json.Unmarshal(body, value); err != nil {
-		log.Fatal(err)
-	}
+	return json.Unmarshal(body, value)
 }

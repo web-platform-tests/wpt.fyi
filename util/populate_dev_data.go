@@ -196,36 +196,59 @@ func main() {
 		Labels:   mapset.NewSetWith("stable"),
 		MaxCount: numRemoteRuns,
 	}
-	prodTestRuns := shared.FetchRuns(*host, filters)
-	labelRuns(prodTestRuns, "prod")
-	latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
-	for i := range prodTestRuns {
-		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
-	}
-	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
-
-	log.Print("Adding latest production Interop data...")
-	filters.MaxCount = nil
-	prodPassRateMetadata := FetchInterop(*host, filters)
-	// Update the interop IDs to match the newly-copied local test-run IDs.
-	prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
-	one := 1
-	localRunCopies, err := shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, nil, &one)
-	for i := range prodPassRateMetadata.TestRunIDs {
-		prodPassRateMetadata.TestRunIDs[i] = localRunCopies[i].ID
-	}
-	addData(ctx, passRateMetadataKindName, []interface{}{&prodPassRateMetadata})
+	copyProdRuns(ctx, filters)
 
 	log.Print("Adding latest experimental TestRun data...")
 	filters.Labels = mapset.NewSetWith("experimental")
-	prodTestRuns = shared.FetchRuns(*host, filters)
-	labelRuns(prodTestRuns, "prod")
+	copyProdRuns(ctx, filters)
+}
 
-	latestProductionTestRunMetadata = make([]interface{}, len(prodTestRuns))
-	for i := range prodTestRuns {
-		latestProductionTestRunMetadata[i] = &prodTestRuns[i]
+func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
+	for _, complete := range []bool{false, true} {
+		if complete {
+			filters.Complete = &complete
+		}
+		prodTestRuns, err := shared.FetchRuns(*host, filters)
+		if err != nil {
+			log.Fatal(err)
+		}
+		labelRuns(prodTestRuns, "prod")
+
+		latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
+		for i := range prodTestRuns {
+			latestProductionTestRunMetadata[i] = &prodTestRuns[i]
+		}
+		addData(ctx, "TestRun", latestProductionTestRunMetadata)
+
+		passRateMetadataKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
+		filters.MaxCount = nil
+		prodPassRateMetadata, err := FetchInterop(*host, filters)
+		if err != nil {
+			log.Printf("Failed to fetch interop (?complete=%v).", complete)
+			continue
+		}
+		// Update the interop IDs to match the newly-copied local test-run IDs.
+		prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
+		one := 1
+		var shas []string
+		if complete {
+			shas, _ = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
+		}
+		var localRunCopies []shared.TestRun
+		localRunCopies, err = shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, shas, nil, nil, &one)
+		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
+			sha := "latest"
+			if len(shas) > 0 {
+				sha = shas[0]
+			}
+			log.Printf("Could not find local copies for SHA %s", sha)
+			continue
+		}
+		for i := range prodPassRateMetadata.TestRunIDs {
+			prodPassRateMetadata.TestRunIDs[i] = localRunCopies[i].ID
+		}
+		addData(ctx, passRateMetadataKindName, []interface{}{&prodPassRateMetadata})
 	}
-	addData(ctx, testRunKindName, latestProductionTestRunMetadata)
 }
 
 func labelRuns(runs []shared.TestRun, labels ...string) {
@@ -266,11 +289,11 @@ func getRemoteAPIContext() (context.Context, error) {
 // FetchInterop fetches the PassRateMetadata for the given sha / labels, using
 // the API on the given host.
 // TODO(lukebjerring): Migrate to results-analysis
-func FetchInterop(wptdHost string, filter shared.TestRunFilter) metrics.PassRateMetadata {
+func FetchInterop(wptdHost string, filter shared.TestRunFilter) (metrics.PassRateMetadata, error) {
 	url := "https://" + wptdHost + "/api/interop"
 	url += "?" + filter.ToQuery(true).Encode()
 
 	var interop metrics.PassRateMetadata
-	shared.FetchJSON(url, &interop)
-	return interop
+	err := shared.FetchJSON(url, &interop)
+	return interop, err
 }

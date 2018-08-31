@@ -120,10 +120,10 @@ found in the LICENSE file.
 
   <section class="search">
     <div class="path">
-      <a href="/interop/" on-click="navigate">wpt</a>
-      <template is="dom-repeat" items="{{ splitPathIntoLinkedParts(path) }}" as="part">
+      <a href="/interop/[[ query ]]" on-click="navigate">wpt</a>
+      <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
         <span class="path-separator">/</span>
-        <a href="/interop{{ part.path }}" on-click="navigate">{{ part.name }}</a>
+        <a href="/interop[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
       </template>
     </div>
 
@@ -180,7 +180,7 @@ found in the LICENSE file.
       <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
         <tr>
           <td>
-            <path-part path="{{ node.path }}" is-dir="{{ !computePathIsATestFile(node.path) }}" prefix="/interop" navigate="{{ bindNavigate() }}"></path-part>
+            <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}" navigate="{{ bindNavigate() }}"></path-part>
           </td>
 
           <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
