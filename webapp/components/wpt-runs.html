@@ -43,7 +43,10 @@ found in the LICENSE file.
       }
       .runs div {
         display: flex;
+        flex-wrap: wrap;
         justify-content: center;
+        max-width: 120px;
+        margin: auto;
       }
       .runs.present {
         background-color: var(--paper-blue-100);
@@ -66,9 +69,9 @@ found in the LICENSE file.
     <table>
       <thead>
         <tr>
-          <th>SHA</th>
+          <th width="[[computeThWidth(browsers)]]">SHA</th>
           <template is="dom-repeat" items="{{ browsers }}" as="browser">
-            <th>[[browser]]</th>
+            <th width="[[computeThWidth(browsers)]]">[[browser]]</th>
           </template>
         </tr>
       </thead>
@@ -205,6 +208,10 @@ found in the LICENSE file.
           }
         }
         return link;
+      }
+
+      computeThWidth(browsers) {
+        return `${100 / (browsers.length + 2)}%`;
       }
     }
 
