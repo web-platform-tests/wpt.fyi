@@ -210,7 +210,8 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		}
 		prodTestRuns, err := shared.FetchRuns(*host, filters)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			continue
 		}
 		labelRuns(prodTestRuns, "prod")
 
