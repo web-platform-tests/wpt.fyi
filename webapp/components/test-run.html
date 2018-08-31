@@ -62,11 +62,14 @@ See models.go for more details.
           <div>{{dateFormat(testRun.created_at)}}</div>
         </template>
       </template>
-      <paper-tooltip offset=0>
-        {{displayName(testRun.browser_name)}} {{testRun.browser_version}}<br>
-        Labels: {{displayLabels(testRun.labels)}}<br>
-        {{moreTooltip(testRun)}}
-      </paper-tooltip>
+
+      <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
+        <paper-tooltip offset=0>
+          {{displayName(testRun.browser_name)}} {{testRun.browser_version}}<br>
+          Labels: {{displayLabels(testRun.labels)}}<br>
+          {{moreTooltip(testRun)}}
+        </paper-tooltip>
+      </template>
     </div>
   </template>
 
