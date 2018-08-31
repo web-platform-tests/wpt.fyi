@@ -7,7 +7,9 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="test-runs.html">
+<link rel="import" href="test-run.html">
 
 <dom-module id="wpt-runs">
   <template>
@@ -26,7 +28,7 @@ found in the LICENSE file.
         margin: 2px;
       }
       td.month {
-        border-top: 1px solid #e3edfd;
+        border-top: 1px solid var(--paper-blue-100);
       }
 
       .info {
@@ -37,10 +39,14 @@ found in the LICENSE file.
         border-left: solid 4px #7477f4;
       }
       .missing {
-        background-color: #e3edfd;
+        background-color: var(--paper-grey-100);
       }
-      .present {
-        background-color: #337af3;
+      .runs div {
+        display: flex;
+        justify-content: center;
+      }
+      .runs.present {
+        background-color: var(--paper-blue-100);
       }
 
       @media (max-width: 800px) {
@@ -74,7 +80,15 @@ found in the LICENSE file.
             <a href="/?sha={{ results.sha }}" title="{{ computeDateTooltip(results.date) }}">{{ results.sha }}</a>
           </td>
           <template is="dom-repeat" items="{{ browsers }}" as="browser">
-            <td class$="{{ runClass(results.runs, browser) }}"></td>
+            <td class$="runs [[ runClass(results.runs, browser) ]]">
+              <div>
+                <template is="dom-repeat" items="[[runList(results.runs, browser)]]" as="run">
+                  <a href='[[runLink(run)]]'>
+                    <test-run small test-run="[[run]]"></test-run>
+                  </a>
+                </template>
+              </div>
+            </td>
           </template>
           <template is="dom-if" if="{{ results.month_boundary }}">
             <td class="month">{{ computeMonthName(results.date) }}</td>
@@ -143,17 +157,17 @@ found in the LICENSE file.
             accum[results.revision] = {};
           }
           if (!accum[results.revision][results.browser_name]) {
-            accum[results.revision][results.browser_name] = results;
+            accum[results.revision][results.browser_name] = [];
           }
+          accum[results.revision][results.browser_name].push(results);
           return accum;
         }, {});
 
         // We flatten into an array of objects so Polymer can deal with them.
-        const firstRunTime = x => Object.values(x.runs)[0].created_at;
+        const firstRunTime = x => Object.values(x.runs)[0][0].created_at;
         const flattened = Object.entries(testRunsBySha)
           .map(({0: sha, 1: runs}) => ({ sha, runs }))
           .sort((a, b) => firstRunTime(a) < firstRunTime(b) ? 1 : -1);
-
 
         // Append time (month) metadata.
         if (flattened.length > 1) {
@@ -177,6 +191,20 @@ found in the LICENSE file.
           return 'missing';
         }
         return 'present';
+      }
+
+      runList(testRuns, browser) {
+        return testRuns[browser] || [];
+      }
+
+      runLink(run) {
+        let link = `/results?sha=${run.revision}`;
+        for (const label of ['experimental', 'stable']) {
+          if (run.labels && run.labels.includes(label)) {
+            link += `&label=${label}`;
+          }
+        }
+        return link;
       }
     }
 
