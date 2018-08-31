@@ -54,6 +54,7 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 		one := 1
 		limit = &one
 	}
+	products := filters.GetProductsOrDefault()
 
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
 	var shas []string
@@ -61,7 +62,7 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 		shas = []string{filters.SHA}
 	} else if filters.Complete != nil && *filters.Complete {
 		if shared.IsLatest(filters.SHA) {
-			shas, err = shared.GetCompleteRunSHAs(ctx, from, filters.To, limit)
+			shas, err = shared.GetCompleteRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
 			if err != nil {
 				return result, err
 			}
@@ -71,6 +72,5 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 			}
 		}
 	}
-	products := filters.GetProductsOrDefault()
 	return shared.LoadTestRuns(ctx, products, filters.Labels, shas, from, filters.To, limit)
 }

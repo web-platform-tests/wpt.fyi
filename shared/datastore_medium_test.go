@@ -357,7 +357,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 	browserNames := GetDefaultBrowserNames()
 
 	// Nothing in datastore.
-	shas, _ := GetCompleteRunSHAs(ctx, nil, nil, nil)
+	shas, _ := GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// Only 3 browsers.
@@ -365,14 +365,30 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		ProductAtRevision: ProductAtRevision{
 			Revision: "abcdef0000",
 		},
+		Labels:    []string{"foo"},
 		TimeStart: time.Now().AddDate(0, 0, -1),
 	}
 	for _, browser := range browserNames[:len(browserNames)-1] {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, nil)
-	assert.Equal(t, 0, len(shas))
+	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
+	assert.Len(t, shas, 0)
+
+	// But, if request by any subset of those 3 browsers, we find the SHA.
+	var products ProductSpecs
+	for _, browser := range browserNames[:len(browserNames)-1] {
+		product := ProductSpec{}
+		product.BrowserName = browser
+		products = append(products, product)
+		shas, _ = GetCompleteRunSHAs(ctx, products, nil, nil, nil, nil)
+		assert.Len(t, shas, 1)
+	}
+	// And labels
+	shas, _ = GetCompleteRunSHAs(ctx, products, mapset.NewSetWith("foo"), nil, nil, nil)
+	assert.Len(t, shas, 1)
+	shas, _ = GetCompleteRunSHAs(ctx, products, mapset.NewSetWith("bar"), nil, nil, nil)
+	assert.Len(t, shas, 0)
 
 	// All 4 browsers, but experimental.
 	run.Revision = "abcdef0111"
@@ -381,7 +397,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser + "-" + ExperimentalLabel
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, nil)
+	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// 2 browsers, and other 2, but experimental.
@@ -394,7 +410,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		}
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, nil)
+	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// 2 browsers which are twice.
@@ -405,7 +421,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, nil)
+	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// All 4 browsers.
@@ -415,7 +431,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, nil)
+	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 
 	// Another (earlier) run, also all 4 browsers.
@@ -425,14 +441,14 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, nil)
+	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, []string{"abcdef0123", "abcdef9999"}, shas)
 	// Limit 1
 	one := 1
-	shas, _ = GetCompleteRunSHAs(ctx, nil, nil, &one)
+	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, &one)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 	// From 4 days ago @ midnight.
 	from := time.Now().AddDate(0, 0, -4).Truncate(24 * time.Hour)
-	shas, _ = GetCompleteRunSHAs(ctx, &from, nil, nil)
+	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, &from, nil, nil)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 }
