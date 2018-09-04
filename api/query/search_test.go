@@ -7,13 +7,15 @@
 package query
 
 import (
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func TestPrepareSearchResponse(t *testing.T) {
+func doTestIC(t *testing.T, p, q string) {
 	runIDs := []int64{1, 2}
 	testRuns := []shared.TestRun{
 		shared.TestRun{
@@ -27,25 +29,25 @@ func TestPrepareSearchResponse(t *testing.T) {
 	}
 	filters := shared.QueryFilter{
 		RunIDs: runIDs,
-		Q:      "/B/",
+		Q:      q,
 	}
 	summaries := []summary{
 		map[string][]int{
-			"/a/b/c": []int{1, 2},
-			"/b/c":   []int{9, 9},
+			"/a" + p + "c": []int{1, 2},
+			p + "c":        []int{9, 9},
 		},
 		map[string][]int{
-			"/z/b/c": []int{0, 8},
-			"/x/y/z": []int{3, 4},
-			"/b/c":   []int{5, 9},
+			"/z" + p + "c": []int{0, 8},
+			"/x/y/z":       []int{3, 4},
+			p + "c":        []int{5, 9},
 		},
 	}
 
 	resp := prepareSearchResponse(&filters, testRuns, summaries)
 	assert.Equal(t, testRuns, resp.Runs)
-	assert.Equal(t, []SearchResult{
+	expectedResults := []SearchResult{
 		SearchResult{
-			Test: "/a/b/c",
+			Test: "/a" + p + "c",
 			LegacyStatus: []LegacySearchRunResult{
 				LegacySearchRunResult{
 					Passes: 1,
@@ -55,7 +57,7 @@ func TestPrepareSearchResponse(t *testing.T) {
 			},
 		},
 		SearchResult{
-			Test: "/b/c",
+			Test: p + "c",
 			LegacyStatus: []LegacySearchRunResult{
 				LegacySearchRunResult{
 					Passes: 9,
@@ -68,7 +70,7 @@ func TestPrepareSearchResponse(t *testing.T) {
 			},
 		},
 		SearchResult{
-			Test: "/z/b/c",
+			Test: "/z" + p + "c",
 			LegacyStatus: []LegacySearchRunResult{
 				LegacySearchRunResult{},
 				LegacySearchRunResult{
@@ -77,5 +79,28 @@ func TestPrepareSearchResponse(t *testing.T) {
 				},
 			},
 		},
-	}, resp.Results)
+	}
+	sort.Sort(byName(expectedResults))
+	assert.Equal(t, expectedResults, resp.Results)
+}
+
+func testIC(t *testing.T, str string, upperQ bool) {
+	var p, q string
+	if upperQ {
+		p = strings.ToLower(str)
+		q = strings.ToUpper(str)
+	} else {
+		p = strings.ToUpper(str)
+		q = strings.ToLower(str)
+	}
+
+	doTestIC(t, p, q)
+}
+
+func TestPrepareSearchResponse_qUC(t *testing.T) {
+	testIC(t, "/b/", true)
+}
+
+func TestPrepareSearchResponse_pUC(t *testing.T) {
+	testIC(t, "/b/", false)
 }
