@@ -52,7 +52,7 @@ See models.go for more details.
       }
     </style>
 
-    <div class$='[[containerClass(small)]]'>
+    <div class$="[[containerClass(small)]]">
       <div><img small="[[small]]" src="{{displayLogo(testRun)}}" /></div>
       <template is="dom-if" if="[[!small]]">
         <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
