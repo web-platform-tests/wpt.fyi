@@ -86,7 +86,7 @@ found in the LICENSE file.
             <td class$="runs [[ runClass(results.runs, browser) ]]">
               <div>
                 <template is="dom-repeat" items="[[runList(results.runs, browser)]]" as="run">
-                  <a href='[[runLink(run)]]'>
+                  <a href="[[runLink(run)]]">
                     <test-run small test-run="[[run]]"></test-run>
                   </a>
                 </template>
