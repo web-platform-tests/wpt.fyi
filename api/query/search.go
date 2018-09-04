@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 // LegacySearchRunResult is the results data from legacy test summarys.  These
@@ -61,10 +60,11 @@ type searchHandler struct {
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse query params.
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	sh := searchHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
+			ctx:   ctx,
 			cache: gzipReadWritable{memcacheReadWritable{ctx}},
 			store: httpReadable{ctx},
 		},

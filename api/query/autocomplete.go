@@ -12,7 +12,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 var (
@@ -59,10 +58,11 @@ type autocompleteHandler struct {
 }
 
 func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	sh := autocompleteHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
+			ctx:   ctx,
 			cache: gzipReadWritable{memcacheReadWritable{ctx}},
 			store: httpReadable{ctx},
 		},

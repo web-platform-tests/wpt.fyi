@@ -20,7 +20,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query/test"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -50,7 +49,7 @@ func TestSearchHandler(t *testing.T) {
 	{
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
-		ctx := appengine.NewContext(req)
+		ctx := shared.NewAppEngineContext(req)
 
 		for idx, testRun := range testRuns {
 			key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &testRun)
@@ -83,12 +82,13 @@ func TestSearchHandler(t *testing.T) {
 		url.QueryEscape(q))
 	r, err := i.NewRequest("GET", url, nil)
 	assert.Nil(t, err)
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	w := httptest.NewRecorder()
 
 	sh := searchHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
+			ctx:   ctx,
 			cache: memcacheReadWritable{ctx},
 			store: store,
 		},
