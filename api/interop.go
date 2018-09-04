@@ -10,14 +10,13 @@ import (
 
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
 // interopHandler handles the view of test results broken down by the
 // number of browsers for which the test passes.
 func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
 

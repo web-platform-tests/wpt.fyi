@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -22,7 +21,7 @@ func TestApiSHAsHandler(t *testing.T) {
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/shas", nil)
 	assert.Nil(t, err)
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	// No results - empty JSON array, 404
 	var shas []string
