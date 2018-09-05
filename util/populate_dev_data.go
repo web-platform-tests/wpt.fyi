@@ -231,21 +231,23 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		// Update the interop IDs to match the newly-copied local test-run IDs.
 		prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
 		one := 1
-		var shas []string
-		var keys map[string][]*datastore.Key
+		sha := shared.LatestSHA
+		var localRunCopies shared.TestRuns
 		if complete {
+			var shas []string
+			var keys map[string][]*datastore.Key
 			shas, keys, _ = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
-		}
-		if len(shas) < 1 || len(keys[shas[0]]) != len(prodPassRateMetadata.TestRunIDs) {
-			sha := "latest"
 			if len(shas) > 0 {
 				sha = shas[0]
+				localRunCopies, _ = shared.LoadTestRunsByKeys(ctx, keys[sha])
 			}
+		}
+		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
 			log.Printf("Could not find local copies for SHA %s", sha)
 			continue
 		}
 		for i := range prodPassRateMetadata.TestRunIDs {
-			prodPassRateMetadata.TestRunIDs[i] = keys[shas[0]][i].IntID()
+			prodPassRateMetadata.TestRunIDs[i] = localRunCopies[i].ID
 		}
 		addData(ctx, passRateMetadataKindName, []interface{}{&prodPassRateMetadata})
 	}
