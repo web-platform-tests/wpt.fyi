@@ -25,7 +25,7 @@ type TwelveHourly struct{}
 func (TwelveHourly) GetData() Data {
 	return Data{
 		"Once every 12 hours",
-		"The last PR merge commit of 12-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
+		"The last PR merge commit of 12-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:12:00, etc..",
 		time.Hour * 12,
 		time.Hour * 12,
 		"",
@@ -63,7 +63,7 @@ type SixHourly struct{}
 func (SixHourly) GetData() Data {
 	return Data{
 		"Once every six hours",
-		"The last PR merge commit of six-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
+		"The last PR merge commit of six-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:06:00, etc..",
 		time.Hour * 6,
 		time.Hour * 6,
 		"",
