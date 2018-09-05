@@ -198,7 +198,7 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 
 	// Cache summary.
 	go func() {
-		logger.Infof("Writing summary to cache: %s", cacheID)
+		logger.Infof(`Writing "%s" summary to cache %v`, cacheID, cs.cache)
 		w, err := cs.cache.NewWriteCloser(cacheID)
 		if err != nil {
 			logger.Warningf("Error creating cache writer for key %s: %v", cacheID, err)
@@ -208,7 +208,7 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 			if err := w.Close(); err != nil {
 				logger.Warningf("Failed to close writer for key %s: %v", cacheID, err)
 			} else {
-				logger.Infof("Wrote summary to cache: %s", cacheID)
+				logger.Infof(`Wrote "%s" summary to cache %v`, cacheID, cs.cache)
 			}
 		}()
 		if _, err := w.Write(data); err != nil {
