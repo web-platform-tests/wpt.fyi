@@ -110,7 +110,7 @@ See models.go for more details.
       }
 
       containerClass(small) {
-        return small && 'small';
+        return small ? 'small' : '';
       }
 
       dateFormat(isoDate) {
