@@ -46,15 +46,24 @@ See models.go for more details.
         width: 32px;
         height: 32px;
       }
+      .small img {
+        width: 24px;
+        height: 24px;
+      }
     </style>
 
-    <div>
-      <div><img src="{{displayLogo(testRun)}}" /></div>
-      <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
+    <div class$="[[containerClass(small)]]">
+      <div><img small="[[small]]" src="{{displayLogo(testRun)}}" /></div>
+      <template is="dom-if" if="[[!small]]">
+        <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
+        <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
+          <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
+          <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
+          <div>{{dateFormat(testRun.created_at)}}</div>
+        </template>
+      </template>
+
       <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
-        <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
-        <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
-        <div>{{dateFormat(testRun.created_at)}}</div>
         <paper-tooltip offset=0>
           {{displayName(testRun.browser_name)}} {{testRun.browser_version}}<br>
           Labels: {{displayLabels(testRun.labels)}}<br>
@@ -90,10 +99,18 @@ See models.go for more details.
 
       static get properties() {
         return {
+          small: {
+            type: Boolean,
+            value: false,
+          },
           testRun: {
-            type: Object
-          }
+            type: Object,
+          },
         };
+      }
+
+      containerClass(small) {
+        return small ? 'small' : '';
       }
 
       dateFormat(isoDate) {

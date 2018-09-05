@@ -526,7 +526,9 @@ found in the LICENSE file.
                 acc.push({
                   path: `${prefix}${name}`,
                   isDir,
-                  results: Array.from(r.legacy_status),
+                  // Copy legacy_status node contents.
+                  results: r.legacy_status
+                    .map(stats => Object.assign({}, stats)),
                 });
               } else {
                 const rs = r.legacy_status;

@@ -210,7 +210,8 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		}
 		prodTestRuns, err := shared.FetchRuns(*host, filters)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			continue
 		}
 		labelRuns(prodTestRuns, "prod")
 
@@ -232,7 +233,7 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		one := 1
 		var shas []string
 		if complete {
-			shas, _ = shared.GetCompleteRunSHAs(ctx, nil, nil, &one)
+			shas, _ = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
 		}
 		var localRunCopies []shared.TestRun
 		localRunCopies, err = shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, shas, nil, nil, &one)

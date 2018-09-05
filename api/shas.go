@@ -24,13 +24,13 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	var shas []string
+	products := filters.GetProductsOrDefault()
 	if filters.Complete != nil && *filters.Complete {
-		if shas, err = shared.GetCompleteRunSHAs(ctx, filters.From, filters.To, filters.MaxCount); err != nil {
+		if shas, err = shared.GetCompleteRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, filters.MaxCount); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} else {
-		products := filters.GetProductsOrDefault()
 		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, nil, filters.From, filters.To, filters.MaxCount)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -56,6 +56,5 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Write(shasBytes)
 }
