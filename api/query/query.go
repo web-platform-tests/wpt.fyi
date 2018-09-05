@@ -186,6 +186,7 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 
 	// Cache summary.
 	go func() {
+		logger.Infof("Writing summary to cache: %s", cacheID)
 		w, err := cs.cache.NewWriteCloser(cacheID)
 		if err != nil {
 			logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
@@ -200,17 +201,23 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 			logger.Warningf("Failed to write to cache key %s: %v", cacheID, err)
 			return
 		}
+		logger.Infof("Wrote summary to cache: %s", cacheID)
 	}()
 
+	logger.Infof("Serving summary from store: %s", storeID)
 	return data, nil
 }
 
 type queryHandler struct {
+	ctx        context.Context
 	sharedImpl sharedInterface
 	dataSource cachedStore
 }
 
 func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, []shared.TestRun, []summary, error) {
+	logger := qh.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Processing query input for %v", r)
+
 	filters, err := qh.sharedImpl.ParseQueryFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -229,12 +236,17 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 		return nil, nil, nil, err
 	}
 
+	logger.Infof("Processed query input for %v", r)
+
 	return &filters, testRuns, summaries, nil
 }
 
 func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRun, shared.QueryFilter, error) {
 	filters := in
 	var testRuns []shared.TestRun
+
+	logger := qh.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Loading runs and filters for %v", in)
 
 	if filters.RunIDs == nil || len(filters.RunIDs) == 0 {
 		var runFilters shared.TestRunFilter
@@ -274,6 +286,8 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 		}
 	}
 
+	logger.Infof("Loaded runs and filters for %v", in)
+
 	return testRuns, filters, nil
 }
 
@@ -281,6 +295,8 @@ func (qh queryHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, erro
 	var err error
 	summaries := make([]summary, len(testRuns))
 
+	logger := qh.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Loading summaries for %v", testRuns)
 	var wg sync.WaitGroup
 	for i, testRun := range testRuns {
 		wg.Add(1)
@@ -304,6 +320,7 @@ func (qh queryHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, erro
 		}(i, testRun)
 	}
 	wg.Wait()
+	logger.Infof("Loaded summaries for %v", testRuns)
 
 	return summaries, err
 }

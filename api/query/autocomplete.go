@@ -63,6 +63,7 @@ type autocompleteHandler struct {
 func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	sh := autocompleteHandler{queryHandler{
+		ctx:        ctx,
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
 			ctx:   ctx,
@@ -80,16 +81,25 @@ func (ah autocompleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	logger := ah.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Preparing autocomplete response for %v", r)
 	resp := prepareAutocompleteResponse(limit, filters, testRuns, summaries)
+	logger.Infof("Prepared autocomplete response for %v", r)
 
+	logger.Infof("Marshaling autocomplete response for %v", r)
 	data, err := json.Marshal(resp)
 	if err != nil {
+		logger.Errorf("Failed to marshal autocomplete response for %v", r)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Write(data)
+	logger.Infof("Marshaled autocomplete response for %v", r)
 }
 
 func (ah autocompleteHandler) processInput(w http.ResponseWriter, r *http.Request) (int, *shared.QueryFilter, []shared.TestRun, []summary, error) {
+	logger := ah.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Processing autocomplete input for %v", r)
+
 	limit, err := ah.parseLimit(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -97,6 +107,9 @@ func (ah autocompleteHandler) processInput(w http.ResponseWriter, r *http.Reques
 	}
 
 	filter, testRuns, summaries, err := ah.queryHandler.processInput(w, r)
+
+	logger.Infof("Processed autocomplete input for %v", r)
+
 	return limit, filter, testRuns, summaries, err
 }
 
