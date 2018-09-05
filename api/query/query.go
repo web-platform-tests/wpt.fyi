@@ -189,19 +189,20 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 		logger.Infof("Writing summary to cache: %s", cacheID)
 		w, err := cs.cache.NewWriteCloser(cacheID)
 		if err != nil {
-			logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
+			logger.Warningf("Error creating cache writer for key %s: %v", cacheID, err)
 			return
 		}
 		defer func() {
 			if err := w.Close(); err != nil {
-				logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
+				logger.Warningf("Failed to close writer for key %s: %v", cacheID, err)
+			} else {
+				logger.Infof("Wrote summary to cache: %s", cacheID)
 			}
 		}()
 		if _, err := w.Write(data); err != nil {
 			logger.Warningf("Failed to write to cache key %s: %v", cacheID, err)
 			return
 		}
-		logger.Infof("Wrote summary to cache: %s", cacheID)
 	}()
 
 	logger.Infof("Serving summary from store: %s", storeID)
