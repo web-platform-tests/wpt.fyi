@@ -10,7 +10,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 // apiSHAsHandler is responsible for emitting just the revision SHAs for test runs.
@@ -21,7 +20,7 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	var shas []string
 	products := filters.GetProductsOrDefault()

@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -25,7 +24,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	assert.Nil(t, err)
 
 	// 'Yesterday', v66...139 earlier version.
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	now := time.Now()
 	chrome := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
@@ -88,7 +87,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/runs", nil)
 	assert.Nil(t, err)
 
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	now := time.Now()
 	run := shared.TestRun{}
 	run.BrowserVersion = "66.0.3359.139"
