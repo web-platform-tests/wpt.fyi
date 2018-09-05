@@ -41,12 +41,11 @@ found in the LICENSE file.
       .missing {
         background-color: var(--paper-grey-100);
       }
-      .runs div {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        max-width: 120px;
-        margin: auto;
+      .runs {
+        text-align: center;
+      }
+      .runs a {
+        display: inline-block;
       }
       .runs.present {
         background-color: var(--paper-blue-100);
@@ -84,13 +83,11 @@ found in the LICENSE file.
           </td>
           <template is="dom-repeat" items="{{ browsers }}" as="browser">
             <td class$="runs [[ runClass(results.runs, browser) ]]">
-              <div>
-                <template is="dom-repeat" items="[[runList(results.runs, browser)]]" as="run">
-                  <a href="[[runLink(run)]]">
-                    <test-run small test-run="[[run]]"></test-run>
-                  </a>
-                </template>
-              </div>
+              <template is="dom-repeat" items="[[runList(results.runs, browser)]]" as="run">
+                <a href="[[runLink(run)]]">
+                  <test-run small test-run="[[run]]"></test-run>
+                </a>
+              </template>
             </td>
           </template>
           <template is="dom-if" if="{{ results.month_boundary }}">
