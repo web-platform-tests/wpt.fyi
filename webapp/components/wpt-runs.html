@@ -198,13 +198,14 @@ found in the LICENSE file.
       }
 
       runLink(run) {
-        let link = `/results?sha=${run.revision}`;
+        let link = new URL('/results', window.location);
+        link.searchParams.set('sha', run.revision);
         for (const label of ['experimental', 'stable']) {
           if (run.labels && run.labels.includes(label)) {
-            link += `&label=${label}`;
+            link.searchParams.append('label', label);
           }
         }
-        return link;
+        return link.toString();
       }
 
       computeThWidth(browsers) {
