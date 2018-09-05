@@ -108,12 +108,24 @@ func (mw memcacheWriteCloser) Write(p []byte) (n int, err error) {
 }
 
 func (mw memcacheWriteCloser) Close() error {
+	exp := 48 * time.Hour
+	logger := mw.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof(`Writing to %d bytes to key memcache "%s"; expiry: %d`, mw.b.Len(), mw.key, exp)
+
 	mw.isClosed = true
-	return memcache.Set(mw.ctx, &memcache.Item{
+	err := memcache.Set(mw.ctx, &memcache.Item{
 		Key:        mw.key,
 		Value:      mw.b.Bytes(),
-		Expiration: 48 * time.Hour,
+		Expiration: exp,
 	})
+
+	if err != nil {
+		logger.Errorf(`Failed to write to memcache key "%s": %v`, mw.key, err)
+	} else {
+		logger.Infof(`Writing to %d bytes to key memcache "%s"; expiry: %d`, mw.b.Len(), mw.key, exp)
+	}
+
+	return err
 }
 
 type sharedInterface interface {
