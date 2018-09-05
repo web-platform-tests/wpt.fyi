@@ -12,6 +12,7 @@ type Data struct {
 	Description string
 	MinDuration time.Duration
 	MaxDuration time.Duration
+	Warning     string
 }
 
 // Epoch encapsulates a pattern in time during which new epochs begin at regular intervals.
