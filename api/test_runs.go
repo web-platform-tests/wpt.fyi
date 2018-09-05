@@ -11,6 +11,7 @@ import (
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
 )
 
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
@@ -57,20 +58,20 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 	products := filters.GetProductsOrDefault()
 
 	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
-	var shas []string
-	if !shared.IsLatest(filters.SHA) {
-		shas = []string{filters.SHA}
-	} else if filters.Complete != nil && *filters.Complete {
-		if shared.IsLatest(filters.SHA) {
-			shas, err = shared.GetCompleteRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
-			if err != nil {
-				return result, err
-			}
-			if len(shas) < 1 {
-				// Bail out early - can't find any complete runs.
-				return result, nil
-			}
+	if shared.IsLatest(filters.SHA) && filters.Complete != nil && *filters.Complete {
+		shas, shaKeys, err := shared.GetCompleteRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
+		if err != nil {
+			return result, err
 		}
+		if len(shas) < 1 {
+			// Bail out early - can't find any complete runs.
+			return result, nil
+		}
+		keys := []*datastore.Key{}
+		for _, sha := range shas {
+			keys = append(keys, shaKeys[sha]...)
+		}
+		return shared.LoadTestRunsByKeys(ctx, keys)
 	}
-	return shared.LoadTestRuns(ctx, products, filters.Labels, shas, from, filters.To, limit)
+	return shared.LoadTestRuns(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit)
 }

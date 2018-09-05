@@ -232,12 +232,11 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
 		one := 1
 		var shas []string
+		var keys map[string][]*datastore.Key
 		if complete {
-			shas, _ = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
+			shas, keys, _ = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
 		}
-		var localRunCopies []shared.TestRun
-		localRunCopies, err = shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, shas, nil, nil, &one)
-		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
+		if len(shas) < 1 || len(keys[shas[0]]) != len(prodPassRateMetadata.TestRunIDs) {
 			sha := "latest"
 			if len(shas) > 0 {
 				sha = shas[0]
@@ -246,7 +245,7 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 			continue
 		}
 		for i := range prodPassRateMetadata.TestRunIDs {
-			prodPassRateMetadata.TestRunIDs[i] = localRunCopies[i].ID
+			prodPassRateMetadata.TestRunIDs[i] = keys[shas[0]][i].IntID()
 		}
 		addData(ctx, passRateMetadataKindName, []interface{}{&prodPassRateMetadata})
 	}
