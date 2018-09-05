@@ -5,8 +5,6 @@
 package shared
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 
 	mapset "github.com/deckarep/golang-set"
@@ -48,8 +46,9 @@ func IsLatest(sha string) bool {
 	return sha == "" || sha == "latest"
 }
 
+// Logger is an abstract logging interface that contains an intersection of
+// logrus and GAE logging functionality.
 type Logger interface {
-	Criticalf(format string, args ...interface{})
 	Debugf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
@@ -60,13 +59,7 @@ type gaeLogger struct {
 	ctx context.Context
 }
 
-type stdLogger struct{}
-
 type nilLogger struct{}
-
-func (l gaeLogger) Criticalf(format string, args ...interface{}) {
-	gaelog.Criticalf(l.ctx, format, args...)
-}
 
 func (l gaeLogger) Debugf(format string, args ...interface{}) {
 	gaelog.Criticalf(l.ctx, format, args...)
@@ -84,28 +77,6 @@ func (l gaeLogger) Warningf(format string, args ...interface{}) {
 	gaelog.Warningf(l.ctx, format, args...)
 }
 
-func (l stdLogger) Criticalf(format string, args ...interface{}) {
-	log.Printf("CRIT: %s", fmt.Sprintf(format, args...))
-}
-
-func (l stdLogger) Debugf(format string, args ...interface{}) {
-	log.Printf("DEBG: %s", fmt.Sprintf(format, args...))
-}
-
-func (l stdLogger) Errorf(format string, args ...interface{}) {
-	log.Printf("ERRO: %s", fmt.Sprintf(format, args...))
-}
-
-func (l stdLogger) Infof(format string, args ...interface{}) {
-	log.Printf("INFO: %s", fmt.Sprintf(format, args...))
-}
-
-func (l stdLogger) Warningf(format string, args ...interface{}) {
-	log.Printf("WARN: %s", fmt.Sprintf(format, args...))
-}
-
-func (l nilLogger) Criticalf(format string, args ...interface{}) {}
-
 func (l nilLogger) Debugf(format string, args ...interface{}) {}
 
 func (l nilLogger) Errorf(format string, args ...interface{}) {}
@@ -119,7 +90,6 @@ type LoggerCtxKey struct{}
 
 var (
 	gl  = gaeLogger{}
-	sl  = stdLogger{}
 	nl  = nilLogger{}
 	lck = LoggerCtxKey{}
 )
@@ -128,11 +98,6 @@ var (
 // the given context.
 func NewGAELogger(ctx context.Context) Logger {
 	return gaeLogger{ctx}
-}
-
-// NewSTDLogger returns a new standard logger.
-func NewSTDLogger() Logger {
-	return sl
 }
 
 // NewNilLogger returns a new logger that silently ignores all Logger calls.

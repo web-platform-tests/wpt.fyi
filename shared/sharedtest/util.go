@@ -5,9 +5,11 @@
 package sharedtest
 
 import (
-	"github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/net/context"
+	"context"
+
 	"google.golang.org/appengine/aetest"
+
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // NewAEInstance creates a new aetest instance backed by dev_appserver whose
