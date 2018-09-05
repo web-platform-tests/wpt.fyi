@@ -305,6 +305,8 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 	logger.Infof("Loading runs and filters for %v", in)
 
 	if filters.RunIDs == nil || len(filters.RunIDs) == 0 {
+		logger.Infof("Loading runs by query")
+
 		var runFilters shared.TestRunFilter
 		var shas []string
 		var err error
@@ -319,7 +321,11 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 		for _, testRun := range testRuns {
 			filters.RunIDs = append(filters.RunIDs, testRun.ID)
 		}
+
+		logger.Infof("Loaded runs by query")
 	} else {
+		logger.Infof("Loading runs by key")
+
 		var err error
 		var wg sync.WaitGroup
 		testRuns = make([]shared.TestRun, len(filters.RunIDs))
@@ -340,6 +346,8 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 		if err != nil {
 			return testRuns, filters, err
 		}
+
+		logger.Infof("Loading runs by key")
 	}
 
 	logger.Infof("Loaded runs and filters for %v", in)
