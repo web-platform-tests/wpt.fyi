@@ -126,7 +126,7 @@ func prepareAutocompleteResponse(limit int, filters *shared.QueryFilter, testRun
 		}
 	}
 
-	var files []AutocompleteResult
+	files := []AutocompleteResult{}
 	q := canonicalizeStr(filters.Q)
 	for fileInterface := range fileSet.Iter() {
 		file := fileInterface.(string)
