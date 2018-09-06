@@ -30,7 +30,7 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 
 	// We load non-default queries by fetching any interop result with all their
 	// TestRunIDs present in the TestRuns matching the query.
-	var keysFilter mapset.Set
+	var keysChecker func(shared.TestRunIDs) bool
 	if !filters.IsDefaultQuery() {
 		// Load default browser runs for SHA.
 		// Force any max-count to one; more than one of each product makes no sense for a interop run.
@@ -46,35 +46,36 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "No metrics runs found", http.StatusNotFound)
 			return
 		}
-		keysFilter = mapset.NewSet()
+		keysFilter := mapset.NewSet()
 		for _, key := range keys {
 			keysFilter.Add(key.IntID())
 		}
-	}
-
-	// Iterate until we find a run where all test runs matched the query.
-	var interop metrics.PassRateMetadata
-	it := query.Run(ctx)
-	for {
-		_, err := it.Next(&interop)
-		if err == datastore.Done {
-			http.NotFound(w, r)
-			return
-		} else if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if keysFilter != nil {
+		keysChecker = func(ids shared.TestRunIDs) bool {
 			all := true
-			for _, id := range interop.TestRunIDs {
+			for _, id := range ids {
 				if !keysFilter.Contains(id) {
 					all = false
 					break
 				}
 			}
-			if !all {
-				continue
-			}
+			return all
+		}
+	}
+
+	// Iterate until we find interop data where its TestRunIDs match the query.
+	var interop metrics.PassRateMetadata
+	it := query.Run(ctx)
+	for {
+		_, err := it.Next(&interop)
+		if err == datastore.Done {
+			http.Error(w, "No metrics runs found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if keysChecker != nil && !keysChecker(interop.TestRunIDs) {
+			continue
 		}
 		break
 	}
