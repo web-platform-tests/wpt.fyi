@@ -16,6 +16,56 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+func TestLoadTestRunsByIDs(t *testing.T) {
+	testRuns := []shared.TestRun{
+		shared.TestRun{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "chrome",
+					BrowserVersion: "63.0",
+					OSName:         "linux",
+				},
+				Revision: "1234567890",
+			},
+			ResultsURL: "/static/chrome-63.0-linux-summary.json.gz",
+		},
+		shared.TestRun{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName:    "firefox",
+					BrowserVersion: "60.0",
+					OSName:         "linux",
+				},
+				Revision: "0987654321",
+			},
+			ResultsURL: "/static/firefox-60.0-linux-summary.json.gz",
+		},
+	}
+
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+
+	keys := make([]*datastore.Key, 0, len(testRuns))
+	for range testRuns {
+		keys = append(keys, datastore.NewIncompleteKey(ctx, "TestRun", nil))
+	}
+	keys, err = datastore.PutMulti(ctx, keys, testRuns)
+	assert.Nil(t, err)
+
+	ids := make([]int64, 0, len(keys))
+	for i, key := range keys {
+		testRuns[i].ID = key.IntID()
+		ids = append(ids, key.IntID())
+	}
+	_, err = datastore.PutMulti(ctx, keys, testRuns)
+	assert.Nil(t, err)
+
+	trs, err := shared.LoadTestRunsByIDs(ctx, ids)
+	assert.Nil(t, err)
+	assert.Equal(t, testRuns, trs)
+}
+
 func TestLoadTestRuns(t *testing.T) {
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
