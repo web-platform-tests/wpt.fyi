@@ -238,10 +238,16 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		if complete {
 			var shas []string
 			var keys map[string][]*datastore.Key
-			shas, keys, _ = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
+			if shas, keys, err = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one); err != nil {
+				log.Printf("Failed to load a complete run SHA: %s", err.Error())
+				continue
+			}
 			if len(shas) > 0 {
 				sha = shas[0]
-				localRunCopies, _ = shared.LoadTestRunsByKeys(ctx, keys[sha])
+				if localRunCopies, err = shared.LoadTestRunsByKeys(ctx, keys[sha]); err != nil {
+					log.Printf("Failed to load test runs by keys: %s", err.Error())
+					continue
+				}
 			}
 		}
 		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {

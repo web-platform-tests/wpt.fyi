@@ -16,7 +16,7 @@ import (
 // ExperimentalLabel is the implicit label present for runs marked 'experimental'.
 const ExperimentalLabel = "experimental"
 
-// LatestSHA is a helper for the 'latest' keyword/special-case.
+// LatestSHA is a helper for the 'latest' keyword/special case.
 const LatestSHA = "latest"
 
 // GetDefaultProducts returns the default set of products to show on wpt.fyi

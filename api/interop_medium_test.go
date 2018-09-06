@@ -50,7 +50,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 		secondRunKeys[i], _ = datastore.Put(ctx, datastore.NewKey(ctx, "TestRun", "", 0, nil), &run)
 	}
 
-	// No interop data
+	// No interop data.
 	resp := httptest.NewRecorder()
 	apiInteropHandler(resp, r)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
@@ -80,7 +80,8 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	}
 	datastore.Put(ctx, datastore.NewKey(ctx, interopKindName, "", 0, nil), &interop)
 
-	interop.LoadTestRuns(ctx) // (Needed for equality comparisons below.)
+	// Load the tests + clear the IDs, to match the output of apiInteropHandler below.
+	interop.LoadTestRuns(ctx)
 	interop.TestRunIDs = nil
 
 	// "complete" and "complete & stable" have the same outcome.
