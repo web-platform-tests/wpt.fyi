@@ -307,8 +307,7 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 		RunIDs: runIDs,
 	}
 
-	si.EXPECT().LoadTestRun(testRuns[0].ID).Return(&testRuns[0], nil)
-	si.EXPECT().LoadTestRun(testRuns[1].ID).Return(&testRuns[1], nil)
+	si.EXPECT().LoadTestRunsByIDs(gomock.Any(), []int64{testRuns[0].ID, testRuns[1].ID}).Return([]shared.TestRun{testRuns[0], testRuns[1]}, nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)
