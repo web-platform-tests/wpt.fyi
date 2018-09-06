@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -25,7 +24,7 @@ func TestGetTestRunByID(t *testing.T) {
 	r = mux.SetURLVars(r, map[string]string{"id": "123"})
 	assert.Nil(t, err)
 
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	resp := httptest.NewRecorder()
 	apiTestRunHandler(resp, r)
 	assert.Equal(t, http.StatusNotFound, resp.Code)

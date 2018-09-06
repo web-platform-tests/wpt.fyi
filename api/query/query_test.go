@@ -38,6 +38,7 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 	store := NewMockreadable(mockCtrl)
 	sh := searchHandler{queryHandler{
 		dataSource: cachedStore{
+			ctx:   shared.NewTestContext(),
 			cache: cache,
 			store: store,
 		},
@@ -77,7 +78,10 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	sh := searchHandler{queryHandler{
-		dataSource: cachedStore{cache: cache},
+		dataSource: cachedStore{
+			ctx:   shared.NewTestContext(),
+			cache: cache,
+		},
 	}}
 	smry := []byte("{}")
 	r := test.NewMockReadCloser(t, smry)
@@ -108,6 +112,7 @@ func TestLoadSummary_missing(t *testing.T) {
 	store := NewMockreadable(mockCtrl)
 	sh := searchHandler{queryHandler{
 		dataSource: cachedStore{
+			ctx:   shared.NewTestContext(),
 			cache: cache,
 			store: store,
 		},
@@ -150,7 +155,10 @@ func TestLoadSummaries_success(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	sh := searchHandler{queryHandler{
-		dataSource: cachedStore{cache: cache},
+		dataSource: cachedStore{
+			ctx:   shared.NewTestContext(),
+			cache: cache,
+		},
 	}}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),
@@ -203,6 +211,7 @@ func TestLoadSummaries_fail(t *testing.T) {
 	store := NewMockreadable(mockCtrl)
 	sh := searchHandler{queryHandler{
 		dataSource: cachedStore{
+			ctx:   shared.NewTestContext(),
 			cache: cache,
 			store: store,
 		},

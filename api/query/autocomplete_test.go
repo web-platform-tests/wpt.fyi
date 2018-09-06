@@ -183,7 +183,7 @@ func TestPrepareAutocompleteResponse_limited(t *testing.T) {
 	}
 	filters := shared.QueryFilter{
 		RunIDs: runIDs,
-		Q:      "/b/",
+		Q:      "/B/",
 	}
 	summaries := []summary{
 		map[string][]int{

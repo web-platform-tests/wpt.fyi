@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 // apiResultsRedirectHandler is responsible for redirecting to the Google Cloud Storage API
@@ -31,7 +30,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	one := 1
 	testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, filters.SHA, nil, nil, &one)
 	if err != nil {

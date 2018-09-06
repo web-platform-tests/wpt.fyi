@@ -143,7 +143,7 @@ found in the LICENSE file.
     </template>
   </section>
 
-  <template is="dom-if" if="{{ !pathIsATestFile }}">
+  <template is="dom-if" if="[[!pathIsATestFile]]">
     <section class="runs">
       <table>
         <thead>
@@ -158,41 +158,40 @@ found in the LICENSE file.
         </head>
       </table>
     </section>
-  </template>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Path</th>
-        <template is="dom-if" if="{{ testRuns }}">
-          <th colspan="100">Tests Passing in <var>X</var> / [[testRuns.length]] Browsers</th>
-        </template>
-      </tr>
-      <tr>
-        <th>&nbsp;</th>
-        <!-- Repeats for as many different browser test runs are available, plus one -->
-        <template is="dom-repeat" items="{{ thLabels }}" as="label">
-          <th class="th-label">{{ label }}</th>
-        </template>
-      </tr>
-    </thead>
-    <tbody>
-      <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
+    <table>
+      <thead>
         <tr>
-          <td>
-            <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}" navigate="{{ bindNavigate() }}"></path-part>
-          </td>
-
-          <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
-            <td class='score' style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+          <th>Path</th>
+          <template is="dom-if" if="{{ testRuns }}">
+            <th colspan="100">Tests Passing in <var>X</var> / [[testRuns.length]] Browsers</th>
           </template>
         </tr>
-      </template>
-    </tbody>
-  </table>
+        <tr>
+          <th>&nbsp;</th>
+          <!-- Repeats for as many different browser test runs are available, plus one -->
+          <template is="dom-repeat" items="{{ thLabels }}" as="label">
+            <th class="th-label">{{ label }}</th>
+          </template>
+        </tr>
+      </thead>
+      <tbody>
+        <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
+          <tr>
+            <td>
+              <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}" navigate="{{ bindNavigate() }}"></path-part>
+            </td>
 
-  <template is="dom-if" if="{{ pathIsATestFile }}">
-    <hr>
+            <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
+              <td class='score' style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+            </template>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </template>
+
+  <template is="dom-if" if="[[ pathIsATestFile ]]">
     <test-file-results
         test-runs="[[passRateMetadata.test_runs]]"
         path="[[path]]">

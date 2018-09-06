@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -25,7 +24,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	testRuns, err := LoadTestRunsForFilters(ctx, filters)
 
 	if err != nil {

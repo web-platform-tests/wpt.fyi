@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -65,7 +64,17 @@ func (gz gzipReadWritable) NewReadCloser(id string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gzip.NewReader(r)
+
+	gzr, err := gzip.NewReader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return compositeReadWriteCloser{
+		reader:   gzr,
+		owner:    gzr,
+		delegate: r,
+	}, nil
 }
 
 func (gz gzipReadWritable) NewWriteCloser(id string) (io.WriteCloser, error) {
@@ -73,11 +82,39 @@ func (gz gzipReadWritable) NewWriteCloser(id string) (io.WriteCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gzip.NewWriter(w), nil
+
+	gzw := gzip.NewWriter(w)
+	return compositeReadWriteCloser{
+		writer:   gzw,
+		owner:    gzw,
+		delegate: w,
+	}, nil
 }
 
 type memcacheReadWritable struct {
 	ctx context.Context
+}
+
+type compositeReadWriteCloser struct {
+	reader   io.Reader
+	writer   io.Writer
+	owner    io.Closer
+	delegate io.Closer
+}
+
+func (crwc compositeReadWriteCloser) Read(p []byte) (n int, err error) {
+	return crwc.reader.Read(p)
+}
+
+func (crwc compositeReadWriteCloser) Write(p []byte) (n int, err error) {
+	return crwc.writer.Write(p)
+}
+
+func (crwc compositeReadWriteCloser) Close() error {
+	if err := crwc.owner.Close(); err != nil {
+		return err
+	}
+	return crwc.delegate.Close()
 }
 
 type memcacheWriteCloser struct {
@@ -98,17 +135,17 @@ func (mc memcacheReadWritable) NewReadCloser(key string) (io.ReadCloser, error) 
 }
 
 func (mc memcacheReadWritable) NewWriteCloser(key string) (io.WriteCloser, error) {
-	return memcacheWriteCloser{mc, key, bytes.Buffer{}, false}, nil
+	return &memcacheWriteCloser{mc, key, bytes.Buffer{}, false}, nil
 }
 
-func (mw memcacheWriteCloser) Write(p []byte) (n int, err error) {
+func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
 	if mw.isClosed {
 		return 0, errMemcacheWriteCloserWriteAfterClose
 	}
 	return mw.b.Write(p)
 }
 
-func (mw memcacheWriteCloser) Close() error {
+func (mw *memcacheWriteCloser) Close() error {
 	mw.isClosed = true
 	return memcache.Set(mw.ctx, &memcache.Item{
 		Key:        mw.key,
@@ -145,36 +182,38 @@ func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
 }
 
 type cachedStore struct {
+	ctx   context.Context
 	cache readWritable
 	store readable
 }
 
 func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
+	logger := cs.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
 	cr, err := cs.cache.NewReadCloser(cacheID)
 	if err == nil {
 		defer func() {
 			if err := cr.Close(); err != nil {
-				log.Printf("WARNING: Error closing cache reader for key %s: %v", cacheID, err)
+				logger.Warningf("Error closing cache reader for key %s: %v", cacheID, err)
 			}
 		}()
 		cached, err := ioutil.ReadAll(cr)
 		if err == nil {
-			log.Printf("INFO: Serving summary from cache: %s", cacheID)
+			logger.Infof("Serving summary from cache: %s", cacheID)
 			return cached, nil
 		}
 	}
 
-	log.Printf("WARNING: Error fetching cache key %s: %v", cacheID, err)
+	logger.Warningf("Error fetching cache key %s: %v", cacheID, err)
 	err = nil
 
-	log.Printf("INFO: Loading summary from store: %s", storeID)
+	logger.Infof("Loading summary from store: %s", storeID)
 	sr, err := cs.store.NewReadCloser(storeID)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err := sr.Close(); err != nil {
-			log.Printf("WARNING: Error closing store reader for key %s: %v", storeID, err)
+			logger.Warningf("Error closing store reader for key %s: %v", storeID, err)
 		}
 	}()
 
@@ -187,16 +226,21 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 	go func() {
 		w, err := cs.cache.NewWriteCloser(cacheID)
 		if err != nil {
-			log.Printf("WARNING: Error cache writer for key %s: %v", cacheID, err)
+			logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
 			return
 		}
 		defer func() {
 			if err := w.Close(); err != nil {
-				log.Printf("WARNING: Error cache writer for key %s: %v", cacheID, err)
+				logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
 			}
 		}()
-		if _, err := w.Write(data); err != nil {
-			log.Printf("WARNING: Failed to write to cache key %s: %v", cacheID, err)
+		n, err := w.Write(data)
+		if err != nil {
+			logger.Warningf("Failed to write to cache key %s: %v", cacheID, err)
+			return
+		}
+		if n != len(data) {
+			logger.Warningf("Failed to write to cache key %s: attempt to write %d bytes, but wrote %d bytes instead", cacheID, len(data), n)
 			return
 		}
 	}()

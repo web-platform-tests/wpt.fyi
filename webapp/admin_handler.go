@@ -7,13 +7,12 @@ package webapp
 import (
 	"net/http"
 
-	"google.golang.org/appengine"
-
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	a := receiver.NewAppEngineAPI(ctx)
 	showAdminUploadForm(a, w, r)
 }

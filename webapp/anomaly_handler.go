@@ -10,7 +10,6 @@ import (
 
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -32,7 +31,7 @@ func anomalyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
 
@@ -67,7 +66,7 @@ func anomalyHandler(w http.ResponseWriter, r *http.Request) {
 // browserAnomalyHandler handles the view of test results showing which tests
 // fail in a specific browser, but pass in at least one other browser.
 func browserAnomalyHandler(w http.ResponseWriter, r *http.Request, browser string) {
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	query := datastore.
 		NewQuery(metrics.GetDatastoreKindName(
 			metrics.FailuresMetadata{})).

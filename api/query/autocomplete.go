@@ -12,7 +12,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 var (
@@ -46,12 +45,15 @@ type byQueryIndex struct {
 func (r byQueryIndex) Len() int      { return len(r.rs) }
 func (r byQueryIndex) Swap(i, j int) { r.rs[i], r.rs[j] = r.rs[j], r.rs[i] }
 func (r byQueryIndex) Less(i, j int) bool {
-	a := strings.Index(r.rs[i].QueryString, r.q)
-	b := strings.Index(r.rs[j].QueryString, r.q)
+	iqs := canonicalizeStr(r.rs[i].QueryString)
+	jqs := canonicalizeStr(r.rs[j].QueryString)
+	q := canonicalizeStr(r.q)
+	a := strings.Index(iqs, q)
+	b := strings.Index(jqs, q)
 	if a == b {
 		return r.rs[i].QueryString < r.rs[j].QueryString
 	}
-	return strings.Index(r.rs[i].QueryString, r.q) < strings.Index(r.rs[j].QueryString, r.q)
+	return a < b
 }
 
 type autocompleteHandler struct {
@@ -59,10 +61,11 @@ type autocompleteHandler struct {
 }
 
 func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	sh := autocompleteHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
+			ctx:   ctx,
 			cache: gzipReadWritable{memcacheReadWritable{ctx}},
 			store: httpReadable{ctx},
 		},
@@ -123,10 +126,11 @@ func prepareAutocompleteResponse(limit int, filters *shared.QueryFilter, testRun
 		}
 	}
 
+	q := canonicalizeStr(filters.Q)
 	files := make([]AutocompleteResult, 0, fileSet.Cardinality()/len(testRuns))
 	for fileInterface := range fileSet.Iter() {
 		file := fileInterface.(string)
-		if strings.Contains(file, filters.Q) {
+		if strings.Contains(canonicalizeStr(file), q) {
 			files = append(files, AutocompleteResult{file})
 		}
 	}
