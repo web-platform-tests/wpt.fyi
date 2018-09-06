@@ -191,7 +191,7 @@ func (sharedImpl defaultShared) LoadTestRuns(ps []shared.ProductSpec, ls mapset.
 }
 
 func (sharedImpl defaultShared) LoadTestRunsByIDs(ctx context.Context, ids []int64) (result []shared.TestRun, err error) {
-	return sharedImpl.LoadTestRunsByIDs(ctx, ids)
+	return shared.LoadTestRunsByIDs(ctx, ids)
 }
 
 func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
