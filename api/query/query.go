@@ -64,7 +64,17 @@ func (gz gzipReadWritable) NewReadCloser(id string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gzip.NewReader(r)
+
+	gzr, err := gzip.NewReader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return compositeReadWriteCloser{
+		reader:   gzr,
+		owner:    gzr,
+		delegate: r,
+	}, nil
 }
 
 func (gz gzipReadWritable) NewWriteCloser(id string) (io.WriteCloser, error) {
@@ -72,11 +82,39 @@ func (gz gzipReadWritable) NewWriteCloser(id string) (io.WriteCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gzip.NewWriter(w), nil
+
+	gzw := gzip.NewWriter(w)
+	return compositeReadWriteCloser{
+		writer:   gzw,
+		owner:    gzw,
+		delegate: w,
+	}, nil
 }
 
 type memcacheReadWritable struct {
 	ctx context.Context
+}
+
+type compositeReadWriteCloser struct {
+	reader   io.Reader
+	writer   io.Writer
+	owner    io.Closer
+	delegate io.Closer
+}
+
+func (crwc compositeReadWriteCloser) Read(p []byte) (n int, err error) {
+	return crwc.reader.Read(p)
+}
+
+func (crwc compositeReadWriteCloser) Write(p []byte) (n int, err error) {
+	return crwc.writer.Write(p)
+}
+
+func (crwc compositeReadWriteCloser) Close() error {
+	if err := crwc.owner.Close(); err != nil {
+		return err
+	}
+	return crwc.delegate.Close()
 }
 
 type memcacheWriteCloser struct {
@@ -97,17 +135,17 @@ func (mc memcacheReadWritable) NewReadCloser(key string) (io.ReadCloser, error) 
 }
 
 func (mc memcacheReadWritable) NewWriteCloser(key string) (io.WriteCloser, error) {
-	return memcacheWriteCloser{mc, key, bytes.Buffer{}, false}, nil
+	return &memcacheWriteCloser{mc, key, bytes.Buffer{}, false}, nil
 }
 
-func (mw memcacheWriteCloser) Write(p []byte) (n int, err error) {
+func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
 	if mw.isClosed {
 		return 0, errMemcacheWriteCloserWriteAfterClose
 	}
 	return mw.b.Write(p)
 }
 
-func (mw memcacheWriteCloser) Close() error {
+func (mw *memcacheWriteCloser) Close() error {
 	mw.isClosed = true
 	return memcache.Set(mw.ctx, &memcache.Item{
 		Key:        mw.key,
@@ -196,8 +234,13 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 				logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
 			}
 		}()
-		if _, err := w.Write(data); err != nil {
+		n, err := w.Write(data)
+		if err != nil {
 			logger.Warningf("Failed to write to cache key %s: %v", cacheID, err)
+			return
+		}
+		if n != len(data) {
+			logger.Warningf("Failed to write to cache key %s: attempt to write %d bytes, but wrote %d bytes instead", cacheID, len(data), n)
 			return
 		}
 	}()
