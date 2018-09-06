@@ -158,6 +158,7 @@ type sharedInterface interface {
 	ParseQueryParamInt(r *http.Request, key string) (int, error)
 	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
 	LoadTestRuns([]shared.ProductSpec, mapset.Set, []string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
+	LoadTestRunsByIDs(ids shared.TestRunIDs) (result []shared.TestRun, err error)
 	LoadTestRun(int64) (*shared.TestRun, error)
 }
 
@@ -175,6 +176,10 @@ func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter
 
 func (sharedImpl defaultShared) LoadTestRuns(ps []shared.ProductSpec, ls mapset.Set, shas []string, from *time.Time, to *time.Time, limit *int) ([]shared.TestRun, error) {
 	return shared.LoadTestRuns(sharedImpl.ctx, ps, ls, shas, from, to, limit)
+}
+
+func (sharedImpl defaultShared) LoadTestRunsByIDs(ids shared.TestRunIDs) (result []shared.TestRun, err error) {
+	return ids.LoadTestRuns(sharedImpl.ctx)
 }
 
 func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
@@ -278,11 +283,11 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRun, shared.QueryFilter, error) {
 	filters := in
 	var testRuns []shared.TestRun
+	var err error
 
 	if filters.RunIDs == nil || len(filters.RunIDs) == 0 {
 		var runFilters shared.TestRunFilter
 		var shas []string
-		var err error
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
 		testRuns, err = qh.sharedImpl.LoadTestRuns(products, runFilters.Labels, shas, runFilters.From, runFilters.To, &limit)
@@ -295,23 +300,7 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 			filters.RunIDs = append(filters.RunIDs, testRun.ID)
 		}
 	} else {
-		var err error
-		var wg sync.WaitGroup
-		testRuns = make([]shared.TestRun, len(filters.RunIDs))
-		for i, id := range filters.RunIDs {
-			wg.Add(1)
-			go func(i int, id int64) {
-				defer wg.Done()
-
-				var testRun *shared.TestRun
-				testRun, err = qh.sharedImpl.LoadTestRun(id)
-				if err == nil {
-					testRuns[i] = *testRun
-				}
-			}(i, id)
-		}
-		wg.Wait()
-
+		testRuns, err = qh.sharedImpl.LoadTestRunsByIDs(shared.TestRunIDs(filters.RunIDs))
 		if err != nil {
 			return testRuns, filters, err
 		}
