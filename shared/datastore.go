@@ -80,7 +80,7 @@ func LoadTestRunKeys(
 			}
 		}
 
-		if limit != nil {
+		if limit != nil && len(keys) > *limit {
 			keys = keys[:*limit]
 		}
 		result = append(result, keys...)
@@ -216,10 +216,8 @@ func GetCompleteRunSHAs(
 			productsBySHA[testRun.Revision] = mapset.NewSet()
 		}
 		set := productsBySHA[testRun.Revision]
-		if !set.Contains(*matchingProduct) {
-			set.Add(*matchingProduct)
-			keys[testRun.Revision] = append(keys[testRun.Revision], key)
-		}
+		set.Add(*matchingProduct)
+		keys[testRun.Revision] = append(keys[testRun.Revision], key)
 		if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 			done.Add(testRun.Revision)
 			shas = append(shas, testRun.Revision)

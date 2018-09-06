@@ -3,8 +3,6 @@
 package shared
 
 import (
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -37,7 +35,7 @@ func TestLoadTestRuns(t *testing.T) {
 	key, _ = datastore.Put(ctx, key, &testRun)
 
 	chrome, _ := ParseProductSpec("chrome")
-	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, nil, nil, nil)
+	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, LatestSHA, nil, nil, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(loaded))
 	assert.Equalf(t, key.IntID(), loaded[0].ID, "ID field should be populated.")
@@ -117,7 +115,7 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	labels := mapset.NewSet()
 	labels.Add("experimental")
 	ten := 10
-	loaded, err := LoadTestRuns(ctx, products, labels, nil, nil, nil, &ten)
+	loaded, err := LoadTestRuns(ctx, products, labels, LatestSHA, nil, nil, &ten)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(loaded))
 	assert.Equal(t, "64.0", loaded[0].BrowserVersion)
@@ -154,7 +152,7 @@ func TestLoadTestRuns_LabelinProductSpec(t *testing.T) {
 	products := make([]ProductSpec, 1)
 	products[0].BrowserName = "chrome"
 	products[0].Labels = mapset.NewSetWith("foo")
-	loaded, err := LoadTestRuns(ctx, products, nil, nil, nil, nil, nil)
+	loaded, err := LoadTestRuns(ctx, products, nil, LatestSHA, nil, nil, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(loaded))
 	assert.Equal(t, "foo", loaded[0].Labels[0])
@@ -190,40 +188,10 @@ func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
 	products := make([]ProductSpec, 1)
 	products[0].BrowserName = "chrome"
 	products[0].Revision = "1111111111"
-	loaded, err := LoadTestRuns(ctx, products, nil, nil, nil, nil, nil)
+	loaded, err := LoadTestRuns(ctx, products, nil, LatestSHA, nil, nil, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(loaded))
 	assert.Equal(t, "1111111111", loaded[0].Revision)
-}
-
-func TestLoadTestRuns_MultipleSHAs(t *testing.T) {
-	var testRuns TestRuns
-	for i := 0; i < 3; i++ {
-		testRun := TestRun{}
-		testRun.BrowserName = "chrome"
-		testRun.Revision = strings.Repeat(strconv.FormatInt(int64(i), 10), 10)
-		testRuns = append(testRuns, testRun)
-	}
-
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
-
-	keys := make([]*datastore.Key, len(testRuns))
-	for i := range testRuns {
-		keys[i] = datastore.NewIncompleteKey(ctx, "TestRun", nil)
-	}
-	keys, err = datastore.PutMulti(ctx, keys, testRuns)
-	assert.Nil(t, err)
-
-	products := make([]ProductSpec, 1)
-	products[0].BrowserName = "chrome"
-	shas := []string{"1111111111", "2222222222"}
-	loaded, err := LoadTestRuns(ctx, products, nil, shas, nil, nil, nil)
-	assert.Nil(t, err)
-	assert.Equal(t, 2, len(loaded))
-	assert.Equal(t, shas[0], loaded[0].Revision)
-	assert.Equal(t, shas[1], loaded[1].Revision)
 }
 
 func TestLoadTestRuns_Ordering(t *testing.T) {
@@ -260,7 +228,7 @@ func TestLoadTestRuns_Ordering(t *testing.T) {
 	}
 
 	chrome, _ := ParseProductSpec("chrome")
-	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, nil, nil, nil)
+	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, LatestSHA, nil, nil, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(loaded))
 	// Runs should be ordered descendingly by TimeStart.
@@ -303,7 +271,7 @@ func TestLoadTestRuns_From(t *testing.T) {
 	}
 
 	chrome, _ := ParseProductSpec("chrome")
-	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, &yesterday, nil, nil)
+	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, LatestSHA, &yesterday, nil, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(loaded))
 	assert.Equal(t, "1234567890", loaded[0].Revision)
@@ -343,7 +311,7 @@ func TestLoadTestRuns_To(t *testing.T) {
 	}
 
 	chrome, _ := ParseProductSpec("chrome")
-	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, nil, nil, &now, nil)
+	loaded, err := LoadTestRuns(ctx, []ProductSpec{chrome}, nil, LatestSHA, nil, &now, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(loaded))
 	assert.Equal(t, "0987654321", loaded[0].Revision)
@@ -357,7 +325,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 	browserNames := GetDefaultBrowserNames()
 
 	// Nothing in datastore.
-	shas, _ := GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
+	shas, _, _ := GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// Only 3 browsers.
@@ -372,7 +340,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Len(t, shas, 0)
 
 	// But, if request by any subset of those 3 browsers, we find the SHA.
@@ -381,13 +349,13 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		product := ProductSpec{}
 		product.BrowserName = browser
 		products = append(products, product)
-		shas, _ = GetCompleteRunSHAs(ctx, products, nil, nil, nil, nil)
+		shas, _, _ = GetCompleteRunSHAs(ctx, products, nil, nil, nil, nil)
 		assert.Len(t, shas, 1)
 	}
 	// And labels
-	shas, _ = GetCompleteRunSHAs(ctx, products, mapset.NewSetWith("foo"), nil, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, products, mapset.NewSetWith("foo"), nil, nil, nil)
 	assert.Len(t, shas, 1)
-	shas, _ = GetCompleteRunSHAs(ctx, products, mapset.NewSetWith("bar"), nil, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, products, mapset.NewSetWith("bar"), nil, nil, nil)
 	assert.Len(t, shas, 0)
 
 	// All 4 browsers, but experimental.
@@ -397,7 +365,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser + "-" + ExperimentalLabel
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// 2 browsers, and other 2, but experimental.
@@ -410,7 +378,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		}
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// 2 browsers which are twice.
@@ -421,7 +389,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, 0, len(shas))
 
 	// All 4 browsers.
@@ -431,7 +399,7 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 
 	// Another (earlier) run, also all 4 browsers.
@@ -441,14 +409,14 @@ func TestGetCompleteRunSHAs(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, nil)
 	assert.Equal(t, []string{"abcdef0123", "abcdef9999"}, shas)
 	// Limit 1
 	one := 1
-	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, &one)
+	shas, _, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, nil, nil, &one)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 	// From 4 days ago @ midnight.
 	from := time.Now().AddDate(0, 0, -4).Truncate(24 * time.Hour)
-	shas, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, &from, nil, nil)
+	shas, _, _ = GetCompleteRunSHAs(ctx, GetDefaultProducts(), nil, &from, nil, nil)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 }

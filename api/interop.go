@@ -6,8 +6,10 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
@@ -19,7 +21,7 @@ import (
 func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
+	query := datastore.NewQuery(passRateType).Order("-StartTime")
 
 	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
@@ -27,45 +29,66 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// We 'load by SHA' by fetching any interop result with all TestRunIDs for that SHA.
+	// We load non-default queries by fetching any interop result with all their
+	// TestRunIDs present in the TestRuns matching the query.
+	var keysFilter mapset.Set
 	if !filters.IsDefaultQuery() {
 		// Load default browser runs for SHA.
 		// Force any max-count to one; more than one of each product makes no sense for a interop run.
-		one := 1
-		filters.MaxCount = &one
-		runs, err := LoadTestRunsForFilters(ctx, filters)
+		shaFilters := filters
+		limit := 128
+		shaFilters.MaxCount = &limit
+		keys, err := LoadTestRunKeysForFilters(ctx, shaFilters)
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-		} else if len(runs) < 1 {
+		} else if len(keys) < 1 {
 			http.Error(w, "No metrics runs found", http.StatusNotFound)
 			return
 		}
-		for _, run := range runs {
-			query = query.Filter("TestRunIDs =", run.ID)
+		keysFilter = mapset.NewSet()
+		for _, key := range keys {
+			keysFilter.Add(key.IntID())
 		}
 	}
 
-	var metadataSlice []metrics.PassRateMetadataLegacy
-	if _, err := query.GetAll(ctx, &metadataSlice); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	// Iterate until we find a run where all test runs matched the query.
+	var interop metrics.PassRateMetadata
+	it := query.Run(ctx)
+	for {
+		_, err := it.Next(&interop)
+		if err == datastore.Done {
+			http.NotFound(w, r)
+			return
+		} else if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if keysFilter != nil {
+			all := true
+			for _, id := range interop.TestRunIDs {
+				if !keysFilter.Contains(id) {
+					all = false
+					break
+				}
+			}
+			if !all {
+				continue
+			}
+		}
+		break
 	}
-	if len(metadataSlice) != 1 {
-		http.Error(w, "No metrics runs found", http.StatusNotFound)
+
+	if err := interop.LoadTestRuns(ctx); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to load interop's test runs: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	metadata := &metadataSlice[0]
-	if err := metadata.LoadTestRuns(ctx); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	metadataBytes, err := json.Marshal(*metadata)
+	interopBytes, err := json.Marshal(interop)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write(metadataBytes)
+	w.Write(interopBytes)
 }

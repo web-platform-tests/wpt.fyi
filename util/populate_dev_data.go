@@ -229,6 +229,8 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 			continue
 		}
 		// Update the interop IDs to match the newly-copied local test-run IDs.
+		// We re-fetch locally because we might have copied a large number of runs,
+		// but only want the latest for interop.
 		prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
 		one := 1
 		sha := shared.LatestSHA

@@ -45,9 +45,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(testRunsBytes)
 }
 
-// LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
-// the TestRuns.
-func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result []shared.TestRun, err error) {
+// LoadTestRunKeysForFilters deciphers the filters and executes a corresponding
+// query to load the TestRun keys.
+func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter) (result []*datastore.Key, err error) {
 	limit := filters.MaxCount
 	from := filters.From
 	if limit == nil && from == nil {
@@ -71,7 +71,17 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 		for _, sha := range shas {
 			keys = append(keys, shaKeys[sha]...)
 		}
-		return shared.LoadTestRunsByKeys(ctx, keys)
+		return keys, err
 	}
-	return shared.LoadTestRuns(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit)
+	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit)
+}
+
+// LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
+// the TestRuns.
+func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result []shared.TestRun, err error) {
+	var keys []*datastore.Key
+	if keys, err = LoadTestRunKeysForFilters(ctx, filters); err != nil {
+		return nil, err
+	}
+	return shared.LoadTestRunsByKeys(ctx, keys)
 }
