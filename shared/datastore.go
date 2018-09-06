@@ -164,7 +164,8 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 }
 
 // GetCompleteRunSHAs returns an array of the SHA[0:10] for runs that
-// exists for all the given products, ordered by most-recent.
+// exists for all the given products, ordered by most-recent, as well as a map
+// of those SHAs to the TestRun keys for the complete run.
 func GetCompleteRunSHAs(
 	ctx context.Context,
 	products ProductSpecs,
@@ -195,7 +196,7 @@ func GetCompleteRunSHAs(
 	for {
 		var testRun TestRun
 		var key *datastore.Key
-		var matchingProduct *ProductSpec
+		matchingProduct := -1
 		key, err := it.Next(&testRun)
 		if err == datastore.Done {
 			break
@@ -204,20 +205,24 @@ func GetCompleteRunSHAs(
 		} else {
 			for i := range products {
 				if products[i].Matches(testRun) {
-					matchingProduct = &products[i]
+					matchingProduct = i
 					break
 				}
 			}
 		}
-		if matchingProduct == nil {
+		if matchingProduct < 0 {
 			continue
 		}
 		if _, ok := productsBySHA[testRun.Revision]; !ok {
 			productsBySHA[testRun.Revision] = mapset.NewSet()
+			keys[testRun.Revision] = make([]*datastore.Key, len(products))
 		}
 		set := productsBySHA[testRun.Revision]
-		set.Add(*matchingProduct)
-		keys[testRun.Revision] = append(keys[testRun.Revision], key)
+		if set.Contains(products[matchingProduct]) {
+			continue
+		}
+		set.Add(products[matchingProduct])
+		keys[testRun.Revision][matchingProduct] = key
 		if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 			done.Add(testRun.Revision)
 			shas = append(shas, testRun.Revision)
