@@ -190,6 +190,7 @@ func GetCompleteRunSHAs(
 	}
 
 	productsBySHA := make(map[string]mapset.Set)
+	keyCollector := make(map[string][]*datastore.Key)
 	keys = make(map[string][]*datastore.Key)
 	done := mapset.NewSet()
 	it := query.Run(ctx)
@@ -215,17 +216,18 @@ func GetCompleteRunSHAs(
 		}
 		if _, ok := productsBySHA[testRun.Revision]; !ok {
 			productsBySHA[testRun.Revision] = mapset.NewSet()
-			keys[testRun.Revision] = make([]*datastore.Key, len(products))
+			keyCollector[testRun.Revision] = make([]*datastore.Key, len(products))
 		}
 		set := productsBySHA[testRun.Revision]
 		if set.Contains(products[matchingProduct]) {
 			continue
 		}
 		set.Add(products[matchingProduct])
-		keys[testRun.Revision][matchingProduct] = key
+		keyCollector[testRun.Revision][matchingProduct] = key
 		if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 			done.Add(testRun.Revision)
 			shas = append(shas, testRun.Revision)
+			keys[testRun.Revision] = keyCollector[testRun.Revision]
 			if limit != nil && len(shas) >= *limit {
 				return shas, keys, nil
 			}

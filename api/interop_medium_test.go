@@ -26,11 +26,11 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	assert.Nil(t, err)
 	defer i.Close()
 
-	r, err := i.NewRequest("GET", "/api/interop", nil)
-	assert.Nil(t, err)
+	r, _ := i.NewRequest("GET", "/api/interop?complete", nil)
 	ctx := appengine.NewContext(r)
 
 	firstRun := shared.TestRun{}
+	firstRun.Labels = []string{"stable"}
 	firstRun.Revision = "0000000000"
 	firstRun.TimeStart = time.Now().AddDate(0, 0, -1)
 
@@ -55,34 +55,45 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	apiInteropHandler(resp, r)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
-	// One interop data, for the first run.
+	// Interop data spanning across the complete runs.
 	interop := metrics.PassRateMetadata{}
 	interop.TestRunIDs = make(shared.TestRunIDs, len(firstRunKeys))
-	for i, key := range firstRunKeys {
+	for i := range firstRunKeys {
+		key := firstRunKeys[i]
+		if i*2 < len(firstRunKeys) {
+			key = secondRunKeys[i]
+		}
 		interop.TestRunIDs[i] = key.IntID()
 	}
 	interopKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 	datastore.Put(ctx, datastore.NewKey(ctx, interopKindName, "", 0, nil), &interop)
 
-	// Needed for equality comparisons below.
-	interop.LoadTestRuns(ctx)
+	resp = httptest.NewRecorder()
+	apiInteropHandler(resp, r)
+	assert.Equal(t, http.StatusNotFound, resp.Code)
+
+	// One interop data, for the first run.
+	interop = metrics.PassRateMetadata{}
+	interop.TestRunIDs = make(shared.TestRunIDs, len(firstRunKeys))
+	for i, key := range firstRunKeys {
+		interop.TestRunIDs[i] = key.IntID()
+	}
+	datastore.Put(ctx, datastore.NewKey(ctx, interopKindName, "", 0, nil), &interop)
+
+	interop.LoadTestRuns(ctx) // (Needed for equality comparisons below.)
 	interop.TestRunIDs = nil
 
-	// Latest run
-	resp = httptest.NewRecorder()
-	apiInteropHandler(resp, r)
-	assert.Equal(t, http.StatusOK, resp.Code)
-	var bodyInterop metrics.PassRateMetadata
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(bodyBytes, &bodyInterop)
-	assert.Equal(t, interop, bodyInterop)
-
-	// Latest complete run
-	r, _ = i.NewRequest("GET", "/api/interop?complete", nil)
-	resp = httptest.NewRecorder()
-	apiInteropHandler(resp, r)
-	assert.Equal(t, http.StatusOK, resp.Code)
-	bodyBytes, _ = ioutil.ReadAll(resp.Body)
-	json.Unmarshal(bodyBytes, &bodyInterop)
-	assert.Equal(t, interop, bodyInterop)
+	// "complete" and "complete & stable" have the same outcome.
+	reqs := make([]*http.Request, 2)
+	reqs[0], _ = i.NewRequest("GET", "/api/interop?complete", nil)
+	reqs[1], _ = i.NewRequest("GET", "/api/interop?complete&label=stable", nil)
+	for _, req := range reqs {
+		resp = httptest.NewRecorder()
+		apiInteropHandler(resp, req)
+		assert.Equal(t, http.StatusOK, resp.Code)
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		var bodyInterop metrics.PassRateMetadata
+		json.Unmarshal(bodyBytes, &bodyInterop)
+		assert.Equal(t, interop, bodyInterop)
+	}
 }
