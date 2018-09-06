@@ -21,7 +21,9 @@ import (
 var epochs = []epoch.Epoch{
 	epoch.Weekly{},
 	epoch.Daily{},
+	epoch.TwelveHourly{},
 	epoch.EightHourly{},
+	epoch.SixHourly{},
 	epoch.FourHourly{},
 	epoch.TwoHourly{},
 	epoch.Hourly{},
