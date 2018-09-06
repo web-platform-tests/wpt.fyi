@@ -47,7 +47,7 @@ func (EightHourly) GetData() Data {
 		"The last PR merge commit of eight-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
 		time.Hour * 8,
 		time.Hour * 8,
-		"DEPRECATED: The eight_hourly is being deprecated in favour of epochs that divide evenly by 24 hours.",
+		"DEPRECATED: The eight_hourly epoch is being deprecated in favour of six_hourly and twelve_hourly.",
 	}
 }
 
@@ -85,7 +85,7 @@ func (FourHourly) GetData() Data {
 		"The last PR merge commit of four-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:04:00, etc..",
 		time.Hour * 4,
 		time.Hour * 4,
-		"DEPRECATED: The eight_hourly is being deprecated in favour of epochs that divide evenly by 24 hours.",
+		"DEPRECATED: The four_hourly epoch is being deprecated in favour of six_hourly and twelve_hourly.",
 	}
 }
 
