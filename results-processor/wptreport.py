@@ -414,6 +414,14 @@ class WPTReport(object):
         self.sha_product_path
         self.test_run_metadata
 
+    def serialize_gzip(self, filepath):
+        """Serializes and gzips the in-memory report to a file.
+
+        Args:
+            filepath: A file path to write to.
+        """
+        self.write_gzip_json(filepath, self._report)
+
 
 def prepare_labels(report, labels_str, uploader):
     """Prepares the list of labels for a test run.
@@ -438,7 +446,6 @@ def prepare_labels(report, labels_str, uploader):
     # Empty labels may be generated here, but they will be removed later.
     for label in labels_str.split(','):
         labels.add(label.strip())
-    # Set the default channel to stable.
     if ('stable' not in labels) and ('experimental' not in labels):
         labels.add('stable')
     # Remove any empty labels.
