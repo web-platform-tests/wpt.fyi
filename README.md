@@ -34,6 +34,14 @@ execute the script which leverages `util/populate_dev_data.go` by running:
 ./util/docker-dev/dev_data.sh
 ```
 
+*NOTE*: Some web UI views, such as `/interop`, only work in the presence of so-called "static runs". If some views
+do not work while debugging locally, try clearing your local datastore and memcache, then run:
+
+```sh
+source ./util/commands.sh
+wptd_exec go run ./util/populate_dev_data.go -static_runs=true
+```
+
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for more information on local development.
 
 # Filesystem and network output
