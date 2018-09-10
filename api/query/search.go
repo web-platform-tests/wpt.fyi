@@ -62,6 +62,7 @@ func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse query params.
 	ctx := shared.NewAppEngineContext(r)
 	sh := searchHandler{queryHandler{
+		ctx:        ctx,
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
 			ctx:   ctx,
@@ -79,13 +80,19 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger := sh.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Preparing search response for %v", r)
 	resp := prepareSearchResponse(filters, testRuns, summaries)
+	logger.Infof("Prepared search response for %v", r)
 
+	logger.Infof("Marshaling search response for %v", r)
 	data, err := json.Marshal(resp)
 	if err != nil {
+		logger.Errorf("Marshaling search response for %v", r)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Write(data)
+	logger.Infof("Marshaled search response for %v", r)
 }
 
 func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRun, summaries []summary) SearchResponse {

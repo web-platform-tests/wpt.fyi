@@ -36,9 +36,11 @@ func TestLoadSummary_cacheMiss(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
+	ctx := shared.NewTestContext()
 	sh := searchHandler{queryHandler{
+		ctx: ctx,
 		dataSource: cachedStore{
-			ctx:   shared.NewTestContext(),
+			ctx:   ctx,
 			cache: cache,
 			store: store,
 		},
@@ -77,9 +79,11 @@ func TestLoadSummary_cacheHit(t *testing.T) {
 	key := getMemcacheKey(testRun)
 
 	cache := NewMockreadWritable(mockCtrl)
+	ctx := shared.NewTestContext()
 	sh := searchHandler{queryHandler{
+		ctx: ctx,
 		dataSource: cachedStore{
-			ctx:   shared.NewTestContext(),
+			ctx:   ctx,
 			cache: cache,
 		},
 	}}
@@ -110,9 +114,11 @@ func TestLoadSummary_missing(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
+	ctx := shared.NewTestContext()
 	sh := searchHandler{queryHandler{
+		ctx: ctx,
 		dataSource: cachedStore{
-			ctx:   shared.NewTestContext(),
+			ctx:   ctx,
 			cache: cache,
 			store: store,
 		},
@@ -154,9 +160,11 @@ func TestLoadSummaries_success(t *testing.T) {
 	}
 
 	cache := NewMockreadWritable(mockCtrl)
+	ctx := shared.NewTestContext()
 	sh := searchHandler{queryHandler{
+		ctx: ctx,
 		dataSource: cachedStore{
-			ctx:   shared.NewTestContext(),
+			ctx:   ctx,
 			cache: cache,
 		},
 	}}
@@ -209,9 +217,11 @@ func TestLoadSummaries_fail(t *testing.T) {
 
 	cache := NewMockreadWritable(mockCtrl)
 	store := NewMockreadable(mockCtrl)
+	ctx := shared.NewTestContext()
 	sh := searchHandler{queryHandler{
+		ctx: ctx,
 		dataSource: cachedStore{
-			ctx:   shared.NewTestContext(),
+			ctx:   ctx,
 			cache: cache,
 			store: store,
 		},
@@ -237,6 +247,7 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 
 	si := NewMocksharedInterface(mockCtrl)
 	sh := searchHandler{queryHandler{
+		ctx:        shared.NewTestContext(),
 		sharedImpl: si,
 	}}
 
@@ -273,6 +284,7 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 
 	si := NewMocksharedInterface(mockCtrl)
 	sh := searchHandler{queryHandler{
+		ctx:        shared.NewTestContext(),
 		sharedImpl: si,
 	}}
 
@@ -295,8 +307,7 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 		RunIDs: runIDs,
 	}
 
-	si.EXPECT().LoadTestRun(testRuns[0].ID).Return(&testRuns[0], nil)
-	si.EXPECT().LoadTestRun(testRuns[1].ID).Return(&testRuns[1], nil)
+	si.EXPECT().LoadTestRunsByIDs(gomock.Any(), []int64{testRuns[0].ID, testRuns[1].ID}).Return([]shared.TestRun{testRuns[0], testRuns[1]}, nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)

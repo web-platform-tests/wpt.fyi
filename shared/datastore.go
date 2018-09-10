@@ -21,6 +21,26 @@ func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
 	return &testRun, nil
 }
 
+// LoadTestRunsByIDs loads the given test runs (by key), but also appends the
+// ID to the TestRun entity.
+func LoadTestRunsByIDs(ctx context.Context, ids []int64) (result []TestRun, err error) {
+	keys := make([]*datastore.Key, 0, len(ids))
+	for _, id := range ids {
+		keys = append(keys, datastore.NewKey(ctx, "TestRun", "", id, nil))
+	}
+
+	result = make([]TestRun, len(keys))
+	err = datastore.GetMulti(ctx, keys, result)
+	if err != nil {
+		return nil, err
+	}
+	// Append the keys as ID
+	for i, key := range keys {
+		result[i].ID = key.IntID()
+	}
+	return result, err
+}
+
 // LoadTestRuns loads the TestRun entities for the given parameters.
 // It is encapsulated because we cannot run single queries with multiple inequality
 // filters, so must load the keys and merge the results.

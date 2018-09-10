@@ -86,6 +86,7 @@ func TestAutocompleteHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	sh := autocompleteHandler{queryHandler{
+		ctx:        ctx,
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
 			ctx:   ctx,

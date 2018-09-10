@@ -86,6 +86,7 @@ func TestSearchHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	sh := searchHandler{queryHandler{
+		ctx:        ctx,
 		sharedImpl: defaultShared{ctx},
 		dataSource: cachedStore{
 			ctx:   ctx,

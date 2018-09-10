@@ -146,18 +146,31 @@ func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
 }
 
 func (mw *memcacheWriteCloser) Close() error {
+	exp := 48 * time.Hour
+	logger := mw.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof(`Writing to %d bytes to key memcache "%s"; expiry: %d`, mw.b.Len(), mw.key, exp)
+
 	mw.isClosed = true
-	return memcache.Set(mw.ctx, &memcache.Item{
+	err := memcache.Set(mw.ctx, &memcache.Item{
 		Key:        mw.key,
 		Value:      mw.b.Bytes(),
-		Expiration: 48 * time.Hour,
+		Expiration: exp,
 	})
+
+	if err != nil {
+		logger.Errorf(`Failed to write to memcache key "%s": %v`, mw.key, err)
+	} else {
+		logger.Infof(`Writing to %d bytes to key memcache "%s"; expiry: %d`, mw.b.Len(), mw.key, exp)
+	}
+
+	return err
 }
 
 type sharedInterface interface {
 	ParseQueryParamInt(r *http.Request, key string) (int, error)
 	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
 	LoadTestRuns([]shared.ProductSpec, mapset.Set, []string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
+	LoadTestRunsByIDs(ctx context.Context, ids []int64) (result []shared.TestRun, err error)
 	LoadTestRun(int64) (*shared.TestRun, error)
 }
 
@@ -175,6 +188,10 @@ func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter
 
 func (sharedImpl defaultShared) LoadTestRuns(ps []shared.ProductSpec, ls mapset.Set, shas []string, from *time.Time, to *time.Time, limit *int) ([]shared.TestRun, error) {
 	return shared.LoadTestRuns(sharedImpl.ctx, ps, ls, shas, from, to, limit)
+}
+
+func (sharedImpl defaultShared) LoadTestRunsByIDs(ctx context.Context, ids []int64) (result []shared.TestRun, err error) {
+	return shared.LoadTestRunsByIDs(ctx, ids)
 }
 
 func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
@@ -224,14 +241,17 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 
 	// Cache summary.
 	go func() {
+		logger.Infof(`Writing "%s" %d-byte summary to cache %v`, cacheID, len(data), cs.cache)
 		w, err := cs.cache.NewWriteCloser(cacheID)
 		if err != nil {
-			logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
+			logger.Warningf("Error creating cache writer for key %s: %v", cacheID, err)
 			return
 		}
 		defer func() {
 			if err := w.Close(); err != nil {
-				logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
+				logger.Warningf("Failed to close writer for key %s: %v", cacheID, err)
+			} else {
+				logger.Infof(`Wrote "%s" summary to cache %v`, cacheID, cs.cache)
 			}
 		}()
 		n, err := w.Write(data)
@@ -245,15 +265,20 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 		}
 	}()
 
+	logger.Infof("Serving summary from store: %s", storeID)
 	return data, nil
 }
 
 type queryHandler struct {
+	ctx        context.Context
 	sharedImpl sharedInterface
 	dataSource cachedStore
 }
 
 func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, []shared.TestRun, []summary, error) {
+	logger := qh.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Processing query input for %v", r)
+
 	filters, err := qh.sharedImpl.ParseQueryFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -272,17 +297,24 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 		return nil, nil, nil, err
 	}
 
+	logger.Infof("Processed query input for %v", r)
+
 	return &filters, testRuns, summaries, nil
 }
 
 func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRun, shared.QueryFilter, error) {
 	filters := in
 	var testRuns []shared.TestRun
+	var err error
+
+	logger := qh.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Loading runs and filters for %v", in)
 
 	if filters.RunIDs == nil || len(filters.RunIDs) == 0 {
+		logger.Infof("Loading runs by query")
+
 		var runFilters shared.TestRunFilter
 		var shas []string
-		var err error
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
 		testRuns, err = qh.sharedImpl.LoadTestRuns(products, runFilters.Labels, shas, runFilters.From, runFilters.To, &limit)
@@ -294,28 +326,20 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 		for _, testRun := range testRuns {
 			filters.RunIDs = append(filters.RunIDs, testRun.ID)
 		}
+
+		logger.Infof("Loaded runs by query")
 	} else {
-		var err error
-		var wg sync.WaitGroup
-		testRuns = make([]shared.TestRun, len(filters.RunIDs))
-		for i, id := range filters.RunIDs {
-			wg.Add(1)
-			go func(i int, id int64) {
-				defer wg.Done()
+		logger.Infof("Loading runs by key")
 
-				var testRun *shared.TestRun
-				testRun, err = qh.sharedImpl.LoadTestRun(id)
-				if err == nil {
-					testRuns[i] = *testRun
-				}
-			}(i, id)
-		}
-		wg.Wait()
-
+		testRuns, err = qh.sharedImpl.LoadTestRunsByIDs(qh.ctx, filters.RunIDs)
 		if err != nil {
 			return testRuns, filters, err
 		}
+
+		logger.Infof("Loading runs by key")
 	}
+
+	logger.Infof("Loaded runs and filters for %v", in)
 
 	return testRuns, filters, nil
 }
@@ -324,6 +348,8 @@ func (qh queryHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, erro
 	var err error
 	summaries := make([]summary, len(testRuns))
 
+	logger := qh.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
+	logger.Infof("Loading summaries for %v", testRuns)
 	var wg sync.WaitGroup
 	for i, testRun := range testRuns {
 		wg.Add(1)
@@ -347,6 +373,7 @@ func (qh queryHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, erro
 		}(i, testRun)
 	}
 	wg.Wait()
+	logger.Infof("Loaded summaries for %v", testRuns)
 
 	return summaries, err
 }
