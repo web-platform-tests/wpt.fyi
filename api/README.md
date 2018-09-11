@@ -639,8 +639,6 @@ range for fetching epochal revisions. Defaults to the date which is
 
 Search for test results over some set of test runs.
 
-_This API is currently in staging, not production._
-
 __Parameters__
 
 __`run_ids`__ : Array-separated list of numerical ids associated with the runs
