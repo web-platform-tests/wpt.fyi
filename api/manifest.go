@@ -17,7 +17,6 @@ import (
 
 	"github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/memcache"
 )
@@ -29,7 +28,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	paths := shared.ParsePathsParam(r)
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	sha, manifestBytes, err := getManifestForSHA(ctx, sha)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

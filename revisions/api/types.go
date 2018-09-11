@@ -36,6 +36,7 @@ type Epoch struct {
 	Description string  `json:"description"`
 	MinDuration float32 `json:"min_duration_sec"`
 	MaxDuration float32 `json:"max_duration_sec"`
+	Warning     string  `json:"warning,omitempty"`
 }
 
 // FromEpoch converts an epoch.Epoch to an epoch exposed via the public API.
@@ -50,12 +51,14 @@ func FromEpoch(e epoch.Epoch) Epoch {
 	d := e.GetData()
 	minDuration := float32(d.MinDuration.Seconds())
 	maxDuration := float32(d.MaxDuration.Seconds())
+	warning := d.Warning
 	return Epoch{
 		id,
 		d.Label,
 		d.Description,
 		minDuration,
 		maxDuration,
+		warning,
 	}
 }
 

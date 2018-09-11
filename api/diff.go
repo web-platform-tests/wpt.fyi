@@ -8,7 +8,6 @@ import (
 	"net/url"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 // apiDiffHandler takes 2 test-run results JSON blobs and produces JSON in the same format, with only the differences
@@ -28,7 +27,7 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	var err error
 	params, err := url.ParseQuery(r.URL.RawQuery)
@@ -83,7 +82,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 // handleAPIDiffPost handles POST requests to /api/diff, which allows the caller to produce the diff of an arbitrary
 // run result JSON blob against a historical production run.
 func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	var err error
 	params, err := url.ParseQuery(r.URL.RawQuery)

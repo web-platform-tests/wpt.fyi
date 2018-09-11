@@ -18,6 +18,7 @@ func (Monthly) GetData() Data {
 		"The last PR merge commit of each month, by UTC commit timestamp on master.",
 		time.Hour * 24 * 28,
 		time.Hour * 24 * 31,
+		"",
 	}
 }
 
@@ -41,6 +42,7 @@ func (Weekly) GetData() Data {
 		"The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Monday.",
 		time.Hour * 24 * 7,
 		time.Hour * 24 * 7,
+		"",
 	}
 }
 
@@ -71,6 +73,7 @@ func (Daily) GetData() Data {
 		"The last PR merge commit of each day, by UTC commit timestamp on master.",
 		time.Hour * 24,
 		time.Hour * 24,
+		"",
 	}
 }
 
@@ -97,6 +100,7 @@ func (Hourly) GetData() Data {
 		"The last PR merge commit of each hour, by UTC commit timestamp on master.",
 		time.Hour,
 		time.Hour,
+		"",
 	}
 }
 

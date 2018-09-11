@@ -14,7 +14,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/revisions/epoch"
 )
 
+var twelveHourly = epoch.TwelveHourly{}
 var eightHourly = epoch.EightHourly{}
+var sixHourly = epoch.SixHourly{}
 var fourHourly = epoch.FourHourly{}
 var twoHourly = epoch.TwoHourly{}
 
@@ -64,6 +66,34 @@ func testTZNegative(t *testing.T, e epoch.Epoch) {
 }
 
 //
+// TwelveHourly
+//
+
+func TestIsTwelveHourly_Close(t *testing.T) {
+	testClosePositive(t, twelveHourly)
+}
+
+func TestIsTwelveHourly_Far(t *testing.T) {
+	testFarPositive(t, twelveHourly)
+}
+
+func TestIsTwelveHourly_TZ(t *testing.T) {
+	testTZPositive(t, twelveHourly)
+}
+
+func TestIsNotTwelveHourly_Close(t *testing.T) {
+	testCloseNegative(t, twelveHourly)
+}
+
+func TestIsNotTwelveHourly_Far(t *testing.T) {
+	testFarNegative(t, twelveHourly)
+}
+
+func TestIsNotTwelveHourly_TZ(t *testing.T) {
+	testTZNegative(t, twelveHourly)
+}
+
+//
 // EightHourly
 //
 
@@ -89,6 +119,34 @@ func TestIsNotEightHourly_Far(t *testing.T) {
 
 func TestIsNotEightHourly_TZ(t *testing.T) {
 	testTZNegative(t, eightHourly)
+}
+
+//
+// SixHourly
+//
+
+func TestIsSixHourly_Close(t *testing.T) {
+	testClosePositive(t, sixHourly)
+}
+
+func TestIsSixHourly_Far(t *testing.T) {
+	testFarPositive(t, sixHourly)
+}
+
+func TestIsSixHourly_TZ(t *testing.T) {
+	testTZPositive(t, sixHourly)
+}
+
+func TestIsNotSixHourly_Close(t *testing.T) {
+	testCloseNegative(t, sixHourly)
+}
+
+func TestIsNotSixHourly_Far(t *testing.T) {
+	testFarNegative(t, sixHourly)
+}
+
+func TestIsNotSixHourly_TZ(t *testing.T) {
+	testTZNegative(t, sixHourly)
 }
 
 //

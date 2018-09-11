@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -65,7 +64,17 @@ func (gz gzipReadWritable) NewReadCloser(id string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gzip.NewReader(r)
+
+	gzr, err := gzip.NewReader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return compositeReadWriteCloser{
+		reader:   gzr,
+		owner:    gzr,
+		delegate: r,
+	}, nil
 }
 
 func (gz gzipReadWritable) NewWriteCloser(id string) (io.WriteCloser, error) {
@@ -73,11 +82,39 @@ func (gz gzipReadWritable) NewWriteCloser(id string) (io.WriteCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gzip.NewWriter(w), nil
+
+	gzw := gzip.NewWriter(w)
+	return compositeReadWriteCloser{
+		writer:   gzw,
+		owner:    gzw,
+		delegate: w,
+	}, nil
 }
 
 type memcacheReadWritable struct {
 	ctx context.Context
+}
+
+type compositeReadWriteCloser struct {
+	reader   io.Reader
+	writer   io.Writer
+	owner    io.Closer
+	delegate io.Closer
+}
+
+func (crwc compositeReadWriteCloser) Read(p []byte) (n int, err error) {
+	return crwc.reader.Read(p)
+}
+
+func (crwc compositeReadWriteCloser) Write(p []byte) (n int, err error) {
+	return crwc.writer.Write(p)
+}
+
+func (crwc compositeReadWriteCloser) Close() error {
+	if err := crwc.owner.Close(); err != nil {
+		return err
+	}
+	return crwc.delegate.Close()
 }
 
 type memcacheWriteCloser struct {
@@ -98,17 +135,17 @@ func (mc memcacheReadWritable) NewReadCloser(key string) (io.ReadCloser, error) 
 }
 
 func (mc memcacheReadWritable) NewWriteCloser(key string) (io.WriteCloser, error) {
-	return memcacheWriteCloser{mc, key, bytes.Buffer{}, false}, nil
+	return &memcacheWriteCloser{mc, key, bytes.Buffer{}, false}, nil
 }
 
-func (mw memcacheWriteCloser) Write(p []byte) (n int, err error) {
+func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
 	if mw.isClosed {
 		return 0, errMemcacheWriteCloserWriteAfterClose
 	}
 	return mw.b.Write(p)
 }
 
-func (mw memcacheWriteCloser) Close() error {
+func (mw *memcacheWriteCloser) Close() error {
 	mw.isClosed = true
 	return memcache.Set(mw.ctx, &memcache.Item{
 		Key:        mw.key,
@@ -121,6 +158,7 @@ type sharedInterface interface {
 	ParseQueryParamInt(r *http.Request, key string) (int, error)
 	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
 	LoadTestRuns([]shared.ProductSpec, mapset.Set, []string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
+	LoadTestRunsByIDs(ids shared.TestRunIDs) (result []shared.TestRun, err error)
 	LoadTestRun(int64) (*shared.TestRun, error)
 }
 
@@ -140,41 +178,47 @@ func (sharedImpl defaultShared) LoadTestRuns(ps []shared.ProductSpec, ls mapset.
 	return shared.LoadTestRuns(sharedImpl.ctx, ps, ls, shas, from, to, limit)
 }
 
+func (sharedImpl defaultShared) LoadTestRunsByIDs(ids shared.TestRunIDs) (result []shared.TestRun, err error) {
+	return ids.LoadTestRuns(sharedImpl.ctx)
+}
+
 func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
 	return shared.LoadTestRun(sharedImpl.ctx, id)
 }
 
 type cachedStore struct {
+	ctx   context.Context
 	cache readWritable
 	store readable
 }
 
 func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
+	logger := cs.ctx.Value(shared.DefaultLoggerCtxKey()).(shared.Logger)
 	cr, err := cs.cache.NewReadCloser(cacheID)
 	if err == nil {
 		defer func() {
 			if err := cr.Close(); err != nil {
-				log.Printf("WARNING: Error closing cache reader for key %s: %v", cacheID, err)
+				logger.Warningf("Error closing cache reader for key %s: %v", cacheID, err)
 			}
 		}()
 		cached, err := ioutil.ReadAll(cr)
 		if err == nil {
-			log.Printf("INFO: Serving summary from cache: %s", cacheID)
+			logger.Infof("Serving summary from cache: %s", cacheID)
 			return cached, nil
 		}
 	}
 
-	log.Printf("WARNING: Error fetching cache key %s: %v", cacheID, err)
+	logger.Warningf("Error fetching cache key %s: %v", cacheID, err)
 	err = nil
 
-	log.Printf("INFO: Loading summary from store: %s", storeID)
+	logger.Infof("Loading summary from store: %s", storeID)
 	sr, err := cs.store.NewReadCloser(storeID)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err := sr.Close(); err != nil {
-			log.Printf("WARNING: Error closing store reader for key %s: %v", storeID, err)
+			logger.Warningf("Error closing store reader for key %s: %v", storeID, err)
 		}
 	}()
 
@@ -187,16 +231,21 @@ func (cs cachedStore) Get(cacheID, storeID string) ([]byte, error) {
 	go func() {
 		w, err := cs.cache.NewWriteCloser(cacheID)
 		if err != nil {
-			log.Printf("WARNING: Error cache writer for key %s: %v", cacheID, err)
+			logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
 			return
 		}
 		defer func() {
 			if err := w.Close(); err != nil {
-				log.Printf("WARNING: Error cache writer for key %s: %v", cacheID, err)
+				logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
 			}
 		}()
-		if _, err := w.Write(data); err != nil {
-			log.Printf("WARNING: Failed to write to cache key %s: %v", cacheID, err)
+		n, err := w.Write(data)
+		if err != nil {
+			logger.Warningf("Failed to write to cache key %s: %v", cacheID, err)
+			return
+		}
+		if n != len(data) {
+			logger.Warningf("Failed to write to cache key %s: attempt to write %d bytes, but wrote %d bytes instead", cacheID, len(data), n)
 			return
 		}
 	}()
@@ -234,11 +283,11 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRun, shared.QueryFilter, error) {
 	filters := in
 	var testRuns []shared.TestRun
+	var err error
 
 	if filters.RunIDs == nil || len(filters.RunIDs) == 0 {
 		var runFilters shared.TestRunFilter
 		var shas []string
-		var err error
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
 		testRuns, err = qh.sharedImpl.LoadTestRuns(products, runFilters.Labels, shas, runFilters.From, runFilters.To, &limit)
@@ -251,23 +300,7 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 			filters.RunIDs = append(filters.RunIDs, testRun.ID)
 		}
 	} else {
-		var err error
-		var wg sync.WaitGroup
-		testRuns = make([]shared.TestRun, len(filters.RunIDs))
-		for i, id := range filters.RunIDs {
-			wg.Add(1)
-			go func(i int, id int64) {
-				defer wg.Done()
-
-				var testRun *shared.TestRun
-				testRun, err = qh.sharedImpl.LoadTestRun(id)
-				if err == nil {
-					testRuns[i] = *testRun
-				}
-			}(i, id)
-		}
-		wg.Wait()
-
+		testRuns, err = qh.sharedImpl.LoadTestRunsByIDs(shared.TestRunIDs(filters.RunIDs))
 		if err != nil {
 			return testRuns, filters, err
 		}

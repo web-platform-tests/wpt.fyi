@@ -8,9 +8,9 @@ set -e
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
-# A safety cutoff. Only versions last deployed more than 4 weeks ago may be
+# A safety cutoff. Only versions last deployed more than 1 week ago may be
 # deleted.
-CUTOFF="-P4W"
+CUTOFF="-P1W"
 
 # This is a constant instead of an argument because production versions should
 # be deleted carefully and manually.
