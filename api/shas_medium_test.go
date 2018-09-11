@@ -47,9 +47,9 @@ func TestApiSHAsHandler(t *testing.T) {
 	run.Revision = "abcdef0000"
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 
-	// Complete
+	// Aligned
 	shas = nil
-	r, err = i.NewRequest("GET", "/api/shas?complete", nil)
+	r, err = i.NewRequest("GET", "/api/shas?aligned", nil)
 	w = httptest.NewRecorder()
 	apiSHAsHandler(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -57,7 +57,7 @@ func TestApiSHAsHandler(t *testing.T) {
 	json.Unmarshal(bytes, &shas)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 
-	// Not complete
+	// Not aligned
 	shas = nil
 	r, err = i.NewRequest("GET", "/api/shas", nil)
 	w = httptest.NewRecorder()
@@ -68,7 +68,7 @@ func TestApiSHAsHandler(t *testing.T) {
 	assert.Equal(t, []string{"abcdef0123", "abcdef0000"}, shas)
 
 	// Bad param
-	r, err = i.NewRequest("GET", "/api/shas?complete=bad-value", nil)
+	r, err = i.NewRequest("GET", "/api/shas?aligned=bad-value", nil)
 	w = httptest.NewRecorder()
 	apiSHAsHandler(w, r)
 	assert.Equal(t, http.StatusBadRequest, w.Code)

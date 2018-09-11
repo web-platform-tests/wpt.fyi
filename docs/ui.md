@@ -4,7 +4,7 @@ The UI consists of base HTML templates served by the Go App Engine app in `webap
 
 ## UI Principles
 
-- The dashboard should not surface any overall metrics that compare complete runs of different browsers against each other.
+- The dashboard should not surface any overall metrics that compare aligned runs of different browsers against each other.
 - Clean, uncluttered design.
 
 ### More specifically

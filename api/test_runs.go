@@ -55,18 +55,18 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 	}
 	products := filters.GetProductsOrDefault()
 
-	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
+	// When ?aligned=true, make sure to show results for the same aligned run (executed for all browsers).
 	var shas []string
 	if !shared.IsLatest(filters.SHA) {
 		shas = []string{filters.SHA}
-	} else if filters.Complete != nil && *filters.Complete {
+	} else if filters.Aligned != nil && *filters.Aligned {
 		if shared.IsLatest(filters.SHA) {
-			shas, err = shared.GetCompleteRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
+			shas, err = shared.GetAlignedRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
 			if err != nil {
 				return result, err
 			}
 			if len(shas) < 1 {
-				// Bail out early - can't find any complete runs.
+				// Bail out early - can't find any aligned runs.
 				return result, nil
 			}
 		}
