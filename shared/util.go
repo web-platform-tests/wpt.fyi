@@ -55,11 +55,41 @@ type Logger interface {
 	Warningf(format string, args ...interface{})
 }
 
+// SplitLogger is a logger that sends logging operations to both A and B.
+type SplitLogger struct {
+	A Logger
+	B Logger
+}
+
 type gaeLogger struct {
 	ctx context.Context
 }
 
 type nilLogger struct{}
+
+// Debugf implements formatted debug logging to both A and B.
+func (l SplitLogger) Debugf(format string, args ...interface{}) {
+	l.A.Debugf(format, args...)
+	l.B.Debugf(format, args...)
+}
+
+// Errorf implements formatted error logging to both A and B.
+func (l SplitLogger) Errorf(format string, args ...interface{}) {
+	l.A.Errorf(format, args...)
+	l.B.Errorf(format, args...)
+}
+
+// Infof implements formatted info logging to both A and B.
+func (l SplitLogger) Infof(format string, args ...interface{}) {
+	l.A.Infof(format, args...)
+	l.B.Infof(format, args...)
+}
+
+// Warningf implements formatted warning logging to both A and B.
+func (l SplitLogger) Warningf(format string, args ...interface{}) {
+	l.A.Warningf(format, args...)
+	l.B.Warningf(format, args...)
+}
 
 func (l gaeLogger) Debugf(format string, args ...interface{}) {
 	gaelog.Criticalf(l.ctx, format, args...)
