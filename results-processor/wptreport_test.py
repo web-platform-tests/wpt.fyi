@@ -505,3 +505,8 @@ class HelpersTest(unittest.TestCase):
             prepare_labels(r, '', 'blade-runner'),
             ['blade-runner', 'experimental', 'firefox']
         )
+        r._report['run_info']['browser_channel'] = 'beta'
+        self.assertListEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            ['beta', 'blade-runner', 'firefox']
+        )
