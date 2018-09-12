@@ -292,7 +292,7 @@ func getRemoteAPIContext() (context.Context, error) {
 // TODO(lukebjerring): Migrate to results-analysis
 func FetchInterop(wptdHost string, filter shared.TestRunFilter) (metrics.PassRateMetadata, error) {
 	url := "https://" + wptdHost + "/api/interop"
-	url += "?" + filter.ToQuery(true).Encode()
+	url += "?" + filter.OrDefault().ToQuery().Encode()
 
 	var interop metrics.PassRateMetadata
 	err := shared.FetchJSON(url, &interop)

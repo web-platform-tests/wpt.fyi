@@ -31,7 +31,7 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 		filter.From = &threeMonthsAgo
 	}
 
-	query := filter.ToQuery(false)
+	query := filter.ToQuery()
 	sourceURL := "/api/runs?" + query.Encode()
 
 	// Serialize the data + pipe through the test-runs.html template.

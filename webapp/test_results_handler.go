@@ -12,8 +12,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/deckarep/golang-set"
-
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -100,13 +98,7 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 	if err != nil {
 		return filter, err
 	}
-
-	// Default to complete (aligned), stable runs.
-	if testRunFilter.IsDefaultQuery() {
-		complete := true
-		testRunFilter.Complete = &complete
-		testRunFilter.Labels = mapset.NewSetWith(shared.StableLabel)
-	}
+	testRunFilter = testRunFilter.OrDefault()
 
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")
