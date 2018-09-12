@@ -95,9 +95,7 @@ found in the LICENSE file.
         // Fetch by products (or default products, if nothing else is present).
         if ((this.products && this.products.length)
           || (!preloaded && !this.testRunResources)) {
-          const byProduct =
-            fetch(`/api/runs${this.query}`).then(r => r.ok && r.json());
-          runs.push(byProduct);
+          runs.push(fetch(`/api/runs${this.query}`).then(r => r.ok && r.json()));
         }
         // Fetch by specific URLs (legacy behaviour)
         if (this.testRunResources) {
