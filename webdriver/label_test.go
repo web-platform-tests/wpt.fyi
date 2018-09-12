@@ -31,11 +31,8 @@ func TestLabelParam(t *testing.T) {
 	} else {
 		// Local static data only have 2 experimental browsers.
 		testLabel(t, wd, app, "/", "experimental", "wpt-results", 2)
-		// TODO(Hexcles): "/interop?label=" is broken on staging (#451),
-		// so we only run this test locally. Once the regression is
-		// fixed, we should run it against staging, too.
-		testLabel(t, wd, app, "/interop", "stable", "wpt-interop", 4)
 	}
+	testLabel(t, wd, app, "/interop", "stable", "wpt-interop", 4)
 }
 
 func testLabel(
