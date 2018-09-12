@@ -16,6 +16,9 @@ import (
 // ExperimentalLabel is the implicit label present for runs marked 'experimental'.
 const ExperimentalLabel = "experimental"
 
+// StableLabel is the implicit label present for runs marked 'stable'.
+const StableLabel = "stable"
+
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
 func GetDefaultProducts() ProductSpecs {
 	browserNames := GetDefaultBrowserNames()
