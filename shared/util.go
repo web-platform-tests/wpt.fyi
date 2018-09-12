@@ -56,9 +56,8 @@ type Logger interface {
 }
 
 // SplitLogger is a logger that sends logging operations to both A and B.
-type SplitLogger struct {
-	A Logger
-	B Logger
+type loggerMux struct {
+	delegates []Logger
 }
 
 type gaeLogger struct {
@@ -68,27 +67,31 @@ type gaeLogger struct {
 type nilLogger struct{}
 
 // Debugf implements formatted debug logging to both A and B.
-func (l SplitLogger) Debugf(format string, args ...interface{}) {
-	l.A.Debugf(format, args...)
-	l.B.Debugf(format, args...)
+func (lm loggerMux) Debugf(format string, args ...interface{}) {
+	for _, l := range lm.delegates {
+		l.Debugf(format, args...)
+	}
 }
 
 // Errorf implements formatted error logging to both A and B.
-func (l SplitLogger) Errorf(format string, args ...interface{}) {
-	l.A.Errorf(format, args...)
-	l.B.Errorf(format, args...)
+func (lm loggerMux) Errorf(format string, args ...interface{}) {
+	for _, l := range lm.delegates {
+		l.Errorf(format, args...)
+	}
 }
 
 // Infof implements formatted info logging to both A and B.
-func (l SplitLogger) Infof(format string, args ...interface{}) {
-	l.A.Infof(format, args...)
-	l.B.Infof(format, args...)
+func (lm loggerMux) Infof(format string, args ...interface{}) {
+	for _, l := range lm.delegates {
+		l.Infof(format, args...)
+	}
 }
 
 // Warningf implements formatted warning logging to both A and B.
-func (l SplitLogger) Warningf(format string, args ...interface{}) {
-	l.A.Warningf(format, args...)
-	l.B.Warningf(format, args...)
+func (lm loggerMux) Warningf(format string, args ...interface{}) {
+	for _, l := range lm.delegates {
+		l.Warningf(format, args...)
+	}
 }
 
 func (l gaeLogger) Debugf(format string, args ...interface{}) {
@@ -123,6 +126,15 @@ var (
 	nl  = nilLogger{}
 	lck = LoggerCtxKey{}
 )
+
+// NewLoggerMux creates a multiplexing Logger that writes all log operations to
+// all delegates.
+func NewLoggerMux(delegates []Logger) Logger {
+	if delegates == nil || len(delegates) == 0 {
+		return NewNilLogger()
+	}
+	return loggerMux{delegates}
+}
 
 // NewGAELogger returns a Google App Engine Standard Environment logger bound to
 // the given context.
