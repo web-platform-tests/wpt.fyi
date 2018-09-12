@@ -51,7 +51,7 @@ found in the LICENSE file.
           },
           maxCount: Number,
           sha: String,
-          complete: Boolean,
+          aligned: Boolean,
           isLatest: {
             type: Boolean,
             computed: 'computeIsLatest(sha)'
@@ -152,10 +152,10 @@ found in the LICENSE file.
           params['max-count'] = maxCount;
         }
 
-        // Insist on complete runs iff there is no other parameter.
+        // Insist on aligned runs iff there is no other parameter.
         // This is a temporary hack for https://github.com/web-platform-tests/wpt.fyi/issues/468
-        if (this.complete || Object.keys(params).length === 0) {
-          params.complete = true;
+        if (this.aligned || Object.keys(params).length === 0) {
+          params.aligned = true;
         }
 
         return params;
