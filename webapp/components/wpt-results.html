@@ -170,7 +170,7 @@ found in the LICENSE file.
       </info-banner>
     </template>
 
-    <template is="dom-if" if="[[hasRuns]]">
+    <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
                            path="[[path]]"
