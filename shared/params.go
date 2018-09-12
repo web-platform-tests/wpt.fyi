@@ -30,7 +30,7 @@ type QueryFilter struct {
 type TestRunFilter struct {
 	SHA      string
 	Labels   mapset.Set
-	Complete *bool
+	Aligned  *bool
 	From     *time.Time
 	To       *time.Time
 	MaxCount *int
@@ -42,7 +42,7 @@ type TestRunFilter struct {
 func (filter TestRunFilter) IsDefaultQuery() bool {
 	return IsLatest(filter.SHA) &&
 		(filter.Labels == nil || filter.Labels.Cardinality() < 1) &&
-		(filter.Complete == nil) &&
+		(filter.Aligned == nil) &&
 		(filter.From == nil) &&
 		(filter.MaxCount == nil || *filter.MaxCount == 1) &&
 		(len(filter.Products) < 1)
@@ -54,8 +54,8 @@ func (filter TestRunFilter) OrDefault() TestRunFilter {
 	if !filter.IsDefaultQuery() {
 		return filter
 	}
-	complete := true
-	filter.Complete = &complete
+	aligned := true
+	filter.Aligned = &aligned
 	filter.Labels = mapset.NewSetWith(StableLabel)
 	return filter
 }
@@ -167,8 +167,8 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 			q.Add("product", p.String())
 		}
 	}
-	if filter.Complete != nil {
-		q.Set("complete", strconv.FormatBool(*filter.Complete))
+	if filter.Aligned != nil {
+		q.Set("aligned", strconv.FormatBool(*filter.Aligned))
 	}
 	if filter.MaxCount != nil {
 		q.Set("max-count", fmt.Sprintf("%v", *filter.MaxCount))
@@ -562,8 +562,12 @@ func ParseQueryParamInt(r *http.Request, key string) (int, error) {
 	return i, err
 }
 
-// ParseCompleteParam parses the "complete" param. See ParseBooleanParam.
-func ParseCompleteParam(r *http.Request) (complete *bool, err error) {
+// ParseAlignedParam parses the "aligned" param. See ParseBooleanParam.
+func ParseAlignedParam(r *http.Request) (aligned *bool, err error) {
+	if aligned, err := ParseBooleanParam(r, "aligned"); aligned != nil || err != nil {
+		return aligned, err
+	}
+	// Legacy param name: complete
 	return ParseBooleanParam(r, "complete")
 }
 
@@ -624,7 +628,7 @@ func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error)
 	}
 	filter.SHA = runSHA
 	filter.Labels = ParseLabelsParam(r)
-	if filter.Complete, err = ParseCompleteParam(r); err != nil {
+	if filter.Aligned, err = ParseAlignedParam(r); err != nil {
 		return filter, err
 	}
 	if filter.Products, err = ParseProductOrBrowserParams(r); err != nil {

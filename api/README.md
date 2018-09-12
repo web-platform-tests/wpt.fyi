@@ -37,6 +37,8 @@ __`sha`__ : SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `
 
 __`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`.
 
+__`aligned`__ : boolean for whether to get only SHAs which were executed across all of the requested `product`s.
+
 __`labels`__: A comma-separated list of labels, e.g. `firefox,stable`; only runs with all
 the given labels will be returned. There are currently two kinds of labels supported,
 browser names (`chrome`, `edge`, `firefox`, `safari`) and release channels (`experimental`
@@ -132,7 +134,7 @@ This method behaves similarly to [/api/runs](#apiruns) above, but projects the `
 
 __Parameters__
 
-__`complete`__ : boolean for whether to get only SHAs which were executed across all four of the default (stable) browsers. Not compatible with `product`.
+__`aligned`__ : boolean for whether to get only SHAs which were executed across all of the requested `product`s.
 
 __`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`
 
@@ -638,8 +640,6 @@ range for fetching epochal revisions. Defaults to the date which is
 ### /api/search
 
 Search for test results over some set of test runs.
-
-_This API is currently in staging, not production._
 
 __Parameters__
 

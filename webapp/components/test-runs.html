@@ -51,7 +51,7 @@ found in the LICENSE file.
           },
           maxCount: Number,
           sha: String,
-          complete: Boolean,
+          aligned: Boolean,
           isLatest: {
             type: Boolean,
             computed: 'computeIsLatest(sha)'
@@ -151,8 +151,8 @@ found in the LICENSE file.
         if (maxCount) {
           params['max-count'] = maxCount;
         }
-        if (this.complete) {
-          params.complete = true;
+        if (this.aligned) {
+          params.aligned = true;
         }
         return params;
       }

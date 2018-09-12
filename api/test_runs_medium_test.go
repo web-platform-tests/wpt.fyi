@@ -117,8 +117,8 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	assert.Equal(t, 2, len(results))
 	assert.Equal(t, "abcdef0123", results[0].Revision)
 
-	// ?complete ignored if SHA provided.
-	r, _ = i.NewRequest("GET", "/api/runs?sha=abcdef0123&complete", nil)
+	// ?aligned ignored if SHA provided.
+	r, _ = i.NewRequest("GET", "/api/runs?sha=abcdef0123&aligned", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
 	body, _ = ioutil.ReadAll(resp.Result().Body)
@@ -127,8 +127,8 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	assert.Equal(t, 2, len(results))
 	assert.Equal(t, "abcdef0123", results[0].Revision)
 
-	// ?complete - no complete runs.
-	r, _ = i.NewRequest("GET", "/api/runs?complete", nil)
+	// ?aligned - no aligned runs.
+	r, _ = i.NewRequest("GET", "/api/runs?aligned", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
 	body, _ = ioutil.ReadAll(resp.Result().Body)
@@ -139,7 +139,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 		run.BrowserName = name
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	r, _ = i.NewRequest("GET", "/api/runs?complete", nil)
+	r, _ = i.NewRequest("GET", "/api/runs?aligned", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
 	body, _ = ioutil.ReadAll(resp.Result().Body)
