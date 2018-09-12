@@ -48,6 +48,18 @@ func (filter TestRunFilter) IsDefaultQuery() bool {
 		(len(filter.Products) < 1)
 }
 
+// OrDefault returns the current filter, or, if it is a default query, returns
+// the query used by default in wpt.fyi.
+func (filter TestRunFilter) OrDefault() TestRunFilter {
+	if !filter.IsDefaultQuery() {
+		return filter
+	}
+	aligned := true
+	filter.Aligned = &aligned
+	filter.Labels = mapset.NewSetWith(StableLabel)
+	return filter
+}
+
 // IsDefaultProducts returns whether the params products are empty, or the
 // equivalent of the default product set.
 func (filter TestRunFilter) IsDefaultProducts() bool {
@@ -139,9 +151,7 @@ func (p ProductSpecs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 func (p ProductSpecs) Less(i, j int) bool { return p[i].String() < p[j].String() }
 
 // ToQuery converts the filter set to a url.Values (set of query params).
-// alignedIfDefault is whether the params should fall back to a aligned run
-// (the default on the homepage) if no conflicting params are used.
-func (filter TestRunFilter) ToQuery(alignedIfDefault bool) (q url.Values) {
+func (filter TestRunFilter) ToQuery() (q url.Values) {
 	u := url.URL{}
 	q = u.Query()
 	if !IsLatest(filter.SHA) {
@@ -159,8 +169,6 @@ func (filter TestRunFilter) ToQuery(alignedIfDefault bool) (q url.Values) {
 	}
 	if filter.Aligned != nil {
 		q.Set("aligned", strconv.FormatBool(*filter.Aligned))
-	} else if alignedIfDefault && len(q) == 0 {
-		q.Set("aligned", "true")
 	}
 	if filter.MaxCount != nil {
 		q.Set("max-count", fmt.Sprintf("%v", *filter.MaxCount))

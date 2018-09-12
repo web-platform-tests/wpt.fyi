@@ -98,6 +98,7 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 	if err != nil {
 		return filter, err
 	}
+	testRunFilter = testRunFilter.OrDefault()
 
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")

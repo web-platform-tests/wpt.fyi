@@ -23,7 +23,7 @@ func FetchLatestRuns(wptdHost string) (TestRuns, error) {
 // API on the given host.
 func FetchRuns(wptdHost string, filter TestRunFilter) (TestRuns, error) {
 	url := "https://" + wptdHost + "/api/runs"
-	url += "?" + filter.ToQuery(true).Encode()
+	url += "?" + filter.OrDefault().ToQuery().Encode()
 
 	var runs TestRuns
 	err := FetchJSON(url, &runs)

@@ -126,8 +126,8 @@ func prepareAutocompleteResponse(limit int, filters *shared.QueryFilter, testRun
 		}
 	}
 
+	files := []AutocompleteResult{}
 	q := canonicalizeStr(filters.Q)
-	files := make([]AutocompleteResult, 0, fileSet.Cardinality()/len(testRuns))
 	for fileInterface := range fileSet.Iter() {
 		file := fileInterface.(string)
 		if strings.Contains(canonicalizeStr(file), q) {

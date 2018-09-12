@@ -117,6 +117,9 @@ found in the LICENSE file.
 
         const datalist = this.shadowRoot.querySelector('datalist');
         datalist.innerHTML = '';
+        if (!json.results) {
+          return;
+        }
         for (const result of json.results) {
           const option = document.createElement('option');
           option.setAttribute('value', result.query_string);

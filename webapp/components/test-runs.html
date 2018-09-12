@@ -95,9 +95,7 @@ found in the LICENSE file.
         // Fetch by products (or default products, if nothing else is present).
         if ((this.products && this.products.length)
           || (!preloaded && !this.testRunResources)) {
-          const byProduct =
-            fetch(`/api/runs${this.query}`).then(r => r.ok && r.json());
-          runs.push(byProduct);
+          runs.push(fetch(`/api/runs${this.query}`).then(r => r.ok && r.json()));
         }
         // Fetch by specific URLs (legacy behaviour)
         if (this.testRunResources) {
@@ -151,13 +149,9 @@ found in the LICENSE file.
         if (maxCount) {
           params['max-count'] = maxCount;
         }
-
-        // Insist on aligned runs iff there is no other parameter.
-        // This is a temporary hack for https://github.com/web-platform-tests/wpt.fyi/issues/468
-        if (this.aligned || Object.keys(params).length === 0) {
+        if (this.aligned) {
           params.aligned = true;
         }
-
         return params;
       }
 
