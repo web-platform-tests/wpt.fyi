@@ -8,6 +8,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="info-banner.html">
 <link rel="import" href="test-runs.html">
 <link rel="import" href="test-run.html">
 
@@ -29,14 +30,6 @@ found in the LICENSE file.
       }
       td.month {
         border-top: 1px solid var(--paper-blue-100);
-      }
-
-      .info {
-        padding: 0.5em;
-        background-color: #e2e3fd;
-        margin-bottom: 1em;
-        margin-top: 2em;
-        border-left: solid 4px #7477f4;
       }
       .missing {
         background-color: var(--paper-grey-100);
@@ -61,9 +54,9 @@ found in the LICENSE file.
       }
     </style>
 
-    <section class="info">
+    <info-banner>
       Showing the last 3 months of test runs.
-    </section>
+    </info-banner>
 
     <table>
       <thead>
