@@ -204,9 +204,9 @@ func main() {
 }
 
 func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
-	for _, complete := range []bool{false, true} {
-		if complete {
-			filters.Complete = &complete
+	for _, aligned := range []bool{false, true} {
+		if aligned {
+			filters.Aligned = &aligned
 		}
 		prodTestRuns, err := shared.FetchRuns(*host, filters)
 		if err != nil {
@@ -225,15 +225,15 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		filters.MaxCount = nil
 		prodPassRateMetadata, err := FetchInterop(*host, filters)
 		if err != nil {
-			log.Printf("Failed to fetch interop (?complete=%v).", complete)
+			log.Printf("Failed to fetch interop (?aligned=%v).", aligned)
 			continue
 		}
 		// Update the interop IDs to match the newly-copied local test-run IDs.
 		prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
 		one := 1
 		var shas []string
-		if complete {
-			shas, _ = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
+		if aligned {
+			shas, _ = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
 		}
 		var localRunCopies []shared.TestRun
 		localRunCopies, err = shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, shas, nil, nil, &one)
