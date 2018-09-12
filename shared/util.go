@@ -130,7 +130,7 @@ var (
 // NewLoggerMux creates a multiplexing Logger that writes all log operations to
 // all delegates.
 func NewLoggerMux(delegates []Logger) Logger {
-	if delegates == nil || len(delegates) == 0 {
+	if len(delegates) == 0 {
 		return NewNilLogger()
 	}
 	return loggerMux{delegates}
