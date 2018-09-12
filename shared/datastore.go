@@ -33,7 +33,7 @@ func LoadTestRuns(
 	to *time.Time,
 	limit *int) (result []TestRun, err error) {
 	var testRuns []TestRun
-	baseQuery := datastore.NewQuery("TestRun")
+	baseQuery := datastore.NewQuery("TestRun").Limit(1000)
 	// NOTE(lukebjerring): While we can't filter on multiple SHAs, it's still much more efficient
 	// to (pre-)filter for a single SHA during the query.
 	if len(shas) == 1 && !IsLatest(shas[0]) {
