@@ -36,9 +36,9 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 		// (executed for all browsers). Because we don't want to mismatch an interop
 		// which has SHAs from 2 separated-but-complete runs, we need to keep the
 		// keys grouped.
-		if shared.IsLatest(filters.SHA) && filters.Complete != nil && *filters.Complete {
+		if shared.IsLatest(filters.SHA) && filters.Aligned != nil && *filters.Aligned {
 			ten := 10
-			_, shaKeys, err := shared.GetCompleteRunSHAs(ctx, filters.GetProductsOrDefault(), filters.Labels, filters.From, filters.To, &ten)
+			_, shaKeys, err := shared.GetAlignedRunSHAs(ctx, filters.GetProductsOrDefault(), filters.Labels, filters.From, filters.To, &ten)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return

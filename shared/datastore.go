@@ -163,10 +163,10 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 		Filter(fieldName+" <=", fmt.Sprintf("%s.%c", versionPrefix, '9'+1))
 }
 
-// GetCompleteRunSHAs returns an array of the SHA[0:10] for runs that
+// GetAlignedRunSHAs returns an array of the SHA[0:10] for runs that
 // exists for all the given products, ordered by most-recent, as well as a map
 // of those SHAs to the TestRun keys for the complete run.
-func GetCompleteRunSHAs(
+func GetAlignedRunSHAs(
 	ctx context.Context,
 	products ProductSpecs,
 	labels mapset.Set,

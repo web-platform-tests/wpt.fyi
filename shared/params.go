@@ -30,7 +30,7 @@ type QueryFilter struct {
 type TestRunFilter struct {
 	SHA      string
 	Labels   mapset.Set
-	Complete *bool
+	Aligned  *bool
 	From     *time.Time
 	To       *time.Time
 	MaxCount *int
@@ -42,7 +42,7 @@ type TestRunFilter struct {
 func (filter TestRunFilter) IsDefaultQuery() bool {
 	return IsLatest(filter.SHA) &&
 		(filter.Labels == nil || filter.Labels.Cardinality() < 1) &&
-		(filter.Complete == nil) &&
+		(filter.Aligned == nil) &&
 		(filter.From == nil) &&
 		(filter.MaxCount == nil || *filter.MaxCount == 1) &&
 		(len(filter.Products) < 1)
@@ -139,9 +139,9 @@ func (p ProductSpecs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 func (p ProductSpecs) Less(i, j int) bool { return p[i].String() < p[j].String() }
 
 // ToQuery converts the filter set to a url.Values (set of query params).
-// completeIfDefault is whether the params should fall back to a complete run
+// alignedIfDefault is whether the params should fall back to a aligned run
 // (the default on the homepage) if no conflicting params are used.
-func (filter TestRunFilter) ToQuery(completeIfDefault bool) (q url.Values) {
+func (filter TestRunFilter) ToQuery(alignedIfDefault bool) (q url.Values) {
 	u := url.URL{}
 	q = u.Query()
 	if !IsLatest(filter.SHA) {
@@ -157,10 +157,10 @@ func (filter TestRunFilter) ToQuery(completeIfDefault bool) (q url.Values) {
 			q.Add("product", p.String())
 		}
 	}
-	if filter.Complete != nil {
-		q.Set("complete", strconv.FormatBool(*filter.Complete))
-	} else if completeIfDefault && len(q) == 0 {
-		q.Set("complete", "true")
+	if filter.Aligned != nil {
+		q.Set("aligned", strconv.FormatBool(*filter.Aligned))
+	} else if alignedIfDefault && len(q) == 0 {
+		q.Set("aligned", "true")
 	}
 	if filter.MaxCount != nil {
 		q.Set("max-count", fmt.Sprintf("%v", *filter.MaxCount))
@@ -554,8 +554,12 @@ func ParseQueryParamInt(r *http.Request, key string) (int, error) {
 	return i, err
 }
 
-// ParseCompleteParam parses the "complete" param. See ParseBooleanParam.
-func ParseCompleteParam(r *http.Request) (complete *bool, err error) {
+// ParseAlignedParam parses the "aligned" param. See ParseBooleanParam.
+func ParseAlignedParam(r *http.Request) (aligned *bool, err error) {
+	if aligned, err := ParseBooleanParam(r, "aligned"); aligned != nil || err != nil {
+		return aligned, err
+	}
+	// Legacy param name: complete
 	return ParseBooleanParam(r, "complete")
 }
 
@@ -616,7 +620,7 @@ func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error)
 	}
 	filter.SHA = runSHA
 	filter.Labels = ParseLabelsParam(r)
-	if filter.Complete, err = ParseCompleteParam(r); err != nil {
+	if filter.Aligned, err = ParseAlignedParam(r); err != nil {
 		return filter, err
 	}
 	if filter.Products, err = ParseProductOrBrowserParams(r); err != nil {

@@ -56,9 +56,9 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 	}
 	products := filters.GetProductsOrDefault()
 
-	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
-	if shared.IsLatest(filters.SHA) && filters.Complete != nil && *filters.Complete {
-		shas, shaKeys, err := shared.GetCompleteRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
+	// When ?aligned=true, make sure to show results for the same aligned run (executed for all browsers).
+	if shared.IsLatest(filters.SHA) && filters.Aligned != nil && *filters.Aligned {
+		shas, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
 		if err != nil {
 			return result, err
 		}
