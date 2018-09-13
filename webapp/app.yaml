@@ -39,6 +39,7 @@ skip_files:
 - bower_components/stacky/
 - bower_components/test-fixture/
 - bower_components/web-component-tester/
+- components/test/
 - node_modules/
 - static/b952881825/
 - static/wptd-metrics/
