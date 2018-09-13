@@ -25,9 +25,9 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get runs from 3 months ago onward by default.
+	// Get runs from a month ago, onward, by default.
 	if filter.From == nil {
-		threeMonthsAgo := time.Now().Truncate(time.Hour*24).AddDate(0, -3, 0)
+		threeMonthsAgo := time.Now().Truncate(time.Hour*24).AddDate(0, -1, 0)
 		filter.From = &threeMonthsAgo
 	}
 
