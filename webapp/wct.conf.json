@@ -1,6 +1,6 @@
 {
   "suites": [
-    "test/*.html"
+    "components/test/*.html"
   ],
   "verbose": false,
   "expanded": true,
