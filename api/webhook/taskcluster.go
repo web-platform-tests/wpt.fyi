@@ -6,9 +6,11 @@ package webhook
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -36,7 +38,28 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := appengine.NewContext(r)
-	processed, err := handleStatusEvent(ctx, r.Body)
+
+	payload, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	if err != nil {
+		log.Errorf(ctx, "%v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	secret, err := getSecret(ctx)
+	if err != nil {
+		log.Errorf(ctx, "%v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !verifySignature(payload, r.Header.Get("X-Hub-Signature"), secret) {
+		http.Error(w, "HMAC verification failed", http.StatusUnauthorized)
+		return
+	}
+
+	processed, err := handleStatusEvent(ctx, payload)
 	if err != nil {
 		log.Errorf(ctx, "%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -65,13 +88,7 @@ type branchInfo struct {
 	Name string `json:"name"`
 }
 
-func handleStatusEvent(ctx context.Context, body io.ReadCloser) (bool, error) {
-	payload, err := ioutil.ReadAll(body)
-	body.Close()
-	if err != nil {
-		return false, err
-	}
-
+func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	var status statusEventPayload
 	if err := json.Unmarshal(payload, &status); err != nil {
 		return false, err
@@ -213,6 +230,26 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 	key := datastore.NewKey(ctx, "Uploader", "taskcluster", 0, nil)
 	err = datastore.Get(ctx, key, &u)
 	return u.Username, u.Password, err
+}
+
+func getSecret(ctx context.Context) (token string, err error) {
+	var t shared.Token
+	key := datastore.NewKey(ctx, "Token", "github-webhook-secret", 0, nil)
+	err = datastore.Get(ctx, key, &t)
+	return t.Secret, err
+}
+
+func verifySignature(message []byte, signature string, secret string) bool {
+	// https://developer.github.com/webhooks/securing/
+	signature = strings.TrimPrefix(signature, "sha1=")
+	messageMAC, err := hex.DecodeString(signature)
+	if err != nil {
+		return false
+	}
+	mac := hmac.New(sha1.New, []byte(secret))
+	mac.Write(message)
+	expectedMAC := mac.Sum(nil)
+	return hmac.Equal(messageMAC, expectedMAC)
 }
 
 func createRun(client *http.Client, api string, username string, password string, reportURLs []string) error {
