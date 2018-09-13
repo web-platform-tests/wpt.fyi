@@ -5,6 +5,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,14 +20,70 @@ import (
 // number of browsers for which the test passes.
 func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	query := datastore.NewQuery(passRateType).Order("-StartTime")
 
 	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	var interop *metrics.PassRateMetadata
+	if interop, err = loadMostRecentInteropRun(ctx, filters); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if interop == nil {
+		if interop, err = loadFallbackInteropRun(ctx, filters); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+	if interop == nil {
+		http.Error(w, "Interop data not found", http.StatusNotFound)
+		return
+	}
+	if err := interop.LoadTestRuns(ctx); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to load interop's test runs: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	interopBytes, err := json.Marshal(interop)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(interopBytes)
+}
+
+func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadata, err error) {
+	// Load default browser runs for SHA.
+	// Force any max-count to one; more than one of each product makes no sense for a interop run.
+	shaFilters := filters
+	limit := 1
+	shaFilters.MaxCount = &limit
+	keys, err := LoadTestRunKeysForFilters(ctx, shaFilters)
+	if err != nil {
+		return nil, err
+	} else if len(keys) < 1 {
+		return nil, nil
+	}
+	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
+	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
+	for _, key := range keys {
+		query = query.Filter("TestRunIDs =", key.IntID())
+	}
+	var results []metrics.PassRateMetadata
+	if _, err = query.GetAll(ctx, &results); err != nil {
+		return nil, err
+	} else if len(results) < 1 {
+		return nil, nil
+	}
+	return &results[0], nil
+}
+
+func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadata, err error) {
+	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
+	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1000)
 
 	// We load non-default queries by fetching any interop result with all their
 	// TestRunIDs present in the TestRuns matching the query.
@@ -40,12 +97,9 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 			ten := 10
 			_, shaKeys, err := shared.GetAlignedRunSHAs(ctx, filters.GetProductsOrDefault(), filters.Labels, filters.From, filters.To, &ten)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
+				return nil, err
 			} else if len(shaKeys) < 1 {
-				// Bail out early - can't find any complete runs.
-				http.Error(w, "No metrics runs found", http.StatusNotFound)
-				return
+				return nil, nil
 			}
 			keysChecker = checkKeysAreAligned(shaKeys)
 		} else {
@@ -57,11 +111,9 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 			keys, err := LoadTestRunKeysForFilters(ctx, shaFilters)
 
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return nil, err
 			} else if len(keys) < 1 {
-				http.Error(w, "No metrics runs found", http.StatusNotFound)
-				return
+				return nil, nil
 			}
 			keysChecker = checkKeysMatchQuery(keys)
 		}
@@ -70,32 +122,24 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 	// Iterate until we find interop data where its TestRunIDs match the query.
 	var interop metrics.PassRateMetadata
 	it := query.Run(ctx)
+	found := false
 	for {
 		_, err := it.Next(&interop)
 		if err == datastore.Done {
-			http.Error(w, "No metrics runs found", http.StatusNotFound)
-			return
+			return nil, nil
 		} else if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return nil, err
 		}
 		if keysChecker != nil && !keysChecker(interop.TestRunIDs) {
 			continue
 		}
+		found = true
 		break
 	}
-
-	if err := interop.LoadTestRuns(ctx); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to load interop's test runs: %s", err.Error()), http.StatusInternalServerError)
-		return
+	if !found {
+		return nil, nil
 	}
-
-	interopBytes, err := json.Marshal(interop)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write(interopBytes)
+	return &interop, nil
 }
 
 func checkKeysAreAligned(shaKeys map[string][]*datastore.Key) func(shared.TestRunIDs) bool {
