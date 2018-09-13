@@ -35,7 +35,7 @@
           let interval = setInterval(() => {
             if (predicate()) {
               clearInterval(interval);
-              resolve(true);
+              resolve();
             }
           }, 0);
         });
@@ -43,7 +43,7 @@
 
       setup(() => {
         sandbox = sinon.sandbox.create();
-        sandbox.stub(window, 'fetch', () => Promise.resolve(new Response(fetches[0])));
+        sandbox.stub(window, 'fetch', () => Promise.resolve(new Response(fetches)));
       });
 
       teardown(() => {
@@ -75,58 +75,41 @@
       });
 
       suite('TestRunsBase.prototype.*', () => {
-        // TODO(Hexcles): Re-enable this test.
-        suite.skip('async connectedCallback()', () => {
-          let superConnectedCallback;
+        suite('async loadRuns()', () => {
           let wrbf;
 
           setup(() => {
-            superConnectedCallback = Promise.resolve(true);
-            sandbox.stub(window.Polymer.Element.prototype, 'connectedCallback').returns(
-              superConnectedCallback
-            );
             wrbf = fixture('wpt-results-base-fixture');
+            wrbf.loadRuns();
           });
 
           teardown(() => {
             sandbox.reset();
           });
 
-          test('super.connectedCallback()', (done) => {
-            superConnectedCallback.then(() => (assert.ok(true),done()));
-          });
-
-          test('window.fetch(...)', (done) => {
-            superConnectedCallback
-              .then(() => waitingOn(() => window.fetch.called))
+          test('calls window.fetch(...)', () => {
+            return waitingOn(() => window.fetch.called)
               .then(() => {
                 assert.equal(window.fetch.callCount, 1);
                 assert.equal(window.fetch.firstCall.args[0], '/api/runs?sha=latest');
-              })
-              .then(done);
+              });
           });
 
-          test('populates testRuns from fetch', (done) => {
+          test('populates testRuns from fetch', () => {
             assert.equal(wrbf.testRuns, null);
-
-            superConnectedCallback
-              .then(() => waitingOn(() => wrbf.testRuns.length))
+            return waitingOn(() => wrbf.testRuns && wrbf.testRuns.length)
               .then(() => {
-                assert.equal(wrbf.testRuns.length, 1);
+                assert.equal(wrbf.testRuns.length, 4);
                 assert.equal(wrbf.testRuns[0], fetches[0]);
-              })
-              .then(done);
+              });
           });
 
-          test('sets testRunResources to null when done', (done) => {
+          test('sets testRunResources to null when done', () => {
             assert.equal(wrbf.testRuns, null);
-
-            superConnectedCallback
-              .then(() => waitingOn(() => wrbf.testRuns.length))
+            return waitingOn(() => wrbf.testRuns && wrbf.testRuns.length)
               .then(() => {
                 assert.equal(wrbf.testRunResources, null);
-              })
-              .then(done);
+              });
           });
         });
       });
