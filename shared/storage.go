@@ -24,12 +24,18 @@ var (
 	errMemcacheWriteCloserWriteAfterClose = errors.New("memcacheWriteCloser: Write() after Close()")
 )
 
+// Readable is a provider interface for an io.ReadCloser.
 type Readable interface {
+	// NewReadCloser provides an io.ReadCloser for the entity keyed by its input
+	// argument.
 	NewReadCloser(interface{}) (io.ReadCloser, error)
 }
 
+// ReadWritable is a provider interface for io.ReadCloser and io.WriteCloser.
 type ReadWritable interface {
 	Readable
+	// NewWriteCloser provides an io.WriteCloser for the entity keyed by its input
+	// argument.
 	NewWriteCloser(interface{}) (io.WriteCloser, error)
 }
 
@@ -56,6 +62,7 @@ func (hr httpReadable) NewReadCloser(iURL interface{}) (io.ReadCloser, error) {
 	return r.Body, nil
 }
 
+// NewHTTPReadable produces a Readable bound to the input context.Context.
 func NewHTTPReadable(ctx context.Context) Readable {
 	return httpReadable{ctx}
 }
@@ -128,6 +135,8 @@ func (gz gzipReadWritable) NewWriteCloser(iID interface{}) (io.WriteCloser, erro
 	}, nil
 }
 
+// NewGZReadWritable produces a ReadWritable that ungzips on read and gzips on
+// write, and delegates the input argument.
 func NewGZReadWritable(delegate ReadWritable) ReadWritable {
 	return gzipReadWritable{delegate}
 }
@@ -181,10 +190,15 @@ func (mw *memcacheWriteCloser) Close() error {
 	})
 }
 
+// NewMemcacheReadWritable produces a ReadWritable that performs read/write
+// operations via the App Engine memcache API through the input context.Context.
 func NewMemcacheReadWritable(ctx context.Context) ReadWritable {
 	return memcacheReadWritable{ctx}
 }
 
+// CachedStore is a read-only interface that attempts to read from a cache, and
+// when entities are not found, read from a store and write the result to the
+// cache.
 type CachedStore interface {
 	Get(cacheID, storeID interface{}) ([]byte, error)
 }
@@ -256,6 +270,8 @@ func (cs ctxCachedStore) Get(cacheID, storeID interface{}) ([]byte, error) {
 	return data, nil
 }
 
+// NewCtxCachedStore produces a CachedStore that composes a ReadWritable cache
+// and a Readable store, operating over the input context.Context.
 func NewCtxCachedStore(ctx context.Context, cache ReadWritable, store Readable) CachedStore {
 	return ctxCachedStore{ctx, cache, store}
 }
