@@ -56,7 +56,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
 	// Interop data spanning across the complete runs.
-	interop := metrics.PassRateMetadata{}
+	interop := metrics.PassRateMetadataLegacy{}
 	interop.TestRunIDs = make(shared.TestRunIDs, len(firstRunKeys))
 	for i := range firstRunKeys {
 		key := firstRunKeys[i]
@@ -73,7 +73,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
 	// One interop data, for the first run.
-	interop = metrics.PassRateMetadata{}
+	interop = metrics.PassRateMetadataLegacy{}
 	interop.TestRunIDs = make(shared.TestRunIDs, len(firstRunKeys))
 	for i, key := range firstRunKeys {
 		interop.TestRunIDs[i] = key.IntID()
@@ -94,7 +94,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 		apiInteropHandler(resp, req)
 		assert.Equal(t, http.StatusOK, resp.Code)
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		var bodyInterop metrics.PassRateMetadata
+		var bodyInterop metrics.PassRateMetadataLegacy
 		json.Unmarshal(bodyBytes, &bodyInterop)
 		assert.Equal(t, interop, bodyInterop)
 	}
