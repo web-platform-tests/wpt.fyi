@@ -89,13 +89,13 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 	// TestRunIDs present in the TestRuns matching the query.
 	var keysChecker func(shared.TestRunIDs) bool
 	if !filters.IsDefaultQuery() {
-		// When ?complete=true, make sure to show results for the same complete run
-		// (executed for all browsers). Because we don't want to mismatch an interop
-		// which has SHAs from 2 separated-but-complete runs, we need to keep the
-		// keys grouped.
+		products := filters.GetProductsOrDefault()
+		// When ?aligned=true, make sure to show results for the same aligned run.
+		// We don't want to mismatch an interop which has runs from several different SHAs
+		// (but, each SHA being from an aligned run), so we need to keep the keys grouped.
 		if shared.IsLatest(filters.SHA) && filters.Aligned != nil && *filters.Aligned {
 			ten := 10
-			_, shaKeys, err := shared.GetAlignedRunSHAs(ctx, filters.GetProductsOrDefault(), filters.Labels, filters.From, filters.To, &ten)
+			_, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, &ten)
 			if err != nil {
 				return nil, err
 			} else if len(shaKeys) < 1 {
@@ -103,10 +103,9 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 			}
 			keysChecker = checkKeysAreAligned(shaKeys)
 		} else {
-			// Load default browser runs for SHA.
-			// Force any max-count to one; more than one of each product makes no sense for a interop run.
+			// We arbitrarily take at most 16 * N runs, which should (typically) be ~16 sets.
 			shaFilters := filters
-			limit := 64
+			limit := 16 * len(products)
 			shaFilters.MaxCount = &limit
 			keys, err := LoadTestRunKeysForFilters(ctx, shaFilters)
 
