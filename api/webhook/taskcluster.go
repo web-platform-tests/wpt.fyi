@@ -234,7 +234,7 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 
 func getSecret(ctx context.Context) (token string, err error) {
 	var t shared.Token
-	key := datastore.NewKey(ctx, "Token", "github-webhook-secret", 0, nil)
+	key := datastore.NewKey(ctx, "Token", "github-tc-webhook-secret", 0, nil)
 	err = datastore.Get(ctx, key, &t)
 	return t.Secret, err
 }
