@@ -32,7 +32,7 @@ func LoadTestRunKeys(
 	from *time.Time,
 	to *time.Time,
 	limit *int) (result []*datastore.Key, err error) {
-	baseQuery := datastore.NewQuery("TestRun")
+	baseQuery := datastore.NewQuery("TestRun").Limit(1000)
 	if !IsLatest(sha) {
 		baseQuery = baseQuery.Filter("Revision =", sha)
 	}
