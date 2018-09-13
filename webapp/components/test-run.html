@@ -134,9 +134,15 @@ See models.go for more details.
 
       displayLogo(testRun) {
         let name = testRun.browser_name;
-        const exp = testRun.labels && testRun.labels.includes('experimental');
-        if (exp && !name.endsWith('-experimental')) {
-          name += '-experimental';
+        const labels = testRun.labels;
+        if (labels) {
+          if (labels.includes('experimental') || labels.includes('dev')) {
+            // Legacy run distinction had name suffix -experimental
+            name.replace(/-experimental$/, '');
+            name += '-dev';
+          } else if (labels.includes('beta')) {
+            name += '-beta';
+          }
         }
         return `/static/${name}_64x64.png`;
       }
