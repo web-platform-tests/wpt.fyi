@@ -88,6 +88,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	reqs := make([]*http.Request, 2)
 	reqs[0], _ = i.NewRequest("GET", "/api/interop?complete", nil)
 	reqs[1], _ = i.NewRequest("GET", "/api/interop?complete&label=stable", nil)
+	reqs[1], _ = i.NewRequest("GET", "/api/interop?label=stable&sha=0000000000", nil)
 	for _, req := range reqs {
 		resp = httptest.NewRecorder()
 		apiInteropHandler(resp, req)

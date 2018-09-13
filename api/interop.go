@@ -27,7 +27,7 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var interop *metrics.PassRateMetadata
+	var interop *metrics.PassRateMetadataLegacy
 	if interop, err = loadMostRecentInteropRun(ctx, filters); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -55,7 +55,7 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(interopBytes)
 }
 
-func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadata, err error) {
+func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadataLegacy, err error) {
 	// Load default browser runs for SHA.
 	// Force any max-count to one; more than one of each product makes no sense for a interop run.
 	shaFilters := filters
@@ -72,7 +72,7 @@ func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter)
 	for _, key := range keys {
 		query = query.Filter("TestRunIDs =", key.IntID())
 	}
-	var results []metrics.PassRateMetadata
+	var results []metrics.PassRateMetadataLegacy
 	if _, err = query.GetAll(ctx, &results); err != nil {
 		return nil, err
 	} else if len(results) < 1 {
@@ -81,9 +81,9 @@ func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter)
 	return &results[0], nil
 }
 
-func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadata, err error) {
+func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadataLegacy, err error) {
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1000)
+	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(100)
 
 	// We load non-default queries by fetching any interop result with all their
 	// TestRunIDs present in the TestRuns matching the query.
@@ -119,7 +119,7 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 	}
 
 	// Iterate until we find interop data where its TestRunIDs match the query.
-	var interop metrics.PassRateMetadata
+	var interop metrics.PassRateMetadataLegacy
 	it := query.Run(ctx)
 	found := false
 	for {
