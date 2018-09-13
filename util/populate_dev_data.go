@@ -229,19 +229,28 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 			continue
 		}
 		// Update the interop IDs to match the newly-copied local test-run IDs.
+		// We re-fetch locally because we might have copied a large number of runs,
+		// but only want the latest for interop.
 		prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
 		one := 1
-		var shas []string
+		sha := shared.LatestSHA
+		var localRunCopies shared.TestRuns
 		if aligned {
-			shas, _ = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
-		}
-		var localRunCopies []shared.TestRun
-		localRunCopies, err = shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, shas, nil, nil, &one)
-		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
-			sha := "latest"
+			var shas []string
+			var keys map[string][]*datastore.Key
+			if shas, keys, err = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one); err != nil {
+				log.Printf("Failed to load a aligned run SHA: %s", err.Error())
+				continue
+			}
 			if len(shas) > 0 {
 				sha = shas[0]
+				if localRunCopies, err = shared.LoadTestRunsByKeys(ctx, keys[sha]); err != nil {
+					log.Printf("Failed to load test runs by keys: %s", err.Error())
+					continue
+				}
 			}
+		}
+		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
 			log.Printf("Could not find local copies for SHA %s", sha)
 			continue
 		}
