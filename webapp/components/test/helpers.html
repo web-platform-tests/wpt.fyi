@@ -1,0 +1,27 @@
+<!--
+Copyright 2018 The WPT Dashboard Project. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<dom-module id="components-test-helper">
+  <script>
+    /* eslint-disable no-unused-vars */
+    function Response(jsonValue) {
+      this.ok = true;
+      this.status = 200;
+      this.json = () => Promise.resolve(jsonValue);
+    }
+
+    async function waitingOn(predicate) {
+      return await new Promise(resolve => {
+        let interval = setInterval(() => {
+          if (predicate()) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 0);
+      });
+    }
+  </script>
+</dom-module>

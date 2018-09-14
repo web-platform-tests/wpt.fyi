@@ -5,9 +5,7 @@
   <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
   <script src="../../bower_components/web-component-tester/browser.js"></script>
 
-  <link rel="import" href="../path-part.html">
-  <link rel="import" href="../test-runs.html">
-  <link rel="import" href="../test-run.html">
+  <link rel="import" href="./helpers.html">
   <link rel="import" href="../interop.html">
 </head>
 <body>
@@ -17,30 +15,12 @@
     </template>
   </test-fixture>
   <script>
-    /* global WPTInterop */
+    /* global WPTInterop, waitingOn */
     suite('WPTInterop', () => {
       const fetches = {};
       let sandbox;
-      let fetchResponse;
 
-      function Response(jsonValue) {
-        this.ok = true;
-        this.status = 200;
-        this.json = () => Promise.resolve(jsonValue);
-      }
-
-      async function waitingOn(predicate) {
-        return await new Promise(resolve => {
-          let interval = setInterval(() => {
-            if (predicate()) {
-              clearInterval(interval);
-              resolve();
-            }
-          }, 0);
-        });
-      }
-
-      setup(async () => {
+      setup(async() => {
         sandbox = sinon.sandbox.create();
 
         const interop = await fetch('fixtures/interop.json').then(r => r.json());
@@ -69,13 +49,11 @@
       });
 
       suite('WPTInterop.prototype.*', () => {
-        let wpti;
-
         setup((done) => {
           sandbox.spy(window.Polymer.Element.prototype, 'ready');
           sandbox.spy(WPTInterop.prototype, 'fetchMetrics');
 
-          wpti = fixture('wpt-interop-fixture');
+          fixture('wpt-interop-fixture');
 
           done();
         });

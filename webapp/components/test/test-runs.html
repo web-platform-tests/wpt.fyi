@@ -5,16 +5,17 @@
   <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
   <script src="../../bower_components/web-component-tester/browser.js"></script>
 
+  <link rel="import" href="./helpers.html">
   <link rel="import" href="../test-runs.html">
 </head>
 <body>
   <test-fixture id="wpt-results-base-fixture">
     <template>
-      <wpt-results-base test-runs="" test-run-resources="[&#34;/api/runs?sha=latest&#34;]"></wpt-results-base>
+      <wpt-results-base test-run-resources="[&#34;/api/runs?sha=latest&#34;]"></wpt-results-base>
     </template>
   </test-fixture>
   <script>
-    /* global TestRunsBase */
+    /* global TestRunsBase, waitingOn */
     suite('TestRunsBase', () => {
       const fetches = [
         {'browser_name':'chrome','browser_version':'63.0','os_name':'linux','os_version':'','revision':'53c5bf648c','results_url':'https://storage.googleapis.com/wptd/53c5bf648c/chrome-63.0-linux-summary.json.gz','created_at':'2018-01-09T15:47:03.949Z'},
@@ -23,23 +24,6 @@
         {'browser_name':'safari','browser_version':'11.0','os_name':'macos','os_version':'10.12','revision':'3b19057653','results_url':'https://storage.googleapis.com/wptd/3b19057653/safari-11.0-macos-10.12-sauce-summary.json.gz','created_at':'2018-01-01T17:59:48.129561Z'}
       ];
       let sandbox;
-
-      function Response(value) {
-        this.ok = true;
-        this.status = 200;
-        this.json = () => Promise.resolve(value);
-      }
-
-      async function waitingOn(predicate) {
-        return await new Promise(resolve => {
-          let interval = setInterval(() => {
-            if (predicate()) {
-              clearInterval(interval);
-              resolve();
-            }
-          }, 0);
-        });
-      }
 
       setup(() => {
         sandbox = sinon.sandbox.create();
