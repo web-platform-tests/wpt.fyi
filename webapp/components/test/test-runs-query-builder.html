@@ -8,7 +8,7 @@
   <link rel="import" href="../test-runs-query-builder.html">
 </head>
 <body>
-  <test-runs-query-builder product-specs='["chrome","edge"]'>
+  <test-runs-query-builder product-specs='["chrome-69","edge"]'>
   </test-runs-query-builder>
 
   <script>
@@ -26,6 +26,7 @@
       test('TestRunsQueryBuilder.prototype.*', () => {
         assert.isNotNull(queryBuilder.products);
         assert.isNotNull(queryBuilder.products.find(p => p.browser_name === 'chrome'));
+        assert.isNotNull(queryBuilder.products.find(p => p.browser_version === '69'));
       });
     });
   </script>
