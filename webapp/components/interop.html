@@ -255,10 +255,16 @@ found in the LICENSE file.
       this.onSearchCommit = this.handleSearchCommit.bind(this);
     }
 
-    detached() {
+    connectedCallback() {
+      super.connectedCallback();
+      this.shadowRoot.querySelector('test-search')
+        .addEventListener('commit', this.onSearchCommit);
+    }
+
+    disconnectedCallback() {
       this.shadowRoot.querySelector('test-search')
         .removeEventListener('commit', this.onSearchCommit);
-      super.detached();
+      super.disconnectedCallback();
     }
 
     async ready() {
@@ -271,8 +277,6 @@ found in the LICENSE file.
           return r.json();
         });
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
-      this.shadowRoot.querySelector('test-search')
-        .addEventListener('commit', this.onSearchCommit);
     }
 
     async fetchMetrics(url) {
