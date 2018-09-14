@@ -5,12 +5,11 @@
   <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
   <script src="../../bower_components/web-component-tester/browser.js"></script>
 
-  <link rel="import" href="../../bower_components/polymer/polymer-element.html">
-  <link rel="import" href="../test-runs-query.html">
+  <link rel="import" href="../test-runs.html">
 </head>
 <body>
   <script>
-    /* global expect, TestRunsQuery */
+    /* global TestRunsQuery */
     suite('TestRunsQuery', () => {
       let testRunsQuery;
 
@@ -26,33 +25,9 @@
         assert.isTrue(testRunsQuery instanceof window.Polymer.Element);
       });
 
-      suite('TestRunsQuery.prototype.*', () => {
-
-        const revision = '1234512345';
-        const chrome = 'chrome';
-        const labels = ['foo', 'bar'];
-        const specStr = `${chrome}[${labels.join(',')}]@${revision}`;
-        test(`parseProductSpec("${specStr}")`, () => {
-          const parsed = testRunsQuery.parseProductSpec(specStr);
-          assert.equal(parsed.browser_name, chrome);
-          assert.equal(parsed.revision, revision);
-          for (const label of labels) {
-            expect(Array.from(parsed.labels)).to.include(label);
-          }
-        });
-
-        const version63 = '63.0';
-        const chrome63 = `chrome-${version63}`;
-        test(`parseProduct(${chrome63})`, () => {
-          const parsed = testRunsQuery.parseProduct(chrome63);
-          assert.equal(parsed.browser_name, chrome);
-          assert.equal(parsed.browser_version, version63);
-        });
-
-        test('no closing bracket', () => {
-          expect(() => testRunsQuery.parseProductSpec('chrome[foo')).to.throw();
-          expect(() => testRunsQuery.parseProductSpec('chrome[foo]')).to.not.throw();
-        });
+      test('TestRunsQuery.prototype.*', () => {
+        const chrome = testRunsQuery.parseProductSpec('chrome');
+        assert.equal(chrome.browser_name, 'chrome');
       });
     });
   </script>
