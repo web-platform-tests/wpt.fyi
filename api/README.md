@@ -342,8 +342,8 @@ The JSON file roughly looks like this:
 ```json
 {
   "results": [...],
-  "time_start": MICROSECONDS_SINCE_EPOCH,
-  "time_end": MICROSECONDS_SINCE_EPOCH,
+  "time_start": MILLISECONDS_SINCE_EPOCH,
+  "time_end": MILLISECONDS_SINCE_EPOCH,
   "run_info": {
     "revision": "WPT revision of the test run",
     "product": "your browser",
@@ -357,7 +357,7 @@ The JSON file roughly looks like this:
 
 __Notes__
 
-The `time_start` and `time_end` fields are numerical timestamps (in microseconds since the UNIX epoch)
+The `time_start` and `time_end` fields are numerical timestamps (in milliseconds since the UNIX epoch)
 when the whole test run starts and finishes. They are optional, but encouraged. `wpt run` produces
 them in the report by default.
 

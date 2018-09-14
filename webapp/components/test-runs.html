@@ -102,6 +102,7 @@ found in the LICENSE file.
           const byUrl = this.testRunResources
             .map(url => fetch(url).then(r => r.ok && r.json()));
           runs.push(...byUrl);
+          this.testRunResources = null;
         }
         const fetches = await Promise.all(runs);
 
@@ -149,13 +150,9 @@ found in the LICENSE file.
         if (maxCount) {
           params['max-count'] = maxCount;
         }
-
-        // Insist on aligned runs iff there is no other parameter.
-        // This is a temporary hack for https://github.com/web-platform-tests/wpt.fyi/issues/468
-        if (this.aligned || Object.keys(params).length === 0) {
+        if (this.aligned) {
           params.aligned = true;
         }
-
         return params;
       }
 

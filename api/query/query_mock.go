@@ -149,7 +149,7 @@ func (mr *MocksharedInterfaceMockRecorder) ParseQueryFilterParams(arg0 interface
 }
 
 // LoadTestRuns mocks base method
-func (m *MocksharedInterface) LoadTestRuns(arg0 []shared.ProductSpec, arg1 golang_set.Set, arg2 []string, arg3, arg4 *time.Time, arg5 *int) ([]shared.TestRun, error) {
+func (m *MocksharedInterface) LoadTestRuns(arg0 []shared.ProductSpec, arg1 golang_set.Set, arg2 string, arg3, arg4 *time.Time, arg5 *int) ([]shared.TestRun, error) {
 	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].([]shared.TestRun)
 	ret1, _ := ret[1].(error)
