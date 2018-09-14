@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../test-runs-query-builder.html">
+</head>
+<body>
+  <test-runs-query-builder product-specs='["chrome","edge"]'>
+  </test-runs-query-builder>
+
+  <script>
+    suite('TestRunsQueryBuilder', () => {
+      let queryBuilder;
+
+      setup(() => {
+        queryBuilder = document.querySelector('test-runs-query-builder');
+      });
+
+      test('instanceof Polymer.Element', () => {
+        assert.isTrue(queryBuilder instanceof window.Polymer.Element);
+      });
+
+      test('TestRunsQueryBuilder.prototype.*', () => {
+        assert.isNotNull(queryBuilder.products);
+        assert.isNotNull(queryBuilder.products.find(p => p.browser_name === 'chrome'));
+      });
+    });
+  </script>
+</body>
+</html>
