@@ -87,7 +87,7 @@ found in the LICENSE file.
       }
 
       computeProducts(productSpecs) {
-        return productSpecs.map(s => parseProductSpec(s));
+        return productSpecs && productSpecs.map(s => this.parseProductSpec(s));
       }
 
       parseProductSpec(spec) {
