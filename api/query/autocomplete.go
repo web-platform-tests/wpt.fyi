@@ -64,7 +64,7 @@ func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	sh := autocompleteHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
-		dataSource: shared.NewCtxCachedStore(ctx, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx)), shared.NewHTTPReadable(ctx)),
+		dataSource: shared.NewByteCachedStore(ctx, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx)), shared.NewHTTPReadable(ctx)),
 	}}
 	sh.ServeHTTP(w, r)
 }

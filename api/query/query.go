@@ -142,7 +142,9 @@ func (qh queryHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, erro
 func (qh queryHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	mkey := getMemcacheKey(testRun)
 	url := api.GetResultsURL(testRun, "")
-	return qh.dataSource.Get(mkey, url)
+	var data []byte
+	err := qh.dataSource.Get(mkey, url, &data)
+	return data, err
 }
 
 func getMemcacheKey(testRun shared.TestRun) string {

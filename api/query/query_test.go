@@ -55,8 +55,14 @@ func TestLoadSummaries_success(t *testing.T) {
 		map[string][]int{"/x/y/z": []int{3, 4}},
 	}
 
+	bindCopySlice := func(i int) func(_, _, _ interface{}) {
+		return func(cid, sid, iv interface{}) {
+			ptr := iv.(*[]byte)
+			*ptr = summaryBytes[i]
+		}
+	}
 	for i, key := range keys {
-		cachedStore.EXPECT().Get(key, urls[i]).Return(summaryBytes[i], nil)
+		cachedStore.EXPECT().Get(key, urls[i], gomock.Any()).Do(bindCopySlice(i)).Return(nil)
 	}
 
 	ss, err := sh.loadSummaries(testRuns)
@@ -95,8 +101,11 @@ func TestLoadSummaries_fail(t *testing.T) {
 	}
 
 	storeMiss := errors.New("No such summary file")
-	cachedStore.EXPECT().Get(keys[0], urls[0]).Return(summaryBytes[0], nil)
-	cachedStore.EXPECT().Get(keys[1], urls[1]).Return(nil, storeMiss)
+	cachedStore.EXPECT().Get(keys[0], urls[0], gomock.Any()).Do(func(cid, sid, iv interface{}) {
+		ptr := iv.(*[]byte)
+		*ptr = summaryBytes[0]
+	}).Return(nil)
+	cachedStore.EXPECT().Get(keys[1], urls[1], gomock.Any()).Return(storeMiss)
 
 	_, err := sh.loadSummaries(testRuns)
 	assert.Equal(t, storeMiss, err)

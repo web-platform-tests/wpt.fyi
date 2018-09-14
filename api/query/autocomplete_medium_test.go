@@ -88,7 +88,7 @@ func TestAutocompleteHandler(t *testing.T) {
 
 	sh := autocompleteHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
-		dataSource: shared.NewCtxCachedStore(ctx, shared.NewMemcacheReadWritable(ctx), store),
+		dataSource: shared.NewByteCachedStore(ctx, shared.NewMemcacheReadWritable(ctx), store),
 	}}
 
 	sh.ServeHTTP(w, r)

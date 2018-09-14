@@ -24,13 +24,14 @@ func TestGet_cacheHit(t *testing.T) {
 
 	cache := NewMockReadWritable(mockCtrl)
 	store := NewMockReadable(mockCtrl)
-	cs := NewCtxCachedStore(NewTestContext(), cache, store)
+	cs := NewByteCachedStore(NewTestContext(), cache, store)
 
 	data := []byte("{}")
 	cr := iotest.NewMockReadCloser(t, data)
 	cache.EXPECT().NewReadCloser(&cacheID).Return(cr, nil)
 
-	v, err := cs.Get(&cacheID, &storeID)
+	var v []byte
+	err := cs.Get(&cacheID, &storeID, &v)
 	assert.Nil(t, err)
 	assert.Equal(t, data, v)
 }
@@ -43,7 +44,7 @@ func TestGet_cacheMiss(t *testing.T) {
 
 	cache := NewMockReadWritable(mockCtrl)
 	store := NewMockReadable(mockCtrl)
-	cs := NewCtxCachedStore(NewTestContext(), cache, store)
+	cs := NewByteCachedStore(NewTestContext(), cache, store)
 
 	data := []byte("{}")
 	c := make(chan bool)
@@ -53,7 +54,8 @@ func TestGet_cacheMiss(t *testing.T) {
 	store.EXPECT().NewReadCloser(&storeID).Return(sr, nil)
 	cache.EXPECT().NewWriteCloser(&cacheID).Return(cw, nil)
 
-	v, err := cs.Get(&cacheID, &storeID)
+	var v []byte
+	err := cs.Get(&cacheID, &storeID, &v)
 	assert.Nil(t, err)
 	assert.Equal(t, data, v)
 
@@ -70,12 +72,13 @@ func TestGet_missing(t *testing.T) {
 
 	cache := NewMockReadWritable(mockCtrl)
 	store := NewMockReadable(mockCtrl)
-	cs := NewCtxCachedStore(NewTestContext(), cache, store)
+	cs := NewByteCachedStore(NewTestContext(), cache, store)
 
 	errMissing := errors.New("Failed to fetch from store")
 	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, memcache.ErrCacheMiss)
 	store.EXPECT().NewReadCloser(&storeID).Return(nil, errMissing)
 
-	_, err := cs.Get(&cacheID, &storeID)
+	var v []byte
+	err := cs.Get(&cacheID, &storeID, &v)
 	assert.Equal(t, errMissing, err)
 }
