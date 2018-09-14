@@ -9,6 +9,7 @@ import (
 
 	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
+	"github.com/web-platform-tests/wpt.fyi/api/webhook"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -18,6 +19,7 @@ func init() {
 	// webapp.RegisterRoutes has a catch-all, so needs to go last.
 	api.RegisterRoutes()
 	query.RegisterRoutes()
+	webhook.RegisterRoutes()
 	RegisterRoutes()
 }
 

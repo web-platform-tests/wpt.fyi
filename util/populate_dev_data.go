@@ -204,9 +204,9 @@ func main() {
 }
 
 func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
-	for _, complete := range []bool{false, true} {
-		if complete {
-			filters.Complete = &complete
+	for _, aligned := range []bool{false, true} {
+		if aligned {
+			filters.Aligned = &aligned
 		}
 		prodTestRuns, err := shared.FetchRuns(*host, filters)
 		if err != nil {
@@ -225,23 +225,32 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		filters.MaxCount = nil
 		prodPassRateMetadata, err := FetchInterop(*host, filters)
 		if err != nil {
-			log.Printf("Failed to fetch interop (?complete=%v).", complete)
+			log.Printf("Failed to fetch interop (?aligned=%v).", aligned)
 			continue
 		}
 		// Update the interop IDs to match the newly-copied local test-run IDs.
+		// We re-fetch locally because we might have copied a large number of runs,
+		// but only want the latest for interop.
 		prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
 		one := 1
-		var shas []string
-		if complete {
-			shas, _ = shared.GetCompleteRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one)
-		}
-		var localRunCopies []shared.TestRun
-		localRunCopies, err = shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), filters.Labels, shas, nil, nil, &one)
-		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
-			sha := "latest"
+		sha := shared.LatestSHA
+		var localRunCopies shared.TestRuns
+		if aligned {
+			var shas []string
+			var keys map[string][]*datastore.Key
+			if shas, keys, err = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one); err != nil {
+				log.Printf("Failed to load a aligned run SHA: %s", err.Error())
+				continue
+			}
 			if len(shas) > 0 {
 				sha = shas[0]
+				if localRunCopies, err = shared.LoadTestRunsByKeys(ctx, keys[sha]); err != nil {
+					log.Printf("Failed to load test runs by keys: %s", err.Error())
+					continue
+				}
 			}
+		}
+		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
 			log.Printf("Could not find local copies for SHA %s", sha)
 			continue
 		}
@@ -292,7 +301,7 @@ func getRemoteAPIContext() (context.Context, error) {
 // TODO(lukebjerring): Migrate to results-analysis
 func FetchInterop(wptdHost string, filter shared.TestRunFilter) (metrics.PassRateMetadata, error) {
 	url := "https://" + wptdHost + "/api/interop"
-	url += "?" + filter.ToQuery(true).Encode()
+	url += "?" + filter.OrDefault().ToQuery().Encode()
 
 	var interop metrics.PassRateMetadata
 	err := shared.FetchJSON(url, &interop)

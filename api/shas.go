@@ -24,13 +24,13 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var shas []string
 	products := filters.GetProductsOrDefault()
-	if filters.Complete != nil && *filters.Complete {
-		if shas, err = shared.GetCompleteRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, filters.MaxCount); err != nil {
+	if filters.Aligned != nil && *filters.Aligned {
+		if shas, _, err = shared.GetAlignedRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, filters.MaxCount); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} else {
-		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, nil, filters.From, filters.To, filters.MaxCount)
+		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, shared.LatestSHA, filters.From, filters.To, filters.MaxCount)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

@@ -51,7 +51,7 @@ found in the LICENSE file.
           },
           maxCount: Number,
           sha: String,
-          complete: Boolean,
+          aligned: Boolean,
           isLatest: {
             type: Boolean,
             computed: 'computeIsLatest(sha)'
@@ -95,15 +95,14 @@ found in the LICENSE file.
         // Fetch by products (or default products, if nothing else is present).
         if ((this.products && this.products.length)
           || (!preloaded && !this.testRunResources)) {
-          const byProduct =
-            fetch(`/api/runs${this.query}`).then(r => r.ok && r.json());
-          runs.push(byProduct);
+          runs.push(fetch(`/api/runs${this.query}`).then(r => r.ok && r.json()));
         }
         // Fetch by specific URLs (legacy behaviour)
         if (this.testRunResources) {
           const byUrl = this.testRunResources
             .map(url => fetch(url).then(r => r.ok && r.json()));
           runs.push(...byUrl);
+          this.testRunResources = null;
         }
         const fetches = await Promise.all(runs);
 
@@ -151,13 +150,9 @@ found in the LICENSE file.
         if (maxCount) {
           params['max-count'] = maxCount;
         }
-
-        // Insist on complete runs iff there is no other parameter.
-        // This is a temporary hack for https://github.com/web-platform-tests/wpt.fyi/issues/468
-        if (this.complete || Object.keys(params).length === 0) {
-          params.complete = true;
+        if (this.aligned) {
+          params.aligned = true;
         }
-
         return params;
       }
 

@@ -20,7 +20,7 @@ type testRunUIFilter struct {
 	Products      string
 	Labels        string
 	SHA           string
-	Complete      bool
+	Aligned       bool
 	MaxCount      *int
 	BeforeSpec    *shared.ProductSpec
 	AfterSpec     *shared.ProductSpec
@@ -98,6 +98,7 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 	if err != nil {
 		return filter, err
 	}
+	testRunFilter = testRunFilter.OrDefault()
 
 	before := r.URL.Query().Get("before")
 	after := r.URL.Query().Get("after")
@@ -151,7 +152,7 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 		filter.Products = string(data)
 	}
 	filter.MaxCount = testRunFilter.MaxCount
-	filter.Complete = testRunFilter.Complete != nil && *testRunFilter.Complete
+	filter.Aligned = testRunFilter.Aligned != nil && *testRunFilter.Aligned
 
 	diff, err := shared.ParseBooleanParam(r, "diff")
 	if err != nil {

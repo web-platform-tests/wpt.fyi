@@ -394,22 +394,22 @@ func TestParseProductSpec_String(t *testing.T) {
 	assert.Equal(t, "chrome-64[bar,foo]@1234512345", productSpec.String())
 }
 
-func TestParseComplete(t *testing.T) {
+func TestParseAligned(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs", nil)
-	complete, _ := ParseCompleteParam(r)
-	assert.Nil(t, complete)
+	aligned, _ := ParseAlignedParam(r)
+	assert.Nil(t, aligned)
 
-	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete", nil)
-	complete, _ = ParseCompleteParam(r)
-	assert.True(t, *complete)
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?aligned", nil)
+	aligned, _ = ParseAlignedParam(r)
+	assert.True(t, *aligned)
 
-	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete=true", nil)
-	complete, _ = ParseCompleteParam(r)
-	assert.True(t, *complete)
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?aligned=true", nil)
+	aligned, _ = ParseAlignedParam(r)
+	assert.True(t, *aligned)
 
-	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?complete=false", nil)
-	complete, _ = ParseCompleteParam(r)
-	assert.False(t, *complete)
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?aligned=false", nil)
+	aligned, _ = ParseAlignedParam(r)
+	assert.False(t, *aligned)
 }
 
 func TestParseRunIDsParam_nil(t *testing.T) {
@@ -458,7 +458,7 @@ func TestParseQueryFilterParams_q(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestParseQueryFilterParams_complete(t *testing.T) {
+func TestParseQueryFilterParams_aligned(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_ids=1,2,3&q=abcd", nil)
 	filter, err := ParseQueryFilterParams(r)
 	assert.Equal(t, QueryFilter{
@@ -477,19 +477,18 @@ func TestParseQueryFilterParams_err(t *testing.T) {
 func TestParseTestRunFilterParams(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	filter, _ := ParseTestRunFilterParams(r)
-	assert.Nil(t, filter.Complete)
-	assert.Equal(t, "complete=true", filter.ToQuery(true).Encode())
-	assert.Equal(t, "", filter.ToQuery(false).Encode())
+	assert.Nil(t, filter.Aligned)
+	assert.Equal(t, "aligned=true&label=stable", filter.OrDefault().ToQuery().Encode())
+	assert.Equal(t, "", filter.ToQuery().Encode())
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?label=stable", nil)
 	filter, _ = ParseTestRunFilterParams(r)
-	assert.Equal(t, "label=stable", filter.ToQuery(true).Encode())
-	assert.Equal(t, "label=stable", filter.ToQuery(false).Encode())
+	assert.Equal(t, "label=stable", filter.OrDefault().ToQuery().Encode())
+	assert.Equal(t, "label=stable", filter.ToQuery().Encode())
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?from=2018-01-01T00%3A00%3A00Z", nil)
 	filter, _ = ParseTestRunFilterParams(r)
-	assert.Equal(t, "complete=true&from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(true).Encode())
-	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery(false).Encode())
+	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery().Encode())
 }
 
 func TestProductSpecMatches(t *testing.T) {

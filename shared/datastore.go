@@ -21,23 +21,20 @@ func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
 	return &testRun, nil
 }
 
-// LoadTestRuns loads the TestRun entities for the given parameters.
+// LoadTestRunKeys loads the keys for the TestRun entities for the given parameters.
 // It is encapsulated because we cannot run single queries with multiple inequality
 // filters, so must load the keys and merge the results.
-func LoadTestRuns(
+func LoadTestRunKeys(
 	ctx context.Context,
 	products []ProductSpec,
 	labels mapset.Set,
-	shas []string,
+	sha string,
 	from *time.Time,
 	to *time.Time,
-	limit *int) (result []TestRun, err error) {
-	var testRuns []TestRun
-	baseQuery := datastore.NewQuery("TestRun")
-	// NOTE(lukebjerring): While we can't filter on multiple SHAs, it's still much more efficient
-	// to (pre-)filter for a single SHA during the query.
-	if len(shas) == 1 && !IsLatest(shas[0]) {
-		baseQuery = baseQuery.Filter("Revision =", shas[0])
+	limit *int) (result []*datastore.Key, err error) {
+	baseQuery := datastore.NewQuery("TestRun").Limit(1000)
+	if !IsLatest(sha) {
+		baseQuery = baseQuery.Filter("Revision =", sha)
 	}
 	if labels != nil {
 		for i := range labels.Iter() {
@@ -76,33 +73,52 @@ func LoadTestRuns(
 		}
 		var keys []*datastore.Key
 		for _, key := range fetched {
-			if len(shas) > 1 || limit == nil || *limit > len(keys) {
+			if limit == nil || *limit > len(keys) {
 				if prefiltered == nil || (*prefiltered).Contains(key.String()) {
 					keys = append(keys, key)
 				}
 			}
 		}
-		testRunResults := make(TestRuns, len(keys))
-		if err = datastore.GetMulti(ctx, keys, testRunResults); err != nil {
-			return nil, err
+
+		if limit != nil && len(keys) > *limit {
+			keys = keys[:*limit]
 		}
-		// Append the keys as ID
-		for i, key := range keys {
-			testRunResults[i].ID = key.IntID()
-		}
-		appended := 0
-		for _, testRun := range testRunResults {
-			if len(shas) > 1 && !contains(shas, testRun.Revision) {
-				continue
-			}
-			testRuns = append(testRuns, testRun)
-			appended++
-			if limit != nil && appended >= *limit {
-				break
-			}
-		}
+		result = append(result, keys...)
 	}
-	return testRuns, nil
+	return result, nil
+}
+
+// LoadTestRuns loads the test runs for the TestRun entities for the given parameters.
+// It is encapsulated because we cannot run single queries with multiple inequality
+// filters, so must load the keys and merge the results.
+func LoadTestRuns(
+	ctx context.Context,
+	products []ProductSpec,
+	labels mapset.Set,
+	sha string,
+	from *time.Time,
+	to *time.Time,
+	limit *int) (result []TestRun, err error) {
+	keys, err := LoadTestRunKeys(ctx, products, labels, sha, from, to, limit)
+	if err != nil {
+		return nil, err
+	}
+	return LoadTestRunsByKeys(ctx, keys)
+}
+
+// LoadTestRunsByKeys loads the given test runs (by key), but also appends the
+// ID to the TestRun entity.
+func LoadTestRunsByKeys(ctx context.Context, keys []*datastore.Key) (result TestRuns, err error) {
+	result = make(TestRuns, len(keys))
+	err = datastore.GetMulti(ctx, keys, result)
+	if err != nil {
+		return nil, err
+	}
+	// Append the keys as ID
+	for i, key := range keys {
+		result[i].ID = key.IntID()
+	}
+	return result, err
 }
 
 func contains(s []string, x string) bool {
@@ -147,15 +163,16 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 		Filter(fieldName+" <=", fmt.Sprintf("%s.%c", versionPrefix, '9'+1))
 }
 
-// GetCompleteRunSHAs returns an array of the SHA[0:10] for runs that
-// exists for all the given products, ordered by most-recent.
-func GetCompleteRunSHAs(
+// GetAlignedRunSHAs returns an array of the SHA[0:10] for runs that
+// exists for all the given products, ordered by most-recent, as well as a map
+// of those SHAs to the TestRun keys for the complete run.
+func GetAlignedRunSHAs(
 	ctx context.Context,
 	products ProductSpecs,
 	labels mapset.Set,
 	from,
 	to *time.Time,
-	limit *int) (shas []string, err error) {
+	limit *int) (shas []string, keys map[string][]*datastore.Key, err error) {
 	query := datastore.
 		NewQuery("TestRun").
 		Order("-TimeStart")
@@ -172,40 +189,49 @@ func GetCompleteRunSHAs(
 		query = query.Filter("TimeStart <", *to)
 	}
 
-	bySHA := make(map[string]mapset.Set)
+	productsBySHA := make(map[string]mapset.Set)
+	keyCollector := make(map[string][]*datastore.Key)
+	keys = make(map[string][]*datastore.Key)
 	done := mapset.NewSet()
 	it := query.Run(ctx)
 	for {
 		var testRun TestRun
-		var matchingProduct *ProductSpec
-		_, err := it.Next(&testRun)
+		var key *datastore.Key
+		matchingProduct := -1
+		key, err := it.Next(&testRun)
 		if err == datastore.Done {
 			break
 		} else if err != nil {
-			return nil, err
+			return nil, nil, err
 		} else {
 			for i := range products {
 				if products[i].Matches(testRun) {
-					matchingProduct = &products[i]
+					matchingProduct = i
 					break
 				}
 			}
 		}
-		if matchingProduct == nil {
+		if matchingProduct < 0 {
 			continue
 		}
-		if _, ok := bySHA[testRun.Revision]; !ok {
-			bySHA[testRun.Revision] = mapset.NewSet()
+		if _, ok := productsBySHA[testRun.Revision]; !ok {
+			productsBySHA[testRun.Revision] = mapset.NewSet()
+			keyCollector[testRun.Revision] = make([]*datastore.Key, len(products))
 		}
-		set := bySHA[testRun.Revision]
-		set.Add(*matchingProduct)
+		set := productsBySHA[testRun.Revision]
+		if set.Contains(products[matchingProduct]) {
+			continue
+		}
+		set.Add(products[matchingProduct])
+		keyCollector[testRun.Revision][matchingProduct] = key
 		if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 			done.Add(testRun.Revision)
 			shas = append(shas, testRun.Revision)
+			keys[testRun.Revision] = keyCollector[testRun.Revision]
 			if limit != nil && len(shas) >= *limit {
-				return shas, nil
+				return shas, keys, nil
 			}
 		}
 	}
-	return shas, err
+	return shas, keys, err
 }

@@ -16,6 +16,12 @@ import (
 // ExperimentalLabel is the implicit label present for runs marked 'experimental'.
 const ExperimentalLabel = "experimental"
 
+// LatestSHA is a helper for the 'latest' keyword/special case.
+const LatestSHA = "latest"
+
+// StableLabel is the implicit label present for runs marked 'stable'.
+const StableLabel = "stable"
+
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
 func GetDefaultProducts() ProductSpecs {
 	browserNames := GetDefaultBrowserNames()
@@ -55,11 +61,44 @@ type Logger interface {
 	Warningf(format string, args ...interface{})
 }
 
+// SplitLogger is a logger that sends logging operations to both A and B.
+type loggerMux struct {
+	delegates []Logger
+}
+
 type gaeLogger struct {
 	ctx context.Context
 }
 
 type nilLogger struct{}
+
+// Debugf implements formatted debug logging to both A and B.
+func (lm loggerMux) Debugf(format string, args ...interface{}) {
+	for _, l := range lm.delegates {
+		l.Debugf(format, args...)
+	}
+}
+
+// Errorf implements formatted error logging to both A and B.
+func (lm loggerMux) Errorf(format string, args ...interface{}) {
+	for _, l := range lm.delegates {
+		l.Errorf(format, args...)
+	}
+}
+
+// Infof implements formatted info logging to both A and B.
+func (lm loggerMux) Infof(format string, args ...interface{}) {
+	for _, l := range lm.delegates {
+		l.Infof(format, args...)
+	}
+}
+
+// Warningf implements formatted warning logging to both A and B.
+func (lm loggerMux) Warningf(format string, args ...interface{}) {
+	for _, l := range lm.delegates {
+		l.Warningf(format, args...)
+	}
+}
 
 func (l gaeLogger) Debugf(format string, args ...interface{}) {
 	gaelog.Criticalf(l.ctx, format, args...)
@@ -93,6 +132,15 @@ var (
 	nl  = nilLogger{}
 	lck = LoggerCtxKey{}
 )
+
+// NewLoggerMux creates a multiplexing Logger that writes all log operations to
+// all delegates.
+func NewLoggerMux(delegates []Logger) Logger {
+	if len(delegates) == 0 {
+		return NewNilLogger()
+	}
+	return loggerMux{delegates}
+}
 
 // NewGAELogger returns a Google App Engine Standard Environment logger bound to
 // the given context.

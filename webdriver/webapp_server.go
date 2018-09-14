@@ -147,6 +147,10 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 		// admin port directly so we don't need to use pickUnusedPort.
 		fmt.Sprintf("--admin_port=%d", 0),
 		"--automatic_restart=false",
+		// TODO(Hexcles): Force the legacy internal Datastore emulation
+		// in dev_appserver instead of the external one until
+		// https://issuetracker.google.com/issues/112817362 is solved.
+		"--support_datastore_emulator=false",
 		"--skip_sdk_update_check=true",
 		"--clear_datastore=true",
 		"--datastore_consistency_policy=consistent",

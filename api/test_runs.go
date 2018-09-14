@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine/datastore"
 )
 
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
@@ -43,9 +44,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(testRunsBytes)
 }
 
-// LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
-// the TestRuns.
-func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result []shared.TestRun, err error) {
+// LoadTestRunKeysForFilters deciphers the filters and executes a corresponding
+// query to load the TestRun keys.
+func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter) (result []*datastore.Key, err error) {
 	limit := filters.MaxCount
 	from := filters.From
 	if limit == nil && from == nil {
@@ -55,21 +56,31 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 	}
 	products := filters.GetProductsOrDefault()
 
-	// When ?complete=true, make sure to show results for the same complete run (executed for all browsers).
-	var shas []string
-	if !shared.IsLatest(filters.SHA) {
-		shas = []string{filters.SHA}
-	} else if filters.Complete != nil && *filters.Complete {
-		if shared.IsLatest(filters.SHA) {
-			shas, err = shared.GetCompleteRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
-			if err != nil {
-				return result, err
-			}
-			if len(shas) < 1 {
-				// Bail out early - can't find any complete runs.
-				return result, nil
-			}
+	// When ?aligned=true, make sure to show results for the same aligned run (executed for all browsers).
+	if shared.IsLatest(filters.SHA) && filters.Aligned != nil && *filters.Aligned {
+		shas, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
+		if err != nil {
+			return result, err
 		}
+		if len(shas) < 1 {
+			// Bail out early - can't find any complete runs.
+			return result, nil
+		}
+		keys := []*datastore.Key{}
+		for _, sha := range shas {
+			keys = append(keys, shaKeys[sha]...)
+		}
+		return keys, err
 	}
-	return shared.LoadTestRuns(ctx, products, filters.Labels, shas, from, filters.To, limit)
+	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit)
+}
+
+// LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
+// the TestRuns.
+func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result []shared.TestRun, err error) {
+	var keys []*datastore.Key
+	if keys, err = LoadTestRunKeysForFilters(ctx, filters); err != nil {
+		return nil, err
+	}
+	return shared.LoadTestRunsByKeys(ctx, keys)
 }
