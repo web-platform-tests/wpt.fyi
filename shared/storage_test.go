@@ -12,7 +12,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/shared/iotest"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/memcache"
 )
 
@@ -27,7 +27,7 @@ func TestGet_cacheHit(t *testing.T) {
 	cs := NewByteCachedStore(NewTestContext(), cache, store)
 
 	data := []byte("{}")
-	cr := iotest.NewMockReadCloser(t, data)
+	cr := sharedtest.NewMockReadCloser(t, data)
 	cache.EXPECT().NewReadCloser(&cacheID).Return(cr, nil)
 
 	var v []byte
@@ -48,8 +48,8 @@ func TestGet_cacheMiss(t *testing.T) {
 
 	data := []byte("{}")
 	c := make(chan bool)
-	cw := iotest.NewMockWriteCloser(t, c)
-	sr := iotest.NewMockReadCloser(t, data)
+	cw := sharedtest.NewMockWriteCloser(t, c)
+	sr := sharedtest.NewMockReadCloser(t, data)
 	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, memcache.ErrCacheMiss)
 	store.EXPECT().NewReadCloser(&storeID).Return(sr, nil)
 	cache.EXPECT().NewWriteCloser(&cacheID).Return(cw, nil)

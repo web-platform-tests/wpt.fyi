@@ -18,7 +18,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"github.com/web-platform-tests/wpt.fyi/shared/iotest"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/datastore"
 )
@@ -67,9 +66,9 @@ func TestSearchHandler(t *testing.T) {
 
 	// TODO(markdittmer): Should this be hitting GCS instead?
 	store := shared.NewMockReadable(mockCtrl)
-	rs := []*iotest.MockReadCloser{
-		iotest.NewMockReadCloser(t, summaryBytes[0]),
-		iotest.NewMockReadCloser(t, summaryBytes[1]),
+	rs := []*sharedtest.MockReadCloser{
+		sharedtest.NewMockReadCloser(t, summaryBytes[0]),
+		sharedtest.NewMockReadCloser(t, summaryBytes[1]),
 	}
 
 	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
