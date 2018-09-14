@@ -6,9 +6,10 @@ package main
 
 import (
 	"context"
-	"log"
+
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/revisions/announcer"
 	"github.com/web-platform-tests/wpt.fyi/revisions/api"
 	"github.com/web-platform-tests/wpt.fyi/revisions/api/handlers"
@@ -34,20 +35,20 @@ var a api.API
 func init() {
 	a = api.NewAPI(epochs)
 	go func() {
-		log.Print("INFO: Initializing announcer")
+		log.Infof("Initializing announcer")
 		var err error
 		ancr, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 			URL:                       "https://github.com/w3c/web-platform-tests.git",
 			RemoteName:                "origin",
 			BranchName:                "master",
 			EpochReferenceIterFactory: announcer.NewBoundedMergedPRIterFactory(),
-			Git: agit.GoGit{},
+			Git:                       agit.GoGit{},
 		})
 		if err != nil {
 			log.Fatalf("Announcer initialization failed: %v", err)
 		}
 		a.SetAnnouncer(ancr)
-		log.Print("INFO: Announcer initialized")
+		log.Infof("Announcer initialized")
 	}()
 
 	go func() {
@@ -59,27 +60,25 @@ func init() {
 		for i := 0; true; i++ {
 			err := limiter.Wait(ctx)
 			if err != nil {
-				log.Printf("WARN: Announcer update rate limiter error: %v", err)
+				log.Warningf("Announcer update rate limiter error: %v", err)
 			}
 			ancr := a.GetAnnouncer()
 			if ancr == nil {
-				log.Print("WARN: Periodic announcer update: Skipping iteration: Announcer not yet initialized")
+				log.Warningf("Periodic announcer update: Skipping iteration: Announcer not yet initialized")
 				continue
 			}
 
-			log.Print("INFO: Periodic announcer update: Updating...")
+			log.Infof("Periodic announcer update: Updating...")
 			err = ancr.Fetch()
 			if err != nil && err != git.NoErrAlreadyUpToDate {
-				log.Printf("ERRO: Error updating announcer: %v", err)
+				log.Errorf("Error updating announcer: %v", err)
 			}
-			log.Print("INFO: Update complete")
+			log.Infof("Update complete")
 		}
 	}()
 }
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Llongfile | log.LUTC)
-
 	http.HandleFunc("/api/revisions/epochs", epochsHandler)
 	http.HandleFunc("/api/revisions/latest", latestHandler)
 	http.HandleFunc("/api/revisions/list", listHandler)
