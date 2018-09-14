@@ -10,7 +10,7 @@
 </head>
 <body>
   <script>
-    /* global TestRunsQuery */
+    /* global expect, TestRunsQuery */
     suite('TestRunsQuery', () => {
       let testRunsQuery;
 
@@ -27,8 +27,16 @@
       });
 
       test('TestRunsQuery.prototype.*', () => {
-        const chrome = testRunsQuery.parseProductSpec('chrome');
-        assert.equal(chrome.browser_name, 'chrome');
+        const revision = '1234512345';
+        const chrome = 'chrome';
+        const labels = ['foo', 'bar'];
+        const specStr = `${chrome}[${labels.join(',')}]@${revision}`;
+        const chromeSpec = testRunsQuery.parseProductSpec(specStr);
+        assert.equal(chromeSpec.browser_name, chrome);
+        assert.equal(chromeSpec.revision, revision);
+        for (const label of labels) {
+          expect(Array.from(chromeSpec.labels)).to.include(label);
+        }
       });
     });
   </script>
