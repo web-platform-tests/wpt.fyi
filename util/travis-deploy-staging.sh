@@ -25,8 +25,7 @@ if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api|shared"; fi
 if [[ "${APP_PATH}" == "revisions/service" ]]; then APP_DEPS="${APP_DEPS}|revisions|shared"; fi
 APP_DEPS_REGEX="^(${APP_DEPS})/"
 
-EXCLUSIONS="_test.go$$"
-if [[ "${APP_PATH}" == "webapp" ]]; then EXCLUSIONS="${EXCLUSIONS}|webapp/components/test/"
+EXCLUSIONS="_test.go$|webapp/components/test/"
 
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
