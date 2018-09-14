@@ -5,7 +5,9 @@ found in the LICENSE file.
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="./display-logo.html">
 <link rel="import" href="./test-runs-query.html">
 
 <dom-module id="test-runs-query-builder">
@@ -13,7 +15,11 @@ found in the LICENSE file.
     <h3>Products</h3>
     <div>
       <template is="dom-repeat" items="[[products]]" as="product">
+        <display-logo product="[[product]]"></display-logo>
         [[product.browser_name]]
+        <template is="dom-if" if="[[product.browser_version]]">
+          [[product.browser_version]]
+        </template>
       </template>
     </div>
   </template>
