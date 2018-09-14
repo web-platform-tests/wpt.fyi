@@ -180,7 +180,8 @@ See models.go for more details.
         if (!showSource || !testRun.labels) {
           return '';
         }
-        return testRun.labels.find(l => ['taskcluster', 'buildbot'].includes(l));
+        const sources = ['taskcluster', 'buildbot', 'msedge'];
+        return testRun.labels.find(l => sources.includes(l));
       }
 
       minorIsSignificant(browserName) {
