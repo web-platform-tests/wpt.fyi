@@ -26,17 +26,28 @@
         assert.isTrue(testRunsQuery instanceof window.Polymer.Element);
       });
 
-      test('TestRunsQuery.prototype.*', () => {
+      suite('TestRunsQuery.prototype.*', () => {
+
         const revision = '1234512345';
         const chrome = 'chrome';
         const labels = ['foo', 'bar'];
         const specStr = `${chrome}[${labels.join(',')}]@${revision}`;
-        const chromeSpec = testRunsQuery.parseProductSpec(specStr);
-        assert.equal(chromeSpec.browser_name, chrome);
-        assert.equal(chromeSpec.revision, revision);
-        for (const label of labels) {
-          expect(Array.from(chromeSpec.labels)).to.include(label);
-        }
+        test(`parseProductSpec("${specStr}")`, () => {
+          const parsed = testRunsQuery.parseProductSpec(specStr);
+          assert.equal(parsed.browser_name, chrome);
+          assert.equal(parsed.revision, revision);
+          for (const label of labels) {
+            expect(Array.from(parsed.labels)).to.include(label);
+          }
+        });
+
+        const version63 = '63.0';
+        const chrome63 = `chrome-${version63}`;
+        test(`parseProduct(${chrome63})`, () => {
+          const parsed = testRunsQuery.parseProduct(chrome63);
+          assert.equal(parsed.browser_name, chrome);
+          assert.equal(parsed.browser_version, version63);
+        });
       });
     });
   </script>
