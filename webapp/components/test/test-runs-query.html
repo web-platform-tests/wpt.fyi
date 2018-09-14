@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../test-runs.html">
+</head>
+<body>
+  <script>
+    /* global TestRunsQuery */
+    suite('TestRunsQuery', () => {
+      let testRunsQuery;
+
+      setup(() => {
+        if (!window.customElements.get('test-runs-query')) {
+          class ConcreteClass extends TestRunsQuery(window.Polymer.Element) {}
+          window.customElements.define('test-runs-query', ConcreteClass);
+        }
+        testRunsQuery = document.createElement('test-runs-query');
+      });
+
+      test('instanceof Polymer.Element', () => {
+        assert.isTrue(testRunsQuery instanceof window.Polymer.Element);
+      });
+
+      test('TestRunsQuery.prototype.*', () => {
+        const chrome = testRunsQuery.parseProductSpec('chrome');
+        assert.equal(chrome.browser_name, 'chrome');
+      });
+    });
+  </script>
+</body>
+</html>
