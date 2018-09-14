@@ -19,14 +19,9 @@
   <script>
     /* global WPTInterop */
     suite('WPTInterop', () => {
-      let fetches = [];
+      const fetches = {};
       let sandbox;
       let fetchResponse;
-
-      async function fetchToJson(url) {
-        const response = await window.fetch(url);
-        return await response.json();
-      }
 
       function Response(jsonValue) {
         this.ok = true;
@@ -39,39 +34,26 @@
           let interval = setInterval(() => {
             if (predicate()) {
               clearInterval(interval);
-              resolve(true);
+              resolve();
             }
           }, 0);
         });
       }
 
-      setup(done => {
+      setup(async () => {
         sandbox = sinon.sandbox.create();
 
-        let prfetch = Promise.resolve();
+        const interop = await fetch('fixtures/interop.json').then(r => r.json());
+        fetches['/api/interop'] = interop;
+        fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
 
-        if (!fetches.length) {
-          prfetch = fetchToJson('fixtures/passrates.json').then(json => {
-            fetches.push(json);
-            return true;
-          });
-        }
-
-        prfetch.then(() => {
-          fetchResponse = new Response(fetches[0]);
-          sandbox.stub(window, 'fetch', () => Promise.resolve(fetchResponse));
-          done();
+        sandbox.stub(window, 'fetch', (url) => {
+          return Promise.resolve(new Response(fetches[url]));
         });
       });
 
       teardown(done => {
         sandbox.restore();
-        done();
-      });
-
-      test('EMPTY', done => {
-        console.log(fetches.length === 1);
-        console.log(fetches[0]);
         done();
       });
 
@@ -86,116 +68,31 @@
         });
       });
 
-      // TODO(Hexcles): Re-enable this test.
-      suite.skip('static get properties()', () => {
-        test('passRateMetadata', () => {
-          assert.property(WPTInterop.properties, 'passRateMetadata');
-          assert.equal(WPTInterop.properties.passRateMetadata, Object);
-        });
-        test('allMetrics', () => {
-          assert.property(WPTInterop.properties, 'allMetrics');
-          assert.equal(WPTInterop.properties.allMetrics, Object);
-        });
-        test('metrics', () => {
-          assert.property(WPTInterop.properties.metrics, 'type');
-          assert.equal(WPTInterop.properties.metrics.type, Object);
-          assert.equal(WPTInterop.properties.metrics.computed,
-            'computeMetrics(path, query, allMetrics)');
-        });
-        test('currentNode', () => {
-          assert.property(WPTInterop.properties.currentNode, 'type');
-          assert.equal(WPTInterop.properties.currentNode.type, Object);
-          assert.equal(WPTInterop.properties.currentNode.computed,
-            'computeCurrentNode(allMetrics, path)');
-        });
-        test('query', () => {
-          assert.property(WPTInterop.properties.query, 'type');
-          assert.equal(WPTInterop.properties.query.value, '');
-          assert.equal(WPTInterop.properties.query.observer, 'queryChanged');
-          assert.equal(WPTInterop.properties.query.type, String);
-        });
-        test('pathIsATestFile', () => {
-          assert.property(WPTInterop.properties.pathIsATestFile, 'type');
-          assert.equal(WPTInterop.properties.pathIsATestFile.type, Boolean);
-          assert.equal(WPTInterop.properties.pathIsATestFile.computed,
-            'computePathIsATestFile(path)');
-        });
-        test('thLabels', () => {
-          assert.property(WPTInterop.properties.thLabels, 'type');
-          assert.equal(WPTInterop.properties.thLabels.type, Array);
-          assert.equal(WPTInterop.properties.thLabels.computed,
-            'computeThLabels(passRateMetadata)');
-        });
-        test('queryPlaceholder', () => {
-          assert.property(WPTInterop.properties.queryPlaceholder, 'type');
-          assert.equal(WPTInterop.properties.queryPlaceholder.type, String);
-          assert.equal(WPTInterop.properties.queryPlaceholder.computed,
-            'computeQueryPlaceholder()');
-        });
-        test('queryTimeoutId', () => {
-          assert.property(WPTInterop.properties.queryTimeoutId, 'type');
-          assert.equal(WPTInterop.properties.queryTimeoutId.type, Number);
-        });
-      });
-
-      // TODO(Hexcles): Re-enable this test.
-      suite.skip('WPTInterop.prototype.*', () => {
-        let superConnectedCallback;
+      suite('WPTInterop.prototype.*', () => {
         let wpti;
 
         setup((done) => {
-          superConnectedCallback = Promise.resolve(true);
-          sandbox.stub(window.Polymer.Element.prototype, 'connectedCallback')
-            .returns(superConnectedCallback);
-
+          sandbox.spy(window.Polymer.Element.prototype, 'ready');
           sandbox.spy(WPTInterop.prototype, 'fetchMetrics');
 
           wpti = fixture('wpt-interop-fixture');
 
-          // passRateMetadata or pass-rate-metadata will be
-          // bootstrapped on the server by interop_handler.go
-          wpti.passRateMetadata = fetches[0].metadata;
-
           done();
         });
 
-        suite('async connectedCallback()', () => {
-          test('super.connectedCallback()', (done) => {
-            waitingOn(() => window.Polymer.Element.prototype.connectedCallback.called)
-              .then(() => done());
+        suite('async ready()', () => {
+          test('super.ready()', () => {
+            return waitingOn(() => window.Polymer.Element.prototype.ready.called);
           });
 
-          test('Sets window.onpopstate', (done) => {
-            let onpopstate = window.onpopstate;
-            window.onpopstate = null;
-            waitingOn(() => window.fetch.called)
-              .then(() => {
-                // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
-                assert.isTrue(typeof window.onpopstate === 'function');
-                assert.notEqual(window.onpopstate, onpopstate);
-              })
-              .then(done);
-          });
-          test('Calls fetchMetrics(url)', (done) => {
-            waitingOn(() => window.fetch.called)
-              .then(() => {
-                // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
-                assert.equal(wpti.fetchMetrics.callCount, 1);
-                assert.isTrue(wpti.fetchMetrics.firstCall.args[0].endsWith('pass-rates.json.gz'));
-              })
-              .then(done);
+          test('fetches interop', () => {
+            return waitingOn(() => window.fetch.calledWith('/api/interop'));
           });
         });
 
         suite('async fetchMetrics()', () => {
-          test('Calls window.fetch(...)', (done) => {
-            waitingOn(() => window.fetch.called)
-              .then(() => {
-                // https://storage.googleapis.com/wptd-metrics/0-0/pass-rates.json.gz
-                assert.equal(window.fetch.callCount, 1);
-                assert.isTrue(window.fetch.firstCall.args[0].endsWith('pass-rates.json.gz'));
-              })
-              .then(done);
+          test('Calls window.fetch(...)', () => {
+            return waitingOn(() => window.fetch.calledWith(fetches['/api/interop'].url));
           });
         });
       });

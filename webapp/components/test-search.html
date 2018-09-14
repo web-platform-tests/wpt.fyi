@@ -81,8 +81,9 @@ found in the LICENSE file.
         this.onBlur = this.handleBlur.bind(this);
       }
 
-      connectedCallback() {
-        super.connectedCallback();
+      ready() {
+        super.ready();
+        this.q = this.query;
         const elem = this.shadowRoot.querySelector('.query');
         elem.addEventListener('keyup', this.onKeyUp);
         elem.addEventListener('change', this.onChange);
@@ -90,18 +91,13 @@ found in the LICENSE file.
         elem.addEventListener('blur', this.onBlur);
       }
 
-      disconnectedCallback() {
+      detached() {
         const elem = this.shadowRoot.querySelector('.query');
         elem.removeEventListener('blur', this.onBlur);
         elem.removeEventListener('focus', this.onFocus);
         elem.removeEventListener('change', this.onChange);
         elem.removeEventListener('keyup', this.onKeyUp);
-        super.disconnectedCallback();
-      }
-
-      ready() {
-        super.ready();
-        this.q = this.query;
+        super.detached();
       }
 
       async observeAutocompleteURL(newValue, oldValue) {

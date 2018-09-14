@@ -255,28 +255,24 @@ found in the LICENSE file.
       this.onSearchCommit = this.handleSearchCommit.bind(this);
     }
 
-    connectedCallback() {
-      super.connectedCallback();
-      this.shadowRoot.querySelector('test-search')
-        .addEventListener('commit', this.onSearchCommit);
-    }
-
-    disconnectedCallback() {
+    detached() {
       this.shadowRoot.querySelector('test-search')
         .removeEventListener('commit', this.onSearchCommit);
-      super.disconnectedCallback();
+      super.detached();
     }
 
     async ready() {
       await super.ready();
-      this.passRateMetadata = await fetch(`/api/interop${this.query}`).then(
-        function(r) {
+      this.passRateMetadata = await fetch(`/api/interop${this.query}`)
+        .then(r => {
           if (!r.ok) {
             return Promise.reject('Failed to fetch interop data');
           }
           return r.json();
         });
       this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
+      this.shadowRoot.querySelector('test-search')
+        .addEventListener('commit', this.onSearchCommit);
     }
 
     async fetchMetrics(url) {
