@@ -65,5 +65,5 @@ script:
     fi
   - | # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
-      docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS}
+      travis_retry docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS}
     fi
