@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	mapset "github.com/deckarep/golang-set"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	gaelog "google.golang.org/appengine/log"
@@ -157,6 +158,18 @@ func NewNilLogger() Logger {
 // stored in a context.Context object.
 func DefaultLoggerCtxKey() LoggerCtxKey {
 	return lck
+}
+
+// GetLogger retrieves a non-nil Logger that is appropriate for use in ctx. If
+// ctx does not provide a logger, then a nil-logger is returned.
+func GetLogger(ctx context.Context) Logger {
+	logger, ok := ctx.Value(DefaultLoggerCtxKey()).(Logger)
+	if !ok || logger == nil {
+		log.Warningf("Context without logger: %v; logs will be dropped", ctx)
+		return NewNilLogger()
+	}
+
+	return logger
 }
 
 // NewAppEngineContext creates a new Google App Engine-based context bound to
