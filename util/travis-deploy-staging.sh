@@ -25,6 +25,8 @@ if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api|shared"; fi
 if [[ "${APP_PATH}" == "revisions/service" ]]; then APP_DEPS="${APP_DEPS}|revisions|shared"; fi
 APP_DEPS_REGEX="^(${APP_DEPS})/"
 
+EXCLUSIONS="_test.go$|webapp/components/test/"
+
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
@@ -36,7 +38,7 @@ fi
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];
 then
-  git diff --name-only ${TRAVIS_BRANCH}..HEAD | egrep "${APP_DEPS_REGEX}" || {
+  git diff --name-only ${TRAVIS_BRANCH}..HEAD | egrep -v "${EXCLUSIONS}" | egrep "${APP_DEPS_REGEX}" || {
     info "No changes detected under ${APP_DEPS}. Skipping deploying ${APP_PATH}."
     exit 0
   }
