@@ -7,9 +7,8 @@ package sharedtest
 import (
 	"context"
 
+	"google.golang.org/appengine"
 	"google.golang.org/appengine/aetest"
-
-	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // NewAEInstance creates a new aetest instance backed by dev_appserver whose
@@ -35,7 +34,7 @@ func NewAEContext(stronglyConsistentDatastore bool) (context.Context, func(), er
 		inst.Close()
 		return nil, nil, err
 	}
-	ctx := shared.NewAppEngineContext(req)
+	ctx := appengine.NewContext(req)
 	return ctx, func() {
 		inst.Close()
 	}, nil
