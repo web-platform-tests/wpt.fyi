@@ -115,8 +115,16 @@ found in the LICENSE file.
       }
 
       parseProduct(name) {
+        // -version (optional)
+        let version;
+        const dashIndex = name.indexOf('-');
+        if (dashIndex > 0) {
+          version = name.substr(dashIndex + 1);
+          name = name.substr(0, dashIndex);
+        }
         return {
           browser_name: name,
+          browser_version: version,
         }
       }
     }
