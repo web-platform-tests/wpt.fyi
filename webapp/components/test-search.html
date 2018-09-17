@@ -19,8 +19,14 @@ found in the LICENSE file.
     </style>
 
     <div>
-      <input value="{{ q::input }}" class="query" placeholder="[[placeholder]]"
-          list="query-list">
+      <input value="{{ q::input }}"
+             class="query"
+             list="query-list"
+             placeholder="[[queryPlaceholder]]"
+             onkeyup="[[onKeyUp]]"
+             onkeydown="[[onKeyDown]]"
+             onfocus="[[onFocus]]"
+             onblur="[[onBlur]]">
       <!-- TODO(markdittmer): Static id will break multiple search
         components. -->
       <datalist id="query-list"></datalist>
@@ -79,25 +85,6 @@ found in the LICENSE file.
         this.onChange = this.handleChange.bind(this);
         this.onFocus = this.handleFocus.bind(this);
         this.onBlur = this.handleBlur.bind(this);
-      }
-
-      ready() {
-        super.ready();
-        this.q = this.query;
-        const elem = this.shadowRoot.querySelector('.query');
-        elem.addEventListener('keyup', this.onKeyUp);
-        elem.addEventListener('change', this.onChange);
-        elem.addEventListener('focus', this.onFocus);
-        elem.addEventListener('blur', this.onBlur);
-      }
-
-      detached() {
-        const elem = this.shadowRoot.querySelector('.query');
-        elem.removeEventListener('blur', this.onBlur);
-        elem.removeEventListener('focus', this.onFocus);
-        elem.removeEventListener('change', this.onChange);
-        elem.removeEventListener('keyup', this.onKeyUp);
-        super.detached();
       }
 
       async observeAutocompleteURL(newValue, oldValue) {
