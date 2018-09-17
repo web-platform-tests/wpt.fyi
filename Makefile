@@ -221,7 +221,7 @@ gofmt:
 		rm -rf "$$TMP_DIR"; \
 		pushd "$(GOPATH)/src" > /dev/null 2>&1; \
 		go build -o "$(GOPATH)/bin/gofmt" cmd/gofmt; \
-		go install cmd/gofmt; \
+		rm -rf "$(GOPATH)/src/cmd"; \
 		popd > /dev/null 2>&1; \
 	fi
 
