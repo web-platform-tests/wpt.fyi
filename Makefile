@@ -154,7 +154,7 @@ firefox_install: firefox_deps bzip2 wget java
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox-esr | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
-go_deps: gcloud go_packages $(GO_FILES)
+go_deps: gcloud gofmt go_packages $(GO_FILES)
 
 go_packages: git
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
@@ -207,6 +207,22 @@ node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
 		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
 		sudo apt-get install -qqy nodejs; \
+	fi
+
+gofmt:
+	if [[ "$$(which gofmt)" != "$(GOPATH)/bin/gofmt" ]]; then \
+		TMP_DIR=$$(mktemp -d); \
+		pushd $$TMP_DIR > /dev/null 2>&1; \
+		git clone "https://github.com/golang/go.git"; \
+		cd go; \
+		git checkout "origin/release-branch.go1.11"; \
+		mv "src/cmd" "$(GOPATH)/src/cmd"; \
+		popd > /dev/null 2>&1; \
+		rm -rf "$$TMP_DIR"; \
+		pushd "$(GOPATH)/src" > /dev/null 2>&1; \
+		go build -o "$(GOPATH)/bin/gofmt" cmd/gofmt; \
+		go install cmd/gofmt; \
+		popd > /dev/null 2>&1; \
 	fi
 
 gcloud: python curl gpg
