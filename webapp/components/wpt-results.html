@@ -11,6 +11,8 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="info-banner.html">
+<link rel="import" href="loading-state.html">
 <link rel="import" href="path-part.html">
 <link rel="import" href="results-navigation.html">
 <link rel="import" href="self-navigator.html">
@@ -20,7 +22,6 @@ found in the LICENSE file.
 <link rel="import" href="test-results-history-grid.html">
 <link rel="import" href="test-results-chart.html">
 <link rel="import" href="test-search.html">
-<link rel="import" href="info-banner.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -164,7 +165,7 @@ found in the LICENSE file.
       </paper-toast>
     </template>
 
-    <template is="dom-if" if="[[runsNotFound]]">
+    <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
         Failed to fetch test runs.
       </info-banner>
@@ -251,14 +252,13 @@ found in the LICENSE file.
         </template>
       </div>
     </template>
-
   </template>
 
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global TestRunsBase, SelfNavigation */
-    class WPTResults extends SelfNavigation(TestRunsBase) {
+    /* global TestRunsBase, SelfNavigation, LoadingState */
+    class WPTResults extends SelfNavigation(LoadingState(TestRunsBase)) {
       static get is() {
         return 'wpt-results';
       }
@@ -321,17 +321,8 @@ found in the LICENSE file.
             type: String,
             computed: 'computeAutocompleteURL(testRuns, search)',
           },
-          loadingCount: {
-            type: Number,
-            value: 0,
-          },
-          isLoading: {
-            type: Boolean,
-            computed: 'computeIsLoading(loadingCount)',
-          },
-          runsNotFound: {
-            type: Boolean,
-            computed: 'computeRunsNotFound(isLoading, testRuns)',
+          resultsLoadFailed: {
+            type:Boolean, value: false,
           },
           onSearchCommit: Function,
         };
@@ -412,17 +403,14 @@ found in the LICENSE file.
         return url;
       }
 
-      computeIsLoading(loadingCount) {
-        return !!loadingCount;
-      }
-
-      computeRunsNotFound(isLoading, testRuns) {
-        return !isLoading && !(testRuns && testRuns.length);
-      }
-
       constructor() {
         super();
         this.onSearchCommit = this.handleSearchCommit.bind(this);
+        this.onLoadingComplete = () => {
+          this.resultsLoadFailed =
+            !(this.testRuns && this.testRuns.length
+              && this.searchResults && this.searchResults.length);
+        }
       }
 
       connectedCallback() {
@@ -437,37 +425,45 @@ found in the LICENSE file.
         super.disconnectedCallback();
       }
 
-      ready() {
-        super.ready();
-        this.loadRuns().then(async runs => {
-          this.fetchResults();
-
-          // Load a diff data into this.diffRun, if needed.
-          if (this.diff && runs && runs.length === 2) {
-            this.diffRun = {
-              revision: 'diff',
-              browser_name: 'diff',
-            };
-          }
-        });
+      async ready() {
+        await super.ready();
 
         // NOTE(lukebjerring): Overriding the pathUpdated method doesn't get
-        // called, so we wrap any given onpathupdated methd here.
+        // called, so we wrap any given onpathupdated method here.
         const onpathupdated = this.onpathupdated;
         this.onpathupdated = path => {
           onpathupdated && onpathupdated(path);
           this.showHistory = false;
         };
+
+        this.loadingCount++;
+        try {
+          await this.loadRuns().then(async runs => {
+            this.fetchResults();
+
+            // Load a diff data into this.diffRun, if needed.
+            if (this.diff && runs && runs.length === 2) {
+              this.diffRun = {
+                revision: 'diff',
+                browser_name: 'diff',
+              };
+            }
+          });
+        } finally {
+          this.loadingCount--;
+        }
       }
 
       async fetchResults() {
         this.loadingCount++;
         try {
-          const response = await window.fetch(this.searchURL);
-          if (response.status !== 200) {
-            throw response;
-          }
-          const json = await response.json();
+          const json = await window.fetch(this.searchURL)
+            .then(async r => {
+              if (!r.ok || r.status != 200) {
+                return Promise.reject('Failed to fetch results data.');
+              }
+              return r.json();
+            });
           this.searchResults = json.results;
           this.refreshDisplayedNodes();
         } finally {

@@ -7,7 +7,10 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="info-banner.html">
+<link rel="import" href="loading-state.html">
 <link rel="import" href="path-part.html">
 <link rel="import" href="test-runs.html">
 <link rel="import" href="test-file-results.html">
@@ -33,10 +36,15 @@ found in the LICENSE file.
       border-bottom: solid 1px #ccc;
       padding-bottom: 1em;
       margin-bottom: 1em;
+      position: relative;
     }
-
     section.search .path {
       margin-top: 1em;
+    }
+    section.search paper-spinner-lite {
+      position: absolute;
+      top: 0;
+      right: 0;
     }
 
     /* Direct access to test-search from local shadowRoot prevents using
@@ -115,6 +123,8 @@ found in the LICENSE file.
       </template>
     </div>
 
+    <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
+
     <test-search class$="search-[[pathIsATestFile]]" query="[[search]]">
     </test-search>
 
@@ -130,6 +140,12 @@ found in the LICENSE file.
       </div>
     </template>
   </section>
+
+  <template is="dom-if" if="[[interopLoadFailed]]">
+    <info-banner type="error">
+      Failed to fetch interop data.
+    </info-banner>
+  </template>
 
   <template is="dom-if" if="[[!pathIsATestFile]]">
     <section class="runs">
@@ -198,8 +214,8 @@ found in the LICENSE file.
     [118, 255,   3], // --paper-light-green-a200
   ];
 
-  /* global TestRunsBase, SelfNavigation */
-  class WPTInterop extends SelfNavigation(TestRunsBase) {
+  /* global TestRunsBase, SelfNavigation, LoadingState */
+  class WPTInterop extends SelfNavigation(LoadingState(TestRunsBase)) {
     static get is() {
       return 'wpt-interop';
     }
@@ -235,12 +251,16 @@ found in the LICENSE file.
         },
         searchResults: Array,
         onSearchCommit: Function,
+        interopLoadFailed: Boolean,
       };
     }
 
     constructor() {
       super();
       this.onSearchCommit = this.handleSearchCommit.bind(this);
+      this.onLoadingComplete = () => {
+        this.interopLoadFailed = !(this.passRateMetadata && this.allMetrics);
+      }
     }
 
     connectedCallback() {
@@ -257,19 +277,19 @@ found in the LICENSE file.
 
     async ready() {
       await super.ready();
-      this.passRateMetadata = await fetch(`/api/interop${this.query}`).then(
-        function(r) {
-          if (!r.ok) {
-            return Promise.reject('Failed to fetch interop data');
-          }
-          return r.json();
-        });
-      this.allMetrics = await this.fetchMetrics(this.passRateMetadata.url);
-    }
-
-    async fetchMetrics(url) {
-      const response = await window.fetch(url);
-      return await response.json();
+      this.loadingCount++;
+      try {
+        this.passRateMetadata = await fetch(`/api/interop${this.query}`)
+          .then(async r => {
+            if (!r.ok || r.status !== 200) {
+              Promise.reject('Failed to fetch interop data');
+            }
+            return r.json();
+          });
+        this.allMetrics = await fetch(this.passRateMetadata.url).then(r => r.json());
+      } finally {
+        this.loadingCount--;
+      }
     }
 
     navigationPathPrefix() {
