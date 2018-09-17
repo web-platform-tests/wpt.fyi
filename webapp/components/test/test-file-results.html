@@ -21,6 +21,12 @@
   <script>
     /* global TestRunsBase, TestFileResults */
     suite('TestFileResults', () => {
+      let tfr;
+
+      setup(() => {
+        tfr = fixture('test-file-results-fixture');
+      });
+
       test('instanceof Polymer.Element', () => {
         assert.isTrue(new TestFileResults() instanceof window.Polymer.Element);
         assert.isTrue(document.createElement('test-file-results') instanceof window.Polymer.Element);
@@ -37,74 +43,15 @@
         });
       });
 
-      // TODO(Hexcles): Re-enable this test.
-      suite.skip('static get properties()', () => {
-        test('testFile', () => {
-          assert.property(TestFileResults.properties, 'testFile');
-          assert.property(TestFileResults.properties.testFile, 'type');
-          assert.equal(TestFileResults.properties.testFile.type, String);
-          assert.equal(TestFileResults.properties.testFile.observer, 'testFileChanged');
-        });
-        test('subtestNames', () => {
-          assert.property(TestFileResults.properties, 'subtestNames');
-          assert.property(TestFileResults.properties.subtestNames, 'type');
-          assert.equal(TestFileResults.properties.subtestNames.type, Array);
-          assert.isTrue(Array.isArray(TestFileResults.properties.subtestNames.value));
-          assert.equal(TestFileResults.properties.subtestNames.value.length, 0);
-        });
-      });
-
-
-      // TODO(Hexcles): Re-enable this test.
-      suite.skip('messages', () => {
-        let trf;
-
-        setup(() => {
-          trf = fixture('test-file-results-fixture');
-        });
-
-        test('assert_equals', () => {
-          assert.equal(trf.parseFailureMessage('assert_equals: expected "a://example.net/foo" but got "a:/foo"'), '!EQ("a://example.net/foo", "a:/foo")');
-        });
-
-        test('assert_approx_equals', () => {
-          assert.equal(trf.parseFailureMessage('assert_approx_equals: expected matrix(1,0,0,1,-100,0) but got matrix(1, 0, 0, 1, -200, 0): The value should be matrix(1,0,0,1,-100,0) at 0ms but got matrix(1, 0, 0, 1, -200, 0) expected -100 +/- 0.0001 but got -200'), '!~EQ(matrix(1,0,0,1,-100,0), matrix(1, 0, 0, 1, -200, 0))');
-        });
-
-        test('assert==', () => {
-          assert.equal(trf.parseFailureMessage('assert 404 == 400'), '!EQ(404, 400)');
-        });
-
-        test('assert_array_equals', () => {
-          assert.equal(trf.parseFailureMessage('assert_array_equals: property 2, expected "Uncaught SyntaxError: Detected cycle while resolving name \'x\' in \'./cycle-unresolvable-a.js\'" but got "Uncaught SyntaxError: Detected cycle while resolving name \'x\' in \'./cycle-unresolvable.js\'"'), '!ARRAY_EQ(a, b)');
-        });
-
-        test('uncaught', () => {
-          assert.equal(trf.parseFailureMessage('Uncaught ReferenceError: SharedArrayBuffer is not defined'), 'UNCAUGHT_ERROR');
-        });
-
-        test('not_a_function', () => {
-          assert.equal(trf.parseFailureMessage('RTCRtpReceiver.getCapabilities is not a function'), 'NOT_A_FUNCTION(RTCRtpReceiver.getCapabilities)');
-        });
-
-        test('not_defined', () => {
-          assert.equal(trf.parseFailureMessage('USBOutTransferResult is not defined'), 'NOT_DEFINED(USBOutTransferResult)');
-        });
-
-        test('unhandled_rejection', () => {
-          assert.equal(trf.parseFailureMessage('promise_test: Unhandled rejection with value: "Frame loading timed out"'), 'PROMISE_REJECT("Frame loading timed out")');
-        });
-
-        test('assert_true', () => {
-          assert.equal(trf.parseFailureMessage('assert_true: The prototype object must have a property "accessKeyLabel" expected true got false'), '!TRUE');
-        });
-
-        test('assert_own_property', () => {
-          assert.equal(trf.parseFailureMessage('assert_own_property: interface prototype object missing non-static operation expected property "caretPositionFromPoint" missing'), '!OWN_PROPERTY(caretPositionFromPoint)');
-        });
-
-        test('assert_inherits', () => {
-          assert.equal(trf.parseFailureMessage('assert_inherits: property "touchType" not found in prototype chain'), '!INHERITS(touchType)');
+      suite('TestFileResults.prototype.*', () => {
+        suite('statusName', () => {
+          test('no subtests', () => {
+            assert.equal(tfr.statusName(0), 'Test status');
+          });
+          test('> 0 subtests', () => {
+            assert.equal(tfr.statusName(1), 'Harness status');
+            assert.equal(tfr.statusName(99), 'Harness status');
+          });
         });
       });
     });
