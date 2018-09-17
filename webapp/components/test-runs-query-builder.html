@@ -7,19 +7,48 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="./display-logo.html">
+<link rel="import" href="./product-info.html">
 <link rel="import" href="./test-runs-query.html">
 
 <dom-module id="test-runs-query-builder">
   <template>
-    <h3>Products</h3>
+    <h3>
+      Products
+      <paper-icon-button icon="editor:mode-edit"
+                         onclick="[[toggleEdit]]"></paper-icon-button>
+    </h3>
     <div>
       <template is="dom-repeat" items="[[products]]" as="product">
-        <display-logo product="[[product]]"></display-logo>
-        [[product.browser_name]]
-        <template is="dom-if" if="[[product.browser_version]]">
-          [[product.browser_version]]
-        </template>
+        <div>
+          <display-logo product="[[product]]"></display-logo>
+          <table>
+            <tr>
+              <td class="label">Browser</td>
+              <td>
+                <template is="dom-if" if="[[edit]]">
+                  <input value="{{ product.browser_name }}">
+                </template>
+                <template is="dom-if" if="[[!edit]]">
+                  [[displayName(product.browser_name)]]
+                </template>
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Version</td>
+              <td>
+                <template is="dom-if" if="[[edit]]">
+                  <input value="{{ product.browser_version}}">
+                </template>
+                <template is="dom-if" if="[[!edit]]">
+                  [[product.browser_version]]
+                </template>
+              </td>
+            </tr>
+          </table>
+        </div>
       </template>
     </div>
   </template>
@@ -28,14 +57,27 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
-    class TestRunsQueryBuilder extends TestRunsQuery(window.Polymer.Element) {
+    class TestRunsQueryBuilder extends TestRunsQuery(ProductInfo(window.Polymer.Element)) {
       static get is() {
         return 'test-runs-query-builder';
       }
 
       static get properties() {
         return {
+          edit: {
+            type: Boolean,
+            value: false,
+          },
         };
+      }
+
+      constructor() {
+        super();
+        this.toggleEdit = this.onToggleEdit.bind(this);
+      }
+
+      onToggleEdit() {
+        this.edit = !this.edit;
       }
     }
 

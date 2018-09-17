@@ -8,6 +8,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="./display-logo.html">
+<link rel="import" href="./product-info.html">
 
 <!--
 `<test-run>` is a stateless component for displaying the details of a TestRun.
@@ -68,25 +69,8 @@ See models.go for more details.
   </template>
 
   <script>
-    const DISPLAY_NAMES = (() => {
-      let m = new Map();
-      ['chrome', 'chrome-experimental'].forEach(n => m.set(n, 'Chrome'));
-      ['edge', 'edge-experimental'].forEach(n => m.set(n, 'Edge'));
-      ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
-      ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
-      m.set('uc', 'UC Browser');
-      m.set('android', 'Android');
-      m.set('linux', 'Linux');
-      m.set('macos', 'macOS');
-      m.set('windows', 'Windows');
-      return m;
-    })();
-    const VERSION_PATTERNS = {
-      major: /(\d+)/,
-      majorAndMinor: /(\d+\.\d+)/
-    };
-
-    class TestRun extends window.Polymer.Element {
+    /* global ProductInfo */
+    class TestRun extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'test-run';
       }
@@ -109,37 +93,6 @@ See models.go for more details.
 
       isDiff(browserName) {
         return browserName.toLowerCase() === 'diff';
-      }
-
-      displayName(name) {
-        return DISPLAY_NAMES.get(name) || name;
-      }
-
-      displayLabels(labels) {
-        if (labels && labels instanceof Array) {
-          return labels.join(', ');
-        }
-        return '';
-      }
-
-      minorIsSignificant(browserName) {
-        return browserName === 'safari';
-      }
-
-      /**
-       * Truncate a software version identifier to include only the most
-       * salient information for the specified browser.
-       */
-      shortVersion(browserName, browserVersion) {
-        const pattern = this.minorIsSignificant(browserName) ?
-          VERSION_PATTERNS.majorAndMinor : VERSION_PATTERNS.major;
-        const match = pattern.exec(browserVersion);
-
-        if (!match) {
-          return browserVersion;
-        }
-
-        return match[1];
       }
 
       moreTooltip(testRun) {
