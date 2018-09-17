@@ -168,11 +168,19 @@ def task_handler():
         # to tell TaskQueue to drop the task.
         return ('', HTTPStatus.NO_CONTENT)
 
-    resp = "{} results loaded from {}\n".format(len(report.results), gcs_path)
+    resp = "{} results loaded from {}\n".format(
+        len(report.results), str(gcs_paths))
 
     raw_results_gcs_path = '/{}/{}/report.json'.format(
         config.raw_results_bucket(), report.sha_product_path)
-    gsutil.copy('gs:/' + gcs_path, 'gs:/' + raw_results_gcs_path)
+    if result_type == 'single':
+        # If the original report isn't chunked, we store it directly without
+        # the roundtrip to serialize it back.
+        gsutil.copy('gs:/' + gcs_paths[0], 'gs:/' + raw_results_gcs_path)
+    else:
+        with tempfile.NamedTemporaryFile(suffix='.json.gz') as temp:
+            report.serialize_gzip(temp.name)
+            gsutil.copy(temp.name, 'gs:/' + raw_results_gcs_path, gzipped=True)
 
     tempdir = tempfile.mkdtemp()
     try:

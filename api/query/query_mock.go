@@ -8,96 +8,10 @@ import (
 	golang_set "github.com/deckarep/golang-set"
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
-	io "io"
 	http "net/http"
 	reflect "reflect"
 	time "time"
 )
-
-// Mockreadable is a mock of readable interface
-type Mockreadable struct {
-	ctrl     *gomock.Controller
-	recorder *MockreadableMockRecorder
-}
-
-// MockreadableMockRecorder is the mock recorder for Mockreadable
-type MockreadableMockRecorder struct {
-	mock *Mockreadable
-}
-
-// NewMockreadable creates a new mock instance
-func NewMockreadable(ctrl *gomock.Controller) *Mockreadable {
-	mock := &Mockreadable{ctrl: ctrl}
-	mock.recorder = &MockreadableMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (m *Mockreadable) EXPECT() *MockreadableMockRecorder {
-	return m.recorder
-}
-
-// NewReadCloser mocks base method
-func (m *Mockreadable) NewReadCloser(arg0 string) (io.ReadCloser, error) {
-	ret := m.ctrl.Call(m, "NewReadCloser", arg0)
-	ret0, _ := ret[0].(io.ReadCloser)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// NewReadCloser indicates an expected call of NewReadCloser
-func (mr *MockreadableMockRecorder) NewReadCloser(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewReadCloser", reflect.TypeOf((*Mockreadable)(nil).NewReadCloser), arg0)
-}
-
-// MockreadWritable is a mock of readWritable interface
-type MockreadWritable struct {
-	ctrl     *gomock.Controller
-	recorder *MockreadWritableMockRecorder
-}
-
-// MockreadWritableMockRecorder is the mock recorder for MockreadWritable
-type MockreadWritableMockRecorder struct {
-	mock *MockreadWritable
-}
-
-// NewMockreadWritable creates a new mock instance
-func NewMockreadWritable(ctrl *gomock.Controller) *MockreadWritable {
-	mock := &MockreadWritable{ctrl: ctrl}
-	mock.recorder = &MockreadWritableMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockreadWritable) EXPECT() *MockreadWritableMockRecorder {
-	return m.recorder
-}
-
-// NewReadCloser mocks base method
-func (m *MockreadWritable) NewReadCloser(arg0 string) (io.ReadCloser, error) {
-	ret := m.ctrl.Call(m, "NewReadCloser", arg0)
-	ret0, _ := ret[0].(io.ReadCloser)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// NewReadCloser indicates an expected call of NewReadCloser
-func (mr *MockreadWritableMockRecorder) NewReadCloser(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewReadCloser", reflect.TypeOf((*MockreadWritable)(nil).NewReadCloser), arg0)
-}
-
-// NewWriteCloser mocks base method
-func (m *MockreadWritable) NewWriteCloser(arg0 string) (io.WriteCloser, error) {
-	ret := m.ctrl.Call(m, "NewWriteCloser", arg0)
-	ret0, _ := ret[0].(io.WriteCloser)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// NewWriteCloser indicates an expected call of NewWriteCloser
-func (mr *MockreadWritableMockRecorder) NewWriteCloser(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewWriteCloser", reflect.TypeOf((*MockreadWritable)(nil).NewWriteCloser), arg0)
-}
 
 // MocksharedInterface is a mock of sharedInterface interface
 type MocksharedInterface struct {

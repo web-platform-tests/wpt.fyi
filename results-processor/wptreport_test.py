@@ -479,3 +479,34 @@ class HelpersTest(unittest.TestCase):
             prepare_labels(r, 'experimental', 'blade-runner'),
             ['blade-runner', 'experimental', 'firefox']
         )
+
+    def test_prepare_labels_from_stable_label(self):
+        r = WPTReport()
+        r.update_metadata(browser_name='firefox')
+        self.assertListEqual(
+            prepare_labels(r, 'stable', 'blade-runner'),
+            ['blade-runner', 'firefox', 'stable']
+        )
+
+    def test_prepare_labels_from_browser_channel(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'firefox',
+                'browser_channel': 'dev',
+            }
+        }
+        self.assertListEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            ['blade-runner', 'experimental', 'firefox']
+        )
+        r._report['run_info']['browser_channel'] = 'nightly'
+        self.assertListEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            ['blade-runner', 'experimental', 'firefox']
+        )
+        r._report['run_info']['browser_channel'] = 'beta'
+        self.assertListEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            ['beta', 'blade-runner', 'firefox']
+        )
