@@ -11,12 +11,18 @@
       m.set('linux', 'Linux');
       m.set('macos', 'macOS');
       m.set('windows', 'Windows');
+      // Channels
+      m.set('stable', 'Stable');
+      m.set('beta', 'Beta');
+      m.set('dev', 'Dev');
+      m.set('experimental', 'Experimental');
       return m;
     })();
     const VERSION_PATTERNS = {
       major: /(\d+)/,
       majorAndMinor: /(\d+\.\d+)/
     };
+    const CHANNELS = new Set(['stable', 'beta', 'dev', 'experimental']);
 
     // eslint-disable-next-line no-unused-vars
     const ProductInfo = (superClass) => class extends superClass {
@@ -54,6 +60,24 @@
         }
 
         return match[1];
+      }
+
+      getSpec(product) {
+        let spec = product.browser_name;
+        if (product.browser_version) {
+          spec += `-${product.browser_version}`;
+        }
+        if (product.labels && product.labels.length) {
+          spec += `[${product.labels.join(',')}]`;
+        }
+        if (product.revision && !isLatest(product.revision)) {
+          spec += `@${product.revision}`;
+        }
+        return spec;
+      }
+
+      isLatest(sha) {
+        return !sha || sha === 'latest';
       }
     }
   </script>

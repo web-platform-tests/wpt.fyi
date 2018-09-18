@@ -25,40 +25,9 @@ found in the LICENSE file.
     </h3>
     <div>
       <template is="dom-repeat" items="[[products]]" as="product">
-        <div>
-          <display-logo product="[[product]]"></display-logo>
-          <table>
-            <tr>
-              <td class="label">Browser</td>
-              <td>
-                <template is="dom-if" if="[[edit]]">
-                  <paper-dropdown-menu label="Browser" no-animations>
-                    <paper-listbox slot="dropdown-content" selected="{{ product.browser_name }}" attr-for-selected="value">
-                      <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
-                      <paper-item value="edge">[[displayName("edge")]]</paper-item>
-                      <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
-                      <paper-item value="safari">[[displayName("safari")]]</paper-item>
-                    </paper-listbox>
-                  </paper-dropdown-menu>
-                </template>
-                <template is="dom-if" if="[[!edit]]">
-                  [[ displayName(product.browser_name) ]]
-                </template>
-              </td>
-            </tr>
-            <tr>
-              <td class="label">Version</td>
-              <td>
-                <template is="dom-if" if="[[edit]]">
-                  <input value="{{ product.browser_version}}">
-                </template>
-                <template is="dom-if" if="[[!edit]]">
-                  [[product.browser_version]]
-                </template>
-              </td>
-            </tr>
-          </table>
-        </div>
+        <product-builder product="{{product}}"
+                         edit="[[edit]]"
+                         debug="[[debug]]"></product-builder>
       </template>
     </div>
   </template>
@@ -76,7 +45,11 @@ found in the LICENSE file.
         return {
           edit: {
             type: Boolean,
-            value: true,
+            value: false,
+          },
+          debug: {
+            type: Boolean,
+            value: false,
           },
         };
       }
@@ -92,5 +65,130 @@ found in the LICENSE file.
     }
 
     window.customElements.define(TestRunsQueryBuilder.is, TestRunsQueryBuilder);
+  </script>
+</dom-module>
+
+<dom-module id="product-builder">
+  <template>
+    <display-logo product="[[product]]"></display-logo>
+    <template is="dom-if" if="[[debug]]">
+      [[spec]]
+    </template>
+    <table>
+      <tr>
+        <td class="label">Browser</td>
+        <td>
+          <template is="dom-if" if="[[edit]]">
+            <paper-dropdown-menu label="Browser" no-animations>
+              <paper-listbox slot="dropdown-content" selected="{{ product.browser_name }}" attr-for-selected="value">
+                <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
+                <paper-item value="edge">[[displayName("edge")]]</paper-item>
+                <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
+                <paper-item value="safari">[[displayName("safari")]]</paper-item>
+              </paper-listbox>
+            </paper-dropdown-menu>
+          </template>
+          <template is="dom-if" if="[[!edit]]">
+            [[ displayName(product.browser_name) ]]
+          </template>
+        </td>
+      </tr>
+      <tr>
+        <td class="label">Channel</td>
+        <td>
+          <template is="dom-if" if="[[edit]]">
+            <paper-dropdown-menu label="Channel" no-animations>
+              <paper-listbox slot="dropdown-content" selected="{{ channel }}" attr-for-selected="value">
+                <paper-item value="any">Any</paper-item>
+                <paper-item value="stable">[[displayName("stable")]]</paper-item>
+                <paper-item value="beta">[[displayName("beta")]]</paper-item>
+                <paper-item value="dev">[[displayName("dev")]]</paper-item>
+                <paper-item value="experimental">[[displayName("experimental")]]</paper-item>
+              </paper-listbox>
+            </paper-dropdown-menu>
+          </template>
+          <template is="dom-if" if="[[!edit]]">
+            [[ displayName(product.browser_name) ]]
+          </template>
+        </td>
+      </tr>
+      <tr>
+        <td class="label">Version</td>
+        <td>
+          <template is="dom-if" if="[[edit]]">
+            <input value="{{ product.browser_version::input }}">
+          </template>
+          <template is="dom-if" if="[[!edit]]">
+            [[product.browser_version]]
+          </template>
+        </td>
+      </tr>
+    </table>
+  </template>
+  <script>
+    class ProductBuilder extends ProductInfo(window.Polymer.Element) {
+      static get is() {
+        return 'product-builder';
+      }
+
+      static get properties() {
+        return {
+          edit: {
+            type: Boolean,
+            value: true,
+          },
+          product: {
+            type: Object,
+          },
+          channel: {
+            type: String,
+          },
+          debug: {
+            type: Boolean,
+            value: false,
+          },
+          spec: String,
+        };
+      }
+
+      static get observers() {
+        return [
+          'productUpdated(product)',
+          'channelUpdated(channel)',
+          'specChanged(product.*)',
+        ];
+      }
+
+      productUpdated(product) {
+        // Configure the channel from the labels.
+        let channel = "any";
+        const labels = new Set(product.labels || []);
+        for (const c of CHANNELS) {
+          if (labels.has(c)) {
+            channel = c;
+          }
+        }
+        this.channel = channel;
+      }
+
+      channelUpdated(channel) {
+        const labels = new Set(this.product.labels || []);
+        for (const c of CHANNELS) {
+          if (c == channel) {
+            labels.add(c);
+          } else {
+            labels.delete(c);
+          }
+        }
+        this.product.labels = Array.from(labels);
+        this.notifyPath('product.labels');
+      }
+
+      specChanged(change) {
+        this.spec = this.getSpec(this.product);
+      }
+    }
+
+    window.customElements.define(ProductBuilder.is, ProductBuilder);
   </script>
 </dom-module>
