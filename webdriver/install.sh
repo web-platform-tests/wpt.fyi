@@ -44,21 +44,21 @@ then
 fi
 cd ${INSTALL_DIR}
 
-# Firefox 60
+# Firefox 62
 FIREFOX="firefox"
 case "${UNAME_OUT}" in
     Darwin*)
         FIREFOX_OS="mac"
-        FIREFOX_DMG="Firefox 60.0.dmg"
+        FIREFOX_DMG="Firefox 62.0.dmg"
         FIREFOX_SRC="${FIREFOX_DMG}"
         ;;
     Linux*|*)
         FIREFOX_OS="linux-x86_64"
-        FIREFOX_TBZ="${FIREFOX}-60.0.tar.bz2"
+        FIREFOX_TBZ="${FIREFOX}-62.0.tar.bz2"
         FIREFOX_SRC="${FIREFOX_TBZ}"
         ;;
 esac
-FIREFOX_URL="https://releases.mozilla.org/pub/firefox/releases/60.0/${FIREFOX_OS}/en-US/${FIREFOX_SRC}"
+FIREFOX_URL="https://releases.mozilla.org/pub/firefox/releases/62.0/${FIREFOX_OS}/en-US/${FIREFOX_SRC}"
 
 info "Getting ${FIREFOX} binary..."
 if [[ ! -e ${FIREFOX} || "${REINSTALL}" == "true" ]]

@@ -292,6 +292,11 @@ found in the LICENSE file.
       }
     }
 
+    async fetchMetrics(url) {
+      const response = await window.fetch(url);
+      return await response.json();
+    }
+
     navigationPathPrefix() {
       return '/interop';
     }
