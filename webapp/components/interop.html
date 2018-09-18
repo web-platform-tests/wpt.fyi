@@ -257,8 +257,8 @@ found in the LICENSE file.
 
     async ready() {
       await super.ready();
-      this.passRateMetadata = await fetch(`/api/interop${this.query}`).then(
-        function(r) {
+      this.passRateMetadata = await fetch(`/api/interop${this.query}`)
+        .then(r => {
           if (!r.ok) {
             return Promise.reject('Failed to fetch interop data');
           }
