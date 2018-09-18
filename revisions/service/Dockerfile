@@ -8,9 +8,8 @@ RUN apt-get install -qy --no-install-suggests git
 WORKDIR /go/src/app
 COPY *.go .
 
-RUN /usr/local/go/bin/go get -d .
-RUN rm -rf /root/go/src/github.com/web-platform-tests/wpt.fyi/*
 COPY wpt.fyi /root/go/src/github.com/web-platform-tests/wpt.fyi/
+RUN /usr/local/go/bin/go get -d .
 RUN /usr/local/go/bin/go build -o app .
 
 # Application image.
