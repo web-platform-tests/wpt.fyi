@@ -5,10 +5,9 @@
 package shared
 
 import (
+	gomock "github.com/golang/mock/gomock"
 	io "io"
 	reflect "reflect"
-
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockReadable is a mock of Readable interface
@@ -129,4 +128,86 @@ func (m *MockCachedStore) Get(cacheID, storeID, value interface{}) error {
 // Get indicates an expected call of Get
 func (mr *MockCachedStoreMockRecorder) Get(cacheID, storeID, value interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCachedStore)(nil).Get), cacheID, storeID, value)
+}
+
+// MockObjectStore is a mock of ObjectStore interface
+type MockObjectStore struct {
+	ctrl     *gomock.Controller
+	recorder *MockObjectStoreMockRecorder
+}
+
+// MockObjectStoreMockRecorder is the mock recorder for MockObjectStore
+type MockObjectStoreMockRecorder struct {
+	mock *MockObjectStore
+}
+
+// NewMockObjectStore creates a new mock instance
+func NewMockObjectStore(ctrl *gomock.Controller) *MockObjectStore {
+	mock := &MockObjectStore{ctrl: ctrl}
+	mock.recorder = &MockObjectStoreMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockObjectStore) EXPECT() *MockObjectStoreMockRecorder {
+	return m.recorder
+}
+
+// Get mocks base method
+func (m *MockObjectStore) Get(id, value interface{}) error {
+	ret := m.ctrl.Call(m, "Get", id, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Get indicates an expected call of Get
+func (mr *MockObjectStoreMockRecorder) Get(id, value interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockObjectStore)(nil).Get), id, value)
+}
+
+// MockObjectCache is a mock of ObjectCache interface
+type MockObjectCache struct {
+	ctrl     *gomock.Controller
+	recorder *MockObjectCacheMockRecorder
+}
+
+// MockObjectCacheMockRecorder is the mock recorder for MockObjectCache
+type MockObjectCacheMockRecorder struct {
+	mock *MockObjectCache
+}
+
+// NewMockObjectCache creates a new mock instance
+func NewMockObjectCache(ctrl *gomock.Controller) *MockObjectCache {
+	mock := &MockObjectCache{ctrl: ctrl}
+	mock.recorder = &MockObjectCacheMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockObjectCache) EXPECT() *MockObjectCacheMockRecorder {
+	return m.recorder
+}
+
+// Get mocks base method
+func (m *MockObjectCache) Get(id, value interface{}) error {
+	ret := m.ctrl.Call(m, "Get", id, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Get indicates an expected call of Get
+func (mr *MockObjectCacheMockRecorder) Get(id, value interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockObjectCache)(nil).Get), id, value)
+}
+
+// Put mocks base method
+func (m *MockObjectCache) Put(id, value interface{}) error {
+	ret := m.ctrl.Call(m, "Put", id, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Put indicates an expected call of Put
+func (mr *MockObjectCacheMockRecorder) Put(id, value interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockObjectCache)(nil).Put), id, value)
 }
