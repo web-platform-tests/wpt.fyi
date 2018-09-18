@@ -55,7 +55,7 @@ func testLabel(
 	}
 	url := fmt.Sprintf("%s?%s", path, filters.ToQuery().Encode())
 	if err := wd.Get(app.GetWebappURL(url)); err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Failed to load %s: %s", url, err.Error()))
 	}
 
 	// Wait for the results view to load.
@@ -66,12 +66,14 @@ func testLabel(
 		}
 		return len(testRuns) > 0, nil
 	}
-	wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
+	if err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10); err != nil {
+		panic(fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
+	}
 
 	// Check loaded test runs
 	testRuns, err := getTestRunElements(wd, elementName)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Failed to get test runs: %s", err.Error()))
 	}
 	assert.Lenf(t, testRuns, runs, "Expected exactly %v TestRuns search result.", runs)
 	if aligned {
