@@ -11,6 +11,12 @@
   <test-runs-query-builder product-specs='["chrome[experimental]","edge"]' edit debug>
   </test-runs-query-builder>
 
+  <test-fixture id="product-builder-fixture">
+    <template>
+      <product-builder></product-builder>
+    </template>
+  </test-fixture>
+
   <script>
     suite('TestRunsQueryBuilder', () => {
       let queryBuilder;
@@ -27,6 +33,33 @@
         assert.isNotNull(queryBuilder.products);
         assert.isNotNull(queryBuilder.products.find(p => p.browser_name === 'chrome'));
         assert.isNotNull(queryBuilder.products.find(p => p.browser_version === '69'));
+      });
+    });
+
+    suite('ProductBuilder', () => {
+      let productBuilder;
+
+      setup(() => {
+        productBuilder = fixture('product-builder-fixture');
+        productBuilder.product = {browser_name: 'chrome'};
+      });
+
+      suite('ProductBuilder.prototype.*', () => {
+        suite('channel', () => {
+          test('updates the labels when value changes', () => {
+            productBuilder.channel = 'stable';
+            assert.isTrue(productBuilder.product.labels.includes('stable'));
+          });
+          test('updates the spec when value changes', () => {
+            productBuilder.channel = 'dev';
+            assert.equal(productBuilder.spec, 'chrome[dev]');
+          });
+
+          test('changes value when labels are updated', () => {
+            productBuilder.set('product.labels', ['experimental']);
+            assert.equal(productBuilder.channel, 'experimental');
+          });
+        });
       });
     });
   </script>

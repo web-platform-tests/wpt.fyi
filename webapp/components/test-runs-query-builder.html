@@ -139,9 +139,11 @@ found in the LICENSE file.
           },
           product: {
             type: Object,
+            value: {},
           },
           channel: {
             type: String,
+            value: "any",
           },
           debug: {
             type: Boolean,
@@ -153,35 +155,36 @@ found in the LICENSE file.
 
       static get observers() {
         return [
-          'productUpdated(product)',
+          'labelsUpdated(product.labels)',
           'channelUpdated(channel)',
           'specChanged(product.*)',
         ];
       }
 
-      productUpdated(product) {
+      labelsUpdated(labels) {
         // Configure the channel from the labels.
         let channel = "any";
-        const labels = new Set(product.labels || []);
+        labels = new Set(labels || []);
         for (const c of CHANNELS) {
           if (labels.has(c)) {
             channel = c;
           }
         }
-        this.channel = channel;
+        if (this.channel != channel) {
+          this.channel = channel;
+        }
       }
 
       channelUpdated(channel) {
         const labels = new Set(this.product.labels || []);
         for (const c of CHANNELS) {
-          if (c == channel) {
+          if (c === channel) {
             labels.add(c);
           } else {
             labels.delete(c);
           }
         }
-        this.product.labels = Array.from(labels);
-        this.notifyPath('product.labels');
+        this.set('product.labels', Array.from(labels));
       }
 
       specChanged(change) {
