@@ -259,6 +259,8 @@ found in the LICENSE file.
       super();
       this.onSearchCommit = this.handleSearchCommit.bind(this);
       this.onLoadingComplete = () => {
+        // passRateMetadata contains the url for the JSON blob of allMetrics;
+        // both fetches need to succeed + parse.
         this.interopLoadFailed = !(this.passRateMetadata && this.allMetrics);
       }
     }
@@ -290,11 +292,6 @@ found in the LICENSE file.
       } finally {
         this.loadingCount--;
       }
-    }
-
-    async fetchMetrics(url) {
-      const response = await window.fetch(url);
-      return await response.json();
     }
 
     navigationPathPrefix() {

@@ -51,7 +51,6 @@
       suite('WPTInterop.prototype.*', () => {
         setup((done) => {
           sandbox.spy(window.Polymer.Element.prototype, 'ready');
-          sandbox.spy(WPTInterop.prototype, 'fetchMetrics');
 
           fixture('wpt-interop-fixture');
 
@@ -65,12 +64,6 @@
 
           test('fetches interop', () => {
             return waitingOn(() => window.fetch.calledWith('/api/interop'));
-          });
-        });
-
-        suite('async fetchMetrics()', () => {
-          test('Calls window.fetch(...)', () => {
-            return waitingOn(() => window.fetch.calledWith(fetches['/api/interop'].url));
           });
         });
       });
