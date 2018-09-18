@@ -5,11 +5,11 @@
 package shared
 
 import (
+	"context"
 	"net/http"
 
 	mapset "github.com/deckarep/golang-set"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	gaelog "google.golang.org/appengine/log"
 )
