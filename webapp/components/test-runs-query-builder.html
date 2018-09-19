@@ -9,9 +9,11 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
-<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="./display-logo.html">
 <link rel="import" href="./product-info.html">
 <link rel="import" href="./test-runs-query.html">
@@ -70,60 +72,53 @@ found in the LICENSE file.
 
 <dom-module id="product-builder">
   <template>
-    <display-logo product="[[product]]"></display-logo>
-    <template is="dom-if" if="[[debug]]">
-      [[spec]]
-    </template>
-    <table>
-      <tr>
-        <td class="label">Browser</td>
-        <td>
-          <template is="dom-if" if="[[edit]]">
-            <paper-dropdown-menu label="Browser" no-animations>
-              <paper-listbox slot="dropdown-content" selected="{{ product.browser_name }}" attr-for-selected="value">
-                <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
-                <paper-item value="edge">[[displayName("edge")]]</paper-item>
-                <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
-                <paper-item value="safari">[[displayName("safari")]]</paper-item>
-              </paper-listbox>
-            </paper-dropdown-menu>
-          </template>
-          <template is="dom-if" if="[[!edit]]">
-            [[ displayName(product.browser_name) ]]
-          </template>
-        </td>
-      </tr>
-      <tr>
-        <td class="label">Channel</td>
-        <td>
-          <template is="dom-if" if="[[edit]]">
-            <paper-dropdown-menu label="Channel" no-animations>
-              <paper-listbox slot="dropdown-content" selected="{{ channel }}" attr-for-selected="value">
-                <paper-item value="any">Any</paper-item>
-                <paper-item value="stable">[[displayName("stable")]]</paper-item>
-                <paper-item value="beta">[[displayName("beta")]]</paper-item>
-                <paper-item value="dev">[[displayName("dev")]]</paper-item>
-                <paper-item value="experimental">[[displayName("experimental")]]</paper-item>
-              </paper-listbox>
-            </paper-dropdown-menu>
-          </template>
-          <template is="dom-if" if="[[!edit]]">
-            [[ displayName(product.browser_name) ]]
-          </template>
-        </td>
-      </tr>
-      <tr>
-        <td class="label">Version</td>
-        <td>
-          <template is="dom-if" if="[[edit]]">
-            <input value="{{ product.browser_version::input }}">
-          </template>
-          <template is="dom-if" if="[[!edit]]">
-            [[product.browser_version]]
-          </template>
-        </td>
-      </tr>
-    </table>
+    <paper-card>
+      <div class="card-content">
+        <display-logo product="[[product]]"></display-logo>
+        <template is="dom-if" if="[[debug]]">
+          [[spec]]
+        </template>
+
+        <template is="dom-if" if="[[edit]]">
+          <br>
+          <paper-dropdown-menu label="Browser" no-animations>
+            <paper-listbox slot="dropdown-content" selected="{{ product.browser_name }}" attr-for-selected="value">
+              <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
+              <paper-item value="edge">[[displayName("edge")]]</paper-item>
+              <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
+              <paper-item value="safari">[[displayName("safari")]]</paper-item>
+            </paper-listbox>
+          </paper-dropdown-menu>
+        </template>
+        <template is="dom-if" if="[[!edit]]">
+          [[ displayName(product.browser_name) ]]
+        </template>
+
+        <template is="dom-if" if="[[edit]]">
+          <br>
+          <paper-dropdown-menu label="Channel" no-animations>
+            <paper-listbox slot="dropdown-content" selected="{{ channel }}" attr-for-selected="value">
+              <paper-item value="any">Any</paper-item>
+              <paper-item value="stable">[[displayName("stable")]]</paper-item>
+              <paper-item value="beta">[[displayName("beta")]]</paper-item>
+              <paper-item value="dev">[[displayName("dev")]]</paper-item>
+              <paper-item value="experimental">[[displayName("experimental")]]</paper-item>
+            </paper-listbox>
+          </paper-dropdown-menu>
+        </template>
+
+        <template is="dom-if" if="[[edit]]">
+          <br>
+          <paper-input always-float-label
+                       label="Version"
+                       placeholder="(Any version)"
+                       value="{{ product.browser_version::input }}"></paper-input>
+        </template>
+        <template is="dom-if" if="[[!edit]]">
+          [[product.browser_version]]
+        </template>
+      </div>
+    </paper-card>
   </template>
   <script>
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
