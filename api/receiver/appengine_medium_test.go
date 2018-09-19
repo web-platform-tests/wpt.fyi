@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,17 +22,19 @@ import (
 
 type mockGcs struct {
 	mockWriter mockGcsWriter
+	errOnNew   error
 }
 
 // mockGcsWriter implements io.WriteCloser
 type mockGcsWriter struct {
 	bytes.Buffer
 	finalContent []byte
+	errOnClose   error
 }
 
 func (m *mockGcsWriter) Close() error {
 	m.finalContent = m.Bytes()
-	return nil
+	return errOnClose
 }
 
 func (m *mockGcs) NewWriter(bucketName, fileName, contentType, contentEncoding string) (io.WriteCloser, error) {
@@ -43,12 +46,24 @@ func TestUploadToGCS(t *testing.T) {
 	mGcs := mockGcs{}
 	a.gcs = &mGcs
 
-	buffer := bytes.NewBufferString("test content")
-	path, err := a.uploadToGCS("test.json", buffer, false)
+	path, err := a.uploadToGCS("test.json", strings.NewReader("test content"), false)
 	assert.Nil(t, err)
 
 	assert.Equal(t, path, fmt.Sprintf("/%s/test.json", BufferBucket))
 	assert.Equal(t, string(mGcs.mockWriter.finalContent), "test content", 0)
+}
+
+func TestUploadToGCS_handlesErrors(t *testing.T) {
+	errNew := fmt.Errorf("error creating writer")
+	a := appEngineAPIImpl{}
+	a.gcs = &mockGcs{errOnNew: errNew}
+	_, err := a.uploadToGCS("test.json", strings.NewReader(""), false)
+	assert.Equal(t, errNew, err)
+
+	errClose := fmt.Errorf("error closing writer")
+	a.gcs = &mockGcs{mockWrit: mockGcsWrit{errOnClose: errClose}}
+	_, err = a.uploadToGCS("test.json", strings.NewReader(""), false)
+	assert.Equal(t, errClose, err)
 }
 
 func TestScheduleResultsTask(t *testing.T) {
