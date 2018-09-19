@@ -6,23 +6,26 @@
   <script src="../../bower_components/web-component-tester/browser.js"></script>
 
   <link rel="import" href="../test-file-results-table-terse.html">
+  <link rel="import" href="./util/helpers.html">
 </head>
 <body>
   <test-fixture id="test-file-results-table-terse-fixture">
     <template>
       <test-file-results-table-terse
-        test-runs="[{&#x22;browser_name&#x22;:&#x22;chrome&#x22;,&#x22;browser_version&#x22;:&#x22;63.0&#x22;,&#x22;os_name&#x22;:&#x22;linux&#x22;,&#x22;os_version&#x22;:&#x22;*&#x22;,&#x22;revision&#x22;:&#x22;53c5bf648c&#x22;,&#x22;results_url&#x22;:&#x22;https://storage.googleapis.com/wptd/53c5bf648c/chrome-63.0-linux-summary.json.gz&#x22;,&#x22;created_at&#x22;:&#x22;2018-01-09T15:47:03.949Z&#x22;},{&#x22;browser_name&#x22;:&#x22;edge&#x22;,&#x22;browser_version&#x22;:&#x22;15&#x22;,&#x22;os_name&#x22;:&#x22;windows&#x22;,&#x22;os_version&#x22;:&#x22;10&#x22;,&#x22;revision&#x22;:&#x22;03d67ae5d9&#x22;,&#x22;results_url&#x22;:&#x22;https://storage.googleapis.com/wptd/03d67ae5d9/edge-15-windows-10-sauce-summary.json.gz&#x22;,&#x22;created_at&#x22;:&#x22;2018-01-17T10:11:24.678461Z&#x22;},{&#x22;browser_name&#x22;:&#x22;firefox&#x22;,&#x22;browser_version&#x22;:&#x22;57.0&#x22;,&#x22;os_name&#x22;:&#x22;linux&#x22;,&#x22;os_version&#x22;:&#x22;*&#x22;,&#x22;revision&#x22;:&#x22;1f9c924a4b&#x22;,&#x22;results_url&#x22;:&#x22;https://storage.googleapis.com/wptd/1f9c924a4b/firefox-57.0-linux-summary.json.gz&#x22;,&#x22;created_at&#x22;:&#x22;2018-01-09T15:54:04.296Z&#x22;},{&#x22;browser_name&#x22;:&#x22;safari&#x22;,&#x22;browser_version&#x22;:&#x22;11.0&#x22;,&#x22;os_name&#x22;:&#x22;macos&#x22;,&#x22;os_version&#x22;:&#x22;10.12&#x22;,&#x22;revision&#x22;:&#x22;3b19057653&#x22;,&#x22;results_url&#x22;:&#x22;https://storage.googleapis.com/wptd/3b19057653/safari-11.0-macos-10.12-sauce-summary.json.gz&#x22;,&#x22;created_at&#x22;:&#x22;2018-01-01T17:59:48.129561Z&#x22;}]"
         path="/2dcontext/the-canvas-state/2d.state.saverestore.bitmap.html">
       </test-file-results>
     </template>
   </test-fixture>
   <script>
-    /* global TestFileResultsTableTerse */
+    /* global TestFileResultsTableTerse, TEST_RUNS_DATA */
     suite('TestFileResultsTableTerse', () => {
       let trf;
 
       setup(() => {
-        trf = fixture('test-file-results-table-terse-fixture');
+        const id = 'test-file-results-table-terse-fixture';
+        document.getElementById(id)
+          .setAttribute('test-runs', JSON.stringify(TEST_RUNS_DATA));
+        trf = fixture(id);
       });
 
       test('instanceof', () => {
