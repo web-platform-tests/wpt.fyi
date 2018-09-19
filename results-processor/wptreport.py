@@ -23,6 +23,15 @@ import gsutil
 
 DEFAULT_PROJECT = 'wptdashboard'
 GCS_PUBLIC_DOMAIN = 'https://storage.googleapis.com'
+CHANNEL_TO_LABEL = {
+    'release': 'stable',
+    'stable': 'stable',
+    'beta': 'beta',
+    'dev': 'experimental',
+    'experimental': 'experimental',
+    'nightly': 'experimental',
+    'preview': 'experimental',
+}
 
 _log = logging.getLogger(__name__)
 
@@ -414,6 +423,14 @@ class WPTReport(object):
         self.sha_product_path
         self.test_run_metadata
 
+    def serialize_gzip(self, filepath):
+        """Serializes and gzips the in-memory report to a file.
+
+        Args:
+            filepath: A file path to write to.
+        """
+        self.write_gzip_json(filepath, self._report)
+
 
 def prepare_labels(report, labels_str, uploader):
     """Prepares the list of labels for a test run.
@@ -421,8 +438,7 @@ def prepare_labels(report, labels_str, uploader):
     The following labels will be automatically added:
     * The name of the uploader
     * The name of the browser
-    * "stable" (as in release channels), if neither "stable" or "experimental"
-      is provided by the uploader.
+    * The release channel of the browser (if the uploader doesn't provide one)
 
     Args:
         report: A WPTReport.
@@ -438,9 +454,15 @@ def prepare_labels(report, labels_str, uploader):
     # Empty labels may be generated here, but they will be removed later.
     for label in labels_str.split(','):
         labels.add(label.strip())
-    # Set the default channel to stable.
-    if ('stable' not in labels) and ('experimental' not in labels):
-        labels.add('stable')
+
+    # Add the release channel label.
+    if not any([i in labels for i in set(CHANNEL_TO_LABEL.values())]):
+        if report.run_info.get('browser_channel') in CHANNEL_TO_LABEL:
+            labels.add(CHANNEL_TO_LABEL[report.run_info['browser_channel']])
+        else:
+            # Default to "stable".
+            labels.add('stable')
+
     # Remove any empty labels.
     if '' in labels:
         labels.remove('')

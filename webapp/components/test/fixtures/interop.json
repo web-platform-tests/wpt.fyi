@@ -1,0 +1,54 @@
+{
+  "test_runs": [{
+    "id": 5697095575011328,
+    "browser_name": "chrome",
+    "browser_version": "69.0.3497.92",
+    "os_name": "linux",
+    "os_version": "16.04",
+    "revision": "93e2953e49",
+    "full_revision_hash": "93e2953e49307f07db029f43e05f605e7070a65a",
+    "results_url": "https://storage.googleapis.com/wptd/93e2953e49307f07db029f43e05f605e7070a65a/chrome-69.0.3497.92-linux-16.04-aae43b27d4-summary.json.gz",
+    "created_at": "2018-09-13T18:08:37.118423Z",
+    "raw_results_url": "https://storage.googleapis.com/wptd-results/93e2953e49307f07db029f43e05f605e7070a65a/chrome-69.0.3497.92-linux-16.04-aae43b27d4/report.json",
+    "labels": ["buildbot", "chrome", "stable"]
+  }, {
+    "id": 5722337332690944,
+    "browser_name": "edge",
+    "browser_version": "17",
+    "os_name": "windows",
+    "os_version": "10",
+    "revision": "880ceceec4",
+    "full_revision_hash": "880ceceec4d092bcee036a8d9dfa0181ffe468a7",
+    "results_url": "https://storage.googleapis.com/wptd/880ceceec4d092bcee036a8d9dfa0181ffe468a7/edge-17-windows-10-192c826c01-summary.json.gz",
+    "created_at": "2018-09-13T06:39:05.531556Z",
+    "raw_results_url": "https://storage.googleapis.com/wptd-results/880ceceec4d092bcee036a8d9dfa0181ffe468a7/edge-17-windows-10-192c826c01/report.json",
+    "labels": ["buildbot", "edge", "stable"]
+  }, {
+    "id": 5708977300045824,
+    "browser_name": "firefox",
+    "browser_version": "64.0a1",
+    "os_name": "linux",
+    "os_version": "16.04",
+    "revision": "6c902e426c",
+    "full_revision_hash": "6c902e426c9f9a0e78c6fe36e27d05b5cf38e506",
+    "results_url": "https://storage.googleapis.com/wptd/6c902e426c9f9a0e78c6fe36e27d05b5cf38e506/firefox-64.0a1-linux-16.04-c07311b3c3-summary.json.gz",
+    "created_at": "2018-09-13T11:11:20.260127Z",
+    "raw_results_url": "https://storage.googleapis.com/wptd-results/6c902e426c9f9a0e78c6fe36e27d05b5cf38e506/firefox-64.0a1-linux-16.04-c07311b3c3/report.json",
+    "labels": ["buildbot", "experimental", "firefox"]
+  }, {
+    "id": 5639461878628352,
+    "browser_name": "safari",
+    "browser_version": "12.1",
+    "os_name": "macos",
+    "os_version": "10.13",
+    "revision": "632a3f5923",
+    "full_revision_hash": "632a3f59238036b6e24b28d47218ba9986ff4c62",
+    "results_url": "https://storage.googleapis.com/wptd/632a3f59238036b6e24b28d47218ba9986ff4c62/safari-12.1-macos-10.13-6affce5034-summary.json.gz",
+    "created_at": "2018-09-13T14:47:01.418399Z",
+    "raw_results_url": "https://storage.googleapis.com/wptd-results/632a3f59238036b6e24b28d47218ba9986ff4c62/safari-12.1-macos-10.13-6affce5034/report.json",
+    "labels": ["buildbot", "experimental", "safari"]
+  }],
+  "start_time": "2018-09-13T18:48:19.360856Z",
+  "end_time": "2018-09-13T18:48:38.193173Z",
+  "url": "https://storage.googleapis.com/wptd-metrics/1536864499-1536864518/pass-rates.json.gz"
+}
