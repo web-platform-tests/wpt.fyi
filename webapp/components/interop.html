@@ -279,8 +279,7 @@ found in the LICENSE file.
 
     async ready() {
       await super.ready();
-      this.loadingCount++;
-      try {
+      this.load(async () => {
         this.passRateMetadata = await fetch(`/api/interop${this.query}`)
           .then(async r => {
             if (!r.ok || r.status !== 200) {
@@ -289,9 +288,7 @@ found in the LICENSE file.
             return r.json();
           });
         this.allMetrics = await fetch(this.passRateMetadata.url).then(r => r.json());
-      } finally {
-        this.loadingCount--;
-      }
+      });
     }
 
     navigationPathPrefix() {
