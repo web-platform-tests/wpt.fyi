@@ -121,7 +121,7 @@ func LoadTestRunsByKeys(ctx context.Context, keys []*datastore.Key) (result Test
 		go func(i int) {
 			defer wg.Done()
 
-			localErr := cs.Get(getTestRunMemcacheKey(keys[i].IntID()), keys[i].IntID(), &testRunResults[i])
+			localErr := cs.Get(getTestRunMemcacheKey(keys[i].IntID()), keys[i].IntID(), &result[i])
 			if localErr != nil {
 				err = localErr
 			}
