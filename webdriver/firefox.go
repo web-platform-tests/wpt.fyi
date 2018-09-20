@@ -14,8 +14,8 @@ var (
 	firefoxPath     = flag.String("firefox_path", "", "Path to the firefox binary")
 )
 
-// FirefoxWebDriver starts up GeckoDriver via Selenium.
-func FirefoxWebDriver(options []selenium.ServiceOption) (*selenium.Service, selenium.WebDriver, error) {
+// FirefoxWebDriver starts up GeckoDriver on the given port.
+func FirefoxWebDriver(port int, options []selenium.ServiceOption) (*selenium.Service, selenium.WebDriver, error) {
 	if *firefoxPath == "" {
 		panic("-firefox_path not specified")
 	}
@@ -26,7 +26,7 @@ func FirefoxWebDriver(options []selenium.ServiceOption) (*selenium.Service, sele
 	// Specify the path to GeckoDriver in order to use Firefox.
 	options = append(options, selenium.GeckoDriver(*geckoDriverPath))
 
-	service, err := selenium.NewSeleniumService(*seleniumPath, seleniumPort, options...)
+	service, err := selenium.NewGeckoDriverService(*geckoDriverPath, port, options...)
 	if err != nil {
 		panic(err)
 	}
@@ -44,8 +44,9 @@ func FirefoxWebDriver(options []selenium.ServiceOption) (*selenium.Service, sele
 	firefoxCapabilities.Binary = firefoxAbsPath
 	seleniumCapabilities.AddFirefox(firefoxCapabilities)
 
+	// geckodriver does not have a URL prefix.
 	wd, err := selenium.NewRemote(
 		seleniumCapabilities,
-		fmt.Sprintf("http://%s:%d/wd/hub", *seleniumHost, seleniumPort))
+		fmt.Sprintf("http://127.0.0.1:%d", port))
 	return service, wd, err
 }

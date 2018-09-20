@@ -82,9 +82,8 @@ go_large_test:
 go_firefox_test: BROWSER := firefox
 go_firefox_test: firefox | _go_webdriver_test
 
-# TODO(Hexcles): Do not depend on chromedriver once we fix #461.
 go_chrome_test: BROWSER := chrome
-go_chrome_test: chrome chromedriver | _go_webdriver_test
+go_chrome_test: chrome | _go_webdriver_test
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
@@ -93,12 +92,10 @@ _go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webs
 	# The following variables are defined here because we don't know the
 	# paths before installing node-web-component-tester as the paths
 	# include version strings.
-	SELENIUM_SERVER_PATH="$(shell find $(NODE_SELENIUM_PATH)selenium-server/ -type f -name '*server.jar')"; \
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
 	cd $(WPTD_PATH)webdriver; \
 	go test -v -tags=large -args \
-		-selenium_path=$$SELENIUM_SERVER_PATH \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
@@ -134,12 +131,6 @@ chrome:
 			make apt-get-chromium; \
 		fi; \
 		sudo ln -s "$$(which chromium)" $(CHROME_PATH); \
-	fi
-
-# TODO(Hexcles): This is only a temporary fix for #461.
-chromedriver:
-	if [[ -z "$$(which chromedriver)" ]]; then \
-		make apt-get-chromedriver; \
 	fi
 
 firefox:
