@@ -43,6 +43,10 @@ before_install: |
   travis_retry docker build -t "${DOCKER_IMAGE}" .
   travis_retry bash ./util/docker-dev/run.sh -d -q
 
+install: |
+  # FIXME: go_packages is required by many, but not all make targets.
+  travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_packages
+
 script:
   - |
     # Deploy PR to staging environment (only when Travis secrets are available).
@@ -59,8 +63,8 @@ script:
     else
       echo "Not on master or a PR. Skipping deployment.";
     fi
-  - | # Run tests
+  - |
+    # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
-      travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_packages;
       docker exec -t "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS};
     fi
