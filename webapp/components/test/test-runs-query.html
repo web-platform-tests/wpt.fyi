@@ -48,6 +48,11 @@
           assert.equal(parsed.browser_name, chrome);
           assert.equal(parsed.browser_version, version63);
         });
+
+        test('no closing bracket', () => {
+          expect(() => testRunsQuery.parseProductSpec('chrome[foo')).to.throw();
+          expect(() => testRunsQuery.parseProductSpec('chrome[foo]')).to.not.throw();
+        });
       });
     });
   </script>
