@@ -1,0 +1,52 @@
+<!--
+Copyright 2018 The WPT Dashboard Project. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<!--
+`<wpt-flags>` is a component for checking wpt.fyi feature flags.
+-->
+<dom-module id="wpt-flags">
+  <template>
+    <style>
+    </style>
+
+  </template>
+
+  <script>
+    const WPT_FYI_FEATURES = ['queryBuilder'];
+
+    class WPTFlags extends window.Polymer.Element {
+      static get is() {
+        return 'wpt-flags';
+      }
+
+      static get properties() {
+        return {
+        };
+      }
+
+      constructor() {
+        super();
+        for (const feature of WPT_FYI_FEATURES) {
+          Object.defineProperty(this, feature, {
+            get: () => {
+              let result = localStorage.getItem(`features.${feature}`);
+              return result && JSON.parse(result);
+            },
+            set: (value) => {
+              return localStorage.setItem(
+                `features.${feature}`,
+                JSON.stringify(value));
+            }
+          })
+        }
+      }
+    }
+
+    window.customElements.define(WPTFlags.is, WPTFlags);
+  </script>
+</dom-module>

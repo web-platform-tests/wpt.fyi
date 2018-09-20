@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../wpt-flags.html">
+</head>
+<body>
+  <test-fixture id="wpt-flags-fixture">
+    <template>
+      <wpt-flags></wpt-flags>
+    </template>
+  </test-fixture>
+
+  <script>
+    suite('WPTFlags', () => {
+      let flags;
+
+      setup(() => {
+        flags = fixture('wpt-flags-fixture');
+      });
+
+      test('queryBuilder', () => {
+        flags.queryBuilder = true;
+        expect(flags.queryBuilder).to.equal(true);
+        flags.queryBuilder = false;
+        expect(flags.queryBuilder).to.equal(false);
+      });
+    });
+  </script>
+</body>
+</html>
