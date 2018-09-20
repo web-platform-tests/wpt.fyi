@@ -101,7 +101,9 @@ func (a *appEngineAPIImpl) uploadToGCS(fileName string, f io.Reader, gzipped boo
 	if err != nil {
 		return "", err
 	}
-	w.Close()
+	if err := w.Close(); err != nil {
+		return "", err
+	}
 
 	gcsPath = fmt.Sprintf("/%s/%s", BufferBucket, fileName)
 	return gcsPath, nil
