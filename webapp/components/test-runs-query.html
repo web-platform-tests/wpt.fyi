@@ -103,6 +103,9 @@ found in the LICENSE file.
         const arrayIndex = spec.indexOf('[');
         if (arrayIndex > 0) {
           let labelsStr = spec.substr(arrayIndex + 1);
+          if (labelsStr[labelsStr.length - 1] !== ']') {
+            throw 'Expected closing bracket';
+          }
           labelsStr = labelsStr.substr(0, labelsStr.length - 1);
           labelsStr.split(',').forEach(l => labels.add(l));
           spec = spec.substr(0, arrayIndex);
