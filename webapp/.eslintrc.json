@@ -12,6 +12,7 @@
   "globals": {
     "assert": true,
     "fixture": true,
+    "flush": true,
     "sandbox": true,
     "sinon": true
   },
@@ -26,7 +27,6 @@
     "no-mixed-spaces-and-tabs": ["error"],
     "no-redeclare": ["error"],
     "no-trailing-spaces": ["error"],
-    "no-underscore-dangle": ["error"],
     "quotes": ["error", "single"],
     "semi": ["error", "always"],
     "space-before-function-paren": ["error", "never"],

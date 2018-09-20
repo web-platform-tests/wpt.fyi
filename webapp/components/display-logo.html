@@ -94,6 +94,9 @@ See models.go for more details.
       }
 
       displayLogo(name, labels) {
+        if (!name) {
+          return;
+        }
         if (labels) {
           labels = new Set(labels);
           if (labels.has('experimental') || labels.has('dev')) {

@@ -10,6 +10,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
@@ -21,19 +22,45 @@ found in the LICENSE file.
 
 <dom-module id="test-runs-query-builder">
   <template>
+    <style>
+      #add-button {
+        background-color: var(--paper-blue-500);
+        color: white;
+      }
+      #clear-button {
+        background-color: var(--paper-red-500);
+        color: white;
+      }
+    </style>
+
     <h3>
       Products
       <paper-icon-button icon="editor:mode-edit"
                          onclick="[[toggleEdit]]"></paper-icon-button>
     </h3>
+    <template is="dom-if" if="[[debug]]">
+      <template is="dom-repeat" items="[[productSpecs]]" as="p" index-as="i">
+        [[p]]
+      </template>
+    </template>
     <div>
-      <template is="dom-repeat" items="[[products]]" as="product">
-        <product-builder product="{{product}}"
+      <template is="dom-repeat" items="[[products]]" as="p" index-as="i">
+        <product-builder browser-name="{{p.browser_name}}"
+                         browser-version="{{p.browser_version}}"
+                         labels="{{p.labels}}"
                          edit="[[edit]]"
                          debug="[[debug]]"
-                         on-delete="[[productDeleted]]"></product-builder>
+                         on-product-changed="[[productChanged(i)]]"
+                         on-delete="[[productDeleted(i)]]"></product-builder>
       </template>
     </div>
+    <br>
+    <paper-button raised id="add-button" onclick="[[addProduct]]">
+      <iron-icon icon="add"></iron-icon> Add product
+    </paper-button>
+    <paper-button raised id="clear-button" onclick="[[clearAll]]">
+      <iron-icon icon="delete"></iron-icon> Clear all
+    </paper-button>
   </template>
   <script>
     /**
@@ -61,18 +88,42 @@ found in the LICENSE file.
       constructor() {
         super();
         this.toggleEdit = this.onToggleEdit.bind(this);
-        this.productDeleted = this.deleteProduct.bind(this);
+        this.productDeleted = i => () => { this.handleDeleteProduct(i); }
+        this.productChanged = i => {
+          return product => { this.handleProductChanged(i, product); }
+        }
+        this.addProduct = this.handleAddProduct.bind(this);
+        this.clearAll = () => { this.set('products', []); };
+      }
+
+      observeSpec(change) {
+        return this.getSpec(change.base);
       }
 
       onToggleEdit() {
         this.edit = !this.edit;
       }
 
-      deleteProduct(product) {
-        const index = this.products.findIndex(p => p == product);
-        if (index > -1) {
-          this.splice('products', index, 1);
+      handleDeleteProduct(i) {
+        this.splice('products', i, 1);
+      }
+
+      handleProductChanged(i, product) {
+        this.set(`products.${i}`, product);
+      }
+
+      handleAddProduct() {
+        // TODO(lukebjerring): Make a smart(er) suggestion.
+        let next = { browser_name: 'chrome' };
+        const builders = this.shadowRoot.querySelectorAll('product-builder');
+        for (const d of DEFAULT_BROWSER_NAMES) {
+          if (this.products.find(p => p.browser_name === d)) {
+            continue;
+          }
+          next.browser_name = d;
+          break;
         }
+        this.splice('products', this.products.length, 0, next);
       }
     }
 
@@ -82,11 +133,16 @@ found in the LICENSE file.
 
 <dom-module id="product-builder">
   <template>
+    <style>
+      paper-icon-button {
+        float: right;
+      }
+    </style>
     <paper-card>
       <div class="card-content">
         <paper-icon-button icon="delete" onclick="[[deleteProduct]]"></paper-icon-button>
 
-        <display-logo product="[[product]]"></display-logo>
+        <display-logo product="[[_product]]"></display-logo>
         <template is="dom-if" if="[[debug]]">
           [[spec]]
         </template>
@@ -94,7 +150,7 @@ found in the LICENSE file.
         <template is="dom-if" if="[[edit]]">
           <br>
           <paper-dropdown-menu label="Browser" no-animations>
-            <paper-listbox slot="dropdown-content" selected="{{ product.browser_name }}" attr-for-selected="value">
+            <paper-listbox slot="dropdown-content" selected="{{ browserName }}" attr-for-selected="value">
               <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
               <paper-item value="edge">[[displayName("edge")]]</paper-item>
               <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
@@ -103,13 +159,13 @@ found in the LICENSE file.
           </paper-dropdown-menu>
         </template>
         <template is="dom-if" if="[[!edit]]">
-          [[ displayName(product.browser_name) ]]
+          [[ displayName(browserName) ]]
         </template>
 
         <template is="dom-if" if="[[edit]]">
           <br>
           <paper-dropdown-menu label="Channel" no-animations>
-            <paper-listbox slot="dropdown-content" selected="{{ channel }}" attr-for-selected="value">
+            <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
               <paper-item value="any">Any</paper-item>
               <paper-item value="stable">[[displayName("stable")]]</paper-item>
               <paper-item value="beta">[[displayName("beta")]]</paper-item>
@@ -124,10 +180,10 @@ found in the LICENSE file.
           <paper-input always-float-label
                        label="Version"
                        placeholder="(Any version)"
-                       value="{{ product.browser_version::input }}"></paper-input>
+                       value="{{ browserVersion::input }}"></paper-input>
         </template>
         <template is="dom-if" if="[[!edit]]">
-          [[product.browser_version]]
+          [[browserVersion]]
         </template>
       </div>
     </paper-card>
@@ -140,24 +196,50 @@ found in the LICENSE file.
 
       static get properties() {
         return {
+          browserName: {
+            type: String,
+            value: DEFAULT_BROWSER_NAMES[0],
+            notify: true,
+          },
+          browserVersion: {
+            type: String,
+            value: '',
+            notify: true,
+          },
+          labels: {
+            type: Array,
+            value: [],
+            notify: true,
+            observer: 'labelsChanged',
+          },
+          /*
+            _product is a local re-aggregation of the fields, used for
+            display-logo, and notifying parents of changes.
+          */
+          _product: {
+            type: Object,
+            computed: 'computeProduct(browserName, browserVersion, labels)',
+            notify: true,
+          },
+          _channel: {
+            type: String,
+            value: 'any',
+            observer: 'channelChanged',
+          },
+          spec: {
+            type: String,
+            computed: 'computeSpec(_product)',
+          },
           edit: {
             type: Boolean,
             value: true,
-          },
-          product: {
-            type: Object,
-            value: {},
-          },
-          channel: {
-            type: String,
-            value: "any",
           },
           debug: {
             type: Boolean,
             value: false,
           },
-          spec: String,
           onDelete: Function,
+          onProductChanged: Function,
         };
       }
 
@@ -168,15 +250,21 @@ found in the LICENSE file.
         }
       }
 
-      static get observers() {
-        return [
-          'labelsUpdated(product.labels)',
-          'channelUpdated(channel)',
-          'specChanged(product.*)',
-        ];
+      computeProduct(browserName, browserVersion, labels) {
+        const product = {
+          browser_name: browserName,
+          browser_version: browserVersion,
+          labels: labels,
+        };
+        this.onProductChanged && this.onProductChanged(product);
+        return product;
       }
 
-      labelsUpdated(labels) {
+      computeSpec(product) {
+        return this.getSpec(product);
+      }
+
+      labelsChanged(labels) {
         // Configure the channel from the labels.
         let channel = "any";
         labels = new Set(labels || []);
@@ -185,25 +273,28 @@ found in the LICENSE file.
             channel = c;
           }
         }
-        if (this.channel != channel) {
-          this.channel = channel;
+        if (this._channel !== channel) {
+          this._channel = channel;
         }
       }
 
-      channelUpdated(channel) {
-        const labels = new Set(this.product.labels || []);
-        for (const c of CHANNELS) {
-          if (c === channel) {
-            labels.add(c);
-          } else {
-            labels.delete(c);
+      channelChanged(channel, was) {
+        // Configure the labels from the channel.
+        const labels = Array.from(this.labels || []);
+        const isAny = !channel || channel == "any";
+        if (was) {
+          // Remove the old channel.
+          let indexOf = labels.findIndex(l => l === was);
+          for (; indexOf > -1; indexOf = labels.findIndex(l => l === was)) {
+            labels.splice(indexOf, 1);
           }
         }
-        this.set('product.labels', Array.from(labels));
-      }
-
-      specChanged(change) {
-        this.spec = this.getSpec(this.product);
+        if (!isAny && !labels.includes(channel)) {
+          labels.push(channel);
+        } else if (!was) {
+          return;
+        }
+        this.labels = labels;
       }
     }
 

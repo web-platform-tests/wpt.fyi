@@ -8,8 +8,13 @@
   <link rel="import" href="../test-runs-query-builder.html">
 </head>
 <body>
-  <test-runs-query-builder product-specs='["chrome[experimental]","edge"]' edit debug>
-  </test-runs-query-builder>
+  <test-runs-query-builder edit debug></test-runs-query-builder>
+
+  <test-fixture id="query-builder-fixture">
+    <template>
+      <test-runs-query-builder></test-runs-query-builder>
+    </template>
+  </test-fixture>
 
   <test-fixture id="product-builder-fixture">
     <template>
@@ -18,21 +23,52 @@
   </test-fixture>
 
   <script>
+    // Set up the playground.
+    document.querySelector('test-runs-query-builder').addProduct();
+    document.querySelector('test-runs-query-builder').addProduct();
+
     suite('TestRunsQueryBuilder', () => {
       let queryBuilder;
 
       setup(() => {
-        queryBuilder = document.querySelector('test-runs-query-builder');
+        queryBuilder = fixture('query-builder-fixture');
+        queryBuilder.products = ['chrome', 'edge']
+          .map(s => queryBuilder.parseProductSpec(s));
       });
 
       test('instanceof Polymer.Element', () => {
         assert.isTrue(queryBuilder instanceof window.Polymer.Element);
       });
 
-      test('TestRunsQueryBuilder.prototype.*', () => {
-        assert.isNotNull(queryBuilder.products);
-        assert.isNotNull(queryBuilder.products.find(p => p.browser_name === 'chrome'));
-        assert.isNotNull(queryBuilder.products.find(p => p.browser_version === '69'));
+      test('add item', () => {
+        queryBuilder.addProduct();
+        assert.equal(queryBuilder.products.length, 3);
+        assert.equal(queryBuilder.products[2].browser_name, 'firefox');
+        queryBuilder.addProduct();
+        assert.equal(queryBuilder.products.length, 4);
+        assert.equal(queryBuilder.products[3].browser_name, 'safari');
+      });
+
+      test('delete item', (done) => {
+        // Wait for shadow DOM.
+        flush(() => {
+          const first = queryBuilder.root.querySelector('product-builder');
+          first.deleteProduct();
+          assert.equal(queryBuilder.products.length, 1);
+          assert.equal(queryBuilder.products[0].browser_name, 'edge');
+          done();
+        });
+      });
+
+      test('clear all items', () => {
+        // Wait for shadow DOM.
+        queryBuilder.clearAll();
+        assert.equal(queryBuilder.products.length, 0);
+      });
+
+      test('productSpecs', () => {
+        queryBuilder.set('products.0.labels', ['beta']);
+        assert.equal(queryBuilder.productSpecs[0], 'chrome[beta]');
       });
     });
 
@@ -45,19 +81,19 @@
       });
 
       suite('ProductBuilder.prototype.*', () => {
-        suite('channel', () => {
+        suite('_channel', () => {
           test('updates the labels when value changes', () => {
-            productBuilder.channel = 'stable';
-            assert.isTrue(productBuilder.product.labels.includes('stable'));
+            productBuilder._channel = 'stable';
+            assert.isTrue(productBuilder.labels.includes('stable'));
           });
           test('updates the spec when value changes', () => {
-            productBuilder.channel = 'dev';
+            productBuilder._channel = 'dev';
             assert.equal(productBuilder.spec, 'chrome[dev]');
           });
 
           test('changes value when labels are updated', () => {
-            productBuilder.set('product.labels', ['experimental']);
-            assert.equal(productBuilder.channel, 'experimental');
+            productBuilder.set('labels', ['experimental']);
+            assert.equal(productBuilder._channel, 'experimental');
           });
         });
       });

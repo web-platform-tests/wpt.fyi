@@ -16,12 +16,13 @@ found in the LICENSE file.
           /* Parsed product objects, computed from the spec strings */
           products: {
             type: Array,
-            computed: 'computeProducts(productSpecs)',
+            notify: true,
+            value: [],
           },
-          /* String array of product specs, e.g. 'chrome[experimental]' */
           productSpecs: {
             type: Array,
-            value: [],
+            notify: true,
+            computed: 'computeProductSpecs(products, products.*)'
           },
           labels: {
             type: Array,
@@ -43,6 +44,10 @@ found in the LICENSE file.
             computed: 'computeQuery(queryParams)',
           }
         };
+      }
+
+      computeProductSpecs(products, itemChange) {
+        return (products || []).map(p => this.getSpec(p));
       }
 
       computeIsLatest(sha) {
@@ -84,51 +89,6 @@ found in the LICENSE file.
           }
         }
         return url.search;
-      }
-
-      computeProducts(productSpecs) {
-        return productSpecs && productSpecs.map(s => this.parseProductSpec(s));
-      }
-
-      parseProductSpec(spec) {
-        // @sha (optional)
-        let revision = '';
-        const atIndex = spec.indexOf('@');
-        if (atIndex > 0) {
-          revision = spec.substr(atIndex + 1);
-          spec = spec.substr(0, atIndex);
-        }
-        // [foo,bar] labels syntax (optional)
-        let labels = new Set();
-        const arrayIndex = spec.indexOf('[');
-        if (arrayIndex > 0) {
-          let labelsStr = spec.substr(arrayIndex + 1);
-          if (labelsStr[labelsStr.length - 1] !== ']') {
-            throw 'Expected closing bracket';
-          }
-          labelsStr = labelsStr.substr(0, labelsStr.length - 1);
-          labelsStr.split(',').forEach(l => labels.add(l));
-          spec = spec.substr(0, arrayIndex);
-        }
-        // product
-        const product = this.parseProduct(spec);
-        product.revision = revision;
-        product.labels = labels;
-        return product;
-      }
-
-      parseProduct(name) {
-        // -version (optional)
-        let version;
-        const dashIndex = name.indexOf('-');
-        if (dashIndex > 0) {
-          version = name.substr(dashIndex + 1);
-          name = name.substr(0, dashIndex);
-        }
-        return {
-          browser_name: name,
-          browser_version: version,
-        }
       }
     }
   </script>

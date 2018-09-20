@@ -23,6 +23,7 @@
       majorAndMinor: /(\d+\.\d+)/
     };
     const CHANNELS = new Set(['stable', 'beta', 'dev', 'experimental']);
+    const DEFAULT_BROWSER_NAMES = ['chrome', 'edge', 'firefox', 'safari'];
 
     // eslint-disable-next-line no-unused-vars
     const ProductInfo = (superClass) => class extends superClass {
@@ -60,6 +61,47 @@
         }
 
         return match[1];
+      }
+
+      parseProductSpec(spec) {
+        // @sha (optional)
+        let revision = '';
+        const atIndex = spec.indexOf('@');
+        if (atIndex > 0) {
+          revision = spec.substr(atIndex + 1);
+          spec = spec.substr(0, atIndex);
+        }
+        // [foo,bar] labels syntax (optional)
+        let labels = new Set();
+        const arrayIndex = spec.indexOf('[');
+        if (arrayIndex > 0) {
+          let labelsStr = spec.substr(arrayIndex + 1);
+          if (labelsStr[labelsStr.length - 1] !== ']') {
+            throw 'Expected closing bracket';
+          }
+          labelsStr = labelsStr.substr(0, labelsStr.length - 1);
+          labelsStr.split(',').forEach(l => labels.add(l));
+          spec = spec.substr(0, arrayIndex);
+        }
+        // product
+        const product = this.parseProduct(spec);
+        product.revision = revision;
+        product.labels = Array.from(labels);
+        return product;
+      }
+
+      parseProduct(name) {
+        // -version (optional)
+        let version;
+        const dashIndex = name.indexOf('-');
+        if (dashIndex > 0) {
+          version = name.substr(dashIndex + 1);
+          name = name.substr(0, dashIndex);
+        }
+        return {
+          browser_name: name,
+          browser_version: version,
+        }
       }
 
       getSpec(product) {
