@@ -34,11 +34,11 @@ type mockGcsWriter struct {
 
 func (m *mockGcsWriter) Close() error {
 	m.finalContent = m.Bytes()
-	return errOnClose
+	return m.errOnClose
 }
 
 func (m *mockGcs) NewWriter(bucketName, fileName, contentType, contentEncoding string) (io.WriteCloser, error) {
-	return &m.mockWriter, nil
+	return &m.mockWriter, m.errOnNew
 }
 
 func TestUploadToGCS(t *testing.T) {
@@ -61,7 +61,7 @@ func TestUploadToGCS_handlesErrors(t *testing.T) {
 	assert.Equal(t, errNew, err)
 
 	errClose := fmt.Errorf("error closing writer")
-	a.gcs = &mockGcs{mockWrit: mockGcsWrit{errOnClose: errClose}}
+	a.gcs = &mockGcs{mockWriter: mockGcsWriter{errOnClose: errClose}}
 	_, err = a.uploadToGCS("test.json", strings.NewReader(""), false)
 	assert.Equal(t, errClose, err)
 }
