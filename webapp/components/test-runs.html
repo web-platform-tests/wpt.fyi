@@ -5,6 +5,7 @@ found in the LICENSE file.
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="./test-runs-query.html">
 
 <dom-module id="wpt-results-base">
   <script>
@@ -12,7 +13,7 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
-    class TestRunsBase extends window.Polymer.Element {
+    class TestRunsBase extends TestRunsQuery(window.Polymer.Element) {
       static get is() {
         return 'wpt-results-base';
       }
@@ -41,30 +42,6 @@ found in the LICENSE file.
             type: Boolean,
             computed: 'computePathIsATestFile(path)'
           },
-          products: {
-            type: Array,
-            value: null
-          },
-          labels: {
-            type: Array,
-            value: [],
-          },
-          maxCount: Number,
-          sha: String,
-          aligned: Boolean,
-          isLatest: {
-            type: Boolean,
-            computed: 'computeIsLatest(sha)'
-          },
-          queryParams: {
-            type: Object,
-            computed: 'testRunQueryParams(sha, labels, products, maxCount)',
-          },
-          query: {
-            type: String,
-            value: '',
-            computed: 'computeQuery(queryParams)',
-          }
         };
       }
 
@@ -114,47 +91,6 @@ found in the LICENSE file.
         }, []);
         this.testRuns = flattened;
         return flattened;
-      }
-
-      computeIsLatest(sha) {
-        return !sha || sha === 'latest';
-      }
-
-      computeQuery(params) {
-        if (Object.keys(params).length < 1) {
-          return '';
-        }
-        const url = new URL(window.location.origin);
-        for (const k of Object.keys(params)) {
-          const v = params[k];
-          if (Array.isArray(v)) {
-            v.forEach(i => url.searchParams.append(k, i));
-          } else {
-            url.searchParams.set(k, params[k]);
-          }
-        }
-        return url.search;
-      }
-
-      testRunQueryParams(sha, labels, products, maxCount) {
-        const params = {};
-        if (sha) {
-          params.sha = sha;
-        }
-        if (labels && labels.length) {
-          params.label = labels;
-        }
-        if (products && products.length) {
-          params.product = products;
-        }
-        maxCount = maxCount || this.defaultMaxCount;
-        if (maxCount) {
-          params['max-count'] = maxCount;
-        }
-        if (this.aligned) {
-          params.aligned = true;
-        }
-        return params;
       }
 
       splitPathIntoLinkedParts(inputPath) {
