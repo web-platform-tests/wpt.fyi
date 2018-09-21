@@ -40,7 +40,8 @@ while getopts ':dhaq' FLAG; do
     d)
       DAEMON="true" ;;
     q)
-      QUIET="true" ;;
+      QUIET="true"
+      PR="r" ;;
     a)
       RESULTS_ANALYSIS="true" ;;
     h|*) usage && exit 0 ;;
@@ -69,7 +70,7 @@ function stop() {
   info "Stopping ${DOCKER_INSTANCE}..."
   wptd_stop
   info ""${DOCKER_INSTANCE}" stopped."
-  if [[ "${QUIET}" != "true" ]] && [[ "${PR}" != "r" ]]; then
+  if [[ "${PR}" == "" ]]; then
     confirm_preserve_remove "Docker instance ${DOCKER_INSTANCE} still exists"
   fi
   if [[ "${PR}" == "r" ]]; then
@@ -86,7 +87,9 @@ function quit() {
 }
 
 if [ "${INSPECT_STATUS}" == "0" ]; then
-  confirm_preserve_remove "Found existing docker instance ${DOCKER_INSTANCE}"
+  if [[ "${PR}" == "" ]]; then
+    confirm_preserve_remove "Found existing docker instance ${DOCKER_INSTANCE}"
+  fi
   if [[ "${PR}" == "r" ]]; then
     stop
   fi
