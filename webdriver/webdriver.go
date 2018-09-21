@@ -1,6 +1,7 @@
 package webdriver
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -125,4 +126,12 @@ func FindShadowElement(
 		return nil, err
 	}
 	return elements[0], nil
+}
+
+func extractScriptRawValue(bytes []byte, key string) (value interface{}, err error) {
+	var parsed map[string]interface{}
+	if err = json.Unmarshal(bytes, &parsed); err != nil {
+		return nil, err
+	}
+	return parsed[key], nil
 }
