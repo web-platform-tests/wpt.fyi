@@ -46,7 +46,7 @@ See models.go for more details.
     </style>
 
     <div>
-      <display-logo small="[[small]]" product="[[testRun]]"></display-logo>
+      <display-logo show-source="[[showSource]]" small="[[small]]" product="[[testRun]]"></display-logo>
 
       <template is="dom-if" if="[[!small]]">
         <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
@@ -99,6 +99,10 @@ See models.go for more details.
           small: {
             type: Boolean,
             value: false,
+          },
+          showSource: {
+            type: Boolean,
+            value: false
           },
         };
       }
