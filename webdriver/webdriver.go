@@ -133,5 +133,5 @@ func extractScriptRawValue(bytes []byte, key string) (value interface{}, err err
 	if err = json.Unmarshal(bytes, &parsed); err != nil {
 		return nil, err
 	}
-	return parsed["value"], nil
+	return parsed[key], nil
 }
