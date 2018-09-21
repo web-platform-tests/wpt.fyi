@@ -8,6 +8,8 @@
   <link rel="import" href="../wpt-flags.html">
 </head>
 <body>
+  <wpt-flags-editor id="playground"></wpt-flags-editor>
+
   <test-fixture id="wpt-flags-fixture">
     <template>
       <wpt-flags></wpt-flags>
@@ -16,10 +18,11 @@
 
   <script>
     suite('WPTFlags', () => {
-      let flags;
+      let flags, queryBuilderStateBefore;
 
       setup(() => {
         flags = fixture('wpt-flags-fixture');
+        queryBuilderStateBefore = flags.queryBuilder;
       });
 
       test('queryBuilder', () => {
@@ -27,6 +30,10 @@
         expect(flags.queryBuilder).to.equal(true);
         flags.queryBuilder = false;
         expect(flags.queryBuilder).to.equal(false);
+      });
+
+      teardown(() => {
+        flags.queryBuilder = queryBuilderStateBefore;
       });
     });
   </script>
