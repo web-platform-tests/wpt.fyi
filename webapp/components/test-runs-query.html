@@ -10,7 +10,7 @@ found in the LICENSE file.
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
     // eslint-disable-next-line no-unused-vars
-    const TestRunsQuery = (superClass) => class extends superClass {
+    const TestRunsQuery = (superClass) => class extends ProductInfo(superClass) {
       static get properties() {
         return {
           /* Parsed product objects, computed from the spec strings */
@@ -22,7 +22,7 @@ found in the LICENSE file.
           productSpecs: {
             type: Array,
             notify: true,
-            computed: 'computeProductSpecs(products, products.*)'
+            value: [],
           },
           labels: {
             type: Array,
@@ -46,8 +46,17 @@ found in the LICENSE file.
         };
       }
 
-      computeProductSpecs(products, itemChange) {
-        return (products || []).map(p => this.getSpec(p));
+      ready() {
+        super.ready();
+        if (this.productSpecs && this.productSpecs.length
+            && !(this.product && this.products.length)) {
+          this.products = this.productSpecs.map(p => this.parseProductSpec(p));
+        }
+        this._createMethodObserver('productsUpdated(products, products.*)');
+      }
+
+      productsUpdated(products, itemChange) {
+        this.productSpecs = (products || []).map(p => this.getSpec(p));
       }
 
       computeIsLatest(sha) {

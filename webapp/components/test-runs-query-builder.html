@@ -67,7 +67,7 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
-    class TestRunsQueryBuilder extends TestRunsQuery(ProductInfo(window.Polymer.Element)) {
+    class TestRunsQueryBuilder extends TestRunsQuery(window.Polymer.Element) {
       static get is() {
         return 'test-runs-query-builder';
       }
