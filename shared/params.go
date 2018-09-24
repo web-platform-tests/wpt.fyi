@@ -137,7 +137,7 @@ func (p ProductSpec) String() string {
 		for l := range p.Labels.Iter() {
 			labels = append(labels, l.(string))
 		}
-		sort.Strings(labels)
+		sort.Strings(labels) // Deterministic String() output.
 		s += "[" + strings.Join(labels, ",") + "]"
 	}
 	if !IsLatest(p.Revision) {
@@ -341,13 +341,12 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 	if browserParams == nil {
 		return nil, nil
 	}
-	for b := range browserParams.Iter() {
-		if !IsBrowserName(b.(string)) {
-			return nil, fmt.Errorf("Invalid browser param value %s", b.(string))
+	for _, b := range browserParams {
+		if !IsBrowserName(b) {
+			return nil, fmt.Errorf("Invalid browser param value %s", b)
 		}
-		browsers = append(browsers, b.(string))
+		browsers = append(browsers, b)
 	}
-	sort.Strings(browsers)
 	return browsers, nil
 }
 
@@ -372,14 +371,13 @@ func ParseProductsParam(r *http.Request) (products ProductSpecs, err error) {
 	if productParams == nil {
 		return nil, nil
 	}
-	for p := range productParams.Iter() {
-		product, err := ParseProductSpec(p.(string))
+	for _, p := range productParams {
+		product, err := ParseProductSpec(p)
 		if err != nil {
 			return nil, err
 		}
 		products = append(products, product)
 	}
-	sort.Sort(products)
 	return products, nil
 }
 
@@ -403,14 +401,13 @@ func ParseProductOrBrowserParams(r *http.Request) (products ProductSpecs, err er
 }
 
 // GetProductsOrDefault parses the 'products' (and legacy 'browsers') params, returning
-// the sorted list of products to include, or a default list.
+// the ordered list of products to include, or a default list.
 func (filter TestRunFilter) GetProductsOrDefault() (products ProductSpecs) {
 	products = filter.Products
 	// Fall back to default browser set.
 	if products == nil {
 		products = GetDefaultProducts()
 	}
-	sort.Sort(products)
 	return products
 }
 
@@ -503,47 +500,46 @@ func ParseDiffFilterParams(r *http.Request) (param DiffFilterParam, err error) {
 			}
 		}
 	}
-	param.Paths = ParsePathsParam(r)
+	param.Paths = NewSetFromStringSlice(ParsePathsParam(r))
 	return param, nil
 }
 
 // ParsePathsParam returns a set list of test paths to include, or nil if no
 // filter is provided (and all tests should be included). It parses the 'paths'
 // parameter, split on commas, and also checks for the (repeatable) 'path' params
-func ParsePathsParam(r *http.Request) (paths mapset.Set) {
+func ParsePathsParam(r *http.Request) []string {
 	return ParseRepeatedParam(r, "path", "paths")
 }
 
 // ParseLabelsParam returns a set list of test-run labels to include, or nil if
 // no labels are provided.
-func ParseLabelsParam(r *http.Request) (labels mapset.Set) {
+func ParseLabelsParam(r *http.Request) []string {
 	return ParseRepeatedParam(r, "label", "labels")
 }
 
 // ParseRepeatedParam parses a param that may be a plural name, with all values
 // comma-separated, or a repeated singular param.
 // e.g. ?label=foo&label=bar vs ?labels=foo,bar
-func ParseRepeatedParam(r *http.Request, singular string, plural string) (params mapset.Set) {
+func ParseRepeatedParam(r *http.Request, singular string, plural string) (params []string) {
 	repeatedParam := r.URL.Query()[singular]
 	pluralParam := r.URL.Query().Get(plural)
 	if len(repeatedParam) == 0 && pluralParam == "" {
 		return nil
 	}
-
-	params = mapset.NewSet()
-	for _, label := range repeatedParam {
-		params.Add(label)
-	}
+	allValues := repeatedParam
 	if pluralParam != "" {
-		for _, label := range strings.Split(pluralParam, ",") {
-			params.Add(label)
+		allValues = append(allValues, strings.Split(pluralParam, ",")...)
+	}
+
+	seen := mapset.NewSet()
+	for _, value := range allValues {
+		if value == "" {
+			continue
 		}
-	}
-	if params.Contains("") {
-		params.Remove("")
-	}
-	if params.Cardinality() == 0 {
-		return nil
+		if !seen.Contains(value) {
+			params = append(params, value)
+			seen.Add(value)
+		}
 	}
 	return params
 }
@@ -627,7 +623,7 @@ func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error)
 		return filter, err
 	}
 	filter.SHA = runSHA
-	filter.Labels = ParseLabelsParam(r)
+	filter.Labels = NewSetFromStringSlice(ParseLabelsParam(r))
 	if filter.Aligned, err = ParseAlignedParam(r); err != nil {
 		return filter, err
 	}
