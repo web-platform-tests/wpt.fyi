@@ -10,30 +10,51 @@
 <body>
   <wpt-flags-editor id="playground"></wpt-flags-editor>
 
-  <test-fixture id="wpt-flags-fixture">
+  <test-fixture id="wpt-flags-editor-fixture">
     <template>
-      <wpt-flags></wpt-flags>
+      <wpt-flags-editor></wpt-flags-editor>
     </template>
   </test-fixture>
 
   <script>
-    suite('WPTFlags', () => {
-      let flags, queryBuilderStateBefore;
+    /* global WPTFlags */
+    suite('wpt-flags', () => {
+      suite('WPTFlags', () => {
+        let flags;
 
-      setup(() => {
-        flags = fixture('wpt-flags-fixture');
-        queryBuilderStateBefore = flags.queryBuilder;
+        setup(() => {
+          if (!window.customElements.get('wpt-flags')) {
+            class ConcreteClass extends WPTFlags(window.Polymer.Element) {}
+            window.customElements.define('wpt-flags', ConcreteClass);
+          }
+          flags = document.createElement('wpt-flags');
+        });
+
+        test('queryBuilder', () => {
+          const before = flags.queryBuilder;
+          flags.queryBuilder = !flags.queryBuilder;
+          expect(flags.queryBuilder).to.equal(before);
+        });
       });
 
-      test('queryBuilder', () => {
-        flags.queryBuilder = true;
-        expect(flags.queryBuilder).to.equal(true);
-        flags.queryBuilder = false;
-        expect(flags.queryBuilder).to.equal(false);
-      });
+      suite('WPTFlagsEditor', () => {
+        let editor, queryBuilderStateBefore;
 
-      teardown(() => {
-        flags.queryBuilder = queryBuilderStateBefore;
+        setup(() => {
+          editor = fixture('wpt-flags-editor-fixture');
+          queryBuilderStateBefore = editor.queryBuilder;
+        });
+
+        test('queryBuilder', () => {
+          editor.queryBuilder = true;
+          expect(editor.queryBuilder).to.equal(true);
+          editor.queryBuilder = false;
+          expect(editor.queryBuilder).to.equal(false);
+        });
+
+        teardown(() => {
+          editor.queryBuilder = queryBuilderStateBefore;
+        });
       });
     });
   </script>

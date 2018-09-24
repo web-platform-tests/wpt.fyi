@@ -12,51 +12,30 @@ found in the LICENSE file.
 `<wpt-flags>` is a component for checking wpt.fyi feature flags.
 -->
 <dom-module id="wpt-flags">
-  <template>
-    <style>
-    </style>
-
-  </template>
-
   <script>
     const WPT_FYI_FEATURES = ['queryBuilder'];
 
-    class WPTFlags extends window.Polymer.Element {
+    const _wptFlags = (superClass, opt_writable) => class extends superClass {
       static get is() {
         return 'wpt-flags';
       }
 
       static get properties() {
-        const props = {
-        };
-
+        const props = {};
         for (const feature of WPT_FYI_FEATURES) {
           const stored = localStorage.getItem(`features.${feature}`);
           const value = stored && JSON.parse(stored);
           props[feature] = {
             type: Boolean,
+            readOnly: !opt_writable,
             notify: true,
             value: value,
           };
         }
         return props;
       }
-
-      ready() {
-        super.ready();
-        for (const feature of WPT_FYI_FEATURES) {
-          this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
-        }
-      }
-
-      valueChanged(value, feature) {
-        return localStorage.setItem(
-          `features.${feature}`,
-          JSON.stringify(value));
-      }
     }
-
-    window.customElements.define(WPTFlags.is, WPTFlags);
+    const WPTFlags = (superClass) => _wptFlags(superClass, false);
   </script>
 </dom-module>
 
@@ -70,12 +49,20 @@ found in the LICENSE file.
   </template>
 
   <script>
-    class WPTFlagsEditor extends WPTFlags {
+    class WPTFlagsEditor extends _wptFlags(window.Polymer.Element, /*writable*/ true) {
       static get is() { return 'wpt-flags-editor'; }
 
-      static get properties() {
-        return {
-        };
+      ready() {
+        super.ready();
+        for (const feature of WPT_FYI_FEATURES) {
+          this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
+        }
+      }
+
+      valueChanged(value, feature) {
+        return localStorage.setItem(
+          `features.${feature}`,
+          JSON.stringify(value));
       }
     }
 
