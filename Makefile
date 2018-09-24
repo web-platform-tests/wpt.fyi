@@ -212,17 +212,14 @@ node: curl gpg
 gofmt:
 	if [[ "$$(which gofmt)" != "$(GOPATH)/bin/gofmt" ]]; then \
 		TMP_DIR=$$(mktemp -d); \
-		pushd $$TMP_DIR > /dev/null 2>&1; \
-		git clone "https://github.com/golang/go.git"; \
+		cd $$TMP_DIR; \
+		git clone --depth 1 "https://github.com/golang/go.git" -b "release-branch.go1.11"; \
 		cd go; \
-		git checkout "origin/release-branch.go1.11"; \
 		mv "src/cmd" "$(GOPATH)/src/cmd"; \
-		popd > /dev/null 2>&1; \
 		rm -rf "$$TMP_DIR"; \
-		pushd "$(GOPATH)/src" > /dev/null 2>&1; \
+		cd "$(GOPATH)/src"; \
 		go build -o "$(GOPATH)/bin/gofmt" cmd/gofmt; \
 		rm -rf "$(GOPATH)/src/cmd"; \
-		popd > /dev/null 2>&1; \
 	fi
 
 gcloud: python curl gpg
