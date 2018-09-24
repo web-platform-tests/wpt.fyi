@@ -7,6 +7,7 @@ package shared
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/memcache"
 	"google.golang.org/appengine/urlfetch"
 )
@@ -283,4 +285,126 @@ func (cs byteCachedStore) Get(cacheID, storeID, iValue interface{}) error {
 // cache and a Readable store, operating over the input context.Context.
 func NewByteCachedStore(ctx context.Context, cache ReadWritable, store Readable) CachedStore {
 	return byteCachedStore{ctx, cache, store}
+}
+
+// ObjectStore is a store that populates an arbitrary output object on Get().
+type ObjectStore interface {
+	Get(id, value interface{}) error
+}
+
+// ObjectCache is an ObjectStore that also supports Put() for arbitrary id/value
+// pairs.
+type ObjectCache interface {
+	ObjectStore
+	Put(id, value interface{}) error
+}
+
+type jsonObjectCache struct {
+	ctx      context.Context
+	delegate ReadWritable
+}
+
+func (oc jsonObjectCache) Get(id, value interface{}) error {
+	r, err := oc.delegate.NewReadCloser(id)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err := r.Close()
+		if err != nil {
+			logger := oc.ctx.Value(DefaultLoggerCtxKey()).(Logger)
+			logger.Warningf("Error closing JSON object cache delegate ReadCloser: %v", err)
+		}
+	}()
+
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(data, value)
+}
+
+func (oc jsonObjectCache) Put(id, value interface{}) error {
+	w, err := oc.delegate.NewWriteCloser(id)
+	if err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	n, err := w.Write(data)
+	if err != nil {
+		return err
+	}
+	if n != len(data) {
+		return fmt.Errorf("JSON object cache: Attempted to write %d bytes, but wrote %d bytes", len(data), n)
+	}
+
+	err = w.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// NewJSONObjectCache constructs a new JSON object cache, bound to the input
+// context.Context and delgating to the input ReadWritable.
+func NewJSONObjectCache(ctx context.Context, delegate ReadWritable) ObjectCache {
+	return jsonObjectCache{ctx, delegate}
+}
+
+type datastoreObjectStore struct {
+	ctx  context.Context
+	kind string
+}
+
+func (s datastoreObjectStore) Get(iID, value interface{}) error {
+	id, ok := iID.(int64)
+	if !ok {
+		return errDatastoreObjectStoreExpectedInt64
+	}
+	key := datastore.NewKey(s.ctx, s.kind, "", id, nil)
+	return datastore.Get(s.ctx, key, value)
+}
+
+// NewDatastoreObjectStore constructs a new ObjectStore backed by datastore
+// objects of a particular kind.
+func NewDatastoreObjectStore(ctx context.Context, kind string) ObjectStore {
+	return datastoreObjectStore{ctx, kind}
+}
+
+type objectCachedStore struct {
+	ctx   context.Context
+	cache ObjectCache
+	store ObjectStore
+}
+
+func (cs objectCachedStore) Get(cacheID, storeID, value interface{}) error {
+	logger := cs.ctx.Value(DefaultLoggerCtxKey()).(Logger)
+
+	err := cs.cache.Get(cacheID, value)
+	if err == nil {
+		logger.Infof("Serving object from cache: %v", cacheID)
+		return nil
+	}
+
+	logger.Warningf("Error fetching cache key %v: %v", cacheID, err)
+
+	err = cs.store.Get(storeID, value)
+	if err == nil {
+		logger.Infof("Serving object for store: %v", storeID)
+	}
+
+	return err
+}
+
+// NewObjectCachedStore constructs a new CachedStore backed by an ObjectCache
+// and ObjectStore.
+func NewObjectCachedStore(ctx context.Context, cache ObjectCache, store ObjectStore) CachedStore {
+	return objectCachedStore{ctx, cache, store}
 }

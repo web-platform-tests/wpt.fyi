@@ -8,7 +8,7 @@
     <wpt-results
         {{- if .TestRuns}} test-runs="{{ .TestRuns }}"{{end}}
         {{- with .Filter}}
-          {{- if .Products}} products="{{ .Products }}"{{end}}
+          {{- if .Products}} product-specs="{{ .Products }}"{{end}}
           {{- if .SHA}} sha="{{ .SHA }}" {{end}}
           {{- if .Labels}} labels="{{ .Labels }}"{{end}}
           {{- if .MaxCount}} max-count="{{ .MaxCount }}"{{end}}

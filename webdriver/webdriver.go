@@ -1,8 +1,10 @@
 package webdriver
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"runtime"
@@ -11,11 +13,9 @@ import (
 )
 
 var (
+	debug            = flag.Bool("debug", false, "Turn on debug logging")
 	browser          = flag.String("browser", "firefox", "Which browser to run the tests with")
 	startFrameBuffer = flag.Bool("frame_buffer", frameBufferDefault(), "Whether to use a frame buffer")
-	seleniumPath     = flag.String("selenium_path", "", "Path to the selenium standalone binary.")
-	seleniumHost     = flag.String("selenium_host", "localhost", "Host to run selenium on")
-	seleniumPort     = 0
 )
 
 func frameBufferDefault() bool {
@@ -57,25 +57,23 @@ func pickUnusedPort() int {
 // defer server.Stop()
 // defer driver.Quit()
 func GetWebDriver() (*selenium.Service, selenium.WebDriver, error) {
-	if *seleniumPath == "" {
-		panic("-selenium_path not specified")
-	}
-	if seleniumPort == 0 {
-		seleniumPort = pickUnusedPort()
-	}
-
 	var options []selenium.ServiceOption
 	if *startFrameBuffer {
 		options = append(options, selenium.StartFrameBuffer())
 	}
-	// TODO(Hexcles): Add a flag for selenium.SetDebug().
-	options = append(options, selenium.Output(os.Stderr))
+	if *debug {
+		selenium.SetDebug(true)
+		options = append(options, selenium.Output(os.Stderr))
+	} else {
+		options = append(options, selenium.Output(ioutil.Discard))
+	}
 
+	port := pickUnusedPort()
 	switch *browser {
 	case "firefox":
-		return FirefoxWebDriver(options)
+		return FirefoxWebDriver(port, options)
 	case "chrome":
-		return ChromeWebDriver(options)
+		return ChromeWebDriver(port, options)
 	}
 	panic("Invalid -browser value specified")
 }
@@ -128,4 +126,12 @@ func FindShadowElement(
 		return nil, err
 	}
 	return elements[0], nil
+}
+
+func extractScriptRawValue(bytes []byte, key string) (value interface{}, err error) {
+	var parsed map[string]interface{}
+	if err = json.Unmarshal(bytes, &parsed); err != nil {
+		return nil, err
+	}
+	return parsed[key], nil
 }
