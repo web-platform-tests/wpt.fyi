@@ -379,6 +379,10 @@ found in the LICENSE file.
       }
 
       computeSearchURL(testRuns, search) {
+        if (!testRuns || testRuns.length === 0) {
+          return '';
+        }
+
         let url = '/api/search?';
         if (testRuns) {
           url += `run_ids=${
@@ -392,6 +396,10 @@ found in the LICENSE file.
       }
 
       computeAutocompleteURL(testRuns, search) {
+        if (!testRuns || testRuns.length === 0) {
+          return '';
+        }
+
         let url = '/api/autocomplete?limit=10&';
         if (testRuns) {
           url += `run_ids=${
