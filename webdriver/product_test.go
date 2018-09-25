@@ -27,21 +27,19 @@ func TestProductParam(t *testing.T) {
 	defer service.Stop()
 	defer wd.Quit()
 
-	// Local static data only have 2 experimental browsers, and neither has aligned
-	// experimental runs.
 	testProduct(t, wd, app, "chrome[stable]")
-	testProduct(t, wd, app, "firefox[experimental]")
+	testProduct(t, wd, app, "firefox[experimental]", "chrome")
 }
 
 func testProduct(
 	t *testing.T,
 	wd selenium.WebDriver,
 	app AppServer,
-	productSpec string) {
+	productSpecs ...string) {
 	// Navigate to the wpt.fyi homepage.
-	product, _ := shared.ParseProductSpec(productSpec)
+	products, _ := shared.ParseProductSpecs(productSpecs...)
 	filters := shared.TestRunFilter{
-		Products: shared.ProductSpecs{product},
+		Products: products,
 	}
 	path := fmt.Sprintf("/results?%s", filters.ToQuery().Encode())
 	if err := wd.Get(app.GetWebappURL(path)); err != nil {
@@ -65,7 +63,7 @@ func testProduct(
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get test runs: %s", err.Error()))
 	}
-	assert.Lenf(t, testRuns, 1, "Expected exactly 1 TestRun.")
+	assert.Lenf(t, testRuns, len(products), "Expected %v TestRun(s).", len(products))
 
 	// Check tab URLs propagate label
 	tabs, err := getTabElements(wd, "wpt-results")
@@ -76,23 +74,29 @@ func testProduct(
 		assert.NotNil(t, a)
 		href, err := a.GetAttribute("href")
 		assert.Nil(t, err)
-		assert.Contains(t, href, "product="+url.QueryEscape(productSpec))
+		for _, p := range productSpecs {
+			assert.Contains(t, href, "product="+url.QueryEscape(p))
+		}
 	}
 
-	assertProduct(t, wd, testRuns, product)
+	assertProducts(t, wd, testRuns, products...)
 }
 
-func assertProduct(t *testing.T, wd selenium.WebDriver, testRuns []selenium.WebElement, product shared.ProductSpec) {
-	if len(testRuns) < 1 {
+func assertProducts(t *testing.T, wd selenium.WebDriver, testRuns []selenium.WebElement, products ...shared.ProductSpec) {
+	if len(testRuns) < len(products) {
 		return
 	}
-	args := []interface{}{testRuns[0]}
-	browserNameBytes, _ := wd.ExecuteScriptRaw("return arguments[0].testRun.browser_name", args)
-	browserName, _ := extractScriptRawValue(browserNameBytes, "value")
-	assert.Equal(t, product.BrowserName, browserName.(string))
-	labelBytes, _ := wd.ExecuteScriptRaw("return arguments[0].testRun.labels", args)
-	labels, _ := extractScriptRawValue(labelBytes, "value")
-	for label := range product.Labels.Iter() {
-		assert.Contains(t, labels, label)
+	for i, product := range products {
+		args := []interface{}{testRuns[i]}
+		browserNameBytes, _ := wd.ExecuteScriptRaw("return arguments[0].testRun.browser_name", args)
+		browserName, _ := extractScriptRawValue(browserNameBytes, "value")
+		assert.Equal(t, product.BrowserName, browserName.(string))
+		if product.Labels != nil {
+			labelBytes, _ := wd.ExecuteScriptRaw("return arguments[0].testRun.labels", args)
+			labels, _ := extractScriptRawValue(labelBytes, "value")
+			for label := range product.Labels.Iter() {
+				assert.Contains(t, labels, label)
+			}
+		}
 	}
 }

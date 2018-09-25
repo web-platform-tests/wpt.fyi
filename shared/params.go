@@ -221,6 +221,19 @@ func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	return runSHA, err
 }
 
+// ParseProductSpecs parses multiple product specs
+func ParseProductSpecs(specs ...string) (products ProductSpecs, err error) {
+	products = make(ProductSpecs, len(specs))
+	for i, p := range specs {
+		product, err := ParseProductSpec(p)
+		if err != nil {
+			return nil, err
+		}
+		products[i] = product
+	}
+	return products, nil
+}
+
 // ParseProductSpec parses a test-run spec into a ProductAtRevision struct.
 func ParseProductSpec(spec string) (productSpec ProductSpec, err error) {
 	errMsg := "invalid product spec: " + spec
@@ -366,19 +379,12 @@ func ParseProductParam(r *http.Request) (product *Product, err error) {
 // ParseProductsParam returns a list of product params for the request.
 // It parses the 'products' parameter, split on commas, and also checks for the (repeatable)
 // 'product' params.
-func ParseProductsParam(r *http.Request) (products ProductSpecs, err error) {
+func ParseProductsParam(r *http.Request) (ProductSpecs, error) {
 	productParams := ParseRepeatedParam(r, "product", "products")
 	if productParams == nil {
 		return nil, nil
 	}
-	for _, p := range productParams {
-		product, err := ParseProductSpec(p)
-		if err != nil {
-			return nil, err
-		}
-		products = append(products, product)
-	}
-	return products, nil
+	return ParseProductSpecs(productParams...)
 }
 
 // ParseProductOrBrowserParams parses the product (or, browser) params present in the given
