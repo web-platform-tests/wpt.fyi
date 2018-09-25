@@ -22,8 +22,6 @@ type testRunUIFilter struct {
 	SHA           string
 	Aligned       bool
 	MaxCount      *int
-	BeforeSpec    *shared.ProductSpec
-	AfterSpec     *shared.ProductSpec
 	Diff          bool
 	BeforeTestRun *shared.TestRun
 	AfterTestRun  *shared.TestRun
@@ -100,46 +98,6 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 	}
 	testRunFilter = testRunFilter.OrDefault()
 
-	before := r.URL.Query().Get("before")
-	after := r.URL.Query().Get("after")
-	if before != "" || after != "" {
-		if before == "" {
-			return filter, errors.New("after param provided, but before param missing")
-		} else if after == "" {
-			return filter, errors.New("before param provided, but after param missing")
-		}
-
-		const singleRunURL = `/api/run?sha=%s&product=%s`
-
-		if beforeDecoded, err := base64.URLEncoding.DecodeString(before); err == nil {
-			var run shared.TestRun
-			if err = json.Unmarshal([]byte(beforeDecoded), &run); err != nil {
-				return filter, err
-			}
-			filter.BeforeTestRun = &run
-		} else {
-			beforeSpec, err := shared.ParseProductSpec(before)
-			if err != nil {
-				return filter, errors.New("invalid before param")
-			}
-			filter.BeforeSpec = &beforeSpec
-		}
-
-		if afterDecoded, err := base64.URLEncoding.DecodeString(after); err == nil {
-			var run shared.TestRun
-			if err = json.Unmarshal([]byte(afterDecoded), &run); err != nil {
-				return filter, err
-			}
-			filter.AfterTestRun = &run
-		} else {
-			afterSpec, err := shared.ParseProductSpec(after)
-			if err != nil {
-				return filter, errors.New("invalid after param")
-			}
-			filter.AfterSpec = &afterSpec
-		}
-	}
-
 	if testRunFilter.Labels != nil {
 		data, _ := json.Marshal(testRunFilter.Labels.ToSlice())
 		filter.Labels = string(data)
@@ -159,5 +117,53 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 		return filter, err
 	}
 	filter.Diff = diff != nil && *diff
+
+	before := r.URL.Query().Get("before")
+	after := r.URL.Query().Get("after")
+	if before != "" || after != "" {
+		if before == "" {
+			return filter, errors.New("after param provided, but before param missing")
+		} else if after == "" {
+			return filter, errors.New("before param provided, but after param missing")
+		}
+
+		const singleRunURL = `/api/run?sha=%s&product=%s`
+		var specs []string
+		if beforeDecoded, err := base64.URLEncoding.DecodeString(before); err == nil {
+			var run shared.TestRun
+			if err = json.Unmarshal([]byte(beforeDecoded), &run); err != nil {
+				return filter, err
+			}
+			filter.BeforeTestRun = &run
+		} else {
+			beforeSpec, err := shared.ParseProductSpec(before)
+			if err != nil {
+				return filter, errors.New("invalid before param")
+			}
+			specs = append(specs, beforeSpec.String())
+		}
+
+		if afterDecoded, err := base64.URLEncoding.DecodeString(after); err == nil {
+			var run shared.TestRun
+			if err = json.Unmarshal([]byte(afterDecoded), &run); err != nil {
+				return filter, err
+			}
+			filter.AfterTestRun = &run
+		} else {
+			afterSpec, err := shared.ParseProductSpec(after)
+			if err != nil {
+				return filter, errors.New("invalid after param")
+			}
+			specs = append(specs, afterSpec.String())
+		}
+		if len(specs) > 0 {
+			bytes, err := json.Marshal(specs)
+			if err != nil {
+				return filter, err
+			}
+			filter.Products = string(bytes)
+		}
+		filter.Diff = true
+	}
 	return filter, nil
 }
