@@ -36,8 +36,7 @@ func (w *cachingResponseWriter) Write(data []byte) (int, error) {
 	}
 
 	var err error
-	i := 0
-	for err == nil && i < len(data) {
+	for i := 0; err == nil && i < len(data); {
 		var n int
 		n, err = w.b.Write(data[i:])
 		i += n
@@ -47,7 +46,7 @@ func (w *cachingResponseWriter) Write(data []byte) (int, error) {
 		return 0, err
 	}
 
-	i = 0
+	i := 0
 	for err == nil && i < len(data) {
 		var n int
 		n, err = w.delegate.Write(data[i:])
