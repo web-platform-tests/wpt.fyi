@@ -109,10 +109,10 @@ found in the LICENSE file.
     }
   </style>
 
-  <results-navigation tab="interop"
-                      path="[[encodedPath]]"
-                      query="[[query]]">
-  </results-navigation>
+  <results-tabs tab="interop"
+                path="[[encodedPath]]"
+                query="[[query]]">
+  </results-tabs>
 
   <section class="search">
     <div class="path">
@@ -125,7 +125,7 @@ found in the LICENSE file.
 
     <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-    <test-search class$="search-[[pathIsATestFile]]" query="[[search]]">
+    <test-search class$="search-[[pathIsATestFile]]" query="{{search}}">
     </test-search>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -214,11 +214,12 @@ found in the LICENSE file.
     [118, 255,   3], // --paper-light-green-a200
   ];
 
-  /* global TestRunsBase, SelfNavigation, LoadingState */
-  class WPTInterop extends SelfNavigation(LoadingState(TestRunsBase)) {
-    static get is() {
-      return 'wpt-interop';
-    }
+  /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation */
+  class WPTInterop extends ResultsNavigation(
+    SelfNavigation(LoadingState(TestRunsBase)),
+    'interopQueryParams(sha, labels, productSpecs, maxCount, search)') {
+    static get is() { return 'wpt-interop'; }
+
     static get properties() {
       return {
         passRateMetadata: Object,
@@ -262,6 +263,9 @@ found in the LICENSE file.
         // passRateMetadata contains the url for the JSON blob of allMetrics;
         // both fetches need to succeed + parse.
         this.interopLoadFailed = !(this.passRateMetadata && this.allMetrics);
+        if (!this.interopLoadFailed && this.search) {
+          this.shadowRoot.querySelector('test-search').commitQuery();
+        }
       }
     }
 
@@ -300,6 +304,14 @@ found in the LICENSE file.
 
     navigationQueryParams() {
       return this.queryParams;
+    }
+
+    interopQueryParams(sha, labels, products, maxCount, search) {
+      const params = this.testRunQueryParams(sha, labels, products, maxCount);
+      if (search) {
+        params.q = search;
+      }
+      return params;
     }
 
     computeThLabels(testRuns) {

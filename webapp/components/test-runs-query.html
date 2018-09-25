@@ -11,6 +11,10 @@ found in the LICENSE file.
      */
     // eslint-disable-next-line no-unused-vars
     const TestRunsQuery = (superClass) => class extends superClass {
+      static get ParamsComputer() {
+        return 'testRunQueryParams(sha, labels, productSpecs, maxCount)';
+      }
+
       static get properties() {
         return {
           /* Parsed product objects, computed from the spec strings */
@@ -34,14 +38,6 @@ found in the LICENSE file.
             type: Boolean,
             computed: 'computeIsLatest(sha)'
           },
-          queryParams: {
-            type: Object,
-            computed: 'testRunQueryParams(sha, labels, productSpecs, maxCount)',
-          },
-          query: {
-            type: String,
-            computed: 'computeQuery(queryParams)',
-          }
         };
       }
 
@@ -68,22 +64,6 @@ found in the LICENSE file.
           params.aligned = true;
         }
         return params;
-      }
-
-      computeQuery(params) {
-        if (Object.keys(params).length < 1) {
-          return '';
-        }
-        const url = new URL(window.location.origin);
-        for (const k of Object.keys(params)) {
-          const v = params[k];
-          if (Array.isArray(v)) {
-            v.forEach(i => url.searchParams.append(k, i));
-          } else {
-            url.searchParams.set(k, params[k]);
-          }
-        }
-        return url.search;
       }
 
       computeProducts(productSpecs) {

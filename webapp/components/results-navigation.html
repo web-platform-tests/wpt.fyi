@@ -2,6 +2,50 @@
 <link rel="import" href="../bower_components/paper-styles/color.html">
 
 <dom-module id='results-navigation'>
+  <script>
+    /**
+     * ResultsNavigation contains helper methods for building a query string,
+     * from a more-simple 'params' object. Because Polymer doesn't support
+     * overriding computed property functions, the computer method string must
+     * be passed in by the concrete class.
+     */
+    const ResultsNavigation =
+      (superClass, queryParamsComputer) => class extends superClass {
+        static get properties() {
+          return {
+            query: {
+              type: String,
+              computed: 'computeQuery(queryParams)',
+              value: '',
+            },
+            queryParams: {
+              type: Object,
+              observe: true,
+              computed: queryParamsComputer,
+            },
+          }
+        }
+
+        computeQuery(params) {
+          if (Object.keys(params).length < 1) {
+            return '';
+          }
+          const url = new URL(window.location.origin);
+          for (const k of Object.keys(params)) {
+            const v = params[k];
+            if (Array.isArray(v)) {
+              v.forEach(i => url.searchParams.append(k, i));
+            } else {
+              url.searchParams.set(k, params[k]);
+            }
+          }
+          return url.search;
+        }
+      }
+  </script>
+</dom-module>
+
+<dom-module id='results-tabs'>
   <template>
     <style>
       paper-tabs {
@@ -39,9 +83,9 @@
   </template>
 
   <script>
-    class ResultsNavigation extends window.Polymer.Element {
+    class ResultsTabs extends window.Polymer.Element {
       static get is() {
-        return 'results-navigation';
+        return 'results-tabs';
       }
 
       static get properties() {
@@ -82,6 +126,6 @@
       }
     }
 
-    window.customElements.define(ResultsNavigation.is, ResultsNavigation);
+    window.customElements.define(ResultsTabs.is, ResultsTabs);
   </script>
 </dom-module>
