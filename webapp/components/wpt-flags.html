@@ -15,7 +15,7 @@ found in the LICENSE file.
   <script>
     const WPT_FYI_FEATURES = ['queryBuilder'];
 
-    const _wptFlags = (superClass, opt_writable) => class extends superClass {
+    const _wptFlags = (superClass, readOnly) => class extends superClass {
       static get is() {
         return 'wpt-flags';
       }
@@ -27,7 +27,7 @@ found in the LICENSE file.
           const value = stored && JSON.parse(stored);
           props[feature] = {
             type: Boolean,
-            readOnly: !opt_writable,
+            readOnly: readOnly,
             notify: true,
             value: value,
           };
@@ -35,7 +35,7 @@ found in the LICENSE file.
         return props;
       }
     }
-    const WPTFlags = (superClass) => _wptFlags(superClass, false);
+    const WPTFlags = (superClass) => _wptFlags(superClass, /*readOnly*/ true);
   </script>
 </dom-module>
 
@@ -49,7 +49,7 @@ found in the LICENSE file.
   </template>
 
   <script>
-    class WPTFlagsEditor extends _wptFlags(window.Polymer.Element, /*writable*/ true) {
+    class WPTFlagsEditor extends _wptFlags(window.Polymer.Element, /*readOnly*/ false) {
       static get is() { return 'wpt-flags-editor'; }
 
       ready() {
