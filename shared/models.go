@@ -162,18 +162,18 @@ type Manifest struct {
 }
 
 // FilterByPath filters all the manifest items by path.
-func (m Manifest) FilterByPath(paths mapset.Set) (result Manifest, err error) {
+func (m Manifest) FilterByPath(paths ...string) (result Manifest, err error) {
 	result = m
-	if result.Items.Manual, err = m.Items.Manual.FilterByPath(paths); err != nil {
+	if result.Items.Manual, err = m.Items.Manual.FilterByPath(paths...); err != nil {
 		return result, err
 	}
-	if result.Items.Reftest, err = m.Items.Reftest.FilterByPath(paths); err != nil {
+	if result.Items.Reftest, err = m.Items.Reftest.FilterByPath(paths...); err != nil {
 		return result, err
 	}
-	if result.Items.TestHarness, err = m.Items.TestHarness.FilterByPath(paths); err != nil {
+	if result.Items.TestHarness, err = m.Items.TestHarness.FilterByPath(paths...); err != nil {
 		return result, err
 	}
-	if result.Items.WDSpec, err = m.Items.WDSpec.FilterByPath(paths); err != nil {
+	if result.Items.WDSpec, err = m.Items.WDSpec.FilterByPath(paths...); err != nil {
 		return result, err
 	}
 	return result, nil
@@ -192,7 +192,7 @@ type ManifestItem map[string][][]*json.RawMessage
 
 // FilterByPath culls out entries in the ManifestItem that don't have any items with
 // a URL that starts with the given path.
-func (m ManifestItem) FilterByPath(paths mapset.Set) (item ManifestItem, err error) {
+func (m ManifestItem) FilterByPath(paths ...string) (item ManifestItem, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -204,8 +204,8 @@ func (m ManifestItem) FilterByPath(paths mapset.Set) (item ManifestItem, err err
 			if err = json.Unmarshal(*item[0], &url); err != nil {
 				return nil, err
 			}
-			for prefix := range paths.Iter() {
-				if strings.Index(url, prefix.(string)) == 0 {
+			for _, prefix := range paths {
+				if strings.Index(url, prefix) == 0 {
 					match = true
 					break
 				}

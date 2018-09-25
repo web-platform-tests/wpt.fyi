@@ -186,3 +186,15 @@ func NewTestContext() context.Context {
 	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), NewNilLogger())
 	return ctx
 }
+
+// NewSetFromStringSlice is a helper for the inability to cast []string to []interface{}
+func NewSetFromStringSlice(items []string) mapset.Set {
+	if items == nil {
+		return nil
+	}
+	set := mapset.NewSet()
+	for _, i := range items {
+		set.Add(i)
+	}
+	return set
+}

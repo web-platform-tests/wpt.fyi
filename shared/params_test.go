@@ -114,13 +114,13 @@ func TestGetProductsOrDefault_BrowserParam_ChromeInvalid(t *testing.T) {
 }
 
 func TestGetProductsOrDefault_BrowserParam_EmptyCommas(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=,chrome,,,,safari,,", nil)
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?browsers=,edge,,,,chrome,,", nil)
 	filters, err := ParseTestRunFilterParams(r)
 	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
-	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
-	assert.Equal(t, "safari", products[1].BrowserName)
+	assert.Equal(t, "edge", products[0].BrowserName)
+	assert.Equal(t, "chrome", products[1].BrowserName)
 }
 
 func TestGetProductsOrDefault_BrowserParam_SafariChrome(t *testing.T) {
@@ -129,8 +129,8 @@ func TestGetProductsOrDefault_BrowserParam_SafariChrome(t *testing.T) {
 	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
-	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
-	assert.Equal(t, "safari", products[1].BrowserName)
+	assert.Equal(t, "safari", products[0].BrowserName)
+	assert.Equal(t, "chrome", products[1].BrowserName)
 }
 
 func TestGetProductsOrDefault_BrowserParam_MultiBrowserParam_SafariChrome(t *testing.T) {
@@ -139,8 +139,8 @@ func TestGetProductsOrDefault_BrowserParam_MultiBrowserParam_SafariChrome(t *tes
 	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
-	assert.Equal(t, "chrome", products[0].BrowserName) // Alphabetical
-	assert.Equal(t, "safari", products[1].BrowserName)
+	assert.Equal(t, "safari", products[0].BrowserName)
+	assert.Equal(t, "chrome", products[1].BrowserName)
 }
 
 func TestGetProductsOrDefault_BrowserParam_MultiBrowserParam_SafariInvalid(t *testing.T) {
@@ -155,9 +155,9 @@ func TestGetProductsOrDefault_BrowserAndProductParam(t *testing.T) {
 	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(products))
-	assert.Equal(t, "chrome", products[0].BrowserName)
-	assert.Equal(t, "edge", products[1].BrowserName)
-	assert.Equal(t, "16", products[1].BrowserVersion)
+	assert.Equal(t, "edge", products[0].BrowserName)
+	assert.Equal(t, "16", products[0].BrowserVersion)
+	assert.Equal(t, "chrome", products[1].BrowserName)
 }
 
 func TestGetProductsOrDefault_BrowsersAndProductsParam(t *testing.T) {
@@ -166,11 +166,11 @@ func TestGetProductsOrDefault_BrowsersAndProductsParam(t *testing.T) {
 	products := filters.GetProductsOrDefault()
 	assert.Nil(t, err)
 	assert.Equal(t, 4, len(products))
-	assert.Equal(t, "chrome", products[0].BrowserName)
-	assert.Equal(t, "edge", products[1].BrowserName)
-	assert.Equal(t, "16", products[1].BrowserVersion)
-	assert.Equal(t, "firefox", products[2].BrowserName)
-	assert.Equal(t, "safari", products[3].BrowserName)
+	assert.Equal(t, "edge", products[0].BrowserName)
+	assert.Equal(t, "16", products[0].BrowserVersion)
+	assert.Equal(t, "safari", products[1].BrowserName)
+	assert.Equal(t, "chrome", products[2].BrowserName)
+	assert.Equal(t, "firefox", products[3].BrowserName)
 }
 
 func TestParseMaxCountParam_Missing(t *testing.T) {
@@ -234,19 +234,19 @@ func TestParsePathsParam_Empty(t *testing.T) {
 func TestParsePathsParam_Path_Duplicate(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/diff?path=/css&path=/css", nil)
 	paths := ParsePathsParam(r)
-	assert.Equal(t, 1, paths.Cardinality())
+	assert.Len(t, paths, 1)
 }
 
 func TestParsePathsParam_Paths_Duplicate(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/diff?paths=/css,/css", nil)
 	paths := ParsePathsParam(r)
-	assert.Equal(t, 1, paths.Cardinality())
+	assert.Len(t, paths, 1)
 }
 
 func TestParsePathsParam_PathsAndPath_Duplicate(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/diff?paths=/css&path=/css", nil)
 	paths := ParsePathsParam(r)
-	assert.Equal(t, 1, paths.Cardinality())
+	assert.Len(t, paths, 1)
 }
 
 func TestParsePathsParam_Paths_DiffFilter(t *testing.T) {
@@ -318,19 +318,19 @@ func TestParseLabelsParam_Empty(t *testing.T) {
 func TestParseLabelsParam_Label_Duplicate(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?label=experimental&label=experimental", nil)
 	labels := ParseLabelsParam(r)
-	assert.Equal(t, 1, labels.Cardinality())
+	assert.Len(t, labels, 1)
 }
 
 func TestParseLabelsParam_Labels_Duplicate(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=experimental,experimental", nil)
 	labels := ParseLabelsParam(r)
-	assert.Equal(t, 1, labels.Cardinality())
+	assert.Len(t, labels, 1)
 }
 
 func TestParseLabelsParam_LabelsAndLabel_Duplicate(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=experimental&label=experimental", nil)
 	labels := ParseLabelsParam(r)
-	assert.Equal(t, 1, labels.Cardinality())
+	assert.Len(t, labels, 1)
 }
 
 func TestParseProductSpec(t *testing.T) {
