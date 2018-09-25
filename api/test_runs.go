@@ -53,9 +53,6 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 		// Default to a single, latest run when from & max-count both empty.
 		one := 1
 		limit = &one
-	} else if limit == nil || *limit > shared.MaxCountMaxValue {
-		max := shared.MaxCountMaxValue
-		limit = &max
 	}
 	products := filters.GetProductsOrDefault()
 
