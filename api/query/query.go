@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -159,20 +158,5 @@ func isRequestCacheable(r *http.Request) bool {
 }
 
 func getRequestCacheKey(r *http.Request) interface{} {
-	q := r.URL.Query()
-	qKeys := make([]string, 0, len(q))
-	for key := range q {
-		qKeys = append(qKeys, key)
-	}
-	sort.Strings(qKeys)
-
-	cacheKey := "URL-" + r.URL.Path + "?"
-	for _, key := range qKeys {
-		values := q[key]
-		for _, value := range values {
-			cacheKey += key + "=" + value + "&"
-		}
-	}
-
-	return cacheKey
+	return r.URL.String()
 }
