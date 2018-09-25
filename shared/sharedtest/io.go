@@ -17,7 +17,6 @@ type MockWriteCloser struct {
 	b      bytes.Buffer
 	closed bool
 	t      *testing.T
-	c      chan bool
 }
 
 func (mwc *MockWriteCloser) Write(p []byte) (n int, err error) {
@@ -27,18 +26,14 @@ func (mwc *MockWriteCloser) Write(p []byte) (n int, err error) {
 
 func (mwc *MockWriteCloser) Close() error {
 	mwc.closed = true
-	if mwc.c != nil {
-		mwc.c <- true
-	}
 	return nil
 }
 
-func NewMockWriteCloser(t *testing.T, c chan bool) *MockWriteCloser {
+func NewMockWriteCloser(t *testing.T) *MockWriteCloser {
 	return &MockWriteCloser{
 		b:      bytes.Buffer{},
 		closed: false,
 		t:      t,
-		c:      c,
 	}
 }
 
