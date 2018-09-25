@@ -4,13 +4,34 @@
 <dom-module id='results-navigation'>
   <script>
     /**
-     * ResultsNavigation contains helper methods for building a query string,
-     * from a more-simple 'params' object. Because Polymer doesn't support
-     * overriding computed property functions, the computer method string must
-     * be passed in by the concrete class.
+     * QueryBuilder contains a helper method for building a query string from
+     * an object of params.
+     */
+    const QueryBuilder = (superClass) => class extends superClass {
+      computeQuery(params) {
+        if (Object.keys(params).length < 1) {
+          return '';
+        }
+        const url = new URL(window.location.origin);
+        for (const k of Object.keys(params)) {
+          const v = params[k];
+          if (Array.isArray(v)) {
+            v.forEach(i => url.searchParams.append(k, i));
+          } else {
+            url.searchParams.set(k, params[k]);
+          }
+        }
+        return url.search;
+      }
+    }
+
+    /**
+     * ResultsNavigation extends QueryBuilder's helper methods. Because Polymer
+     * doesn't support overriding computed property functions, the computer
+     * method string must be passed in by the concrete class.
      */
     const ResultsNavigation =
-      (superClass, queryParamsComputer) => class extends superClass {
+      (superClass, queryParamsComputer) => class extends QueryBuilder(superClass) {
         static get properties() {
           return {
             query: {
@@ -24,22 +45,6 @@
               computed: queryParamsComputer,
             },
           }
-        }
-
-        computeQuery(params) {
-          if (Object.keys(params).length < 1) {
-            return '';
-          }
-          const url = new URL(window.location.origin);
-          for (const k of Object.keys(params)) {
-            const v = params[k];
-            if (Array.isArray(v)) {
-              v.forEach(i => url.searchParams.append(k, i));
-            } else {
-              url.searchParams.set(k, params[k]);
-            }
-          }
-          return url.search;
         }
       }
   </script>
