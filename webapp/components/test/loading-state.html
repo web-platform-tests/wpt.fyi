@@ -12,10 +12,13 @@
 
 <dom-module id="loading-state-concrete">
   <script>
-    /* global LoadingState */
-    class ConcreteType extends LoadingState(window.Polymer.Element) {}
+    // Needed for FF, which doesn't block on the imports above.
+    document.addEventListener('WebComponentsReady', () => {
+      /* global LoadingState */
+      class ConcreteType extends LoadingState(window.Polymer.Element) {}
 
-    window.customElements.define('loading-state-concrete', ConcreteType);
+      window.customElements.define('loading-state-concrete', ConcreteType);
+    });
   </script>
 </dom-module>
 
