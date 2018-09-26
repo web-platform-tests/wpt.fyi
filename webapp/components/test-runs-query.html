@@ -5,6 +5,7 @@ found in the LICENSE file.
 -->
 
 <link rel="import" href="./product-info.html">
+<link rel="import" href="./results-navigation.html">
 
 <dom-module id="test-runs-query">
   <script>
@@ -12,7 +13,8 @@ found in the LICENSE file.
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
     // eslint-disable-next-line no-unused-vars
-    const TestRunsQuery = (superClass) => class extends ProductInfo(superClass) {
+    const TestRunsQuery =
+      (superClass) => class extends QueryBuilder(ProductInfo(superClass)) {
       static get properties() {
         return {
           /* Parsed product objects, computed from the spec strings */
@@ -37,14 +39,14 @@ found in the LICENSE file.
             type: Boolean,
             computed: 'computeIsLatest(sha)'
           },
-          queryParams: {
+          testRunQueryParams: {
             type: Object,
-            computed: 'testRunQueryParams(sha, labels, productSpecs, maxCount)',
+            computed: 'computeTestRunQueryParams(sha, labels, productSpecs, maxCount)',
           },
-          query: {
+          testRunQuery: {
             type: String,
-            computed: 'computeQuery(queryParams)',
-          }
+            computed: 'computeQuery(testRunQueryParams)',
+          },
         };
       }
 
@@ -65,7 +67,7 @@ found in the LICENSE file.
         return !sha || sha === 'latest';
       }
 
-      testRunQueryParams(sha, labels, productSpecs, maxCount) {
+      computeTestRunQueryParams(sha, labels, productSpecs, maxCount) {
         const params = {};
         if (sha) {
           params.sha = sha;
@@ -86,20 +88,49 @@ found in the LICENSE file.
         return params;
       }
 
-      computeQuery(params) {
-        if (Object.keys(params).length < 1) {
-          return '';
+      computeProducts(productSpecs) {
+        return productSpecs && productSpecs.map(s => this.parseProductSpec(s));
+      }
+
+      parseProductSpec(spec) {
+        // @sha (optional)
+        let revision = '';
+        const atIndex = spec.indexOf('@');
+        if (atIndex > 0) {
+          revision = spec.substr(atIndex + 1);
+          spec = spec.substr(0, atIndex);
         }
-        const url = new URL(window.location.origin);
-        for (const k of Object.keys(params)) {
-          const v = params[k];
-          if (Array.isArray(v)) {
-            v.forEach(i => url.searchParams.append(k, i));
-          } else {
-            url.searchParams.set(k, params[k]);
+        // [foo,bar] labels syntax (optional)
+        let labels = new Set();
+        const arrayIndex = spec.indexOf('[');
+        if (arrayIndex > 0) {
+          let labelsStr = spec.substr(arrayIndex + 1);
+          if (labelsStr[labelsStr.length - 1] !== ']') {
+            throw 'Expected closing bracket';
           }
+          labelsStr = labelsStr.substr(0, labelsStr.length - 1);
+          labelsStr.split(',').forEach(l => labels.add(l));
+          spec = spec.substr(0, arrayIndex);
         }
-        return url.search;
+        // product
+        const product = this.parseProduct(spec);
+        product.revision = revision;
+        product.labels = labels;
+        return product;
+      }
+
+      parseProduct(name) {
+        // -version (optional)
+        let version;
+        const dashIndex = name.indexOf('-');
+        if (dashIndex > 0) {
+          version = name.substr(dashIndex + 1);
+          name = name.substr(0, dashIndex);
+        }
+        return {
+          browser_name: name,
+          browser_version: version,
+        }
       }
     }
   </script>

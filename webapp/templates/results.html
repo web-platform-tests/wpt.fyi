@@ -14,7 +14,8 @@
           {{- if .MaxCount}} max-count="{{ .MaxCount }}"{{end}}
           {{- if .Diff}} diff{{end}}
           {{- if .Aligned}} aligned{{end}}
-        {{- end}}></wpt-results>
+        {{- end}}
+        {{- if .Query }} search="{{.Query}}"{{end}}></wpt-results>
   </div>
 </div>
 {{ template "_ga.html" }}
