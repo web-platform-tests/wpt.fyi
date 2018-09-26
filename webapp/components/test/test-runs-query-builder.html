@@ -23,77 +23,79 @@
   </test-fixture>
 
   <script>
-    // Set up the playground.
-    document.querySelector('test-runs-query-builder').addProduct();
-    document.querySelector('test-runs-query-builder').addProduct();
+    document.addEventListener('WebComponentsReady', () => {
+      // Set up the playground.
+      document.querySelector('test-runs-query-builder').addProduct();
+      document.querySelector('test-runs-query-builder').addProduct();
 
-    suite('TestRunsQueryBuilder', () => {
-      let queryBuilder;
+      suite('TestRunsQueryBuilder', () => {
+        let queryBuilder;
 
-      setup(() => {
-        queryBuilder = fixture('query-builder-fixture');
-        queryBuilder.products = ['chrome', 'edge']
-          .map(s => queryBuilder.parseProductSpec(s));
-      });
+        setup(() => {
+          queryBuilder = fixture('query-builder-fixture');
+          queryBuilder.products = ['chrome', 'edge']
+            .map(s => queryBuilder.parseProductSpec(s));
+        });
 
-      test('instanceof Polymer.Element', () => {
-        assert.isTrue(queryBuilder instanceof window.Polymer.Element);
-      });
+        test('instanceof Polymer.Element', () => {
+          assert.isTrue(queryBuilder instanceof window.Polymer.Element);
+        });
 
-      test('add item', () => {
-        queryBuilder.addProduct();
-        assert.equal(queryBuilder.products.length, 3);
-        assert.equal(queryBuilder.products[2].browser_name, 'firefox');
-        queryBuilder.addProduct();
-        assert.equal(queryBuilder.products.length, 4);
-        assert.equal(queryBuilder.products[3].browser_name, 'safari');
-      });
+        test('add item', () => {
+          queryBuilder.addProduct();
+          assert.equal(queryBuilder.products.length, 3);
+          assert.equal(queryBuilder.products[2].browser_name, 'firefox');
+          queryBuilder.addProduct();
+          assert.equal(queryBuilder.products.length, 4);
+          assert.equal(queryBuilder.products[3].browser_name, 'safari');
+        });
 
-      test('delete item', (done) => {
-        // Wait for shadow DOM.
-        flush(() => {
-          const first = queryBuilder.root.querySelector('product-builder');
-          first.deleteProduct();
-          assert.equal(queryBuilder.products.length, 1);
-          assert.equal(queryBuilder.products[0].browser_name, 'edge');
-          done();
+        test('delete item', (done) => {
+          // Wait for shadow DOM.
+          flush(() => {
+            const first = queryBuilder.root.querySelector('product-builder');
+            first.deleteProduct();
+            assert.equal(queryBuilder.products.length, 1);
+            assert.equal(queryBuilder.products[0].browser_name, 'edge');
+            done();
+          });
+        });
+
+        test('clear all items', () => {
+          // Wait for shadow DOM.
+          queryBuilder.clearAll();
+          assert.equal(queryBuilder.products.length, 0);
+        });
+
+        test('productSpecs', () => {
+          queryBuilder.set('products.0.labels', ['beta']);
+          assert.equal(queryBuilder.productSpecs[0], 'chrome[beta]');
         });
       });
 
-      test('clear all items', () => {
-        // Wait for shadow DOM.
-        queryBuilder.clearAll();
-        assert.equal(queryBuilder.products.length, 0);
-      });
+      suite('ProductBuilder', () => {
+        let productBuilder;
 
-      test('productSpecs', () => {
-        queryBuilder.set('products.0.labels', ['beta']);
-        assert.equal(queryBuilder.productSpecs[0], 'chrome[beta]');
-      });
-    });
+        setup(() => {
+          productBuilder = fixture('product-builder-fixture');
+          productBuilder.product = {browser_name: 'chrome'};
+        });
 
-    suite('ProductBuilder', () => {
-      let productBuilder;
+        suite('ProductBuilder.prototype.*', () => {
+          suite('_channel', () => {
+            test('updates the labels when value changes', () => {
+              productBuilder._channel = 'stable';
+              assert.isTrue(productBuilder.labels.includes('stable'));
+            });
+            test('updates the spec when value changes', () => {
+              productBuilder._channel = 'dev';
+              assert.equal(productBuilder.spec, 'chrome[dev]');
+            });
 
-      setup(() => {
-        productBuilder = fixture('product-builder-fixture');
-        productBuilder.product = {browser_name: 'chrome'};
-      });
-
-      suite('ProductBuilder.prototype.*', () => {
-        suite('_channel', () => {
-          test('updates the labels when value changes', () => {
-            productBuilder._channel = 'stable';
-            assert.isTrue(productBuilder.labels.includes('stable'));
-          });
-          test('updates the spec when value changes', () => {
-            productBuilder._channel = 'dev';
-            assert.equal(productBuilder.spec, 'chrome[dev]');
-          });
-
-          test('changes value when labels are updated', () => {
-            productBuilder.set('labels', ['experimental']);
-            assert.equal(productBuilder._channel, 'experimental');
+            test('changes value when labels are updated', () => {
+              productBuilder.set('labels', ['experimental']);
+              assert.equal(productBuilder._channel, 'experimental');
+            });
           });
         });
       });

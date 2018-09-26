@@ -92,7 +92,7 @@ found in the LICENSE file.
         this.productChanged = i => {
           return product => { this.handleProductChanged(i, product); }
         }
-        this.addProduct = this.handleAddProduct.bind(this);
+        this.addProduct = () => { this.handleAddProduct(); };
         this.clearAll = () => { this.set('products', []); };
       }
 
