@@ -48,7 +48,7 @@ found in the LICENSE file.
       ready() {
         super.ready();
         // Fall back to the default product set.
-        if (!(this.product && this.products.length)
+        if (!(this.products && this.products.length)
             && !this.testRunResources) {
           this.products = Array.from(DEFAULT_PRODUCTS);
         }
