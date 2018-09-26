@@ -23,6 +23,7 @@ type CachingResponseWriter interface {
 type cachingResponseWriter struct {
 	delegate   http.ResponseWriter
 	b          *bytes.Buffer
+	err        error
 	statusCode int
 }
 
@@ -35,7 +36,9 @@ func (w *cachingResponseWriter) Write(data []byte) (int, error) {
 		w.statusCode = http.StatusOK
 	}
 
-	return w.b.Write(data)
+	_, w.err = w.b.Write(data)
+
+	return w.delegate.Write(data)
 }
 
 func (w *cachingResponseWriter) WriteHeader(statusCode int) {
@@ -44,6 +47,9 @@ func (w *cachingResponseWriter) WriteHeader(statusCode int) {
 }
 
 func (w *cachingResponseWriter) WriteTo(wtr io.Writer) (int64, error) {
+	if w.err != nil {
+		return 0, fmt.Errorf("Error writing response data to caching response writer: %v", w.err)
+	}
 	if w.statusCode != http.StatusOK {
 		return 0, fmt.Errorf("Attempt to cache response with bad status code: %d", w.statusCode)
 	}
