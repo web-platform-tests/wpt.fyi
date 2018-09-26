@@ -214,7 +214,7 @@ type byteCachedStore struct {
 }
 
 func (cs byteCachedStore) Get(cacheID, storeID, iValue interface{}) error {
-	logger := cs.ctx.Value(DefaultLoggerCtxKey()).(Logger)
+	logger := GetLogger(cs.ctx)
 	valuePtr, ok := iValue.(*[]byte)
 	if !ok {
 		return errByteCachedStoreExpectedByteSlice
@@ -312,7 +312,7 @@ func (oc jsonObjectCache) Get(id, value interface{}) error {
 	defer func() {
 		err := r.Close()
 		if err != nil {
-			logger := oc.ctx.Value(DefaultLoggerCtxKey()).(Logger)
+			logger := GetLogger(oc.ctx)
 			logger.Warningf("Error closing JSON object cache delegate ReadCloser: %v", err)
 		}
 	}()
@@ -385,7 +385,7 @@ type objectCachedStore struct {
 }
 
 func (cs objectCachedStore) Get(cacheID, storeID, value interface{}) error {
-	logger := cs.ctx.Value(DefaultLoggerCtxKey()).(Logger)
+	logger := GetLogger(cs.ctx)
 
 	err := cs.cache.Get(cacheID, value)
 	if err == nil {

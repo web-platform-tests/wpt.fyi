@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../wpt-flags.html">
+</head>
+<body>
+  <wpt-flags-editor id="playground"></wpt-flags-editor>
+
+  <test-fixture id="wpt-flags-editor-fixture">
+    <template>
+      <wpt-flags-editor></wpt-flags-editor>
+    </template>
+  </test-fixture>
+
+  <script>
+    /* global WPTFlags */
+    suite('wpt-flags', () => {
+      suite('WPTFlags', () => {
+        let flags;
+
+        setup(() => {
+          if (!window.customElements.get('wpt-flags')) {
+            class ConcreteClass extends WPTFlags(window.Polymer.Element) {}
+            window.customElements.define('wpt-flags', ConcreteClass);
+          }
+          flags = document.createElement('wpt-flags');
+        });
+
+        test('queryBuilder', () => {
+          const before = flags.queryBuilder;
+          flags.queryBuilder = !flags.queryBuilder;
+          expect(flags.queryBuilder).to.equal(before);
+        });
+      });
+
+      suite('WPTFlagsEditor', () => {
+        let editor, queryBuilderStateBefore;
+
+        setup(() => {
+          editor = fixture('wpt-flags-editor-fixture');
+          queryBuilderStateBefore = editor.queryBuilder;
+        });
+
+        test('queryBuilder', () => {
+          editor.queryBuilder = true;
+          expect(editor.queryBuilder).to.equal(true);
+          editor.queryBuilder = false;
+          expect(editor.queryBuilder).to.equal(false);
+        });
+
+        teardown(() => {
+          editor.queryBuilder = queryBuilderStateBefore;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

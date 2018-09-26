@@ -279,19 +279,16 @@ found in the LICENSE file.
 
     async ready() {
       await super.ready();
-      this.loadingCount++;
-      try {
-        this.passRateMetadata = await fetch(`/api/interop${this.query}`)
+      this.load(
+        fetch(`/api/interop${this.query}`)
           .then(async r => {
             if (!r.ok || r.status !== 200) {
               Promise.reject('Failed to fetch interop data');
             }
-            return r.json();
-          });
-        this.allMetrics = await fetch(this.passRateMetadata.url).then(r => r.json());
-      } finally {
-        this.loadingCount--;
-      }
+            this.passRateMetadata = await r.json();
+            this.allMetrics = await fetch(this.passRateMetadata.url).then(r => r.json());
+          })
+      );
     }
 
     navigationPathPrefix() {

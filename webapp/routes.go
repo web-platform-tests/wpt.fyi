@@ -31,6 +31,9 @@ func RegisterRoutes() {
 	// Lists of test run results which have poor interoperability
 	shared.AddRoute("/anomalies", "anomaly", anomalyHandler)
 
+	// Feature flags for wpt.fyi
+	shared.AddRoute("/flags", "flags", flagsHandler)
+
 	// Test run results, viewed by pass-rate across the browsers
 	shared.AddRoute("/interop/", "interop", interopHandler)
 	shared.AddRoute("/interop/{path:.*}", "interop", interopHandler)

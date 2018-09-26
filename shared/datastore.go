@@ -2,6 +2,8 @@ package shared
 
 import (
 	"fmt"
+	"strconv"
+	"sync"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -13,11 +15,13 @@ import (
 // LoadTestRun loads the TestRun entity for the given key.
 func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
 	var testRun TestRun
-	key := datastore.NewKey(ctx, "TestRun", "", id, nil)
-	if err := datastore.Get(ctx, key, &testRun); err != nil {
+	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx)), NewDatastoreObjectStore(ctx, "TestRun"))
+	err := cs.Get(getTestRunMemcacheKey(id), id, &testRun)
+	if err != nil {
 		return nil, err
 	}
-	testRun.ID = key.IntID()
+
+	testRun.ID = id
 	return &testRun, nil
 }
 
@@ -110,7 +114,21 @@ func LoadTestRuns(
 // ID to the TestRun entity.
 func LoadTestRunsByKeys(ctx context.Context, keys []*datastore.Key) (result TestRuns, err error) {
 	result = make(TestRuns, len(keys))
-	err = datastore.GetMulti(ctx, keys, result)
+	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx)), NewDatastoreObjectStore(ctx, "TestRun"))
+	var wg sync.WaitGroup
+	for i := range keys {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			localErr := cs.Get(getTestRunMemcacheKey(keys[i].IntID()), keys[i].IntID(), &result[i])
+			if localErr != nil {
+				err = localErr
+			}
+		}(i)
+	}
+	wg.Wait()
+
 	if err != nil {
 		return nil, err
 	}
@@ -234,4 +252,8 @@ func GetAlignedRunSHAs(
 		}
 	}
 	return shas, keys, err
+}
+
+func getTestRunMemcacheKey(id int64) string {
+	return "TEST_RUN-" + strconv.FormatInt(id, 10)
 }
