@@ -63,7 +63,6 @@ func testProduct(
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get test runs: %s", err.Error()))
 	}
-	assert.Lenf(t, testRuns, len(products), "Expected %v TestRun(s).", len(products))
 
 	// Check tab URLs propagate label
 	tabs, err := getTabElements(wd, "wpt-results")
@@ -83,7 +82,8 @@ func testProduct(
 }
 
 func assertProducts(t *testing.T, wd selenium.WebDriver, testRuns []selenium.WebElement, products ...shared.ProductSpec) {
-	if len(testRuns) < len(products) {
+	if len(testRuns) != len(products) {
+		assert.Failf(t, "Incorrect number of runs", "Expected %v TestRun(s).", len(products))
 		return
 	}
 	for i, product := range products {
