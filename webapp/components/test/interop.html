@@ -28,6 +28,7 @@
         fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
 
         sandbox.stub(window, 'fetch', (url) => {
+          console.log(url);
           return Promise.resolve(new Response(fetches[url]));
         });
       });

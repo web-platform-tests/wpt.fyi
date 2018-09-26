@@ -8,7 +8,10 @@
   <link rel="import" href="../test-runs-query-builder.html">
 </head>
 <body>
-  <test-runs-query-builder edit debug></test-runs-query-builder>
+  <test-runs-query-builder id="playground"
+                           product-specs='["chrome","firefox[experimental]"]'
+                           edit
+                           debug></test-runs-query-builder>
 
   <test-fixture id="query-builder-fixture">
     <template>

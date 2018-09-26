@@ -15,11 +15,11 @@
     "google-chart": "^2.0.0",
     "paper-toggle-button": "PolymerElements/paper-toggle-button#^2.1.1",
     "paper-spinner": "PolymerElements/paper-spinner#2.1.0",
+    "paper-checkbox": "2",
     "iron-icons": "2",
     "paper-dropdown-menu": "2",
-    "paper-listbox": "2",
     "paper-item": "2",
-    "paper-checkbox": "2"
+    "paper-listbox": "2"
   },
   "devDependencies": {
     "web-component-tester": "^6.4.3"
