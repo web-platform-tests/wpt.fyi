@@ -400,7 +400,7 @@ func (cs objectCachedStore) Get(cacheID, storeID, value interface{}) error {
 	err = cs.store.Get(storeID, value)
 	if err == nil {
 		logger.Infof("Serving object from store: %v", storeID)
-		go func() {
+		func() {
 			err := cs.cache.Put(cacheID, value)
 			if err != nil {
 				logger.Warningf("Error caching to key %v: %v", cacheID, err)
