@@ -61,13 +61,19 @@ found in the LICENSE file.
       }
     </style>
 
-    <info-banner>
-      Showing the last month of test runs.
-    </info-banner>
-
     <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-    <template is="dom-if" if="[[testResults]]">
+    <template is="dom-if" if="[[loadingFailed]]">
+      <info-banner type="error">
+        Failed to load test runs.
+      </info-banner>
+    </template>
+
+    <template is="dom-if" if="[[testResults.length]]">
+      <info-banner>
+        Showing the last month of test runs.
+      </info-banner>
+
       <table>
         <thead>
           <tr>
@@ -124,7 +130,11 @@ found in the LICENSE file.
           displayedNodes: {
             type: Array,
             value: []
-          }
+          },
+          loadingFailed: {
+            type: Boolean,
+            value: false,
+          },
         };
       }
 
@@ -149,44 +159,51 @@ found in the LICENSE file.
         return date && date.toDateString();
       }
 
+      constructor() {
+        super();
+        this.onLoadingComplete = () => {
+          this.loadingFailed = !this.testResults;
+        }
+      }
+
       async ready() {
         super.ready();
-        await this.load(this.loadRuns());
-
-        let browsers = new Set();
-        // Group the runs by their revision/SHA
-        let testRunsBySha = this.testRuns.reduce((accum, results) => {
-          browsers.add(results.browser_name);
-          if (!accum[results.revision]) {
-            accum[results.revision] = {};
-          }
-          if (!accum[results.revision][results.browser_name]) {
-            accum[results.revision][results.browser_name] = [];
-          }
-          accum[results.revision][results.browser_name].push(results);
-          return accum;
-        }, {});
-
-        // We flatten into an array of objects so Polymer can deal with them.
-        const firstRunTime = x => Object.values(x.runs)[0][0].created_at;
-        const flattened = Object.entries(testRunsBySha)
-          .map(({0: sha, 1: runs}) => ({ sha, runs }))
-          .sort((a, b) => firstRunTime(a) < firstRunTime(b) ? 1 : -1);
-
-        // Append time (month) metadata.
-        if (flattened.length > 1) {
-          let previousMonth = -1;
-          for (let i = 0; i < flattened.length; i++) {
-            let current = new Date(firstRunTime(flattened[i]));
-            flattened[i].date = current;
-            if (previousMonth !== current.getMonth()) {
-              flattened[i].month_boundary = true;
+        await this.load(this.loadRuns().then(testRuns => {
+          let browsers = new Set();
+          // Group the runs by their revision/SHA
+          let testRunsBySha = this.testRuns.reduce((accum, results) => {
+            browsers.add(results.browser_name);
+            if (!accum[results.revision]) {
+              accum[results.revision] = {};
             }
-            previousMonth = current.getMonth();
+            if (!accum[results.revision][results.browser_name]) {
+              accum[results.revision][results.browser_name] = [];
+            }
+            accum[results.revision][results.browser_name].push(results);
+            return accum;
+          }, {});
+
+          // We flatten into an array of objects so Polymer can deal with them.
+          const firstRunTime = x => Object.values(x.runs)[0][0].created_at;
+          const flattened = Object.entries(testRunsBySha)
+            .map(({0: sha, 1: runs}) => ({ sha, runs }))
+            .sort((a, b) => firstRunTime(a) < firstRunTime(b) ? 1 : -1);
+
+          // Append time (month) metadata.
+          if (flattened.length > 1) {
+            let previousMonth = -1;
+            for (let i = 0; i < flattened.length; i++) {
+              let current = new Date(firstRunTime(flattened[i]));
+              flattened[i].date = current;
+              if (previousMonth !== current.getMonth()) {
+                flattened[i].month_boundary = true;
+              }
+              previousMonth = current.getMonth();
+            }
           }
-        }
-        this.testResults = flattened;
-        this.browsers = Array.from(browsers).sort();
+          this.testResults = flattened;
+          this.browsers = Array.from(browsers).sort();
+        }));
       }
 
       runClass(testRuns, browser) {
