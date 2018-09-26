@@ -7,15 +7,16 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="./display-logo.html">
 <link rel="import" href="./info-banner.html">
 <link rel="import" href="./product-info.html">
@@ -48,9 +49,7 @@ found in the LICENSE file.
                          onclick="[[toggleEdit]]"></paper-icon-button>
     </h3>
     <template is="dom-if" if="[[debug]]">
-      <template is="dom-repeat" items="[[productSpecs]]" as="p" index-as="i">
-        [[p]]
-      </template>
+      [[query]]
     </template>
     <div>
       <template is="dom-repeat" items="[[products]]" as="p" index-as="i">
@@ -68,6 +67,16 @@ found in the LICENSE file.
         </info-banner>
       </template>
     </div>
+    <paper-item>
+      <paper-checkbox checked="{{aligned}}">Align runs</paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-input label="Labels"
+                   always-float-label
+                   placeholder="e.g. stable,buildbot"
+                   value="{{ labelsString::input }}">
+      </paper-input>
+    </paper-item>
     <br>
     <paper-button raised id="add-button" onclick="[[addProduct]]">
       <iron-icon icon="add"></iron-icon> Add product
@@ -100,6 +109,10 @@ found in the LICENSE file.
             value: false,
           },
           onSubmit: Function,
+          labelsString: {
+            type: String,
+            observer: 'labelsStringUpdated',
+          },
         };
       }
 
@@ -111,8 +124,10 @@ found in the LICENSE file.
           return product => { this.handleProductChanged(i, product); }
         }
         this.addProduct = () => { this.handleAddProduct(); };
-        this.clearAll = () => { this.set('products', []); };
+        this.clearAll = this.handleClearAll.bind(this);
         this.submit = () => { this.onSubmit && this.onSubmit(); };
+
+        this._createMethodObserver('labelsUpdated(labels, labels.*)');
       }
 
       observeSpec(change) {
@@ -131,6 +146,23 @@ found in the LICENSE file.
         this.set(`products.${i}`, product);
       }
 
+      labelsUpdated(labels) {
+        let joined = labels && labels.length && labels.join(', ')
+          || null;
+        if (joined !== this.labelsString) {
+          this.labelsString = joined;
+        }
+      }
+
+      labelsStringUpdated(labelsString) {
+        console.log(labelsString);
+        const labels = (labelsString || '')
+          .split(',').map(i => i.trim()).filter(i => i);
+        if (labels.join(',') !== this.labels.join(',')) {
+          this.labels = labels;
+        }
+      }
+
       handleAddProduct() {
         // TODO(lukebjerring): Make a smart(er) suggestion.
         let next = { browser_name: 'chrome' };
@@ -143,6 +175,11 @@ found in the LICENSE file.
           break;
         }
         this.splice('products', this.products.length, 0, next);
+      }
+
+      handleClearAll() {
+        this.clearQuery();
+        this.set('products', []);
       }
     }
 
