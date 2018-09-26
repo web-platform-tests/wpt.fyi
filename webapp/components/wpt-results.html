@@ -137,8 +137,10 @@ found in the LICENSE file.
 
       <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-      <test-search class$="search-[[pathIsATestFile]]" query='{{search}}'
-          autocomplete-u-r-l="[[autocompleteURL]]"></test-search>
+      <test-search class$="search-[[pathIsATestFile]]"
+                   query='{{search}}'
+                   test-runs="[[testRuns]]">
+      </test-search>
 
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <div class="links">
@@ -317,10 +319,6 @@ found in the LICENSE file.
             type: String,
             computed: 'computeSearchURL(testRuns, search)',
           },
-          autocompleteURL: {
-            type: String,
-            computed: 'computeAutocompleteURL(testRuns, search)',
-          },
           resultsLoadFailed: {
             type: Boolean,
             value: false,
@@ -380,19 +378,6 @@ found in the LICENSE file.
 
       computeSearchURL(testRuns, search) {
         let url = '/api/search?';
-        if (testRuns) {
-          url += `run_ids=${
-            window.encodeURIComponent(
-              testRuns.map(r => r.id.toString()).join(','))}&`;
-        }
-        if (search) {
-          url += `q=${window.encodeURIComponent(search)}`;
-        }
-        return url;
-      }
-
-      computeAutocompleteURL(testRuns, search) {
-        let url = '/api/autocomplete?limit=10&';
         if (testRuns) {
           url += `run_ids=${
             window.encodeURIComponent(

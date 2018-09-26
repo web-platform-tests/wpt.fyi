@@ -125,7 +125,9 @@ found in the LICENSE file.
 
     <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-    <test-search class$="search-[[pathIsATestFile]]" query="[[search]]">
+    <test-search class$="search-[[pathIsATestFile]]"
+                 query="[[search]]"
+                 test-runs="[[testRuns]]">
     </test-search>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
