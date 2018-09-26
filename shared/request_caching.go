@@ -7,7 +7,7 @@ package shared
 import (
 	"bytes"
 	"fmt"
-	io "io"
+	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -94,7 +94,7 @@ func (h cachingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Case 1: Not cacheable.
 	if !h.isCacheable(r) {
-		logger.Infof("Not cacheable: %s", r.URL.String())
+		logger.Debugf("Not cacheable: %s", r.URL.String())
 		h.delegate.ServeHTTP(w, r)
 		return
 	}
