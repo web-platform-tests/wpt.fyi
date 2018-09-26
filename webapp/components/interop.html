@@ -258,13 +258,15 @@ found in the LICENSE file.
 
     constructor() {
       super();
-      this.onSearchCommit = this.handleSearchCommit.bind(this);
+      this.onSearchCommit = (e) => {
+        this.handleSearchCommit(e.detail.query);
+      };
       this.onLoadingComplete = () => {
         // passRateMetadata contains the url for the JSON blob of allMetrics;
         // both fetches need to succeed + parse.
         this.interopLoadFailed = !(this.passRateMetadata && this.allMetrics);
         if (!this.interopLoadFailed && this.search) {
-          this.shadowRoot.querySelector('test-search').commitQuery();
+          this.handleSearchCommit(this.search);
         }
       }
     }
@@ -355,8 +357,7 @@ found in the LICENSE file.
       return `background-color: rgba(${INTEROP_COLORS[browserCount].join(', ')}, ${alpha})`;
     }
 
-    handleSearchCommit(e) {
-      const q = e.detail.query;
+    handleSearchCommit(q) {
       if (!q || q.length < 1) {
         this.searchResults = this.fileMetrics;
         return;
@@ -367,8 +368,6 @@ found in the LICENSE file.
 
       this.searchResults = this.fileMetrics
         .filter(t => t.dir.toLowerCase().includes(q));
-
-      this.refreshDisplayedNodes();
     }
 
     computeDisplayedNodes(path, displayedTests) {
