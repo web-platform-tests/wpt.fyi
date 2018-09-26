@@ -158,5 +158,5 @@ func isRequestCacheable(r *http.Request) bool {
 }
 
 func getRequestCacheKey(r *http.Request) interface{} {
-	return r.URL.String()
+	return r.URL.Path + "?" + r.URL.RawQuery
 }
