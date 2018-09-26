@@ -35,29 +35,7 @@ func (w *cachingResponseWriter) Write(data []byte) (int, error) {
 		w.statusCode = http.StatusOK
 	}
 
-	var err error
-	for i := 0; err == nil && i < len(data); {
-		var n int
-		n, err = w.b.Write(data[i:])
-		i += n
-	}
-	if err != nil {
-		w.b.Reset()
-		return 0, err
-	}
-
-	i := 0
-	for err == nil && i < len(data) {
-		var n int
-		n, err = w.delegate.Write(data[i:])
-		i += n
-	}
-	if err != nil {
-		w.b.Reset()
-		return i, err
-	}
-
-	return i, nil
+	return w.b.Write(data)
 }
 
 func (w *cachingResponseWriter) WriteHeader(statusCode int) {
