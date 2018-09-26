@@ -4,13 +4,15 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<link rel="import" href="./results-navigation.html">
+
 <dom-module id="test-runs-query">
   <script>
     /**
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
     // eslint-disable-next-line no-unused-vars
-    const TestRunsQuery = (superClass) => class extends superClass {
+    const TestRunsQuery = (superClass) => class extends QueryBuilder(superClass) {
       static get properties() {
         return {
           /* Parsed product objects, computed from the spec strings */
@@ -34,14 +36,14 @@ found in the LICENSE file.
             type: Boolean,
             computed: 'computeIsLatest(sha)'
           },
-          queryParams: {
+          testRunQueryParams: {
             type: Object,
-            computed: 'testRunQueryParams(sha, labels, productSpecs, maxCount)',
+            computed: 'computeTestRunQueryParams(sha, labels, productSpecs, maxCount)',
           },
-          query: {
+          testRunQuery: {
             type: String,
-            computed: 'computeQuery(queryParams)',
-          }
+            computed: 'computeQuery(testRunQueryParams)',
+          },
         };
       }
 
@@ -49,7 +51,7 @@ found in the LICENSE file.
         return !sha || sha === 'latest';
       }
 
-      testRunQueryParams(sha, labels, productSpecs, maxCount) {
+      computeTestRunQueryParams(sha, labels, productSpecs, maxCount) {
         const params = {};
         if (sha) {
           params.sha = sha;
@@ -68,22 +70,6 @@ found in the LICENSE file.
           params.aligned = true;
         }
         return params;
-      }
-
-      computeQuery(params) {
-        if (Object.keys(params).length < 1) {
-          return '';
-        }
-        const url = new URL(window.location.origin);
-        for (const k of Object.keys(params)) {
-          const v = params[k];
-          if (Array.isArray(v)) {
-            v.forEach(i => url.searchParams.append(k, i));
-          } else {
-            url.searchParams.set(k, params[k]);
-          }
-        }
-        return url.search;
       }
 
       computeProducts(productSpecs) {

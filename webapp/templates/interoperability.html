@@ -14,7 +14,8 @@
                    {{- if .SHA}} sha="{{ .SHA }}" {{end}}
                    {{- if .Labels}} labels="{{ .Labels }}"{{end}}
                    {{- if .Aligned}} aligned{{end}}
-                 {{- end}}></wpt-interop>
+                 {{- end}}
+                 {{if .Query}} search="{{.Query}}"{{end}}></wpt-interop>
   </div>
 </div>
 {{ template "_ga.html" }}
