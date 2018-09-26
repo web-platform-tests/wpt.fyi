@@ -11,6 +11,7 @@
   },
   "globals": {
     "assert": true,
+    "expect": true,
     "fixture": true,
     "sandbox": true,
     "sinon": true
