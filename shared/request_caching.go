@@ -88,7 +88,7 @@ func (h cachingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		err := rc.Close()
 		if err != nil {
-			logger.Warningf("Failed to close WriteCloser for %v: %v", key, err)
+			logger.Warningf("Failed to close ReadCloser for %v: %v", key, err)
 		}
 	}()
 
