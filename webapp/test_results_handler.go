@@ -63,8 +63,10 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		// diffing), for runs which aren't fetchable via a URL or the api.
 		TestRuns string
 		Filter   testRunUIFilter
+		Query    string
 	}{
 		Filter: filter,
+		Query:  r.URL.Query().Get("q"),
 	}
 
 	// Runs by base64-encoded param or spec param.

@@ -36,6 +36,15 @@ still being loaded (generally, fetched).
           this.onLoadingComplete();
         }
       }
+
+      async load(promise) {
+        this.loadingCount++;
+        try {
+          return await promise;
+        } finally {
+          this.loadingCount--;
+        }
+      }
     };
   </script>
 </dom-module>
