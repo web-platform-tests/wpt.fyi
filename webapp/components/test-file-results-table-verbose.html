@@ -9,73 +9,36 @@ found in the LICENSE file.
 
 <dom-module id="test-file-results-table-verbose">
   <template>
-    <style>
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      td {
-        padding: 0;
-        height: 1.5em;
-      }
-      td code {
-        padding: 0.25em;
-      }
-      td.sub-test-name {
-        font-family: monospace;
-      }
-      td.result {
-        background-color: #eee;
-      }
-      td.result.OK, td.result.PASS {
-        background-color: rgb(90, 242, 113);
-      }
-      td.result.FAIL {
-        background-color: rgb(242, 90, 90);
-      }
-    </style>
-
-    <table>
-      <thead>
-        <tr>
-          <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
-          <template is="dom-repeat" items="[[testRuns]]" as="testRun">
-            <th width="[[computeRunThWidth(testRuns)]]">
-              <test-run test-run="[[testRun]]"></test-run>
-            </th>
-          </template>
-        </tr>
-      </thead>
-      <tbody>
-        <template is="dom-repeat" items="[[resultsTable]]" as="row">
-          <tr>
-            <td class="sub-test-name"><code>[[ row.name ]]</code></td>
-
-            <template is="dom-repeat" items="{{row.results}}" as="result">
-              <td class$="result [[ result.status ]]">
-                <code>[[ subtestMessage(result) ]]</code>
-              </td>
-            </template>
-          </tr>
-        </template>
-      </tbody>
-    </table>
+    <!-- superclass template appended below. -->
   </template>
 
   <script>
     /* global AbstractTestFileResultsTable, TestRunsBase */
-    class TestFileResultsTableVerbose extends AbstractTestFileResultsTable(TestRunsBase) {
-      static get is() {
-        return 'test-file-results-table-verbose';
+    (function() {
+      let memoizedTemplate;
+
+      class TestFileResultsTableVerbose extends AbstractTestFileResultsTable {
+        static get is() {
+          return 'test-file-results-table-verbose';
+        }
+
+        static get template() {
+          if (!memoizedTemplate) {
+            memoizedTemplate = Polymer.DomModule.import(this.is, 'template');
+            memoizedTemplate.content.appendChild(
+              document.importNode(AbstractTestFileResultsTable.template.content, true));
+          }
+          return memoizedTemplate;
+        }
+
+        subtestMessage(result) {
+          return super.subtestMessage(result)  ||
+            `Failure message: ${result.message}`;
+        }
       }
 
-      subtestMessage(result) {
-        return super.subtestMessage(result)  ||
-          `Failure message: ${result.message}`;
-      }
-    }
-
-    window.customElements.define(
-      TestFileResultsTableVerbose.is, TestFileResultsTableVerbose);
+      window.customElements.define(
+        TestFileResultsTableVerbose.is, TestFileResultsTableVerbose);
+    })();
   </script>
 </dom-module>
