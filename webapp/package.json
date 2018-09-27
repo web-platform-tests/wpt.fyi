@@ -11,8 +11,8 @@
   "scripts": {
     "bower-components": "bower install",
     "test": "npm run lint && npm run wct",
-    "lint": "eslint --plugin html components/**/*.html",
-    "lint-fix": "eslint --plugin html components/**/*.html --fix",
+    "lint": "eslint --plugin html 'components/**/*.html' ",
+    "lint-fix": "eslint --plugin html --fix 'components/**/*.html' ",
     "wctp": "wct -p",
     "wct": "wct"
   }
