@@ -61,8 +61,8 @@ go_lint: go_deps golint_deps go_test_tag_lint
 	cd $(WPTD_GO_PATH); ! (gofmt -l ./ | read && echo "Found gofmt issues:" && gofmt -d ./)
 
 go_test_tag_lint:
-	@ echo "# Printing a list of test files without +build tag, asserting empty..."
-	TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES));
+	# Printing a list of test files without +build tag, asserting empty...
+	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
 go_test: go_small_test go_medium_test
@@ -145,21 +145,14 @@ firefox_install: firefox_deps bzip2 wget java
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox-esr | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
-go_deps: gcloud gofmt go_packages $(GO_FILES)
+go_deps: gofmt go_packages $(GO_FILES)
 
 go_packages: git
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
-golint_deps: git go_deps
-	# Manual git clone + install is a workaround for #85.
+golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \
-		mkdir -p $(GOPATH)/src/golang.org/x/tools; \
-		git clone https://go.googlesource.com/tools $(GOPATH)/src/golang.org/x/tools; \
-		cd $(GOPATH)/src/golang.org/x/tools; \
-		git checkout release-branch.go1.10; \
-		mkdir -p "$(GOPATH)/src/golang.org/x"; \
-		cd "$(GOPATH)/src/golang.org/x" && git clone https://github.com/golang/lint; \
-		cd "$(GOPATH)/src/golang.org/x/lint" && go get ./... && go install ./...; \
+		go get -u golang.org/x/lint/golint; \
 	fi
 
 package_announcer: var-APP_PATH
@@ -200,7 +193,7 @@ node: curl gpg
 		sudo apt-get install -qqy nodejs; \
 	fi
 
-gofmt:
+gofmt: git
 	if [[ "$$(which gofmt)" != "$(GOPATH)/bin/gofmt" ]]; then \
 		TMP_DIR=$$(mktemp -d); \
 		cd $$TMP_DIR; \
@@ -226,7 +219,7 @@ eslint: node-babel-eslint node-eslint node-eslint-plugin-html
 	cd $(WPTD_PATH)webapp; npm run lint
 
 dev_data: FLAGS := -host=staging.wpt.fyi
-dev_data:
+dev_data: git
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
 
