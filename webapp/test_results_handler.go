@@ -131,36 +131,33 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 
 		const singleRunURL = `/api/run?sha=%s&product=%s`
 		var specs []string
-		if beforeDecoded, err := base64.URLEncoding.DecodeString(before); err == nil {
-			var run shared.TestRun
-			if err = json.Unmarshal([]byte(beforeDecoded), &run); err != nil {
-				return filter, err
+		beforeSpec, err := shared.ParseProductSpec(before)
+		if err != nil {
+			beforeDecoded, base64Err := unpackTestRun(before)
+			if base64Err == nil && beforeDecoded != nil {
+				filter.BeforeTestRun = beforeDecoded
+			} else {
+				return filter, fmt.Errorf("invalid before param: %s", err.Error())
 			}
-			filter.BeforeTestRun = &run
 		} else {
-			beforeSpec, err := shared.ParseProductSpec(before)
-			if err != nil {
-				return filter, errors.New("invalid before param")
-			}
 			specs = append(specs, beforeSpec.String())
 		}
 
-		if afterDecoded, err := base64.URLEncoding.DecodeString(after); err == nil {
-			var run shared.TestRun
-			if err = json.Unmarshal([]byte(afterDecoded), &run); err != nil {
-				return filter, err
+		afterSpec, err := shared.ParseProductSpec(after)
+		if err != nil {
+			afterDecoded, base64Err := unpackTestRun(after)
+			if base64Err == nil && afterDecoded != nil {
+				filter.AfterTestRun = afterDecoded
+			} else {
+				return filter, fmt.Errorf("invalid after param: %s", err.Error())
 			}
-			filter.AfterTestRun = &run
 		} else {
-			afterSpec, err := shared.ParseProductSpec(after)
-			if err != nil {
-				return filter, errors.New("invalid after param")
-			}
 			specs = append(specs, afterSpec.String())
 		}
+
 		if len(specs) > 0 {
-			bytes, err := json.Marshal(specs)
-			if err != nil {
+			var bytes []byte
+			if bytes, err = json.Marshal(specs); err != nil {
 				return filter, err
 			}
 			filter.Products = string(bytes)
@@ -168,4 +165,16 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 		filter.Diff = true
 	}
 	return filter, nil
+}
+
+func unpackTestRun(base64Run string) (*shared.TestRun, error) {
+	decoded, err := base64.URLEncoding.DecodeString(base64Run)
+	if err != nil {
+		return nil, err
+	}
+	var run shared.TestRun
+	if err := json.Unmarshal([]byte(decoded), &run); err != nil {
+		return nil, err
+	}
+	return &run, nil
 }

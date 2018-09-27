@@ -338,6 +338,10 @@ func TestParseProductSpec(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "chrome", productSpec.BrowserName)
 	assert.Equal(t, "latest", productSpec.Revision)
+
+	productSpec, err = ParseProductSpec("edge")
+	assert.Nil(t, err)
+	assert.Equal(t, "edge", productSpec.BrowserName)
 }
 
 func TestParseProductSpec_BrowserVersion(t *testing.T) {
