@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// MockWriteCloser is a mock io.WriteCloser for testing.
 type MockWriteCloser struct {
 	b      bytes.Buffer
 	closed bool
@@ -24,11 +25,13 @@ func (mwc *MockWriteCloser) Write(p []byte) (n int, err error) {
 	return mwc.b.Write(p)
 }
 
+// Close closes the WriteCloser.
 func (mwc *MockWriteCloser) Close() error {
 	mwc.closed = true
 	return nil
 }
 
+// NewMockWriteCloser creates a new MockWriteCloser.
 func NewMockWriteCloser(t *testing.T) *MockWriteCloser {
 	return &MockWriteCloser{
 		b:      bytes.Buffer{},
@@ -37,6 +40,7 @@ func NewMockWriteCloser(t *testing.T) *MockWriteCloser {
 	}
 }
 
+// MockReadCloser is a mock io.ReadCloser for testing.
 type MockReadCloser struct {
 	rc     io.ReadCloser
 	closed bool
@@ -48,11 +52,13 @@ func (mrc *MockReadCloser) Read(p []byte) (n int, err error) {
 	return mrc.rc.Read(p)
 }
 
+// Close closes the ReadCloser.
 func (mrc *MockReadCloser) Close() error {
 	mrc.closed = true
 	return nil
 }
 
+// NewMockReadCloser creates a new MockWriteCloser.
 func NewMockReadCloser(t *testing.T, data []byte) *MockReadCloser {
 	return &MockReadCloser{
 		rc:     ioutil.NopCloser(bytes.NewReader(data)),
@@ -61,6 +67,7 @@ func NewMockReadCloser(t *testing.T, data []byte) *MockReadCloser {
 	}
 }
 
+// IsClosed returns whether the ReadCloser has been closed.
 func (mrc *MockReadCloser) IsClosed() bool {
 	return mrc.closed
 }
