@@ -20,8 +20,10 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Metadata string
 		Filter   testRunUIFilter
+		Query    string
 	}{
 		Filter: uiFilters,
+		Query:  r.URL.Query().Get("q"),
 	}
 
 	if err := templates.ExecuteTemplate(w, "interoperability.html", data); err != nil {

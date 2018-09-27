@@ -10,7 +10,15 @@ import (
 	"github.com/tebeka/selenium"
 )
 
-func TestSearch(t *testing.T) {
+func TestSearch_Results(t *testing.T) {
+	testSearch(t, "/", "wpt-results")
+}
+
+func TestSearch_Interop(t *testing.T) {
+	testSearch(t, "/interop/", "wpt-interop")
+}
+
+func testSearch(t *testing.T, path, elementName string) {
 	app, err := NewWebserver()
 	if err != nil {
 		panic(err)
@@ -24,27 +32,20 @@ func TestSearch(t *testing.T) {
 	defer service.Stop()
 	defer wd.Quit()
 
-	testSearch(t, wd, app, "/", "wpt-results")
-	testSearch(t, wd, app, "/interop/", "wpt-interop")
-}
-
-func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string, elementName string) {
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL(path)); err != nil {
 		panic(err)
 	}
 
 	// Wait for the results view to load.
-	numInitialPathParts := 0
-	runsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
+	resultsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
 		pathParts, err := getPathPartElements(wd, elementName)
 		if err != nil {
 			return false, err
 		}
-		numInitialPathParts = len(pathParts)
 		return len(pathParts) > 0, nil
 	}
-	err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
+	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*5)
 	assert.Nil(t, err)
 
 	// Run the search.
@@ -52,30 +53,41 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path string,
 	if err != nil {
 		panic(err)
 	}
-	const query = "2dcontext"
-	if err := searchBox.SendKeys(query + selenium.EnterKey); err != nil {
+	folder := "2dcontext"
+	if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
 		panic(err)
 	}
+	assertListIsFiltered(t, wd, elementName, folder)
+
+	// Navigate to the wpt.fyi homepage.
+	if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
+		panic(err)
+	}
+	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*5)
+	assert.Nil(t, err)
+	assertListIsFiltered(t, wd, elementName, folder)
+}
+
+func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName, folder string) {
+	var pathParts []selenium.WebElement
+	var err error
 	filteredPathPartsCondition := func(wd selenium.WebDriver) (bool, error) {
-		pathParts, err := getPathPartElements(wd, elementName)
+		pathParts, err = getPathPartElements(wd, elementName)
 		if err != nil {
 			return false, err
 		}
-		return len(pathParts) > 0 && len(pathParts) < numInitialPathParts, nil
+		return len(pathParts) == 1, nil
 	}
-	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*10)
-	assert.Nil(t, err)
-
-	pathParts, err := getPathPartElements(wd, elementName)
+	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*5)
 	if err != nil {
-		panic(err)
+		assert.Failf(t, "Expected exactly one %s result", folder)
+		return
 	}
-	assert.Lenf(t, pathParts, 1, "Expected exactly 1 '%s' search result.", query)
 	text, err := pathParts[0].Text()
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
-	assert.Equal(t, "2dcontext/", text)
+	assert.Equal(t, folder+"/", text)
 }
 
 // NOTE(lukebjerring): Firefox, annoyingly, throws a TypeError querying

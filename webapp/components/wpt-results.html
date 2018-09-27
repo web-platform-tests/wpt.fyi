@@ -121,10 +121,10 @@ found in the LICENSE file.
       }
     </style>
 
-    <results-navigation tab="results"
-                        path="[[encodedPath]]"
-                        query="[[query]]">
-    </results-navigation>
+    <results-tabs tab="results"
+                  path="[[encodedPath]]"
+                  query="[[query]]">
+    </results-tabs>
 
     <section class="search">
       <div class="path">
@@ -178,7 +178,7 @@ found in the LICENSE file.
         <test-file-results test-runs="[[testRuns]]"
                            path="[[path]]"
                            labels="[[labels]]"
-                           product-specs="[[productSpecs]]">
+                           products="[[products]]">
         </test-file-results>
       </template>
 
@@ -260,7 +260,9 @@ found in the LICENSE file.
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
     /* global TestRunsBase, SelfNavigation, LoadingState */
-    class WPTResults extends SelfNavigation(LoadingState(TestRunsBase)) {
+    class WPTResults extends ResultsNavigation(
+        SelfNavigation(LoadingState(TestRunsBase)),
+        'resultsQueryParams(sha, labels, productSpecs, maxCount, diff, search)') {
       static get is() {
         return 'wpt-results';
       }
@@ -301,11 +303,6 @@ found in the LICENSE file.
           diffShown: {
             type: Boolean,
             computed: 'isDiffShown(diff, diffRun)',
-          },
-          // Override TestRunsBase to add diff.
-          queryParams: {
-            type: Object,
-            computed: 'testRunQueryParams(sha, labels, products, maxCount, diff)',
           },
           filter: {
             type: String,
@@ -376,15 +373,15 @@ found in the LICENSE file.
           .filter(name => name.startsWith(path));
       }
 
-      computeSearchURL(testRuns, search) {
-        let url = '/api/search?';
+      computeSearchURL(testRuns, query) {
+        let url = new URL('/api/search', window.location);
         if (testRuns) {
-          url += `run_ids=${
-            window.encodeURIComponent(
-              testRuns.map(r => r.id.toString()).join(','))}&`;
+          url.searchParams.set(
+            'run_ids',
+            testRuns.map(r => r.id.toString()).join(','));
         }
-        if (search) {
-          url += `q=${window.encodeURIComponent(search)}`;
+        if (query) {
+          url.searchParams.set('q', query);
         }
         return url;
       }
@@ -592,10 +589,13 @@ found in the LICENSE file.
         return testRun && testRun.revision === 'diff';
       }
 
-      testRunQueryParams(sha, labels, products, maxCount, diff) {
-        const params = super.testRunQueryParams(sha, labels, products, maxCount);
+      resultsQueryParams(sha, labels, products, maxCount, diff, search) {
+        const params = this.computeTestRunQueryParams(sha, labels, products, maxCount);
         if (diff || this.diff) {
           params.diff = true;
+        }
+        if (search) {
+          params.q = search;
         }
         return params;
       }
