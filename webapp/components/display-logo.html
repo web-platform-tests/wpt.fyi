@@ -54,7 +54,7 @@ See models.go for more details.
     </style>
 
     <div class$="icon [[containerClass(small)]]">
-      <img class="browser" src="[[displayLogo(product)]]" />
+      <img class="browser" src="[[displayLogo(product.browser_name, product.labels)]]" />
       <template is="dom-if" if="[[source]]">
         <img class="source" src="/static/[[source]].svg" />
       </template>
@@ -93,10 +93,12 @@ See models.go for more details.
         return small ? 'small' : '';
       }
 
-      displayLogo(product) {
-        let name = product.browser_name;
-        if (product.labels) {
-          const labels = new Set(product.labels);
+      displayLogo(name, labels) {
+        if (!name) {
+          return;
+        }
+        if (labels) {
+          labels = new Set(labels);
           if (labels.has('experimental') || labels.has('dev')) {
             // Legacy run distinction had name suffix -experimental
             name.replace(/-experimental$/, '');

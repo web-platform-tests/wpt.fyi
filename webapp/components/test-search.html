@@ -49,8 +49,6 @@ found in the LICENSE file.
             type: String,
             value: 'Search test files, like \'cors/allow-headers.htm\', then press <Enter>',
           },
-          items: Array,
-          itemKey: String,
           q: {
             type: String,
             notify: true,
@@ -85,6 +83,11 @@ found in the LICENSE file.
         this.onChange = this.handleChange.bind(this);
         this.onFocus = this.handleFocus.bind(this);
         this.onBlur = this.handleBlur.bind(this);
+      }
+
+      ready() {
+        super.ready();
+        this.q = this.query;
       }
 
       async observeAutocompleteURL(newValue, oldValue) {

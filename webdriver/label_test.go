@@ -109,13 +109,13 @@ func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebEl
 func getTabElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
 	switch *browser {
 	case "firefox":
-		return wd.FindElements(selenium.ByCSSSelector, "results-navigation paper-tab")
+		return wd.FindElements(selenium.ByCSSSelector, "results-tabs paper-tab")
 	default:
 		e, err := wd.FindElement(selenium.ByCSSSelector, element)
 		if err != nil {
 			return nil, err
 		}
-		return FindShadowElements(wd, e, "results-navigation", "paper-tab")
+		return FindShadowElements(wd, e, "results-tabs", "paper-tab")
 	}
 }
 
