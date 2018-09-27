@@ -158,5 +158,8 @@ func isRequestCacheable(r *http.Request) bool {
 }
 
 func getRequestCacheKey(r *http.Request) interface{} {
-	return r.URL.Path + "?" + r.URL.RawQuery
+	// Use full URL string as key. If this string is too long to be a memcache key
+	// then writes to memcache will fail, but that is not a big concern; it simply
+	// means that requests for cacheable long URLs will not be cached.
+	return r.URL.String()
 }
