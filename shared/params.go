@@ -188,9 +188,6 @@ const MaxCountMinValue = 1
 // SHARegex is a regex for SHA[0:10] slice of a git hash.
 var SHARegex = regexp.MustCompile("[0-9a-fA-F]{10,40}")
 
-// ErrMissing is the error returned when an expected parameter is missing.
-var ErrMissing = errors.New("Missing parameter")
-
 // ParseSHAParam parses and validates the 'sha' param for the request,
 // cropping it to 10 chars. It returns "latest" by default. (and in error cases).
 func ParseSHAParam(r *http.Request) (runSHA string, err error) {
@@ -551,7 +548,7 @@ func ParseRepeatedParam(r *http.Request, singular string, plural string) (params
 }
 
 // ParseQueryParamInt parses the URL query parameter at key. If the parameter is
-// empty or missing, ErrMissing is returned.
+// empty or missing, nil is returned.
 func ParseQueryParamInt(r *http.Request, key string) (*int, error) {
 	value := r.URL.Query().Get(key)
 	if value == "" {
