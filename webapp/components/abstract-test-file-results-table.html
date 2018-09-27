@@ -78,6 +78,22 @@ found in the LICENSE file.
           },
         };
       }
+      
+      // Sets the template property for the given type to be its template, with
+      // the AbstractTestFileResultsTable template appended.
+      static appendTemplate(type) {
+        const template = Symbol();
+        Object.defineProperty(type, 'template', {
+          get: function() {
+            if (!this[template]) {
+              this[template] = Polymer.DomModule.import(type.is, 'template');
+              this[template].content.appendChild(
+                document.importNode(AbstractTestFileResultsTable.template.content, true));
+            }
+            return this[template];
+          }
+        });
+      }
 
       subtestMessage(result) {
         // Return status string for messageless status or "status-as-message".

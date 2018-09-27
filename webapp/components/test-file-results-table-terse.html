@@ -41,94 +41,82 @@ found in the LICENSE file.
 
   <script>
     /* global AbstractTestFileResultsTable, TestRunsBase */
-    (function() {
-      let memoizedTemplate;
-
-      class TestFileResultsTableTerse extends AbstractTestFileResultsTable {
-        static get is() {
-          return 'test-file-results-table-terse';
-        }
-
-        static get template() {
-          if (!memoizedTemplate) {
-            memoizedTemplate = Polymer.DomModule.import(this.is, 'template');
-            memoizedTemplate.content.appendChild(
-              document.importNode(AbstractTestFileResultsTable.template.content, true));
-          }
-          return memoizedTemplate;
-        }
-
-        static get properties() {
-          return {
-            matchers: {
-              type: Array,
-              value: [
-                {
-                  re: /^assert_equals:.* expected ("(\\"|[^"])*"|[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/,
-                  getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
-                },
-                {
-                  re: /^assert_approx_equals:.* expected ("(\\"|[^"])*"| [+][/][-] |[^:]*) but got ("(\\"|[^"])*"| [+][/][-] |[^:]*):.*$/,
-                  getMessage: match => `!~EQ(${match[1]}, ${match[3]})`,
-                },
-                {
-                  re: /^assert ("(\\"|[^"])*"|[^ ]*) == ("(\\"|[^"])*"|[^ ]*)$/,
-                  getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
-                },
-                {
-                  re: /^assert_array_equals:.*$/,
-                  getMessage: () => '!ARRAY_EQ(a, b)',
-                },
-                {
-                  re: /^Uncaught [^ ]*Error:.*$/,
-                  getMessage: () => 'UNCAUGHT_ERROR',
-                },
-                {
-                  re: /^([^ ]*) is not ([a-zA-Z0-9 ]*)$/,
-                  getMessage: match => `NOT_${match[2].toUpperCase().replace(/\s/g, '_')}(${match[1]})`,
-                },
-                {
-                  re: /^promise_test: Unhandled rejection with value: (.*)$/,
-                  getMessage: match => `PROMISE_REJECT(${match[1]})`,
-                },
-                {
-                  re: /^assert_true: .*$/,
-                  getMessage: () => '!TRUE',
-                },
-                {
-                  re: /^assert_own_property: [^"]*"([^"]*)".*$/,
-                  getMessage: match => `!OWN_PROPERTY(${match[1]})`,
-                },
-                {
-                  re: /^assert_inherits: [^"]*"([^"]*)".*$/,
-                  getMessage: match => `!INHERITS(${match[1]})`,
-                },
-              ],
-            },
-          };
-        }
-
-        subtestMessage(result) {
-          return super.subtestMessage(result) ||
-            this.parseFailureMessage(result.message);
-        }
-
-        parseFailureMessage(msg) {
-          let matchedMsg = '';
-          for (const matcher of this.matchers) {
-            const match = msg.match(matcher.re);
-            if (match !== null) {
-              matchedMsg = matcher.getMessage(match);
-              break;
-            }
-          }
-          return matchedMsg ? matchedMsg : 'FAIL';
-        }
+    class TestFileResultsTableTerse extends AbstractTestFileResultsTable {
+      static get is() {
+        return 'test-file-results-table-terse';
       }
 
-      window.customElements.define(
-        TestFileResultsTableTerse.is, TestFileResultsTableTerse);
-    })();
+      static get properties() {
+        return {
+          matchers: {
+            type: Array,
+            value: [
+              {
+                re: /^assert_equals:.* expected ("(\\"|[^"])*"|[^ ]*) but got ("(\\"|[^"])*"|[^ ]*)$/,
+                getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert_approx_equals:.* expected ("(\\"|[^"])*"| [+][/][-] |[^:]*) but got ("(\\"|[^"])*"| [+][/][-] |[^:]*):.*$/,
+                getMessage: match => `!~EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert ("(\\"|[^"])*"|[^ ]*) == ("(\\"|[^"])*"|[^ ]*)$/,
+                getMessage: match => `!EQ(${match[1]}, ${match[3]})`,
+              },
+              {
+                re: /^assert_array_equals:.*$/,
+                getMessage: () => '!ARRAY_EQ(a, b)',
+              },
+              {
+                re: /^Uncaught [^ ]*Error:.*$/,
+                getMessage: () => 'UNCAUGHT_ERROR',
+              },
+              {
+                re: /^([^ ]*) is not ([a-zA-Z0-9 ]*)$/,
+                getMessage: match => `NOT_${match[2].toUpperCase().replace(/\s/g, '_')}(${match[1]})`,
+              },
+              {
+                re: /^promise_test: Unhandled rejection with value: (.*)$/,
+                getMessage: match => `PROMISE_REJECT(${match[1]})`,
+              },
+              {
+                re: /^assert_true: .*$/,
+                getMessage: () => '!TRUE',
+              },
+              {
+                re: /^assert_own_property: [^"]*"([^"]*)".*$/,
+                getMessage: match => `!OWN_PROPERTY(${match[1]})`,
+              },
+              {
+                re: /^assert_inherits: [^"]*"([^"]*)".*$/,
+                getMessage: match => `!INHERITS(${match[1]})`,
+              },
+            ],
+          },
+        };
+      }
 
+      subtestMessage(result) {
+        return super.subtestMessage(result) ||
+          this.parseFailureMessage(result.message);
+      }
+
+      parseFailureMessage(msg) {
+        let matchedMsg = '';
+        for (const matcher of this.matchers) {
+          const match = msg.match(matcher.re);
+          if (match !== null) {
+            matchedMsg = matcher.getMessage(match);
+            break;
+          }
+        }
+        return matchedMsg ? matchedMsg : 'FAIL';
+      }
+    }
+
+    AbstractTestFileResultsTable.appendTemplate(TestFileResultsTableTerse);
+
+    window.customElements.define(
+      TestFileResultsTableTerse.is, TestFileResultsTableTerse);
   </script>
 </dom-module>

@@ -14,31 +14,20 @@ found in the LICENSE file.
 
   <script>
     /* global AbstractTestFileResultsTable, TestRunsBase */
-    (function() {
-      let memoizedTemplate;
-
-      class TestFileResultsTableVerbose extends AbstractTestFileResultsTable {
-        static get is() {
-          return 'test-file-results-table-verbose';
-        }
-
-        static get template() {
-          if (!memoizedTemplate) {
-            memoizedTemplate = Polymer.DomModule.import(this.is, 'template');
-            memoizedTemplate.content.appendChild(
-              document.importNode(AbstractTestFileResultsTable.template.content, true));
-          }
-          return memoizedTemplate;
-        }
-
-        subtestMessage(result) {
-          return super.subtestMessage(result)  ||
-            `Failure message: ${result.message}`;
-        }
+    class TestFileResultsTableVerbose extends AbstractTestFileResultsTable {
+      static get is() {
+        return 'test-file-results-table-verbose';
       }
 
-      window.customElements.define(
-        TestFileResultsTableVerbose.is, TestFileResultsTableVerbose);
-    })();
+      subtestMessage(result) {
+        return super.subtestMessage(result)  ||
+          `Failure message: ${result.message}`;
+      }
+    }
+
+    AbstractTestFileResultsTable.appendTemplate(TestFileResultsTableVerbose);
+
+    window.customElements.define(
+      TestFileResultsTableVerbose.is, TestFileResultsTableVerbose);
   </script>
 </dom-module>
