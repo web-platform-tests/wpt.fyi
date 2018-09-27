@@ -259,8 +259,8 @@ found in the LICENSE file.
 
     /* global TestRunsBase, SelfNavigation, LoadingState */
     class WPTResults extends ResultsNavigation(
-        SelfNavigation(LoadingState(TestRunsBase)),
-        'resultsQueryParams(sha, labels, productSpecs, maxCount, diff, search)') {
+      SelfNavigation(LoadingState(TestRunsBase)),
+      'resultsQueryParams(sha, labels, productSpecs, maxCount, diff, search)') {
       static get is() {
         return 'wpt-results';
       }
@@ -409,7 +409,7 @@ found in the LICENSE file.
           this.resultsLoadFailed =
             !(this.testRuns && this.testRuns.length
               && this.searchResults && this.searchResults.length);
-        }
+        };
       }
 
       connectedCallback() {

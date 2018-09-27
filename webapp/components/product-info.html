@@ -101,7 +101,7 @@
         return {
           browser_name: name,
           browser_version: version,
-        }
+        };
       }
 
       getSpec(product) {
@@ -121,6 +121,6 @@
       isLatest(sha) {
         return !sha || sha === 'latest';
       }
-    }
+    };
   </script>
 </dom-module>

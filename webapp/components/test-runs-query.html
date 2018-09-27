@@ -15,123 +15,123 @@ found in the LICENSE file.
     // eslint-disable-next-line no-unused-vars
     const TestRunsQuery =
       (superClass) => class extends QueryBuilder(ProductInfo(superClass)) {
-      static get properties() {
-        return {
+        static get properties() {
+          return {
           /* Parsed product objects, computed from the spec strings */
-          products: {
-            type: Array,
-            notify: true,
-            value: [],
-          },
-          productSpecs: {
-            type: Array,
-            notify: true,
-            value: [],
-          },
-          labels: {
-            type: Array,
-            value: [],
-          },
-          maxCount: Number,
-          sha: String,
-          aligned: Boolean,
-          isLatest: {
-            type: Boolean,
-            computed: 'computeIsLatest(sha)'
-          },
-          testRunQueryParams: {
-            type: Object,
-            computed: 'computeTestRunQueryParams(sha, labels, productSpecs, maxCount)',
-          },
-          testRunQuery: {
-            type: String,
-            computed: 'computeQuery(testRunQueryParams)',
-          },
-        };
-      }
+            products: {
+              type: Array,
+              notify: true,
+              value: [],
+            },
+            productSpecs: {
+              type: Array,
+              notify: true,
+              value: [],
+            },
+            labels: {
+              type: Array,
+              value: [],
+            },
+            maxCount: Number,
+            sha: String,
+            aligned: Boolean,
+            isLatest: {
+              type: Boolean,
+              computed: 'computeIsLatest(sha)'
+            },
+            testRunQueryParams: {
+              type: Object,
+              computed: 'computeTestRunQueryParams(sha, labels, productSpecs, maxCount)',
+            },
+            testRunQuery: {
+              type: String,
+              computed: 'computeQuery(testRunQueryParams)',
+            },
+          };
+        }
 
-      ready() {
-        super.ready();
-        if (this.productSpecs && this.productSpecs.length
+        ready() {
+          super.ready();
+          if (this.productSpecs && this.productSpecs.length
             && !(this.product && this.products.length)) {
-          this.products = this.productSpecs.map(p => this.parseProductSpec(p));
-        }
-        this._createMethodObserver('productsUpdated(products, products.*)');
-      }
-
-      productsUpdated(products, itemChange) {
-        this.productSpecs = (products || []).map(p => this.getSpec(p));
-      }
-
-      computeIsLatest(sha) {
-        return !sha || sha === 'latest';
-      }
-
-      computeTestRunQueryParams(sha, labels, productSpecs, maxCount) {
-        const params = {};
-        if (sha) {
-          params.sha = sha;
-        }
-        if (labels && labels.length) {
-          params.label = labels;
-        }
-        if (productSpecs && productSpecs.length) {
-          params.product = productSpecs;
-        }
-        maxCount = maxCount || this.defaultMaxCount;
-        if (maxCount) {
-          params['max-count'] = maxCount;
-        }
-        if (this.aligned) {
-          params.aligned = true;
-        }
-        return params;
-      }
-
-      computeProducts(productSpecs) {
-        return productSpecs && productSpecs.map(s => this.parseProductSpec(s));
-      }
-
-      parseProductSpec(spec) {
-        // @sha (optional)
-        let revision = '';
-        const atIndex = spec.indexOf('@');
-        if (atIndex > 0) {
-          revision = spec.substr(atIndex + 1);
-          spec = spec.substr(0, atIndex);
-        }
-        // [foo,bar] labels syntax (optional)
-        let labels = new Set();
-        const arrayIndex = spec.indexOf('[');
-        if (arrayIndex > 0) {
-          let labelsStr = spec.substr(arrayIndex + 1);
-          if (labelsStr[labelsStr.length - 1] !== ']') {
-            throw 'Expected closing bracket';
+            this.products = this.productSpecs.map(p => this.parseProductSpec(p));
           }
-          labelsStr = labelsStr.substr(0, labelsStr.length - 1);
-          labelsStr.split(',').forEach(l => labels.add(l));
-          spec = spec.substr(0, arrayIndex);
+          this._createMethodObserver('productsUpdated(products, products.*)');
         }
-        // product
-        const product = this.parseProduct(spec);
-        product.revision = revision;
-        product.labels = labels;
-        return product;
-      }
 
-      parseProduct(name) {
+        productsUpdated(products, itemChange) {
+          this.productSpecs = (products || []).map(p => this.getSpec(p));
+        }
+
+        computeIsLatest(sha) {
+          return !sha || sha === 'latest';
+        }
+
+        computeTestRunQueryParams(sha, labels, productSpecs, maxCount) {
+          const params = {};
+          if (sha) {
+            params.sha = sha;
+          }
+          if (labels && labels.length) {
+            params.label = labels;
+          }
+          if (productSpecs && productSpecs.length) {
+            params.product = productSpecs;
+          }
+          maxCount = maxCount || this.defaultMaxCount;
+          if (maxCount) {
+            params['max-count'] = maxCount;
+          }
+          if (this.aligned) {
+            params.aligned = true;
+          }
+          return params;
+        }
+
+        computeProducts(productSpecs) {
+          return productSpecs && productSpecs.map(s => this.parseProductSpec(s));
+        }
+
+        parseProductSpec(spec) {
+        // @sha (optional)
+          let revision = '';
+          const atIndex = spec.indexOf('@');
+          if (atIndex > 0) {
+            revision = spec.substr(atIndex + 1);
+            spec = spec.substr(0, atIndex);
+          }
+          // [foo,bar] labels syntax (optional)
+          let labels = new Set();
+          const arrayIndex = spec.indexOf('[');
+          if (arrayIndex > 0) {
+            let labelsStr = spec.substr(arrayIndex + 1);
+            if (labelsStr[labelsStr.length - 1] !== ']') {
+              throw 'Expected closing bracket';
+            }
+            labelsStr = labelsStr.substr(0, labelsStr.length - 1);
+            labelsStr.split(',').forEach(l => labels.add(l));
+            spec = spec.substr(0, arrayIndex);
+          }
+          // product
+          const product = this.parseProduct(spec);
+          product.revision = revision;
+          product.labels = labels;
+          return product;
+        }
+
+        parseProduct(name) {
         // -version (optional)
-        let version;
-        const dashIndex = name.indexOf('-');
-        if (dashIndex > 0) {
-          version = name.substr(dashIndex + 1);
-          name = name.substr(0, dashIndex);
+          let version;
+          const dashIndex = name.indexOf('-');
+          if (dashIndex > 0) {
+            version = name.substr(dashIndex + 1);
+            name = name.substr(0, dashIndex);
+          }
+          return {
+            browser_name: name,
+            browser_version: version,
+          };
         }
-        return {
-          browser_name: name,
-          browser_version: version,
-        }
-      }
-    }
+    };
   </script>
 </dom-module>
