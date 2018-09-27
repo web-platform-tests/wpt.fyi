@@ -51,12 +51,13 @@ go_build: go_deps
 
 go_lint: go_deps golint_deps go_test_tag_lint
 	@echo "# Linting the go packages..."
-	cd $(WPTD_GO_PATH); golint -set_exit_status api/
-	cd $(WPTD_GO_PATH); golint -set_exit_status revisions/
-	cd $(WPTD_GO_PATH); golint -set_exit_status shared/
-	cd $(WPTD_GO_PATH); golint -set_exit_status util/
-	cd $(WPTD_GO_PATH); golint -set_exit_status webapp/
-	cd $(WPTD_GO_PATH); golint -set_exit_status webdriver/
+	golint -set_exit_status $(WPTD_GO_PATH)/api/...
+	# Skip revisions/test
+	golint -set_exit_status $(WPTD_GO_PATH)/revisions/{announcer,api,epoch,git,service}/...
+	golint -set_exit_status $(WPTD_GO_PATH)/shared/...
+	golint -set_exit_status $(WPTD_GO_PATH)/util/...
+	golint -set_exit_status $(WPTD_GO_PATH)/webapp/...
+	golint -set_exit_status $(WPTD_GO_PATH)/webdriver/...
 	# Print out gofmt diff and fail if `gofmt -l` gives non-empty output.
 	cd $(WPTD_GO_PATH); ! (gofmt -l ./ | read && echo "Found gofmt issues:" && gofmt -d ./)
 
