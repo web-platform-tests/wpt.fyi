@@ -257,7 +257,7 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global TestRunsBase, SelfNavigation, LoadingState */
+    /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation */
     class WPTResults extends ResultsNavigation(
       SelfNavigation(LoadingState(TestRunsBase)),
       'resultsQueryParams(sha, labels, productSpecs, maxCount, diff, search)') {
@@ -455,7 +455,7 @@ found in the LICENSE file.
         try {
           const json = await window.fetch(this.searchURL)
             .then(r => {
-              if (!r.ok || r.status != 200) {
+              if (!r.ok || r.status !== 200) {
                 return Promise.reject('Failed to fetch results data.');
               }
               return r.json();

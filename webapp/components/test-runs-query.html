@@ -12,6 +12,7 @@ found in the LICENSE file.
     /**
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
+    /* global QueryBuilder, ProductInfo */
     // eslint-disable-next-line no-unused-vars
     const TestRunsQuery =
       (superClass) => class extends QueryBuilder(ProductInfo(superClass)) {
@@ -132,6 +133,6 @@ found in the LICENSE file.
             browser_version: version,
           };
         }
-    };
+      };
   </script>
 </dom-module>
