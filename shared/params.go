@@ -552,16 +552,16 @@ func ParseRepeatedParam(r *http.Request, singular string, plural string) (params
 
 // ParseQueryParamInt parses the URL query parameter at key. If the parameter is
 // empty or missing, ErrMissing is returned.
-func ParseQueryParamInt(r *http.Request, key string) (int, error) {
+func ParseQueryParamInt(r *http.Request, key string) (*int, error) {
 	value := r.URL.Query().Get(key)
 	if value == "" {
-		return 0, ErrMissing
+		return nil, nil
 	}
 	i, err := strconv.Atoi(value)
 	if err != nil {
-		return i, fmt.Errorf("Invalid %s value: %s", key, value)
+		return &i, fmt.Errorf("Invalid %s value: %s", key, value)
 	}
-	return i, err
+	return &i, err
 }
 
 // ParseAlignedParam parses the "aligned" param. See ParseBooleanParam.

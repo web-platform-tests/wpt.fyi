@@ -98,20 +98,16 @@ func (ah autocompleteHandler) processInput(w http.ResponseWriter, r *http.Reques
 
 func (ah autocompleteHandler) parseLimit(r *http.Request) (int, error) {
 	limit, err := ah.sharedImpl.ParseQueryParamInt(r, "limit")
-	if err == shared.ErrMissing {
-		return autocompleteDefaultLimit, nil
-	}
-	if err != nil {
-		return 0, err
+	if limit == nil || err != nil {
+		return autocompleteDefaultLimit, err
 	}
 
-	if limit < autocompleteMinLimit {
-		return autocompleteMinLimit, nil
+	if *limit > autocompleteMaxLimit {
+		*limit = autocompleteMaxLimit
+	} else if *limit < autocompleteMinLimit {
+		*limit = autocompleteMinLimit
 	}
-	if limit > autocompleteMaxLimit {
-		return autocompleteMaxLimit, nil
-	}
-	return limit, nil
+	return *limit, nil
 }
 
 func prepareAutocompleteResponse(limit int, filters *shared.QueryFilter, testRuns []shared.TestRun, summaries []summary) AutocompleteResponse {

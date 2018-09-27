@@ -21,7 +21,7 @@ import (
 type summary map[string][]int
 
 type sharedInterface interface {
-	ParseQueryParamInt(r *http.Request, key string) (int, error)
+	ParseQueryParamInt(r *http.Request, key string) (*int, error)
 	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
 	LoadTestRuns([]shared.ProductSpec, mapset.Set, string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
 	LoadTestRunsByIDs(ids shared.TestRunIDs) (result []shared.TestRun, err error)
@@ -32,7 +32,7 @@ type defaultShared struct {
 	ctx context.Context
 }
 
-func (defaultShared) ParseQueryParamInt(r *http.Request, key string) (int, error) {
+func (defaultShared) ParseQueryParamInt(r *http.Request, key string) (*int, error) {
 	return shared.ParseQueryParamInt(r, key)
 }
 
