@@ -649,6 +649,7 @@ found in the LICENSE file.
           totals[key].percent = (totals[key].passes / totals[key].total) * 100;
         });
 
+        // eslint-disable-next-line no-console
         console.table(Object.keys(totals).map(k => ({
           platformID: k,
           passes: totals[k].passes,
@@ -656,6 +657,7 @@ found in the LICENSE file.
           percent: totals[k].percent
         })));
 
+        // eslint-disable-next-line no-console
         console.log('JSON version:', JSON.stringify(totals));
       }
 
