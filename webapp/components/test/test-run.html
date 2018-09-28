@@ -38,7 +38,23 @@
       suite('TestRunsBase.prototype.*', () => {
         suite('dateFormat()', () => {
           test('dateFormat(iso string)', () => {
-            assert.equal(trf.dateFormat('2018-01-12T12:00:00Z'), 'Jan 12 2018');
+            assert.equal(trf.dateFormat('2018-01-12T12:00:00Z'), 'Jan 12, 2018');
+          });
+        });
+        suite('timeFormat()', () => {
+          let sandbox;
+
+          setup(() => {
+            sandbox = sinon.sandbox.create();
+            sandbox.stub(Date.prototype, 'getTimezoneOffset').returns(240);
+          });
+
+          test('timeFormat(iso string)', () => {
+            assert.equal(trf.timeFormat('2018-01-12T12:00:00Z'), 'Jan 12 at 7:00 AM');
+          });
+
+          teardown(() => {
+            sandbox.restore();
           });
         });
         suite('isDiff()', () => {
