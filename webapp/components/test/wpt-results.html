@@ -7,21 +7,37 @@
   <script src="../../bower_components/web-component-tester/browser.js"></script>
 
   <link rel="import" href="../wpt-results.html">
+  <link rel="import" href="./util/helpers.html">
 </head>
 
 <body>
   <test-fixture id="wpt-results-fixture">
     <template>
-      <wpt-results></wpt-results>
+      <wpt-results path="/"></wpt-results>
     </template>
   </test-fixture>
 
   <script>
+    /* global WPTResults, TEST_RUNS_DATA */
     suite('<wpt-results>', () => {
-      let trf = null;
+      let sandbox, trf = null;
 
       setup(() => {
+        sandbox = sinon.sandbox.create();
+        sandbox.stub(WPTResults.prototype, 'loadData', function() {
+          this.testRuns = Array.from(TEST_RUNS_DATA);
+        });
         trf = fixture('wpt-results-fixture');
+      });
+
+      test('show banner on noResults', (done) => {
+        trf.noResults = true;
+        flush(() => {
+          const banner = trf.root.querySelector('info-banner');
+          expect(banner).to.not.be.null;
+          expect(banner.type).to.equal('info');
+          done();
+        });
       });
 
       suite('WPTResults.prototype.*', () => {
@@ -37,6 +53,10 @@
             });
           });
         });
+      });
+
+      teardown(() => {
+        sandbox.restore();
       });
     });
   </script>
