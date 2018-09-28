@@ -8,22 +8,44 @@
   <link rel="import" href="../../bower_components/polymer/polymer-element.html">
   <link rel="import" href="../test-runs-query.html">
 </head>
+
+<dom-module id="test-runs-query-concrete">
+  <script>
+    // Needed for FF, which doesn't block on the imports above.
+    document.addEventListener('WebComponentsReady', () => {
+      /* global TestRunsQuery */
+      class ConcreteType extends TestRunsQuery(window.Polymer.Element) {}
+
+      window.customElements.define('test-runs-query-concrete', ConcreteType);
+    });
+  </script>
+</dom-module>
+
+<test-fixture id="test-runs-query-fixture">
+  <template>
+    <test-runs-query-concrete></test-runs-query-concrete>
+  </template>
+</test-fixture>
+
 <body>
   <script>
-    /* global TestRunsQuery */
+    /* global DEFAULT_PRODUCTS */
     suite('TestRunsQuery', () => {
       let testRunsQuery;
 
       setup(() => {
-        if (!window.customElements.get('test-runs-query')) {
-          class ConcreteClass extends TestRunsQuery(window.Polymer.Element) {}
-          window.customElements.define('test-runs-query', ConcreteClass);
-        }
-        testRunsQuery = document.createElement('test-runs-query');
+        testRunsQuery = fixture('test-runs-query-fixture');
       });
 
       test('instanceof Polymer.Element', () => {
         assert.isTrue(testRunsQuery instanceof window.Polymer.Element);
+      });
+
+      test('isDefaultProducts', () => {
+        testRunsQuery.products = Array.from(DEFAULT_PRODUCTS);
+        expect(testRunsQuery.isDefaultProducts).to.equal(true);
+        testRunsQuery.products = Array.from([DEFAULT_PRODUCTS[0]]);
+        expect(testRunsQuery.isDefaultProducts).to.equal(false);
       });
 
       suite('TestRunsQuery.prototype.*', () => {

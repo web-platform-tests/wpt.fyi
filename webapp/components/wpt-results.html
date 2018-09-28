@@ -4,7 +4,9 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
@@ -21,7 +23,9 @@ found in the LICENSE file.
 <link rel="import" href="test-file-results.html">
 <link rel="import" href="test-results-history-grid.html">
 <link rel="import" href="test-results-chart.html">
+<link rel="import" href="test-runs-query-builder.html">
 <link rel="import" href="test-search.html">
+<link rel="import" href="wpt-flags.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -110,6 +114,10 @@ found in the LICENSE file.
         background: var(--paper-blue-500);
         color: white;
       }
+      test-runs-query-builder {
+        display: block;
+        margin-bottom: 32px;
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -173,6 +181,13 @@ found in the LICENSE file.
       </info-banner>
     </template>
 
+    <template is="dom-if" if="[[editingQuery]]">
+      <test-runs-query-builder product-specs="[[productSpecs]]"
+                               on-submit="[[updateQuery]]"
+                               edit>
+      </test-runs-query-builder>
+    </template>
+
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
@@ -193,6 +208,11 @@ found in the LICENSE file.
               </template>
               <template is="dom-if" if="[[diffShown]]">
                 <th><test-run test-run="[[diffRun]]"></test-run></th>
+              </template>
+              <template is="dom-if" if="[[queryBuilder]]">
+                <th>
+                  <paper-icon-button icon="editor:mode-edit" onclick="[[toggleQueryEdit]]"></paper-icon-button>
+                </th>
               </template>
             </tr>
           </thead>
@@ -259,10 +279,11 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation */
+    /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation, WPTFlags */
     class WPTResults extends ResultsNavigation(
-      SelfNavigation(LoadingState(TestRunsBase)),
+      WPTFlags(SelfNavigation(LoadingState(TestRunsBase))),
       'resultsQueryParams(sha, labels, productSpecs, maxCount, diff, search)') {
+
       static get is() {
         return 'wpt-results';
       }
@@ -321,6 +342,10 @@ found in the LICENSE file.
             value: false,
           },
           onSearchCommit: Function,
+          editingQuery: {
+            type: Boolean,
+            value: false,
+          },
         };
       }
 
@@ -394,6 +419,20 @@ found in the LICENSE file.
             !(this.testRuns && this.testRuns.length
               && this.searchResults && this.searchResults.length);
         };
+        this.toggleQueryEdit = () => {
+          this.editingQuery = !this.editingQuery;
+        };
+        this.updateQuery = () => {
+          this.clearQuery();
+          const builder = this.shadowRoot.querySelector('test-runs-query-builder');
+          if (builder.products && builder.products.length) {
+            this.products = builder.products;
+          }
+          this.testRuns = [];
+          this.searchResults = [];
+          this.refreshDisplayedNodes();
+          this.loadData();
+        };
       }
 
       connectedCallback() {
@@ -418,7 +457,10 @@ found in the LICENSE file.
           onpathupdated && onpathupdated(path);
           this.showHistory = false;
         };
+        this.loadData();
+      }
 
+      async loadData() {
         this.load(
           this.loadRuns().then(async runs => {
             this.fetchResults();
