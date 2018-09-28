@@ -4,10 +4,68 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<link rel="import" href="./test-runs.html">
+
 <dom-module id="abstract-test-file-results-table">
+  <template>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td {
+        padding: 0;
+        height: 1.5em;
+      }
+      td code {
+        padding: 0.25em;
+      }
+      td.sub-test-name {
+        font-family: monospace;
+      }
+      td.result {
+        background-color: #eee;
+      }
+      td.result.OK, td.result.PASS {
+        background-color: rgb(90, 242, 113);
+      }
+      td.result.FAIL {
+        background-color: rgb(242, 90, 90);
+      }
+    </style>
+
+    <table>
+      <thead>
+        <tr>
+          <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
+          <template is="dom-repeat" items="[[testRuns]]" as="testRun">
+            <th width="[[computeRunThWidth(testRuns)]]">
+              <test-run test-run="[[testRun]]"></test-run>
+            </th>
+          </template>
+        </tr>
+      </thead>
+      <tbody>
+        <template is="dom-repeat" items="[[resultsTable]]" as="row">
+          <tr>
+            <td class="sub-test-name"><code>[[ row.name ]]</code></td>
+
+            <template is="dom-repeat" items="{{row.results}}" as="result">
+              <td class$="result [[ result.status ]]">
+                <code>[[ subtestMessage(result) ]]</code>
+              </td>
+            </template>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </template>
+
   <script>
     // eslint-disable-next-line no-unused-vars
-    const AbstractTestFileResultsTable = superClass => class extends superClass {
+    class AbstractTestFileResultsTable extends TestRunsBase {
+      static get is() { return 'abstract-test-file-results-table'; }
+
       static get properties() {
         return {
           statusesAsMessage: {
@@ -19,6 +77,22 @@ found in the LICENSE file.
             value: [],
           },
         };
+      }
+      
+      // Sets the template property for the given type to be its template, with
+      // the AbstractTestFileResultsTable template appended.
+      static appendTemplate(type) {
+        const template = Symbol();
+        Object.defineProperty(type, 'template', {
+          get: function() {
+            if (!this[template]) {
+              this[template] = Polymer.DomModule.import(type.is, 'template');
+              this[template].content.appendChild(
+                document.importNode(AbstractTestFileResultsTable.template.content, true));
+            }
+            return this[template];
+          }
+        });
       }
 
       subtestMessage(result) {
