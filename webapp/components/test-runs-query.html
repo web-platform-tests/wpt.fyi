@@ -121,7 +121,7 @@ found in the LICENSE file.
         }
 
         computeIsLatest(sha) {
-          return !sha || 'latest' === sha;
+          return !sha || sha === 'latest';
         }
 
         computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount) {
