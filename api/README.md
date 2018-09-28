@@ -10,7 +10,6 @@ the endpoints can be found in `routes.go`.
 
  - [/api/runs](#apiruns)
  - [/api/runs/{id}](#apirunsid)
- - [/api/run](#apirun)
  - [/api/shas](#apishas)
  - [/api/diff](#apidiff)
  - [/api/results](#apiresults)
@@ -78,37 +77,6 @@ Gets a specific (single) TestRun metadata by its datastore ID.
 #### Example
 
 https://wpt.fyi/api/runs/5164888561287168
-
-<details><summary><b>Example JSON</b></summary>
-
-    {
-      "id": "5164888561287168",
-      "browser_name": "chrome",
-      "browser_version": "67.0.3396.62",
-      "os_name": "linux",
-      "os_version": "4.4",
-      "revision": "2bd11b91d4",
-      "full_revision_hash": "2bd11b91d490ddd5237bcb6d8149a7f25faaa101",
-      "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary.json.gz",
-      "created_at": "2018-06-05T08:27:30.627865Z",
-      "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
-    }
-
-</details>
-
-### /api/run
-
-Gets a specific (single) TestRun metadata by `product` and `sha`.
-
-__Parameters__
-
-__`sha`__ :  SHA[0:10] of the runs to get, or the keyword `latest`. Defaults to `latest`.
-
-__`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
-
-#### Example
-
-https://wpt.fyi/api/run?sha=latest&product=chrome
 
 <details><summary><b>Example JSON</b></summary>
 
