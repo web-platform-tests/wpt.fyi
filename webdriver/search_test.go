@@ -45,7 +45,7 @@ func testSearch(t *testing.T, path, elementName string) {
 		}
 		return len(pathParts) > 0, nil
 	}
-	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*5)
+	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
 	assert.Nil(t, err)
 
 	// Run the search.
@@ -63,7 +63,7 @@ func testSearch(t *testing.T, path, elementName string) {
 	if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
 		panic(err)
 	}
-	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*5)
+	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
 	assert.Nil(t, err)
 	assertListIsFiltered(t, wd, elementName, folder)
 }

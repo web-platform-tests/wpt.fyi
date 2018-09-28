@@ -112,7 +112,7 @@ found in the LICENSE file.
   </template>
 
   <script>
-    /* global TestRunsBase */
+    /* global TestRunsBase, LoadingState */
     class WPTRuns extends LoadingState(TestRunsBase) {
       static get is() {
         return 'wpt-runs';
@@ -163,7 +163,7 @@ found in the LICENSE file.
         super();
         this.onLoadingComplete = () => {
           this.loadingFailed = !this.testResults;
-        }
+        };
       }
 
       async ready() {
@@ -171,7 +171,7 @@ found in the LICENSE file.
         await this.load(this.loadRuns().then(testRuns => {
           let browsers = new Set();
           // Group the runs by their revision/SHA
-          let testRunsBySha = this.testRuns.reduce((accum, results) => {
+          let testRunsBySha = testRuns.reduce((accum, results) => {
             browsers.add(results.browser_name);
             if (!accum[results.revision]) {
               accum[results.revision] = {};

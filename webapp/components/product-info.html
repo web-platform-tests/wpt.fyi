@@ -1,4 +1,4 @@
-<dom-module id="browser-info">
+<dom-module id="product-info">
   <script>
     const DISPLAY_NAMES = (() => {
       let m = new Map();
@@ -18,6 +18,7 @@
       m.set('experimental', 'Experimental');
       return m;
     })();
+    /*eslint-disable no-unused-vars*/
     const VERSION_PATTERNS = {
       major: /(\d+)/,
       majorAndMinor: /(\d+\.\d+)/
@@ -25,7 +26,6 @@
     const CHANNELS = new Set(['stable', 'beta', 'dev', 'experimental']);
     const DEFAULT_BROWSER_NAMES = ['chrome', 'edge', 'firefox', 'safari'];
 
-    // eslint-disable-next-line no-unused-vars
     const ProductInfo = (superClass) => class extends superClass {
       static get properties() {
         return {
@@ -101,7 +101,7 @@
         return {
           browser_name: name,
           browser_version: version,
-        }
+        };
       }
 
       getSpec(product) {
@@ -112,7 +112,7 @@
         if (product.labels && product.labels.length) {
           spec += `[${product.labels.join(',')}]`;
         }
-        if (product.revision && !isLatest(product.revision)) {
+        if (product.revision && !this.isLatest(product.revision)) {
           spec += `@${product.revision}`;
         }
         return spec;
@@ -121,6 +121,6 @@
       isLatest(sha) {
         return !sha || sha === 'latest';
       }
-    }
+    };
   </script>
 </dom-module>
