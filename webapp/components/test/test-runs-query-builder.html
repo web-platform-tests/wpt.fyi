@@ -73,20 +73,20 @@
 
         test('aligned', () => {
           queryBuilder.aligned = false;
-          expect(queryBuilder.query).to.not.contain('aligned');
+          expect(queryBuilder.testRunQuery).to.not.contain('aligned');
           queryBuilder.aligned = true;
-          expect(queryBuilder.query).to.contain('aligned');
+          expect(queryBuilder.testRunQuery).to.contain('aligned');
         });
 
         test('labels', () => {
           queryBuilder.labelsString = '';
-          expect(queryBuilder.query).to.not.contain('label');
+          expect(queryBuilder.testRunQuery).to.not.contain('label');
           queryBuilder.labelsString = 'foo,';
-          expect(queryBuilder.query).to.contain('label=foo');
-          expect(queryBuilder.query).to.not.contain('foo,');
+          expect(queryBuilder.testRunQuery).to.contain('label=foo');
+          expect(queryBuilder.testRunQuery).to.not.contain('foo,');
           queryBuilder.labels = ['foo', 'bar'];
-          expect(queryBuilder.query).to.contain('label=foo');
-          expect(queryBuilder.query).to.contain('label=bar');
+          expect(queryBuilder.testRunQuery).to.contain('label=foo');
+          expect(queryBuilder.testRunQuery).to.contain('label=bar');
         });
       });
 

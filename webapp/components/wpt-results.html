@@ -145,8 +145,10 @@ found in the LICENSE file.
 
       <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-      <test-search class$="search-[[pathIsATestFile]]" query='{{search}}'
-          autocomplete-u-r-l="[[autocompleteURL]]"></test-search>
+      <test-search class$="search-[[pathIsATestFile]]"
+                   query='{{search}}'
+                   test-runs="[[testRuns]]">
+      </test-search>
 
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <div class="links">
@@ -277,10 +279,11 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global TestRunsBase, SelfNavigation, LoadingState */
+    /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation, WPTFlags */
     class WPTResults extends ResultsNavigation(
-        WPTFlags(SelfNavigation(LoadingState(TestRunsBase))),
-        'resultsQueryParams(sha, aligned, labels, productSpecs, maxCount, diff, search)') {
+      WPTFlags(SelfNavigation(LoadingState(TestRunsBase))),
+      'resultsQueryParams(sha, labels, productSpecs, maxCount, diff, search)') {
+
       static get is() {
         return 'wpt-results';
       }
@@ -333,10 +336,6 @@ found in the LICENSE file.
           searchURL: {
             type: String,
             computed: 'computeSearchURL(testRuns, search)',
-          },
-          autocompleteURL: {
-            type: String,
-            computed: 'computeAutocompleteURL(testRuns, search)',
           },
           resultsLoadFailed: {
             type: Boolean,
@@ -412,20 +411,6 @@ found in the LICENSE file.
         return url;
       }
 
-      computeAutocompleteURL(testRuns, query) {
-        let url = new URL('/api/autocomplete', window.location);
-        url.searchParams.set('limit', 10);
-        if (testRuns) {
-          url.searchParams.set(
-            'run_ids',
-            testRuns.map(r => r.id.toString()).join(','));
-        }
-        if (query) {
-          url.searchParams.set('q', query);
-        }
-        return url;
-      }
-
       constructor() {
         super();
         this.onSearchCommit = this.handleSearchCommit.bind(this);
@@ -447,7 +432,7 @@ found in the LICENSE file.
           this.searchResults = [];
           this.refreshDisplayedNodes();
           this.loadData();
-        }
+        };
       }
 
       connectedCallback() {
@@ -496,7 +481,7 @@ found in the LICENSE file.
         try {
           const json = await window.fetch(this.searchURL)
             .then(r => {
-              if (!r.ok || r.status != 200) {
+              if (!r.ok || r.status !== 200) {
                 return Promise.reject('Failed to fetch results data.');
               }
               return r.json();
@@ -690,6 +675,7 @@ found in the LICENSE file.
           totals[key].percent = (totals[key].passes / totals[key].total) * 100;
         });
 
+        // eslint-disable-next-line no-console
         console.table(Object.keys(totals).map(k => ({
           platformID: k,
           passes: totals[k].passes,
@@ -697,6 +683,7 @@ found in the LICENSE file.
           percent: totals[k].percent
         })));
 
+        // eslint-disable-next-line no-console
         console.log('JSON version:', JSON.stringify(totals));
       }
 

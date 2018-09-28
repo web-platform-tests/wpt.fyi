@@ -55,114 +55,116 @@ found in the LICENSE file.
       return {
         browser_name: name,
         browser_version: version,
-      }
+      };
     }
 
     /**
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
+    /* global QueryBuilder, ProductInfo */
     // eslint-disable-next-line no-unused-vars
     const TestRunsQuery =
       (superClass) => class extends QueryBuilder(ProductInfo(superClass)) {
-      static get properties() {
-        return {
-          /* Parsed product objects, computed from the spec strings */
-          products: {
-            type: Array,
-            notify: true,
-            value: [],
-          },
-          productSpecs: {
-            type: Array,
-            notify: true,
-            value: [],
-          },
-          isDefaultProducts: {
-            type: Boolean,
-            computed: 'computeIsDefaultProducts(productSpecs, productSpecs.*)',
-            value: true,
-          },
-          labels: {
-            type: Array,
-            value: [],
-          },
-          maxCount: Number,
-          sha: String,
-          aligned: Boolean,
-          isLatest: {
-            type: Boolean,
-            computed: 'computeIsLatest(sha)'
-          },
-          testRunQueryParams: {
-            type: Object,
-            computed: 'computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount)',
-          },
-          testRunQuery: {
-            type: String,
-            computed: 'computeQuery(testRunQueryParams)',
-          },
-        };
-      }
-
-      ready() {
-        super.ready();
-        // Convert any initial product specs to products, if provided.
-        if (!(this.product && this.products.length)
-            && (this.productSpecs && this.productSpecs.length)) {
-          this.products = this.productSpecs.map(p => this.parseProductSpec(p));
+        static get properties() {
+          return {
+            /* Parsed product objects, computed from the spec strings */
+            products: {
+              type: Array,
+              notify: true,
+              value: [],
+            },
+            productSpecs: {
+              type: Array,
+              notify: true,
+              value: [],
+            },
+            isDefaultProducts: {
+              type: Boolean,
+              computed: 'computeIsDefaultProducts(productSpecs, productSpecs.*)',
+              value: true,
+            },
+            labels: {
+              type: Array,
+              value: [],
+            },
+            maxCount: Number,
+            sha: String,
+            aligned: Boolean,
+            isLatest: {
+              type: Boolean,
+              computed: 'computeIsLatest(sha)'
+            },
+            testRunQueryParams: {
+              type: Object,
+              computed: 'computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount)',
+            },
+            testRunQuery: {
+              type: String,
+              computed: 'computeQuery(testRunQueryParams)',
+            },
+          };
         }
-        this._createMethodObserver('productsUpdated(products, products.*)');
-      }
 
-      productsUpdated(products, itemChange) {
-        this.productSpecs = (products || []).map(p => this.getSpec(p));
-      }
-
-      computeIsLatest(sha) {
-        return !sha || sha === 'latest';
-      }
-
-      computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount) {
-        const params = {};
-        if (sha) {
-          params.sha = sha;
+        ready() {
+          super.ready();
+          // Convert any initial product specs to products, if provided.
+          if (this.productSpecs && this.productSpecs.length
+            && !(this.products && this.products.length)) {
+            this.products = this.productSpecs.map(p => this.parseProductSpec(p));
+          }
+          this._createMethodObserver('productsUpdated(products, products.*)');
         }
-        if (labels && labels.length) {
-          params.label = labels;
-        }
-        if (productSpecs && productSpecs.length && !this.isDefaultProducts) {
-          params.product = productSpecs;
-        }
-        maxCount = maxCount || this.defaultMaxCount;
-        if (maxCount) {
-          params['max-count'] = maxCount;
-        }
-        if (aligned) {
-          params.aligned = true;
-        }
-        return params;
-      }
 
-      computeProducts(productSpecs) {
-        return productSpecs && productSpecs.map(s => this.parseProductSpec(s));
-      }
+        // eslint-disable-next-line no-unused-vars
+        productsUpdated(products, itemChange) {
+          this.productSpecs = (products || []).map(p => this.getSpec(p));
+        }
 
-      computeIsDefaultProducts(productSpecs) {
-        return !productSpecs || !productSpecs.length
-          || DEFAULT_PRODUCT_SPECS.join(',') === (productSpecs || []).join(',');
-      }
+        computeIsLatest(sha) {
+          return !sha || 'latest' === sha;
+        }
 
-      parseProductSpec(p) {
-        return window.parseProductSpec(p);
-      }
+        computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount) {
+          const params = {};
+          if (sha) {
+            params.sha = sha;
+          }
+          if (labels && labels.length) {
+            params.label = labels;
+          }
+          if (productSpecs && productSpecs.length && !this.isDefaultProducts) {
+            params.product = productSpecs;
+          }
+          maxCount = maxCount || this.defaultMaxCount;
+          if (maxCount) {
+            params['max-count'] = maxCount;
+          }
+          if (aligned) {
+            params.aligned = true;
+          }
+          return params;
+        }
 
-      clearQuery() {
-        this.products = Array.from(DEFAULT_PRODUCTS);
-        this.labels = [];
-        this.maxCount = undefined;
-        this.sha = 'latest';
-        this.aligned = undefined;
-      }
-    }
+        computeProducts(productSpecs) {
+          return productSpecs && productSpecs.map(s => this.parseProductSpec(s));
+        }
+
+        computeIsDefaultProducts(productSpecs) {
+          return !productSpecs || !productSpecs.length
+            || DEFAULT_PRODUCT_SPECS.join(',') === (productSpecs || []).join(',');
+        }
+
+        parseProductSpec(p) {
+          return window.parseProductSpec(p);
+        }
+
+        clearQuery() {
+          this.products = Array.from(DEFAULT_PRODUCTS);
+          this.labels = [];
+          this.maxCount = undefined;
+          this.sha = 'latest';
+          this.aligned = undefined;
+        }
+      };
   </script>
 </dom-module>

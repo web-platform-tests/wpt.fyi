@@ -36,7 +36,9 @@ func LoadTestRunKeys(
 	from *time.Time,
 	to *time.Time,
 	limit *int) (result []*datastore.Key, err error) {
-	baseQuery := datastore.NewQuery("TestRun").Limit(1000)
+	baseQuery := datastore.
+		NewQuery("TestRun").
+		Limit(MaxCountMaxValue)
 	if !IsLatest(sha) {
 		baseQuery = baseQuery.Filter("Revision =", sha)
 	}
@@ -77,7 +79,7 @@ func LoadTestRunKeys(
 		}
 		var keys []*datastore.Key
 		for _, key := range fetched {
-			if limit == nil || *limit > len(keys) {
+			if limit == nil || *limit > len(keys) && len(keys) < MaxCountMaxValue {
 				if prefiltered == nil || (*prefiltered).Contains(key.String()) {
 					keys = append(keys, key)
 				}
@@ -176,6 +178,7 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 		order = "-" + order
 	}
 	return query.
+		Limit(MaxCountMaxValue).
 		Order(order).
 		Filter(fieldName+" >=", fmt.Sprintf("%s.", versionPrefix)).
 		Filter(fieldName+" <=", fmt.Sprintf("%s.%c", versionPrefix, '9'+1))
@@ -193,6 +196,7 @@ func GetAlignedRunSHAs(
 	limit *int) (shas []string, keys map[string][]*datastore.Key, err error) {
 	query := datastore.
 		NewQuery("TestRun").
+		Limit(MaxCountMaxValue).
 		Order("-TimeStart")
 
 	if labels != nil {
