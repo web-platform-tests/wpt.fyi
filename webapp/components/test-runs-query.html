@@ -60,6 +60,7 @@ found in the LICENSE file.
           this._createMethodObserver('productsUpdated(products, products.*)');
         }
 
+        // eslint-disable-next-line no-unused-vars
         productsUpdated(products, itemChange) {
           this.productSpecs = (products || []).map(p => this.getSpec(p));
         }

@@ -35,6 +35,7 @@ found in the LICENSE file.
         return props;
       }
     };
+    // eslint-disable-next-line no-unused-vars
     const WPTFlags = (superClass) => _wptFlags(superClass, /*readOnly*/ true);
   </script>
 </dom-module>
@@ -49,6 +50,7 @@ found in the LICENSE file.
   </template>
 
   <script>
+    /* global _wptFlags, WPT_FYI_FEATURES */
     class WPTFlagsEditor extends _wptFlags(window.Polymer.Element, /*readOnly*/ false) {
       static get is() {
         return 'wpt-flags-editor';

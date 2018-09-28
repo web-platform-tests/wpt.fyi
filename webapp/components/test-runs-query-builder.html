@@ -67,7 +67,7 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
-    /* global TestRunsQuery */
+    /* global TestRunsQuery, DEFAULT_BROWSER_NAMES */
     class TestRunsQueryBuilder extends TestRunsQuery(window.Polymer.Element) {
       static get is() {
         return 'test-runs-query-builder';
@@ -124,7 +124,6 @@ found in the LICENSE file.
       handleAddProduct() {
         // TODO(lukebjerring): Make a smart(er) suggestion.
         let next = { browser_name: 'chrome' };
-        const builders = this.shadowRoot.querySelectorAll('product-builder');
         for (const d of DEFAULT_BROWSER_NAMES) {
           if (this.products.find(p => p.browser_name === d)) {
             continue;
@@ -198,6 +197,7 @@ found in the LICENSE file.
     </paper-card>
   </template>
   <script>
+    /* global ProductInfo, CHANNELS, DEFAULT_BROWSER_NAMES */
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'product-builder';
