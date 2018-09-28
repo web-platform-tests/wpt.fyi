@@ -5,12 +5,13 @@
 package query
 
 import (
-	golang_set "github.com/deckarep/golang-set"
-	gomock "github.com/golang/mock/gomock"
-	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	http "net/http"
 	reflect "reflect"
 	time "time"
+
+	golang_set "github.com/deckarep/golang-set"
+	gomock "github.com/golang/mock/gomock"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // MocksharedInterface is a mock of sharedInterface interface
@@ -37,9 +38,9 @@ func (m *MocksharedInterface) EXPECT() *MocksharedInterfaceMockRecorder {
 }
 
 // ParseQueryParamInt mocks base method
-func (m *MocksharedInterface) ParseQueryParamInt(r *http.Request, key string) (int, error) {
+func (m *MocksharedInterface) ParseQueryParamInt(r *http.Request, key string) (*int, error) {
 	ret := m.ctrl.Call(m, "ParseQueryParamInt", r, key)
-	ret0, _ := ret[0].(int)
+	ret0, _ := ret[0].(*int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
