@@ -20,6 +20,7 @@ import (
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
+		panic(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

@@ -71,7 +71,6 @@ func TestApiShasBound(t *testing.T) {
 }
 
 func TestApiRunBound(t *testing.T) {
-	assertHandlerIs(t, "/api/run", "api-test-run")
 	assertHandlerIs(t, "/api/runs/123", "api-test-run")
 }
 

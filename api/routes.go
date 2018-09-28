@@ -17,17 +17,14 @@ func RegisterRoutes() {
 	// API endpoint for fetching a manifest for a commit SHA.
 	shared.AddRoute("/api/manifest", "api-manifest", shared.WrapPermissiveCORS(apiManifestHandler))
 
-	// API endpoint for listing all test runs for a given SHA.
+	// API endpoint for listing test runs for a set of products, labels, and SHA.
 	shared.AddRoute("/api/runs", "api-test-runs", shared.WrapPermissiveCORS(apiTestRunsHandler))
+
+	// API endpoints for a single test run, by its ID:
+	shared.AddRoute("/api/runs/{id}", "api-test-run", shared.WrapPermissiveCORS(apiTestRunHandler))
 
 	// API endpoint for listing SHAs for the test runs.
 	shared.AddRoute("/api/shas", "api-shas", shared.WrapPermissiveCORS(apiSHAsHandler))
-
-	// API endpoints for a single test run, by
-	// ID:
-	shared.AddRoute("/api/runs/{id}", "api-test-run", shared.WrapPermissiveCORS(apiTestRunHandler))
-	// 'product' param & 'sha' param:
-	shared.AddRoute("/api/run", "api-test-run", shared.WrapPermissiveCORS(apiTestRunHandler))
 
 	// API endpoint for redirecting to a run's summary JSON blob.
 	shared.AddRoute("/api/results", "api-results", shared.WrapPermissiveCORS(apiResultsRedirectHandler))
