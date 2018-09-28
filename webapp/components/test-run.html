@@ -62,7 +62,7 @@ See models.go for more details.
         <paper-tooltip offset=0>
           {{displayName(testRun.browser_name)}} {{testRun.browser_version}}<br>
           Labels: {{displayLabels(testRun.labels)}}<br>
-          Started {{timeFormat(testRun.time_start)}} (took {{timeTaken(testRun)}})<br>
+          Started {{timeFormat(testRun.time_start)}} {{timeTaken(testRun)}}<br>
           {{moreTooltip(testRun)}}
         </paper-tooltip>
       </template>
@@ -113,9 +113,11 @@ See models.go for more details.
       }
 
       timeTaken(testRun) {
+        // NOTE: We don't always have a real start/end time.
         const hour = 1000*60*60;
         const elapsed = new Date(testRun.time_end) - new Date(testRun.time_start);
-        return `${(elapsed / hour).toFixed(1)}h`;
+        const oneDP = (elapsed / hour).toFixed(1);
+        return oneDP < 0.1 ? '' : `(took ${oneDP}h)`;
       }
 
       isDiff(browserName) {

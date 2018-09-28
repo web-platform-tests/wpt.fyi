@@ -54,8 +54,22 @@
           assert.equal(trf.timeFormat('2018-01-12T12:00:00Z'), 'Jan 12 at 7:00 AM');
         });
 
-        test('timeTaken(testRun Object)', () => {
-          assert.equal(trf.timeTaken(trf.testRun), '1.3h');
+        suite('timeTaken(testRun Object)', () => {
+          test('1h 20m', () => {
+            const testRun = {
+              time_start: '2018-01-12T12:00:00Z',
+              time_end: '2018-01-12T13:20:00Z',
+            };
+            assert.equal(trf.timeTaken(testRun), '(took 1.3h)');
+          });
+
+          test('0m', () => {
+            const testRun = {
+              time_start: '2018-01-12T12:00:00Z',
+              time_end: '2018-01-12T12:00:00Z',
+            };
+            assert.equal(trf.timeTaken(testRun), '');
+          });
         });
 
         suite('isDiff()', () => {
