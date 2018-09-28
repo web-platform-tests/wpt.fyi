@@ -40,6 +40,16 @@
         });
       });
 
+      test('show banner on failedToLoad', (done) => {
+        trf.resultsLoadFailed = true;
+        flush(() => {
+          const banner = trf.root.querySelector('info-banner');
+          expect(banner).to.not.be.null;
+          expect(banner.type).to.equal('error');
+          done();
+        });
+      });
+
       suite('WPTResults.prototype.*', () => {
         suite('urlToPath()', () => {
           test('urlToPath(location Location)', () => {
