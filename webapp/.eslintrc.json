@@ -24,7 +24,7 @@
     "func-call-spacing": ["error", "never"],
     "indent": ["error", 2],
     "linebreak-style": ["error", "unix"],
-    "no-console": [0],
+    "no-console": ["error", { "allow": ["assert"] }],
     "no-mixed-spaces-and-tabs": ["error"],
     "no-redeclare": ["error"],
     "no-trailing-spaces": ["error"],

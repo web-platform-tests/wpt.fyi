@@ -13,6 +13,7 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
+    /* global TestRunsQuery, DEFAULT_PRODUCTS */
     class TestRunsBase extends TestRunsQuery(window.Polymer.Element) {
       static get is() {
         return 'wpt-results-base';

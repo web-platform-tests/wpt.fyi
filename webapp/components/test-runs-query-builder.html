@@ -84,6 +84,7 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
+    /* global TestRunsQuery, DEFAULT_BROWSER_NAMES */
     class TestRunsQueryBuilder extends TestRunsQuery(window.Polymer.Element) {
       static get is() {
         return 'test-runs-query-builder';
@@ -106,13 +107,23 @@ found in the LICENSE file.
       constructor() {
         super();
         this.toggleEdit = this.onToggleEdit.bind(this);
-        this.productDeleted = i => () => { this.handleDeleteProduct(i); }
+        this.productDeleted = i => () => {
+          this.handleDeleteProduct(i);
+        };
         this.productChanged = i => {
-          return product => { this.handleProductChanged(i, product); }
-        }
-        this.addProduct = () => { this.handleAddProduct(); };
-        this.clearAll = () => { this.set('products', []); };
-        this.submit = () => { this.onSubmit && this.onSubmit(); };
+          return product => {
+            this.handleProductChanged(i, product);
+          };
+        };
+        this.addProduct = () => {
+          this.handleAddProduct();
+        };
+        this.clearAll = () => {
+          this.set('products', []);
+        };
+        this.submit = () => {
+          this.onSubmit && this.onSubmit();
+        };
       }
 
       observeSpec(change) {
@@ -134,7 +145,6 @@ found in the LICENSE file.
       handleAddProduct() {
         // TODO(lukebjerring): Make a smart(er) suggestion.
         let next = { browser_name: 'chrome' };
-        const builders = this.shadowRoot.querySelectorAll('product-builder');
         for (const d of DEFAULT_BROWSER_NAMES) {
           if (this.products.find(p => p.browser_name === d)) {
             continue;
@@ -208,6 +218,7 @@ found in the LICENSE file.
     </paper-card>
   </template>
   <script>
+    /* global ProductInfo, CHANNELS, DEFAULT_BROWSER_NAMES */
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'product-builder';
@@ -266,7 +277,7 @@ found in the LICENSE file.
         super();
         this.deleteProduct = () => {
           this.onDelete && this.onDelete(this.product);
-        }
+        };
       }
 
       computeProduct(browserName, browserVersion, labels) {
@@ -285,7 +296,7 @@ found in the LICENSE file.
 
       labelsChanged(labels) {
         // Configure the channel from the labels.
-        let channel = "any";
+        let channel = 'any';
         labels = new Set(labels || []);
         for (const c of CHANNELS) {
           if (labels.has(c)) {
@@ -300,7 +311,7 @@ found in the LICENSE file.
       channelChanged(channel, was) {
         // Configure the labels from the channel.
         const labels = Array.from(this.labels || []);
-        const isAny = !channel || channel == "any";
+        const isAny = !channel || channel === 'any';
         if (was) {
           // Remove the old channel.
           let indexOf = labels.findIndex(l => l === was);

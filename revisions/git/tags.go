@@ -38,6 +38,8 @@ func (rcs refCommits) Less(i, j int) bool {
 	return rcs[i].commit.Committer.When.After(rcs[j].commit.Committer.When)
 }
 
+// NewTimeOrderedReferenceIter creates a storer.ReferenceIter that is ordered by
+// commit time.
 func NewTimeOrderedReferenceIter(iter storer.ReferenceIter, repo Repository) (storer.ReferenceIter, error) {
 	rcs := make([]refCommit, 0)
 	var ref *plumbing.Reference
@@ -65,6 +67,10 @@ func NewTimeOrderedReferenceIter(iter storer.ReferenceIter, repo Repository) (st
 	return storer.NewReferenceSliceIter(refs), nil
 }
 
+// NewMergedPRIter creates a storer.ReferenceIter that contains commits that are
+// tagged with a tag name beginning with "merge_pr_". This is a tagging
+// convention used by web platform tests to identify commits on the master
+// branch that constitute a PR merge onto the master branch.
 func NewMergedPRIter(iter storer.ReferenceIter, repo Repository) (storer.ReferenceIter, error) {
 	iter, err := NewTimeOrderedReferenceIter(storer.NewReferenceFilteredIter(func(ref *plumbing.Reference) bool {
 		if ref == nil {
@@ -79,12 +85,16 @@ func NewMergedPRIter(iter storer.ReferenceIter, repo Repository) (storer.Referen
 	return iter, err
 }
 
+// StartReferenceIter is a storer.ReferenceIter decorator that skips commits
+// until a commit where StartReferenceIter.startAt(commit) returns true; commit
+// is included in the iteration. It iterates over all subsequent commits.
 type StartReferenceIter struct {
 	startAt func(ref *plumbing.Reference) bool
 	iter    storer.ReferenceIter
 	started bool
 }
 
+// Next implements storer.ReferenceIter.Next for StartReferenceIter.
 func (iter *StartReferenceIter) Next() (ref *plumbing.Reference, err error) {
 	if iter.started {
 		return iter.iter.Next()
@@ -98,6 +108,7 @@ func (iter *StartReferenceIter) Next() (ref *plumbing.Reference, err error) {
 	return ref, err
 }
 
+// ForEach implements storer.ReferenceIter.ForEach for StartReferenceIter.
 func (iter *StartReferenceIter) ForEach(f func(*plumbing.Reference) error) error {
 	return iter.iter.ForEach(func(ref *plumbing.Reference) error {
 		if iter.started {
@@ -111,10 +122,13 @@ func (iter *StartReferenceIter) ForEach(f func(*plumbing.Reference) error) error
 	})
 }
 
+// Close implements storer.ReferenceIter.Close for StartReferenceIter.
 func (iter *StartReferenceIter) Close() {
 	iter.iter.Close()
 }
 
+// NewStartReferenceIter creates a new StartReferenceIter that decorates iter
+// and uses startAt to determine when to stop skipping commits.
 func NewStartReferenceIter(iter storer.ReferenceIter, startAt func(ref *plumbing.Reference) bool) storer.ReferenceIter {
 	return &StartReferenceIter{
 		startAt,
@@ -123,11 +137,15 @@ func NewStartReferenceIter(iter storer.ReferenceIter, startAt func(ref *plumbing
 	}
 }
 
+// StopReferenceIter is a storer.ReferenceIter decorator that stops iterating
+// over commits as soon as StopReferenceIter.stopAt(commit) returns true; commit
+// is not included in the iteration.
 type StopReferenceIter struct {
 	stopAt func(ref *plumbing.Reference) bool
 	iter   storer.ReferenceIter
 }
 
+// Next implements storer.ReferenceIter.Next for StopReferenceIter.
 func (iter StopReferenceIter) Next() (ref *plumbing.Reference, err error) {
 	ref, err = iter.iter.Next()
 	if err != nil {
@@ -140,6 +158,7 @@ func (iter StopReferenceIter) Next() (ref *plumbing.Reference, err error) {
 	return ref, err
 }
 
+// ForEach implements storer.ReferenceIter.ForEach for StopReferenceIter.
 func (iter StopReferenceIter) ForEach(f func(*plumbing.Reference) error) error {
 	return iter.iter.ForEach(func(ref *plumbing.Reference) error {
 		if iter.stopAt(ref) {
@@ -149,10 +168,14 @@ func (iter StopReferenceIter) ForEach(f func(*plumbing.Reference) error) error {
 	})
 }
 
+// Close implements storer.ReferenceIter.Close for StopReferenceIter.
 func (iter StopReferenceIter) Close() {
 	iter.iter.Close()
 }
 
+// NewStopReferenceIter constructs a new StopReferenceIter that decorates iter
+// and stops at (and excludes) the first commit where stopAt(commit) returns
+// true.
 func NewStopReferenceIter(iter storer.ReferenceIter, stopAt func(ref *plumbing.Reference) bool) storer.ReferenceIter {
 	return StopReferenceIter{
 		stopAt,

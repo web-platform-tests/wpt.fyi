@@ -23,13 +23,14 @@
         }
         return url.search;
       }
-    }
+    };
 
     /**
      * ResultsNavigation extends QueryBuilder's helper methods. Because Polymer
      * doesn't support overriding computed property functions, the computer
      * method string must be passed in by the concrete class.
      */
+    // eslint-disable-next-line no-unused-vars
     const ResultsNavigation =
       (superClass, queryParamsComputer) => class extends QueryBuilder(superClass) {
         static get properties() {
@@ -44,9 +45,9 @@
               observe: true,
               computed: queryParamsComputer,
             },
-          }
+          };
         }
-      }
+      };
   </script>
 </dom-module>
 
