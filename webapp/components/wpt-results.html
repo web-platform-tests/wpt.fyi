@@ -621,10 +621,11 @@ found in the LICENSE file.
       getDiffDelta(node, prop) {
         const [before, after] = node.results;
         switch (prop) {
-        case 'regressions':
+        case 'regressions': {
           const failingBefore = before.total - before.passes;
           const failingAfter = after.total - after.passes;
           return Math.min(failingBefore - failingAfter, 0);
+        }
         case 'total':
           return before.total - after.total;
         case 'passes':
