@@ -23,44 +23,44 @@ func TestDiffResults_NoDifference(t *testing.T) {
 
 func TestDiffResults_Difference(t *testing.T) {
 	// One test now passing
-	assertDelta(t, []int{0, 1}, []int{1, 1}, []int{1, 1})
+	assertDelta(t, []int{0, 1}, []int{1, 1}, []int{1, 0, 0})
 
 	// One test now failing
-	assertDelta(t, []int{1, 1}, []int{0, 1}, []int{1, 1})
+	assertDelta(t, []int{1, 1}, []int{0, 1}, []int{0, 1, 0})
 
 	// Two tests, one now failing
-	assertDelta(t, []int{2, 2}, []int{1, 2}, []int{1, 2})
+	assertDelta(t, []int{2, 2}, []int{1, 2}, []int{0, 1, 0})
 
 	// Three tests, two now passing
-	assertDelta(t, []int{1, 3}, []int{3, 3}, []int{2, 3})
+	assertDelta(t, []int{1, 3}, []int{3, 3}, []int{2, 0, 0})
 }
 
 func TestDiffResults_Added(t *testing.T) {
 	// One new test, all passing
-	assertDelta(t, []int{1, 1}, []int{2, 2}, []int{1, 2})
+	assertDelta(t, []int{1, 1}, []int{2, 2}, []int{1, 0, 1})
 
 	// One new test, all failing
-	assertDelta(t, []int{0, 1}, []int{0, 2}, []int{1, 2})
+	assertDelta(t, []int{0, 1}, []int{0, 2}, []int{0, 0, 1})
 
 	// One new test, new test passing
-	assertDelta(t, []int{0, 1}, []int{1, 2}, []int{1, 2})
+	assertDelta(t, []int{0, 1}, []int{1, 2}, []int{1, 0, 1})
 
 	// One new test, new test failing
-	assertDelta(t, []int{1, 1}, []int{1, 2}, []int{1, 2})
+	assertDelta(t, []int{1, 1}, []int{1, 2}, []int{0, 0, 1})
 }
 
 func TestDiffResults_Removed(t *testing.T) {
 	// One removed test, all passing
-	assertDelta(t, []int{2, 2}, []int{1, 1}, []int{1, 2})
+	assertDelta(t, []int{2, 2}, []int{1, 1}, []int{0, 1, -1})
 
 	// One removed test, all failing
-	assertDelta(t, []int{0, 2}, []int{0, 1}, []int{1, 2})
+	assertDelta(t, []int{0, 2}, []int{0, 1}, []int{0, 0, -1})
 
 	// One removed test, deleted test passing
-	assertDelta(t, []int{1, 2}, []int{0, 1}, []int{1, 2})
+	assertDelta(t, []int{1, 2}, []int{0, 1}, []int{0, 1, -1})
 
 	// One removed test, deleted test failing
-	assertDelta(t, []int{1, 2}, []int{1, 1}, []int{1, 2})
+	assertDelta(t, []int{1, 2}, []int{1, 1}, []int{0, 0, -1})
 }
 
 func TestDiffResults_Filtered(t *testing.T) {
@@ -79,16 +79,16 @@ func TestDiffResults_Filtered(t *testing.T) {
 		changedPath: {3, 5},
 		addedPath:   {1, 3},
 	}
-	assert.Equal(t, map[string][]int{changedPath: {1, 5}}, GetResultsDiff(before, after, changedFilter))
-	assert.Equal(t, map[string][]int{addedPath: {3, 3}}, GetResultsDiff(before, after, addedFilter))
-	assert.Equal(t, map[string][]int{removedPath: {2, 2}}, GetResultsDiff(before, after, deletedFilter))
+	assert.Equal(t, map[string][]int{changedPath: {1, 0, 0}}, GetResultsDiff(before, after, changedFilter))
+	assert.Equal(t, map[string][]int{addedPath: {1, 2, 3}}, GetResultsDiff(before, after, addedFilter))
+	assert.Equal(t, map[string][]int{removedPath: {1, 1, -2}}, GetResultsDiff(before, after, deletedFilter))
 
 	// Test filtering by each /, /mock/, and /mock/path.html
 	pieces := strings.SplitAfter(mockTestPath, "/")
 	for i := 1; i < len(pieces); i++ {
 		paths := mapset.NewSet(strings.Join(pieces[:i], ""))
 		filter := DiffFilterParam{Changed: true, Paths: paths}
-		assertDeltaWithFilter(t, []int{0, 5}, []int{5, 5}, []int{5, 5}, filter)
+		assertDeltaWithFilter(t, []int{1, 3}, []int{2, 4}, []int{1, 0, 1}, filter)
 	}
 
 	// Filter where none match
@@ -110,7 +110,7 @@ func TestDiffResults_Filtered(t *testing.T) {
 	delta := GetResultsDiff(rBefore, rAfter, filter)
 	assert.NotContains(t, delta, mockPath2)
 	assert.Contains(t, delta, mockPath1)
-	assert.Equal(t, []int{2, 2}, delta[mockPath1])
+	assert.Equal(t, []int{2, 0, 1}, delta[mockPath1])
 }
 
 func assertNoDeltaDifferences(t *testing.T, before []int, after []int) {
