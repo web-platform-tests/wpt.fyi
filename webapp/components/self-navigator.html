@@ -19,7 +19,7 @@
             type: Boolean,
             computed: 'computeIsSubfolder(path)',
           },
-          onpathupdated: Function,
+          onLocationUpdated: Function,
         };
       }
 
@@ -30,6 +30,7 @@
         }
         window.onpopstate = () => {
           this.path = this.urlToPath(window.location);
+          this.onLocationUpdated && this.onLocationUpdated(this.path, history.state);
         };
       }
 
@@ -64,8 +65,9 @@
       }
 
       pathUpdated(path) {
-        if (this.onpathupdated) {
-          this.onpathupdated(path);
+        if (this.onLocationUpdated) {
+          this.onLocationUpdated(
+            path, history.state || this.navigationQueryParams());
         }
       }
 
@@ -106,13 +108,14 @@
       navigateToLocation(location) {
         const url = new URL(location);
         url.search = '';
-        for (const [k, v] of Object.entries(this.navigationQueryParams())) {
+        const params = this.navigationQueryParams();
+        for (const [k, v] of Object.entries(params)) {
           const list = (v instanceof Array) ? v : [v];
           for (const item of list) {
             url.searchParams.append(k, item);
           }
         }
-        if (url.toString() === location.toString()) {
+        if (url.toString() === window.location.toString()) {
           return;
         }
 
@@ -121,7 +124,7 @@
           this.path = path;
         }
 
-        window.history.pushState({}, '', url);
+        window.history.pushState(params, '', url);
 
         // Send Google Analytics pageview event
         if ('ga' in window) {

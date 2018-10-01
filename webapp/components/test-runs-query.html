@@ -168,14 +168,27 @@ found in the LICENSE file.
         }
 
         /**
-         * Update the query params to match those of the given TestRunQuery.
+         * Update this builder's properties to match the given query params.
          */
-        updateQueryParams(testRunsQuery) {
+        updateQueryParams(params) {
           this.clearQuery();
-          for (const field of ['products', 'labels', 'maxCount', 'sha', 'aligned']) {
-            if (field in testRunsQuery) {
-              this[field] = testRunsQuery[field];
-            }
+          if (!params) {
+            return;
+          }
+          if (!this.computeIsLatest(params.sha)) {
+            this.sha = params.sha;
+          }
+          if ('label' in params) {
+            this.labels = params.label;
+          }
+          if ('product' in params) {
+            this.products = params.product.map(p => this.parseProductSpec(p));
+          }
+          if ('max-count' in params) {
+            this.maxCount = params['max-count'];
+          }
+          if ('aligned' in params) {
+            this.aligned = params.aligned;
           }
         }
       };
