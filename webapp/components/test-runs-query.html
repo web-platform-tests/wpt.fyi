@@ -101,6 +101,7 @@ found in the LICENSE file.
             testRunQuery: {
               type: String,
               computed: 'computeQuery(testRunQueryParams)',
+              notify: true,
             },
           };
         }
@@ -164,6 +165,18 @@ found in the LICENSE file.
           this.maxCount = undefined;
           this.sha = 'latest';
           this.aligned = undefined;
+        }
+
+        /**
+         * Update the query params to match those of the given TestRunQuery.
+         */
+        updateQueryParams(testRunsQuery) {
+          this.clearQuery();
+          for (const field of ['products', 'labels', 'maxCount', 'sha', 'aligned']) {
+            if (field in testRunsQuery) {
+              this[field] = testRunsQuery[field];
+            }
+          }
         }
       };
   </script>
