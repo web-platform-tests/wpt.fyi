@@ -18,7 +18,6 @@ type MockWriteCloser struct {
 	b      bytes.Buffer
 	closed bool
 	t      *testing.T
-	c      chan bool
 }
 
 // Write ensures MockWriteCloser isn't closed and delegates to an underlying
@@ -34,21 +33,15 @@ func (mwc *MockWriteCloser) Write(p []byte) (n int, err error) {
 // goroutine receives the message.
 func (mwc *MockWriteCloser) Close() error {
 	mwc.closed = true
-	if mwc.c != nil {
-		mwc.c <- true
-	}
 	return nil
 }
 
-// NewMockWriteCloser constructs a MockWriteCloser for a given test and optional
-// on-close synchronization channel. MockWriteCloser will send true to the
-// channel on Close().
-func NewMockWriteCloser(t *testing.T, c chan bool) *MockWriteCloser {
+// NewMockWriteCloser constructs a MockWriteCloser for a given test.
+func NewMockWriteCloser(t *testing.T) *MockWriteCloser {
 	return &MockWriteCloser{
 		b:      bytes.Buffer{},
 		closed: false,
 		t:      t,
-		c:      c,
 	}
 }
 

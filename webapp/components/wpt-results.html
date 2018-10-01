@@ -406,6 +406,10 @@ found in the LICENSE file.
       }
 
       computeSearchURL(testRuns, query) {
+        if (!testRuns || testRuns.length === 0) {
+          return '';
+        }
+
         let url = new URL('/api/search', window.location);
         if (testRuns) {
           url.searchParams.set(
