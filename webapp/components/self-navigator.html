@@ -25,7 +25,9 @@
 
       ready() {
         super.ready();
-        this.path = this.urlToPath(window.location);
+        if (!this.path) {
+          this.path = this.urlToPath(window.location);
+        }
         window.onpopstate = () => {
           this.path = this.urlToPath(window.location);
         };
