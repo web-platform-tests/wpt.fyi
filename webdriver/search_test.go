@@ -58,7 +58,7 @@ func testSearch(t *testing.T, path, elementName string) {
 	if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
 		panic(err)
 	}
-	assertListIsFiltered(t, wd, elementName, folder)
+	assertListIsFiltered(t, wd, elementName, folder+"/")
 
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
