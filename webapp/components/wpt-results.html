@@ -247,6 +247,12 @@ found in the LICENSE file.
 
           </tbody>
         </table>
+
+        <template is="dom-if" if="[[noResults]]">
+          <info-banner type="info">
+            No results.
+          </info-banner>
+        </template>
       </template>
     </template>
 
@@ -340,10 +346,8 @@ found in the LICENSE file.
             type: String,
             computed: 'computeSearchURL(testRuns, search)',
           },
-          resultsLoadFailed: {
-            type: Boolean,
-            value: false,
-          },
+          resultsLoadFailed: Boolean,
+          noResults: Boolean,
           onSearchCommit: Function,
           editingQuery: {
             type: Boolean,
@@ -418,9 +422,9 @@ found in the LICENSE file.
         super();
         this.onSearchCommit = this.handleSearchCommit.bind(this);
         this.onLoadingComplete = () => {
-          this.resultsLoadFailed =
-            !(this.testRuns && this.testRuns.length
-              && this.searchResults && this.searchResults.length);
+          this.resultsLoadFailed = !(this.testRuns && this.testRuns.length);
+          this.noResults = !this.resultsLoadFailed
+            && !(this.searchResults && this.searchResults.length);
         };
         this.toggleQueryEdit = () => {
           this.editingQuery = !this.editingQuery;

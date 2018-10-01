@@ -33,8 +33,9 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
 	numRevisions, err := shared.ParseQueryParamInt(r, "num_revisions")
-	if err == shared.ErrMissing {
-		numRevisions = 1
+	if numRevisions == nil {
+		one := 1
+		numRevisions = &one
 	} else if err != nil {
 		http.Error(w, a.ErrorJSON(err.Error()), http.StatusBadRequest)
 		return
@@ -45,7 +46,7 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 		epochsMap := a.GetEpochsMap()
 		for _, eStr := range eStrs {
 			if e, ok := epochsMap[eStr]; ok {
-				getRevisions[e] = numRevisions
+				getRevisions[e] = *numRevisions
 			} else {
 				http.Error(w, a.ErrorJSON(fmt.Sprintf("Unknown epoch: %s", eStr)), http.StatusBadRequest)
 				return
@@ -54,7 +55,7 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	} else {
 		latestGetRevisions := a.GetLatestGetRevisionsInput()
 		for e := range latestGetRevisions {
-			getRevisions[e] = numRevisions
+			getRevisions[e] = *numRevisions
 		}
 	}
 
@@ -82,7 +83,7 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	start := at.Add(time.Duration(-1-numRevisions) * epochs[0].GetData().MaxDuration)
+	start := at.Add(time.Duration(-1-*numRevisions) * epochs[0].GetData().MaxDuration)
 	if tStrs, ok := q["start"]; ok {
 		if len(tStrs) > 1 {
 			http.Error(w, a.ErrorJSON("Multiple start values"), http.StatusBadRequest)

@@ -5,8 +5,8 @@ found in the LICENSE file.
 -->
 
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="test-file-results.html">
-<link rel="import" href="abstract-test-file-results-table.html">
+<link rel="import" href="./test-file-results.html">
+<link rel="import" href="./test-runs-query.html">
 
 <dom-module id="test-results-history-grid">
   <template>
@@ -62,8 +62,8 @@ found in the LICENSE file.
     <pre id="status">&nbsp;</pre>
   </template>
   <script>
-    /* global AbstractTestFileResultsTable, TestFileResults */
-    class TestFileResultsTimeSeries extends AbstractTestFileResultsTable(TestFileResults) {
+    /* global TestRunsQuery, TestFileResults */
+    class TestFileResultsTimeSeries extends TestRunsQuery(TestFileResults) {
       static get is() {
         return 'test-results-history-grid';
       }
@@ -90,7 +90,7 @@ found in the LICENSE file.
 
       computeTestRunQueryParams(sha, labels, products, maxCount) {
         sha = null;
-        const params = super.testRunQueryParams(sha, labels, products, maxCount);
+        const params = super.computeTestRunQueryParams(sha, labels, products, maxCount);
         if (!labels || !labels.length) {
           params.aligned = true;
         }
