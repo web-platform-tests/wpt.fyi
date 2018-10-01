@@ -54,7 +54,7 @@ See models.go for more details.
         <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
           <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
           <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
-          <div>{{dateFormat(testRun.created_at)}}</div>
+          <div>{{dateFormat(testRun.time_start)}}</div>
         </template>
       </template>
 
@@ -62,6 +62,7 @@ See models.go for more details.
         <paper-tooltip offset=0>
           {{displayName(testRun.browser_name)}} {{testRun.browser_version}}<br>
           Labels: {{displayLabels(testRun.labels)}}<br>
+          Started {{timeFormat(testRun.time_start)}} {{timeTaken(testRun)}}<br>
           {{moreTooltip(testRun)}}
         </paper-tooltip>
       </template>
@@ -92,7 +93,31 @@ See models.go for more details.
       }
 
       dateFormat(isoDate) {
-        return String(new Date(isoDate)).match(/^\w+ (\w+ \w+ \w+)/)[1];
+        return new Date(isoDate).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+      }
+
+      timeFormat(isoDate) {
+        const date = new Date(isoDate).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        });
+        const time = new Date(isoDate).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: 'numeric',
+        });
+        return `${date} at ${time}`;
+      }
+
+      timeTaken(testRun) {
+        // NOTE: We don't always have a real start/end time.
+        const hour = 1000*60*60;
+        const elapsed = new Date(testRun.time_end) - new Date(testRun.time_start);
+        const oneDP = (elapsed / hour).toFixed(1);
+        return oneDP < 0.1 ? '' : `(took ${oneDP}h)`;
       }
 
       isDiff(browserName) {

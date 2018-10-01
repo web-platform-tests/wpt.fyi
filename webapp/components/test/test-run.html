@@ -23,7 +23,8 @@
         trf = fixture('test-run-fixture');
         trf.set('testRun', {
           browser_name: 'firefox',
-          created_at: '2018-01-12T12:00:00Z'
+          time_start: '2018-01-12T12:00:00Z',
+          time_end: '2018-01-12T13:20:00Z',
         });
       });
 
@@ -36,11 +37,41 @@
       });
 
       suite('TestRunsBase.prototype.*', () => {
+        let sandbox;
+
+        setup(() => {
+          sandbox = sinon.sandbox.create();
+          sandbox.stub(Date.prototype, 'getTimezoneOffset').returns(240);
+        });
+
         suite('dateFormat()', () => {
           test('dateFormat(iso string)', () => {
-            assert.equal(trf.dateFormat('2018-01-12T12:00:00Z'), 'Jan 12 2018');
+            assert.equal(trf.dateFormat('2018-01-12T12:00:00Z'), 'Jan 12, 2018');
           });
         });
+
+        test('timeFormat(iso string)', () => {
+          assert.equal(trf.timeFormat('2018-01-12T12:00:00Z'), 'Jan 12 at 7:00 AM');
+        });
+
+        suite('timeTaken(testRun Object)', () => {
+          test('1h 20m', () => {
+            const testRun = {
+              time_start: '2018-01-12T12:00:00Z',
+              time_end: '2018-01-12T13:20:00Z',
+            };
+            assert.equal(trf.timeTaken(testRun), '(took 1.3h)');
+          });
+
+          test('0m', () => {
+            const testRun = {
+              time_start: '2018-01-12T12:00:00Z',
+              time_end: '2018-01-12T12:00:00Z',
+            };
+            assert.equal(trf.timeTaken(testRun), '');
+          });
+        });
+
         suite('isDiff()', () => {
           test('isDiff("Diff|diff")', () => {
             assert.isTrue(trf.isDiff('Diff'));
@@ -50,50 +81,41 @@
             assert.isFalse(trf.isDiff('literally anything'));
           });
         });
+
         suite('shortVersion', () => {
           test('valid, major only', () => {
-
             assert.equal(trf.shortVersion('chrome', '1'), '1');
-
             assert.equal(trf.shortVersion('chrome', '2.3'), '2');
-
             assert.equal(trf.shortVersion('chrome', '3.4.5'), '3');
-
             assert.equal(trf.shortVersion('chrome', '4.5.6.7'), '4');
-
             assert.equal(trf.shortVersion('chrome', '765.687'), '765');
-
             assert.equal(trf.shortVersion('chrome', '   11.0 '), '11');
-
             assert.equal(trf.shortVersion('chrome', '56.0a'), '56');
           });
+
           test('valid, major and minor', () => {
             assert.equal(trf.shortVersion('safari', '1'), '1');
-
             assert.equal(trf.shortVersion('safari', '2.3'), '2.3');
-
             assert.equal(trf.shortVersion('safari', '3.4.5'), '3.4');
-
             assert.equal(trf.shortVersion('safari', '4.5.6.7'), '4.5');
-
             assert.equal(trf.shortVersion('safari', '765.687'), '765.687');
-
             assert.equal(trf.shortVersion('safari', '   11.0 '), '11.0');
-
             assert.equal(trf.shortVersion('safari', '56.0a'), '56.0');
           });
+
           test('invalid', () => {
             assert.equal(trf.shortVersion('chrome', 'five'), 'five');
-
             assert.equal(trf.shortVersion('chrome', ''), '');
-
             assert.equal(trf.shortVersion('safari', 'five'), 'five');
-
             assert.equal(trf.shortVersion('safari', ''), '');
           });
         });
+
+        teardown(() => {
+          sandbox.restore();
+        });
       });
     });
-  </script>
+    </script>
 </body>
 </html>
