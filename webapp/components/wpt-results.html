@@ -288,7 +288,7 @@ found in the LICENSE file.
     /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation, WPTFlags */
     class WPTResults extends ResultsNavigation(
       WPTFlags(SelfNavigation(LoadingState(TestRunsBase))),
-      'resultsQueryParams(sha, labels, productSpecs, maxCount, diff, search)') {
+      'resultsQueryParams(sha, aligned, labels, productSpecs, maxCount, diff, search)') {
 
       static get is() {
         return 'wpt-results';

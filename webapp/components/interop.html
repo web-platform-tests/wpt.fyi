@@ -219,7 +219,7 @@ found in the LICENSE file.
   /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation */
   class WPTInterop extends ResultsNavigation(
     SelfNavigation(LoadingState(TestRunsBase)),
-    'interopQueryParams(sha, labels, productSpecs, maxCount, search)') {
+    'interopQueryParams(sha, aligned, labels, productSpecs, maxCount, search)') {
     static get is() {
       return 'wpt-interop';
     }
