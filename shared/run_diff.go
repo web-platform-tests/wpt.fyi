@@ -88,8 +88,8 @@ func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (res
 	return results, nil
 }
 
-// GetResultsDiff returns a map of test name to an array of [count-different-tests, total-tests], for tests which had
-// different results counts in their map (which is test name to array of [count-passed, total-tests]).
+// GetResultsDiff returns a map of test name to an array of [newly-passing, newly-failing, total-delta], for tests which had
+// different results counts in their map (which is test name to array of [count-passed, total]).
 //
 func GetResultsDiff(before map[string][]int, after map[string][]int, filter DiffFilterParam) map[string][]int {
 	diff := make(map[string][]int)
@@ -104,22 +104,28 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 				if !filter.Deleted {
 					continue
 				}
-				diff[test] = []int{resultsBefore[1], resultsBefore[1]}
+				diff[test] = []int{resultsBefore[0], resultsBefore[1] - resultsBefore[0], resultsBefore[1]}
 			} else {
 				if !filter.Changed && !filter.Unchanged {
 					continue
 				}
-				passDiff := abs(resultsBefore[0] - resultsAfter[0])
+				improved, regressed, delta := 0, 0, resultsBefore[0]-resultsAfter[0]
+				if delta >= 0 {
+					improved = delta
+				} else {
+					regressed = abs(delta)
+				}
 				countDiff := abs(resultsBefore[1] - resultsAfter[1])
-				changed := passDiff != 0 || countDiff != 0
+				changed := delta != 0 || countDiff != 0
 				if (!changed && !filter.Unchanged) || changed && !filter.Changed {
 					continue
 				}
 				// Changed tests is at most the number of different outcomes,
 				// but newly introduced tests should still be counted (e.g. 0/2 => 0/5)
 				diff[test] = []int{
-					max(passDiff, countDiff),
-					max(resultsBefore[1], resultsAfter[1]),
+					improved,
+					regressed,
+					abs(resultsBefore[1] - resultsAfter[1]),
 				}
 			}
 		}
@@ -132,7 +138,7 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 
 			if _, ok := before[test]; !ok {
 				// Missing? Then N / N tests are 'different'
-				diff[test] = []int{resultsAfter[1], resultsAfter[1]}
+				diff[test] = []int{resultsAfter[0], resultsAfter[1] - resultsAfter[0], resultsAfter[1]}
 			}
 		}
 	}

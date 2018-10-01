@@ -90,10 +90,10 @@ found in the LICENSE file.
       .passes-80 { background-color: hsl(0, 85%, 85%); }
       .passes-100 { background-color: var(--paper-light-green-a400); }
 
-      span.delta.negative {
+      span.delta.regressions {
         color: var(--paper-red-700);
       }
-      span.delta.positive {
+      span.delta.passes {
         color: var(--paper-green-700);
       }
       td.none {
@@ -237,9 +237,11 @@ found in the LICENSE file.
                 </template>
                 <template is="dom-if" if="[[diffShown]]">
                   <td class$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
-                    <span class$="passes [[ testResultClass(node, index, diffRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
+                    <span class="delta passes">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
                     /
-                    <span class$="total [[ testResultClass(node, index, diffRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'total') }}</span>
+                    <span class="delta regressions">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'regressions') }}</span>
+                    /
+                    <span class="delta total">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'total') }}</span>
                   </td>
                 </template>
               </tr>
@@ -617,8 +619,18 @@ found in the LICENSE file.
       }
 
       getDiffDelta(node, prop) {
-        return node.results[1][prop || 'passes'] -
-          node.results[0][prop || 'passes'];
+        const [before, after] = node.results;
+        switch (prop) {
+        case 'regressions':
+          const failingBefore = before.total - before.passes;
+          const failingAfter = after.total - after.passes;
+          return Math.min(failingBefore - failingAfter, 0);
+        case 'total':
+          return before.total - after.total;
+        case 'passes':
+        default:
+          return Math.max(after.passes - before.passes, 0);
+        }
       }
 
       getDiffDeltaStr(node, prop) {
