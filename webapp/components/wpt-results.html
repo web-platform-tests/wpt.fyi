@@ -334,9 +334,13 @@ found in the LICENSE file.
             type: Boolean,
             computed: 'isDiffShown(diff, diffRun)',
           },
+          diffURL: {
+            type: String,
+            computed: 'computeDiffURL(testRuns)',
+          },
           filter: {
             type: String,
-            value: 'ADCU', // Added, Deleted, Changed, Unchanged
+            value: 'ADC', // Added, Deleted, Changed
           },
           showHistory: {
             type: Boolean,
@@ -422,6 +426,17 @@ found in the LICENSE file.
         return url;
       }
 
+      computeDiffURL(productSpecs) {
+        if (!productSpecs || productSpecs.length !== 2) {
+          return;
+        }
+        let url = new URL('/api/diff', window.location);
+        url.searchParams.set('before', this.productSpecs[0]);
+        url.searchParams.set('after', this.productSpecs[1]);
+        url.searchParams.set('filter', this.filter);
+        return url;
+      }
+
       constructor() {
         super();
         this.onSearchCommit = this.handleSearchCommit.bind(this);
@@ -482,26 +497,42 @@ found in the LICENSE file.
                 revision: 'diff',
                 browser_name: 'diff',
               };
+              this.fetchDiff();
             }
           })
         );
       }
 
       async fetchResults() {
-        this.loadingCount++;
-        try {
-          const json = await window.fetch(this.searchURL)
+        this.load(
+          window.fetch(this.searchURL)
             .then(r => {
               if (!r.ok || r.status !== 200) {
                 return Promise.reject('Failed to fetch results data.');
               }
               return r.json();
-            });
-          this.searchResults = json.results;
-          this.refreshDisplayedNodes();
-        } finally {
-          this.loadingCount--;
-        }
+            })
+            .then(json => {
+              this.searchResults = json.results;
+              this.refreshDisplayedNodes();
+            })
+        );
+      }
+
+      async fetchDiff() {
+        this.load(
+          window.fetch(this.diffURL)
+            .then(r => {
+              if (!r.ok || r.status !== 200) {
+                return Promise.reject('Failed to fetch diff data.');
+              }
+              return r.json();
+            })
+            .then(json => {
+              this.diffResults = json;
+              this.refreshDisplayedNodes();
+            })
+        );
       }
 
       pathUpdated(path) {
@@ -537,7 +568,7 @@ found in the LICENSE file.
           // Filter out files not in this directory.
           .filter(r => r.test.startsWith(prefix))
           // Accumulate displayedNodes from remaining files.
-          .reduce((() => {
+          .reduce(((acc, r) => {
             // Bookkeeping of the form:
             //   {<displayed dir/file name>: <index in acc>}.
             let nodes = {};
@@ -552,23 +583,35 @@ found in the LICENSE file.
               // existing node.
               if (!nodes.hasOwnProperty(name)) {
                 nodes[name] = acc.length;
-                acc.push({
+                const row = {
                   path: `${prefix}${name}`,
                   isDir,
-                  // Copy legacy_status node contents.
-                  results: r.legacy_status
-                    .map(stats => Object.assign({}, stats)),
-                });
-              } else {
-                const rs = r.legacy_status;
-                const nrs = acc[nodes[name]].results;
-
-                for (let i = 0; i < rs.length; i++) {
-                  nrs[i].passes += rs[i].passes;
-                  nrs[i].total += rs[i].total;
+                  results: r.legacy_status.map(i => ({
+                    passes: 0,
+                    total: 0,
+                  })),
+                };
+                if (this.diffResults) {
+                  row.diff = {
+                    passes: 0,
+                    // TODO(lukebjerring): regressions
+                    total: 0,
+                  };
                 }
+                acc.push(row);
               }
-
+              // Accumulate the sums.
+              const rs = r.legacy_status;
+              const row = acc[nodes[name]];
+              for (let i = 0; i < rs.length; i++) {
+                row.results[i].passes += rs[i].passes;
+                row.results[i].total += rs[i].total;
+              }
+              if (this.diffResults && r.test in this.diffResults) {
+                const diff = this.diffResults[r.test];
+                row.diff.passes += diff[0];
+                row.diff.total += diff[1];
+              }
               return acc;
             };
           })(), [])
@@ -621,6 +664,9 @@ found in the LICENSE file.
       }
 
       getDiffDelta(node, prop) {
+        if (node.diff) {
+          return node.diff[prop || 'passes'];
+        }
         return node.results[1][prop || 'passes'] -
           node.results[0][prop || 'passes'];
       }
