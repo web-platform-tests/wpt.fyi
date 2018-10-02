@@ -16,11 +16,11 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -37,19 +37,20 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
 
 	payload, err := ioutil.ReadAll(r.Body)
 	r.Body.Close()
 	if err != nil {
-		log.Errorf(ctx, "%v", err)
+		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	secret, err := getSecret(ctx)
 	if err != nil {
-		log.Errorf(ctx, "%v", err)
+		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -61,7 +62,7 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	processed, err := handleStatusEvent(ctx, payload)
 	if err != nil {
-		log.Errorf(ctx, "%v", err)
+		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -89,6 +90,7 @@ type branchInfo struct {
 }
 
 func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
+	log := shared.GetLogger(ctx)
 	var status statusEventPayload
 	if err := json.Unmarshal(payload, &status); err != nil {
 		return false, err
@@ -103,7 +105,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, fmt.Errorf("unrecognized target_url: %s", status.TargetURL)
 	}
 
-	log.Infof(ctx, "Processing task group %s", taskGroupID)
+	log.Infof("Processing task group %s", taskGroupID)
 	client := urlfetch.Client(ctx)
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
 	if err != nil {
@@ -122,18 +124,15 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#results-creation
 	api := fmt.Sprintf("https://%s/api/results/upload", appengine.DefaultVersionHostname(ctx))
-	for browser, urls := range urlsByBrowser {
-		log.Infof(ctx, "Reports for %s: %v", browser, urls)
-		// Set timeout to 1 min (the default is 5s) to give the
-		// receiver enough time to download the reports.
-		slowCtx, cancel := context.WithTimeout(ctx, time.Minute)
-		client := urlfetch.Client(slowCtx)
-		err := createRun(client, api, username, password, urls)
-		cancel()
-		if err != nil {
-			return false, err
-		}
+
+	// Set timeout to 1 min (the default is 5s) to give the receiver enough time to download the reports.
+	slowCtx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	err = createAllRuns(log, &urlfetch.Transport{Context: slowCtx}, api, username, password, urlsByBrowser)
+	if err != nil {
+		return false, err
 	}
+
 	return true, nil
 }
 
@@ -250,6 +249,31 @@ func verifySignature(message []byte, signature string, secret string) bool {
 	mac.Write(message)
 	expectedMAC := mac.Sum(nil)
 	return hmac.Equal(messageMAC, expectedMAC)
+}
+
+func createAllRuns(log shared.Logger, transport http.RoundTripper, api, username, password string, urlsByBrowser map[string][]string) error {
+	client := &http.Client{Transport: transport}
+
+	errors := make(chan error, len(urlsByBrowser))
+	var wg sync.WaitGroup
+	wg.Add(len(urlsByBrowser))
+	for browser, urls := range urlsByBrowser {
+		go func(browser string, urls []string) {
+			defer wg.Done()
+			log.Infof("Reports for %s: %v", browser, urls)
+			err := createRun(client, api, username, password, urls)
+			if err != nil {
+				log.Errorf("%v", err)
+				errors <- err
+			}
+		}(browser, urls)
+	}
+	wg.Wait()
+	close(errors)
+	if _, ok := <-errors; ok {
+		return fmt.Errorf("error(s) occured when talking to %s", api)
+	}
+	return nil
 }
 
 func createRun(client *http.Client, api string, username string, password string, reportURLs []string) error {

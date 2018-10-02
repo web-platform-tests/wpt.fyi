@@ -7,8 +7,11 @@
 package webhook
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,4 +96,30 @@ func TestVerifySignature(t *testing.T) {
 	// Test an ill-formed (odd-length) signature.
 	assert.False(t, verifySignature(
 		message, "875a5feef4cde4265d6d5d21c304d755903ccb6", secret))
+}
+
+func TestCreateAllRuns_success(t *testing.T) {
+	requested := 0
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		requested++
+		w.Write([]byte("OK"))
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	err := createAllRuns(logrus.New(), nil, server.URL, "username", "password",
+		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+	)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, requested)
+}
+
+func TestCreateAllRuns_error(t *testing.T) {
+	server := httptest.NewServer(http.NotFoundHandler())
+	defer server.Close()
+
+	err := createAllRuns(logrus.New(), nil, server.URL, "username", "password",
+		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+	)
+	assert.NotNil(t, err)
 }
