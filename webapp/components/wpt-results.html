@@ -570,7 +570,7 @@ found in the LICENSE file.
           // Filter out files not in this directory.
           .filter(r => r.test.startsWith(prefix))
           // Accumulate displayedNodes from remaining files.
-          .reduce(((acc, r) => {
+          .reduce((() => {
             // Bookkeeping of the form:
             //   {<displayed dir/file name>: <index in acc>}.
             let nodes = {};
@@ -588,7 +588,7 @@ found in the LICENSE file.
                 const row = {
                   path: `${prefix}${name}`,
                   isDir,
-                  results: r.legacy_status.map(i => ({
+                  results: r.legacy_status.map(() => ({
                     passes: 0,
                     total: 0,
                   })),
@@ -669,7 +669,7 @@ found in the LICENSE file.
       getDiffDelta(node, prop) {
         if (node.diff) {
           const val = node.diff[prop || 'passes'];
-          return prop == 'regressions' ? -val : val;
+          return prop === 'regressions' ? -val : val;
         }
         const [before, after] = node.results;
         switch (prop) {

@@ -109,14 +109,13 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 				if !filter.Changed && !filter.Unchanged {
 					continue
 				}
-				improved, regressed, delta := 0, 0, resultsBefore[0] - resultsAfter[0]
+				improved, regressed, delta := 0, 0, resultsBefore[0]-resultsAfter[0]
 				if delta < 0 {
 					improved = abs(delta)
 				} else {
 					regressed = delta
 				}
-				countDiff := abs(resultsBefore[1] - resultsAfter[1])
-				changed := delta != 0 || countDiff != 0
+				changed := delta != 0 || resultsBefore[1] != resultsAfter[1]
 				if (!changed && !filter.Unchanged) || changed && !filter.Changed {
 					continue
 				}
