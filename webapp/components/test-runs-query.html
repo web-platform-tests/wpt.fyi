@@ -101,6 +101,7 @@ found in the LICENSE file.
             testRunQuery: {
               type: String,
               computed: 'computeQuery(testRunQueryParams)',
+              notify: true,
             },
           };
         }
@@ -164,6 +165,31 @@ found in the LICENSE file.
           this.maxCount = undefined;
           this.sha = 'latest';
           this.aligned = undefined;
+        }
+
+        /**
+         * Update this builder's properties to match the given query params.
+         */
+        updateQueryParams(params) {
+          this.clearQuery();
+          if (!params) {
+            return;
+          }
+          if (!this.computeIsLatest(params.sha)) {
+            this.sha = params.sha;
+          }
+          if ('label' in params) {
+            this.labels = params.label;
+          }
+          if ('product' in params) {
+            this.products = params.product.map(p => this.parseProductSpec(p));
+          }
+          if ('max-count' in params) {
+            this.maxCount = params['max-count'];
+          }
+          if ('aligned' in params) {
+            this.aligned = params.aligned;
+          }
         }
       };
   </script>

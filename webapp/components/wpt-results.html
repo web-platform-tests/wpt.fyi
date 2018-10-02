@@ -433,17 +433,7 @@ found in the LICENSE file.
         this.toggleQueryEdit = () => {
           this.editingQuery = !this.editingQuery;
         };
-        this.updateQuery = () => {
-          this.clearQuery();
-          const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-          if (builder.products && builder.products.length) {
-            this.products = builder.products;
-          }
-          this.testRuns = [];
-          this.searchResults = [];
-          this.refreshDisplayedNodes();
-          this.loadData();
-        };
+        this.updateQuery = this.handleUpdateQuery.bind(this);
       }
 
       connectedCallback() {
@@ -462,11 +452,18 @@ found in the LICENSE file.
         await super.ready();
 
         // NOTE(lukebjerring): Overriding the pathUpdated method doesn't get
-        // called, so we wrap any given onpathupdated method here.
-        const onpathupdated = this.onpathupdated;
-        this.onpathupdated = path => {
-          onpathupdated && onpathupdated(path);
+        // called, so we wrap any given onLocationUpdated method here.
+        const onLocationUpdated = this.onLocationUpdated;
+        this.onLocationUpdated = (path, state) => {
+          onLocationUpdated && onLocationUpdated(path, state);
           this.showHistory = false;
+          if (state) {
+            const builder = this.shadowRoot.querySelector('test-runs-query-builder');
+            if (builder) {
+              builder.updateQueryParams(state);
+              builder.submit();
+            }
+          }
         };
         this.loadData();
       }
@@ -708,6 +705,17 @@ found in the LICENSE file.
         // Fetch search results when test-search signals that user has committed
         // to search string (by pressing <Enter>).
         this.fetchResults();
+      }
+
+      handleUpdateQuery() {
+        const builder = this.shadowRoot.querySelector('test-runs-query-builder');
+        this.updateQueryParams(builder.testRunQueryParams);
+        // Trigger a virtual navigation.
+        this.navigateToLocation(window.location);
+        this.testRuns = [];
+        this.searchResults = [];
+        this.refreshDisplayedNodes();
+        this.loadData();
       }
     }
 
