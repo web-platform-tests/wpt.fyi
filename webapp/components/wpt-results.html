@@ -186,6 +186,9 @@ found in the LICENSE file.
 
     <template is="dom-if" if="[[editingQuery]]">
       <test-runs-query-builder product-specs="[[productSpecs]]"
+                               labels="[[labels]]"
+                               sha="[[sha]]"
+                               aligned="[[aligned]]"
                                on-submit="[[updateQuery]]"
                                edit>
       </test-runs-query-builder>
