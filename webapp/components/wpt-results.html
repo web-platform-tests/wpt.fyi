@@ -67,6 +67,9 @@ found in the LICENSE file.
         padding: 0.2em 0.5em;
         border: solid 1px var(--paper-grey-300);
       }
+      thead {
+        border-bottom: 8px solid white;
+      }
       .path {
         margin-bottom: 16px;
       }
@@ -403,6 +406,10 @@ found in the LICENSE file.
       }
 
       computeSearchURL(testRuns, query) {
+        if (!testRuns || testRuns.length === 0) {
+          return '';
+        }
+
         let url = new URL('/api/search', window.location);
         if (testRuns) {
           url.searchParams.set(
