@@ -3,7 +3,7 @@
 <dom-module id='self-navigator'>
   <script>
     // eslint-disable-next-line no-unused-vars
-    const SelfNavigation = (superClass) => class extends superClass {
+    const SelfNavigation = (superClass) => class SelfNavigation extends superClass {
       static get properties() {
         return {
           path: {
@@ -25,7 +25,7 @@
 
       ready() {
         super.ready();
-        if (!this.path) {
+        if (this.path === SelfNavigation.properties.path.value) {
           this.path = this.urlToPath(window.location);
         }
         window.onpopstate = () => {
