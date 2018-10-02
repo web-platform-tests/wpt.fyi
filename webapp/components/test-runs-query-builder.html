@@ -138,10 +138,6 @@ found in the LICENSE file.
         this._createMethodObserver('labelsUpdated(labels, labels.*)');
       }
 
-      observeSpec(change) {
-        return this.getSpec(change.base);
-      }
-
       onToggleEdit() {
         this.edit = !this.edit;
       }

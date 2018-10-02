@@ -19,7 +19,7 @@
             type: Boolean,
             computed: 'computeIsSubfolder(path)',
           },
-          onpathupdated: Function,
+          onLocationUpdated: Function,
         };
       }
 
@@ -30,6 +30,7 @@
         }
         window.onpopstate = () => {
           this.path = this.urlToPath(window.location);
+          this.onLocationUpdated && this.onLocationUpdated(this.path, history.state);
         };
       }
 
@@ -64,8 +65,9 @@
       }
 
       pathUpdated(path) {
-        if (this.onpathupdated) {
-          this.onpathupdated(path);
+        if (this.onLocationUpdated) {
+          this.onLocationUpdated(
+            path, history.state || this.navigationQueryParams());
         }
       }
 
@@ -100,25 +102,29 @@
         this.navigateToLocation(event.target);
       }
 
+      /**
+       * Navigate to the path + query of the given Location object.
+       */
       navigateToLocation(location) {
-        let path = this.urlToPath(location);
-        if (path === this.path) {
+        const url = new URL(location);
+        url.search = '';
+        const params = this.navigationQueryParams();
+        for (const [k, v] of Object.entries(params)) {
+          const list = (v instanceof Array) ? v : [v];
+          for (const item of list) {
+            url.searchParams.append(k, item);
+          }
+        }
+        if (url.toString() === window.location.toString()) {
           return;
         }
-        this.path = path;
 
-        let sep = this.encodedPath.indexOf('?') < 0 ? '?' : '&';
-        let params = '';
-        Object.entries(this.navigationQueryParams()).forEach(e => {
-          const [k, v] = e;
-          const list = (v instanceof Array) ? v : [v];
-          list.forEach(item => {
-            params += `${sep}${k}=${item}`;
-            sep = '&';
-          });
-        });
-        window.history.pushState(
-          {}, '', `${this.navigationPathPrefix()}${this.encodedPath}${params}`);
+        const path = this.urlToPath(location);
+        if (path !== this.path) {
+          this.path = path;
+        }
+
+        window.history.pushState(params, '', url);
 
         // Send Google Analytics pageview event
         if ('ga' in window) {
