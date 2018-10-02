@@ -25,6 +25,8 @@
     };
     const CHANNELS = new Set(['stable', 'beta', 'dev', 'experimental']);
     const DEFAULT_BROWSER_NAMES = ['chrome', 'edge', 'firefox', 'safari'];
+    const DEFAULT_PRODUCT_SPECS = Array.from(DEFAULT_BROWSER_NAMES);
+    const DEFAULT_PRODUCTS = DEFAULT_PRODUCT_SPECS.map(p => parseProductSpec(p));
 
     function parseProductSpec(spec) {
       // @sha (optional)
