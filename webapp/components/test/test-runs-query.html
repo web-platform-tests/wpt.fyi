@@ -75,6 +75,16 @@
           expect(() => testRunsQuery.parseProductSpec('chrome[foo')).to.throw();
           expect(() => testRunsQuery.parseProductSpec('chrome[foo]')).to.not.throw();
         });
+
+        test('updateQueryParams', () => {
+          const params = {
+            product: ['safari', 'safari[experimental]'],
+          };
+          testRunsQuery.updateQueryParams(params);
+          expect(testRunsQuery.products[0].browser_name).to.equal('safari');
+          expect(testRunsQuery.products[1].browser_name).to.equal('safari');
+          assert.isTrue(testRunsQuery.products[1].labels.has('experimental'));
+        });
       });
     });
   </script>
