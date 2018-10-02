@@ -47,8 +47,7 @@ func TestGet_cacheMiss(t *testing.T) {
 	cs := NewByteCachedStore(NewTestContext(), cache, store)
 
 	data := []byte("{}")
-	c := make(chan bool)
-	cw := sharedtest.NewMockWriteCloser(t, c)
+	cw := sharedtest.NewMockWriteCloser(t)
 	sr := sharedtest.NewMockReadCloser(t, data)
 	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, memcache.ErrCacheMiss)
 	store.EXPECT().NewReadCloser(&storeID).Return(sr, nil)
@@ -58,10 +57,7 @@ func TestGet_cacheMiss(t *testing.T) {
 	err := cs.Get(&cacheID, &storeID, &v)
 	assert.Nil(t, err)
 	assert.Equal(t, data, v)
-
-	b := <-c
 	assert.True(t, sr.IsClosed())
-	assert.True(t, b)
 }
 
 func TestGet_missing(t *testing.T) {

@@ -41,7 +41,14 @@
 
         setup(() => {
           sandbox = sinon.sandbox.create();
-          sandbox.stub(Date.prototype, 'getTimezoneOffset').returns(240);
+          // Override the timezone as UTC.
+          for (const method of ['toLocaleDateString', 'toLocaleTimeString']) {
+            const original = Date.prototype[method];
+            sandbox.stub(Date.prototype, method, function(locale, options) {
+              return original.call(
+                this, 'en-US', Object.assign(options, {timeZone: 'UTC'}));
+            });
+          }
         });
 
         suite('dateFormat()', () => {
@@ -51,7 +58,7 @@
         });
 
         test('timeFormat(iso string)', () => {
-          assert.equal(trf.timeFormat('2018-01-12T12:00:00Z'), 'Jan 12 at 7:00 AM');
+          assert.equal(trf.timeFormat('2018-01-12T12:00:00Z'), 'Jan 12 at 12:00 PM');
         });
 
         suite('timeTaken(testRun Object)', () => {

@@ -224,28 +224,28 @@ func (cs byteCachedStore) Get(cacheID, storeID, iValue interface{}) error {
 	if err == nil {
 		defer func() {
 			if err := cr.Close(); err != nil {
-				logger.Warningf("Error closing cache reader for key %s: %v", cacheID, err)
+				logger.Warningf("Error closing cache reader for key %v: %v", cacheID, err)
 			}
 		}()
 		cached, err := ioutil.ReadAll(cr)
 		if err == nil {
-			logger.Infof("Serving data from cache: %s", cacheID)
+			logger.Infof("Serving data from cache: %v", cacheID)
 			*valuePtr = cached
 			return nil
 		}
 	}
 
-	logger.Warningf("Error fetching cache key %s: %v", cacheID, err)
+	logger.Warningf("Error fetching cache key %v: %v", cacheID, err)
 	err = nil
 
-	logger.Infof("Loading data from store: %s", storeID)
+	logger.Infof("Loading data from store: %v", storeID)
 	sr, err := cs.store.NewReadCloser(storeID)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err := sr.Close(); err != nil {
-			logger.Warningf("Error closing store reader for key %s: %v", storeID, err)
+			logger.Warningf("Error closing store reader for key %v: %v", storeID, err)
 		}
 	}()
 
@@ -255,26 +255,28 @@ func (cs byteCachedStore) Get(cacheID, storeID, iValue interface{}) error {
 	}
 
 	// Cache result.
-	go func() {
+	func() {
 		w, err := cs.cache.NewWriteCloser(cacheID)
 		if err != nil {
-			logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
+			logger.Warningf("Error cache writer for key %v: %v", cacheID, err)
 			return
 		}
 		defer func() {
 			if err := w.Close(); err != nil {
-				logger.Warningf("Error cache writer for key %s: %v", cacheID, err)
+				logger.Warningf("Error cache writer for key %v: %v", cacheID, err)
 			}
 		}()
 		n, err := w.Write(data)
 		if err != nil {
-			logger.Warningf("Failed to write to cache key %s: %v", cacheID, err)
+			logger.Warningf("Failed to write to cache key %v: %v", cacheID, err)
 			return
 		}
 		if n != len(data) {
 			logger.Warningf("Failed to write to cache key %s: attempt to write %d bytes, but wrote %d bytes instead", cacheID, len(data), n)
 			return
 		}
+
+		logger.Infof("Cached store value for key: %v", cacheID)
 	}()
 
 	*valuePtr = data
@@ -397,7 +399,15 @@ func (cs objectCachedStore) Get(cacheID, storeID, value interface{}) error {
 
 	err = cs.store.Get(storeID, value)
 	if err == nil {
-		logger.Infof("Serving object for store: %v", storeID)
+		logger.Infof("Serving object from store: %v", storeID)
+		func() {
+			err := cs.cache.Put(cacheID, value)
+			if err != nil {
+				logger.Warningf("Error caching to key %v: %v", cacheID, err)
+			} else {
+				logger.Infof("Cached object at key: %v", cacheID)
+			}
+		}()
 	}
 
 	return err
