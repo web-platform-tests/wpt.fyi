@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"time"
 
@@ -139,6 +140,10 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 		apiPort: pickUnusedPort(),
 	}
 
+	absAppYAMLPath, err := filepath.Abs("../webapp")
+	if err != nil {
+		panic(err.Error())
+	}
 	i.cmd = exec.Command(
 		"dev_appserver.py",
 		fmt.Sprintf("--port=%d", i.port),
@@ -156,7 +161,7 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 		"--datastore_consistency_policy=consistent",
 		"--clear_search_indexes=true",
 		"-A=wptdashboard",
-		"../webapp",
+		absAppYAMLPath,
 	)
 
 	s = DevAppServerInstance(i)
