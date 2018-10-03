@@ -13,7 +13,7 @@
 <body>
   <test-fixture id="wpt-results-fixture">
     <template>
-      <wpt-results path="/"></wpt-results>
+      <wpt-results></wpt-results>
     </template>
   </test-fixture>
 
@@ -28,6 +28,7 @@
           this.testRuns = Array.from(TEST_RUNS_DATA);
         });
         trf = fixture('wpt-results-fixture');
+        trf.path = '/'; // Override the path computed from the current page.
       });
 
       test('show banner on noResults', (done) => {
