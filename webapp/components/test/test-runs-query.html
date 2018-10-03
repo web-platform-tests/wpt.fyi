@@ -83,7 +83,7 @@
           testRunsQuery.updateQueryParams(params);
           expect(testRunsQuery.products[0].browser_name).to.equal('safari');
           expect(testRunsQuery.products[1].browser_name).to.equal('safari');
-          assert.isTrue(testRunsQuery.products[1].labels.has('experimental'));
+          expect(testRunsQuery.products[1].labels).to.contain('experimental');
         });
       });
     });
