@@ -29,7 +29,8 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 
-	// /results has the same params (before + after), so we re-use the logic there.
+	// NOTE: We use the same params as /results, but also support
+	// 'before' and 'after' and 'filter'.
 	runFilter, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
