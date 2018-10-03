@@ -60,6 +60,8 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
+
 	processed, err := handleStatusEvent(ctx, payload)
 	if err != nil {
 		log.Errorf("%v", err)
