@@ -27,7 +27,8 @@ import (
 )
 
 var (
-	taskNameRegex = regexp.MustCompile(`^wpt-(.*)-(testharness|reftest|wdspec)-\d+$`)
+	taskNameRegex          = regexp.MustCompile(`^wpt-(.*)-(testharness|reftest|wdspec)-\d+$`)
+	resultsReceiverTimeout = time.Minute
 )
 
 func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -127,10 +128,10 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#results-creation
 	api := fmt.Sprintf("https://%s/api/results/upload", appengine.DefaultVersionHostname(ctx))
 
-	// Set timeout to 1 min (the default is 5s) to give the receiver enough time to download the reports.
-	slowCtx, cancel := context.WithTimeout(ctx, time.Minute)
+	// The default timeout is 5s, not enough for the receiver to download the reports.
+	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
 	defer cancel()
-	err = createAllRuns(log, &urlfetch.Transport{Context: slowCtx}, api, username, password, urlsByBrowser)
+	err = createAllRuns(log, urlfetch.Client(slowCtx), api, username, password, urlsByBrowser)
 	if err != nil {
 		return false, err
 	}
@@ -253,9 +254,7 @@ func verifySignature(message []byte, signature string, secret string) bool {
 	return hmac.Equal(messageMAC, expectedMAC)
 }
 
-func createAllRuns(log shared.Logger, transport http.RoundTripper, api, username, password string, urlsByBrowser map[string][]string) error {
-	client := &http.Client{Transport: transport}
-
+func createAllRuns(log shared.Logger, client *http.Client, api, username, password string, urlsByBrowser map[string][]string) error {
 	errors := make(chan error, len(urlsByBrowser))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
@@ -265,15 +264,19 @@ func createAllRuns(log shared.Logger, transport http.RoundTripper, api, username
 			log.Infof("Reports for %s: %v", browser, urls)
 			err := createRun(client, api, username, password, urls)
 			if err != nil {
-				log.Errorf("%v", err)
 				errors <- err
 			}
 		}(browser, urls)
 	}
 	wg.Wait()
 	close(errors)
-	if _, ok := <-errors; ok {
-		return fmt.Errorf("error(s) occured when talking to %s", api)
+
+	var errStr string
+	for err := range errors {
+		errStr += err.Error() + "\n"
+	}
+	if errStr != "" {
+		return fmt.Errorf("error(s) occured when talking to %s:\n%s", api, errStr)
 	}
 	return nil
 }
