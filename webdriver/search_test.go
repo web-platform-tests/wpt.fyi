@@ -3,6 +3,7 @@
 package webdriver
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -57,7 +58,7 @@ func testSearch(t *testing.T, path, elementName string) {
 	if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
 		panic(err)
 	}
-	assertListIsFiltered(t, wd, elementName, folder)
+	assertListIsFiltered(t, wd, elementName, folder+"/")
 
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
@@ -65,10 +66,10 @@ func testSearch(t *testing.T, path, elementName string) {
 	}
 	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
 	assert.Nil(t, err)
-	assertListIsFiltered(t, wd, elementName, folder)
+	assertListIsFiltered(t, wd, elementName, folder+"/")
 }
 
-func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName, folder string) {
+func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName string, paths ...string) {
 	var pathParts []selenium.WebElement
 	var err error
 	filteredPathPartsCondition := func(wd selenium.WebDriver) (bool, error) {
@@ -76,18 +77,20 @@ func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName, fold
 		if err != nil {
 			return false, err
 		}
-		return len(pathParts) == 1, nil
+		return len(pathParts) == len(paths), nil
 	}
 	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*5)
 	if err != nil {
-		assert.Failf(t, "Expected exactly one %s result", folder)
+		assert.Fail(t, fmt.Sprintf("Expected exactly %v results", len(paths)))
 		return
 	}
-	text, err := pathParts[0].Text()
-	if err != nil {
-		assert.Fail(t, err.Error())
+	for i := range paths {
+		text, err := pathParts[i].Text()
+		if err != nil {
+			assert.Fail(t, err.Error())
+		}
+		assert.Equal(t, paths[i], text)
 	}
-	assert.Equal(t, folder+"/", text)
 }
 
 // NOTE(lukebjerring): Firefox, annoyingly, throws a TypeError querying
