@@ -29,48 +29,51 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 
-	var err error
-	params, err := url.ParseQuery(r.URL.RawQuery)
+	// /results has the same params (before + after), so we re-use the logic there.
+	runFilter, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	specBefore := params.Get("before")
-	if specBefore == "" {
-		http.Error(w, "before param missing", http.StatusBadRequest)
-		return
-	}
-	var beforeJSON map[string][]int
-	if beforeJSON, err = shared.FetchRunResultsJSONForParam(ctx, r, specBefore); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if beforeJSON == nil {
-		http.Error(w, specBefore+" not found", http.StatusNotFound)
-		return
-	}
-
-	specAfter := params.Get("after")
-	if specAfter == "" {
-		http.Error(w, "after param missing", http.StatusBadRequest)
-		return
-	}
-	var afterJSON map[string][]int
-	if afterJSON, err = shared.FetchRunResultsJSONForParam(ctx, r, specAfter); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if afterJSON == nil {
-		http.Error(w, specAfter+" not found", http.StatusNotFound)
-		return
-	}
-
-	var filter shared.DiffFilterParam
-	if filter, err = shared.ParseDiffFilterParams(r); err != nil {
+	var diffFilter shared.DiffFilterParam
+	if diffFilter, err = shared.ParseDiffFilterParams(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, filter)
+	var beforeAndAfter shared.ProductSpecs
+	beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(beforeAndAfter) > 0 {
+		runFilter.Products = beforeAndAfter
+	}
+	if len(runFilter.Products) != 2 {
+		http.Error(w, fmt.Sprintf("Diffing requires before/after, or exactly 2 products, but found %v", len(runFilter.Products)), http.StatusBadRequest)
+		return
+	}
+	var runs shared.TestRuns
+	if runs, err = LoadTestRunsForFilters(ctx, runFilter); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	beforeJSON, err := shared.FetchRunResultsJSON(ctx, r, runs[0])
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to fetch 'before' results: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+	afterJSON, err := shared.FetchRunResultsJSON(ctx, r, runs[1])
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to fetch 'after' results: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, diffFilter)
 	var bytes []byte
 	if bytes, err = json.Marshal(diffJSON); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

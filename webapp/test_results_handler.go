@@ -7,7 +7,6 @@ package webapp
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -17,14 +16,13 @@ import (
 )
 
 type testRunUIFilter struct {
-	Products      string
-	Labels        string
-	SHA           string
-	Aligned       bool
-	MaxCount      *int
-	Diff          bool
-	BeforeTestRun *shared.TestRun
-	AfterTestRun  *shared.TestRun
+	Products string
+	Labels   string
+	SHA      string
+	Aligned  bool
+	MaxCount *int
+	Diff     bool
+	TestRuns string
 }
 
 // This handler is responsible for all pages that display test results.
@@ -61,28 +59,11 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		// TestRuns are inlined marshalled JSON for arbitrary test runs (e.g. when
 		// diffing), for runs which aren't fetchable via a URL or the api.
-		TestRuns string
-		Filter   testRunUIFilter
-		Query    string
+		Filter testRunUIFilter
+		Query  string
 	}{
 		Filter: filter,
 		Query:  r.URL.Query().Get("q"),
-	}
-
-	// Runs by base64-encoded param or spec param.
-	if filter.BeforeTestRun != nil && filter.AfterTestRun != nil {
-		runs := []shared.TestRun{
-			*(filter.BeforeTestRun),
-			*(filter.AfterTestRun),
-		}
-		filter.Diff = true
-
-		var marshaled []byte
-		if marshaled, err = json.Marshal(runs); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		data.TestRuns = string(marshaled)
 	}
 
 	if err := templates.ExecuteTemplate(w, "results.html", data); err != nil {
@@ -120,48 +101,15 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 	}
 	filter.Diff = diff != nil && *diff
 
-	before := r.URL.Query().Get("before")
-	after := r.URL.Query().Get("after")
-	if before != "" || after != "" {
-		if before == "" {
-			return filter, errors.New("after param provided, but before param missing")
-		} else if after == "" {
-			return filter, errors.New("before param provided, but after param missing")
+	var beforeAndAfter shared.ProductSpecs
+	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r); err != nil {
+		return filter, err
+	} else if len(beforeAndAfter) > 0 {
+		var bytes []byte
+		if bytes, err = json.Marshal(beforeAndAfter.Strings()); err != nil {
+			return filter, err
 		}
-
-		const singleRunURL = `/api/run?sha=%s&product=%s`
-		var specs []string
-		beforeSpec, err := shared.ParseProductSpec(before)
-		if err != nil {
-			beforeDecoded, base64Err := unpackTestRun(before)
-			if base64Err == nil && beforeDecoded != nil {
-				filter.BeforeTestRun = beforeDecoded
-			} else {
-				return filter, fmt.Errorf("invalid before param: %s", err.Error())
-			}
-		} else {
-			specs = append(specs, beforeSpec.String())
-		}
-
-		afterSpec, err := shared.ParseProductSpec(after)
-		if err != nil {
-			afterDecoded, base64Err := unpackTestRun(after)
-			if base64Err == nil && afterDecoded != nil {
-				filter.AfterTestRun = afterDecoded
-			} else {
-				return filter, fmt.Errorf("invalid after param: %s", err.Error())
-			}
-		} else {
-			specs = append(specs, afterSpec.String())
-		}
-
-		if len(specs) > 0 {
-			var bytes []byte
-			if bytes, err = json.Marshal(specs); err != nil {
-				return filter, err
-			}
-			filter.Products = string(bytes)
-		}
+		filter.Products = string(bytes)
 		filter.Diff = true
 	}
 	return filter, nil
