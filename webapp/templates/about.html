@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html>
-{{ template "_head.html" }}
+  <head>
+    {{ template "_head_common.html" }}
+    <style>
+      .version {
+        color: #ccc;
+      }
+    </style>
+  </head>
 <body>
 <div id="content">
   {{ template "_header.html" }}
@@ -21,6 +28,11 @@
     <p>The source code for both running and serving test results is on <a href="https://github.com/web-platform-tests/wpt.fyi">GitHub</a>.</p>
     <h2>Contact</h2>
     <p>Please file a <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new">GitHub issue</a>. For other discussion, most people who contribute to the WPT Dashboard monitor the <a href="http://lists.w3.org/Archives/Public/public-test-infra/">public-test-infra@w3.org</a> mailing list.</p>
+  </article>
+  <article>
+    {{ if .Version }}
+    <i class="version">wpt.fyi version {{ .Version }}</i>
+    {{ end }}
   </article>
 </div>
 {{ template "_ga.html" }}
