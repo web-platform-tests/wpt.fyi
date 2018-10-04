@@ -66,5 +66,7 @@ script:
   - |
     # Run tests
     if [ "${MAKE_TEST_TARGET}" != "" ]; then
-      docker exec -t "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS};
+      for i in `seq 1 1000`; do
+        (docker exec -t "${DOCKER_INSTANCE}" false) && echo "OH NOOOO!" && exit 1;
+      done
     fi
