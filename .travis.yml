@@ -53,3 +53,4 @@ script:
       echo $i;
       (docker exec -t "${DOCKER_INSTANCE}" false) && echo "OH NOOOO!" && exit 1;
     done
+    true
