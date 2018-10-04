@@ -210,7 +210,12 @@ found in the LICENSE file.
                 <th><test-run test-run="[[testRun]]"></test-run></th>
               </template>
               <template is="dom-if" if="[[diffShown]]">
-                <th><test-run test-run="[[diffRun]]"></test-run></th>
+                <th>
+                  <test-run test-run="[[diffRun]]"></test-run>
+                  <template is="dom-if" if="[[diffFilter]]">
+                    <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]"></paper-icon-button>
+                  </template>
+                </th>
               </template>
               <template is="dom-if" if="[[queryBuilder]]">
                 <th>
@@ -359,6 +364,7 @@ found in the LICENSE file.
             type: Boolean,
             value: false,
           },
+          onlyShowDifferences: Boolean,
         };
       }
 
@@ -451,6 +457,10 @@ found in the LICENSE file.
         };
         this.toggleQueryEdit = () => {
           this.editingQuery = !this.editingQuery;
+        };
+        this.toggleDiffFilter = () => {
+          this.onlyShowDifferences = !this.onlyShowDifferences;
+          this.refreshDisplayedNodes();
         };
         this.updateQuery = () => {
           this.clearQuery();
@@ -598,13 +608,11 @@ found in the LICENSE file.
                     total: 0,
                   })),
                 };
-                if (this.diffResults) {
-                  row.diff = {
-                    passes: 0,
-                    regressions: 0,
-                    total: 0,
-                  };
-                }
+                row.diff = {
+                  passes: 0,
+                  regressions: 0,
+                  total: 0,
+                };
                 acc.push(row);
               }
               // Accumulate the sums.
@@ -614,15 +622,24 @@ found in the LICENSE file.
                 row.results[i].passes += rs[i].passes;
                 row.results[i].total += rs[i].total;
               }
+              let diff = [];
               if (this.diffResults && r.test in this.diffResults) {
-                const diff = this.diffResults[r.test];
-                row.diff.passes += diff[0];
-                row.diff.regressions += diff[1];
-                row.diff.total += diff[2];
+                diff = this.diffResults[r.test];
+              } else {
+                const [before, after] = rs;
+                const failingBefore = before.total - before.passes;
+                const failingAfter = after.total - after.passes;
+                diff.push(Math.max(after.passes - before.passes, 0)); // passes
+                diff.push(Math.max(failingAfter - failingBefore, 0)); // regressions
+                diff.push(after.total - before.total); // total
               }
+              row.diff.passes += diff[0];
+              row.diff.regressions += diff[1];
+              row.diff.total += diff[2];
               return acc;
             };
           })(), [])
+          .filter(row => !this.onlyShowDifferences || Object.values(row.diff).find(i => !!i))
           // TODO(markdittmer): Is this still necessary?
           .sort(this.nodeSort);
       }
@@ -672,23 +689,13 @@ found in the LICENSE file.
       }
 
       getDiffDelta(node, prop) {
-        if (node.diff) {
-          const val = node.diff[prop || 'passes'];
-          return prop === 'regressions' ? -val : val;
+        let val = 0;
+        if (!prop) {
+          val = Object.values(node.diff).forEach(v => val += Math.abs(v));
+        } else {
+          val = node.diff[prop];
         }
-        const [before, after] = node.results;
-        switch (prop) {
-        case 'regressions': {
-          const failingBefore = before.total - before.passes;
-          const failingAfter = after.total - after.passes;
-          return 0 - Math.max(failingAfter - failingBefore, 0);
-        }
-        case 'total':
-          return after.total - before.total;
-        case 'passes':
-        default:
-          return Math.max(after.passes - before.passes, 0);
-        }
+        return prop === 'regressions' ? -val : val;
       }
 
       getDiffDeltaStr(node, prop) {
