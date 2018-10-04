@@ -681,10 +681,10 @@ found in the LICENSE file.
         case 'regressions': {
           const failingBefore = before.total - before.passes;
           const failingAfter = after.total - after.passes;
-          return Math.min(failingBefore - failingAfter, 0);
+          return 0 - Math.max(failingAfter - failingBefore, 0);
         }
         case 'total':
-          return before.total - after.total;
+          return after.total - before.total;
         case 'passes':
         default:
           return Math.max(after.passes - before.passes, 0);
