@@ -13,6 +13,7 @@ found in the LICENSE file.
 <link rel="import" href="./test-runs.html">
 <link rel="import" href="./test-run.html">
 <link rel="import" href="./loading-state.html">
+<link rel="import" href="./product-info.html">
 
 <dom-module id="wpt-runs">
   <template>
@@ -79,7 +80,7 @@ found in the LICENSE file.
           <tr>
             <th width="[[computeThWidth(browsers)]]">SHA</th>
             <template is="dom-repeat" items="{{ browsers }}" as="browser">
-              <th width="[[computeThWidth(browsers)]]">[[browser]]</th>
+              <th width="[[computeThWidth(browsers)]]">[[displayName(browser)]]</th>
             </template>
           </tr>
         </thead>
@@ -88,7 +89,7 @@ found in the LICENSE file.
         <template is="dom-repeat" items="{{ testResults }}" as="results">
           <tr data-boundary$="{{ results.month_boundary }}">
             <td>
-              <a href="/?sha={{ results.sha }}" title="{{ computeDateTooltip(results.date) }}">{{ results.sha }}</a>
+              <a href="/?sha={{ results.sha }}" title="{{ computeDateTooltip(results.firstRunDate) }}">{{ results.sha }}</a>
             </td>
             <template is="dom-repeat" items="{{ browsers }}" as="browser">
               <td class$="runs [[ runClass(results.runs, browser) ]]">
@@ -184,16 +185,26 @@ found in the LICENSE file.
           }, {});
 
           // We flatten into an array of objects so Polymer can deal with them.
-          const firstRunTime = x => Object.values(x.runs)[0][0].created_at;
-          const flattened = Object.entries(testRunsBySha)
-            .map(({0: sha, 1: runs}) => ({ sha, runs }))
-            .sort((a, b) => firstRunTime(a) < firstRunTime(b) ? 1 : -1);
+          const firstRunTime = runs => {
+            return Array.from(Object.values(runs))
+              .reduce((oldest, runs) => {
+                for (const time of runs.map(r => new Date(r.time_start))) {
+                  if (time < oldest) {
+                    oldest = time;
+                  }
+                }
+                return oldest;
+              }, new Date()); // Existing runs should be historical...
+          };
+          const flattened = Array.from(Object.entries(testRunsBySha))
+            .map(({0: sha, 1: runs}) => ({ sha, runs, firstRunTime: firstRunTime(runs) }))
+            .sort((a, b) => b.firstRunTime.getTime() - a.firstRunTime.getTime());
 
           // Append time (month) metadata.
           if (flattened.length > 1) {
             let previousMonth = -1;
             for (let i = 0; i < flattened.length; i++) {
-              let current = new Date(firstRunTime(flattened[i]));
+              let current = flattened[i].firstRunTime;
               flattened[i].date = current;
               if (previousMonth !== current.getMonth()) {
                 flattened[i].month_boundary = true;
