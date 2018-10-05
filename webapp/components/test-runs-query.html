@@ -9,59 +9,10 @@ found in the LICENSE file.
 
 <dom-module id="test-runs-query">
   <script>
-    const DEFAULT_PRODUCT_SPECS = [
-      'chrome',
-      'edge',
-      'firefox',
-      'safari',
-    ];
-    const DEFAULT_PRODUCTS = DEFAULT_PRODUCT_SPECS.map(p => parseProductSpec(p));
-
-    function parseProductSpec(spec) {
-      // @sha (optional)
-      let revision = '';
-      const atIndex = spec.indexOf('@');
-      if (atIndex > 0) {
-        revision = spec.substr(atIndex + 1);
-        spec = spec.substr(0, atIndex);
-      }
-      // [foo,bar] labels syntax (optional)
-      let labels = new Set();
-      const arrayIndex = spec.indexOf('[');
-      if (arrayIndex > 0) {
-        let labelsStr = spec.substr(arrayIndex + 1);
-        if (labelsStr[labelsStr.length - 1] !== ']') {
-          throw 'Expected closing bracket';
-        }
-        labelsStr = labelsStr.substr(0, labelsStr.length - 1);
-        labelsStr.split(',').forEach(l => labels.add(l));
-        spec = spec.substr(0, arrayIndex);
-      }
-      // product
-      const product = parseProduct(spec);
-      product.revision = revision;
-      product.labels = labels;
-      return product;
-    }
-
-    function parseProduct(name) {
-      // -version (optional)
-      let version;
-      const dashIndex = name.indexOf('-');
-      if (dashIndex > 0) {
-        version = name.substr(dashIndex + 1);
-        name = name.substr(0, dashIndex);
-      }
-      return {
-        browser_name: name,
-        browser_version: version,
-      };
-    }
-
     /**
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
-    /* global QueryBuilder, ProductInfo */
+    /* global QueryBuilder, ProductInfo, DEFAULT_PRODUCTS, DEFAULT_PRODUCT_SPECS */
     // eslint-disable-next-line no-unused-vars
     const TestRunsQuery =
       (superClass) => class extends QueryBuilder(ProductInfo(superClass)) {
@@ -96,16 +47,15 @@ found in the LICENSE file.
             },
             testRunQueryParams: {
               type: Object,
-              computed: 'computeTestRunQueryParams(sha, labels, productSpecs, maxCount)',
+              computed: 'computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount)',
             },
             testRunQuery: {
               type: String,
               computed: 'computeQuery(testRunQueryParams)',
+              notify: true,
             },
           };
         }
-
-
 
         ready() {
           super.ready();
@@ -122,9 +72,13 @@ found in the LICENSE file.
           this.productSpecs = (products || []).map(p => this.getSpec(p));
         }
 
-        computeTestRunQueryParams(sha, labels, productSpecs, maxCount) {
+        computeIsLatest(sha) {
+          return !sha || sha === 'latest';
+        }
+
+        computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount) {
           const params = {};
-          if (sha) {
+          if (!this.computeIsLatest(sha)) {
             params.sha = sha;
           }
           if (labels && labels.length) {
@@ -137,7 +91,7 @@ found in the LICENSE file.
           if (maxCount) {
             params['max-count'] = maxCount;
           }
-          if (this.aligned) {
+          if (aligned) {
             params.aligned = true;
           }
           return params;
@@ -152,16 +106,37 @@ found in the LICENSE file.
             || DEFAULT_PRODUCT_SPECS.join(',') === (productSpecs || []).join(',');
         }
 
-        parseProductSpec(p) {
-          return window.parseProductSpec(p);
-        }
-
         clearQuery() {
           this.products = Array.from(DEFAULT_PRODUCTS);
           this.labels = [];
           this.maxCount = undefined;
           this.sha = 'latest';
           this.aligned = undefined;
+        }
+
+        /**
+         * Update this builder's properties to match the given query params.
+         */
+        updateQueryParams(params) {
+          this.clearQuery();
+          if (!params) {
+            return;
+          }
+          if (!this.computeIsLatest(params.sha)) {
+            this.sha = params.sha;
+          }
+          if ('label' in params) {
+            this.labels = params.label;
+          }
+          if ('product' in params) {
+            this.products = params.product.map(p => this.parseProductSpec(p));
+          }
+          if ('max-count' in params) {
+            this.maxCount = params['max-count'];
+          }
+          if ('aligned' in params) {
+            this.aligned = params.aligned;
+          }
         }
       };
   </script>

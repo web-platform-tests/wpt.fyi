@@ -7,7 +7,6 @@
 package webapp
 
 import (
-	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -34,15 +33,5 @@ func TestParseTestRunUIFilter_BeforeAfter(t *testing.T) {
 	f, err = parseTestRunUIFilter(httptest.NewRequest("GET", "/results/?after=chrome&before=edge", nil))
 	assert.Nil(t, err)
 	assert.Equal(t, "[\"edge\",\"chrome\"]", f.Products)
-	assert.Equal(t, true, f.Diff)
-}
-
-func TestParseTestRunUIFilter_BeforeAfter_Base64(t *testing.T) {
-	enc := "eyJicm93c2VyX25hbWUiOiJGaXJlZm94IiwiYnJvd3Nlcl92ZXJzaW9uIjoiTmlnaHRseSIsIm9zX25hbWUiOiJUcmF2aXMiLCJvc192ZXJzaW9uIjoiSm9iIDU0LjQiLCJyZXZpc2lvbiI6ImYwNzdlMjQyZGUiLCJyZXN1bHRzX3VybCI6Imh0dHBzOi8vcHVsbHMtc3RhZ2luZy53ZWItcGxhdGZvcm0tdGVzdHMub3JnL2pvYi81NC40L3N1bW1hcnkiLCJjcmVhdGVkX2F0IjoiMjAxOC0wMS0wNFQwMDowMDowMFoifQ=="
-	f, err := parseTestRunUIFilter(
-		httptest.NewRequest("GET", fmt.Sprintf("/results/?before=chrome&after=%s", enc), nil))
-	assert.Nil(t, err)
-	assert.Equal(t, "[\"chrome\"]", f.Products)
-	assert.Equal(t, "Firefox", f.AfterTestRun.BrowserName)
 	assert.Equal(t, true, f.Diff)
 }

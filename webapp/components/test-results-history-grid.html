@@ -88,13 +88,8 @@ found in the LICENSE file.
         ];
       }
 
-      computeTestRunQueryParams(sha, labels, products, maxCount) {
-        sha = null;
-        const params = super.computeTestRunQueryParams(sha, labels, products, maxCount);
-        if (!labels || !labels.length) {
-          params.aligned = true;
-        }
-        return params;
+      computeTestRunQueryParams(sha, aligned, labels, products, maxCount) {
+        return super.computeTestRunQueryParams(/*sha*/ null, aligned, labels, products, maxCount);
       }
 
       bindResultHover(run, subTestName) {

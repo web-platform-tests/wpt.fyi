@@ -65,7 +65,7 @@ See models.go for more details.
           Started {{timeFormat(testRun.time_start)}} {{timeTaken(testRun)}}<br>
           {{moreTooltip(testRun)}}
         </template>
-        <template is="dom-if" if="{{ isDiff(testRun.browser_name }}">
+        <template is="dom-if" if="{{ isDiff(testRun.browser_name) }}">
           diff numbers are for:<br>
           [newly passing] / [newly failing] / [total count delta]
         </template>

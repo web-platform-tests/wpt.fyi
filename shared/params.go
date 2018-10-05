@@ -644,3 +644,33 @@ func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error)
 	}
 	return filter, nil
 }
+
+// ParseBeforeAndAfterParams parses the before and after params used when
+// intending to diff two test runs. Either both or neither of the params
+// must be present.
+func ParseBeforeAndAfterParams(r *http.Request) (ProductSpecs, error) {
+	before := r.URL.Query().Get("before")
+	after := r.URL.Query().Get("after")
+	if before == "" && after == "" {
+		return nil, nil
+	}
+	if before == "" {
+		return nil, errors.New("after param provided, but before param missing")
+	} else if after == "" {
+		return nil, errors.New("before param provided, but after param missing")
+	}
+
+	specs := make(ProductSpecs, 2)
+	beforeSpec, err := ParseProductSpec(before)
+	if err != nil {
+		return nil, fmt.Errorf("invalid before param: %s", err.Error())
+	}
+	specs[0] = beforeSpec
+
+	afterSpec, err := ParseProductSpec(after)
+	if err != nil {
+		return nil, fmt.Errorf("invalid after param: %s", err.Error())
+	}
+	specs[1] = afterSpec
+	return specs, nil
+}
