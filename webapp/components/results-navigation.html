@@ -21,7 +21,7 @@
             url.searchParams.set(k, params[k]);
           }
         }
-        return url.search;
+        return `${url.search}`.replace(/=true/g, '');
       }
     };
 
