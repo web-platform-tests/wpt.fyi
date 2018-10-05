@@ -7,8 +7,13 @@
 package webhook
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,4 +98,55 @@ func TestVerifySignature(t *testing.T) {
 	// Test an ill-formed (odd-length) signature.
 	assert.False(t, verifySignature(
 		message, "875a5feef4cde4265d6d5d21c304d755903ccb6", secret))
+}
+
+func TestCreateAllRuns_success(t *testing.T) {
+	requested := 0
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		requested++
+		w.Write([]byte("OK"))
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	err := createAllRuns(logrus.New(), &http.Client{}, server.URL, "username", "password",
+		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+	)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, requested)
+}
+
+func TestCreateAllRuns_one_error(t *testing.T) {
+	requested := 0
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if requested == 0 {
+			w.Write([]byte("OK"))
+		} else {
+			http.Error(w, "Not found", http.StatusNotFound)
+		}
+		requested++
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	err := createAllRuns(logrus.New(), &http.Client{}, server.URL, "username", "password",
+		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+	)
+	assert.NotNil(t, err)
+	assert.Equal(t, 2, requested)
+	assert.Contains(t, err.Error(), "API error: Not found")
+}
+
+func TestCreateAllRuns_all_errors(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Second * 2)
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	err := createAllRuns(logrus.New(), &http.Client{Timeout: time.Second}, server.URL, "username", "password",
+		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+	)
+	assert.NotNil(t, err)
+	assert.Equal(t, 2, strings.Count(err.Error(), "Client.Timeout"))
 }
