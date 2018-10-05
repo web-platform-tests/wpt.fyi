@@ -185,8 +185,8 @@ found in the LICENSE file.
           }, {});
 
           // We flatten into an array of objects so Polymer can deal with them.
-          const firstRunTime = runs => {
-            return Array.from(Object.values(runs))
+          const firstRunDate = runs => {
+            return Object.values(runs)
               .reduce((oldest, runs) => {
                 for (const time of runs.map(r => new Date(r.time_start))) {
                   if (time < oldest) {
@@ -196,15 +196,15 @@ found in the LICENSE file.
                 return oldest;
               }, new Date()); // Existing runs should be historical...
           };
-          const flattened = Array.from(Object.entries(testRunsBySha))
-            .map(({0: sha, 1: runs}) => ({ sha, runs, firstRunTime: firstRunTime(runs) }))
-            .sort((a, b) => b.firstRunTime.getTime() - a.firstRunTime.getTime());
+          const flattened = Object.entries(testRunsBySha)
+            .map(([sha, runs]) => ({ sha, runs, firstRunDate: firstRunDate(runs) }))
+            .sort((a, b) => b.firstRunDate.getTime() - a.firstRunDate.getTime());
 
           // Append time (month) metadata.
           if (flattened.length > 1) {
             let previousMonth = -1;
             for (let i = 0; i < flattened.length; i++) {
-              let current = flattened[i].firstRunTime;
+              let current = flattened[i].firstRunDate;
               flattened[i].date = current;
               if (previousMonth !== current.getMonth()) {
                 flattened[i].month_boundary = true;
