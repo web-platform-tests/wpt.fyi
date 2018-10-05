@@ -6,7 +6,6 @@
   {{ template "_header.html" }}
   <div>
     <wpt-results
-        {{- if .TestRuns}} test-runs="{{ .TestRuns }}"{{end}}
         {{- with .Filter}}
           {{- if .Products}} product-specs="{{ .Products }}"{{end}}
           {{- if .SHA}} sha="{{ .SHA }}" {{end}}
