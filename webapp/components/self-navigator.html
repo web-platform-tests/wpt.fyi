@@ -124,6 +124,7 @@
           this.path = path;
         }
 
+        url.search = url.search.replace(/=true/g, '');
         window.history.pushState(params, '', url);
 
         // Send Google Analytics pageview event
