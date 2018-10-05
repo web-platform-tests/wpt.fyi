@@ -6,10 +6,20 @@ package webapp
 
 import (
 	"net/http"
+	"strings"
+
+	"google.golang.org/appengine"
 )
 
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
-	if err := templates.ExecuteTemplate(w, "about.html", nil); err != nil {
+	ctx := appengine.NewContext(r)
+	version := strings.Split(appengine.VersionID(ctx), ".")[0]
+	data := struct {
+		Version string
+	}{
+		Version: version,
+	}
+	if err := templates.ExecuteTemplate(w, "about.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
