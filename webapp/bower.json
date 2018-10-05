@@ -19,7 +19,8 @@
     "paper-dropdown-menu": "2",
     "paper-listbox": "2",
     "paper-item": "2",
-    "paper-checkbox": "2"
+    "paper-checkbox": "2",
+    "pluralize": "^7.0.0"
   },
   "devDependencies": {
     "web-component-tester": "^6.4.3"
