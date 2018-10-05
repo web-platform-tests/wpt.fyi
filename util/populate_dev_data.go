@@ -201,6 +201,10 @@ func main() {
 	log.Print("Adding latest experimental TestRun data...")
 	filters.Labels = mapset.NewSetWith("experimental")
 	copyProdRuns(ctx, filters)
+
+	log.Print("Adding latest beta TestRun data...")
+	filters.Labels = mapset.NewSetWith("beta")
+	copyProdRuns(ctx, filters)
 }
 
 func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {

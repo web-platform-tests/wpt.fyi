@@ -196,8 +196,8 @@ https://wpt.fyi/api/results?product=chrome
 
 ### /api/diff
 
-Computes a TestRun summary JSON blob of the differences between two TestRun
-summary blobs.
+Computes a summary JSON blob of the differences between two TestRun summary blobs,
+in the format of an array of [improved, regressed, total-delta].
 
 __Parameters__
 

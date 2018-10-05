@@ -58,14 +58,18 @@ See models.go for more details.
         </template>
       </template>
 
-      <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
-        <paper-tooltip offset=0>
+      <paper-tooltip offset=0>
+        <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
           {{displayName(testRun.browser_name)}} {{testRun.browser_version}}<br>
           Labels: {{displayLabels(testRun.labels)}}<br>
           Started {{timeFormat(testRun.time_start)}} {{timeTaken(testRun)}}<br>
           {{moreTooltip(testRun)}}
-        </paper-tooltip>
-      </template>
+        </template>
+        <template is="dom-if" if="{{ isDiff(testRun.browser_name) }}">
+          diff numbers are for:<br>
+          [newly passing] / [newly failing] / [total count delta]
+        </template>
+      </paper-tooltip>
     </div>
   </template>
 
