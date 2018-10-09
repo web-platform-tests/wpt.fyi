@@ -622,7 +622,7 @@ found in the LICENSE file.
                 row.results[i].passes += rs[i].passes;
                 row.results[i].total += rs[i].total;
               }
-              if (this.diff && rs.length == 2) {
+              if (this.diff && rs.length === 2) {
                 let diff = [];
                 if (this.diffResults && r.test in this.diffResults) {
                   diff = this.diffResults[r.test];
