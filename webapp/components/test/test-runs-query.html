@@ -29,7 +29,7 @@
 
 <body>
   <script>
-    /* global DEFAULT_PRODUCTS */
+    /* global DEFAULT_PRODUCTS, CHANNELS */
     suite('TestRunsQuery', () => {
       let testRunsQuery;
 
@@ -52,7 +52,7 @@
         for (const channel of CHANNELS) {
           test(channel, () => {
             testRunsQuery.products = DEFAULT_PRODUCTS
-            .map(p => Object.assign({}, p, { labels: [channel] }));
+              .map(p => Object.assign({}, p, { labels: [channel] }));
             expect(testRunsQuery.testRunQuery).to.equal(`?label=${channel}`);
           });
         }
