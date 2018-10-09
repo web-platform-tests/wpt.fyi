@@ -97,15 +97,15 @@ found in the LICENSE file.
           // Collapse a globally shared channel into a single label.
           if (this.products.length) {
             let allChannelsSame = true;
-            const channel = this.products[0].labels.find(l => CHANNELS.has(l));
+            const channel = (this.products[0].labels || []).find(l => CHANNELS.has(l));
             for (const p of this.products) {
-              if (!p.labels.find(l => l === channel)) {
+              if (!(p.labels || []).find(l => l === channel)) {
                 allChannelsSame = false;
               }
             }
             if (allChannelsSame) {
               const channelless = this.products.map(p => Object.assign(
-                {}, p, {labels: p.labels.filter(l => !CHANNELS.has(l)) }))
+                {}, p, {labels: (p.labels || []).filter(l => !CHANNELS.has(l)) }))
                 .map(p => this.getSpec(p));
               if (!this.computeIsDefaultProducts(channelless)) {
                 params.product = channelless;
