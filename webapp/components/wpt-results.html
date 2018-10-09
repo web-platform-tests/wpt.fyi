@@ -622,20 +622,22 @@ found in the LICENSE file.
                 row.results[i].passes += rs[i].passes;
                 row.results[i].total += rs[i].total;
               }
-              let diff = [];
-              if (this.diffResults && r.test in this.diffResults) {
-                diff = this.diffResults[r.test];
-              } else {
-                const [before, after] = rs;
-                const failingBefore = before.total - before.passes;
-                const failingAfter = after.total - after.passes;
-                diff.push(Math.max(after.passes - before.passes, 0)); // passes
-                diff.push(Math.max(failingAfter - failingBefore, 0)); // regressions
-                diff.push(after.total - before.total); // total
+              if (this.diff && rs.length == 2) {
+                let diff = [];
+                if (this.diffResults && r.test in this.diffResults) {
+                  diff = this.diffResults[r.test];
+                } else {
+                  const [before, after] = rs;
+                  const failingBefore = before.total - before.passes;
+                  const failingAfter = after.total - after.passes;
+                  diff.push(Math.max(after.passes - before.passes, 0)); // passes
+                  diff.push(Math.max(failingAfter - failingBefore, 0)); // regressions
+                  diff.push(after.total - before.total); // total
+                }
+                row.diff.passes += diff[0];
+                row.diff.regressions += diff[1];
+                row.diff.total += diff[2];
               }
-              row.diff.passes += diff[0];
-              row.diff.regressions += diff[1];
-              row.diff.total += diff[2];
               return acc;
             };
           })(), [])
