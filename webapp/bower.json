@@ -20,7 +20,8 @@
     "paper-listbox": "2",
     "paper-item": "2",
     "paper-checkbox": "2",
-    "pluralize": "^7.0.0"
+    "pluralize": "^7.0.0",
+    "iron-collapse": "2"
   },
   "devDependencies": {
     "web-component-tester": "^6.4.3"
