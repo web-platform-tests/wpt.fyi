@@ -11,7 +11,7 @@
 <body>
   <test-fixture id="wpt-results-base-fixture">
     <template>
-      <wpt-results-base test-run-resources="[&#34;/api/runs?sha=latest&#34;]"></wpt-results-base>
+      <wpt-results-base aligned></wpt-results-base>
     </template>
   </test-fixture>
   <script>
@@ -69,7 +69,7 @@
             return waitingOn(() => window.fetch.called)
               .then(() => {
                 assert.equal(window.fetch.callCount, 1);
-                assert.equal(window.fetch.firstCall.args[0], '/api/runs?sha=latest');
+                assert.equal(window.fetch.firstCall.args[0], '/api/runs?aligned');
               });
           });
 

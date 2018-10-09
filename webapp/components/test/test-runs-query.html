@@ -48,6 +48,29 @@
         expect(testRunsQuery.isDefaultProducts).to.equal(false);
       });
 
+      suite('collapses shared channels', () => {
+        for (const channel of CHANNELS) {
+          test(channel, () => {
+            testRunsQuery.products = DEFAULT_PRODUCTS
+            .map(p => Object.assign({}, p, { labels: [channel] }));
+            expect(testRunsQuery.testRunQuery).to.equal(`?label=${channel}`);
+          });
+        }
+      });
+
+      suite('expands channel labels', () => {
+        for (const channel of CHANNELS) {
+          test(channel, () => {
+            testRunsQuery.updateQueryParams({ label: [channel] });
+            expect(testRunsQuery.products.length).to.equal(DEFAULT_PRODUCTS.length);
+            for (const product of testRunsQuery.products) {
+              expect(product.labels).to.contain(channel);
+            }
+            expect(testRunsQuery.labels).to.not.contain(channel);
+          });
+        }
+      });
+
       suite('TestRunsQuery.prototype.*', () => {
 
         const revision = '1234512345';

@@ -103,19 +103,20 @@ found in the LICENSE file.
                 allChannelsSame = false;
               }
             }
+            let productSpecs;
             if (allChannelsSame) {
-              const channelless = this.products.map(p => Object.assign(
+              productSpecs = this.products.map(p => Object.assign(
                 {}, p, {labels: (p.labels || []).filter(l => !CHANNELS.has(l)) }))
                 .map(p => this.getSpec(p));
-              if (!this.computeIsDefaultProducts(channelless)) {
-                params.product = channelless;
-              }
               const labels = params.label || [];
               if (!labels.includes(channel)) {
                 params.label = [...labels, channel];
               }
             } else {
-              params.product = this.products.map(p => this.getSpec(p));
+              productSpecs = this.products.map(p => this.getSpec(p));
+            }
+            if (!this.computeIsDefaultProducts(productSpecs)) {
+              params.product = productSpecs;
             }
           }
           return params;
