@@ -204,8 +204,9 @@ def task_handler():
 
     ds = datastore.Client()
     secret = ds.get(ds.key('Uploader', '_processor'))['Password']
-    wptreport.create_test_run(report, labels, uploader, secret,
-                              results_gcs_path, raw_results_gcs_path)
+    id = wptreport.create_test_run(report, labels, uploader, secret,
+                                   results_gcs_path, raw_results_gcs_path)
+    assert (isinstance(id, int) and id != 0)
 
     return (resp, HTTPStatus.CREATED)
 
