@@ -59,12 +59,12 @@ found in the LICENSE file.
 
         ready() {
           super.ready();
+          this._createMethodObserver('productsUpdated(products, products.*)');
           // Convert any initial product specs to products, if provided.
           if (this.productSpecs && this.productSpecs.length
             && !(this.products && this.products.length)) {
             this.products = this.productSpecs.map(p => this.parseProductSpec(p));
           }
-          this._createMethodObserver('productsUpdated(products, products.*)');
           // Force-trigger a channel label expansion.
           this.updateQueryParams(this.testRunQueryParams);
         }

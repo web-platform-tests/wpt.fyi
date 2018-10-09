@@ -108,6 +108,15 @@
           expect(testRunsQuery.products[1].browser_name).to.equal('safari');
           expect(testRunsQuery.products[1].labels).to.contain('experimental');
         });
+
+        test('testRunQueryParams', () => {
+          testRunsQuery.products = [
+            Object.assign({}, DEFAULT_PRODUCTS[0], { labels: ['experimental'] }),
+            Object.assign({}, DEFAULT_PRODUCTS[1], { labels: ['stable'] })
+          ];
+          expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[0].browser_name}[experimental]`);
+          expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[1].browser_name}[stable]`);
+        });
       });
     });
   </script>
