@@ -8,7 +8,6 @@ import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
-	datastore "google.golang.org/appengine/datastore"
 	taskqueue "google.golang.org/appengine/taskqueue"
 	io "io"
 	reflect "reflect"
@@ -50,9 +49,9 @@ func (mr *MockAppEngineAPIMockRecorder) Context() *gomock.Call {
 }
 
 // AddTestRun mocks base method
-func (m *MockAppEngineAPI) AddTestRun(testRun *shared.TestRun) (*datastore.Key, error) {
+func (m *MockAppEngineAPI) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
 	ret := m.ctrl.Call(m, "AddTestRun", testRun)
-	ret0, _ := ret[0].(*datastore.Key)
+	ret0, _ := ret[0].(*DatastoreKey)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

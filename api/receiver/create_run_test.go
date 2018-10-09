@@ -19,6 +19,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+var testDatastoreKey = &DatastoreKey{"TestRun", 1}
+
 func TestHandleResultsCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -44,7 +46,7 @@ func TestHandleResultsCreate(t *testing.T) {
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().AuthenticateUploader("_processor", "secret-token").Return(true),
-		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(nil, nil),
+		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(testDatastoreKey, nil),
 	)
 
 	HandleResultsCreate(mockAE, w, req)
@@ -79,7 +81,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().AuthenticateUploader("_processor", "secret-token").Return(true),
-		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(nil, nil),
+		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(testDatastoreKey, nil),
 	)
 
 	HandleResultsCreate(mockAE, w, req)

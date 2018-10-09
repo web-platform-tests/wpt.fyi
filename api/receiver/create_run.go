@@ -53,7 +53,7 @@ func HandleResultsCreate(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 
 	// Copy int64 representation of key into TestRun.ID so that clients can
 	// inspect/use key value.
-	testRun.ID = key.IntID()
+	testRun.ID = key.ID
 
 	jsonOutput, err := json.Marshal(testRun)
 	if err != nil {
