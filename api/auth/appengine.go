@@ -11,6 +11,10 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+// InternalUsername is a special uploader whose password is kept secret and can
+// only be accessed by services in this AppEngine project via Datastore.
+const InternalUsername = "_processor"
+
 type AppEngineAPI interface {
 	Context() context.Context
 	AuthenticateUploader(username, password string) bool
