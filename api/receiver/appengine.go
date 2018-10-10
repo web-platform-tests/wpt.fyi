@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -149,7 +148,6 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 		}
 	}
 	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
-	log.Printf("taskqueue.Add context: %v", a.ctx)
 	t, err := taskqueue.Add(a.ctx, t, a.queue)
 	return t, err
 }

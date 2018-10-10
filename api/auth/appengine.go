@@ -11,10 +11,6 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-// InternalUsername is a special uploader whose password is kept secret and can
-// only be accessed by services in this AppEngine project via Datastore.
-const InternalUsername = "_processor"
-
 // AppEngineAPI is the API for basic authentication on App Engine-based wpt.fyi
 // APIs.
 type AppEngineAPI interface {

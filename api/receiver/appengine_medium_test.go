@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 	"testing"
 
@@ -77,7 +76,6 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 0)
 
-	log.Printf("Test context: %v", ctx)
 	a := &appEngineAPIImpl{AppEngineAPI: auth.NewAppEngineAPI(ctx), ctx: ctx}
 	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.Nil(t, err)
