@@ -1,0 +1,18 @@
+runtime: custom
+env: flex
+service: spannerwrite
+
+# Should match something at https://cloud.google.com/compute/docs/machine-types.
+resources:
+  # g1-small
+  cpu: 0.5
+  memory_gb: 1.70
+
+automatic_scaling:
+  min_instances: 1
+
+liveness_check:
+  path: "/_ah/liveness_check"
+
+readiness_check:
+  path: "/_ah/readiness_check"
