@@ -13,7 +13,12 @@ import (
 
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
-	version := strings.Split(appengine.VersionID(ctx), ".")[0]
+	var version string
+	if appengine.IsDevAppServer() {
+		version = strings.Split(appengine.VersionID(ctx), ".")[0]
+	} else {
+		version = "local-dev"
+	}
 	data := struct {
 		Version string
 	}{

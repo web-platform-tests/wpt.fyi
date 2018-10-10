@@ -79,6 +79,17 @@ func testProduct(
 	}
 
 	assertProducts(t, wd, testRuns, products...)
+
+	// Wait for the actual results to load.
+	resultsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
+		pathParts, err := getPathPartElements(wd, "wpt-results")
+		if err != nil {
+			return false, err
+		}
+		return len(pathParts) > 0, nil
+	}
+	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+	assert.Nil(t, err)
 }
 
 func assertProducts(t *testing.T, wd selenium.WebDriver, testRuns []selenium.WebElement, products ...shared.ProductSpec) {
