@@ -100,13 +100,13 @@
           });
 
           for (const channel of CHANNELS) {
-            test(channel, () => {
-              for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
-                productBuilder._channel = channel;
-              }
-              queryBuilder.submit();
+            test(channel, done => {
               flush(() => {
+                for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
+                  productBuilder._channel = channel;
+                }
                 expect(queryBuilder.testRunQueryParams.label).to.contain(channel);
+                done();
               });
             });
           }
