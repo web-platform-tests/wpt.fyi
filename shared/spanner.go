@@ -35,35 +35,68 @@ const (
 	// TestStatusCrash indicates that the WPT test runner crashed attempting to run the test.
 	TestStatusCrash int64 = 7
 
+	// TestStatusNameUnknown is the string representation for an uninitialized
+	// TestStatus and should not be used.
+	TestStatusNameUnknown string = "UNKNOWN"
+
+	// TestStatusNamePass is the string representation of a test result where the
+	// test passed.
+	TestStatusNamePass string = "PASS"
+
+	// TestStatusNameOK is the string represnetation of a test result where the
+	// test ran completely but may not have passed (and/or not all of its subtests
+	// passed).
+	TestStatusNameOK string = "OK"
+
+	// TestStatusNameError is the string representation for a test result where
+	// a test harness error was encountered at test runtime.
+	TestStatusNameError string = "ERROR"
+
+	// TestStatusNameTimeout is the string representation for a test result where
+	// the test timed out.
+	TestStatusNameTimeout string = "TIMEOUT"
+
+	// TestStatusNameNotRun is  the string representation for a test result where
+	// the test exists but was not run.
+	TestStatusNameNotRun string = "NOT_RUN"
+
+	// TestStatusNameFail is the string representation of a test result where the
+	// test failed.
+	TestStatusNameFail string = "FAIL"
+
+	// TestStatusNameCrash is the string representation of a test result where the
+	// test runner crashed.
+	TestStatusNameCrash string = "CRASH"
+
 	// TestStatusDefault is the default value used when a status string cannot be
 	// interpreted.
-	TestStatusDefault int64 = 0
+	TestStatusDefault int64 = TestStatusUnknown
 
 	// TestStatusNameDefault is the default string used when a status value cannot
 	// be interpreted.
-	TestStatusNameDefault string = "UNKNOWN"
+	TestStatusNameDefault string = TestStatusNameUnknown
 )
 
 var testStatusValues = map[string]int64{
-	"UNKNOWN": 0,
-	"PASS":    1,
-	"OK":      2,
-	"ERROR":   3,
-	"TIMEOUT": 4,
-	"NOT_RUN": 5,
-	"FAIL":    6,
-	"CRASH":   7,
+	TestStatusNameUnknown: TestStatusUnknown,
+	TestStatusNamePass:    TestStatusPass,
+	TestStatusNameOK:      TestStatusOK,
+	TestStatusNameError:   TestStatusError,
+	TestStatusNameTimeout: TestStatusTimeout,
+	TestStatusNameNotRun:  TestStatusNotRun,
+	TestStatusNameFail:    TestStatusFail,
+	TestStatusNameCrash:   TestStatusCrash,
 }
 
 var testStatusNames = map[int64]string{
-	0: "UNKNOWN",
-	1: "PASS",
-	2: "OK",
-	3: "ERROR",
-	4: "TIMEOUT",
-	5: "NOT_RUN",
-	6: "FAIL",
-	7: "CRASH",
+	TestStatusUnknown: TestStatusNameUnknown,
+	TestStatusPass:    TestStatusNamePass,
+	TestStatusOK:      TestStatusNameOK,
+	TestStatusError:   TestStatusNameError,
+	TestStatusTimeout: TestStatusNameTimeout,
+	TestStatusNotRun:  TestStatusNameNotRun,
+	TestStatusFail:    TestStatusNameFail,
+	TestStatusCrash:   TestStatusNameCrash,
 }
 
 // TestStatusValueFromString returns the enum value associated with str (if
