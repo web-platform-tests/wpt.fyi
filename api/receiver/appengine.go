@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/web-platform-tests/wpt.fyi/api/auth"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
@@ -29,9 +30,9 @@ type DatastoreKey struct {
 
 // AppEngineAPI abstracts all AppEngine APIs used by the results receiver.
 type AppEngineAPI interface {
-	Context() context.Context
+	auth.AppEngineAPI
+
 	AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error)
-	AuthenticateUploader(username, password string) bool
 	// The three methods below are exported for webapp.admin_handler.
 	IsLoggedIn() bool
 	IsAdmin() bool
@@ -46,6 +47,8 @@ type AppEngineAPI interface {
 
 // appEngineAPIImpl is backed by real AppEngine APIs.
 type appEngineAPIImpl struct {
+	auth.AppEngineAPI
+
 	ctx    context.Context
 	client *http.Client
 	gcs    gcs
@@ -55,13 +58,20 @@ type appEngineAPIImpl struct {
 // NewAppEngineAPI creates a real AppEngineAPI from a given context.
 func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 	return &appEngineAPIImpl{
-		ctx:   ctx,
-		queue: ResultsQueue,
+		AppEngineAPI: auth.NewAppEngineAPI(ctx),
+		ctx:          ctx,
+		queue:        ResultsQueue,
 	}
 }
 
-func (a *appEngineAPIImpl) Context() context.Context {
-	return a.ctx
+// NewAppEngineAPIWithAuth creates a real AppEngineAPI from a given context and
+// authentication API.
+func NewAppEngineAPIWithAuth(ctx context.Context, aeAuth auth.AppEngineAPI) AppEngineAPI {
+	return &appEngineAPIImpl{
+		AppEngineAPI: aeAuth,
+		ctx:          ctx,
+		queue:        ResultsQueue,
+	}
 }
 
 func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
@@ -74,15 +84,6 @@ func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, e
 		Kind: key.Kind(),
 		ID:   key.IntID(),
 	}, nil
-}
-
-func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool {
-	key := datastore.NewKey(a.ctx, "Uploader", username, 0, nil)
-	var uploader shared.Uploader
-	if err := datastore.Get(a.ctx, key, &uploader); err != nil || uploader.Password != password {
-		return false
-	}
-	return true
 }
 
 func (a *appEngineAPIImpl) IsLoggedIn() bool {
