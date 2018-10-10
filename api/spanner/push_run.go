@@ -20,6 +20,10 @@ type PushID struct {
 	RunID int64     `json:"run_id"`
 }
 
+// InternalUsername is a special uploader whose password is kept secret and can
+// only be accessed by services in this AppEngine project via Datastore.
+const InternalUsername = "_spanner"
+
 // HandlePushRun handles a request to push a test run to Cloud Spanner.
 func HandlePushRun(a auth.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PUT" {
@@ -28,7 +32,7 @@ func HandlePushRun(a auth.AppEngineAPI, w http.ResponseWriter, r *http.Request) 
 	}
 
 	username, password, ok := r.BasicAuth()
-	if !ok || username != auth.InternalUsername || !a.AuthenticateUploader(username, password) {
+	if !ok || username != InternalUsername || !a.AuthenticateUploader(username, password) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
 		return
 	}
