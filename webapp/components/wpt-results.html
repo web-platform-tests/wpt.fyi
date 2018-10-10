@@ -4,6 +4,7 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
@@ -184,15 +185,15 @@ found in the LICENSE file.
       </info-banner>
     </template>
 
-    <template is="dom-if" if="[[editingQuery]]">
+    <iron-collapse opened="[[editingQuery]]">
       <test-runs-query-builder product-specs="[[productSpecs]]"
-                               labels="[[labels]]"
-                               sha="[[sha]]"
-                               aligned="[[aligned]]"
-                               on-submit="[[updateQuery]]"
-                               edit>
+                              labels="[[labels]]"
+                              sha="[[sha]]"
+                              aligned="[[aligned]]"
+                              on-submit="[[submitQuery]]"
+                              edit>
       </test-runs-query-builder>
-    </template>
+    </iron-collapse>
 
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -465,7 +466,7 @@ found in the LICENSE file.
           this.onlyShowDifferences = !this.onlyShowDifferences;
           this.refreshDisplayedNodes();
         };
-        this.updateQuery = this.handleUpdateQuery.bind(this);
+        this.submitQuery = this.handleSubmitQuery.bind(this);
       }
 
       connectedCallback() {
@@ -492,7 +493,7 @@ found in the LICENSE file.
           if (state) {
             const builder = this.shadowRoot.querySelector('test-runs-query-builder');
             if (builder) {
-              builder.updateQueryParams(state);
+              builder.submitQueryParams(state);
               builder.submit();
             }
           }
@@ -785,9 +786,10 @@ found in the LICENSE file.
         this.fetchResults();
       }
 
-      handleUpdateQuery() {
+      handleSubmitQuery() {
         const builder = this.shadowRoot.querySelector('test-runs-query-builder');
         this.updateQueryParams(builder.testRunQueryParams);
+        this.editingQuery = false;
         // Trigger a virtual navigation.
         this.navigateToLocation(window.location);
         this.testRuns = [];

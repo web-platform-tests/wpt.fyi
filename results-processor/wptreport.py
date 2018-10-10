@@ -484,6 +484,9 @@ def create_test_run(report, labels_str, uploader, secret,
             (e.g. '/wptd/0123456789/chrome-62.0-linux-summary.json.gz')
         raw_results_gcs_path: The GCS path to the raw full report.
             (e.g. '/wptd-results/[full SHA]/chrome-62.0-linux/report.json')
+
+    Returns:
+        The integral ID associated with the created test run.
     """
     assert results_gcs_path.startswith('/')
     assert raw_results_gcs_path.startswith('/')
@@ -502,6 +505,8 @@ def create_test_run(report, labels_str, uploader, secret,
         data=json.dumps(payload)
     )
     response.raise_for_status()
+    response_data = response.json()
+    return response_data['id']
 
 
 def main():

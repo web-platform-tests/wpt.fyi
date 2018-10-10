@@ -19,10 +19,18 @@ import (
 	"google.golang.org/appengine/user"
 )
 
+// DatastoreKey is a context-free constructable form of datastore.Key that
+// contains identifying data for a datastore object that was assigned an
+// integral ID with no parent key.
+type DatastoreKey struct {
+	Kind string
+	ID   int64
+}
+
 // AppEngineAPI abstracts all AppEngine APIs used by the results receiver.
 type AppEngineAPI interface {
 	Context() context.Context
-	AddTestRun(testRun *shared.TestRun) (*datastore.Key, error)
+	AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error)
 	AuthenticateUploader(username, password string) bool
 	// The three methods below are exported for webapp.admin_handler.
 	IsLoggedIn() bool
@@ -56,9 +64,16 @@ func (a *appEngineAPIImpl) Context() context.Context {
 	return a.ctx
 }
 
-func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*datastore.Key, error) {
+func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
 	key := datastore.NewIncompleteKey(a.ctx, "TestRun", nil)
-	return datastore.Put(a.ctx, key, testRun)
+	key, err := datastore.Put(a.ctx, key, testRun)
+	if err != nil {
+		return nil, err
+	}
+	return &DatastoreKey{
+		Kind: key.Kind(),
+		ID:   key.IntID(),
+	}, nil
 }
 
 func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool {

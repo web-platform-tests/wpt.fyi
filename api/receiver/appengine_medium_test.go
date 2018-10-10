@@ -117,10 +117,10 @@ func TestAddTestRun(t *testing.T) {
 
 	key, err := a.AddTestRun(&testRun)
 	assert.Nil(t, err)
-	assert.Equal(t, "TestRun", key.Kind())
+	assert.Equal(t, "TestRun", key.Kind)
 
 	var testRun2 shared.TestRun
-	datastore.Get(ctx, key, &testRun2)
+	datastore.Get(ctx, datastore.NewKey(ctx, key.Kind, "", key.ID, nil), &testRun2)
 	assert.Equal(t, testRun, testRun2)
 }
 
