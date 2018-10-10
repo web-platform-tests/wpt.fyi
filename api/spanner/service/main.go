@@ -16,7 +16,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-var port *int = flag.Int("port", 8080, "Port to listen on")
+var port = flag.Int("port", 8080, "Port to listen on")
 
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Alive"))
