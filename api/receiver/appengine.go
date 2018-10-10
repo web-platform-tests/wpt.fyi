@@ -5,9 +5,11 @@
 package receiver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -48,22 +50,34 @@ type AppEngineAPI interface {
 type appEngineAPIImpl struct {
 	auth.AppEngineAPI
 
+	ctx    context.Context
 	client *http.Client
 	gcs    gcs
 	queue  string
 }
 
 // NewAppEngineAPI creates a real AppEngineAPI from a given context.
-func NewAppEngineAPI(aeAuth auth.AppEngineAPI) AppEngineAPI {
+func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
+	return &appEngineAPIImpl{
+		AppEngineAPI: auth.NewAppEngineAPI(ctx),
+		ctx:          ctx,
+		queue:        ResultsQueue,
+	}
+}
+
+// NewAppEngineAPIWithAuth creates a real AppEngineAPI from a given context and
+// authentication API.
+func NewAppEngineAPIWithAuth(ctx context.Context, aeAuth auth.AppEngineAPI) AppEngineAPI {
 	return &appEngineAPIImpl{
 		AppEngineAPI: aeAuth,
+		ctx:          ctx,
 		queue:        ResultsQueue,
 	}
 }
 
 func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
-	key := datastore.NewIncompleteKey(a.Context(), "TestRun", nil)
-	key, err := datastore.Put(a.Context(), key, testRun)
+	key := datastore.NewIncompleteKey(a.ctx, "TestRun", nil)
+	key, err := datastore.Put(a.ctx, key, testRun)
 	if err != nil {
 		return nil, err
 	}
@@ -74,20 +88,20 @@ func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, e
 }
 
 func (a *appEngineAPIImpl) IsLoggedIn() bool {
-	return user.Current(a.Context()) != nil
+	return user.Current(a.ctx) != nil
 }
 
 func (a *appEngineAPIImpl) LoginURL(redirect string) (string, error) {
-	return user.LoginURL(a.Context(), redirect)
+	return user.LoginURL(a.ctx, redirect)
 }
 
 func (a *appEngineAPIImpl) IsAdmin() bool {
-	return user.IsAdmin(a.Context())
+	return user.IsAdmin(a.ctx)
 }
 
 func (a *appEngineAPIImpl) uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error) {
 	if a.gcs == nil {
-		a.gcs = &gcsImpl{ctx: a.Context()}
+		a.gcs = &gcsImpl{ctx: a.ctx}
 	}
 
 	encoding := ""
@@ -135,13 +149,14 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 		}
 	}
 	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
-	t, err := taskqueue.Add(a.Context(), t, a.queue)
+	log.Printf("taskqueue.Add context: %v", a.ctx)
+	t, err := taskqueue.Add(a.ctx, t, a.queue)
 	return t, err
 }
 
 func (a *appEngineAPIImpl) fetchURL(url string) (io.ReadCloser, error) {
 	if a.client == nil {
-		a.client = urlfetch.Client(a.Context())
+		a.client = urlfetch.Client(a.ctx)
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

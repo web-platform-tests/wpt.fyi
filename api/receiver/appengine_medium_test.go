@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 	"testing"
 
@@ -76,7 +77,8 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 0)
 
-	a := NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
+	log.Printf("Test context: %v", ctx)
+	a := &appEngineAPIImpl{AppEngineAPI: auth.NewAppEngineAPI(ctx), ctx: ctx}
 	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.Nil(t, err)
 
@@ -89,7 +91,7 @@ func TestScheduleResultsTask_error(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(false)
 	assert.Nil(t, err)
 	defer done()
-	a := NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
+	a := &appEngineAPIImpl{AppEngineAPI: auth.NewAppEngineAPI(ctx), ctx: ctx}
 
 	_, err = a.scheduleResultsTask("", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.NotNil(t, err)
@@ -108,7 +110,7 @@ func TestAddTestRun(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
+	a := &appEngineAPIImpl{AppEngineAPI: auth.NewAppEngineAPI(ctx), ctx: ctx}
 
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
