@@ -7,14 +7,13 @@ package webapp
 import (
 	"net/http"
 
-	"github.com/web-platform-tests/wpt.fyi/api/auth"
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
+	a := receiver.NewAppEngineAPI(ctx)
 	showAdminUploadForm(a, w, r)
 }
 

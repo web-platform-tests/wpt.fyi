@@ -15,17 +15,14 @@ import (
 // only be accessed by services in this AppEngine project via Datastore.
 const InternalUsername = "_processor"
 
+// AppEngineAPI is the API for basic authentication on App Engine-based wpt.fyi
+// APIs.
 type AppEngineAPI interface {
-	Context() context.Context
 	AuthenticateUploader(username, password string) bool
 }
 
 type appEngineAPIImpl struct {
 	ctx context.Context
-}
-
-func (a *appEngineAPIImpl) Context() context.Context {
-	return a.ctx
 }
 
 func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool {
@@ -37,6 +34,7 @@ func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool 
 	return true
 }
 
+// NewAppEngineAPI constructs a new AppEngineAPI for the given context.
 func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 	return &appEngineAPIImpl{ctx}
 }
