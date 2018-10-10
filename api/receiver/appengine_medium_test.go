@@ -124,16 +124,3 @@ func TestAddTestRun(t *testing.T) {
 	datastore.Get(ctx, datastore.NewKey(ctx, key.Kind, "", key.ID, nil), &testRun2)
 	assert.Equal(t, testRun, testRun2)
 }
-
-func TestAuthenticateUploader(t *testing.T) {
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
-	a := NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
-
-	assert.False(t, a.AuthenticateUploader("user", "123"))
-
-	key := datastore.NewKey(ctx, "Uploader", "user", 0, nil)
-	datastore.Put(ctx, key, &shared.Uploader{Username: "user", Password: "123"})
-	assert.True(t, a.AuthenticateUploader("user", "123"))
-}
