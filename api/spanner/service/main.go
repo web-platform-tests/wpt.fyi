@@ -27,11 +27,6 @@ func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func spannerPushRunHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "PUT" {
-		http.Error(w, "Only PUT is supported", http.StatusMethodNotAllowed)
-		return
-	}
-
 	a := auth.NewAppEngineAPI(shared.NewAppEngineContext(r))
 	spanner.HandlePushRun(a, w, r)
 }
