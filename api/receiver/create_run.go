@@ -45,10 +45,15 @@ func HandleResultsCreate(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	}
 	testRun.CreatedAt = time.Now()
 
-	if _, err := a.AddTestRun(&testRun); err != nil {
+	key, err := a.AddTestRun(&testRun)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Copy int64 representation of key into TestRun.ID so that clients can
+	// inspect/use key value.
+	testRun.ID = key.ID
 
 	jsonOutput, err := json.Marshal(testRun)
 	if err != nil {
