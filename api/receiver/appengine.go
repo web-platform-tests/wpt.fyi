@@ -5,13 +5,13 @@
 package receiver
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
+	"github.com/web-platform-tests/wpt.fyi/api/auth"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
@@ -29,9 +29,9 @@ type DatastoreKey struct {
 
 // AppEngineAPI abstracts all AppEngine APIs used by the results receiver.
 type AppEngineAPI interface {
-	Context() context.Context
+	auth.AppEngineAPI
+
 	AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error)
-	AuthenticateUploader(username, password string) bool
 	// The three methods below are exported for webapp.admin_handler.
 	IsLoggedIn() bool
 	IsAdmin() bool
@@ -46,27 +46,24 @@ type AppEngineAPI interface {
 
 // appEngineAPIImpl is backed by real AppEngine APIs.
 type appEngineAPIImpl struct {
-	ctx    context.Context
+	auth.AppEngineAPI
+
 	client *http.Client
 	gcs    gcs
 	queue  string
 }
 
 // NewAppEngineAPI creates a real AppEngineAPI from a given context.
-func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
+func NewAppEngineAPI(aeAuth auth.AppEngineAPI) AppEngineAPI {
 	return &appEngineAPIImpl{
-		ctx:   ctx,
-		queue: ResultsQueue,
+		AppEngineAPI: aeAuth,
+		queue:        ResultsQueue,
 	}
 }
 
-func (a *appEngineAPIImpl) Context() context.Context {
-	return a.ctx
-}
-
 func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
-	key := datastore.NewIncompleteKey(a.ctx, "TestRun", nil)
-	key, err := datastore.Put(a.ctx, key, testRun)
+	key := datastore.NewIncompleteKey(a.Context(), "TestRun", nil)
+	key, err := datastore.Put(a.Context(), key, testRun)
 	if err != nil {
 		return nil, err
 	}
@@ -76,30 +73,21 @@ func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, e
 	}, nil
 }
 
-func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool {
-	key := datastore.NewKey(a.ctx, "Uploader", username, 0, nil)
-	var uploader shared.Uploader
-	if err := datastore.Get(a.ctx, key, &uploader); err != nil || uploader.Password != password {
-		return false
-	}
-	return true
-}
-
 func (a *appEngineAPIImpl) IsLoggedIn() bool {
-	return user.Current(a.ctx) != nil
+	return user.Current(a.Context()) != nil
 }
 
 func (a *appEngineAPIImpl) LoginURL(redirect string) (string, error) {
-	return user.LoginURL(a.ctx, redirect)
+	return user.LoginURL(a.Context(), redirect)
 }
 
 func (a *appEngineAPIImpl) IsAdmin() bool {
-	return user.IsAdmin(a.ctx)
+	return user.IsAdmin(a.Context())
 }
 
 func (a *appEngineAPIImpl) uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error) {
 	if a.gcs == nil {
-		a.gcs = &gcsImpl{ctx: a.ctx}
+		a.gcs = &gcsImpl{ctx: a.Context()}
 	}
 
 	encoding := ""
@@ -147,13 +135,13 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 		}
 	}
 	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
-	t, err := taskqueue.Add(a.ctx, t, a.queue)
+	t, err := taskqueue.Add(a.Context(), t, a.queue)
 	return t, err
 }
 
 func (a *appEngineAPIImpl) fetchURL(url string) (io.ReadCloser, error) {
 	if a.client == nil {
-		a.client = urlfetch.Client(a.ctx)
+		a.client = urlfetch.Client(a.Context())
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

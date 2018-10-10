@@ -7,6 +7,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/web-platform-tests/wpt.fyi/api/auth"
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -18,7 +19,7 @@ func apiResultsUploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := receiver.NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
 	receiver.HandleResultsUpload(a, w, r)
 }
 
@@ -29,6 +30,6 @@ func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := receiver.NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
 	receiver.HandleResultsCreate(a, w, r)
 }

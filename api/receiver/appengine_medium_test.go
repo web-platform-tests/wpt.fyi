@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/auth"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/datastore"
@@ -75,7 +76,7 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 0)
 
-	a := appEngineAPIImpl{ctx: ctx}
+	a := NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
 	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.Nil(t, err)
 
@@ -88,7 +89,7 @@ func TestScheduleResultsTask_error(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(false)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{ctx: ctx}
+	a := NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
 
 	_, err = a.scheduleResultsTask("", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.NotNil(t, err)
@@ -107,7 +108,7 @@ func TestAddTestRun(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{ctx: ctx}
+	a := NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
 
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
@@ -128,7 +129,7 @@ func TestAuthenticateUploader(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{ctx: ctx}
+	a := NewAppEngineAPI(auth.NewAppEngineAPI(ctx))
 
 	assert.False(t, a.AuthenticateUploader("user", "123"))
 
