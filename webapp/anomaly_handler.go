@@ -31,7 +31,7 @@ func anomalyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := shared.NewAppEngineStandardContext(r)
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
 
@@ -66,7 +66,7 @@ func anomalyHandler(w http.ResponseWriter, r *http.Request) {
 // browserAnomalyHandler handles the view of test results showing which tests
 // fail in a specific browser, but pass in at least one other browser.
 func browserAnomalyHandler(w http.ResponseWriter, r *http.Request, browser string) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := shared.NewAppEngineStandardContext(r)
 	query := datastore.
 		NewQuery(metrics.GetDatastoreKindName(
 			metrics.FailuresMetadata{})).

@@ -38,7 +38,7 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := shared.NewAppEngineStandardContext(r)
 	log := shared.GetLogger(ctx)
 
 	payload, err := ioutil.ReadAll(r.Body)

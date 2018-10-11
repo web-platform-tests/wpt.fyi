@@ -24,7 +24,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	assert.Nil(t, err)
 
 	// 'Yesterday', v66...139 earlier version.
-	ctx := shared.NewAppEngineContext(r)
+	ctx := shared.NewAppEngineStandardContext(r)
 	now := time.Now()
 	chrome := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
@@ -87,7 +87,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/runs", nil)
 	assert.Nil(t, err)
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := shared.NewAppEngineStandardContext(r)
 	now := time.Now()
 	run := shared.TestRun{}
 	run.BrowserVersion = "66.0.3359.139"

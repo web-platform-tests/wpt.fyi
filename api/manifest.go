@@ -27,7 +27,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	paths := shared.ParsePathsParam(r)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := shared.NewAppEngineStandardContext(r)
 	sha, manifestBytes, err := getManifestForSHA(ctx, sha)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

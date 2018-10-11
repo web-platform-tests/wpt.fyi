@@ -21,7 +21,7 @@ func TestApiSHAsHandler(t *testing.T) {
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/shas", nil)
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := shared.NewAppEngineStandardContext(r)
 
 	// No results - empty JSON array, 404
 	var shas []string

@@ -24,7 +24,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := shared.NewAppEngineStandardContext(r)
 	testRuns, err := LoadTestRunsForFilters(ctx, filters)
 
 	if err != nil {

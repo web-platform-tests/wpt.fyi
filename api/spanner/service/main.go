@@ -27,7 +27,7 @@ func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func spannerPushRunHandler(w http.ResponseWriter, r *http.Request) {
-	a := auth.NewAppEngineAPI(shared.NewAppEngineContext(r))
+	a := auth.NewAppEngineAPI(shared.NewAppEngineFlexContext(r))
 	spanner.HandlePushRun(a, w, r)
 }
 

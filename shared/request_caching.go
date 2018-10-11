@@ -78,7 +78,7 @@ type cachingHandler struct {
 }
 
 func (h cachingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := NewAppEngineContext(r)
+	ctx := NewAppEngineStandardContext(r)
 	logger := GetLogger(ctx)
 
 	// Case 1: Not cacheable.
