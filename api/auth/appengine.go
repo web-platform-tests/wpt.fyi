@@ -6,7 +6,9 @@ package auth
 
 import (
 	"context"
+	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
 )
@@ -25,6 +27,13 @@ func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool 
 	key := datastore.NewKey(a.ctx, "Uploader", username, 0, nil)
 	var uploader shared.Uploader
 	if err := datastore.Get(a.ctx, key, &uploader); err != nil || uploader.Password != password {
+		logger := shared.GetLogger(ctx)
+		str := fmt.Sprintf(`Authentication failure:
+Error: %v
+Username: %s
+Password: %s`, err, username, password)
+		logger.Errorf(str)
+		log.Errorf(str)
 		return false
 	}
 	return true
