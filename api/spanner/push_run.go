@@ -5,12 +5,11 @@
 package spanner
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/web-platform-tests/wpt.fyi/api/auth"
 )
 
 // PushID is a unique identifier for a request to push a test run to
@@ -20,19 +19,15 @@ type PushID struct {
 	RunID int64     `json:"run_id"`
 }
 
-// InternalUsername is a special uploader whose password is kept secret and can
-// only be accessed by services in this AppEngine project via Datastore.
-const InternalUsername = "_spanner"
-
 // HandlePushRun handles a request to push a test run to Cloud Spanner.
-func HandlePushRun(a auth.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
+func HandlePushRun(ctx context.Context, auth Authenticator, w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PUT" {
 		http.Error(w, "Only PUT is supported", http.StatusMethodNotAllowed)
 		return
 	}
 
 	username, password, ok := r.BasicAuth()
-	if !ok || username != InternalUsername || !a.AuthenticateUploader(username, password) {
+	if !ok || username != InternalUsername || !auth.Authenticate(ctx, username, password) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
 		return
 	}

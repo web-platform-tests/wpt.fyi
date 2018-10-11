@@ -10,13 +10,16 @@ import (
 
 	"net/http"
 
+	"cloud.google.com/go/compute/metadata"
 	log "github.com/sirupsen/logrus"
-	"github.com/web-platform-tests/wpt.fyi/api/auth"
 	"github.com/web-platform-tests/wpt.fyi/api/spanner"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-var port = flag.Int("port", 8080, "Port to listen on")
+var (
+	port = flag.Int("port", 8080, "Port to listen on")
+	auth spanner.Authenticator
+)
 
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Alive"))
@@ -27,8 +30,7 @@ func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func spannerPushRunHandler(w http.ResponseWriter, r *http.Request) {
-	a := auth.NewAppEngineAPI(shared.NewRequestContext(r))
-	spanner.HandlePushRun(a, w, r)
+	spanner.HandlePushRun(shared.NewRequestContext(r), auth, w, r)
 }
 
 func init() {
@@ -36,6 +38,15 @@ func init() {
 }
 
 func main() {
+	projectID, err := metadata.ProjectID()
+	if err != nil {
+		log.Warningf("Failed to get project ID from metadata service; disabling spanner service authentication")
+		auth = spanner.NewNopAuthenticator()
+	} else {
+		log.Infof(`Using project ID from metadata service: "%s"`, projectID)
+		auth = spanner.NewDatastoreAuthenticator(projectID)
+	}
+
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
 	http.HandleFunc("/api/spanner_push_run", spannerPushRunHandler)
