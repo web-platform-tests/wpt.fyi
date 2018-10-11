@@ -428,11 +428,21 @@ func TestParseRunIDsParam_ok(t *testing.T) {
 	runIDs, err := ParseRunIDsParam(r)
 	assert.Equal(t, []int64{1, 2, 3}, runIDs)
 	assert.Nil(t, err)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_id=1&run_id=2&run_id=3", nil)
+	runIDs, err = ParseRunIDsParam(r)
+	assert.Equal(t, []int64{1, 2, 3}, runIDs)
+	assert.Nil(t, err)
 }
 
 func TestParseRunIDsParam_err(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_ids=1,notanumber,3", nil)
 	runIDs, err := ParseRunIDsParam(r)
+	assert.Nil(t, runIDs)
+	assert.NotNil(t, err)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_id=1&run_id=notanumber&run_id=3", nil)
+	runIDs, err = ParseRunIDsParam(r)
 	assert.Nil(t, runIDs)
 	assert.NotNil(t, err)
 }
