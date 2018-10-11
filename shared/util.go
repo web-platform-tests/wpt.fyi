@@ -175,17 +175,19 @@ func GetLogger(ctx context.Context) Logger {
 // NewAppEngineStandardContext creates a new Google App Engine Standard-based
 // context bound to an http.Request.
 func NewAppEngineStandardContext(r *http.Request) context.Context {
-	return decorateContext(appengine.NewContext(r))
+	ctx := appengine.NewContext(r)
+	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), NewGAELogger(ctx))
+	return ctx
 }
 
 // NewAppEngineFlexContext creates a new Google App Engine Flexible-based
 // context bound to an http.Request.
 func NewAppEngineFlexContext(r *http.Request) context.Context {
-	return decorateContext(r.Context())
-}
-
-func decorateContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, DefaultLoggerCtxKey(), NewGAELogger(ctx))
+	ctx := appengine.NewContext(r)
+	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), log.WithFields(log.Fields{
+		"request": r,
+	}))
+	return ctx
 }
 
 // NewTestContext creates a new context.Context for small tests.
