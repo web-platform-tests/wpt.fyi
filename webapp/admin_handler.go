@@ -12,7 +12,7 @@ import (
 )
 
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	a := receiver.NewAppEngineAPI(ctx)
 	showAdminUploadForm(a, w, r)
 }

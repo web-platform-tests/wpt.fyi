@@ -60,7 +60,7 @@ type searchHandler struct {
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse query params.
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx))
 	sh := searchHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},

@@ -27,7 +27,7 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	// NOTE: We use the same params as /results, but also support
 	// 'before' and 'after' and 'filter'.
@@ -86,7 +86,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 // handleAPIDiffPost handles POST requests to /api/diff, which allows the caller to produce the diff of an arbitrary
 // run result JSON blob against a historical production run.
 func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	var err error
 	params, err := url.ParseQuery(r.URL.RawQuery)

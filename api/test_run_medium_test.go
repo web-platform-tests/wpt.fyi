@@ -24,7 +24,7 @@ func TestGetTestRunByID(t *testing.T) {
 	r = mux.SetURLVars(r, map[string]string{"id": "123"})
 	assert.Nil(t, err)
 
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	resp := httptest.NewRecorder()
 	apiTestRunHandler(resp, r)
 	assert.Equal(t, http.StatusNotFound, resp.Code)

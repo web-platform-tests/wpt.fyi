@@ -174,7 +174,7 @@ func GetLogger(ctx context.Context) Logger {
 
 // NewAppEngineStandardContext creates a new Google App Engine Standard-based
 // context bound to an http.Request.
-func NewAppEngineStandardContext(r *http.Request) context.Context {
+func NewAppEngineContext(r *http.Request) context.Context {
 	ctx := appengine.NewContext(r)
 	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), NewGAELogger(ctx))
 	return ctx
@@ -182,7 +182,7 @@ func NewAppEngineStandardContext(r *http.Request) context.Context {
 
 // NewAppEngineFlexContext creates a new Google App Engine Flexible-based
 // context bound to an http.Request.
-func NewAppEngineFlexContext(r *http.Request) context.Context {
+func NewRequestContext(r *http.Request) context.Context {
 	ctx := appengine.NewContext(r)
 	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), log.WithFields(log.Fields{
 		"request": r,

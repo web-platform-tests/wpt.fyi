@@ -61,7 +61,7 @@ type autocompleteHandler struct {
 }
 
 func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx))
 	sh := autocompleteHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},

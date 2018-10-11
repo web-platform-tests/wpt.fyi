@@ -48,7 +48,7 @@ func TestAutocompleteHandler(t *testing.T) {
 	{
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
-		ctx := shared.NewAppEngineStandardContext(req)
+		ctx := shared.NewAppEngineContext(req)
 
 		for idx, testRun := range testRuns {
 			key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &testRun)
@@ -82,7 +82,7 @@ func TestAutocompleteHandler(t *testing.T) {
 		url.QueryEscape("2"))
 	r, err := i.NewRequest("GET", url, nil)
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	w := httptest.NewRecorder()
 
 	sh := autocompleteHandler{queryHandler{

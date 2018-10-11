@@ -19,7 +19,7 @@ import (
 // interopHandler handles the view of test results broken down by the
 // number of browsers for which the test passes.
 func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {

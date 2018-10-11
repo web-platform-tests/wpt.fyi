@@ -20,7 +20,7 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineStandardContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	var shas []string
 	products := filters.GetProductsOrDefault()
