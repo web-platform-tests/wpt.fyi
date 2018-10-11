@@ -44,7 +44,6 @@ type AppEngineAPI interface {
 	scheduleResultsTask(
 		uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (
 		*taskqueue.Task, error)
-	fetchURL(url string) (io.ReadCloser, error)
 }
 
 // appEngineAPIImpl is backed by real AppEngine APIs.
@@ -158,22 +157,6 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
 	t, err := taskqueue.Add(a.ctx, t, a.queue)
 	return t, err
-}
-
-func (a *appEngineAPIImpl) fetchURL(url string) (io.ReadCloser, error) {
-	if a.client == nil {
-		a.client = urlfetch.Client(a.ctx)
-	}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept-Encoding", "gzip")
-	resp, err := a.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Body, nil
 }
 
 func (a *appEngineAPIImpl) getHTTPClientWithTimeout(timeout time.Duration) (*http.Client, context.CancelFunc) {
