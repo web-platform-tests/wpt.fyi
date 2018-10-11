@@ -27,7 +27,7 @@ func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool 
 	key := datastore.NewKey(a.ctx, "Uploader", username, 0, nil)
 	var uploader shared.Uploader
 	if err := datastore.Get(a.ctx, key, &uploader); err != nil || uploader.Password != password {
-		logger := shared.GetLogger(ctx)
+		logger := shared.GetLogger(a.ctx)
 		str := fmt.Sprintf(`Authentication failure:
 Error: %v
 Username: %s
