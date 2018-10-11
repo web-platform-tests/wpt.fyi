@@ -6,6 +6,7 @@ package spanner
 
 import (
 	"context"
+	"net/http"
 
 	"cloud.google.com/go/datastore"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -17,14 +18,21 @@ const InternalUsername = "_spanner"
 
 // Authenticator is an interface for authenticating via a username and password.
 type Authenticator interface {
-	Authenticate(ctx context.Context, username, password string) bool
+	Authenticate(context.Context, *http.Request) bool
 }
 
 type datastoreAuthenticator struct {
 	projectID string
 }
 
-func (a *datastoreAuthenticator) Authenticate(ctx context.Context, username, password string) bool {
+func (a *datastoreAuthenticator) Authenticate(ctx context.Context, r *http.Request) bool {
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		logger := shared.GetLogger(ctx)
+		logger.Errorf("Datastore authenticator failed to locate basic auth credentials")
+		return false
+	}
+
 	client, err := datastore.NewClient(ctx, a.projectID)
 	if err != nil {
 		logger := shared.GetLogger(ctx)
@@ -47,14 +55,15 @@ func (a *datastoreAuthenticator) Authenticate(ctx context.Context, username, pas
 }
 
 // NewDatastoreAuthenticator constructs a new Datastore-based authenticator
-// bound to a Google Cloud Platform project ID.
+// bound to a Google Cloud Platform project ID. The authenticator compares HTTP
+// basic auth credentials against username/password data in Datastore.
 func NewDatastoreAuthenticator(projectID string) Authenticator {
 	return &datastoreAuthenticator{projectID}
 }
 
 type nopAuthenticator struct{}
 
-func (a *nopAuthenticator) Authenticate(ctx context.Context, username, password string) bool {
+func (a *nopAuthenticator) Authenticate(ctx context.Context, r *http.Request) bool {
 	return true
 }
 

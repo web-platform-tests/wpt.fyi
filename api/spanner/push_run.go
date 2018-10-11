@@ -26,8 +26,7 @@ func HandlePushRun(ctx context.Context, auth Authenticator, w http.ResponseWrite
 		return
 	}
 
-	username, password, ok := r.BasicAuth()
-	if !ok || username != InternalUsername || !auth.Authenticate(ctx, username, password) {
+	if !auth.Authenticate(ctx, r) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
 		return
 	}
