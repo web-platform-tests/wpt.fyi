@@ -8,8 +8,14 @@ resources:
   cpu: 0.5
   memory_gb: 1.70
 
-automatic_scaling:
-  max_pending_latency: 30ms
+# Setting values under automatic_scaling yields error:
+# (gcloud.app.deploy) INVALID_ARGUMENT: VM-based automatic scaling should NOT have the following parameter(s): [auto_scaling parameter name]
+#
+# According to https://stackoverflow.com/questions/35416319/how-to-set-automatic-scaling-in-google-cloud-managed-vm
+# automatic_scaling should be on by default with no explicit configuration.
+#
+# automatic_scaling:
+#   ...
 
 liveness_check:
   path: "/_ah/liveness_check"
