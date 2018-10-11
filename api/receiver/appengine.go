@@ -11,6 +11,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
@@ -37,7 +39,8 @@ type AppEngineAPI interface {
 	IsAdmin() bool
 	LoginURL(redirect string) (string, error)
 
-	uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error)
+	getHTTPClientWithTimeout(timeout time.Duration) (*http.Client, context.CancelFunc)
+	uploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 	scheduleResultsTask(
 		uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (
 		*taskqueue.Task, error)
@@ -97,7 +100,15 @@ func (a *appEngineAPIImpl) IsAdmin() bool {
 	return user.IsAdmin(a.ctx)
 }
 
-func (a *appEngineAPIImpl) uploadToGCS(fileName string, f io.Reader, gzipped bool) (gcsPath string, err error) {
+func (a *appEngineAPIImpl) uploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
+	// Expecting gcsPath to be /bucket/path/to/file
+	split := strings.SplitN(gcsPath, "/", 3)
+	if len(split) != 3 || split[0] != "" {
+		return fmt.Errorf("invalid GCS path: %s", gcsPath)
+	}
+	bufferName := split[1]
+	fileName := split[2]
+
 	if a.gcs == nil {
 		a.gcs = &gcsImpl{ctx: a.ctx}
 	}
@@ -108,20 +119,18 @@ func (a *appEngineAPIImpl) uploadToGCS(fileName string, f io.Reader, gzipped boo
 	}
 	// We don't defer wc.Close() here so that the file is only closed (and
 	// hence saved) if nothing fails.
-	w, err := a.gcs.NewWriter(BufferBucket, fileName, "application/json", encoding)
+	w, err := a.gcs.NewWriter(bufferName, fileName, "application/json", encoding)
 	if err != nil {
-		return "", err
+		return err
 	}
 	_, err = io.Copy(w, f)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if err := w.Close(); err != nil {
-		return "", err
+		return err
 	}
-
-	gcsPath = fmt.Sprintf("/%s/%s", BufferBucket, fileName)
-	return gcsPath, nil
+	return nil
 }
 
 func (a *appEngineAPIImpl) scheduleResultsTask(
@@ -165,4 +174,10 @@ func (a *appEngineAPIImpl) fetchURL(url string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return resp.Body, nil
+}
+
+func (a *appEngineAPIImpl) getHTTPClientWithTimeout(timeout time.Duration) (*http.Client, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(a.ctx, timeout)
+	client := urlfetch.Client(ctx)
+	return client, cancel
 }

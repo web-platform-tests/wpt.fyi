@@ -6,8 +6,11 @@ package receiver
 
 import (
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
+	"sync"
+	"time"
 
 	"google.golang.org/appengine/taskqueue"
 
@@ -22,6 +25,9 @@ const ResultsQueue = "results-arrival"
 
 // ResultsTarget is the target URL for results proccessing tasks.
 const ResultsTarget = "/api/results/process"
+
+// NumRetries is the number of retries the receiver will do to download results from a URL.
+const NumRetries = 3
 
 // HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
@@ -84,10 +90,9 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 }
 
 func handleFilePayload(a AppEngineAPI, uploader string, f multipart.File, extraParams map[string]string) (*taskqueue.Task, error) {
-	fileName := fmt.Sprintf("%s/%s.json", uploader, uuid.New().String())
+	gcsPath := fmt.Sprintf("/%s/%s/%s.json", BufferBucket, uploader, uuid.New().String())
 
-	gcsPath, err := a.uploadToGCS(fileName, f, true)
-	if err != nil {
+	if err := a.uploadToGCS(gcsPath, f, true); err != nil {
 		return nil, err
 	}
 	return a.scheduleResultsTask(uploader, []string{gcsPath}, "single", extraParams)
@@ -98,38 +103,73 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 
 	var payloadType string
 	gcs := make([]string, 0, len(urls))
+	errors := make(chan error, len(urls))
+	var wg sync.WaitGroup
+	wg.Add(len(urls))
 
 	if len(urls) > 1 {
 		payloadType = "multiple"
 		for i, u := range urls {
-			f, err := a.fetchURL(u)
-			if err != nil {
-				return nil, err
-			}
-			defer f.Close()
-			fileName := fmt.Sprintf("%s/%s/%d.json", uploader, id, i)
-			// TODO: Detect whether the fetched blob is gzipped.
-			gcsPath, err := a.uploadToGCS(fileName, f, true)
-			if err != nil {
-				return nil, err
-			}
+			gcsPath := fmt.Sprintf("/%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
 			gcs = append(gcs, gcsPath)
+			go saveFileToGCS(a, errors, &wg, u, gcsPath)
 		}
 	} else {
 		payloadType = "single"
-		f, err := a.fetchURL(urls[0])
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-		fileName := fmt.Sprintf("%s/%s.json", uploader, id)
-		// TODO: Detect whether the fetched blob is gzipped.
-		gcsPath, err := a.uploadToGCS(fileName, f, true)
-		if err != nil {
-			return nil, err
-		}
+		gcsPath := fmt.Sprintf("/%s/%s/%s.json", BufferBucket, uploader, id)
 		gcs = append(gcs, gcsPath)
+		saveFileToGCS(a, errors, &wg, urls[0], gcsPath)
+	}
+
+	wg.Wait()
+	close(errors)
+	var errStr string
+	for err := range errors {
+		errStr += err.Error() + "\n"
+	}
+	if errStr != "" {
+		return nil, fmt.Errorf("error(s) occured when retrieving results from %s:\n%s", uploader, errStr)
 	}
 
 	return a.scheduleResultsTask(uploader, gcs, payloadType, extraParams)
+}
+
+func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPath string) {
+	defer wg.Done()
+	client, cancel := a.getHTTPClientWithTimeout(time.Minute)
+	defer cancel()
+
+	f, err := fetchFile(client, url)
+	if err != nil {
+		e <- err
+		return
+	}
+	defer f.Close()
+	// TODO: Detect whether the fetched blob is gzipped.
+	if err := a.uploadToGCS(gcsPath, f, true); err != nil {
+		e <- err
+	}
+}
+
+func fetchFile(client *http.Client, url string) (io.ReadCloser, error) {
+	// It is safe to reuse the request as long as we are not modifying it.
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Accept-Encoding", "gzip")
+	sleep := time.Millisecond * 500
+	for retry := 0; retry < NumRetries; retry++ {
+		resp, err := client.Do(req)
+		if err == nil {
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				return resp.Body, nil
+			}
+			resp.Body.Close()
+		}
+
+		time.Sleep(sleep)
+		sleep *= 2
+	}
+	return nil, fmt.Errorf("failed to fetch %s", url)
 }
