@@ -153,9 +153,10 @@ found in the LICENSE file.
           if ('product' in params) {
             this.products = params.product.map(p => this.parseProductSpec(p));
           }
-          // Expand a global channel label into the separate products
-          let sharedChannel = (params.label || []).find(l => CHANNELS.has(l));
+          // Expand any global channel labels into the separate products
+          let sharedChannel;
           if ('label' in params) {
+            sharedChannel = params.label.find(l => CHANNELS.has(l));
             this.labels = params.label.filter(l => !CHANNELS.has(l));
           }
           if (sharedChannel) {
