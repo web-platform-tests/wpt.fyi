@@ -493,7 +493,7 @@ found in the LICENSE file.
           if (state) {
             const builder = this.shadowRoot.querySelector('test-runs-query-builder');
             if (builder) {
-              builder.submitQueryParams(state);
+              builder.updateQueryParams(state);
               builder.submit();
             }
           }

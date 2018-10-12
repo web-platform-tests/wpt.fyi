@@ -13,7 +13,7 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
-    /* global TestRunsQuery, DEFAULT_PRODUCTS */
+    /* global TestRunsQuery */
     class TestRunsBase extends TestRunsQuery(window.Polymer.Element) {
       static get is() {
         return 'wpt-results-base';
@@ -44,15 +44,6 @@ found in the LICENSE file.
             computed: 'computePathIsATestFile(path)'
           },
         };
-      }
-
-      ready() {
-        super.ready();
-        // Fall back to the default product set.
-        if (!(this.products && this.products.length)
-            && !this.testRunResources) {
-          this.products = Array.from(DEFAULT_PRODUCTS);
-        }
       }
 
       computeTestScheme(path) {

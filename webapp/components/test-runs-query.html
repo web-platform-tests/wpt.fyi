@@ -12,7 +12,7 @@ found in the LICENSE file.
     /**
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
-    /* global QueryBuilder, ProductInfo, DEFAULT_PRODUCTS, DEFAULT_PRODUCT_SPECS */
+    /* global QueryBuilder, ProductInfo, CHANNELS, DEFAULT_PRODUCTS, DEFAULT_PRODUCT_SPECS */
     // eslint-disable-next-line no-unused-vars
     const TestRunsQuery =
       (superClass) => class extends QueryBuilder(ProductInfo(superClass)) {
@@ -59,12 +59,14 @@ found in the LICENSE file.
 
         ready() {
           super.ready();
+          this._createMethodObserver('productsUpdated(products, products.*)');
           // Convert any initial product specs to products, if provided.
           if (this.productSpecs && this.productSpecs.length
             && !(this.products && this.products.length)) {
             this.products = this.productSpecs.map(p => this.parseProductSpec(p));
           }
-          this._createMethodObserver('productsUpdated(products, products.*)');
+          // Force-trigger a channel label expansion.
+          this.updateQueryParams(this.testRunQueryParams);
         }
 
         // eslint-disable-next-line no-unused-vars
@@ -84,15 +86,38 @@ found in the LICENSE file.
           if (labels && labels.length) {
             params.label = labels;
           }
-          if (productSpecs && productSpecs.length && !this.isDefaultProducts) {
-            params.product = productSpecs;
-          }
           maxCount = maxCount || this.defaultMaxCount;
           if (maxCount) {
             params['max-count'] = maxCount;
           }
           if (aligned) {
             params.aligned = true;
+          }
+
+          // Collapse a globally shared channel into a single label.
+          if (this.products.length) {
+            let allChannelsSame = true;
+            const channel = (this.products[0].labels || []).find(l => CHANNELS.has(l));
+            for (const p of this.products) {
+              if (!(p.labels || []).find(l => l === channel)) {
+                allChannelsSame = false;
+              }
+            }
+            let productSpecs;
+            if (allChannelsSame) {
+              productSpecs = this.products.map(p => Object.assign(
+                {}, p, {labels: (p.labels || []).filter(l => !CHANNELS.has(l)) }))
+                .map(p => this.getSpec(p));
+              const labels = params.label || [];
+              if (!labels.includes(channel)) {
+                params.label = [...labels, channel];
+              }
+            } else {
+              productSpecs = this.products.map(p => this.getSpec(p));
+            }
+            if (!this.computeIsDefaultProducts(productSpecs)) {
+              params.product = productSpecs;
+            }
           }
           return params;
         }
@@ -107,7 +132,7 @@ found in the LICENSE file.
         }
 
         clearQuery() {
-          this.products = Array.from(DEFAULT_PRODUCTS);
+          this.products = DEFAULT_PRODUCTS.map(p => Object.assign({}, p));
           this.labels = [];
           this.maxCount = undefined;
           this.sha = 'latest';
@@ -125,11 +150,23 @@ found in the LICENSE file.
           if (!this.computeIsLatest(params.sha)) {
             this.sha = params.sha;
           }
-          if ('label' in params) {
-            this.labels = params.label;
-          }
           if ('product' in params) {
             this.products = params.product.map(p => this.parseProductSpec(p));
+          }
+          // Expand any global channel labels into the separate products
+          let sharedChannel;
+          if ('label' in params) {
+            sharedChannel = params.label.find(l => CHANNELS.has(l));
+            this.labels = params.label.filter(l => !CHANNELS.has(l));
+          }
+          if (sharedChannel) {
+            for (const i in this.products) {
+              const labels = this.products[i].labels.filter(l => !CHANNELS.has(l) || l === sharedChannel);
+              if (!this.products[i].labels.includes(sharedChannel)) {
+                labels.push(sharedChannel);
+              }
+              this.set(`products.${i}.labels`, labels);
+            }
           }
           if ('max-count' in params) {
             this.maxCount = params['max-count'];
