@@ -16,16 +16,19 @@ func LatestHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 	ancr := a.GetAnnouncer()
 	if ancr == nil {
 		http.Error(w, a.ErrorJSON("Announcer not yet initialized"), http.StatusServiceUnavailable)
+		return
 	}
 
 	epochs := a.GetEpochs()
 	if len(epochs) == 0 {
 		http.Error(w, a.ErrorJSON("No epochs"), http.StatusInternalServerError)
+		return
 	}
 
 	response, err := push.GetLatestRevisions(a, ancr, epochs)
 	if err != nil {
 		http.Error(w, a.ErrorJSON(err.Error()), http.StatusInternalServerError)
+		return
 	}
 
 	bytes, err := a.Marshal(*response)
