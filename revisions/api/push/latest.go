@@ -33,9 +33,9 @@ func GetLatestRevisions(a api.API, ancr announcer.Announcer, epochs []epoch.Epoc
 	return &response, nil
 }
 
-// DiffLatest returns an api.LatestResponse that contains the new values for
-// given epochs that changed in value between prev and next.
-func DiffLatest(prev *api.LatestResponse, next *api.LatestResponse, epochs []epoch.Epoch) []api.Diff {
+// DiffLatest returns the differences between same-key values in prev and next,
+// processing only those keys that correspond to epochs (by api.Epoch.ID value).
+func DiffLatest(prev map[string]api.Revision, next map[string]api.Revision, epochs []epoch.Epoch) []api.Diff {
 	changes := make([]api.Diff, 0, len(epochs))
 
 	if prev == nil && next == nil {
@@ -46,7 +46,7 @@ func DiffLatest(prev *api.LatestResponse, next *api.LatestResponse, epochs []epo
 		for _, epoch := range epochs {
 			e := api.FromEpoch(epoch)
 			key := e.ID
-			r := next.Revisions[key]
+			r := next[key]
 			changes = append(changes, api.Diff{e.ID, nil, &r})
 		}
 
@@ -57,7 +57,7 @@ func DiffLatest(prev *api.LatestResponse, next *api.LatestResponse, epochs []epo
 		for _, epoch := range epochs {
 			e := api.FromEpoch(epoch)
 			key := e.ID
-			r := prev.Revisions[key]
+			r := prev[key]
 			changes = append(changes, api.Diff{e.ID, &r, nil})
 		}
 
@@ -67,11 +67,17 @@ func DiffLatest(prev *api.LatestResponse, next *api.LatestResponse, epochs []epo
 	for _, epoch := range epochs {
 		e := api.FromEpoch(epoch)
 		key := e.ID
-		if !prev.Revisions[key].Equal(next.Revisions[key]) {
-			pr := prev.Revisions[key]
-			nr := next.Revisions[key]
+		if !prev[key].Equal(next[key]) {
+			pr, pok := prev[key]
+			nr, nok := next[key]
 			if pr != nr {
-				changes = append(changes, api.Diff{e.ID, &pr, &nr})
+				if !pok {
+					changes = append(changes, api.Diff{e.ID, nil, &nr})
+				} else if !nok {
+					changes = append(changes, api.Diff{e.ID, &pr, nil})
+				} else {
+					changes = append(changes, api.Diff{e.ID, &pr, &nr})
+				}
 			}
 		}
 	}
