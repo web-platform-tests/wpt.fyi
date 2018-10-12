@@ -33,6 +33,7 @@ func RegisterRoutes() {
 
 	// Feature flags for wpt.fyi
 	shared.AddRoute("/flags", "flags", flagsHandler)
+	shared.AddRoute("/components/wpt-env-flags.html", "flags-component", flagsComponentHandler)
 
 	// Test run results, viewed by pass-rate across the browsers
 	shared.AddRoute("/interop/", "interop", interopHandler)

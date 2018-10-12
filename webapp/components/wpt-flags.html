@@ -7,6 +7,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../components/wpt-env-flags.html">
 
 <!--
 `<wpt-flags>` is a component for checking wpt.fyi feature flags.
@@ -24,7 +25,12 @@ found in the LICENSE file.
         const props = {};
         for (const feature of WPT_FYI_FEATURES) {
           const stored = localStorage.getItem(`features.${feature}`);
-          const value = stored && JSON.parse(stored);
+          let value = stored && JSON.parse(stored);
+          // Fall back to env default.
+          if (value === null) {
+            value = window.WPTEnvironmentFlags
+              && window.WPTEnvironmentFlags[feature];
+          }
           props[feature] = {
             type: Boolean,
             readOnly: readOnly,
