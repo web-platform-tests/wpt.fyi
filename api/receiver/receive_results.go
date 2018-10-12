@@ -109,7 +109,7 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 	gcs := make([]string, 0, len(urls))
 	if len(urls) > 1 {
 		payloadType = "multiple"
-		for i, u := range urls {
+		for i := range urls {
 			gcsPath := fmt.Sprintf("/%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
 			gcs = append(gcs, gcsPath)
 		}
@@ -122,8 +122,8 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 	errors := make(chan error, len(urls))
 	var wg sync.WaitGroup
 	wg.Add(len(urls))
-	for i, gcsPath := range gcs {
-		go saveFileToGCS(a, errors, &wg, urls[i], gcsPath)
+	for i := range urls {
+		go saveFileToGCS(a, errors, &wg, urls[i], gcs[i])
 	}
 	wg.Wait()
 	close(errors)
