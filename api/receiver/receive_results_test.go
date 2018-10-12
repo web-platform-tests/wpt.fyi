@@ -185,10 +185,14 @@ func TestHandleURLPayload_multiple(t *testing.T) {
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
-	mockAE.EXPECT().fetchWithTimeout(urls[0], DownloadTimeout).Return(f, nil)
-	mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*/0\.json$`), f, true).Return(nil)
-	mockAE.EXPECT().fetchWithTimeout(urls[1], DownloadTimeout).Return(f, nil)
-	mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*/1\.json$`), f, true).Return(nil)
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout(urls[0], DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*/0\.json$`), f, true).Return(nil),
+	)
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout(urls[1], DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*/1\.json$`), f, true).Return(nil),
+	)
 	mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "multiple", nil)
 
 	handleURLPayload(mockAE, "blade-runner", urls, nil)

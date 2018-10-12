@@ -10,8 +10,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -143,4 +147,39 @@ func TestAuthenticateUploader(t *testing.T) {
 	key := datastore.NewKey(ctx, "Uploader", "user", 0, nil)
 	datastore.Put(ctx, key, &shared.Uploader{Username: "user", Password: "123"})
 	assert.True(t, a.authenticateUploader("user", "123"))
+}
+
+func TestFetchWithTimeout_success(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+	a := appEngineAPIImpl{ctx: ctx}
+
+	hello := []byte("Hello, world!")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write(hello)
+	})
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	body, err := a.fetchWithTimeout(server.URL, time.Second)
+	assert.Nil(t, err)
+	defer body.Close()
+	content, err := ioutil.ReadAll(body)
+	assert.Nil(t, err)
+	assert.Equal(t, hello, content)
+}
+
+func TestFetchWithTimeout_404(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+	a := appEngineAPIImpl{ctx: ctx}
+
+	server := httptest.NewServer(http.NotFoundHandler())
+	defer server.Close()
+
+	body, err := a.fetchWithTimeout(server.URL, time.Second)
+	assert.Nil(t, body)
+	assert.EqualError(t, err, "server returned 404 Not Found")
 }
