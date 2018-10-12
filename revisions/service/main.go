@@ -36,7 +36,7 @@ var (
 
 	a api.API
 
-	latest *api.LatestResponse
+	latest map[string]api.Revision
 
 	port = flag.Int("port", 8080, "Port to listen on")
 )
@@ -66,7 +66,7 @@ func init() {
 		limiter := rate.NewLimiter(limit, burst)
 		ctx := context.Background()
 
-		for i := 0; true; i++ {
+		for {
 			err := limiter.Wait(ctx)
 			if err != nil {
 				log.Printf("WARN: Announcer update rate limiter error: %v", err)
@@ -85,10 +85,11 @@ func init() {
 			log.Print("INFO: Update complete")
 
 			// TODO(mdittmer): Push changes to subscribers instead of logging.
-			next, err := push.GetLatestRevisions(a, ancr, epochs)
+			nextResponse, err := push.GetLatestRevisions(a, ancr, epochs)
 			if err != nil {
 				log.Printf("ERRO: Error getting latest revisions: %v", err)
 			}
+			next := nextResponse.Revisions
 			changes := push.DiffLatest(latest, next, epochs)
 			for _, change := range changes {
 				log.Printf("INFO: Epoch %s changed from %v to %v", change.Epoch, change.Prev, change.Next)
