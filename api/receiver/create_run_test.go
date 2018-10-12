@@ -45,8 +45,8 @@ func TestHandleResultsCreate(t *testing.T) {
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
-		mockAE.EXPECT().AuthenticateUploader("_processor", "secret-token").Return(true),
-		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
+		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
 	)
 
 	HandleResultsCreate(mockAE, w, req)
@@ -80,8 +80,8 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
-		mockAE.EXPECT().AuthenticateUploader("_processor", "secret-token").Return(true),
-		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
+		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
 	)
 
 	HandleResultsCreate(mockAE, w, req)
@@ -130,7 +130,7 @@ func TestHandleResultsCreate_WrongPassword(t *testing.T) {
 	req.SetBasicAuth("_processor", "wrong-password")
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().AuthenticateUploader("_processor", "wrong-password").Return(false)
+	mockAE.EXPECT().authenticateUploader("_processor", "wrong-password").Return(false)
 
 	HandleResultsCreate(mockAE, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)

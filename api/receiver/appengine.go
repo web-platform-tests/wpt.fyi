@@ -39,7 +39,7 @@ type AppEngineAPI interface {
 
 	addTestRun(testRun *shared.TestRun) (*DatastoreKey, error)
 	authenticateUploader(username, password string) bool
-	requestWithTimeout(request *http.Request, timeout time.Duration) (io.ReadCloser, error)
+	fetchWithTimeout(url string, timeout time.Duration) (io.ReadCloser, error)
 	uploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 	scheduleResultsTask(
 		uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (
@@ -158,11 +158,16 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 	return t, err
 }
 
-func (a *appEngineAPIImpl) requestWithTimeout(request *http.Request, timeout time.Duration) (io.ReadCloser, error) {
+func (a *appEngineAPIImpl) fetchWithTimeout(url string, timeout time.Duration) (io.ReadCloser, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Accept-Encoding", "gzip")
 	ctx, cancel := context.WithTimeout(a.ctx, timeout)
 	defer cancel()
 	client := urlfetch.Client(ctx)
-	resp, err := client.Do(request)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

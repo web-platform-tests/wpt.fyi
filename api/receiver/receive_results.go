@@ -30,6 +30,9 @@ const ResultsTarget = "/api/results/process"
 // NumRetries is the number of retries the receiver will do to download results from a URL.
 const NumRetries = 3
 
+// DownloadTimeout is the timeout for downloading results.
+const DownloadTimeout = time.Second * 10
+
 // HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	var uploader string
@@ -152,15 +155,10 @@ func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPat
 
 func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
 	// It is safe to reuse the request as long as we are not modifying it.
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept-Encoding", "gzip")
 	log := shared.GetLogger(a.Context())
 	sleep := time.Millisecond * 500
 	for retry := 0; retry < NumRetries; retry++ {
-		body, err := a.requestWithTimeout(req, time.Second*10)
+		body, err := a.fetchWithTimeout(url, DownloadTimeout)
 		if err == nil {
 			return body, nil
 		}
