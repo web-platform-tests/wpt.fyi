@@ -15,6 +15,7 @@ import (
 	"google.golang.org/appengine/taskqueue"
 
 	"github.com/google/uuid"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // BufferBucket is the GCS bucket to temporarily store results until they are proccessed.
@@ -34,7 +35,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	var uploader string
 	if !a.IsAdmin() {
 		username, password, ok := r.BasicAuth()
-		if !ok || !a.AuthenticateUploader(username, password) {
+		if !ok || !a.authenticateUploader(username, password) {
 			http.Error(w, "Authentication error", http.StatusUnauthorized)
 			return
 		}
@@ -136,10 +137,8 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 
 func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPath string) {
 	defer wg.Done()
-	client, cancel := a.getHTTPClientWithTimeout(time.Minute)
-	defer cancel()
 
-	f, err := fetchFile(client, url)
+	f, err := fetchFile(a, url)
 	if err != nil {
 		e <- err
 		return
@@ -151,22 +150,21 @@ func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPat
 	}
 }
 
-func fetchFile(client *http.Client, url string) (io.ReadCloser, error) {
+func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
 	// It is safe to reuse the request as long as we are not modifying it.
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Accept-Encoding", "gzip")
+	log := shared.GetLogger(a.Context())
 	sleep := time.Millisecond * 500
 	for retry := 0; retry < NumRetries; retry++ {
-		resp, err := client.Do(req)
+		body, err := a.requestWithTimeout(req, time.Second*10)
 		if err == nil {
-			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-				return resp.Body, nil
-			}
-			resp.Body.Close()
+			return body, nil
 		}
+		log.Errorf("[%d/%d] error requesting %s: %s", retry+1, NumRetries, url, err.Error())
 
 		time.Sleep(sleep)
 		sleep *= 2

@@ -32,14 +32,14 @@ type DatastoreKey struct {
 // AppEngineAPI abstracts all AppEngine APIs used by the results receiver.
 type AppEngineAPI interface {
 	Context() context.Context
-	AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error)
-	AuthenticateUploader(username, password string) bool
 	// The three methods below are exported for webapp.admin_handler.
 	IsLoggedIn() bool
 	IsAdmin() bool
 	LoginURL(redirect string) (string, error)
 
-	getHTTPClientWithTimeout(timeout time.Duration) (*http.Client, context.CancelFunc)
+	addTestRun(testRun *shared.TestRun) (*DatastoreKey, error)
+	authenticateUploader(username, password string) bool
+	requestWithTimeout(request *http.Request, timeout time.Duration) (io.ReadCloser, error)
 	uploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 	scheduleResultsTask(
 		uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (
@@ -48,10 +48,9 @@ type AppEngineAPI interface {
 
 // appEngineAPIImpl is backed by real AppEngine APIs.
 type appEngineAPIImpl struct {
-	ctx    context.Context
-	client *http.Client
-	gcs    gcs
-	queue  string
+	ctx   context.Context
+	gcs   gcs
+	queue string
 }
 
 // NewAppEngineAPI creates a real AppEngineAPI from a given context.
@@ -66,7 +65,7 @@ func (a *appEngineAPIImpl) Context() context.Context {
 	return a.ctx
 }
 
-func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
+func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
 	key := datastore.NewIncompleteKey(a.ctx, "TestRun", nil)
 	key, err := datastore.Put(a.ctx, key, testRun)
 	if err != nil {
@@ -78,7 +77,7 @@ func (a *appEngineAPIImpl) AddTestRun(testRun *shared.TestRun) (*DatastoreKey, e
 	}, nil
 }
 
-func (a *appEngineAPIImpl) AuthenticateUploader(username, password string) bool {
+func (a *appEngineAPIImpl) authenticateUploader(username, password string) bool {
 	key := datastore.NewKey(a.ctx, "Uploader", username, 0, nil)
 	var uploader shared.Uploader
 	if err := datastore.Get(a.ctx, key, &uploader); err != nil || uploader.Password != password {
@@ -159,8 +158,17 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 	return t, err
 }
 
-func (a *appEngineAPIImpl) getHTTPClientWithTimeout(timeout time.Duration) (*http.Client, context.CancelFunc) {
+func (a *appEngineAPIImpl) requestWithTimeout(request *http.Request, timeout time.Duration) (io.ReadCloser, error) {
 	ctx, cancel := context.WithTimeout(a.ctx, timeout)
+	defer cancel()
 	client := urlfetch.Client(ctx)
-	return client, cancel
+	resp, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		resp.Body.Close()
+		return nil, fmt.Errorf("server returned %s", resp.Status)
+	}
+	return resp.Body, nil
 }
