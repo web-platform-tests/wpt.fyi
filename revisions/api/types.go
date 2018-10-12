@@ -185,3 +185,17 @@ func RevisionsFromEpochs(revs map[epoch.Epoch][]agit.Revision, apiErr error) Rev
 
 	return response
 }
+
+// Diff contains a change in epoch revision where the epoch is identified by an
+// Epoch.ID.
+type Diff struct {
+	Epoch string    `json:"epoch"`
+	Prev  *Revision `json:"prev,omitempty"`
+	Next  *Revision `json:"next,omitempty"`
+}
+
+// DiffPayload contains the data pushed to a subscriber to epochal revision
+// changes.
+type DiffPayload struct {
+	Changes []Diff `json:"changes"`
+}

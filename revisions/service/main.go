@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/web-platform-tests/wpt.fyi/revisions/api/push"
+
 	"github.com/web-platform-tests/wpt.fyi/revisions/announcer"
 	"github.com/web-platform-tests/wpt.fyi/revisions/api"
 	"github.com/web-platform-tests/wpt.fyi/revisions/api/handlers"
@@ -18,18 +20,22 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 )
 
-var epochs = []epoch.Epoch{
-	epoch.Weekly{},
-	epoch.Daily{},
-	epoch.TwelveHourly{},
-	epoch.EightHourly{},
-	epoch.SixHourly{},
-	epoch.FourHourly{},
-	epoch.TwoHourly{},
-	epoch.Hourly{},
-}
+var (
+	epochs = []epoch.Epoch{
+		epoch.Weekly{},
+		epoch.Daily{},
+		epoch.TwelveHourly{},
+		epoch.EightHourly{},
+		epoch.SixHourly{},
+		epoch.FourHourly{},
+		epoch.TwoHourly{},
+		epoch.Hourly{},
+	}
 
-var a api.API
+	a api.API
+
+	latest *api.LatestResponse
+)
 
 func init() {
 	a = api.NewAPI(epochs)
@@ -41,7 +47,7 @@ func init() {
 			RemoteName:                "origin",
 			BranchName:                "master",
 			EpochReferenceIterFactory: announcer.NewBoundedMergedPRIterFactory(),
-			Git: agit.GoGit{},
+			Git:                       agit.GoGit{},
 		})
 		if err != nil {
 			log.Fatalf("Announcer initialization failed: %v", err)
@@ -73,6 +79,16 @@ func init() {
 				log.Printf("ERRO: Error updating announcer: %v", err)
 			}
 			log.Print("INFO: Update complete")
+
+			// TODO(mdittmer): Push changes to subscribers instead of logging.
+			next, err := push.GetLatestRevisions(a, ancr, epochs)
+			if err != nil {
+				log.Printf("ERRO: Error getting latest revisions: %v", err)
+			}
+			delta := push.DiffLatest(latest, next, epochs)
+			for _, change := range delta.Changes {
+				log.Printf("INFO: Epoch %s changed from %v to %v", change.Epoch, change.Prev, change.Next)
+			}
 		}
 	}()
 }
