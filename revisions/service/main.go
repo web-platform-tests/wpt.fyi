@@ -6,6 +6,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -35,6 +37,8 @@ var (
 	a api.API
 
 	latest *api.LatestResponse
+
+	port = flag.Int("port", 8080, "Port to listen on")
 )
 
 func init() {
@@ -85,16 +89,18 @@ func init() {
 			if err != nil {
 				log.Printf("ERRO: Error getting latest revisions: %v", err)
 			}
-			delta := push.DiffLatest(latest, next, epochs)
-			for _, change := range delta.Changes {
+			changes := push.DiffLatest(latest, next, epochs)
+			for _, change := range changes {
 				log.Printf("INFO: Epoch %s changed from %v to %v", change.Epoch, change.Prev, change.Next)
 			}
+			latest = next
 		}
 	}()
 }
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile | log.LUTC)
+	flag.Parse()
 
 	http.HandleFunc("/api/revisions/epochs", epochsHandler)
 	http.HandleFunc("/api/revisions/latest", latestHandler)
@@ -110,7 +116,8 @@ func main() {
 		w.Write([]byte("Ready"))
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("INFO: Listening on port %d", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
 
 func epochsHandler(w http.ResponseWriter, r *http.Request) {
