@@ -63,14 +63,12 @@ func NewDatastoreAuthenticator(projectID string) Authenticator {
 
 type nopAuthenticator struct{}
 
-func (a *nopAuthenticator) Authenticate(ctx context.Context, r *http.Request) bool {
+func (a nopAuthenticator) Authenticate(ctx context.Context, r *http.Request) bool {
 	return true
 }
-
-var nopa = &nopAuthenticator{}
 
 // NewNopAuthenticator returns an authenticator that always
 // authenticates successfully.
 func NewNopAuthenticator() Authenticator {
-	return nopa
+	return nopAuthenticator{}
 }
