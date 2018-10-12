@@ -70,6 +70,11 @@ type Revision struct {
 	CommitTime UTCTime `json:"commit_time"`
 }
 
+// Equal returns true iff r and r2 represent the same revision.
+func (r Revision) Equal(r2 Revision) bool {
+	return r.Hash == r2.Hash && time.Time(r.CommitTime).Equal(time.Time(r2.CommitTime))
+}
+
 // FromRevision converts an agit.Revision to a revision exposed via the public API.
 func FromRevision(rev agit.Revision) Revision {
 	return Revision{
