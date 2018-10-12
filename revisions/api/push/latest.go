@@ -67,10 +67,12 @@ func DiffLatest(prev *api.LatestResponse, next *api.LatestResponse, epochs []epo
 	for _, epoch := range epochs {
 		e := api.FromEpoch(epoch)
 		key := e.ID
-		if prev.Revisions[key] != next.Revisions[key] {
+		if !prev.Revisions[key].Equal(next.Revisions[key]) {
 			pr := prev.Revisions[key]
 			nr := next.Revisions[key]
-			changes = append(changes, api.Diff{e.ID, &pr, &nr})
+			if pr != nr {
+				changes = append(changes, api.Diff{e.ID, &pr, &nr})
+			}
 		}
 	}
 
