@@ -107,26 +107,27 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 
 	var payloadType string
 	gcs := make([]string, 0, len(urls))
-	errors := make(chan error, len(urls))
-	var wg sync.WaitGroup
-	wg.Add(len(urls))
-
 	if len(urls) > 1 {
 		payloadType = "multiple"
 		for i, u := range urls {
 			gcsPath := fmt.Sprintf("/%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
 			gcs = append(gcs, gcsPath)
-			go saveFileToGCS(a, errors, &wg, u, gcsPath)
 		}
 	} else {
 		payloadType = "single"
 		gcsPath := fmt.Sprintf("/%s/%s/%s.json", BufferBucket, uploader, id)
 		gcs = append(gcs, gcsPath)
-		saveFileToGCS(a, errors, &wg, urls[0], gcsPath)
 	}
 
+	errors := make(chan error, len(urls))
+	var wg sync.WaitGroup
+	wg.Add(len(urls))
+	for i, gcsPath := range gcs {
+		go saveFileToGCS(a, errors, &wg, urls[i], gcsPath)
+	}
 	wg.Wait()
 	close(errors)
+
 	var errStr string
 	for err := range errors {
 		errStr += err.Error() + "\n"
@@ -154,7 +155,6 @@ func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPat
 }
 
 func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
-	// It is safe to reuse the request as long as we are not modifying it.
 	log := shared.GetLogger(a.Context())
 	sleep := time.Millisecond * 500
 	for retry := 0; retry < NumRetries; retry++ {

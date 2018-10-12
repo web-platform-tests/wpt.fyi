@@ -104,7 +104,7 @@ func (a *appEngineAPIImpl) uploadToGCS(gcsPath string, f io.Reader, gzipped bool
 	if len(split) != 3 || split[0] != "" {
 		return fmt.Errorf("invalid GCS path: %s", gcsPath)
 	}
-	bufferName := split[1]
+	bucketName := split[1]
 	fileName := split[2]
 
 	if a.gcs == nil {
@@ -117,7 +117,7 @@ func (a *appEngineAPIImpl) uploadToGCS(gcsPath string, f io.Reader, gzipped bool
 	}
 	// We don't defer wc.Close() here so that the file is only closed (and
 	// hence saved) if nothing fails.
-	w, err := a.gcs.NewWriter(bufferName, fileName, "application/json", encoding)
+	w, err := a.gcs.NewWriter(bucketName, fileName, "application/json", encoding)
 	if err != nil {
 		return err
 	}

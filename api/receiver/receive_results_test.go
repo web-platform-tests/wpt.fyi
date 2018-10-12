@@ -22,6 +22,8 @@ import (
 	"google.golang.org/appengine/taskqueue"
 )
 
+// regexMatcher is a gomock.Matcher that verifies whether a string argument
+// matches the predefined regular expression.
 type regexMatcher struct {
 	regex *regexp.Regexp
 }
