@@ -7,6 +7,7 @@
 package receiver
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -196,4 +197,62 @@ func TestHandleURLPayload_multiple(t *testing.T) {
 	mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "multiple", nil)
 
 	handleURLPayload(mockAE, "blade-runner", urls, nil)
+}
+
+func TestHandleURLPayload_retry_fetching(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	f := &os.File{}
+	errTimeout := fmt.Errorf("server timed out")
+
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "single", nil),
+	)
+
+	handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil)
+}
+
+func TestHandleURLPayload_fail_fetching(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	errTimeout := fmt.Errorf("server timed out")
+
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+	)
+
+	task, err := handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil)
+	assert.Nil(t, task)
+	assert.NotNil(t, err)
+}
+
+func TestHandleURLPayload_fail_uploading(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	f := &os.File{}
+	errGCS := fmt.Errorf("failed to upload to GCS")
+
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(errGCS),
+	)
+
+	task, err := handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil)
+	assert.Nil(t, task)
+	assert.NotNil(t, err)
 }
