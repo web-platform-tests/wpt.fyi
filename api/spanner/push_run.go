@@ -17,9 +17,11 @@ import (
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/spanner"
 	mapset "github.com/deckarep/golang-set"
+	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 )
 
 const (
@@ -34,13 +36,13 @@ type PushID struct {
 }
 
 // HandlePushRun handles a request to push a test run to Cloud Spanner.
-func HandlePushRun(ctx context.Context, auth Authenticator, w http.ResponseWriter, r *http.Request) {
+func HandlePushRun(ctx context.Context, api API, w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PUT" {
 		http.Error(w, "Only PUT is supported", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if !auth.Authenticate(ctx, r) {
+	if !api.Authenticate(ctx, r) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
 		return
 	}
@@ -52,7 +54,12 @@ func HandlePushRun(ctx context.Context, auth Authenticator, w http.ResponseWrite
 	}
 
 	t := time.Now().UTC()
+	pushID := PushID{t, id}
+	pushCtx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), log.WithFields(log.Fields{
+		"spanner_push_run_id": pushID,
+	}))
 
+	go pushRun(pushCtx, api, id)
 	// TODO(mdittmer): Load run report URL from datastore, load report from GCS,
 	// write results to Cloud Spanner.
 
@@ -62,6 +69,54 @@ func HandlePushRun(ctx context.Context, auth Authenticator, w http.ResponseWrite
 	}
 
 	w.Write(data)
+}
+
+func pushRun(ctx context.Context, api API, id int64) {
+	var (
+		dsClient *datastore.Client
+		sClient  *spanner.Client
+		err      error
+	)
+	if api.GCPCredentialsFile != nil {
+		dsClient, err = datastore.NewClient(ctx, api.ProjectID, option.WithCredentialsFile(*api.GCPCredentialsFile))
+	} else {
+		dsClient, err = datastore.NewClient(ctx, api.ProjectID)
+	}
+
+	if err != nil {
+		shared.GetLogger(ctx).Errorf("Spanner push run failed: %v", err)
+		return
+	}
+
+	run, err := loadRun(ctx, dsClient, id)
+	if err != nil {
+		shared.GetLogger(ctx).Errorf("Spanner push run failed loading run: %v", err)
+		return
+	}
+
+	report, err := loadRunReport(ctx, run)
+	if err != nil {
+		shared.GetLogger(ctx).Errorf("Spanner push run failed loading run report: %v", err)
+		return
+	}
+
+	if api.GCPCredentialsFile != nil {
+		sClient, err = spanner.NewClient(ctx, api.Database, option.WithCredentialsFile(*api.GCPCredentialsFile))
+	} else {
+		sClient, err = spanner.NewClient(ctx, api.Database)
+	}
+	if err != nil {
+		shared.GetLogger(ctx).Errorf("Spanner push run failed connecting to spanner: %v", err)
+		return
+	}
+
+	n, err := numRowsToUpload(ctx, sClient, id, report)
+	if err != nil {
+		shared.GetLogger(ctx).Errorf("Spanner push run failed calculating number of rows to upload: %v", err)
+		return
+	}
+
+	shared.GetLogger(ctx).Infof("NOT IMPLEMENTED: Spanner push run would now push run if number of missing rows=%d > 0", n)
 }
 
 func loadRun(ctx context.Context, client *datastore.Client, id int64) (*shared.TestRun, error) {
