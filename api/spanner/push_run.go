@@ -112,7 +112,7 @@ func pushRun(ctx context.Context, api API, id int64) {
 func loadRun(ctx context.Context, client *datastore.Client, id int64) (*shared.TestRun, error) {
 	logger := shared.GetLogger(ctx)
 
-	logger.Infof("Loading TestRun entity with integra key %d", id)
+	logger.Infof("Loading TestRun entity with integral key %d", id)
 
 	var run shared.TestRun
 	err := client.Get(ctx, &datastore.Key{

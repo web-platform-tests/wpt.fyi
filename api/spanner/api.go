@@ -33,7 +33,7 @@ type apiImpl struct {
 	gcpCredentialsFile *string
 }
 
-func (a *apiImpl) DatastoreConnect(ctx context.Context) (*datastore.Client, error) {
+func (a apiImpl) DatastoreConnect(ctx context.Context) (*datastore.Client, error) {
 	if a.gcpCredentialsFile != nil {
 		return datastore.NewClient(ctx, a.projectID, option.WithCredentialsFile(*a.gcpCredentialsFile))
 	}
@@ -41,7 +41,7 @@ func (a *apiImpl) DatastoreConnect(ctx context.Context) (*datastore.Client, erro
 	return datastore.NewClient(ctx, a.projectID)
 }
 
-func (a *apiImpl) SpannerConnect(ctx context.Context) (*spanner.Client, error) {
+func (a apiImpl) SpannerConnect(ctx context.Context) (*spanner.Client, error) {
 	db := fmt.Sprintf("projects/%s/instances/%s/databases/%s", a.projectID, a.instance, a.database)
 	if a.gcpCredentialsFile != nil {
 		return spanner.NewClient(ctx, db, option.WithCredentialsFile(*a.gcpCredentialsFile))
@@ -50,17 +50,15 @@ func (a *apiImpl) SpannerConnect(ctx context.Context) (*spanner.Client, error) {
 	return spanner.NewClient(ctx, db)
 }
 
-func (a *apiImpl) WithCredentialsFile(gcpCredentialsFile string) API {
-	// Make a copy of a and store credentials file path in copy.
-	a2 := *a
-	a2.gcpCredentialsFile = &gcpCredentialsFile
-	return &a2
+func (a apiImpl) WithCredentialsFile(gcpCredentialsFile string) API {
+	a.gcpCredentialsFile = &gcpCredentialsFile
+	return a
 }
 
 // NewAPI creates a new API instance bound to the given authenticator and
 // spanner storage location.
 func NewAPI(a Authenticator, projectID, instance, database string) API {
-	return &apiImpl{
+	return apiImpl{
 		Authenticator: a,
 		projectID:     projectID,
 		instance:      instance,
