@@ -494,7 +494,7 @@ found in the LICENSE file.
             const builder = this.shadowRoot.querySelector('test-runs-query-builder');
             if (builder) {
               builder.updateQueryParams(state);
-              builder.submit();
+              this.handleSubmitQuery();
             }
           }
         };
@@ -788,8 +788,11 @@ found in the LICENSE file.
 
       handleSubmitQuery() {
         const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-        this.updateQueryParams(builder.testRunQueryParams);
         this.editingQuery = false;
+        if (this.testRunQuery === builder.testRunQuery) {
+          return;
+        }
+        this.updateQueryParams(builder.testRunQueryParams);
         // Trigger a virtual navigation.
         this.navigateToLocation(window.location);
         this.testRuns = [];
