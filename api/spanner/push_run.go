@@ -107,6 +107,8 @@ func pushRun(ctx context.Context, api API, id int64) {
 	shared.GetLogger(ctx).Infof("NOT IMPLEMENTED: Spanner push run would now push run if number of missing rows=%d > 0", n)
 }
 
+// loadRun loads shared.TestRun data from datastore, given an integral ID
+// (Datastore key).
 func loadRun(ctx context.Context, client *datastore.Client, id int64) (*shared.TestRun, error) {
 	logger := shared.GetLogger(ctx)
 
@@ -125,6 +127,8 @@ func loadRun(ctx context.Context, client *datastore.Client, id int64) (*shared.T
 	return &run, nil
 }
 
+// loadRunReport loads a metrics.TestResultsReport using the URL specified in
+// run.
 func loadRunReport(ctx context.Context, run *shared.TestRun) (*metrics.TestResultsReport, error) {
 	logger := shared.GetLogger(ctx)
 
@@ -169,6 +173,8 @@ func loadRunReport(ctx context.Context, run *shared.TestRun) (*metrics.TestResul
 	return &report, nil
 }
 
+// countReportResults counts the number of meaningfully distinct test results
+// detailed in report.
 func countReportResults(ctx context.Context, report *metrics.TestResultsReport) int64 {
 	count := int64(0)
 	for _, r := range report.Results {
@@ -189,6 +195,8 @@ func countReportResults(ctx context.Context, report *metrics.TestResultsReport) 
 	return count
 }
 
+// countSpannerResults counts the number of test results bound to the given
+// runID in Cloud Spanner.
 func countSpannerResults(ctx context.Context, client *spanner.Client, runID int64) (int64, error) {
 	params := map[string]interface{}{
 		"run_id": runID,
@@ -220,6 +228,10 @@ func countSpannerResults(ctx context.Context, client *spanner.Client, runID int6
 	return count, nil
 }
 
+// numRowsToUpload delegates to internal counting functions to compare the
+// number of test results in a run report to the number of results stored in
+// Cloud Spanner. The return value is the number of results in the report that
+// do not appear in Cloud Spanner.
 func numRowsToUpload(ctx context.Context, client *spanner.Client, runID int64, report *metrics.TestResultsReport) (int64, error) {
 	totalRows := countReportResults(ctx, report)
 	existingRows, err := countSpannerResults(ctx, client, runID)

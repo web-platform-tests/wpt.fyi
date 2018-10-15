@@ -13,6 +13,9 @@ import (
 	"google.golang.org/api/option"
 )
 
+// API is a wrapper for service configuration that does not change between
+// requests. E.g., information necessary to connect to Datastore and Cloud
+// Spanner.
 type API interface {
 	Authenticator
 
@@ -48,11 +51,14 @@ func (a *apiImpl) SpannerConnect(ctx context.Context) (*spanner.Client, error) {
 }
 
 func (a *apiImpl) WithCredentialsFile(gcpCredentialsFile string) API {
+	// Make a copy of a and store credentials file path in copy.
 	a2 := *a
 	a2.gcpCredentialsFile = &gcpCredentialsFile
 	return &a2
 }
 
+// NewAPI creates a new API instance bound to the given authenticator and
+// spanner storage location.
 func NewAPI(a Authenticator, projectID, instance, database string) API {
 	return &apiImpl{
 		Authenticator: a,
