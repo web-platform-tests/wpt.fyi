@@ -390,6 +390,10 @@ func TestParseProductSpec_Labels(t *testing.T) {
 	assert.NotNil(t, err)
 	_, err = ParseProductSpec("[foo]")
 	assert.NotNil(t, err)
+	_, err = ParseProductSpec("chrome[")
+	assert.NotNil(t, err)
+	_, err = ParseProductSpec("chrome[foo")
+	assert.NotNil(t, err)
 }
 
 func TestParseProductSpec_String(t *testing.T) {
@@ -503,6 +507,12 @@ func TestParseTestRunFilterParams(t *testing.T) {
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?from=2018-01-01T00%3A00%3A00Z", nil)
 	filter, _ = ParseTestRunFilterParams(r)
 	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery().Encode())
+}
+
+func TestParseTestRunFilterParams_Invalid(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?product=chrome%5B", nil)
+	_, err := ParseTestRunFilterParams(r)
+	assert.NotNil(t, err)
 }
 
 func TestProductSpecMatches(t *testing.T) {
