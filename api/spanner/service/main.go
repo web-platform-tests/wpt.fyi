@@ -27,6 +27,7 @@ const (
 var (
 	port               = flag.Int("port", 8080, "Port to listen on")
 	projectID          = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
+	spannerInstance    = flag.String("spanner_instance", "wpt-results", "Cloud Spanner instance ID where data are stored")
 	gcpCredentialsFile = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	auth               spanner.Authenticator
 	api                spanner.API
@@ -65,13 +66,9 @@ func main() {
 		auth = spanner.NewDatastoreAuthenticator(*projectID)
 	}
 
-	api = spanner.API{
-		Authenticator: auth,
-		ProjectID:     *projectID,
-		Database:      spannerDatabase,
-	}
+	api = spanner.NewAPI(auth, *projectID, *spannerInstance, spannerDatabase)
 	if *gcpCredentialsFile != "" {
-		api.GCPCredentialsFile = gcpCredentialsFile
+		api = api.WithCredentialsFile(*gcpCredentialsFile)
 	}
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)

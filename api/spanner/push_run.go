@@ -21,11 +21,10 @@ import (
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 )
 
 const (
-	countStmt = "SELECT COUNT(*) FROM results-apep WHERE run_id = @run_id"
+	countStmt = "SELECT COUNT(*) FROM results WHERE run_id = @run_id"
 )
 
 // PushID is a unique identifier for a request to push a test run to
@@ -60,8 +59,6 @@ func HandlePushRun(ctx context.Context, api API, w http.ResponseWriter, r *http.
 	}))
 
 	go pushRun(pushCtx, api, id)
-	// TODO(mdittmer): Load run report URL from datastore, load report from GCS,
-	// write results to Cloud Spanner.
 
 	data, err := json.Marshal(PushID{t, id})
 	if err != nil {
@@ -77,14 +74,9 @@ func pushRun(ctx context.Context, api API, id int64) {
 		sClient  *spanner.Client
 		err      error
 	)
-	if api.GCPCredentialsFile != nil {
-		dsClient, err = datastore.NewClient(ctx, api.ProjectID, option.WithCredentialsFile(*api.GCPCredentialsFile))
-	} else {
-		dsClient, err = datastore.NewClient(ctx, api.ProjectID)
-	}
-
+	dsClient, err = api.DatastoreConnect(ctx)
 	if err != nil {
-		shared.GetLogger(ctx).Errorf("Spanner push run failed: %v", err)
+		shared.GetLogger(ctx).Errorf("Spanner push run failed connecting to datastore: %v", err)
 		return
 	}
 
@@ -100,11 +92,7 @@ func pushRun(ctx context.Context, api API, id int64) {
 		return
 	}
 
-	if api.GCPCredentialsFile != nil {
-		sClient, err = spanner.NewClient(ctx, api.Database, option.WithCredentialsFile(*api.GCPCredentialsFile))
-	} else {
-		sClient, err = spanner.NewClient(ctx, api.Database)
-	}
+	sClient, err = api.SpannerConnect(ctx)
 	if err != nil {
 		shared.GetLogger(ctx).Errorf("Spanner push run failed connecting to spanner: %v", err)
 		return
@@ -133,6 +121,7 @@ func loadRun(ctx context.Context, client *datastore.Client, id int64) (*shared.T
 		logger.Errorf("Failed to load TestRun entity with integral key %d", id)
 		return nil, err
 	}
+	run.ID = id
 	return &run, nil
 }
 
