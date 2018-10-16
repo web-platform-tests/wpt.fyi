@@ -214,9 +214,8 @@ def task_handler():
     secret = ds.get(ds.key('Uploader', '_spanner'))['Password']
     response = requests.put(
         '%s/api/spanner_push_run?run_id=%d' % (config.project_baseurl(), test_run_id)
-        auth=('_processor', secret))
+        auth=('_spanner', secret))
     response.raise_for_status()
-
 
     return (resp, HTTPStatus.CREATED)
 
