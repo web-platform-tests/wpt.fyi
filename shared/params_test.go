@@ -387,7 +387,7 @@ func TestParseProductSpec_Labels(t *testing.T) {
 	productSpec, err = ParseProductSpec("chrome[]")
 	assert.Nil(t, err)
 	assert.Equal(t, "chrome", productSpec.BrowserName)
-	assert.True(t, 0, productSpec.Labels.Cardinality())
+	assert.Equal(t, 0, productSpec.Labels.Cardinality())
 
 	_, err = ParseProductSpec("chrome[foo")
 	assert.NotNil(t, err)
