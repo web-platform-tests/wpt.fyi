@@ -214,7 +214,7 @@ def task_handler():
     # Authenticate as "_spanner" for push-to-spanner API.
     secret = ds.get(ds.key('Uploader', '_spanner'))['Password']
     response = requests.put(
-        '%s/api/spanner_push_run?run_id=%d' % (config.project_baseurl(), test_run_id)
+        '%s/api/spanner_push_run?run_id=%d' % (config.project_baseurl(), test_run_id),
         auth=('_spanner', secret))
     if not response.ok:
         app.logger.error('Bad status code from push-to-spanner API: %d' % response.status_code)
