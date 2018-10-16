@@ -34,7 +34,7 @@ function cleanup() {
     return 0
   fi
 
-  gcloud app versions delete $PROJECT_ARG $SERVICE_ARG ${versions_to_delete[*]}
+  gcloud app versions delete --quiet $PROJECT_ARG $SERVICE_ARG ${versions_to_delete[*]}
 }
 
 
