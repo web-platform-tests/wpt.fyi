@@ -251,6 +251,9 @@ func ParseProductSpec(spec string) (productSpec ProductSpec, err error) {
 	} else if len(labelPieces) == 2 {
 		name = labelPieces[0]
 		labels := labelPieces[1]
+		if labels == "" {
+			return productSpec, errors.New(errMsg)
+		}
 		if labels[len(labels)-1:] != "]" || strings.Index(labels, "]") < len(labels)-1 {
 			return productSpec, errors.New(errMsg)
 		}
