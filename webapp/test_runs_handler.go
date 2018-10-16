@@ -5,7 +5,6 @@
 package webapp
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -19,32 +18,24 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter, err := shared.ParseTestRunFilterParams(r)
+	testRunFilter, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Get runs from a month ago, onward, by default.
-	if filter.From == nil {
+	if testRunFilter.From == nil {
 		aMonthAgo := time.Now().Truncate(time.Hour*24).AddDate(0, -1, 0)
-		filter.From = &aMonthAgo
+		testRunFilter.From = &aMonthAgo
 	}
 
-	query := filter.ToQuery()
-	sourceURL := "/api/runs?" + query.Encode()
-
-	// Serialize the data + pipe through the test-runs.html template.
-	testRunSourcesBytes, err := json.Marshal([]string{sourceURL})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	filter := parseTestRunUIFilter(testRunFilter)
 
 	data := struct {
-		TestRunSources string
+		Filter testRunUIFilter
 	}{
-		string(testRunSourcesBytes),
+		Filter: filter,
 	}
 
 	if err := templates.ExecuteTemplate(w, "test-runs.html", data); err != nil {

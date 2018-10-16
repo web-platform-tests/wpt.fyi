@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -21,8 +22,15 @@ type testRunUIFilter struct {
 	SHA      string
 	Aligned  bool
 	MaxCount *int
-	Diff     bool
+	From     string
+	To       string
+	// JSON blob of extra (arbitrary) test runs
 	TestRuns string
+}
+
+type testResultsUIFilter struct {
+	testRunUIFilter
+	Diff bool
 }
 
 // This handler is responsible for all pages that display test results.
@@ -50,7 +58,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter, err := parseTestRunUIFilter(r)
+	filter, err := parseTestResultsUIFilter(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -59,7 +67,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		// TestRuns are inlined marshalled JSON for arbitrary test runs (e.g. when
 		// diffing), for runs which aren't fetchable via a URL or the api.
-		Filter testRunUIFilter
+		Filter testResultsUIFilter
 		Query  string
 	}{
 		Filter: filter,
@@ -72,28 +80,16 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// parseTestRunUIFilter parses the standard TestRunFilter, as well as the extra
+// parseTestResultsUIFilter parses the standard TestRunFilter, as well as the extra
 // diff params (diff, before, after).
-func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
+func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err error) {
 	testRunFilter, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		return filter, err
 	}
 	testRunFilter = testRunFilter.OrDefault()
 
-	if testRunFilter.Labels != nil {
-		data, _ := json.Marshal(testRunFilter.Labels.ToSlice())
-		filter.Labels = string(data)
-	}
-	if !shared.IsLatest(testRunFilter.SHA) {
-		filter.SHA = testRunFilter.SHA
-	}
-	if !testRunFilter.IsDefaultProducts() {
-		data, _ := json.Marshal(testRunFilter.Products.Strings())
-		filter.Products = string(data)
-	}
-	filter.MaxCount = testRunFilter.MaxCount
-	filter.Aligned = testRunFilter.Aligned != nil && *testRunFilter.Aligned
+	filter.testRunUIFilter = parseTestRunUIFilter(testRunFilter)
 
 	diff, err := shared.ParseBooleanParam(r, "diff")
 	if err != nil {
@@ -113,6 +109,29 @@ func parseTestRunUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
 		filter.Diff = true
 	}
 	return filter, nil
+}
+
+func parseTestRunUIFilter(testRunFilter shared.TestRunFilter) (filter testRunUIFilter) {
+	if testRunFilter.Labels != nil {
+		data, _ := json.Marshal(testRunFilter.Labels.ToSlice())
+		filter.Labels = string(data)
+	}
+	if !shared.IsLatest(testRunFilter.SHA) {
+		filter.SHA = testRunFilter.SHA
+	}
+	if !testRunFilter.IsDefaultProducts() {
+		data, _ := json.Marshal(testRunFilter.Products.Strings())
+		filter.Products = string(data)
+	}
+	filter.MaxCount = testRunFilter.MaxCount
+	filter.Aligned = testRunFilter.Aligned != nil && *testRunFilter.Aligned
+	if testRunFilter.From != nil {
+		filter.From = testRunFilter.From.Format(time.RFC3339)
+	}
+	if testRunFilter.To != nil {
+		filter.To = testRunFilter.To.Format(time.RFC3339)
+	}
+	return filter
 }
 
 func unpackTestRun(base64Run string) (*shared.TestRun, error) {

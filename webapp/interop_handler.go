@@ -6,16 +6,21 @@ package webapp
 
 import (
 	"net/http"
+
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // interopHandler handles the view of test results broken down by the
 // number of browsers for which the test passes.
 func interopHandler(w http.ResponseWriter, r *http.Request) {
-	uiFilters, err := parseTestRunUIFilter(r)
+	testRunFilter, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	testRunFilter = testRunFilter.OrDefault()
+
+	uiFilters := parseTestRunUIFilter(testRunFilter)
 
 	data := struct {
 		Metadata string

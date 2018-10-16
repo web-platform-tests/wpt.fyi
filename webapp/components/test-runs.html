@@ -26,10 +26,6 @@ found in the LICENSE file.
             type: String,
             computed: 'encodeTestPath(path)'
           },
-          // URLs for TestRuns to load.
-          testRunResources: {
-            type: Array
-          },
           // Fetched + parsed JSON blobs for the runs
           testRuns: {
             type: Array,
@@ -75,13 +71,6 @@ found in the LICENSE file.
         if (this.productSpecs && this.productSpecs.length) {
           runs.push(fetch(`/api/runs${this.testRunQuery}`)
             .then(r => r.ok && r.json()));
-        }
-        // Fetch by specific URLs (legacy behaviour)
-        if (this.testRunResources) {
-          const byUrl = this.testRunResources
-            .map(url => fetch(url).then(r => r.ok && r.json()));
-          runs.push(...byUrl);
-          this.testRunResources = null;
         }
         const fetches = await Promise.all(runs);
 

@@ -41,13 +41,15 @@ found in the LICENSE file.
             maxCount: Number,
             sha: String,
             aligned: Boolean,
+            from: Date,
+            to: Date,
             isLatest: {
               type: Boolean,
               computed: 'computeIsLatest(sha)'
             },
             testRunQueryParams: {
               type: Object,
-              computed: 'computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount)',
+              computed: 'computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to)',
             },
             testRunQuery: {
               type: String,
@@ -78,7 +80,7 @@ found in the LICENSE file.
           return !sha || sha === 'latest';
         }
 
-        computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount) {
+        computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to) {
           const params = {};
           if (!this.computeIsLatest(sha)) {
             params.sha = sha;
@@ -92,6 +94,12 @@ found in the LICENSE file.
           }
           if (aligned) {
             params.aligned = true;
+          }
+          if (from) {
+            params.from = from.toISOString();
+          }
+          if (to) {
+            params.to = to.toISOString();
           }
 
           // Collapse a globally shared channel into a single label.

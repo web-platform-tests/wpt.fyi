@@ -176,6 +176,9 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 	if filter.From != nil {
 		q.Set("from", filter.From.Format(time.RFC3339))
 	}
+	if filter.To != nil {
+		q.Set("to", filter.From.Format(time.RFC3339))
+	}
 	return q
 }
 
