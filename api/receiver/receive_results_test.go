@@ -7,17 +7,44 @@
 package receiver
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/taskqueue"
 )
+
+// regexMatcher is a gomock.Matcher that verifies whether a string argument
+// matches the predefined regular expression.
+//
+// This is used to match arguments containing random strings (e.g. UUID).
+type regexMatcher struct {
+	regex *regexp.Regexp
+}
+
+func (r *regexMatcher) Matches(x interface{}) bool {
+	s, ok := x.(string)
+	if !ok {
+		return false
+	}
+	return r.regex.MatchString(s)
+}
+
+func (r *regexMatcher) String() string {
+	return "matches " + r.regex.String()
+}
+
+func matchRegex(r string) *regexMatcher {
+	return &regexMatcher{regex: regexp.MustCompile(r)}
+}
 
 func TestHandleResultsUpload_not_admin(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
@@ -43,7 +70,7 @@ func TestHandleResultsUpload_http_basic_auth_invalid(t *testing.T) {
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
-		mockAE.EXPECT().AuthenticateUploader("not_a_user", "123").Return(false),
+		mockAE.EXPECT().authenticateUploader("not_a_user", "123").Return(false),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
@@ -65,12 +92,13 @@ func TestHandleResultsUpload_success(t *testing.T) {
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	f := &os.File{}
 	task := &taskqueue.Task{Name: "task"}
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
-		mockAE.EXPECT().AuthenticateUploader("blade-runner", "123").Return(true),
-		mockAE.EXPECT().fetchURL("http://wpt.fyi/test.json.gz").Return(f, nil),
-		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", gomock.Any()).Return(task, nil),
+		mockAE.EXPECT().authenticateUploader("blade-runner", "123").Return(true),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "single", gomock.Any()).Return(task, nil),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
@@ -102,12 +130,13 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 		"os_version":      "",
 	}
 	task := &taskqueue.Task{Name: "task"}
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
-		mockAE.EXPECT().AuthenticateUploader("blade-runner", "123").Return(true),
-		mockAE.EXPECT().fetchURL("http://wpt.fyi/test.json.gz").Return(f, nil),
-		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", extraParams).Return(task, nil),
+		mockAE.EXPECT().authenticateUploader("blade-runner", "123").Return(true),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "single", extraParams).Return(task, nil),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
@@ -125,8 +154,8 @@ func TestHandleFilePayload(t *testing.T) {
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	gomock.InOrder(
-		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", extraParams),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "single", extraParams),
 	)
 
 	handleFilePayload(mockAE, "blade-runner", f, extraParams)
@@ -142,10 +171,11 @@ func TestHandleURLPayload_single(t *testing.T) {
 	}
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
 	gomock.InOrder(
-		mockAE.EXPECT().fetchURL("http://wpt.fyi/test.json.gz").Return(f, nil),
-		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return("/blade-runner/test.json", nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", extraParams),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "single", extraParams),
 	)
 
 	handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"}, extraParams)
@@ -157,16 +187,76 @@ func TestHandleURLPayload_multiple(t *testing.T) {
 
 	f := &os.File{}
 	urls := []string{"http://wpt.fyi/foo.json.gz", "http://wpt.fyi/bar.json.gz"}
-	gcs := []string{"/blade-runner/foo.json", "/blade-runner/bar.json"}
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
 	gomock.InOrder(
-		mockAE.EXPECT().fetchURL(urls[0]).Return(f, nil),
-		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return(gcs[0], nil),
-		mockAE.EXPECT().fetchURL(urls[1]).Return(f, nil),
-		mockAE.EXPECT().uploadToGCS(gomock.Any(), f, true).Return(gcs[1], nil),
-		mockAE.EXPECT().scheduleResultsTask("blade-runner", gcs, "multiple", nil),
+		mockAE.EXPECT().fetchWithTimeout(urls[0], DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*/0\.json$`), f, true).Return(nil),
 	)
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout(urls[1], DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*/1\.json$`), f, true).Return(nil),
+	)
+	mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "multiple", nil)
 
 	handleURLPayload(mockAE, "blade-runner", urls, nil)
+}
+
+func TestHandleURLPayload_retry_fetching(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	f := &os.File{}
+	errTimeout := fmt.Errorf("server timed out")
+
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
+		mockAE.EXPECT().scheduleResultsTask("blade-runner", gomock.Any(), "single", nil),
+	)
+
+	handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil)
+}
+
+func TestHandleURLPayload_fail_fetching(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	errTimeout := fmt.Errorf("server timed out")
+
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
+	)
+
+	task, err := handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil)
+	assert.Nil(t, task)
+	assert.NotNil(t, err)
+}
+
+func TestHandleURLPayload_fail_uploading(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	f := &os.File{}
+	errGCS := fmt.Errorf("failed to upload to GCS")
+
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
+		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(errGCS),
+	)
+
+	task, err := handleURLPayload(mockAE, "blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil)
+	assert.Nil(t, task)
+	assert.NotNil(t, err)
 }
