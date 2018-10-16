@@ -24,6 +24,8 @@ import (
 
 // regexMatcher is a gomock.Matcher that verifies whether a string argument
 // matches the predefined regular expression.
+//
+// This is used to match arguments containing random strings (e.g. UUID).
 type regexMatcher struct {
 	regex *regexp.Regexp
 }
