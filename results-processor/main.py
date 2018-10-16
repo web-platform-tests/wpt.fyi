@@ -215,7 +215,8 @@ def task_handler():
     response = requests.put(
         '%s/api/spanner_push_run?run_id=%d' % (config.project_baseurl(), test_run_id)
         auth=('_spanner', secret))
-    response.raise_for_status()
+    if not response.ok:
+        app.logger.info('ERROR: Bad status code from push-to-spanner API: %d' % response.status_code)
 
     return (resp, HTTPStatus.CREATED)
 
