@@ -384,6 +384,11 @@ func TestParseProductSpec_Labels(t *testing.T) {
 	assert.True(t, productSpec.Labels.Contains("foo"))
 	assert.Equal(t, "1234512345", productSpec.Revision)
 
+	productSpec, err := ParseProductSpec("chrome[]")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome", productSpec.BrowserName)
+	assert.True(t, 0, productSpec.Labels.Cardinality())
+
 	_, err = ParseProductSpec("chrome[foo")
 	assert.NotNil(t, err)
 	_, err = ParseProductSpec("chrome[foo][bar]")
