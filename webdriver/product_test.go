@@ -14,7 +14,20 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func TestProductParam(t *testing.T) {
+func TestProductParam_Labels(t *testing.T) {
+	testProductParamSets(
+		t,
+		[]string{"chrome[stable]"},
+		[]string{"firefox[experimental]", "chrome"})
+}
+
+func TestProductParam_SHA(t *testing.T) {
+	testProductParamSets(t,
+		[]string{"chrome@latest"},
+		[]string{fmt.Sprintf("chrome@%s", StaticTestDataRevision)})
+}
+
+func testProductParamSets(t *testing.T, productSpecs ...[]string) {
 	app, err := NewWebserver()
 	if err != nil {
 		panic(err)
@@ -28,11 +41,12 @@ func TestProductParam(t *testing.T) {
 	defer service.Stop()
 	defer wd.Quit()
 
-	testProduct(t, wd, app, "chrome[stable]")
-	testProduct(t, wd, app, "firefox[experimental]", "chrome")
+	for _, specs := range productSpecs {
+		testProducts(t, wd, app, specs...)
+	}
 }
 
-func testProduct(
+func testProducts(
 	t *testing.T,
 	wd selenium.WebDriver,
 	app AppServer,
