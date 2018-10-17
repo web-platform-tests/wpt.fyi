@@ -407,6 +407,22 @@ func TestParseProductSpec_String(t *testing.T) {
 	assert.Equal(t, "chrome-64[bar,foo]@1234512345", productSpec.String())
 }
 
+func TestParseProductSpec_Plural(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?products=chrome[stable],chrome[experimental]", nil)
+	products, err := ParseProductsParam(r)
+	assert.Nil(t, err)
+	assert.Len(t, products, 2)
+	assert.Equal(t, "chrome[stable]", products[0].String())
+	assert.Equal(t, "chrome[experimental]", products[1].String())
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?products=chrome[foo,bar,baz],chrome[qux]", nil)
+	products, err = ParseProductsParam(r)
+	assert.Nil(t, err)
+	assert.Len(t, products, 2)
+	assert.Equal(t, "chrome[bar,baz,foo]", products[0].String()) // Labels alphabeticized.
+	assert.Equal(t, "chrome[qux]", products[1].String())
+}
+
 func TestParseAligned(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs", nil)
 	aligned, _ := ParseAlignedParam(r)
