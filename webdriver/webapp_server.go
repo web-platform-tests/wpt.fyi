@@ -27,6 +27,9 @@ var (
 	remoteHost = flag.String("remote_host", "staging.wpt.fyi", "Remote host of the staging webapp")
 )
 
+// SHA for the local (static) test run summaries.
+const StaticTestDataRevision = "b952881825"
+
 // AppServer is an abstraction for navigating an instance of the webapp.
 type AppServer interface {
 	// Hook for closing the process that runs the webserver.
@@ -244,7 +247,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 
 	staticDataTime := time.Now()
 	// Follow pattern established in run/*.py data collection code.
-	const sha = "b952881825"
+	const sha = StaticTestDataRevision
 	var summaryURLFmtString = i.GetWebappURL("/static/" + sha + "/%s")
 	stableTestRuns := shared.TestRuns{
 		{
