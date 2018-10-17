@@ -10,21 +10,17 @@ found in the LICENSE file.
 -->
 <dom-module id="wpt-env-flags">
   <script>
-    (() => {
-      // eslint-disable-next-line no-unused-vars
-      const DEFAULTS = JSON.parse({{ .Flags }});
-
-      window.WPTEnvironmentFlags = class WPTEnvironmentFlags {};
-      for (const feature of DEFAULTS) {
-        Object.defineProperty(
-          window.WPTEnvironmentFlags,
-          feature.Name,
-          {
-            writable: false,
-            configurable: false,
-            value: feature.Enabled,
-          });
+    window.WPTEnvironmentFlags = class WPTEnvironmentFlags {}
+    {{range .Flags}}
+    Object.defineProperty(
+      window.WPTEnvironmentFlags,
+      {{.Name}},
+      {
+        writable: false,
+        configurable: false,
+        value: {{.Enabled}}
       }
-    })();
+    );
+    {{end}}
   </script>
 </dom-module>
