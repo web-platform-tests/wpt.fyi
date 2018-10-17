@@ -154,13 +154,13 @@ golint_deps: git
 		go get -u golang.org/x/lint/golint; \
 	fi
 
-package_announcer: var-APP_PATH
-	if [[ "$(APP_PATH)" == "revisions/service" ]]; then \
+package_service: var-APP_PATH
+	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/spanner/service" ]]; then \
 		export TMP_DIR=$$(mktemp -d); \
-		rm -rf $(WPTD_PATH)revisions/service/wpt.fyi; \
+		rm -rf $(WPTD_PATH)$(APP_PATH)/wpt.fyi; \
 		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
-		mkdir $(WPTD_PATH)revisions/service/wpt.fyi; \
-		cp -r $${TMP_DIR}/* $(WPTD_PATH)revisions/service/wpt.fyi/; \
+		mkdir $(WPTD_PATH)$(APP_PATH)/wpt.fyi; \
+		cp -r $${TMP_DIR}/* $(WPTD_PATH)$(APP_PATH)/wpt.fyi/; \
 		rm -rf $${TMP_DIR}; \
 	fi
 
@@ -209,16 +209,18 @@ dev_data: git
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
 
-deploy_staging: gcloud webapp_deps package_announcer var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
+deploy_staging: gcloud webapp_deps package_service var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
 	gcloud config set project $(PROJECT)
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
+	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 
-deploy_production: gcloud webapp_deps package_announcer var-APP_PATH var-PROJECT
+deploy_production: gcloud webapp_deps package_service var-APP_PATH var-PROJECT
 	gcloud config set project $(PROJECT)
 	cd $(WPTD_PATH); util/deploy.sh -p $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
+	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 
 bower_components: git node-bower
 	cd $(WPTD_PATH)webapp; npm run bower-components

@@ -5,6 +5,7 @@ package webdriver
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -73,8 +74,17 @@ func testProduct(
 		assert.NotNil(t, a)
 		href, err := a.GetAttribute("href")
 		assert.Nil(t, err)
-		for _, p := range productSpecs {
-			assert.Contains(t, href, "product="+url.QueryEscape(p))
+		for _, p := range products {
+			label := ""
+			if p.Labels != nil {
+				label = p.Labels.ToSlice()[0].(string)
+			}
+			// Shared channels can get pulled into the label param.
+			hasLabelAndHasProduct :=
+				label != "" && strings.Contains(href, "label="+url.QueryEscape(label)) &&
+					strings.Contains(href, "product="+p.BrowserName)
+			hasFullProductSpec := strings.Contains(href, "product="+url.QueryEscape(p.String()))
+			assert.True(t, hasLabelAndHasProduct || hasFullProductSpec)
 		}
 	}
 

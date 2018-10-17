@@ -20,7 +20,7 @@ const InternalUsername = "_processor"
 // HandleResultsCreate handles the POST requests for creating test runs.
 func HandleResultsCreate(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	username, password, ok := r.BasicAuth()
-	if !ok || username != InternalUsername || !a.AuthenticateUploader(username, password) {
+	if !ok || username != InternalUsername || !a.authenticateUploader(username, password) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
 		return
 	}
@@ -45,7 +45,7 @@ func HandleResultsCreate(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	}
 	testRun.CreatedAt = time.Now()
 
-	key, err := a.AddTestRun(&testRun)
+	key, err := a.addTestRun(&testRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

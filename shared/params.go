@@ -251,6 +251,9 @@ func ParseProductSpec(spec string) (productSpec ProductSpec, err error) {
 	} else if len(labelPieces) == 2 {
 		name = labelPieces[0]
 		labels := labelPieces[1]
+		if labels == "" {
+			return productSpec, errors.New(errMsg)
+		}
 		if labels[len(labels)-1:] != "]" || strings.Index(labels, "]") < len(labels)-1 {
 			return productSpec, errors.New(errMsg)
 		}
@@ -547,6 +550,23 @@ func ParseRepeatedParam(r *http.Request, singular string, plural string) (params
 	return params
 }
 
+// ParseRepeatedInt64Param parses the result of ParseRepeatedParam as int64.
+func ParseRepeatedInt64Param(r *http.Request, singular, plural string) (params []int64, err error) {
+	strs := ParseRepeatedParam(r, singular, plural)
+	if len(strs) < 1 {
+		return nil, nil
+	}
+	ints := make([]int64, len(strs))
+	for i, idStr := range strs {
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		ints[i] = id
+	}
+	return ints, err
+}
+
 // ParseQueryParamInt parses the URL query parameter at key. If the parameter is
 // empty or missing, nil is returned.
 func ParseQueryParamInt(r *http.Request, key string) (*int, error) {
@@ -589,20 +609,7 @@ func ParseBooleanParam(r *http.Request, name string) (result *bool, err error) {
 // ParseRunIDsParam parses the "run_ids" parameter. If the ID is not a valid
 // int64, an error will be returned.
 func ParseRunIDsParam(r *http.Request) (ids []int64, err error) {
-	str := r.URL.Query().Get("run_ids")
-	if str == "" {
-		return nil, nil
-	}
-	idStrs := strings.Split(str, ",")
-	ids = make([]int64, 0, len(idStrs))
-	for _, idStr := range idStrs {
-		id, err := strconv.ParseInt(idStr, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	return ids, err
+	return ParseRepeatedInt64Param(r, "run_id", "run_ids")
 }
 
 // ParseQueryFilterParams parses shared params for the search and autocomplete

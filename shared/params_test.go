@@ -384,11 +384,20 @@ func TestParseProductSpec_Labels(t *testing.T) {
 	assert.True(t, productSpec.Labels.Contains("foo"))
 	assert.Equal(t, "1234512345", productSpec.Revision)
 
+	productSpec, err = ParseProductSpec("chrome[]")
+	assert.Nil(t, err)
+	assert.Equal(t, "chrome", productSpec.BrowserName)
+	assert.Equal(t, 0, productSpec.Labels.Cardinality())
+
 	_, err = ParseProductSpec("chrome[foo")
 	assert.NotNil(t, err)
 	_, err = ParseProductSpec("chrome[foo][bar]")
 	assert.NotNil(t, err)
 	_, err = ParseProductSpec("[foo]")
+	assert.NotNil(t, err)
+	_, err = ParseProductSpec("chrome[")
+	assert.NotNil(t, err)
+	_, err = ParseProductSpec("chrome[foo")
 	assert.NotNil(t, err)
 }
 
@@ -428,11 +437,21 @@ func TestParseRunIDsParam_ok(t *testing.T) {
 	runIDs, err := ParseRunIDsParam(r)
 	assert.Equal(t, []int64{1, 2, 3}, runIDs)
 	assert.Nil(t, err)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_id=1&run_id=2&run_id=3", nil)
+	runIDs, err = ParseRunIDsParam(r)
+	assert.Equal(t, []int64{1, 2, 3}, runIDs)
+	assert.Nil(t, err)
 }
 
 func TestParseRunIDsParam_err(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_ids=1,notanumber,3", nil)
 	runIDs, err := ParseRunIDsParam(r)
+	assert.Nil(t, runIDs)
+	assert.NotNil(t, err)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/search?run_id=1&run_id=notanumber&run_id=3", nil)
+	runIDs, err = ParseRunIDsParam(r)
 	assert.Nil(t, runIDs)
 	assert.NotNil(t, err)
 }
@@ -493,6 +512,12 @@ func TestParseTestRunFilterParams(t *testing.T) {
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?from=2018-01-01T00%3A00%3A00Z", nil)
 	filter, _ = ParseTestRunFilterParams(r)
 	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery().Encode())
+}
+
+func TestParseTestRunFilterParams_Invalid(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?product=chrome%5B", nil)
+	_, err := ParseTestRunFilterParams(r)
+	assert.NotNil(t, err)
 }
 
 func TestProductSpecMatches(t *testing.T) {

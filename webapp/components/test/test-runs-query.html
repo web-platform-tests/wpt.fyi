@@ -29,61 +29,113 @@
 
 <body>
   <script>
-    /* global DEFAULT_PRODUCTS */
-    suite('TestRunsQuery', () => {
-      let testRunsQuery;
+    document.addEventListener('WebComponentsReady', () => {
+      /* global DEFAULT_PRODUCTS, CHANNELS */
+      suite('TestRunsQuery', () => {
+        let testRunsQuery;
 
-      setup(() => {
-        testRunsQuery = fixture('test-runs-query-fixture');
-      });
+        setup(() => {
+          testRunsQuery = fixture('test-runs-query-fixture');
+        });
 
-      test('instanceof Polymer.Element', () => {
-        assert.isTrue(testRunsQuery instanceof window.Polymer.Element);
-      });
+        test('instanceof Polymer.Element', () => {
+          assert.isTrue(testRunsQuery instanceof window.Polymer.Element);
+        });
 
-      test('isDefaultProducts', () => {
-        testRunsQuery.products = Array.from(DEFAULT_PRODUCTS);
-        expect(testRunsQuery.isDefaultProducts).to.equal(true);
-        testRunsQuery.products = Array.from([DEFAULT_PRODUCTS[0]]);
-        expect(testRunsQuery.isDefaultProducts).to.equal(false);
-      });
+        test('isDefaultProducts', () => {
+          testRunsQuery.products = Array.from(DEFAULT_PRODUCTS);
+          expect(testRunsQuery.isDefaultProducts).to.equal(true);
+          testRunsQuery.products = Array.from([DEFAULT_PRODUCTS[0]]);
+          expect(testRunsQuery.isDefaultProducts).to.equal(false);
+        });
 
-      suite('TestRunsQuery.prototype.*', () => {
-
-        const revision = '1234512345';
-        const chrome = 'chrome';
-        const labels = ['foo', 'bar'];
-        const specStr = `${chrome}[${labels.join(',')}]@${revision}`;
-        test(`parseProductSpec("${specStr}")`, () => {
-          const parsed = testRunsQuery.parseProductSpec(specStr);
-          assert.equal(parsed.browser_name, chrome);
-          assert.equal(parsed.revision, revision);
-          for (const label of labels) {
-            expect(Array.from(parsed.labels)).to.include(label);
+        suite('collapses shared channels', () => {
+          for (const channel of CHANNELS) {
+            test(channel, () => {
+              testRunsQuery.products = DEFAULT_PRODUCTS
+                .map(p => Object.assign({}, p, { labels: [channel] }));
+              expect(testRunsQuery.testRunQuery).to.equal(`?label=${channel}`);
+            });
           }
         });
 
-        const version63 = '63.0';
-        const chrome63 = `chrome-${version63}`;
-        test(`parseProduct(${chrome63})`, () => {
-          const parsed = testRunsQuery.parseProduct(chrome63);
-          assert.equal(parsed.browser_name, chrome);
-          assert.equal(parsed.browser_version, version63);
+        suite('expands channel labels', () => {
+          for (const channel of CHANNELS) {
+            test(channel, () => {
+              testRunsQuery.updateQueryParams({ label: [channel] });
+              expect(testRunsQuery.products.length).to.equal(DEFAULT_PRODUCTS.length);
+              for (const product of testRunsQuery.products) {
+                expect(product.labels).to.contain(channel);
+              }
+              expect(testRunsQuery.labels).to.not.contain(channel);
+            });
+          }
         });
 
-        test('no closing bracket', () => {
-          expect(() => testRunsQuery.parseProductSpec('chrome[foo')).to.throw();
-          expect(() => testRunsQuery.parseProductSpec('chrome[foo]')).to.not.throw();
-        });
+        suite('TestRunsQuery.prototype.*', () => {
 
-        test('updateQueryParams', () => {
-          const params = {
-            product: ['safari', 'safari[experimental]'],
-          };
-          testRunsQuery.updateQueryParams(params);
-          expect(testRunsQuery.products[0].browser_name).to.equal('safari');
-          expect(testRunsQuery.products[1].browser_name).to.equal('safari');
-          expect(testRunsQuery.products[1].labels).to.contain('experimental');
+          const revision = '1234512345';
+          const chrome = 'chrome';
+          const labels = ['foo', 'bar'];
+          const specStr = `${chrome}[${labels.join(',')}]@${revision}`;
+          test(`parseProductSpec("${specStr}")`, () => {
+            const parsed = testRunsQuery.parseProductSpec(specStr);
+            assert.equal(parsed.browser_name, chrome);
+            assert.equal(parsed.revision, revision);
+            for (const label of labels) {
+              expect(Array.from(parsed.labels)).to.include(label);
+            }
+          });
+
+          const version63 = '63.0';
+          const chrome63 = `chrome-${version63}`;
+          test(`parseProduct(${chrome63})`, () => {
+            const parsed = testRunsQuery.parseProduct(chrome63);
+            assert.equal(parsed.browser_name, chrome);
+            assert.equal(parsed.browser_version, version63);
+          });
+
+          test('no closing bracket', () => {
+            expect(() => testRunsQuery.parseProductSpec('chrome[foo')).to.throw();
+            expect(() => testRunsQuery.parseProductSpec('chrome[foo]')).to.not.throw();
+          });
+
+          suite('updateQueryParams', () => {
+            test('product', () => {
+              const params = {
+                product: ['safari', 'safari[experimental]'],
+              };
+              testRunsQuery.updateQueryParams(params);
+              expect(testRunsQuery.products[0].browser_name).to.equal('safari');
+              expect(testRunsQuery.products[1].browser_name).to.equal('safari');
+              expect(testRunsQuery.products[1].labels).to.contain('experimental');
+            });
+
+            test('label', () => {
+              testRunsQuery.products =
+                DEFAULT_PRODUCTS.map(p => Object.assign({}, p, { labels: ['experimental'] }));
+              for (const channel of CHANNELS) {
+                testRunsQuery.updateQueryParams({
+                  label: [channel],
+                });
+                expect(testRunsQuery.productSpecs.join(',')).to.equal(
+                  DEFAULT_PRODUCTS
+                    .map(p => Object.assign({}, p, { labels: [channel] }))
+                    .map(p => testRunsQuery.getSpec(p))
+                    .join(',')
+                );
+              }
+            });
+          });
+
+          test('testRunQueryParams', () => {
+            testRunsQuery.products = [
+              Object.assign({}, DEFAULT_PRODUCTS[0], { labels: ['experimental'] }),
+              Object.assign({}, DEFAULT_PRODUCTS[1], { labels: ['stable'] })
+            ];
+            expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[0].browser_name}[experimental]`);
+            expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[1].browser_name}[stable]`);
+          });
         });
       });
     });

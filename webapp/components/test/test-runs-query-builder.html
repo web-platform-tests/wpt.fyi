@@ -26,6 +26,7 @@
   </test-fixture>
 
   <script>
+    /* global CHANNELS */
     document.addEventListener('WebComponentsReady', () => {
       suite('TestRunsQueryBuilder', () => {
         let queryBuilder;
@@ -87,6 +88,28 @@
           queryBuilder.labels = ['foo', 'bar'];
           expect(queryBuilder.testRunQuery).to.contain('label=foo');
           expect(queryBuilder.testRunQuery).to.contain('label=bar');
+        });
+
+        suite('shared channels', () => {
+          setup(() => {
+            queryBuilder.clearAll();
+            queryBuilder.updateQueryParams({
+              label: ['stable'],
+              product: ['chrome', 'safari'],
+            });
+          });
+
+          for (const channel of CHANNELS) {
+            test(channel, done => {
+              flush(() => {
+                for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
+                  productBuilder._channel = channel;
+                }
+                expect(queryBuilder.testRunQueryParams.label).to.contain(channel);
+                done();
+              });
+            });
+          }
         });
       });
 
