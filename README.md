@@ -1,6 +1,6 @@
 # [web-platform-tests dashboard](https://wpt.fyi/) 📈 [![Build Status](https://travis-ci.org/web-platform-tests/wpt.fyi.svg?branch=master)](https://travis-ci.org/web-platform-tests/wpt.fyi)
 
-A dashboard of cross-browser results for [web-platform-tests](https://github.com/web-platform-tests/wpt).
+wpt.fyi is a dashboard of cross-browser results for [web-platform-tests](https://github.com/web-platform-tests/wpt), the data for which is uploaded by external services, primarily via execution of the [results-collection](https://github.com/web-platform-tests/results-collection) repo.
 
 **Backend**: An [App Engine app](webapp/) for storing test run metadata and serving HTML
 
