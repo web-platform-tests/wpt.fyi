@@ -128,13 +128,13 @@
         if (product.labels && product.labels.length) {
           spec += `[${product.labels.join(',')}]`;
         }
-        if (product.revision && !this.isLatest(product.revision)) {
+        if (product.revision && !this.computeIsLatest(product.revision)) {
           spec += `@${product.revision}`;
         }
         return spec;
       }
 
-      isLatest(sha) {
+      computeIsLatest(sha) {
         return !sha || sha === 'latest';
       }
     };

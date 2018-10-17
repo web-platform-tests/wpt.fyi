@@ -74,10 +74,6 @@ found in the LICENSE file.
           this.productSpecs = (products || []).map(p => this.getSpec(p));
         }
 
-        computeIsLatest(sha) {
-          return !sha || sha === 'latest';
-        }
-
         computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount) {
           const params = {};
           if (!this.computeIsLatest(sha)) {
