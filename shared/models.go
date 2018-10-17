@@ -225,3 +225,9 @@ type Uploader struct {
 	Username string
 	Password string
 }
+
+// Flag represents an enviroment feature flag's default state.
+type Flag struct {
+	Name    string `datastore:"-"` // Name is the key in datastore.
+	Enabled bool
+}

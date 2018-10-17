@@ -41,6 +41,7 @@ func main() {
 	}
 
 	emptySecretToken := &shared.Token{}
+	enabledFlag := &shared.Flag{Enabled: true}
 	staticDataTime, _ := time.Parse(time.RFC3339, "2017-10-18T00:00:00Z")
 
 	// Follow pattern established in run/*.py data collection code.
@@ -169,6 +170,11 @@ func main() {
 	addSecretToken(ctx, "upload-token", emptySecretToken)
 	addSecretToken(ctx, "github-api-token", emptySecretToken)
 
+	log.Print("Adding flag defaults...")
+	addFlag(ctx, "queryBuilder", enabledFlag)
+	addFlag(ctx, "diffFilter", enabledFlag)
+	addFlag(ctx, "diffFromAPI", enabledFlag)
+
 	log.Print("Adding uploader \"test\"...")
 	addData(ctx, "Uploader", []interface{}{
 		&shared.Uploader{Username: "test", Password: "123"},
@@ -279,6 +285,14 @@ func addSecretToken(ctx context.Context, id string, data interface{}) {
 		log.Fatalf("Failed to add %s secret: %s", id, err.Error())
 	}
 	log.Printf("Added %s secret", id)
+}
+
+func addFlag(ctx context.Context, id string, data interface{}) {
+	key := datastore.NewKey(ctx, "Flag", id, 0, nil)
+	if _, err := datastore.Put(ctx, key, data); err != nil {
+		log.Fatalf("Failed to add %s flag: %s", id, err.Error())
+	}
+	log.Printf("Added %s flag", id)
 }
 
 func addData(ctx context.Context, kindName string, data []interface{}) (keys []*datastore.Key) {
