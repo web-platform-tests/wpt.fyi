@@ -27,7 +27,7 @@ var (
 	remoteHost = flag.String("remote_host", "staging.wpt.fyi", "Remote host of the staging webapp")
 )
 
-// SHA for the local (static) test run summaries.
+// StaticTestDataRevision is the SHA for the local (static) test run summaries.
 const StaticTestDataRevision = "b952881825"
 
 // AppServer is an abstraction for navigating an instance of the webapp.
