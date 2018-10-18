@@ -383,9 +383,21 @@ func ParseProductParam(r *http.Request) (product *Product, err error) {
 // It parses the 'products' parameter, split on commas, and also checks for the (repeatable)
 // 'product' params.
 func ParseProductsParam(r *http.Request) (ProductSpecs, error) {
-	productParams := ParseRepeatedParam(r, "product", "products")
+	repeatedParam := r.URL.Query()["product"]
+	pluralParam := r.URL.Query().Get("products")
+	// Replace nested ',' in the label part with a placeholder
+	nestedCommas := regexp.MustCompile(`(\[[^\]]*),`)
+	const comma = `%COMMA%`
+	for nestedCommas.MatchString(pluralParam) {
+		pluralParam = nestedCommas.ReplaceAllString(pluralParam, "$1"+comma)
+	}
+	productParams := parseRepeatedParamValues(repeatedParam, pluralParam)
 	if productParams == nil {
 		return nil, nil
+	}
+	// Revert placeholder to ',' and parse.
+	for i := range productParams {
+		productParams[i] = strings.Replace(productParams[i], comma, ",", -1)
 	}
 	return ParseProductSpecs(productParams...)
 }
@@ -532,6 +544,10 @@ func ParseLabelsParam(r *http.Request) []string {
 func ParseRepeatedParam(r *http.Request, singular string, plural string) (params []string) {
 	repeatedParam := r.URL.Query()[singular]
 	pluralParam := r.URL.Query().Get(plural)
+	return parseRepeatedParamValues(repeatedParam, pluralParam)
+}
+
+func parseRepeatedParamValues(repeatedParam []string, pluralParam string) (params []string) {
 	if len(repeatedParam) == 0 && pluralParam == "" {
 		return nil
 	}
