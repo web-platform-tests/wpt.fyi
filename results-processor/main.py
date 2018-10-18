@@ -12,6 +12,7 @@ from http import HTTPStatus
 
 import filelock
 import flask
+import requests
 from google.cloud import datastore, storage
 
 import config
@@ -202,12 +203,21 @@ def task_handler():
     finally:
         shutil.rmtree(tempdir)
 
+    # Authenticate as "_processor" for create-test-run API.
     ds = datastore.Client()
     secret = ds.get(ds.key('Uploader', '_processor'))['Password']
     test_run_id = wptreport.create_test_run(report, labels, uploader, secret,
                                             results_gcs_path,
                                             raw_results_gcs_path)
     assert test_run_id
+
+    # Authenticate as "_spanner" for push-to-spanner API.
+    secret = ds.get(ds.key('Uploader', '_spanner'))['Password']
+    response = requests.put(
+        '%s/api/spanner_push_run?run_id=%d' % (config.project_baseurl(), test_run_id),
+        auth=('_spanner', secret))
+    if not response.ok:
+        app.logger.error('Bad status code from push-to-spanner API: %d' % response.status_code)
 
     return (resp, HTTPStatus.CREATED)
 

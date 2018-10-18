@@ -261,3 +261,13 @@ func GetAlignedRunSHAs(
 func getTestRunMemcacheKey(id int64) string {
 	return "TEST_RUN-" + strconv.FormatInt(id, 10)
 }
+
+// GetFeatureFlags returns all feature flag defaults set in the datastore.
+func GetFeatureFlags(ctx context.Context) (flags []Flag, err error) {
+	var keys []*datastore.Key
+	keys, err = datastore.NewQuery("Flag").GetAll(ctx, &flags)
+	for i := range keys {
+		flags[i].Name = keys[i].StringID()
+	}
+	return flags, err
+}

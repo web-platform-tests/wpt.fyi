@@ -40,24 +40,24 @@ func TestDiffResults_Added(t *testing.T) {
 	assertDelta(t, []int{1, 1}, []int{2, 2}, []int{1, 0, 1})
 
 	// One new test, all failing
-	assertDelta(t, []int{0, 1}, []int{0, 2}, []int{0, 0, 1})
+	assertDelta(t, []int{0, 1}, []int{0, 2}, []int{0, 1, 1})
 
 	// One new test, new test passing
 	assertDelta(t, []int{0, 1}, []int{1, 2}, []int{1, 0, 1})
 
 	// One new test, new test failing
-	assertDelta(t, []int{1, 1}, []int{1, 2}, []int{0, 0, 1})
+	assertDelta(t, []int{1, 1}, []int{1, 2}, []int{0, 1, 1})
 }
 
 func TestDiffResults_Removed(t *testing.T) {
 	// One removed test, all passing
-	assertDelta(t, []int{2, 2}, []int{1, 1}, []int{0, 1, -1})
+	assertDelta(t, []int{2, 2}, []int{1, 1}, []int{0, 0, -1})
 
 	// One removed test, all failing
 	assertDelta(t, []int{0, 2}, []int{0, 1}, []int{0, 0, -1})
 
 	// One removed test, deleted test passing
-	assertDelta(t, []int{1, 2}, []int{0, 1}, []int{0, 1, -1})
+	assertDelta(t, []int{1, 2}, []int{0, 1}, []int{0, 0, -1})
 
 	// One removed test, deleted test failing
 	assertDelta(t, []int{1, 2}, []int{1, 1}, []int{0, 0, -1})
@@ -81,7 +81,7 @@ func TestDiffResults_Filtered(t *testing.T) {
 	}
 	assert.Equal(t, map[string][]int{changedPath: {1, 0, 0}}, GetResultsDiff(before, after, changedFilter))
 	assert.Equal(t, map[string][]int{addedPath: {1, 2, 3}}, GetResultsDiff(before, after, addedFilter))
-	assert.Equal(t, map[string][]int{removedPath: {1, 1, -2}}, GetResultsDiff(before, after, deletedFilter))
+	assert.Equal(t, map[string][]int{removedPath: {0, 0, -2}}, GetResultsDiff(before, after, deletedFilter))
 
 	// Test filtering by each /, /mock/, and /mock/path.html
 	pieces := strings.SplitAfter(mockTestPath, "/")

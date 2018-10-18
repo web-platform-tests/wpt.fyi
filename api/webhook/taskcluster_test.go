@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -101,9 +102,10 @@ func TestVerifySignature(t *testing.T) {
 }
 
 func TestCreateAllRuns_success(t *testing.T) {
-	requested := 0
+	var requested uint32
+	requested = 0
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		requested++
+		atomic.AddUint32(&requested, 1)
 		w.Write([]byte("OK"))
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
@@ -113,18 +115,20 @@ func TestCreateAllRuns_success(t *testing.T) {
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
 	)
 	assert.Nil(t, err)
-	assert.Equal(t, 2, requested)
+	assert.Equal(t, uint32(2), requested)
 }
 
 func TestCreateAllRuns_one_error(t *testing.T) {
-	requested := 0
+	var requested uint32
+	requested = 0
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		if requested == 0 {
+		if atomic.CompareAndSwapUint32(&requested, 0, 1) {
 			w.Write([]byte("OK"))
-		} else {
+		} else if atomic.CompareAndSwapUint32(&requested, 1, 2) {
 			http.Error(w, "Not found", http.StatusNotFound)
+		} else {
+			panic("requested != 0 && requested != 1")
 		}
-		requested++
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
@@ -133,7 +137,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
 	)
 	assert.NotNil(t, err)
-	assert.Equal(t, 2, requested)
+	assert.Equal(t, uint32(2), requested)
 	assert.Contains(t, err.Error(), "API error: Not found")
 }
 
