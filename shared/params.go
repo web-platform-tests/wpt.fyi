@@ -383,8 +383,8 @@ func ParseProductsParam(r *http.Request) (ProductSpecs, error) {
 	repeatedParam := r.URL.Query()["product"]
 	pluralParam := r.URL.Query().Get("products")
 	// Replace nested ',' in the label part with a placeholder
-	nestedCommas := regexp.MustCompile("(\\[[^\\]]*),")
-	const comma = "%COMMA%"
+	nestedCommas := regexp.MustCompile(`(\[[^\]]*),`)
+	const comma = `%COMMA%`
 	for nestedCommas.MatchString(pluralParam) {
 		pluralParam = nestedCommas.ReplaceAllString(pluralParam, "$1"+comma)
 	}
