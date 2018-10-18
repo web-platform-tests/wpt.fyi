@@ -12,6 +12,7 @@ import (
 
 // apiBadgeHandler builds a badge URL for a summary of the results for a given path.
 func apiBadgeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/svg+xml")
 	ctx := shared.NewAppEngineContext(r)
 	mc := shared.NewMemcacheReadWritable(ctx)
 	ch := shared.NewCachingHandler(fetchBadge{}, mc, shared.AlwaysCachable, shared.URLAsCacheKey)
@@ -21,7 +22,6 @@ func apiBadgeHandler(w http.ResponseWriter, r *http.Request) {
 type fetchBadge struct{}
 
 func (fetchBadge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "image/svg+xml")
 	ctx := shared.NewAppEngineContext(r)
 
 	runFilter, err := shared.ParseTestRunFilterParams(r)
