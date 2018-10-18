@@ -36,9 +36,7 @@ func LoadTestRunKeys(
 	from *time.Time,
 	to *time.Time,
 	limit *int) (result []*datastore.Key, err error) {
-	baseQuery := datastore.
-		NewQuery("TestRun").
-		Limit(MaxCountMaxValue)
+	baseQuery := datastore.NewQuery("TestRun")
 	if !IsLatest(sha) {
 		baseQuery = baseQuery.Filter("Revision =", sha)
 	}
@@ -73,21 +71,20 @@ func LoadTestRunKeys(
 			query = query.Filter("TimeStart <", *to)
 		}
 
-		fetched, err := query.KeysOnly().GetAll(ctx, nil)
-		if err != nil {
-			return nil, err
-		}
 		var keys []*datastore.Key
-		for _, key := range fetched {
-			if limit == nil || *limit > len(keys) && len(keys) < MaxCountMaxValue {
-				if prefiltered == nil || (*prefiltered).Contains(key.String()) {
-					keys = append(keys, key)
-				}
+		iter := query.KeysOnly().Run(ctx)
+		for {
+			key, err := iter.Next(nil)
+			if err == datastore.Done {
+				break
+			} else if err != nil {
+				return result, err
+			} else if (limit != nil && len(keys) >= *limit) || len(keys) >= MaxCountMaxValue {
+				break
+			} else if prefiltered != nil && !(*prefiltered).Contains(key.String()) {
+				continue
 			}
-		}
-
-		if limit != nil && len(keys) > *limit {
-			keys = keys[:*limit]
+			keys = append(keys, key)
 		}
 		result = append(result, keys...)
 	}
