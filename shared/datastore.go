@@ -79,16 +79,12 @@ func LoadTestRunKeys(
 				break
 			} else if err != nil {
 				return result, err
+			} else if (limit != nil && *limit <= len(keys)) || len(keys) >= MaxCountMaxValue {
+				break
+			} else if prefiltered != nil && !(*prefiltered).Contains(key.String()) {
+				continue
 			}
-			if (limit == nil || *limit > len(keys)) && len(keys) < MaxCountMaxValue {
-				if prefiltered == nil || (*prefiltered).Contains(key.String()) {
-					keys = append(keys, key)
-				}
-			}
-		}
-
-		if limit != nil && len(keys) > *limit {
-			keys = keys[:*limit]
+			keys = append(keys, key)
 		}
 		result = append(result, keys...)
 	}
