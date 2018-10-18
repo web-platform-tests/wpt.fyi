@@ -21,6 +21,7 @@ func apiBadgeHandler(w http.ResponseWriter, r *http.Request) {
 type fetchBadge struct{}
 
 func (fetchBadge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/svg+xml")
 	ctx := shared.NewAppEngineContext(r)
 
 	runFilter, err := shared.ParseTestRunFilterParams(r)
@@ -72,9 +73,19 @@ func (fetchBadge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	colorB := "red"
+	if passes == total {
+		colorB = "brightgreen"
+	} else if float64(passes)/float64(total) >= 0.8 {
+		colorB = "orange"
+	}
+
 	badgeURL, _ := url.Parse(fmt.Sprintf("https://img.shields.io/badge/-%v/%v-grey.svg", passes, total))
-	badgeURL.Query().Set("label", fmt.Sprintf("wpt | %s", runFilter.Products[0].DisplayName()))
-	badgeURL.Query().Set("style", "flat")
+	q := badgeURL.Query()
+	q.Set("label", fmt.Sprintf("wpt | %s", runFilter.Products[0].DisplayName()))
+	q.Set("style", "flat")
+	q.Set("colorB", colorB)
+	badgeURL.RawQuery = q.Encode()
 
 	client := urlfetch.Client(ctx)
 	var resp *http.Response
