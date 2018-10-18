@@ -67,7 +67,7 @@ func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 	}}
-	ch := shared.NewCachingHandler(sh, mc, isRequestCacheable, getRequestCacheKey)
+	ch := shared.NewCachingHandler(sh, mc, isRequestCacheable, shared.URLAsCacheKey)
 	ch.ServeHTTP(w, r)
 }
 

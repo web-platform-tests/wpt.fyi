@@ -95,7 +95,7 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 	diff := make(map[string][]int)
 	if filter.Deleted || filter.Changed {
 		for test, resultsBefore := range before {
-			if !anyPathMatches(filter.Paths, test) {
+			if !AnyPathMatches(filter.Paths, test) {
 				continue
 			}
 
@@ -131,7 +131,7 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 	}
 	if filter.Added {
 		for test, resultsAfter := range after {
-			if !anyPathMatches(filter.Paths, test) {
+			if !AnyPathMatches(filter.Paths, test) {
 				continue
 			}
 
@@ -144,7 +144,9 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 	return diff
 }
 
-func anyPathMatches(paths mapset.Set, testPath string) bool {
+// AnyPathMatches returns whether any of the given path prefixes matches
+// the given testPath.
+func AnyPathMatches(paths mapset.Set, testPath string) bool {
 	if paths == nil {
 		return true
 	}

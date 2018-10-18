@@ -8,6 +8,9 @@ import "github.com/web-platform-tests/wpt.fyi/shared"
 
 // RegisterRoutes adds all the api route handlers.
 func RegisterRoutes() {
+	// API endpoint for a badge of pass-rate for summary JSON blobs for a product.
+	shared.AddRoute("/api/badge", "api-badge", shared.WrapPermissiveCORS(apiBadgeHandler))
+
 	// API endpoint for diff of two test run summary JSON blobs.
 	shared.AddRoute("/api/diff", "api-diff", shared.WrapPermissiveCORS(apiDiffHandler))
 

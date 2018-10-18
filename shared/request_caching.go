@@ -145,3 +145,16 @@ func (h cachingHandler) delegateAndCache(w http.ResponseWriter, r *http.Request,
 func NewCachingHandler(delegate http.Handler, cache ReadWritable, isCacheable func(*http.Request) bool, getCacheKey func(*http.Request) interface{}) http.Handler {
 	return cachingHandler{delegate, cache, isCacheable, getCacheKey}
 }
+
+// AlwaysCachable is a helper for returning true for all requests.
+func AlwaysCachable(r *http.Request) bool {
+	return true
+}
+
+// URLAsCacheKey is a helper for returning the request's full URL as a cache key.
+// If this string is too long to be a memcache key then writes to memcache will fail,
+// but that is not a big concern; it simply means that requests for cacheable long
+// URLs will not be cached.
+func URLAsCacheKey(r *http.Request) interface{} {
+	return r.URL.String()
+}

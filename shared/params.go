@@ -85,6 +85,22 @@ type ProductSpec struct {
 	Labels mapset.Set
 }
 
+// DisplayName returns a capitalized version of the BrowserName, if applicable.
+func (p ProductSpec) DisplayName() string {
+	switch p.BrowserName {
+	case "chrome":
+		return "Chrome"
+	case "edge":
+		return "Edge"
+	case "firefox":
+		return "Firefox"
+	case "safari":
+		return "Safari"
+	default:
+		return p.BrowserName
+	}
+}
+
 // Matches returns whether the spec matches the given run.
 func (p ProductSpec) Matches(run TestRun) bool {
 	if run.BrowserName != p.BrowserName {
