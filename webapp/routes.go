@@ -40,7 +40,8 @@ func RegisterRoutes() {
 	shared.AddRoute("/interop/{path:.*}", "interop", interopHandler)
 
 	// List of all test runs, by SHA[0:10]
-	shared.AddRoute("/test-runs", "test-runs", testRunsHandler)
+	shared.AddRoute("/runs", "test-runs", testRunsHandler)
+	shared.AddRoute("/test-runs", "test-runs", testRunsHandler) // Legacy name
 
 	// Admin-only manual results upload.
 	shared.AddRoute("/admin/results/upload", "admin-results-upload", adminUploadHandler)

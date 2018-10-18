@@ -25,7 +25,7 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get runs from a month ago, onward, by default.
-	if testRunFilter.From == nil {
+	if testRunFilter.IsDefaultQuery() {
 		aMonthAgo := time.Now().Truncate(time.Hour*24).AddDate(0, -1, 0)
 		testRunFilter.From = &aMonthAgo
 	}
