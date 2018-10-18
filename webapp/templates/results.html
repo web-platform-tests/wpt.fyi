@@ -6,13 +6,9 @@
   {{ template "_header.html" }}
   <div>
     <wpt-results
+        {{ template "_test_run_query_params.html" .Filter }}
         {{- with .Filter}}
-          {{- if .Products}} product-specs="{{ .Products }}"{{end}}
-          {{- if .SHA}} sha="{{ .SHA }}" {{end}}
-          {{- if .Labels}} labels="{{ .Labels }}"{{end}}
-          {{- if .MaxCount}} max-count="{{ .MaxCount }}"{{end}}
           {{- if .Diff}} diff{{end}}
-          {{- if .Aligned}} aligned{{end}}
         {{- end}}
         {{- if .Query }} search="{{.Query}}"{{end}}></wpt-results>
   </div>
