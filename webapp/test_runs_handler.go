@@ -28,6 +28,9 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 	if testRunFilter.IsDefaultQuery() {
 		aMonthAgo := time.Now().Truncate(time.Hour*24).AddDate(0, -1, 0)
 		testRunFilter.From = &aMonthAgo
+	} else if testRunFilter.MaxCount == nil {
+		oneHundred := 100
+		testRunFilter.MaxCount = &oneHundred
 	}
 
 	filter := parseTestRunUIFilter(testRunFilter)
