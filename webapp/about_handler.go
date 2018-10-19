@@ -15,9 +15,9 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	var version string
 	if appengine.IsDevAppServer() {
-		version = strings.Split(appengine.VersionID(ctx), ".")[0]
-	} else {
 		version = "local-dev"
+	} else {
+		version = strings.Split(appengine.VersionID(ctx), ".")[0]
 	}
 	data := struct {
 		Version string
