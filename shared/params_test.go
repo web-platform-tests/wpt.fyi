@@ -344,6 +344,18 @@ func TestParseProductSpec(t *testing.T) {
 	assert.Equal(t, "edge", productSpec.BrowserName)
 }
 
+func TestParseProductSpec_FullSHA(t *testing.T) {
+	sha := "0123456789aaaaabbbbbcccccdddddeeeeefffff"
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?product=chrome@"+sha, nil)
+	filters, err := ParseTestRunFilterParams(r)
+	assert.Nil(t, err)
+	products := filters.GetProductsOrDefault()
+	assert.Len(t, products, 1)
+	if len(products) > 0 {
+		assert.Equal(t, sha[:10], products[0].Revision)
+	}
+}
+
 func TestParseProductSpec_BrowserVersion(t *testing.T) {
 	productSpec, err := ParseProductSpec("chrome-63.0@latest")
 	assert.Nil(t, err)
