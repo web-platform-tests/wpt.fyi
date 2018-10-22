@@ -1,3 +1,4 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 
@@ -7,7 +8,24 @@
      * QueryBuilder contains a helper method for building a query string from
      * an object of params.
      */
-    const QueryBuilder = (superClass) => class extends superClass {
+    // eslint-disable-next-line no-unused-vars
+    const QueryBuilder = (superClass, queryParamsComputer) => class extends superClass {
+      static get properties() {
+        return {
+          query: {
+            type: String,
+            computed: 'computeQuery(queryParams)',
+            value: '',
+            notify: true,
+          },
+          queryParams: {
+            type: Object,
+            notify: true,
+            computed: queryParamsComputer,
+          },
+        };
+      }
+
       computeQuery(params) {
         if (Object.keys(params).length < 1) {
           return '';
@@ -24,30 +42,6 @@
         return `${url.search}`.replace(/=true/g, '');
       }
     };
-
-    /**
-     * ResultsNavigation extends QueryBuilder's helper methods. Because Polymer
-     * doesn't support overriding computed property functions, the computer
-     * method string must be passed in by the concrete class.
-     */
-    // eslint-disable-next-line no-unused-vars
-    const ResultsNavigation =
-      (superClass, queryParamsComputer) => class extends QueryBuilder(superClass) {
-        static get properties() {
-          return {
-            query: {
-              type: String,
-              computed: 'computeQuery(queryParams)',
-              value: '',
-            },
-            queryParams: {
-              type: Object,
-              observe: true,
-              computed: queryParamsComputer,
-            },
-          };
-        }
-      };
   </script>
 </dom-module>
 
