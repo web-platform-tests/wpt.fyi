@@ -44,13 +44,6 @@ func TestParseSHAParam_FullSHA(t *testing.T) {
 	assert.Equal(t, sha[:10], runSHA)
 }
 
-func TestParseSHAParam_BadRequest(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=%zz", nil)
-	runSHA, err := ParseSHAParam(r)
-	assert.NotNil(t, err)
-	assert.Equal(t, "latest", runSHA)
-}
-
 func TestParseSHAParam_NonSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=123", nil)
 	_, err := ParseSHAParam(r)
