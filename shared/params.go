@@ -215,7 +215,6 @@ func ParseSHA(sha string) (runSHA string, err error) {
 // It returns "latest" by default (and in error cases).
 func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	// Get the SHA for the run being loaded (the first part of the path.)
-	runSHA = "latest"
 	return ParseSHAFull(r.URL.Query().Get("sha"))
 }
 
