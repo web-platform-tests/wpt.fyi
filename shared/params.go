@@ -201,17 +201,28 @@ func ParseSHAParam(r *http.Request) (runSHA string, err error) {
 	return sha[:10], nil
 }
 
+// ParseSHA validates the given 'sha' value, cropping it to 10 chars.
+// It returns "latest" by default (and in error cases).
+func ParseSHA(sha string) (runSHA string, err error) {
+	sha, err = ParseSHAFull(sha)
+	if err != nil || !SHARegex.MatchString(sha) {
+		return sha, err
+	}
+	return sha[:10], nil
+}
+
 // ParseSHAParamFull parses and validates the 'sha' param for the request.
 // It returns "latest" by default (and in error cases).
 func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	// Get the SHA for the run being loaded (the first part of the path.)
-	runSHA = "latest"
-	params, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		return runSHA, err
-	}
+	return ParseSHAFull(r.URL.Query().Get("sha"))
+}
 
-	runParam := params.Get("sha")
+// ParseSHAFull parses and validates the given 'sha'.
+// It returns "latest" by default (and in error cases).
+func ParseSHAFull(runParam string) (runSHA string, err error) {
+	// Get the SHA for the run being loaded (the first part of the path.)
+	runSHA = "latest"
 	if runParam != "" && runParam != "latest" {
 		runSHA = runParam
 		if !SHARegex.MatchString(runParam) {
@@ -245,7 +256,9 @@ func ParseProductSpec(spec string) (productSpec ProductSpec, err error) {
 		return productSpec, errors.New(errMsg)
 	} else if len(atSHAPieces) == 2 {
 		name = atSHAPieces[0]
-		productSpec.Revision = atSHAPieces[1]
+		if productSpec.Revision, err = ParseSHA(atSHAPieces[1]); err != nil {
+			return productSpec, errors.New(errMsg)
+		}
 	}
 	// [foo,bar] labels syntax (optional)
 	labelPieces := strings.Split(name, "[")
