@@ -301,10 +301,9 @@ found in the LICENSE file.
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
     /* global WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
-    class WPTResults extends WPTFlags(SelfNavigation(LoadingState(
-      TestRunsQueryLoader(
-        TestRunsUIQuery(window.Polymer.Element),
-        TestRunsUIQuery.Computer)))) {
+    class WPTResults extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
+      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer))))) {
+
       static get is() {
         return 'wpt-results';
       }
