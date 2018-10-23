@@ -202,7 +202,7 @@ func ParseSHAParam(r *http.Request) (runSHA string, err error) {
 }
 
 // ParseSHA validates the given 'sha' value, cropping it to 10 chars.
-// It returns "latest" by default. (and in error cases).
+// It returns "latest" by default (and in error cases).
 func ParseSHA(sha string) (runSHA string, err error) {
 	sha, err = ParseSHAFull(sha)
 	if err != nil || !SHARegex.MatchString(sha) {
