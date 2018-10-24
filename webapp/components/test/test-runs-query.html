@@ -128,13 +128,22 @@
             });
           });
 
-          test('testRunQueryParams', () => {
-            testRunsQuery.products = [
-              Object.assign({}, DEFAULT_PRODUCTS[0], { labels: ['experimental'] }),
-              Object.assign({}, DEFAULT_PRODUCTS[1], { labels: ['stable'] })
-            ];
-            expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[0].browser_name}[experimental]`);
-            expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[1].browser_name}[stable]`);
+          suite('testRunQueryParams', () => {
+            test('products', () => {
+              testRunsQuery.products = [
+                Object.assign({}, DEFAULT_PRODUCTS[0], { labels: ['experimental'] }),
+                Object.assign({}, DEFAULT_PRODUCTS[1], { labels: ['stable'] })
+              ];
+              expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[0].browser_name}[experimental]`);
+              expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[1].browser_name}[stable]`);
+            })
+
+            test('sha', () => {
+              testRunsQuery.sha = '1234567890';
+              testRunsQuery.aligned = true;
+              expect(testRunsQuery.testRunQueryParams.sha).to.equal(testRunsQuery.sha);
+              expect(testRunsQuery.testRunQueryParams.aligned).to.not.be.defined;
+            })
           });
         });
       });

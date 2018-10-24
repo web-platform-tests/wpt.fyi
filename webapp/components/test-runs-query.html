@@ -88,9 +88,6 @@ found in the LICENSE file.
           if (maxCount) {
             params['max-count'] = maxCount;
           }
-          if (aligned) {
-            params.aligned = true;
-          }
           if (from) {
             params.from = from.toISOString();
           }
@@ -122,6 +119,10 @@ found in the LICENSE file.
             if (!this.computeIsDefaultProducts(productSpecs)) {
               params.product = productSpecs;
             }
+          }
+          // Requesting a specific SHA makes aligned redundant.
+          if (aligned && this.computeIsLatest(sha)) {
+            params.aligned = true;
           }
           return params;
         }
