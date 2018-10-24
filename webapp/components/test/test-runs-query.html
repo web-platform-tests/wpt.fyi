@@ -136,14 +136,19 @@
               ];
               expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[0].browser_name}[experimental]`);
               expect(testRunsQuery.testRunQueryParams.product).to.contain(`${DEFAULT_PRODUCTS[1].browser_name}[stable]`);
-            })
+            });
+
+            test('aligned', () => {
+              testRunsQuery.aligned = true;
+              expect(testRunsQuery.testRunQueryParams.aligned).to.be.true;
+            });
 
             test('sha', () => {
               testRunsQuery.sha = '1234567890';
               testRunsQuery.aligned = true;
               expect(testRunsQuery.testRunQueryParams.sha).to.equal(testRunsQuery.sha);
               expect(testRunsQuery.testRunQueryParams.aligned).to.not.be.defined;
-            })
+            });
           });
         });
       });
