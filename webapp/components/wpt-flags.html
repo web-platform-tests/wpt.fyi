@@ -14,7 +14,12 @@ found in the LICENSE file.
 -->
 <dom-module id="wpt-flags">
   <script>
-    const WPT_FYI_FEATURES = ['queryBuilder', 'diffFromAPI', 'diffFilter'];
+    const WPT_FYI_FEATURES = [
+      'queryBuilder',
+      'queryBuilderSHA',
+      'diffFromAPI',
+      'diffFilter',
+    ];
 
     const _wptFlags = (superClass, readOnly) => class extends superClass {
       static get is() {
@@ -52,6 +57,11 @@ found in the LICENSE file.
       <paper-checkbox checked="{{queryBuilder}}">
         Query Builder component
       </paper-checkbox>
+      <paper-item>
+        <paper-checkbox checked="{{queryBuilderSHA}}">
+          SHA input
+        </paper-checkbox>
+      </paper-item>
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{diffFromAPI}}">

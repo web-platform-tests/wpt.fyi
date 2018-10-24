@@ -111,6 +111,15 @@
             });
           }
         });
+
+        test('sha', () => {
+          const sha = '1234567890';
+          queryBuilder.sha = sha;
+          expect(queryBuilder.testRunQuery).to.contain(`sha=${sha}`);
+
+          queryBuilder.sha = 'latest';
+          expect(queryBuilder.testRunQuery).to.not.contain('sha');
+        });
       });
 
       suite('ProductBuilder', () => {
