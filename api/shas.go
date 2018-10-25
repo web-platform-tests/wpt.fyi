@@ -23,12 +23,11 @@ type SHAsHandler struct {
 func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to SHAsHandler on cache miss.
 	ctx := shared.NewAppEngineContext(r)
-	shared.NewCachingHandler(
-		SHAsHandler{ctx},
-		shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)),
-		shasIsCacheable,
-		shasGetCacheKey,
-	).ServeHTTP(w, r)
+	// nils => defaults of:
+	// (1) all URLs to this handler are cacheable;
+	// (2) URL string as cache key;
+	// (3) cache only HTTP 200.
+	shared.NewCachingHandler(SHAsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), nil, nil, nil).ServeHTTP(w, r)
 }
 func shasIsCacheable(*http.Request) bool          { return true }
 func shasGetCacheKey(r *http.Request) interface{} { return r.URL.String() }

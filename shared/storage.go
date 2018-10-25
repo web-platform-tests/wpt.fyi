@@ -152,10 +152,11 @@ type memcacheReadWritable struct {
 
 type memcacheWriteCloser struct {
 	memcacheReadWritable
-	key      string
-	expiry   time.Duration
-	b        bytes.Buffer
-	isClosed bool
+	key        string
+	expiry     time.Duration
+	b          bytes.Buffer
+	hasWritten bool
+	isClosed   bool
 }
 
 func (mc memcacheReadWritable) NewReadCloser(iKey interface{}) (io.ReadCloser, error) {
@@ -177,10 +178,11 @@ func (mc memcacheReadWritable) NewWriteCloser(iKey interface{}) (io.WriteCloser,
 		return nil, errNewReadCloserExpectedString
 	}
 
-	return &memcacheWriteCloser{mc, key, mc.expiry, bytes.Buffer{}, false}, nil
+	return &memcacheWriteCloser{mc, key, mc.expiry, bytes.Buffer{}, false, false}, nil
 }
 
 func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
+	mw.hasWritten = true
 	if mw.isClosed {
 		return 0, errMemcacheWriteCloserWriteAfterClose
 	}
@@ -189,6 +191,10 @@ func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
 
 func (mw *memcacheWriteCloser) Close() error {
 	mw.isClosed = true
+	if !mw.hasWritten {
+		return nil
+	}
+
 	return memcache.Set(mw.ctx, &memcache.Item{
 		Key:        mw.key,
 		Value:      mw.b.Bytes(),

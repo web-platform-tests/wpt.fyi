@@ -18,6 +18,7 @@ type CachingResponseWriter interface {
 	http.ResponseWriter
 
 	WriteTo(io.Writer) (int64, error)
+	StatusCode() int
 }
 
 type cachingResponseWriter struct {
@@ -55,11 +56,12 @@ func (w *cachingResponseWriter) WriteTo(wtr io.Writer) (int64, error) {
 	if w.bufErr != nil {
 		return 0, fmt.Errorf("Error writing response data to caching response writer: %v", w.bufErr)
 	}
-	if w.statusCode != http.StatusOK {
-		return 0, fmt.Errorf("Attempt to cache response with bad status code: %d", w.statusCode)
-	}
 
 	return w.b.WriteTo(wtr)
+}
+
+func (w *cachingResponseWriter) StatusCode() int {
+	return w.statusCode
 }
 
 // NewCachingResponseWriter wraps the input http.ResponseWriter with a caching implementation.
@@ -75,7 +77,12 @@ type cachingHandler struct {
 	cache       ReadWritable
 	isCacheable func(*http.Request) bool
 	getCacheKey func(*http.Request) interface{}
+	shouldCache func(int) bool
 }
+
+func defaultIsCacheable(*http.Request) bool          { return true }
+func defaultGetCacheKey(r *http.Request) interface{} { return r.URL.String() }
+func defaultShouldCache(status int) bool             { return status == http.StatusOK }
 
 func (h cachingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := NewAppEngineContext(r)
@@ -119,6 +126,11 @@ func (h cachingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h cachingHandler) delegateAndCache(w http.ResponseWriter, r *http.Request, logger Logger, key interface{}) {
 	cw := NewCachingResponseWriter(w)
 	h.delegate.ServeHTTP(cw, r)
+	s := cw.StatusCode()
+	if !h.shouldCache(s) {
+		logger.Warningf("Not caching uncacheable status code %d for URL %s", s, r.URL.String())
+		return
+	}
 
 	wc, err := h.cache.NewWriteCloser(key)
 	if err != nil {
@@ -142,6 +154,15 @@ func (h cachingHandler) delegateAndCache(w http.ResponseWriter, r *http.Request,
 
 // NewCachingHandler produces a caching handler with an underlying delegate
 // handler, cache, cacheability decision function, and cache key producer.
-func NewCachingHandler(delegate http.Handler, cache ReadWritable, isCacheable func(*http.Request) bool, getCacheKey func(*http.Request) interface{}) http.Handler {
-	return cachingHandler{delegate, cache, isCacheable, getCacheKey}
+func NewCachingHandler(delegate http.Handler, cache ReadWritable, isCacheable func(*http.Request) bool, getCacheKey func(*http.Request) interface{}, shouldCache func(int) bool) http.Handler {
+	if isCacheable == nil {
+		isCacheable = defaultIsCacheable
+	}
+	if getCacheKey == nil {
+		getCacheKey = defaultGetCacheKey
+	}
+	if shouldCache == nil {
+		shouldCache = defaultShouldCache
+	}
+	return cachingHandler{delegate, cache, isCacheable, getCacheKey, shouldCache}
 }
