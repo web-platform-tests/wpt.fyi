@@ -146,12 +146,14 @@ func NewGZReadWritable(delegate ReadWritable) ReadWritable {
 }
 
 type memcacheReadWritable struct {
-	ctx context.Context
+	ctx    context.Context
+	expiry time.Duration
 }
 
 type memcacheWriteCloser struct {
 	memcacheReadWritable
 	key      string
+	expiry   time.Duration
 	b        bytes.Buffer
 	isClosed bool
 }
@@ -175,7 +177,7 @@ func (mc memcacheReadWritable) NewWriteCloser(iKey interface{}) (io.WriteCloser,
 		return nil, errNewReadCloserExpectedString
 	}
 
-	return &memcacheWriteCloser{mc, key, bytes.Buffer{}, false}, nil
+	return &memcacheWriteCloser{mc, key, mc.expiry, bytes.Buffer{}, false}, nil
 }
 
 func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
@@ -190,14 +192,14 @@ func (mw *memcacheWriteCloser) Close() error {
 	return memcache.Set(mw.ctx, &memcache.Item{
 		Key:        mw.key,
 		Value:      mw.b.Bytes(),
-		Expiration: 48 * time.Hour,
+		Expiration: mw.expiry,
 	})
 }
 
 // NewMemcacheReadWritable produces a ReadWritable that performs read/write
 // operations via the App Engine memcache API through the input context.Context.
-func NewMemcacheReadWritable(ctx context.Context) ReadWritable {
-	return memcacheReadWritable{ctx}
+func NewMemcacheReadWritable(ctx context.Context, expiry time.Duration) ReadWritable {
+	return memcacheReadWritable{ctx, expiry}
 }
 
 // CachedStore is a read-only interface that attempts to read from a cache, and

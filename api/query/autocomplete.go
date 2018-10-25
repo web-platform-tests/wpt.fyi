@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -62,7 +63,7 @@ type autocompleteHandler struct {
 
 func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx))
+	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := autocompleteHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
