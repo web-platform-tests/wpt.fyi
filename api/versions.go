@@ -1,4 +1,4 @@
-// Copyright 2017 The WPT Dashboard Project. All rights reserved.
+// Copyright 2018 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -27,13 +27,16 @@ func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := shared.NewAppEngineContext(r)
 	query := datastore.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
-	queries := []*datastore.Query{query}
-	if product.BrowserVersion != "" {
-		queries = make([]*datastore.Query, 2)
-		queries[0] = query.Filter("BrowserVersion =", product.BrowserVersion).Limit(1)
-		queries[1] = shared.VersionPrefix(query, "BrowserVersion", product.BrowserVersion, false).
-			Project("BrowserVersion").
-			Distinct()
+	var queries []*datastore.Query
+	if product.BrowserVersion == "" {
+		queries = []*datastore.Query{query}
+	} else {
+		queries = []*datastore.Query{
+			query.Filter("BrowserVersion =", product.BrowserVersion).Limit(1),
+			shared.VersionPrefix(query, "BrowserVersion", product.BrowserVersion, false /*desc*/).
+				Project("BrowserVersion").
+				Distinct(),
+		}
 	}
 
 	var runs shared.TestRuns
@@ -56,6 +59,7 @@ func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
 	for i := range runs {
 		versions[i] = runs[i].BrowserVersion
 	}
+	// TODO(lukebjerring): Fix this, it will put 100 before 11..., etc.
 	sort.Sort(sort.Reverse(sort.StringSlice(versions)))
 
 	versionsBytes, err := json.Marshal(versions)
