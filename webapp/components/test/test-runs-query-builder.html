@@ -120,6 +120,29 @@
           queryBuilder.sha = 'latest';
           expect(queryBuilder.testRunQuery).to.not.contain('sha');
         });
+
+        suite('shas autocomplete', () => {
+          let sandbox, queryBuilderSHAState;
+
+          setup(() => {
+            sandbox = sinon.sandbox.create();
+            sandbox.spy(queryBuilder, 'shasURLUpdated');
+
+            queryBuilderSHAState = queryBuilder.queryBuilderSHA;
+            queryBuilder.queryBuilderSHA = true;
+          });
+
+          test('/api/shas fetches', () => {
+            // Should only trigger a single update, in spite of many params changing.
+            queryBuilder.updateQueryParams({ product: ['chrome'], aligned: true, label: ['dev'] });
+            expect(queryBuilder.shasURLUpdated.callCount).to.equal(1);
+          });
+
+          teardown(() => {
+            sandbox.restore();
+            queryBuilder.queryBuilderSHA = queryBuilderSHAState;
+          });
+        });
       });
 
       suite('ProductBuilder', () => {

@@ -136,49 +136,57 @@ found in the LICENSE file.
             || DEFAULT_PRODUCT_SPECS.join(',') === (productSpecs || []).join(',');
         }
 
+        get emptyQuery() {
+          return {
+            products: DEFAULT_PRODUCTS.map(p => Object.assign({}, p)),
+            labels: [],
+            maxCount: undefined,
+            sha: '',
+            aligned: undefined,
+          };
+        }
+
         clearQuery() {
-          this.products = DEFAULT_PRODUCTS.map(p => Object.assign({}, p));
-          this.labels = [];
-          this.maxCount = undefined;
-          this.sha = '';
-          this.aligned = undefined;
+          this.setProperties(this.emptyQuery);
         }
 
         /**
          * Update this builder's properties to match the given query params.
          */
         updateQueryParams(params) {
-          this.clearQuery();
           if (!params) {
+            this.clearQuery();
             return;
           }
+          const batchUpdate = this.emptyQuery;
           if (!this.computeIsLatest(params.sha)) {
-            this.sha = params.sha;
+            batchUpdate.sha = params.sha;
           }
           if ('product' in params) {
-            this.products = params.product.map(p => this.parseProductSpec(p));
+            batchUpdate.products = params.product.map(p => this.parseProductSpec(p));
           }
           // Expand any global channel labels into the separate products
           let sharedChannel;
           if ('label' in params) {
             sharedChannel = params.label.find(l => CHANNELS.has(l));
-            this.labels = params.label.filter(l => !CHANNELS.has(l));
+            batchUpdate.labels = params.label.filter(l => !CHANNELS.has(l));
           }
           if (sharedChannel) {
-            for (const i in this.products) {
-              const labels = this.products[i].labels.filter(l => !CHANNELS.has(l) || l === sharedChannel);
-              if (!this.products[i].labels.includes(sharedChannel)) {
+            for (const i in batchUpdate.products) {
+              const labels = batchUpdate.products[i].labels.filter(l => !CHANNELS.has(l) || l === sharedChannel);
+              if (!batchUpdate.products[i].labels.includes(sharedChannel)) {
                 labels.push(sharedChannel);
               }
-              this.set(`products.${i}.labels`, labels);
+              batchUpdate.products[i].labels = labels;
             }
           }
           if ('max-count' in params) {
-            this.maxCount = params['max-count'];
+            batchUpdate.maxCount = params['max-count'];
           }
           if ('aligned' in params) {
-            this.aligned = params.aligned;
+            batchUpdate.aligned = params.aligned;
           }
+          this.setProperties(batchUpdate);
         }
       };
   </script>
