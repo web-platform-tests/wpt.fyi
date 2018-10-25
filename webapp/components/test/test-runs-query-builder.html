@@ -29,9 +29,19 @@
     /* global CHANNELS */
     document.addEventListener('WebComponentsReady', () => {
       suite('TestRunsQueryBuilder', () => {
-        let queryBuilder;
+        let queryBuilder, sandbox;
 
         setup(() => {
+          sandbox = sinon.sandbox.create();
+          // Spoof an empty result for /api/shas to speed up tests.
+          const realFetch = window.fetch;
+          sandbox.stub(window, 'fetch', url => {
+            if (url.pathname === '/api/shas') {
+              return Promise.resolve(new Response('[]'));
+            }
+            return realFetch(url);
+          });
+
           queryBuilder = fixture('query-builder-fixture');
           queryBuilder.products = ['chrome', 'edge']
             .map(s => queryBuilder.parseProductSpec(s));
@@ -76,6 +86,13 @@
           queryBuilder.aligned = false;
           expect(queryBuilder.testRunQuery).to.not.contain('aligned');
           queryBuilder.aligned = true;
+          expect(queryBuilder.testRunQuery).to.contain('aligned');
+
+          const alignedCB = queryBuilder.shadowRoot.querySelector('#aligned-checkbox');
+          expect(alignedCB.checked).to.be.true;
+          alignedCB.checked = false;
+          expect(queryBuilder.testRunQuery).to.not.contain('aligned');
+          alignedCB.checked = true;
           expect(queryBuilder.testRunQuery).to.contain('aligned');
         });
 
@@ -142,6 +159,10 @@
             sandbox.restore();
             queryBuilder.queryBuilderSHA = queryBuilderSHAState;
           });
+        });
+
+        teardown(() => {
+          sandbox.restore();
         });
       });
 
