@@ -31,6 +31,16 @@ func (mwc *MockWriteCloser) Close() error {
 	return nil
 }
 
+// IsClosed indicates whether the WriteCloser has been closed.
+func (mwc *MockWriteCloser) IsClosed() bool {
+	return mwc.closed
+}
+
+// Bytes returns the bytes written to the WriteCloser.
+func (mwc *MockWriteCloser) Bytes() []byte {
+	return mwc.b.Bytes()
+}
+
 // NewMockWriteCloser creates a new MockWriteCloser.
 func NewMockWriteCloser(t *testing.T) *MockWriteCloser {
 	return &MockWriteCloser{
