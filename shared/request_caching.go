@@ -6,6 +6,7 @@ package shared
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -19,6 +20,7 @@ type CachingResponseWriter interface {
 
 	WriteTo(io.Writer) (int64, error)
 	StatusCode() int
+	Bytes() []byte
 }
 
 type cachingResponseWriter struct {
@@ -64,6 +66,10 @@ func (w *cachingResponseWriter) StatusCode() int {
 	return w.statusCode
 }
 
+func (w *cachingResponseWriter) Bytes() []byte {
+	return w.b.Bytes()
+}
+
 // NewCachingResponseWriter wraps the input http.ResponseWriter with a caching implementation.
 func NewCachingResponseWriter(delegate http.ResponseWriter) CachingResponseWriter {
 	return &cachingResponseWriter{
@@ -73,20 +79,16 @@ func NewCachingResponseWriter(delegate http.ResponseWriter) CachingResponseWrite
 }
 
 type cachingHandler struct {
+	ctx         context.Context
 	delegate    http.Handler
 	cache       ReadWritable
 	isCacheable func(*http.Request) bool
 	getCacheKey func(*http.Request) interface{}
-	shouldCache func(int) bool
+	shouldCache func(int, []byte) bool
 }
 
-func defaultIsCacheable(*http.Request) bool          { return true }
-func defaultGetCacheKey(r *http.Request) interface{} { return r.URL.String() }
-func defaultShouldCache(status int) bool             { return status == http.StatusOK }
-
 func (h cachingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := NewAppEngineContext(r)
-	logger := GetLogger(ctx)
+	logger := GetLogger(h.ctx)
 
 	// Case 1: Not cacheable.
 	if !h.isCacheable(r) {
@@ -127,7 +129,7 @@ func (h cachingHandler) delegateAndCache(w http.ResponseWriter, r *http.Request,
 	cw := NewCachingResponseWriter(w)
 	h.delegate.ServeHTTP(cw, r)
 	s := cw.StatusCode()
-	if !h.shouldCache(s) {
+	if !h.shouldCache(s, cw.Bytes()) {
 		logger.Warningf("Not caching uncacheable status code %d for URL %s", s, r.URL.String())
 		return
 	}
@@ -154,15 +156,34 @@ func (h cachingHandler) delegateAndCache(w http.ResponseWriter, r *http.Request,
 
 // NewCachingHandler produces a caching handler with an underlying delegate
 // handler, cache, cacheability decision function, and cache key producer.
-func NewCachingHandler(delegate http.Handler, cache ReadWritable, isCacheable func(*http.Request) bool, getCacheKey func(*http.Request) interface{}, shouldCache func(int) bool) http.Handler {
+func NewCachingHandler(ctx context.Context, delegate http.Handler, cache ReadWritable, isCacheable func(*http.Request) bool, getCacheKey func(*http.Request) interface{}, shouldCache func(int, []byte) bool) http.Handler {
 	if isCacheable == nil {
-		isCacheable = defaultIsCacheable
+		isCacheable = AlwaysCachable
 	}
 	if getCacheKey == nil {
-		getCacheKey = defaultGetCacheKey
+		getCacheKey = URLAsCacheKey
 	}
 	if shouldCache == nil {
-		shouldCache = defaultShouldCache
+		shouldCache = CacheStatusOK
 	}
-	return cachingHandler{delegate, cache, isCacheable, getCacheKey, shouldCache}
+	return cachingHandler{ctx, delegate, cache, isCacheable, getCacheKey, shouldCache}
+}
+
+// AlwaysCachable is a helper for returning true for all requests.
+func AlwaysCachable(r *http.Request) bool {
+	return true
+}
+
+// URLAsCacheKey is a helper for returning the request's full URL as a cache key.
+// If this string is too long to be a memcache key then writes to memcache will fail,
+// but that is not a big concern; it simply means that requests for cacheable long
+// URLs will not be cached.
+func URLAsCacheKey(r *http.Request) interface{} {
+	return r.URL.String()
+}
+
+// CacheStatusOK is a hlper for indicating that a request is cacheable iff the
+// status code is http.StatusOK.
+func CacheStatusOK(statusCode int, payload []byte) bool {
+	return statusCode == http.StatusOK
 }
