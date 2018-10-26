@@ -84,27 +84,27 @@
 
         test('aligned', () => {
           queryBuilder.aligned = false;
-          expect(queryBuilder.testRunQuery).to.not.contain('aligned');
+          expect(queryBuilder.query).to.not.contain('aligned');
           queryBuilder.aligned = true;
-          expect(queryBuilder.testRunQuery).to.contain('aligned');
+          expect(queryBuilder.query).to.contain('aligned');
 
           const alignedCB = queryBuilder.shadowRoot.querySelector('#aligned-checkbox');
           expect(alignedCB.checked).to.be.true;
           alignedCB.checked = false;
-          expect(queryBuilder.testRunQuery).to.not.contain('aligned');
+          expect(queryBuilder.query).to.not.contain('aligned');
           alignedCB.checked = true;
-          expect(queryBuilder.testRunQuery).to.contain('aligned');
+          expect(queryBuilder.query).to.contain('aligned');
         });
 
         test('labels', () => {
           queryBuilder.labelsString = '';
-          expect(queryBuilder.testRunQuery).to.not.contain('label');
+          expect(queryBuilder.query).to.not.contain('label');
           queryBuilder.labelsString = 'foo,';
-          expect(queryBuilder.testRunQuery).to.contain('label=foo');
-          expect(queryBuilder.testRunQuery).to.not.contain('foo,');
+          expect(queryBuilder.query).to.contain('label=foo');
+          expect(queryBuilder.query).to.not.contain('foo,');
           queryBuilder.labels = ['foo', 'bar'];
-          expect(queryBuilder.testRunQuery).to.contain('label=foo');
-          expect(queryBuilder.testRunQuery).to.contain('label=bar');
+          expect(queryBuilder.query).to.contain('label=foo');
+          expect(queryBuilder.query).to.contain('label=bar');
         });
 
         suite('shared channels', () => {
@@ -122,7 +122,7 @@
                 for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
                   productBuilder._channel = channel;
                 }
-                expect(queryBuilder.testRunQueryParams.label).to.contain(channel);
+                expect(queryBuilder.queryParams.label).to.contain(channel);
                 done();
               });
             });
@@ -132,10 +132,10 @@
         test('sha', () => {
           const sha = '1234567890';
           queryBuilder.sha = sha;
-          expect(queryBuilder.testRunQuery).to.contain(`sha=${sha}`);
+          expect(queryBuilder.query).to.contain(`sha=${sha}`);
 
           queryBuilder.sha = 'latest';
-          expect(queryBuilder.testRunQuery).to.not.contain('sha');
+          expect(queryBuilder.query).to.not.contain('sha');
         });
 
         suite('shas autocomplete', () => {

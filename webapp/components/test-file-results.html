@@ -57,8 +57,10 @@ found in the LICENSE file.
   </template>
 
   <script>
-    /* global TestRunsBase */
-    class TestFileResults extends TestRunsBase {
+    /* global TestRunsUIQuery, TestRunsQueryLoader */
+    class TestFileResults extends TestRunsUIQuery(
+      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer)) {
+
       static get is() {
         return 'test-file-results';
       }

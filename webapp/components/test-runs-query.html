@@ -14,8 +14,13 @@ found in the LICENSE file.
      */
     /* global QueryBuilder, ProductInfo, CHANNELS, DEFAULT_PRODUCTS, DEFAULT_PRODUCT_SPECS */
     // eslint-disable-next-line no-unused-vars
-    const TestRunsQuery =
-      (superClass) => class extends QueryBuilder(ProductInfo(superClass)) {
+    (() => {
+      const testRunsQueryComputer =
+        'computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to)';
+      window.TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
+        ProductInfo(superClass),
+        opt_queryCompute || testRunsQueryComputer) {
+
         static get properties() {
           return {
             /* Parsed product objects, computed from the spec strings */
@@ -47,15 +52,6 @@ found in the LICENSE file.
               type: Boolean,
               computed: 'computeIsLatest(sha)'
             },
-            testRunQueryParams: {
-              type: Object,
-              computed: 'computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to)',
-            },
-            testRunQuery: {
-              type: String,
-              computed: 'computeQuery(testRunQueryParams)',
-              notify: true,
-            },
           };
         }
 
@@ -68,7 +64,7 @@ found in the LICENSE file.
             this.products = this.productSpecs.map(p => this.parseProductSpec(p));
           }
           // Force-trigger a channel label expansion.
-          this.updateQueryParams(this.testRunQueryParams);
+          this.updateQueryParams(this.queryParams);
         }
 
         // eslint-disable-next-line no-unused-vars
@@ -151,8 +147,8 @@ found in the LICENSE file.
         }
 
         /**
-         * Update this builder's properties to match the given query params.
-         */
+        * Update this builder's properties to match the given query params.
+        */
         updateQueryParams(params) {
           if (!params) {
             this.clearQuery();
@@ -189,5 +185,50 @@ found in the LICENSE file.
           this.setProperties(batchUpdate);
         }
       };
+      window.TestRunsQuery.Computer = testRunsQueryComputer;
+    })();
+
+    (() => {
+      // TODO(lukebjerring): Support to & from in the builder.
+      const testRunsUIQueryComputer =
+        'computeTestRunUIQueryParams(sha, aligned, labels, productSpecs, maxCount, diff, search)';
+      /* global TestRunsQuery */
+      window.TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
+        superClass,
+        opt_queryCompute || testRunsUIQueryComputer) {
+
+        static get properties() {
+          return {
+            search: {
+              type: String,
+              value: '',
+              notify: true,
+            },
+            diff: {
+              type: Boolean,
+              value: false,
+              notify: true,
+            },
+          };
+        }
+
+        computeTestRunUIQueryParams(sha, aligned, labels, productSpecs, maxCount, diff, search) {
+          const params = this.computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount);
+          if (diff || this.diff) {
+            params.diff = true;
+          }
+          if (search) {
+            params.q = search;
+          }
+          return params;
+        }
+
+        updateQueryParams(params) {
+          super.updateQueryParams(params);
+          this.diff = params.diff;
+        }
+      };
+      window.TestRunsUIQuery.Computer = testRunsUIQueryComputer;
+    })();
   </script>
 </dom-module>
