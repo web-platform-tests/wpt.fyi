@@ -21,7 +21,7 @@ const (
 	// maintained for same-name databases across projects. If schema changes are
 	// needed, usually a new database is created, then code containing assumptions
 	// about schema can be updated alongside this constant in a single change.
-	spannerDatabase = "results-apep"
+	spannerDatabase = "results-caspilly"
 )
 
 var (

@@ -6,13 +6,14 @@ package spanner
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -28,11 +29,14 @@ import (
 )
 
 const (
-	numConcurrentBatches = 1000
-	batchSize            = 1000
-	testsTableName       = "tests"
-	resultsTableName     = "results"
-	countStmt            = "SELECT COUNT(*) FROM results WHERE run_id = @run_id"
+	numConcurrentBatches    = 1000
+	batchSize               = 1000
+	testsTableName          = "Tests"
+	resultsTableName        = "Results"
+	runsTableName           = "Runs"
+	runResultsTableName     = "RunResults"
+	runResultTestsTableName = "RunResultTests"
+	countStmt               = "SELECT COUNT(*) FROM RunResultTests WHERE RunID = @RunID"
 )
 
 // PushID is a unique identifier for a request to push a test run to
@@ -40,6 +44,199 @@ const (
 type PushID struct {
 	Time  time.Time `json:"time"`
 	RunID int64     `json:"run_id"`
+}
+
+type RunKey struct {
+	RunID int64
+}
+
+type Run struct {
+	RunKey
+	BrowserName     string
+	BrowserVersion  string
+	OSName          string
+	OSVersion       string
+	WPTRevisionHash []byte
+	ResultsURL      spanner.NullString
+	CreatedAt       time.Time
+	TimeStart       time.Time
+	TimeEnd         time.Time
+	RawResultsURL   spanner.NullString
+	Labels          []string
+}
+
+func NewRun(r *shared.TestRun) (*Run, error) {
+	hash, err := hex.DecodeString(r.FullRevisionHash)
+	if err != nil {
+		return nil, err
+	}
+	return &Run{
+		RunKey:          RunKey{r.ID},
+		BrowserName:     r.BrowserName,
+		BrowserVersion:  r.BrowserVersion,
+		OSName:          r.OSName,
+		OSVersion:       r.OSVersion,
+		WPTRevisionHash: hash,
+		ResultsURL:      toNullString(&r.ResultsURL),
+		CreatedAt:       r.CreatedAt,
+		TimeStart:       r.TimeStart,
+		TimeEnd:         r.TimeEnd,
+		RawResultsURL:   toNullString(&r.RawResultsURL),
+		Labels:          r.Labels,
+	}, nil
+}
+
+type ResultKey struct {
+	ResultID int64
+}
+
+type Result struct {
+	ResultKey
+	Name        string
+	Description spanner.NullString
+}
+
+func NewResult(name string, desc *string) *Result {
+	id := shared.TestStatusValueFromString(name)
+	return &Result{
+		ResultKey:   ResultKey{id},
+		Name:        name,
+		Description: toNullString(desc),
+	}
+}
+
+type TestKey struct {
+	TestID    int64
+	SubtestID spanner.NullInt64
+}
+
+type Test struct {
+	TestKey
+	TestName    string
+	SubtestName spanner.NullString
+}
+
+func NewTest(name string, sub *string) *Test {
+	key := computeTestKey(name, sub)
+	subName := toNullString(sub)
+	return &Test{key, name, subName}
+}
+
+type RunResult struct {
+	RunKey
+	ResultKey
+}
+
+type RunResultTest struct {
+	RunKey
+	ResultKey
+	TestKey
+	Message spanner.NullString
+}
+
+type Structs struct {
+	Runs           map[RunKey]*Run
+	Results        map[ResultKey]*Result
+	Tests          map[TestKey]*Test
+	RunResults     map[RunKey]map[ResultKey]*RunResult
+	RunResultTests map[RunKey]map[ResultKey]map[TestKey]*RunResultTest
+}
+
+func NewStructs() *Structs {
+	return &Structs{
+		make(map[RunKey]*Run),
+		make(map[ResultKey]*Result),
+		make(map[TestKey]*Test),
+		make(map[RunKey]map[ResultKey]*RunResult),
+		make(map[RunKey]map[ResultKey]map[TestKey]*RunResultTest),
+	}
+}
+
+func (s *Structs) AddRun(r *Run) {
+	s.Runs[r.RunKey] = r
+}
+
+func (s *Structs) AddResult(r *Result) {
+	s.Results[r.ResultKey] = r
+}
+
+func (s *Structs) AddTest(t *Test) {
+	s.Tests[t.TestKey] = t
+}
+
+func (s *Structs) AddRunResult(run *Run, res *Result) {
+	if _, ok := s.RunResults[run.RunKey]; !ok {
+		s.RunResults[run.RunKey] = make(map[ResultKey]*RunResult)
+	}
+	s.RunResults[run.RunKey][res.ResultKey] = &RunResult{
+		RunKey:    run.RunKey,
+		ResultKey: res.ResultKey,
+	}
+}
+
+func (s *Structs) AddRunResultTest(run *Run, res *Result, t *Test, message *string) {
+	msg := toNullString(message)
+	if _, ok := s.RunResultTests[run.RunKey]; !ok {
+		s.RunResultTests[run.RunKey] = make(map[ResultKey]map[TestKey]*RunResultTest)
+	}
+	if _, ok := s.RunResultTests[run.RunKey][res.ResultKey]; !ok {
+		s.RunResultTests[run.RunKey][res.ResultKey] = make(map[TestKey]*RunResultTest)
+	}
+	s.RunResultTests[run.RunKey][res.ResultKey][t.TestKey] = &RunResultTest{
+		TestKey:   t.TestKey,
+		RunKey:    run.RunKey,
+		ResultKey: res.ResultKey,
+		Message:   msg,
+	}
+}
+
+func (s *Structs) ToMutations() ([]*spanner.Mutation, []*spanner.Mutation, []*spanner.Mutation, error) {
+	m1s := make([]*spanner.Mutation, 0, len(s.Tests)+len(s.Runs)+len(s.Results))
+	m2s := make([]*spanner.Mutation, 0, len(s.RunResults))
+	m3s := make([]*spanner.Mutation, 0, len(s.RunResultTests))
+	for _, t := range s.Tests {
+		m, err := spanner.InsertOrUpdateStruct(testsTableName, t)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		m1s = append(m1s, m)
+	}
+	for _, r := range s.Runs {
+		m, err := spanner.InsertOrUpdateStruct(runsTableName, r)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		m1s = append(m1s, m)
+	}
+	for _, r := range s.Results {
+		m, err := spanner.InsertOrUpdateStruct(resultsTableName, r)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		m1s = append(m1s, m)
+	}
+	for _, m1 := range s.RunResults {
+		for _, tr := range m1 {
+			m, err := spanner.InsertOrUpdateStruct(runResultsTableName, tr)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			m2s = append(m2s, m)
+		}
+	}
+	for _, m1 := range s.RunResultTests {
+		for _, m2 := range m1 {
+			for _, rrt := range m2 {
+				m, err := spanner.InsertOrUpdateStruct(runResultTestsTableName, rrt)
+				if err != nil {
+					return nil, nil, nil, err
+				}
+				m3s = append(m3s, m)
+			}
+		}
+	}
+
+	return m1s, m2s, m3s, nil
 }
 
 // HandlePushRun handles a request to push a test run to Cloud Spanner.
@@ -129,75 +326,105 @@ func pushRun(ctx context.Context, api API, id int64) {
 		return
 	}
 
-	// Generate mutations for complete run.
-	logger.Infof("Queuing rows for run")
-	tests, results := getMutationsForRun(run.ID, report)
-	logger.Infof("Queued %d+%d rows", len(tests), len(results))
+	log.Infof("Preparing data for run %d", run.ID)
 
-	// Write rows to spanner in batches.
-	// Retries: 5 per batch.
-	writeMutations := func(muts []*spanner.Mutation) []error {
-		logger.Infof("Writing %d-row batches", len(muts))
-		s := semaphore.NewWeighted(numConcurrentBatches)
-		ec := make(chan error, int64(math.Ceil(float64(len(muts))/float64(batchSize))))
-		writeBatch := func(m, n int) error {
-			batch := muts[m:n]
+	ss := NewStructs()
 
-			logger.Infof("Writing batch: [%d,%d)", m, n)
-			_, err := sClient.Apply(ctx, batch)
+	r, err := NewRun(run)
+	if err != nil {
+		log.Errorf("Spanner push failed to constructing run: %v", err)
+		return
+	}
+	ss.AddRun(r)
+
+	for _, result := range report.Results {
+		if len(result.Subtests) == 0 {
+			t := NewTest(result.Test, nil)
+			ss.AddTest(t)
+			res := NewResult(result.Status, nil)
+			ss.AddResult(res)
+			ss.AddRunResult(r, res)
+			ss.AddRunResultTest(r, res, t, result.Message)
+		} else {
+			for _, s := range result.Subtests {
+				t := NewTest(result.Test, &s.Name)
+				ss.AddTest(t)
+				res := NewResult(s.Status, nil)
+				ss.AddResult(res)
+				ss.AddRunResult(r, res)
+				ss.AddRunResultTest(r, res, t, s.Message)
+			}
+		}
+	}
+
+	log.Infof("Generating row-based mutations for run %d", run.ID)
+	r1s, r2s, r3s, err := ss.ToMutations()
+	if err != nil {
+		log.Errorf("Spanner push failed to generating mutations: %v", err)
+		return
+	}
+	numRows := len(r2s) + len(r2s) + len(r3s)
+	log.Infof("Generated %d rows for run %d", numRows, run.ID)
+
+	log.Infof("Writing batches for %d-row run %d", numRows, run.ID)
+
+	s := semaphore.NewWeighted(numConcurrentBatches)
+	writeBatch := func(batchSync *semaphore.Weighted, rowGroupSync *sync.WaitGroup, rows []*spanner.Mutation, m, n int) {
+		defer rowGroupSync.Done()
+		defer batchSync.Release(1)
+		batch := rows[m:n]
+
+		err := retry.Do(func() error {
+			log.Infof("Writing batch for %d-row run %d: [%d,%d)", len(rows), run.ID, m, n)
+
+			newCtx, cancel := context.WithTimeout(ctx, time.Second*60)
+			defer cancel()
+
+			_, err := sClient.Apply(newCtx, batch)
 			if err != nil {
+				log.Errorf("Error writing batch for %d-row run %d: %v", len(rows), run.ID, err)
 				return err
 			}
-			logger.Infof("Wrote batch: [%d,%d)", m, n)
+
+			log.Infof("Wrote batch for %d-row run %d: [%d,%d)", len(rows), run.ID, m, n)
 			return nil
+		}, retry.Attempts(5), retry.OnRetry(func(n uint, err error) {
+			log.Warningf("Retrying failed batch batch for %d-row run %d: [%d,%d): %v", len(rows), run.ID, m, n, err)
+		}))
+		if err != nil {
+			log.Fatal(err)
 		}
-		retryableWriteBatch := func(m, n int) {
-			defer s.Release(1)
-			err := retry.Do(func() error {
-				return writeBatch(m, n)
-			}, retry.Attempts(5), retry.OnRetry(func(num uint, err error) {
-				logger.Warningf("Attempt #%d to write batch [%d,%d) failed: %v", num, m, n, err)
-			}))
-			if err != nil {
-				ec <- err
-			}
-		}
+	}
+	writeRows := func(rows []*spanner.Mutation) *sync.WaitGroup {
+		var wg sync.WaitGroup
 		var end int
-		for end = batchSize; end <= len(muts); end += batchSize {
+		for end = batchSize; end <= len(rows); end += batchSize {
+			wg.Add(1)
 			s.Acquire(ctx, 1)
-			go retryableWriteBatch(end-batchSize, end)
+			go writeBatch(s, &wg, rows[0:], end-batchSize, end)
 		}
-		// Corner case: Leftover rows when len(muts) % batchSize != 0.
-		if end != len(muts) {
+		if end != len(rows) {
+			wg.Add(1)
 			s.Acquire(ctx, 1)
-			logger.Infof("Writing small batch: [%d,%d)", end-batchSize, len(muts))
-			go retryableWriteBatch(end-batchSize, len(muts))
-			logger.Infof("Wrote small batch: [%d,%d)", end-batchSize, len(muts))
+			log.Infof("Writing small batch for %d-row run %d: [%d,%d)", len(rows), run.ID, end-batchSize, len(rows))
+			go writeBatch(s, &wg, rows[0:], end-batchSize, len(rows))
+			log.Infof("Wrote small batch for %d-row run %d: [%d,%d)", len(rows), run.ID, end-batchSize, len(rows))
 		}
-		s.Acquire(ctx, numConcurrentBatches)
-
-		errs := make([]error, 0)
-		close(ec)
-		for err := range ec {
-			logger.Errorf("Failed to write batch: %v", err)
-			errs = append(errs, err)
-		}
-		return errs
+		return &wg
 	}
 
-	// Write tests (parent table), then results (child table).
-	errs := writeMutations(tests)
-	if len(errs) != 0 {
-		logger.Errorf("Spanner push run failed with %d test batch write errors", len(errs))
-		return
-	}
-	errs = writeMutations(results)
-	if len(errs) != 0 {
-		logger.Errorf("Spanner push run failed with %d result batch write errors", len(errs))
-		return
-	}
+	log.Infof("Writing %d layer-1 rows run %d", len(r1s), run.ID)
+	writeRows(r1s).Wait()
 
-	logger.Infof("Spanner push run succeeded: Wrote batches for %d+%d rows", len(tests), len(results))
+	log.Infof("Writing %d layer-2 rows run %d", len(r2s), run.ID)
+	writeRows(r2s).Wait()
+
+	log.Infof("Writing %d layer-3 rows run %d", len(r3s), run.ID)
+	writeRows(r3s).Wait()
+
+	log.Infof("Wrote batches for %d-row run %d", numRows, run.ID)
+
+	logger.Infof("Spanner push run succeeded: Wrote batches for %d rows", numRows)
 }
 
 // loadRun loads shared.TestRun data from datastore, given an integral ID
@@ -337,66 +564,36 @@ func numRowsToUpload(ctx context.Context, client *spanner.Client, runID int64, r
 	return totalRows - existingRows, nil
 }
 
-// getMutationsForRun returns (test table mutations, results table mutations)
-// associated with tests and test results contained in report.
-func getMutationsForRun(runID int64, report *metrics.TestResultsReport) ([]*spanner.Mutation, []*spanner.Mutation) {
-	testsRows := make([]*spanner.Mutation, 0)
-	resultsRows := make([]*spanner.Mutation, 0)
-	for _, r := range report.Results {
-		if len(r.Subtests) == 0 {
-			testsRows = appendTestsRow(r.Test, nil, testsRows)
-			resultsRows = appendResultsRow(runID, r.Status, r.Test, nil, r.Message, resultsRows)
-		} else {
-			for _, s := range r.Subtests {
-				testsRows = appendTestsRow(r.Test, &s.Name, testsRows)
-				resultsRows = appendResultsRow(runID, s.Status, r.Test, &s.Name, s.Message, resultsRows)
-			}
+// computeTestKey computes a stable int64 ID for a test+(optional)subtest pair.
+func computeTestKey(test string, subtest *string) TestKey {
+	key := TestKey{
+		TestID: int64(farm.Fingerprint64([]byte(test))),
+	}
+	if subtest != nil && *subtest != "" {
+		key.SubtestID = spanner.NullInt64{
+			Int64: int64(farm.Fingerprint64([]byte(*subtest))),
+			Valid: true,
 		}
 	}
-	return testsRows, resultsRows
+	return key
 }
 
-// appendTestsRow appends a *spanner.Mutation to rows, containing the mutation
-// required to ensure that the associated (sub)test is stored in Cloud Spanner.
-func appendTestsRow(test string, subtest *string, rows []*spanner.Mutation) []*spanner.Mutation {
-	testID := computeTestID(test, subtest)
-	testsRowMap := map[string]interface{}{
-		"test_id": testID,
-		"test":    test,
-	}
-	if subtest != nil && *subtest != "" {
-		testsRowMap["subtest"] = *subtest
-	} else {
-		testsRowMap["subtest"] = spanner.NullString{}
+func toNullString(s *string) spanner.NullString {
+	if s != nil && *s != "" {
+		return spanner.NullString{
+			StringVal: *s,
+			Valid:     true,
+		}
 	}
 
-	// Use InsertOrUpdate to ensure provided fields are correct without triggering
-	// a Delete that could break sub-table consistency.
-	return append(rows, spanner.InsertOrUpdateMap(testsTableName, testsRowMap))
+	return spanner.NullString{}
 }
-
-// appendResultsRow appends a *spanner.Mutation to rows, containing the mutation
-// required to ensure that the associated test result is stored in Cloud
-// Spanner.
-func appendResultsRow(runID int64, status, test string, subtest, message *string, rows []*spanner.Mutation) []*spanner.Mutation {
-	testID := computeTestID(test, subtest)
-	resultsRowMap := map[string]interface{}{
-		"test_id": testID,
-		"run_id":  runID,
-		"result":  shared.TestStatusValueFromString(status),
+func toNullInt64(n *int64) spanner.NullInt64 {
+	if n != nil && *n != 0 {
+		return spanner.NullInt64{
+			Int64: *n,
+			Valid: true,
+		}
 	}
-	if message != nil && *message != "" {
-		resultsRowMap["message"] = *message
-	}
-
-	// Use Replace to clobber any existing row.
-	return append(rows, spanner.ReplaceMap(resultsTableName, resultsRowMap))
-}
-
-// computeTestID computes a stable int64 ID for a test+(optional)subtest pair.
-func computeTestID(test string, subtest *string) int64 {
-	if subtest != nil && *subtest != "" {
-		return int64(farm.Fingerprint64([]byte(test + "\x00" + *subtest)))
-	}
-	return int64(farm.Fingerprint64([]byte(test)))
+	return spanner.NullInt64{}
 }
