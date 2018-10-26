@@ -747,6 +747,6 @@ __`path`__ : The test path to filter by, e.g. `/webdriver`.
 
 Latest chrome experimental run:
 
-![webdriver badge](https://staging.wpt.fyi/api/badge?product=chrome&path=/webdriver)
+![webdriver badge](https://staging.wpt.fyi/api/badge?product=chrome[experimental]&path=/webdriver)
 
-    <img src="https://staging.wpt.fyi/api/badge?product=chrome&path=/webdriver">
+    <img src="https://staging.wpt.fyi/api/badge?product=chrome[experimental]&path=/webdriver">
