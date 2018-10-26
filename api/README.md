@@ -21,6 +21,10 @@ the endpoints can be found in `routes.go`.
  - [/api/revisions/list](#apirevisionslist)
  - [/api/search](#apisearch)
 
+ ### Beta endpoints
+
+ - [/api/badge](#apibadge)
+
 Also see [results creation](#results-creation) for endpoints to add new data.
 
 ## TestRun entities
@@ -718,3 +722,31 @@ empty string, which will yield all test results for the selected runs.
 ```
 
 </details>
+
+## Badges _(Beta)_
+
+### /api/badge
+
+Generates and serves an `image/svg+xml` response of an [shields.io](https://shields.io) badge, for the overall status of a path (folder), for a given product.
+
+__An important note on gamification:__
+
+As noted on the website,
+
+>_wpt.fyi is a work in progress. The reported results do not necessarily reflect the true capabilities of each web browser, so they should not be used evaluate or compare feature support._
+
+As such, we discourage contributors from gamification of overall pass rates, as this can inhibit contribution of (new) failing tests, which can be important in revealing interoperability problems.
+
+__Parameters__
+
+__`product`__ : The product to compute the summary badge for, e.g. `chrome`, or `firefox-60`, or `edge[experimental]`.
+
+__`path`__ : The test path to filter by, e.g. `/webdriver`.
+
+<details><summary><b>Example badge</b></summary>
+
+Latest chrome experimental run:
+
+![webdriver badge](https://staging.wpt.fyi/api/badge?product=chrome&path=/webdriver)
+
+    <img src="https://staging.wpt.fyi/api/badge?product=chrome&path=/webdriver">
