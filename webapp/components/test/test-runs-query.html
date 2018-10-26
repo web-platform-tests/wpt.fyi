@@ -161,15 +161,15 @@
             });
           });
         });
-      });
 
-      suite('TestRunsUIQuery.prototype.*', () => {
-        test('diff', () => {
-          testRunsUIQuery.diff = true;
-          expect(testRunsUIQuery.query).to.contain('diff');
+        suite('TestRunsUIQuery.prototype.*', () => {
+          test('diff', () => {
+            testRunsUIQuery.diff = true;
+            expect(testRunsUIQuery.query).to.contain('diff');
 
-          testRunsUIQuery.diff = false;
-          expect(testRunsUIQuery.query).to.not.contain('diff');
+            testRunsUIQuery.diff = false;
+            expect(testRunsUIQuery.query).to.not.contain('diff');
+          });
         });
       });
 
