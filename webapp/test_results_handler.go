@@ -14,6 +14,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
 )
 
 type testRunUIFilter struct {
@@ -87,7 +89,19 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 	if err != nil {
 		return filter, err
 	}
-	testRunFilter = testRunFilter.OrDefault()
+	var experimentalByDefault, experimentalAlignedExceptEdge shared.Flag
+	ctx := appengine.NewContext(r)
+	datastore.Get(ctx, datastore.NewKey(ctx, "Flag", "experimentalByDefault", 0, nil), &experimentalByDefault)
+	datastore.Get(ctx, datastore.NewKey(ctx, "Flag", "experimentalAlignedExceptEdge", 0, nil), &experimentalAlignedExceptEdge)
+	if experimentalByDefault.Enabled {
+		if experimentalAlignedExceptEdge.Enabled {
+			testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
+		} else {
+			testRunFilter = testRunFilter.OrExperimentalRuns()
+		}
+	} else {
+		testRunFilter = testRunFilter.OrAlignedStableRuns()
+	}
 
 	filter.testRunUIFilter = parseTestRunUIFilter(testRunFilter)
 

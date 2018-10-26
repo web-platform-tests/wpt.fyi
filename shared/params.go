@@ -51,12 +51,45 @@ func (filter TestRunFilter) IsDefaultQuery() bool {
 // OrDefault returns the current filter, or, if it is a default query, returns
 // the query used by default in wpt.fyi.
 func (filter TestRunFilter) OrDefault() TestRunFilter {
+	return filter.OrAlignedStableRuns()
+}
+
+// OrAlignedStableRuns returns the current filter, or, if it is a default query, returns
+// a query for stable runs, with an aligned SHA.
+func (filter TestRunFilter) OrAlignedStableRuns() TestRunFilter {
 	if !filter.IsDefaultQuery() {
 		return filter
 	}
 	aligned := true
 	filter.Aligned = &aligned
 	filter.Labels = mapset.NewSetWith(StableLabel)
+	return filter
+}
+
+// OrExperimentalRuns returns the current filter, or, if it is a default query, returns
+// a query for the latest experimental runs.
+func (filter TestRunFilter) OrExperimentalRuns() TestRunFilter {
+	if !filter.IsDefaultQuery() {
+		return filter
+	}
+	filter.Labels = mapset.NewSetWith(ExperimentalLabel)
+	return filter
+}
+
+// OrAlignedExperimentalRunsExceptEdge returns the current filter, or, if it is a default
+// query, returns a query for the latest experimental runs.
+func (filter TestRunFilter) OrAlignedExperimentalRunsExceptEdge() TestRunFilter {
+	if !filter.IsDefaultQuery() {
+		return filter
+	}
+	aligned := true
+	filter.Aligned = &aligned
+	filter.Products = GetDefaultProducts()
+	for i := range filter.Products {
+		if filter.Products[i].BrowserName != "edge" {
+			filter.Products[i].Labels = mapset.NewSetWith("experimental")
+		}
+	}
 	return filter
 }
 
