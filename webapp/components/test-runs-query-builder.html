@@ -7,7 +7,6 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
@@ -45,8 +44,6 @@ found in the LICENSE file.
 
     <h3>
       Products
-      <paper-icon-button icon="editor:mode-edit"
-                         onclick="[[toggleEdit]]"></paper-icon-button>
     </h3>
     <template is="dom-if" if="[[debug]]">
       [[query]]
@@ -56,7 +53,6 @@ found in the LICENSE file.
         <product-builder browser-name="{{p.browser_name}}"
                          browser-version="{{p.browser_version}}"
                          labels="{{p.labels}}"
-                         edit="[[edit]]"
                          debug="[[debug]]"
                          on-product-changed="[[productChanged(i)]]"
                          on-delete="[[productDeleted(i)]]"></product-builder>
@@ -104,10 +100,6 @@ found in the LICENSE file.
 
       static get properties() {
         return {
-          edit: {
-            type: Boolean,
-            value: true,
-          },
           debug: {
             type: Boolean,
             value: false,
@@ -126,7 +118,6 @@ found in the LICENSE file.
 
       constructor() {
         super();
-        this.toggleEdit = this.onToggleEdit.bind(this);
         this.productDeleted = i => () => {
           this.handleDeleteProduct(i);
         };
@@ -147,10 +138,6 @@ found in the LICENSE file.
 
       computeCanShowDiff(productSpecs) {
         return productSpecs && productSpecs.length === 2;
-      }
-
-      onToggleEdit() {
-        this.edit = !this.edit;
       }
 
       handleDeleteProduct(i) {
@@ -221,44 +208,32 @@ found in the LICENSE file.
           [[spec]]
         </template>
 
-        <template is="dom-if" if="[[edit]]">
-          <br>
-          <paper-dropdown-menu label="Browser" no-animations>
-            <paper-listbox slot="dropdown-content" selected="{{ browserName }}" attr-for-selected="value">
-              <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
-              <paper-item value="edge">[[displayName("edge")]]</paper-item>
-              <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
-              <paper-item value="safari">[[displayName("safari")]]</paper-item>
-            </paper-listbox>
-          </paper-dropdown-menu>
-        </template>
-        <template is="dom-if" if="[[!edit]]">
-          [[ displayName(browserName) ]]
-        </template>
+        <br>
+        <paper-dropdown-menu label="Browser" no-animations>
+          <paper-listbox slot="dropdown-content" selected="{{ browserName }}" attr-for-selected="value">
+            <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
+            <paper-item value="edge">[[displayName("edge")]]</paper-item>
+            <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
+            <paper-item value="safari">[[displayName("safari")]]</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
 
-        <template is="dom-if" if="[[edit]]">
-          <br>
-          <paper-dropdown-menu label="Channel" no-animations>
-            <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
-              <paper-item value="any">Any</paper-item>
-              <paper-item value="stable">[[displayName("stable")]]</paper-item>
-              <paper-item value="beta">[[displayName("beta")]]</paper-item>
-              <paper-item value="dev">[[displayName("dev")]]</paper-item>
-              <paper-item value="experimental">[[displayName("experimental")]]</paper-item>
-            </paper-listbox>
-          </paper-dropdown-menu>
-        </template>
+        <br>
+        <paper-dropdown-menu label="Channel" no-animations>
+          <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
+            <paper-item value="any">Any</paper-item>
+            <paper-item value="stable">[[displayName("stable")]]</paper-item>
+            <paper-item value="beta">[[displayName("beta")]]</paper-item>
+            <paper-item value="dev">[[displayName("dev")]]</paper-item>
+            <paper-item value="experimental">[[displayName("experimental")]]</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
 
-        <template is="dom-if" if="[[edit]]">
-          <br>
-          <paper-input always-float-label
-                       label="Version"
-                       placeholder="(Any version)"
-                       value="{{ browserVersion::input }}"></paper-input>
-        </template>
-        <template is="dom-if" if="[[!edit]]">
-          [[browserVersion]]
-        </template>
+        <br>
+        <paper-input always-float-label
+                      label="Version"
+                      placeholder="(Any version)"
+                      value="{{ browserVersion::input }}"></paper-input>
       </div>
     </paper-card>
   </template>
@@ -304,10 +279,6 @@ found in the LICENSE file.
           spec: {
             type: String,
             computed: 'computeSpec(_product)',
-          },
-          edit: {
-            type: Boolean,
-            value: true,
           },
           debug: {
             type: Boolean,
