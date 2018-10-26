@@ -33,8 +33,8 @@ func TestApiVersionsHandler(t *testing.T) {
 	json.Unmarshal(bytes, &versions)
 	assert.Equal(t, []string{}, versions)
 
-	// Add test runs
-	someVersions := []string{"2", "1.1.1", "1.1", "1.0", "1"}
+	// Add test runs (duplicating 1.1 is deliberate)
+	someVersions := []string{"2", "1.1.1", "1.1", "1.1", "1.0", "1"}
 	run := shared.TestRun{}
 	browserNames := shared.GetDefaultBrowserNames()
 	for _, browser := range browserNames {
@@ -53,7 +53,8 @@ func TestApiVersionsHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	bytes, _ = ioutil.ReadAll(w.Result().Body)
 	json.Unmarshal(bytes, &versions)
-	assert.Equal(t, someVersions, versions)
+	// Duplication should be removed.
+	assert.Equal(t, []string{"2", "1.1.1", "1.1", "1.0", "1"}, versions)
 
 	// Chrome 1.1
 	r, err = i.NewRequest("GET", "/api/versions?product=chrome-1", nil)

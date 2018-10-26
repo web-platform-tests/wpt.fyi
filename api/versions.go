@@ -27,15 +27,14 @@ func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := shared.NewAppEngineContext(r)
 	query := datastore.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
+	distinctQuery := query.Project("BrowserVersion").Distinct()
 	var queries []*datastore.Query
 	if product.BrowserVersion == "" {
-		queries = []*datastore.Query{query}
+		queries = []*datastore.Query{distinctQuery}
 	} else {
 		queries = []*datastore.Query{
 			query.Filter("BrowserVersion =", product.BrowserVersion).Limit(1),
-			shared.VersionPrefix(query, "BrowserVersion", product.BrowserVersion, false /*desc*/).
-				Project("BrowserVersion").
-				Distinct(),
+			shared.VersionPrefix(distinctQuery, "BrowserVersion", product.BrowserVersion, false /*desc*/),
 		}
 	}
 
