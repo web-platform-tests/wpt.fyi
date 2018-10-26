@@ -33,7 +33,7 @@ func TestApiVersionsHandler(t *testing.T) {
 	json.Unmarshal(bytes, &versions)
 	assert.Equal(t, []string{}, versions)
 
-	// Add test runs (duplicating 1.1 is deliberate)
+	// Add test runs (duplicating 1.1 is deliberate).
 	someVersions := []string{"2", "1.1.1", "1.1", "1.1", "1.0", "1"}
 	run := shared.TestRun{}
 	browserNames := shared.GetDefaultBrowserNames()
