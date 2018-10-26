@@ -18,7 +18,7 @@
     </template>
   </test-fixture>
   <script>
-    /* global TestRunsBase, TestFileResults, TEST_RUNS_DATA */
+    /* global TestFileResults, TEST_RUNS_DATA */
     suite('TestFileResults', () => {
       let tfr;
 
@@ -32,11 +32,6 @@
       test('instanceof Polymer.Element', () => {
         assert.isTrue(new TestFileResults() instanceof window.Polymer.Element);
         assert.isTrue(document.createElement('test-file-results') instanceof window.Polymer.Element);
-      });
-
-      test('instanceof TestRunsBase', () => {
-        assert.isTrue(new TestFileResults() instanceof TestRunsBase);
-        assert.isTrue(document.createElement('test-file-results') instanceof TestRunsBase);
       });
 
       suite('static get is()', () => {

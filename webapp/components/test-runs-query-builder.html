@@ -49,7 +49,7 @@ found in the LICENSE file.
                          onclick="[[toggleEdit]]"></paper-icon-button>
     </h3>
     <template is="dom-if" if="[[debug]]">
-      [[testRunQuery]]
+      [[query]]
     </template>
     <div>
       <template is="dom-repeat" items="[[products]]" as="p" index-as="i">
@@ -69,6 +69,9 @@ found in the LICENSE file.
     </div>
     <paper-item>
       <paper-checkbox checked="{{aligned}}">Align runs</paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{diff}}" disabled="{{!canShowDiff}}">Show diff</paper-checkbox>
     </paper-item>
     <paper-item>
       <paper-input label="Labels"
@@ -93,8 +96,8 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
-    /* global TestRunsQuery, DEFAULT_BROWSER_NAMES */
-    class TestRunsQueryBuilder extends TestRunsQuery(window.Polymer.Element) {
+    /* global TestRunsUIQuery, DEFAULT_BROWSER_NAMES */
+    class TestRunsQueryBuilder extends TestRunsUIQuery(window.Polymer.Element) {
       static get is() {
         return 'test-runs-query-builder';
       }
@@ -113,6 +116,10 @@ found in the LICENSE file.
           labelsString: {
             type: String,
             observer: 'labelsStringUpdated',
+          },
+          canShowDiff: {
+            type: Boolean,
+            computed: 'computeCanShowDiff(productSpecs)',
           },
         };
       }
@@ -136,6 +143,10 @@ found in the LICENSE file.
           this.onSubmit && this.onSubmit();
         };
         this._createMethodObserver('labelsUpdated(labels, labels.*)');
+      }
+
+      computeCanShowDiff(productSpecs) {
+        return productSpecs && productSpecs.length === 2;
       }
 
       onToggleEdit() {
@@ -177,6 +188,11 @@ found in the LICENSE file.
           break;
         }
         this.splice('products', this.products.length, 0, next);
+      }
+
+      clearQuery() {
+        super.clearQuery();
+        this.diff = undefined;
       }
 
       handleClearAll() {

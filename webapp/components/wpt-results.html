@@ -191,6 +191,7 @@ found in the LICENSE file.
                               sha="[[sha]]"
                               aligned="[[aligned]]"
                               on-submit="[[submitQuery]]"
+                              diff="[[diff]]"
                               edit>
       </test-runs-query-builder>
     </iron-collapse>
@@ -299,10 +300,9 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation, WPTFlags */
-    class WPTResults extends ResultsNavigation(
-      WPTFlags(SelfNavigation(LoadingState(TestRunsBase))),
-      'resultsQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to, diff, search)') {
+    /* global WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
+    class WPTResults extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
+      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer))))) {
 
       static get is() {
         return 'wpt-results';
@@ -310,10 +310,6 @@ found in the LICENSE file.
 
       static get properties() {
         return {
-          search: {
-            type: String,
-            value: '',
-          },
           sourcePath: {
             type: String,
             computed: 'computeSourcePath(path, manifest)',
@@ -347,7 +343,7 @@ found in the LICENSE file.
           },
           diffURL: {
             type: String,
-            computed: 'computeDiffURL(testRuns, testRunQuery)',
+            computed: 'computeDiffURL(testRuns, query)',
           },
           filter: {
             type: String,
@@ -438,12 +434,12 @@ found in the LICENSE file.
         return url;
       }
 
-      computeDiffURL(productSpecs, testRunQuery) {
+      computeDiffURL(productSpecs, query) {
         if (!productSpecs || productSpecs.length !== 2) {
           return;
         }
         let url = new URL('/api/diff', window.location);
-        url.search = testRunQuery
+        url.search = query
           .replace('product', 'before')
           .replace('product', 'after');
         url.searchParams.delete('diff');
@@ -656,7 +652,7 @@ found in the LICENSE file.
       }
 
       navigationQueryParams() {
-        return this.queryParams;
+        return Object.assign({}, this.queryParams);
       }
 
       testResultClass(node, index, testRun, prop) {
@@ -716,17 +712,6 @@ found in the LICENSE file.
 
       isDiff(testRun) {
         return testRun && testRun.revision === 'diff';
-      }
-
-      resultsQueryParams(sha, aligned, labels, products, maxCount, diff, search) {
-        const params = this.computeTestRunQueryParams(sha, aligned, labels, products, maxCount);
-        if (diff || this.diff) {
-          params.diff = true;
-        }
-        if (search) {
-          params.q = search;
-        }
-        return params;
       }
 
       getNodeResultDataByPropertyName(node, index, testRun, property) {
@@ -789,10 +774,14 @@ found in the LICENSE file.
       handleSubmitQuery() {
         const builder = this.shadowRoot.querySelector('test-runs-query-builder');
         this.editingQuery = false;
-        if (this.testRunQuery === builder.testRunQuery) {
+        if (this.query === builder.query) {
           return;
         }
-        this.updateQueryParams(builder.testRunQueryParams);
+
+        this.updateQueryParams(builder.queryParams);
+        if (!this.diff) {
+          this.diffRun = null;
+        }
         // Trigger a virtual navigation.
         this.navigateToLocation(window.location);
         this.testRuns = [];
