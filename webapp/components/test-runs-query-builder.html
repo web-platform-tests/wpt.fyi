@@ -248,10 +248,15 @@ found in the LICENSE file.
         </paper-dropdown-menu>
 
         <br>
-        <paper-input always-float-label
-                      label="Version"
-                      placeholder="(Any version)"
-                      value="{{ browserVersion::input }}"></paper-input>
+        <paper-input-container always-float-label>
+          <label slot="label">Version</label>
+          <input slot="input"
+                  placeholder="(Any version)"
+                  list="versions-datalist"
+                  value="{{ browserVersion::input }}">
+          <datalist id="versions-datalist"></datalist>
+        </paper-input-container>
+      </template>
       </div>
     </paper-card>
   </template>
@@ -317,6 +322,18 @@ found in the LICENSE file.
             type: Array,
             value: Array.from(CHANNELS),
           },
+          versionsURL: {
+            type: String,
+            computed: 'computeVersionsURL(browserName)',
+            observer: 'versionsURLUpdated',
+          },
+          versions: {
+            type: Array,
+          },
+          versionsAutocomplete: {
+            type: Array,
+            observer: 'versionsAutocompleteUpdated'
+          },
         };
       }
 
@@ -325,6 +342,7 @@ found in the LICENSE file.
         this.deleteProduct = () => {
           this.onDelete && this.onDelete(this.product);
         };
+        this._createMethodObserver('versionsUpdated(browserVersion, versions)');
       }
 
       static get SemanticLabels() {
@@ -382,6 +400,52 @@ found in the LICENSE file.
         return Object.assign({}, product, {
           labels: (product.labels || []).filter(l => !CHANNELS.has(l)).concat(channel)
         });
+      }
+
+      computeVersionsURL(browserName) {
+        const url = new URL('/api/versions', window.location);
+        url.searchParams.set('product', browserName);
+        return url;
+      }
+
+      versionsURLUpdated(url) {
+        fetch(url).then(r => r.json()).then(v => {
+          this.versions = v;
+        });
+      }
+
+      versionsUpdated(version, versions) {
+        if (!versions) {
+          return;
+        }
+        if (version) {
+          versions = versions.filter(s => s.startsWith(version));
+        }
+        versions = versions.slice(0, 10);
+        // Check actually different from current.
+        const curr = this.versionsAutocomplete || [];
+        if (curr.length === versions.length) {
+          let same = true;
+          for (let i = 0; i < versions.length && same; i++) {
+            if (i >= curr.length || versions[i] !== curr[i]) {
+              same = false;
+            }
+          }
+          if (same) {
+            return;
+          }
+        }
+        this.versionsAutocomplete = versions;
+      }
+
+      versionsAutocompleteUpdated(versionsAutocomplete) {
+        const datalist = this.shadowRoot.querySelector('datalist');
+        datalist.innerHTML = '';
+        for (const sha of versionsAutocomplete) {
+          const option = document.createElement('option');
+          option.setAttribute('value', sha);
+          datalist.appendChild(option);
+        }
       }
     }
 
