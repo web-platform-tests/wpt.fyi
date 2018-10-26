@@ -27,10 +27,8 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	// (1) all URLs to this handler are cacheable;
 	// (2) URL string as cache key;
 	// (3) cache only HTTP 200.
-	shared.NewCachingHandler(ctx, SHAsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), nil, nil, nil).ServeHTTP(w, r)
+	shared.NewCachingHandler(ctx, SHAsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
 }
-func shasIsCacheable(*http.Request) bool          { return true }
-func shasGetCacheKey(r *http.Request) interface{} { return r.URL.String() }
 
 func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters, err := shared.ParseTestRunFilterParams(r)

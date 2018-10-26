@@ -157,15 +157,6 @@ func (h cachingHandler) delegateAndCache(w http.ResponseWriter, r *http.Request,
 // NewCachingHandler produces a caching handler with an underlying delegate
 // handler, cache, cacheability decision function, and cache key producer.
 func NewCachingHandler(ctx context.Context, delegate http.Handler, cache ReadWritable, isCacheable func(*http.Request) bool, getCacheKey func(*http.Request) interface{}, shouldCache func(int, []byte) bool) http.Handler {
-	if isCacheable == nil {
-		isCacheable = AlwaysCachable
-	}
-	if getCacheKey == nil {
-		getCacheKey = URLAsCacheKey
-	}
-	if shouldCache == nil {
-		shouldCache = CacheStatusOK
-	}
 	return cachingHandler{ctx, delegate, cache, isCacheable, getCacheKey, shouldCache}
 }
 
