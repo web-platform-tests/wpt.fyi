@@ -127,7 +127,8 @@ found in the LICENSE file.
 
     <test-search class$="search-[[pathIsATestFile]]"
                  query="{{search}}"
-                 test-runs="[[testRuns]]">
+                 test-runs="[[testRuns]]"
+                 test-paths="[[testPaths]]">
     </test-search>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -257,6 +258,10 @@ found in the LICENSE file.
         searchResults: Array,
         onSearchCommit: Function,
         interopLoadFailed: Boolean,
+        testPaths: {
+          type: Set,
+          computed: 'computeTestPaths(fileMetrics)',
+        },
       };
     }
 
@@ -264,6 +269,9 @@ found in the LICENSE file.
       super();
       this.onSearchCommit = (e) => {
         this.handleSearchCommit(e.detail.query);
+      };
+      this.onSearchAutocomplete = (e) => {
+        this.handleSearchAutocomplete(e.detail.path);
       };
       this.onLoadingComplete = () => {
         // passRateMetadata contains the url for the JSON blob of allMetrics;
@@ -279,6 +287,8 @@ found in the LICENSE file.
       super.connectedCallback();
       this.shadowRoot.querySelector('test-search')
         .addEventListener('commit', this.onSearchCommit);
+      this.shadowRoot.querySelector('test-search')
+        .addEventListener('autocomplete', this.onSearchAutocomplete);
     }
 
     disconnectedCallback() {
@@ -333,6 +343,13 @@ found in the LICENSE file.
       return metadata && metadata.test_runs;
     }
 
+    computeTestPaths(fileMetrics) {
+      if (!fileMetrics) {
+        return [];
+      }
+      return new Set(fileMetrics.map(m => m.dir));
+    }
+
     computeFileMetrics(allMetrics) {
       let fileMetrics = [];
       for (const metric of allMetrics.data) {
@@ -369,6 +386,11 @@ found in the LICENSE file.
 
       this.searchResults = this.fileMetrics
         .filter(t => t.dir.toLowerCase().includes(q));
+    }
+
+    handleSearchAutocomplete(path) {
+      this.shadowRoot.querySelector('test-search').clear();
+      this.navigateToPath(path);
     }
 
     computeDisplayedNodes(path, displayedTests) {
