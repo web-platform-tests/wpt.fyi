@@ -127,7 +127,7 @@ found in the LICENSE file.
       }
 
       latchQuery() {
-        this.query = this.queryInput.toLowerCase();
+        this.query = (this.queryInput || '').toLowerCase();
       }
 
       commitQuery() {
