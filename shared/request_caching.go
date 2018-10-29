@@ -10,6 +10,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"google.golang.org/appengine"
 )
 
 // CachingResponseWriter is an http.ResponseWriter that can produce a new
@@ -149,6 +151,11 @@ func NewCachingHandler(delegate http.Handler, cache ReadWritable, isCacheable fu
 // AlwaysCachable is a helper for returning true for all requests.
 func AlwaysCachable(r *http.Request) bool {
 	return true
+}
+
+// AlwaysCacheExceptDevAppServer is a helper for returning true for all requests.
+func AlwaysCacheExceptDevAppServer(r *http.Request) bool {
+	return !appengine.IsDevAppServer()
 }
 
 // URLAsCacheKey is a helper for returning the request's full URL as a cache key.

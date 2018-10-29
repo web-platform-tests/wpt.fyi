@@ -15,7 +15,7 @@ func apiBadgeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/svg+xml")
 	ctx := shared.NewAppEngineContext(r)
 	mc := shared.NewMemcacheReadWritable(ctx)
-	ch := shared.NewCachingHandler(fetchBadge{}, mc, shared.AlwaysCachable, shared.URLAsCacheKey)
+	ch := shared.NewCachingHandler(fetchBadge{}, mc, shared.AlwaysCacheExceptDevAppServer, shared.URLAsCacheKey)
 	ch.ServeHTTP(w, r)
 }
 
@@ -73,16 +73,34 @@ func (fetchBadge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	colorB := "red"
-	if passes == total {
-		colorB = "brightgreen"
-	} else if float64(passes)/float64(total) >= 0.8 {
-		colorB = "orange"
+	// See wpt-colors.html for color scheme.
+	colors := []string{
+		"#ef5350", // --paper-red-400
+		"#ffa726", // --paper-orange-400
+		"#ffca28", // --paper-amber-400
+		"#ffee58", // --paper-yellow-400
+		"#d4e157", // --paper-lime-400
+		"#9ccc65", // --paper-light-green-400
+		"#66bb6a", // --paper-green-400
 	}
 
-	badgeURL, _ := url.Parse(fmt.Sprintf("https://img.shields.io/badge/-%v/%v-grey.svg", passes, total))
+	colorB := colors[0]
+	if passes > 0 && total > 0 {
+		if passes == total {
+			colorB = colors[len(colors)-1]
+		} else {
+			midRange := len(colors) - 2
+			i := 1 + int(float64(midRange)*float64(passes)/float64(total))
+			colorB = colors[i]
+		}
+	}
+
+	badgeURL, _ := url.Parse(
+		fmt.Sprintf("https://img.shields.io/badge/wpt | %s-%v/%v-grey.svg",
+			runFilter.Products[0].DisplayName(),
+			passes,
+			total))
 	q := badgeURL.Query()
-	q.Set("label", fmt.Sprintf("wpt | %s", runFilter.Products[0].DisplayName()))
 	q.Set("style", "flat")
 	q.Set("colorB", colorB)
 	badgeURL.RawQuery = q.Encode()
