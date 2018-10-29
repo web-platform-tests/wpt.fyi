@@ -15,7 +15,7 @@ import (
 // LoadTestRun loads the TestRun entity for the given key.
 func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
 	var testRun TestRun
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx)), NewDatastoreObjectStore(ctx, "TestRun"))
+	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
 	err := cs.Get(getTestRunMemcacheKey(id), id, &testRun)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func LoadTestRuns(
 // ID to the TestRun entity.
 func LoadTestRunsByKeys(ctx context.Context, keys []*datastore.Key) (result TestRuns, err error) {
 	result = make(TestRuns, len(keys))
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx)), NewDatastoreObjectStore(ctx, "TestRun"))
+	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
 	var wg sync.WaitGroup
 	for i := range keys {
 		wg.Add(1)
