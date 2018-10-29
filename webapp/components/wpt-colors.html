@@ -32,7 +32,7 @@
     };
     wpt.passRateColorRGBA = (passes, total, alpha) => {
       const color = wpt.getColor(passes, total);
-      return `rgba(${color['rgb'].join(', ')}, ${alpha})`;
+      return `rgba(${color.rgb.join(', ')}, ${alpha})`;
     };
     wpt.getColor = (passes, total) => {
       if (passes === 0 || total === 0) {
