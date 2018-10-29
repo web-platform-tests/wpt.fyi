@@ -28,7 +28,7 @@
       return wpt.getColor(passes, total).class;
     };
     wpt.passRateColorVar = (passes, total) => {
-      return wpt.getColor(passes, total)['colorVar'];
+      return wpt.getColor(passes, total).colorVar;
     };
     wpt.passRateColorRGBA = (passes, total, alpha) => {
       const color = wpt.getColor(passes, total);
