@@ -25,7 +25,7 @@
       { class: 'passes-all', colorVar: '--paper-green-400', rgb: [102, 187, 106] },
     ];
     wpt.passRateClass = (passes, total) => {
-      return wpt.getColor(passes, total)['class'];
+      return wpt.getColor(passes, total).class;
     };
     wpt.passRateColorVar = (passes, total) => {
       return wpt.getColor(passes, total)['colorVar'];
