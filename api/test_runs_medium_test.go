@@ -148,3 +148,39 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	assert.Equal(t, 4, len(results))
 	assert.Equal(t, "1111111111", results[0].Revision)
 }
+
+func TestGetTestRuns_Full(t *testing.T) {
+	i, err := sharedtest.NewAEInstance(true)
+	assert.Nil(t, err)
+	defer i.Close()
+	r, err := i.NewRequest("GET", "/api/runs?full&max-count=2", nil)
+	assert.Nil(t, err)
+
+	ctx := shared.NewAppEngineContext(r)
+	now := time.Now()
+	run := shared.TestRun{}
+	run.CreatedAt = now.AddDate(0, 0, -1)
+	run.BrowserName = "chrome"
+	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+
+	run.Labels = []string{"full"}
+	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+
+	// full, 1 result
+	resp := httptest.NewRecorder()
+	apiTestRunsHandler(resp, r)
+	body, _ := ioutil.ReadAll(resp.Result().Body)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var results shared.TestRuns
+	json.Unmarshal(body, &results)
+	assert.Equal(t, 1, len(results))
+
+	// Non-full, 2 results
+	r, err = i.NewRequest("GET", "/api/runs?max-count=2", nil)
+	resp = httptest.NewRecorder()
+	apiTestRunsHandler(resp, r)
+	body, _ = ioutil.ReadAll(resp.Result().Body)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	json.Unmarshal(body, &results)
+	assert.Equal(t, 2, len(results))
+}

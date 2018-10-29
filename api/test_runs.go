@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/deckarep/golang-set"
+
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
 )
@@ -56,9 +58,19 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 	}
 	products := filters.GetProductsOrDefault()
 
+	labels := mapset.NewSet()
+	if filters.Labels != nil {
+		for label := range filters.Labels.Iter() {
+			labels.Add(label)
+		}
+	}
+	if filters.Full != nil && *filters.Full {
+		labels.Add(shared.FullLabel)
+	}
+
 	// When ?aligned=true, make sure to show results for the same aligned run (executed for all browsers).
 	if shared.IsLatest(filters.SHA) && filters.Aligned != nil && *filters.Aligned {
-		shas, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, filters.Labels, from, filters.To, limit)
+		shas, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, labels, from, filters.To, limit)
 		if err != nil {
 			return result, err
 		}
@@ -72,7 +84,7 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 		}
 		return keys, err
 	}
-	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit)
+	return shared.LoadTestRunKeys(ctx, products, labels, filters.SHA, from, filters.To, limit)
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load

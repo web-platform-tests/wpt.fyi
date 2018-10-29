@@ -23,6 +23,10 @@ const LatestSHA = "latest"
 // StableLabel is the implicit label present for runs marked 'stable'.
 const StableLabel = "stable"
 
+// FullLabel is the label present for full runs (which run the entire WPT suite),
+// as opposed to things like affected tests for PRs.
+const FullLabel = "full"
+
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
 func GetDefaultProducts() ProductSpecs {
 	browserNames := GetDefaultBrowserNames()

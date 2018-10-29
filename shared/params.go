@@ -30,7 +30,8 @@ type QueryFilter struct {
 type TestRunFilter struct {
 	SHA      string
 	Labels   mapset.Set
-	Aligned  *bool
+	Aligned  *bool // Runs with the same SHA
+	Full     *bool // Runs which are the full test suite (i.e. labelled 'full')
 	From     *time.Time
 	To       *time.Time
 	MaxCount *int
@@ -178,6 +179,9 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 	}
 	if filter.To != nil {
 		q.Set("to", filter.From.Format(time.RFC3339))
+	}
+	if filter.Full != nil {
+		q.Set("full", strconv.FormatBool(*filter.Full))
 	}
 	return q
 }
@@ -679,6 +683,9 @@ func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error)
 		return filter, err
 	}
 	if filter.To, err = ParseDateTimeParam(r, "to"); err != nil {
+		return filter, err
+	}
+	if filter.Full, err = ParseBooleanParam(r, "full"); err != nil {
 		return filter, err
 	}
 	return filter, nil
