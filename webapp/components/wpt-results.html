@@ -26,11 +26,12 @@ found in the LICENSE file.
 <link rel="import" href="test-results-chart.html">
 <link rel="import" href="test-runs-query-builder.html">
 <link rel="import" href="test-search.html">
+<link rel="import" href="wpt-colors.html">
 <link rel="import" href="wpt-flags.html">
 
 <dom-module id="wpt-results">
   <template>
-    <style>
+    <style include="wpt-colors">
       :host {
         display: block;
         font-size: 15px;
@@ -84,12 +85,6 @@ found in the LICENSE file.
       .delta {
         background-color: var(--paper-grey-200);
       }
-      .passes-0 { background-color: hsl(0, 85%, 65%); }
-      .passes-20 { background-color: hsl(0, 85%, 70%); }
-      .passes-40 { background-color: hsl(0, 85%, 75%); }
-      .passes-60 { background-color: hsl(0, 85%, 80%); }
-      .passes-80 { background-color: hsl(0, 85%, 85%); }
-      .passes-100 { background-color: var(--paper-light-green-a400); }
 
       span.delta.regressions {
         color: var(--paper-red-700);
@@ -300,9 +295,9 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
-    class WPTResults extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
-      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer))))) {
+    /* global WPTColors, WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
+    class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
+      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer)))))) {
 
       static get is() {
         return 'wpt-results';
@@ -681,9 +676,7 @@ found in the LICENSE file.
           if (this.path === '/') {
             return 'top';
           }
-
-          const passes = result.passes / result.total;
-          return `passes-${passes * 100 - (passes * 100 % 20)}`;
+          return this.passRateClass(result.passes, result.total);
         }
       }
 
