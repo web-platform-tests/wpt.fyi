@@ -225,6 +225,7 @@ found in the LICENSE file.
 
         updateQueryParams(params) {
           super.updateQueryParams(params);
+          this.search = params.q;
           this.diff = params.diff;
         }
       };
