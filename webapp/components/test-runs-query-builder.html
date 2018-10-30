@@ -420,7 +420,8 @@ found in the LICENSE file.
 
       // Respond to newly fetched versions, or user input, by filtering the autocomplete list.
       versionsUpdated(version, versions) {
-        if (!versions) {
+        if (!versions || !versions.length) {
+          this.versionsAutocomplete = [];
           return;
         }
         if (version) {
