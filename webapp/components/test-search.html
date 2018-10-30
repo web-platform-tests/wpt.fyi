@@ -71,10 +71,6 @@ found in the LICENSE file.
             computed: 'computeQueryPlaceholder()'
           },
           testPaths: Array,
-          normalizedTestPaths: {
-            type: Array,
-            computed: 'normalizeTestPaths(testPaths)',
-          },
           onKeyUp: Function,
           onChange: Function,
           onFocus: Function,
@@ -92,7 +88,7 @@ found in the LICENSE file.
 
       ready() {
         super.ready();
-        this._createMethodObserver('updateDatalist(query, normalizedTestPaths)');
+        this._createMethodObserver('updateDatalist(query, testPaths)');
         this.queryInput = this.query;
       }
 
@@ -109,6 +105,7 @@ found in the LICENSE file.
         let matches = Array.from(paths);
         if (query) {
           matches = matches
+            .filter(p => p.toLowerCase())
             .filter(p => p.includes(query))
             .sort((p1, p2) => p1.indexOf(query) - p2.indexOf(query));
         }
@@ -178,10 +175,6 @@ found in the LICENSE file.
       clear() {
         this.query = '';
         this.queryInput = '';
-      }
-
-      normalizeTestPaths(testPaths) {
-        return testPaths && testPaths.map(p => p.toLowerCase());
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);
