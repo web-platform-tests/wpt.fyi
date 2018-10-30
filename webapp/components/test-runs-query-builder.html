@@ -7,7 +7,6 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
@@ -46,18 +45,15 @@ found in the LICENSE file.
 
     <h3>
       Products
-      <paper-icon-button icon="editor:mode-edit"
-                         onclick="[[toggleEdit]]"></paper-icon-button>
     </h3>
     <template is="dom-if" if="[[debug]]">
-      [[testRunQuery]]
+      [[query]]
     </template>
     <div>
       <template is="dom-repeat" items="[[products]]" as="p" index-as="i">
         <product-builder browser-name="{{p.browser_name}}"
                          browser-version="{{p.browser_version}}"
                          labels="{{p.labels}}"
-                         edit="[[edit]]"
                          debug="[[debug]]"
                          on-product-changed="[[productChanged(i)]]"
                          on-delete="[[productDeleted(i)]]"></product-builder>
@@ -70,6 +66,9 @@ found in the LICENSE file.
     </div>
     <paper-item>
       <paper-checkbox checked="{{aligned}}">Align runs</paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{diff}}" disabled="{{!canShowDiff}}">Show diff</paper-checkbox>
     </paper-item>
     <paper-item>
       <paper-input label="Labels"
@@ -94,18 +93,14 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
-    /* global TestRunsQuery, DEFAULT_BROWSER_NAMES */
-    class TestRunsQueryBuilder extends TestRunsQuery(window.Polymer.Element) {
+    /* global TestRunsUIQuery, DEFAULT_BROWSER_NAMES */
+    class TestRunsQueryBuilder extends TestRunsUIQuery(window.Polymer.Element) {
       static get is() {
         return 'test-runs-query-builder';
       }
 
       static get properties() {
         return {
-          edit: {
-            type: Boolean,
-            value: true,
-          },
           debug: {
             type: Boolean,
             value: false,
@@ -115,12 +110,15 @@ found in the LICENSE file.
             type: String,
             observer: 'labelsStringUpdated',
           },
+          canShowDiff: {
+            type: Boolean,
+            computed: 'computeCanShowDiff(productSpecs)',
+          },
         };
       }
 
       constructor() {
         super();
-        this.toggleEdit = this.onToggleEdit.bind(this);
         this.productDeleted = i => () => {
           this.handleDeleteProduct(i);
         };
@@ -139,8 +137,8 @@ found in the LICENSE file.
         this._createMethodObserver('labelsUpdated(labels, labels.*)');
       }
 
-      onToggleEdit() {
-        this.edit = !this.edit;
+      computeCanShowDiff(productSpecs) {
+        return productSpecs && productSpecs.length === 2;
       }
 
       handleDeleteProduct(i) {
@@ -180,6 +178,11 @@ found in the LICENSE file.
         this.splice('products', this.products.length, 0, next);
       }
 
+      clearQuery() {
+        super.clearQuery();
+        this.diff = undefined;
+      }
+
       handleClearAll() {
         this.clearQuery();
         this.set('products', []);
@@ -209,48 +212,36 @@ found in the LICENSE file.
           [[spec]]
         </template>
 
-        <template is="dom-if" if="[[edit]]">
-          <br>
-          <paper-dropdown-menu label="Browser" no-animations>
-            <paper-listbox slot="dropdown-content" selected="{{ browserName }}" attr-for-selected="value">
-              <template is="dom-repeat" items="[[defaultProducts]]" as="product">
-                <paper-icon-item value="[[product.browser_name]]">
-                  <display-logo slot="item-icon" product="[[product]]" small></display-logo>
-                  [[displayName(product.browser_name)]]
-                </paper-icon-item>
-              </template>
-            </paper-listbox>
-          </paper-dropdown-menu>
-        </template>
-        <template is="dom-if" if="[[!edit]]">
-          [[ displayName(browserName) ]]
-        </template>
+        <br>
+        <paper-dropdown-menu label="Browser" no-animations>
+          <paper-listbox slot="dropdown-content" selected="{{ browserName }}" attr-for-selected="value">
+            <template is="dom-repeat" items="[[defaultProducts]]" as="product">
+              <paper-icon-item value="[[product.browser_name]]">
+                <display-logo slot="item-icon" product="[[product]]" small></display-logo>
+                [[displayName(product.browser_name)]]
+              </paper-icon-item>
+            </template>
+          </paper-listbox>
+        </paper-dropdown-menu>
 
-        <template is="dom-if" if="[[edit]]">
-          <br>
-          <paper-dropdown-menu label="Channel" no-animations>
-            <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
-              <paper-item value="any">Any</paper-item>
-              <template is="dom-repeat" items="[[channels]]" as="channel">
-                <paper-icon-item value="[[channel]]">
-                  <display-logo slot="item-icon" product="[[productWithChannel(_product, channel)]]" small></display-logo>
-                  [[displayName(channel)]]
-                </paper-icon-item>
-              </template>
-            </paper-listbox>
-          </paper-dropdown-menu>
-        </template>
+        <br>
+        <paper-dropdown-menu label="Channel" no-animations>
+          <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
+            <paper-item value="any">Any</paper-item>
+            <template is="dom-repeat" items="[[channels]]" as="channel">
+              <paper-icon-item value="[[channel]]">
+                <display-logo slot="item-icon" product="[[productWithChannel(_product, channel)]]" small></display-logo>
+                [[displayName(channel)]]
+              </paper-icon-item>
+            </template>
+          </paper-listbox>
+        </paper-dropdown-menu>
 
-        <template is="dom-if" if="[[edit]]">
-          <br>
-          <paper-input always-float-label
-                       label="Version"
-                       placeholder="(Any version)"
-                       value="{{ browserVersion::input }}"></paper-input>
-        </template>
-        <template is="dom-if" if="[[!edit]]">
-          [[browserVersion]]
-        </template>
+        <br>
+        <paper-input always-float-label
+                      label="Version"
+                      placeholder="(Any version)"
+                      value="{{ browserVersion::input }}"></paper-input>
       </div>
     </paper-card>
   </template>
@@ -296,10 +287,6 @@ found in the LICENSE file.
           spec: {
             type: String,
             computed: 'computeSpec(_product)',
-          },
-          edit: {
-            type: Boolean,
-            value: true,
           },
           debug: {
             type: Boolean,

@@ -102,7 +102,7 @@ func (lm loggerMux) Warningf(format string, args ...interface{}) {
 }
 
 func (l gaeLogger) Debugf(format string, args ...interface{}) {
-	gaelog.Criticalf(l.ctx, format, args...)
+	gaelog.Debugf(l.ctx, format, args...)
 }
 
 func (l gaeLogger) Errorf(format string, args ...interface{}) {
