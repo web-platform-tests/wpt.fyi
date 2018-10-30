@@ -88,8 +88,34 @@ type statusEventPayload struct {
 	Branches  []branchInfo `json:"branches"`
 }
 
+// GetBranch returns the first branch that has the revision of the commit
+// as its HEAD state.
+func (s statusEventPayload) GetBranch() string {
+	// Only process the master branch.
+	for _, branch := range s.Branches {
+		if branch.Commit.Sha == s.Sha {
+			return branch.Name
+		}
+	}
+	return ""
+}
+
+func (s statusEventPayload) IsSuccess() bool {
+	return s.State == "success"
+}
+
+func (s statusEventPayload) IsTaskcluster() bool {
+	return strings.HasPrefix(s.Context, "Taskcluster")
+}
+
 type branchInfo struct {
-	Name string `json:"name"`
+	Name   string     `json:"name"`
+	Commit commitInfo `json:"commit"`
+}
+
+type commitInfo struct {
+	Sha string `json:"sha"`
+	URL string `json:"url"`
 }
 
 func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
@@ -131,7 +157,8 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
 	defer cancel()
-	err = createAllRuns(log, urlfetch.Client(slowCtx), api, username, password, urlsByBrowser)
+	branch := status.GetBranch()
+	err = createAllRuns(log, urlfetch.Client(slowCtx), api, username, password, urlsByBrowser, branch)
 	if err != nil {
 		return false, err
 	}
@@ -140,16 +167,9 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 }
 
 func shouldProcessStatus(status *statusEventPayload) bool {
-	if status.State == "success" &&
-		strings.HasPrefix(status.Context, "Taskcluster") {
-		// Only process the master branch.
-		for _, branch := range status.Branches {
-			if branch.Name == "master" {
-				return true
-			}
-		}
-	}
-	return false
+	return status.IsSuccess() &&
+		status.IsTaskcluster() &&
+		status.GetBranch() == "master"
 }
 
 func extractTaskGroupID(targetURL string) string {
@@ -254,7 +274,13 @@ func verifySignature(message []byte, signature string, secret string) bool {
 	return hmac.Equal(messageMAC, expectedMAC)
 }
 
-func createAllRuns(log shared.Logger, client *http.Client, api, username, password string, urlsByBrowser map[string][]string) error {
+func createAllRuns(log shared.Logger,
+	client *http.Client,
+	api,
+	username,
+	password string,
+	urlsByBrowser map[string][]string,
+	branch string) error {
 	errors := make(chan error, len(urlsByBrowser))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
@@ -262,7 +288,7 @@ func createAllRuns(log shared.Logger, client *http.Client, api, username, passwo
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, api, username, password, urls)
+			err := createRun(client, api, username, password, urls, branch)
 			if err != nil {
 				errors <- err
 			}
@@ -281,11 +307,14 @@ func createAllRuns(log shared.Logger, client *http.Client, api, username, passwo
 	return nil
 }
 
-func createRun(client *http.Client, api string, username string, password string, reportURLs []string) error {
+func createRun(client *http.Client, api string, username string, password string, reportURLs []string, branch string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
 	for _, url := range reportURLs {
 		payload.Add("result_url", url)
+	}
+	if branch != "" {
+		payload.Add("labels", branch)
 	}
 
 	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))

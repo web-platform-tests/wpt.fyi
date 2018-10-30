@@ -54,6 +54,38 @@ func TestShouldProcessStatus_notOnMaster(t *testing.T) {
 	assert.False(t, shouldProcessStatus(&status))
 }
 
+func TestGetBranch(t *testing.T) {
+	status := statusEventPayload{
+		Sha:     "a10867b14bb761a232cd80139fbd4c0d33264240",
+		State:   "success",
+		Context: "Taskcluster",
+		Branches: []branchInfo{
+			branchInfo{
+				Name: "master",
+				Commit: commitInfo{
+					Sha: "a10867b14bb761a232cd80139fbd4c0d33264240",
+					URL: "https://api.github.com/repos/Codertocat/Hello-World/commits/a10867b14bb761a232cd80139fbd4c0d33264240",
+				},
+			},
+			branchInfo{
+				Name: "changes",
+				Commit: commitInfo{
+					Sha: "34c5c7793cb3b279e22454cb6750c80560547b3a",
+					URL: "https://api.github.com/repos/Codertocat/Hello-World/commits/34c5c7793cb3b279e22454cb6750c80560547b3a",
+				},
+			},
+			branchInfo{
+				Name: "gh-pages",
+				Commit: commitInfo{
+					Sha: "fd353d4ae7c19d2268397459524f849c129944a7",
+					URL: "https://api.github.com/repos/Codertocat/Hello-World/commits/fd353d4ae7c19d2268397459524f849c129944a7",
+				},
+			},
+		},
+	}
+	assert.Equal(t, "master", status.GetBranch())
+}
+
 func TestExtractTaskGroupID(t *testing.T) {
 	assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg",
 		extractTaskGroupID("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg"))
@@ -111,8 +143,13 @@ func TestCreateAllRuns_success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	err := createAllRuns(logrus.New(), &http.Client{}, server.URL, "username", "password",
+	err := createAllRuns(logrus.New(),
+		&http.Client{},
+		server.URL,
+		"username",
+		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+		"master",
 	)
 	assert.Nil(t, err)
 	assert.Equal(t, uint32(2), requested)
@@ -133,8 +170,13 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	err := createAllRuns(logrus.New(), &http.Client{}, server.URL, "username", "password",
+	err := createAllRuns(logrus.New(),
+		&http.Client{},
+		server.URL,
+		"username",
+		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+		"master",
 	)
 	assert.NotNil(t, err)
 	assert.Equal(t, uint32(2), requested)
@@ -148,8 +190,13 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	err := createAllRuns(logrus.New(), &http.Client{Timeout: time.Second}, server.URL, "username", "password",
+	err := createAllRuns(logrus.New(),
+		&http.Client{Timeout: time.Second},
+		server.URL,
+		"username",
+		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+		"master",
 	)
 	assert.NotNil(t, err)
 	assert.Equal(t, 2, strings.Count(err.Error(), "Client.Timeout"))
