@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/urlfetch"
@@ -14,8 +15,8 @@ import (
 func apiBadgeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/svg+xml")
 	ctx := shared.NewAppEngineContext(r)
-	mc := shared.NewMemcacheReadWritable(ctx)
-	ch := shared.NewCachingHandler(fetchBadge{}, mc, shared.AlwaysCacheExceptDevAppServer, shared.URLAsCacheKey)
+	mc := shared.NewMemcacheReadWritable(ctx, time.Hour*24)
+	ch := shared.NewCachingHandler(ctx, fetchBadge{}, mc, shared.AlwaysCacheExceptDevAppServer, shared.URLAsCacheKey, shared.CacheStatusOK)
 	ch.ServeHTTP(w, r)
 }
 

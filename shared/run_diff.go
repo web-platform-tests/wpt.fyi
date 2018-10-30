@@ -100,19 +100,23 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 			}
 
 			if resultsAfter, ok := after[test]; !ok {
-				// Missing? Then N / N tests are 'different'.
+				// NOTE(lukebjerring): Missing tests are only counted towards changes
+				// in the total.
 				if !filter.Deleted {
 					continue
 				}
-				diff[test] = []int{resultsBefore[0], resultsBefore[1] - resultsBefore[0], -resultsBefore[1]}
+				diff[test] = []int{0, 0, -resultsBefore[1]}
 			} else {
 				if !filter.Changed && !filter.Unchanged {
 					continue
 				}
 				improved, regressed, delta := 0, 0, resultsBefore[0]-resultsAfter[0]
-				if delta < 0 {
-					improved = abs(delta)
-				} else {
+				if delta := resultsAfter[0] - resultsBefore[0]; delta > 0 {
+					improved = delta
+				}
+				failingBefore := resultsBefore[1] - resultsBefore[0]
+				failingAfter := resultsAfter[1] - resultsAfter[0]
+				if delta := failingAfter - failingBefore; delta > 0 {
 					regressed = delta
 				}
 				changed := delta != 0 || resultsBefore[1] != resultsAfter[1]

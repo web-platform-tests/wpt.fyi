@@ -192,6 +192,9 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 	if filter.From != nil {
 		q.Set("from", filter.From.Format(time.RFC3339))
 	}
+	if filter.To != nil {
+		q.Set("to", filter.From.Format(time.RFC3339))
+	}
 	return q
 }
 
@@ -214,17 +217,28 @@ func ParseSHAParam(r *http.Request) (runSHA string, err error) {
 	return sha[:10], nil
 }
 
+// ParseSHA validates the given 'sha' value, cropping it to 10 chars.
+// It returns "latest" by default (and in error cases).
+func ParseSHA(sha string) (runSHA string, err error) {
+	sha, err = ParseSHAFull(sha)
+	if err != nil || !SHARegex.MatchString(sha) {
+		return sha, err
+	}
+	return sha[:10], nil
+}
+
 // ParseSHAParamFull parses and validates the 'sha' param for the request.
 // It returns "latest" by default (and in error cases).
 func ParseSHAParamFull(r *http.Request) (runSHA string, err error) {
 	// Get the SHA for the run being loaded (the first part of the path.)
-	runSHA = "latest"
-	params, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		return runSHA, err
-	}
+	return ParseSHAFull(r.URL.Query().Get("sha"))
+}
 
-	runParam := params.Get("sha")
+// ParseSHAFull parses and validates the given 'sha'.
+// It returns "latest" by default (and in error cases).
+func ParseSHAFull(runParam string) (runSHA string, err error) {
+	// Get the SHA for the run being loaded (the first part of the path.)
+	runSHA = "latest"
 	if runParam != "" && runParam != "latest" {
 		runSHA = runParam
 		if !SHARegex.MatchString(runParam) {
@@ -258,7 +272,9 @@ func ParseProductSpec(spec string) (productSpec ProductSpec, err error) {
 		return productSpec, errors.New(errMsg)
 	} else if len(atSHAPieces) == 2 {
 		name = atSHAPieces[0]
-		productSpec.Revision = atSHAPieces[1]
+		if productSpec.Revision, err = ParseSHA(atSHAPieces[1]); err != nil {
+			return productSpec, errors.New(errMsg)
+		}
 	}
 	// [foo,bar] labels syntax (optional)
 	labelPieces := strings.Split(name, "[")
@@ -320,7 +336,23 @@ func ParseProduct(product string) (result Product, err error) {
 
 // ParseVersion parses the given version as a semantically versioned string.
 func ParseVersion(version string) (result *Version, err error) {
-	pieces := strings.Split(version, ".")
+	pieces := strings.Split(version, " ")
+	channel := ""
+	if len(pieces) > 2 {
+		return nil, fmt.Errorf("Invalid version: %s", version)
+	} else if len(pieces) > 1 {
+		channel = " " + pieces[1]
+		version = pieces[0]
+	}
+
+	// Special case ff's "a1" suffix
+	ffSuffix := regexp.MustCompile(`^.*([ab]\d+)$`)
+	if match := ffSuffix.FindStringSubmatch(version); match != nil {
+		channel = match[1]
+		version = version[:len(version)-len(channel)]
+	}
+
+	pieces = strings.Split(version, ".")
 	if len(pieces) > 4 {
 		return nil, fmt.Errorf("Invalid version: %s", version)
 	}
@@ -333,16 +365,17 @@ func ParseVersion(version string) (result *Version, err error) {
 		numbers[i] = int(n)
 	}
 	result = &Version{
-		Major: numbers[0],
+		Major:   numbers[0],
+		Channel: channel,
 	}
 	if len(numbers) > 1 {
-		result.Minor = numbers[1]
+		result.Minor = &numbers[1]
 	}
 	if len(numbers) > 2 {
-		result.Build = numbers[2]
+		result.Build = &numbers[2]
 	}
 	if len(numbers) > 3 {
-		result.Revision = numbers[3]
+		result.Revision = &numbers[3]
 	}
 	return result, nil
 }
@@ -396,9 +429,21 @@ func ParseProductParam(r *http.Request) (product *Product, err error) {
 // It parses the 'products' parameter, split on commas, and also checks for the (repeatable)
 // 'product' params.
 func ParseProductsParam(r *http.Request) (ProductSpecs, error) {
-	productParams := ParseRepeatedParam(r, "product", "products")
+	repeatedParam := r.URL.Query()["product"]
+	pluralParam := r.URL.Query().Get("products")
+	// Replace nested ',' in the label part with a placeholder
+	nestedCommas := regexp.MustCompile(`(\[[^\]]*),`)
+	const comma = `%COMMA%`
+	for nestedCommas.MatchString(pluralParam) {
+		pluralParam = nestedCommas.ReplaceAllString(pluralParam, "$1"+comma)
+	}
+	productParams := parseRepeatedParamValues(repeatedParam, pluralParam)
 	if productParams == nil {
 		return nil, nil
+	}
+	// Revert placeholder to ',' and parse.
+	for i := range productParams {
+		productParams[i] = strings.Replace(productParams[i], comma, ",", -1)
 	}
 	return ParseProductSpecs(productParams...)
 }
@@ -545,6 +590,10 @@ func ParseLabelsParam(r *http.Request) []string {
 func ParseRepeatedParam(r *http.Request, singular string, plural string) (params []string) {
 	repeatedParam := r.URL.Query()[singular]
 	pluralParam := r.URL.Query().Get(plural)
+	return parseRepeatedParamValues(repeatedParam, pluralParam)
+}
+
+func parseRepeatedParamValues(repeatedParam []string, pluralParam string) (params []string) {
 	if len(repeatedParam) == 0 && pluralParam == "" {
 		return nil
 	}

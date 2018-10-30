@@ -40,11 +40,6 @@
       });
 
       suite('static get properties()', () => {
-        test('testRunResources', () => {
-          assert.property(TestRunsBase.properties, 'testRunResources');
-          assert.property(TestRunsBase.properties.testRunResources, 'type');
-          assert.equal(TestRunsBase.properties.testRunResources.type, Array);
-        });
         test('testRuns', () => {
           assert.property(TestRunsBase.properties, 'testRuns');
           assert.property(TestRunsBase.properties.testRuns, 'type');
@@ -79,14 +74,6 @@
               .then(() => {
                 assert.equal(wrbf.testRuns.length, 4);
                 assert.equal(wrbf.testRuns[0], TEST_RUNS_DATA[0]);
-              });
-          });
-
-          test('sets testRunResources to null when done', () => {
-            assert.equal(wrbf.testRuns, null);
-            return waitingOn(() => wrbf.testRuns && wrbf.testRuns.length)
-              .then(() => {
-                assert.equal(wrbf.testRunResources, null);
               });
           });
         });

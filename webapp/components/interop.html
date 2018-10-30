@@ -216,10 +216,10 @@ found in the LICENSE file.
     [118, 255,   3], // --paper-light-green-a200
   ];
 
-  /* global TestRunsBase, SelfNavigation, LoadingState, ResultsNavigation */
-  class WPTInterop extends ResultsNavigation(
+  /* global TestRunsBase, SelfNavigation, LoadingState, QueryBuilder */
+  class WPTInterop extends QueryBuilder(
     SelfNavigation(LoadingState(TestRunsBase)),
-    'interopQueryParams(sha, aligned, labels, productSpecs, maxCount, search)') {
+    'interopQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to, search)') {
     static get is() {
       return 'wpt-interop';
     }
@@ -290,7 +290,7 @@ found in the LICENSE file.
     async ready() {
       await super.ready();
       this.load(
-        fetch(`/api/interop${this.testRunQuery}`)
+        fetch(`/api/interop${this.query}`)
           .then(async r => {
             if (!r.ok || r.status !== 200) {
               Promise.reject('Failed to fetch interop data');

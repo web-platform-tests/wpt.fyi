@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	time "time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -61,12 +62,13 @@ type searchHandler struct {
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse query params.
 	ctx := shared.NewAppEngineContext(r)
-	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx))
+	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := searchHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 	}}
-	ch := shared.NewCachingHandler(sh, mc, isRequestCacheable, shared.URLAsCacheKey)
+	// nils => defaults of: (1) URL string as cache key; (2) cache only HTTP 200.
+	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, shared.CacheStatusOK)
 	ch.ServeHTTP(w, r)
 }
 

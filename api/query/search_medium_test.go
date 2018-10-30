@@ -14,6 +14,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	time "time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -87,7 +88,7 @@ func TestSearchHandler(t *testing.T) {
 
 	sh := searchHandler{queryHandler{
 		sharedImpl: defaultShared{ctx},
-		dataSource: shared.NewByteCachedStore(ctx, shared.NewMemcacheReadWritable(ctx), store),
+		dataSource: shared.NewByteCachedStore(ctx, shared.NewMemcacheReadWritable(ctx, 48*time.Hour), store),
 	}}
 
 	sh.ServeHTTP(w, r)

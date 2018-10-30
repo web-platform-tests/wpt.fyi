@@ -44,13 +44,6 @@ func TestParseSHAParam_FullSHA(t *testing.T) {
 	assert.Equal(t, sha[:10], runSHA)
 }
 
-func TestParseSHAParam_BadRequest(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=%zz", nil)
-	runSHA, err := ParseSHAParam(r)
-	assert.NotNil(t, err)
-	assert.Equal(t, "latest", runSHA)
-}
-
 func TestParseSHAParam_NonSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=123", nil)
 	_, err := ParseSHAParam(r)
@@ -333,6 +326,34 @@ func TestParseLabelsParam_LabelsAndLabel_Duplicate(t *testing.T) {
 	assert.Len(t, labels, 1)
 }
 
+func TestParseVersion(t *testing.T) {
+	v, err := ParseVersion("63.0")
+	assert.Nil(t, err)
+	assert.Equal(t, 63, v.Major)
+	assert.Equal(t, 0, *v.Minor)
+	assert.Nil(t, v.Build)
+	assert.Nil(t, v.Revision)
+	assert.Empty(t, v.Channel)
+
+	// FF
+	v, err = ParseVersion("65.0a1")
+	assert.Nil(t, err)
+	assert.Equal(t, 65, v.Major)
+	assert.Equal(t, 0, *v.Minor)
+	assert.Nil(t, v.Build)
+	assert.Nil(t, v.Revision)
+	assert.Equal(t, "a1", v.Channel)
+
+	// Chrome
+	v, err = ParseVersion("71.0.3578.20 dev")
+	assert.Nil(t, err)
+	assert.Equal(t, 71, v.Major)
+	assert.Equal(t, 0, *v.Minor)
+	assert.Equal(t, 3578, *v.Build)
+	assert.Equal(t, 20, *v.Revision)
+	assert.Equal(t, " dev", v.Channel)
+}
+
 func TestParseProductSpec(t *testing.T) {
 	productSpec, err := ParseProductSpec("chrome@latest")
 	assert.Nil(t, err)
@@ -342,6 +363,18 @@ func TestParseProductSpec(t *testing.T) {
 	productSpec, err = ParseProductSpec("edge")
 	assert.Nil(t, err)
 	assert.Equal(t, "edge", productSpec.BrowserName)
+}
+
+func TestParseProductSpec_FullSHA(t *testing.T) {
+	sha := "0123456789aaaaabbbbbcccccdddddeeeeefffff"
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?product=chrome@"+sha, nil)
+	filters, err := ParseTestRunFilterParams(r)
+	assert.Nil(t, err)
+	products := filters.GetProductsOrDefault()
+	assert.Len(t, products, 1)
+	if len(products) > 0 {
+		assert.Equal(t, sha[:10], products[0].Revision)
+	}
 }
 
 func TestParseProductSpec_BrowserVersion(t *testing.T) {
@@ -405,6 +438,22 @@ func TestParseProductSpec_String(t *testing.T) {
 	productSpec, err := ParseProductSpec("chrome-64[foo,bar]@1234512345")
 	assert.Nil(t, err)
 	assert.Equal(t, "chrome-64[bar,foo]@1234512345", productSpec.String())
+}
+
+func TestParseProductSpec_Plural(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?products=chrome[stable],chrome[experimental]", nil)
+	products, err := ParseProductsParam(r)
+	assert.Nil(t, err)
+	assert.Len(t, products, 2)
+	assert.Equal(t, "chrome[stable]", products[0].String())
+	assert.Equal(t, "chrome[experimental]", products[1].String())
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/api/runs?products=chrome[foo,bar,baz],chrome[qux]", nil)
+	products, err = ParseProductsParam(r)
+	assert.Nil(t, err)
+	assert.Len(t, products, 2)
+	assert.Equal(t, "chrome[bar,baz,foo]", products[0].String()) // Labels alphabeticized.
+	assert.Equal(t, "chrome[qux]", products[1].String())
 }
 
 func TestParseAligned(t *testing.T) {

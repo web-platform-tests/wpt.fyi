@@ -9,7 +9,7 @@
 <div id="content">
   {{ template "_header.html" }}
   <div>
-    <wpt-runs test-run-resources="{{ .TestRunSources }}"></wpt-runs>
+    <wpt-runs {{ template "_test_run_query_params.html" .Filter }}></wpt-runs>
   </div>
 </div>
 {{ template "_ga.html" }}
