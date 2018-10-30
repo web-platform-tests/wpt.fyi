@@ -353,7 +353,23 @@ func ParseProduct(product string) (result Product, err error) {
 
 // ParseVersion parses the given version as a semantically versioned string.
 func ParseVersion(version string) (result *Version, err error) {
-	pieces := strings.Split(version, ".")
+	pieces := strings.Split(version, " ")
+	channel := ""
+	if len(pieces) > 2 {
+		return nil, fmt.Errorf("Invalid version: %s", version)
+	} else if len(pieces) > 1 {
+		channel = " " + pieces[1]
+		version = pieces[0]
+	}
+
+	// Special case ff's "a1" suffix
+	ffSuffix := regexp.MustCompile(`^.*([ab]\d+)$`)
+	if match := ffSuffix.FindStringSubmatch(version); match != nil {
+		channel = match[1]
+		version = version[:len(version)-len(channel)]
+	}
+
+	pieces = strings.Split(version, ".")
 	if len(pieces) > 4 {
 		return nil, fmt.Errorf("Invalid version: %s", version)
 	}
@@ -366,16 +382,17 @@ func ParseVersion(version string) (result *Version, err error) {
 		numbers[i] = int(n)
 	}
 	result = &Version{
-		Major: numbers[0],
+		Major:   numbers[0],
+		Channel: channel,
 	}
 	if len(numbers) > 1 {
-		result.Minor = numbers[1]
+		result.Minor = &numbers[1]
 	}
 	if len(numbers) > 2 {
-		result.Build = numbers[2]
+		result.Build = &numbers[2]
 	}
 	if len(numbers) > 3 {
-		result.Revision = numbers[3]
+		result.Revision = &numbers[3]
 	}
 	return result, nil
 }
