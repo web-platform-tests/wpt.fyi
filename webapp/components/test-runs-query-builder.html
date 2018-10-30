@@ -324,7 +324,7 @@ found in the LICENSE file.
           },
           versionsURL: {
             type: String,
-            computed: 'computeVersionsURL(browserName)',
+            computed: 'computeVersionsURL(_product)',
             observer: 'versionsURLUpdated',
           },
           versions: {
@@ -402,18 +402,23 @@ found in the LICENSE file.
         });
       }
 
-      computeVersionsURL(browserName) {
+      // Respond to product spec changing by computing a new versions URL.
+      computeVersionsURL(product) {
+        product = Object.assign({}, product);
+        delete product.browser_version;
         const url = new URL('/api/versions', window.location);
-        url.searchParams.set('product', browserName);
+        url.searchParams.set('product', this.getSpec(product));
         return url;
       }
 
+      // Respond to version URL changing by fetching the versions
       versionsURLUpdated(url) {
         fetch(url).then(r => r.json()).then(v => {
           this.versions = v;
         });
       }
 
+      // Respond to newly fetched versions, or user input, by filtering the autocomplete list.
       versionsUpdated(version, versions) {
         if (!versions) {
           return;
@@ -423,17 +428,9 @@ found in the LICENSE file.
         }
         versions = versions.slice(0, 10);
         // Check actually different from current.
-        const curr = this.versionsAutocomplete || [];
-        if (curr.length === versions.length) {
-          let same = true;
-          for (let i = 0; i < versions.length && same; i++) {
-            if (i >= curr.length || versions[i] !== curr[i]) {
-              same = false;
-            }
-          }
-          if (same) {
-            return;
-          }
+        const current = new Set(this.versionsAutocomplete || []);
+        if (!versions.find(v => !current.has(v))) {
+          return;
         }
         this.versionsAutocomplete = versions;
       }
