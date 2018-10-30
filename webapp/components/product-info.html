@@ -16,6 +16,10 @@
       m.set('beta', 'Beta');
       m.set('dev', 'Dev');
       m.set('experimental', 'Experimental');
+      // Sources
+      m.set('taskcluster', 'Taskcluster');
+      m.set('buildbot', 'Buildbot');
+      m.set('msedge', 'MS Edge');
       return m;
     })();
     /*eslint-disable no-unused-vars*/
@@ -24,6 +28,7 @@
       majorAndMinor: /(\d+\.\d+)/
     };
     const CHANNELS = new Set(['stable', 'beta', 'dev', 'experimental']);
+    const SOURCES = new Set(['buildbot', 'taskcluster', 'msedge']);
     const DEFAULT_BROWSER_NAMES = ['chrome', 'edge', 'firefox', 'safari'];
     const DEFAULT_PRODUCT_SPECS = Array.from(DEFAULT_BROWSER_NAMES);
     const DEFAULT_PRODUCTS = DEFAULT_PRODUCT_SPECS.map(p => parseProductSpec(p));

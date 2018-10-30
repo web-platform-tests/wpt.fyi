@@ -5,22 +5,39 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// SHAsHandler is an http.Handler for the /api/shas endpoint.
+type SHAsHandler struct {
+	ctx context.Context
+}
+
 // apiSHAsHandler is responsible for emitting just the revision SHAs for test runs.
 func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
+	// Serve cached with 5 minute expiry. Delegate to SHAsHandler on cache miss.
+	ctx := shared.NewAppEngineContext(r)
+	// nils => defaults of:
+	// (1) all URLs to this handler are cacheable;
+	// (2) URL string as cache key;
+	// (3) cache only HTTP 200.
+	shared.NewCachingHandler(ctx, SHAsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
+}
+
+func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := h.ctx
 
 	var shas []string
 	products := filters.GetProductsOrDefault()
