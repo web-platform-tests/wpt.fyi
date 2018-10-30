@@ -184,10 +184,14 @@
               productBuilder._channel = 'dev';
               assert.equal(productBuilder.spec, 'chrome[dev]');
             });
-
             test('changes value when labels are updated', () => {
               productBuilder.set('labels', ['experimental']);
               assert.equal(productBuilder._channel, 'experimental');
+              assert.equal(productBuilder._source, 'any');
+
+              productBuilder.set('labels', ['buildbot']);
+              assert.equal(productBuilder._source, 'buildbot');
+              assert.equal(productBuilder._channel, 'any');
             });
           });
         });

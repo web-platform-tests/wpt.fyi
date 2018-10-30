@@ -5,17 +5,35 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
 )
 
+// VersionsHandler is an http.Handler for the /api/versions endpoint.
+type VersionsHandler struct {
+	ctx context.Context
+}
+
 // apiVersionsHandler is responsible for emitting just the browser versions for the test runs.
 func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
+	// Serve cached with 5 minute expiry. Delegate to VersionsHandler on cache
+	// miss.
+	ctx := shared.NewAppEngineContext(r)
+	// nils => defaults of:
+	// (1) all URLs to this handler are cacheable;
+	// (2) URL string as cache key;
+	// (3) cache only HTTP 200.
+	shared.NewCachingHandler(ctx, VersionsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
+}
+
+func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	product, err := shared.ParseProductParam(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -25,7 +43,7 @@ func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := h.ctx
 	query := datastore.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
 	distinctQuery := query.Project("BrowserVersion").Distinct()
 	var queries []*datastore.Query

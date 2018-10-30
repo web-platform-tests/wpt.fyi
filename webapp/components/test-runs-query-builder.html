@@ -13,6 +13,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
@@ -271,6 +272,9 @@ found in the LICENSE file.
       paper-icon-button {
         float: right;
       }
+      display-logo[small] {
+        margin-top: 16px;
+      }
     </style>
     <paper-card>
       <div class="card-content">
@@ -284,10 +288,12 @@ found in the LICENSE file.
         <br>
         <paper-dropdown-menu label="Browser" no-animations>
           <paper-listbox slot="dropdown-content" selected="{{ browserName }}" attr-for-selected="value">
-            <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
-            <paper-item value="edge">[[displayName("edge")]]</paper-item>
-            <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
-            <paper-item value="safari">[[displayName("safari")]]</paper-item>
+            <template is="dom-repeat" items="[[defaultProducts]]" as="product">
+              <paper-icon-item value="[[product.browser_name]]">
+                <display-logo slot="item-icon" product="[[product]]" small></display-logo>
+                [[displayName(product.browser_name)]]
+              </paper-icon-item>
+            </template>
           </paper-listbox>
         </paper-dropdown-menu>
 
@@ -295,10 +301,22 @@ found in the LICENSE file.
         <paper-dropdown-menu label="Channel" no-animations>
           <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
             <paper-item value="any">Any</paper-item>
-            <paper-item value="stable">[[displayName("stable")]]</paper-item>
-            <paper-item value="beta">[[displayName("beta")]]</paper-item>
-            <paper-item value="dev">[[displayName("dev")]]</paper-item>
-            <paper-item value="experimental">[[displayName("experimental")]]</paper-item>
+            <template is="dom-repeat" items="[[channels]]" as="channel">
+              <paper-icon-item value="[[channel]]">
+                <display-logo slot="item-icon" product="[[productWithChannel(_product, channel)]]" small></display-logo>
+                [[displayName(channel)]]
+              </paper-icon-item>
+            </template>
+          </paper-listbox>
+        </paper-dropdown-menu>
+
+        <br>
+        <paper-dropdown-menu label="Source" no-animations>
+          <paper-listbox slot="dropdown-content" selected="{{ _source }}" attr-for-selected="value">
+            <paper-item value="any">Any</paper-item>
+            <paper-item value="taskcluster">[[displayName("taskcluster")]]</paper-item>
+            <paper-item value="buildbot">[[displayName("buildbot")]]</paper-item>
+            <paper-item value="msedge">[[displayName("msedge")]]</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
 
@@ -311,7 +329,7 @@ found in the LICENSE file.
     </paper-card>
   </template>
   <script>
-    /* global ProductInfo, CHANNELS, DEFAULT_BROWSER_NAMES */
+    /* global ProductInfo, CHANNELS, SOURCES, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'product-builder';
@@ -347,7 +365,12 @@ found in the LICENSE file.
           _channel: {
             type: String,
             value: 'any',
-            observer: 'channelChanged',
+            observer: 'semanticLabelChanged',
+          },
+          _source: {
+            type: String,
+            value: 'any',
+            observer: 'semanticLabelChanged',
           },
           spec: {
             type: String,
@@ -359,6 +382,14 @@ found in the LICENSE file.
           },
           onDelete: Function,
           onProductChanged: Function,
+          defaultProducts: {
+            type: Array,
+            value: Array.from(DEFAULT_PRODUCTS),
+          },
+          channels: {
+            type: Array,
+            value: Array.from(CHANNELS),
+          },
         };
       }
 
@@ -367,6 +398,13 @@ found in the LICENSE file.
         this.deleteProduct = () => {
           this.onDelete && this.onDelete(this.product);
         };
+      }
+
+      static get SemanticLabels() {
+        return [
+          { property: '_channel', values: CHANNELS },
+          { property: '_source', values: SOURCES },
+        ];
       }
 
       computeProduct(browserName, browserVersion, labels) {
@@ -385,35 +423,38 @@ found in the LICENSE file.
 
       labelsChanged(labels) {
         // Configure the channel from the labels.
-        let channel = 'any';
         labels = new Set(labels || []);
-        for (const c of CHANNELS) {
-          if (labels.has(c)) {
-            channel = c;
+        for (const semantic of ProductBuilder.SemanticLabels) {
+          const value = Array.from(semantic.values).find(c => labels.has(c)) || 'any';
+          if (this[semantic.property] !== value) {
+            this[semantic.property] = value;
           }
-        }
-        if (this._channel !== channel) {
-          this._channel = channel;
         }
       }
 
-      channelChanged(channel, was) {
-        // Configure the labels from the channel.
+      semanticLabelChanged(newValue, oldValue) {
+        // Configure the labels from the semantic label's value.
         const labels = Array.from(this.labels || []);
-        const isAny = !channel || channel === 'any';
-        if (was) {
-          // Remove the old channel.
-          let indexOf = labels.findIndex(l => l === was);
-          for (; indexOf > -1; indexOf = labels.findIndex(l => l === was)) {
+        const isAny = !newValue || newValue === 'any';
+        if (oldValue) {
+          // Remove the old newValue.
+          let indexOf = labels.findIndex(l => l === oldValue);
+          for (; indexOf > -1; indexOf = labels.findIndex(l => l === oldValue)) {
             labels.splice(indexOf, 1);
           }
         }
-        if (!isAny && !labels.includes(channel)) {
-          labels.push(channel);
-        } else if (!was) {
+        if (!isAny && !labels.includes(newValue)) {
+          labels.push(newValue);
+        } else if (!oldValue) {
           return;
         }
         this.labels = labels;
+      }
+
+      productWithChannel(product, channel) {
+        return Object.assign({}, product, {
+          labels: (product.labels || []).filter(l => !CHANNELS.has(l)).concat(channel)
+        });
       }
     }
 

@@ -1,4 +1,4 @@
-// +build small
+// +build medium
 
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -7,30 +7,37 @@
 package webapp
 
 import (
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func TestParseTestResultsUIFilter(t *testing.T) {
-	f, err := parseTestResultsUIFilter(httptest.NewRequest("GET", "/results/?max-count=3", nil))
+	i, err := sharedtest.NewAEInstance(true)
+	assert.Nil(t, err)
+	defer i.Close()
+	r, _ := i.NewRequest("GET", "/results/?max-count=3", nil)
+	assert.Nil(t, err)
+
+	f, err := parseTestResultsUIFilter(r)
 	assert.Nil(t, err)
 	assert.True(t, f.MaxCount != nil && *f.MaxCount == 3)
 
-	f, err = parseTestResultsUIFilter(httptest.NewRequest("GET", "/results/?products=chrome,safari&diff", nil))
+	r, _ = i.NewRequest("GET", "/results/?products=chrome,safari&diff", nil)
+	f, err = parseTestResultsUIFilter(r)
 	assert.Nil(t, err)
 	assert.Equal(t, "[\"chrome\",\"safari\"]", f.Products)
 	assert.Equal(t, true, f.Diff)
-}
 
-func TestParseTestResultsUIFilter_BeforeAfter(t *testing.T) {
-	f, err := parseTestResultsUIFilter(httptest.NewRequest("GET", "/results/?before=chrome&after=chrome[experimental]", nil))
+	r, _ = i.NewRequest("GET", "/results/?before=chrome&after=chrome[experimental]", nil)
+	f, err = parseTestResultsUIFilter(r)
 	assert.Nil(t, err)
 	assert.Equal(t, "[\"chrome\",\"chrome[experimental]\"]", f.Products)
 	assert.Equal(t, true, f.Diff)
 
-	f, err = parseTestResultsUIFilter(httptest.NewRequest("GET", "/results/?after=chrome&before=edge", nil))
+	r, _ = i.NewRequest("GET", "/results/?after=chrome&before=edge", nil)
+	f, err = parseTestResultsUIFilter(r)
 	assert.Nil(t, err)
 	assert.Equal(t, "[\"edge\",\"chrome\"]", f.Products)
 	assert.Equal(t, true, f.Diff)
