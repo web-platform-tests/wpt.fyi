@@ -330,7 +330,7 @@ func ParseVersion(version string) (result *Version, err error) {
 	}
 
 	// Special case ff's "a1" suffix
-	ffSuffix := regexp.MustCompile("^.*([ab]\\d+)$")
+	ffSuffix := regexp.MustCompile(`^.*([ab]\d+)$`)
 	if match := ffSuffix.FindStringSubmatch(version); match != nil {
 		channel = match[1]
 		version = version[:len(version)-len(channel)]
