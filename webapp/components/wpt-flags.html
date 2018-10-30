@@ -18,6 +18,7 @@ found in the LICENSE file.
       'queryBuilder',
       'diffFromAPI',
       'diffFilter',
+      'colorHomepage',
       'structuredQueries',
     ];
 
@@ -69,9 +70,13 @@ found in the LICENSE file.
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{structuredQueries}}">
-        Interpret query strings as structured queries over test names and test
-        status/result values
+      <paper-checkbox checked="{{colorHomepage}}">
+        Use pass-rate colors on the homepage
+      </paper-checkbox>
+    </paper-item>
+    <paper-checkbox checked="{{structuredQueries}}">
+      Interpret query strings as structured queries over test names and test
+      status/result values
       </paper-checkbox>
     </paper-item>
   </template>

@@ -173,7 +173,9 @@ func main() {
 	log.Print("Adding flag defaults...")
 	addFlag(ctx, "queryBuilder", enabledFlag)
 	addFlag(ctx, "diffFilter", enabledFlag)
-	addFlag(ctx, "diffFromAPI", enabledFlag)
+  addFlag(ctx, "diffFromAPI", enabledFlag)
+	addFlag(ctx, "experimentalByDefault", enabledFlag)
+	addFlag(ctx, "experimentalAlignedExceptEdge", enabledFlag)
 	addFlag(ctx, "structuredQueries", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")

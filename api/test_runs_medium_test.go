@@ -39,7 +39,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
 
 	// 'Today', v66...181 (revision increased)
-	chrome.BrowserVersion = "66.0.3359.181"
+	chrome.BrowserVersion = "66.0.3359.181 beta"
 	chrome.CreatedAt = now
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
 
@@ -59,7 +59,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	assert.Equalf(t, http.StatusOK, resp.Code, string(body))
 	var result66 shared.TestRun
 	json.Unmarshal(body, &result66)
-	assert.Equal(t, "66.0.3359.181", result66.BrowserVersion)
+	assert.Equal(t, "66.0.3359.181 beta", result66.BrowserVersion)
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.139", nil)
 	resp = httptest.NewRecorder()
@@ -69,6 +69,14 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	var result66139 shared.TestRun
 	json.Unmarshal(body, &result66139)
 	assert.Equal(t, "66.0.3359.139", result66139.BrowserVersion)
+
+	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.181 beta", nil)
+	resp = httptest.NewRecorder()
+	apiTestRunHandler(resp, r)
+	body, _ = ioutil.ReadAll(resp.Result().Body)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	json.Unmarshal(body, &result66139)
+	assert.Equal(t, "66.0.3359.181 beta", result66139.BrowserVersion)
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-68", nil)
 	resp = httptest.NewRecorder()

@@ -51,12 +51,45 @@ func (filter TestRunFilter) IsDefaultQuery() bool {
 // OrDefault returns the current filter, or, if it is a default query, returns
 // the query used by default in wpt.fyi.
 func (filter TestRunFilter) OrDefault() TestRunFilter {
+	return filter.OrAlignedStableRuns()
+}
+
+// OrAlignedStableRuns returns the current filter, or, if it is a default query, returns
+// a query for stable runs, with an aligned SHA.
+func (filter TestRunFilter) OrAlignedStableRuns() TestRunFilter {
 	if !filter.IsDefaultQuery() {
 		return filter
 	}
 	aligned := true
 	filter.Aligned = &aligned
 	filter.Labels = mapset.NewSetWith(StableLabel)
+	return filter
+}
+
+// OrExperimentalRuns returns the current filter, or, if it is a default query, returns
+// a query for the latest experimental runs.
+func (filter TestRunFilter) OrExperimentalRuns() TestRunFilter {
+	if !filter.IsDefaultQuery() {
+		return filter
+	}
+	filter.Labels = mapset.NewSetWith(ExperimentalLabel)
+	return filter
+}
+
+// OrAlignedExperimentalRunsExceptEdge returns the current filter, or, if it is a default
+// query, returns a query for the latest experimental runs.
+func (filter TestRunFilter) OrAlignedExperimentalRunsExceptEdge() TestRunFilter {
+	if !filter.IsDefaultQuery() {
+		return filter
+	}
+	aligned := true
+	filter.Aligned = &aligned
+	filter.Products = GetDefaultProducts()
+	for i := range filter.Products {
+		if filter.Products[i].BrowserName != "edge" {
+			filter.Products[i].Labels = mapset.NewSetWith("experimental")
+		}
+	}
 	return filter
 }
 
@@ -320,7 +353,23 @@ func ParseProduct(product string) (result Product, err error) {
 
 // ParseVersion parses the given version as a semantically versioned string.
 func ParseVersion(version string) (result *Version, err error) {
-	pieces := strings.Split(version, ".")
+	pieces := strings.Split(version, " ")
+	channel := ""
+	if len(pieces) > 2 {
+		return nil, fmt.Errorf("Invalid version: %s", version)
+	} else if len(pieces) > 1 {
+		channel = " " + pieces[1]
+		version = pieces[0]
+	}
+
+	// Special case ff's "a1" suffix
+	ffSuffix := regexp.MustCompile(`^.*([ab]\d+)$`)
+	if match := ffSuffix.FindStringSubmatch(version); match != nil {
+		channel = match[1]
+		version = version[:len(version)-len(channel)]
+	}
+
+	pieces = strings.Split(version, ".")
 	if len(pieces) > 4 {
 		return nil, fmt.Errorf("Invalid version: %s", version)
 	}
@@ -333,16 +382,17 @@ func ParseVersion(version string) (result *Version, err error) {
 		numbers[i] = int(n)
 	}
 	result = &Version{
-		Major: numbers[0],
+		Major:   numbers[0],
+		Channel: channel,
 	}
 	if len(numbers) > 1 {
-		result.Minor = numbers[1]
+		result.Minor = &numbers[1]
 	}
 	if len(numbers) > 2 {
-		result.Build = numbers[2]
+		result.Build = &numbers[2]
 	}
 	if len(numbers) > 3 {
-		result.Revision = numbers[3]
+		result.Revision = &numbers[3]
 	}
 	return result, nil
 }
@@ -380,12 +430,12 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 }
 
 // ParseProductParam parses and validates the 'product' param for the request.
-func ParseProductParam(r *http.Request) (product *Product, err error) {
+func ParseProductParam(r *http.Request) (product *ProductSpec, err error) {
 	productParam := r.URL.Query().Get("product")
 	if "" == productParam {
 		return nil, nil
 	}
-	parsed, err := ParseProduct(productParam)
+	parsed, err := ParseProductSpec(productParam)
 	if err != nil {
 		return nil, err
 	}
