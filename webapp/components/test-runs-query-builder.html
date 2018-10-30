@@ -13,6 +13,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
@@ -198,6 +199,9 @@ found in the LICENSE file.
       paper-icon-button {
         float: right;
       }
+      display-logo[small] {
+        margin-top: 16px;
+      }
     </style>
     <paper-card>
       <div class="card-content">
@@ -211,10 +215,12 @@ found in the LICENSE file.
         <br>
         <paper-dropdown-menu label="Browser" no-animations>
           <paper-listbox slot="dropdown-content" selected="{{ browserName }}" attr-for-selected="value">
-            <paper-item value="chrome">[[displayName("chrome")]]</paper-item>
-            <paper-item value="edge">[[displayName("edge")]]</paper-item>
-            <paper-item value="firefox">[[displayName("firefox")]]</paper-item>
-            <paper-item value="safari">[[displayName("safari")]]</paper-item>
+            <template is="dom-repeat" items="[[defaultProducts]]" as="product">
+              <paper-icon-item value="[[product.browser_name]]">
+                <display-logo slot="item-icon" product="[[product]]" small></display-logo>
+                [[displayName(product.browser_name)]]
+              </paper-icon-item>
+            </template>
           </paper-listbox>
         </paper-dropdown-menu>
 
@@ -222,10 +228,12 @@ found in the LICENSE file.
         <paper-dropdown-menu label="Channel" no-animations>
           <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
             <paper-item value="any">Any</paper-item>
-            <paper-item value="stable">[[displayName("stable")]]</paper-item>
-            <paper-item value="beta">[[displayName("beta")]]</paper-item>
-            <paper-item value="dev">[[displayName("dev")]]</paper-item>
-            <paper-item value="experimental">[[displayName("experimental")]]</paper-item>
+            <template is="dom-repeat" items="[[channels]]" as="channel">
+              <paper-icon-item value="[[channel]]">
+                <display-logo slot="item-icon" product="[[productWithChannel(_product, channel)]]" small></display-logo>
+                [[displayName(channel)]]
+              </paper-icon-item>
+            </template>
           </paper-listbox>
         </paper-dropdown-menu>
 
@@ -248,7 +256,7 @@ found in the LICENSE file.
     </paper-card>
   </template>
   <script>
-    /* global ProductInfo, CHANNELS, SOURCES, DEFAULT_BROWSER_NAMES */
+    /* global ProductInfo, CHANNELS, SOURCES, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'product-builder';
@@ -301,6 +309,14 @@ found in the LICENSE file.
           },
           onDelete: Function,
           onProductChanged: Function,
+          defaultProducts: {
+            type: Array,
+            value: Array.from(DEFAULT_PRODUCTS),
+          },
+          channels: {
+            type: Array,
+            value: Array.from(CHANNELS),
+          },
         };
       }
 
@@ -360,6 +376,12 @@ found in the LICENSE file.
           return;
         }
         this.labels = labels;
+      }
+
+      productWithChannel(product, channel) {
+        return Object.assign({}, product, {
+          labels: (product.labels || []).filter(l => !CHANNELS.has(l)).concat(channel)
+        });
       }
     }
 
