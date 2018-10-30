@@ -14,7 +14,12 @@ found in the LICENSE file.
 -->
 <dom-module id="wpt-flags">
   <script>
-    const WPT_FYI_FEATURES = ['queryBuilder', 'diffFromAPI', 'diffFilter'];
+    const WPT_FYI_FEATURES = [
+      'queryBuilder',
+      'diffFromAPI',
+      'diffFilter',
+      'colorHomepage',
+    ];
 
     const _wptFlags = (superClass, readOnly) => class extends superClass {
       static get is() {
@@ -61,6 +66,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{diffFilter}}">
         Filter toggle for diff view
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{colorHomepage}}">
+        Use pass-rate colors on the homepage
       </paper-checkbox>
     </paper-item>
   </template>

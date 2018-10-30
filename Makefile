@@ -216,6 +216,9 @@ deploy_staging: gcloud webapp_deps package_service var-BRANCH_NAME var-APP_PATH 
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 
+cleanup_staging_versions: gcloud
+	$(WPTD_GO_PATH)/util/cleanup-versions.sh
+
 deploy_production: gcloud webapp_deps package_service var-APP_PATH var-PROJECT
 	gcloud config set project $(PROJECT)
 	cd $(WPTD_PATH); util/deploy.sh -p $(APP_PATH)
