@@ -353,7 +353,7 @@ func ParseVersion(version string) (result *Version, err error) {
 		Channel: channel,
 	}
 	if len(numbers) > 1 {
-		result.Minor = &(numbers[1])
+		result.Minor = &numbers[1]
 	}
 	if len(numbers) > 2 {
 		result.Build = &numbers[2]
