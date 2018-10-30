@@ -326,6 +326,34 @@ func TestParseLabelsParam_LabelsAndLabel_Duplicate(t *testing.T) {
 	assert.Len(t, labels, 1)
 }
 
+func TestParseVersion(t *testing.T) {
+	v, err := ParseVersion("63.0")
+	assert.Nil(t, err)
+	assert.Equal(t, 63, v.Major)
+	assert.Equal(t, 0, *v.Minor)
+	assert.Nil(t, v.Build)
+	assert.Nil(t, v.Revision)
+	assert.Empty(t, v.Channel)
+
+	// FF
+	v, err = ParseVersion("65.0a1")
+	assert.Nil(t, err)
+	assert.Equal(t, 65, v.Major)
+	assert.Equal(t, 0, *v.Minor)
+	assert.Nil(t, v.Build)
+	assert.Nil(t, v.Revision)
+	assert.Equal(t, "a1", v.Channel)
+
+	// Chrome
+	v, err = ParseVersion("71.0.3578.20 dev")
+	assert.Nil(t, err)
+	assert.Equal(t, 71, v.Major)
+	assert.Equal(t, 0, *v.Minor)
+	assert.Equal(t, 3578, *v.Build)
+	assert.Equal(t, 20, *v.Revision)
+	assert.Equal(t, " dev", v.Channel)
+}
+
 func TestParseProductSpec(t *testing.T) {
 	productSpec, err := ParseProductSpec("chrome@latest")
 	assert.Nil(t, err)
