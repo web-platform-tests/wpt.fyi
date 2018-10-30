@@ -238,6 +238,16 @@ found in the LICENSE file.
         </paper-dropdown-menu>
 
         <br>
+        <paper-dropdown-menu label="Source" no-animations>
+          <paper-listbox slot="dropdown-content" selected="{{ _source }}" attr-for-selected="value">
+            <paper-item value="any">Any</paper-item>
+            <paper-item value="taskcluster">[[displayName("taskcluster")]]</paper-item>
+            <paper-item value="buildbot">[[displayName("buildbot")]]</paper-item>
+            <paper-item value="msedge">[[displayName("msedge")]]</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+
+        <br>
         <paper-input always-float-label
                       label="Version"
                       placeholder="(Any version)"
@@ -246,7 +256,7 @@ found in the LICENSE file.
     </paper-card>
   </template>
   <script>
-    /* global ProductInfo, CHANNELS, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
+    /* global ProductInfo, CHANNELS, SOURCES, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'product-builder';
@@ -282,7 +292,12 @@ found in the LICENSE file.
           _channel: {
             type: String,
             value: 'any',
-            observer: 'channelChanged',
+            observer: 'semanticLabelChanged',
+          },
+          _source: {
+            type: String,
+            value: 'any',
+            observer: 'semanticLabelChanged',
           },
           spec: {
             type: String,
@@ -312,6 +327,13 @@ found in the LICENSE file.
         };
       }
 
+      static get SemanticLabels() {
+        return [
+          { property: '_channel', values: CHANNELS },
+          { property: '_source', values: SOURCES },
+        ];
+      }
+
       computeProduct(browserName, browserVersion, labels) {
         const product = {
           browser_name: browserName,
@@ -328,32 +350,29 @@ found in the LICENSE file.
 
       labelsChanged(labels) {
         // Configure the channel from the labels.
-        let channel = 'any';
         labels = new Set(labels || []);
-        for (const c of CHANNELS) {
-          if (labels.has(c)) {
-            channel = c;
+        for (const semantic of ProductBuilder.SemanticLabels) {
+          const value = Array.from(semantic.values).find(c => labels.has(c)) || 'any';
+          if (this[semantic.property] !== value) {
+            this[semantic.property] = value;
           }
-        }
-        if (this._channel !== channel) {
-          this._channel = channel;
         }
       }
 
-      channelChanged(channel, was) {
-        // Configure the labels from the channel.
+      semanticLabelChanged(newValue, oldValue) {
+        // Configure the labels from the semantic label's value.
         const labels = Array.from(this.labels || []);
-        const isAny = !channel || channel === 'any';
-        if (was) {
-          // Remove the old channel.
-          let indexOf = labels.findIndex(l => l === was);
-          for (; indexOf > -1; indexOf = labels.findIndex(l => l === was)) {
+        const isAny = !newValue || newValue === 'any';
+        if (oldValue) {
+          // Remove the old newValue.
+          let indexOf = labels.findIndex(l => l === oldValue);
+          for (; indexOf > -1; indexOf = labels.findIndex(l => l === oldValue)) {
             labels.splice(indexOf, 1);
           }
         }
-        if (!isAny && !labels.includes(channel)) {
-          labels.push(channel);
-        } else if (!was) {
+        if (!isAny && !labels.includes(newValue)) {
+          labels.push(newValue);
+        } else if (!oldValue) {
           return;
         }
         this.labels = labels;
