@@ -81,23 +81,11 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 // https://developer.github.com/v3/activity/events/types/#statusevent
 type statusEventPayload struct {
-	Sha       string       `json:"sha"`
-	State     string       `json:"state"`
-	Context   string       `json:"context"`
-	TargetURL string       `json:"target_url"`
-	Branches  []branchInfo `json:"branches"`
-}
-
-// GetBranch returns the first branch that has the revision of the commit
-// as its HEAD state.
-func (s statusEventPayload) GetBranch() string {
-	// Only process the master branch.
-	for _, branch := range s.Branches {
-		if branch.Commit.Sha == s.Sha {
-			return branch.Name
-		}
-	}
-	return ""
+	SHA       string      `json:"sha"`
+	State     string      `json:"state"`
+	Context   string      `json:"context"`
+	TargetURL string      `json:"target_url"`
+	Branches  branchInfos `json:"branches"`
 }
 
 func (s statusEventPayload) IsSuccess() bool {
@@ -108,14 +96,42 @@ func (s statusEventPayload) IsTaskcluster() bool {
 	return strings.HasPrefix(s.Context, "Taskcluster")
 }
 
+func (s statusEventPayload) IsOnMaster() bool {
+	for _, branch := range s.Branches {
+		if branch.Name == "master" {
+			return true
+		}
+	}
+	return false
+}
+
+func (s statusEventPayload) HeadingBranches() branchInfos {
+	var branches branchInfos
+	for _, branch := range s.Branches {
+		if branch.Commit.SHA == s.SHA {
+			branches = append(branches, branch)
+		}
+	}
+	return branches
+}
+
 type branchInfo struct {
 	Name   string     `json:"name"`
 	Commit commitInfo `json:"commit"`
 }
 
+type branchInfos []branchInfo
+
+func (b branchInfos) GetNames() []string {
+	names := make([]string, len(b))
+	for i := range b {
+		names[i] = b[i].Name
+	}
+	return names
+}
+
 type commitInfo struct {
-	Sha string `json:"sha"`
-	URL string `json:"url"`
+	SHA string `json:"sha"`
 }
 
 func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
@@ -157,8 +173,8 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
 	defer cancel()
-	branch := status.GetBranch()
-	err = createAllRuns(log, urlfetch.Client(slowCtx), api, username, password, urlsByBrowser, branch)
+	branches := status.HeadingBranches().GetNames()
+	err = createAllRuns(log, urlfetch.Client(slowCtx), api, username, password, urlsByBrowser, branches)
 	if err != nil {
 		return false, err
 	}
@@ -169,7 +185,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 func shouldProcessStatus(status *statusEventPayload) bool {
 	return status.IsSuccess() &&
 		status.IsTaskcluster() &&
-		status.GetBranch() == "master"
+		status.IsOnMaster()
 }
 
 func extractTaskGroupID(targetURL string) string {
@@ -280,7 +296,7 @@ func createAllRuns(log shared.Logger,
 	username,
 	password string,
 	urlsByBrowser map[string][]string,
-	branch string) error {
+	branches []string) error {
 	errors := make(chan error, len(urlsByBrowser))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
@@ -288,7 +304,7 @@ func createAllRuns(log shared.Logger,
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, api, username, password, urls, branch)
+			err := createRun(client, api, username, password, urls, branches)
 			if err != nil {
 				errors <- err
 			}
@@ -307,14 +323,14 @@ func createAllRuns(log shared.Logger,
 	return nil
 }
 
-func createRun(client *http.Client, api string, username string, password string, reportURLs []string, branch string) error {
+func createRun(client *http.Client, api string, username string, password string, reportURLs []string, branches []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
 	for _, url := range reportURLs {
 		payload.Add("result_url", url)
 	}
-	if branch != "" {
-		payload.Add("labels", branch)
+	if branches != nil {
+		payload.Add("labels", strings.Join(branches, ","))
 	}
 
 	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))
