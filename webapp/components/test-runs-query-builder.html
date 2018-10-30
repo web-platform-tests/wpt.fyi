@@ -176,20 +176,23 @@ found in the LICENSE file.
         this.set(`products.${i}`, product);
       }
 
+      // Respond to query changes by computing a new shas URL.
       computeSHAsURL(query) {
         const url = new URL(`/api/shas${query || ''}`, window.location);
         url.searchParams.delete('sha');
         return url;
       }
 
+      // Respond to shas URL changing by fetching the shas
       shasURLUpdated(url) {
         fetch(url).then(r => r.json()).then(s => {
           this.shas = s;
         });
       }
 
+      // Respond to newly fetched shas, or user input, by filtering the autocomplete list.
       shasUpdated(sha, shas) {
-        if (!shas || !this.queryBuilderSHA) {
+        if (!shas || !shas.length || !this.queryBuilderSHA) {
           return;
         }
         if (sha) {
@@ -197,17 +200,9 @@ found in the LICENSE file.
         }
         shas = shas.slice(0, 10);
         // Check actually different from current.
-        const curr = this.shasAutocomplete || [];
-        if (curr.length === shas.length) {
-          let same = true;
-          for (let i = 0; i < shas.length && same; i++) {
-            if (i >= curr.length || shas[i] !== curr[i]) {
-              same = false;
-            }
-          }
-          if (same) {
-            return;
-          }
+        const current = new Set(this.shasAutocomplete || []);
+        if (current.size === shas.length && !shas.find(v => !current.has(v))) {
+          return;
         }
         this.shasAutocomplete = shas;
       }
@@ -503,7 +498,7 @@ found in the LICENSE file.
         versions = versions.slice(0, 10);
         // Check actually different from current.
         const current = new Set(this.versionsAutocomplete || []);
-        if (!versions.find(v => !current.has(v))) {
+        if (current.size === versions.length && !versions.find(v => !current.has(v))) {
           return;
         }
         this.versionsAutocomplete = versions;
