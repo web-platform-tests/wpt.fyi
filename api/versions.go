@@ -45,6 +45,11 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ctx := h.ctx
 	query := datastore.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
+	if product.Labels != nil {
+		for label := range product.Labels.Iter() {
+			query = query.Filter("Labels =", label)
+		}
+	}
 	distinctQuery := query.Project("BrowserVersion").Distinct()
 	var queries []*datastore.Query
 	if product.BrowserVersion == "" {

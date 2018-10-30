@@ -321,10 +321,15 @@ found in the LICENSE file.
         </paper-dropdown-menu>
 
         <br>
-        <paper-input always-float-label
-                      label="Version"
-                      placeholder="(Any version)"
-                      value="{{ browserVersion::input }}"></paper-input>
+        <paper-input-container always-float-label>
+          <label slot="label">Version</label>
+          <input slot="input"
+                  placeholder="(Any version)"
+                  list="versions-datalist"
+                  value="{{ browserVersion::input }}">
+          <datalist id="versions-datalist"></datalist>
+        </paper-input-container>
+      </template>
       </div>
     </paper-card>
   </template>
@@ -390,6 +395,18 @@ found in the LICENSE file.
             type: Array,
             value: Array.from(CHANNELS),
           },
+          versionsURL: {
+            type: String,
+            computed: 'computeVersionsURL(_product)',
+            observer: 'versionsURLUpdated',
+          },
+          versions: {
+            type: Array,
+          },
+          versionsAutocomplete: {
+            type: Array,
+            observer: 'versionsAutocompleteUpdated'
+          },
         };
       }
 
@@ -398,6 +415,7 @@ found in the LICENSE file.
         this.deleteProduct = () => {
           this.onDelete && this.onDelete(this.product);
         };
+        this._createMethodObserver('versionsUpdated(browserVersion, versions)');
       }
 
       static get SemanticLabels() {
@@ -455,6 +473,50 @@ found in the LICENSE file.
         return Object.assign({}, product, {
           labels: (product.labels || []).filter(l => !CHANNELS.has(l)).concat(channel)
         });
+      }
+
+      // Respond to product spec changing by computing a new versions URL.
+      computeVersionsURL(product) {
+        product = Object.assign({}, product);
+        delete product.browser_version;
+        const url = new URL('/api/versions', window.location);
+        url.searchParams.set('product', this.getSpec(product));
+        return url;
+      }
+
+      // Respond to version URL changing by fetching the versions
+      versionsURLUpdated(url) {
+        fetch(url).then(r => r.json()).then(v => {
+          this.versions = v;
+        });
+      }
+
+      // Respond to newly fetched versions, or user input, by filtering the autocomplete list.
+      versionsUpdated(version, versions) {
+        if (!versions || !versions.length) {
+          this.versionsAutocomplete = [];
+          return;
+        }
+        if (version) {
+          versions = versions.filter(s => s.startsWith(version));
+        }
+        versions = versions.slice(0, 10);
+        // Check actually different from current.
+        const current = new Set(this.versionsAutocomplete || []);
+        if (!versions.find(v => !current.has(v))) {
+          return;
+        }
+        this.versionsAutocomplete = versions;
+      }
+
+      versionsAutocompleteUpdated(versionsAutocomplete) {
+        const datalist = this.shadowRoot.querySelector('datalist');
+        datalist.innerHTML = '';
+        for (const sha of versionsAutocomplete) {
+          const option = document.createElement('option');
+          option.setAttribute('value', sha);
+          datalist.appendChild(option);
+        }
       }
     }
 

@@ -430,12 +430,12 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 }
 
 // ParseProductParam parses and validates the 'product' param for the request.
-func ParseProductParam(r *http.Request) (product *Product, err error) {
+func ParseProductParam(r *http.Request) (product *ProductSpec, err error) {
 	productParam := r.URL.Query().Get("product")
 	if "" == productParam {
 		return nil, nil
 	}
-	parsed, err := ParseProduct(productParam)
+	parsed, err := ParseProductSpec(productParam)
 	if err != nil {
 		return nil, err
 	}
