@@ -98,8 +98,17 @@ found in the LICENSE file.
       }
 
       subtestMessage(result) {
-        return super.subtestMessage(result) ||
-          this.parseFailureMessage(result.message);
+        let msg = super.subtestMessage(result);
+        if (msg) {
+          return msg;
+        }
+
+        // Terse table only: Display "ERROR" without message on harness error.
+        if (result.status === 'ERROR') {
+          return 'ERROR';
+        }
+
+        return this.parseFailureMessage(result.message);
       }
 
       parseFailureMessage(msg) {
