@@ -38,7 +38,126 @@ found in the LICENSE file.
     </div>
   </template>
 
+  <script type="text/javascript" src="https://unpkg.com/ohm-js@latest/dist/ohm.js"></script>
+  <script type="text/ohm-js">
+
+  </script>
   <script>
+    const QUERY_GRAMMAR = ohm.grammar(`
+      Query {
+        Q = ListOf<Exp, space*>
+
+        Exp = NonemptyListOf<OrPart, or>
+
+        OrPart = NonemptyListOf<AndPart, and>
+
+        AndPart
+          = not Exp     -- not
+          | "(" Exp ")" -- paren
+          | Fragment    -- fragment
+
+        or
+          = "|"
+          | caseInsensitive<"or">
+
+        and
+          = "&"
+          | caseInsensitive<"and">
+
+        not
+          = "!"
+          | "not"
+
+        Fragment
+          = nameLiteral
+          | statusExp
+          | nameFragment
+
+        nameLiteral
+          = "\"" nameLiteralInner "\""
+
+        nameLiteralInner
+          = nameLiteralChar*
+
+        nameLiteralChar
+          = "\x00".."\x21"
+          | "\x5D".."\uFFFF"
+          | "\\\\" -- slash
+          | "\\\"" -- quote
+
+        statusExp
+          = browserName ":" statusLiteral
+
+        browserName
+          = caseInsensitive<"chrome">
+          | caseInsensitive<"edge">
+          | caseInsensitive<"firefox">
+          | caseInsensitive<"safari">
+
+        statusLiteral
+          = caseInsensitive<"unknown">
+          | caseInsensitive<"pass">
+          | caseInsensitive<"ok">
+          | caseInsensitive<"fail">
+          | caseInsensitive<"timeout">
+          | caseInsensitive<"not_run">
+          | caseInsensitive<"error">
+
+        nameFragment = nameFragmentChar+
+
+        nameFragmentChar
+          = "\x00".."\x08"
+          | "\x0E".."\x1F"
+          | "\x21".."\uFFFF"
+      }
+    `);
+    const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
+      _terminal: function() {
+        return this.sourceString;
+      },
+      EmptyListOf: function() {
+        return [];
+      },
+      NonemptyListOf: function(fst, seps, rest) {
+        return [fst.eval()].concat(rest.eval());
+      },
+      Q: l => {
+        const ps = l.eval();
+        return ps.length == 0 ? {pattern: ''} : ps.length === 1 ?
+          ps[0] : {and: ps};
+      },
+      Exp: l => {
+        const ps = l.eval();
+        return ps.length === 1 ? ps[0] : {or: ps};
+      },
+      OrPart: l => {
+        const ps = l.eval();
+        return ps.length === 1 ? ps[0] : {and: ps};
+      },
+      AndPart_not: (n, p) => {
+        return {not: p.eval()};
+      },
+      AndPart_paren: (lp, p, rp) => p.eval(),
+      AndPart_fragment: p => p.eval(),
+      Fragment: f => f.eval(),
+      nameLiteral: (q1, l, q2) => {
+        return {pattern: l.eval().join('')};
+      },
+      nameLiteralInner: (chars) => {
+        return chars.eval();
+      },
+      nameLiteralChar_slash: (v) => '\\',
+      nameLiteralChar_quote: (v) => '"',
+      statusExp: (l, colon, r) => {
+        return {
+          browserName: l.sourceString.toLowerCase(),
+          status: r.sourceString.toUpperCase(),
+        };
+      },
+      nameFragment: (chars) => {
+        return {pattern: chars.eval().join('')};
+      },
+    });
     const QUERY_DEBOUNCE_ID = Symbol('query_debounce_timeout');
 
     /* global WPTFlags */
@@ -152,8 +271,25 @@ found in the LICENSE file.
       }
 
       commitQueryStructured() {
-        // TODO: Operate over query parse result.
-        return this.commitQueryUnstructured();
+        const p = QUERY_GRAMMAR.match(this.queryInput);
+        if (!p.succeeded()) {
+          // TODO: Interpret error and add toast to UI.
+          return;
+        }
+        try {
+          const q = QUERY_SEMANTICS(p).eval();
+
+          this.query = this.queryInput;
+          this.dispatchEvent(new CustomEvent('commit', {
+            detail: {
+              query: this.query,
+              structuredQuery: q,
+            },
+          }));
+          this.shadowRoot.querySelector('.query').blur();
+        } catch (err) {
+          // TODO: Interpret error and add toast to UI.
+        }
       }
 
       handleKeyUpUnstructured(e) {
