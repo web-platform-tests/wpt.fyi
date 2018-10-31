@@ -16,6 +16,7 @@ found in the LICENSE file.
   <script>
     const WPT_FYI_FEATURES = [
       'queryBuilder',
+      'queryBuilderSHA',
       'diffFromAPI',
       'diffFilter',
       'colorHomepage',
@@ -54,9 +55,19 @@ found in the LICENSE file.
 
 <dom-module id="wpt-flags-editor">
   <template>
+    <style>
+      paper-item[sub-item] {
+        margin-left: 32px;
+      }
+    </style>
     <paper-item>
       <paper-checkbox checked="{{queryBuilder}}">
         Query Builder component
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{queryBuilderSHA}}">
+        SHA input
       </paper-checkbox>
     </paper-item>
     <paper-item>

@@ -20,10 +20,11 @@ found in the LICENSE file.
     </style>
 
     <div>
-      <input value="{{ q::input }}"
+      <input value="{{ queryInput::input }}"
              class="query"
              list="query-list"
              placeholder="[[queryPlaceholder]]"
+             onchange="[[onChange]]"
              onkeyup="[[onKeyUp]]"
              onkeydown="[[onKeyDown]]"
              onfocus="[[onFocus]]"
@@ -51,14 +52,17 @@ found in the LICENSE file.
             type: String,
             value: 'Search test files, like \'cors/allow-headers.htm\', then press <Enter>',
           },
-          q: {
+          // Query input string
+          queryInput: {
             type: String,
             notify: true,
-            observer: 'queryChanged'
+            observer: 'queryInputChanged'
           },
+          // Debounced + normalized query string.
           query: {
             type: String,
             notify: true,
+            observer: 'queryUpdated',
           },
           parsedQuery: Object,
           results: {
@@ -69,11 +73,7 @@ found in the LICENSE file.
             type: String,
             computed: 'computeQueryPlaceholder()'
           },
-          autocompleteURL: {
-            type: String,
-            computed: 'computeAutocompleteURL(testRuns, q)',
-            observer: 'observeAutocompleteURL',
-          },
+          testPaths: Array,
           onKeyUp: Function,
           onChange: Function,
           onFocus: Function,
@@ -98,50 +98,37 @@ found in the LICENSE file.
         }
       }
 
-      computeAutocompleteURL(testRuns, q) {
-        if (!testRuns || !testRuns.length) {
-          return '';
-        }
-        let url = new URL('/api/autocomplete', window.location);
-        url.searchParams.set('limit', 10);
-        url.searchParams.set(
-          'run_ids',
-          testRuns.map(r => r.id.toString()).join(','));
-        if (q) {
-          url.searchParams.set('q', q);
-        }
-        return url;
-      }
-
       ready() {
         super.ready();
-        this.q = this.query;
+        this._createMethodObserver('updateDatalist(query, testPaths)');
+        this.queryInput = this.query;
       }
 
-      async observeAutocompleteURL(newValue, oldValue) {
-        if (newValue === oldValue || !newValue) {
+      queryUpdated(query) {
+        this.queryInput = query;
+      }
+
+      updateDatalist(query, paths) {
+        if (!paths) {
           return;
         }
-
-        const response = await window.fetch(newValue);
-        if (response.status !== 200) {
-          throw response;
-        }
-        const json = await response.json();
-
         const datalist = this.shadowRoot.querySelector('datalist');
         datalist.innerHTML = '';
-        if (!json.results) {
-          return;
+        let matches = Array.from(paths);
+        if (query) {
+          matches = matches
+            .filter(p => p.toLowerCase())
+            .filter(p => p.includes(query))
+            .sort((p1, p2) => p1.indexOf(query) - p2.indexOf(query));
         }
-        for (const result of json.results) {
+        for (const match of matches.slice(0, 10)) {
           const option = document.createElement('option');
-          option.setAttribute('value', result.query_string);
+          option.setAttribute('value', match);
           datalist.appendChild(option);
         }
       }
 
-      queryChanged(_, oldQuery) {
+      queryInputChanged(_, oldQuery) {
         // Debounce first initialization.
         if (typeof(oldQuery) === 'undefined') {
           return;
@@ -153,11 +140,11 @@ found in the LICENSE file.
       }
 
       latchQuery() {
-        this.query = this.q.toLowerCase();
+        this.query = (this.queryInput || '').toLowerCase();
       }
 
       commitQueryUnstructured() {
-        this.query = this.q;
+        this.query = this.queryInput;
         this.dispatchEvent(new CustomEvent('commit', {
           detail: {query: this.query},
         }));
@@ -192,7 +179,10 @@ found in the LICENSE file.
         const value = e.target.value.toLowerCase();
 
         if (opts.includes(value)) {
-          this.commitQuery();
+          this.dispatchEvent(new CustomEvent('autocomplete', {
+            detail: {path: value},
+          }));
+          this.shadowRoot.querySelector('.query').blur();
         }
       }
 
@@ -202,6 +192,11 @@ found in the LICENSE file.
 
       handleBlur() {
         this.shadowRoot.querySelector('paper-tooltip').hide();
+      }
+
+      clear() {
+        this.query = '';
+        this.queryInput = '';
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);

@@ -29,9 +29,19 @@
     /* global CHANNELS */
     document.addEventListener('WebComponentsReady', () => {
       suite('TestRunsQueryBuilder', () => {
-        let queryBuilder;
+        let queryBuilder, sandbox;
 
         setup(() => {
+          sandbox = sinon.sandbox.create();
+          // Spoof an empty result for /api/shas to speed up tests.
+          const realFetch = window.fetch;
+          sandbox.stub(window, 'fetch', url => {
+            if (url.pathname === '/api/shas') {
+              return Promise.resolve(new Response('[]'));
+            }
+            return realFetch(url);
+          });
+
           queryBuilder = fixture('query-builder-fixture');
           queryBuilder.products = ['chrome', 'edge']
             .map(s => queryBuilder.parseProductSpec(s));
@@ -77,6 +87,13 @@
           expect(queryBuilder.query).to.not.contain('aligned');
           queryBuilder.aligned = true;
           expect(queryBuilder.query).to.contain('aligned');
+
+          const alignedCB = queryBuilder.shadowRoot.querySelector('#aligned-checkbox');
+          expect(alignedCB.checked).to.be.true;
+          alignedCB.checked = false;
+          expect(queryBuilder.query).to.not.contain('aligned');
+          alignedCB.checked = true;
+          expect(queryBuilder.query).to.contain('aligned');
         });
 
         test('labels', () => {
@@ -110,6 +127,42 @@
               });
             });
           }
+        });
+
+        test('sha', () => {
+          const sha = '1234567890';
+          queryBuilder.sha = sha;
+          expect(queryBuilder.query).to.contain(`sha=${sha}`);
+
+          queryBuilder.sha = 'latest';
+          expect(queryBuilder.query).to.not.contain('sha');
+        });
+
+        suite('shas autocomplete', () => {
+          let sandbox, queryBuilderSHAState;
+
+          setup(() => {
+            sandbox = sinon.sandbox.create();
+            sandbox.spy(queryBuilder, 'shasURLUpdated');
+
+            queryBuilderSHAState = queryBuilder.queryBuilderSHA;
+            queryBuilder.queryBuilderSHA = true;
+          });
+
+          test('/api/shas fetches', () => {
+            // Should only trigger a single update, in spite of many params changing.
+            queryBuilder.updateQueryParams({ product: ['chrome'], aligned: true, label: ['dev'] });
+            expect(queryBuilder.shasURLUpdated.callCount).to.equal(1);
+          });
+
+          teardown(() => {
+            sandbox.restore();
+            queryBuilder.queryBuilderSHA = queryBuilderSHAState;
+          });
+        });
+
+        teardown(() => {
+          sandbox.restore();
         });
       });
 
