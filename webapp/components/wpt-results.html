@@ -519,7 +519,7 @@ found in the LICENSE file.
         } else {
           url.searchParams.set(
             'run_ids',
-            testRuns.map(r => r.id.toString()).join(','));
+            this.testRuns.map(r => r.id.toString()).join(','));
           if (this.query) {
             url.searchParams.set('q', q);
           }
