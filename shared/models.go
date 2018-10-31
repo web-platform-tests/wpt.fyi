@@ -47,9 +47,27 @@ func (e ByBrowserName) Less(i, j int) bool { return e[i].BrowserName < e[j].Brow
 // Version is a struct for a parsed version string.
 type Version struct {
 	Major    int
-	Minor    int
-	Build    int
-	Revision int
+	Minor    *int
+	Build    *int
+	Revision *int
+	Channel  string
+}
+
+func (v Version) String() string {
+	s := fmt.Sprintf("%v", v.Major)
+	if v.Minor != nil {
+		s = fmt.Sprintf("%s.%v", s, *v.Minor)
+	}
+	if v.Build != nil {
+		s = fmt.Sprintf("%s.%v", s, *v.Build)
+	}
+	if v.Revision != nil {
+		s = fmt.Sprintf("%s.%v", s, *v.Revision)
+	}
+	if v.Channel != "" {
+		s = fmt.Sprintf("%s%s", s, v.Channel)
+	}
+	return s
 }
 
 // ProductAtRevision defines a WPT run for a specific product, at a

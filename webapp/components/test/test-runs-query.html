@@ -138,18 +138,31 @@
             });
           });
 
-          test('queryParams', () => {
-            testRunsQuery.products = [
-              Object.assign({}, DEFAULT_PRODUCTS[0], { labels: ['experimental'] }),
-              Object.assign({}, DEFAULT_PRODUCTS[1], { labels: ['stable'] })
-            ];
-            expect(testRunsQuery.queryParams.product).to.contain(`${DEFAULT_PRODUCTS[0].browser_name}[experimental]`);
-            expect(testRunsQuery.queryParams.product).to.contain(`${DEFAULT_PRODUCTS[1].browser_name}[stable]`);
+          suite('queryParams', () => {
+            test('products', () => {
+              testRunsQuery.products = [
+                Object.assign({}, DEFAULT_PRODUCTS[0], { labels: ['experimental'] }),
+                Object.assign({}, DEFAULT_PRODUCTS[1], { labels: ['stable'] })
+              ];
+              expect(testRunsQuery.queryParams.product).to.contain(`${DEFAULT_PRODUCTS[0].browser_name}[experimental]`);
+              expect(testRunsQuery.queryParams.product).to.contain(`${DEFAULT_PRODUCTS[1].browser_name}[stable]`);
+            });
+
+            test('aligned', () => {
+              testRunsQuery.aligned = true;
+              expect(testRunsQuery.queryParams.aligned).to.be.true;
+            });
+
+            test('sha', () => {
+              testRunsQuery.sha = '1234567890';
+              testRunsQuery.aligned = true;
+              expect(testRunsQuery.queryParams.sha).to.equal(testRunsQuery.sha);
+              expect(testRunsQuery.queryParams.aligned).to.not.be.defined;
+            });
           });
         });
 
-
-        suite('TestRunsQuery.prototype.*', () => {
+        suite('TestRunsUIQuery.prototype.*', () => {
           test('diff', () => {
             testRunsUIQuery.diff = true;
             expect(testRunsUIQuery.query).to.contain('diff');
@@ -159,7 +172,8 @@
           });
         });
       });
-    });
+
+    }); // end 'WebComponentsReady' handler.
   </script>
 </body>
 </html>

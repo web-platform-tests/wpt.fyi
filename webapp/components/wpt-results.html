@@ -26,11 +26,12 @@ found in the LICENSE file.
 <link rel="import" href="test-results-chart.html">
 <link rel="import" href="test-runs-query-builder.html">
 <link rel="import" href="test-search.html">
+<link rel="import" href="wpt-colors.html">
 <link rel="import" href="wpt-flags.html">
 
 <dom-module id="wpt-results">
   <template>
-    <style>
+    <style include="wpt-colors">
       :host {
         display: block;
         font-size: 15px;
@@ -84,12 +85,6 @@ found in the LICENSE file.
       .delta {
         background-color: var(--paper-grey-200);
       }
-      .passes-0 { background-color: hsl(0, 85%, 65%); }
-      .passes-20 { background-color: hsl(0, 85%, 70%); }
-      .passes-40 { background-color: hsl(0, 85%, 75%); }
-      .passes-60 { background-color: hsl(0, 85%, 80%); }
-      .passes-80 { background-color: hsl(0, 85%, 85%); }
-      .passes-100 { background-color: var(--paper-light-green-a400); }
 
       span.delta.regressions {
         color: var(--paper-red-700);
@@ -151,7 +146,8 @@ found in the LICENSE file.
 
       <test-search class$="search-[[pathIsATestFile]]"
                    query='{{search}}'
-                   test-runs="[[testRuns]]">
+                   test-runs="[[testRuns]]"
+                   test-paths="[[testPaths]]">
       </test-search>
 
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -300,9 +296,9 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
-    class WPTResults extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
-      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer))))) {
+    /* global WPTColors, WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
+    class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
+      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer)))))) {
 
       static get is() {
         return 'wpt-results';
@@ -321,6 +317,10 @@ found in the LICENSE file.
           searchResults: {
             type: Array,
             value: [],
+          },
+          testPaths: {
+            type: Set,
+            computed: 'computeTestPaths(searchResults)',
           },
           displayedNodes: {
             type: Array,
@@ -360,6 +360,7 @@ found in the LICENSE file.
           resultsLoadFailed: Boolean,
           noResults: Boolean,
           onSearchCommit: Function,
+          onSearchAutocomplete: Function,
           editingQuery: {
             type: Boolean,
             value: false,
@@ -412,6 +413,11 @@ found in the LICENSE file.
         return true;
       }
 
+      computeTestPaths(searchResults) {
+        const paths = searchResults && searchResults.map(r => r.test) || [];
+        return new Set(paths);
+      }
+
       computeDisplayedTests(path, searchResults) {
         return searchResults.map(r => r.test)
           .filter(name => name.startsWith(path));
@@ -450,6 +456,7 @@ found in the LICENSE file.
       constructor() {
         super();
         this.onSearchCommit = this.handleSearchCommit.bind(this);
+        this.onSearchAutocomplete = this.handleSearchAutocomplete.bind(this);
         this.onLoadingComplete = () => {
           this.resultsLoadFailed = !(this.testRuns && this.testRuns.length);
           this.noResults = !this.resultsLoadFailed
@@ -467,8 +474,9 @@ found in the LICENSE file.
 
       connectedCallback() {
         super.connectedCallback();
-        this.shadowRoot.querySelector('test-search')
-          .addEventListener('commit', this.onSearchCommit);
+        const search = this.shadowRoot.querySelector('test-search');
+        search.addEventListener('commit', this.onSearchCommit);
+        search.addEventListener('autocomplete', this.onSearchAutocomplete);
       }
 
       disconnectedCallback() {
@@ -678,12 +686,10 @@ found in the LICENSE file.
           if (typeof result === 'undefined' && prop === 'total') {
             return 'none';
           }
-          if (this.path === '/') {
+          if (this.path === '/' && !this.colorHomepage) {
             return 'top';
           }
-
-          const passes = result.passes / result.total;
-          return `passes-${passes * 100 - (passes * 100 % 20)}`;
+          return this.passRateClass(result.passes, result.total);
         }
       }
 
@@ -765,25 +771,33 @@ found in the LICENSE file.
         };
       }
 
+      handleSearchAutocomplete(e) {
+        this.shadowRoot.querySelector('test-search').clear();
+        this.navigateToPath(e.detail.path);
+      }
+
       handleSearchCommit() {
         // Fetch search results when test-search signals that user has committed
         // to search string (by pressing <Enter>).
         this.fetchResults();
+        // Trigger a virtual navigation.
+        this.navigateToLocation(window.location);
       }
 
       handleSubmitQuery() {
+        const queryBefore = this.query;
         const builder = this.shadowRoot.querySelector('test-runs-query-builder');
         this.editingQuery = false;
-        if (this.query === builder.query) {
-          return;
-        }
-
         this.updateQueryParams(builder.queryParams);
-        if (!this.diff) {
-          this.diffRun = null;
+        if (queryBefore === this.query) {
+          return;
         }
         // Trigger a virtual navigation.
         this.navigateToLocation(window.location);
+        // Reload the data.
+        if (!this.diff) {
+          this.diffRun = null;
+        }
         this.testRuns = [];
         this.searchResults = [];
         this.refreshDisplayedNodes();

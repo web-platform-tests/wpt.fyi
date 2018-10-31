@@ -7,14 +7,21 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
-<link rel="import" href="../components/wpt-env-flags.html">
+<link rel="import" href="wpt-env-flags.html">
 
 <!--
 `<wpt-flags>` is a component for checking wpt.fyi feature flags.
 -->
 <dom-module id="wpt-flags">
   <script>
-    const WPT_FYI_FEATURES = ['queryBuilder', 'diffFromAPI', 'diffFilter'];
+    const WPT_FYI_FEATURES = [
+      'queryBuilder',
+      'queryBuilderSHA',
+      'diffFromAPI',
+      'diffFilter',
+      'colorHomepage',
+      'structuredQueries',
+    ];
 
     const _wptFlags = (superClass, readOnly) => class extends superClass {
       static get is() {
@@ -48,9 +55,19 @@ found in the LICENSE file.
 
 <dom-module id="wpt-flags-editor">
   <template>
+    <style>
+      paper-item[sub-item] {
+        margin-left: 32px;
+      }
+    </style>
     <paper-item>
       <paper-checkbox checked="{{queryBuilder}}">
         Query Builder component
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{queryBuilderSHA}}">
+        SHA input
       </paper-checkbox>
     </paper-item>
     <paper-item>
@@ -61,6 +78,16 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{diffFilter}}">
         Filter toggle for diff view
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{colorHomepage}}">
+        Use pass-rate colors on the homepage
+      </paper-checkbox>
+    </paper-item>
+    <paper-checkbox checked="{{structuredQueries}}">
+      Interpret query strings as structured queries over test names and test
+      status/result values
       </paper-checkbox>
     </paper-item>
   </template>

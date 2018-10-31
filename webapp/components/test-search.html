@@ -6,6 +6,7 @@ found in the LICENSE file.
 
 <link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="wpt-flags.html">
 
 <dom-module id="test-search">
   <template>
@@ -19,10 +20,11 @@ found in the LICENSE file.
     </style>
 
     <div>
-      <input value="{{ q::input }}"
+      <input value="{{ queryInput::input }}"
              class="query"
              list="query-list"
              placeholder="[[queryPlaceholder]]"
+             onchange="[[onChange]]"
              onkeyup="[[onKeyUp]]"
              onkeydown="[[onKeyDown]]"
              onfocus="[[onFocus]]"
@@ -39,7 +41,8 @@ found in the LICENSE file.
   <script>
     const QUERY_DEBOUNCE_ID = Symbol('query_debounce_timeout');
 
-    class TestSearch extends window.Polymer.Element {
+    /* global WPTFlags */
+    class TestSearch extends WPTFlags(window.Polymer.Element) {
       static get is() {
         return 'test-search';
       }
@@ -49,15 +52,19 @@ found in the LICENSE file.
             type: String,
             value: 'Search test files, like \'cors/allow-headers.htm\', then press <Enter>',
           },
-          q: {
+          // Query input string
+          queryInput: {
             type: String,
             notify: true,
-            observer: 'queryChanged'
+            observer: 'queryInputChanged'
           },
+          // Debounced + normalized query string.
           query: {
             type: String,
             notify: true,
+            observer: 'queryUpdated',
           },
+          parsedQuery: Object,
           results: {
             type: Array,
             notify: true,
@@ -66,70 +73,62 @@ found in the LICENSE file.
             type: String,
             computed: 'computeQueryPlaceholder()'
           },
-          autocompleteURL: {
-            type: String,
-            computed: 'computeAutocompleteURL(testRuns, q)',
-            observer: 'observeAutocompleteURL',
-          },
+          testPaths: Array,
           onKeyUp: Function,
           onChange: Function,
           onFocus: Function,
           onBlur: Function,
+          commitQuery: Function,
         };
       }
 
       constructor() {
         super();
-        this.onKeyUp = this.handleKeyUp.bind(this);
+
         this.onChange = this.handleChange.bind(this);
         this.onFocus = this.handleFocus.bind(this);
         this.onBlur = this.handleBlur.bind(this);
-      }
 
-      computeAutocompleteURL(testRuns, q) {
-        if (!testRuns || !testRuns.length) {
-          return '';
+        if (this.structuredQueries) {
+          this.onKeyUp = this.handleKeyUpStructured.bind(this);
+          this.commitQuery = this.commitQueryStructured;
+        } else {
+          this.onKeyUp = this.handleKeyUpUnstructured.bind(this);
+          this.commitQuery = this.commitQueryUnstructured;
         }
-        let url = new URL('/api/autocomplete', window.location);
-        url.searchParams.set('limit', 10);
-        url.searchParams.set(
-          'run_ids',
-          testRuns.map(r => r.id.toString()).join(','));
-        if (q) {
-          url.searchParams.set('q', q);
-        }
-        return url;
       }
 
       ready() {
         super.ready();
-        this.q = this.query;
+        this._createMethodObserver('updateDatalist(query, testPaths)');
+        this.queryInput = this.query;
       }
 
-      async observeAutocompleteURL(newValue, oldValue) {
-        if (newValue === oldValue || !newValue) {
+      queryUpdated(query) {
+        this.queryInput = query;
+      }
+
+      updateDatalist(query, paths) {
+        if (!paths) {
           return;
         }
-
-        const response = await window.fetch(newValue);
-        if (response.status !== 200) {
-          throw response;
-        }
-        const json = await response.json();
-
         const datalist = this.shadowRoot.querySelector('datalist');
         datalist.innerHTML = '';
-        if (!json.results) {
-          return;
+        let matches = Array.from(paths);
+        if (query) {
+          matches = matches
+            .filter(p => p.toLowerCase())
+            .filter(p => p.includes(query))
+            .sort((p1, p2) => p1.indexOf(query) - p2.indexOf(query));
         }
-        for (const result of json.results) {
+        for (const match of matches.slice(0, 10)) {
           const option = document.createElement('option');
-          option.setAttribute('value', result.query_string);
+          option.setAttribute('value', match);
           datalist.appendChild(option);
         }
       }
 
-      queryChanged(_, oldQuery) {
+      queryInputChanged(_, oldQuery) {
         // Debounce first initialization.
         if (typeof(oldQuery) === 'undefined') {
           return;
@@ -141,23 +140,33 @@ found in the LICENSE file.
       }
 
       latchQuery() {
-        this.query = this.q.toLowerCase();
+        this.query = (this.queryInput || '').toLowerCase();
       }
 
-      commitQuery() {
-        this.query = this.q;
+      commitQueryUnstructured() {
+        this.query = this.queryInput;
         this.dispatchEvent(new CustomEvent('commit', {
           detail: {query: this.query},
         }));
         this.shadowRoot.querySelector('.query').blur();
       }
 
-      handleKeyUp(e) {
+      commitQueryStructured() {
+        // TODO: Operate over query parse result.
+        return this.commitQueryUnstructured();
+      }
+
+      handleKeyUpUnstructured(e) {
         if (e.keyCode !== 13) {
           return;
         }
 
         this.commitQuery();
+      }
+
+      handleKeyUpStructured(e) {
+        // TODO: Parse query.
+        return this.handleKeyUpUnstructured(e);
       }
 
       handleChange(e) {
@@ -170,7 +179,10 @@ found in the LICENSE file.
         const value = e.target.value.toLowerCase();
 
         if (opts.includes(value)) {
-          this.commitQuery();
+          this.dispatchEvent(new CustomEvent('autocomplete', {
+            detail: {path: value},
+          }));
+          this.shadowRoot.querySelector('.query').blur();
         }
       }
 
@@ -180,6 +192,11 @@ found in the LICENSE file.
 
       handleBlur() {
         this.shadowRoot.querySelector('paper-tooltip').hide();
+      }
+
+      clear() {
+        this.query = '';
+        this.queryInput = '';
       }
     }
     window.customElements.define(TestSearch.is, TestSearch);
