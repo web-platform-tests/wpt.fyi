@@ -67,7 +67,6 @@ func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 	}}
-	// nils => defaults of: (1) URL string as cache key; (2) cache only HTTP 200.
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, shared.CacheStatusOK)
 	ch.ServeHTTP(w, r)
 }
