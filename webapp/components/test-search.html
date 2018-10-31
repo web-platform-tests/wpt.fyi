@@ -112,6 +112,7 @@ found in the LICENSE file.
           | "\\x21".."\\uFFFF"
       }
     `);
+    /* eslint-disable */
     const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
       _terminal: function() {
         return this.sourceString;
@@ -157,6 +158,8 @@ found in the LICENSE file.
         return {pattern: chars.eval().join('')};
       },
     });
+    /* eslint-enable */
+
     const QUERY_DEBOUNCE_ID = Symbol('query_debounce_timeout');
 
     /* global WPTFlags */
