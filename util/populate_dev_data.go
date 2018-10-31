@@ -176,6 +176,7 @@ func main() {
 	addFlag(ctx, "diffFromAPI", enabledFlag)
 	addFlag(ctx, "experimentalByDefault", enabledFlag)
 	addFlag(ctx, "experimentalAlignedExceptEdge", enabledFlag)
+	addFlag(ctx, "structuredQueries", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")
 	addData(ctx, "Uploader", []interface{}{
