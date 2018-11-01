@@ -18,12 +18,6 @@
   <script>
     /* global TestSearch */
     suite('<test-search>', () => {
-      let tsf = null;
-
-      setup(() => {
-        tsf = fixture('test-search-fixture');
-      });
-
       suite('Parser/interpreter', () => {
         const G = TestSearch.QUERY_GRAMMAR;
         const S = TestSearch.QUERY_SEMANTICS;
@@ -123,7 +117,7 @@
               },
             ],
           });
-        })
+        });
       });
     });
   </script>
