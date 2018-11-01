@@ -778,8 +778,9 @@ found in the LICENSE file.
         const detail = e.detail;
         // Fetch search results when test-search signals that user has committed
         // to search string (by pressing <Enter>).
-        this.fetchResults(this.structuredQueries ?
-          detail.structuredQuery : detail.query);
+        this.fetchResults(this.structuredQueries
+          ? detail.structuredQuery
+          : detail.query);
         // Trigger a virtual navigation.
         this.navigateToLocation(window.location);
       }
