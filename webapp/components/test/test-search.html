@@ -111,8 +111,12 @@
                   {
                     and: [
                       {browserName: 'chrome', status: 'FAIL'},
-                      {pattern: 'b'},
-                      {pattern: 'c'},
+                      {
+                        and: [
+                          {pattern: 'b'},
+                          {pattern: 'c'},
+                        ],
+                      },
                     ],
                   },
                 ],
