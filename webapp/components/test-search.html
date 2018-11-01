@@ -161,6 +161,12 @@ found in the LICENSE file.
 
     /* global WPTFlags */
     class TestSearch extends WPTFlags(window.Polymer.Element) {
+      static get QUERY_GRAMMAR() {
+        return QUERY_GRAMMAR;
+      }
+      static get QUERY_SEMANTICS() {
+        return QUERY_SEMANTICS;
+      }
       static get is() {
         return 'test-search';
       }
