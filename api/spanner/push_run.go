@@ -46,10 +46,13 @@ type PushID struct {
 	RunID int64     `json:"run_id"`
 }
 
+// RunKey is a wrapper type for run identifiers that match int64 IDs from
+// Datastore.
 type RunKey struct {
 	RunID int64
 }
 
+// Run is a record in the table specified by runsTableName.
 type Run struct {
 	RunKey
 	BrowserName     string
@@ -65,6 +68,7 @@ type Run struct {
 	Labels          []string
 }
 
+// NewRun constructs a Run record from a shared.TestRun object.
 func NewRun(r *shared.TestRun) (*Run, error) {
 	hash, err := hex.DecodeString(r.FullRevisionHash)
 	if err != nil {
@@ -86,16 +90,20 @@ func NewRun(r *shared.TestRun) (*Run, error) {
 	}, nil
 }
 
+// ResultKey is a wrapper for result identifiers detailed in "TestStatus..."
+// symbols in the shared package.
 type ResultKey struct {
 	ResultID int64
 }
 
+// Result is a record in the table specified by resultsTableName.
 type Result struct {
 	ResultKey
 	Name        string
 	Description spanner.NullString
 }
 
+// NewResult constructs a Result record from a name and description.
 func NewResult(name string, desc *string) *Result {
 	id := shared.TestStatusValueFromString(name)
 	return &Result{
@@ -105,28 +113,34 @@ func NewResult(name string, desc *string) *Result {
 	}
 }
 
+// TestKey is wrapper for test identifiers. These are derived from test and
+// subtest names using the farm.Fingerprint64() function.
 type TestKey struct {
 	TestID    int64
 	SubtestID spanner.NullInt64
 }
 
+// Test is a record in the table specified by testsTableName.
 type Test struct {
 	TestKey
 	TestName    string
 	SubtestName spanner.NullString
 }
 
+// NewTest constructs a Test record from a test and subtest name pair.
 func NewTest(name string, sub *string) *Test {
 	key := computeTestKey(name, sub)
 	subName := toNullString(sub)
 	return &Test{key, name, subName}
 }
 
+// RunResult is a record in the table specified by runResultsTableName.
 type RunResult struct {
 	RunKey
 	ResultKey
 }
 
+// RunResultTest is a record in the table specified by runResultTestsTableName.
 type RunResultTest struct {
 	RunKey
 	ResultKey
@@ -134,6 +148,9 @@ type RunResultTest struct {
 	Message spanner.NullString
 }
 
+// Structs is a collection of data that constitutes the records for a single
+// test run, structured for easy lookup for the "write run to Cloud Spanner"
+// use case.
 type Structs struct {
 	Runs           map[RunKey]*Run
 	Results        map[ResultKey]*Result
@@ -142,6 +159,7 @@ type Structs struct {
 	RunResultTests map[RunKey]map[ResultKey]map[TestKey]*RunResultTest
 }
 
+// NewStructs constructs an empty, usable Structs.
 func NewStructs() *Structs {
 	return &Structs{
 		make(map[RunKey]*Run),
@@ -152,18 +170,22 @@ func NewStructs() *Structs {
 	}
 }
 
+// AddRun adds a Run to a Structs.
 func (s *Structs) AddRun(r *Run) {
 	s.Runs[r.RunKey] = r
 }
 
+// AddResult adds a result to a Structs.
 func (s *Structs) AddResult(r *Result) {
 	s.Results[r.ResultKey] = r
 }
 
+// AddTest adds a test to a Structs.
 func (s *Structs) AddTest(t *Test) {
 	s.Tests[t.TestKey] = t
 }
 
+// AddRunResult adds a RunResult to a Structs.
 func (s *Structs) AddRunResult(run *Run, res *Result) {
 	if _, ok := s.RunResults[run.RunKey]; !ok {
 		s.RunResults[run.RunKey] = make(map[ResultKey]*RunResult)
@@ -174,6 +196,7 @@ func (s *Structs) AddRunResult(run *Run, res *Result) {
 	}
 }
 
+// AddRunResultTest adds a RunResultTest to a Structs.
 func (s *Structs) AddRunResultTest(run *Run, res *Result, t *Test, message *string) {
 	msg := toNullString(message)
 	if _, ok := s.RunResultTests[run.RunKey]; !ok {
@@ -190,6 +213,10 @@ func (s *Structs) AddRunResultTest(run *Run, res *Result, t *Test, message *stri
 	}
 }
 
+// ToMutations unpacks a Structs into three collections of Cloud Spanner
+// mutations. Due to table interleaving, the collections must be applied in
+// order; i.e., all mutations in the first collection must be applied before
+// any mutations in the second collection, and so on.
 func (s *Structs) ToMutations() ([]*spanner.Mutation, []*spanner.Mutation, []*spanner.Mutation, error) {
 	m1s := make([]*spanner.Mutation, 0, len(s.Tests)+len(s.Runs)+len(s.Results))
 	m2s := make([]*spanner.Mutation, 0, len(s.RunResults))
@@ -578,6 +605,8 @@ func computeTestKey(test string, subtest *string) TestKey {
 	return key
 }
 
+// toNullString converts a string pointer to a spanner.NullString, where
+// nil is equivalent to the spanner.NullString null value.
 func toNullString(s *string) spanner.NullString {
 	if s != nil && *s != "" {
 		return spanner.NullString{
@@ -588,6 +617,9 @@ func toNullString(s *string) spanner.NullString {
 
 	return spanner.NullString{}
 }
+
+// toNullInt64 converts a int64 pointer to a spanner.NullInt64, where
+// both nil and 0 are equivalent to the spanner.NullInt64 null value.
 func toNullInt64(n *int64) spanner.NullInt64 {
 	if n != nil && *n != 0 {
 		return spanner.NullInt64{
