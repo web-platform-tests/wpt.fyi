@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../bower_components/web-component-tester/browser.js"></script>
+
+  <link rel="import" href="util/helpers.html">
+  <link rel="import" href="../test-search.html">
+</head>
+<body>
+  <test-fixture id="test-search-fixture">
+    <template>
+      <test-search></test-search>
+    </template>
+  </test-fixture>
+
+  <script>
+    /* global waitingOn */
+    suite('<test-search>', () => {
+      let tsf = null;
+
+      setup(() => {
+        tsf = fixture('test-search-fixture');
+      });
+
+      suite('Parser/interpreter', () => {
+        let q;
+        const commitListener = e => {
+          q = e.detail.structuredQuery;
+        };
+
+        setup(() => {
+          tsf.addEventListener('commit', commitListener);
+        });
+        teardown(() => {
+          tsf.removeEventListener('commit', commitListener);
+          q = undefined;
+        });
+
+        const assertQueryEqual = (str, structuredQuery) => {
+          return waitingOn(() => q && assert.equal(structuredQuery, q));
+        };
+
+        test('simple pattern', () => {
+          return assertQueryEqual('2dcontext', {pattern: '2dcontext'});
+        });
+      });
+    });
+  </script>
+</body>
+</html>
