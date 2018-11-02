@@ -200,3 +200,10 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, 2, strings.Count(err.Error(), "Client.Timeout"))
 }
+
+func TestTaskNameRegex(t *testing.T) {
+	assert.Len(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results"), 4)
+	assert.Len(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-reftest-1"), 4)
+	assert.Len(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-testharness-5"), 4)
+	assert.Len(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-wdspec-1"), 4)
+}
