@@ -106,14 +106,14 @@ func (s statusEventPayload) IsOnMaster() bool {
 func (s statusEventPayload) HeadingBranches() branchInfos {
 	var branches branchInfos
 	for _, branch := range s.Branches {
-		if branch.Commit.SHA == s.SHA {
-			branches = append(branches, *branch)
+		if *branch.Commit.SHA == *s.SHA {
+			branches = append(branches, branch)
 		}
 	}
 	return branches
 }
 
-type branchInfos []github.Branch
+type branchInfos []*github.Branch
 
 func (b branchInfos) GetNames() []string {
 	names := make([]string, len(b))
