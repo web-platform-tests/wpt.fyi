@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -38,7 +39,8 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var diffFilter shared.DiffFilterParam
-	if diffFilter, err = shared.ParseDiffFilterParams(r); err != nil {
+	var paths mapset.Set
+	if diffFilter, paths, err = shared.ParseDiffFilterParams(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -53,13 +55,12 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	if len(beforeAndAfter) > 0 {
 		runFilter.Products = beforeAndAfter
 	}
-	if len(runFilter.Products) != 2 {
-		http.Error(w, fmt.Sprintf("Diffing requires before/after, or exactly 2 products, but found %v", len(runFilter.Products)), http.StatusBadRequest)
-		return
-	}
 	var runs shared.TestRuns
 	if runs, err = LoadTestRunsForFilters(ctx, runFilter); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} else if len(runs) != 2 {
+		http.Error(w, fmt.Sprintf("Diffing requires exactly 2 runs, but found %v", len(runFilter.Products)), http.StatusBadRequest)
 		return
 	}
 
@@ -74,7 +75,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, diffFilter)
+	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, diffFilter, paths)
 	var bytes []byte
 	if bytes, err = json.Marshal(diffJSON); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -122,12 +123,13 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var filter shared.DiffFilterParam
-	if filter, err = shared.ParseDiffFilterParams(r); err != nil {
+	var paths mapset.Set
+	if filter, paths, err = shared.ParseDiffFilterParams(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, filter)
+	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, filter, paths)
 	var bytes []byte
 	if bytes, err = json.Marshal(diffJSON); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

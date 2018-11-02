@@ -32,7 +32,8 @@ type testRunUIFilter struct {
 
 type testResultsUIFilter struct {
 	testRunUIFilter
-	Diff bool
+	Diff       bool
+	DiffFilter string
 }
 
 // This handler is responsible for all pages that display test results.
@@ -110,6 +111,11 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 		return filter, err
 	}
 	filter.Diff = diff != nil && *diff
+	diffFilter, _, err := shared.ParseDiffFilterParams(r)
+	if err != nil {
+		return filter, err
+	}
+	filter.DiffFilter = diffFilter.String()
 
 	var beforeAndAfter shared.ProductSpecs
 	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r); err != nil {
