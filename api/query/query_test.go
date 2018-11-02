@@ -45,7 +45,7 @@ func TestLoadSummaries_success(t *testing.T) {
 	}
 
 	cachedStore := shared.NewMockCachedStore(mockCtrl)
-	sh := searchHandler{queryHandler{dataSource: cachedStore}}
+	sh := unstructuredSearchHandler{queryHandler{dataSource: cachedStore}}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),
 		[]byte(`{"/x/y/z":[3,4]}`),
@@ -95,7 +95,7 @@ func TestLoadSummaries_fail(t *testing.T) {
 	}
 
 	cachedStore := shared.NewMockCachedStore(mockCtrl)
-	sh := searchHandler{queryHandler{dataSource: cachedStore}}
+	sh := unstructuredSearchHandler{queryHandler{dataSource: cachedStore}}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),
 	}
@@ -116,7 +116,7 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	si := NewMocksharedInterface(mockCtrl)
-	sh := searchHandler{queryHandler{
+	sh := unstructuredSearchHandler{queryHandler{
 		sharedImpl: si,
 	}}
 
@@ -152,7 +152,7 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	si := NewMocksharedInterface(mockCtrl)
-	sh := searchHandler{queryHandler{
+	sh := unstructuredSearchHandler{queryHandler{
 		sharedImpl: si,
 	}}
 
