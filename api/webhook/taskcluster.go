@@ -6,9 +6,6 @@ package webhook
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha1"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -38,29 +35,14 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	payload, err := verifyRequestSignature(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	ctx := appengine.NewContext(r)
 	log := shared.GetLogger(ctx)
-
-	payload, err := ioutil.ReadAll(r.Body)
-	r.Body.Close()
-	if err != nil {
-		log.Errorf("%v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	secret, err := getSecret(ctx)
-	if err != nil {
-		log.Errorf("%v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !verifySignature(payload, r.Header.Get("X-Hub-Signature"), secret) {
-		http.Error(w, "HMAC verification failed", http.StatusUnauthorized)
-		return
-	}
-
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	processed, err := handleStatusEvent(ctx, payload)
@@ -275,19 +257,6 @@ func getSecret(ctx context.Context) (token string, err error) {
 	key := datastore.NewKey(ctx, "Token", "github-tc-webhook-secret", 0, nil)
 	err = datastore.Get(ctx, key, &t)
 	return t.Secret, err
-}
-
-func verifySignature(message []byte, signature string, secret string) bool {
-	// https://developer.github.com/webhooks/securing/
-	signature = strings.TrimPrefix(signature, "sha1=")
-	messageMAC, err := hex.DecodeString(signature)
-	if err != nil {
-		return false
-	}
-	mac := hmac.New(sha1.New, []byte(secret))
-	mac.Write(message)
-	expectedMAC := mac.Sum(nil)
-	return hmac.Equal(messageMAC, expectedMAC)
 }
 
 func createAllRuns(log shared.Logger,
