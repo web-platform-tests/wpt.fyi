@@ -68,7 +68,7 @@ type structuredSearchHandler struct {
 }
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" && r.Method != "PUT" {
+	if r.Method != "GET" && r.Method != "POST" {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
 		return
 	}
