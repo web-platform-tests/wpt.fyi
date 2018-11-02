@@ -60,7 +60,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if len(runs) != 2 {
-		http.Error(w, fmt.Sprintf("Diffing requires exactly 2 runs, but found %v", len(runFilter.Products)), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Diffing requires exactly 2 runs, but found %v", len(runs)), http.StatusBadRequest)
 		return
 	}
 
