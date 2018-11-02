@@ -10,6 +10,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -81,24 +83,20 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 // https://developer.github.com/v3/activity/events/types/#statusevent
 type statusEventPayload struct {
-	SHA       string      `json:"sha"`
-	State     string      `json:"state"`
-	Context   string      `json:"context"`
-	TargetURL string      `json:"target_url"`
-	Branches  branchInfos `json:"branches"`
+	github.StatusEvent
 }
 
 func (s statusEventPayload) IsSuccess() bool {
-	return s.State == "success"
+	return s.State != nil && *s.State == "success"
 }
 
 func (s statusEventPayload) IsTaskcluster() bool {
-	return strings.HasPrefix(s.Context, "Taskcluster")
+	return s.Context != nil && strings.HasPrefix(*s.Context, "Taskcluster")
 }
 
 func (s statusEventPayload) IsOnMaster() bool {
 	for _, branch := range s.Branches {
-		if branch.Name == "master" {
+		if branch.Name != nil && *branch.Name == "master" {
 			return true
 		}
 	}
@@ -109,29 +107,20 @@ func (s statusEventPayload) HeadingBranches() branchInfos {
 	var branches branchInfos
 	for _, branch := range s.Branches {
 		if branch.Commit.SHA == s.SHA {
-			branches = append(branches, branch)
+			branches = append(branches, *branch)
 		}
 	}
 	return branches
 }
 
-type branchInfo struct {
-	Name   string     `json:"name"`
-	Commit commitInfo `json:"commit"`
-}
-
-type branchInfos []branchInfo
+type branchInfos []github.Branch
 
 func (b branchInfos) GetNames() []string {
 	names := make([]string, len(b))
 	for i := range b {
-		names[i] = b[i].Name
+		names[i] = *b[i].Name
 	}
 	return names
-}
-
-type commitInfo struct {
-	SHA string `json:"sha"`
 }
 
 func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
@@ -145,9 +134,12 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, nil
 	}
 
-	taskGroupID := extractTaskGroupID(status.TargetURL)
+	if status.TargetURL == nil {
+		return false, errors.New("No target_url on taskcluster status event")
+	}
+	taskGroupID := extractTaskGroupID(*status.TargetURL)
 	if taskGroupID == "" {
-		return false, fmt.Errorf("unrecognized target_url: %s", status.TargetURL)
+		return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
 	}
 
 	log.Infof("Processing task group %s", taskGroupID)
