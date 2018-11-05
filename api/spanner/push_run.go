@@ -606,7 +606,7 @@ func countReportResults(ctx context.Context, report *metrics.TestResultsReport) 
 // runID in Cloud Spanner.
 func countSpannerResults(ctx context.Context, client *spanner.Client, runID int64) (int64, error) {
 	params := map[string]interface{}{
-		"run_id": runID,
+		"RunID": runID,
 	}
 	s := spanner.Statement{
 		SQL:    countStmt,
