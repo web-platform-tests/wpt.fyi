@@ -177,6 +177,7 @@ func main() {
 	addFlag(ctx, "experimentalByDefault", enabledFlag)
 	addFlag(ctx, "experimentalAlignedExceptEdge", enabledFlag)
 	addFlag(ctx, "structuredQueries", enabledFlag)
+	addFlag(ctx, "masterRunsOnly", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")
 	addData(ctx, "Uploader", []interface{}{
