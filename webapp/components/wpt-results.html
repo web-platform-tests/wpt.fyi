@@ -487,7 +487,10 @@ found in the LICENSE file.
       loadData() {
         this.load(
           this.loadRuns().then(async runs => {
-            this.fetchResults();
+            // Pass current (un)structured query is passed to fetchResults().
+            const search = this.shadowRoot.querySelector('test-search');
+            this.fetchResults(
+              this.structuredQueries && search.structuredQuery || this.search);
 
             // Load a diff data into this.diffRun, if needed.
             if (this.diff && runs && runs.length === 2) {
@@ -520,7 +523,7 @@ found in the LICENSE file.
           url.searchParams.set(
             'run_ids',
             this.testRuns.map(r => r.id.toString()).join(','));
-          if (this.query) {
+          if (q) {
             url.searchParams.set('q', q);
           }
         }
