@@ -114,6 +114,39 @@ type TestRun struct {
 	Labels []string `json:"labels"`
 }
 
+// TestRunStatus is an enum for PendingTestRun statuses.
+type TestRunStatus int64
+
+// TestRunStatusCreated represents a PendingTestRun that was created, but hasn't started.
+const TestRunStatusCreated = TestRunStatus(0)
+
+// TestRunStatusRunning represents a PendingTestRun that has been announced as in-flight.
+const TestRunStatusRunning = TestRunStatus(1)
+
+// TestRunStatusProcessing represents a PendingTestRun that has completed the run,
+// and the results are being processed.
+const TestRunStatusProcessing = TestRunStatus(2)
+
+// PendingTestRun represents a TestRun that has started, but is not yet
+// completed.
+type PendingTestRun struct {
+	TestRun
+
+	Status TestRunStatus `json:"status"`
+}
+
+// CheckSuite entities represent a GitHub check request that has been noted by
+// wpt.fyi, and will cause creation of a completed check_run when results arrive
+// for the PR.
+type CheckSuite struct {
+	// SHA of the revision that requested a check suite.
+	SHA string `json:"sha"`
+	// The GitHub app installation ID for custom wpt.fyi check
+	InstallationID int64  `json:"installation"`
+	Owner          string `json:"owner"` // Owner username
+	Repo           string `json:"repo"`
+}
+
 // LabelsSet creates a set from the run's labels.
 func (run TestRun) LabelsSet() mapset.Set {
 	runLabels := mapset.NewSet()
