@@ -187,10 +187,12 @@ found in the LICENSE file.
           if ('aligned' in params) {
             batchUpdate.aligned = params.aligned;
           }
-          if (this.masterRunsOnly
-              && batchUpdate.labels && batchUpdate.labels.includes('master')) {
-            batchUpdate.master = true;
-            batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
+          if (this.masterRunsOnly) {
+            batchUpdate.master = batchUpdate.labels
+              && batchUpdate.labels.includes('master');
+            if (batchUpdate.master) {
+              batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
+            }
           }
           this.setProperties(batchUpdate);
         }
