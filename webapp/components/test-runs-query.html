@@ -78,7 +78,8 @@ found in the LICENSE file.
           if (!this.computeIsLatest(sha)) {
             params.sha = sha;
           }
-          if (this.master) {
+          if (this.masterRunsOnly && master
+              && (!labels || !labels.includes('master'))) {
             labels = (labels || []).concat('master');
           }
           if (labels && labels.length) {
@@ -186,7 +187,8 @@ found in the LICENSE file.
           if ('aligned' in params) {
             batchUpdate.aligned = params.aligned;
           }
-          if (batchUpdate.labels && batchUpdate.labels.includes('master')) {
+          if (this.masterRunsOnly
+              && batchUpdate.labels && batchUpdate.labels.includes('master')) {
             batchUpdate.master = true;
             batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
           }
