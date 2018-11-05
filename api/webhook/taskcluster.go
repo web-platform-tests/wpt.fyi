@@ -82,9 +82,7 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // https://developer.github.com/v3/activity/events/types/#statusevent
-type statusEventPayload struct {
-	github.StatusEvent
-}
+type statusEventPayload github.StatusEvent
 
 func (s statusEventPayload) IsSuccess() bool {
 	return s.State != nil && *s.State == "success"
