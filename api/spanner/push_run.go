@@ -16,6 +16,8 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/grpc/codes"
+
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/spanner"
 	retry "github.com/avast/retry-go"
@@ -36,6 +38,8 @@ const (
 	runsTableName           = "Runs"
 	runResultsTableName     = "RunResults"
 	runResultTestsTableName = "RunResultTests"
+	testNameColumnName      = "TestName"
+	subtestNameColumnName   = "SubtestName"
 	countStmt               = "SELECT COUNT(*) FROM RunResultTests WHERE RunID = @RunID"
 )
 
@@ -218,16 +222,11 @@ func (s *Structs) AddRunResultTest(run *Run, res *Result, t *Test, message *stri
 // order; i.e., all mutations in the first collection must be applied before
 // any mutations in the second collection, and so on.
 func (s *Structs) ToMutations() ([]*spanner.Mutation, []*spanner.Mutation, []*spanner.Mutation, error) {
-	m1s := make([]*spanner.Mutation, 0, len(s.Tests)+len(s.Runs)+len(s.Results))
+	m1s := make([]*spanner.Mutation, 0, len(s.Runs)+len(s.Results))
 	m2s := make([]*spanner.Mutation, 0, len(s.RunResults))
 	m3s := make([]*spanner.Mutation, 0, len(s.RunResultTests))
-	for _, t := range s.Tests {
-		m, err := spanner.InsertOrUpdateStruct(testsTableName, t)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		m1s = append(m1s, m)
-	}
+
+	// Note: Skip s.Tests, which is handled separately t avoid has collisions.
 	for _, r := range s.Runs {
 		m, err := spanner.InsertOrUpdateStruct(runsTableName, r)
 		if err != nil {
@@ -384,13 +383,74 @@ func pushRun(ctx context.Context, api API, id int64) {
 		}
 	}
 
+	log.Infof("Updating tests from %d-test run %d", len(ss.Tests), run.ID)
+
+	tErrs := make(chan error, len(ss.Tests))
+	for _, t := range ss.Tests {
+		go func(t *Test) {
+			ins, err := spanner.InsertStruct(testsTableName, t)
+			if err != nil {
+				log.Errorf("Spanner push failed to generating tests mutations: %v", err)
+				return
+			}
+
+			tErrs <- retry.Do(func() error {
+				insCtx, insCancel := context.WithTimeout(ctx, time.Second*60)
+				defer insCancel()
+
+				_, err = sClient.Apply(insCtx, []*spanner.Mutation{ins})
+				if err == nil {
+					log.Infof("Wrote new test to Spanner: %v", *t)
+					return nil
+				}
+
+				// Continue with hash collission check iff error was Cloud Spanner error
+				// "already exists". Other errors are unexpected.
+				spanErr, ok := err.(*spanner.Error)
+				if !ok || spanErr.Code != codes.AlreadyExists {
+					return err
+				}
+
+				readCtx, readCancel := context.WithTimeout(ctx, time.Second*60)
+				defer readCancel()
+
+				row, err := sClient.Single().ReadRow(readCtx, testsTableName, spanner.Key{t.TestID, t.SubtestID}, []string{testNameColumnName, subtestNameColumnName})
+				if err != nil {
+					return err
+				}
+
+				var testName string
+				err = row.ColumnByName(testNameColumnName, &testName)
+				if err != nil {
+					return err
+				}
+				var subtestName spanner.NullString
+				err = row.ColumnByName(subtestNameColumnName, &subtestName)
+				if err != nil {
+					return err
+				}
+				if t.TestName != testName || t.SubtestName != subtestName {
+					return fmt.Errorf(`Hash collision: Test identifier <%d, %v> mapped to different test+subtest names: "%s".%v != "%s".%v`, t.TestID, t.SubtestID, t.TestName, t.SubtestName, testName, subtestName)
+				}
+
+				return nil
+			})
+		}(t)
+	}
+	for err := range tErrs {
+		if err != nil {
+			log.Errorf("Spanner push failed committing test mutations: %v", err)
+			return
+		}
+	}
+
 	log.Infof("Generating row-based mutations for run %d", run.ID)
 	r1s, r2s, r3s, err := ss.ToMutations()
 	if err != nil {
 		log.Errorf("Spanner push failed to generating mutations: %v", err)
 		return
 	}
-	numRows := len(r2s) + len(r2s) + len(r3s)
+	numRows := len(r1s) + len(r2s) + len(r3s)
 	log.Infof("Generated %d rows for run %d", numRows, run.ID)
 
 	log.Infof("Writing batches for %d-row run %d", numRows, run.ID)
