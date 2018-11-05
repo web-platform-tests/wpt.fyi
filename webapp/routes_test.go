@@ -51,7 +51,6 @@ func TestRunsBoundHSTS(t *testing.T) {
 
 func TestApiDiffBoundCORS(t *testing.T) {
 	assertHandlerIs(t, "/api/diff", "api-diff")
-	assertCORS(t, "/api/diff")
 }
 
 func TestApiInteropBound(t *testing.T) {
