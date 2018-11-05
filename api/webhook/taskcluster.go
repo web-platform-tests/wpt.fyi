@@ -173,8 +173,11 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
 	defer cancel()
-	branches := status.HeadingBranches().GetNames()
-	err = createAllRuns(log, urlfetch.Client(slowCtx), api, username, password, urlsByBrowser, branches)
+	var labels []string
+	if status.IsOnMaster() {
+		labels = []string{"master"}
+	}
+	err = createAllRuns(log, urlfetch.Client(slowCtx), api, username, password, urlsByBrowser, labels)
 	if err != nil {
 		return false, err
 	}
@@ -296,7 +299,7 @@ func createAllRuns(log shared.Logger,
 	username,
 	password string,
 	urlsByBrowser map[string][]string,
-	branches []string) error {
+	labels []string) error {
 	errors := make(chan error, len(urlsByBrowser))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
@@ -304,7 +307,7 @@ func createAllRuns(log shared.Logger,
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, api, username, password, urls, branches)
+			err := createRun(client, api, username, password, urls, labels)
 			if err != nil {
 				errors <- err
 			}
@@ -323,14 +326,14 @@ func createAllRuns(log shared.Logger,
 	return nil
 }
 
-func createRun(client *http.Client, api string, username string, password string, reportURLs []string, branches []string) error {
+func createRun(client *http.Client, api string, username string, password string, reportURLs []string, labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
 	for _, url := range reportURLs {
 		payload.Add("result_url", url)
 	}
-	if branches != nil {
-		payload.Add("labels", strings.Join(branches, ","))
+	if labels != nil {
+		payload.Add("labels", strings.Join(labels, ","))
 	}
 
 	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))
