@@ -164,8 +164,10 @@ type githubCommitsComparison struct {
 }
 
 func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
+	log := shared.GetLogger(ctx)
 	secret, err := shared.GetSecret(ctx, "github-api-token")
 	if err != nil {
+		log.Debugf("Failed to load github-api-token: %s", err.Error())
 		return nil
 	}
 	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
@@ -173,7 +175,7 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	}))
 	comparison, err := compareCommits(oauthClient, "web-platform-tests", "wpt", shaBefore, shaAfter)
 	if err != nil || comparison == nil {
-		panic(err)
+		log.Errorf("Failed to fetch diff for %s...%s: %s", shaBefore[:7], shaAfter[:7], err.Error())
 		return nil
 	}
 
@@ -207,12 +209,11 @@ func compareCommits(client *http.Client, owner, repo string, base, head string) 
 	var comparison githubCommitsComparison
 	bytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = json.Unmarshal(bytes, &comparison)
 	if err != nil {
-		panic(err)
-		return nil, nil
+		return nil, err
 	}
 
 	return comp, nil
