@@ -33,7 +33,7 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 
 type diffResult struct {
 	Diff    map[string][]int  `json:"diff"`
-	Renames map[string]string `json:"renames"`
+	Renames map[string]string `json:"renames,omitempty"`
 }
 
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
@@ -182,11 +182,14 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	renames := make(map[string]string)
 	for _, file := range comparison.Files {
 		if file.Status != nil &&
-			*file.Status == "rename" &&
+			*file.Status == "renamed" &&
 			file.Filename != nil &&
 			file.PreviousFilename != nil {
 			renames["/"+*file.PreviousFilename] = "/" + *file.Filename
 		}
+	}
+	if len(renames) < 1 {
+		log.Debugf("No renames for %s...%s", shaBefore[:7], shaAfter[:7])
 	}
 	return renames
 }
