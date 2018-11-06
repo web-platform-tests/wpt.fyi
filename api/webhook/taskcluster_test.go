@@ -14,64 +14,64 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-github/github"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
+func strPtr(s string) *string {
+	return &s
+}
+
 func TestShouldProcessStatus_ok(t *testing.T) {
-	status := statusEventPayload{
-		State:    "success",
-		Context:  "Taskcluster",
-		Branches: []branchInfo{branchInfo{Name: "master"}},
-	}
+	status := statusEventPayload{}
+	status.State = strPtr("success")
+	status.Context = strPtr("Taskcluster")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
 	assert.True(t, shouldProcessStatus(&status))
 }
 
 func TestShouldProcessStatus_unsuccessful(t *testing.T) {
-	status := statusEventPayload{
-		State:    "error",
-		Context:  "Taskcluster",
-		Branches: []branchInfo{branchInfo{Name: "master"}},
-	}
+	status := statusEventPayload{}
+	status.State = strPtr("error")
+	status.Context = strPtr("Taskcluster")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
 	assert.False(t, shouldProcessStatus(&status))
 }
 
 func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
-	status := statusEventPayload{
-		State:    "success",
-		Context:  "Travis",
-		Branches: []branchInfo{branchInfo{Name: "master"}},
-	}
+	status := statusEventPayload{}
+	status.State = strPtr("success")
+	status.Context = strPtr("Travis")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
 	assert.False(t, shouldProcessStatus(&status))
 }
 
 func TestShouldProcessStatus_notOnMaster(t *testing.T) {
-	status := statusEventPayload{
-		State:    "success",
-		Context:  "Taskcluster",
-		Branches: []branchInfo{branchInfo{Name: "gh-pages"}},
-	}
+	status := statusEventPayload{}
+	status.State = strPtr("success")
+	status.Context = strPtr("Taskcluster")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr("gh-pages")}}
 	assert.False(t, shouldProcessStatus(&status))
 }
 
 func TestIsOnMaster(t *testing.T) {
-	status := statusEventPayload{
-		SHA:     "a10867b14bb761a232cd80139fbd4c0d33264240",
-		State:   "success",
-		Context: "Taskcluster",
-		Branches: []branchInfo{
-			branchInfo{
-				Name:   "master",
-				Commit: commitInfo{SHA: "a10867b14bb761a232cd80139fbd4c0d33264240"},
-			},
-			branchInfo{
-				Name:   "changes",
-				Commit: commitInfo{SHA: "34c5c7793cb3b279e22454cb6750c80560547b3a"},
-			},
-			branchInfo{
-				Name:   "gh-pages",
-				Commit: commitInfo{SHA: "fd353d4ae7c19d2268397459524f849c129944a7"},
-			},
+	status := statusEventPayload{}
+	status.SHA = strPtr("a10867b14bb761a232cd80139fbd4c0d33264240")
+	status.State = strPtr("success")
+	status.Context = strPtr("Taskcluster")
+	status.Branches = branchInfos{
+		&github.Branch{
+			Name:   strPtr("master"),
+			Commit: &github.RepositoryCommit{SHA: strPtr("a10867b14bb761a232cd80139fbd4c0d33264240")},
+		},
+		&github.Branch{
+			Name:   strPtr("changes"),
+			Commit: &github.RepositoryCommit{SHA: strPtr("34c5c7793cb3b279e22454cb6750c80560547b3a")},
+		},
+		&github.Branch{
+			Name:   strPtr("gh-pages"),
+			Commit: &github.RepositoryCommit{SHA: strPtr("fd353d4ae7c19d2268397459524f849c129944a7")},
 		},
 	}
 	assert.Equal(t, []string{"master"}, status.HeadingBranches().GetNames())

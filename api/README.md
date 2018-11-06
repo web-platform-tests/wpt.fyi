@@ -367,7 +367,7 @@ version, Sauce Labs, or custom runners), they can be overridden with the followi
 parameters in the POST payload (this is __NOT__ recommended; please include metadata in the reports
 whenever possible):
 
-* __`revision`__
+* __`revision`__ (note this should be the full revision hash, not a 10-char truncation) 
 * __`browser_name`__ (note that it is not called `product` here)
 * __`browser_version`__
 * __`os_name`__ (note that it is not called `os` here)
