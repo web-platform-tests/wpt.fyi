@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,7 +9,10 @@ import (
 	"net/url"
 
 	mapset "github.com/deckarep/golang-set"
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+
+	"golang.org/x/oauth2"
 )
 
 // apiDiffHandler takes 2 test-run results JSON blobs and produces JSON in the same format, with only the differences
@@ -25,6 +29,11 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, fmt.Sprintf("invalid HTTP method %s", r.Method), http.StatusBadRequest)
 	}
+}
+
+type diffResult struct {
+	Diff    map[string][]int  `json:"diff"`
+	Renames map[string]string `json:"renames"`
 }
 
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
@@ -75,9 +84,14 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, diffFilter, paths)
+	diff := diffResult{
+		Diff: shared.GetResultsDiff(beforeJSON, afterJSON, diffFilter, paths),
+	}
+	if shared.IsFeatureEnabled(ctx, "diffRenames") {
+		diff.Renames = getDiffRenames(ctx, runs[0].FullRevisionHash, runs[1].FullRevisionHash)
+	}
 	var bytes []byte
-	if bytes, err = json.Marshal(diffJSON); err != nil {
+	if bytes, err = json.Marshal(diff); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -136,4 +150,70 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(bytes)
+}
+
+// Wrappers for including a missing field in go-github
+type githubCommitFile struct {
+	github.CommitFile
+	PreviousFilename *string `json:"previous_filename,omitempty"`
+}
+
+type githubCommitsComparison struct {
+	github.CommitsComparison
+	Files []githubCommitFile
+}
+
+func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
+	secret, err := shared.GetSecret(ctx, "github-api-token")
+	if err != nil {
+		return nil
+	}
+	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: secret,
+	}))
+	comparison, err := compareCommits(oauthClient, "web-platform-tests", "wpt", shaBefore, shaAfter)
+	if err != nil || comparison == nil {
+		panic(err)
+		return nil
+	}
+
+	renames := make(map[string]string)
+	for _, file := range comparison.Files {
+		if file.Status != nil &&
+			*file.Status == "rename" &&
+			file.Filename != nil &&
+			file.PreviousFilename != nil {
+			renames["/"+*file.PreviousFilename] = "/" + *file.Filename
+		}
+	}
+	return renames
+}
+
+func compareCommits(client *http.Client, owner, repo string, base, head string) (*githubCommitsComparison, error) {
+	u := fmt.Sprintf("https://api.github.com/repos/%v/%v/compare/%v...%v", owner, repo, base, head)
+
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	comp := new(githubCommitsComparison)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var bytes []byte
+	var comparison githubCommitsComparison
+	bytes, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(bytes, &comparison)
+	if err != nil {
+		panic(err)
+		return nil, nil
+	}
+
+	return comp, nil
 }

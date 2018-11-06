@@ -421,3 +421,41 @@ func TestGetAlignedRunSHAs(t *testing.T) {
 	shas, _, _ = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), nil, &from, nil, nil)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 }
+func TestIsFeatureEnabled(t *testing.T) {
+	i, err := sharedtest.NewAEInstance(true)
+	assert.Nil(t, err)
+	defer i.Close()
+	r, err := i.NewRequest("GET", "/", nil)
+	assert.Nil(t, err)
+	flagName := "foo"
+	ctx := shared.NewAppEngineContext(r)
+	key := datastore.NewKey(ctx, "Flag", flagName, 0, nil)
+	// No flag value.
+	assert.False(t, shared.IsFeatureEnabled(ctx, flagName))
+	// Disabled flag.
+	datastore.Put(ctx, key, &shared.Flag{Enabled: false})
+	assert.False(t, shared.IsFeatureEnabled(ctx, flagName))
+	// Enabled flag.
+	datastore.Put(ctx, key, &shared.Flag{Enabled: true})
+	assert.True(t, shared.IsFeatureEnabled(ctx, flagName))
+}
+
+func TestGetSecret(t *testing.T) {
+	i, err := sharedtest.NewAEInstance(true)
+	assert.Nil(t, err)
+	defer i.Close()
+	r, err := i.NewRequest("GET", "/", nil)
+	assert.Nil(t, err)
+	tokenName := "foo"
+	ctx := shared.NewAppEngineContext(r)
+	key := datastore.NewKey(ctx, "Token", tokenName, 0, nil)
+	secret, err := shared.GetSecret(ctx, tokenName)
+	assert.NotNil(t, err)
+	assert.Equal(t, "", secret)
+
+	// Token.
+	datastore.Put(ctx, key, &shared.Token{Secret: "bar"})
+	secret, err = shared.GetSecret(ctx, tokenName)
+	assert.Nil(t, err)
+	assert.Equal(t, "bar", secret)
+}
