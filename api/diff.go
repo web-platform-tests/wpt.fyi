@@ -160,7 +160,7 @@ type githubCommitFile struct {
 
 type githubCommitsComparison struct {
 	github.CommitsComparison
-	Files []githubCommitFile
+	Files []githubCommitFile `json:"files,omitempty"`
 }
 
 func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
