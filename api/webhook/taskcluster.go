@@ -323,8 +323,9 @@ func createAllRuns(log shared.Logger,
 func createRun(client *http.Client, sha, api string, username string, password string, reportURLs []string, labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
-	payload.Add("revision", sha[:10])
-	payload.Add("full_revision_hash", sha)
+	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
+	// parameter is the full revision hash.
+	payload.Add("revision", sha)
 	for _, url := range reportURLs {
 		payload.Add("result_url", url)
 	}
