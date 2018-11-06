@@ -352,134 +352,199 @@ func pushRun(ctx context.Context, api API, id int64) {
 		return
 	}
 
-	log.Infof("Preparing data for run %d", run.ID)
+	logger.Infof("Preparing data for run %d", run.ID)
 
 	ss := NewStructs()
 
 	r, err := NewRun(run)
 	if err != nil {
-		log.Errorf("Spanner push failed to constructing run: %v", err)
+		logger.Errorf("Spanner push failed to constructing run: %v", err)
 		return
 	}
 	ss.AddRun(r)
 
 	for _, result := range report.Results {
-		if len(result.Subtests) == 0 {
-			t := NewTest(result.Test, nil)
+		t := NewTest(result.Test, nil)
+		ss.AddTest(t)
+		res := NewResult(result.Status, nil)
+		ss.AddResult(res)
+		ss.AddRunResult(r, res)
+		ss.AddRunResultTest(r, res, t, result.Message)
+
+		names := mapset.NewSet()
+		for _, s := range result.Subtests {
+			if names.Contains(s.Name) {
+				logger.Warningf("Found test \"%s\" contains duplicate subtest name \"%s\"", result.Test, s.Name)
+			}
+			names.Add(s.Name)
+
+			t := NewTest(result.Test, &s.Name)
 			ss.AddTest(t)
-			res := NewResult(result.Status, nil)
+			res := NewResult(s.Status, nil)
 			ss.AddResult(res)
 			ss.AddRunResult(r, res)
-			ss.AddRunResultTest(r, res, t, result.Message)
-		} else {
-			for _, s := range result.Subtests {
-				t := NewTest(result.Test, &s.Name)
-				ss.AddTest(t)
-				res := NewResult(s.Status, nil)
-				ss.AddResult(res)
-				ss.AddRunResult(r, res)
-				ss.AddRunResultTest(r, res, t, s.Message)
-			}
+			ss.AddRunResultTest(r, res, t, s.Message)
 		}
 	}
+	report = nil
 
-	log.Infof("Updating tests from %d-test run %d", len(ss.Tests), run.ID)
+	s := semaphore.NewWeighted(numConcurrentBatches)
 
-	tErrs := make(chan error, len(ss.Tests))
-	for _, t := range ss.Tests {
-		go func(t *Test) {
-			ins, err := spanner.InsertStruct(testsTableName, t)
-			if err != nil {
-				log.Errorf("Spanner push failed to generating tests mutations: %v", err)
-				return
+	logger.Infof("Updating tests from %d-test run %d", len(ss.Tests), run.ID)
+
+	fatalLock := &sync.Mutex{}
+	fatalErrs := make([]error, 0)
+	reportFatal := func(err error) {
+		fatalLock.Lock()
+		defer fatalLock.Unlock()
+		fatalErrs = append(fatalErrs, err)
+	}
+	hasFatal := func() bool {
+		fatalLock.Lock()
+		defer fatalLock.Unlock()
+		return len(fatalErrs) > 0
+	}
+
+	writeTestBatch := func(batchSync *semaphore.Weighted, rowGroupSync *sync.WaitGroup, rows []*spanner.Mutation, tests []*Test, m, n int) {
+		defer rowGroupSync.Done()
+		defer batchSync.Release(1)
+		batch := rows[m:n]
+		ts := tests[m:n]
+
+		err := retry.Do(func() error {
+			logger.Infof("Writing test batch for %d-test run %d: [%d,%d)", len(rows), run.ID, m, n)
+
+			for i := range batch {
+				err := func(ins *spanner.Mutation, t *Test) error {
+					insCtx, insCancel := context.WithTimeout(ctx, time.Second*60)
+					defer insCancel()
+
+					_, err = sClient.Apply(insCtx, []*spanner.Mutation{ins})
+					if err == nil {
+						logger.Infof("Wrote new test to Spanner: %v", *t)
+						return nil
+					}
+
+					// Continue with hash collission check iff error was Cloud Spanner error
+					// "already exists". Other errors are unexpected.
+					spanErr, ok := err.(*spanner.Error)
+					if !ok || spanErr.Code != codes.AlreadyExists {
+						return err
+					}
+
+					readCtx, readCancel := context.WithTimeout(ctx, time.Second*60)
+					defer readCancel()
+
+					row, err := sClient.Single().ReadRow(readCtx, testsTableName, spanner.Key{t.TestID, t.SubtestID}, []string{testNameColumnName, subtestNameColumnName})
+					if err != nil {
+						return err
+					}
+
+					var testName string
+					err = row.ColumnByName(testNameColumnName, &testName)
+					if err != nil {
+						return err
+					}
+					var subtestName spanner.NullString
+					err = row.ColumnByName(subtestNameColumnName, &subtestName)
+					if err != nil {
+						return err
+					}
+					if t.TestName != testName || t.SubtestName != subtestName {
+						return fmt.Errorf(`Hash collision: Test identifier <%d, %v> mapped to different test+subtest names: "%s".%v != "%s".%v`, t.TestID, t.SubtestID, t.TestName, t.SubtestName, testName, subtestName)
+					}
+
+					return nil
+				}(batch[i], ts[i])
+
+				if err != nil {
+					return err
+				}
 			}
 
-			tErrs <- retry.Do(func() error {
-				insCtx, insCancel := context.WithTimeout(ctx, time.Second*60)
-				defer insCancel()
-
-				_, err = sClient.Apply(insCtx, []*spanner.Mutation{ins})
-				if err == nil {
-					log.Infof("Wrote new test to Spanner: %v", *t)
-					return nil
-				}
-
-				// Continue with hash collission check iff error was Cloud Spanner error
-				// "already exists". Other errors are unexpected.
-				spanErr, ok := err.(*spanner.Error)
-				if !ok || spanErr.Code != codes.AlreadyExists {
-					return err
-				}
-
-				readCtx, readCancel := context.WithTimeout(ctx, time.Second*60)
-				defer readCancel()
-
-				row, err := sClient.Single().ReadRow(readCtx, testsTableName, spanner.Key{t.TestID, t.SubtestID}, []string{testNameColumnName, subtestNameColumnName})
-				if err != nil {
-					return err
-				}
-
-				var testName string
-				err = row.ColumnByName(testNameColumnName, &testName)
-				if err != nil {
-					return err
-				}
-				var subtestName spanner.NullString
-				err = row.ColumnByName(subtestNameColumnName, &subtestName)
-				if err != nil {
-					return err
-				}
-				if t.TestName != testName || t.SubtestName != subtestName {
-					return fmt.Errorf(`Hash collision: Test identifier <%d, %v> mapped to different test+subtest names: "%s".%v != "%s".%v`, t.TestID, t.SubtestID, t.TestName, t.SubtestName, testName, subtestName)
-				}
-
-				return nil
-			})
-		}(t)
-	}
-	for err := range tErrs {
+			logger.Infof("Wrote test batch for %d-test run %d: [%d,%d)", len(rows), run.ID, m, n)
+			return nil
+		}, retry.Attempts(5), retry.OnRetry(func(n uint, err error) {
+			logger.Warningf("Retrying failed test batch for %d-test run %d: [%d,%d): %v", len(rows), run.ID, m, n, err)
+		}))
 		if err != nil {
-			log.Errorf("Spanner push failed committing test mutations: %v", err)
+			reportFatal(err)
+		}
+	}
+	writeTestRows := func(rows []*spanner.Mutation, tests []*Test) *sync.WaitGroup {
+		var wg sync.WaitGroup
+		var end int
+		for end = batchSize; end <= len(rows); end += batchSize {
+			wg.Add(1)
+			s.Acquire(ctx, 1)
+			go writeTestBatch(s, &wg, rows[0:], tests[0:], end-batchSize, end)
+		}
+		if end != len(rows) {
+			wg.Add(1)
+			s.Acquire(ctx, 1)
+			logger.Infof("Writing small test batch for %d-test run %d: [%d,%d)", len(rows), run.ID, end-batchSize, len(rows))
+			go writeTestBatch(s, &wg, rows[0:], tests[0:], end-batchSize, len(rows))
+			logger.Infof("Wrote small test batch for %d-test run %d: [%d,%d)", len(rows), run.ID, end-batchSize, len(rows))
+		}
+		return &wg
+	}
+	inss := make([]*spanner.Mutation, 0, len(ss.Tests))
+	ts := make([]*Test, 0, len(ss.Tests))
+	for _, t := range ss.Tests {
+		ins, err := spanner.InsertStruct(testsTableName, t)
+		if err != nil {
+			logger.Errorf("Spanner push failed to generating tests mutations: %v", err)
 			return
 		}
+		inss = append(inss, ins)
+		ts = append(ts, t)
 	}
 
-	log.Infof("Generating row-based mutations for run %d", run.ID)
+	logger.Infof("Writing %d tests for run %d", len(ts), run.ID)
+	writeTestRows(inss, ts).Wait()
+	if hasFatal() {
+		logger.Errorf("Spanner push failed to write tests for run %v: %v", run.ID, fatalErrs)
+		return
+	}
+	logger.Infof("Wrote tests for %d-test run %d", len(ts), run.ID)
+	inss = nil
+	ts = nil
+
+	logger.Infof("Generating row-based mutations for run %d", run.ID)
 	r1s, r2s, r3s, err := ss.ToMutations()
 	if err != nil {
-		log.Errorf("Spanner push failed to generating mutations: %v", err)
+		logger.Errorf("Spanner push failed to generating mutations: %v", err)
 		return
 	}
 	numRows := len(r1s) + len(r2s) + len(r3s)
-	log.Infof("Generated %d rows for run %d", numRows, run.ID)
+	logger.Infof("Generated %d rows for run %d", numRows, run.ID)
 
-	log.Infof("Writing batches for %d-row run %d", numRows, run.ID)
+	logger.Infof("Writing batches for %d-row run %d", numRows, run.ID)
 
-	s := semaphore.NewWeighted(numConcurrentBatches)
 	writeBatch := func(batchSync *semaphore.Weighted, rowGroupSync *sync.WaitGroup, rows []*spanner.Mutation, m, n int) {
 		defer rowGroupSync.Done()
 		defer batchSync.Release(1)
 		batch := rows[m:n]
 
 		err := retry.Do(func() error {
-			log.Infof("Writing batch for %d-row run %d: [%d,%d)", len(rows), run.ID, m, n)
+			logger.Infof("Writing batch for %d-row run %d: [%d,%d)", len(rows), run.ID, m, n)
 
 			newCtx, cancel := context.WithTimeout(ctx, time.Second*60)
 			defer cancel()
 
 			_, err := sClient.Apply(newCtx, batch)
 			if err != nil {
-				log.Errorf("Error writing batch for %d-row run %d: %v", len(rows), run.ID, err)
+				logger.Errorf("Error writing batch for %d-row run %d: %v", len(rows), run.ID, err)
 				return err
 			}
 
-			log.Infof("Wrote batch for %d-row run %d: [%d,%d)", len(rows), run.ID, m, n)
+			logger.Infof("Wrote batch for %d-row run %d: [%d,%d)", len(rows), run.ID, m, n)
 			return nil
 		}, retry.Attempts(5), retry.OnRetry(func(n uint, err error) {
-			log.Warningf("Retrying failed batch batch for %d-row run %d: [%d,%d): %v", len(rows), run.ID, m, n, err)
+			logger.Warningf("Retrying failed batch batch for %d-row run %d: [%d,%d): %v", len(rows), run.ID, m, n, err)
 		}))
 		if err != nil {
-			log.Fatal(err)
+			reportFatal(err)
 		}
 	}
 	writeRows := func(rows []*spanner.Mutation) *sync.WaitGroup {
@@ -493,23 +558,38 @@ func pushRun(ctx context.Context, api API, id int64) {
 		if end != len(rows) {
 			wg.Add(1)
 			s.Acquire(ctx, 1)
-			log.Infof("Writing small batch for %d-row run %d: [%d,%d)", len(rows), run.ID, end-batchSize, len(rows))
+			logger.Infof("Writing small batch for %d-row run %d: [%d,%d)", len(rows), run.ID, end-batchSize, len(rows))
 			go writeBatch(s, &wg, rows[0:], end-batchSize, len(rows))
-			log.Infof("Wrote small batch for %d-row run %d: [%d,%d)", len(rows), run.ID, end-batchSize, len(rows))
+			logger.Infof("Wrote small batch for %d-row run %d: [%d,%d)", len(rows), run.ID, end-batchSize, len(rows))
 		}
 		return &wg
 	}
 
-	log.Infof("Writing %d layer-1 rows run %d", len(r1s), run.ID)
+	logger.Infof("Writing %d layer-1 rows run %d", len(r1s), run.ID)
 	writeRows(r1s).Wait()
+	r1s = nil
+	if hasFatal() {
+		logger.Errorf("Spanner push failed to write layer-1 rows for run %v: %v", run.ID, fatalErrs)
+		return
+	}
 
-	log.Infof("Writing %d layer-2 rows run %d", len(r2s), run.ID)
+	logger.Infof("Writing %d layer-2 rows run %d", len(r2s), run.ID)
 	writeRows(r2s).Wait()
+	r2s = nil
+	if hasFatal() {
+		logger.Errorf("Spanner push failed to write layer-2 rows for run %v: %v", run.ID, fatalErrs)
+		return
+	}
 
-	log.Infof("Writing %d layer-3 rows run %d", len(r3s), run.ID)
+	logger.Infof("Writing %d layer-3 rows run %d", len(r3s), run.ID)
 	writeRows(r3s).Wait()
+	r3s = nil
+	if hasFatal() {
+		logger.Errorf("Spanner push failed to write layer-3 rows for run %v: %v", run.ID, fatalErrs)
+		return
+	}
 
-	log.Infof("Wrote batches for %d-row run %d", numRows, run.ID)
+	logger.Infof("Wrote batches for %d-row run %d", numRows, run.ID)
 
 	logger.Infof("Spanner push run succeeded: Wrote batches for %d rows", numRows)
 }
@@ -583,21 +663,17 @@ func loadRunReport(ctx context.Context, run *shared.TestRun) (*metrics.TestResul
 // countReportResults counts the number of meaningfully distinct test results
 // detailed in report.
 func countReportResults(ctx context.Context, report *metrics.TestResultsReport) int64 {
-	count := int64(0)
+	count := int64(len(report.Results))
 	for _, r := range report.Results {
-		if len(r.Subtests) == 0 {
-			count++
-		} else {
-			set := mapset.NewSet()
-			for _, s := range r.Subtests {
-				if set.Contains(s.Name) {
-					shared.GetLogger(ctx).Warningf("Found test \"%s\" contains duplicate subtest name \"%s\"", r.Test, s.Name)
-				} else {
-					set.Add(s.Name)
-				}
+		set := mapset.NewSet()
+		for _, s := range r.Subtests {
+			if set.Contains(s.Name) {
+				shared.GetLogger(ctx).Warningf("Found test \"%s\" contains duplicate subtest name \"%s\"", r.Test, s.Name)
+			} else {
+				set.Add(s.Name)
 			}
-			count += int64(set.Cardinality())
 		}
+		count += int64(set.Cardinality())
 	}
 	return count
 }
