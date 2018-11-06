@@ -4,9 +4,9 @@ service: spannerwrite
 
 # Should match something at https://cloud.google.com/compute/docs/machine-types.
 resources:
-  # g1-small
-  cpu: 0.5
-  memory_gb: 1.70
+  # n1-standard-2
+  cpu: 2
+  memory_gb: 7.50
 
 # Setting values under automatic_scaling yields error:
 # (gcloud.app.deploy) INVALID_ARGUMENT: VM-based automatic scaling should NOT have the following parameter(s): [auto_scaling parameter name]
