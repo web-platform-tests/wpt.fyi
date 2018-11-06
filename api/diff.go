@@ -9,6 +9,8 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
 )
 
 // apiDiffHandler takes 2 test-run results JSON blobs and produces JSON in the same format, with only the differences
@@ -30,9 +32,7 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 
-	// NOTE: We use the same params as /results, but also support
-	// 'before' and 'after' and 'filter'.
-	runFilter, err := shared.ParseTestRunFilterParams(r)
+	runIDs, err := shared.ParseRunIDsParam(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -45,18 +45,46 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var beforeAndAfter shared.ProductSpecs
-	beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	var runs shared.TestRuns
+	if len(runIDs) > 0 {
+		runs, err = runIDs.LoadTestRuns(ctx)
+		if err != nil {
+			if multiError, ok := err.(appengine.MultiError); ok {
+				all404s := true
+				for _, err := range multiError {
+					if err != datastore.ErrNoSuchEntity {
+						all404s = false
+					}
+				}
+				if all404s {
+					http.NotFound(w, r)
+					return
+				}
+			}
+		}
+	} else {
+		// NOTE: We use the same params as /results, but also support
+		// 'before' and 'after' and 'filter'.
+		runFilter, err := shared.ParseTestRunFilterParams(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var beforeAndAfter shared.ProductSpecs
+		beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if len(beforeAndAfter) > 0 {
+			runFilter.Products = beforeAndAfter
+		}
+		runs, err = LoadTestRunsForFilters(ctx, runFilter)
 	}
 
-	if len(beforeAndAfter) > 0 {
-		runFilter.Products = beforeAndAfter
-	}
-	var runs shared.TestRuns
-	if runs, err = LoadTestRunsForFilters(ctx, runFilter); err != nil {
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if len(runs) != 2 {

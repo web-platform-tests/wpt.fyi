@@ -343,7 +343,7 @@ found in the LICENSE file.
           },
           diffURL: {
             type: String,
-            computed: 'computeDiffURL(testRuns, query)',
+            computed: 'computeDiffURL(testRuns)',
           },
           diffFilter: {
             type: String,
@@ -440,20 +440,15 @@ found in the LICENSE file.
         return url;
       }
 
-      computeDiffURL(productSpecs, query) {
-        if (!productSpecs || productSpecs.length !== 2) {
+      computeDiffURL(testRuns) {
+        if (!testRuns || testRuns.length !== 2) {
           return;
         }
         let url = new URL('/api/diff', window.location);
-        url.search = query;
-        const productParams = url.searchParams.getAll('product');
-        if (productParams && productParams.length === 2) {
-          url.searchParams.delete('product');
-          url.searchParams.set('before', productParams[0]);
-          url.searchParams.set('after', productParams[1]);
+        for (const run of testRuns) {
+          url.searchParams.append('run_id', run.id);
         }
-        url.searchParams.delete('diff');
-        url.searchParams.set('filter', this.diffFilter);
+        url.searchParams.set('filter', this.filter);
         return url;
       }
 

@@ -4,6 +4,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -86,6 +87,53 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	var result68 shared.TestRun
 	json.Unmarshal(body, &result68)
 	assert.Equal(t, "68.0.3432.3", result68.BrowserVersion)
+}
+
+func TestGetTestRuns_RunIDs(t *testing.T) {
+	i, err := sharedtest.NewAEInstance(true)
+	assert.Nil(t, err)
+	defer i.Close()
+	r, err := i.NewRequest("GET", "/api/runs?run_id=123", nil)
+	assert.Nil(t, err)
+
+	ctx := shared.NewAppEngineContext(r)
+	now := time.Now()
+	run := shared.TestRun{}
+	run.BrowserVersion = "66.0.3359.139"
+	run.Revision = "abcdef0123"
+	run.CreatedAt = now.AddDate(0, 0, -1)
+	keys := make([]*datastore.Key, 2)
+
+	run.BrowserName = "chrome"
+	keys[0], _ = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	run.BrowserName = "safari"
+	keys[1], _ = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+
+	// run_id=123 from above should 404.
+	resp := httptest.NewRecorder()
+	apiTestRunsHandler(resp, r)
+	body, _ := ioutil.ReadAll(resp.Result().Body)
+	assert.Equal(t, http.StatusNotFound, resp.Code)
+
+	r, _ = i.NewRequest("GET", fmt.Sprintf("/api/runs?run_id=%v", keys[0].IntID()), nil)
+	resp = httptest.NewRecorder()
+	apiTestRunsHandler(resp, r)
+	body, _ = ioutil.ReadAll(resp.Result().Body)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var results shared.TestRuns
+	json.Unmarshal(body, &results)
+	assert.Equal(t, 1, len(results))
+	assert.Equal(t, "chrome", results[0].BrowserName)
+
+	r, _ = i.NewRequest("GET", fmt.Sprintf("/api/runs?run_ids=%v,%v", keys[1].IntID(), keys[0].IntID()), nil)
+	resp = httptest.NewRecorder()
+	apiTestRunsHandler(resp, r)
+	body, _ = ioutil.ReadAll(resp.Result().Body)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	json.Unmarshal(body, &results)
+	assert.Equal(t, 2, len(results))
+	assert.Equal(t, "safari", results[0].BrowserName)
+	assert.Equal(t, "chrome", results[1].BrowserName)
 }
 
 func TestGetTestRuns_SHA(t *testing.T) {

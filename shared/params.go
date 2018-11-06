@@ -703,7 +703,7 @@ func ParseBooleanParam(r *http.Request, name string) (result *bool, err error) {
 
 // ParseRunIDsParam parses the "run_ids" parameter. If the ID is not a valid
 // int64, an error will be returned.
-func ParseRunIDsParam(r *http.Request) (ids []int64, err error) {
+func ParseRunIDsParam(r *http.Request) (ids TestRunIDs, err error) {
 	return ParseRepeatedInt64Param(r, "run_id", "run_ids")
 }
 
