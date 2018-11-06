@@ -244,51 +244,51 @@ func TestParsePathsParam_PathsAndPath_Duplicate(t *testing.T) {
 
 func TestParsePathsParam_Paths_DiffFilter(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/diff?paths=/css&path=/css", nil)
-	filter, err := ParseDiffFilterParams(r)
+	_, paths, err := ParseDiffFilterParams(r)
 	assert.Nil(t, err)
-	assert.Equal(t, 1, filter.Paths.Cardinality())
+	assert.Equal(t, 1, paths.Cardinality())
 }
 
 func TestParseDiffFilterParam(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/diff?filter=A", nil)
-	filter, _ := ParseDiffFilterParams(r)
+	filter, _, _ := ParseDiffFilterParams(r)
 	assert.Equal(t, DiffFilterParam{Added: true, Deleted: false, Changed: false}, filter)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/diff?filter=D", nil)
-	filter, _ = ParseDiffFilterParams(r)
+	filter, _, _ = ParseDiffFilterParams(r)
 	assert.Equal(t, DiffFilterParam{Added: false, Deleted: true, Changed: false}, filter)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/diff?filter=C", nil)
-	filter, _ = ParseDiffFilterParams(r)
+	filter, _, _ = ParseDiffFilterParams(r)
 	assert.Equal(t, DiffFilterParam{Added: false, Deleted: false, Changed: true}, filter)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/diff?filter=CAD", nil)
-	filter, _ = ParseDiffFilterParams(r)
+	filter, _, _ = ParseDiffFilterParams(r)
 	assert.Equal(t, DiffFilterParam{Added: true, Deleted: true, Changed: true}, filter)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/diff?filter=CD", nil)
-	filter, _ = ParseDiffFilterParams(r)
+	filter, _, _ = ParseDiffFilterParams(r)
 	assert.Equal(t, DiffFilterParam{Added: false, Deleted: true, Changed: true}, filter)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/diff?filter=CACA", nil)
-	filter, _ = ParseDiffFilterParams(r)
+	filter, _, _ = ParseDiffFilterParams(r)
 	assert.Equal(t, DiffFilterParam{Added: true, Deleted: false, Changed: true}, filter)
 
 	r = httptest.NewRequest("GET", "http://wpt.fyi/api/diff?filter=U", nil)
-	filter, _ = ParseDiffFilterParams(r)
+	filter, _, _ = ParseDiffFilterParams(r)
 	assert.Equal(t, DiffFilterParam{Unchanged: true}, filter)
 }
 
 func TestParseDiffFilterParam_Empty(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/diff", nil)
-	filter, err := ParseDiffFilterParams(r)
+	filter, _, err := ParseDiffFilterParams(r)
 	assert.Nil(t, err)
 	assert.Equal(t, DiffFilterParam{Added: true, Deleted: true, Changed: true, Unchanged: false}, filter)
 }
 
 func TestParseDiffFilterParam_Invalid(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/diff?filter=Z", nil)
-	_, err := ParseDiffFilterParams(r)
+	_, _, err := ParseDiffFilterParams(r)
 	assert.NotNil(t, err)
 }
 

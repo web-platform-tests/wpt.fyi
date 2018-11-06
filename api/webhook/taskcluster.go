@@ -10,6 +10,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -82,25 +84,19 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // https://developer.github.com/v3/activity/events/types/#statusevent
-type statusEventPayload struct {
-	SHA       string      `json:"sha"`
-	State     string      `json:"state"`
-	Context   string      `json:"context"`
-	TargetURL string      `json:"target_url"`
-	Branches  branchInfos `json:"branches"`
-}
+type statusEventPayload github.StatusEvent
 
 func (s statusEventPayload) IsSuccess() bool {
-	return s.State == "success"
+	return s.State != nil && *s.State == "success"
 }
 
 func (s statusEventPayload) IsTaskcluster() bool {
-	return strings.HasPrefix(s.Context, "Taskcluster")
+	return s.Context != nil && strings.HasPrefix(*s.Context, "Taskcluster")
 }
 
 func (s statusEventPayload) IsOnMaster() bool {
 	for _, branch := range s.Branches {
-		if branch.Name == "master" {
+		if branch.Name != nil && *branch.Name == "master" {
 			return true
 		}
 	}
@@ -110,30 +106,21 @@ func (s statusEventPayload) IsOnMaster() bool {
 func (s statusEventPayload) HeadingBranches() branchInfos {
 	var branches branchInfos
 	for _, branch := range s.Branches {
-		if branch.Commit.SHA == s.SHA {
+		if *branch.Commit.SHA == *s.SHA {
 			branches = append(branches, branch)
 		}
 	}
 	return branches
 }
 
-type branchInfo struct {
-	Name   string     `json:"name"`
-	Commit commitInfo `json:"commit"`
-}
-
-type branchInfos []branchInfo
+type branchInfos []*github.Branch
 
 func (b branchInfos) GetNames() []string {
 	names := make([]string, len(b))
 	for i := range b {
-		names[i] = b[i].Name
+		names[i] = *b[i].Name
 	}
 	return names
-}
-
-type commitInfo struct {
-	SHA string `json:"sha"`
 }
 
 func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
@@ -147,9 +134,12 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, nil
 	}
 
-	taskGroupID := extractTaskGroupID(status.TargetURL)
+	if status.TargetURL == nil {
+		return false, errors.New("No target_url on taskcluster status event")
+	}
+	taskGroupID := extractTaskGroupID(*status.TargetURL)
 	if taskGroupID == "" {
-		return false, fmt.Errorf("unrecognized target_url: %s", status.TargetURL)
+		return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
 	}
 
 	log.Infof("Processing task group %s", taskGroupID)
@@ -175,8 +165,11 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
 	defer cancel()
-	branches := status.HeadingBranches().GetNames()
-	err = createAllRuns(log, urlfetch.Client(slowCtx), api, status.SHA, username, password, urlsByBrowser, branches)
+	var labels []string
+	if status.IsOnMaster() {
+		labels = []string{"master"}
+	}
+	err = createAllRuns(log, urlfetch.Client(slowCtx), api, *status.SHA, username, password, urlsByBrowser, labels)
 	if err != nil {
 		return false, err
 	}
@@ -300,7 +293,7 @@ func createAllRuns(log shared.Logger,
 	username,
 	password string,
 	urlsByBrowser map[string][]string,
-	branches []string) error {
+	labels []string) error {
 	errors := make(chan error, len(urlsByBrowser))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
@@ -308,7 +301,7 @@ func createAllRuns(log shared.Logger,
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, sha, api, username, password, urls, branches)
+			err := createRun(client, sha, api, username, password, urls, labels)
 			if err != nil {
 				errors <- err
 			}
@@ -327,7 +320,7 @@ func createAllRuns(log shared.Logger,
 	return nil
 }
 
-func createRun(client *http.Client, sha, api, username, password string, reportURLs []string, branches []string) error {
+func createRun(client *http.Client, sha, api string, username string, password string, reportURLs []string, labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
 	payload.Add("revision", sha[:10])
@@ -335,8 +328,8 @@ func createRun(client *http.Client, sha, api, username, password string, reportU
 	for _, url := range reportURLs {
 		payload.Add("result_url", url)
 	}
-	if branches != nil {
-		payload.Add("labels", strings.Join(branches, ","))
+	if labels != nil {
+		payload.Add("labels", strings.Join(labels, ","))
 	}
 
 	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))
