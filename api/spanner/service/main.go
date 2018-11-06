@@ -47,6 +47,10 @@ func spannerPushRunHandler(w http.ResponseWriter, r *http.Request) {
 
 func init() {
 	flag.Parse()
+	log.SetFormatter(&log.TextFormatter{
+		ForceColors:   true,
+		FullTimestamp: true,
+	})
 }
 
 func main() {
