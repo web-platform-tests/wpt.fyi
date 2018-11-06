@@ -91,11 +91,11 @@ func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (res
 // GetResultsDiff returns a map of test name to an array of [newly-passing, newly-failing, total-delta], for tests which had
 // different results counts in their map (which is test name to array of [count-passed, total]).
 //
-func GetResultsDiff(before map[string][]int, after map[string][]int, filter DiffFilterParam) map[string][]int {
+func GetResultsDiff(before map[string][]int, after map[string][]int, filter DiffFilterParam, paths mapset.Set) map[string][]int {
 	diff := make(map[string][]int)
 	if filter.Deleted || filter.Changed {
 		for test, resultsBefore := range before {
-			if !anyPathMatches(filter.Paths, test) {
+			if !anyPathMatches(paths, test) {
 				continue
 			}
 
@@ -135,7 +135,7 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 	}
 	if filter.Added {
 		for test, resultsAfter := range after {
-			if !anyPathMatches(filter.Paths, test) {
+			if !anyPathMatches(paths, test) {
 				continue
 			}
 

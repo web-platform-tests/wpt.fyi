@@ -553,15 +553,29 @@ type DiffFilterParam struct {
 	// Unchanged tests are present in both the 'before' and 'after' states of the diff,
 	// and the number of passes, failures, or total tests is unchanged.
 	Unchanged bool
+}
 
-	// Set of test paths to include, or include all tests if nil.
-	Paths mapset.Set
+func (d DiffFilterParam) String() string {
+	s := ""
+	if d.Added {
+		s += "A"
+	}
+	if d.Deleted {
+		s += "D"
+	}
+	if d.Changed {
+		s += "C"
+	}
+	if d.Unchanged {
+		s += "U"
+	}
+	return s
 }
 
 // ParseDiffFilterParams collects the diff filtering params for the given request.
 // It splits the filter param into the differences to include. The filter param is inspired by Git's --diff-filter flag.
 // It also adds the set of test paths to include; see ParsePathsParam below.
-func ParseDiffFilterParams(r *http.Request) (param DiffFilterParam, err error) {
+func ParseDiffFilterParams(r *http.Request) (param DiffFilterParam, paths mapset.Set, err error) {
 	param = DiffFilterParam{
 		Added:   true,
 		Deleted: true,
@@ -580,12 +594,11 @@ func ParseDiffFilterParams(r *http.Request) (param DiffFilterParam, err error) {
 			case 'U':
 				param.Unchanged = true
 			default:
-				return param, fmt.Errorf("invalid filter character %c", char)
+				return param, nil, fmt.Errorf("invalid filter character %c", char)
 			}
 		}
 	}
-	param.Paths = NewSetFromStringSlice(ParsePathsParam(r))
-	return param, nil
+	return param, NewSetFromStringSlice(ParsePathsParam(r)), nil
 }
 
 // ParsePathsParam returns a set list of test paths to include, or nil if no

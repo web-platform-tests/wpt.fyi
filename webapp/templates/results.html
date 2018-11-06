@@ -9,6 +9,7 @@
         {{ template "_test_run_query_params.html" .Filter }}
         {{- with .Filter}}
           {{- if .Diff}} diff{{end}}
+          {{- if .DiffFilter}} diff-filter="{{.DiffFilter}}"{{end}}
         {{- end}}
         {{- if .Query }} search="{{.Query}}"{{end}}></wpt-results>
   </div>
