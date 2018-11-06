@@ -185,8 +185,12 @@ func (s *Structs) AddResult(r *Result) {
 }
 
 // AddTest adds a test to a Structs.
-func (s *Structs) AddTest(t *Test) {
+func (s *Structs) AddTest(t *Test) error {
+	if _, ok := s.Tests[t.TestKey]; ok {
+		return fmt.Errorf(`Duplicate add of test with key %v`, t.TestKey)
+	}
 	s.Tests[t.TestKey] = t
+	return nil
 }
 
 // AddRunResult adds a RunResult to a Structs.
@@ -214,6 +218,29 @@ func (s *Structs) AddRunResultTest(run *Run, res *Result, t *Test, message *stri
 		RunKey:    run.RunKey,
 		ResultKey: res.ResultKey,
 		Message:   msg,
+	}
+}
+
+// RemoveTestData removes all data associated with a test, cascading removals of
+// nested/interleaved data when the removed test was the last entry associated
+// with the nested/interleaved run and/or result.
+func (s *Structs) RemoveTestData(t *Test) {
+	delete(s.Tests, t.TestKey)
+	for k1 := range s.RunResultTests {
+		for k2 := range s.RunResultTests[k1] {
+			if _, ok := s.RunResultTests[k1][k2][t.TestKey]; ok {
+				delete(s.RunResultTests[k1][k2], t.TestKey)
+				if len(s.RunResultTests[k1][k2]) == 0 {
+					delete(s.RunResultTests[k1], k2)
+					delete(s.RunResults[k1], k2)
+				}
+				if len(s.RunResultTests[k1]) == 0 {
+					delete(s.RunResultTests, k1)
+					delete(s.RunResults, k1)
+					delete(s.Runs, k1)
+				}
+			}
+		}
 	}
 }
 
@@ -263,6 +290,41 @@ func (s *Structs) ToMutations() ([]*spanner.Mutation, []*spanner.Mutation, []*sp
 	}
 
 	return m1s, m2s, m3s, nil
+}
+
+// ConcurrentSlice is a slice that supports concurrent read/write.
+type ConcurrentSlice struct {
+	m *sync.RWMutex
+	s []interface{}
+}
+
+// Append adds a single value to the underlying slice.
+func (s *ConcurrentSlice) Append(v interface{}) {
+	s.m.Lock()
+	defer s.m.Unlock()
+	s.s = append(s.s, v)
+}
+
+// Len returns the length of the underlying slice.
+func (s *ConcurrentSlice) Len() int {
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return len(s.s)
+}
+
+// Slice returns a copy of the underlying slice.
+func (s *ConcurrentSlice) Slice() []interface{} {
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return s.s[0:]
+}
+
+// NewConcurrentSlice initializes a new ConcurrentSlice.
+func NewConcurrentSlice() *ConcurrentSlice {
+	return &ConcurrentSlice{
+		m: &sync.RWMutex{},
+		s: make([]interface{}, 0),
+	}
 }
 
 // HandlePushRun handles a request to push a test run to Cloud Spanner.
@@ -365,11 +427,15 @@ func pushRun(ctx context.Context, api API, id int64) {
 
 	for _, result := range report.Results {
 		t := NewTest(result.Test, nil)
-		ss.AddTest(t)
-		res := NewResult(result.Status, nil)
-		ss.AddResult(res)
-		ss.AddRunResult(r, res)
-		ss.AddRunResultTest(r, res, t, result.Message)
+		err := ss.AddTest(t)
+		if err != nil {
+			logger.Warningf("Error adding test from report: %v", err)
+		} else {
+			res := NewResult(result.Status, nil)
+			ss.AddResult(res)
+			ss.AddRunResult(r, res)
+			ss.AddRunResultTest(r, res, t, result.Message)
+		}
 
 		names := mapset.NewSet()
 		for _, s := range result.Subtests {
@@ -379,11 +445,15 @@ func pushRun(ctx context.Context, api API, id int64) {
 			names.Add(s.Name)
 
 			t := NewTest(result.Test, &s.Name)
-			ss.AddTest(t)
-			res := NewResult(s.Status, nil)
-			ss.AddResult(res)
-			ss.AddRunResult(r, res)
-			ss.AddRunResultTest(r, res, t, s.Message)
+			err := ss.AddTest(t)
+			if err != nil {
+				logger.Warningf("Error adding test from report: %v", err)
+			} else {
+				res := NewResult(s.Status, nil)
+				ss.AddResult(res)
+				ss.AddRunResult(r, res)
+				ss.AddRunResultTest(r, res, t, s.Message)
+			}
 		}
 	}
 	report = nil
@@ -392,18 +462,8 @@ func pushRun(ctx context.Context, api API, id int64) {
 
 	logger.Infof("Updating tests from %d-test run %d", len(ss.Tests), run.ID)
 
-	fatalLock := &sync.Mutex{}
-	fatalErrs := make([]error, 0)
-	reportFatal := func(err error) {
-		fatalLock.Lock()
-		defer fatalLock.Unlock()
-		fatalErrs = append(fatalErrs, err)
-	}
-	hasFatal := func() bool {
-		fatalLock.Lock()
-		defer fatalLock.Unlock()
-		return len(fatalErrs) > 0
-	}
+	fatalErrs := NewConcurrentSlice()
+	hashCollisions := NewConcurrentSlice()
 
 	writeTestBatch := func(batchSync *semaphore.Weighted, rowGroupSync *sync.WaitGroup, rows []*spanner.Mutation, tests []*Test, m, n int) {
 		defer rowGroupSync.Done()
@@ -451,7 +511,8 @@ func pushRun(ctx context.Context, api API, id int64) {
 						return err
 					}
 					if t.TestName != testName || t.SubtestName != subtestName {
-						return fmt.Errorf(`Hash collision: Test identifier <%d, %v> mapped to different test+subtest names: "%s".%v != "%s".%v`, t.TestID, t.SubtestID, t.TestName, t.SubtestName, testName, subtestName)
+						hashCollisions.Append(t)
+						logger.Errorf(`Hash collision: Test identifier <%d, %v> mapped to different test+subtest names: "%s".%v != "%s".%v`, t.TestID, t.SubtestID, t.TestName, t.SubtestName, testName, subtestName)
 					}
 
 					return nil
@@ -468,7 +529,7 @@ func pushRun(ctx context.Context, api API, id int64) {
 			logger.Warningf("Retrying failed test batch for %d-test run %d: [%d,%d): %v", len(rows), run.ID, m, n, err)
 		}))
 		if err != nil {
-			reportFatal(err)
+			fatalErrs.Append(err)
 		}
 	}
 	writeTestRows := func(rows []*spanner.Mutation, tests []*Test) *sync.WaitGroup {
@@ -502,13 +563,18 @@ func pushRun(ctx context.Context, api API, id int64) {
 
 	logger.Infof("Writing %d tests for run %d", len(ts), run.ID)
 	writeTestRows(inss, ts).Wait()
-	if hasFatal() {
-		logger.Errorf("Spanner push failed to write tests for run %v: %v", run.ID, fatalErrs)
+	if fatalErrs.Len() > 0 {
+		logger.Errorf("Spanner push failed to write tests for run %v: %v", run.ID, fatalErrs.Slice())
 		return
 	}
 	logger.Infof("Wrote tests for %d-test run %d", len(ts), run.ID)
 	inss = nil
 	ts = nil
+
+	for _, i := range hashCollisions.Slice() {
+		t := i.(*Test)
+		ss.RemoveTestData(t)
+	}
 
 	logger.Infof("Generating row-based mutations for run %d", run.ID)
 	r1s, r2s, r3s, err := ss.ToMutations()
@@ -544,7 +610,7 @@ func pushRun(ctx context.Context, api API, id int64) {
 			logger.Warningf("Retrying failed batch batch for %d-row run %d: [%d,%d): %v", len(rows), run.ID, m, n, err)
 		}))
 		if err != nil {
-			reportFatal(err)
+			fatalErrs.Append(err)
 		}
 	}
 	writeRows := func(rows []*spanner.Mutation) *sync.WaitGroup {
@@ -568,24 +634,24 @@ func pushRun(ctx context.Context, api API, id int64) {
 	logger.Infof("Writing %d layer-1 rows run %d", len(r1s), run.ID)
 	writeRows(r1s).Wait()
 	r1s = nil
-	if hasFatal() {
-		logger.Errorf("Spanner push failed to write layer-1 rows for run %v: %v", run.ID, fatalErrs)
+	if fatalErrs.Len() > 0 {
+		logger.Errorf("Spanner push failed to write layer-1 rows for run %v: %v", run.ID, fatalErrs.Slice())
 		return
 	}
 
 	logger.Infof("Writing %d layer-2 rows run %d", len(r2s), run.ID)
 	writeRows(r2s).Wait()
 	r2s = nil
-	if hasFatal() {
-		logger.Errorf("Spanner push failed to write layer-2 rows for run %v: %v", run.ID, fatalErrs)
+	if fatalErrs.Len() > 0 {
+		logger.Errorf("Spanner push failed to write layer-2 rows for run %v: %v", run.ID, fatalErrs.Slice())
 		return
 	}
 
 	logger.Infof("Writing %d layer-3 rows run %d", len(r3s), run.ID)
 	writeRows(r3s).Wait()
 	r3s = nil
-	if hasFatal() {
-		logger.Errorf("Spanner push failed to write layer-3 rows for run %v: %v", run.ID, fatalErrs)
+	if fatalErrs.Len() > 0 {
+		logger.Errorf("Spanner push failed to write layer-3 rows for run %v: %v", run.ID, fatalErrs.Slice())
 		return
 	}
 
