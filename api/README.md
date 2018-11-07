@@ -29,7 +29,7 @@ Also see [results creation](#results-creation) for endpoints to add new data.
 
 ### /api/runs
 
-Gets the TestRun metadata for all runs for a given SHA[0:10].
+Gets the TestRun metadata for all runs for a given SHA[0:10], sorted by `time_start` descending.
 
 __Parameters__
 
