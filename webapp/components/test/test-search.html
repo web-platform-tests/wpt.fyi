@@ -19,9 +19,9 @@
     /* global TestSearch */
     suite('<test-search>', () => {
       suite('Parser/interpreter', () => {
-        const G = TestSearch.QUERY_GRAMMAR;
-        const S = TestSearch.QUERY_SEMANTICS;
         const assertQueryParse = (query, structuredQuery) => {
+          const G = TestSearch.QUERY_GRAMMAR;
+          const S = TestSearch.QUERY_SEMANTICS;
           const p = G.match(query);
           assert.isTrue(p.succeeded());
           assert.deepEqual(structuredQuery, S(p).eval());
