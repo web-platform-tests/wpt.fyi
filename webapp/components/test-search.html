@@ -38,11 +38,135 @@ found in the LICENSE file.
     </div>
   </template>
 
+  <script type="text/javascript" src="https://unpkg.com/ohm-js@latest/dist/ohm.min.js"></script>
   <script>
+    /* global ohm */
+    const QUERY_GRAMMAR = ohm.grammar(`
+      Query {
+        Q = ListOf<Exp, space*>
+
+        Exp = NonemptyListOf<OrPart, or>
+
+        OrPart = NonemptyListOf<AndPart, and>
+
+        AndPart
+          = not Exp     -- not
+          | "(" Exp ")" -- paren
+          | Fragment    -- fragment
+
+        or
+          = "|"
+          | caseInsensitive<"or">
+
+        and
+          = "&"
+          | caseInsensitive<"and">
+
+        not
+          = "!"
+          | "not"
+
+        Fragment
+          = nameLiteral
+          | statusExp
+          | nameFragment
+
+        nameLiteral
+          = "\\"" nameLiteralInner "\\""
+
+        nameLiteralInner
+          = nameLiteralChar*
+
+        nameLiteralChar
+          = "\\x00".."\\x21"
+          | "\\x5D".."\\uFFFF"
+          | "\\\\" -- slash
+          | "\\"" -- quote
+
+        statusExp
+          = browserName ":" statusLiteral
+
+        browserName
+          = caseInsensitive<"chrome">
+          | caseInsensitive<"edge">
+          | caseInsensitive<"firefox">
+          | caseInsensitive<"safari">
+
+        statusLiteral
+          = caseInsensitive<"unknown">
+          | caseInsensitive<"pass">
+          | caseInsensitive<"ok">
+          | caseInsensitive<"fail">
+          | caseInsensitive<"timeout">
+          | caseInsensitive<"not_run">
+          | caseInsensitive<"error">
+
+        nameFragment = nameFragmentChar+
+
+        nameFragmentChar
+          = "\\x00".."\\x08"
+          | "\\x0E".."\\x1F"
+          | "\\x21".."\\uFFFF"
+      }
+    `);
+    /* eslint-disable */
+    const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
+      _terminal: function() {
+        return this.sourceString;
+      },
+      EmptyListOf: function() {
+        return [];
+      },
+      NonemptyListOf: function(fst, seps, rest) {
+        return [fst.eval()].concat(rest.eval());
+      },
+      Q: l => {
+        const ps = l.eval();
+        return ps.length === 0 ? {pattern: ''} : ps.length === 1 ?
+          ps[0] : {and: ps};
+      },
+      Exp: l => {
+        const ps = l.eval();
+        return ps.length === 1 ? ps[0] : {or: ps};
+      },
+      OrPart: l => {
+        const ps = l.eval();
+        return ps.length === 1 ? ps[0] : {and: ps};
+      },
+      AndPart_not: (n, p) => {
+        return {not: p.eval()};
+      },
+      AndPart_paren: (_, p, __) => p.eval(),
+      AndPart_fragment: p => p.eval(),
+      Fragment: f => f.eval(),
+      nameLiteral: (_, l, __) => {
+        return {pattern: l.eval().join('')};
+      },
+      nameLiteralInner: chars => chars.eval(),
+      nameLiteralChar_slash: (v) => '\\',
+      nameLiteralChar_quote: (v) => '"',
+      statusExp: (l, colon, r) => {
+        return {
+          browserName: l.sourceString.toLowerCase(),
+          status: r.sourceString.toUpperCase(),
+        };
+      },
+      nameFragment: (chars) => {
+        return {pattern: chars.eval().join('')};
+      },
+    });
+    /* eslint-enable */
+
     const QUERY_DEBOUNCE_ID = Symbol('query_debounce_timeout');
 
     /* global WPTFlags */
     class TestSearch extends WPTFlags(window.Polymer.Element) {
+      static get QUERY_GRAMMAR() {
+        return QUERY_GRAMMAR;
+      }
+      static get QUERY_SEMANTICS() {
+        return QUERY_SEMANTICS;
+      }
       static get is() {
         return 'test-search';
       }
@@ -64,7 +188,7 @@ found in the LICENSE file.
             notify: true,
             observer: 'queryUpdated',
           },
-          parsedQuery: Object,
+          structuredQuery: Object,
           results: {
             type: Array,
             notify: true,
@@ -78,7 +202,6 @@ found in the LICENSE file.
           onChange: Function,
           onFocus: Function,
           onBlur: Function,
-          commitQuery: Function,
         };
       }
 
@@ -88,14 +211,7 @@ found in the LICENSE file.
         this.onChange = this.handleChange.bind(this);
         this.onFocus = this.handleFocus.bind(this);
         this.onBlur = this.handleBlur.bind(this);
-
-        if (this.structuredQueries) {
-          this.onKeyUp = this.handleKeyUpStructured.bind(this);
-          this.commitQuery = this.commitQueryStructured;
-        } else {
-          this.onKeyUp = this.handleKeyUpUnstructured.bind(this);
-          this.commitQuery = this.commitQueryUnstructured;
-        }
+        this.onKeyUp = this.handleKeyUp.bind(this);
       }
 
       ready() {
@@ -106,6 +222,22 @@ found in the LICENSE file.
 
       queryUpdated(query) {
         this.queryInput = query;
+        if (this.structuredQueries) {
+          try {
+            this.structuredQuery = this.parseAndInterpretQuery(query);
+          } catch (err) {
+            // TODO: Handle query parse/interpret error.
+          }
+        }
+      }
+
+      parseAndInterpretQuery(query) {
+        const p = QUERY_GRAMMAR.match(query);
+        if (!p.succeeded()) {
+          throw new Error(`Failed to parse query: ${query}`);
+        }
+
+        return QUERY_SEMANTICS(p).eval();
       }
 
       updateDatalist(query, paths) {
@@ -143,30 +275,23 @@ found in the LICENSE file.
         this.query = (this.queryInput || '').toLowerCase();
       }
 
-      commitQueryUnstructured() {
+      commitQuery() {
         this.query = this.queryInput;
         this.dispatchEvent(new CustomEvent('commit', {
-          detail: {query: this.query},
+          detail: {
+            query: this.query,
+            structuredQuery: this.structuredQuery,
+          },
         }));
         this.shadowRoot.querySelector('.query').blur();
       }
 
-      commitQueryStructured() {
-        // TODO: Operate over query parse result.
-        return this.commitQueryUnstructured();
-      }
-
-      handleKeyUpUnstructured(e) {
+      handleKeyUp(e) {
         if (e.keyCode !== 13) {
           return;
         }
 
         this.commitQuery();
-      }
-
-      handleKeyUpStructured(e) {
-        // TODO: Parse query.
-        return this.handleKeyUpUnstructured(e);
       }
 
       handleChange(e) {

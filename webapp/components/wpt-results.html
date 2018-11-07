@@ -353,10 +353,6 @@ found in the LICENSE file.
             type: Boolean,
             value: false,
           },
-          searchURL: {
-            type: String,
-            computed: 'computeSearchURL(testRuns, search)',
-          },
           resultsLoadFailed: Boolean,
           noResults: Boolean,
           onSearchCommit: Function,
@@ -421,23 +417,6 @@ found in the LICENSE file.
       computeDisplayedTests(path, searchResults) {
         return searchResults.map(r => r.test)
           .filter(name => name.startsWith(path));
-      }
-
-      computeSearchURL(testRuns, query) {
-        if (!testRuns || testRuns.length === 0) {
-          return '';
-        }
-
-        let url = new URL('/api/search', window.location);
-        if (testRuns) {
-          url.searchParams.set(
-            'run_ids',
-            testRuns.map(r => r.id.toString()).join(','));
-        }
-        if (query) {
-          url.searchParams.set('q', query);
-        }
-        return url;
       }
 
       computeDiffURL(productSpecs, query) {
@@ -512,7 +491,10 @@ found in the LICENSE file.
       loadData() {
         this.load(
           this.loadRuns().then(async runs => {
-            this.fetchResults();
+            // Pass current (un)structured query is passed to fetchResults().
+            const search = this.shadowRoot.querySelector('test-search');
+            this.fetchResults(
+              this.structuredQueries && search.structuredQuery || this.search);
 
             // Load a diff data into this.diffRun, if needed.
             if (this.diff && runs && runs.length === 2) {
@@ -526,20 +508,39 @@ found in the LICENSE file.
         );
       }
 
-      fetchResults() {
-        this.load(
-          window.fetch(this.searchURL)
-            .then(r => {
-              if (!r.ok || r.status !== 200) {
-                return Promise.reject('Failed to fetch results data.');
-              }
-              return r.json();
-            })
-            .then(json => {
-              this.searchResults = json.results;
-              this.refreshDisplayedNodes();
-            })
-        );
+      fetchResults(q) {
+        if (!this.testRuns || !this.testRuns.length) {
+          return;
+        }
+
+        let url = new URL('/api/search', window.location);
+        let fetchOpts;
+        if (this.structuredQueries) {
+          fetchOpts = {
+            method: 'POST',
+            body: JSON.stringify({
+              run_ids: this.testRuns.map(r => r.id),
+              query: q,
+            }),
+          };
+        } else {
+          url.searchParams.set(
+            'run_ids',
+            this.testRuns.map(r => r.id.toString()).join(','));
+          if (q) {
+            url.searchParams.set('q', q);
+          }
+        }
+
+        this.load(window.fetch(url, fetchOpts).then(r => {
+          if (!r.ok || r.status !== 200) {
+            return Promise.reject('Failed to fetch results data.');
+          }
+          return r.json();
+        }).then(json => {
+          this.searchResults = json.results;
+          this.refreshDisplayedNodes();
+        }));
       }
 
       fetchDiff() {
@@ -780,10 +781,13 @@ found in the LICENSE file.
         this.navigateToPath(e.detail.path);
       }
 
-      handleSearchCommit() {
+      handleSearchCommit(e) {
+        const detail = e.detail;
         // Fetch search results when test-search signals that user has committed
         // to search string (by pressing <Enter>).
-        this.fetchResults();
+        this.fetchResults(this.structuredQueries
+          ? detail.structuredQuery
+          : detail.query);
         // Trigger a virtual navigation.
         this.navigateToLocation(window.location);
       }
