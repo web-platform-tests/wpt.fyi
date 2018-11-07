@@ -195,7 +195,9 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 }
 
 func compareCommits(client *http.Client, owner, repo string, base, head string) (*githubCommitsComparison, error) {
-	u := fmt.Sprintf("https://api.github.com/repos/%v/%v/compare/%v...%v", owner, repo, base, head)
+	// NOTE(lukebjerring): We use double-dot because in general our use-case is across 2 revisions of master,
+	// and GitHub seems to not consider changes when using ... in a backward direction.
+	u := fmt.Sprintf("https://api.github.com/repos/%v/%v/compare/%v..%v", owner, repo, base, head)
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
@@ -209,12 +211,11 @@ func compareCommits(client *http.Client, owner, repo string, base, head string) 
 	}
 
 	var bytes []byte
-	var comparison githubCommitsComparison
 	bytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	err = json.Unmarshal(bytes, &comparison)
+	err = json.Unmarshal(bytes, comp)
 	if err != nil {
 		return nil, err
 	}
