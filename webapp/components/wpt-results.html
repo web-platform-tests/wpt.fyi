@@ -427,7 +427,7 @@ found in the LICENSE file.
         for (const run of testRuns) {
           url.searchParams.append('run_id', run.id);
         }
-        url.searchParams.set('filter', this.filter);
+        url.searchParams.set('filter', this.diffFilter);
         return url;
       }
 

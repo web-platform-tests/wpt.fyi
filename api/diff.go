@@ -65,19 +65,16 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// NOTE: We use the same params as /results, but also support
 		// 'before' and 'after' and 'filter'.
-		runFilter, err := shared.ParseTestRunFilterParams(r)
-		if err != nil {
+		runFilter, parseErr := shared.ParseTestRunFilterParams(r)
+		if parseErr != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		var beforeAndAfter shared.ProductSpecs
-		beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r)
-		if err != nil {
+		beforeAndAfter, parseErr := shared.ParseBeforeAndAfterParams(r)
+		if parseErr != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
 		if len(beforeAndAfter) > 0 {
 			runFilter.Products = beforeAndAfter
 		}
