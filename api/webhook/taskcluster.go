@@ -28,8 +28,10 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+const flagTaskclusterAllBranches = "taskclusterAllBranches"
+
 var (
-	taskNameRegex          = regexp.MustCompile(`^wpt-(.*)-(testharness|reftest|wdspec)-\d+$`)
+	taskNameRegex          = regexp.MustCompile(`^wpt-(\w+)-(\w+)-(testharness|reftest|wdspec|results)(?:-\d+)?$`)
 	resultsReceiverTimeout = time.Minute
 )
 
@@ -128,7 +130,8 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	if !shouldProcessStatus(&status) {
+	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
+	if !shouldProcessStatus(processAllBranches, &status) {
 		return false, nil
 	}
 
@@ -167,7 +170,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	if status.IsOnMaster() {
 		labels = []string{"master"}
 	}
-	err = createAllRuns(log, urlfetch.Client(slowCtx), api, username, password, urlsByBrowser, labels)
+	err = createAllRuns(log, urlfetch.Client(slowCtx), api, *status.SHA, username, password, urlsByBrowser, labels)
 	if err != nil {
 		return false, err
 	}
@@ -175,10 +178,11 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	return true, nil
 }
 
-func shouldProcessStatus(status *statusEventPayload) bool {
-	return status.IsSuccess() &&
-		status.IsTaskcluster() &&
-		status.IsOnMaster()
+func shouldProcessStatus(processAllBranches bool, status *statusEventPayload) bool {
+	if !status.IsSuccess() || !status.IsTaskcluster() {
+		return false
+	}
+	return processAllBranches || status.IsOnMaster()
 }
 
 func extractTaskGroupID(targetURL string) string {
@@ -238,10 +242,10 @@ func extractResultURLs(group *taskGroupInfo) (map[string][]string, error) {
 		}
 
 		matches := taskNameRegex.FindStringSubmatch(task.Task.Metadata.Name)
-		if len(matches) != 3 { // full match, browser, test type
-			return nil, fmt.Errorf("error parsing the name of task %s: %s", taskID, task.Task.Metadata.Name)
+		if len(matches) != 4 { // full match, browser, channel, test type
+			continue
 		}
-		browser := matches[1]
+		browser := fmt.Sprintf("%s-%s", matches[1], matches[2])
 
 		resultURLs[browser] = append(resultURLs[browser],
 			// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
@@ -286,6 +290,7 @@ func verifySignature(message []byte, signature string, secret string) bool {
 func createAllRuns(log shared.Logger,
 	client *http.Client,
 	api,
+	sha,
 	username,
 	password string,
 	urlsByBrowser map[string][]string,
@@ -297,7 +302,7 @@ func createAllRuns(log shared.Logger,
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, api, username, password, urls, labels)
+			err := createRun(client, sha, api, username, password, urls, labels)
 			if err != nil {
 				errors <- err
 			}
@@ -316,9 +321,12 @@ func createAllRuns(log shared.Logger,
 	return nil
 }
 
-func createRun(client *http.Client, api string, username string, password string, reportURLs []string, labels []string) error {
+func createRun(client *http.Client, sha, api string, username string, password string, reportURLs []string, labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
+	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
+	// parameter is the full revision hash.
+	payload.Add("revision", sha)
 	for _, url := range reportURLs {
 		payload.Add("result_url", url)
 	}

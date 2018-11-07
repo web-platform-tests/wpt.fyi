@@ -28,7 +28,7 @@ func TestShouldProcessStatus_ok(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.True(t, shouldProcessStatus(&status))
+	assert.True(t, shouldProcessStatus(false, &status))
 }
 
 func TestShouldProcessStatus_unsuccessful(t *testing.T) {
@@ -36,7 +36,7 @@ func TestShouldProcessStatus_unsuccessful(t *testing.T) {
 	status.State = strPtr("error")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.False(t, shouldProcessStatus(&status))
+	assert.False(t, shouldProcessStatus(false, &status))
 }
 
 func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
@@ -44,7 +44,7 @@ func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Travis")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.False(t, shouldProcessStatus(&status))
+	assert.False(t, shouldProcessStatus(false, &status))
 }
 
 func TestShouldProcessStatus_notOnMaster(t *testing.T) {
@@ -52,7 +52,8 @@ func TestShouldProcessStatus_notOnMaster(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("gh-pages")}}
-	assert.False(t, shouldProcessStatus(&status))
+	assert.False(t, shouldProcessStatus(false, &status))
+	assert.True(t, shouldProcessStatus(true, &status))
 }
 
 func TestIsOnMaster(t *testing.T) {
@@ -141,6 +142,7 @@ func TestCreateAllRuns_success(t *testing.T) {
 	err := createAllRuns(logrus.New(),
 		&http.Client{},
 		server.URL,
+		"abcdef1234abcdef1234abcdef1234abcdef1234",
 		"username",
 		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
@@ -168,6 +170,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	err := createAllRuns(logrus.New(),
 		&http.Client{},
 		server.URL,
+		"abcdef1234abcdef1234abcdef1234abcdef1234",
 		"username",
 		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
@@ -188,6 +191,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	err := createAllRuns(logrus.New(),
 		&http.Client{Timeout: time.Second},
 		server.URL,
+		"abcdef1234abcdef1234abcdef1234abcdef1234",
 		"username",
 		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
@@ -195,4 +199,11 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	)
 	assert.NotNil(t, err)
 	assert.Equal(t, 2, strings.Count(err.Error(), "Client.Timeout"))
+}
+
+func TestTaskNameRegex(t *testing.T) {
+	assert.Len(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results"), 4)
+	assert.Len(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-reftest-1"), 4)
+	assert.Len(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-testharness-5"), 4)
+	assert.Len(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-wdspec-1"), 4)
 }

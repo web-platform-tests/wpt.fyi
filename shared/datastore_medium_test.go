@@ -428,9 +428,11 @@ func TestIsFeatureEnabled(t *testing.T) {
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/", nil)
 	assert.Nil(t, err)
+
 	flagName := "foo"
 	ctx := shared.NewAppEngineContext(r)
 	key := datastore.NewKey(ctx, "Flag", flagName, 0, nil)
+
 	// No flag value.
 	assert.False(t, shared.IsFeatureEnabled(ctx, flagName))
 	// Disabled flag.
