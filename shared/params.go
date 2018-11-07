@@ -153,6 +153,14 @@ func (p ProductSpecs) Products() []Product {
 	return result
 }
 
+// OrDefault returns the current product specs, or the default if the set is empty.
+func (p ProductSpecs) OrDefault() ProductSpecs {
+	if len(p) < 1 {
+		return GetDefaultProducts()
+	}
+	return p
+}
+
 // Strings returns the array of the ProductSpec items as their string
 // representations.
 func (p ProductSpecs) Strings() []string {
@@ -487,12 +495,7 @@ func ParseProductOrBrowserParams(r *http.Request) (products ProductSpecs, err er
 // GetProductsOrDefault parses the 'products' (and legacy 'browsers') params, returning
 // the ordered list of products to include, or a default list.
 func (filter TestRunFilter) GetProductsOrDefault() (products ProductSpecs) {
-	products = filter.Products
-	// Fall back to default browser set.
-	if products == nil {
-		products = GetDefaultProducts()
-	}
-	return products
+	return filter.Products.OrDefault()
 }
 
 // ParseMaxCountParam parses the 'max-count' parameter as an integer

@@ -93,18 +93,8 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			return false, err
 		}
 
-		// Jump straight to completed check_run for already-present runs for the SHA.
-		runs, err := shared.LoadTestRuns(ctx, shared.GetDefaultProducts(), nil, sha[:10], nil, nil, nil)
-		if err != nil {
-			return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
-		}
-		createdSome := false
-		for _, run := range runs {
-			created, err := completeCheckRun(ctx, suite.SHA, run.BrowserName)
-			createdSome = createdSome || created
-			if err != nil {
-				return createdSome, err
-			}
+		if *checkSuite.Action == "rerequested" {
+			completeChecksForExistingRuns(ctx, sha)
 		}
 	}
 	return false, nil
@@ -121,10 +111,33 @@ func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
 
 	if checkRun.Action != nil &&
 		(*checkRun.Action == "created" || *checkRun.Action == "rerequested") {
-		log.Debugf("Check run %s: %s", *checkRun.Action, *checkRun.CheckRun.Name)
-		return true, nil
+		name, sha := *checkRun.CheckRun.Name, *checkRun.CheckRun.HeadSHA
+		log.Debugf("Check run %s @ %s %s", name, sha[:7], *checkRun.Action)
+		spec, err := shared.ParseProductSpec(*checkRun.CheckRun.Name)
+		if err != nil {
+			log.Errorf("Failed to parse \"%s\" as product spec")
+		}
+		return completeChecksForExistingRuns(ctx, sha, spec)
 	}
 	return false, nil
+}
+
+func completeChecksForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
+	// Jump straight to completed check_run for already-present runs for the SHA.
+	products = shared.ProductSpecs(products).OrDefault()
+	runs, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
+	}
+	createdSome := false
+	for _, run := range runs {
+		created, err := completeCheckRun(ctx, sha, run.BrowserName)
+		createdSome = createdSome || created
+		if err != nil {
+			return createdSome, err
+		}
+	}
+	return createdSome, nil
 }
 
 func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.CreateCheckRunOptions) (bool, error) {
@@ -206,6 +219,7 @@ func getJWTClient(ctx context.Context, installation int64) (*http.Client, error)
 	return oauth2.NewClient(ctx, oauth2.StaticTokenSource(token)), nil
 }
 
+// https://developer.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app
 func getSignedJWT(ctx context.Context) (string, error) {
 	// Fetch shared.Token entity for GitHub API Token.
 	tokenKey := datastore.NewKey(ctx, "Token", "github-app-private-key", 0, nil)

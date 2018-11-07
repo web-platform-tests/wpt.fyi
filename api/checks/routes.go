@@ -9,5 +9,5 @@ import "github.com/web-platform-tests/wpt.fyi/shared"
 // RegisterRoutes adds route handlers for webhooks.
 func RegisterRoutes() {
 	// GitHub webhook for creating custom status checks.
-	shared.AddRoute("/api/webhook/status", "api-webhook-check", checkWebhookHandler)
+	shared.AddRoute("/api/webhook/check", "api-webhook-check", checkWebhookHandler)
 }
