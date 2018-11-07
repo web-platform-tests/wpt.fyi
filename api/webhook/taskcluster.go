@@ -130,7 +130,8 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	if !shouldProcessStatus(shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches), &status) {
+	masterOnly := !shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
+	if !shouldProcessStatus(masterOnly, &status) {
 		return false, nil
 	}
 
