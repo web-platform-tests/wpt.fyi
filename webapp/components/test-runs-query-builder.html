@@ -71,6 +71,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{diff}}" disabled="{{!canShowDiff}}">Show diff</paper-checkbox>
     </paper-item>
+    <template is="dom-if" if="[[masterRunsOnly]]">
+      <paper-item>
+        <paper-checkbox id="master-checkbox" checked="{{master}}">Only master</paper-checkbox>
+      </paper-item>
+    </template>
     <paper-item>
       <paper-input label="Labels"
                    always-float-label
