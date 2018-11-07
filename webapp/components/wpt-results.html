@@ -633,16 +633,27 @@ found in the LICENSE file.
                 row.results[i].total += rs[i].total;
               }
               if (this.diff && rs.length === 2) {
-                let diff = [];
+                let diff;
                 if (this.diffResults) {
                   diff = this.diffResults[r.test] || [0, 0, 0];
                 } else {
                   const [before, after] = rs;
+                  const deleted = before.total > 0 && after.total === 0;
+                  const added = after.total > 0 && before.total === 0;
+                  if (deleted && !this.diffFilter.includes('D')
+                      || added && !this.diffFilter.includes('A')) {
+                    return acc;
+                  }
                   const failingBefore = before.total - before.passes;
                   const failingAfter = after.total - after.passes;
-                  diff.push(Math.max(after.passes - before.passes, 0)); // passes
-                  diff.push(Math.max(failingAfter - failingBefore, 0)); // regressions
-                  diff.push(after.total - before.total); // total
+                  diff = [
+                    Math.max(after.passes - before.passes, 0), // passes
+                    Math.max(failingAfter - failingBefore, 0), // regressions
+                    after.total - before.total // total
+                  ];
+                  if (!this.diffFilter.includes('C') && diff.some(v => v !== 0)) {
+                    return acc;
+                  }
                 }
                 row.diff.passes += diff[0];
                 row.diff.regressions += diff[1];
