@@ -130,8 +130,8 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	masterOnly := !shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
-	if !shouldProcessStatus(masterOnly, &status) {
+	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
+	if !shouldProcessStatus(processAllBranches, &status) {
 		return false, nil
 	}
 
@@ -178,11 +178,11 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	return true, nil
 }
 
-func shouldProcessStatus(masterOnly bool, status *statusEventPayload) bool {
+func shouldProcessStatus(processAllBranches bool, status *statusEventPayload) bool {
 	if !status.IsSuccess() || !status.IsTaskcluster() {
 		return false
 	}
-	return !masterOnly || status.IsOnMaster()
+	return processAllBranches || status.IsOnMaster()
 }
 
 func extractTaskGroupID(targetURL string) string {

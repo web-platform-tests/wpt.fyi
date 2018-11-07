@@ -28,7 +28,7 @@ func TestShouldProcessStatus_ok(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.True(t, shouldProcessStatus(true, &status))
+	assert.True(t, shouldProcessStatus(false, &status))
 }
 
 func TestShouldProcessStatus_unsuccessful(t *testing.T) {
@@ -36,7 +36,7 @@ func TestShouldProcessStatus_unsuccessful(t *testing.T) {
 	status.State = strPtr("error")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.False(t, shouldProcessStatus(true, &status))
+	assert.False(t, shouldProcessStatus(false, &status))
 }
 
 func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
@@ -44,7 +44,7 @@ func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Travis")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.False(t, shouldProcessStatus(true, &status))
+	assert.False(t, shouldProcessStatus(false, &status))
 }
 
 func TestShouldProcessStatus_notOnMaster(t *testing.T) {
@@ -52,8 +52,8 @@ func TestShouldProcessStatus_notOnMaster(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("gh-pages")}}
-	assert.False(t, shouldProcessStatus(true, &status))
-	assert.True(t, shouldProcessStatus(false, &status))
+	assert.False(t, shouldProcessStatus(false, &status))
+	assert.True(t, shouldProcessStatus(true, &status))
 }
 
 func TestIsOnMaster(t *testing.T) {
