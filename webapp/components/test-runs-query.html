@@ -73,16 +73,20 @@ found in the LICENSE file.
           this.productSpecs = (products || []).map(p => this.getSpec(p));
         }
 
+        /**
+        * Convert the UI property values into their equivalent URI query params.
+        */
         computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, maxCount, from, to) {
           const params = {};
           if (!this.computeIsLatest(sha)) {
             params.sha = sha;
           }
-          if (this.masterRunsOnly && master
-              && (!labels || !labels.includes('master'))) {
-            labels = (labels || []).concat('master');
+          // Convert bool master to label 'master'
+          labels = labels && Array.from(labels) || [];
+          if (this.masterRunsOnly && master && !labels.includes('master')) {
+            labels.push('master');
           }
-          if (labels && labels.length) {
+          if (labels.length) {
             params.label = labels;
           }
           maxCount = maxCount || this.defaultMaxCount;
@@ -107,12 +111,12 @@ found in the LICENSE file.
             }
             let productSpecs;
             if (allChannelsSame) {
-              productSpecs = this.products.map(p => Object.assign(
-                {}, p, {labels: (p.labels || []).filter(l => !CHANNELS.has(l)) }))
-                .map(p => this.getSpec(p));
-              const labels = params.label || [];
+              productSpecs = this.products.map(p => {
+                const nonChannel = (p.labels || []).filter(l => !CHANNELS.has(l));
+                return this.getSpec(Object.assign({}, p, {labels: nonChannel}));
+              });
               if (!labels.includes(channel)) {
-                params.label = [...labels, channel];
+                params.label = labels.concat(channel);
               }
             } else {
               productSpecs = this.products.map(p => this.getSpec(p));
@@ -152,7 +156,7 @@ found in the LICENSE file.
         }
 
         /**
-        * Update this builder's properties to match the given query params.
+        * Update this component's UI properties to match the given query params.
         */
         updateQueryParams(params) {
           if (!params) {
