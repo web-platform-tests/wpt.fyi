@@ -16,7 +16,7 @@ found in the LICENSE file.
     // eslint-disable-next-line no-unused-vars
     (() => {
       const testRunsQueryComputer =
-        'computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to)';
+        'computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, maxCount, from, to)';
       window.TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
         ProductInfo(superClass),
         opt_queryCompute || testRunsQueryComputer) {
@@ -46,6 +46,7 @@ found in the LICENSE file.
             maxCount: Number,
             sha: String,
             aligned: Boolean,
+            master: Boolean,
             from: Date,
             to: Date,
             isLatest: {
@@ -72,12 +73,20 @@ found in the LICENSE file.
           this.productSpecs = (products || []).map(p => this.getSpec(p));
         }
 
-        computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to) {
+        /**
+        * Convert the UI property values into their equivalent URI query params.
+        */
+        computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, maxCount, from, to) {
           const params = {};
           if (!this.computeIsLatest(sha)) {
             params.sha = sha;
           }
-          if (labels && labels.length) {
+          // Convert bool master to label 'master'
+          labels = labels && Array.from(labels) || [];
+          if (this.masterRunsOnly && master && !labels.includes('master')) {
+            labels.push('master');
+          }
+          if (labels.length) {
             params.label = labels;
           }
           maxCount = maxCount || this.defaultMaxCount;
@@ -102,12 +111,12 @@ found in the LICENSE file.
             }
             let productSpecs;
             if (allChannelsSame) {
-              productSpecs = this.products.map(p => Object.assign(
-                {}, p, {labels: (p.labels || []).filter(l => !CHANNELS.has(l)) }))
-                .map(p => this.getSpec(p));
-              const labels = params.label || [];
+              productSpecs = this.products.map(p => {
+                const nonChannel = (p.labels || []).filter(l => !CHANNELS.has(l));
+                return this.getSpec(Object.assign({}, p, {labels: nonChannel}));
+              });
               if (!labels.includes(channel)) {
-                params.label = [...labels, channel];
+                params.label = labels.concat(channel);
               }
             } else {
               productSpecs = this.products.map(p => this.getSpec(p));
@@ -147,7 +156,7 @@ found in the LICENSE file.
         }
 
         /**
-        * Update this builder's properties to match the given query params.
+        * Update this component's UI properties to match the given query params.
         */
         updateQueryParams(params) {
           if (!params) {
@@ -182,6 +191,13 @@ found in the LICENSE file.
           if ('aligned' in params) {
             batchUpdate.aligned = params.aligned;
           }
+          if (this.masterRunsOnly) {
+            batchUpdate.master = batchUpdate.labels
+              && batchUpdate.labels.includes('master');
+            if (batchUpdate.master) {
+              batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
+            }
+          }
           this.setProperties(batchUpdate);
         }
       };
@@ -191,7 +207,7 @@ found in the LICENSE file.
     (() => {
       // TODO(lukebjerring): Support to & from in the builder.
       const testRunsUIQueryComputer =
-        'computeTestRunUIQueryParams(sha, aligned, labels, productSpecs, maxCount, diff, search)';
+        'computeTestRunUIQueryParams(sha, aligned, master, labels, productSpecs, maxCount, diff, search)';
       /* global TestRunsQuery */
       window.TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
         superClass,
@@ -212,8 +228,8 @@ found in the LICENSE file.
           };
         }
 
-        computeTestRunUIQueryParams(sha, aligned, labels, productSpecs, maxCount, diff, search) {
-          const params = this.computeTestRunQueryParams(sha, aligned, labels, productSpecs, maxCount);
+        computeTestRunUIQueryParams(sha, aligned, master, labels, productSpecs, maxCount, diff, search) {
+          const params = this.computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, maxCount);
           if (diff || this.diff) {
             params.diff = true;
           }
