@@ -167,6 +167,9 @@ type githubCommitsComparison struct {
 }
 
 func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
+	if shaBefore == shaAfter {
+		return nil
+	}
 	log := shared.GetLogger(ctx)
 	secret, err := shared.GetSecret(ctx, "github-api-token")
 	if err != nil {
