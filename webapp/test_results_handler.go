@@ -12,10 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/deckarep/golang-set"
+
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
 )
 
 type testRunUIFilter struct {
@@ -90,18 +91,25 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 	if err != nil {
 		return filter, err
 	}
-	var experimentalByDefault, experimentalAlignedExceptEdge shared.Flag
 	ctx := appengine.NewContext(r)
-	datastore.Get(ctx, datastore.NewKey(ctx, "Flag", "experimentalByDefault", 0, nil), &experimentalByDefault)
-	datastore.Get(ctx, datastore.NewKey(ctx, "Flag", "experimentalAlignedExceptEdge", 0, nil), &experimentalAlignedExceptEdge)
-	if experimentalByDefault.Enabled {
-		if experimentalAlignedExceptEdge.Enabled {
+
+	experimentalByDefault := shared.IsFeatureEnabled(ctx, "experimentalByDefault")
+	experimentalAlignedExceptEdge := shared.IsFeatureEnabled(ctx, "experimentalAlignedExceptEdge")
+	masterRunsOnly := shared.IsFeatureEnabled(ctx, "masterRunsOnly")
+	if experimentalByDefault {
+		if experimentalAlignedExceptEdge {
 			testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
 		} else {
 			testRunFilter = testRunFilter.OrExperimentalRuns()
 		}
 	} else {
 		testRunFilter = testRunFilter.OrAlignedStableRuns()
+	}
+	if masterRunsOnly {
+		if testRunFilter.Labels == nil {
+			testRunFilter.Labels = mapset.NewSet()
+		}
+		testRunFilter.Labels.Add("master")
 	}
 
 	filter.testRunUIFilter = parseTestRunUIFilter(testRunFilter)

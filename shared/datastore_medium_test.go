@@ -421,6 +421,7 @@ func TestGetAlignedRunSHAs(t *testing.T) {
 	shas, _, _ = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), nil, &from, nil, nil)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 }
+
 func TestIsFeatureEnabled(t *testing.T) {
 	i, err := sharedtest.NewAEInstance(true)
 	assert.Nil(t, err)

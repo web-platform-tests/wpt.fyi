@@ -88,8 +88,8 @@ found in the LICENSE file.
         ];
       }
 
-      computeTestRunQueryParams(sha, aligned, labels, products, maxCount) {
-        return super.computeTestRunQueryParams(/*sha*/ null, aligned, labels, products, maxCount);
+      computeTestRunQueryParams(sha, aligned, master, labels, products, maxCount) {
+        return super.computeTestRunQueryParams(/*sha*/ null, aligned, master, labels, products, maxCount);
       }
 
       bindResultHover(run, subTestName) {
