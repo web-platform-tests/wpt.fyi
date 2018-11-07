@@ -209,12 +209,11 @@ func compareCommits(client *http.Client, owner, repo string, base, head string) 
 	}
 
 	var bytes []byte
-	var comparison githubCommitsComparison
 	bytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	err = json.Unmarshal(bytes, &comparison)
+	err = json.Unmarshal(bytes, comp)
 	if err != nil {
 		return nil, err
 	}
