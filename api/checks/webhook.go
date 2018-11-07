@@ -22,7 +22,6 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -244,7 +243,7 @@ func getSignedJWT(ctx context.Context) (string, error) {
 }
 
 func getDetailsURL(ctx context.Context, sha, browser string) *url.URL {
-	hostname, _ := appengine.ModuleHostname(ctx, "", "", "")
+	hostname := shared.GetHostname(ctx)
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))
 	filter := shared.TestRunFilter{}
 	filter.Products, _ = shared.ParseProductSpecs(browser, browser)
