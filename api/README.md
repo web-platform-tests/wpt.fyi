@@ -29,7 +29,7 @@ Also see [results creation](#results-creation) for endpoints to add new data.
 
 ### /api/runs
 
-Gets the TestRun metadata for all runs for a given SHA[0:10].
+Gets the TestRun metadata for all runs for a given SHA[0:10], sorted by `time_start` descending.
 
 __Parameters__
 
@@ -45,6 +45,10 @@ browser names (`chrome`, `edge`, `firefox`, `safari`) and release channels (`exp
 or `stable`).
 
 __`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
+NOTE: Runs are sorted by `time_start` descending, so be wary when combining this parameter
+with the `max-count` parameter below.
+
+__`to`__ : RFC3339 timestamp, for which to include runs that occured before the given time.
 
 __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
 
@@ -139,6 +143,10 @@ __`aligned`__ : boolean for whether to get only SHAs which were executed across 
 __`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`
 
 __`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
+NOTE: Runs are sorted by `time_start` descending, so be wary when combining this parameter
+with the `max-count` parameter below.
+
+__`to`__ : RFC3339 timestamp, for which to include runs that occured before the given time.
 
 __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
 
@@ -236,6 +244,10 @@ browser names (`chrome`, `edge`, `firefox`, `safari`) and release channels (`exp
 or `stable`).
 
 __`from`__ : RFC3339 timestamp, for which to include runs that occured after the given time.
+NOTE: Runs are sorted by `time_start` descending, so be wary when combining this parameter
+with the `max-count` parameter below.
+
+__`to`__: RFC3339 timestamp, for which to include runs that occured before the given time.
 
 __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
 
