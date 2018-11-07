@@ -5,6 +5,11 @@
   <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
   <script src="../../bower_components/web-component-tester/browser.js"></script>
 
+  <script>
+    window.wpt = window.wpt || {};
+    window.wpt.MUTABLE_FLAGS = true;
+  </script>
+
   <link rel="import" href="../test-runs-query-builder.html">
 </head>
 <body>
@@ -139,14 +144,11 @@
         });
 
         suite('shas autocomplete', () => {
-          let sandbox, queryBuilderSHAState;
+          let sandbox;
 
           setup(() => {
             sandbox = sinon.sandbox.create();
             sandbox.spy(queryBuilder, 'shasURLUpdated');
-
-            queryBuilderSHAState = queryBuilder.queryBuilderSHA;
-            queryBuilder.queryBuilderSHA = true;
           });
 
           test('/api/shas fetches', () => {
@@ -157,7 +159,28 @@
 
           teardown(() => {
             sandbox.restore();
-            queryBuilder.queryBuilderSHA = queryBuilderSHAState;
+          });
+        });
+
+        suite('master runs only', () => {
+          setup(() => {
+            queryBuilder.masterRunsOnly = true;
+          });
+
+          test('updateQueryParams', () => {
+            queryBuilder.updateQueryParams({ label: ['master'] });
+            expect(queryBuilder.master).to.be.true;
+
+            queryBuilder.updateQueryParams({ label: [] });
+            expect(queryBuilder.master).to.be.false;
+          });
+
+          test('queryParams', () => {
+            queryBuilder.master = true;
+            expect(queryBuilder.query).to.contain('master');
+
+            queryBuilder.master = false;
+            expect(queryBuilder.query).to.not.contain('master');
           });
         });
 
