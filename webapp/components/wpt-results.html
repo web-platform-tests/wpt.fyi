@@ -607,7 +607,7 @@ found in the LICENSE file.
                   // This path was renamed; ignore.
                   return acc;
                 }
-                const rename = Object.entries(this.diffResults.renames).find(([k, v]) => v === testPath);
+                const rename = Object.entries(this.diffResults.renames).find(e => e[1] === testPath);
                 if (rename) {
                   // This is the new path name; store the old one.
                   previousTestPath = rename[0];
