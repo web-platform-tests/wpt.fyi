@@ -40,17 +40,14 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, install
 	return &suite, err
 }
 
-// GetSuitesForSHA returns any CheckSuite entities associated with the given SHA.
-func GetSuitesForSHA(ctx context.Context, sha string) ([]shared.CheckSuite, error) {
+func getSuitesForSHA(ctx context.Context, sha string) ([]shared.CheckSuite, error) {
 	var suites []shared.CheckSuite
 	_, err := datastore.NewQuery("CheckSuite").Filter("SHA =", sha).GetAll(ctx, &suites)
 	return suites, err
 }
 
-// PendingCheckRun loads the CheckSuite(s), if any, for the given SHAs, and creates a pending
-// check_run for the given browser name for each CheckSuite.
 func pendingCheckRun(ctx context.Context, sha, browser string) (bool, error) {
-	suites, err := GetSuitesForSHA(ctx, sha)
+	suites, err := getSuitesForSHA(ctx, sha)
 	if err != nil {
 		return false, err
 	} else if len(suites) < 1 {
@@ -77,10 +74,8 @@ func pendingCheckRun(ctx context.Context, sha, browser string) (bool, error) {
 	return true, nil
 }
 
-// CompleteCheckRun creates a complete check_run for the given browser on GitHub,
-// for the given CheckSuite
 func completeCheckRun(ctx context.Context, sha, browser string) (bool, error) {
-	suites, err := GetSuitesForSHA(ctx, sha)
+	suites, err := getSuitesForSHA(ctx, sha)
 	if err != nil {
 		return false, err
 	} else if len(suites) < 1 {
