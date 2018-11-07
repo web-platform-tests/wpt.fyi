@@ -235,7 +235,8 @@ func getSignedJWT(ctx context.Context) (string, error) {
 	claims := &jwt.StandardClaims{
 		IssuedAt:  now.Unix(),
 		ExpiresAt: now.Add(time.Minute * 10).Unix(),
-		Issuer:    "19965",
+		// NOTE(lukebjerring): This is https://github.com/apps/wpt-fyi-status-check
+		Issuer: "19965",
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
