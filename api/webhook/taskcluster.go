@@ -39,7 +39,7 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := verifyRequestSignature(r)
+	payload, err := verifyAndGetPayload(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -247,13 +247,6 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 	key := datastore.NewKey(ctx, "Uploader", "taskcluster", 0, nil)
 	err = datastore.Get(ctx, key, &u)
 	return u.Username, u.Password, err
-}
-
-func getSecret(ctx context.Context) (token string, err error) {
-	var t shared.Token
-	key := datastore.NewKey(ctx, "Token", "github-tc-webhook-secret", 0, nil)
-	err = datastore.Get(ctx, key, &t)
-	return t.Secret, err
 }
 
 func createAllRuns(log shared.Logger,

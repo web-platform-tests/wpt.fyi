@@ -12,7 +12,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func verifyRequestSignature(r *http.Request) ([]byte, error) {
+func verifyAndGetPayload(r *http.Request) ([]byte, error) {
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 
@@ -23,7 +23,7 @@ func verifyRequestSignature(r *http.Request) ([]byte, error) {
 		return nil, errors.New("Failed to read request body")
 	}
 
-	secret, err := getSecret(ctx)
+	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
 	if err != nil {
 		log.Errorf("Failed to get verification secret: %s", err.Error())
 		return nil, errors.New("Internal error")
