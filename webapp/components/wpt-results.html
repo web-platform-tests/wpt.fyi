@@ -644,18 +644,19 @@ found in the LICENSE file.
                 row.results[i].passes += rs[i].passes;
                 row.results[i].total += rs[i].total;
               }
+              if (previousTestPath) {
+                const previous = this.searchResults.find(r => r.test === previousTestPath);
+                if (previous) {
+                  row.results[0].passes += previous.legacy_status[0].passes;
+                  row.results[0].total += previous.legacy_status[0].total;
+                }
+              }
               if (this.diff && rs.length === 2) {
                 let diff = [];
                 if (this.diffResults) {
                   diff = this.diffResults.diff[testPath] || [0, 0, 0];
                 } else {
                   let [before, after] = rs;
-                  if (previousTestPath) {
-                    const previous = this.searchResults.find(r => r.test === previousTestPath);
-                    if (previous) {
-                      before = previous.legacy_status[0];
-                    }
-                  }
                   const failingBefore = before.total - before.passes;
                   const failingAfter = after.total - after.passes;
                   diff.push(Math.max(after.passes - before.passes, 0)); // passes

@@ -84,12 +84,15 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diff := diffResult{
-		Diff: shared.GetResultsDiff(beforeJSON, afterJSON, diffFilter, paths),
-	}
+	var renames map[string]string
 	if shared.IsFeatureEnabled(ctx, "diffRenames") {
-		diff.Renames = getDiffRenames(ctx, runs[0].FullRevisionHash, runs[1].FullRevisionHash)
+		renames = getDiffRenames(ctx, runs[0].FullRevisionHash, runs[1].FullRevisionHash)
 	}
+	diff := diffResult{
+		Diff: shared.GetResultsDiff(beforeJSON, afterJSON, diffFilter, paths, renames),
+	}
+	diff.Renames = renames
+
 	var bytes []byte
 	if bytes, err = json.Marshal(diff); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -143,7 +146,7 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, filter, paths)
+	diffJSON := shared.GetResultsDiff(beforeJSON, afterJSON, filter, paths, nil)
 	var bytes []byte
 	if bytes, err = json.Marshal(diffJSON); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
