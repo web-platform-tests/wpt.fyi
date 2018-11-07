@@ -18,6 +18,7 @@ found in the LICENSE file.
 <link rel="import" href="self-navigator.html">
 <link rel="import" href="test-search.html">
 <link rel="import" href="results-navigation.html">
+<link rel="import" href="wpt-colors.html">
 
 <dom-module id="wpt-interop">
 <template>
@@ -127,7 +128,8 @@ found in the LICENSE file.
 
     <test-search class$="search-[[pathIsATestFile]]"
                  query="{{search}}"
-                 test-runs="[[testRuns]]">
+                 test-runs="[[testRuns]]"
+                 test-paths="[[testPaths]]">
     </test-search>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -207,19 +209,10 @@ found in the LICENSE file.
 </template>
 
 <script>
-
-  const INTEROP_COLORS = [
-    [219,  68,  55], // --paper-red-500
-    [255,  87,  34], // --paper-deep-orange-500
-    [255, 152,   0], // --paper-orange-500
-    [255, 235,  59], // --paper-yellow-500
-    [118, 255,   3], // --paper-light-green-a200
-  ];
-
-  /* global TestRunsBase, SelfNavigation, LoadingState, QueryBuilder */
+  /* global WPTColors, TestRunsBase, SelfNavigation, LoadingState, QueryBuilder */
   class WPTInterop extends QueryBuilder(
-    SelfNavigation(LoadingState(TestRunsBase)),
-    'interopQueryParams(sha, aligned, labels, productSpecs, maxCount, from, to, search)') {
+    WPTColors(SelfNavigation(LoadingState(TestRunsBase))),
+    'interopQueryParams(sha, aligned, master, labels, productSpecs, maxCount, from, to, search)') {
     static get is() {
       return 'wpt-interop';
     }
@@ -256,7 +249,12 @@ found in the LICENSE file.
         },
         searchResults: Array,
         onSearchCommit: Function,
+        onSearchAutocomplete: Function,
         interopLoadFailed: Boolean,
+        testPaths: {
+          type: Set,
+          computed: 'computeTestPaths(fileMetrics)',
+        },
       };
     }
 
@@ -264,6 +262,9 @@ found in the LICENSE file.
       super();
       this.onSearchCommit = (e) => {
         this.handleSearchCommit(e.detail.query);
+      };
+      this.onSearchAutocomplete = (e) => {
+        this.handleSearchAutocomplete(e.detail.path);
       };
       this.onLoadingComplete = () => {
         // passRateMetadata contains the url for the JSON blob of allMetrics;
@@ -279,6 +280,8 @@ found in the LICENSE file.
       super.connectedCallback();
       this.shadowRoot.querySelector('test-search')
         .addEventListener('commit', this.onSearchCommit);
+      this.shadowRoot.querySelector('test-search')
+        .addEventListener('autocomplete', this.onSearchAutocomplete);
     }
 
     disconnectedCallback() {
@@ -309,8 +312,8 @@ found in the LICENSE file.
       return this.queryParams;
     }
 
-    interopQueryParams(sha, aligned, labels, products, maxCount, search) {
-      const params = this.computeTestRunQueryParams(sha, aligned, labels, products, maxCount);
+    interopQueryParams(sha, aligned, master, labels, products, maxCount, search) {
+      const params = this.computeTestRunQueryParams(sha, aligned, master, labels, products, maxCount);
       if (search) {
         params.q = search;
       }
@@ -331,6 +334,11 @@ found in the LICENSE file.
 
     computeTestRuns(metadata) {
       return metadata && metadata.test_runs;
+    }
+
+    computeTestPaths(fileMetrics) {
+      const paths = fileMetrics && fileMetrics.map(m => m.dir) || [];
+      return new Set(paths);
     }
 
     computeFileMetrics(allMetrics) {
@@ -355,7 +363,7 @@ found in the LICENSE file.
     passRateStyle(total, passRate, browserCount) {
       const fraction = passRate / total;
       const alpha = Math.round(fraction * 1000) / 1000;
-      return `background-color: rgba(${INTEROP_COLORS[browserCount].join(', ')}, ${alpha})`;
+      return `background-color: ${this.passRateColorRGBA(browserCount, this.testRuns.length, alpha)}`;
     }
 
     handleSearchCommit(q) {
@@ -369,6 +377,11 @@ found in the LICENSE file.
 
       this.searchResults = this.fileMetrics
         .filter(t => t.dir.toLowerCase().includes(q));
+    }
+
+    handleSearchAutocomplete(path) {
+      this.shadowRoot.querySelector('test-search').clear();
+      this.navigateToPath(path);
     }
 
     computeDisplayedNodes(path, displayedTests) {

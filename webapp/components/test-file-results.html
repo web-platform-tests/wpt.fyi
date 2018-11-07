@@ -13,7 +13,7 @@ found in the LICENSE file.
 
 <dom-module id="test-file-results">
   <template>
-    <style>
+    <style include="wpt-colors">
       :host {
         display: block;
         font-size: 16px;
@@ -99,7 +99,10 @@ found in the LICENSE file.
         // resultsTable[0].name set after discovering subtests.
         let resultsTable = [{
           results: resultsPerTestRun.map(data => {
-            return {status: data && data.status};
+            return {
+              status: data && data.status,
+              message: data && data.message,
+            };
           }),
         }];
 

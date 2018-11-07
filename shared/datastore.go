@@ -268,3 +268,14 @@ func GetFeatureFlags(ctx context.Context) (flags []Flag, err error) {
 	}
 	return flags, err
 }
+
+// IsFeatureEnabled returns true if a feature with the given flag name exists,
+// and Enabled is set to true.
+func IsFeatureEnabled(ctx context.Context, flagName string) bool {
+	key := datastore.NewKey(ctx, "Flag", flagName, 0, nil)
+	flag := Flag{}
+	if err := datastore.Get(ctx, key, &flag); err != nil {
+		return false
+	}
+	return flag.Enabled
+}

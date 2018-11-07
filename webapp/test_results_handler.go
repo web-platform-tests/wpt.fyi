@@ -12,8 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/deckarep/golang-set"
+
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine"
 )
 
 type testRunUIFilter struct {
@@ -30,7 +33,8 @@ type testRunUIFilter struct {
 
 type testResultsUIFilter struct {
 	testRunUIFilter
-	Diff bool
+	Diff       bool
+	DiffFilter string
 }
 
 // This handler is responsible for all pages that display test results.
@@ -87,7 +91,26 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 	if err != nil {
 		return filter, err
 	}
-	testRunFilter = testRunFilter.OrDefault()
+	ctx := appengine.NewContext(r)
+
+	experimentalByDefault := shared.IsFeatureEnabled(ctx, "experimentalByDefault")
+	experimentalAlignedExceptEdge := shared.IsFeatureEnabled(ctx, "experimentalAlignedExceptEdge")
+	masterRunsOnly := shared.IsFeatureEnabled(ctx, "masterRunsOnly")
+	if experimentalByDefault {
+		if experimentalAlignedExceptEdge {
+			testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
+		} else {
+			testRunFilter = testRunFilter.OrExperimentalRuns()
+		}
+	} else {
+		testRunFilter = testRunFilter.OrAlignedStableRuns()
+	}
+	if masterRunsOnly {
+		if testRunFilter.Labels == nil {
+			testRunFilter.Labels = mapset.NewSet()
+		}
+		testRunFilter.Labels.Add("master")
+	}
 
 	filter.testRunUIFilter = parseTestRunUIFilter(testRunFilter)
 
@@ -96,6 +119,11 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 		return filter, err
 	}
 	filter.Diff = diff != nil && *diff
+	diffFilter, _, err := shared.ParseDiffFilterParams(r)
+	if err != nil {
+		return filter, err
+	}
+	filter.DiffFilter = diffFilter.String()
 
 	var beforeAndAfter shared.ProductSpecs
 	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r); err != nil {

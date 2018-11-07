@@ -21,7 +21,7 @@ found in the LICENSE file.
 
       subtestMessage(result) {
         return super.subtestMessage(result)  ||
-          `Failure message: ${result.message}`;
+          `${result.status} message: ${result.message}`;
       }
     }
 

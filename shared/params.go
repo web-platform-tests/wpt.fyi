@@ -51,12 +51,45 @@ func (filter TestRunFilter) IsDefaultQuery() bool {
 // OrDefault returns the current filter, or, if it is a default query, returns
 // the query used by default in wpt.fyi.
 func (filter TestRunFilter) OrDefault() TestRunFilter {
+	return filter.OrAlignedStableRuns()
+}
+
+// OrAlignedStableRuns returns the current filter, or, if it is a default query, returns
+// a query for stable runs, with an aligned SHA.
+func (filter TestRunFilter) OrAlignedStableRuns() TestRunFilter {
 	if !filter.IsDefaultQuery() {
 		return filter
 	}
 	aligned := true
 	filter.Aligned = &aligned
 	filter.Labels = mapset.NewSetWith(StableLabel)
+	return filter
+}
+
+// OrExperimentalRuns returns the current filter, or, if it is a default query, returns
+// a query for the latest experimental runs.
+func (filter TestRunFilter) OrExperimentalRuns() TestRunFilter {
+	if !filter.IsDefaultQuery() {
+		return filter
+	}
+	filter.Labels = mapset.NewSetWith(ExperimentalLabel)
+	return filter
+}
+
+// OrAlignedExperimentalRunsExceptEdge returns the current filter, or, if it is a default
+// query, returns a query for the latest experimental runs.
+func (filter TestRunFilter) OrAlignedExperimentalRunsExceptEdge() TestRunFilter {
+	if !filter.IsDefaultQuery() {
+		return filter
+	}
+	aligned := true
+	filter.Aligned = &aligned
+	filter.Products = GetDefaultProducts()
+	for i := range filter.Products {
+		if filter.Products[i].BrowserName != "edge" {
+			filter.Products[i].Labels = mapset.NewSetWith("experimental")
+		}
+	}
 	return filter
 }
 
@@ -413,12 +446,12 @@ func ParseBrowsersParam(r *http.Request) (browsers []string, err error) {
 }
 
 // ParseProductParam parses and validates the 'product' param for the request.
-func ParseProductParam(r *http.Request) (product *Product, err error) {
+func ParseProductParam(r *http.Request) (product *ProductSpec, err error) {
 	productParam := r.URL.Query().Get("product")
 	if "" == productParam {
 		return nil, nil
 	}
-	parsed, err := ParseProduct(productParam)
+	parsed, err := ParseProductSpec(productParam)
 	if err != nil {
 		return nil, err
 	}
@@ -536,15 +569,29 @@ type DiffFilterParam struct {
 	// Unchanged tests are present in both the 'before' and 'after' states of the diff,
 	// and the number of passes, failures, or total tests is unchanged.
 	Unchanged bool
+}
 
-	// Set of test paths to include, or include all tests if nil.
-	Paths mapset.Set
+func (d DiffFilterParam) String() string {
+	s := ""
+	if d.Added {
+		s += "A"
+	}
+	if d.Deleted {
+		s += "D"
+	}
+	if d.Changed {
+		s += "C"
+	}
+	if d.Unchanged {
+		s += "U"
+	}
+	return s
 }
 
 // ParseDiffFilterParams collects the diff filtering params for the given request.
 // It splits the filter param into the differences to include. The filter param is inspired by Git's --diff-filter flag.
 // It also adds the set of test paths to include; see ParsePathsParam below.
-func ParseDiffFilterParams(r *http.Request) (param DiffFilterParam, err error) {
+func ParseDiffFilterParams(r *http.Request) (param DiffFilterParam, paths mapset.Set, err error) {
 	param = DiffFilterParam{
 		Added:   true,
 		Deleted: true,
@@ -563,12 +610,11 @@ func ParseDiffFilterParams(r *http.Request) (param DiffFilterParam, err error) {
 			case 'U':
 				param.Unchanged = true
 			default:
-				return param, fmt.Errorf("invalid filter character %c", char)
+				return param, nil, fmt.Errorf("invalid filter character %c", char)
 			}
 		}
 	}
-	param.Paths = NewSetFromStringSlice(ParsePathsParam(r))
-	return param, nil
+	return param, NewSetFromStringSlice(ParsePathsParam(r)), nil
 }
 
 // ParsePathsParam returns a set list of test paths to include, or nil if no

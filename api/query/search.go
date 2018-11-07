@@ -6,8 +6,12 @@ package query
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	time "time"
 
@@ -55,24 +59,77 @@ func (r byName) Len() int           { return len(r) }
 func (r byName) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
 func (r byName) Less(i, j int) bool { return r[i].Test < r[j].Test }
 
-type searchHandler struct {
+type unstructuredSearchHandler struct {
+	queryHandler
+}
+
+type structuredSearchHandler struct {
 	queryHandler
 }
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse query params.
+	if r.Method != "GET" && r.Method != "POST" {
+		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
+		return
+	}
+
 	ctx := shared.NewAppEngineContext(r)
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
-	sh := searchHandler{queryHandler{
+	qh := queryHandler{
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
-	}}
-	// nils => defaults of: (1) URL string as cache key; (2) cache only HTTP 200.
+	}
+	var sh http.Handler
+	if r.Method == "GET" {
+		sh = unstructuredSearchHandler{queryHandler: qh}
+	} else {
+		sh = structuredSearchHandler{queryHandler: qh}
+	}
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, shared.CacheStatusOK)
 	ch.ServeHTTP(w, r)
 }
 
-func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+	}
+	err = r.Body.Close()
+	if err != nil {
+		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
+	}
+
+	var rq runQuery
+	err = json.Unmarshal(data, &rq)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	simpleQ, ok := rq.query.(testNamePattern)
+	if !ok {
+		// TODO: Implement serving complex queries.
+		http.Error(w, "Query pattern is valid, but processing of this query configuration is not yet implemented", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Structured query is equivalent to unstructured query.
+	// Create an unstructured query request and delegate to unstructured query
+	// handler.
+	r2 := *r
+	r2url := *r.URL
+	r2.URL = &r2url
+	r2.Method = "GET"
+	runIDStrs := make([]string, 0, len(rq.runIDs))
+	for _, id := range rq.runIDs {
+		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
+	}
+	runIDsStr := strings.Join(runIDStrs, ",")
+	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.pattern))
+	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
+}
+
+func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters, testRuns, summaries, err := sh.processInput(w, r)
 	// processInput handles writing any error to w.
 	if err != nil {

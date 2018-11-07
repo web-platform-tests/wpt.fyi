@@ -132,6 +132,12 @@
           window.ga('send', 'pageview', path);
         }
       }
+
+      navigateToPath(testPath) {
+        const url = new URL(window.location);
+        url.pathname = this.navigationPathPrefix() + testPath;
+        this.navigateToLocation(url);
+      }
     };
   </script>
 </dom-module>

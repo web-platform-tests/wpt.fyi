@@ -26,10 +26,6 @@ func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to VersionsHandler on cache
 	// miss.
 	ctx := shared.NewAppEngineContext(r)
-	// nils => defaults of:
-	// (1) all URLs to this handler are cacheable;
-	// (2) URL string as cache key;
-	// (3) cache only HTTP 200.
 	shared.NewCachingHandler(ctx, VersionsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
 }
 
@@ -45,6 +41,11 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ctx := h.ctx
 	query := datastore.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
+	if product.Labels != nil {
+		for label := range product.Labels.Iter() {
+			query = query.Filter("Labels =", label)
+		}
+	}
 	distinctQuery := query.Project("BrowserVersion").Distinct()
 	var queries []*datastore.Query
 	if product.BrowserVersion == "" {

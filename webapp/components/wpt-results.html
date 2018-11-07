@@ -26,11 +26,12 @@ found in the LICENSE file.
 <link rel="import" href="test-results-chart.html">
 <link rel="import" href="test-runs-query-builder.html">
 <link rel="import" href="test-search.html">
+<link rel="import" href="wpt-colors.html">
 <link rel="import" href="wpt-flags.html">
 
 <dom-module id="wpt-results">
   <template>
-    <style>
+    <style include="wpt-colors">
       :host {
         display: block;
         font-size: 15px;
@@ -84,12 +85,6 @@ found in the LICENSE file.
       .delta {
         background-color: var(--paper-grey-200);
       }
-      .passes-0 { background-color: hsl(0, 85%, 65%); }
-      .passes-20 { background-color: hsl(0, 85%, 70%); }
-      .passes-40 { background-color: hsl(0, 85%, 75%); }
-      .passes-60 { background-color: hsl(0, 85%, 80%); }
-      .passes-80 { background-color: hsl(0, 85%, 85%); }
-      .passes-100 { background-color: var(--paper-light-green-a400); }
 
       span.delta.regressions {
         color: var(--paper-red-700);
@@ -151,7 +146,8 @@ found in the LICENSE file.
 
       <test-search class$="search-[[pathIsATestFile]]"
                    query='{{search}}'
-                   test-runs="[[testRuns]]">
+                   test-runs="[[testRuns]]"
+                   test-paths="[[testPaths]]">
       </test-search>
 
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -217,7 +213,7 @@ found in the LICENSE file.
               <template is="dom-if" if="[[diffShown]]">
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
-                  <template is="dom-if" if="[[diffFilter]]">
+                  <template is="dom-if" if="[[diffFilterUIToggle]]">
                     <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]"></paper-icon-button>
                   </template>
                 </th>
@@ -300,9 +296,9 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
-    class WPTResults extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
-      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer))))) {
+    /* global WPTColors, WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
+    class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
+      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer)))))) {
 
       static get is() {
         return 'wpt-results';
@@ -321,6 +317,10 @@ found in the LICENSE file.
           searchResults: {
             type: Array,
             value: [],
+          },
+          testPaths: {
+            type: Set,
+            computed: 'computeTestPaths(searchResults)',
           },
           displayedNodes: {
             type: Array,
@@ -345,7 +345,7 @@ found in the LICENSE file.
             type: String,
             computed: 'computeDiffURL(testRuns, query)',
           },
-          filter: {
+          diffFilter: {
             type: String,
             value: 'ADC', // Added, Deleted, Changed
           },
@@ -353,13 +353,10 @@ found in the LICENSE file.
             type: Boolean,
             value: false,
           },
-          searchURL: {
-            type: String,
-            computed: 'computeSearchURL(testRuns, search)',
-          },
           resultsLoadFailed: Boolean,
           noResults: Boolean,
           onSearchCommit: Function,
+          onSearchAutocomplete: Function,
           editingQuery: {
             type: Boolean,
             value: false,
@@ -412,26 +409,14 @@ found in the LICENSE file.
         return true;
       }
 
+      computeTestPaths(searchResults) {
+        const paths = searchResults && searchResults.map(r => r.test) || [];
+        return new Set(paths);
+      }
+
       computeDisplayedTests(path, searchResults) {
         return searchResults.map(r => r.test)
           .filter(name => name.startsWith(path));
-      }
-
-      computeSearchURL(testRuns, query) {
-        if (!testRuns || testRuns.length === 0) {
-          return '';
-        }
-
-        let url = new URL('/api/search', window.location);
-        if (testRuns) {
-          url.searchParams.set(
-            'run_ids',
-            testRuns.map(r => r.id.toString()).join(','));
-        }
-        if (query) {
-          url.searchParams.set('q', query);
-        }
-        return url;
       }
 
       computeDiffURL(productSpecs, query) {
@@ -439,17 +424,22 @@ found in the LICENSE file.
           return;
         }
         let url = new URL('/api/diff', window.location);
-        url.search = query
-          .replace('product', 'before')
-          .replace('product', 'after');
+        url.search = query;
+        const productParams = url.searchParams.getAll('product');
+        if (productParams && productParams.length === 2) {
+          url.searchParams.delete('product');
+          url.searchParams.set('before', productParams[0]);
+          url.searchParams.set('after', productParams[1]);
+        }
         url.searchParams.delete('diff');
-        url.searchParams.set('filter', this.filter);
+        url.searchParams.set('filter', this.diffFilter);
         return url;
       }
 
       constructor() {
         super();
         this.onSearchCommit = this.handleSearchCommit.bind(this);
+        this.onSearchAutocomplete = this.handleSearchAutocomplete.bind(this);
         this.onLoadingComplete = () => {
           this.resultsLoadFailed = !(this.testRuns && this.testRuns.length);
           this.noResults = !this.resultsLoadFailed
@@ -467,8 +457,9 @@ found in the LICENSE file.
 
       connectedCallback() {
         super.connectedCallback();
-        this.shadowRoot.querySelector('test-search')
-          .addEventListener('commit', this.onSearchCommit);
+        const search = this.shadowRoot.querySelector('test-search');
+        search.addEventListener('commit', this.onSearchCommit);
+        search.addEventListener('autocomplete', this.onSearchAutocomplete);
       }
 
       disconnectedCallback() {
@@ -500,7 +491,10 @@ found in the LICENSE file.
       loadData() {
         this.load(
           this.loadRuns().then(async runs => {
-            this.fetchResults();
+            // Pass current (un)structured query is passed to fetchResults().
+            const search = this.shadowRoot.querySelector('test-search');
+            this.fetchResults(
+              this.structuredQueries && search.structuredQuery || this.search);
 
             // Load a diff data into this.diffRun, if needed.
             if (this.diff && runs && runs.length === 2) {
@@ -514,20 +508,39 @@ found in the LICENSE file.
         );
       }
 
-      fetchResults() {
-        this.load(
-          window.fetch(this.searchURL)
-            .then(r => {
-              if (!r.ok || r.status !== 200) {
-                return Promise.reject('Failed to fetch results data.');
-              }
-              return r.json();
-            })
-            .then(json => {
-              this.searchResults = json.results;
-              this.refreshDisplayedNodes();
-            })
-        );
+      fetchResults(q) {
+        if (!this.testRuns || !this.testRuns.length) {
+          return;
+        }
+
+        let url = new URL('/api/search', window.location);
+        let fetchOpts;
+        if (this.structuredQueries) {
+          fetchOpts = {
+            method: 'POST',
+            body: JSON.stringify({
+              run_ids: this.testRuns.map(r => r.id),
+              query: q,
+            }),
+          };
+        } else {
+          url.searchParams.set(
+            'run_ids',
+            this.testRuns.map(r => r.id.toString()).join(','));
+          if (q) {
+            url.searchParams.set('q', q);
+          }
+        }
+
+        this.load(window.fetch(url, fetchOpts).then(r => {
+          if (!r.ok || r.status !== 200) {
+            return Promise.reject('Failed to fetch results data.');
+          }
+          return r.json();
+        }).then(json => {
+          this.searchResults = json.results;
+          this.refreshDisplayedNodes();
+        }));
       }
 
       fetchDiff() {
@@ -620,16 +633,27 @@ found in the LICENSE file.
                 row.results[i].total += rs[i].total;
               }
               if (this.diff && rs.length === 2) {
-                let diff = [];
-                if (this.diffResults && r.test in this.diffResults) {
-                  diff = this.diffResults[r.test];
+                let diff;
+                if (this.diffResults) {
+                  diff = this.diffResults[r.test] || [0, 0, 0];
                 } else {
                   const [before, after] = rs;
+                  const deleted = before.total > 0 && after.total === 0;
+                  const added = after.total > 0 && before.total === 0;
+                  if (deleted && !this.diffFilter.includes('D')
+                      || added && !this.diffFilter.includes('A')) {
+                    return acc;
+                  }
                   const failingBefore = before.total - before.passes;
                   const failingAfter = after.total - after.passes;
-                  diff.push(Math.max(after.passes - before.passes, 0)); // passes
-                  diff.push(Math.max(failingAfter - failingBefore, 0)); // regressions
-                  diff.push(after.total - before.total); // total
+                  diff = [
+                    Math.max(after.passes - before.passes, 0), // passes
+                    Math.max(failingAfter - failingBefore, 0), // regressions
+                    after.total - before.total // total
+                  ];
+                  if (!this.diffFilter.includes('C') && diff.some(v => v !== 0)) {
+                    return acc;
+                  }
                 }
                 row.diff.passes += diff[0];
                 row.diff.regressions += diff[1];
@@ -678,12 +702,10 @@ found in the LICENSE file.
           if (typeof result === 'undefined' && prop === 'total') {
             return 'none';
           }
-          if (this.path === '/') {
+          if (this.path === '/' && !this.colorHomepage) {
             return 'top';
           }
-
-          const passes = result.passes / result.total;
-          return `passes-${passes * 100 - (passes * 100 % 20)}`;
+          return this.passRateClass(result.passes, result.total);
         }
       }
 
@@ -765,25 +787,36 @@ found in the LICENSE file.
         };
       }
 
-      handleSearchCommit() {
+      handleSearchAutocomplete(e) {
+        this.shadowRoot.querySelector('test-search').clear();
+        this.navigateToPath(e.detail.path);
+      }
+
+      handleSearchCommit(e) {
+        const detail = e.detail;
         // Fetch search results when test-search signals that user has committed
         // to search string (by pressing <Enter>).
-        this.fetchResults();
+        this.fetchResults(this.structuredQueries
+          ? detail.structuredQuery
+          : detail.query);
+        // Trigger a virtual navigation.
+        this.navigateToLocation(window.location);
       }
 
       handleSubmitQuery() {
+        const queryBefore = this.query;
         const builder = this.shadowRoot.querySelector('test-runs-query-builder');
         this.editingQuery = false;
-        if (this.query === builder.query) {
-          return;
-        }
-
         this.updateQueryParams(builder.queryParams);
-        if (!this.diff) {
-          this.diffRun = null;
+        if (queryBefore === this.query) {
+          return;
         }
         // Trigger a virtual navigation.
         this.navigateToLocation(window.location);
+        // Reload the data.
+        if (!this.diff) {
+          this.diffRun = null;
+        }
         this.testRuns = [];
         this.searchResults = [];
         this.refreshDisplayedNodes();
