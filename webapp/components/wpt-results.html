@@ -600,7 +600,20 @@ found in the LICENSE file.
             let nodes = {};
             return (acc, r) => {
               // Compute dir/file name that is direct descendant of this.path.
-              const suffix = r.test.substring(pLen);
+              let testPath = r.test;
+              let previousTestPath;
+              if (this.diffResults && this.diffResults.renames) {
+                if (testPath in this.diffResults.renames) {
+                  // This path was renamed; ignore.
+                  return acc;
+                }
+                const rename = Object.entries(this.diffResults.renames).find(([k, v]) => v === testPath);
+                if (rename) {
+                  // This is the new path name; store the old one.
+                  previousTestPath = rename[0];
+                }
+              }
+              const suffix = testPath.substring(pLen);
               const slashIdx = suffix.indexOf('/');
               const isDir = slashIdx !== -1;
               const name = isDir ? suffix.substring(0, slashIdx): suffix;
@@ -634,9 +647,15 @@ found in the LICENSE file.
               if (this.diff && rs.length === 2) {
                 let diff = [];
                 if (this.diffResults) {
-                  diff = this.diffResults[r.test] || [0, 0, 0];
+                  diff = this.diffResults.diff[testPath] || [0, 0, 0];
                 } else {
-                  const [before, after] = rs;
+                  let [before, after] = rs;
+                  if (previousTestPath) {
+                    const previous = this.searchResults.find(r => r.test === previousTestPath);
+                    if (previous) {
+                      before = previous.legacy_status[0];
+                    }
+                  }
                   const failingBefore = before.total - before.passes;
                   const failingAfter = after.total - after.passes;
                   diff.push(Math.max(after.passes - before.passes, 0)); // passes
