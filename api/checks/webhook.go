@@ -20,7 +20,6 @@ import (
 
 	"github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
-	wptgithub "github.com/web-platform-tests/wpt.fyi/api/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine/datastore"
@@ -41,7 +40,13 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
-	payload, err := wptgithub.VerifyAndGetPayload(r, "github-check-webhook-secret")
+	secret, err := shared.GetSecret(ctx, "github-check-webhook-secret")
+	if err != nil {
+		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
+		return
+	}
+
+	payload, err := github.ValidatePayload(r, []byte(secret))
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -22,7 +22,6 @@ import (
 	"google.golang.org/appengine/urlfetch"
 
 	"github.com/google/go-github/github"
-	wptgithub "github.com/web-platform-tests/wpt.fyi/api/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -40,15 +39,21 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := wptgithub.VerifyAndGetPayload(r, "github-tc-webhook-secret")
+	ctx := appengine.NewContext(r)
+	log := shared.GetLogger(ctx)
+	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
+
+	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
+	if err != nil {
+		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
+		return
+	}
+
+	payload, err := github.ValidatePayload(r, []byte(secret))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-
-	ctx := appengine.NewContext(r)
-	log := shared.GetLogger(ctx)
-	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	processed, err := handleStatusEvent(ctx, payload)
 	if err != nil {
