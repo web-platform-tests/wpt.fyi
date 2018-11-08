@@ -20,6 +20,7 @@ import (
 
 	"github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
+	wptgithub "github.com/web-platform-tests/wpt.fyi/api/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine/datastore"
@@ -38,15 +39,12 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 
-	payload, err := ioutil.ReadAll(r.Body)
-	r.Body.Close()
+	payload, err := wptgithub.VerifyAndGetPayload(r, "github-check-webhook-secret")
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// TODO(lukebjerring): Verify payload.
 
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 

@@ -1,4 +1,8 @@
-package webhook
+// Copyright 2018 The WPT Dashboard Project. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+package github
 
 import (
 	"crypto/hmac"
@@ -12,7 +16,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func verifyAndGetPayload(r *http.Request) ([]byte, error) {
+// VerifyAndGetPayload verifies the given GitHub request payload's hash, against
+// the given token's secret.
+func VerifyAndGetPayload(r *http.Request, tokenName string) ([]byte, error) {
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 
@@ -23,7 +29,7 @@ func verifyAndGetPayload(r *http.Request) ([]byte, error) {
 		return nil, errors.New("Failed to read request body")
 	}
 
-	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
+	secret, err := shared.GetSecret(ctx, tokenName)
 	if err != nil {
 		log.Errorf("Failed to get verification secret: %s", err.Error())
 		return nil, errors.New("Internal error")
