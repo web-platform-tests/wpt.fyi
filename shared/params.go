@@ -93,6 +93,16 @@ func (filter TestRunFilter) OrAlignedExperimentalRunsExceptEdge() TestRunFilter 
 	return filter
 }
 
+// MasterOnly returns the current filter, ensuring it has with the master-only
+// restriction (a label of "master").
+func (filter TestRunFilter) MasterOnly() TestRunFilter {
+	if filter.Labels == nil {
+		filter.Labels = mapset.NewSet()
+	}
+	filter.Labels.Add(MasterLabel)
+	return filter
+}
+
 // IsDefaultProducts returns whether the params products are empty, or the
 // equivalent of the default product set.
 func (filter TestRunFilter) IsDefaultProducts() bool {

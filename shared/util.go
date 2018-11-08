@@ -25,6 +25,10 @@ const LatestSHA = "latest"
 // StableLabel is the implicit label present for runs marked 'stable'.
 const StableLabel = "stable"
 
+// MasterLabel is the implicit label present for runs marked 'master',
+// i.e. run from the master branch.
+const MasterLabel = "master"
+
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
 func GetDefaultProducts() ProductSpecs {
 	browserNames := GetDefaultBrowserNames()
