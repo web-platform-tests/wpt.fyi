@@ -455,7 +455,6 @@ func TestGetSecret(t *testing.T) {
 	secret, err := shared.GetSecret(ctx, tokenName)
 	assert.NotNil(t, err)
 	assert.Equal(t, "", secret)
-
 	// Token.
 	datastore.Put(ctx, key, &shared.Token{Secret: "bar"})
 	secret, err = shared.GetSecret(ctx, tokenName)

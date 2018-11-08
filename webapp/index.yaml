@@ -82,3 +82,9 @@ indexes:
   - name: Labels
   - name: BrowserVersion
     direction: desc
+- kind: CheckSuite
+  properties:
+  - name: SHA
+  - name: Owner
+  - name: Repo
+  - name: InstallationID
