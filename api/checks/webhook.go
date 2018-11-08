@@ -39,14 +39,14 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 
+	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
+
 	payload, err := wptgithub.VerifyAndGetPayload(r, "github-check-webhook-secret")
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	var processed bool
 	if r.Header.Get("X-GitHub-Event") == "check_suite" {
