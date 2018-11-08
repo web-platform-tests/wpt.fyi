@@ -8,6 +8,7 @@ import (
 	"html/template"
 
 	"github.com/web-platform-tests/wpt.fyi/api"
+	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/webhook"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -20,6 +21,7 @@ func init() {
 	api.RegisterRoutes()
 	query.RegisterRoutes()
 	webhook.RegisterRoutes()
+	checks.RegisterRoutes()
 	RegisterRoutes()
 }
 
