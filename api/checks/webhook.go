@@ -108,15 +108,17 @@ func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	if checkRun.Action != nil &&
-		(*checkRun.Action == "created" || *checkRun.Action == "rerequested") {
-		name, sha := *checkRun.CheckRun.Name, *checkRun.CheckRun.HeadSHA
-		log.Debugf("Check run %s @ %s %s", name, sha[:7], *checkRun.Action)
-		spec, err := shared.ParseProductSpec(*checkRun.CheckRun.Name)
-		if err != nil {
-			log.Errorf("Failed to parse \"%s\" as product spec")
+	if checkRun.Action != nil {
+		if (*checkRun.Action == "created" && *checkRun.CheckRun.Status != "completed") ||
+			*checkRun.Action == "rerequested" {
+			name, sha := *checkRun.CheckRun.Name, *checkRun.CheckRun.HeadSHA
+			log.Debugf("Check run %s @ %s %s", name, sha[:7], *checkRun.Action)
+			spec, err := shared.ParseProductSpec(*checkRun.CheckRun.Name)
+			if err != nil {
+				log.Errorf("Failed to parse \"%s\" as product spec")
+			}
+			return completeChecksForExistingRuns(ctx, sha, spec)
 		}
-		return completeChecksForExistingRuns(ctx, sha, spec)
 	}
 	return false, nil
 }

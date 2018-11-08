@@ -161,7 +161,8 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		*status.SHA,
 		username,
 		password,
-		urlsByBrowser, labels)
+		urlsByBrowser,
+		labels)
 	if err != nil {
 		return false, err
 	}
@@ -277,7 +278,8 @@ func createAllRuns(log shared.Logger,
 			err := createRun(client, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
-			} else {
+			} else if !shared.StringSliceContains(labels, shared.MasterLabel) {
+				// Create pending checks on non-master branches.
 				browserName := strings.Split(browser, "-")[0] // chrome-dev => chrome
 				suitesAPI.PendingCheckRun(sha, browserName)
 			}
