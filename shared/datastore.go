@@ -279,3 +279,14 @@ func IsFeatureEnabled(ctx context.Context, flagName string) bool {
 	}
 	return flag.Enabled
 }
+
+// GetSecret is a helper wrapper for loading a token's secret from the datastore
+// by name.
+func GetSecret(ctx context.Context, tokenName string) (string, error) {
+	key := datastore.NewKey(ctx, "Token", tokenName, 0, nil)
+	var token Token
+	if err := datastore.Get(ctx, key, &token); err != nil {
+		return "", err
+	}
+	return token.Secret, nil
+}
