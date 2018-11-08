@@ -16,6 +16,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -44,12 +45,14 @@ func TestHandleResultsCreate(t *testing.T) {
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockS.EXPECT().CompleteCheckRun(gomock.Any(), gomock.Any()).Return(true, nil),
 	)
 
-	HandleResultsCreate(mockAE, w, req)
+	HandleResultsCreate(mockAE, mockS, w, req)
 	resp := w.Result()
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
@@ -79,12 +82,14 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockS.EXPECT().CompleteCheckRun(gomock.Any(), gomock.Any()).Return(true, nil),
 	)
 
-	HandleResultsCreate(mockAE, w, req)
+	HandleResultsCreate(mockAE, mockS, w, req)
 	resp := w.Result()
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
@@ -104,8 +109,9 @@ func TestHandleResultsCreate_NoBasicAuth(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", nil)
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
@@ -117,8 +123,9 @@ func TestHandleResultsCreate_WrongUser(t *testing.T) {
 	req.SetBasicAuth("wrong-user", "secret-token")
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
@@ -131,7 +138,8 @@ func TestHandleResultsCreate_WrongPassword(t *testing.T) {
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().authenticateUploader("_processor", "wrong-password").Return(false)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }

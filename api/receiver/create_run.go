@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -18,7 +19,7 @@ import (
 const InternalUsername = "_processor"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
-func HandleResultsCreate(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
+func HandleResultsCreate(a AppEngineAPI, s checks.SuitesAPI, w http.ResponseWriter, r *http.Request) {
 	username, password, ok := r.BasicAuth()
 	if !ok || username != InternalUsername || !a.authenticateUploader(username, password) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
@@ -50,6 +51,8 @@ func HandleResultsCreate(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	s.CompleteCheckRun(testRun.FullRevisionHash, testRun.BrowserName)
 
 	// Copy int64 representation of key into TestRun.ID so that clients can
 	// inspect/use key value.
