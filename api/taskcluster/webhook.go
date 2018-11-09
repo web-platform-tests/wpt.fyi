@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webhook
+package taskcluster
 
 import (
 	"context"
@@ -39,13 +39,20 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := verifyAndGetPayload(r)
+	ctx := appengine.NewContext(r)
+
+	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
+	if err != nil {
+		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
+		return
+	}
+
+	payload, err := github.ValidatePayload(r, []byte(secret))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	ctx := appengine.NewContext(r)
 	log := shared.GetLogger(ctx)
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
