@@ -2,13 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webhook
+package taskcluster
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha1"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,6 +22,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 
 	"github.com/google/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -42,29 +40,21 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := appengine.NewContext(r)
+
+	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
+	if err != nil {
+		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
+		return
+	}
+
+	payload, err := github.ValidatePayload(r, []byte(secret))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
 	log := shared.GetLogger(ctx)
-
-	payload, err := ioutil.ReadAll(r.Body)
-	r.Body.Close()
-	if err != nil {
-		log.Errorf("%v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	secret, err := getSecret(ctx)
-	if err != nil {
-		log.Errorf("%v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !verifySignature(payload, r.Header.Get("X-Hub-Signature"), secret) {
-		http.Error(w, "HMAC verification failed", http.StatusUnauthorized)
-		return
-	}
-
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	processed, err := handleStatusEvent(ctx, payload)
@@ -161,7 +151,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#results-creation
-	api := fmt.Sprintf("https://%s/api/results/upload", appengine.DefaultVersionHostname(ctx))
+	uploadURL := fmt.Sprintf("https://%s/api/results/upload", appengine.DefaultVersionHostname(ctx))
 
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
@@ -170,7 +160,16 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	if status.IsOnMaster() {
 		labels = []string{"master"}
 	}
-	err = createAllRuns(log, urlfetch.Client(slowCtx), api, *status.SHA, username, password, urlsByBrowser, labels)
+	suitesAPI := checks.NewSuitesAPI(ctx)
+	err = createAllRuns(log,
+		urlfetch.Client(slowCtx),
+		suitesAPI,
+		uploadURL,
+		*status.SHA,
+		username,
+		password,
+		urlsByBrowser,
+		labels)
 	if err != nil {
 		return false, err
 	}
@@ -267,29 +266,10 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 	return u.Username, u.Password, err
 }
 
-func getSecret(ctx context.Context) (token string, err error) {
-	var t shared.Token
-	key := datastore.NewKey(ctx, "Token", "github-tc-webhook-secret", 0, nil)
-	err = datastore.Get(ctx, key, &t)
-	return t.Secret, err
-}
-
-func verifySignature(message []byte, signature string, secret string) bool {
-	// https://developer.github.com/webhooks/securing/
-	signature = strings.TrimPrefix(signature, "sha1=")
-	messageMAC, err := hex.DecodeString(signature)
-	if err != nil {
-		return false
-	}
-	mac := hmac.New(sha1.New, []byte(secret))
-	mac.Write(message)
-	expectedMAC := mac.Sum(nil)
-	return hmac.Equal(messageMAC, expectedMAC)
-}
-
 func createAllRuns(log shared.Logger,
 	client *http.Client,
-	api,
+	suitesAPI checks.SuitesAPI,
+	uploadURL,
 	sha,
 	username,
 	password string,
@@ -302,9 +282,13 @@ func createAllRuns(log shared.Logger,
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, sha, api, username, password, urls, labels)
+			err := createRun(client, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
+			} else if !shared.StringSliceContains(labels, shared.MasterLabel) {
+				// Create pending checks on non-master branches.
+				browserName := strings.Split(browser, "-")[0] // chrome-dev => chrome
+				suitesAPI.PendingCheckRun(sha, browserName)
 			}
 		}(browser, urls)
 	}
@@ -316,7 +300,7 @@ func createAllRuns(log shared.Logger,
 		errStr += err.Error() + "\n"
 	}
 	if errStr != "" {
-		return fmt.Errorf("error(s) occured when talking to %s:\n%s", api, errStr)
+		return fmt.Errorf("error(s) occured when talking to %s:\n%s", uploadURL, errStr)
 	}
 	return nil
 }
