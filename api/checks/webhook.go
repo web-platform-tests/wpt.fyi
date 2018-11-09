@@ -39,8 +39,6 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 
-	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
-
 	secret, err := shared.GetSecret(ctx, "github-check-webhook-secret")
 	if err != nil {
 		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
@@ -53,6 +51,8 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	var processed bool
 	if r.Header.Get("X-GitHub-Event") == "check_suite" {
@@ -83,6 +83,22 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 	if err := json.Unmarshal(payload, &checkSuite); err != nil {
 		return false, err
 	}
+
+	if !shared.IsFeatureEnabled(ctx, "checksAllUsers") {
+		whitelist := []string{
+			"lukebjerring",
+			"autofoolip",
+		}
+		sender := ""
+		if checkSuite.Sender != nil && checkSuite.Sender.Login != nil {
+			sender = *checkSuite.Sender.Login
+		}
+		if !shared.StringSliceContains(whitelist, sender) {
+			log.Infof("Sender %s not whitelisted for wpt.fyi checks")
+			return false, nil
+		}
+	}
+
 	if checkSuite.Action != nil &&
 		(*checkSuite.Action == "requested" || *checkSuite.Action == "rerequested") {
 		log.Debugf("Check suite %s: %s", *(checkSuite.Action), *(checkSuite.CheckSuite.HeadBranch))
