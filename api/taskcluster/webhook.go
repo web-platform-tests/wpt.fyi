@@ -40,8 +40,6 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := appengine.NewContext(r)
-	log := shared.GetLogger(ctx)
-	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
 	if err != nil {
@@ -54,6 +52,9 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+
+	log := shared.GetLogger(ctx)
+	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	processed, err := handleStatusEvent(ctx, payload)
 	if err != nil {
