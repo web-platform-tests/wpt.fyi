@@ -153,7 +153,9 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 	}
 	createdSome := false
 	for _, run := range runs {
-		created, err := completeCheckRun(ctx, sha, run.BrowserName)
+		spec := shared.ProductSpec{}
+		spec.BrowserName = run.BrowserName
+		created, err := completeCheckRun(ctx, sha, spec)
 		createdSome = createdSome || created
 		if err != nil {
 			return createdSome, err
@@ -266,15 +268,22 @@ func getSignedJWT(ctx context.Context) (string, error) {
 	return jwtToken.SignedString(key)
 }
 
-func getDetailsURL(ctx context.Context, sha, browser string) *url.URL {
-	hostname := shared.GetHostname(ctx)
-	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))
+// Diff for the given product at master vs the given sha.
+func getMasterDiffURL(ctx context.Context, sha string, product shared.ProductSpec) *url.URL {
 	filter := shared.TestRunFilter{}
-	filter.Products, _ = shared.ParseProductSpecs(browser, browser)
+	filter.Products = shared.ProductSpecs{product, product}
 	filter.Products[0].Labels = mapset.NewSet("master")
 	filter.Products[1].Revision = sha
-	query := filter.ToQuery()
+	detailsURL := getURL(ctx, filter)
+	query := detailsURL.Query()
 	query.Set("diff", "")
 	detailsURL.RawQuery = query.Encode()
+	return detailsURL
+}
+
+func getURL(ctx context.Context, filter shared.TestRunFilter) *url.URL {
+	hostname := shared.GetHostname(ctx)
+	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))
+	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL
 }
