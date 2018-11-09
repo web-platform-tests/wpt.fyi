@@ -39,17 +39,20 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 
-	payload, err := ioutil.ReadAll(r.Body)
-	r.Body.Close()
+	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
+
+	secret, err := shared.GetSecret(ctx, "github-check-webhook-secret")
+	if err != nil {
+		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
+		return
+	}
+
+	payload, err := github.ValidatePayload(r, []byte(secret))
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// TODO(lukebjerring): Verify payload.
-
-	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	var processed bool
 	if r.Header.Get("X-GitHub-Event") == "check_suite" {

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webhook
+package taskcluster
 
 import "github.com/web-platform-tests/wpt.fyi/shared"
 
