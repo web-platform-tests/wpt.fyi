@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -111,13 +112,16 @@ func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	if checkRun.Action != nil &&
-		(*checkRun.Action == "created" || *checkRun.Action == "rerequested") {
+	if checkRun.Action == nil {
+		return false, errors.New("No action present on the check_run event")
+	}
+	if (*checkRun.Action == "created" && *checkRun.CheckRun.Status != "completed") ||
+		*checkRun.Action == "rerequested" {
 		name, sha := *checkRun.CheckRun.Name, *checkRun.CheckRun.HeadSHA
-		log.Debugf("Check run %s @ %s %s", name, sha[:7], *checkRun.Action)
+		log.Debugf("Check run %s @ %s %s", name, sha, *checkRun.Action)
 		spec, err := shared.ParseProductSpec(*checkRun.CheckRun.Name)
 		if err != nil {
-			log.Errorf("Failed to parse \"%s\" as product spec")
+			log.Errorf("Failed to parse \"%s\" as product spec", *checkRun.CheckRun.Name)
 		}
 		return completeChecksForExistingRuns(ctx, sha, spec)
 	}

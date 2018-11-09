@@ -22,6 +22,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 
 	"github.com/google/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -150,7 +151,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#results-creation
-	api := fmt.Sprintf("https://%s/api/results/upload", appengine.DefaultVersionHostname(ctx))
+	uploadURL := fmt.Sprintf("https://%s/api/results/upload", appengine.DefaultVersionHostname(ctx))
 
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
@@ -159,7 +160,16 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	if status.IsOnMaster() {
 		labels = []string{"master"}
 	}
-	err = createAllRuns(log, urlfetch.Client(slowCtx), api, *status.SHA, username, password, urlsByBrowser, labels)
+	suitesAPI := checks.NewSuitesAPI(ctx)
+	err = createAllRuns(log,
+		urlfetch.Client(slowCtx),
+		suitesAPI,
+		uploadURL,
+		*status.SHA,
+		username,
+		password,
+		urlsByBrowser,
+		labels)
 	if err != nil {
 		return false, err
 	}
@@ -258,7 +268,8 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 
 func createAllRuns(log shared.Logger,
 	client *http.Client,
-	api,
+	suitesAPI checks.SuitesAPI,
+	uploadURL,
 	sha,
 	username,
 	password string,
@@ -271,9 +282,13 @@ func createAllRuns(log shared.Logger,
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, sha, api, username, password, urls, labels)
+			err := createRun(client, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
+			} else if !shared.StringSliceContains(labels, shared.MasterLabel) {
+				// Create pending checks on non-master branches.
+				browserName := strings.Split(browser, "-")[0] // chrome-dev => chrome
+				suitesAPI.PendingCheckRun(sha, browserName)
 			}
 		}(browser, urls)
 	}
@@ -285,7 +300,7 @@ func createAllRuns(log shared.Logger,
 		errStr += err.Error() + "\n"
 	}
 	if errStr != "" {
-		return fmt.Errorf("error(s) occured when talking to %s:\n%s", api, errStr)
+		return fmt.Errorf("error(s) occured when talking to %s:\n%s", uploadURL, errStr)
 	}
 	return nil
 }
