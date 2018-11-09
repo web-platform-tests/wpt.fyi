@@ -2,22 +2,14 @@
 import functools
 import logging
 import os
-import re
-import shutil
-import sys
 import tempfile
 import time
-import traceback
 from http import HTTPStatus
 
 import filelock
 import flask
-import requests
-from google.cloud import datastore, storage
 
-import config
-import wptreport
-import gsutil
+import processor
 
 
 # All the AppEngine internal requests (including other services and TaskQueue)
@@ -112,21 +104,6 @@ def readiness_check():
     return 'Service alive'
 
 
-def _process_chunk(report, gcs_path):
-    match = re.match(r'/([^/]+)/(.*)', gcs_path)
-    assert match
-    bucket_name, blob_path = match.groups()
-
-    gcs = storage.Client()
-    bucket = gcs.get_bucket(bucket_name)
-    blob = bucket.blob(blob_path)
-
-    with tempfile.NamedTemporaryFile(suffix='.json') as temp:
-        blob.download_to_file(temp)
-        temp.seek(0)
-        report.load_json(temp)
-
-
 # Check request origins before acquiring the lock.
 @app.route('/api/results/process', methods=['POST'])
 @_internal_only
@@ -134,92 +111,13 @@ def _process_chunk(report, gcs_path):
 def task_handler():
     _atomic_write(TIMESTAMP_FILE, str(time.time()))
 
-    params = flask.request.form
-    # Mandatory fields:
-    uploader = params['uploader']
-    gcs_paths = params.getlist('gcs')
-    result_type = params['type']
-    # Optional fields:
-    labels = params.get('labels', '')
+    app.logger.info('Processing task %s',
+                    flask.request.headers.get('X-AppEngine-TaskName'))
+    resp = processor.process_report(flask.request.form)
+    status = HTTPStatus.CREATED if resp else HTTPStatus.NO_CONTENT
+    app.logger.info(resp)
 
-    assert (
-        (result_type == 'single' and len(gcs_paths) == 1) or
-        (result_type == 'multiple' and len(gcs_paths) > 1)
-    )
-
-    report = wptreport.WPTReport()
-    try:
-        for gcs_path in gcs_paths:
-            _process_chunk(report, gcs_path)
-        # To be deprecated once all reports have all the required metadata.
-        report.update_metadata(
-            revision=params.get('revision'),
-            browser_name=params.get('browser_name'),
-            browser_version=params.get('browser_version'),
-            os_name=params.get('os_name'),
-            os_version=params.get('os_version'),
-        )
-        report.finalize()
-    except wptreport.WPTReportError:
-        etype, e, tb = sys.exc_info()
-        e.path = str(gcs_paths)
-        # This will register an error in Stackdriver.
-        traceback.print_exception(etype, e, tb)
-        # The input is invalid and there is no point to retry, so we return 2XX
-        # to tell TaskQueue to drop the task.
-        return ('', HTTPStatus.NO_CONTENT)
-
-    resp = "{} results loaded from {}\n".format(
-        len(report.results), str(gcs_paths))
-
-    raw_results_gcs_path = '/{}/{}/report.json'.format(
-        config.raw_results_bucket(), report.sha_product_path)
-    if result_type == 'single':
-        # If the original report isn't chunked, we store it directly without
-        # the roundtrip to serialize it back.
-        gsutil.copy('gs:/' + gcs_paths[0], 'gs:/' + raw_results_gcs_path)
-    else:
-        with tempfile.NamedTemporaryFile(suffix='.json.gz') as temp:
-            report.serialize_gzip(temp.name)
-            gsutil.copy(temp.name, 'gs:/' + raw_results_gcs_path, gzipped=True)
-
-    tempdir = tempfile.mkdtemp()
-    try:
-        report.populate_upload_directory(output_dir=tempdir)
-        results_gcs_path = '/{}/{}'.format(
-            config.results_bucket(), report.sha_summary_path)
-        gsutil.copy(
-            os.path.join(tempdir, report.sha_summary_path),
-            'gs:/' + results_gcs_path,
-            gzipped=True)
-        # TODO(Hexcles): Consider switching to gsutil.copy.
-        gsutil.rsync_gzip(
-            os.path.join(tempdir, report.sha_product_path),
-            # The trailing slash is crucial (wpt.fyi#275).
-            'gs://{}/{}/'.format(config.results_bucket(),
-                                 report.sha_product_path),
-            quiet=True)
-        resp += "Uploaded to gs:/{}\n".format(results_gcs_path)
-    finally:
-        shutil.rmtree(tempdir)
-
-    # Authenticate as "_processor" for create-test-run API.
-    ds = datastore.Client()
-    secret = ds.get(ds.key('Uploader', '_processor'))['Password']
-    test_run_id = wptreport.create_test_run(report, labels, uploader, secret,
-                                            results_gcs_path,
-                                            raw_results_gcs_path)
-    assert test_run_id
-
-    # Authenticate as "_spanner" for push-to-spanner API.
-    secret = ds.get(ds.key('Uploader', '_spanner'))['Password']
-    response = requests.put(
-        '%s/api/spanner_push_run?run_id=%d' % (config.project_baseurl(), test_run_id),
-        auth=('_spanner', secret))
-    if not response.ok:
-        app.logger.error('Bad status code from push-to-spanner API: %d' % response.status_code)
-
-    return (resp, HTTPStatus.CREATED)
+    return (resp, status)
 
 
 # Run the script directly locally to start Flask dev server.
