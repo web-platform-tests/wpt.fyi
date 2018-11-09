@@ -128,25 +128,25 @@ def process_report(params):
     resp = "{} results loaded from: {}\n".format(
         len(report.results), ' '.join(gcs_paths))
 
-    raw_results_gcs_path = '/{}/{}/report.json'.format(
+    raw_results_gs_url = 'gs://{}/{}/report.json'.format(
         config.raw_results_bucket(), report.sha_product_path)
     if result_type == 'single':
         # If the original report isn't chunked, we store it directly without
         # the roundtrip to serialize it back.
-        gsutil.copy('gs:/' + gcs_paths[0], 'gs:/' + raw_results_gcs_path)
+        gsutil.copy('gs:/' + gcs_paths[0], raw_results_gs_url)
     else:
         with tempfile.NamedTemporaryFile(suffix='.json.gz') as temp:
             report.serialize_gzip(temp.name)
-            gsutil.copy(temp.name, 'gs:/' + raw_results_gcs_path, gzipped=True)
+            gsutil.copy(temp.name, raw_results_gs_url, gzipped=True)
 
     tempdir = tempfile.mkdtemp()
     try:
         report.populate_upload_directory(output_dir=tempdir)
-        results_gcs_path = '/{}/{}'.format(
+        results_gs_url = 'gs://{}/{}'.format(
             config.results_bucket(), report.sha_summary_path)
         gsutil.copy(
             os.path.join(tempdir, report.sha_summary_path),
-            'gs:/' + results_gcs_path,
+            results_gs_url,
             gzipped=True)
         # TODO(Hexcles): Consider switching to gsutil.copy.
         gsutil.rsync_gzip(
@@ -155,15 +155,16 @@ def process_report(params):
             'gs://{}/{}/'.format(config.results_bucket(),
                                  report.sha_product_path),
             quiet=True)
-        resp += "Uploaded to gs:/{}\n".format(results_gcs_path)
+        resp += "Uploaded to {}\n".format(results_gs_url)
     finally:
         shutil.rmtree(tempdir)
 
     # Authenticate as "_processor" for create-test-run API.
     secret = _get_uploader_password('_processor')
-    test_run_id = wptreport.create_test_run(report, labels, uploader, secret,
-                                            results_gcs_path,
-                                            raw_results_gcs_path)
+    test_run_id = wptreport.create_test_run(
+        report, labels, uploader, secret,
+        gsutil.gs_to_public_url(results_gs_url),
+        gsutil.gs_to_public_url(raw_results_gs_url))
     assert test_run_id
 
     success = _after_new_run(report, test_run_id)
