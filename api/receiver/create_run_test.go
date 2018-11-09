@@ -37,8 +37,6 @@ func TestHandleResultsCreate(t *testing.T) {
 		"labels":             []string{"foo", "bar"},
 		"time_start":         "2018-06-21T18:39:54.218000+00:00",
 		"time_end":           "2018-06-21T20:03:49Z",
-		// Intentionally missing full_revision_hash; no error should be raised.
-		// Unknown parameters should be ignored.
 		"_random_extra_key_": "some_value",
 	}
 	body, err := json.Marshal(payload)
