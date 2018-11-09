@@ -65,7 +65,9 @@ func HandleResultsCreate(a AppEngineAPI, s checks.SuitesAPI, w http.ResponseWrit
 		return
 	}
 
-	s.CompleteCheckRun(testRun.FullRevisionHash, testRun.BrowserName)
+	spec := shared.ProductSpec{}
+	spec.BrowserName = testRun.BrowserName
+	s.CompleteCheckRun(testRun.FullRevisionHash, spec)
 
 	// Copy int64 representation of key into TestRun.ID so that clients can
 	// inspect/use key value.
