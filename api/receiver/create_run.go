@@ -6,8 +6,10 @@ package receiver
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
@@ -45,6 +47,17 @@ func HandleResultsCreate(a AppEngineAPI, s checks.SuitesAPI, w http.ResponseWrit
 		testRun.TimeEnd = testRun.TimeStart
 	}
 	testRun.CreatedAt = time.Now()
+
+	if len(testRun.FullRevisionHash) != 40 {
+		http.Error(w, "full_revision_hash must be the full SHA (40 chars)", http.StatusBadRequest)
+		return
+	} else if testRun.Revision != "" && strings.Index(testRun.FullRevisionHash, testRun.Revision) != 0 {
+		http.Error(w,
+			fmt.Sprintf("Mismatch of full_revision_hash and revision fields: %s vs %s", testRun.FullRevisionHash, testRun.Revision),
+			http.StatusBadRequest)
+		return
+	}
+	testRun.Revision = testRun.FullRevisionHash[:10]
 
 	key, err := a.addTestRun(&testRun)
 	if err != nil {

@@ -26,15 +26,17 @@ func TestHandleResultsCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
+	sha := "0123456789012345678901234567890123456789"
 	payload := map[string]interface{}{
-		"browser_name":    "firefox",
-		"browser_version": "59.0",
-		"os_name":         "linux",
-		"os_version":      "4.4",
-		"revision":        "0123456789",
-		"labels":          []string{"foo", "bar"},
-		"time_start":      "2018-06-21T18:39:54.218000+00:00",
-		"time_end":        "2018-06-21T20:03:49Z",
+		"browser_name":       "firefox",
+		"browser_version":    "59.0",
+		"os_name":            "linux",
+		"os_version":         "4.4",
+		"revision":           sha[:10],
+		"full_revision_hash": sha,
+		"labels":             []string{"foo", "bar"},
+		"time_start":         "2018-06-21T18:39:54.218000+00:00",
+		"time_end":           "2018-06-21T20:03:49Z",
 		// Intentionally missing full_revision_hash; no error should be raised.
 		// Unknown parameters should be ignored.
 		"_random_extra_key_": "some_value",
@@ -49,7 +51,7 @@ func TestHandleResultsCreate(t *testing.T) {
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
-		mockS.EXPECT().CompleteCheckRun(gomock.Any(), gomock.Any()).Return(true, nil),
+		mockS.EXPECT().CompleteCheckRun(sha, "firefox").Return(true, nil),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)
@@ -70,6 +72,44 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
+	sha := "0123456789012345678901234567890123456789"
+	payload := map[string]interface{}{
+		"browser_name":       "firefox",
+		"browser_version":    "59.0",
+		"os_name":            "linux",
+		"revision":           sha[:10],
+		"full_revision_hash": sha,
+	}
+	body, err := json.Marshal(payload)
+	assert.Nil(t, err)
+	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
+	req.SetBasicAuth("_processor", "secret-token")
+	w := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
+	gomock.InOrder(
+		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
+		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockS.EXPECT().CompleteCheckRun(sha, "firefox").Return(true, nil),
+	)
+
+	HandleResultsCreate(mockAE, mockS, w, req)
+	resp := w.Result()
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	var testRun shared.TestRun
+	body, _ = ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(body, &testRun)
+	assert.Nil(t, err)
+	assert.False(t, testRun.CreatedAt.IsZero())
+	assert.False(t, testRun.TimeStart.IsZero())
+	assert.Equal(t, testRun.TimeStart, testRun.TimeEnd)
+}
+
+func TestHandleResultsCreate_BadRevision(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
 	payload := map[string]interface{}{
 		"browser_name":    "firefox",
 		"browser_version": "59.0",
@@ -85,21 +125,24 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	mockS := checks.NewMockSuitesAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
-		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
-		mockS.EXPECT().CompleteCheckRun(gomock.Any(), gomock.Any()).Return(true, nil),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)
 	resp := w.Result()
-	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	var testRun shared.TestRun
-	body, _ = ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &testRun)
+	payload["full_revision_hash"] = "9876543210987654321098765432109876543210"
+	gomock.InOrder(
+		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
+	)
+	body, err = json.Marshal(payload)
 	assert.Nil(t, err)
-	assert.False(t, testRun.CreatedAt.IsZero())
-	assert.False(t, testRun.TimeStart.IsZero())
-	assert.Equal(t, testRun.TimeStart, testRun.TimeEnd)
+	req = httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
+	req.SetBasicAuth("_processor", "secret-token")
+
+	HandleResultsCreate(mockAE, mockS, w, req)
+	resp = w.Result()
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestHandleResultsCreate_NoBasicAuth(t *testing.T) {
