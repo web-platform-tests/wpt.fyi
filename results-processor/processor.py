@@ -1,3 +1,7 @@
+# Copyright 2018 The WPT Dashboard Project. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
 import logging
 import os
 import re
@@ -30,6 +34,14 @@ def _get_uploader_password(username):
         A string, the password for this user.
     """
     return _datastore.get(_datastore.key('Uploader', username))['Password']
+
+
+def _find_run_by_raw_results(raw_results_url):
+    """Returns true if an existing run already has the same raw_results_url."""
+    q = _datastore.query(kind='TestRun')
+    q.add_filter('RawResultsURL', '=', raw_results_url).keys_only()
+    run = q.fetch(limit=1)
+    return len(run) > 0
 
 
 def _process_chunk(report, gcs_path):
@@ -130,6 +142,16 @@ def process_report(params):
 
     raw_results_gs_url = 'gs://{}/{}/report.json'.format(
         config.raw_results_bucket(), report.sha_product_path)
+    raw_results_url = gsutil.gs_to_public_url(raw_results_gs_url)
+
+    # Abort early if the result already exists in Datastore. This is safe to do
+    # because raw_results_url contains both the full revision & checksum of the
+    # report content, unique enough to use as a UID.
+    if _find_run_by_raw_results(raw_results_url):
+        _log.warn('Skipping the task because RawResultsURL already exists: %s',
+                  raw_results_url)
+        return ''
+
     if result_type == 'single':
         # If the original report isn't chunked, we store it directly without
         # the roundtrip to serialize it back.
@@ -159,11 +181,19 @@ def process_report(params):
     finally:
         shutil.rmtree(tempdir)
 
+    # Check again because the upload takes a long time.
+    # Datastore does not support a query-and-put transaction, so this is only a
+    # best effort to avoid duplicate runs.
+    if _find_run_by_raw_results(raw_results_url):
+        _log.warn('Skipping the task because RawResultsURL already exists: %s',
+                  raw_results_url)
+        return ''
+
     # Authenticate as "_processor" for create-test-run API.
     secret = _get_uploader_password('_processor')
     test_run_id = wptreport.create_test_run(
         report, labels, uploader, secret,
-        gsutil.gs_to_public_url(results_gs_url),
+        raw_results_url,
         gsutil.gs_to_public_url(raw_results_gs_url))
     assert test_run_id
 
