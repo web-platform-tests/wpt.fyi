@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package shared
+package shared_test
 
 import (
 	"errors"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/memcache"
 )
@@ -22,9 +23,9 @@ func TestGet_cacheHit(t *testing.T) {
 
 	var cacheID, storeID interface{}
 
-	cache := NewMockReadWritable(mockCtrl)
-	store := NewMockReadable(mockCtrl)
-	cs := NewByteCachedStore(NewTestContext(), cache, store)
+	cache := sharedtest.NewMockReadWritable(mockCtrl)
+	store := sharedtest.NewMockReadable(mockCtrl)
+	cs := shared.NewByteCachedStore(sharedtest.NewTestContext(), cache, store)
 
 	data := []byte("{}")
 	cr := sharedtest.NewMockReadCloser(t, data)
@@ -42,9 +43,9 @@ func TestGet_cacheMiss(t *testing.T) {
 
 	var cacheID, storeID interface{}
 
-	cache := NewMockReadWritable(mockCtrl)
-	store := NewMockReadable(mockCtrl)
-	cs := NewByteCachedStore(NewTestContext(), cache, store)
+	cache := sharedtest.NewMockReadWritable(mockCtrl)
+	store := sharedtest.NewMockReadable(mockCtrl)
+	cs := shared.NewByteCachedStore(sharedtest.NewTestContext(), cache, store)
 
 	data := []byte("{}")
 	cw := sharedtest.NewMockWriteCloser(t)
@@ -66,9 +67,9 @@ func TestGet_missing(t *testing.T) {
 
 	var cacheID, storeID interface{}
 
-	cache := NewMockReadWritable(mockCtrl)
-	store := NewMockReadable(mockCtrl)
-	cs := NewByteCachedStore(NewTestContext(), cache, store)
+	cache := sharedtest.NewMockReadWritable(mockCtrl)
+	store := sharedtest.NewMockReadable(mockCtrl)
+	cs := shared.NewByteCachedStore(sharedtest.NewTestContext(), cache, store)
 
 	errMissing := errors.New("Failed to fetch from store")
 	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, memcache.ErrCacheMiss)
