@@ -1,17 +1,18 @@
 // +build medium
 
-package shared
+package shared_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/datastore"
 )
 
 func TestTestRunIDs_LoadTestRuns(t *testing.T) {
-	testRuns := make(TestRuns, 2)
+	testRuns := make(shared.TestRuns, 2)
 	testRuns[0].BrowserName = "chrome"
 	testRuns[0].BrowserVersion = "63.0"
 	testRuns[0].OSName = "linux"
