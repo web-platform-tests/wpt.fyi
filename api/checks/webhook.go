@@ -125,7 +125,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 	for _, p := range pullRequests {
 		destRepoID := p.GetBase().GetRepo().GetID()
 		if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
-			// Pull is across forks; request a check suite on the main fork too.
+			// Pull is across forks; register a wpt.fyi check suite on the main fork too.
 			_, err := createWPTCheckSuite(ctx, sha)
 			if err != nil {
 				log.Errorf("Failed to create wpt check_suite: %s", err.Error())
@@ -196,7 +196,8 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 	destRepoID := pullRequest.GetPullRequest().GetBase().GetRepo().GetID()
 	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
 		// Pull is across forks; request a check suite on the main fork too.
-		return createWPTCheckSuite(ctx, sha)
+		suite, err := createWPTCheckSuite(ctx, sha)
+		return suite != nil, err
 	}
 	return false, nil
 }
@@ -223,21 +224,8 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 
 // createWPTCheckSuite creates a check_suite on the main wpt repo for the given
 // SHA. This is needed when a PR comes from a different fork of the repo.
-func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
-	log := shared.GetLogger(ctx)
-	log.Debugf("Creating check_suite for web-platform-tests/wpt")
-
-	jwtClient, err := getJWTClient(ctx, wptRepoInstallationID)
-	if err != nil {
-		return false, err
-	}
-	client := github.NewClient(jwtClient)
-
-	opts := github.CreateCheckSuiteOptions{
-		HeadSHA: sha,
-	}
-	suite, _, err := client.Checks.CreateCheckSuite(ctx, "web-platform-tests", "wpt", opts)
-	return suite != nil, err
+func createWPTCheckSuite(ctx context.Context, sha string) (*shared.CheckSuite, error) {
+	return getOrCreateCheckSuite(ctx, sha, "web-platform-tests", "wpt", wptRepoInstallationID)
 }
 
 func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.CreateCheckRunOptions) (bool, error) {
