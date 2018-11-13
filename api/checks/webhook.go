@@ -194,7 +194,11 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	if pullRequest.GetAction() != "opened" {
+	switch pullRequest.GetAction() {
+	case "opened":
+	case "synchronize":
+		break
+	default:
 		return false, nil
 	}
 
