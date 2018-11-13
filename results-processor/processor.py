@@ -41,7 +41,7 @@ def _find_run_by_raw_results(raw_results_url):
     q = _datastore.query(kind='TestRun')
     q.add_filter('RawResultsURL', '=', raw_results_url)
     q.keys_only()
-    run = q.fetch(limit=1)
+    run = list(q.fetch(limit=1))
     return len(run) > 0
 
 
