@@ -88,7 +88,7 @@ func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpe
 
 	host := shared.GetHostname(ctx)
 	completed := summaries.Completed{
-		HostName: "staging.wpt.fyi",
+		HostName: host,
 		HostURL:  fmt.Sprintf("https://%s/", host),
 		SHAURL:   getURL(ctx, shared.TestRunFilter{SHA: sha[:10]}).String(),
 		DiffURL:  getMasterDiffURL(ctx, sha, product).String(),
