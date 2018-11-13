@@ -42,6 +42,13 @@ func NewAEContext(stronglyConsistentDatastore bool) (context.Context, func(), er
 	}, nil
 }
 
+// NewTestContext creates a new context.Context for small tests.
+func NewTestContext() context.Context {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
+	return ctx
+}
+
 type sameProductSpec struct {
 	spec string
 }
@@ -54,7 +61,6 @@ func (s sameProductSpec) Matches(x interface{}) bool {
 	}
 	return false
 }
-
 func (s sameProductSpec) String() string {
 	return s.spec
 }
@@ -64,11 +70,4 @@ func SameProductSpec(spec string) gomock.Matcher {
 	return sameProductSpec{
 		spec: spec,
 	}
-}
-
-// NewTestContext creates a new context.Context for small tests.
-func NewTestContext() context.Context {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
-	return ctx
 }
