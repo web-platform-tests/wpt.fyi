@@ -7,6 +7,7 @@ package sharedtest
 import (
 	"context"
 
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/aetest"
 )
@@ -38,4 +39,11 @@ func NewAEContext(stronglyConsistentDatastore bool) (context.Context, func(), er
 	return ctx, func() {
 		inst.Close()
 	}, nil
+}
+
+// NewTestContext creates a new context.Context for small tests.
+func NewTestContext() context.Context {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
+	return ctx
 }

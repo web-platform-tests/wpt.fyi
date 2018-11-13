@@ -195,13 +195,6 @@ func NewRequestContext(r *http.Request) context.Context {
 	return ctx
 }
 
-// NewTestContext creates a new context.Context for small tests.
-func NewTestContext() context.Context {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), NewNilLogger())
-	return ctx
-}
-
 // NewSetFromStringSlice is a helper for the inability to cast []string to []interface{}
 func NewSetFromStringSlice(items []string) mapset.Set {
 	if items == nil {
