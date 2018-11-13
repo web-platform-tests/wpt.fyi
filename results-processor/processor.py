@@ -39,7 +39,8 @@ def _get_uploader_password(username):
 def _find_run_by_raw_results(raw_results_url):
     """Returns true if an existing run already has the same raw_results_url."""
     q = _datastore.query(kind='TestRun')
-    q.add_filter('RawResultsURL', '=', raw_results_url).keys_only()
+    q.add_filter('RawResultsURL', '=', raw_results_url)
+    q.keys_only()
     run = q.fetch(limit=1)
     return len(run) > 0
 
