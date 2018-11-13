@@ -28,6 +28,8 @@ import (
 
 // NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
 const wptfyiCheckAppID = 19965
+const wptRepoID = 3618133
+const wptRepoInstallationID = 449270
 
 // checkWebhookHandler listens for check_suite and check_run events,
 // responding to requested and rerequested events.
@@ -108,13 +110,22 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		}
 	}
 
+	sha := checkSuite.GetCheckSuite().GetHeadSHA()
+	pullRequests := checkSuite.GetCheckSuite().PullRequests
+	for _, p := range pullRequests {
+		destRepoID := p.GetBase().GetRepo().GetID()
+		if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
+			// Pull is across forks; request a check suite on the main fork too.
+			createWPTCheckSuite(ctx, sha)
+		}
+	}
+
 	if checkSuite.Action != nil &&
 		(*checkSuite.Action == "requested" || *checkSuite.Action == "rerequested") {
 		log.Debugf("Check suite %s: %s", *(checkSuite.Action), *(checkSuite.CheckSuite.HeadBranch))
 
-		sha := *checkSuite.CheckSuite.HeadSHA
-		owner := *checkSuite.GetRepo().Owner.Login
-		repo := *checkSuite.GetRepo().Name
+		owner := checkSuite.GetRepo().GetOwner().GetLogin()
+		repo := checkSuite.GetRepo().GetName()
 		installation := *checkSuite.Installation.ID
 		suite, err := getOrCreateCheckSuite(ctx, sha, owner, repo, installation)
 		if err != nil || suite == nil {
@@ -175,6 +186,25 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 		}
 	}
 	return createdSome, nil
+}
+
+// createWPTCheckSuite creates a check_suite on the main wpt repo for the given
+// SHA. This is needed when a PR comes from a different fork of the repo.
+func createWPTCheckSuite(ctx context.Context, sha string) error {
+	log := shared.GetLogger(ctx)
+	log.Debugf("Creating check_suite for web-platform-tests/wpt")
+
+	jwtClient, err := getJWTClient(ctx, wptRepoInstallationID)
+	if err != nil {
+		return err
+	}
+	client := github.NewClient(jwtClient)
+
+	opts := github.CreateCheckSuiteOptions{
+		HeadSHA: sha,
+	}
+	_, _, err = client.Checks.CreateCheckSuite(ctx, "web-platform-tests", "wpt", opts)
+	return err
 }
 
 func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.CreateCheckRunOptions) (bool, error) {
