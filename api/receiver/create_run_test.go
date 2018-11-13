@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 var testDatastoreKey = &DatastoreKey{"TestRun", 1}
@@ -49,7 +50,7 @@ func TestHandleResultsCreate(t *testing.T) {
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
-		mockS.EXPECT().CompleteCheckRun(sha, "firefox").Return(true, nil),
+		mockS.EXPECT().CompleteCheckRun(sha, sharedtest.SameProductSpec("firefox")).Return(true, nil),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)
@@ -88,7 +89,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
-		mockS.EXPECT().CompleteCheckRun(sha, "firefox").Return(true, nil),
+		mockS.EXPECT().CompleteCheckRun(sha, sharedtest.SameProductSpec("firefox")).Return(true, nil),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)

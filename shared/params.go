@@ -141,6 +141,22 @@ func (p ProductSpec) Matches(run TestRun) bool {
 	return true
 }
 
+// DisplayName returns a capitalized version of the product's name.
+func (p ProductSpec) DisplayName() string {
+	switch p.BrowserName {
+	case "chrome":
+		return "Chrome"
+	case "edge":
+		return "Edge"
+	case "firefox":
+		return "Firefox"
+	case "safari":
+		return "Safari"
+	default:
+		return p.BrowserName
+	}
+}
+
 // ProductSpecs is a helper type for a slice of ProductSpec structs.
 type ProductSpecs []ProductSpec
 

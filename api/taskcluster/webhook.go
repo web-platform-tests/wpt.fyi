@@ -287,8 +287,9 @@ func createAllRuns(log shared.Logger,
 				errors <- err
 			} else if !shared.StringSliceContains(labels, shared.MasterLabel) {
 				// Create pending checks on non-master branches.
-				browserName := strings.Split(browser, "-")[0] // chrome-dev => chrome
-				suitesAPI.PendingCheckRun(sha, browserName)
+				spec := shared.ProductSpec{}
+				spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
+				suitesAPI.PendingCheckRun(sha, spec)
 			}
 		}(browser, urls)
 	}
