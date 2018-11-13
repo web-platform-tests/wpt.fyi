@@ -124,7 +124,9 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 
 	action := checkSuite.GetAction()
 	if action == "requested" || action == "rerequested" {
-		log.Debugf("Check suite %s: %s", *(checkSuite.Action), *(checkSuite.CheckSuite.HeadBranch))
+		repo := checkSuite.GetRepo().GetName()
+		branch := checkSuite.GetCheckSuite().GetHeadBranch()
+		log.Debugf("Check suite %s: %s:%s", action, repo, branch)
 
 		sha := checkSuite.GetCheckSuite().GetHeadSHA()
 
@@ -144,7 +146,6 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		}
 
 		owner := checkSuite.GetRepo().GetOwner().GetLogin()
-		repo := checkSuite.GetRepo().GetName()
 		installation := *checkSuite.Installation.ID
 		suite, err := getOrCreateCheckSuite(ctx, sha, owner, repo, installation)
 		if err != nil || suite == nil {
