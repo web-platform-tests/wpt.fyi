@@ -126,7 +126,10 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		destRepoID := p.GetBase().GetRepo().GetID()
 		if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
 			// Pull is across forks; request a check suite on the main fork too.
-			createWPTCheckSuite(ctx, sha)
+			_, err := createWPTCheckSuite(ctx, sha)
+			if err != nil {
+				log.Errorf("Failed to create wpt check_suite: %s", err.Error())
+			}
 		}
 	}
 
