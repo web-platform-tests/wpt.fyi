@@ -671,12 +671,13 @@ found in the LICENSE file.
           after.total - before.total // total
         ];
         const hasChanges = diff.some(v => v !== 0);
-        if (!this.diffFilter.includes('C') && hasChanges) {
-          return;
-        } else if (!this.diffFilter.includes('U') && !hasChanges) {
-          return;
+        if ((this.diffFilter.includes('A') && added)
+          || (this.diffFilter.includes('D') && deleted)
+          || (this.diffFilter.includes('C') && hasChanges)
+          || (this.diffFilter.includes('U') && !hasChanges)) {
+          return diff;
         }
-        return diff;
+        return undefined;
       }
 
       platformID({browser_name, browser_version, os_name, os_version}) {
