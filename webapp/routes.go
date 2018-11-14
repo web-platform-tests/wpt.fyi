@@ -48,6 +48,9 @@ func RegisterRoutes() {
 	// Admin-only manual results upload.
 	shared.AddRoute("/admin/results/upload", "admin-results-upload", adminUploadHandler)
 
+	// Admin-only environment flag management
+	shared.AddRoute("/admin/flags", "admin-flags", adminFlagsHandler)
+
 	// Test run results, viewed by browser (default view)
 	// For run results diff view, 'before' and 'after' params can be given.
 	shared.AddRoute("/results/", "results", testResultsHandler)

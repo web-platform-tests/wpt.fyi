@@ -24,7 +24,7 @@ found in the LICENSE file.
       'masterRunsOnly',
     ];
 
-    const _wptFlags = (superClass, readOnly) => class extends superClass {
+    const _wptFlags = (superClass, readOnly, useLocalStorage) => class extends superClass {
       static get is() {
         return 'wpt-flags';
       }
@@ -35,8 +35,11 @@ found in the LICENSE file.
         }
         const props = {};
         for (const feature of WPT_FYI_FEATURES) {
-          const stored = localStorage.getItem(`features.${feature}`);
-          let value = stored && JSON.parse(stored);
+          let value = null;
+          if (useLocalStorage) {
+            const stored = localStorage.getItem(`features.${feature}`);
+            value = stored && JSON.parse(stored);
+          }
           // Fall back to env default.
           if (value === null) {
             value = window.WPTEnvironmentFlags
@@ -53,7 +56,7 @@ found in the LICENSE file.
       }
     };
     // eslint-disable-next-line no-unused-vars
-    const WPTFlags = (superClass) => _wptFlags(superClass, /*readOnly*/ true);
+    const WPTFlags = (superClass) => _wptFlags(superClass, /*readOnly*/ true, /*useLocalStorage*/ true);
   </script>
 </dom-module>
 
@@ -104,25 +107,65 @@ found in the LICENSE file.
 
   <script>
     /* global _wptFlags, WPT_FYI_FEATURES */
-    class WPTFlagsEditor extends _wptFlags(window.Polymer.Element, /*readOnly*/ false) {
+    const _wptFlagsEditor = (environmentFlags) =>
+      class extends _wptFlags(window.Polymer.Element, /*readOnly*/ false, /*useLocalStorage*/ !environmentFlags) {
+        ready() {
+          super.ready();
+          for (const feature of WPT_FYI_FEATURES) {
+            this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
+          }
+        }
+
+        valueChanged(value, feature) {
+          if (environmentFlags) {
+            fetch(`/admin/flags`, {
+              method: 'POST',
+              body: JSON.stringify({
+                Name: feature,
+                Enabled: value,
+              }),
+              credentials: 'include',
+            }).catch(e => {
+              alert(`Failed to save feature ${feature}.\n\n${e}`);
+            });
+          } else {
+            return localStorage.setItem(
+              `features.${feature}`,
+              JSON.stringify(value));
+          }
+        }
+      };
+
+    class WPTFlagsEditor extends _wptFlagsEditor(/*environmentFlags*/ false) {
       static get is() {
         return 'wpt-flags-editor';
       }
+    }
+    window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
+  </script>
+</dom-module>
 
-      ready() {
-        super.ready();
-        for (const feature of WPT_FYI_FEATURES) {
-          this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
-        }
-      }
-
-      valueChanged(value, feature) {
-        return localStorage.setItem(
-          `features.${feature}`,
-          JSON.stringify(value));
+<dom-module id="wpt-environment-flags-editor">
+  <script>
+    class WPTEnvironmentFlagsEditor extends _wptFlagsEditor(/*environmentFlags*/ true) {
+      static get is() {
+        return 'wpt-environment-flags-editor';
       }
     }
 
-    window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
+    // Copy the WPTFlags template.
+    (() => {
+      const template = Symbol();
+      Object.defineProperty(WPTEnvironmentFlagsEditor, 'template', {
+        get: function() {
+          if (!this[template]) {
+            this[template] = window.Polymer.DomModule.import(WPTFlagsEditor.is, 'template');
+          }
+          return this[template];
+        }
+      });
+    })();
+
+    window.customElements.define(WPTEnvironmentFlagsEditor.is, WPTEnvironmentFlagsEditor);
   </script>
 </dom-module>

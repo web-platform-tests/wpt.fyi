@@ -280,6 +280,13 @@ func IsFeatureEnabled(ctx context.Context, flagName string) bool {
 	return flag.Enabled
 }
 
+// SetFeature puts a feature with the given flag name and enabled state.
+func SetFeature(ctx context.Context, flag Flag) error {
+	key := datastore.NewKey(ctx, "Flag", flag.Name, 0, nil)
+	_, err := datastore.Put(ctx, key, &flag)
+	return err
+}
+
 // GetSecret is a helper wrapper for loading a token's secret from the datastore
 // by name.
 func GetSecret(ctx context.Context, tokenName string) (string, error) {
