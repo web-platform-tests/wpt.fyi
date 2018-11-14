@@ -166,7 +166,9 @@ func (mc memcacheReadWritable) NewReadCloser(iKey interface{}) (io.ReadCloser, e
 	}
 
 	item, err := memcache.Get(mc.ctx, key)
-	if err != nil {
+	if err == memcache.ErrCacheMiss {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 	return ioutil.NopCloser(bytes.NewReader(item.Value)), nil
