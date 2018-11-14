@@ -194,8 +194,8 @@ def process_report(params):
     secret = _get_uploader_password('_processor')
     test_run_id = wptreport.create_test_run(
         report, labels, uploader, secret,
-        raw_results_url,
-        gsutil.gs_to_public_url(raw_results_gs_url))
+        gsutil.gs_to_public_url(results_gs_url),
+        raw_results_url)
     assert test_run_id
 
     success = _after_new_run(report, test_run_id)
