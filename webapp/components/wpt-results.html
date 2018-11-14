@@ -500,7 +500,7 @@ found in the LICENSE file.
               this.fetchDiff();
             }
           }),
-          e => {
+          () => {
             this.resultsLoadFailed = true;
           }
         );
@@ -540,7 +540,7 @@ found in the LICENSE file.
             this.searchResults = json.results;
             this.refreshDisplayedNodes();
           }),
-          e => {
+          () => {
             this.resultsLoadFailed = true;
           }
         );
