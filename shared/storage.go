@@ -26,6 +26,7 @@ var (
 	errMemcacheWriteCloserWriteAfterClose = errors.New("memcacheWriteCloser: Write() after Close()")
 	errByteCachedStoreExpectedByteSlice   = errors.New("contextualized byte CachedStore expected []byte output arg")
 	errDatastoreObjectStoreExpectedInt64  = errors.New("datastore ObjectStore expected int64 ID")
+	errCacheMiss                          = errors.New("cache miss")
 )
 
 // Readable is a provider interface for an io.ReadCloser.
@@ -167,7 +168,7 @@ func (mc memcacheReadWritable) NewReadCloser(iKey interface{}) (io.ReadCloser, e
 
 	item, err := memcache.Get(mc.ctx, key)
 	if err == memcache.ErrCacheMiss {
-		return nil, nil
+		return nil, errCacheMiss
 	} else if err != nil {
 		return nil, err
 	}
@@ -245,7 +246,9 @@ func (cs byteCachedStore) Get(cacheID, storeID, iValue interface{}) error {
 		}
 	}
 
-	logger.Warningf("Error fetching cache key %v: %v", cacheID, err)
+	if err != errCacheMiss {
+		logger.Warningf("Error fetching cache key %v: %v", cacheID, err)
+	}
 	err = nil
 
 	logger.Infof("Loading data from store: %v", storeID)
