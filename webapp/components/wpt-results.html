@@ -214,13 +214,13 @@ found in the LICENSE file.
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
                   <template is="dom-if" if="[[diffFilterUIToggle]]">
-                    <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]"></paper-icon-button>
+                  <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
                   </template>
                 </th>
               </template>
               <template is="dom-if" if="[[queryBuilder]]">
                 <th>
-                  <paper-icon-button icon="editor:mode-edit" onclick="[[toggleQueryEdit]]"></paper-icon-button>
+                  <paper-icon-button icon="editor:mode-edit" onclick="[[toggleQueryEdit]]" title="Modify the selection of WPT runs"></paper-icon-button>
                 </th>
               </template>
             </tr>
