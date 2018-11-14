@@ -22,7 +22,6 @@ import gsutil
 
 
 DEFAULT_PROJECT = 'wptdashboard'
-GCS_PUBLIC_DOMAIN = 'https://storage.googleapis.com'
 CHANNEL_TO_LABEL = {
     'release': 'stable',
     'stable': 'stable',
@@ -470,7 +469,7 @@ def prepare_labels(report, labels_str, uploader):
 
 
 def create_test_run(report, labels_str, uploader, secret,
-                    results_gcs_path, raw_results_gcs_path):
+                    results_url, raw_results_url):
     """Creates a TestRun on the dashboard.
 
     By posting to the /api/results/create endpoint.
@@ -480,23 +479,20 @@ def create_test_run(report, labels_str, uploader, secret,
         labels_str: A comma-separated string of labels from the uploader.
         uploader: The name of the uploader.
         secret: A secret token.
-        results_gcs_path: The GCS path to the gzipped summary file.
-            (e.g. '/wptd/0123456789/chrome-62.0-linux-summary.json.gz')
-        raw_results_gcs_path: The GCS path to the raw full report.
-            (e.g. '/wptd-results/[full SHA]/chrome-62.0-linux/report.json')
+        results_url: URL of the gzipped summary file. (e.g.
+            'https://.../wptd/0123456789/chrome-62.0-linux-summary.json.gz')
+        raw_results_url: URL of the raw full report. (e.g.
+            'https://.../wptd-results/[FullSHA]/chrome-62.0-linux/report.json')
 
     Returns:
         The integral ID associated with the created test run.
     """
-    assert results_gcs_path.startswith('/')
-    assert raw_results_gcs_path.startswith('/')
-
     labels = prepare_labels(report, labels_str, uploader)
     assert len(labels) > 0
 
     payload = report.test_run_metadata
-    payload['results_url'] = GCS_PUBLIC_DOMAIN + results_gcs_path
-    payload['raw_results_url'] = GCS_PUBLIC_DOMAIN + raw_results_gcs_path
+    payload['results_url'] = results_url
+    payload['raw_results_url'] = raw_results_url
     payload['labels'] = labels
 
     response = requests.post(

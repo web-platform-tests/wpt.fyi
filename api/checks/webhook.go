@@ -9,12 +9,12 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -25,6 +25,9 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine/datastore"
 )
+
+// NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
+const wptfyiCheckAppID = 19965
 
 // checkWebhookHandler listens for check_suite and check_run events,
 // responding to requested and rerequested events.
@@ -84,6 +87,12 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
+	appID := checkSuite.GetCheckSuite().GetApp().GetID()
+	if appID != wptfyiCheckAppID {
+		log.Infof("Ignoring check_suite App ID %v", appID)
+		return false, nil
+	}
+
 	if !shared.IsFeatureEnabled(ctx, "checksAllUsers") {
 		whitelist := []string{
 			"lukebjerring",
@@ -94,7 +103,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			sender = *checkSuite.Sender.Login
 		}
 		if !shared.StringSliceContains(whitelist, sender) {
-			log.Infof("Sender %s not whitelisted for wpt.fyi checks")
+			log.Infof("Sender %s not whitelisted for wpt.fyi checks", sender)
 			return false, nil
 		}
 	}
@@ -128,13 +137,17 @@ func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	if checkRun.Action == nil {
-		return false, errors.New("No action present on the check_run event")
+	appID := checkRun.GetCheckRun().GetApp().GetID()
+	if appID != wptfyiCheckAppID {
+		log.Infof("Ignoring check_suite App ID %v", appID)
+		return false, nil
 	}
-	if (*checkRun.Action == "created" && *checkRun.CheckRun.Status != "completed") ||
-		*checkRun.Action == "rerequested" {
+
+	action := checkRun.GetAction()
+	status := checkRun.GetCheckRun().GetStatus()
+	if (action == "created" && status != "completed") || action == "rerequested" {
 		name, sha := *checkRun.CheckRun.Name, *checkRun.CheckRun.HeadSHA
-		log.Debugf("Check run %s @ %s %s", name, sha, *checkRun.Action)
+		log.Debugf("Check run %s @ %s %s", name, sha, action)
 		spec, err := shared.ParseProductSpec(*checkRun.CheckRun.Name)
 		if err != nil {
 			log.Errorf("Failed to parse \"%s\" as product spec", *checkRun.CheckRun.Name)
@@ -153,7 +166,9 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 	}
 	createdSome := false
 	for _, run := range runs {
-		created, err := completeCheckRun(ctx, sha, run.BrowserName)
+		spec := shared.ProductSpec{}
+		spec.BrowserName = run.BrowserName
+		created, err := completeCheckRun(ctx, sha, spec)
 		createdSome = createdSome || created
 		if err != nil {
 			return createdSome, err
@@ -258,23 +273,29 @@ func getSignedJWT(ctx context.Context) (string, error) {
 	claims := &jwt.StandardClaims{
 		IssuedAt:  now.Unix(),
 		ExpiresAt: now.Add(time.Minute * 10).Unix(),
-		// NOTE(lukebjerring): This is https://github.com/apps/wpt-fyi-status-check
-		Issuer: "19965",
+		Issuer:    strconv.Itoa(wptfyiCheckAppID),
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return jwtToken.SignedString(key)
 }
 
-func getDetailsURL(ctx context.Context, sha, browser string) *url.URL {
-	hostname := shared.GetHostname(ctx)
-	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))
+// Diff for the given product at master vs the given sha.
+func getMasterDiffURL(ctx context.Context, sha string, product shared.ProductSpec) *url.URL {
 	filter := shared.TestRunFilter{}
-	filter.Products, _ = shared.ParseProductSpecs(browser, browser)
+	filter.Products = shared.ProductSpecs{product, product}
 	filter.Products[0].Labels = mapset.NewSet("master")
 	filter.Products[1].Revision = sha
-	query := filter.ToQuery()
+	detailsURL := getURL(ctx, filter)
+	query := detailsURL.Query()
 	query.Set("diff", "")
 	detailsURL.RawQuery = query.Encode()
+	return detailsURL
+}
+
+func getURL(ctx context.Context, filter shared.TestRunFilter) *url.URL {
+	hostname := shared.GetHostname(ctx)
+	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))
+	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL
 }

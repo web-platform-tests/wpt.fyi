@@ -66,7 +66,7 @@ func TestAutocompleteHandler(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	// TODO(markdittmer): Should this be hitting GCS instead?
-	store := shared.NewMockReadable(mockCtrl)
+	store := sharedtest.NewMockReadable(mockCtrl)
 	rs := []*sharedtest.MockReadCloser{
 		sharedtest.NewMockReadCloser(t, summaryBytes[0]),
 		sharedtest.NewMockReadCloser(t, summaryBytes[1]),
