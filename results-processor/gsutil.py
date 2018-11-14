@@ -22,6 +22,7 @@ def _call(command, quiet=False):
 
 
 def gs_to_public_url(gcs_path):
+    """Converts a gs:// URI to a HTTP URL."""
     assert gcs_path.startswith('gs://')
     return gcs_path.replace('gs://', 'https://storage.googleapis.com/', 1)
 
