@@ -32,12 +32,11 @@ found in the LICENSE file.
         padding: 0 0.5em;
         margin: 2px;
       }
-      td.time {
-        color: var(--paper-grey-300);
-      }
       td[day-boundary] {
-        color: var(--paper-black-300);
         border-top: 1px solid var(--paper-blue-100);
+      }
+      .time {
+        color: var(--paper-grey-300);
       }
       .missing {
         background-color: var(--paper-grey-100);
@@ -106,8 +105,13 @@ found in the LICENSE file.
                 </template>
               </td>
             </template>
-            <td class="time" day-boundary$="{{results.day_boundary}}">
-              {{ computeDateDisplay(results) }}
+            <td day-boundary$="{{results.day_boundary}}">
+              <template is="dom-if" if="[[results.day_boundary]]">
+                {{ computeDateDisplay(results.date) }}
+              </template>
+              <span class="time">
+                {{ computeTimeDisplay(results.date) }}
+              </span>
             </td>
           </tr>
         </template>
@@ -145,18 +149,19 @@ found in the LICENSE file.
         };
       }
 
-      computeDateDisplay(results) {
-        return results.day_boundary
-          ? results.date.toLocaleDateString(navigator.language, {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-          })
-          : results.date.toLocaleTimeString(navigator.language, {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true,
-          });
+      computeDateDisplay(date) {
+        return date.toLocaleDateString(navigator.language, {
+          month: 'short',
+          day: 'numeric',
+        });
+      }
+
+      computeTimeDisplay(date) {
+        return date.toLocaleTimeString(navigator.language, {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: false,
+        });
       }
 
       constructor() {
