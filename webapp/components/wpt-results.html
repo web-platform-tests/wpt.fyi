@@ -243,11 +243,13 @@ found in the LICENSE file.
                 </template>
                 <template is="dom-if" if="[[diffShown]]">
                   <td class$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
-                    <span class="delta passes">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
-                    /
-                    <span class="delta regressions">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'regressions') }}</span>
-                    /
-                    <span class="delta total">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'total') }}</span>
+                    <template is="dom-if" if="[[node.diff]]">
+                      <span class="delta passes">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
+                      /
+                      <span class="delta regressions">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'regressions') }}</span>
+                      /
+                      <span class="delta total">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'total') }}</span>
+                    </template>
                   </td>
                 </template>
               </tr>
@@ -626,11 +628,6 @@ found in the LICENSE file.
                     total: 0,
                   })),
                 };
-                row.diff = {
-                  passes: 0,
-                  regressions: 0,
-                  total: 0,
-                };
                 acc.push(row);
               }
               // Accumulate the sums.
@@ -650,36 +647,56 @@ found in the LICENSE file.
               if (this.diff && rs.length === 2) {
                 let diff;
                 if (this.diffResults) {
-                  diff = this.diffResults.diff[testPath] || [0, 0, 0];
+                  diff = this.diffResults.diff[r.test];
                 } else {
                   const [before, after] = rs;
-                  const deleted = before.total > 0 && after.total === 0;
-                  const added = after.total > 0 && before.total === 0;
-                  if (deleted && !this.diffFilter.includes('D')
-                      || added && !this.diffFilter.includes('A')) {
-                    return acc;
-                  }
-                  const failingBefore = before.total - before.passes;
-                  const failingAfter = after.total - after.passes;
-                  diff = [
-                    Math.max(after.passes - before.passes, 0), // passes
-                    Math.max(failingAfter - failingBefore, 0), // regressions
-                    after.total - before.total // total
-                  ];
-                  if (!this.diffFilter.includes('C') && diff.some(v => v !== 0)) {
-                    return acc;
-                  }
+                  diff = this.computeDifferences(before, after);
                 }
-                row.diff.passes += diff[0];
-                row.diff.regressions += diff[1];
-                row.diff.total += diff[2];
+                if (diff) {
+                  row.diff = row.diff || {
+                    passes: 0,
+                    regressions: 0,
+                    total: 0,
+                  };
+                  row.diff.passes += diff[0];
+                  row.diff.regressions += diff[1];
+                  row.diff.total += diff[2];
+                }
               }
               return acc;
             };
           })(), [])
-          .filter(row => !this.onlyShowDifferences || Object.values(row.diff).find(i => !!i))
+          .filter(row => {
+            if (!this.onlyShowDifferences) {
+              return true;
+            }
+            return row.diff;
+          })
           // TODO(markdittmer): Is this still necessary?
           .sort(this.nodeSort);
+      }
+
+      computeDifferences(before, after) {
+        const deleted = before.total > 0 && after.total === 0;
+        const added = after.total > 0 && before.total === 0;
+        if (deleted && !this.diffFilter.includes('D')
+          || added && !this.diffFilter.includes('A')) {
+          return;
+        }
+        const failingBefore = before.total - before.passes;
+        const failingAfter = after.total - after.passes;
+        const diff = [
+          Math.max(after.passes - before.passes, 0), // passes
+          Math.max(failingAfter - failingBefore, 0), // regressions
+          after.total - before.total // total
+        ];
+        const hasChanges = diff.some(v => v !== 0);
+        if ((this.diffFilter.includes('A') && added)
+          || (this.diffFilter.includes('D') && deleted)
+          || (this.diffFilter.includes('C') && hasChanges)
+          || (this.diffFilter.includes('U') && !hasChanges)) {
+          return diff;
+        }
       }
 
       platformID({browser_name, browser_version, os_name, os_version}) {
@@ -703,6 +720,9 @@ found in the LICENSE file.
         const result = node.results[index];
         const isDiff = this.isDiff(testRun);
         if (isDiff) {
+          if (!node.diff) {
+            return 'none';
+          }
           // Diff case: 'delta [positive|negative|<nothing>]' based on delta
           // value;
           const delta = this.getDiffDelta(node, prop);
