@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+notifications:
+  email:
+    on_success: never # default: change
+    on_failure: always # default: always
+    
 branches:
   only:
     - master
