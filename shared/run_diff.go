@@ -91,10 +91,21 @@ func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (res
 // GetResultsDiff returns a map of test name to an array of [newly-passing, newly-failing, total-delta], for tests which had
 // different results counts in their map (which is test name to array of [count-passed, total]).
 //
-func GetResultsDiff(before map[string][]int, after map[string][]int, filter DiffFilterParam, paths mapset.Set) map[string][]int {
+func GetResultsDiff(
+	before map[string][]int,
+	after map[string][]int,
+	filter DiffFilterParam,
+	paths mapset.Set,
+	renames map[string]string) map[string][]int {
 	diff := make(map[string][]int)
 	if filter.Deleted || filter.Changed {
 		for test, resultsBefore := range before {
+			if renames != nil {
+				rename, ok := renames[test]
+				if ok {
+					test = rename
+				}
+			}
 			if !anyPathMatches(paths, test) {
 				continue
 			}
@@ -110,18 +121,20 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 				if !filter.Changed && !filter.Unchanged {
 					continue
 				}
-				improved, regressed, delta := 0, 0, resultsBefore[0]-resultsAfter[0]
-				if delta := resultsAfter[0] - resultsBefore[0]; delta > 0 {
-					improved = delta
-				}
-				failingBefore := resultsBefore[1] - resultsBefore[0]
-				failingAfter := resultsAfter[1] - resultsAfter[0]
-				if delta := failingAfter - failingBefore; delta > 0 {
-					regressed = delta
-				}
+				delta := resultsBefore[0] - resultsAfter[0]
 				changed := delta != 0 || resultsBefore[1] != resultsAfter[1]
 				if (!changed && !filter.Unchanged) || changed && !filter.Changed {
 					continue
+				}
+
+				improved, regressed := 0, 0
+				if d := resultsAfter[0] - resultsBefore[0]; d > 0 {
+					improved = d
+				}
+				failingBefore := resultsBefore[1] - resultsBefore[0]
+				failingAfter := resultsAfter[1] - resultsAfter[0]
+				if d := failingAfter - failingBefore; d > 0 {
+					regressed = d
 				}
 				// Changed tests is at most the number of different outcomes,
 				// but newly introduced tests should still be counted (e.g. 0/2 => 0/5)
@@ -135,6 +148,19 @@ func GetResultsDiff(before map[string][]int, after map[string][]int, filter Diff
 	}
 	if filter.Added {
 		for test, resultsAfter := range after {
+			// Skip 'added' results of a renamed file (handled above).
+			if renames != nil {
+				renamed := false
+				for _, is := range renames {
+					if is == test {
+						renamed = true
+						break
+					}
+				}
+				if renamed {
+					continue
+				}
+			}
 			if !anyPathMatches(paths, test) {
 				continue
 			}
