@@ -5,8 +5,11 @@
 package shared
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -804,4 +807,36 @@ func ParseBeforeAndAfterParams(r *http.Request) (ProductSpecs, error) {
 	}
 	specs[1] = afterSpec
 	return specs, nil
+}
+
+// ExtractRunIDsBodyParam extracts {"run_ids": <run ids>} from a request JSON
+// body. Optionally replace r.Body so that it can be replayed by subsequent
+// request handling code can process it.
+func ExtractRunIDsBodyParam(r *http.Request, replay bool) (TestRunIDs, error) {
+	raw := make([]byte, 0)
+	body := r.Body
+	raw, err := ioutil.ReadAll(body)
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	// If requested, allow subsequent request handling code to re-read body.
+	if replay {
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(raw))
+	}
+
+	var data map[string]*json.RawMessage
+	err = json.Unmarshal(raw, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	msg, ok := data["run_ids"]
+	if !ok {
+		return nil, err
+	}
+	var runIDs []int64
+	err = json.Unmarshal(*msg, &runIDs)
+	return TestRunIDs(runIDs), err
 }
