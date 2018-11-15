@@ -214,13 +214,13 @@ found in the LICENSE file.
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
                   <template is="dom-if" if="[[diffFilterUIToggle]]">
-                    <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]"></paper-icon-button>
+                  <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
                   </template>
                 </th>
               </template>
               <template is="dom-if" if="[[queryBuilder]]">
                 <th>
-                  <paper-icon-button icon="editor:mode-edit" onclick="[[toggleQueryEdit]]"></paper-icon-button>
+                  <paper-icon-button icon="editor:mode-edit" onclick="[[toggleQueryEdit]]" title="Modify the selection of WPT runs"></paper-icon-button>
                 </th>
               </template>
             </tr>
@@ -598,7 +598,20 @@ found in the LICENSE file.
             let nodes = {};
             return (acc, r) => {
               // Compute dir/file name that is direct descendant of this.path.
-              const suffix = r.test.substring(pLen);
+              let testPath = r.test;
+              let previousTestPath;
+              if (this.diffResults && this.diffResults.renames) {
+                if (testPath in this.diffResults.renames) {
+                  // This path was renamed; ignore.
+                  return acc;
+                }
+                const rename = Object.entries(this.diffResults.renames).find(e => e[1] === testPath);
+                if (rename) {
+                  // This is the new path name; store the old one.
+                  previousTestPath = rename[0];
+                }
+              }
+              const suffix = testPath.substring(pLen);
               const slashIdx = suffix.indexOf('/');
               const isDir = slashIdx !== -1;
               const name = isDir ? suffix.substring(0, slashIdx): suffix;
@@ -624,10 +637,17 @@ found in the LICENSE file.
                 row.results[i].passes += rs[i].passes;
                 row.results[i].total += rs[i].total;
               }
+              if (previousTestPath) {
+                const previous = this.searchResults.find(r => r.test === previousTestPath);
+                if (previous) {
+                  row.results[0].passes += previous.legacy_status[0].passes;
+                  row.results[0].total += previous.legacy_status[0].total;
+                }
+              }
               if (this.diff && rs.length === 2) {
                 let diff;
                 if (this.diffResults) {
-                  diff = this.diffResults[r.test];
+                  diff = this.diffResults.diff[r.test];
                 } else {
                   const [before, after] = rs;
                   diff = this.computeDifferences(before, after);

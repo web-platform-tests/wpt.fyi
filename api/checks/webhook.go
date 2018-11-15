@@ -28,13 +28,25 @@ import (
 
 // NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
 const wptfyiCheckAppID = 19965
+const wptRepoID = 3618133
+const wptRepoInstallationID = 449270
+const wptRepoOwner = "web-platform-tests"
+const wptRepoName = "wpt"
 
 // checkWebhookHandler listens for check_suite and check_run events,
 // responding to requested and rerequested events.
 func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != "application/json" ||
-		(r.Header.Get("X-GitHub-Event") != "check_suite" &&
-			r.Header.Get("X-GitHub-Event") != "check_run") {
+	if r.Header.Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	event := r.Header.Get("X-GitHub-Event")
+	switch event {
+	case "check_suite":
+	case "check_run":
+	case "pull_request":
+		break
+	default:
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -58,10 +70,12 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	var processed bool
-	if r.Header.Get("X-GitHub-Event") == "check_suite" {
+	if event == "check_suite" {
 		processed, err = handleCheckSuiteEvent(ctx, payload)
-	} else {
+	} else if event == "check_run" {
 		processed, err = handleCheckRunEvent(ctx, payload)
+	} else if event == "pull_request" {
+		processed, err = handlePullRequestEvent(ctx, payload)
 	}
 	if err != nil {
 		log.Errorf("%v", err)
@@ -108,20 +122,37 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		}
 	}
 
-	if checkSuite.Action != nil &&
-		(*checkSuite.Action == "requested" || *checkSuite.Action == "rerequested") {
-		log.Debugf("Check suite %s: %s", *(checkSuite.Action), *(checkSuite.CheckSuite.HeadBranch))
+	action := checkSuite.GetAction()
+	if action == "requested" || action == "rerequested" {
+		repo := checkSuite.GetRepo().GetName()
+		branch := checkSuite.GetCheckSuite().GetHeadBranch()
+		log.Debugf("Check suite %s: %s:%s", action, repo, branch)
 
-		sha := *checkSuite.CheckSuite.HeadSHA
-		owner := *checkSuite.GetRepo().Owner.Login
-		repo := *checkSuite.GetRepo().Name
+		sha := checkSuite.GetCheckSuite().GetHeadSHA()
+
+		if action == "requested" {
+			// For new suites, check if the pull is across forks; if so, request a suite
+			// on the main repo (web-platform-tests/wpt) too.
+			pullRequests := checkSuite.GetCheckSuite().PullRequests
+			for _, p := range pullRequests {
+				destRepoID := p.GetBase().GetRepo().GetID()
+				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
+					_, err := createWPTCheckSuite(ctx, sha)
+					if err != nil {
+						log.Errorf("Failed to create wpt check_suite: %s", err.Error())
+					}
+				}
+			}
+		}
+
+		owner := checkSuite.GetRepo().GetOwner().GetLogin()
 		installation := *checkSuite.Installation.ID
 		suite, err := getOrCreateCheckSuite(ctx, sha, owner, repo, installation)
 		if err != nil || suite == nil {
 			return false, err
 		}
 
-		if *checkSuite.Action == "rerequested" {
+		if action == "rerequested" {
 			completeChecksForExistingRuns(ctx, sha)
 		}
 	}
@@ -157,6 +188,29 @@ func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
 	return false, nil
 }
 
+func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
+	var pullRequest github.PullRequestEvent
+	if err := json.Unmarshal(payload, &pullRequest); err != nil {
+		return false, err
+	}
+
+	switch pullRequest.GetAction() {
+	case "opened":
+	case "synchronize":
+		break
+	default:
+		return false, nil
+	}
+
+	sha := pullRequest.GetPullRequest().GetHead().GetSHA()
+	destRepoID := pullRequest.GetPullRequest().GetBase().GetRepo().GetID()
+	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
+		// Pull is across forks; request a check suite on the main fork too.
+		return createWPTCheckSuite(ctx, sha)
+	}
+	return false, nil
+}
+
 func completeChecksForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
 	// Jump straight to completed check_run for already-present runs for the SHA.
 	products = shared.ProductSpecs(products).OrDefault()
@@ -175,6 +229,28 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 		}
 	}
 	return createdSome, nil
+}
+
+// createWPTCheckSuite creates a check_suite on the main wpt repo for the given
+// SHA. This is needed when a PR comes from a different fork of the repo.
+func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
+	log := shared.GetLogger(ctx)
+	log.Debugf("Creating check_suite for web-platform-tests/wpt")
+
+	jwtClient, err := getJWTClient(ctx, wptRepoInstallationID)
+	if err != nil {
+		return false, err
+	}
+	client := github.NewClient(jwtClient)
+
+	opts := github.CreateCheckSuiteOptions{
+		HeadSHA: sha,
+	}
+	suite, _, err := client.Checks.CreateCheckSuite(ctx, wptRepoOwner, wptRepoName, opts)
+	if suite != nil && err != nil {
+		getOrCreateCheckSuite(ctx, sha, wptRepoOwner, wptRepoName, wptRepoInstallationID)
+	}
+	return suite != nil, err
 }
 
 func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.CreateCheckRunOptions) (bool, error) {
