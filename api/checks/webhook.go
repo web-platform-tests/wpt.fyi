@@ -124,11 +124,10 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 
 	action := checkSuite.GetAction()
 	if action == "requested" || action == "rerequested" {
+		owner := checkSuite.GetRepo().GetOwner().GetLogin()
 		repo := checkSuite.GetRepo().GetName()
-		branch := checkSuite.GetCheckSuite().GetHeadBranch()
-		log.Debugf("Check suite %s: %s:%s", action, repo, branch)
-
 		sha := checkSuite.GetCheckSuite().GetHeadSHA()
+		log.Debugf("Check suite %s: %s/%s @ %s", action, owner, repo, sha[:7])
 
 		if action == "requested" {
 			// For new suites, check if the pull is across forks; if so, request a suite
@@ -145,7 +144,6 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			}
 		}
 
-		owner := checkSuite.GetRepo().GetOwner().GetLogin()
 		installation := *checkSuite.Installation.ID
 		suite, err := getOrCreateCheckSuite(ctx, sha, owner, repo, installation)
 		if err != nil || suite == nil {
