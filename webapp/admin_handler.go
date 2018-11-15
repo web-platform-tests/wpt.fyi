@@ -36,7 +36,7 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 		Host: shared.GetHostname(a.Context()),
 	}
 	if r.Method == "GET" {
-		assertLoginAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_flags.html", data)
+		assertLoginAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)
 	} else if r.Method == "POST" {
 		if !a.IsAdmin() {
 			http.Error(w, "Admin only", http.StatusUnauthorized)
