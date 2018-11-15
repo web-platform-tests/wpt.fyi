@@ -697,7 +697,7 @@ found in the LICENSE file.
           || (this.diffFilter.includes('U') && !hasChanges)) {
           return diff;
         }
-        return undefined;
+        return;
       }
 
       platformID({browser_name, browser_version, os_name, os_version}) {
