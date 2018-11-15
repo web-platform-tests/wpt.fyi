@@ -363,6 +363,11 @@ func getMasterDiffURL(ctx context.Context, sha string, product shared.ProductSpe
 	detailsURL := getURL(ctx, filter)
 	query := detailsURL.Query()
 	query.Set("diff", "")
+	query.Set("filter", shared.DiffFilterParam{
+		Added:     true,
+		Changed:   true,
+		Unchanged: true,
+	}.String())
 	detailsURL.RawQuery = query.Encode()
 	return detailsURL
 }
