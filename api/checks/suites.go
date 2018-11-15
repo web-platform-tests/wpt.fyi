@@ -46,19 +46,19 @@ func getSuitesForSHA(ctx context.Context, sha string) ([]shared.CheckSuite, erro
 	return suites, err
 }
 
-func pendingCheckRun(ctx context.Context, sha, browser string) (bool, error) {
+func pendingCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
 	suites, err := getSuitesForSHA(ctx, sha)
 	if err != nil {
 		return false, err
 	} else if len(suites) < 1 {
 		return false, nil
 	}
-	detailsURL := getDetailsURL(ctx, sha, browser)
+	detailsURL := getMasterDiffURL(ctx, sha, product)
 	detailsURLStr := detailsURL.String()
 
 	status := "in_progress"
 	opts := github.CreateCheckRunOptions{
-		Name:       browser,
+		Name:       product.String(),
 		HeadSHA:    sha,
 		DetailsURL: &detailsURLStr,
 		Status:     &status,
@@ -74,20 +74,20 @@ func pendingCheckRun(ctx context.Context, sha, browser string) (bool, error) {
 	return true, nil
 }
 
-func completeCheckRun(ctx context.Context, sha, browser string) (bool, error) {
+func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
 	suites, err := getSuitesForSHA(ctx, sha)
 	if err != nil {
 		return false, err
 	} else if len(suites) < 1 {
 		return false, nil
 	}
-	detailsURL := getDetailsURL(ctx, sha, browser)
+	detailsURL := getMasterDiffURL(ctx, sha, product)
 	detailsURLStr := detailsURL.String()
 
 	status := "completed"
 	conclusion := "success"
 	opts := github.CreateCheckRunOptions{
-		Name:        browser,
+		Name:        product.BrowserName,
 		HeadSHA:     sha,
 		DetailsURL:  &detailsURLStr,
 		Status:      &status,

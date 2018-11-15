@@ -9,6 +9,8 @@ import (
 
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+
+	"google.golang.org/appengine/memcache"
 )
 
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,5 +37,20 @@ func showAdminUploadForm(a receiver.AppEngineAPI, w http.ResponseWriter, r *http
 	if err := templates.ExecuteTemplate(w, "admin_upload.html", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	a := receiver.NewAppEngineAPI(ctx)
+
+	if !a.IsLoggedIn() || !a.IsAdmin() {
+		http.Error(w, "Admin only", http.StatusUnauthorized)
+		return
+	}
+	if err := memcache.Flush(ctx); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.Write([]byte("Successfully flushed cache"))
 	}
 }

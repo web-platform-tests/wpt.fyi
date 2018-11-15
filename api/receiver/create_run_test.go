@@ -16,7 +16,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 var testDatastoreKey = &DatastoreKey{"TestRun", 1}
@@ -25,17 +27,17 @@ func TestHandleResultsCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
+	sha := "0123456789012345678901234567890123456789"
 	payload := map[string]interface{}{
-		"browser_name":    "firefox",
-		"browser_version": "59.0",
-		"os_name":         "linux",
-		"os_version":      "4.4",
-		"revision":        "0123456789",
-		"labels":          []string{"foo", "bar"},
-		"time_start":      "2018-06-21T18:39:54.218000+00:00",
-		"time_end":        "2018-06-21T20:03:49Z",
-		// Intentionally missing full_revision_hash; no error should be raised.
-		// Unknown parameters should be ignored.
+		"browser_name":       "firefox",
+		"browser_version":    "59.0",
+		"os_name":            "linux",
+		"os_version":         "4.4",
+		"revision":           sha[:10],
+		"full_revision_hash": sha,
+		"labels":             []string{"foo", "bar"},
+		"time_start":         "2018-06-21T18:39:54.218000+00:00",
+		"time_end":           "2018-06-21T20:03:49Z",
 		"_random_extra_key_": "some_value",
 	}
 	body, err := json.Marshal(payload)
@@ -44,12 +46,14 @@ func TestHandleResultsCreate(t *testing.T) {
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockS.EXPECT().CompleteCheckRun(sha, sharedtest.SameProductSpec("firefox")).Return(true, nil),
 	)
 
-	HandleResultsCreate(mockAE, w, req)
+	HandleResultsCreate(mockAE, mockS, w, req)
 	resp := w.Result()
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
@@ -67,11 +71,13 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
+	sha := "0123456789012345678901234567890123456789"
 	payload := map[string]interface{}{
-		"browser_name":    "firefox",
-		"browser_version": "59.0",
-		"os_name":         "linux",
-		"revision":        "0123456789",
+		"browser_name":       "firefox",
+		"browser_version":    "59.0",
+		"os_name":            "linux",
+		"revision":           sha[:10],
+		"full_revision_hash": sha,
 	}
 	body, err := json.Marshal(payload)
 	assert.Nil(t, err)
@@ -79,12 +85,14 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockS.EXPECT().CompleteCheckRun(sha, sharedtest.SameProductSpec("firefox")).Return(true, nil),
 	)
 
-	HandleResultsCreate(mockAE, w, req)
+	HandleResultsCreate(mockAE, mockS, w, req)
 	resp := w.Result()
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
@@ -97,6 +105,45 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	assert.Equal(t, testRun.TimeStart, testRun.TimeEnd)
 }
 
+func TestHandleResultsCreate_BadRevision(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	payload := map[string]interface{}{
+		"browser_name":    "firefox",
+		"browser_version": "59.0",
+		"os_name":         "linux",
+		"revision":        "0123456789",
+	}
+	body, err := json.Marshal(payload)
+	assert.Nil(t, err)
+	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
+	req.SetBasicAuth("_processor", "secret-token")
+	w := httptest.NewRecorder()
+	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
+	gomock.InOrder(
+		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
+	)
+
+	HandleResultsCreate(mockAE, mockS, w, req)
+	resp := w.Result()
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	payload["full_revision_hash"] = "9876543210987654321098765432109876543210"
+	gomock.InOrder(
+		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
+	)
+	body, err = json.Marshal(payload)
+	assert.Nil(t, err)
+	req = httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
+	req.SetBasicAuth("_processor", "secret-token")
+
+	HandleResultsCreate(mockAE, mockS, w, req)
+	resp = w.Result()
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
 func TestHandleResultsCreate_NoBasicAuth(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -104,8 +151,9 @@ func TestHandleResultsCreate_NoBasicAuth(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", nil)
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
@@ -117,8 +165,9 @@ func TestHandleResultsCreate_WrongUser(t *testing.T) {
 	req.SetBasicAuth("wrong-user", "secret-token")
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
@@ -131,7 +180,8 @@ func TestHandleResultsCreate_WrongPassword(t *testing.T) {
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().authenticateUploader("_processor", "wrong-password").Return(false)
+	mockS := checks.NewMockSuitesAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
-	"github.com/web-platform-tests/wpt.fyi/api/webhook"
+	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -20,7 +20,7 @@ func init() {
 	// webapp.RegisterRoutes has a catch-all, so needs to go last.
 	api.RegisterRoutes()
 	query.RegisterRoutes()
-	webhook.RegisterRoutes()
+	taskcluster.RegisterRoutes()
 	checks.RegisterRoutes()
 	RegisterRoutes()
 }
@@ -47,6 +47,9 @@ func RegisterRoutes() {
 
 	// Admin-only manual results upload.
 	shared.AddRoute("/admin/results/upload", "admin-results-upload", adminUploadHandler)
+
+	// Admin-only manual cache flush.
+	shared.AddRoute("/admin/cache/flush", "admin-cache-flush", adminCacheFlushHandler)
 
 	// Test run results, viewed by browser (default view)
 	// For run results diff view, 'before' and 'after' params can be given.

@@ -13,6 +13,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func TestGetMemcacheKey(t *testing.T) {
@@ -44,7 +45,7 @@ func TestLoadSummaries_success(t *testing.T) {
 		getMemcacheKey(testRuns[1]),
 	}
 
-	cachedStore := shared.NewMockCachedStore(mockCtrl)
+	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)
 	sh := unstructuredSearchHandler{queryHandler{dataSource: cachedStore}}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),
@@ -94,7 +95,7 @@ func TestLoadSummaries_fail(t *testing.T) {
 		getMemcacheKey(testRuns[1]),
 	}
 
-	cachedStore := shared.NewMockCachedStore(mockCtrl)
+	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)
 	sh := unstructuredSearchHandler{queryHandler{dataSource: cachedStore}}
 	summaryBytes := [][]byte{
 		[]byte(`{"/a/b/c":[1,2]}`),

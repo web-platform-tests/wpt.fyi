@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webhook
+package taskcluster
 
 import (
 	"net/http"
@@ -14,9 +14,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/checks"
 )
 
 func strPtr(s string) *string {
@@ -122,10 +124,18 @@ func TestCreateAllRuns_success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
+	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
+
+	mockC := gomock.NewController(t)
+	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
+	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+
 	err := createAllRuns(logrus.New(),
 		&http.Client{},
+		suitesAPI,
 		server.URL,
-		"abcdef1234abcdef1234abcdef1234abcdef1234",
+		sha,
 		"username",
 		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
@@ -150,10 +160,18 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
+	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
+
+	mockC := gomock.NewController(t)
+	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
+	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+
 	err := createAllRuns(logrus.New(),
 		&http.Client{},
+		suitesAPI,
 		server.URL,
-		"abcdef1234abcdef1234abcdef1234abcdef1234",
+		sha,
 		"username",
 		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
@@ -171,10 +189,18 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
+	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
+
+	mockC := gomock.NewController(t)
+	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
+	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+
 	err := createAllRuns(logrus.New(),
 		&http.Client{Timeout: time.Second},
+		suitesAPI,
 		server.URL,
-		"abcdef1234abcdef1234abcdef1234abcdef1234",
+		sha,
 		"username",
 		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},

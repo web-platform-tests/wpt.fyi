@@ -25,6 +25,10 @@ const LatestSHA = "latest"
 // StableLabel is the implicit label present for runs marked 'stable'.
 const StableLabel = "stable"
 
+// MasterLabel is the implicit label present for runs marked 'master',
+// i.e. run from the master branch.
+const MasterLabel = "master"
+
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
 func GetDefaultProducts() ProductSpecs {
 	browserNames := GetDefaultBrowserNames()
@@ -191,13 +195,6 @@ func NewRequestContext(r *http.Request) context.Context {
 	return ctx
 }
 
-// NewTestContext creates a new context.Context for small tests.
-func NewTestContext() context.Context {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), NewNilLogger())
-	return ctx
-}
-
 // NewSetFromStringSlice is a helper for the inability to cast []string to []interface{}
 func NewSetFromStringSlice(items []string) mapset.Set {
 	if items == nil {
@@ -221,4 +218,14 @@ func GetHostname(ctx context.Context) string {
 		return "staging.wpt.fyi"
 	}
 	return fmt.Sprintf("%s-dot-%s", version, hostname)
+}
+
+// StringSliceContains returns true if the given slice contains the given string.
+func StringSliceContains(ss []string, s string) bool {
+	for _, i := range ss {
+		if i == s {
+			return true
+		}
+	}
+	return false
 }

@@ -6,6 +6,8 @@ package checks
 
 import (
 	"context"
+
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // SuitesAPI abstracts all the API calls used externally.
@@ -16,13 +18,13 @@ type SuitesAPI interface {
 	// a pending check_run for the given browser name for each CheckSuite.
 	// Returns true if any check_runs were created (i.e. any CheckSuite entities were
 	// found, and the create succeeded).
-	PendingCheckRun(sha, browser string) (bool, error)
+	PendingCheckRun(sha string, browser shared.ProductSpec) (bool, error)
 
 	// CompleteCheckRun loads the CheckSuite(s), if any, for the given SHA, and creates
 	// a complete check_run for the given browser on GitHub.
 	// Returns true if any check_runs were created (i.e. any CheckSuite entities were
 	// found, and the create succeeded).
-	CompleteCheckRun(sha, browser string) (bool, error)
+	CompleteCheckRun(sha string, browser shared.ProductSpec) (bool, error)
 }
 
 // NewSuitesAPI returns a real implementation of the SuitesAPI
@@ -40,10 +42,10 @@ func (s suitesAPIImpl) Context() context.Context {
 	return s.ctx
 }
 
-func (s suitesAPIImpl) PendingCheckRun(sha, browser string) (bool, error) {
-	return pendingCheckRun(s.ctx, sha, browser)
+func (s suitesAPIImpl) PendingCheckRun(sha string, product shared.ProductSpec) (bool, error) {
+	return pendingCheckRun(s.ctx, sha, product)
 }
 
-func (s suitesAPIImpl) CompleteCheckRun(sha, browser string) (bool, error) {
-	return completeCheckRun(s.ctx, sha, browser)
+func (s suitesAPIImpl) CompleteCheckRun(sha string, product shared.ProductSpec) (bool, error) {
+	return completeCheckRun(s.ctx, sha, product)
 }

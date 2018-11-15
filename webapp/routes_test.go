@@ -103,6 +103,11 @@ func TestAdminResultsUploadBound(t *testing.T) {
 	assertHSTS(t, "/admin/results/upload")
 }
 
+func TestAdminCacheFlushBound(t *testing.T) {
+	assertHandlerIs(t, "/admin/cache/flush", "admin-cache-flush")
+	assertHSTS(t, "/admin/cache/flush")
+}
+
 func assertBound(t *testing.T, path string) mux.RouteMatch {
 	req := httptest.NewRequest("GET", path, nil)
 	router := shared.Router()

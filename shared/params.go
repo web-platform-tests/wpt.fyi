@@ -93,6 +93,16 @@ func (filter TestRunFilter) OrAlignedExperimentalRunsExceptEdge() TestRunFilter 
 	return filter
 }
 
+// MasterOnly returns the current filter, ensuring it has with the master-only
+// restriction (a label of "master").
+func (filter TestRunFilter) MasterOnly() TestRunFilter {
+	if filter.Labels == nil {
+		filter.Labels = mapset.NewSet()
+	}
+	filter.Labels.Add(MasterLabel)
+	return filter
+}
+
 // IsDefaultProducts returns whether the params products are empty, or the
 // equivalent of the default product set.
 func (filter TestRunFilter) IsDefaultProducts() bool {
@@ -139,6 +149,22 @@ func (p ProductSpec) Matches(run TestRun) bool {
 		}
 	}
 	return true
+}
+
+// DisplayName returns a capitalized version of the product's name.
+func (p ProductSpec) DisplayName() string {
+	switch p.BrowserName {
+	case "chrome":
+		return "Chrome"
+	case "edge":
+		return "Edge"
+	case "firefox":
+		return "Firefox"
+	case "safari":
+		return "Safari"
+	default:
+		return p.BrowserName
+	}
 }
 
 // ProductSpecs is a helper type for a slice of ProductSpec structs.

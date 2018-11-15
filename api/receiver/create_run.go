@@ -6,10 +6,13 @@ package receiver
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -18,7 +21,7 @@ import (
 const InternalUsername = "_processor"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
-func HandleResultsCreate(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
+func HandleResultsCreate(a AppEngineAPI, s checks.SuitesAPI, w http.ResponseWriter, r *http.Request) {
 	username, password, ok := r.BasicAuth()
 	if !ok || username != InternalUsername || !a.authenticateUploader(username, password) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
@@ -45,11 +48,26 @@ func HandleResultsCreate(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	}
 	testRun.CreatedAt = time.Now()
 
+	if len(testRun.FullRevisionHash) != 40 {
+		http.Error(w, "full_revision_hash must be the full SHA (40 chars)", http.StatusBadRequest)
+		return
+	} else if testRun.Revision != "" && strings.Index(testRun.FullRevisionHash, testRun.Revision) != 0 {
+		http.Error(w,
+			fmt.Sprintf("Mismatch of full_revision_hash and revision fields: %s vs %s", testRun.FullRevisionHash, testRun.Revision),
+			http.StatusBadRequest)
+		return
+	}
+	testRun.Revision = testRun.FullRevisionHash[:10]
+
 	key, err := a.addTestRun(&testRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	spec := shared.ProductSpec{}
+	spec.BrowserName = testRun.BrowserName
+	s.CompleteCheckRun(testRun.FullRevisionHash, spec)
 
 	// Copy int64 representation of key into TestRun.ID so that clients can
 	// inspect/use key value.

@@ -18,7 +18,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/taskqueue"
 )
 
@@ -92,7 +92,7 @@ func TestHandleResultsUpload_success(t *testing.T) {
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	f := &os.File{}
 	task := &taskqueue.Task{Name: "task"}
-	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
 		mockAE.EXPECT().authenticateUploader("blade-runner", "123").Return(true),
@@ -130,7 +130,7 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 		"os_version":      "",
 	}
 	task := &taskqueue.Task{Name: "task"}
-	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
 		mockAE.EXPECT().authenticateUploader("blade-runner", "123").Return(true),
@@ -171,7 +171,7 @@ func TestHandleURLPayload_single(t *testing.T) {
 	}
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
 		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
@@ -189,7 +189,7 @@ func TestHandleURLPayload_multiple(t *testing.T) {
 	urls := []string{"http://wpt.fyi/foo.json.gz", "http://wpt.fyi/bar.json.gz"}
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().fetchWithTimeout(urls[0], DownloadTimeout).Return(f, nil),
 		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*/0\.json$`), f, true).Return(nil),
@@ -211,7 +211,7 @@ func TestHandleURLPayload_retry_fetching(t *testing.T) {
 	errTimeout := fmt.Errorf("server timed out")
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
 		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
@@ -230,7 +230,7 @@ func TestHandleURLPayload_fail_fetching(t *testing.T) {
 	errTimeout := fmt.Errorf("server timed out")
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
 		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
@@ -250,7 +250,7 @@ func TestHandleURLPayload_fail_uploading(t *testing.T) {
 	errGCS := fmt.Errorf("failed to upload to GCS")
 
 	mockAE := NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().Context().Return(shared.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().fetchWithTimeout("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
 		mockAE.EXPECT().uploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(errGCS),

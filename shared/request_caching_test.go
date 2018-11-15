@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package shared
+package shared_test
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
@@ -36,9 +37,15 @@ func (okHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func TestNoCaching404(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	cache := NewMockReadWritable(mockCtrl)
+	cache := sharedtest.NewMockReadWritable(mockCtrl)
 	cache.EXPECT().NewReadCloser("/some/url").Return(ioutil.NopCloser(failReader{}), nil)
-	h := NewCachingHandler(context.Background(), http.NotFoundHandler(), cache, AlwaysCachable, URLAsCacheKey, CacheStatusOK)
+	h := shared.NewCachingHandler(
+		context.Background(),
+		http.NotFoundHandler(),
+		cache,
+		shared.AlwaysCachable,
+		shared.URLAsCacheKey,
+		shared.CacheStatusOK)
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/some/url", nil)
 	h.ServeHTTP(w, r)
@@ -48,11 +55,17 @@ func TestNoCaching404(t *testing.T) {
 func TestCaching200(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	cache := NewMockReadWritable(mockCtrl)
+	cache := sharedtest.NewMockReadWritable(mockCtrl)
 	cache.EXPECT().NewReadCloser("/some/url").Return(ioutil.NopCloser(failReader{}), nil)
 	wc := sharedtest.NewMockWriteCloser(t)
 	cache.EXPECT().NewWriteCloser("/some/url").Return(wc, nil)
-	h := NewCachingHandler(context.Background(), okHandler{}, cache, AlwaysCachable, URLAsCacheKey, CacheStatusOK)
+	h := shared.NewCachingHandler(
+		context.Background(),
+		okHandler{},
+		cache,
+		shared.AlwaysCachable,
+		shared.URLAsCacheKey,
+		shared.CacheStatusOK)
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/some/url", nil)
 	h.ServeHTTP(w, r)
