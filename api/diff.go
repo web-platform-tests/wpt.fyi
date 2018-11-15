@@ -180,17 +180,6 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 	w.Write(bytes)
 }
 
-// Wrappers for including a missing field in go-github
-type githubCommitFile struct {
-	github.CommitFile
-	PreviousFilename *string `json:"previous_filename,omitempty"`
-}
-
-type githubCommitsComparison struct {
-	github.CommitsComparison
-	Files []githubCommitFile `json:"files,omitempty"`
-}
-
 func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
 	if shaBefore == shaAfter {
 		return nil
@@ -204,7 +193,8 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
 		AccessToken: secret,
 	}))
-	comparison, err := compareCommits(oauthClient, "web-platform-tests", "wpt", shaBefore, shaAfter)
+	githubClient := github.NewClient(oauthClient)
+	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
 	if err != nil || comparison == nil {
 		log.Errorf("Failed to fetch diff for %s...%s: %s", shaBefore[:7], shaAfter[:7], err.Error())
 		return nil
@@ -212,42 +202,13 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 
 	renames := make(map[string]string)
 	for _, file := range comparison.Files {
-		if file.Status != nil &&
-			*file.Status == "renamed" &&
-			file.Filename != nil &&
-			file.PreviousFilename != nil {
-			renames["/"+*file.PreviousFilename] = "/" + *file.Filename
+		if file.GetStatus() == "renamed" {
+			is, was := file.GetFilename(), file.GetPreviousFilename()
+			renames["/"+was] = "/" + is
 		}
 	}
 	if len(renames) < 1 {
 		log.Debugf("No renames for %s...%s", shaBefore[:7], shaAfter[:7])
 	}
 	return renames
-}
-
-func compareCommits(client *http.Client, owner, repo string, base, head string) (*githubCommitsComparison, error) {
-	u := fmt.Sprintf("https://api.github.com/repos/%v/%v/compare/%v...%v", owner, repo, base, head)
-
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	comp := new(githubCommitsComparison)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	var bytes []byte
-	bytes, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(bytes, comp)
-	if err != nil {
-		return nil, err
-	}
-
-	return comp, nil
 }
