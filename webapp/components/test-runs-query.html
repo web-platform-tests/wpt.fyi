@@ -53,6 +53,10 @@ found in the LICENSE file.
               type: Boolean,
               computed: 'computeIsLatest(sha)'
             },
+            resultsRangeMessage: {
+              type: String,
+              computed: 'computeResultsRangeMessage(from, maxCount)',
+            },
           };
         }
 
@@ -199,6 +203,16 @@ found in the LICENSE file.
             }
           }
           this.setProperties(batchUpdate);
+        }
+
+        computeResultsRangeMessage(from, maxCount) {
+          if (from) {
+            var diff = Math.floor((Date.now() - from) / 86400000);
+            return `Showing test runs from the last ${diff} days`;
+          } else if (maxCount) {
+            return `Showing ${maxCount} test runs per product`;
+          }
+          return null;
         }
       };
       window.TestRunsQuery.Computer = testRunsQueryComputer;

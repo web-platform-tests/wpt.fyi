@@ -32,8 +32,11 @@ found in the LICENSE file.
         padding: 0 0.5em;
         margin: 2px;
       }
-      td.month {
+      td[day-boundary] {
         border-top: 1px solid var(--paper-blue-100);
+      }
+      .time {
+        color: var(--paper-grey-300);
       }
       .missing {
         background-color: var(--paper-grey-100);
@@ -71,9 +74,11 @@ found in the LICENSE file.
     </template>
 
     <template is="dom-if" if="[[testResults.length]]">
-      <info-banner>
-        Showing the last month of test runs.
-      </info-banner>
+      <template is="dom-if" if="[[resultsRangeMessage]]">
+        <info-banner>
+          [[resultsRangeMessage]]
+        </info-banner>
+      </template>
 
       <table>
         <thead>
@@ -87,9 +92,9 @@ found in the LICENSE file.
         <tbody>
 
         <template is="dom-repeat" items="{{ testResults }}" as="results">
-          <tr data-boundary$="{{ results.month_boundary }}">
+          <tr>
             <td>
-              <a href="/?sha={{ results.sha }}" title="{{ computeDateTooltip(results.firstRunDate) }}">{{ results.sha }}</a>
+              <a href="/?sha={{ results.sha }}">{{ results.sha }}</a>
             </td>
             <template is="dom-repeat" items="{{ browsers }}" as="browser">
               <td class$="runs [[ runClass(results.runs, browser) ]]">
@@ -100,9 +105,14 @@ found in the LICENSE file.
                 </template>
               </td>
             </template>
-            <template is="dom-if" if="{{ results.month_boundary }}">
-              <td class="month">{{ computeMonthName(results.date) }}</td>
-            </template>
+            <td day-boundary$="{{results.day_boundary}}">
+              <template is="dom-if" if="[[results.day_boundary]]">
+                {{ computeDateDisplay(results.date) }}
+              </template>
+              <span class="time">
+                {{ computeTimeDisplay(results.date) }}
+              </span>
+            </td>
           </tr>
         </template>
 
@@ -139,25 +149,19 @@ found in the LICENSE file.
         };
       }
 
-      computeMonthName(date) {
-        return [
-          'January',
-          'February',
-          'March',
-          'April',
-          'May',
-          'June',
-          'July',
-          'August',
-          'September',
-          'October',
-          'November',
-          'December'
-        ][date.getMonth()];
+      computeDateDisplay(date) {
+        return date.toLocaleDateString(navigator.language, {
+          month: 'short',
+          day: 'numeric',
+        });
       }
 
-      computeDateTooltip(date) {
-        return date && date.toDateString();
+      computeTimeDisplay(date) {
+        return date.toLocaleTimeString(navigator.language, {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: false,
+        });
       }
 
       constructor() {
@@ -200,16 +204,16 @@ found in the LICENSE file.
             .map(([sha, runs]) => ({ sha, runs, firstRunDate: firstRunDate(runs) }))
             .sort((a, b) => b.firstRunDate.getTime() - a.firstRunDate.getTime());
 
-          // Append time (month) metadata.
+          // Append time (day) metadata.
           if (flattened.length > 1) {
-            let previousMonth = -1;
+            let previousDay = -1;
             for (let i = 0; i < flattened.length; i++) {
               let current = flattened[i].firstRunDate;
               flattened[i].date = current;
-              if (previousMonth !== current.getMonth()) {
-                flattened[i].month_boundary = true;
+              if (previousDay !== current.getDate()) {
+                flattened[i].day_boundary = true;
               }
-              previousMonth = current.getMonth();
+              previousDay = current.getDate();
             }
           }
           this.testResults = flattened;
