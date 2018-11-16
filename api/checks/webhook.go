@@ -111,6 +111,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		whitelist := []string{
 			"lukebjerring",
 			"autofoolip",
+			"chromium-wpt-export-bot",
 		}
 		sender := ""
 		if checkSuite.Sender != nil && checkSuite.Sender.Login != nil {
