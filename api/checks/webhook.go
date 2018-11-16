@@ -112,6 +112,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			"lukebjerring",
 			"autofoolip",
 			"chromium-wpt-export-bot",
+			"jgraham",
 		}
 		sender := ""
 		if checkSuite.Sender != nil && checkSuite.Sender.Login != nil {
