@@ -624,7 +624,7 @@ func TestProductSpecMatches_Revision(t *testing.T) {
 
 func TestParsePageToken(t *testing.T) {
 	filter := TestRunFilter{}
-	now := time.Now().Truncate(time.Microsecond)
+	now := time.Now().Truncate(time.Second)
 	filter.To = &now
 
 	token, err := filter.Token()
@@ -636,5 +636,5 @@ func TestParsePageToken(t *testing.T) {
 	if parsed == nil {
 		assert.FailNow(t, "Parsed page token was nil")
 	}
-	assert.Equal(t, filter, *parsed)
+	assert.EqualValues(t, filter, *parsed)
 }

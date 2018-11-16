@@ -9,6 +9,7 @@ package query
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -133,12 +134,14 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 		shared.TestRun{
 			ID:         runIDs[0],
 			ResultsURL: urls[0],
+			TimeStart:  time.Now(),
 		},
 	}
 	testRuns[edge] = shared.TestRuns{
 		shared.TestRun{
 			ID:         runIDs[1],
 			ResultsURL: urls[1],
+			TimeStart:  time.Now().AddDate(0, 0, -1),
 		},
 	}
 	filters := shared.QueryFilter{}
@@ -174,12 +177,14 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 		shared.TestRun{
 			ID:         runIDs[0],
 			ResultsURL: urls[0],
+			TimeStart:  time.Now(),
 		},
 	}
 	testRuns[edge] = shared.TestRuns{
 		shared.TestRun{
 			ID:         runIDs[1],
 			ResultsURL: urls[1],
+			TimeStart:  time.Now().AddDate(0, 0, -1),
 		},
 	}
 	filters := shared.QueryFilter{
