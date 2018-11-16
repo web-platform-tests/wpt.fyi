@@ -5,6 +5,8 @@
 package shared
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -617,6 +619,10 @@ func ParseQueryFilterParams(r *http.Request) (filter QueryFilter, err error) {
 
 // ParseTestRunFilterParams parses all of the filter params for a TestRun query.
 func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error) {
+	if page, err := ParsePageToken(r); page != nil || err != nil {
+		return *page, err
+	}
+
 	runSHA, err := ParseSHAParam(r)
 	if err != nil {
 		return filter, err
@@ -669,4 +675,21 @@ func ParseBeforeAndAfterParams(r *http.Request) (ProductSpecs, error) {
 	}
 	specs[1] = afterSpec
 	return specs, nil
+}
+
+// ParsePageToken decodes a base64 encoding of a TestRunFilter struct.
+func ParsePageToken(r *http.Request) (*TestRunFilter, error) {
+	token := r.URL.Query().Get("page")
+	if token == "" {
+		return nil, nil
+	}
+	decoded, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return nil, err
+	}
+	var filter TestRunFilter
+	if err := json.Unmarshal([]byte(decoded), &filter); err != nil {
+		return nil, err
+	}
+	return &filter, nil
 }

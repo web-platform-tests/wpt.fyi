@@ -164,9 +164,9 @@ func (filter TestRunFilter) NextPage(loadedRuns TestRuns) *TestRunFilter {
 
 // Token returns a base64 encoded copy of the filter.
 func (filter TestRunFilter) Token() (string, error) {
-	if bytes, err := json.Marshal(filter); err != nil {
+	bytes, err := json.Marshal(filter)
+	if err != nil {
 		return "", err
-	} else {
-		return base64.URLEncoding.EncodeToString(bytes), nil
 	}
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }

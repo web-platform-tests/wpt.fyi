@@ -27,6 +27,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var testRuns shared.TestRuns
+	var nextPageToken string
 	if len(ids) > 0 {
 		testRuns, err = ids.LoadTestRuns(ctx)
 		if multiError, ok := err.(appengine.MultiError); ok {
@@ -49,6 +50,15 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		testRuns, err = LoadTestRunsForFilters(ctx, filters)
+
+		if err == nil {
+			if shared.IsFeatureEnabled(ctx, "paginationTokens") {
+				nextPage := filters.NextPage(testRuns)
+				if nextPage != nil {
+					nextPageToken, _ = nextPage.Token()
+				}
+			}
+		}
 	}
 
 	if err != nil {
@@ -58,6 +68,10 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("[]"))
 		return
+	}
+
+	if nextPageToken != "" {
+		w.Header().Add("x-wpt-next-page", nextPageToken)
 	}
 
 	testRunsBytes, err := json.Marshal(testRuns)

@@ -113,6 +113,7 @@ found in the LICENSE file.
       'experimentalByDefault',
       'experimentalAlignedExceptEdge',
       'taskclusterAllBranches',
+      'paginationTokens',
     ];
 
     /* global _wptFlags, WPT_FYI_FEATURES */
@@ -189,6 +190,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{taskclusterAllBranches}}">
         Process all taskcluster results (not just master)
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{paginationTokens}}">
+        Return "x-wpt-next-page" pagination token HTTP header in /api/runs
       </paper-checkbox>
     </paper-item>
   </template>
