@@ -6,9 +6,11 @@ package checks
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
 )
@@ -84,6 +86,19 @@ func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpe
 	detailsURL := getMasterDiffURL(ctx, sha, product)
 	detailsURLStr := detailsURL.String()
 
+	host := shared.GetHostname(ctx)
+	completed := summaries.Completed{
+		HostName: host,
+		HostURL:  fmt.Sprintf("https://%s/", host),
+		SHAURL:   getURL(ctx, shared.TestRunFilter{SHA: sha[:10]}).String(),
+		DiffURL:  getMasterDiffURL(ctx, sha, product).String(),
+	}
+	summary, err := completed.Compile()
+	if err != nil {
+		return false, err
+	}
+
+	title := fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
 	status := "completed"
 	conclusion := "success"
 	opts := github.CreateCheckRunOptions{
@@ -93,6 +108,10 @@ func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpe
 		Status:      &status,
 		Conclusion:  &conclusion,
 		CompletedAt: &github.Timestamp{Time: time.Now()},
+		Output: &github.CheckRunOutput{
+			Title:   &title,
+			Summary: &summary,
+		},
 	}
 	for _, suite := range suites {
 		created, err := createCheckRun(ctx, suite, opts)
