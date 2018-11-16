@@ -72,6 +72,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 // query to load the TestRun keys.
 func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter) (result []*datastore.Key, err error) {
 	limit := filters.MaxCount
+	offset := filters.Offset
 	from := filters.From
 	if limit == nil && from == nil {
 		// Default to a single, latest run when from & max-count both empty.
@@ -96,7 +97,8 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 		}
 		return keys, err
 	}
-	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit)
+	keys, err := shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit, offset)
+	return keys.AllKeys(), err
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load

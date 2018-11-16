@@ -64,22 +64,22 @@ func (mr *MocksharedInterfaceMockRecorder) ParseQueryFilterParams(arg0 interface
 }
 
 // LoadTestRuns mocks base method
-func (m *MocksharedInterface) LoadTestRuns(arg0 []shared.ProductSpec, arg1 golang_set.Set, arg2 string, arg3, arg4 *time.Time, arg5 *int) ([]shared.TestRun, error) {
-	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5)
-	ret0, _ := ret[0].([]shared.TestRun)
+func (m *MocksharedInterface) LoadTestRuns(arg0 shared.ProductSpecs, arg1 golang_set.Set, arg2 string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.TestRunsByProduct, error) {
+	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret0, _ := ret[0].(shared.TestRunsByProduct)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // LoadTestRuns indicates an expected call of LoadTestRuns
-func (mr *MocksharedInterfaceMockRecorder) LoadTestRuns(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRuns", reflect.TypeOf((*MocksharedInterface)(nil).LoadTestRuns), arg0, arg1, arg2, arg3, arg4, arg5)
+func (mr *MocksharedInterfaceMockRecorder) LoadTestRuns(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRuns", reflect.TypeOf((*MocksharedInterface)(nil).LoadTestRuns), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 }
 
 // LoadTestRunsByIDs mocks base method
-func (m *MocksharedInterface) LoadTestRunsByIDs(ids shared.TestRunIDs) ([]shared.TestRun, error) {
+func (m *MocksharedInterface) LoadTestRunsByIDs(ids shared.TestRunIDs) (shared.TestRuns, error) {
 	ret := m.ctrl.Call(m, "LoadTestRunsByIDs", ids)
-	ret0, _ := ret[0].([]shared.TestRun)
+	ret0, _ := ret[0].(shared.TestRuns)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

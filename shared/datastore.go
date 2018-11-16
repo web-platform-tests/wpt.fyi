@@ -35,7 +35,9 @@ func LoadTestRunKeys(
 	sha string,
 	from *time.Time,
 	to *time.Time,
-	limit *int) (result []*datastore.Key, err error) {
+	limit *int,
+	offset *int) (result KeysByProduct, err error) {
+	result = make(KeysByProduct)
 	baseQuery := datastore.NewQuery("TestRun")
 	if !IsLatest(sha) {
 		baseQuery = baseQuery.Filter("Revision =", sha)
@@ -86,7 +88,7 @@ func LoadTestRunKeys(
 			}
 			keys = append(keys, key)
 		}
-		result = append(result, keys...)
+		result[product] = append(result[product], keys...)
 	}
 	return result, nil
 }
@@ -101,12 +103,24 @@ func LoadTestRuns(
 	sha string,
 	from *time.Time,
 	to *time.Time,
-	limit *int) (result []TestRun, err error) {
-	keys, err := LoadTestRunKeys(ctx, products, labels, sha, from, to, limit)
+	limit,
+	offset *int) (result TestRunsByProduct, err error) {
+	keys, err := LoadTestRunKeys(ctx, products, labels, sha, from, to, limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	return LoadTestRunsByKeys(ctx, keys)
+	return loadTestRunsPerProductByKeys(ctx, keys)
+}
+
+func loadTestRunsPerProductByKeys(ctx context.Context, keys map[ProductSpec][]*datastore.Key) (result TestRunsByProduct, err error) {
+	result = make(TestRunsByProduct)
+	for p, k := range keys {
+		result[p], err = LoadTestRunsByKeys(ctx, k)
+		if err != nil {
+			return result, err
+		}
+	}
+	return result, err
 }
 
 // LoadTestRunsByKeys loads the given test runs (by key), but also appends the

@@ -7,6 +7,7 @@ package shared
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -159,6 +160,10 @@ func (run TestRun) LabelsSet() mapset.Set {
 // TestRuns is a helper type for an array of TestRun entities.
 type TestRuns []TestRun
 
+func (t TestRuns) Len() int           { return len(t) }
+func (t TestRuns) Less(i, j int) bool { return t[i].TimeStart.Before(t[j].TimeStart) }
+func (t TestRuns) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+
 // GetTestRunIDs gets an array of the IDs for the TestRun entities in the array.
 func (runs TestRuns) GetTestRunIDs() TestRunIDs {
 	ids := make([]int64, len(runs))
@@ -166,6 +171,47 @@ func (runs TestRuns) GetTestRunIDs() TestRunIDs {
 		ids[i] = run.ID
 	}
 	return ids
+}
+
+// OldestRunTimeStart returns the TimeStart of the oldest run in the set.
+func (runs TestRuns) OldestRunTimeStart() time.Time {
+	if len(runs) < 1 {
+		return time.Time{}
+	}
+	oldest := time.Now()
+	for _, run := range runs {
+		if run.TimeStart.Before(oldest) {
+			oldest = run.TimeStart
+		}
+	}
+	return oldest
+}
+
+// TestRunsByProduct is a map of product to matching runs, returned
+// when a TestRun query is executed.
+type TestRunsByProduct map[ProductSpec]TestRuns
+
+// AllRuns returns an array of all the loaded runs.
+func (t TestRunsByProduct) AllRuns() TestRuns {
+	var runs TestRuns
+	for _, v := range t {
+		runs = append(runs, v...)
+	}
+	sort.Sort(sort.Reverse(runs))
+	return runs
+}
+
+// KeysByProduct is a map of product to matching keys, returned
+// when a TestRun key query is executed.
+type KeysByProduct map[ProductSpec][]*datastore.Key
+
+// AllKeys returns an array of all the loaded keys.
+func (t KeysByProduct) AllKeys() []*datastore.Key {
+	var keys []*datastore.Key
+	for _, v := range t {
+		keys = append(keys, v...)
+	}
+	return keys
 }
 
 // TestRunIDs is a helper for an array of TestRun IDs.
