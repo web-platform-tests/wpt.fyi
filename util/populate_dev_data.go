@@ -252,16 +252,18 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		var localRunCopies shared.TestRuns
 		if aligned {
 			var shas []string
-			var keys map[string][]*datastore.Key
+			var keys map[string]shared.KeysByProduct
 			if shas, keys, err = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one); err != nil {
 				log.Printf("Failed to load a aligned run SHA: %s", err.Error())
 				continue
 			}
 			if len(shas) > 0 {
 				sha = shas[0]
-				if localRunCopies, err = shared.LoadTestRunsByKeys(ctx, keys[sha]); err != nil {
+				if loaded, err := shared.LoadTestRunsByKeys(ctx, keys[sha]); err != nil {
 					log.Printf("Failed to load test runs by keys: %s", err.Error())
 					continue
+				} else {
+					localRunCopies = loaded.AllRuns()
 				}
 			}
 		}

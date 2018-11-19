@@ -14,6 +14,9 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+const nextPageTokenHeaderName = "x-wpt-next-page"
+const paginationTokenFeatureFlagName = "paginationTokens"
+
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
 //
 // URL Params:
@@ -49,11 +52,13 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		testRuns, err = LoadTestRunsForFilters(ctx, filters)
+		var runsByProduct shared.TestRunsByProduct
+		runsByProduct, err = LoadTestRunsForFilters(ctx, filters)
 
 		if err == nil {
-			if shared.IsFeatureEnabled(ctx, "paginationTokens") {
-				nextPage := filters.NextPage(testRuns)
+			testRuns = runsByProduct.AllRuns()
+			if shared.IsFeatureEnabled(ctx, paginationTokenFeatureFlagName) {
+				nextPage := filters.NextPage(runsByProduct)
 				if nextPage != nil {
 					nextPageToken, _ = nextPage.Token()
 				}
@@ -71,7 +76,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if nextPageToken != "" {
-		w.Header().Add("x-wpt-next-page", nextPageToken)
+		w.Header().Add(nextPageTokenHeaderName, nextPageToken)
 	}
 
 	testRunsBytes, err := json.Marshal(testRuns)
@@ -84,7 +89,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 // LoadTestRunKeysForFilters deciphers the filters and executes a corresponding
 // query to load the TestRun keys.
-func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter) (result []*datastore.Key, err error) {
+func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter) (result shared.KeysByProduct, err error) {
 	limit := filters.MaxCount
 	offset := filters.Offset
 	from := filters.From
@@ -105,20 +110,21 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 			// Bail out early - can't find any complete runs.
 			return result, nil
 		}
-		keys := []*datastore.Key{}
+		keys := make(shared.KeysByProduct)
 		for _, sha := range shas {
-			keys = append(keys, shaKeys[sha]...)
+			for p := range shaKeys[sha] {
+				keys[p] = append(keys[p], shaKeys[sha][p]...)
+			}
 		}
 		return keys, err
 	}
-	keys, err := shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit, offset)
-	return keys.AllKeys(), err
+	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit, offset)
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
 // the TestRuns.
-func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result []shared.TestRun, err error) {
-	var keys []*datastore.Key
+func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result shared.TestRunsByProduct, err error) {
+	var keys shared.KeysByProduct
 	if keys, err = LoadTestRunKeysForFilters(ctx, filters); err != nil {
 		return nil, err
 	}

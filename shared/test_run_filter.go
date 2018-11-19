@@ -149,15 +149,24 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 // NextPage returns a filter for the next page of results that
 // would match the current filter, based on the given results that were
 // loaded.
-func (filter TestRunFilter) NextPage(loadedRuns TestRuns) *TestRunFilter {
+func (filter TestRunFilter) NextPage(loadedRuns TestRunsByProduct) *TestRunFilter {
 	// TODO: Handle to/from ranges.
 	if filter.MaxCount != nil {
-		offset := *filter.MaxCount
-		if filter.Offset != nil {
-			offset += *filter.Offset
+		// We only have another page if N results were returned for a max of N.
+		anyMaxedOut := false
+		for _, v := range loadedRuns {
+			if len(v) >= *filter.MaxCount {
+				anyMaxedOut = true
+			}
 		}
-		filter.Offset = &offset
-		return &filter
+		if anyMaxedOut {
+			offset := *filter.MaxCount
+			if filter.Offset != nil {
+				offset += *filter.Offset
+			}
+			filter.Offset = &offset
+			return &filter
+		}
 	}
 	return nil
 }

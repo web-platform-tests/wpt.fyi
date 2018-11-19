@@ -42,6 +42,9 @@ func LoadTestRunKeys(
 	if !IsLatest(sha) {
 		baseQuery = baseQuery.Filter("Revision =", sha)
 	}
+	if offset != nil {
+		baseQuery = baseQuery.Offset(*offset)
+	}
 	if labels != nil {
 		for i := range labels.Iter() {
 			baseQuery = baseQuery.Filter("Labels =", i.(string))
@@ -109,45 +112,39 @@ func LoadTestRuns(
 	if err != nil {
 		return nil, err
 	}
-	return loadTestRunsPerProductByKeys(ctx, keys)
-}
-
-func loadTestRunsPerProductByKeys(ctx context.Context, keys map[ProductSpec][]*datastore.Key) (result TestRunsByProduct, err error) {
-	result = make(TestRunsByProduct)
-	for p, k := range keys {
-		result[p], err = LoadTestRunsByKeys(ctx, k)
-		if err != nil {
-			return result, err
-		}
-	}
-	return result, err
+	return LoadTestRunsByKeys(ctx, keys)
 }
 
 // LoadTestRunsByKeys loads the given test runs (by key), but also appends the
 // ID to the TestRun entity.
-func LoadTestRunsByKeys(ctx context.Context, keys []*datastore.Key) (result TestRuns, err error) {
-	result = make(TestRuns, len(keys))
+func LoadTestRunsByKeys(ctx context.Context, keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
+	result = make(TestRunsByProduct)
 	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
 	var wg sync.WaitGroup
-	for i := range keys {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
+	for product, keys := range keysByProduct {
+		result[product] = make(TestRuns, len(keys))
+		for i := range keys {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
 
-			localErr := cs.Get(getTestRunMemcacheKey(keys[i].IntID()), keys[i].IntID(), &result[i])
-			if localErr != nil {
-				err = localErr
-			}
-		}(i)
+				localErr := cs.Get(getTestRunMemcacheKey(keys[i].IntID()), keys[i].IntID(), &result[product][i])
+				if localErr != nil {
+					err = localErr
+				}
+			}(i)
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 
 	if err != nil {
 		return nil, err
 	}
 	// Append the keys as ID
-	for i, key := range keys {
-		result[i].ID = key.IntID()
+	for product, keys := range keysByProduct {
+		for i, key := range keys {
+			result[product][i].ID = key.IntID()
+		}
 	}
 	return result, err
 }
@@ -197,14 +194,15 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 
 // GetAlignedRunSHAs returns an array of the SHA[0:10] for runs that
 // exists for all the given products, ordered by most-recent, as well as a map
-// of those SHAs to the TestRun keys for the complete run.
+// of those SHAs to a KeysByProduct map of products to the TestRun keys, for the
+// runs in the aligned run.
 func GetAlignedRunSHAs(
 	ctx context.Context,
 	products ProductSpecs,
 	labels mapset.Set,
 	from,
 	to *time.Time,
-	limit *int) (shas []string, keys map[string][]*datastore.Key, err error) {
+	limit *int) (shas []string, keys map[string]KeysByProduct, err error) {
 	query := datastore.
 		NewQuery("TestRun").
 		Limit(MaxCountMaxValue).
@@ -223,14 +221,14 @@ func GetAlignedRunSHAs(
 	}
 
 	productsBySHA := make(map[string]mapset.Set)
-	keyCollector := make(map[string][]*datastore.Key)
-	keys = make(map[string][]*datastore.Key)
+	keyCollector := make(map[string]KeysByProduct)
+	keys = make(map[string]KeysByProduct)
 	done := mapset.NewSet()
 	it := query.Run(ctx)
 	for {
 		var testRun TestRun
 		var key *datastore.Key
-		matchingProduct := -1
+		var matchingProduct *ProductSpec
 		key, err := it.Next(&testRun)
 		if err == datastore.Done {
 			break
@@ -239,24 +237,24 @@ func GetAlignedRunSHAs(
 		} else {
 			for i := range products {
 				if products[i].Matches(testRun) {
-					matchingProduct = i
+					matchingProduct = &products[i]
 					break
 				}
 			}
 		}
-		if matchingProduct < 0 {
+		if matchingProduct == nil {
 			continue
 		}
 		if _, ok := productsBySHA[testRun.Revision]; !ok {
 			productsBySHA[testRun.Revision] = mapset.NewSet()
-			keyCollector[testRun.Revision] = make([]*datastore.Key, len(products))
+			keyCollector[testRun.Revision] = make(KeysByProduct)
 		}
 		set := productsBySHA[testRun.Revision]
-		if set.Contains(products[matchingProduct]) {
+		if set.Contains(matchingProduct) {
 			continue
 		}
-		set.Add(products[matchingProduct])
-		keyCollector[testRun.Revision][matchingProduct] = key
+		set.Add(matchingProduct)
+		keyCollector[testRun.Revision][*matchingProduct] = []*datastore.Key{key}
 		if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 			done.Add(testRun.Revision)
 			shas = append(shas, testRun.Revision)
