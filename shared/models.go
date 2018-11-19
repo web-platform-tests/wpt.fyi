@@ -165,21 +165,21 @@ func (t TestRuns) Less(i, j int) bool { return t[i].TimeStart.Before(t[j].TimeSt
 func (t TestRuns) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 
 // GetTestRunIDs gets an array of the IDs for the TestRun entities in the array.
-func (runs TestRuns) GetTestRunIDs() TestRunIDs {
-	ids := make([]int64, len(runs))
-	for i, run := range runs {
+func (t TestRuns) GetTestRunIDs() TestRunIDs {
+	ids := make([]int64, len(t))
+	for i, run := range t {
 		ids[i] = run.ID
 	}
 	return ids
 }
 
 // OldestRunTimeStart returns the TimeStart of the oldest run in the set.
-func (runs TestRuns) OldestRunTimeStart() time.Time {
-	if len(runs) < 1 {
+func (t TestRuns) OldestRunTimeStart() time.Time {
+	if len(t) < 1 {
 		return time.Time{}
 	}
 	oldest := time.Now()
-	for _, run := range runs {
+	for _, run := range t {
 		if run.TimeStart.Before(oldest) {
 			oldest = run.TimeStart
 		}
