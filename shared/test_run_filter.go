@@ -14,14 +14,14 @@ import (
 // TestRunFilter represents the ways TestRun entities can be filtered in
 // the webapp and api.
 type TestRunFilter struct {
-	SHA      string
-	Labels   mapset.Set
-	Aligned  *bool
-	From     *time.Time
-	To       *time.Time
-	MaxCount *int
-	Offset   *int // Used for paginating with MaxCount.
-	Products ProductSpecs
+	SHA      string       `json:"sha,omitempty"`
+	Labels   mapset.Set   `json:"labels,omitempty"`
+	Aligned  *bool        `json:"aligned,omitempty"`
+	From     *time.Time   `json:"from,omitempty"`
+	To       *time.Time   `json:"to,omitempty"`
+	MaxCount *int         `json:"maxcount,omitempty"`
+	Offset   *int         `json:"offset,omitempty"` // Used for paginating with MaxCount.
+	Products ProductSpecs `json:"products,omitempty"`
 }
 
 // IsDefaultQuery returns whether the params are just an empty query (or,

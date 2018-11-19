@@ -635,6 +635,8 @@ func TestParsePageToken(t *testing.T) {
 	assert.Nil(t, err)
 	if parsed == nil {
 		assert.FailNow(t, "Parsed page token was nil")
+	} else if parsed.To == nil {
+		assert.FailNow(t, "Parsed page token has no 'to' param")
 	}
-	assert.EqualValues(t, filter, *parsed)
+	assert.True(t, filter.To.Equal(*parsed.To))
 }
