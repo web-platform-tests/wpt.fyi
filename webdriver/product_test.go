@@ -18,7 +18,7 @@ func TestProductParam_Order(t *testing.T) {
 	testProductParamSets(
 		t,
 		[]string{"chrome", "firefox"},
-		[]string{"firefox", "chrome"},
+		[]string{"firefox", "chrome"})
 }
 
 func TestProductParam_Labels(t *testing.T) {
