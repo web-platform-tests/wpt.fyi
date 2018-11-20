@@ -219,9 +219,9 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
-	for p, runs := range runsByProduct {
-		if len(runs) > 0 {
-			created, err := completeCheckRun(ctx, sha, p)
+	for _, rbp := range runsByProduct {
+		if len(rbp.TestRuns) > 0 {
+			created, err := completeCheckRun(ctx, sha, rbp.Product)
 			createdSome = createdSome || created
 			if err != nil {
 				return createdSome, err

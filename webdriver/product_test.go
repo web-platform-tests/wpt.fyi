@@ -14,6 +14,13 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+func TestProductParam_Order(t *testing.T) {
+	testProductParamSets(
+		t,
+		[]string{"chrome", "firefox"},
+		[]string{"firefox", "chrome"},
+}
+
 func TestProductParam_Labels(t *testing.T) {
 	testProductParamSets(
 		t,

@@ -155,7 +155,7 @@ func (filter TestRunFilter) NextPage(loadedRuns TestRunsByProduct) *TestRunFilte
 		// We only have another page if N results were returned for a max of N.
 		anyMaxedOut := false
 		for _, v := range loadedRuns {
-			if len(v) >= *filter.MaxCount {
+			if len(v.TestRuns) >= *filter.MaxCount {
 				anyMaxedOut = true
 			}
 		}
