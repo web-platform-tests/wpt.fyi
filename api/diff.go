@@ -87,7 +87,11 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		if len(beforeAndAfter) > 0 {
 			runFilter.Products = beforeAndAfter
 		}
-		runs, err = LoadTestRunsForFilters(ctx, runFilter)
+		var runsByProduct shared.TestRunsByProduct
+		runsByProduct, err = LoadTestRunsForFilters(ctx, runFilter)
+		if err != nil {
+			runs = runsByProduct.AllRuns()
+		}
 	}
 
 	if err != nil {

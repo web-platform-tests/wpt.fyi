@@ -43,14 +43,14 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, shared.LatestSHA, filters.From, filters.To, filters.MaxCount)
+		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, shared.LatestSHA, filters.From, filters.To, filters.MaxCount, filters.Offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		seen := mapset.NewSet()
-		for _, testRun := range testRuns {
+		for _, testRun := range testRuns.AllRuns() {
 			if !seen.Contains(testRun.Revision) {
 				shas = append(shas, testRun.Revision)
 				seen.Add(testRun.Revision)

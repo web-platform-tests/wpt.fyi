@@ -5,10 +5,11 @@
 package shared
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -23,102 +24,6 @@ import (
 type QueryFilter struct {
 	RunIDs []int64
 	Q      string
-}
-
-// TestRunFilter represents the ways TestRun entities can be filtered in
-// the webapp and api.
-type TestRunFilter struct {
-	SHA      string
-	Labels   mapset.Set
-	Aligned  *bool
-	From     *time.Time
-	To       *time.Time
-	MaxCount *int
-	Products ProductSpecs
-}
-
-// IsDefaultQuery returns whether the params are just an empty query (or,
-// the equivalent defaults of an empty query).
-func (filter TestRunFilter) IsDefaultQuery() bool {
-	return IsLatest(filter.SHA) &&
-		(filter.Labels == nil || filter.Labels.Cardinality() < 1) &&
-		(filter.Aligned == nil) &&
-		(filter.From == nil) &&
-		(filter.MaxCount == nil || *filter.MaxCount == 1) &&
-		(len(filter.Products) < 1)
-}
-
-// OrDefault returns the current filter, or, if it is a default query, returns
-// the query used by default in wpt.fyi.
-func (filter TestRunFilter) OrDefault() TestRunFilter {
-	return filter.OrAlignedStableRuns()
-}
-
-// OrAlignedStableRuns returns the current filter, or, if it is a default query, returns
-// a query for stable runs, with an aligned SHA.
-func (filter TestRunFilter) OrAlignedStableRuns() TestRunFilter {
-	if !filter.IsDefaultQuery() {
-		return filter
-	}
-	aligned := true
-	filter.Aligned = &aligned
-	filter.Labels = mapset.NewSetWith(StableLabel)
-	return filter
-}
-
-// OrExperimentalRuns returns the current filter, or, if it is a default query, returns
-// a query for the latest experimental runs.
-func (filter TestRunFilter) OrExperimentalRuns() TestRunFilter {
-	if !filter.IsDefaultQuery() {
-		return filter
-	}
-	filter.Labels = mapset.NewSetWith(ExperimentalLabel)
-	return filter
-}
-
-// OrAlignedExperimentalRunsExceptEdge returns the current filter, or, if it is a default
-// query, returns a query for the latest experimental runs.
-func (filter TestRunFilter) OrAlignedExperimentalRunsExceptEdge() TestRunFilter {
-	if !filter.IsDefaultQuery() {
-		return filter
-	}
-	aligned := true
-	filter.Aligned = &aligned
-	filter.Products = GetDefaultProducts()
-	for i := range filter.Products {
-		if filter.Products[i].BrowserName != "edge" {
-			filter.Products[i].Labels = mapset.NewSetWith("experimental")
-		}
-	}
-	return filter
-}
-
-// MasterOnly returns the current filter, ensuring it has with the master-only
-// restriction (a label of "master").
-func (filter TestRunFilter) MasterOnly() TestRunFilter {
-	if filter.Labels == nil {
-		filter.Labels = mapset.NewSet()
-	}
-	filter.Labels.Add(MasterLabel)
-	return filter
-}
-
-// IsDefaultProducts returns whether the params products are empty, or the
-// equivalent of the default product set.
-func (filter TestRunFilter) IsDefaultProducts() bool {
-	if len(filter.Products) == 0 {
-		return true
-	}
-	def := GetDefaultProducts()
-	if len(filter.Products) != len(def) {
-		return false
-	}
-	for i := range def {
-		if def[i] != filter.Products[i] {
-			return false
-		}
-	}
-	return true
 }
 
 // ProductSpec is a struct representing a parsed product spec string.
@@ -216,38 +121,6 @@ func (p ProductSpec) String() string {
 func (p ProductSpecs) Len() int           { return len(p) }
 func (p ProductSpecs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 func (p ProductSpecs) Less(i, j int) bool { return p[i].String() < p[j].String() }
-
-// ToQuery converts the filter set to a url.Values (set of query params).
-func (filter TestRunFilter) ToQuery() (q url.Values) {
-	u := url.URL{}
-	q = u.Query()
-	if !IsLatest(filter.SHA) {
-		q.Set("sha", filter.SHA)
-	}
-	if filter.Labels != nil && filter.Labels.Cardinality() > 0 {
-		for label := range filter.Labels.Iter() {
-			q.Add("label", label.(string))
-		}
-	}
-	if len(filter.Products) > 0 {
-		for _, p := range filter.Products {
-			q.Add("product", p.String())
-		}
-	}
-	if filter.Aligned != nil {
-		q.Set("aligned", strconv.FormatBool(*filter.Aligned))
-	}
-	if filter.MaxCount != nil {
-		q.Set("max-count", fmt.Sprintf("%v", *filter.MaxCount))
-	}
-	if filter.From != nil {
-		q.Set("from", filter.From.Format(time.RFC3339))
-	}
-	if filter.To != nil {
-		q.Set("to", filter.From.Format(time.RFC3339))
-	}
-	return q
-}
 
 // MaxCountMaxValue is the maximum allowed value for the max-count param.
 const MaxCountMaxValue = 500
@@ -518,12 +391,6 @@ func ParseProductOrBrowserParams(r *http.Request) (products ProductSpecs, err er
 	return products, nil
 }
 
-// GetProductsOrDefault parses the 'products' (and legacy 'browsers') params, returning
-// the ordered list of products to include, or a default list.
-func (filter TestRunFilter) GetProductsOrDefault() (products ProductSpecs) {
-	return filter.Products.OrDefault()
-}
-
 // ParseMaxCountParam parses the 'max-count' parameter as an integer
 func ParseMaxCountParam(r *http.Request) (*int, error) {
 	if maxCountParam := r.URL.Query().Get("max-count"); maxCountParam != "" {
@@ -752,6 +619,10 @@ func ParseQueryFilterParams(r *http.Request) (filter QueryFilter, err error) {
 
 // ParseTestRunFilterParams parses all of the filter params for a TestRun query.
 func ParseTestRunFilterParams(r *http.Request) (filter TestRunFilter, err error) {
+	if page, err := ParsePageToken(r); page != nil || err != nil {
+		return *page, err
+	}
+
 	runSHA, err := ParseSHAParam(r)
 	if err != nil {
 		return filter, err
@@ -804,4 +675,21 @@ func ParseBeforeAndAfterParams(r *http.Request) (ProductSpecs, error) {
 	}
 	specs[1] = afterSpec
 	return specs, nil
+}
+
+// ParsePageToken decodes a base64 encoding of a TestRunFilter struct.
+func ParsePageToken(r *http.Request) (*TestRunFilter, error) {
+	token := r.URL.Query().Get("page")
+	if token == "" {
+		return nil, nil
+	}
+	decoded, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return nil, err
+	}
+	var filter TestRunFilter
+	if err := json.Unmarshal([]byte(decoded), &filter); err != nil {
+		return nil, err
+	}
+	return &filter, nil
 }

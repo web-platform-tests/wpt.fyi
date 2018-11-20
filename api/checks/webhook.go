@@ -214,18 +214,18 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 func completeChecksForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
 	// Jump straight to completed check_run for already-present runs for the SHA.
 	products = shared.ProductSpecs(products).OrDefault()
-	runs, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil)
+	runsByProduct, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
-	for _, run := range runs {
-		spec := shared.ProductSpec{}
-		spec.BrowserName = run.BrowserName
-		created, err := completeCheckRun(ctx, sha, spec)
-		createdSome = createdSome || created
-		if err != nil {
-			return createdSome, err
+	for p, runs := range runsByProduct {
+		if len(runs) > 0 {
+			created, err := completeCheckRun(ctx, sha, p)
+			createdSome = createdSome || created
+			if err != nil {
+				return createdSome, err
+			}
 		}
 	}
 	return createdSome, nil

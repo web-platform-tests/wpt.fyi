@@ -9,6 +9,7 @@ package query
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -126,23 +127,30 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 		"https://example.com/1-summary.json.gz",
 		"https://example.com/2-summary.json.gz",
 	}
-	testRuns := []shared.TestRun{
+	chrome, _ := shared.ParseProductSpec("chrome")
+	edge, _ := shared.ParseProductSpec("edge")
+	testRuns := make(shared.TestRunsByProduct)
+	testRuns[chrome] = shared.TestRuns{
 		shared.TestRun{
 			ID:         runIDs[0],
 			ResultsURL: urls[0],
+			TimeStart:  time.Now(),
 		},
+	}
+	testRuns[edge] = shared.TestRuns{
 		shared.TestRun{
 			ID:         runIDs[1],
 			ResultsURL: urls[1],
+			TimeStart:  time.Now().AddDate(0, 0, -1),
 		},
 	}
 	filters := shared.QueryFilter{}
 
-	si.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
+	si.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)
-	assert.Equal(t, testRuns, trs)
+	assert.Equal(t, testRuns.AllRuns(), trs)
 	assert.Equal(t, shared.QueryFilter{
 		RunIDs: runIDs,
 	}, fs)
@@ -162,24 +170,31 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 		"https://example.com/1-summary.json.gz",
 		"https://example.com/2-summary.json.gz",
 	}
-	testRuns := []shared.TestRun{
+	chrome, _ := shared.ParseProductSpec("chrome")
+	edge, _ := shared.ParseProductSpec("edge")
+	testRuns := make(shared.TestRunsByProduct)
+	testRuns[chrome] = shared.TestRuns{
 		shared.TestRun{
 			ID:         runIDs[0],
 			ResultsURL: urls[0],
+			TimeStart:  time.Now(),
 		},
+	}
+	testRuns[edge] = shared.TestRuns{
 		shared.TestRun{
 			ID:         runIDs[1],
 			ResultsURL: urls[1],
+			TimeStart:  time.Now().AddDate(0, 0, -1),
 		},
 	}
 	filters := shared.QueryFilter{
 		RunIDs: runIDs,
 	}
 
-	si.EXPECT().LoadTestRunsByIDs(shared.TestRunIDs([]int64{testRuns[0].ID, testRuns[1].ID})).Return([]shared.TestRun{testRuns[0], testRuns[1]}, nil)
+	si.EXPECT().LoadTestRunsByIDs(shared.TestRunIDs(testRuns.AllRuns().GetTestRunIDs())).Return(testRuns.AllRuns(), nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)
-	assert.Equal(t, testRuns, trs)
+	assert.Equal(t, testRuns.AllRuns(), trs)
 	assert.Equal(t, filters, fs)
 }

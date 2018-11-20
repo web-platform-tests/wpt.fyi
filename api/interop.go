@@ -69,7 +69,7 @@ func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter)
 	}
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
-	for _, key := range keys {
+	for _, key := range keys.AllKeys() {
 		query = query.Filter("TestRunIDs =", key.IntID())
 	}
 	var results []metrics.PassRateMetadataLegacy
@@ -141,12 +141,14 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 	return &interop, nil
 }
 
-func checkKeysAreAligned(shaKeys map[string][]*datastore.Key) func(shared.TestRunIDs) bool {
+func checkKeysAreAligned(shaKeys map[string]shared.KeysByProduct) func(shared.TestRunIDs) bool {
 	keySets := make(map[string]mapset.Set)
 	for sha, keys := range shaKeys {
 		keySet := mapset.NewSet()
-		for _, key := range keys {
-			keySet.Add(key.IntID())
+		for _, kbp := range keys {
+			for _, key := range kbp {
+				keySet.Add(key.IntID())
+			}
 		}
 		keySets[sha] = keySet
 	}
@@ -167,10 +169,12 @@ func checkKeysAreAligned(shaKeys map[string][]*datastore.Key) func(shared.TestRu
 	}
 }
 
-func checkKeysMatchQuery(keys []*datastore.Key) func(shared.TestRunIDs) bool {
+func checkKeysMatchQuery(keys shared.KeysByProduct) func(shared.TestRunIDs) bool {
 	keysFilter := mapset.NewSet()
-	for _, key := range keys {
-		keysFilter.Add(key.IntID())
+	for _, kbp := range keys {
+		for _, key := range kbp {
+			keysFilter.Add(key.IntID())
+		}
 	}
 	return func(ids shared.TestRunIDs) bool {
 		all := true

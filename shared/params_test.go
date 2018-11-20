@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -619,4 +620,23 @@ func TestProductSpecMatches_Revision(t *testing.T) {
 	assert.False(t, chrome.Matches(chromeRun)) // Still wrong version
 	chromeRun.BrowserVersion = version
 	assert.True(t, chrome.Matches(chromeRun))
+}
+
+func TestParsePageToken(t *testing.T) {
+	filter := TestRunFilter{}
+	now := time.Now().Truncate(time.Second)
+	filter.To = &now
+
+	token, err := filter.Token()
+	assert.Nil(t, err)
+	r := httptest.NewRequest("GET", "/?page="+token, nil)
+
+	parsed, err := ParsePageToken(r)
+	assert.Nil(t, err)
+	if parsed == nil {
+		assert.FailNow(t, "Parsed page token was nil")
+	} else if parsed.To == nil {
+		assert.FailNow(t, "Parsed page token has no 'to' param")
+	}
+	assert.True(t, filter.To.Equal(*parsed.To))
 }

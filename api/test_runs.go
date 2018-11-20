@@ -14,6 +14,9 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+const nextPageTokenHeaderName = "wpt-next-page"
+const paginationTokenFeatureFlagName = "paginationTokens"
+
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
 //
 // URL Params:
@@ -27,6 +30,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var testRuns shared.TestRuns
+	var nextPageToken string
 	if len(ids) > 0 {
 		testRuns, err = ids.LoadTestRuns(ctx)
 		if multiError, ok := err.(appengine.MultiError); ok {
@@ -48,7 +52,18 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		testRuns, err = LoadTestRunsForFilters(ctx, filters)
+		var runsByProduct shared.TestRunsByProduct
+		runsByProduct, err = LoadTestRunsForFilters(ctx, filters)
+
+		if err == nil {
+			testRuns = runsByProduct.AllRuns()
+			if shared.IsFeatureEnabled(ctx, paginationTokenFeatureFlagName) {
+				nextPage := filters.NextPage(runsByProduct)
+				if nextPage != nil {
+					nextPageToken, _ = nextPage.Token()
+				}
+			}
+		}
 	}
 
 	if err != nil {
@@ -58,6 +73,10 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("[]"))
 		return
+	}
+
+	if nextPageToken != "" {
+		w.Header().Add(nextPageTokenHeaderName, nextPageToken)
 	}
 
 	testRunsBytes, err := json.Marshal(testRuns)
@@ -70,8 +89,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 // LoadTestRunKeysForFilters deciphers the filters and executes a corresponding
 // query to load the TestRun keys.
-func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter) (result []*datastore.Key, err error) {
+func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter) (result shared.KeysByProduct, err error) {
 	limit := filters.MaxCount
+	offset := filters.Offset
 	from := filters.From
 	if limit == nil && from == nil {
 		// Default to a single, latest run when from & max-count both empty.
@@ -90,19 +110,21 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 			// Bail out early - can't find any complete runs.
 			return result, nil
 		}
-		keys := []*datastore.Key{}
+		keys := make(shared.KeysByProduct)
 		for _, sha := range shas {
-			keys = append(keys, shaKeys[sha]...)
+			for p := range shaKeys[sha] {
+				keys[p] = append(keys[p], shaKeys[sha][p]...)
+			}
 		}
 		return keys, err
 	}
-	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit)
+	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit, offset)
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
 // the TestRuns.
-func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result []shared.TestRun, err error) {
-	var keys []*datastore.Key
+func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result shared.TestRunsByProduct, err error) {
+	var keys shared.KeysByProduct
 	if keys, err = LoadTestRunKeysForFilters(ctx, filters); err != nil {
 		return nil, err
 	}
