@@ -14,9 +14,9 @@ import (
 
 func TestCompile_Completed(t *testing.T) {
 	foo := Completed{
+		DiffURL:  "foo.com/diff?before=chrome[master]&after=chrome@0123456789",
 		HostName: "foo.com",
 		HostURL:  "foo.com/results/",
-		DiffURL:  "foo.com/diff/",
 		SHAURL:   "foo.com/sha/",
 	}
 	s, err := foo.Compile()
@@ -30,7 +30,7 @@ func TestCompile_Completed(t *testing.T) {
 func TestCompile_Pending(t *testing.T) {
 	foo := Pending{
 		HostName: "foo.com",
-		RunsURL:  "foo.com/runs",
+		RunsURL:  "foo.com/runs?products=chrome&sha=0123456789",
 	}
 	s, err := foo.Compile()
 	assert.Nil(t, err)

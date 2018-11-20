@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 	"path/filepath"
+	"reflect"
 	"runtime"
 )
 
@@ -40,8 +41,20 @@ func (c Pending) Compile() (string, error) {
 }
 
 func compile(i interface{}, t string) (string, error) {
+	// Copy all the fields as template.HTML to avoid HTML escaping.
+	values := make(map[string]template.HTML)
+	v := reflect.Indirect(reflect.ValueOf(i))
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		if field.CanInterface() {
+			if s, ok := field.Interface().(string); ok {
+				values[v.Type().Field(i).Name] = template.HTML(s)
+			}
+		}
+	}
+
 	var dest bytes.Buffer
-	if err := templates.ExecuteTemplate(&dest, t, i); err != nil {
+	if err := templates.ExecuteTemplate(&dest, t, values); err != nil {
 		return "", err
 	}
 	return dest.String(), nil
