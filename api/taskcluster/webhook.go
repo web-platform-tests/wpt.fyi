@@ -40,8 +40,7 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
-
+	ctx := shared.NewAppEngineContext(r)
 	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
 	if err != nil {
 		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)

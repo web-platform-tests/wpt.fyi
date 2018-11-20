@@ -14,7 +14,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 type testRunUIFilter struct {
@@ -89,7 +88,7 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 	if err != nil {
 		return filter, err
 	}
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
 	if testRunFilter.IsDefaultQuery() {
 		experimentalByDefault := shared.IsFeatureEnabled(ctx, "experimentalByDefault")
