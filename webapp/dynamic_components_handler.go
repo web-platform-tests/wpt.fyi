@@ -15,7 +15,7 @@ func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Errors aren't a big deal; log them and ignore.
 		log := shared.GetLogger(ctx)
-		log.Debugf("Error loading flags: %s", err.Error())
+		log.Errorf("Error loading flags: %s", err.Error())
 	}
 	data := struct{ Flags []shared.Flag }{flags}
 	componentTemplates.ExecuteTemplate(w, "wpt-env-flags.html", data)
