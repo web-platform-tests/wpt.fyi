@@ -2,9 +2,9 @@ package summaries
 
 import (
 	"bytes"
-	"html/template"
 	"path/filepath"
 	"runtime"
+	"text/template"
 )
 
 var templates *template.Template
@@ -17,9 +17,9 @@ func init() {
 
 // Completed is the struct for completed.md
 type Completed struct {
+	DiffURL  string // URL for the diff-view of the results
 	HostName string // Host environment name, e.g. "wpt.fyi"
 	HostURL  string // Host environment URL, e.g. "https://wpt.fyi"
-	DiffURL  string // URL for the diff-view of the results
 	SHAURL   string // URL for the latest results for the same SHA
 }
 
