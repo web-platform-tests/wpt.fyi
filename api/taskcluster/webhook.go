@@ -74,10 +74,12 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // https://developer.github.com/v3/activity/events/types/#statusevent
-type statusEventPayload github.StatusEvent
+type statusEventPayload struct {
+	github.StatusEvent
+}
 
 func (s statusEventPayload) IsSuccess() bool {
-	return s.State != nil && *s.State == "success"
+	return s.GetState() == "success"
 }
 
 func (s statusEventPayload) IsTaskcluster() bool {
@@ -121,7 +123,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
-	if !shouldProcessStatus(processAllBranches, &status) {
+	if !shouldProcessStatus(log, processAllBranches, &status) {
 		return false, nil
 	}
 
@@ -177,11 +179,18 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	return true, nil
 }
 
-func shouldProcessStatus(processAllBranches bool, status *statusEventPayload) bool {
-	if !status.IsSuccess() || !status.IsTaskcluster() {
+func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *statusEventPayload) bool {
+	if !status.IsSuccess() {
+		log.Debugf("Ignoring non-success status: %s", status.GetState())
+		return false
+	} else if !status.IsTaskcluster() {
+		log.Debugf("Ignoring non-Taskcluster context: %s", status.GetContext())
+		return false
+	} else if !processAllBranches && !status.IsOnMaster() {
+		log.Debugf("Ignoring non-master status event")
 		return false
 	}
-	return processAllBranches || status.IsOnMaster()
+	return true
 }
 
 func extractTaskGroupID(targetURL string) string {
