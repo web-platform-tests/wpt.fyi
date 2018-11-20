@@ -33,7 +33,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	w.Header().Add("x-wpt-sha", sha)
+	w.Header().Add("wpt-sha", sha)
 	w.Header().Add("Content-Type", "application/json")
 	if paths != nil {
 		if manifestBytes, err = filterManifest(manifestBytes, paths); err != nil {

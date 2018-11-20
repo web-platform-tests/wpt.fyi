@@ -14,7 +14,7 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-const nextPageTokenHeaderName = "x-wpt-next-page"
+const nextPageTokenHeaderName = "wpt-next-page"
 const paginationTokenFeatureFlagName = "paginationTokens"
 
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
