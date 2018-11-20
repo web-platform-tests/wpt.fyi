@@ -25,6 +25,22 @@ func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
 	return &testRun, nil
 }
 
+// LoadTestRunsBySHAs loads all test runs that belong to any of the given revisions (SHAs).
+func LoadTestRunsBySHAs(ctx context.Context, shas ...string) (runs TestRuns, err error) {
+	for _, sha := range shas {
+		if len(sha) > 10 {
+			sha = sha[:10]
+		}
+		var shaRuns TestRuns
+		_, err = datastore.NewQuery("TestRun").Filter("Revision =", sha).GetAll(ctx, &shaRuns)
+		if err != nil {
+			return runs, err
+		}
+		runs = append(runs, shaRuns...)
+	}
+	return runs, err
+}
+
 // LoadTestRunKeys loads the keys for the TestRun entities for the given parameters.
 // It is encapsulated because we cannot run single queries with multiple inequality
 // filters, so must load the keys and merge the results.
