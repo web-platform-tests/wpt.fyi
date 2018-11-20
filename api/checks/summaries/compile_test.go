@@ -14,9 +14,9 @@ import (
 
 func TestCompile_Completed(t *testing.T) {
 	foo := Completed{
+		DiffURL:  "foo.com/diff?before=chrome[master]&after=chrome@0123456789",
 		HostName: "foo.com",
 		HostURL:  "foo.com/results/",
-		DiffURL:  "foo.com/diff?before=chrome[master]&after=chrome@0123456789",
 		SHAURL:   "foo.com/sha/",
 	}
 	s, err := foo.Compile()
