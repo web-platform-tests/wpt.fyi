@@ -7,7 +7,6 @@ package shared
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -187,29 +186,40 @@ func (t TestRuns) OldestRunTimeStart() time.Time {
 	return oldest
 }
 
+// ProductTestRuns is a tuple of a product and test runs loaded for it.
+type ProductTestRuns struct {
+	Product  ProductSpec
+	TestRuns TestRuns
+}
+
 // TestRunsByProduct is a map of product to matching runs, returned
 // when a TestRun query is executed.
-type TestRunsByProduct map[ProductSpec]TestRuns
+type TestRunsByProduct []ProductTestRuns
 
 // AllRuns returns an array of all the loaded runs.
 func (t TestRunsByProduct) AllRuns() TestRuns {
 	var runs TestRuns
-	for _, v := range t {
-		runs = append(runs, v...)
+	for _, p := range t {
+		runs = append(runs, p.TestRuns...)
 	}
-	sort.Sort(sort.Reverse(runs))
 	return runs
+}
+
+// ProductTestRunKeys is a tuple of a product and test run keys loaded for it.
+type ProductTestRunKeys struct {
+	Product ProductSpec
+	Keys    []*datastore.Key
 }
 
 // KeysByProduct is a map of product to matching keys, returned
 // when a TestRun key query is executed.
-type KeysByProduct map[ProductSpec][]*datastore.Key
+type KeysByProduct []ProductTestRunKeys
 
 // AllKeys returns an array of all the loaded keys.
 func (t KeysByProduct) AllKeys() []*datastore.Key {
 	var keys []*datastore.Key
 	for _, v := range t {
-		keys = append(keys, v...)
+		keys = append(keys, v.Keys...)
 	}
 	return keys
 }

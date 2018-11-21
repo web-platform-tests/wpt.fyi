@@ -129,19 +129,26 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	}
 	chrome, _ := shared.ParseProductSpec("chrome")
 	edge, _ := shared.ParseProductSpec("edge")
-	testRuns := make(shared.TestRunsByProduct)
-	testRuns[chrome] = shared.TestRuns{
-		shared.TestRun{
-			ID:         runIDs[0],
-			ResultsURL: urls[0],
-			TimeStart:  time.Now(),
+	testRuns := shared.TestRunsByProduct{
+		shared.ProductTestRuns{
+			Product: chrome,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{
+					ID:         runIDs[0],
+					ResultsURL: urls[0],
+					TimeStart:  time.Now(),
+				},
+			},
 		},
-	}
-	testRuns[edge] = shared.TestRuns{
-		shared.TestRun{
-			ID:         runIDs[1],
-			ResultsURL: urls[1],
-			TimeStart:  time.Now().AddDate(0, 0, -1),
+		shared.ProductTestRuns{
+			Product: edge,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{
+					ID:         runIDs[1],
+					ResultsURL: urls[1],
+					TimeStart:  time.Now().AddDate(0, 0, -1),
+				},
+			},
 		},
 	}
 	filters := shared.QueryFilter{}
@@ -172,19 +179,26 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 	}
 	chrome, _ := shared.ParseProductSpec("chrome")
 	edge, _ := shared.ParseProductSpec("edge")
-	testRuns := make(shared.TestRunsByProduct)
-	testRuns[chrome] = shared.TestRuns{
-		shared.TestRun{
-			ID:         runIDs[0],
-			ResultsURL: urls[0],
-			TimeStart:  time.Now(),
+	testRuns := shared.TestRunsByProduct{
+		shared.ProductTestRuns{
+			Product: chrome,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{
+					ID:         runIDs[0],
+					ResultsURL: urls[0],
+					TimeStart:  time.Now(),
+				},
+			},
 		},
-	}
-	testRuns[edge] = shared.TestRuns{
-		shared.TestRun{
-			ID:         runIDs[1],
-			ResultsURL: urls[1],
-			TimeStart:  time.Now().AddDate(0, 0, -1),
+		shared.ProductTestRuns{
+			Product: edge,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{
+					ID:         runIDs[1],
+					ResultsURL: urls[1],
+					TimeStart:  time.Now().AddDate(0, 0, -1),
+				},
+			},
 		},
 	}
 	filters := shared.QueryFilter{
