@@ -54,12 +54,9 @@ func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(testRuns) == 1 {
-		for _, v := range testRuns {
-			if len(v) == 1 {
-				return &v[0], nil
-			}
-		}
+	allRuns := testRuns.AllRuns()
+	if len(allRuns) == 1 {
+		return &allRuns[0], nil
 	}
 	return nil, nil
 }

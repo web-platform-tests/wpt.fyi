@@ -110,10 +110,10 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 			// Bail out early - can't find any complete runs.
 			return result, nil
 		}
-		keys := make(shared.KeysByProduct)
+		keys := make(shared.KeysByProduct, len(products))
 		for _, sha := range shas {
-			for p := range shaKeys[sha] {
-				keys[p] = append(keys[p], shaKeys[sha][p]...)
+			for i := range shaKeys[sha] {
+				keys[i].Keys = append(keys[i].Keys, shaKeys[sha][i].Keys...)
 			}
 		}
 		return keys, err

@@ -145,10 +145,8 @@ func checkKeysAreAligned(shaKeys map[string]shared.KeysByProduct) func(shared.Te
 	keySets := make(map[string]mapset.Set)
 	for sha, keys := range shaKeys {
 		keySet := mapset.NewSet()
-		for _, kbp := range keys {
-			for _, key := range kbp {
-				keySet.Add(key.IntID())
-			}
+		for _, key := range keys.AllKeys() {
+			keySet.Add(key.IntID())
 		}
 		keySets[sha] = keySet
 	}
@@ -171,10 +169,8 @@ func checkKeysAreAligned(shaKeys map[string]shared.KeysByProduct) func(shared.Te
 
 func checkKeysMatchQuery(keys shared.KeysByProduct) func(shared.TestRunIDs) bool {
 	keysFilter := mapset.NewSet()
-	for _, kbp := range keys {
-		for _, key := range kbp {
-			keysFilter.Add(key.IntID())
-		}
+	for _, key := range keys.AllKeys() {
+		keysFilter.Add(key.IntID())
 	}
 	return func(ids shared.TestRunIDs) bool {
 		all := true
