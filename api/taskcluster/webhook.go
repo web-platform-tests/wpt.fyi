@@ -162,7 +162,8 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		labels = []string{"master"}
 	}
 	suitesAPI := checks.NewSuitesAPI(ctx)
-	err = createAllRuns(log,
+	err = createAllRuns(
+		ctx,
 		urlfetch.Client(slowCtx),
 		suitesAPI,
 		uploadURL,
@@ -274,7 +275,8 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 	return u.Username, u.Password, err
 }
 
-func createAllRuns(log shared.Logger,
+func createAllRuns(
+	ctx context.Context,
 	client *http.Client,
 	suitesAPI checks.SuitesAPI,
 	uploadURL,
@@ -284,13 +286,14 @@ func createAllRuns(log shared.Logger,
 	urlsByBrowser map[string][]string,
 	labels []string) error {
 	errors := make(chan error, len(urlsByBrowser))
+	log := shared.GetLogger(ctx)
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
 	for browser, urls := range urlsByBrowser {
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, sha, uploadURL, username, password, urls, labels)
+			err := createRun(ctx, client, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
 			} else if !shared.StringSliceContains(labels, shared.MasterLabel) {
@@ -314,7 +317,15 @@ func createAllRuns(log shared.Logger,
 	return nil
 }
 
-func createRun(client *http.Client, sha, api string, username string, password string, reportURLs []string, labels []string) error {
+func createRun(
+	ctx context.Context,
+	client *http.Client,
+	sha,
+	api string,
+	username string,
+	password string,
+	reportURLs []string,
+	labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
 	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
@@ -326,6 +337,9 @@ func createRun(client *http.Client, sha, api string, username string, password s
 	if labels != nil {
 		payload.Add("labels", strings.Join(labels, ","))
 	}
+	// Ensure we call back to this appengine version instance.
+	host := appengine.DefaultVersionHostname(ctx)
+	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))
 	if err != nil {

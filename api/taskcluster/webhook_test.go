@@ -7,6 +7,7 @@
 package taskcluster
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -132,7 +132,8 @@ func TestCreateAllRuns_success(t *testing.T) {
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
 
-	err := createAllRuns(logrus.New(),
+	err := createAllRuns(
+		context.Background(),
 		&http.Client{},
 		suitesAPI,
 		server.URL,
@@ -168,7 +169,8 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
 
-	err := createAllRuns(logrus.New(),
+	err := createAllRuns(
+		context.Background(),
 		&http.Client{},
 		suitesAPI,
 		server.URL,
@@ -197,7 +199,8 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
 
-	err := createAllRuns(logrus.New(),
+	err := createAllRuns(
+		context.Background(),
 		&http.Client{Timeout: time.Second},
 		suitesAPI,
 		server.URL,

@@ -109,6 +109,7 @@ def process_report(params):
     gcs_paths = params.getlist('gcs')
     result_type = params['type']
     # Optional fields:
+    callback_url = params['callback_url']
     labels = params.get('labels', '')
 
     assert (
@@ -193,9 +194,13 @@ def process_report(params):
     # Authenticate as "_processor" for create-test-run API.
     secret = _get_uploader_password('_processor')
     test_run_id = wptreport.create_test_run(
-        report, labels, uploader, secret,
+        report,
+        labels,
+        uploader,
+        secret,
         gsutil.gs_to_public_url(results_gs_url),
-        raw_results_url)
+        raw_results_url,
+        callback_url)
     assert test_run_id
 
     success = _after_new_run(report, test_run_id)
