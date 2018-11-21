@@ -34,9 +34,8 @@
       test('show banner on noResults', (done) => {
         trf.noResults = true;
         flush(() => {
-          const banner = trf.root.querySelector('info-banner');
+          const banner = trf.root.querySelector('info-banner[type="info"]');
           expect(banner).to.not.be.null;
-          expect(banner.type).to.equal('info');
           done();
         });
       });
@@ -44,9 +43,8 @@
       test('show banner on failedToLoad', (done) => {
         trf.resultsLoadFailed = true;
         flush(() => {
-          const banner = trf.root.querySelector('info-banner');
+          const banner = trf.root.querySelector('info-banner[type="error"]');
           expect(banner).to.not.be.null;
-          expect(banner.type).to.equal('error');
           done();
         });
       });
