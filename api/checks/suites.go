@@ -49,10 +49,13 @@ func getSuitesForSHA(ctx context.Context, sha string) ([]shared.CheckSuite, erro
 }
 
 func pendingCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
+	log := shared.GetLogger(ctx)
 	suites, err := getSuitesForSHA(ctx, sha)
 	if err != nil {
+		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
 		return false, err
 	} else if len(suites) < 1 {
+		log.Debugf("No CheckSuites found for %s", sha)
 		return false, nil
 	}
 	detailsURL := getMasterDiffURL(ctx, sha, product)
@@ -77,10 +80,13 @@ func pendingCheckRun(ctx context.Context, sha string, product shared.ProductSpec
 }
 
 func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
+	log := shared.GetLogger(ctx)
 	suites, err := getSuitesForSHA(ctx, sha)
 	if err != nil {
+		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
 		return false, err
 	} else if len(suites) < 1 {
+		log.Debugf("No CheckSuites found for %s", sha)
 		return false, nil
 	}
 	detailsURL := getMasterDiffURL(ctx, sha, product)
