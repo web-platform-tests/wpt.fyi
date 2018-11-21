@@ -32,10 +32,11 @@ func LoadTestRunsBySHAs(ctx context.Context, shas ...string) (runs TestRuns, err
 			sha = sha[:10]
 		}
 		var shaRuns TestRuns
-		_, err = datastore.NewQuery("TestRun").Filter("Revision =", sha).GetAll(ctx, &shaRuns)
+		keys, err := datastore.NewQuery("TestRun").Filter("Revision =", sha).GetAll(ctx, &shaRuns)
 		if err != nil {
 			return runs, err
 		}
+		shaRuns.SetTestRunIDs(keys)
 		runs = append(runs, shaRuns...)
 	}
 	return runs, err
@@ -165,9 +166,7 @@ func LoadTestRunsByKeys(ctx context.Context, keysByProduct KeysByProduct) (resul
 	}
 	// Append the keys as ID
 	for i, kbp := range keysByProduct {
-		for j, key := range kbp.Keys {
-			result[i].TestRuns[j].ID = key.IntID()
-		}
+		result[i].TestRuns.SetTestRunIDs(kbp.Keys)
 	}
 	return result, err
 }

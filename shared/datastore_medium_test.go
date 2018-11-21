@@ -67,6 +67,9 @@ func TestLoadTestRunsBySHAs(t *testing.T) {
 	runs, err := shared.LoadTestRunsBySHAs(ctx, "1111111111", "3333333333")
 	assert.Nil(t, err)
 	assert.Len(t, runs, 2)
+	for _, run := range runs {
+		assert.True(t, run.ID > 0, "ID field should be populated.")
+	}
 	assert.Equal(t, runs[0].Revision, "1111111111")
 	assert.Equal(t, runs[1].Revision, "3333333333")
 }
@@ -149,6 +152,9 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	allRuns := loaded.AllRuns()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(allRuns))
+	for _, run := range allRuns {
+		assert.True(t, run.ID > 0, "ID field should be populated.")
+	}
 	assert.Equal(t, "64.0", allRuns[0].BrowserVersion)
 	assert.Equal(t, "65.0", allRuns[1].BrowserVersion)
 }

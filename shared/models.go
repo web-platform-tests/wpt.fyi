@@ -163,6 +163,13 @@ func (t TestRuns) Len() int           { return len(t) }
 func (t TestRuns) Less(i, j int) bool { return t[i].TimeStart.Before(t[j].TimeStart) }
 func (t TestRuns) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 
+// SetTestRunIDs sets the ID field for each run, from the given keys.
+func (t TestRuns) SetTestRunIDs(keys []*datastore.Key) {
+	for i := 0; i < len(keys) && i < len(t); i++ {
+		t[i].ID = keys[i].IntID()
+	}
+}
+
 // GetTestRunIDs gets an array of the IDs for the TestRun entities in the array.
 func (t TestRuns) GetTestRunIDs() TestRunIDs {
 	ids := make([]int64, len(t))
