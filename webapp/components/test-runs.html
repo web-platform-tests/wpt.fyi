@@ -15,10 +15,6 @@ found in the LICENSE file.
     /* global TestRunsQuery */
     const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
       class extends TestRunsQuery(superClass, opt_queryCompute) {
-        static get is() {
-          return 'wpt-results-base';
-        }
-
         static get properties() {
           return {
             path: String,
@@ -99,8 +95,24 @@ found in the LICENSE file.
         }
       };
 
-    const TestRunsBase = TestRunsQueryLoader(window.Polymer.Element);
-
+    class TestRunsBase extends TestRunsQueryLoader(window.Polymer.Element) {
+      static get is() {
+        return 'wpt-results-base';
+      }
+    }
     window.customElements.define(TestRunsBase.is, TestRunsBase);
+  </script>
+</dom-module>
+
+<dom-module id="wpt-results-ui-base">
+  <script>
+    /* global TestRunsUIQuery, TestRunsQueryLoader */
+    class TestRunsUIBase extends TestRunsUIQuery(
+      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer)) {
+      static get is() {
+        return 'wpt-results-ui-base';
+      }
+    }
+    window.customElements.define(TestRunsUIBase.is, TestRunsUIBase);
   </script>
 </dom-module>
