@@ -5,13 +5,13 @@
 package shared
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 )
 

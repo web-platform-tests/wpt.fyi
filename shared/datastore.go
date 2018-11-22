@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -8,7 +9,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 
-	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 )
 

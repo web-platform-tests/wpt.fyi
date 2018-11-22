@@ -33,7 +33,7 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Host string
 	}{
-		Host: shared.GetHostname(a.Context()),
+		Host: a.GetHostname(),
 	}
 	if r.Method == "GET" {
 		assertLoginAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)

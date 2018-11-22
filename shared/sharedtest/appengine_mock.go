@@ -5,9 +5,9 @@
 package sharedtest
 
 import (
-	reflect "reflect"
-
+	context "context"
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
 // MockAppEngineAPI is a mock of AppEngineAPI interface
@@ -31,6 +31,55 @@ func NewMockAppEngineAPI(ctrl *gomock.Controller) *MockAppEngineAPI {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockAppEngineAPI) EXPECT() *MockAppEngineAPIMockRecorder {
 	return m.recorder
+}
+
+// Context mocks base method
+func (m *MockAppEngineAPI) Context() context.Context {
+	ret := m.ctrl.Call(m, "Context")
+	ret0, _ := ret[0].(context.Context)
+	return ret0
+}
+
+// Context indicates an expected call of Context
+func (mr *MockAppEngineAPIMockRecorder) Context() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockAppEngineAPI)(nil).Context))
+}
+
+// IsLoggedIn mocks base method
+func (m *MockAppEngineAPI) IsLoggedIn() bool {
+	ret := m.ctrl.Call(m, "IsLoggedIn")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsLoggedIn indicates an expected call of IsLoggedIn
+func (mr *MockAppEngineAPIMockRecorder) IsLoggedIn() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoggedIn", reflect.TypeOf((*MockAppEngineAPI)(nil).IsLoggedIn))
+}
+
+// IsAdmin mocks base method
+func (m *MockAppEngineAPI) IsAdmin() bool {
+	ret := m.ctrl.Call(m, "IsAdmin")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsAdmin indicates an expected call of IsAdmin
+func (mr *MockAppEngineAPIMockRecorder) IsAdmin() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAdmin", reflect.TypeOf((*MockAppEngineAPI)(nil).IsAdmin))
+}
+
+// LoginURL mocks base method
+func (m *MockAppEngineAPI) LoginURL(redirect string) (string, error) {
+	ret := m.ctrl.Call(m, "LoginURL", redirect)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoginURL indicates an expected call of LoginURL
+func (mr *MockAppEngineAPIMockRecorder) LoginURL(redirect interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAppEngineAPI)(nil).LoginURL), redirect)
 }
 
 // GetHostname mocks base method
