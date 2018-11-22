@@ -163,8 +163,9 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 	suitesAPI := checks.NewSuitesAPI(ctx)
 	err = createAllRuns(
-		ctx,
+		log,
 		urlfetch.Client(slowCtx),
+		shared.NewAppEngineAPI(ctx),
 		suitesAPI,
 		uploadURL,
 		*status.SHA,
@@ -276,8 +277,9 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 }
 
 func createAllRuns(
-	ctx context.Context,
+	log shared.Logger,
 	client *http.Client,
+	aeAPI shared.AppEngineAPI,
 	suitesAPI checks.SuitesAPI,
 	uploadURL,
 	sha,
@@ -286,14 +288,13 @@ func createAllRuns(
 	urlsByBrowser map[string][]string,
 	labels []string) error {
 	errors := make(chan error, len(urlsByBrowser))
-	log := shared.GetLogger(ctx)
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
 	for browser, urls := range urlsByBrowser {
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(ctx, client, sha, uploadURL, username, password, urls, labels)
+			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
 			} else if !shared.StringSliceContains(labels, shared.MasterLabel) {
@@ -318,8 +319,9 @@ func createAllRuns(
 }
 
 func createRun(
-	ctx context.Context,
+	log shared.Logger,
 	client *http.Client,
+	aeAPI shared.AppEngineAPI,
 	sha,
 	api string,
 	username string,
@@ -338,7 +340,7 @@ func createRun(
 		payload.Add("labels", strings.Join(labels, ","))
 	}
 	// Ensure we call back to this appengine version instance.
-	host := shared.GetHostname(ctx)
+	host := aeAPI.GetHostname()
 	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))

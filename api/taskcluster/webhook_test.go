@@ -7,7 +7,6 @@
 package taskcluster
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,9 +16,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func strPtr(s string) *string {
@@ -131,10 +132,13 @@ func TestCreateAllRuns_success(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
+	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
 	err := createAllRuns(
-		context.Background(),
+		logrus.New(),
 		&http.Client{},
+		aeAPI,
 		suitesAPI,
 		server.URL,
 		sha,
@@ -168,10 +172,13 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
+	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
 	err := createAllRuns(
-		context.Background(),
+		logrus.New(),
 		&http.Client{},
+		aeAPI,
 		suitesAPI,
 		server.URL,
 		sha,
@@ -198,10 +205,13 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
+	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
 	err := createAllRuns(
-		context.Background(),
+		logrus.New(),
 		&http.Client{Timeout: time.Second},
+		aeAPI,
 		suitesAPI,
 		server.URL,
 		sha,

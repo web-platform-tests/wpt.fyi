@@ -375,7 +375,7 @@ func getMasterDiffURL(ctx context.Context, sha string, product shared.ProductSpe
 }
 
 func getURL(ctx context.Context, filter shared.TestRunFilter) *url.URL {
-	hostname := shared.GetHostname(ctx)
+	hostname := shared.NewAppEngineAPI(ctx).GetHostname()
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))
 	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL
