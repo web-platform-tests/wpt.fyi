@@ -232,7 +232,7 @@ found in the LICENSE file.
     (() => {
       // TODO(lukebjerring): Support to & from in the builder.
       const testRunsUIQueryComputer =
-        'computeTestRunUIQueryParams(sha, aligned, master, labels, productSpecs, maxCount, diff, search)';
+        'computeTestRunUIQueryParams(pr, sha, aligned, master, labels, productSpecs, maxCount, diff, search)';
       /* global TestRunsQuery */
       window.TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
         superClass,
@@ -250,10 +250,14 @@ found in the LICENSE file.
               value: false,
               notify: true,
             },
+            pr: {
+              type: Number,
+              notify: true,
+            },
           };
         }
 
-        computeTestRunUIQueryParams(sha, aligned, master, labels, productSpecs, maxCount, diff, search) {
+        computeTestRunUIQueryParams(pr, sha, aligned, master, labels, productSpecs, maxCount, diff, search) {
           const params = this.computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, maxCount);
           if (diff || this.diff) {
             params.diff = true;
@@ -261,11 +265,15 @@ found in the LICENSE file.
           if (search) {
             params.q = search;
           }
+          if (pr) {
+            params.pr = pr;
+          }
           return params;
         }
 
         updateQueryParams(params) {
           super.updateQueryParams(params);
+          this.pr = params.pr;
           this.search = params.q;
           this.diff = params.diff;
         }

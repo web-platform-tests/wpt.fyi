@@ -20,7 +20,7 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	testRunFilter = testRunFilter.OrDefault()
 
-	uiFilters := parseTestRunUIFilter(testRunFilter)
+	uiFilters := convertTestRunUIFilter(testRunFilter)
 
 	data := struct {
 		Metadata string

@@ -38,6 +38,7 @@ found in the LICENSE file.
           'diffRenames',
           'taskclusterAllBranches',
           'paginationTokens',
+          'runsByPRNumber',
         ];
       }
     });
@@ -205,6 +206,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{paginationTokens}}">
         Return "wpt-next-page" pagination token HTTP header in /api/runs
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{runsByPRNumber}}">
+        Allow /api/runs?pr=[GitHub PR number]
       </paper-checkbox>
     </paper-item>
   </template>
