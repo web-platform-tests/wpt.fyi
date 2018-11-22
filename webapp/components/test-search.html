@@ -301,11 +301,10 @@ found in the LICENSE file.
           return;
         }
 
-        const value = e.target.value.toLowerCase();
-
-        if (opts.includes(value)) {
+        const path = e.target.value;
+        if (opts.includes(path.toLowerCase())) {
           this.dispatchEvent(new CustomEvent('autocomplete', {
-            detail: {path: value},
+            detail: {path: path},
           }));
           this.shadowRoot.querySelector('.query').blur();
         }
