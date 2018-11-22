@@ -541,6 +541,19 @@ func parseRepeatedParamValues(repeatedParam []string, pluralParam string) (param
 	return params
 }
 
+// ParseIntParam parses the result of ParseParam as int64.
+func ParseIntParam(r *http.Request, param string) (*int, error) {
+	strVal := r.URL.Query().Get(param)
+	if strVal == "" {
+		return nil, nil
+	}
+	parsed, err := strconv.Atoi(strVal)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
+}
+
 // ParseRepeatedInt64Param parses the result of ParseRepeatedParam as int64.
 func ParseRepeatedInt64Param(r *http.Request, singular, plural string) (params []int64, err error) {
 	strs := ParseRepeatedParam(r, singular, plural)
@@ -549,11 +562,10 @@ func ParseRepeatedInt64Param(r *http.Request, singular, plural string) (params [
 	}
 	ints := make([]int64, len(strs))
 	for i, idStr := range strs {
-		id, err := strconv.ParseInt(idStr, 10, 64)
+		ints[i], err = strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		ints[i] = id
 	}
 	return ints, err
 }
@@ -601,6 +613,12 @@ func ParseBooleanParam(r *http.Request, name string) (result *bool, err error) {
 // int64, an error will be returned.
 func ParseRunIDsParam(r *http.Request) (ids TestRunIDs, err error) {
 	return ParseRepeatedInt64Param(r, "run_id", "run_ids")
+}
+
+// ParsePRParam parses the "pr" parameter. If it's not a valid int64, an error
+// will be returned.
+func ParsePRParam(r *http.Request) (*int, error) {
+	return ParseIntParam(r, "pr")
 }
 
 // ParseQueryFilterParams parses shared params for the search and autocomplete
