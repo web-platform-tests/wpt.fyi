@@ -141,7 +141,6 @@ found in the LICENSE file.
         }
 
         computeIsDefaultProducts(productSpecs) {
-
           return !productSpecs || !productSpecs.length
             || DEFAULT_PRODUCT_SPECS.join(',') === (productSpecs || []).join(',');
         }
@@ -208,11 +207,11 @@ found in the LICENSE file.
 
         computeResultsRangeMessage(sha, productSpecs, from, to, maxCount) {
           if (sha) {
-            return `Showing results from revision ${sha}`;
+            return `Showing test runs from revision ${sha}`;
           } else if (from) {
             const max = to || Date.now();
             var diff = Math.floor((max - from) / 86400000);
-            const shortDate = date => date.toLocaleDateString(navigator.language, {
+            const shortDate = date => date.toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
             });
