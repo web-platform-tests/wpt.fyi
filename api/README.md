@@ -52,6 +52,10 @@ __`to`__ : RFC3339 timestamp, for which to include runs that occured before the 
 
 __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
 
+#### staging.wpt.fyi only (Beta params)
+
+__`pr`__ (Beta): GitHub PR number. Shows runs for commits that belong to the PR.
+
 #### Examples
 
 - https://wpt.fyi/api/runs?product=chrome&product=safari
@@ -379,7 +383,7 @@ version, Sauce Labs, or custom runners), they can be overridden with the followi
 parameters in the POST payload (this is __NOT__ recommended; please include metadata in the reports
 whenever possible):
 
-* __`revision`__ (note this should be the full revision hash, not a 10-char truncation) 
+* __`revision`__ (note this should be the full revision hash, not a 10-char truncation)
 * __`browser_name`__ (note that it is not called `product` here)
 * __`browser_version`__
 * __`os_name`__ (note that it is not called `os` here)

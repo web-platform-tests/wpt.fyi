@@ -3,6 +3,8 @@
 package shared_test
 
 import (
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -41,6 +43,35 @@ func TestLoadTestRuns(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(allRuns))
 	assert.Equalf(t, key.IntID(), allRuns[0].ID, "ID field should be populated.")
+}
+
+func TestLoadTestRunsBySHAs(t *testing.T) {
+	testRun := shared.TestRun{}
+	testRun.BrowserName = "chrome"
+	testRun.BrowserVersion = "63.0"
+	testRun.OSName = "linux"
+	testRun.Revision = "0000000000"
+	testRun.CreatedAt = time.Now()
+
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+
+	for i := 0; i < 5; i++ {
+		testRun.Revision = strings.Repeat(strconv.Itoa(i), 10)
+		testRun.CreatedAt = time.Now().AddDate(0, 0, -i)
+		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
+		datastore.Put(ctx, key, &testRun)
+	}
+
+	runs, err := shared.LoadTestRunsBySHAs(ctx, "1111111111", "3333333333")
+	assert.Nil(t, err)
+	assert.Len(t, runs, 2)
+	for _, run := range runs {
+		assert.True(t, run.ID > 0, "ID field should be populated.")
+	}
+	assert.Equal(t, runs[0].Revision, "1111111111")
+	assert.Equal(t, runs[1].Revision, "3333333333")
 }
 
 func TestLoadTestRuns_Experimental_Only(t *testing.T) {
@@ -121,6 +152,9 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	allRuns := loaded.AllRuns()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(allRuns))
+	for _, run := range allRuns {
+		assert.True(t, run.ID > 0, "ID field should be populated.")
+	}
 	assert.Equal(t, "64.0", allRuns[0].BrowserVersion)
 	assert.Equal(t, "65.0", allRuns[1].BrowserVersion)
 }

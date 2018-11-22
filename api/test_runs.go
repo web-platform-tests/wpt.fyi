@@ -9,7 +9,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"golang.org/x/oauth2"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
@@ -29,6 +31,11 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pr, err := shared.ParsePRParam(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
 	var testRuns shared.TestRuns
 	var nextPageToken string
 	if len(ids) > 0 {
@@ -45,6 +52,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 				err = nil
 			}
 		}
+	} else if pr != nil && shared.IsFeatureEnabled(ctx, "runsByPRNumber") {
+		commits := getPRCommits(ctx, *pr)
+		testRuns, err = shared.LoadTestRunsBySHAs(ctx, commits...)
 	} else {
 		var filters shared.TestRunFilter
 		filters, err = shared.ParseTestRunFilterParams(r)
@@ -129,4 +139,27 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 		return nil, err
 	}
 	return shared.LoadTestRunsByKeys(ctx, keys)
+}
+
+func getPRCommits(ctx context.Context, pr int) []string {
+	log := shared.GetLogger(ctx)
+	secret, err := shared.GetSecret(ctx, "github-api-token")
+	if err != nil {
+		log.Debugf("Failed to load github-api-token: %s", err.Error())
+		return nil
+	}
+	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: secret,
+	}))
+	githubClient := github.NewClient(oauthClient)
+	commits, _, err := githubClient.PullRequests.ListCommits(ctx, "web-platform-tests", "wpt", pr, nil)
+	if err != nil || commits == nil {
+		log.Errorf("Failed to fetch PR #%v: %s", pr, err.Error())
+		return nil
+	}
+	shas := make([]string, len(commits))
+	for i := range commits {
+		shas[i] = commits[i].GetSHA()
+	}
+	return shas
 }
