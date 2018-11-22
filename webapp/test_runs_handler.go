@@ -33,7 +33,7 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 		testRunFilter.MaxCount = &oneHundred
 	}
 
-	filter := parseTestRunUIFilter(testRunFilter)
+	filter := convertTestRunUIFilter(testRunFilter)
 
 	data := struct {
 		Filter testRunUIFilter
