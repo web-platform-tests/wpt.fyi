@@ -67,7 +67,7 @@ func LoadTestRunKeys(
 			baseQuery = baseQuery.Filter("Labels =", i.(string))
 		}
 	}
-	for _, product := range products {
+	for i, product := range products {
 		var prefiltered *mapset.Set
 		query := baseQuery.Filter("BrowserName =", product.BrowserName)
 		if product.Labels != nil {
@@ -108,10 +108,10 @@ func LoadTestRunKeys(
 			}
 			keys = append(keys, key)
 		}
-		result = append(result, ProductTestRunKeys{
+		result[i] = ProductTestRunKeys{
 			Product: product,
 			Keys:    keys,
-		})
+		}
 	}
 	return result, nil
 }

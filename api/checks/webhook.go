@@ -235,7 +235,7 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 // SHA. This is needed when a PR comes from a different fork of the repo.
 func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
 	log := shared.GetLogger(ctx)
-	log.Debugf("Creating check_suite for web-platform-tests/wpt")
+	log.Debugf("Creating check_suite for web-platform-tests/wpt @ %s", sha)
 
 	jwtClient, err := getJWTClient(ctx, wptRepoInstallationID)
 	if err != nil {
