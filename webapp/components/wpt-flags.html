@@ -14,28 +14,36 @@ found in the LICENSE file.
 -->
 <dom-module id="wpt-flags">
   <script>
-    const WPT_FYI_FEATURES = [
-      'queryBuilder',
-      'queryBuilderSHA',
-      'diffFromAPI',
-      'diffFilterUIToggle',
-      'colorHomepage',
-      'structuredQueries',
-      'masterRunsOnly',
-    ];
-
-    const _wptFlags = (superClass, readOnly, useLocalStorage) => class extends superClass {
-      static get is() {
-        return 'wpt-flags';
-      }
-
-      static get properties() {
-        return window.wpt.makeFeatureProperties(WPT_FYI_FEATURES, readOnly, useLocalStorage);
-      }
-    };
-
     window.wpt = window.wpt || {};
-    window.wpt.makeFeatureProperties = function(features, readOnly, useLocalStorage) {
+
+    /* global wpt */
+    Object.defineProperty(wpt, 'ClientSideFeatures', {
+      get: function() {
+        return [
+          'queryBuilder',
+          'queryBuilderSHA',
+          'diffFromAPI',
+          'diffFilterUIToggle',
+          'colorHomepage',
+          'structuredQueries',
+          'masterRunsOnly',
+          'experimentalByDefault',
+          'experimentalAlignedExceptEdge',
+        ];
+      }
+    });
+    Object.defineProperty(wpt, 'ServerSideFeatures', {
+      get: function() {
+        return [
+          'diffRenames',
+          'taskclusterAllBranches',
+          'paginationTokens',
+          'runsByPRNumber',
+        ];
+      }
+    });
+
+    wpt.makeFeatureProperties = function(features, readOnly, useLocalStorage) {
       const props = {};
       for (const feature of features) {
         let value = null;
@@ -50,15 +58,26 @@ found in the LICENSE file.
         }
         props[feature] = {
           type: Boolean,
-          readOnly: readOnly && !window.wpt.MUTABLE_FLAGS,
+          readOnly: readOnly && !wpt.MUTABLE_FLAGS,
           notify: true,
           value: value,
         };
       }
       return props;
     };
+
+    wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superClass {
+      static get is() {
+        return 'wpt-flags';
+      }
+
+      static get properties() {
+        return wpt.makeFeatureProperties(wpt.ClientSideFeatures, readOnly, useLocalStorage);
+      }
+    };
+
     // eslint-disable-next-line no-unused-vars
-    const WPTFlags = (superClass) => _wptFlags(superClass, /*readOnly*/ true, /*useLocalStorage*/ true);
+    const WPTFlags = (superClass) => wpt.FlagsClass(superClass, /*readOnly*/ true, /*useLocalStorage*/ true);
   </script>
 </dom-module>
 
@@ -108,21 +127,12 @@ found in the LICENSE file.
   </template>
 
   <script>
-    const WPT_FYI_SERVER_SIDE_FEATURES = [
-      'diffRenames',
-      'experimentalByDefault',
-      'experimentalAlignedExceptEdge',
-      'taskclusterAllBranches',
-      'paginationTokens',
-      'runsByPRNumber',
-    ];
-
-    /* global _wptFlags, WPT_FYI_FEATURES */
-    const _wptFlagsEditor = (environmentFlags) =>
-      class extends _wptFlags(window.Polymer.Element, /*readOnly*/ false, /*useLocalStorage*/ !environmentFlags) {
+    /* global wpt */
+    wpt.FlagsEditorClass = (environmentFlags) =>
+      class extends wpt.FlagsClass(window.Polymer.Element, /*readOnly*/ false, /*useLocalStorage*/ !environmentFlags) {
         ready() {
           super.ready();
-          const features = WPT_FYI_FEATURES.concat(WPT_FYI_SERVER_SIDE_FEATURES);
+          const features = wpt.ClientSideFeatures;
           for (const feature of features) {
             this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
           }
@@ -131,8 +141,8 @@ found in the LICENSE file.
         static get properties() {
           const useLocalStorage = !environmentFlags;
           const readOnly = false;
-          return window.wpt.makeFeatureProperties(
-            WPT_FYI_SERVER_SIDE_FEATURES, readOnly, useLocalStorage);
+          return wpt.makeFeatureProperties(
+            wpt.ServerSideFeatures, readOnly, useLocalStorage);
         }
 
         valueChanged(value, feature) {
@@ -155,7 +165,7 @@ found in the LICENSE file.
         }
       };
 
-    class WPTFlagsEditor extends _wptFlagsEditor(/*environmentFlags*/ false) {
+    class WPTFlagsEditor extends wpt.FlagsEditorClass(/*environmentFlags*/ false) {
       static get is() {
         return 'wpt-flags-editor';
       }
@@ -205,15 +215,15 @@ found in the LICENSE file.
     </paper-item>
   </template>
   <script>
-    /* global _wptFlagsEditor, WPTFlagsEditor, WPT_FYI_SERVER_SIDE_FEATURES */
-    class WPTEnvironmentFlagsEditor extends _wptFlagsEditor(/*environmentFlags*/ true) {
+    /* global wpt, WPTFlagsEditor */
+    class WPTEnvironmentFlagsEditor extends wpt.FlagsEditorClass(/*environmentFlags*/ true) {
       static get is() {
         return 'wpt-environment-flags-editor';
       }
 
       ready() {
         super.ready();
-        for (const feature of WPT_FYI_SERVER_SIDE_FEATURES) {
+        for (const feature of wpt.ServerSideFeatures) {
           this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
         }
       }

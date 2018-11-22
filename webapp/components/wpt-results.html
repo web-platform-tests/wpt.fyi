@@ -113,6 +113,9 @@ found in the LICENSE file.
         background: var(--paper-blue-500);
         color: white;
       }
+      #edit-query {
+        padding: 1px;
+      }
       test-runs-query-builder {
         display: block;
         margin-bottom: 32px;
@@ -161,11 +164,15 @@ found in the LICENSE file.
         </div>
       </template>
 
-      <template is="dom-if" if="{{ !isLatest }}">
-        <info-banner type="info">
-          Showing results for run <b>{{ sha }}</b>.
-          <a slot="small" href='?sha=latest'>View latest run</a></small>
-        </info-banner>
+      <template is="dom-if" if="[[testRuns.length]]">
+        <template is="dom-if" if="[[resultsRangeMessage]]">
+          <info-banner>
+            [[resultsRangeMessage]]
+            <template is="dom-if" if="[[queryBuilder]]">
+              <paper-button id="edit-query" onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+            </template>
+          </info-banner>
+        </template>
       </template>
     </section>
 
@@ -216,11 +223,6 @@ found in the LICENSE file.
                   <template is="dom-if" if="[[diffFilterUIToggle]]">
                   <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
                   </template>
-                </th>
-              </template>
-              <template is="dom-if" if="[[queryBuilder]]">
-                <th>
-                  <paper-icon-button icon="editor:mode-edit" onclick="[[toggleQueryEdit]]" title="Modify the selection of WPT runs"></paper-icon-button>
                 </th>
               </template>
             </tr>
