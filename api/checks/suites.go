@@ -92,7 +92,7 @@ func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpe
 	detailsURL := getMasterDiffURL(ctx, sha, product)
 	detailsURLStr := detailsURL.String()
 
-	host := shared.GetHostname(ctx)
+	host := shared.NewAppEngineAPI(ctx).GetHostname()
 	completed := summaries.Completed{
 		HostName: host,
 		HostURL:  fmt.Sprintf("https://%s/", host),

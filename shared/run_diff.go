@@ -5,6 +5,7 @@
 package shared
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,6 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine/urlfetch"
 )
 

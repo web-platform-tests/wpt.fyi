@@ -469,7 +469,7 @@ def prepare_labels(report, labels_str, uploader):
 
 
 def create_test_run(report, labels_str, uploader, secret,
-                    results_url, raw_results_url):
+                    results_url, raw_results_url, callback_url=None):
     """Creates a TestRun on the dashboard.
 
     By posting to the /api/results/create endpoint.
@@ -487,6 +487,9 @@ def create_test_run(report, labels_str, uploader, secret,
     Returns:
         The integral ID associated with the created test run.
     """
+    if callback_url is None:
+        callback_url = config.project_baseurl() + '/api/results/create'
+
     labels = prepare_labels(report, labels_str, uploader)
     assert len(labels) > 0
 
@@ -496,7 +499,7 @@ def create_test_run(report, labels_str, uploader, secret,
     payload['labels'] = labels
 
     response = requests.post(
-        config.project_baseurl() + '/api/results/create',
+        callback_url,
         auth=('_processor', secret),
         data=json.dumps(payload)
     )
