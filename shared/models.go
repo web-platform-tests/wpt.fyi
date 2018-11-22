@@ -192,7 +192,7 @@ type ProductTestRuns struct {
 	TestRuns TestRuns
 }
 
-// TestRunsByProduct is a map of product to matching runs, returned
+// TestRunsByProduct is an array of tuples of {product, matching runs}, returned
 // when a TestRun query is executed.
 type TestRunsByProduct []ProductTestRuns
 
@@ -211,7 +211,7 @@ type ProductTestRunKeys struct {
 	Keys    []*datastore.Key
 }
 
-// KeysByProduct is a map of product to matching keys, returned
+// KeysByProduct is an array of tuples of {product, matching keys}, returned
 // when a TestRun key query is executed.
 type KeysByProduct []ProductTestRunKeys
 
