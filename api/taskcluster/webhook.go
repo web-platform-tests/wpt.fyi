@@ -338,7 +338,7 @@ func createRun(
 		payload.Add("labels", strings.Join(labels, ","))
 	}
 	// Ensure we call back to this appengine version instance.
-	host := appengine.DefaultVersionHostname(ctx)
+	host := shared.GetHostname(ctx)
 	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))
