@@ -10,7 +10,6 @@ import (
 	"net/url"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/taskqueue"
 )
 
@@ -42,13 +41,9 @@ type suitesAPIImpl struct {
 
 // NewSuitesAPI returns a real implementation of the SuitesAPI
 func NewSuitesAPI(ctx context.Context) SuitesAPI {
-	queue := ""
-	if !appengine.IsDevAppServer() {
-		queue = CheckProcessingQueue
-	}
 	return suitesAPIImpl{
 		ctx:   ctx,
-		queue: queue,
+		queue: CheckProcessingQueue,
 	}
 }
 
