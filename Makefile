@@ -209,10 +209,10 @@ dev_data: git
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
 
-gcloud-login: gcloud
+gcloud-login: gcloud  $(WPTD_PATH)client-secret.json
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 
-deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP_PATH var-PROJECT $(WPTD_PATH)client-secret.json
+deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP_PATH var-PROJECT
 	gcloud config set project $(PROJECT)
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
