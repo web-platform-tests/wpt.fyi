@@ -260,7 +260,7 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 	if opts.Status != nil {
 		status = *opts.Status
 	}
-	log.Debugf("Creating %s %s check_run for %s/%s", status, opts.Name, suite.Owner, suite.Repo)
+	log.Debugf("Creating %s %s check_run for %s/%s @ %s", status, opts.Name, suite.Owner, suite.Repo, suite.SHA)
 	jwtClient, err := getJWTClient(ctx, suite.InstallationID)
 	if err != nil {
 		return false, err
@@ -281,7 +281,7 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		log.Warningf(string(body))
 		return false, err
 	} else if checkRun != nil {
-		log.Infof("Created check_run %v", checkRun.ID)
+		log.Infof("Created check_run %v", checkRun.GetID())
 	}
 	return true, nil
 }
