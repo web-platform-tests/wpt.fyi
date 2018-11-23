@@ -60,10 +60,16 @@ func (s suitesAPIImpl) CompleteCheckRun(sha string, product shared.ProductSpec) 
 }
 
 func (s suitesAPIImpl) ScheduleResultsProcessing(sha string, product shared.ProductSpec) error {
+	log := shared.GetLogger(s.ctx)
 	target := fmt.Sprintf("/api/checks/%s", sha)
 	q := url.Values{}
 	q.Set("product", product.String())
 	t := taskqueue.NewPOSTTask(target, q)
 	t, err := taskqueue.Add(s.ctx, t, s.queue)
+	if err != nil {
+		log.Warningf("Failed to queue %s @ %s: %s", product.String(), sha[:7], err.Error())
+	} else {
+		log.Warningf("Added %s @ %s to checks processing queue", product.String(), sha[:7])
+	}
 	return err
 }

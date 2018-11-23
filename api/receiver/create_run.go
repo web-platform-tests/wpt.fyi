@@ -78,6 +78,8 @@ func HandleResultsCreate(a AppEngineAPI, s checks.SuitesAPI, w http.ResponseWrit
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log := shared.GetLogger(a.Context())
+	log.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonOutput)
 }
