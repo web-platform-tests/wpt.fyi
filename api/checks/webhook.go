@@ -73,7 +73,9 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if event == "check_suite" {
 		processed, err = handleCheckSuiteEvent(ctx, payload)
 	} else if event == "check_run" {
-		processed, err = handleCheckRunEvent(ctx, payload)
+		aeAPI := shared.NewAppEngineAPI(ctx)
+		suitesAPI := NewSuitesAPI(ctx)
+		processed, err = handleCheckRunEvent(aeAPI, suitesAPI, payload)
 	} else if event == "pull_request" {
 		processed, err = handlePullRequestEvent(ctx, payload)
 	}
@@ -162,8 +164,8 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
-func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
-	log := shared.GetLogger(ctx)
+func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload []byte) (bool, error) {
+	log := shared.GetLogger(aeAPI.Context())
 	var checkRun github.CheckRunEvent
 	if err := json.Unmarshal(payload, &checkRun); err != nil {
 		return false, err
@@ -178,13 +180,15 @@ func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
 	action := checkRun.GetAction()
 	status := checkRun.GetCheckRun().GetStatus()
 	if (action == "created" && status != "completed") || action == "rerequested" {
-		name, sha := *checkRun.CheckRun.Name, *checkRun.CheckRun.HeadSHA
-		log.Debugf("Check run %s @ %s %s", name, sha, action)
-		spec, err := shared.ParseProductSpec(*checkRun.CheckRun.Name)
+		name, sha := checkRun.GetCheckRun().GetName(), checkRun.GetCheckRun().GetHeadSHA()
+		log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
+		spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
 		if err != nil {
 			log.Errorf("Failed to parse \"%s\" as product spec", *checkRun.CheckRun.Name)
+			return false, err
 		}
-		return completeChecksForExistingRuns(ctx, sha, spec)
+		suitesAPI.ScheduleResultsProcessing(sha, spec)
+		return true, nil
 	}
 	return false, nil
 }
