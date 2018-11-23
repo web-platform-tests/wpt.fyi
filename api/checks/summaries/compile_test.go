@@ -12,14 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCompile_Completed(t *testing.T) {
+func TestGetSummary_Completed(t *testing.T) {
 	foo := Completed{
 		DiffURL:  "foo.com/diff?before=chrome[master]&after=chrome@0123456789",
 		HostName: "foo.com",
 		HostURL:  "foo.com/results/",
 		SHAURL:   "foo.com/sha/",
 	}
-	s, err := foo.Compile()
+	s, err := foo.GetSummary()
 	assert.Nil(t, err)
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.HostURL)
@@ -27,12 +27,12 @@ func TestCompile_Completed(t *testing.T) {
 	assert.Contains(t, s, foo.SHAURL)
 }
 
-func TestCompile_Pending(t *testing.T) {
+func TestGetSummary_Pending(t *testing.T) {
 	foo := Pending{
 		HostName: "foo.com",
 		RunsURL:  "foo.com/runs?products=chrome&sha=0123456789",
 	}
-	s, err := foo.Compile()
+	s, err := foo.GetSummary()
 	assert.Nil(t, err)
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.RunsURL)

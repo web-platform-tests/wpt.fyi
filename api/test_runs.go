@@ -152,10 +152,7 @@ func getPRCommits(ctx context.Context, pr int) []string {
 		AccessToken: secret,
 	}))
 	githubClient := github.NewClient(oauthClient)
-	opts := github.ListOptions{
-		PerPage: 100,
-	}
-	commits, _, err := githubClient.PullRequests.ListCommits(ctx, "web-platform-tests", "wpt", pr, &opts)
+	commits, _, err := githubClient.PullRequests.ListCommits(ctx, "web-platform-tests", "wpt", pr, nil)
 	if err != nil || commits == nil {
 		log.Errorf("Failed to fetch PR #%v: %s", pr, err.Error())
 		return nil
