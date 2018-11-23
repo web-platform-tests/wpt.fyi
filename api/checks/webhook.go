@@ -374,6 +374,10 @@ func getMasterDiffURL(ctx context.Context, sha string, product shared.ProductSpe
 	return detailsURL
 }
 
+func getCheckTitle(product shared.ProductSpec) string {
+	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
+}
+
 func getURL(ctx context.Context, filter shared.TestRunFilter) *url.URL {
 	hostname := shared.NewAppEngineAPI(ctx).GetHostname()
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))

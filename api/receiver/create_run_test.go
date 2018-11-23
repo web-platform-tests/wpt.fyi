@@ -50,7 +50,7 @@ func TestHandleResultsCreate(t *testing.T) {
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
-		mockS.EXPECT().CompleteCheckRun(sha, sharedtest.SameProductSpec("firefox")).Return(true, nil),
+		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)
@@ -89,7 +89,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
-		mockS.EXPECT().CompleteCheckRun(sha, sharedtest.SameProductSpec("firefox")).Return(true, nil),
+		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)

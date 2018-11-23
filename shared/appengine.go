@@ -56,15 +56,11 @@ func (a AppEngineAPIImpl) IsAdmin() bool {
 
 // GetHostname returns a cleaned-up hostname for the current environment.
 func (a AppEngineAPIImpl) GetHostname() string {
-	return getHostname(a.ctx)
-}
-
-func getHostname(ctx context.Context) string {
-	hostname := appengine.DefaultVersionHostname(ctx)
+	hostname := appengine.DefaultVersionHostname(a.ctx)
 	if hostname == "wptdashboard.appspot.com" {
 		return "wpt.fyi"
 	}
-	version := strings.Split(appengine.VersionID(ctx), ".")[0]
+	version := strings.Split(appengine.VersionID(a.ctx), ".")[0]
 	if version == "master" && hostname == "wptdashboard-staging.appspot.com" {
 		return "staging.wpt.fyi"
 	}
