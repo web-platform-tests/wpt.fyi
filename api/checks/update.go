@@ -19,20 +19,27 @@ import (
 
 // updateCheckHandler handles /api/checks/[commit] POST requests.
 func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+	log := shared.GetLogger(ctx)
+
 	vars := mux.Vars(r)
 	sha := vars["commit"]
 	if len(sha) != 40 {
-		http.Error(w, fmt.Sprintf("Invalid commit: %s", sha), http.StatusBadRequest)
+		msg := fmt.Sprintf("Invalid commit: %s", sha)
+		log.Warningf(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
-	ctx := appengine.NewContext(r)
 	filter, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
+		log.Warningf("Failed to parse params: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if len(filter.Products) < 1 {
-		http.Error(w, "product param is missing", http.StatusBadRequest)
+		msg := fmt.Sprintf("Invalid commit: %s", sha)
+		log.Warningf(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 	filter.SHA = sha[:10]
@@ -40,12 +47,14 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	runs, err := shared.LoadTestRuns(ctx, filter.Products, filter.Labels, sha[:10], filter.From, filter.To, &one, nil)
 	allRuns := runs.AllRuns()
 	if err != nil {
+		log.Errorf("Failed to load test runs: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if len(allRuns) < 1 {
 		http.NotFound(w, r)
 		return
 	} else if len(allRuns) > 1 {
+		log.Errorf("Failed to load test runs: %s", err.Error())
 		http.Error(w, fmt.Sprintf("Expected exactly 1 run, but found %v", len(runs)), http.StatusBadRequest)
 		return
 	}
