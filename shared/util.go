@@ -27,9 +27,6 @@ const StableLabel = "stable"
 // i.e. run from the master branch.
 const MasterLabel = "master"
 
-// CreateTestRunPath is the path for POST creation on a TestRun.
-const CreateTestRunPath = "/api/results/create"
-
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
 func GetDefaultProducts() ProductSpecs {
 	browserNames := GetDefaultBrowserNames()
