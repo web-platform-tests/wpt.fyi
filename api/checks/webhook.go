@@ -184,7 +184,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload
 		log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
 		spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
 		if err != nil {
-			log.Errorf("Failed to parse \"%s\" as product spec", *checkRun.CheckRun.Name)
+			log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
 			return false, err
 		}
 		suitesAPI.ScheduleResultsProcessing(sha, spec)
