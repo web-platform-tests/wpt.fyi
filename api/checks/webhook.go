@@ -109,10 +109,11 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 
 	if !shared.IsFeatureEnabled(ctx, "checksAllUsers") {
 		whitelist := []string{
-			"lukebjerring",
 			"autofoolip",
 			"chromium-wpt-export-bot",
+			"foolip",
 			"jgraham",
+			"lukebjerring",
 		}
 		sender := ""
 		if checkSuite.Sender != nil && checkSuite.Sender.Login != nil {
