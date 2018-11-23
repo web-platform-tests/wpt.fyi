@@ -441,7 +441,6 @@ found in the LICENSE file.
         this.onSearchCommit = this.handleSearchCommit.bind(this);
         this.onSearchAutocomplete = this.handleSearchAutocomplete.bind(this);
         this.onLoadingComplete = () => {
-          this.resultsLoadFailed = !(this.testRuns && this.testRuns.length);
           this.noResults = !this.resultsLoadFailed
             && !(this.searchResults && this.searchResults.length);
         };
@@ -489,6 +488,7 @@ found in the LICENSE file.
       }
 
       loadData() {
+        this.resultsLoadFailed = false;
         this.load(
           this.loadRuns().then(async runs => {
             // Pass current (un)structured query is passed to fetchResults().
@@ -504,7 +504,10 @@ found in the LICENSE file.
               };
               this.fetchDiff();
             }
-          })
+          }),
+          () => {
+            this.resultsLoadFailed = true;
+          }
         );
       }
 
@@ -532,15 +535,20 @@ found in the LICENSE file.
           }
         }
 
-        this.load(window.fetch(url, fetchOpts).then(r => {
-          if (!r.ok || r.status !== 200) {
-            return Promise.reject('Failed to fetch results data.');
+        this.load(
+          window.fetch(url, fetchOpts).then(r => {
+            if (!r.ok || r.status !== 200) {
+              return Promise.reject('Failed to fetch results data.');
+            }
+            return r.json();
+          }).then(json => {
+            this.searchResults = json.results;
+            this.refreshDisplayedNodes();
+          }),
+          () => {
+            this.resultsLoadFailed = true;
           }
-          return r.json();
-        }).then(json => {
-          this.searchResults = json.results;
-          this.refreshDisplayedNodes();
-        }));
+        );
       }
 
       fetchDiff() {

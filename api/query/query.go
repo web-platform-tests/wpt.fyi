@@ -7,6 +7,7 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -125,7 +126,7 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 			s := make(summary)
 			data, loadErr := qh.loadSummary(testRun)
 			if err == nil && loadErr != nil {
-				err = loadErr
+				err = fmt.Errorf("Failed to load test run %v: %s", testRun.ID, loadErr.Error())
 				return
 			}
 			marshalErr := json.Unmarshal(data, &s)
