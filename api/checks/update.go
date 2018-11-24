@@ -14,25 +14,39 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 // updateCheckHandler handles /api/checks/[commit] POST requests.
 func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
+
 	vars := mux.Vars(r)
 	sha := vars["commit"]
 	if len(sha) != 40 {
-		http.Error(w, fmt.Sprintf("Invalid commit: %s", sha), http.StatusBadRequest)
+		msg := fmt.Sprintf("Invalid commit: %s", sha)
+		log.Warningf(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
-	ctx := appengine.NewContext(r)
-	filter, err := shared.ParseTestRunFilterParams(r)
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
+		log.Warningf("Failed to parse form: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	} else if len(filter.Products) < 1 {
-		http.Error(w, "product param is missing", http.StatusBadRequest)
+	}
+
+	filter, err := shared.ParseTestRunFilterParams(r.Form)
+	if err != nil {
+		log.Warningf("Failed to parse params: %s", err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(filter.Products) < 1 {
+		msg := "product param is missing"
+		log.Warningf(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 	filter.SHA = sha[:10]
@@ -40,12 +54,15 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	runs, err := shared.LoadTestRuns(ctx, filter.Products, filter.Labels, sha[:10], filter.From, filter.To, &one, nil)
 	allRuns := runs.AllRuns()
 	if err != nil {
+		log.Errorf("Failed to load test runs: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if len(allRuns) < 1 {
+		log.Debugf("No runs found for %s @ %s", filter.Products[0].String(), sha[:7])
 		http.NotFound(w, r)
 		return
 	} else if len(allRuns) > 1 {
+		log.Errorf("Failed to load test runs: %s", err.Error())
 		http.Error(w, fmt.Sprintf("Expected exactly 1 run, but found %v", len(runs)), http.StatusBadRequest)
 		return
 	}
@@ -62,6 +79,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if len(allMasterRuns) < 1 {
+		log.Debugf("No masters runs found for %s @ %s", filter.Products[0].String(), sha[:7])
 		http.Error(w, "No master run found to compare differences", http.StatusNotFound)
 		return
 	}

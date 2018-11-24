@@ -24,7 +24,7 @@ import (
 //   (optional) run: SHA[0:10] of the test run, or "latest" (latest is the default)
 //   (optional) test: Path of the test, e.g. "/css/css-images-3/gradient-button.html"
 func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
-	filters, err := shared.ParseTestRunFilterParams(r)
+	filters, err := shared.ParseTestRunFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

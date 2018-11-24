@@ -7,6 +7,7 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -33,11 +34,11 @@ type defaultShared struct {
 }
 
 func (defaultShared) ParseQueryParamInt(r *http.Request, key string) (*int, error) {
-	return shared.ParseQueryParamInt(r, key)
+	return shared.ParseQueryParamInt(r.URL.Query(), key)
 }
 
 func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter, error) {
-	return shared.ParseQueryFilterParams(r)
+	return shared.ParseQueryFilterParams(r.URL.Query())
 }
 
 func (sharedImpl defaultShared) LoadTestRuns(ps shared.ProductSpecs, ls mapset.Set, sha string, from *time.Time, to *time.Time, limit *int, offset *int) (shared.TestRunsByProduct, error) {
@@ -125,7 +126,7 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 			s := make(summary)
 			data, loadErr := qh.loadSummary(testRun)
 			if err == nil && loadErr != nil {
-				err = loadErr
+				err = fmt.Errorf("Failed to load test run %v: %s", testRun.ID, loadErr.Error())
 				return
 			}
 			marshalErr := json.Unmarshal(data, &s)
@@ -154,6 +155,6 @@ func getMemcacheKey(testRun shared.TestRun) string {
 }
 
 func isRequestCacheable(r *http.Request) bool {
-	ids, err := shared.ParseRunIDsParam(r)
+	ids, err := shared.ParseRunIDsParam(r.URL.Query())
 	return err == nil && len(ids) > 0
 }

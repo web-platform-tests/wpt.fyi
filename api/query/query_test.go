@@ -110,7 +110,7 @@ func TestLoadSummaries_fail(t *testing.T) {
 	cachedStore.EXPECT().Get(keys[1], urls[1], gomock.Any()).Return(storeMiss)
 
 	_, err := sh.loadSummaries(testRuns)
-	assert.Equal(t, storeMiss, err)
+	assert.Contains(t, err.Error(), storeMiss.Error())
 }
 
 func TestGetRunsAndFilters_default(t *testing.T) {

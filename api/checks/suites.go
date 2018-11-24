@@ -103,12 +103,13 @@ func updateCheckRun(ctx context.Context, summary summaries.Summary) (bool, error
 
 	summaryStr, err := summary.GetSummary()
 	if err != nil {
+		log.Warningf("Failed to generate summary for %s: %s", state.HeadSHA, err.Error())
 		return false, err
 	}
 
 	detailsURLStr := state.DetailsURL.String()
 	opts := github.CreateCheckRunOptions{
-		Name:       state.Product.BrowserName,
+		Name:       state.Product.String(),
 		HeadSHA:    state.HeadSHA,
 		DetailsURL: &detailsURLStr,
 		Status:     &state.Status,
@@ -127,6 +128,7 @@ func updateCheckRun(ctx context.Context, summary summaries.Summary) (bool, error
 		if !created || err != nil {
 			return false, err
 		}
+		log.Debugf("Check for %s/%s @ %s (%s) updated", suite.Owner, suite.Repo, suite.SHA[:7], state.Product.String())
 	}
 	return true, nil
 }

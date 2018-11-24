@@ -76,13 +76,14 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 // parseTestResultsUIFilter parses the standard TestRunFilter, as well as the extra
 // diff params (diff, before, after).
 func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err error) {
-	testRunFilter, err := shared.ParseTestRunFilterParams(r)
+	q := r.URL.Query()
+	testRunFilter, err := shared.ParseTestRunFilterParams(q)
 	if err != nil {
 		return filter, err
 	}
 	ctx := shared.NewAppEngineContext(r)
 
-	filter.PR, err = shared.ParsePRParam(r)
+	filter.PR, err = shared.ParsePRParam(q)
 	if err != nil {
 		return filter, err
 	} else if filter.PR != nil {
@@ -110,13 +111,13 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 		filter.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
 	}
 
-	diff, err := shared.ParseBooleanParam(r, "diff")
+	diff, err := shared.ParseBooleanParam(q, "diff")
 	if err != nil {
 		return filter, err
 	}
 	filter.Diff = diff != nil && *diff
 	if filter.Diff {
-		diffFilter, _, err := shared.ParseDiffFilterParams(r)
+		diffFilter, _, err := shared.ParseDiffFilterParams(q)
 		if err != nil {
 			return filter, err
 		}
@@ -124,7 +125,7 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 	}
 
 	var beforeAndAfter shared.ProductSpecs
-	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r); err != nil {
+	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(q); err != nil {
 		return filter, err
 	} else if len(beforeAndAfter) > 0 {
 		var bytes []byte
