@@ -126,7 +126,12 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 			break
 		}
 	}
-	if !regressed || !shared.IsFeatureEnabled(ctx, "failChecksOnRegression") {
+	neutral := "neutral"
+	checkState.Conclusion = &neutral
+	checksCanFailAndPass := shared.IsFeatureEnabled(ctx, "failChecksOnRegression")
+
+	var summary summaries.Summary
+	if !regressed {
 		host := shared.NewAppEngineAPI(ctx).GetHostname()
 		data := summaries.Completed{
 			CheckState: checkState,
@@ -135,34 +140,39 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 			DiffURL:    getMasterDiffURL(ctx, checkState.HeadSHA, checkState.Product).String(),
 			SHAURL:     getURL(ctx, shared.TestRunFilter{SHA: checkState.HeadSHA[:10]}).String(),
 		}
-		neutral := "neutral"
-		data.CheckState.Conclusion = &neutral
-		return data
-	}
-
-	data := summaries.Regressed{
-		CheckState:  checkState,
-		Regressions: make(map[string]summaries.BeforeAndAfter),
-	}
-	failure := "failure"
-	data.CheckState.Conclusion = &failure
-	for path, d := range diff {
-		if d[1] != 0 {
-			if len(data.Regressions) <= 10 {
-				ba := summaries.BeforeAndAfter{}
-				if b, ok := before[path]; ok {
-					ba.PassingBefore = b[0]
-					ba.TotalBefore = b[1]
+		if checksCanFailAndPass {
+			success := "success"
+			data.CheckState.Conclusion = &success
+		}
+		summary = data
+	} else {
+		data := summaries.Regressed{
+			CheckState:  checkState,
+			Regressions: make(map[string]summaries.BeforeAndAfter),
+		}
+		for path, d := range diff {
+			if d[1] != 0 {
+				if len(data.Regressions) <= 10 {
+					ba := summaries.BeforeAndAfter{}
+					if b, ok := before[path]; ok {
+						ba.PassingBefore = b[0]
+						ba.TotalBefore = b[1]
+					}
+					if a, ok := after[path]; ok {
+						ba.PassingAfter = a[0]
+						ba.TotalAfter = a[1]
+					}
+					data.Regressions[path] = ba
+				} else {
+					data.More++
 				}
-				if a, ok := after[path]; ok {
-					ba.PassingAfter = a[0]
-					ba.TotalAfter = a[1]
-				}
-				data.Regressions[path] = ba
-			} else {
-				data.More++
 			}
 		}
+		if checksCanFailAndPass {
+			failure := "failure"
+			data.CheckState.Conclusion = &failure
+		}
+		summary = data
 	}
-	return data
+	return summary
 }
