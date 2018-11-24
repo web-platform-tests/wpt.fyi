@@ -128,7 +128,7 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 	}
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
-	failsAndPasses := shared.IsFeatureEnabled(ctx, "failChecksOnRegression")
+	checksCanFailAndPass := shared.IsFeatureEnabled(ctx, "failChecksOnRegression")
 
 	var summary summaries.Summary
 	if !regressed {
@@ -140,7 +140,7 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 			DiffURL:    getMasterDiffURL(ctx, checkState.HeadSHA, checkState.Product).String(),
 			SHAURL:     getURL(ctx, shared.TestRunFilter{SHA: checkState.HeadSHA[:10]}).String(),
 		}
-		if failsAndPasses {
+		if checksCanFailAndPass {
 			success := "success"
 			data.CheckState.Conclusion = &success
 		}
@@ -168,7 +168,7 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 				}
 			}
 		}
-		if failsAndPasses {
+		if checksCanFailAndPass {
 			failure := "failure"
 			data.CheckState.Conclusion = &failure
 		}
