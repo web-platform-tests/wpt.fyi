@@ -6,9 +6,7 @@ package checks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/deckarep/golang-set"
@@ -32,27 +30,17 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Pull the params from either the query params or the post body.
-	payload, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Errorf("Failed to read request body: %s", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	filter, err := shared.ParseTestRunFilterParams(r)
-	if err != nil {
-		log.Warningf("Failed to parse params: %s", err.Error())
+	if err := r.ParseForm(); err != nil {
+		log.Warningf("Failed to parse form: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if len(payload) > 0 {
-		if err := json.Unmarshal(payload, &filter); err != nil {
-			log.Warningf("Failed to unmarshal body: %s", err.Error())
-			http.Error(w, "Invalid post body", http.StatusBadRequest)
-			return
-		}
+	filter, err := shared.ParseTestRunFilterParams(r.Form)
+	if err != nil {
+		log.Warningf("Failed to parse params: %s", err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	if len(filter.Products) < 1 {

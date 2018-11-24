@@ -32,7 +32,7 @@ func ListHandler(a api.API, w http.ResponseWriter, r *http.Request) {
 
 	q := r.URL.Query()
 
-	numRevisions, err := shared.ParseQueryParamInt(r, "num_revisions")
+	numRevisions, err := shared.ParseQueryParamInt(r.URL.Query(), "num_revisions")
 	if numRevisions == nil {
 		one := 1
 		numRevisions = &one

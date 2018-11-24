@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -23,25 +22,6 @@ type TestRunFilter struct {
 	MaxCount *int         `json:"maxcount,omitempty"`
 	Offset   *int         `json:"offset,omitempty"` // Used for paginating with MaxCount.
 	Products ProductSpecs `json:"products,omitempty"`
-}
-
-// UnmarshalJSON treats the data a URL param map, and parses the same
-// way the request params do.
-func (filter *TestRunFilter) UnmarshalJSON(data []byte) (err error) {
-	var params map[string]interface{}
-	if err = json.Unmarshal(data, &params); err != nil {
-		return err
-	}
-	r, _ := http.NewRequest("GET", "/", nil)
-	q := r.URL.Query()
-	for k, v := range params {
-		if s, ok := v.(string); ok {
-			q.Set(k, s)
-		}
-	}
-	r.URL.RawQuery = q.Encode()
-	*filter, err = ParseTestRunFilterParams(r)
-	return err
 }
 
 // IsDefaultQuery returns whether the params are just an empty query (or,
