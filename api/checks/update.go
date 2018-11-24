@@ -67,13 +67,13 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get a master run to compare.
+	// Get the most recent master run to compare.
 	labels := filter.Labels
 	if labels == nil {
 		labels = mapset.NewSet()
 	}
 	labels.Add("master")
-	masterRuns, err := shared.LoadTestRuns(ctx, filter.Products, labels, "", nil, nil, nil, nil)
+	masterRuns, err := shared.LoadTestRuns(ctx, filter.Products, labels, "", nil, nil, &one, nil)
 	allMasterRuns := masterRuns.AllRuns()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
