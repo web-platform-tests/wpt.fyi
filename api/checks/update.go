@@ -6,7 +6,9 @@ package checks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/deckarep/golang-set"
@@ -31,13 +33,31 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Pull the params from either the query params or the post body.
+	payload, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Failed to read request body: %s", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	filter, err := shared.ParseTestRunFilterParams(r)
 	if err != nil {
 		log.Warningf("Failed to parse params: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	} else if len(filter.Products) < 1 {
-		msg := fmt.Sprintf("Invalid commit: %s", sha)
+	}
+
+	if len(payload) > 0 {
+		if err := json.Unmarshal(payload, &filter); err != nil {
+			log.Warningf("Failed to unmarshal body: %s", err.Error())
+			http.Error(w, "Invalid post body", http.StatusBadRequest)
+			return
+		}
+	}
+
+	if len(filter.Products) < 1 {
+		msg := "product param is missing"
 		log.Warningf(msg)
 		http.Error(w, msg, http.StatusBadRequest)
 		return
@@ -51,6 +71,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if len(allRuns) < 1 {
+		log.Debugf("No runs found for %s @ %s", filter.Products[0].String(), sha[:7])
 		http.NotFound(w, r)
 		return
 	} else if len(allRuns) > 1 {
@@ -71,6 +92,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if len(allMasterRuns) < 1 {
+		log.Debugf("No masters runs found for %s @ %s", filter.Products[0].String(), sha[:7])
 		http.Error(w, "No master run found to compare differences", http.StatusNotFound)
 		return
 	}
