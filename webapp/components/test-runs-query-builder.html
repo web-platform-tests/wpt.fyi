@@ -162,9 +162,7 @@ found in the LICENSE file.
           this.handleAddProduct();
         };
         this.clearAll = this.handleClearAll.bind(this);
-        this.submit = () => {
-          this.onSubmit && this.onSubmit();
-        };
+        this.submit = this.handleSubmit.bind(this);
         this._createMethodObserver('labelsUpdated(labels, labels.*)');
         this._createMethodObserver('shasUpdated(sha, shas)');
       }
@@ -179,6 +177,22 @@ found in the LICENSE file.
 
       handleProductChanged(i, product) {
         this.set(`products.${i}`, product);
+      }
+
+      handleSubmit() {
+        // Handle the edge-case that the user typed a label for channel or source, etc.
+        const productBuilders = this.shadowRoot.querySelectorAll('product-builder');
+        for (const semantic of window.wpt.SemanticLabels) {
+          for (const label of semantic.values) {
+            if (this.labels.includes(label)) {
+              this.labels = this.labels.filter(l => l !== label);
+              for (const p of productBuilders) {
+                p[semantic.property] = label;
+              }
+            }
+          }
+        }
+        this.onSubmit && this.onSubmit();
       }
 
       // Respond to query changes by computing a new shas URL.
@@ -334,7 +348,7 @@ found in the LICENSE file.
     </paper-card>
   </template>
   <script>
-    /* global ProductInfo, CHANNELS, SOURCES, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
+    /* global ProductInfo, CHANNELS, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'product-builder';
@@ -418,13 +432,6 @@ found in the LICENSE file.
         this._createMethodObserver('versionsUpdated(browserVersion, versions)');
       }
 
-      static get SemanticLabels() {
-        return [
-          { property: '_channel', values: CHANNELS },
-          { property: '_source', values: SOURCES },
-        ];
-      }
-
       computeProduct(browserName, browserVersion, labels) {
         const product = {
           browser_name: browserName,
@@ -442,7 +449,7 @@ found in the LICENSE file.
       labelsChanged(labels) {
         // Configure the channel from the labels.
         labels = new Set(labels || []);
-        for (const semantic of ProductBuilder.SemanticLabels) {
+        for (const semantic of window.wpt.SemanticLabels) {
           const value = Array.from(semantic.values).find(c => labels.has(c)) || 'any';
           if (this[semantic.property] !== value) {
             this[semantic.property] = value;

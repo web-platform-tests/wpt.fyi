@@ -132,6 +132,19 @@
               });
             });
           }
+
+          for (const channel of CHANNELS) {
+            test(channel, done => {
+              flush(() => {
+                queryBuilder.set('labels', [channel]);
+                queryBuilder.submit();
+                for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
+                  expect(productBuilder._channel).to.equal(channel);
+                }
+                done();
+              });
+            });
+          }
         });
 
         test('sha', () => {
