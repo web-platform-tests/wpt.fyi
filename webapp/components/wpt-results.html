@@ -188,16 +188,19 @@ found in the LICENSE file.
       </info-banner>
     </template>
 
-    <iron-collapse opened="[[editingQuery]]">
-      <test-runs-query-builder product-specs="[[productSpecs]]"
-                              labels="[[labels]]"
-                              sha="[[sha]]"
-                              aligned="[[aligned]]"
-                              on-submit="[[submitQuery]]"
-                              diff="[[diff]]"
-                              edit>
-      </test-runs-query-builder>
-    </iron-collapse>
+    <template is="dom-if" if="[[queryBuilder]]">
+      <iron-collapse opened="[[editingQuery]]">
+        <test-runs-query-builder product-specs="[[productSpecs]]"
+                                labels="[[labels]]"
+                                sha="[[sha]]"
+                                aligned="[[aligned]]"
+                                on-submit="[[submitQuery]]"
+                                from="[[from]]"
+                                to="[[to]]"
+                                diff="[[diff]]">
+        </test-runs-query-builder>
+      </iron-collapse>
+    </template>
 
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -301,9 +304,8 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global WPTColors, WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
-    class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
-      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer)))))) {
+    /* global WPTColors, WPTFlags, SelfNavigation, LoadingState, TestRunsUIBase */
+    class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase)))) {
 
       static get is() {
         return 'wpt-results';

@@ -17,6 +17,8 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../bower_components/vaadin-date-picker/vaadin-date-picker-light.html">
 <link rel="import" href="./display-logo.html">
 <link rel="import" href="./info-banner.html">
 <link rel="import" href="./product-info.html">
@@ -42,6 +44,9 @@ found in the LICENSE file.
         max-width: 180px;
         display: inline-block;
       }
+      vaadin-date-picker-light + vaadin-date-picker-light {
+        margin-left: 16px;
+      }
     </style>
 
     <h3>
@@ -65,15 +70,25 @@ found in the LICENSE file.
         </info-banner>
       </template>
     </div>
+    <template is="dom-if" if="[[showTimeRange]]">
+      <paper-item>
+        <vaadin-date-picker-light attr-for-value="value" value="[[fromISO]]">
+          <paper-input label="From" value="{{fromISO}}"></paper-input>
+        </vaadin-date-picker-light>
+        <vaadin-date-picker-light attr-for-value="value" value="[[toISO]]">
+          <paper-input label="To" value="{{toISO}}"></paper-input>
+        </vaadin-date-picker-light>
+      </paper-item>
+    </template>
     <paper-item>
-      <paper-checkbox id="aligned-checkbox" checked="{{aligned}}">Align runs</paper-checkbox>
+      <paper-checkbox id="aligned-checkbox" checked="{{aligned}}">Aligned runs only</paper-checkbox>
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{diff}}" disabled="{{!canShowDiff}}">Show diff</paper-checkbox>
     </paper-item>
     <template is="dom-if" if="[[masterRunsOnly]]">
       <paper-item>
-        <paper-checkbox id="master-checkbox" checked="{{master}}">Only master</paper-checkbox>
+        <paper-checkbox id="master-checkbox" checked="{{master}}">Only master branch</paper-checkbox>
       </paper-item>
     </template>
     <paper-item>
@@ -129,6 +144,7 @@ found in the LICENSE file.
             type: String,
             observer: 'labelsStringUpdated',
           },
+          showTimeRange: Boolean,
           shasURL: {
             type: String,
             computed: 'computeSHAsURL(query)',
@@ -144,6 +160,14 @@ found in the LICENSE file.
           canShowDiff: {
             type: Boolean,
             computed: 'computeCanShowDiff(productSpecs)',
+          },
+          fromISO: {
+            type: String,
+            observer: 'fromISOChanged',
+          },
+          toISO: {
+            type: String,
+            observer: 'toISOChanged',
           },
         };
       }
@@ -165,6 +189,16 @@ found in the LICENSE file.
         this.submit = this.handleSubmit.bind(this);
         this._createMethodObserver('labelsUpdated(labels, labels.*)');
         this._createMethodObserver('shasUpdated(sha, shas)');
+      }
+
+      ready() {
+        super.ready();
+        if (this.from) {
+          this.fromISO = this.from.toISOString().substring(0, 10);
+        }
+        if (this.to) {
+          this.toISO = this.to.toISOString().substring(0, 10);
+        }
       }
 
       computeCanShowDiff(productSpecs) {
@@ -273,6 +307,20 @@ found in the LICENSE file.
       handleClearAll() {
         this.clearQuery();
         this.set('products', []);
+      }
+
+      fromISOChanged(from) {
+        from = new Date(from);
+        if (isFinite(from)) {
+          this.from = from;
+        }
+      }
+
+      toISOChanged(to) {
+        to = new Date(to);
+        if (isFinite(to)) {
+          this.to = to;
+        }
       }
     }
 
