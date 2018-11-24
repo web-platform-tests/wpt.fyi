@@ -27,7 +27,7 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	filters, err := shared.ParseTestRunFilterParams(r)
+	filters, err := shared.ParseTestRunFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

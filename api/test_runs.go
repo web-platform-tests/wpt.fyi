@@ -25,13 +25,14 @@ const paginationTokenFeatureFlagName = "paginationTokens"
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	ids, err := shared.ParseRunIDsParam(r)
+	q := r.URL.Query()
+	ids, err := shared.ParseRunIDsParam(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	pr, err := shared.ParsePRParam(r)
+	pr, err := shared.ParsePRParam(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -57,7 +58,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		testRuns, err = shared.LoadTestRunsBySHAs(ctx, commits...)
 	} else {
 		var filters shared.TestRunFilter
-		filters, err = shared.ParseTestRunFilterParams(r)
+		filters, err = shared.ParseTestRunFilterParams(r.URL.Query())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

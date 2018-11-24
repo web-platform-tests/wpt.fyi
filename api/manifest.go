@@ -21,12 +21,13 @@ import (
 )
 
 func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
-	sha, err := shared.ParseSHAParamFull(r)
+	q := r.URL.Query()
+	sha, err := shared.ParseSHAParamFull(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	paths := shared.ParsePathsParam(r)
+	paths := shared.ParsePathsParam(q)
 	ctx := shared.NewAppEngineContext(r)
 	sha, manifestBytes, err := getManifestForSHA(ctx, sha)
 	if err != nil {

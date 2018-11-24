@@ -21,7 +21,7 @@ import (
 func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 
-	filters, err := shared.ParseTestRunFilterParams(r)
+	filters, err := shared.ParseTestRunFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
