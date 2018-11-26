@@ -15,6 +15,9 @@ of type info, warning, or error.
   <template>
     <style>
       .banner {
+        display: flex;
+        flex-direction: row;
+        justify-items: center;
         padding: 0.5em;
         background-color: var(--paper-blue-100);
         margin-bottom: 1em;
@@ -22,7 +25,7 @@ of type info, warning, or error.
         border-left: solid 4px var(--paper-blue-300);
       }
       .banner small {
-        float: right;
+        display: flex;
       }
       .banner.error {
         background-color: var(--paper-red-100);
