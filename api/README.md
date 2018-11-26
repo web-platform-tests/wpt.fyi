@@ -23,6 +23,12 @@ the endpoints can be found in `routes.go`.
 
 Also see [results creation](#results-creation) for endpoints to add new data.
 
+## Service availability
+
+In rare cases, [this project's deployment may go offline without advanced
+notice](https://github.com/web-platform-tests/wpt.fyi/issues/802). Users should
+allow 10 minutes for the service to return before reporting an issue.
+
 ## TestRun entities
 
 `TestRun` entities represent metadata about an execution of the [wpt](https://github.com/web-platform-tests/wpt) test suite, on a particular product. Tests are run on a regular basis, and each entry in `/api/runs` annotates when the tests were executed, which product they were executed on, and the where the results are stored.
