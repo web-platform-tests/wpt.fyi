@@ -290,6 +290,7 @@ func createAllRuns(
 	errors := make(chan error, len(urlsByBrowser))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
+	suites, _ := suitesAPI.GetSuitesForSHA(sha)
 	for browser, urls := range urlsByBrowser {
 		go func(browser string, urls []string) {
 			defer wg.Done()
@@ -301,7 +302,9 @@ func createAllRuns(
 				// Create pending checks on non-master branches.
 				spec := shared.ProductSpec{}
 				spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
-				suitesAPI.PendingCheckRun(sha, spec)
+				for _, suite := range suites {
+					suitesAPI.PendingCheckRun(suite, spec)
+				}
 			}
 		}(browser, urls)
 	}

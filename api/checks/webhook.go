@@ -154,7 +154,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		}
 
 		if action == "rerequested" {
-			completeChecksForExistingRuns(ctx, sha)
+			scheduleProcessingForExistingRuns(ctx, sha)
 		}
 	}
 	return false, nil
@@ -184,7 +184,7 @@ func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
 		if err != nil {
 			log.Errorf("Failed to parse \"%s\" as product spec", *checkRun.CheckRun.Name)
 		}
-		return completeChecksForExistingRuns(ctx, sha, spec)
+		return scheduleProcessingForExistingRuns(ctx, sha, spec)
 	}
 	return false, nil
 }
@@ -212,7 +212,7 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 	return false, nil
 }
 
-func completeChecksForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
+func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
 	// Jump straight to completed check_run for already-present runs for the SHA.
 	products = shared.ProductSpecs(products).OrDefault()
 	runsByProduct, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil, nil)
@@ -220,10 +220,11 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
+	api := NewSuitesAPI(ctx)
 	for _, rbp := range runsByProduct {
 		if len(rbp.TestRuns) > 0 {
-			created, err := completeCheckRun(ctx, sha, rbp.Product)
-			createdSome = createdSome || created
+			err := api.ScheduleResultsProcessing(sha, rbp.Product)
+			createdSome = createdSome || err == nil
 			if err != nil {
 				return createdSome, err
 			}

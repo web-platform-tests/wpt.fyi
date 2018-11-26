@@ -6,7 +6,6 @@ package checks
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"google.golang.org/appengine/datastore"
@@ -47,59 +46,9 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, install
 	return &suite, err
 }
 
-func getSuitesForSHA(ctx context.Context, sha string) ([]shared.CheckSuite, error) {
-	var suites []shared.CheckSuite
-	_, err := datastore.NewQuery("CheckSuite").Filter("SHA =", sha).GetAll(ctx, &suites)
-	return suites, err
-}
-
-func pendingCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
-	host := shared.NewAppEngineAPI(ctx).GetHostname()
-	pending := summaries.Pending{
-		CheckState: summaries.CheckState{
-			Product:    product,
-			HeadSHA:    sha,
-			Title:      getCheckTitle(product),
-			DetailsURL: getMasterDiffURL(ctx, sha, product),
-			Status:     "in_progress",
-		},
-		HostName: host,
-		RunsURL:  fmt.Sprintf("https://%s/runs", host),
-	}
-	return updateCheckRun(ctx, pending)
-}
-
-func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
-	host := shared.NewAppEngineAPI(ctx).GetHostname()
-	success := "success"
-	completed := summaries.Completed{
-		CheckState: summaries.CheckState{
-			Product:    product,
-			HeadSHA:    sha,
-			Title:      fmt.Sprintf("wpt.fyi - %s results", product.DisplayName()),
-			DetailsURL: getMasterDiffURL(ctx, sha, product),
-			Status:     "completed",
-			Conclusion: &success,
-		},
-		HostName: host,
-		HostURL:  fmt.Sprintf("https://%s/", host),
-		SHAURL:   getURL(ctx, shared.TestRunFilter{SHA: sha[:10]}).String(),
-		DiffURL:  getMasterDiffURL(ctx, sha, product).String(),
-	}
-	return updateCheckRun(ctx, completed)
-}
-
-func updateCheckRun(ctx context.Context, summary summaries.Summary) (bool, error) {
+func updateCheckRun(ctx context.Context, summary summaries.Summary, suites ...shared.CheckSuite) (bool, error) {
 	log := shared.GetLogger(ctx)
 	state := summary.GetCheckState()
-	suites, err := getSuitesForSHA(ctx, state.HeadSHA)
-	if err != nil {
-		log.Warningf("Failed to load CheckSuites for %s: %s", state.HeadSHA, err.Error())
-		return false, err
-	} else if len(suites) < 1 {
-		log.Debugf("No CheckSuites found for %s", state.HeadSHA)
-		return false, nil
-	}
 
 	summaryStr, err := summary.GetSummary()
 	if err != nil {
