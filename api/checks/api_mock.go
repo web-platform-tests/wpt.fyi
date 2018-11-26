@@ -47,32 +47,6 @@ func (mr *MockSuitesAPIMockRecorder) Context() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockSuitesAPI)(nil).Context))
 }
 
-// PendingCheckRun mocks base method
-func (m *MockSuitesAPI) PendingCheckRun(sha string, browser shared.ProductSpec) (bool, error) {
-	ret := m.ctrl.Call(m, "PendingCheckRun", sha, browser)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PendingCheckRun indicates an expected call of PendingCheckRun
-func (mr *MockSuitesAPIMockRecorder) PendingCheckRun(sha, browser interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PendingCheckRun", reflect.TypeOf((*MockSuitesAPI)(nil).PendingCheckRun), sha, browser)
-}
-
-// CompleteCheckRun mocks base method
-func (m *MockSuitesAPI) CompleteCheckRun(sha string, browser shared.ProductSpec) (bool, error) {
-	ret := m.ctrl.Call(m, "CompleteCheckRun", sha, browser)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CompleteCheckRun indicates an expected call of CompleteCheckRun
-func (mr *MockSuitesAPIMockRecorder) CompleteCheckRun(sha, browser interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteCheckRun", reflect.TypeOf((*MockSuitesAPI)(nil).CompleteCheckRun), sha, browser)
-}
-
 // ScheduleResultsProcessing mocks base method
 func (m *MockSuitesAPI) ScheduleResultsProcessing(sha string, browser shared.ProductSpec) error {
 	ret := m.ctrl.Call(m, "ScheduleResultsProcessing", sha, browser)
@@ -83,4 +57,30 @@ func (m *MockSuitesAPI) ScheduleResultsProcessing(sha string, browser shared.Pro
 // ScheduleResultsProcessing indicates an expected call of ScheduleResultsProcessing
 func (mr *MockSuitesAPIMockRecorder) ScheduleResultsProcessing(sha, browser interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsProcessing", reflect.TypeOf((*MockSuitesAPI)(nil).ScheduleResultsProcessing), sha, browser)
+}
+
+// PendingCheckRun mocks base method
+func (m *MockSuitesAPI) PendingCheckRun(checkSuite shared.CheckSuite, browser shared.ProductSpec) (bool, error) {
+	ret := m.ctrl.Call(m, "PendingCheckRun", checkSuite, browser)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PendingCheckRun indicates an expected call of PendingCheckRun
+func (mr *MockSuitesAPIMockRecorder) PendingCheckRun(checkSuite, browser interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PendingCheckRun", reflect.TypeOf((*MockSuitesAPI)(nil).PendingCheckRun), checkSuite, browser)
+}
+
+// GetSuitesForSHA mocks base method
+func (m *MockSuitesAPI) GetSuitesForSHA(sha string) ([]shared.CheckSuite, error) {
+	ret := m.ctrl.Call(m, "GetSuitesForSHA", sha)
+	ret0, _ := ret[0].([]shared.CheckSuite)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSuitesForSHA indicates an expected call of GetSuitesForSHA
+func (mr *MockSuitesAPIMockRecorder) GetSuitesForSHA(sha interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSuitesForSHA", reflect.TypeOf((*MockSuitesAPI)(nil).GetSuitesForSHA), sha)
 }

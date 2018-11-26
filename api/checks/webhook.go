@@ -255,6 +255,7 @@ func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
 	return suite != nil, err
 }
 
+// createCheckRun submits an http POST to create the check run on GitHub, handling JWT auth for the app.
 func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.CreateCheckRunOptions) (bool, error) {
 	log := shared.GetLogger(ctx)
 	status := ""
@@ -267,19 +268,10 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		return false, err
 	}
 	client := github.NewClient(jwtClient)
-	u := fmt.Sprintf("repos/%v/%v/check-runs", suite.Owner, suite.Repo)
-	req, err := client.NewRequest("POST", u, opts)
-	if err != nil {
-		return false, err
-	}
-	req.Header.Set("Accept", "application/vnd.github.antiope-preview+json")
-	checkRun := new(github.CheckRun)
-	resp, err := client.Do(ctx, req, checkRun)
 
+	checkRun, resp, err := client.Checks.CreateCheckRun(ctx, suite.Owner, suite.Repo, opts)
 	if err != nil {
 		log.Warningf("Failed to create check_run: %s", resp.Status)
-		body, _ := ioutil.ReadAll(resp.Body)
-		log.Warningf(string(body))
 		return false, err
 	} else if checkRun != nil {
 		log.Infof("Created check_run %v", checkRun.GetID())

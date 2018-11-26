@@ -130,6 +130,9 @@ func TestCreateAllRuns_success(t *testing.T) {
 
 	mockC := gomock.NewController(t)
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{
+		shared.CheckSuite{SHA: sha},
+	}, nil)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
@@ -170,6 +173,9 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 
 	mockC := gomock.NewController(t)
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{
+		shared.CheckSuite{SHA: sha},
+	}, nil)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
@@ -203,6 +209,9 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 
 	mockC := gomock.NewController(t)
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{
+		shared.CheckSuite{SHA: sha},
+	}, nil)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
