@@ -113,9 +113,6 @@ found in the LICENSE file.
         background: var(--paper-blue-500);
         color: white;
       }
-      #edit-query {
-        padding: 1px;
-      }
       test-runs-query-builder {
         display: block;
         margin-bottom: 32px;
@@ -169,7 +166,7 @@ found in the LICENSE file.
           <info-banner>
             [[resultsRangeMessage]]
             <template is="dom-if" if="[[queryBuilder]]">
-              <paper-button id="edit-query" onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+              <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
             </template>
           </info-banner>
         </template>

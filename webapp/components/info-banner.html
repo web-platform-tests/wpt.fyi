@@ -15,14 +15,20 @@ of type info, warning, or error.
   <template>
     <style>
       .banner {
-        padding: 0.5em;
+        display: flex;
+        flex-direction: row;
+        justify-items: center;
+        justify-content: space-between;
         background-color: var(--paper-blue-100);
         margin-bottom: 1em;
         margin-top: 2em;
         border-left: solid 4px var(--paper-blue-300);
       }
-      .banner small {
-        float: right;
+      .main {
+        padding: 0.5em;
+      }
+      small {
+        display: flex;
       }
       .banner.error {
         background-color: var(--paper-red-100);
@@ -31,7 +37,9 @@ of type info, warning, or error.
     </style>
 
     <section class$="banner [[type]]">
-      <slot></slot>
+      <span class="main">
+        <slot></slot>
+      </span>
       <small>
         <slot name="small"></slot>
       </small>
