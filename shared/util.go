@@ -6,9 +6,7 @@ package shared
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 
 	mapset "github.com/deckarep/golang-set"
 	log "github.com/sirupsen/logrus"
@@ -205,19 +203,6 @@ func NewSetFromStringSlice(items []string) mapset.Set {
 		set.Add(i)
 	}
 	return set
-}
-
-// GetHostname returns a cleaned-up hostname for the current environment.
-func GetHostname(ctx context.Context) string {
-	hostname := appengine.DefaultVersionHostname(ctx)
-	if hostname == "wptdashboard.appspot.com" {
-		return "wpt.fyi"
-	}
-	version := strings.Split(appengine.VersionID(ctx), ".")[0]
-	if version == "master" && hostname == "wptdashboard-staging.appspot.com" {
-		return "staging.wpt.fyi"
-	}
-	return fmt.Sprintf("%s-dot-%s", version, hostname)
 }
 
 // StringSliceContains returns true if the given slice contains the given string.

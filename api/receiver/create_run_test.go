@@ -7,6 +7,7 @@
 package receiver
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -46,11 +47,12 @@ func TestHandleResultsCreate(t *testing.T) {
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().AnyTimes().Return(context.Background())
 	mockS := checks.NewMockSuitesAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
-		mockS.EXPECT().CompleteCheckRun(sha, sharedtest.SameProductSpec("firefox")).Return(true, nil),
+		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)
@@ -85,11 +87,12 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().AnyTimes().Return(context.Background())
 	mockS := checks.NewMockSuitesAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
-		mockS.EXPECT().CompleteCheckRun(sha, sharedtest.SameProductSpec("firefox")).Return(true, nil),
+		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)
@@ -121,6 +124,7 @@ func TestHandleResultsCreate_BadRevision(t *testing.T) {
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().AnyTimes().Return(context.Background())
 	mockS := checks.NewMockSuitesAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
@@ -151,6 +155,7 @@ func TestHandleResultsCreate_NoBasicAuth(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", nil)
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().AnyTimes().Return(context.Background())
 	mockS := checks.NewMockSuitesAPI(mockCtrl)
 
 	HandleResultsCreate(mockAE, mockS, resp, req)
@@ -165,6 +170,7 @@ func TestHandleResultsCreate_WrongUser(t *testing.T) {
 	req.SetBasicAuth("wrong-user", "secret-token")
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().AnyTimes().Return(context.Background())
 	mockS := checks.NewMockSuitesAPI(mockCtrl)
 
 	HandleResultsCreate(mockAE, mockS, resp, req)
@@ -179,6 +185,7 @@ func TestHandleResultsCreate_WrongPassword(t *testing.T) {
 	req.SetBasicAuth("_processor", "wrong-password")
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().AnyTimes().Return(context.Background())
 	mockAE.EXPECT().authenticateUploader("_processor", "wrong-password").Return(false)
 	mockS := checks.NewMockSuitesAPI(mockCtrl)
 

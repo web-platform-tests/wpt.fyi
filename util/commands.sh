@@ -6,9 +6,9 @@ function wptd_chown() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) $1
 }
 function wptd_useradd() {
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" groupadd -g "$(id -g $USER)" user
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" useradd -u "$(id -u $USER)" -g "$(id -g $USER)" user
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" usermod -a -G user root
+  # Allow the exit code of groupadd to be 4 (GID not unique).
+  docker exec -u 0:0 "${DOCKER_INSTANCE}" groupadd -g $(id -g $USER) user || [ $? == 4 ]
+  docker exec -u 0:0 "${DOCKER_INSTANCE}" useradd -u $(id -u $USER) -g $(id -g $USER) user
   docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "%user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers'
 }
 function wptd_exec() {

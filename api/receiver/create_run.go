@@ -67,7 +67,7 @@ func HandleResultsCreate(a AppEngineAPI, s checks.SuitesAPI, w http.ResponseWrit
 
 	spec := shared.ProductSpec{}
 	spec.BrowserName = testRun.BrowserName
-	s.CompleteCheckRun(testRun.FullRevisionHash, spec)
+	s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
 
 	// Copy int64 representation of key into TestRun.ID so that clients can
 	// inspect/use key value.
@@ -78,6 +78,8 @@ func HandleResultsCreate(a AppEngineAPI, s checks.SuitesAPI, w http.ResponseWrit
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log := shared.GetLogger(a.Context())
+	log.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonOutput)
 }

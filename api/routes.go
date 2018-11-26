@@ -9,28 +9,44 @@ import "github.com/web-platform-tests/wpt.fyi/shared"
 // RegisterRoutes adds all the api route handlers.
 func RegisterRoutes() {
 	// API endpoint for diff of two test run summary JSON blobs.
-	shared.AddRoute("/api/diff", "api-diff", shared.WrapPermissiveCORS(apiDiffHandler))
+	shared.AddRoute("/api/diff", "api-diff",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiDiffHandler)))
 
 	// API endpoint for fetching interoperability metadata.
-	shared.AddRoute("/api/interop", "api-interop", shared.WrapPermissiveCORS(apiInteropHandler))
+	shared.AddRoute("/api/interop", "api-interop",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiInteropHandler)))
 
 	// API endpoint for fetching a manifest for a commit SHA.
-	shared.AddRoute("/api/manifest", "api-manifest", shared.WrapPermissiveCORS(apiManifestHandler))
+	shared.AddRoute("/api/manifest", "api-manifest",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiManifestHandler)))
 
 	// API endpoint for listing all test runs for a given SHA.
-	shared.AddRoute("/api/runs", "api-test-runs", shared.WrapPermissiveCORS(apiTestRunsHandler))
+	shared.AddRoute("/api/runs", "api-test-runs",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiTestRunsHandler)))
 
 	// API endpoint for listing SHAs for the test runs.
-	shared.AddRoute("/api/shas", "api-shas", shared.WrapPermissiveCORS(apiSHAsHandler))
+	shared.AddRoute("/api/shas", "api-shas",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiSHAsHandler)))
 
 	// API endpoint for listing SHAs for the test runs.
-	shared.AddRoute("/api/versions", "api-versions", shared.WrapPermissiveCORS(apiVersionsHandler))
+	shared.AddRoute("/api/versions", "api-versions",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiVersionsHandler)))
 
 	// API endpoints for a single test run, by
 	// ID:
-	shared.AddRoute("/api/runs/{id}", "api-test-run", shared.WrapPermissiveCORS(apiTestRunHandler))
+	shared.AddRoute("/api/runs/{id}", "api-test-run",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiTestRunHandler)))
 	// 'product' param & 'sha' param:
-	shared.AddRoute("/api/run", "api-test-run", shared.WrapPermissiveCORS(apiTestRunHandler))
+	shared.AddRoute("/api/run", "api-test-run",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiTestRunHandler)))
 
 	// API endpoint for redirecting to a run's summary JSON blob.
 	shared.AddRoute("/api/results", "api-results", shared.WrapPermissiveCORS(apiResultsRedirectHandler))

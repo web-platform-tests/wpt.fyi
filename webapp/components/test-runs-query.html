@@ -16,7 +16,7 @@ found in the LICENSE file.
     // eslint-disable-next-line no-unused-vars
     (() => {
       const testRunsQueryComputer =
-        'computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, maxCount, from, to)';
+        'computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, to, from, maxCount)';
       window.TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
         ProductInfo(superClass),
         opt_queryCompute || testRunsQueryComputer) {
@@ -53,6 +53,10 @@ found in the LICENSE file.
               type: Boolean,
               computed: 'computeIsLatest(sha)'
             },
+            resultsRangeMessage: {
+              type: String,
+              computed: 'computeResultsRangeMessage(sha, productSpecs, to, from, maxCount)',
+            },
           };
         }
 
@@ -76,7 +80,7 @@ found in the LICENSE file.
         /**
         * Convert the UI property values into their equivalent URI query params.
         */
-        computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, maxCount, from, to) {
+        computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, to, from, maxCount) {
           const params = {};
           if (!this.computeIsLatest(sha)) {
             params.sha = sha;
@@ -188,6 +192,12 @@ found in the LICENSE file.
           if ('max-count' in params) {
             batchUpdate.maxCount = params['max-count'];
           }
+          if ('from' in params) {
+            batchUpdate.from = new Date(params['from']);
+          }
+          if ('to' in params) {
+            batchUpdate.to = new Date(params['to']);
+          }
           if ('aligned' in params) {
             batchUpdate.aligned = params.aligned;
           }
@@ -200,6 +210,27 @@ found in the LICENSE file.
           }
           this.setProperties(batchUpdate);
         }
+
+        computeResultsRangeMessage(sha, productSpecs, from, to, maxCount) {
+          if (sha) {
+            return `Showing test runs from revision ${sha}`;
+          } else if (from) {
+            const max = to || Date.now();
+            var diff = Math.floor((max - from) / 86400000);
+            const shortDate = date => date.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            });
+            return to
+              ? `Showing test runs from ${shortDate(from)} to ${shortDate(to)}`
+              : `Showing test runs from the last ${diff} days`;
+          } else if (maxCount) {
+            return `Showing ${maxCount} test runs per product`;
+          } else if (this.computeIsDefaultProducts(productSpecs)) {
+            return 'Showing the latest test runs for the default product set';
+          }
+          return `Showing the latest test runs for ${productSpecs.join(', ')}`;
+        }
       };
       window.TestRunsQuery.Computer = testRunsQueryComputer;
     })();
@@ -207,7 +238,7 @@ found in the LICENSE file.
     (() => {
       // TODO(lukebjerring): Support to & from in the builder.
       const testRunsUIQueryComputer =
-        'computeTestRunUIQueryParams(sha, aligned, master, labels, productSpecs, maxCount, diff, search)';
+        'computeTestRunUIQueryParams(pr, sha, aligned, master, labels, productSpecs, to, from, maxCount, diff, search)';
       /* global TestRunsQuery */
       window.TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
         superClass,
@@ -225,22 +256,30 @@ found in the LICENSE file.
               value: false,
               notify: true,
             },
+            pr: {
+              type: Number,
+              notify: true,
+            },
           };
         }
 
-        computeTestRunUIQueryParams(sha, aligned, master, labels, productSpecs, maxCount, diff, search) {
-          const params = this.computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, maxCount);
+        computeTestRunUIQueryParams(pr, sha, aligned, master, labels, productSpecs, to, from, maxCount, diff, search) {
+          const params = this.computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, to, from, maxCount);
           if (diff || this.diff) {
             params.diff = true;
           }
           if (search) {
             params.q = search;
           }
+          if (pr) {
+            params.pr = pr;
+          }
           return params;
         }
 
         updateQueryParams(params) {
           super.updateQueryParams(params);
+          this.pr = params.pr;
           this.search = params.q;
           this.diff = params.diff;
         }

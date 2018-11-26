@@ -40,8 +40,7 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
-
+	ctx := shared.NewAppEngineContext(r)
 	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
 	if err != nil {
 		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
@@ -74,10 +73,12 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // https://developer.github.com/v3/activity/events/types/#statusevent
-type statusEventPayload github.StatusEvent
+type statusEventPayload struct {
+	github.StatusEvent
+}
 
 func (s statusEventPayload) IsSuccess() bool {
-	return s.State != nil && *s.State == "success"
+	return s.GetState() == "success"
 }
 
 func (s statusEventPayload) IsTaskcluster() bool {
@@ -121,7 +122,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
-	if !shouldProcessStatus(processAllBranches, &status) {
+	if !shouldProcessStatus(log, processAllBranches, &status) {
 		return false, nil
 	}
 
@@ -161,8 +162,10 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		labels = []string{"master"}
 	}
 	suitesAPI := checks.NewSuitesAPI(ctx)
-	err = createAllRuns(log,
+	err = createAllRuns(
+		log,
 		urlfetch.Client(slowCtx),
+		shared.NewAppEngineAPI(ctx),
 		suitesAPI,
 		uploadURL,
 		*status.SHA,
@@ -177,11 +180,18 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	return true, nil
 }
 
-func shouldProcessStatus(processAllBranches bool, status *statusEventPayload) bool {
-	if !status.IsSuccess() || !status.IsTaskcluster() {
+func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *statusEventPayload) bool {
+	if !status.IsSuccess() {
+		log.Debugf("Ignoring non-success status: %s", status.GetState())
+		return false
+	} else if !status.IsTaskcluster() {
+		log.Debugf("Ignoring non-Taskcluster context: %s", status.GetContext())
+		return false
+	} else if !processAllBranches && !status.IsOnMaster() {
+		log.Debugf("Ignoring non-master status event")
 		return false
 	}
-	return processAllBranches || status.IsOnMaster()
+	return true
 }
 
 func extractTaskGroupID(targetURL string) string {
@@ -266,8 +276,10 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 	return u.Username, u.Password, err
 }
 
-func createAllRuns(log shared.Logger,
+func createAllRuns(
+	log shared.Logger,
 	client *http.Client,
+	aeAPI shared.AppEngineAPI,
 	suitesAPI checks.SuitesAPI,
 	uploadURL,
 	sha,
@@ -282,7 +294,7 @@ func createAllRuns(log shared.Logger,
 		go func(browser string, urls []string) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(client, sha, uploadURL, username, password, urls, labels)
+			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
 			} else if !shared.StringSliceContains(labels, shared.MasterLabel) {
@@ -306,7 +318,16 @@ func createAllRuns(log shared.Logger,
 	return nil
 }
 
-func createRun(client *http.Client, sha, api string, username string, password string, reportURLs []string, labels []string) error {
+func createRun(
+	log shared.Logger,
+	client *http.Client,
+	aeAPI shared.AppEngineAPI,
+	sha,
+	api string,
+	username string,
+	password string,
+	reportURLs []string,
+	labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
 	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
@@ -318,6 +339,9 @@ func createRun(client *http.Client, sha, api string, username string, password s
 	if labels != nil {
 		payload.Add("labels", strings.Join(labels, ","))
 	}
+	// Ensure we call back to this appengine version instance.
+	host := aeAPI.GetHostname()
+	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))
 	if err != nil {

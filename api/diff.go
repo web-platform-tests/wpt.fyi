@@ -41,7 +41,8 @@ type diffResult struct {
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 
-	runIDs, err := shared.ParseRunIDsParam(r)
+	q := r.URL.Query()
+	runIDs, err := shared.ParseRunIDsParam(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -49,7 +50,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 
 	var diffFilter shared.DiffFilterParam
 	var paths mapset.Set
-	if diffFilter, paths, err = shared.ParseDiffFilterParams(r); err != nil {
+	if diffFilter, paths, err = shared.ParseDiffFilterParams(q); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -74,12 +75,12 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// NOTE: We use the same params as /results, but also support
 		// 'before' and 'after' and 'filter'.
-		runFilter, parseErr := shared.ParseTestRunFilterParams(r)
+		runFilter, parseErr := shared.ParseTestRunFilterParams(q)
 		if parseErr != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		beforeAndAfter, parseErr := shared.ParseBeforeAndAfterParams(r)
+		beforeAndAfter, parseErr := shared.ParseBeforeAndAfterParams(q)
 		if parseErr != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -87,7 +88,11 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		if len(beforeAndAfter) > 0 {
 			runFilter.Products = beforeAndAfter
 		}
-		runs, err = LoadTestRunsForFilters(ctx, runFilter)
+		var runsByProduct shared.TestRunsByProduct
+		runsByProduct, err = LoadTestRunsForFilters(ctx, runFilter)
+		if err != nil {
+			runs = runsByProduct.AllRuns()
+		}
 	}
 
 	if err != nil {
@@ -166,7 +171,7 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 
 	var filter shared.DiffFilterParam
 	var paths mapset.Set
-	if filter, paths, err = shared.ParseDiffFilterParams(r); err != nil {
+	if filter, paths, err = shared.ParseDiffFilterParams(params); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

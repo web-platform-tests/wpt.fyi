@@ -87,7 +87,7 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 0)
 
-	a := appEngineAPIImpl{ctx: ctx}
+	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
 	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.Nil(t, err)
 
@@ -100,7 +100,7 @@ func TestScheduleResultsTask_error(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(false)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{ctx: ctx}
+	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
 
 	_, err = a.scheduleResultsTask("", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.NotNil(t, err)
@@ -119,7 +119,7 @@ func TestAddTestRun(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{ctx: ctx}
+	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
 
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
@@ -140,7 +140,7 @@ func TestAuthenticateUploader(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{ctx: ctx}
+	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
 
 	assert.False(t, a.authenticateUploader("user", "123"))
 
@@ -153,7 +153,7 @@ func TestFetchWithTimeout_success(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{ctx: ctx}
+	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
 
 	hello := []byte("Hello, world!")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -174,7 +174,7 @@ func TestFetchWithTimeout_404(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{ctx: ctx}
+	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
 
 	server := httptest.NewServer(http.NotFoundHandler())
 	defer server.Close()

@@ -18,7 +18,6 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
 	"google.golang.org/appengine/urlfetch"
-	"google.golang.org/appengine/user"
 )
 
 // DatastoreKey is a context-free constructable form of datastore.Key that
@@ -31,11 +30,7 @@ type DatastoreKey struct {
 
 // AppEngineAPI abstracts all AppEngine APIs used by the results receiver.
 type AppEngineAPI interface {
-	Context() context.Context
-	// The three methods below are exported for webapp.admin_handler.
-	IsLoggedIn() bool
-	IsAdmin() bool
-	LoginURL(redirect string) (string, error)
+	shared.AppEngineAPI
 
 	addTestRun(testRun *shared.TestRun) (*DatastoreKey, error)
 	authenticateUploader(username, password string) bool
@@ -48,7 +43,8 @@ type AppEngineAPI interface {
 
 // appEngineAPIImpl is backed by real AppEngine APIs.
 type appEngineAPIImpl struct {
-	ctx   context.Context
+	shared.AppEngineAPIImpl
+
 	gcs   gcs
 	queue string
 }
@@ -56,18 +52,14 @@ type appEngineAPIImpl struct {
 // NewAppEngineAPI creates a real AppEngineAPI from a given context.
 func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 	return &appEngineAPIImpl{
-		ctx:   ctx,
-		queue: ResultsQueue,
+		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
+		queue:            ResultsQueue,
 	}
 }
 
-func (a *appEngineAPIImpl) Context() context.Context {
-	return a.ctx
-}
-
 func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
-	key := datastore.NewIncompleteKey(a.ctx, "TestRun", nil)
-	key, err := datastore.Put(a.ctx, key, testRun)
+	key := datastore.NewIncompleteKey(a.Context(), "TestRun", nil)
+	key, err := datastore.Put(a.Context(), key, testRun)
 	if err != nil {
 		return nil, err
 	}
@@ -78,24 +70,12 @@ func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, e
 }
 
 func (a *appEngineAPIImpl) authenticateUploader(username, password string) bool {
-	key := datastore.NewKey(a.ctx, "Uploader", username, 0, nil)
+	key := datastore.NewKey(a.Context(), "Uploader", username, 0, nil)
 	var uploader shared.Uploader
-	if err := datastore.Get(a.ctx, key, &uploader); err != nil || uploader.Password != password {
+	if err := datastore.Get(a.Context(), key, &uploader); err != nil || uploader.Password != password {
 		return false
 	}
 	return true
-}
-
-func (a *appEngineAPIImpl) IsLoggedIn() bool {
-	return user.Current(a.ctx) != nil
-}
-
-func (a *appEngineAPIImpl) LoginURL(redirect string) (string, error) {
-	return user.LoginURL(a.ctx, redirect)
-}
-
-func (a *appEngineAPIImpl) IsAdmin() bool {
-	return user.IsAdmin(a.ctx)
 }
 
 func (a *appEngineAPIImpl) uploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
@@ -108,7 +88,7 @@ func (a *appEngineAPIImpl) uploadToGCS(gcsPath string, f io.Reader, gzipped bool
 	fileName := split[2]
 
 	if a.gcs == nil {
-		a.gcs = &gcsImpl{ctx: a.ctx}
+		a.gcs = &gcsImpl{ctx: a.Context()}
 	}
 
 	encoding := ""
@@ -154,7 +134,7 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 		}
 	}
 	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
-	t, err := taskqueue.Add(a.ctx, t, a.queue)
+	t, err := taskqueue.Add(a.Context(), t, a.queue)
 	return t, err
 }
 
@@ -164,7 +144,7 @@ func (a *appEngineAPIImpl) fetchWithTimeout(url string, timeout time.Duration) (
 		return nil, err
 	}
 	req.Header.Add("Accept-Encoding", "gzip")
-	ctx, cancel := context.WithTimeout(a.ctx, timeout)
+	ctx, cancel := context.WithTimeout(a.Context(), timeout)
 	defer cancel()
 	client := urlfetch.Client(ctx)
 	resp, err := client.Do(req)

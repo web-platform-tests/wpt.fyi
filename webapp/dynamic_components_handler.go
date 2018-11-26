@@ -5,14 +5,18 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 var componentTemplates = template.Must(template.ParseGlob("dynamic-components/*.html"))
 
 func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-	flags, _ := shared.GetFeatureFlags(ctx) // Errors aren't a big deal.
+	ctx := shared.NewAppEngineContext(r)
+	flags, err := shared.GetFeatureFlags(ctx)
+	if err != nil {
+		// Errors aren't a big deal; log them and ignore.
+		log := shared.GetLogger(ctx)
+		log.Errorf("Error loading flags: %s", err.Error())
+	}
 	data := struct{ Flags []shared.Flag }{flags}
 	componentTemplates.ExecuteTemplate(w, "wpt-env-flags.html", data)
 }

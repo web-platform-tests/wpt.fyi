@@ -5,12 +5,12 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	models "github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine/urlfetch"
 )
 

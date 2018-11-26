@@ -51,6 +51,9 @@ func RegisterRoutes() {
 	// Admin-only manual cache flush.
 	shared.AddRoute("/admin/cache/flush", "admin-cache-flush", adminCacheFlushHandler)
 
+	// Admin-only environment flag management
+	shared.AddRoute("/admin/flags", "admin-flags", adminFlagsHandler)
+
 	// Test run results, viewed by browser (default view)
 	// For run results diff view, 'before' and 'after' params can be given.
 	shared.AddRoute("/results/", "results", testResultsHandler)
