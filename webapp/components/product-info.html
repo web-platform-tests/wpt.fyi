@@ -1,5 +1,6 @@
 <dom-module id="product-info">
   <script>
+    window.wpt = window.wpt || {};
     const DISPLAY_NAMES = (() => {
       let m = new Map();
       ['chrome', 'chrome-experimental'].forEach(n => m.set(n, 'Chrome'));
@@ -32,6 +33,13 @@
     const DEFAULT_BROWSER_NAMES = ['chrome', 'edge', 'firefox', 'safari'];
     const DEFAULT_PRODUCT_SPECS = Array.from(DEFAULT_BROWSER_NAMES);
     const DEFAULT_PRODUCTS = DEFAULT_PRODUCT_SPECS.map(p => parseProductSpec(p));
+
+    Object.defineProperty(window.wpt, 'SemanticLabels', {
+      get: () => [
+        { property: '_channel', values: CHANNELS },
+        { property: '_source', values: SOURCES },
+      ],
+    });
 
     function parseProductSpec(spec) {
       // @sha (optional)

@@ -14,10 +14,10 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 type testRunUIFilter struct {
+	PR       *int // GitHub PR to fetch the results for.
 	Products string
 	Labels   string
 	SHA      string
@@ -25,6 +25,7 @@ type testRunUIFilter struct {
 	MaxCount *int
 	From     string
 	To       string
+	Search   string
 	// JSON blob of extra (arbitrary) test runs
 	TestRuns string
 }
@@ -66,17 +67,7 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := struct {
-		// TestRuns are inlined marshalled JSON for arbitrary test runs (e.g. when
-		// diffing), for runs which aren't fetchable via a URL or the api.
-		Filter testResultsUIFilter
-		Query  string
-	}{
-		Filter: filter,
-		Query:  r.URL.Query().Get("q"),
-	}
-
-	if err := templates.ExecuteTemplate(w, "results.html", data); err != nil {
+	if err := templates.ExecuteTemplate(w, "results.html", filter); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -85,45 +76,56 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 // parseTestResultsUIFilter parses the standard TestRunFilter, as well as the extra
 // diff params (diff, before, after).
 func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err error) {
-	testRunFilter, err := shared.ParseTestRunFilterParams(r)
+	q := r.URL.Query()
+	testRunFilter, err := shared.ParseTestRunFilterParams(q)
 	if err != nil {
 		return filter, err
 	}
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 
-	if testRunFilter.IsDefaultQuery() {
-		experimentalByDefault := shared.IsFeatureEnabled(ctx, "experimentalByDefault")
-		experimentalAlignedExceptEdge := shared.IsFeatureEnabled(ctx, "experimentalAlignedExceptEdge")
-		masterRunsOnly := shared.IsFeatureEnabled(ctx, "masterRunsOnly")
-		if experimentalByDefault {
-			if experimentalAlignedExceptEdge {
-				testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
+	filter.PR, err = shared.ParsePRParam(q)
+	if err != nil {
+		return filter, err
+	} else if filter.PR != nil {
+		one := 1
+		filter.MaxCount = &one
+	} else {
+		if testRunFilter.IsDefaultQuery() {
+			experimentalByDefault := shared.IsFeatureEnabled(ctx, "experimentalByDefault")
+			experimentalAlignedExceptEdge := shared.IsFeatureEnabled(ctx, "experimentalAlignedExceptEdge")
+			masterRunsOnly := shared.IsFeatureEnabled(ctx, "masterRunsOnly")
+			if experimentalByDefault {
+				if experimentalAlignedExceptEdge {
+					testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
+				} else {
+					testRunFilter = testRunFilter.OrExperimentalRuns()
+				}
 			} else {
-				testRunFilter = testRunFilter.OrExperimentalRuns()
+				testRunFilter = testRunFilter.OrAlignedStableRuns()
 			}
-		} else {
-			testRunFilter = testRunFilter.OrAlignedStableRuns()
+			if masterRunsOnly {
+				testRunFilter = testRunFilter.MasterOnly()
+			}
 		}
-		if masterRunsOnly {
-			testRunFilter = testRunFilter.MasterOnly()
-		}
+
+		filter.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
 	}
 
-	filter.testRunUIFilter = parseTestRunUIFilter(testRunFilter)
-
-	diff, err := shared.ParseBooleanParam(r, "diff")
+	diff, err := shared.ParseBooleanParam(q, "diff")
 	if err != nil {
 		return filter, err
 	}
 	filter.Diff = diff != nil && *diff
-	diffFilter, _, err := shared.ParseDiffFilterParams(r)
-	if err != nil {
-		return filter, err
+	if filter.Diff {
+		diffFilter, _, err := shared.ParseDiffFilterParams(q)
+		if err != nil {
+			return filter, err
+		}
+		filter.DiffFilter = diffFilter.String()
 	}
-	filter.DiffFilter = diffFilter.String()
 
 	var beforeAndAfter shared.ProductSpecs
-	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(r); err != nil {
+	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(q); err != nil {
 		return filter, err
 	} else if len(beforeAndAfter) > 0 {
 		var bytes []byte
@@ -133,10 +135,13 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 		filter.Products = string(bytes)
 		filter.Diff = true
 	}
+
+	filter.Search = r.URL.Query().Get("q")
+
 	return filter, nil
 }
 
-func parseTestRunUIFilter(testRunFilter shared.TestRunFilter) (filter testRunUIFilter) {
+func convertTestRunUIFilter(testRunFilter shared.TestRunFilter) (filter testRunUIFilter) {
 	if testRunFilter.Labels != nil {
 		data, _ := json.Marshal(testRunFilter.Labels.ToSlice())
 		filter.Labels = string(data)

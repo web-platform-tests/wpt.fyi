@@ -19,6 +19,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func strPtr(s string) *string {
@@ -30,7 +32,7 @@ func TestShouldProcessStatus_ok(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.True(t, shouldProcessStatus(false, &status))
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 }
 
 func TestShouldProcessStatus_unsuccessful(t *testing.T) {
@@ -38,7 +40,7 @@ func TestShouldProcessStatus_unsuccessful(t *testing.T) {
 	status.State = strPtr("error")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.False(t, shouldProcessStatus(false, &status))
+	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 }
 
 func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
@@ -46,7 +48,7 @@ func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Travis")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
-	assert.False(t, shouldProcessStatus(false, &status))
+	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 }
 
 func TestShouldProcessStatus_notOnMaster(t *testing.T) {
@@ -54,8 +56,8 @@ func TestShouldProcessStatus_notOnMaster(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("gh-pages")}}
-	assert.False(t, shouldProcessStatus(false, &status))
-	assert.True(t, shouldProcessStatus(true, &status))
+	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), true, &status))
 }
 
 func TestIsOnMaster(t *testing.T) {
@@ -130,9 +132,13 @@ func TestCreateAllRuns_success(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
+	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
-	err := createAllRuns(logrus.New(),
+	err := createAllRuns(
+		logrus.New(),
 		&http.Client{},
+		aeAPI,
 		suitesAPI,
 		server.URL,
 		sha,
@@ -166,9 +172,13 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
+	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
-	err := createAllRuns(logrus.New(),
+	err := createAllRuns(
+		logrus.New(),
 		&http.Client{},
+		aeAPI,
 		suitesAPI,
 		server.URL,
 		sha,
@@ -195,9 +205,13 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
 	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
+	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
-	err := createAllRuns(logrus.New(),
+	err := createAllRuns(
+		logrus.New(),
 		&http.Client{Timeout: time.Second},
+		aeAPI,
 		suitesAPI,
 		server.URL,
 		sha,

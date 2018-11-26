@@ -34,9 +34,8 @@
       test('show banner on noResults', (done) => {
         trf.noResults = true;
         flush(() => {
-          const banner = trf.root.querySelector('info-banner');
+          const banner = trf.root.querySelector('info-banner[type="info"]');
           expect(banner).to.not.be.null;
-          expect(banner.type).to.equal('info');
           done();
         });
       });
@@ -44,9 +43,8 @@
       test('show banner on failedToLoad', (done) => {
         trf.resultsLoadFailed = true;
         flush(() => {
-          const banner = trf.root.querySelector('info-banner');
+          const banner = trf.root.querySelector('info-banner[type="error"]');
           expect(banner).to.not.be.null;
-          expect(banner.type).to.equal('error');
           done();
         });
       });
@@ -62,6 +60,82 @@
               assert.equal(trf.urlToPath(url('/results/abc/def/')), '/abc/def');
               assert.equal(trf.urlToPath(url('/results/abc/def.html')), '/abc/def.html');
             });
+          });
+        });
+
+        suite('computeDifferences(before, after)', () => {
+          test('added', () => {
+            const before = { passes: 0, total: 0 };
+            const after = { passes: 1, total: 2 };
+
+            trf.diffFilter = 'A';
+            expect(trf.computeDifferences(before, after)).to.have.members([1, 1, 2]);
+
+            for (const filter of ['C', 'D', 'U']) {
+              trf.diffFilter = filter;
+              expect(trf.computeDifferences(before, after)).to.be.undefined;
+            }
+          });
+
+          test('deleted', () => {
+            const before = { passes: 1, total: 2 };
+            const after = { passes: 0, total: 0 };
+
+            trf.diffFilter = 'D';
+            expect(trf.computeDifferences(before, after)).to.have.members([0, 0, -2]);
+
+            for (const filter of ['A', 'C', 'U']) {
+              trf.diffFilter = filter;
+              expect(trf.computeDifferences(before, after)).to.be.undefined;
+            }
+          });
+
+          test('changed', () => {
+            // 1/2 new tests pass.
+            const before = { passes: 0, total: 1 };
+            const after = { passes: 1, total: 3 };
+
+            trf.diffFilter = 'C';
+            expect(trf.computeDifferences(before, after)).to.have.members([1, 1, 2]);
+            for (const filter of ['A', 'D', 'U']) {
+              trf.diffFilter = filter;
+              expect(trf.computeDifferences(before, after)).to.be.undefined;
+            }
+
+            // One new pass.
+            after.passes = 1;
+            after.total = 1;
+            trf.diffFilter = 'C';
+            expect(trf.computeDifferences(before, after)).to.have.members([1, 0, 0]);
+            for (const filter of ['A', 'D', 'U']) {
+              trf.diffFilter = filter;
+              expect(trf.computeDifferences(before, after)).to.be.undefined;
+            }
+
+            // One new fail (regression) and one extra failing test = 2 regressions.
+            before.passes = 1;
+            before.total = 2;
+            after.passes = 0;
+            after.total = 3;
+            trf.diffFilter = 'C';
+            expect(trf.computeDifferences(before, after)).to.have.members([0, 2, 1]);
+            for (const filter of ['A', 'D', 'U']) {
+              trf.diffFilter = filter;
+              expect(trf.computeDifferences(before, after)).to.be.undefined;
+            }
+          });
+
+          test('unchanged', () => {
+            // 1/2 new tests pass.
+            const before = { passes: 1, total: 1 };
+            const after = before;
+
+            trf.diffFilter = 'U';
+            expect(trf.computeDifferences(before, after)).to.have.members([0, 0, 0]);
+            for (const filter of ['A', 'C', 'D']) {
+              trf.diffFilter = filter;
+              expect(trf.computeDifferences(before, after)).to.be.undefined;
+            }
           });
         });
       });

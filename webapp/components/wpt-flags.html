@@ -14,46 +14,71 @@ found in the LICENSE file.
 -->
 <dom-module id="wpt-flags">
   <script>
-    const WPT_FYI_FEATURES = [
-      'queryBuilder',
-      'queryBuilderSHA',
-      'diffFromAPI',
-      'diffFilterUIToggle',
-      'colorHomepage',
-      'structuredQueries',
-      'masterRunsOnly',
-    ];
+    window.wpt = window.wpt || {};
 
-    const _wptFlags = (superClass, readOnly) => class extends superClass {
+    /* global wpt */
+    Object.defineProperty(wpt, 'ClientSideFeatures', {
+      get: function() {
+        return [
+          'queryBuilder',
+          'queryBuilderSHA',
+          'diffFromAPI',
+          'diffFilterUIToggle',
+          'colorHomepage',
+          'structuredQueries',
+          'masterRunsOnly',
+          'experimentalByDefault',
+          'experimentalAlignedExceptEdge',
+        ];
+      }
+    });
+    Object.defineProperty(wpt, 'ServerSideFeatures', {
+      get: function() {
+        return [
+          'diffRenames',
+          'taskclusterAllBranches',
+          'paginationTokens',
+          'runsByPRNumber',
+          'failChecksOnRegression',
+        ];
+      }
+    });
+
+    wpt.makeFeatureProperties = function(features, readOnly, useLocalStorage) {
+      const props = {};
+      for (const feature of features) {
+        let value = null;
+        if (useLocalStorage) {
+          const stored = localStorage.getItem(`features.${feature}`);
+          value = stored && JSON.parse(stored);
+        }
+        // Fall back to env default.
+        if (value === null) {
+          value = window.WPTEnvironmentFlags
+            && window.WPTEnvironmentFlags[feature];
+        }
+        props[feature] = {
+          type: Boolean,
+          readOnly: readOnly && !wpt.MUTABLE_FLAGS,
+          notify: true,
+          value: value,
+        };
+      }
+      return props;
+    };
+
+    wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superClass {
       static get is() {
         return 'wpt-flags';
       }
 
       static get properties() {
-        if (!window.wpt) {
-          window.wpt = {};
-        }
-        const props = {};
-        for (const feature of WPT_FYI_FEATURES) {
-          const stored = localStorage.getItem(`features.${feature}`);
-          let value = stored && JSON.parse(stored);
-          // Fall back to env default.
-          if (value === null) {
-            value = window.WPTEnvironmentFlags
-              && window.WPTEnvironmentFlags[feature];
-          }
-          props[feature] = {
-            type: Boolean,
-            readOnly: readOnly && !window.wpt.MUTABLE_FLAGS,
-            notify: true,
-            value: value,
-          };
-        }
-        return props;
+        return wpt.makeFeatureProperties(wpt.ClientSideFeatures, readOnly, useLocalStorage);
       }
     };
+
     // eslint-disable-next-line no-unused-vars
-    const WPTFlags = (superClass) => _wptFlags(superClass, /*readOnly*/ true);
+    const WPTFlags = (superClass) => wpt.FlagsClass(superClass, /*readOnly*/ true, /*useLocalStorage*/ true);
   </script>
 </dom-module>
 
@@ -103,26 +128,128 @@ found in the LICENSE file.
   </template>
 
   <script>
-    /* global _wptFlags, WPT_FYI_FEATURES */
-    class WPTFlagsEditor extends _wptFlags(window.Polymer.Element, /*readOnly*/ false) {
+    /* global wpt */
+    wpt.FlagsEditorClass = (environmentFlags) =>
+      class extends wpt.FlagsClass(window.Polymer.Element, /*readOnly*/ false, /*useLocalStorage*/ !environmentFlags) {
+        ready() {
+          super.ready();
+          const features = wpt.ClientSideFeatures;
+          for (const feature of features) {
+            this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
+          }
+        }
+
+        static get properties() {
+          const useLocalStorage = !environmentFlags;
+          const readOnly = false;
+          return wpt.makeFeatureProperties(
+            wpt.ServerSideFeatures, readOnly, useLocalStorage);
+        }
+
+        valueChanged(value, feature) {
+          if (environmentFlags) {
+            fetch('/admin/flags', {
+              method: 'POST',
+              body: JSON.stringify({
+                Name: feature,
+                Enabled: value,
+              }),
+              credentials: 'include',
+            }).catch(e => {
+              alert(`Failed to save feature ${feature}.\n\n${e}`);
+            });
+          } else {
+            return localStorage.setItem(
+              `features.${feature}`,
+              JSON.stringify(value));
+          }
+        }
+      };
+
+    class WPTFlagsEditor extends wpt.FlagsEditorClass(/*environmentFlags*/ false) {
       static get is() {
         return 'wpt-flags-editor';
+      }
+    }
+    window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
+  </script>
+</dom-module>
+
+<dom-module id="wpt-environment-flags-editor">
+  <template>
+    <!-- WPTFlags template prepended in code, below. -->
+    <h4>Server-side only features</h4>
+    <paper-item>
+      <paper-checkbox checked="{{diffRenames}}">
+        Compute renames in diffs with the GitHub API
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{experimentalByDefault}}">
+        Fetch experimental runs as the default (homepage) query
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{experimentalAlignedExceptEdge}}">
+        All experimental, except edge, and aligned
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{masterRunsOnly}}">
+        Master runs only
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{taskclusterAllBranches}}">
+        Process all taskcluster results (not just master)
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{paginationTokens}}">
+        Return "wpt-next-page" pagination token HTTP header in /api/runs
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{runsByPRNumber}}">
+        Allow /api/runs?pr=[GitHub PR number]
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{failChecksOnRegression}}">
+        Fail the wpt.fyi GitHub status check if regressions are found, and pass them if not.
+      </paper-checkbox>
+    </paper-item>
+  </template>
+  <script>
+    /* global wpt, WPTFlagsEditor */
+    class WPTEnvironmentFlagsEditor extends wpt.FlagsEditorClass(/*environmentFlags*/ true) {
+      static get is() {
+        return 'wpt-environment-flags-editor';
       }
 
       ready() {
         super.ready();
-        for (const feature of WPT_FYI_FEATURES) {
+        for (const feature of wpt.ServerSideFeatures) {
           this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
         }
       }
-
-      valueChanged(value, feature) {
-        return localStorage.setItem(
-          `features.${feature}`,
-          JSON.stringify(value));
-      }
     }
 
-    window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
+    // Copy the WPTFlags template.
+    (() => {
+      const template = Symbol();
+      Object.defineProperty(WPTEnvironmentFlagsEditor, 'template', {
+        get: function() {
+          if (!this[template]) {
+            const envTemplate = window.Polymer.DomModule.import(WPTEnvironmentFlagsEditor.is, 'template');
+            this[template] = window.Polymer.DomModule.import(WPTFlagsEditor.is, 'template');
+            this[template].content.appendChild(envTemplate.content);
+          }
+          return this[template];
+        }
+      });
+    })();
+
+    window.customElements.define(WPTEnvironmentFlagsEditor.is, WPTEnvironmentFlagsEditor);
   </script>
 </dom-module>

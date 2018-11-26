@@ -5,13 +5,13 @@
 package shared
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -159,13 +159,76 @@ func (run TestRun) LabelsSet() mapset.Set {
 // TestRuns is a helper type for an array of TestRun entities.
 type TestRuns []TestRun
 
+func (t TestRuns) Len() int           { return len(t) }
+func (t TestRuns) Less(i, j int) bool { return t[i].TimeStart.Before(t[j].TimeStart) }
+func (t TestRuns) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+
+// SetTestRunIDs sets the ID field for each run, from the given keys.
+func (t TestRuns) SetTestRunIDs(keys []*datastore.Key) {
+	for i := 0; i < len(keys) && i < len(t); i++ {
+		t[i].ID = keys[i].IntID()
+	}
+}
+
 // GetTestRunIDs gets an array of the IDs for the TestRun entities in the array.
-func (runs TestRuns) GetTestRunIDs() TestRunIDs {
-	ids := make([]int64, len(runs))
-	for i, run := range runs {
+func (t TestRuns) GetTestRunIDs() TestRunIDs {
+	ids := make([]int64, len(t))
+	for i, run := range t {
 		ids[i] = run.ID
 	}
 	return ids
+}
+
+// OldestRunTimeStart returns the TimeStart of the oldest run in the set.
+func (t TestRuns) OldestRunTimeStart() time.Time {
+	if len(t) < 1 {
+		return time.Time{}
+	}
+	oldest := time.Now()
+	for _, run := range t {
+		if run.TimeStart.Before(oldest) {
+			oldest = run.TimeStart
+		}
+	}
+	return oldest
+}
+
+// ProductTestRuns is a tuple of a product and test runs loaded for it.
+type ProductTestRuns struct {
+	Product  ProductSpec
+	TestRuns TestRuns
+}
+
+// TestRunsByProduct is an array of tuples of {product, matching runs}, returned
+// when a TestRun query is executed.
+type TestRunsByProduct []ProductTestRuns
+
+// AllRuns returns an array of all the loaded runs.
+func (t TestRunsByProduct) AllRuns() TestRuns {
+	var runs TestRuns
+	for _, p := range t {
+		runs = append(runs, p.TestRuns...)
+	}
+	return runs
+}
+
+// ProductTestRunKeys is a tuple of a product and test run keys loaded for it.
+type ProductTestRunKeys struct {
+	Product ProductSpec
+	Keys    []*datastore.Key
+}
+
+// KeysByProduct is an array of tuples of {product, matching keys}, returned
+// when a TestRun key query is executed.
+type KeysByProduct []ProductTestRunKeys
+
+// AllKeys returns an array of all the loaded keys.
+func (t KeysByProduct) AllKeys() []*datastore.Key {
+	var keys []*datastore.Key
+	for _, v := range t {
+		keys = append(keys, v.Keys...)
+	}
+	return keys
 }
 
 // TestRunIDs is a helper for an array of TestRun IDs.

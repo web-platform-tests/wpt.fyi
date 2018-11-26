@@ -109,8 +109,11 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 
 	if !shared.IsFeatureEnabled(ctx, "checksAllUsers") {
 		whitelist := []string{
-			"lukebjerring",
 			"autofoolip",
+			"chromium-wpt-export-bot",
+			"foolip",
+			"jgraham",
+			"lukebjerring",
 		}
 		sender := ""
 		if checkSuite.Sender != nil && checkSuite.Sender.Login != nil {
@@ -124,11 +127,10 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 
 	action := checkSuite.GetAction()
 	if action == "requested" || action == "rerequested" {
+		owner := checkSuite.GetRepo().GetOwner().GetLogin()
 		repo := checkSuite.GetRepo().GetName()
-		branch := checkSuite.GetCheckSuite().GetHeadBranch()
-		log.Debugf("Check suite %s: %s:%s", action, repo, branch)
-
 		sha := checkSuite.GetCheckSuite().GetHeadSHA()
+		log.Debugf("Check suite %s: %s/%s @ %s", action, owner, repo, sha[:7])
 
 		if action == "requested" {
 			// For new suites, check if the pull is across forks; if so, request a suite
@@ -145,7 +147,6 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			}
 		}
 
-		owner := checkSuite.GetRepo().GetOwner().GetLogin()
 		installation := *checkSuite.Installation.ID
 		suite, err := getOrCreateCheckSuite(ctx, sha, owner, repo, installation)
 		if err != nil || suite == nil {
@@ -214,18 +215,18 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 func completeChecksForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
 	// Jump straight to completed check_run for already-present runs for the SHA.
 	products = shared.ProductSpecs(products).OrDefault()
-	runs, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil)
+	runsByProduct, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
-	for _, run := range runs {
-		spec := shared.ProductSpec{}
-		spec.BrowserName = run.BrowserName
-		created, err := completeCheckRun(ctx, sha, spec)
-		createdSome = createdSome || created
-		if err != nil {
-			return createdSome, err
+	for _, rbp := range runsByProduct {
+		if len(rbp.TestRuns) > 0 {
+			created, err := completeCheckRun(ctx, sha, rbp.Product)
+			createdSome = createdSome || created
+			if err != nil {
+				return createdSome, err
+			}
 		}
 	}
 	return createdSome, nil
@@ -235,7 +236,7 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 // SHA. This is needed when a PR comes from a different fork of the repo.
 func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
 	log := shared.GetLogger(ctx)
-	log.Debugf("Creating check_suite for web-platform-tests/wpt")
+	log.Debugf("Creating check_suite for web-platform-tests/wpt @ %s", sha)
 
 	jwtClient, err := getJWTClient(ctx, wptRepoInstallationID)
 	if err != nil {
@@ -259,7 +260,7 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 	if opts.Status != nil {
 		status = *opts.Status
 	}
-	log.Debugf("Creating %s %s check_run for %s/%s", status, opts.Name, suite.Owner, suite.Repo)
+	log.Debugf("Creating %s %s check_run for %s/%s @ %s", status, opts.Name, suite.Owner, suite.Repo, suite.SHA)
 	jwtClient, err := getJWTClient(ctx, suite.InstallationID)
 	if err != nil {
 		return false, err
@@ -280,7 +281,7 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		log.Warningf(string(body))
 		return false, err
 	} else if checkRun != nil {
-		log.Infof("Created check_run %v", checkRun.ID)
+		log.Infof("Created check_run %v", checkRun.GetID())
 	}
 	return true, nil
 }
@@ -365,12 +366,21 @@ func getMasterDiffURL(ctx context.Context, sha string, product shared.ProductSpe
 	detailsURL := getURL(ctx, filter)
 	query := detailsURL.Query()
 	query.Set("diff", "")
+	query.Set("filter", shared.DiffFilterParam{
+		Added:     true,
+		Changed:   true,
+		Unchanged: true,
+	}.String())
 	detailsURL.RawQuery = query.Encode()
 	return detailsURL
 }
 
+func getCheckTitle(product shared.ProductSpec) string {
+	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
+}
+
 func getURL(ctx context.Context, filter shared.TestRunFilter) *url.URL {
-	hostname := shared.GetHostname(ctx)
+	hostname := shared.NewAppEngineAPI(ctx).GetHostname()
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))
 	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL

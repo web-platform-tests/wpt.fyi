@@ -44,7 +44,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		testRun = *run
 	} else {
-		filters, err := shared.ParseTestRunFilterParams(r)
+		filters, err := shared.ParseTestRunFilterParams(r.URL.Query())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -56,17 +56,18 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		one := 1
-		testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, filters.SHA, nil, nil, &one)
+		testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, filters.SHA, nil, nil, &one, nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if len(testRuns) == 0 {
+		allRuns := testRuns.AllRuns()
+		if len(allRuns) == 0 {
 			http.NotFound(w, r)
 			return
 		}
-		testRun = testRuns[0]
+		testRun = allRuns[0]
 	}
 
 	testRunsBytes, err := json.Marshal(testRun)

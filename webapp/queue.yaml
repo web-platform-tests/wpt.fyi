@@ -3,3 +3,9 @@ queue:
   target: processor
   max_concurrent_requests: 2
   rate: 1/m
+- name: check-processing
+  rate: 1/s
+  retry_parameters:
+    task_age_limit: 5m
+    min_backoff_seconds: 15
+    max_doublings: 2 # longest timeout will be 1m

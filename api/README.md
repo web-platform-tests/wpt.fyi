@@ -52,6 +52,10 @@ __`to`__ : RFC3339 timestamp, for which to include runs that occured before the 
 
 __`max-count`__ : Maximum number of runs to get (for each browser). Maximum of 500.
 
+#### staging.wpt.fyi only (Beta params)
+
+__`pr`__ (Beta): GitHub PR number. Shows runs for commits that belong to the PR.
+
 #### Examples
 
 - https://wpt.fyi/api/runs?product=chrome&product=safari
@@ -344,10 +348,14 @@ __Content type__: `multipart/form-data`
 
 __Parameters__
 
-__`result_file`__: A **gzipped** JSON file produced by `wpt run --log-wptreport`.
-
 __`labels`__: (Optional) A comma-separated string of labels for this test run. Currently recognized
 labels are "experimental" and "stable" (the release channel of the tested browser).
+
+__`callback_url`__: (Optional) A URL that the processor should `POST` when successful, which will
+create the TestRun. Defaults to /api/results/create in the current project's environment (e.g. wpt.fyi for
+wptdashboard, staging.wpt.fyi for wptdashboard-staging).
+
+__`result_file`__: A **gzipped** JSON file produced by `wpt run --log-wptreport`.
 
 The JSON file roughly looks like this:
 
@@ -379,7 +387,7 @@ version, Sauce Labs, or custom runners), they can be overridden with the followi
 parameters in the POST payload (this is __NOT__ recommended; please include metadata in the reports
 whenever possible):
 
-* __`revision`__ (note this should be the full revision hash, not a 10-char truncation) 
+* __`revision`__ (note this should be the full revision hash, not a 10-char truncation)
 * __`browser_name`__ (note that it is not called `product` here)
 * __`browser_version`__
 * __`os_name`__ (note that it is not called `os` here)
@@ -393,6 +401,10 @@ __Parameters__
 
 __`result_url`__: A URL to a **gzipped** JSON file produced by `wpt run --log-wptreport` (see above
 for its format). This field can be repeated to include multiple links (for chunked reports).
+
+__`callback_url`__: (Optional) A URL that the processor should `POST` when successful, which will
+create the TestRun. Defaults to /api/results/create in the current project's environment (e.g. wpt.fyi for
+wptdashboard, staging.wpt.fyi for wptdashboard-staging).
 
 __`labels`__: (Optional) A comma-separated string of labels for this test run. Currently recognized
 labels are "experimental" and "stable" (the release channel of the tested browser).

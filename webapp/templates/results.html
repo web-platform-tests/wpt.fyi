@@ -6,12 +6,11 @@
   {{ template "_header.html" }}
   <div>
     <wpt-results
-        {{ template "_test_run_query_params.html" .Filter }}
-        {{- with .Filter}}
-          {{- if .Diff}} diff{{end}}
-          {{- if .DiffFilter}} diff-filter="{{.DiffFilter}}"{{end}}
-        {{- end}}
-        {{- if .Query }} search="{{.Query}}"{{end}}></wpt-results>
+        {{- template "_test_run_query_params.html" . }}
+        {{- if .Diff}} diff{{end}}
+        {{- if .DiffFilter}} diff-filter="{{.DiffFilter}}"{{end}}
+        {{- if .PR }} pr="{{.PR}}"{{end}}
+        {{- if .Search }} search="{{.Search}}"{{end}}></wpt-results>
   </div>
 </div>
 {{ template "_ga.html" }}

@@ -6,12 +6,19 @@ package checks
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/google/go-github/github"
-	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
+
+	"github.com/google/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
+
+// CheckProcessingQueue is the name of the TaskQueue that handles processing and
+// interpretation of TestRun results, in order to update the GitHub checks.
+const CheckProcessingQueue = "check-processing"
 
 func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, installation int64) (*shared.CheckSuite, error) {
 	query := datastore.NewQuery("CheckSuite").
@@ -47,58 +54,81 @@ func getSuitesForSHA(ctx context.Context, sha string) ([]shared.CheckSuite, erro
 }
 
 func pendingCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
-	suites, err := getSuitesForSHA(ctx, sha)
-	if err != nil {
-		return false, err
-	} else if len(suites) < 1 {
-		return false, nil
+	host := shared.NewAppEngineAPI(ctx).GetHostname()
+	pending := summaries.Pending{
+		CheckState: summaries.CheckState{
+			Product:    product,
+			HeadSHA:    sha,
+			Title:      getCheckTitle(product),
+			DetailsURL: getMasterDiffURL(ctx, sha, product),
+			Status:     "in_progress",
+		},
+		HostName: host,
+		RunsURL:  fmt.Sprintf("https://%s/runs", host),
 	}
-	detailsURL := getMasterDiffURL(ctx, sha, product)
-	detailsURLStr := detailsURL.String()
-
-	status := "in_progress"
-	opts := github.CreateCheckRunOptions{
-		Name:       product.String(),
-		HeadSHA:    sha,
-		DetailsURL: &detailsURLStr,
-		Status:     &status,
-		StartedAt:  &github.Timestamp{Time: time.Now()},
-	}
-
-	for _, suite := range suites {
-		created, err := createCheckRun(ctx, suite, opts)
-		if !created || err != nil {
-			return false, err
-		}
-	}
-	return true, nil
+	return updateCheckRun(ctx, pending)
 }
 
 func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
-	suites, err := getSuitesForSHA(ctx, sha)
+	host := shared.NewAppEngineAPI(ctx).GetHostname()
+	success := "success"
+	completed := summaries.Completed{
+		CheckState: summaries.CheckState{
+			Product:    product,
+			HeadSHA:    sha,
+			Title:      fmt.Sprintf("wpt.fyi - %s results", product.DisplayName()),
+			DetailsURL: getMasterDiffURL(ctx, sha, product),
+			Status:     "completed",
+			Conclusion: &success,
+		},
+		HostName: host,
+		HostURL:  fmt.Sprintf("https://%s/", host),
+		SHAURL:   getURL(ctx, shared.TestRunFilter{SHA: sha[:10]}).String(),
+		DiffURL:  getMasterDiffURL(ctx, sha, product).String(),
+	}
+	return updateCheckRun(ctx, completed)
+}
+
+func updateCheckRun(ctx context.Context, summary summaries.Summary) (bool, error) {
+	log := shared.GetLogger(ctx)
+	state := summary.GetCheckState()
+	suites, err := getSuitesForSHA(ctx, state.HeadSHA)
 	if err != nil {
+		log.Warningf("Failed to load CheckSuites for %s: %s", state.HeadSHA, err.Error())
 		return false, err
 	} else if len(suites) < 1 {
+		log.Debugf("No CheckSuites found for %s", state.HeadSHA)
 		return false, nil
 	}
-	detailsURL := getMasterDiffURL(ctx, sha, product)
-	detailsURLStr := detailsURL.String()
 
-	status := "completed"
-	conclusion := "success"
-	opts := github.CreateCheckRunOptions{
-		Name:        product.BrowserName,
-		HeadSHA:     sha,
-		DetailsURL:  &detailsURLStr,
-		Status:      &status,
-		Conclusion:  &conclusion,
-		CompletedAt: &github.Timestamp{Time: time.Now()},
+	summaryStr, err := summary.GetSummary()
+	if err != nil {
+		log.Warningf("Failed to generate summary for %s: %s", state.HeadSHA, err.Error())
+		return false, err
 	}
+
+	detailsURLStr := state.DetailsURL.String()
+	opts := github.CreateCheckRunOptions{
+		Name:       state.Product.String(),
+		HeadSHA:    state.HeadSHA,
+		DetailsURL: &detailsURLStr,
+		Status:     &state.Status,
+		Conclusion: state.Conclusion,
+		Output: &github.CheckRunOutput{
+			Title:   &state.Title,
+			Summary: &summaryStr,
+		},
+	}
+	if state.Conclusion != nil {
+		opts.CompletedAt = &github.Timestamp{Time: time.Now()}
+	}
+
 	for _, suite := range suites {
 		created, err := createCheckRun(ctx, suite, opts)
 		if !created || err != nil {
 			return false, err
 		}
+		log.Debugf("Check for %s/%s @ %s (%s) updated", suite.Owner, suite.Repo, suite.SHA[:7], state.Product.String())
 	}
 	return true, nil
 }

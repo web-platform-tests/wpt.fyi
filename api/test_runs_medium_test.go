@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -203,4 +204,53 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	json.Unmarshal(body, &results)
 	assert.Equal(t, 4, len(results))
 	assert.Equal(t, "1111111111", results[0].Revision)
+}
+
+func TestGetTestRuns_Pagination(t *testing.T) {
+	i, err := sharedtest.NewAEInstance(true)
+	assert.Nil(t, err)
+	defer i.Close()
+	r, err := i.NewRequest("GET", "/api/runs", nil)
+	assert.Nil(t, err)
+
+	ctx := shared.NewAppEngineContext(r)
+	now := time.Now()
+	run := shared.TestRun{}
+	run.BrowserName = "chrome"
+	for _, d := range []int{-3, -2, -1} {
+		run.CreatedAt = now.AddDate(0, 0, d)
+		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	}
+
+	r, _ = i.NewRequest("GET", "/api/runs?product=chrome&max-count=2", nil)
+	resp := httptest.NewRecorder()
+
+	// Feature disabled
+	apiTestRunsHandler(resp, r)
+	next := resp.Header().Get(nextPageTokenHeaderName)
+	assert.Equal(t, "", next)
+
+	// Feature enabled
+	shared.SetFeature(ctx, shared.Flag{Name: paginationTokenFeatureFlagName, Enabled: true})
+	resp = httptest.NewRecorder()
+	apiTestRunsHandler(resp, r)
+	next = resp.Header().Get(nextPageTokenHeaderName)
+	assert.NotEqual(t, "", next)
+
+	body, _ := ioutil.ReadAll(resp.Result().Body)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var pageOne shared.TestRuns
+	json.Unmarshal(body, &pageOne)
+	assert.Equal(t, 2, len(pageOne))
+
+	r, _ = i.NewRequest("GET", fmt.Sprintf("/api/runs?page=%s", url.QueryEscape(next)), nil)
+	resp = httptest.NewRecorder()
+	apiTestRunsHandler(resp, r)
+	body, _ = ioutil.ReadAll(resp.Result().Body)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var pageTwo shared.TestRuns
+	json.Unmarshal(body, &pageTwo)
+	assert.Equal(t, 1, len(pageTwo))
+	next = resp.Header().Get(nextPageTokenHeaderName)
+	assert.Equal(t, "", next)
 }

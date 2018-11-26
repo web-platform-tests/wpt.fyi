@@ -6,8 +6,11 @@ package checks
 
 import (
 	"context"
+	"fmt"
+	"net/url"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine/taskqueue"
 )
 
 // SuitesAPI abstracts all the API calls used externally.
@@ -25,17 +28,23 @@ type SuitesAPI interface {
 	// Returns true if any check_runs were created (i.e. any CheckSuite entities were
 	// found, and the create succeeded).
 	CompleteCheckRun(sha string, browser shared.ProductSpec) (bool, error)
+
+	// ScheduleResultsProcessing adds a URL for callback to TaskQueue for the given sha and
+	// product, which will actually interpret the results and summarize the outcome.
+	ScheduleResultsProcessing(sha string, browser shared.ProductSpec) error
+}
+
+type suitesAPIImpl struct {
+	ctx   context.Context
+	queue string
 }
 
 // NewSuitesAPI returns a real implementation of the SuitesAPI
 func NewSuitesAPI(ctx context.Context) SuitesAPI {
 	return suitesAPIImpl{
-		ctx: ctx,
+		ctx:   ctx,
+		queue: CheckProcessingQueue,
 	}
-}
-
-type suitesAPIImpl struct {
-	ctx context.Context
 }
 
 func (s suitesAPIImpl) Context() context.Context {
@@ -48,4 +57,19 @@ func (s suitesAPIImpl) PendingCheckRun(sha string, product shared.ProductSpec) (
 
 func (s suitesAPIImpl) CompleteCheckRun(sha string, product shared.ProductSpec) (bool, error) {
 	return completeCheckRun(s.ctx, sha, product)
+}
+
+func (s suitesAPIImpl) ScheduleResultsProcessing(sha string, product shared.ProductSpec) error {
+	log := shared.GetLogger(s.ctx)
+	target := fmt.Sprintf("/api/checks/%s", sha)
+	q := url.Values{}
+	q.Set("product", product.String())
+	t := taskqueue.NewPOSTTask(target, q)
+	t, err := taskqueue.Add(s.ctx, t, s.queue)
+	if err != nil {
+		log.Warningf("Failed to queue %s @ %s: %s", product.String(), sha[:7], err.Error())
+	} else {
+		log.Infof("Added %s @ %s to checks processing queue", product.String(), sha[:7])
+	}
+	return err
 }

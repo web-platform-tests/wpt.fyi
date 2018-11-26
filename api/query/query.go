@@ -7,6 +7,7 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -23,8 +24,8 @@ type summary map[string][]int
 type sharedInterface interface {
 	ParseQueryParamInt(r *http.Request, key string) (*int, error)
 	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
-	LoadTestRuns([]shared.ProductSpec, mapset.Set, string, *time.Time, *time.Time, *int) ([]shared.TestRun, error)
-	LoadTestRunsByIDs(ids shared.TestRunIDs) (result []shared.TestRun, err error)
+	LoadTestRuns(shared.ProductSpecs, mapset.Set, string, *time.Time, *time.Time, *int, *int) (shared.TestRunsByProduct, error)
+	LoadTestRunsByIDs(ids shared.TestRunIDs) (result shared.TestRuns, err error)
 	LoadTestRun(int64) (*shared.TestRun, error)
 }
 
@@ -33,18 +34,18 @@ type defaultShared struct {
 }
 
 func (defaultShared) ParseQueryParamInt(r *http.Request, key string) (*int, error) {
-	return shared.ParseQueryParamInt(r, key)
+	return shared.ParseQueryParamInt(r.URL.Query(), key)
 }
 
 func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter, error) {
-	return shared.ParseQueryFilterParams(r)
+	return shared.ParseQueryFilterParams(r.URL.Query())
 }
 
-func (sharedImpl defaultShared) LoadTestRuns(ps []shared.ProductSpec, ls mapset.Set, sha string, from *time.Time, to *time.Time, limit *int) ([]shared.TestRun, error) {
-	return shared.LoadTestRuns(sharedImpl.ctx, ps, ls, sha, from, to, limit)
+func (sharedImpl defaultShared) LoadTestRuns(ps shared.ProductSpecs, ls mapset.Set, sha string, from *time.Time, to *time.Time, limit *int, offset *int) (shared.TestRunsByProduct, error) {
+	return shared.LoadTestRuns(sharedImpl.ctx, ps, ls, sha, from, to, limit, offset)
 }
 
-func (sharedImpl defaultShared) LoadTestRunsByIDs(ids shared.TestRunIDs) (result []shared.TestRun, err error) {
+func (sharedImpl defaultShared) LoadTestRunsByIDs(ids shared.TestRunIDs) (result shared.TestRuns, err error) {
 	return ids.LoadTestRuns(sharedImpl.ctx)
 }
 
@@ -57,7 +58,7 @@ type queryHandler struct {
 	dataSource shared.CachedStore
 }
 
-func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, []shared.TestRun, []summary, error) {
+func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, shared.TestRuns, []summary, error) {
 	filters, err := qh.sharedImpl.ParseQueryFilterParams(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -79,9 +80,9 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 	return &filters, testRuns, summaries, nil
 }
 
-func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRun, shared.QueryFilter, error) {
+func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns, shared.QueryFilter, error) {
 	filters := in
-	var testRuns []shared.TestRun
+	var testRuns shared.TestRuns
 	var err error
 
 	if filters.RunIDs == nil || len(filters.RunIDs) == 0 {
@@ -90,11 +91,12 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 		var err error
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
-		testRuns, err = qh.sharedImpl.LoadTestRuns(products, runFilters.Labels, sha, runFilters.From, runFilters.To, &limit)
+		runsByProduct, err := qh.sharedImpl.LoadTestRuns(products, runFilters.Labels, sha, runFilters.From, runFilters.To, &limit, nil)
 		if err != nil {
 			return testRuns, filters, err
 		}
 
+		testRuns = runsByProduct.AllRuns()
 		filters.RunIDs = make([]int64, 0, len(testRuns))
 		for _, testRun := range testRuns {
 			filters.RunIDs = append(filters.RunIDs, testRun.ID)
@@ -109,7 +111,7 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) ([]shared.TestRu
 	return testRuns, filters, nil
 }
 
-func (qh queryHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, error) {
+func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error) {
 	var err error
 	summaries := make([]summary, len(testRuns))
 
@@ -124,7 +126,7 @@ func (qh queryHandler) loadSummaries(testRuns []shared.TestRun) ([]summary, erro
 			s := make(summary)
 			data, loadErr := qh.loadSummary(testRun)
 			if err == nil && loadErr != nil {
-				err = loadErr
+				err = fmt.Errorf("Failed to load test run %v: %s", testRun.ID, loadErr.Error())
 				return
 			}
 			marshalErr := json.Unmarshal(data, &s)
@@ -154,7 +156,7 @@ func getMemcacheKey(testRun shared.TestRun) string {
 
 func isRequestCacheable(r *http.Request) bool {
 	if r.Method == "GET" {
-		ids, err := shared.ParseRunIDsParam(r)
+		ids, err := shared.ParseRunIDsParam(r.URL.Query())
 		return err == nil && len(ids) > 0
 	}
 

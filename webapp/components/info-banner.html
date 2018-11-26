@@ -46,7 +46,11 @@ of type info, warning, or error.
 
       static get properties() {
         return {
-          type: String,
+          type: {
+            type: String,
+            value: 'info',
+            reflectToAttribute: true,
+          },
         };
       }
     }
