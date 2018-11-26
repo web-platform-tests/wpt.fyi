@@ -7,7 +7,9 @@
 package query
 
 import (
+	"bytes"
 	"errors"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -211,4 +213,20 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, testRuns.AllRuns(), trs)
 	assert.Equal(t, filters, fs)
+}
+
+func TestIsRequestCacheable_getNotCacheable(t *testing.T) {
+	assert.False(t, isRequestCacheable(httptest.NewRequest("GET", "https://wpt.fyi/api/search", nil)))
+}
+
+func TestIsRequestCacheable_getCacheable(t *testing.T) {
+	assert.True(t, isRequestCacheable(httptest.NewRequest("GET", "https://wpt.fyi/api/search?run_ids=1,2,-3", nil)))
+}
+
+func TestIsRequestCacheable_postNotCacheable(t *testing.T) {
+	assert.False(t, isRequestCacheable(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer([]byte("{}")))))
+}
+
+func TestIsRequestCacheable_postCacheable(t *testing.T) {
+	assert.True(t, isRequestCacheable(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer([]byte(`{"run_ids":[1,2,-3]}`)))))
 }

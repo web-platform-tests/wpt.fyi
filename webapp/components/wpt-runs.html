@@ -58,9 +58,6 @@ found in the LICENSE file.
         display: block;
         margin: auto;
       }
-      #edit-query {
-        padding: 0;
-      }
       test-runs-query-builder {
         display: block;
         margin-bottom: 32px;
@@ -88,7 +85,7 @@ found in the LICENSE file.
       <template is="dom-if" if="[[resultsRangeMessage]]">
         <info-banner>
           [[resultsRangeMessage]]
-          <paper-button id="edit-query" onclick="[[toggleBuilder]]" slot="small">Edit</paper-button>
+          <paper-button onclick="[[toggleBuilder]]" slot="small">Edit</paper-button>
         </info-banner>
       </template>
 

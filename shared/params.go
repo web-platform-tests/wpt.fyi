@@ -740,7 +740,7 @@ func ExtractRunIDsBodyParam(r *http.Request, replay bool) (TestRunIDs, error) {
 
 	msg, ok := data["run_ids"]
 	if !ok {
-		return nil, err
+		return nil, fmt.Errorf(`JSON request body is missing "run_ids" key; body: %s`, string(raw))
 	}
 	var runIDs []int64
 	err = json.Unmarshal(*msg, &runIDs)
