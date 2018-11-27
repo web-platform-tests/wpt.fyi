@@ -4,9 +4,9 @@ service: searchcache
 
 # Should match something at https://cloud.google.com/compute/docs/machine-types.
 resources:
-  # n1-standard-64 (TODO: Would prefer n1-highmem-96 or larger ultramem)
-  cpu: 64
-  memory_gb: 240
+  # n1-standard-32 (TODO: Would prefer n1-highmem-96 or larger ultramem)
+  cpu: 32
+  memory_gb: 120
 
 manual_scaling:
   instances: 2
