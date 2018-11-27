@@ -54,6 +54,11 @@ found in the LICENSE file.
       .runs.present {
         background-color: var(--paper-blue-100);
       }
+      .load-more {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
       paper-spinner-lite {
         display: block;
         margin: auto;
@@ -72,8 +77,6 @@ found in the LICENSE file.
         }
       }
     </style>
-
-    <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
     <template is="dom-if" if="[[loadingFailed]]">
       <info-banner type="error">
@@ -115,7 +118,7 @@ found in the LICENSE file.
         </thead>
         <tbody>
 
-        <template is="dom-repeat" items="{{ testRuns }}" as="results">
+        <template is="dom-repeat" items="{{ testRunsBySHA }}" as="results">
           <tr>
             <td>
               <a href="/?sha={{ results.sha }}">{{ results.sha }}</a>
@@ -142,7 +145,17 @@ found in the LICENSE file.
 
         </tbody>
       </table>
+
     </template>
+
+    <div class="load-more">
+      <template is="dom-if" if="[[nextPageToken]]">
+        <paper-button id="load-more" onclick="[[loadNextPage]]">
+          Load more
+        </paper-button>
+      </template>
+      <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
+    </div>
 
   </template>
 
@@ -156,7 +169,7 @@ found in the LICENSE file.
       static get properties() {
         return {
           // Array({ sha, Array({ platform, run, sum }))
-          testRuns: {
+          testRunsBySHA: {
             type: Array
           },
           browsers: {
@@ -179,12 +192,13 @@ found in the LICENSE file.
       constructor() {
         super();
         this.onLoadingComplete = () => {
-          this.loadingFailed = !this.testRuns;
+          this.loadingFailed = !this.testRunsBySHA;
         };
         this.toggleBuilder = () => {
           this.editingQuery = !this.editingQuery;
         };
         this.submitQuery = this.handleSubmitQuery.bind(this);
+        this.loadNextPage = this.handleLoadNextPage.bind(this);
       }
 
       computeDateDisplay(results) {
@@ -218,58 +232,61 @@ found in the LICENSE file.
       async ready() {
         super.ready();
         this.loadData();
+        this._createMethodObserver('testRunsLoaded(testRuns, testRuns.*)');
       }
 
       async loadData() {
-        return this.load(this.loadRuns().then(testRuns => {
-          let browsers = new Set();
-          // Group the runs by their revision/SHA
-          let testRunsBySha = testRuns.reduce((accum, results) => {
-            browsers.add(results.browser_name);
-            if (!accum[results.revision]) {
-              accum[results.revision] = {};
-            }
-            if (!accum[results.revision][results.browser_name]) {
-              accum[results.revision][results.browser_name] = [];
-            }
-            accum[results.revision][results.browser_name].push(results);
-            return accum;
-          }, {});
+        return this.load(this.loadRuns());
+      }
 
-          // We flatten into an array of objects so Polymer can deal with them.
-          const firstRunDate = runs => {
-            return Object.values(runs)
-              .reduce((oldest, runs) => {
-                for (const time of runs.map(r => new Date(r.time_start))) {
-                  if (time < oldest) {
-                    oldest = time;
-                  }
-                }
-                return oldest;
-              }, new Date()); // Existing runs should be historical...
-          };
-          const flattened = Object.entries(testRunsBySha)
-            .map(([sha, runs]) => ({ sha, runs, firstRunDate: firstRunDate(runs) }))
-            .sort((a, b) => b.firstRunDate.getTime() - a.firstRunDate.getTime());
-
-          // Append time (day) metadata.
-          if (flattened.length > 1) {
-            let previous = new Date(8640000000000000); // Max date.
-            for (let i = 0; i < flattened.length; i++) {
-              let current = flattened[i].firstRunDate;
-              flattened[i].date = current;
-              if (previous.getDate() !== current.getDate()) {
-                flattened[i].day_boundary = true;
-              }
-              if (previous.getYear() !== current.getYear()) {
-                flattened[i].year_boundary = true;
-              }
-              previous = current;
-            }
+      testRunsLoaded(testRuns) {
+        let browsers = new Set();
+        // Group the runs by their revision/SHA
+        let testRunsBySha = testRuns.reduce((accum, results) => {
+          browsers.add(results.browser_name);
+          if (!accum[results.revision]) {
+            accum[results.revision] = {};
           }
-          this.testRuns = flattened;
-          this.browsers = Array.from(browsers).sort();
-        }));
+          if (!accum[results.revision][results.browser_name]) {
+            accum[results.revision][results.browser_name] = [];
+          }
+          accum[results.revision][results.browser_name].push(results);
+          return accum;
+        }, {});
+
+        // We flatten into an array of objects so Polymer can deal with them.
+        const firstRunDate = runs => {
+          return Object.values(runs)
+            .reduce((oldest, runs) => {
+              for (const time of runs.map(r => new Date(r.time_start))) {
+                if (time < oldest) {
+                  oldest = time;
+                }
+              }
+              return oldest;
+            }, new Date()); // Existing runs should be historical...
+        };
+        const flattened = Object.entries(testRunsBySha)
+          .map(([sha, runs]) => ({ sha, runs, firstRunDate: firstRunDate(runs) }))
+          .sort((a, b) => b.firstRunDate.getTime() - a.firstRunDate.getTime());
+
+        // Append time (day) metadata.
+        if (flattened.length > 1) {
+          let previous = new Date(8640000000000000); // Max date.
+          for (let i = 0; i < flattened.length; i++) {
+            let current = flattened[i].firstRunDate;
+            flattened[i].date = current;
+            if (previous.getDate() !== current.getDate()) {
+              flattened[i].day_boundary = true;
+            }
+            if (previous.getYear() !== current.getYear()) {
+              flattened[i].year_boundary = true;
+            }
+            previous = current;
+          }
+        }
+        this.testRunsBySHA = flattened;
+        this.browsers = Array.from(browsers).sort();
       }
 
       runClass(testRuns, browser) {
@@ -312,6 +329,10 @@ found in the LICENSE file.
           testRuns: [],
         });
         this.loadData();
+      }
+
+      handleLoadNextPage() {
+        this.load(this.loadMoreRuns());
       }
     }
 
