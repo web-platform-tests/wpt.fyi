@@ -8,6 +8,9 @@ resources:
   cpu: 96
   memory_gb: 360
 
+manual_scaling:
+  instances: 2
+
 liveness_check:
   path: "/_ah/liveness_check"
 
