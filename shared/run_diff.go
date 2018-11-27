@@ -11,11 +11,63 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 	"google.golang.org/appengine/urlfetch"
 )
+
+// DiffAPI is an abstraction for computing run differences.
+type DiffAPI interface {
+	GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (RunDiff, error)
+	GetMasterDiffURL(sha string, product ProductSpec) *url.URL
+}
+
+type diffAPIImpl struct {
+	ctx   context.Context
+	aeAPI AppEngineAPIImpl
+}
+
+// NewDiffAPI return and implementation of the DiffAPI interface.
+func NewDiffAPI(ctx context.Context) DiffAPI {
+	return diffAPIImpl{
+		ctx:   ctx,
+		aeAPI: NewAppEngineAPI(ctx),
+	}
+}
+
+func (d diffAPIImpl) GetMasterDiffURL(sha string, product ProductSpec) *url.URL {
+	filter := TestRunFilter{}
+	filter.Products = ProductSpecs{product, product}
+	filter.Products[0].Labels = mapset.NewSet("master")
+	filter.Products[1].Revision = sha
+	detailsURL := d.aeAPI.GetResultsURL(filter)
+	query := detailsURL.Query()
+	query.Set("diff", "")
+	query.Set("filter", DiffFilterParam{
+		Added:     true,
+		Changed:   true,
+		Unchanged: true,
+	}.String())
+	detailsURL.RawQuery = query.Encode()
+	return detailsURL
+}
+
+// RunDiff represents a summary of the differences between 2 runs.
+type RunDiff struct {
+	// Differences is a map from test-path to an array of
+	// [newly-passing, newly-failing, total-delta],
+	// where newly-pa
+	Before        TestRun           `json:"-"`
+	BeforeSummary map[string][]int  `json:"-"`
+	After         TestRun           `json:"-"`
+	AfterSummary  map[string][]int  `json:"-"`
+	Differences   map[string][]int  `json:"diff"`
+	Renames       map[string]string `json:"renames"`
+}
 
 // FetchRunResultsJSONForParam fetches the results JSON blob for the given [product]@[SHA] param.
 func FetchRunResultsJSONForParam(
@@ -26,7 +78,7 @@ func FetchRunResultsJSONForParam(
 		if err = json.Unmarshal([]byte(afterDecoded), &run); err != nil {
 			return nil, err
 		}
-		return FetchRunResultsJSON(ctx, r, run)
+		return FetchRunResultsJSON(ctx, run)
 	}
 	var spec ProductSpec
 	if spec, err = ParseProductSpec(param); err != nil {
@@ -44,7 +96,7 @@ func FetchRunResultsJSONForSpec(
 	} else if run == nil {
 		return nil, nil
 	}
-	return FetchRunResultsJSON(ctx, r, *run)
+	return FetchRunResultsJSON(ctx, *run)
 }
 
 // FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
@@ -63,13 +115,9 @@ func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 
 // FetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
 // a full run can span 20k files).
-func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (results map[string][]int, err error) {
+func FetchRunResultsJSON(ctx context.Context, run TestRun) (results map[string][]int, err error) {
 	client := urlfetch.Client(ctx)
 	url := strings.TrimSpace(run.ResultsURL)
-	if strings.Index(url, "/") == 0 {
-		reqURL := *r.URL
-		reqURL.Path = url
-	}
 	var resp *http.Response
 	if resp, err = client.Get(url); err != nil {
 		return nil, err
@@ -89,9 +137,33 @@ func FetchRunResultsJSON(ctx context.Context, r *http.Request, run TestRun) (res
 	return results, nil
 }
 
+// GetRunsDiff returns a RunDiff for the given runs.
+func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
+	beforeJSON, err := FetchRunResultsJSON(d.ctx, before)
+	if err != nil {
+		return diff, fmt.Errorf("Failed to fetch 'before' results: %s", err.Error())
+	}
+	afterJSON, err := FetchRunResultsJSON(d.ctx, after)
+	if err != nil {
+		return diff, fmt.Errorf("Failed to fetch 'after' results: %s", err.Error())
+	}
+
+	var renames map[string]string
+	if IsFeatureEnabled(d.ctx, "diffRenames") {
+		renames = getDiffRenames(d.ctx, before.FullRevisionHash, after.FullRevisionHash)
+	}
+	return RunDiff{
+		Before:        before,
+		BeforeSummary: beforeJSON,
+		After:         after,
+		AfterSummary:  afterJSON,
+		Differences:   GetResultsDiff(beforeJSON, afterJSON, filter, paths, renames),
+		Renames:       renames,
+	}, nil
+}
+
 // GetResultsDiff returns a map of test name to an array of [newly-passing, newly-failing, total-delta], for tests which had
 // different results counts in their map (which is test name to array of [count-passed, total]).
-//
 func GetResultsDiff(
 	before map[string][]int,
 	after map[string][]int,
@@ -173,6 +245,39 @@ func GetResultsDiff(
 		}
 	}
 	return diff
+}
+
+func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
+	if shaBefore == shaAfter {
+		return nil
+	}
+	log := GetLogger(ctx)
+	secret, err := GetSecret(ctx, "github-api-token")
+	if err != nil {
+		log.Debugf("Failed to load github-api-token: %s", err.Error())
+		return nil
+	}
+	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: secret,
+	}))
+	githubClient := github.NewClient(oauthClient)
+	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
+	if err != nil || comparison == nil {
+		log.Errorf("Failed to fetch diff for %s...%s: %s", shaBefore[:7], shaAfter[:7], err.Error())
+		return nil
+	}
+
+	renames := make(map[string]string)
+	for _, file := range comparison.Files {
+		if file.GetStatus() == "renamed" {
+			is, was := file.GetFilename(), file.GetPreviousFilename()
+			renames["/"+was] = "/" + is
+		}
+	}
+	if len(renames) < 1 {
+		log.Debugf("No renames for %s...%s", shaBefore[:7], shaAfter[:7])
+	}
+	return renames
 }
 
 func anyPathMatches(paths mapset.Set, testPath string) bool {
