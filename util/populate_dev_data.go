@@ -253,7 +253,7 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		if aligned {
 			var shas []string
 			var keys map[string]shared.KeysByProduct
-			if shas, keys, err = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one); err != nil {
+			if shas, keys, err = shared.GetAlignedRunSHAs(ctx, shared.GetDefaultProducts(), filters.Labels, nil, nil, &one, nil); err != nil {
 				log.Printf("Failed to load a aligned run SHA: %s", err.Error())
 				continue
 			}
