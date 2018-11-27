@@ -4,9 +4,9 @@ service: searchcache
 
 # Should match something at https://cloud.google.com/compute/docs/machine-types.
 resources:
-  # n1-highmem-96
+  # n1-standard-96 (TODO: Would prefer n1-highmem-96)
   cpu: 96
-  memory_gb: 624
+  memory_gb: 360
 
 liveness_check:
   path: "/_ah/liveness_check"
