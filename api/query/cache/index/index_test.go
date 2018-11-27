@@ -16,13 +16,8 @@ func TestEvictEmpty(t *testing.T) {
 	assert.NotNil(t, i.EvictAnyRun())
 }
 
-func TestIngestNil(t *testing.T) {
-	i := NewWPTIndex()
-	assert.NotNil(t, i.IngestRun(nil))
-}
-
 func TestEvictNonEmpty(t *testing.T) {
 	i := NewWPTIndex()
-	i.IngestRun(&shared.TestRun{})
+	i.IngestRun(shared.TestRun{})
 	assert.Nil(t, i.EvictAnyRun())
 }

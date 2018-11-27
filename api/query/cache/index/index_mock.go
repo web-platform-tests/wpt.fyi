@@ -34,7 +34,7 @@ func (m *MockIndex) EXPECT() *MockIndexMockRecorder {
 }
 
 // IngestRun mocks base method
-func (m *MockIndex) IngestRun(arg0 *shared.TestRun) error {
+func (m *MockIndex) IngestRun(arg0 shared.TestRun) error {
 	ret := m.ctrl.Call(m, "IngestRun", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0

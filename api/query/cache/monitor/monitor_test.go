@@ -16,23 +16,25 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func getTestHarness(t *testing.T) (*index.MockIndex, *MockRuntime, Monitor) {
-	mockCtrl := gomock.NewController(t)
-	idx := index.NewMockIndex(mockCtrl)
-	rt := NewMockRuntime(mockCtrl)
+func getTestHarness(t *testing.T) (*gomock.Controller, *index.MockIndex, *MockRuntime, Monitor) {
+	ctrl := gomock.NewController(t)
+	idx := index.NewMockIndex(ctrl)
+	rt := NewMockRuntime(ctrl)
 	mon := NewIndexMonitor(shared.NewNilLogger(), rt, time.Microsecond, 1, idx)
-	return idx, rt, mon
+	return ctrl, idx, rt, mon
 }
 
 func TestStopErr(t *testing.T) {
-	_, rt, mon := getTestHarness(t)
+	ctrl, _, rt, mon := getTestHarness(t)
+	defer ctrl.Finish()
 	rt.EXPECT().GetHeapBytes().Return(uint64(0)).AnyTimes()
 	err := mon.Stop()
 	assert.Equal(t, errStopped, err)
 }
 
 func TestStartStop(t *testing.T) {
-	_, rt, mon := getTestHarness(t)
+	ctrl, _, rt, mon := getTestHarness(t)
+	defer ctrl.Finish()
 	rt.EXPECT().GetHeapBytes().Return(uint64(0)).AnyTimes()
 	var startErr, stopErr error
 	go func() {
@@ -45,7 +47,8 @@ func TestStartStop(t *testing.T) {
 }
 
 func TestDoubleStart(t *testing.T) {
-	_, rt, mon := getTestHarness(t)
+	ctrl, _, rt, mon := getTestHarness(t)
+	defer ctrl.Finish()
 	rt.EXPECT().GetHeapBytes().Return(uint64(0)).AnyTimes()
 	var err1, err2 error
 	var wg sync.WaitGroup
@@ -65,7 +68,8 @@ func TestDoubleStart(t *testing.T) {
 }
 
 func TestOOM(t *testing.T) {
-	idx, rt, mon := getTestHarness(t)
+	ctrl, idx, rt, mon := getTestHarness(t)
+	defer ctrl.Finish()
 	rt.EXPECT().GetHeapBytes().Return(uint64(0))
 	rt.EXPECT().GetHeapBytes().Return(uint64(0))
 	rt.EXPECT().GetHeapBytes().Return(uint64(10))
