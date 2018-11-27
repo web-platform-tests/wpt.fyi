@@ -1,3 +1,7 @@
+// Copyright 2018 The WPT Dashboard Project. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package shared
 
 import (
@@ -167,6 +171,20 @@ func (filter TestRunFilter) NextPage(loadedRuns TestRunsByProduct) *TestRunFilte
 			filter.Offset = &offset
 			return &filter
 		}
+	} else if filter.From != nil {
+		from := *filter.From
+		var to time.Time
+		if filter.To != nil {
+			to = *filter.To
+		} else {
+			to = time.Now()
+		}
+		span := to.Sub(from)
+		newFrom := from.Add(-span)
+		newTo := from.Add(-time.Millisecond)
+		filter.To = &newTo
+		filter.From = &newFrom
+		return &filter
 	}
 	return nil
 }
