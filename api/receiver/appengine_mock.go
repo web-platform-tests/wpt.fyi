@@ -7,6 +7,7 @@ package receiver
 import (
 	context "context"
 	io "io"
+	url "net/url"
 	reflect "reflect"
 	time "time"
 
@@ -62,6 +63,30 @@ func (mr *MockAppEngineAPIMockRecorder) GetHostname() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHostname))
 }
 
+// GetResultsURL mocks base method
+func (m *MockAppEngineAPI) GetResultsURL(arg0 shared.TestRunFilter) *url.URL {
+	ret := m.ctrl.Call(m, "GetResultsURL", arg0)
+	ret0, _ := ret[0].(*url.URL)
+	return ret0
+}
+
+// GetResultsURL indicates an expected call of GetResultsURL
+func (mr *MockAppEngineAPIMockRecorder) GetResultsURL(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetResultsURL), arg0)
+}
+
+// GetRunsURL mocks base method
+func (m *MockAppEngineAPI) GetRunsURL(arg0 shared.TestRunFilter) *url.URL {
+	ret := m.ctrl.Call(m, "GetRunsURL", arg0)
+	ret0, _ := ret[0].(*url.URL)
+	return ret0
+}
+
+// GetRunsURL indicates an expected call of GetRunsURL
+func (mr *MockAppEngineAPIMockRecorder) GetRunsURL(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetRunsURL), arg0)
+}
+
 // IsAdmin mocks base method
 func (m *MockAppEngineAPI) IsAdmin() bool {
 	ret := m.ctrl.Call(m, "IsAdmin")
@@ -72,6 +97,18 @@ func (m *MockAppEngineAPI) IsAdmin() bool {
 // IsAdmin indicates an expected call of IsAdmin
 func (mr *MockAppEngineAPIMockRecorder) IsAdmin() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAdmin", reflect.TypeOf((*MockAppEngineAPI)(nil).IsAdmin))
+}
+
+// IsFeatureEnabled mocks base method
+func (m *MockAppEngineAPI) IsFeatureEnabled(arg0 string) bool {
+	ret := m.ctrl.Call(m, "IsFeatureEnabled", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsFeatureEnabled indicates an expected call of IsFeatureEnabled
+func (mr *MockAppEngineAPIMockRecorder) IsFeatureEnabled(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAppEngineAPI)(nil).IsFeatureEnabled), arg0)
 }
 
 // IsLoggedIn mocks base method

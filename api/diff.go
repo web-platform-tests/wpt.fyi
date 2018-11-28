@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,10 +8,8 @@ import (
 	"net/url"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 
-	"golang.org/x/oauth2"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
@@ -103,25 +100,12 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	beforeJSON, err := shared.FetchRunResultsJSON(ctx, r, runs[0])
+	diffAPI := shared.NewDiffAPI(ctx)
+	diff, err := diffAPI.GetRunsDiff(runs[0], runs[1], diffFilter, paths)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to fetch 'before' results: %s", err.Error()), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	afterJSON, err := shared.FetchRunResultsJSON(ctx, r, runs[1])
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to fetch 'after' results: %s", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	var renames map[string]string
-	if shared.IsFeatureEnabled(ctx, "diffRenames") {
-		renames = getDiffRenames(ctx, runs[0].FullRevisionHash, runs[1].FullRevisionHash)
-	}
-	diff := diffResult{
-		Diff: shared.GetResultsDiff(beforeJSON, afterJSON, diffFilter, paths, renames),
-	}
-	diff.Renames = renames
 
 	var bytes []byte
 	if bytes, err = json.Marshal(diff); err != nil {
@@ -183,37 +167,4 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(bytes)
-}
-
-func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
-	if shaBefore == shaAfter {
-		return nil
-	}
-	log := shared.GetLogger(ctx)
-	secret, err := shared.GetSecret(ctx, "github-api-token")
-	if err != nil {
-		log.Debugf("Failed to load github-api-token: %s", err.Error())
-		return nil
-	}
-	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
-		AccessToken: secret,
-	}))
-	githubClient := github.NewClient(oauthClient)
-	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
-	if err != nil || comparison == nil {
-		log.Errorf("Failed to fetch diff for %s...%s: %s", shaBefore[:7], shaAfter[:7], err.Error())
-		return nil
-	}
-
-	renames := make(map[string]string)
-	for _, file := range comparison.Files {
-		if file.GetStatus() == "renamed" {
-			is, was := file.GetFilename(), file.GetPreviousFilename()
-			renames["/"+was] = "/" + is
-		}
-	}
-	if len(renames) < 1 {
-		log.Debugf("No renames for %s...%s", shaBefore[:7], shaAfter[:7])
-	}
-	return renames
 }

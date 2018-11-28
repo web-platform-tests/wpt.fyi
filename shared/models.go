@@ -212,6 +212,15 @@ func (t TestRunsByProduct) AllRuns() TestRuns {
 	return runs
 }
 
+// First returns the first TestRun
+func (t TestRunsByProduct) First() *TestRun {
+	if len(t) > 0 {
+		first := t.AllRuns()[0]
+		return &first
+	}
+	return nil
+}
+
 // ProductTestRunKeys is a tuple of a product and test run keys loaded for it.
 type ProductTestRunKeys struct {
 	Product ProductSpec

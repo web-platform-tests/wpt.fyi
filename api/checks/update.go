@@ -5,7 +5,6 @@
 package checks
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -62,7 +61,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	} else if len(allRuns) > 1 {
-		log.Errorf("Failed to load test runs: %s", err.Error())
+		log.Errorf("Found more that one test run")
 		http.Error(w, fmt.Sprintf("Expected exactly 1 run, but found %v", len(runs)), http.StatusBadRequest)
 		return
 	}
@@ -74,37 +73,23 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	labels.Add("master")
 	masterRuns, err := shared.LoadTestRuns(ctx, filter.Products, labels, "", nil, nil, &one, nil)
-	allMasterRuns := masterRuns.AllRuns()
+	masterRun := masterRuns.First()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	} else if len(allMasterRuns) < 1 {
+	} else if masterRun == nil {
 		log.Debugf("No masters runs found for %s @ %s", filter.Products[0].String(), sha[:7])
 		http.Error(w, "No master run found to compare differences", http.StatusNotFound)
 		return
 	}
 
-	beforeJSON, err := shared.FetchRunResultsJSON(ctx, r, allRuns[0])
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	diffAPI := shared.NewDiffAPI(ctx)
+	summaryData, err := getDiffSummary(aeAPI, diffAPI, allRuns[0], *masterRun)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to fetch 'before' results: %s", err.Error()), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	afterJSON, err := shared.FetchRunResultsJSON(ctx, r, allMasterRuns[0])
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to fetch 'after' results: %s", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	product, _ := shared.ParseProductSpec(runs[0].Product.String())
-	checkState := summaries.CheckState{
-		Product:    product,
-		HeadSHA:    sha,
-		Title:      getCheckTitle(product),
-		DetailsURL: getMasterDiffURL(ctx, sha, product),
-		Status:     "in_progress",
-	}
-	summaryData := getDiffSummary(ctx, beforeJSON, afterJSON, checkState)
-
 	updated, err := updateCheckRun(ctx, summaryData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -115,12 +100,24 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getDiffSummary(ctx context.Context, before, after map[string][]int, checkState summaries.CheckState) summaries.Summary {
+func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, before, after shared.TestRun) (summaries.Summary, error) {
 	diffFilter := shared.DiffFilterParam{Added: true, Changed: true, Unchanged: true}
-	diff := shared.GetResultsDiff(before, after, diffFilter, nil, nil)
+	diff, err := diffAPI.GetRunsDiff(before, after, diffFilter, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	product, _ := shared.ParseProductSpec(before.Product.String())
+	checkState := summaries.CheckState{
+		Product:    product,
+		HeadSHA:    before.FullRevisionHash,
+		Title:      getCheckTitle(product),
+		DetailsURL: diffAPI.GetMasterDiffURL(before.FullRevisionHash, product),
+		Status:     "completed",
+	}
 
 	regressed := false
-	for _, d := range diff {
+	for _, d := range diff.Differences {
 		if d[1] != 0 {
 			regressed = true
 			break
@@ -128,17 +125,18 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 	}
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
-	checksCanFailAndPass := shared.IsFeatureEnabled(ctx, "failChecksOnRegression")
+	checksCanFailAndPass := aeAPI.IsFeatureEnabled("failChecksOnRegression")
 
 	var summary summaries.Summary
-	host := shared.NewAppEngineAPI(ctx).GetHostname()
+	host := aeAPI.GetHostname()
+	diffURL := diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product)
 	if !regressed {
 		data := summaries.Completed{
 			CheckState: checkState,
 			HostName:   host,
 			HostURL:    fmt.Sprintf("https://%s/", host),
-			DiffURL:    getMasterDiffURL(ctx, checkState.HeadSHA, checkState.Product).String(),
-			SHAURL:     getURL(ctx, shared.TestRunFilter{SHA: checkState.HeadSHA[:10]}).String(),
+			DiffURL:    diffURL.String(),
+			SHAURL:     aeAPI.GetRunsURL(shared.TestRunFilter{SHA: checkState.HeadSHA[:10]}).String(),
 		}
 		if checksCanFailAndPass {
 			success := "success"
@@ -150,18 +148,18 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 			CheckState:  checkState,
 			HostName:    host,
 			HostURL:     fmt.Sprintf("https://%s/", host),
-			DiffURL:     getMasterDiffURL(ctx, checkState.HeadSHA, checkState.Product).String(),
+			DiffURL:     diffURL.String(),
 			Regressions: make(map[string]summaries.BeforeAndAfter),
 		}
-		for path, d := range diff {
+		for path, d := range diff.Differences {
 			if d[1] != 0 {
 				if len(data.Regressions) <= 10 {
 					ba := summaries.BeforeAndAfter{}
-					if b, ok := before[path]; ok {
+					if b, ok := diff.BeforeSummary[path]; ok {
 						ba.PassingBefore = b[0]
 						ba.TotalBefore = b[1]
 					}
-					if a, ok := after[path]; ok {
+					if a, ok := diff.AfterSummary[path]; ok {
 						ba.PassingAfter = a[0]
 						ba.TotalAfter = a[1]
 					}
@@ -177,5 +175,5 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 		}
 		summary = data
 	}
-	return summary
+	return summary, nil
 }
