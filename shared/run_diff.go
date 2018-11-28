@@ -140,7 +140,7 @@ func NewTestDiff(before, after []int, filter DiffFilterParam) TestDiff {
 func (r RunDiff) Regressions() mapset.Set {
 	regressions := mapset.NewSet()
 	for test, diff := range r.Differences {
-		if diff[1] != 0 {
+		if diff.Regressions() > 0 {
 			regressions.Add(test)
 		}
 	}
