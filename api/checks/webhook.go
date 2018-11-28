@@ -84,7 +84,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if processed {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "wpt.fyi check started successfully")
+		fmt.Fprintln(w, "wpt.fyi check(s) scheduled successfully")
 	} else {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintln(w, "Status was ignored")
@@ -154,7 +154,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		}
 
 		if action == "rerequested" {
-			scheduleProcessingForExistingRuns(ctx, sha)
+			return scheduleProcessingForExistingRuns(ctx, sha)
 		}
 	}
 	return false, nil
