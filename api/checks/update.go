@@ -113,7 +113,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, before, a
 		HeadSHA:    before.FullRevisionHash,
 		Title:      getCheckTitle(product),
 		DetailsURL: diffAPI.GetMasterDiffURL(before.FullRevisionHash, product),
-		Status:     "in_progress",
+		Status:     "completed",
 	}
 
 	regressed := false
