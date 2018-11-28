@@ -69,7 +69,7 @@ found in the LICENSE file.
             runs.push(
               fetch(`/api/runs${this.query}`)
                 .then(r => r.ok && r.json().then(runs => {
-                  this.nextPageToken = r.headers.get('wpt-next-page');
+                  this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
                   return runs;
                 }))
             );
@@ -97,7 +97,7 @@ found in the LICENSE file.
           this.nextPageToken = null;
           return fetch(url).then(r => r.ok && r.json().then(runs => {
             this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
-            this.nextPageToken = r.headers.get('wpt-next-page');
+            this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
           }));
         }
 
