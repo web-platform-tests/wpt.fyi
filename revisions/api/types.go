@@ -70,11 +70,6 @@ type Revision struct {
 	CommitTime UTCTime `json:"commit_time"`
 }
 
-// Equal returns true iff r and r2 represent the same revision.
-func (r Revision) Equal(r2 Revision) bool {
-	return r.Hash == r2.Hash && time.Time(r.CommitTime).Equal(time.Time(r2.CommitTime))
-}
-
 // FromRevision converts an agit.Revision to a revision exposed via the public API.
 func FromRevision(rev agit.Revision) Revision {
 	return Revision{
@@ -189,18 +184,4 @@ func RevisionsFromEpochs(revs map[epoch.Epoch][]agit.Revision, apiErr error) Rev
 	}
 
 	return response
-}
-
-// Diff contains a change in epoch revision where the epoch is identified by an
-// Epoch.ID.
-type Diff struct {
-	Epoch string    `json:"epoch"`
-	Prev  *Revision `json:"prev,omitempty"`
-	Next  *Revision `json:"next,omitempty"`
-}
-
-// DiffPayload contains the data pushed to a subscriber to epochal revision
-// changes.
-type DiffPayload struct {
-	Changes []Diff `json:"changes"`
 }
