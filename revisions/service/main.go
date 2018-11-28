@@ -6,12 +6,8 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/web-platform-tests/wpt.fyi/revisions/api/push"
 
 	"github.com/web-platform-tests/wpt.fyi/revisions/announcer"
 	"github.com/web-platform-tests/wpt.fyi/revisions/api"
@@ -22,24 +18,18 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 )
 
-var (
-	epochs = []epoch.Epoch{
-		epoch.Weekly{},
-		epoch.Daily{},
-		epoch.TwelveHourly{},
-		epoch.EightHourly{},
-		epoch.SixHourly{},
-		epoch.FourHourly{},
-		epoch.TwoHourly{},
-		epoch.Hourly{},
-	}
+var epochs = []epoch.Epoch{
+	epoch.Weekly{},
+	epoch.Daily{},
+	epoch.TwelveHourly{},
+	epoch.EightHourly{},
+	epoch.SixHourly{},
+	epoch.FourHourly{},
+	epoch.TwoHourly{},
+	epoch.Hourly{},
+}
 
-	a api.API
-
-	latest map[string]api.Revision
-
-	port = flag.Int("port", 8080, "Port to listen on")
-)
+var a api.API
 
 func init() {
 	a = api.NewAPI(epochs)
@@ -51,7 +41,7 @@ func init() {
 			RemoteName:                "origin",
 			BranchName:                "master",
 			EpochReferenceIterFactory: announcer.NewBoundedMergedPRIterFactory(),
-			Git:                       agit.GoGit{},
+			Git: agit.GoGit{},
 		})
 		if err != nil {
 			log.Fatalf("Announcer initialization failed: %v", err)
@@ -83,25 +73,12 @@ func init() {
 				log.Printf("ERRO: Error updating announcer: %v", err)
 			}
 			log.Print("INFO: Update complete")
-
-			// TODO(mdittmer): Push changes to subscribers instead of logging.
-			nextResponse, err := push.GetLatestRevisions(a, ancr, epochs)
-			if err != nil {
-				log.Printf("ERRO: Error getting latest revisions: %v", err)
-			}
-			next := nextResponse.Revisions
-			changes := push.DiffLatest(latest, next, epochs)
-			for _, change := range changes {
-				log.Printf("INFO: Epoch %s changed from %v to %v", change.Epoch, change.Prev, change.Next)
-			}
-			latest = next
 		}
 	}()
 }
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile | log.LUTC)
-	flag.Parse()
 
 	http.HandleFunc("/api/revisions/epochs", epochsHandler)
 	http.HandleFunc("/api/revisions/latest", latestHandler)
@@ -117,8 +94,7 @@ func main() {
 		w.Write([]byte("Ready"))
 	})
 
-	log.Printf("INFO: Listening on port %d", *port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func epochsHandler(w http.ResponseWriter, r *http.Request) {
