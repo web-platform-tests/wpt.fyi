@@ -247,7 +247,8 @@ func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
 		HeadSHA: sha,
 	}
 	suite, _, err := client.Checks.CreateCheckSuite(ctx, wptRepoOwner, wptRepoName, opts)
-	if suite != nil && err != nil {
+	if err == nil && suite != nil {
+		log.Infof("check_suite %v created", suite.GetID())
 		getOrCreateCheckSuite(ctx, sha, wptRepoOwner, wptRepoName, wptRepoInstallationID)
 	}
 	return suite != nil, err
