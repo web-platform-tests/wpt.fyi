@@ -154,7 +154,6 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 // would match the current filter, based on the given results that were
 // loaded.
 func (filter TestRunFilter) NextPage(loadedRuns TestRunsByProduct) *TestRunFilter {
-	// TODO: Handle to/from ranges.
 	if filter.MaxCount != nil {
 		// We only have another page if N results were returned for a max of N.
 		anyMaxedOut := false
