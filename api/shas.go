@@ -38,7 +38,7 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var shas []string
 	products := filters.GetProductsOrDefault()
 	if filters.Aligned != nil && *filters.Aligned {
-		if shas, _, err = shared.GetAlignedRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, filters.MaxCount); err != nil {
+		if shas, _, err = shared.GetAlignedRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, filters.MaxCount, filters.Offset); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
