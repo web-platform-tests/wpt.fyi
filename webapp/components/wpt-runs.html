@@ -231,18 +231,14 @@ found in the LICENSE file.
 
       async ready() {
         super.ready();
-        this.loadData();
+        this.load(this.loadRuns());
         this._createMethodObserver('testRunsLoaded(testRuns, testRuns.*)');
-      }
-
-      async loadData() {
-        return this.load(this.loadRuns());
       }
 
       testRunsLoaded(testRuns) {
         let browsers = new Set();
         // Group the runs by their revision/SHA
-        let testRunsBySha = testRuns.reduce((accum, results) => {
+        let shaToRunsMap = testRuns.reduce((accum, results) => {
           browsers.add(results.browser_name);
           if (!accum[results.revision]) {
             accum[results.revision] = {};
@@ -266,7 +262,7 @@ found in the LICENSE file.
               return oldest;
             }, new Date()); // Existing runs should be historical...
         };
-        const flattened = Object.entries(testRunsBySha)
+        const flattened = Object.entries(shaToRunsMap)
           .map(([sha, runs]) => ({ sha, runs, firstRunDate: firstRunDate(runs) }))
           .sort((a, b) => b.firstRunDate.getTime() - a.firstRunDate.getTime());
 
@@ -328,7 +324,7 @@ found in the LICENSE file.
           browsers: [],
           testRuns: [],
         });
-        this.loadData();
+        this.load(this.loadRuns());
       }
 
       handleLoadNextPage() {
