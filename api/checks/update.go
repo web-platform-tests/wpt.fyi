@@ -131,8 +131,8 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 	checksCanFailAndPass := shared.IsFeatureEnabled(ctx, "failChecksOnRegression")
 
 	var summary summaries.Summary
+	host := shared.NewAppEngineAPI(ctx).GetHostname()
 	if !regressed {
-		host := shared.NewAppEngineAPI(ctx).GetHostname()
 		data := summaries.Completed{
 			CheckState: checkState,
 			HostName:   host,
@@ -148,6 +148,9 @@ func getDiffSummary(ctx context.Context, before, after map[string][]int, checkSt
 	} else {
 		data := summaries.Regressed{
 			CheckState:  checkState,
+			HostName:    host,
+			HostURL:     fmt.Sprintf("https://%s/", host),
+			DiffURL:     getMasterDiffURL(ctx, checkState.HeadSHA, checkState.Product).String(),
 			Regressions: make(map[string]summaries.BeforeAndAfter),
 		}
 		for path, d := range diff {
