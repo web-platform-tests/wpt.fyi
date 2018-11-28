@@ -419,6 +419,10 @@ The `/api/revisions` namespace contains APIs for accessing WPT
 _revisions-of-interest_. The primary use case for this API is synchronizing the
 WPT revision used by active test runners.
 
+In rare cases, [this namespace may go offline without advanced
+notice](https://github.com/web-platform-tests/wpt.fyi/issues/802). Users should
+allow 10 minutes for the service to return before reporting an issue.
+
 ### /api/revisions/epochs
 
 Get the collection of epochs over which revisions are announced. For example,

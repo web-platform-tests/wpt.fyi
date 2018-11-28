@@ -128,13 +128,14 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, before, a
 	checksCanFailAndPass := aeAPI.IsFeatureEnabled("failChecksOnRegression")
 
 	var summary summaries.Summary
+	host := aeAPI.GetHostname()
+	diffURL := diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product)
 	if !regressed {
-		host := aeAPI.GetHostname()
 		data := summaries.Completed{
 			CheckState: checkState,
 			HostName:   host,
 			HostURL:    fmt.Sprintf("https://%s/", host),
-			DiffURL:    diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product).String(),
+			DiffURL:    diffURL.String(),
 			SHAURL:     aeAPI.GetRunsURL(shared.TestRunFilter{SHA: checkState.HeadSHA[:10]}).String(),
 		}
 		if checksCanFailAndPass {
@@ -145,6 +146,9 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, before, a
 	} else {
 		data := summaries.Regressed{
 			CheckState:  checkState,
+			HostName:    host,
+			HostURL:     fmt.Sprintf("https://%s/", host),
+			DiffURL:     diffURL.String(),
 			Regressions: make(map[string]summaries.BeforeAndAfter),
 		}
 		for path, d := range diff.Differences {
