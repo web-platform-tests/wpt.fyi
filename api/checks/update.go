@@ -90,7 +90,16 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	updated, err := updateCheckRun(ctx, summaryData)
+
+	suites, err := NewSuitesAPI(ctx).GetSuitesForSHA(sha)
+	if err != nil {
+		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else if len(suites) < 1 {
+		log.Debugf("No CheckSuites found for %s", sha)
+	}
+
+	updated, err := updateCheckRun(ctx, summaryData, suites...)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else if updated {

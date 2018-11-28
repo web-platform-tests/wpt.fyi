@@ -125,13 +125,16 @@ func TestCreateAllRuns_success(t *testing.T) {
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	mockC := gomock.NewController(t)
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
-	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
-	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	suite := shared.CheckSuite{SHA: sha}
+	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
+	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome"))
+	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
@@ -165,13 +168,16 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	mockC := gomock.NewController(t)
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
-	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
-	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	suite := shared.CheckSuite{SHA: sha}
+	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
+	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome"))
+	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
@@ -198,13 +204,16 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	mockC := gomock.NewController(t)
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
-	suitesAPI.EXPECT().PendingCheckRun(sha, "chrome")
-	suitesAPI.EXPECT().PendingCheckRun(sha, "firefox")
+	suite := shared.CheckSuite{SHA: sha}
+	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
+	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome"))
+	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 

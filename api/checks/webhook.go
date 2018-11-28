@@ -84,7 +84,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if processed {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "wpt.fyi check started successfully")
+		fmt.Fprintln(w, "wpt.fyi check(s) scheduled successfully")
 	} else {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintln(w, "Status was ignored")
@@ -154,7 +154,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		}
 
 		if action == "rerequested" {
-			completeChecksForExistingRuns(ctx, sha)
+			return scheduleProcessingForExistingRuns(ctx, sha)
 		}
 	}
 	return false, nil
@@ -214,7 +214,7 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 	return false, nil
 }
 
-func completeChecksForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
+func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
 	// Jump straight to completed check_run for already-present runs for the SHA.
 	products = shared.ProductSpecs(products).OrDefault()
 	runsByProduct, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil, nil)
@@ -222,10 +222,11 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
+	api := NewSuitesAPI(ctx)
 	for _, rbp := range runsByProduct {
 		if len(rbp.TestRuns) > 0 {
-			created, err := completeCheckRun(ctx, sha, rbp.Product)
-			createdSome = createdSome || created
+			err := api.ScheduleResultsProcessing(sha, rbp.Product)
+			createdSome = createdSome || err == nil
 			if err != nil {
 				return createdSome, err
 			}
@@ -257,6 +258,7 @@ func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
 	return suite != nil, err
 }
 
+// createCheckRun submits an http POST to create the check run on GitHub, handling JWT auth for the app.
 func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.CreateCheckRunOptions) (bool, error) {
 	log := shared.GetLogger(ctx)
 	status := ""
@@ -269,19 +271,10 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		return false, err
 	}
 	client := github.NewClient(jwtClient)
-	u := fmt.Sprintf("repos/%v/%v/check-runs", suite.Owner, suite.Repo)
-	req, err := client.NewRequest("POST", u, opts)
-	if err != nil {
-		return false, err
-	}
-	req.Header.Set("Accept", "application/vnd.github.antiope-preview+json")
-	checkRun := new(github.CheckRun)
-	resp, err := client.Do(ctx, req, checkRun)
 
+	checkRun, resp, err := client.Checks.CreateCheckRun(ctx, suite.Owner, suite.Repo, opts)
 	if err != nil {
 		log.Warningf("Failed to create check_run: %s", resp.Status)
-		body, _ := ioutil.ReadAll(resp.Body)
-		log.Warningf(string(body))
 		return false, err
 	} else if checkRun != nil {
 		log.Infof("Created check_run %v", checkRun.GetID())
