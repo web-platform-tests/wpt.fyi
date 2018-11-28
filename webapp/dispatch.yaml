@@ -3,3 +3,7 @@ dispatch:
     service: announcer
   - url: "*.appspot.com/api/revisions/*"
     service: announcer
+  - url: "*wpt.fyi/api/search/cache"
+    service: searchcache
+  - url: "*.appspot.com/api/search/cache"
+    service: searchcache
