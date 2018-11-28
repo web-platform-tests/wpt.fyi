@@ -8,6 +8,7 @@ package checks
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -75,6 +76,7 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	id := int64(wptfyiCheckAppID)
+	sha := strings.Repeat("0123456789", 4)
 	chrome := "chrome"
 	created := "created"
 	pending := "pending"
@@ -84,8 +86,9 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 			App: &github.App{
 				ID: &id,
 			},
-			Name:   &chrome,
-			Status: &pending,
+			Name:    &chrome,
+			Status:  &pending,
+			HeadSHA: &sha,
 		},
 	}
 	payload, _ := json.Marshal(event)
@@ -93,7 +96,7 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
 	suitesAPI := NewMockSuitesAPI(mockCtrl)
-	suitesAPI.EXPECT().ScheduleResultsProcessing(gomock.Any(), gomock.Any())
+	suitesAPI.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome"))
 
 	processed, err := handleCheckRunEvent(aeAPI, suitesAPI, payload)
 	assert.Nil(t, err)
