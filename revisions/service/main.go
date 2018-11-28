@@ -56,7 +56,7 @@ func init() {
 		limiter := rate.NewLimiter(limit, burst)
 		ctx := context.Background()
 
-		for i := 0; true; i++ {
+		for {
 			err := limiter.Wait(ctx)
 			if err != nil {
 				log.Printf("WARN: Announcer update rate limiter error: %v", err)
