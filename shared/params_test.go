@@ -7,7 +7,9 @@
 package shared
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -639,4 +641,55 @@ func TestParsePageToken(t *testing.T) {
 		assert.FailNow(t, "Parsed page token has no 'to' param")
 	}
 	assert.True(t, filter.To.Equal(*parsed.To))
+}
+
+func TestExtractRunIDsBodyParam_ParseError(t *testing.T) {
+	payload := []byte("}{")
+	_, err := ExtractRunIDsBodyParam(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload)), false)
+	assert.NotNil(t, err)
+	_, err = ExtractRunIDsBodyParam(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload)), true)
+	assert.NotNil(t, err)
+}
+
+func TestExtractRunIDsBodyParam_MissingRunIDs(t *testing.T) {
+	payload := []byte("{}")
+	_, err := ExtractRunIDsBodyParam(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload)), false)
+	assert.NotNil(t, err)
+	_, err = ExtractRunIDsBodyParam(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload)), true)
+	assert.NotNil(t, err)
+}
+
+func TestExtractRunIDsBodyParam_NonInt(t *testing.T) {
+	arrayContents := []string{
+		`"42"`,
+		`true`,
+		`[]`,
+	}
+	for _, contents := range arrayContents {
+		payload := []byte(fmt.Sprintf(`{"run_ids":[%s]}`, contents))
+		_, err := ExtractRunIDsBodyParam(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload)), false)
+		assert.NotNil(t, err)
+		_, err = ExtractRunIDsBodyParam(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload)), true)
+		assert.NotNil(t, err)
+	}
+}
+
+func TestExtractRunIDsBodyParam_OK(t *testing.T) {
+	payload := []byte(`{"run_ids":[1,2,-3]}`)
+	expected := TestRunIDs([]int64{1, 2, -3})
+	runIDs, err := ExtractRunIDsBodyParam(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload)), false)
+	assert.Nil(t, err)
+	assert.Equal(t, expected, runIDs)
+	_, err = ExtractRunIDsBodyParam(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload)), true)
+	assert.Nil(t, err)
+	assert.Equal(t, expected, runIDs)
+}
+
+func TestExtractRunIDsBodyParam_Replayable(t *testing.T) {
+	payload := []byte(`{"run_ids":[1,2,-3]}`)
+	req := httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer(payload))
+	ExtractRunIDsBodyParam(req, true)
+	replayed, err := ioutil.ReadAll(req.Body)
+	assert.Nil(t, err)
+	assert.Equal(t, payload, replayed)
 }

@@ -5,10 +5,13 @@
 package shared
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"regexp"
 	"sort"
@@ -710,4 +713,36 @@ func ParsePageToken(v url.Values) (*TestRunFilter, error) {
 		return nil, err
 	}
 	return &filter, nil
+}
+
+// ExtractRunIDsBodyParam extracts {"run_ids": <run ids>} from a request JSON
+// body. Optionally replace r.Body so that it can be replayed by subsequent
+// request handling code can process it.
+func ExtractRunIDsBodyParam(r *http.Request, replay bool) (TestRunIDs, error) {
+	raw := make([]byte, 0)
+	body := r.Body
+	raw, err := ioutil.ReadAll(body)
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	// If requested, allow subsequent request handling code to re-read body.
+	if replay {
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(raw))
+	}
+
+	var data map[string]*json.RawMessage
+	err = json.Unmarshal(raw, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	msg, ok := data["run_ids"]
+	if !ok {
+		return nil, fmt.Errorf(`JSON request body is missing "run_ids" key; body: %s`, string(raw))
+	}
+	var runIDs []int64
+	err = json.Unmarshal(*msg, &runIDs)
+	return TestRunIDs(runIDs), err
 }

@@ -66,7 +66,7 @@ func (s suitesAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 			Product:    product,
 			HeadSHA:    suite.SHA,
 			Title:      getCheckTitle(product),
-			DetailsURL: getMasterDiffURL(s.ctx, suite.SHA, product),
+			DetailsURL: shared.NewDiffAPI(s.ctx).GetMasterDiffURL(suite.SHA, product),
 			Status:     "in_progress",
 		},
 		HostName: host,

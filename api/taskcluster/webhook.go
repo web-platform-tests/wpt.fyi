@@ -298,13 +298,11 @@ func createAllRuns(
 			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
-			} else if !shared.StringSliceContains(labels, shared.MasterLabel) {
-				// Create pending checks on non-master branches.
-				spec := shared.ProductSpec{}
-				spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
-				for _, suite := range suites {
-					suitesAPI.PendingCheckRun(suite, spec)
-				}
+			}
+			spec := shared.ProductSpec{}
+			spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
+			for _, suite := range suites {
+				suitesAPI.PendingCheckRun(suite, spec)
 			}
 		}(browser, urls)
 	}

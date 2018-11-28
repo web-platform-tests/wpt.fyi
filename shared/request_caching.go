@@ -84,7 +84,7 @@ type cachingHandler struct {
 	cache       ReadWritable
 	isCacheable func(*http.Request) bool
 	getCacheKey func(*http.Request) interface{}
-	shouldCache func(int, []byte) bool
+	shouldCache func(context.Context, int, []byte) bool
 }
 
 func (h cachingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +129,7 @@ func (h cachingHandler) delegateAndCache(w http.ResponseWriter, r *http.Request,
 	cw := NewCachingResponseWriter(w)
 	h.delegate.ServeHTTP(cw, r)
 	s := cw.StatusCode()
-	if !h.shouldCache(s, cw.Bytes()) {
+	if !h.shouldCache(h.ctx, s, cw.Bytes()) {
 		logger.Warningf("Not caching uncacheable status code %d for URL %s", s, r.URL.String())
 		return
 	}
@@ -156,7 +156,7 @@ func (h cachingHandler) delegateAndCache(w http.ResponseWriter, r *http.Request,
 
 // NewCachingHandler produces a caching handler with an underlying delegate
 // handler, cache, cacheability decision function, and cache key producer.
-func NewCachingHandler(ctx context.Context, delegate http.Handler, cache ReadWritable, isCacheable func(*http.Request) bool, getCacheKey func(*http.Request) interface{}, shouldCache func(int, []byte) bool) http.Handler {
+func NewCachingHandler(ctx context.Context, delegate http.Handler, cache ReadWritable, isCacheable func(*http.Request) bool, getCacheKey func(*http.Request) interface{}, shouldCache func(context.Context, int, []byte) bool) http.Handler {
 	return cachingHandler{ctx, delegate, cache, isCacheable, getCacheKey, shouldCache}
 }
 
@@ -175,6 +175,6 @@ func URLAsCacheKey(r *http.Request) interface{} {
 
 // CacheStatusOK is a hlper for indicating that a request is cacheable iff the
 // status code is http.StatusOK.
-func CacheStatusOK(statusCode int, payload []byte) bool {
+func CacheStatusOK(ctx context.Context, statusCode int, payload []byte) bool {
 	return statusCode == http.StatusOK
 }

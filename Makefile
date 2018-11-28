@@ -212,8 +212,8 @@ dev_data: git
 gcloud-login: gcloud  $(WPTD_PATH)client-secret.json
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 
-deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP_PATH var-PROJECT
-	gcloud config set project $(PROJECT)
+deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP_PATH
+	gcloud config set project wptdashboard-staging
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
@@ -221,8 +221,8 @@ deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP
 cleanup_staging_versions: gcloud-login
 	$(WPTD_GO_PATH)/util/cleanup-versions.sh
 
-deploy_production: gcloud webapp_deps package_service var-APP_PATH var-PROJECT
-	gcloud config set project $(PROJECT)
+deploy_production: gcloud webapp_deps package_service var-APP_PATH
+	gcloud config set project wptdashboard
 	cd $(WPTD_PATH); util/deploy.sh -p $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi

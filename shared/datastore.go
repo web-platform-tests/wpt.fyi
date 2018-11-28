@@ -224,10 +224,14 @@ func GetAlignedRunSHAs(
 	labels mapset.Set,
 	from,
 	to *time.Time,
-	limit *int) (shas []string, keys map[string]KeysByProduct, err error) {
+	limit *int,
+	offset *int) (shas []string, keys map[string]KeysByProduct, err error) {
+	if limit == nil {
+		maxMax := MaxCountMaxValue
+		limit = &maxMax
+	}
 	query := datastore.
 		NewQuery("TestRun").
-		Limit(MaxCountMaxValue).
 		Order("-TimeStart")
 
 	if labels != nil {
@@ -278,10 +282,12 @@ func GetAlignedRunSHAs(
 		set.Add(matchingProduct)
 		keyCollector[testRun.Revision][matchingProduct].Keys = []*datastore.Key{key}
 		if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
+			if offset == nil || done.Cardinality() >= *offset {
+				shas = append(shas, testRun.Revision)
+			}
 			done.Add(testRun.Revision)
-			shas = append(shas, testRun.Revision)
 			keys[testRun.Revision] = keyCollector[testRun.Revision]
-			if limit != nil && len(shas) >= *limit {
+			if len(shas) >= *limit {
 				return shas, keys, nil
 			}
 		}
