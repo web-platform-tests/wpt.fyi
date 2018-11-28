@@ -60,7 +60,7 @@ func pendingCheckRun(ctx context.Context, sha string, product shared.ProductSpec
 			Product:    product,
 			HeadSHA:    sha,
 			Title:      getCheckTitle(product),
-			DetailsURL: getMasterDiffURL(ctx, sha, product),
+			DetailsURL: shared.NewDiffAPI(ctx).GetMasterDiffURL(sha, product),
 			Status:     "in_progress",
 		},
 		HostName: host,
@@ -70,21 +70,25 @@ func pendingCheckRun(ctx context.Context, sha string, product shared.ProductSpec
 }
 
 func completeCheckRun(ctx context.Context, sha string, product shared.ProductSpec) (bool, error) {
-	host := shared.NewAppEngineAPI(ctx).GetHostname()
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	host := aeAPI.GetHostname()
+	runsURL := aeAPI.GetRunsURL(shared.TestRunFilter{SHA: sha[:10]})
+	diffAPI := shared.NewDiffAPI(ctx)
+	diffURL := diffAPI.GetMasterDiffURL(sha, product)
 	success := "success"
 	completed := summaries.Completed{
 		CheckState: summaries.CheckState{
 			Product:    product,
 			HeadSHA:    sha,
 			Title:      fmt.Sprintf("wpt.fyi - %s results", product.DisplayName()),
-			DetailsURL: getMasterDiffURL(ctx, sha, product),
+			DetailsURL: diffURL,
 			Status:     "completed",
 			Conclusion: &success,
 		},
 		HostName: host,
 		HostURL:  fmt.Sprintf("https://%s/", host),
-		SHAURL:   getURL(ctx, shared.TestRunFilter{SHA: sha[:10]}).String(),
-		DiffURL:  getMasterDiffURL(ctx, sha, product).String(),
+		SHAURL:   runsURL.String(),
+		DiffURL:  diffURL.String(),
 	}
 	return updateCheckRun(ctx, completed)
 }
@@ -103,12 +107,13 @@ func updateCheckRun(ctx context.Context, summary summaries.Summary) (bool, error
 
 	summaryStr, err := summary.GetSummary()
 	if err != nil {
+		log.Warningf("Failed to generate summary for %s: %s", state.HeadSHA, err.Error())
 		return false, err
 	}
 
 	detailsURLStr := state.DetailsURL.String()
 	opts := github.CreateCheckRunOptions{
-		Name:       state.Product.BrowserName,
+		Name:       state.Product.String(),
 		HeadSHA:    state.HeadSHA,
 		DetailsURL: &detailsURLStr,
 		Status:     &state.Status,
@@ -127,6 +132,7 @@ func updateCheckRun(ctx context.Context, summary summaries.Summary) (bool, error
 		if !created || err != nil {
 			return false, err
 		}
+		log.Debugf("Check for %s/%s @ %s (%s) updated", suite.Owner, suite.Repo, suite.SHA[:7], state.Product.String())
 	}
 	return true, nil
 }

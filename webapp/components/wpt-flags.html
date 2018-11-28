@@ -39,6 +39,7 @@ found in the LICENSE file.
           'taskclusterAllBranches',
           'paginationTokens',
           'runsByPRNumber',
+          'failChecksOnRegression',
         ];
       }
     });
@@ -211,6 +212,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{runsByPRNumber}}">
         Allow /api/runs?pr=[GitHub PR number]
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{failChecksOnRegression}}">
+        Fail the wpt.fyi GitHub status check if regressions are found, and pass them if not.
       </paper-checkbox>
     </paper-item>
   </template>

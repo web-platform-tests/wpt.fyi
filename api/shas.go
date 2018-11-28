@@ -27,7 +27,7 @@ func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	filters, err := shared.ParseTestRunFilterParams(r)
+	filters, err := shared.ParseTestRunFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -38,7 +38,7 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var shas []string
 	products := filters.GetProductsOrDefault()
 	if filters.Aligned != nil && *filters.Aligned {
-		if shas, _, err = shared.GetAlignedRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, filters.MaxCount); err != nil {
+		if shas, _, err = shared.GetAlignedRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, filters.MaxCount, filters.Offset); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

@@ -113,9 +113,6 @@ found in the LICENSE file.
         background: var(--paper-blue-500);
         color: white;
       }
-      #edit-query {
-        padding: 1px;
-      }
       test-runs-query-builder {
         display: block;
         margin-bottom: 32px;
@@ -169,7 +166,7 @@ found in the LICENSE file.
           <info-banner>
             [[resultsRangeMessage]]
             <template is="dom-if" if="[[queryBuilder]]">
-              <paper-button id="edit-query" onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+              <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
             </template>
           </info-banner>
         </template>
@@ -188,16 +185,19 @@ found in the LICENSE file.
       </info-banner>
     </template>
 
-    <iron-collapse opened="[[editingQuery]]">
-      <test-runs-query-builder product-specs="[[productSpecs]]"
-                              labels="[[labels]]"
-                              sha="[[sha]]"
-                              aligned="[[aligned]]"
-                              on-submit="[[submitQuery]]"
-                              diff="[[diff]]"
-                              edit>
-      </test-runs-query-builder>
-    </iron-collapse>
+    <template is="dom-if" if="[[queryBuilder]]">
+      <iron-collapse opened="[[editingQuery]]">
+        <test-runs-query-builder product-specs="[[productSpecs]]"
+                                labels="[[labels]]"
+                                sha="[[sha]]"
+                                aligned="[[aligned]]"
+                                on-submit="[[submitQuery]]"
+                                from="[[from]]"
+                                to="[[to]]"
+                                diff="[[diff]]">
+        </test-runs-query-builder>
+      </iron-collapse>
+    </template>
 
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -287,6 +287,7 @@ found in the LICENSE file.
 
           <template is="dom-if" if="[[pathIsATestFile]]">
             <test-results-history-grid
+                product-specs="[[productSpecs]]"
                 path="[[path]]"
                 labels="[[labels]]"
                 tests="[[displayedTests]]">
@@ -300,9 +301,8 @@ found in the LICENSE file.
   <script>
     const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-    /* global WPTColors, WPTFlags, SelfNavigation, LoadingState, TestRunsUIQuery, TestRunsQueryLoader */
-    class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIQuery(
-      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer)))))) {
+    /* global WPTColors, WPTFlags, SelfNavigation, LoadingState, TestRunsUIBase */
+    class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase)))) {
 
       static get is() {
         return 'wpt-results';
@@ -440,7 +440,6 @@ found in the LICENSE file.
         this.onSearchCommit = this.handleSearchCommit.bind(this);
         this.onSearchAutocomplete = this.handleSearchAutocomplete.bind(this);
         this.onLoadingComplete = () => {
-          this.resultsLoadFailed = !(this.testRuns && this.testRuns.length);
           this.noResults = !this.resultsLoadFailed
             && !(this.searchResults && this.searchResults.length);
         };
@@ -488,6 +487,7 @@ found in the LICENSE file.
       }
 
       loadData() {
+        this.resultsLoadFailed = false;
         this.load(
           this.loadRuns().then(async runs => {
             // Pass current (un)structured query is passed to fetchResults().
@@ -503,7 +503,10 @@ found in the LICENSE file.
               };
               this.fetchDiff();
             }
-          })
+          }),
+          () => {
+            this.resultsLoadFailed = true;
+          }
         );
       }
 
@@ -531,15 +534,20 @@ found in the LICENSE file.
           }
         }
 
-        this.load(window.fetch(url, fetchOpts).then(r => {
-          if (!r.ok || r.status !== 200) {
-            return Promise.reject('Failed to fetch results data.');
+        this.load(
+          window.fetch(url, fetchOpts).then(r => {
+            if (!r.ok || r.status !== 200) {
+              return Promise.reject('Failed to fetch results data.');
+            }
+            return r.json();
+          }).then(json => {
+            this.searchResults = json.results;
+            this.refreshDisplayedNodes();
+          }),
+          () => {
+            this.resultsLoadFailed = true;
           }
-          return r.json();
-        }).then(json => {
-          this.searchResults = json.results;
-          this.refreshDisplayedNodes();
-        }));
+        );
       }
 
       fetchDiff() {

@@ -6,8 +6,11 @@ package sharedtest
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
+	url "net/url"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // MockAppEngineAPI is a mock of AppEngineAPI interface
@@ -82,6 +85,18 @@ func (mr *MockAppEngineAPIMockRecorder) LoginURL(redirect interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAppEngineAPI)(nil).LoginURL), redirect)
 }
 
+// IsFeatureEnabled mocks base method
+func (m *MockAppEngineAPI) IsFeatureEnabled(featureName string) bool {
+	ret := m.ctrl.Call(m, "IsFeatureEnabled", featureName)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsFeatureEnabled indicates an expected call of IsFeatureEnabled
+func (mr *MockAppEngineAPIMockRecorder) IsFeatureEnabled(featureName interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAppEngineAPI)(nil).IsFeatureEnabled), featureName)
+}
+
 // GetHostname mocks base method
 func (m *MockAppEngineAPI) GetHostname() string {
 	ret := m.ctrl.Call(m, "GetHostname")
@@ -92,4 +107,28 @@ func (m *MockAppEngineAPI) GetHostname() string {
 // GetHostname indicates an expected call of GetHostname
 func (mr *MockAppEngineAPIMockRecorder) GetHostname() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHostname))
+}
+
+// GetResultsURL mocks base method
+func (m *MockAppEngineAPI) GetResultsURL(filter shared.TestRunFilter) *url.URL {
+	ret := m.ctrl.Call(m, "GetResultsURL", filter)
+	ret0, _ := ret[0].(*url.URL)
+	return ret0
+}
+
+// GetResultsURL indicates an expected call of GetResultsURL
+func (mr *MockAppEngineAPIMockRecorder) GetResultsURL(filter interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetResultsURL), filter)
+}
+
+// GetRunsURL mocks base method
+func (m *MockAppEngineAPI) GetRunsURL(filter shared.TestRunFilter) *url.URL {
+	ret := m.ctrl.Call(m, "GetRunsURL", filter)
+	ret0, _ := ret[0].(*url.URL)
+	return ret0
+}
+
+// GetRunsURL indicates an expected call of GetRunsURL
+func (mr *MockAppEngineAPIMockRecorder) GetRunsURL(filter interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetRunsURL), filter)
 }

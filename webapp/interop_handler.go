@@ -13,7 +13,7 @@ import (
 // interopHandler handles the view of test results broken down by the
 // number of browsers for which the test passes.
 func interopHandler(w http.ResponseWriter, r *http.Request) {
-	testRunFilter, err := shared.ParseTestRunFilterParams(r)
+	testRunFilter, err := shared.ParseTestRunFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

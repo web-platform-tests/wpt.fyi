@@ -9,11 +9,15 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="./info-banner.html">
 <link rel="import" href="./test-runs.html">
 <link rel="import" href="./test-run.html">
 <link rel="import" href="./loading-state.html">
 <link rel="import" href="./product-info.html">
+<link rel="import" href="./test-runs-query-builder.html">
+<link rel="import" href="./wpt-flags.html">
 
 <dom-module id="wpt-runs">
   <template>
@@ -50,9 +54,18 @@ found in the LICENSE file.
       .runs.present {
         background-color: var(--paper-blue-100);
       }
+      .load-more {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
       paper-spinner-lite {
         display: block;
         margin: auto;
+      }
+      test-runs-query-builder {
+        display: block;
+        margin-bottom: 32px;
       }
 
       @media (max-width: 800px) {
@@ -65,19 +78,33 @@ found in the LICENSE file.
       }
     </style>
 
-    <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
-
     <template is="dom-if" if="[[loadingFailed]]">
       <info-banner type="error">
         Failed to load test runs.
       </info-banner>
     </template>
 
-    <template is="dom-if" if="[[testResults.length]]">
+    <template is="dom-if" if="[[testRuns.length]]">
       <template is="dom-if" if="[[resultsRangeMessage]]">
         <info-banner>
           [[resultsRangeMessage]]
+          <paper-button onclick="[[toggleBuilder]]" slot="small">Edit</paper-button>
         </info-banner>
+      </template>
+
+      <template is="dom-if" if="[[queryBuilder]]">
+        <iron-collapse opened="[[editingQuery]]">
+          <test-runs-query-builder product-specs="[[productSpecs]]"
+                                  labels="[[labels]]"
+                                  sha="[[sha]]"
+                                  aligned="[[aligned]]"
+                                  on-submit="[[submitQuery]]"
+                                  from="[[from]]"
+                                  to="[[to]]"
+                                  diff="[[diff]]"
+                                  show-time-range>
+          </test-runs-query-builder>
+        </iron-collapse>
       </template>
 
       <table>
@@ -91,7 +118,7 @@ found in the LICENSE file.
         </thead>
         <tbody>
 
-        <template is="dom-repeat" items="{{ testResults }}" as="results">
+        <template is="dom-repeat" items="{{ testRunsBySHA }}" as="results">
           <tr>
             <td>
               <a href="/?sha={{ results.sha }}">{{ results.sha }}</a>
@@ -107,10 +134,10 @@ found in the LICENSE file.
             </template>
             <td day-boundary$="{{results.day_boundary}}">
               <template is="dom-if" if="[[results.day_boundary]]">
-                {{ computeDateDisplay(results.date) }}
+                {{ computeDateDisplay(results) }}
               </template>
               <span class="time">
-                {{ computeTimeDisplay(results.date) }}
+                {{ computeTimeDisplay(results) }}
               </span>
             </td>
           </tr>
@@ -118,13 +145,23 @@ found in the LICENSE file.
 
         </tbody>
       </table>
+
     </template>
+
+    <div class="load-more">
+      <template is="dom-if" if="[[nextPageToken]]">
+        <paper-button id="load-more" onclick="[[loadNextPage]]">
+          Load more
+        </paper-button>
+      </template>
+      <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
+    </div>
 
   </template>
 
   <script>
-    /* global TestRunsBase, LoadingState */
-    class WPTRuns extends LoadingState(TestRunsBase) {
+    /* global WPTFlags, TestRunsUIBase, LoadingState */
+    class WPTRuns extends WPTFlags(LoadingState(TestRunsUIBase)) {
       static get is() {
         return 'wpt-runs';
       }
@@ -132,7 +169,7 @@ found in the LICENSE file.
       static get properties() {
         return {
           // Array({ sha, Array({ platform, run, sum }))
-          testResults: {
+          testRunsBySHA: {
             type: Array
           },
           browsers: {
@@ -146,79 +183,106 @@ found in the LICENSE file.
             type: Boolean,
             value: false,
           },
+          editingQuery: Boolean,
+          toggleBuilder: Function,
+          submitQuery: Function,
         };
       }
 
-      computeDateDisplay(date) {
-        return date.toLocaleDateString(navigator.language, {
-          month: 'short',
-          day: 'numeric',
-        });
+      constructor() {
+        super();
+        this.onLoadingComplete = () => {
+          this.loadingFailed = !this.testRunsBySHA;
+        };
+        this.toggleBuilder = () => {
+          this.editingQuery = !this.editingQuery;
+        };
+        this.submitQuery = this.handleSubmitQuery.bind(this);
+        this.loadNextPage = this.handleLoadNextPage.bind(this);
       }
 
-      computeTimeDisplay(date) {
-        return date.toLocaleTimeString(navigator.language, {
+      computeDateDisplay(results) {
+        if (!results || !results.date) {
+          return;
+        }
+        const date = results.date;
+        const opts = {
+          month: 'short',
+          day: 'numeric',
+        };
+        if (results.year_boundary
+          && date.getYear() !== new Date().getYear()) {
+          opts.year = 'numeric';
+        }
+        return date && date.toLocaleDateString(navigator.language, opts);
+      }
+
+      computeTimeDisplay(results) {
+        if (!results || !results.date) {
+          return;
+        }
+        const date = results.date;
+        return date && date.toLocaleTimeString(navigator.language, {
           hour: 'numeric',
           minute: '2-digit',
           hour12: false,
         });
       }
 
-      constructor() {
-        super();
-        this.onLoadingComplete = () => {
-          this.loadingFailed = !this.testResults;
-        };
-      }
-
       async ready() {
         super.ready();
-        await this.load(this.loadRuns().then(testRuns => {
-          let browsers = new Set();
-          // Group the runs by their revision/SHA
-          let testRunsBySha = testRuns.reduce((accum, results) => {
-            browsers.add(results.browser_name);
-            if (!accum[results.revision]) {
-              accum[results.revision] = {};
-            }
-            if (!accum[results.revision][results.browser_name]) {
-              accum[results.revision][results.browser_name] = [];
-            }
-            accum[results.revision][results.browser_name].push(results);
-            return accum;
-          }, {});
+        this.load(this.loadRuns());
+        this._createMethodObserver('testRunsLoaded(testRuns, testRuns.*)');
+      }
 
-          // We flatten into an array of objects so Polymer can deal with them.
-          const firstRunDate = runs => {
-            return Object.values(runs)
-              .reduce((oldest, runs) => {
-                for (const time of runs.map(r => new Date(r.time_start))) {
-                  if (time < oldest) {
-                    oldest = time;
-                  }
-                }
-                return oldest;
-              }, new Date()); // Existing runs should be historical...
-          };
-          const flattened = Object.entries(testRunsBySha)
-            .map(([sha, runs]) => ({ sha, runs, firstRunDate: firstRunDate(runs) }))
-            .sort((a, b) => b.firstRunDate.getTime() - a.firstRunDate.getTime());
-
-          // Append time (day) metadata.
-          if (flattened.length > 1) {
-            let previousDay = -1;
-            for (let i = 0; i < flattened.length; i++) {
-              let current = flattened[i].firstRunDate;
-              flattened[i].date = current;
-              if (previousDay !== current.getDate()) {
-                flattened[i].day_boundary = true;
-              }
-              previousDay = current.getDate();
-            }
+      testRunsLoaded(testRuns) {
+        let browsers = new Set();
+        // Group the runs by their revision/SHA
+        let shaToRunsMap = testRuns.reduce((accum, results) => {
+          browsers.add(results.browser_name);
+          if (!accum[results.revision]) {
+            accum[results.revision] = {};
           }
-          this.testResults = flattened;
-          this.browsers = Array.from(browsers).sort();
-        }));
+          if (!accum[results.revision][results.browser_name]) {
+            accum[results.revision][results.browser_name] = [];
+          }
+          accum[results.revision][results.browser_name].push(results);
+          return accum;
+        }, {});
+
+        // We flatten into an array of objects so Polymer can deal with them.
+        const firstRunDate = runs => {
+          return Object.values(runs)
+            .reduce((oldest, runs) => {
+              for (const time of runs.map(r => new Date(r.time_start))) {
+                if (time < oldest) {
+                  oldest = time;
+                }
+              }
+              return oldest;
+            }, new Date()); // Existing runs should be historical...
+        };
+        const flattened = Object.entries(shaToRunsMap)
+          .map(([sha, runs]) => ({ sha, runs, firstRunDate: firstRunDate(runs) }))
+          .sort((a, b) => b.firstRunDate.getTime() - a.firstRunDate.getTime());
+
+        // Append time (day) metadata.
+        if (flattened.length > 1) {
+          let previous = new Date(8640000000000000); // Max date.
+          for (let i = 0; i < flattened.length; i++) {
+            let current = flattened[i].firstRunDate;
+            flattened[i].date = current;
+            if (previous.getDate() !== current.getDate()) {
+              flattened[i].day_boundary = true;
+            }
+            if (previous.getYear() !== current.getYear()) {
+              flattened[i].year_boundary = true;
+            }
+            previous = current;
+          }
+        }
+        this.testRunsBySHA = flattened;
+        this.browsers = Array.from(browsers).sort();
       }
 
       runClass(testRuns, browser) {
@@ -246,6 +310,25 @@ found in the LICENSE file.
 
       computeThWidth(browsers) {
         return `${100 / (browsers.length + 2)}%`;
+      }
+
+      handleSubmitQuery() {
+        const queryBefore = this.query;
+        const builder = this.shadowRoot.querySelector('test-runs-query-builder');
+        this.editingQuery = false;
+        this.updateQueryParams(builder.queryParams);
+        if (queryBefore === this.query) {
+          return;
+        }
+        this.setProperties({
+          browsers: [],
+          testRuns: [],
+        });
+        this.load(this.loadRuns());
+      }
+
+      handleLoadNextPage() {
+        this.load(this.loadMoreRuns());
       }
     }
 

@@ -30,7 +30,7 @@ func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	product, err := shared.ParseProductParam(r)
+	product, err := shared.ParseProductParam(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

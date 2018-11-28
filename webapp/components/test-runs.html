@@ -15,10 +15,6 @@ found in the LICENSE file.
     /* global TestRunsQuery */
     const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
       class extends TestRunsQuery(superClass, opt_queryCompute) {
-        static get is() {
-          return 'wpt-results-base';
-        }
-
         static get properties() {
           return {
             path: String,
@@ -39,6 +35,7 @@ found in the LICENSE file.
               type: Boolean,
               computed: 'computePathIsATestFile(path)'
             },
+            nextPageToken: String,
           };
         }
 
@@ -69,8 +66,13 @@ found in the LICENSE file.
           }
           // Fetch by products.
           if (this.productSpecs && this.productSpecs.length) {
-            runs.push(fetch(`/api/runs${this.query}`)
-              .then(r => r.ok && r.json()));
+            runs.push(
+              fetch(`/api/runs${this.query}`)
+                .then(r => r.ok && r.json().then(runs => {
+                  this.nextPageToken = r.headers.get('wpt-next-page');
+                  return runs;
+                }))
+            );
           }
           const fetches = await Promise.all(runs);
 
@@ -81,6 +83,22 @@ found in the LICENSE file.
           }, []);
           this.testRuns = flattened;
           return flattened;
+        }
+
+        /**
+         * Fetch the next page of runs, using nextPageToken, if applicable.
+         */
+        loadMoreRuns() {
+          if (!this.nextPageToken) {
+            return;
+          }
+          const url = new URL('/api/runs', window.location);
+          url.searchParams.set('page', this.nextPageToken);
+          this.nextPageToken = null;
+          return fetch(url).then(r => r.ok && r.json().then(runs => {
+            this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
+            this.nextPageToken = r.headers.get('wpt-next-page');
+          }));
         }
 
         splitPathIntoLinkedParts(inputPath) {
@@ -99,8 +117,24 @@ found in the LICENSE file.
         }
       };
 
-    const TestRunsBase = TestRunsQueryLoader(window.Polymer.Element);
-
+    class TestRunsBase extends TestRunsQueryLoader(window.Polymer.Element) {
+      static get is() {
+        return 'wpt-results-base';
+      }
+    }
     window.customElements.define(TestRunsBase.is, TestRunsBase);
+  </script>
+</dom-module>
+
+<dom-module id="wpt-results-ui-base">
+  <script>
+    /* global TestRunsUIQuery, TestRunsQueryLoader */
+    class TestRunsUIBase extends TestRunsUIQuery(
+      TestRunsQueryLoader(window.Polymer.Element, TestRunsUIQuery.Computer)) {
+      static get is() {
+        return 'wpt-results-ui-base';
+      }
+    }
+    window.customElements.define(TestRunsUIBase.is, TestRunsUIBase);
   </script>
 </dom-module>

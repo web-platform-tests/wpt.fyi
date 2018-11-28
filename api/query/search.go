@@ -5,6 +5,7 @@
 package query
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -85,7 +86,7 @@ func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		sh = structuredSearchHandler{queryHandler: qh}
 	}
-	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, shared.CacheStatusOK)
+	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, shouldCacheSearchResponse)
 	ch.ServeHTTP(w, r)
 }
 
@@ -179,4 +180,29 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 	sort.Sort(byName(resp.Results))
 
 	return resp
+}
+
+// TODO: Sometimes an empty result set is being cached for a query over
+// legitimate runs. For now, prevent serving empty result sets from cache.
+// Eventually, a more durable fix to
+// https://github.com/web-platform-tests/wpt.fyi/issues/759 should replace this
+// approximation.
+var shouldCacheSearchResponse = func(ctx context.Context, statusCode int, payload []byte) bool {
+	if !shared.CacheStatusOK(ctx, statusCode, payload) {
+		return false
+	}
+
+	var resp SearchResponse
+	err := json.Unmarshal(payload, &resp)
+	if err != nil {
+		shared.GetLogger(ctx).Errorf("Malformed search response")
+		return false
+	}
+
+	if len(resp.Results) == 0 {
+		shared.GetLogger(ctx).Errorf("Query yielded no results; not caching")
+		return false
+	}
+
+	return true
 }

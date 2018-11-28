@@ -155,7 +155,7 @@ golint_deps: git
 	fi
 
 package_service: var-APP_PATH
-	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/spanner/service" ]]; then \
+	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/spanner/service" || "$(APP_PATH)" == "api/query/cache/service" ]]; then \
 		export TMP_DIR=$$(mktemp -d); \
 		rm -rf $(WPTD_PATH)$(APP_PATH)/wpt.fyi; \
 		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
@@ -212,20 +212,22 @@ dev_data: git
 gcloud-login: gcloud  $(WPTD_PATH)client-secret.json
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 
-deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP_PATH var-PROJECT
-	gcloud config set project $(PROJECT)
+deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP_PATH
+	gcloud config set project wptdashboard-staging
 	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
+	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 cleanup_staging_versions: gcloud-login
 	$(WPTD_GO_PATH)/util/cleanup-versions.sh
 
-deploy_production: gcloud webapp_deps package_service var-APP_PATH var-PROJECT
-	gcloud config set project $(PROJECT)
+deploy_production: gcloud webapp_deps package_service var-APP_PATH
+	gcloud config set project wptdashboard
 	cd $(WPTD_PATH); util/deploy.sh -p $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
+	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 bower_components: git node-bower
 	cd $(WPTD_PATH)webapp; npm run bower-components

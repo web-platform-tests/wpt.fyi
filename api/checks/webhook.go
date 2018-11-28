@@ -13,13 +13,11 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 
-	"github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
@@ -361,31 +359,6 @@ func getSignedJWT(ctx context.Context) (string, error) {
 	return jwtToken.SignedString(key)
 }
 
-// Diff for the given product at master vs the given sha.
-func getMasterDiffURL(ctx context.Context, sha string, product shared.ProductSpec) *url.URL {
-	filter := shared.TestRunFilter{}
-	filter.Products = shared.ProductSpecs{product, product}
-	filter.Products[0].Labels = mapset.NewSet("master")
-	filter.Products[1].Revision = sha
-	detailsURL := getURL(ctx, filter)
-	query := detailsURL.Query()
-	query.Set("diff", "")
-	query.Set("filter", shared.DiffFilterParam{
-		Added:     true,
-		Changed:   true,
-		Unchanged: true,
-	}.String())
-	detailsURL.RawQuery = query.Encode()
-	return detailsURL
-}
-
 func getCheckTitle(product shared.ProductSpec) string {
 	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
-}
-
-func getURL(ctx context.Context, filter shared.TestRunFilter) *url.URL {
-	hostname := shared.NewAppEngineAPI(ctx).GetHostname()
-	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", hostname))
-	detailsURL.RawQuery = filter.ToQuery().Encode()
-	return detailsURL
 }
