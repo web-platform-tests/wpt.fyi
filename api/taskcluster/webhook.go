@@ -121,17 +121,18 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
-	if !shouldProcessStatus(log, processAllBranches, &status) {
-		return false, nil
-	}
-
 	if status.TargetURL == nil {
 		return false, errors.New("No target_url on taskcluster status event")
 	}
 	taskGroupID := extractTaskGroupID(*status.TargetURL)
 	if taskGroupID == "" {
 		return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
+	}
+
+	log.Debugf("Taskcluster group %s", taskGroupID)
+	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
+	if !shouldProcessStatus(log, processAllBranches, &status) {
+		return false, nil
 	}
 
 	log.Infof("Processing task group %s", taskGroupID)
