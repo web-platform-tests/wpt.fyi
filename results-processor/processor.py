@@ -156,8 +156,9 @@ def process_report(params):
     # because raw_results_url contains both the full revision & checksum of the
     # report content, unique enough to use as a UID.
     if _find_run_by_raw_results(raw_results_url):
-        _log.warn('Skipping the task because RawResultsURL already exists: %s',
-                  raw_results_url)
+        _log.warning(
+            'Skipping the task because RawResultsURL already exists: %s',
+            raw_results_url)
         return ''
 
     if result_type == 'single':
@@ -172,19 +173,20 @@ def process_report(params):
     tempdir = tempfile.mkdtemp()
     try:
         report.populate_upload_directory(output_dir=tempdir)
+        # First copy [ID]-summary.json.gz to /wptd/[SHA]/[ID]-summary.json.gz.
         results_gs_url = 'gs://{}/{}'.format(
             config.results_bucket(), report.sha_summary_path)
         gsutil.copy(
             os.path.join(tempdir, report.sha_summary_path),
             results_gs_url,
             gzipped=True)
-        # TODO(Hexcles): Consider switching to gsutil.copy.
-        gsutil.rsync_gzip(
+        # Now /wptd/[SHA] is guaranteed to exist. According to `gsutil cp
+        # --help`, copy [ID] to /wptd/[SHA] will create /wptd/[SHA]/[ID].
+        gsutil.copy(
             os.path.join(tempdir, report.sha_product_path),
-            # The trailing slash is crucial (wpt.fyi#275).
-            'gs://{}/{}/'.format(config.results_bucket(),
-                                 report.sha_product_path),
-            quiet=True)
+            'gs://{}/{}'.format(config.results_bucket(),
+                                report.run_info['revision']),
+            gzipped=True, quiet=True)
         resp += "Uploaded to {}\n".format(results_gs_url)
     finally:
         shutil.rmtree(tempdir)
@@ -193,8 +195,9 @@ def process_report(params):
     # Datastore does not support a query-and-put transaction, so this is only a
     # best effort to avoid duplicate runs.
     if _find_run_by_raw_results(raw_results_url):
-        _log.warn('Skipping the task because RawResultsURL already exists: %s',
-                  raw_results_url)
+        _log.warning(
+            'Skipping the task because RawResultsURL already exists: %s',
+            raw_results_url)
         return ''
 
     # Authenticate as "_processor" for create-test-run API.
