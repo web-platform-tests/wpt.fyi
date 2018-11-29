@@ -71,7 +71,9 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if event == "check_suite" {
 		processed, err = handleCheckSuiteEvent(ctx, payload)
 	} else if event == "check_run" {
-		processed, err = handleCheckRunEvent(ctx, payload)
+		aeAPI := shared.NewAppEngineAPI(ctx)
+		suitesAPI := NewSuitesAPI(ctx)
+		processed, err = handleCheckRunEvent(aeAPI, suitesAPI, payload)
 	} else if event == "pull_request" {
 		processed, err = handlePullRequestEvent(ctx, payload)
 	}
@@ -82,7 +84,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if processed {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "wpt.fyi check started successfully")
+		fmt.Fprintln(w, "wpt.fyi check(s) scheduled successfully")
 	} else {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintln(w, "Status was ignored")
@@ -152,7 +154,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		}
 
 		if action == "rerequested" {
-			completeChecksForExistingRuns(ctx, sha)
+			return scheduleProcessingForExistingRuns(ctx, sha)
 		}
 	}
 	return false, nil
@@ -160,8 +162,8 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
-func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
-	log := shared.GetLogger(ctx)
+func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload []byte) (bool, error) {
+	log := shared.GetLogger(aeAPI.Context())
 	var checkRun github.CheckRunEvent
 	if err := json.Unmarshal(payload, &checkRun); err != nil {
 		return false, err
@@ -176,13 +178,15 @@ func handleCheckRunEvent(ctx context.Context, payload []byte) (bool, error) {
 	action := checkRun.GetAction()
 	status := checkRun.GetCheckRun().GetStatus()
 	if (action == "created" && status != "completed") || action == "rerequested" {
-		name, sha := *checkRun.CheckRun.Name, *checkRun.CheckRun.HeadSHA
-		log.Debugf("Check run %s @ %s %s", name, sha, action)
-		spec, err := shared.ParseProductSpec(*checkRun.CheckRun.Name)
+		name, sha := checkRun.GetCheckRun().GetName(), checkRun.GetCheckRun().GetHeadSHA()
+		log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
+		spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
 		if err != nil {
-			log.Errorf("Failed to parse \"%s\" as product spec", *checkRun.CheckRun.Name)
+			log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
+			return false, err
 		}
-		return completeChecksForExistingRuns(ctx, sha, spec)
+		suitesAPI.ScheduleResultsProcessing(sha, spec)
+		return true, nil
 	}
 	return false, nil
 }
@@ -210,7 +214,7 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 	return false, nil
 }
 
-func completeChecksForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
+func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
 	// Jump straight to completed check_run for already-present runs for the SHA.
 	products = shared.ProductSpecs(products).OrDefault()
 	runsByProduct, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil, nil)
@@ -218,10 +222,11 @@ func completeChecksForExistingRuns(ctx context.Context, sha string, products ...
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
+	api := NewSuitesAPI(ctx)
 	for _, rbp := range runsByProduct {
 		if len(rbp.TestRuns) > 0 {
-			created, err := completeCheckRun(ctx, sha, rbp.Product)
-			createdSome = createdSome || created
+			err := api.ScheduleResultsProcessing(sha, rbp.Product)
+			createdSome = createdSome || err == nil
 			if err != nil {
 				return createdSome, err
 			}
@@ -253,6 +258,7 @@ func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
 	return suite != nil, err
 }
 
+// createCheckRun submits an http POST to create the check run on GitHub, handling JWT auth for the app.
 func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.CreateCheckRunOptions) (bool, error) {
 	log := shared.GetLogger(ctx)
 	status := ""
@@ -265,19 +271,10 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		return false, err
 	}
 	client := github.NewClient(jwtClient)
-	u := fmt.Sprintf("repos/%v/%v/check-runs", suite.Owner, suite.Repo)
-	req, err := client.NewRequest("POST", u, opts)
-	if err != nil {
-		return false, err
-	}
-	req.Header.Set("Accept", "application/vnd.github.antiope-preview+json")
-	checkRun := new(github.CheckRun)
-	resp, err := client.Do(ctx, req, checkRun)
 
+	checkRun, resp, err := client.Checks.CreateCheckRun(ctx, suite.Owner, suite.Repo, opts)
 	if err != nil {
 		log.Warningf("Failed to create check_run: %s", resp.Status)
-		body, _ := ioutil.ReadAll(resp.Body)
-		log.Warningf(string(body))
 		return false, err
 	} else if checkRun != nil {
 		log.Infof("Created check_run %v", checkRun.GetID())

@@ -23,6 +23,7 @@ import (
 // DiffAPI is an abstraction for computing run differences.
 type DiffAPI interface {
 	GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (RunDiff, error)
+	GetDiffURL(before, after TestRun, diffFilter *DiffFilterParam) *url.URL
 	GetMasterDiffURL(sha string, product ProductSpec) *url.URL
 }
 
@@ -37,6 +38,22 @@ func NewDiffAPI(ctx context.Context) DiffAPI {
 		ctx:   ctx,
 		aeAPI: NewAppEngineAPI(ctx),
 	}
+}
+
+func (d diffAPIImpl) GetDiffURL(before, after TestRun, diffFilter *DiffFilterParam) *url.URL {
+	filter := TestRunFilter{}
+	filter.Products = ProductSpecs{
+		ProductSpec{ProductAtRevision: before.ProductAtRevision},
+		ProductSpec{ProductAtRevision: after.ProductAtRevision},
+	}
+	detailsURL := d.aeAPI.GetResultsURL(filter)
+	query := detailsURL.Query()
+	query.Set("diff", "")
+	if diffFilter != nil {
+		query.Set("filter", diffFilter.String())
+	}
+	detailsURL.RawQuery = query.Encode()
+	return detailsURL
 }
 
 func (d diffAPIImpl) GetMasterDiffURL(sha string, product ProductSpec) *url.URL {

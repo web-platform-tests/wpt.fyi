@@ -95,11 +95,14 @@ type BeforeAndAfter struct {
 type Regressed struct {
 	CheckState
 
-	HostName    string
-	HostURL     string
-	DiffURL     string
-	Regressions map[string]BeforeAndAfter
-	More        int
+	MasterRun     shared.TestRun
+	PRRun         shared.TestRun
+	HostName      string
+	HostURL       string
+	DiffURL       string
+	MasterDiffURL string
+	Regressions   map[string]BeforeAndAfter
+	More          int
 }
 
 // GetCheckState returns the info needed to update a check.
