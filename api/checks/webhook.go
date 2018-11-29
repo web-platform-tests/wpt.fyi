@@ -13,7 +13,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -350,7 +349,7 @@ func getSignedJWT(ctx context.Context, appID int64) (string, error) {
 	claims := &jwt.StandardClaims{
 		IssuedAt:  now.Unix(),
 		ExpiresAt: now.Add(time.Minute * 10).Unix(),
-		Issuer:    strconv.Itoa(wptfyiCheckAppID),
+		Issuer:    fmt.Sprintf("%v", appID),
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
