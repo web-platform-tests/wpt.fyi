@@ -39,6 +39,8 @@ type Index interface {
 	EvictAnyRun() error
 }
 
+// ReportLoader handles loading a WPT test results report based on metadata in
+// a shared.TestRun.
 type ReportLoader interface {
 	Load(shared.TestRun) (*metrics.TestResultsReport, error)
 }
