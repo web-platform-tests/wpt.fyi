@@ -117,7 +117,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 		return nil, err
 	}
 
-	product, _ := shared.ParseProductSpec(prRun.Product.String())
+	product, _ := shared.ParseProductSpec(prRun.Product.BrowserName)
 	diffURL := diffAPI.GetDiffURL(masterRun, prRun, &diffFilter)
 	checkState := summaries.CheckState{
 		Product:    product,
