@@ -7,6 +7,7 @@ package shared
 import (
 	"context"
 	"net/http"
+	"reflect"
 
 	mapset "github.com/deckarep/golang-set"
 	log "github.com/sirupsen/logrus"
@@ -213,4 +214,14 @@ func StringSliceContains(ss []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// MapStringKeys returns the keys in the given string-keyed map.
+func MapStringKeys(m interface{}) []string {
+	keys := reflect.ValueOf(m).MapKeys()
+	strKeys := make([]string, len(keys))
+	for i, key := range keys {
+		strKeys[i] = key.Interface().(string)
+	}
+	return strKeys
 }

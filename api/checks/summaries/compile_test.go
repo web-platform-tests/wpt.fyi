@@ -16,24 +16,40 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// To output the rendered content during execution of the test(s), set this flag,
-// e.g. go test ./api/checks/summaries -tags="small" -print_output -test.v
+// To output the rendered content during execution of the test(s), set this flag, e.g.
+// go test ./api/checks/summaries -tags="medium" -print_output -test.v
 var renderOutputToConsole = flag.Bool("print_output", false, "Whether to render compiled markdown during test execution.")
 
 func TestGetSummary_Completed(t *testing.T) {
-	foo := Completed{
-		DiffURL:  "foo.com/diff?before=chrome[master]&after=chrome@0123456789",
-		HostName: "foo.com",
-		HostURL:  "foo.com/results/",
-		SHAURL:   "foo.com/sha/",
+	master := shared.TestRun{}
+	master.BrowserName = "chrome"
+	master.Revision = "abcdef0123"
+	master.FullRevisionHash = strings.Repeat(master.Revision, 4)
+	pr := shared.TestRun{}
+	pr.BrowserName = "chrome"
+	pr.Revision = "0123456789"
+	pr.FullRevisionHash = strings.Repeat(pr.Revision, 4)
+	foo := Completed{}
+	foo.MasterRun = master
+	foo.PRRun = pr
+	foo.DiffURL = "foo.com/diff?before=chrome[master]&after=chrome@0123456789"
+	foo.HostName = "foo.com"
+	foo.HostURL = "foo.com/results/"
+	foo.Results = map[string][]int{
+		"/foo.html": []int{2, 3},
 	}
+	foo.More = 1
+
 	s, err := foo.GetSummary()
 	printOutput(s)
-	assert.Nil(t, err)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.HostURL)
 	assert.Contains(t, s, foo.DiffURL)
-	assert.Contains(t, s, foo.SHAURL)
+	assert.Contains(t, s, "2 / 3")
+	assert.Contains(t, s, "And 1 others...")
 }
 
 func TestGetSummary_Pending(t *testing.T) {
@@ -43,7 +59,9 @@ func TestGetSummary_Pending(t *testing.T) {
 	}
 	s, err := foo.GetSummary()
 	printOutput(s)
-	assert.Nil(t, err)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.RunsURL)
 }
@@ -57,26 +75,28 @@ func TestGetSummary_Regressed(t *testing.T) {
 	pr.BrowserName = "chrome"
 	pr.Revision = "0123456789"
 	pr.FullRevisionHash = strings.Repeat(pr.Revision, 4)
-	foo := Regressed{
-		MasterRun:     master,
-		PRRun:         pr,
-		HostName:      "foo.com",
-		HostURL:       "https://foo.com/",
-		DiffURL:       "https://foo.com/?products=chrome@0000000000,chrome@0123456789&diff",
-		MasterDiffURL: "https://foo.com/?products=chrome[master],chrome@0123456789&diff",
-		Regressions: map[string]BeforeAndAfter{
-			"/foo.html": BeforeAndAfter{
-				PassingBefore: 1,
-				TotalBefore:   1,
-				PassingAfter:  0,
-				TotalAfter:    1,
-			},
+	foo := Regressed{}
+	foo.MasterRun = master
+	foo.PRRun = pr
+	foo.HostName = "foo.com"
+	foo.HostURL = "https://foo.com/"
+	foo.DiffURL = "https://foo.com/?products=chrome@0000000000,chrome@0123456789&diff"
+	foo.MasterDiffURL = "https://foo.com/?products=chrome[master],chrome@0123456789&diff"
+	foo.Regressions = map[string]BeforeAndAfter{
+		"/foo.html": BeforeAndAfter{
+			PassingBefore: 1,
+			TotalBefore:   1,
+			PassingAfter:  0,
+			TotalAfter:    1,
 		},
-		More: 1,
 	}
+	foo.More = 1
+
 	s, err := foo.GetSummary()
 	printOutput(s)
-	assert.Nil(t, err)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.HostURL)
 	assert.Contains(t, s, foo.DiffURL)

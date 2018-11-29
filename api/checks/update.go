@@ -7,6 +7,7 @@ package checks
 import (
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/deckarep/golang-set"
 
@@ -140,13 +141,30 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 
 	var summary summaries.Summary
 	host := aeAPI.GetHostname()
+
+	resultsComparison := summaries.ResultsComparison{
+		MasterRun:     masterRun,
+		PRRun:         prRun,
+		HostName:      host,
+		HostURL:       fmt.Sprintf("https://%s/", host),
+		DiffURL:       diffURL.String(),
+		MasterDiffURL: diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product).String(),
+	}
+
 	if !regressed {
 		data := summaries.Completed{
-			CheckState: checkState,
-			HostName:   host,
-			HostURL:    fmt.Sprintf("https://%s/", host),
-			DiffURL:    diffURL.String(),
-			SHAURL:     aeAPI.GetRunsURL(shared.TestRunFilter{SHA: checkState.HeadSHA[:10]}).String(),
+			CheckState:        checkState,
+			ResultsComparison: resultsComparison,
+			Results:           make(map[string][]int),
+		}
+		tests := shared.MapStringKeys(diff.AfterSummary)
+		sort.Strings(tests)
+		for _, test := range tests {
+			if len(data.Results) < 10 {
+				data.Results[test] = diff.AfterSummary[test]
+			} else {
+				data.More++
+			}
 		}
 		if checksCanFailAndPass {
 			success := "success"
@@ -155,14 +173,9 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 		summary = data
 	} else {
 		data := summaries.Regressed{
-			MasterRun:     masterRun,
-			PRRun:         prRun,
-			CheckState:    checkState,
-			HostName:      host,
-			HostURL:       fmt.Sprintf("https://%s/", host),
-			DiffURL:       diffURL.String(),
-			MasterDiffURL: diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product).String(),
-			Regressions:   make(map[string]summaries.BeforeAndAfter),
+			CheckState:        checkState,
+			ResultsComparison: resultsComparison,
+			Regressions:       make(map[string]summaries.BeforeAndAfter),
 		}
 		for path, d := range diff.Differences {
 			if d[1] != 0 {
