@@ -141,6 +141,8 @@ type PendingTestRun struct {
 type CheckSuite struct {
 	// SHA of the revision that requested a check suite.
 	SHA string `json:"sha"`
+	// The GitHub app ID for custom wpt.fyi check
+	AppID int64 `json:"app_id"`
 	// The GitHub app installation ID for custom wpt.fyi check
 	InstallationID int64  `json:"installation"`
 	Owner          string `json:"owner"` // Owner username

@@ -21,11 +21,11 @@ import (
 	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
-	"google.golang.org/appengine/datastore"
 )
 
 // NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
 const wptfyiCheckAppID = 19965
+const checksStagingAppID = 21580
 const wptRepoID = 3618133
 const wptRepoInstallationID = 449270
 const wptRepoOwner = "web-platform-tests"
@@ -102,7 +102,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
-	if appID != wptfyiCheckAppID {
+	if appID != wptfyiCheckAppID && appID != checksStagingAppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -132,6 +132,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		sha := checkSuite.GetCheckSuite().GetHeadSHA()
 		log.Debugf("Check suite %s: %s/%s @ %s", action, owner, repo, sha[:7])
 
+		installationID := checkSuite.GetInstallation().GetID()
 		if action == "requested" {
 			// For new suites, check if the pull is across forks; if so, request a suite
 			// on the main repo (web-platform-tests/wpt) too.
@@ -139,7 +140,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			for _, p := range pullRequests {
 				destRepoID := p.GetBase().GetRepo().GetID()
 				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
-					_, err := createWPTCheckSuite(ctx, sha)
+					_, err := createWPTCheckSuite(ctx, appID, installationID, sha)
 					if err != nil {
 						log.Errorf("Failed to create wpt check_suite: %s", err.Error())
 					}
@@ -147,8 +148,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			}
 		}
 
-		installation := *checkSuite.Installation.ID
-		suite, err := getOrCreateCheckSuite(ctx, sha, owner, repo, installation)
+		suite, err := getOrCreateCheckSuite(ctx, sha, owner, repo, appID, installationID)
 		if err != nil || suite == nil {
 			return false, err
 		}
@@ -210,7 +210,7 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 	destRepoID := pullRequest.GetPullRequest().GetBase().GetRepo().GetID()
 	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
 		// Pull is across forks; request a check suite on the main fork too.
-		return createWPTCheckSuite(ctx, sha)
+		return createWPTCheckSuite(ctx, wptfyiCheckAppID, wptRepoInstallationID, sha)
 	}
 	return false, nil
 }
@@ -238,11 +238,11 @@ func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products
 
 // createWPTCheckSuite creates a check_suite on the main wpt repo for the given
 // SHA. This is needed when a PR comes from a different fork of the repo.
-func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
+func createWPTCheckSuite(ctx context.Context, appID, installationID int64, sha string) (bool, error) {
 	log := shared.GetLogger(ctx)
 	log.Debugf("Creating check_suite for web-platform-tests/wpt @ %s", sha)
 
-	jwtClient, err := getJWTClient(ctx, wptRepoInstallationID)
+	jwtClient, err := getJWTClient(ctx, appID, installationID)
 	if err != nil {
 		return false, err
 	}
@@ -254,7 +254,7 @@ func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
 	suite, _, err := client.Checks.CreateCheckSuite(ctx, wptRepoOwner, wptRepoName, opts)
 	if err == nil && suite != nil {
 		log.Infof("check_suite %v created", suite.GetID())
-		getOrCreateCheckSuite(ctx, sha, wptRepoOwner, wptRepoName, wptRepoInstallationID)
+		getOrCreateCheckSuite(ctx, sha, wptRepoOwner, wptRepoName, appID, installationID)
 	}
 	return suite != nil, err
 }
@@ -267,7 +267,10 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		status = *opts.Status
 	}
 	log.Debugf("Creating %s %s check_run for %s/%s @ %s", status, opts.Name, suite.Owner, suite.Repo, suite.SHA)
-	jwtClient, err := getJWTClient(ctx, suite.InstallationID)
+	if suite.AppID == 0 {
+		suite.AppID = wptfyiCheckAppID
+	}
+	jwtClient, err := getJWTClient(ctx, suite.AppID, suite.InstallationID)
 	if err != nil {
 		return false, err
 	}
@@ -286,8 +289,8 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 // NOTE(lukebjerring): oauth2/jwt has incorrect field-names, and doesn't allow
 // passing in an http.Client (for GitHub's Authorization header flow), so we
 // are forced to copy a little code here :(
-func getJWTClient(ctx context.Context, installation int64) (*http.Client, error) {
-	ss, err := getSignedJWT(ctx)
+func getJWTClient(ctx context.Context, appID, installation int64) (*http.Client, error) {
+	ss, err := getSignedJWT(ctx, appID)
 	if err != nil {
 		return nil, err
 	}
@@ -331,12 +334,12 @@ func getJWTClient(ctx context.Context, installation int64) (*http.Client, error)
 }
 
 // https://developer.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app
-func getSignedJWT(ctx context.Context) (string, error) {
-	// Fetch shared.Token entity for GitHub API Token.
-	tokenKey := datastore.NewKey(ctx, "Token", "github-app-private-key", 0, nil)
-	var token shared.Token
-	datastore.Get(ctx, tokenKey, &token)
-	block, _ := pem.Decode([]byte(token.Secret))
+func getSignedJWT(ctx context.Context, appID int64) (string, error) {
+	secret, err := shared.GetSecret(ctx, fmt.Sprintf("github-app-private-key-%v", appID))
+	if err != nil {
+		return "", err
+	}
+	block, _ := pem.Decode([]byte(secret))
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return "", err

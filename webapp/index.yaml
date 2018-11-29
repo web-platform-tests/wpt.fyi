@@ -87,4 +87,5 @@ indexes:
   - name: SHA
   - name: Owner
   - name: Repo
+  - name: AppID
   - name: InstallationID

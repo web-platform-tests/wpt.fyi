@@ -19,10 +19,11 @@ import (
 // interpretation of TestRun results, in order to update the GitHub checks.
 const CheckProcessingQueue = "check-processing"
 
-func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, installation int64) (*shared.CheckSuite, error) {
+func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, appID, installationID int64) (*shared.CheckSuite, error) {
 	query := datastore.NewQuery("CheckSuite").
 		Filter("SHA =", sha).
-		Filter("InstallationID =", installation).
+		Filter("AppID =", appID).
+		Filter("InstallationID =", installationID).
 		Filter("Owner =", owner).
 		Filter("Repo =", repo).
 		KeysOnly()
@@ -38,7 +39,8 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, install
 	suite.SHA = sha
 	suite.Owner = owner
 	suite.Repo = repo
-	suite.InstallationID = installation
+	suite.AppID = appID
+	suite.InstallationID = installationID
 	_, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "CheckSuite", nil), &suite)
 	if err != nil {
 		log.Debugf("Created CheckSuite entity for %s/%s @ %s", owner, repo, sha)
