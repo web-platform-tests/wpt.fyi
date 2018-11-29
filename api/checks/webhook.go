@@ -139,10 +139,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			for _, p := range pullRequests {
 				destRepoID := p.GetBase().GetRepo().GetID()
 				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
-					_, err := createWPTCheckSuite(ctx, sha)
-					if err != nil {
-						log.Errorf("Failed to create wpt check_suite: %s", err.Error())
-					}
+					createWPTCheckSuite(ctx, sha)
 				}
 			}
 		}
@@ -251,7 +248,9 @@ func createWPTCheckSuite(ctx context.Context, sha string) (bool, error) {
 		HeadSHA: sha,
 	}
 	suite, _, err := client.Checks.CreateCheckSuite(ctx, wptRepoOwner, wptRepoName, opts)
-	if err == nil && suite != nil {
+	if err != nil {
+		log.Errorf("Failed to create GitHub check suite: %s", err.Error())
+	} else if suite != nil {
 		log.Infof("check_suite %v created", suite.GetID())
 		getOrCreateCheckSuite(ctx, sha, wptRepoOwner, wptRepoName, wptRepoInstallationID)
 	}
@@ -268,6 +267,7 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 	log.Debugf("Creating %s %s check_run for %s/%s @ %s", status, opts.Name, suite.Owner, suite.Repo, suite.SHA)
 	jwtClient, err := getJWTClient(ctx, suite.InstallationID)
 	if err != nil {
+		log.Errorf("Failed to create JWT client: %s", err.Error())
 		return false, err
 	}
 	client := github.NewClient(jwtClient)
