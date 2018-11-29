@@ -129,7 +129,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 
 	regressed := false
 	for _, d := range diff.Differences {
-		if d[1] != 0 {
+		if d[1] != 0 || d[2] < 0 {
 			regressed = true
 			break
 		}
@@ -165,7 +165,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 			Regressions:   make(map[string]summaries.BeforeAndAfter),
 		}
 		for path, d := range diff.Differences {
-			if d[1] != 0 {
+			if d[1] != 0 || d[2] < 0 {
 				if len(data.Regressions) <= 10 {
 					ba := summaries.BeforeAndAfter{}
 					if b, ok := diff.BeforeSummary[path]; ok {
