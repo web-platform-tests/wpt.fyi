@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/appengine/datastore"
 
-	"github.com/google/go-github/github"
+	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -49,6 +49,7 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, install
 func updateCheckRun(ctx context.Context, summary summaries.Summary, suites ...shared.CheckSuite) (bool, error) {
 	log := shared.GetLogger(ctx)
 	state := summary.GetCheckState()
+	actions := summary.GetActions()
 
 	summaryStr, err := summary.GetSummary()
 	if err != nil {
@@ -67,6 +68,7 @@ func updateCheckRun(ctx context.Context, summary summaries.Summary, suites ...sh
 			Title:   &state.Title,
 			Summary: &summaryStr,
 		},
+		Actions: actions,
 	}
 	if state.Conclusion != nil {
 		opts.CompletedAt = &github.Timestamp{Time: time.Now()}

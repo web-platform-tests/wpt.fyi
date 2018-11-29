@@ -18,7 +18,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 
-	"github.com/google/go-github/github"
+	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine/datastore"
@@ -188,6 +188,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload
 		suitesAPI.ScheduleResultsProcessing(sha, spec)
 		return true, nil
 	}
+	log.Debugf("Ignoring %s action for %s check_run")
 	return false, nil
 }
 
