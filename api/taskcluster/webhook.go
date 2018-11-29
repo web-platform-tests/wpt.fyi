@@ -129,13 +129,12 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
 	}
 
-	log.Debugf("Taskcluster group %s", taskGroupID)
+	log.Debugf("Processing task group %s", taskGroupID)
 	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
 	if !shouldProcessStatus(log, processAllBranches, &status) {
 		return false, nil
 	}
 
-	log.Infof("Processing task group %s", taskGroupID)
 	client := urlfetch.Client(ctx)
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
 	if err != nil {
