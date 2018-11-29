@@ -19,8 +19,12 @@ type TestID struct {
 
 // Tests is an indexing component that provides fast test name lookup by TestID.
 type Tests interface {
-	Add(name string, subName *string) (TestID, error)
-	GetName(id TestID) (string, *string, error)
+	// Add adds a new named test/subtest to a tests index. An error is returned if
+	// there is a problem assigning a suitable TestID to the test.
+	Add(string, *string) (TestID, error)
+	// GetName retrieves the name/subtest name associated with a given TestID. If
+	// the index does not recognize the TestID, then an error is returned.
+	GetName(TestID) (string, *string, error)
 
 	// TODO: Add filter binding function:
 	// TestFilter(q string) UnboundFilter
