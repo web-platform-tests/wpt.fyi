@@ -7,12 +7,18 @@
 package summaries
 
 import (
+	"flag"
+	"log"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
+
+// To output the rendered content during execution of the test(s), set this flag,
+// e.g. go test ./api/checks/summaries -tags="small" -print_output -test.v
+var renderOutputToConsole = flag.Bool("print_output", false, "Whether to render compiled markdown during test execution.")
 
 func TestGetSummary_Completed(t *testing.T) {
 	foo := Completed{
@@ -22,6 +28,7 @@ func TestGetSummary_Completed(t *testing.T) {
 		SHAURL:   "foo.com/sha/",
 	}
 	s, err := foo.GetSummary()
+	printOutput(s)
 	assert.Nil(t, err)
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.HostURL)
@@ -35,6 +42,7 @@ func TestGetSummary_Pending(t *testing.T) {
 		RunsURL:  "foo.com/runs?products=chrome&sha=0123456789",
 	}
 	s, err := foo.GetSummary()
+	printOutput(s)
 	assert.Nil(t, err)
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.RunsURL)
@@ -42,11 +50,13 @@ func TestGetSummary_Pending(t *testing.T) {
 
 func TestGetSummary_Regressed(t *testing.T) {
 	master := shared.TestRun{}
+	master.BrowserName = "chrome"
 	master.Revision = "abcdef0123"
 	master.FullRevisionHash = strings.Repeat(master.Revision, 4)
 	pr := shared.TestRun{}
+	pr.BrowserName = "chrome"
 	pr.Revision = "0123456789"
-	pr.FullRevisionHash = strings.Repeat(master.Revision, 4)
+	pr.FullRevisionHash = strings.Repeat(pr.Revision, 4)
 	foo := Regressed{
 		MasterRun:     master,
 		PRRun:         pr,
@@ -65,6 +75,7 @@ func TestGetSummary_Regressed(t *testing.T) {
 		More: 1,
 	}
 	s, err := foo.GetSummary()
+	printOutput(s)
 	assert.Nil(t, err)
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.HostURL)
@@ -74,4 +85,10 @@ func TestGetSummary_Regressed(t *testing.T) {
 	assert.Contains(t, s, "0 / 1")
 	assert.Contains(t, s, "1 / 1")
 	assert.Contains(t, s, "And 1 others...")
+}
+
+func printOutput(s string) {
+	if *renderOutputToConsole {
+		log.Printf("MD output:\n-----------\n%s", s)
+	}
 }

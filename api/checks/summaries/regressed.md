@@ -4,7 +4,8 @@ Uh-oh - it looks like there are some newly-failing results when we compared the 
 to the latest run against the `master` branch.
 
 Run | Spec
-`master` | [{{ .MasterRun.String }}]
+--- | ---
+`master` | {{ .MasterRun.String }}
 `{{ printf "%.7s" .PRRun.FullRevisionHash }}` | {{ .PRRun.String }}
 
 ### Regressions
