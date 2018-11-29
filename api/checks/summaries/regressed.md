@@ -18,7 +18,7 @@ Test | `master` | `{{ printf "%.7s" .PRRun.FullRevisionHash }}`
 And {{ .More }} others...
 {{ end }}
 
-You can view a visual comparison of all the results [here]]({{ .DiffURL }}).
+[Visual comparison of the results]({{ .DiffURL }})
 
 Other views that might be useful:
 - [`{{ printf "%.7s" .PRRun.FullRevisionHash }}` vs `master`@`{{ printf "%.7s" .MasterRun.FullRevisionHash }}`]({{ .DiffURL }})
