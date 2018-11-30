@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/google/go-github/github"
+	"github.com/lukebjerring/go-github/github"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine/urlfetch"
 )
@@ -78,12 +78,92 @@ type RunDiff struct {
 	// Differences is a map from test-path to an array of
 	// [newly-passing, newly-failing, total-delta],
 	// where newly-pa
-	Before        TestRun           `json:"-"`
-	BeforeSummary map[string][]int  `json:"-"`
-	After         TestRun           `json:"-"`
-	AfterSummary  map[string][]int  `json:"-"`
-	Differences   map[string][]int  `json:"diff"`
-	Renames       map[string]string `json:"renames"`
+	Before        TestRun             `json:"-"`
+	BeforeSummary map[string][]int    `json:"-"`
+	After         TestRun             `json:"-"`
+	AfterSummary  map[string][]int    `json:"-"`
+	Differences   map[string]TestDiff `json:"diff"`
+	Renames       map[string]string   `json:"renames"`
+}
+
+// TestDiff is an array of differences between 2 tests.
+type TestDiff []int
+
+// NewlyPassing is the delta/increase in the number of passing tests when comparing before/after.
+func (d TestDiff) NewlyPassing() int {
+	return d[0]
+}
+
+// Regressions is the delta/increase in the number of failing tests when comparing before/after.
+func (d TestDiff) Regressions() int {
+	return d[1]
+}
+
+// TotalDelta is the delta in the number of total subtests when comparing before/after.
+func (d TestDiff) TotalDelta() int {
+	return d[2]
+}
+
+// NewTestDiff computes the differences between two test-run pass-count summaries,
+// namely an array of [passing, total] counts.
+func NewTestDiff(before, after []int, filter DiffFilterParam) TestDiff {
+	if before == nil {
+		if after == nil || !filter.Added {
+			return nil
+		}
+		return TestDiff{
+			after[0],
+			after[1] - after[0],
+			after[1],
+		}
+	}
+	if after == nil {
+		// NOTE(lukebjerring): Missing tests are only counted towards changes
+		// in the total.
+		if !filter.Deleted {
+			return nil
+		}
+		return TestDiff{0, 0, -before[1]}
+	}
+
+	delta := before[0] - after[0]
+	changed := delta != 0 || before[1] != after[1]
+	if (!changed && !filter.Unchanged) || changed && !filter.Changed {
+		return nil
+	}
+
+	improved, regressed := 0, 0
+	if d := after[0] - before[0]; d > 0 {
+		improved = d
+	}
+	failingBefore := before[1] - before[0]
+	failingAfter := after[1] - after[0]
+	if d := failingAfter - failingBefore; d > 0 {
+		regressed = d
+	}
+	// Changed tests is at most the number of different outcomes,
+	// but newly introduced tests should still be counted (e.g. 0/2 => 0/5)
+	return TestDiff{
+		improved,
+		regressed,
+		after[1] - before[1],
+	}
+}
+
+// Regressions returns the set of test paths for tests that have a regression
+// value in their diff. A change is considered a regression when tests that existed
+// both before and after have an increase in the number of failing tests has increased,
+// which will of course include newly-added tests that are failing.
+// Additionally, we flag a decrease in the total number of tests as a regression,
+// since that can often indicate a failure in a test's setup.
+func (r RunDiff) Regressions() mapset.Set {
+	regressions := mapset.NewSet()
+	for test, diff := range r.Differences {
+		if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
+			regressions.Add(test)
+		}
+	}
+	return regressions
 }
 
 // FetchRunResultsJSONForParam fetches the results JSON blob for the given [product]@[SHA] param.
@@ -186,8 +266,8 @@ func GetResultsDiff(
 	after map[string][]int,
 	filter DiffFilterParam,
 	paths mapset.Set,
-	renames map[string]string) map[string][]int {
-	diff := make(map[string][]int)
+	renames map[string]string) map[string]TestDiff {
+	diff := make(map[string]TestDiff)
 	if filter.Deleted || filter.Changed {
 		for test, resultsBefore := range before {
 			if renames != nil {
@@ -199,40 +279,9 @@ func GetResultsDiff(
 			if !anyPathMatches(paths, test) {
 				continue
 			}
-
-			if resultsAfter, ok := after[test]; !ok {
-				// NOTE(lukebjerring): Missing tests are only counted towards changes
-				// in the total.
-				if !filter.Deleted {
-					continue
-				}
-				diff[test] = []int{0, 0, -resultsBefore[1]}
-			} else {
-				if !filter.Changed && !filter.Unchanged {
-					continue
-				}
-				delta := resultsBefore[0] - resultsAfter[0]
-				changed := delta != 0 || resultsBefore[1] != resultsAfter[1]
-				if (!changed && !filter.Unchanged) || changed && !filter.Changed {
-					continue
-				}
-
-				improved, regressed := 0, 0
-				if d := resultsAfter[0] - resultsBefore[0]; d > 0 {
-					improved = d
-				}
-				failingBefore := resultsBefore[1] - resultsBefore[0]
-				failingAfter := resultsAfter[1] - resultsAfter[0]
-				if d := failingAfter - failingBefore; d > 0 {
-					regressed = d
-				}
-				// Changed tests is at most the number of different outcomes,
-				// but newly introduced tests should still be counted (e.g. 0/2 => 0/5)
-				diff[test] = []int{
-					improved,
-					regressed,
-					resultsAfter[1] - resultsBefore[1],
-				}
+			testDiff := NewTestDiff(resultsBefore, after[test], filter)
+			if testDiff != nil {
+				diff[test] = testDiff
 			}
 		}
 	}
@@ -251,13 +300,15 @@ func GetResultsDiff(
 					continue
 				}
 			}
-			if !anyPathMatches(paths, test) {
+			// If it was in the before set, it's already been computed.
+			if _, ok := before[test]; ok {
+				continue
+			} else if !anyPathMatches(paths, test) {
 				continue
 			}
-
-			if _, ok := before[test]; !ok {
-				// Missing? Then N / N tests are 'different'
-				diff[test] = []int{resultsAfter[0], resultsAfter[1] - resultsAfter[0], resultsAfter[1]}
+			testDiff := NewTestDiff(nil, resultsAfter, filter)
+			if testDiff != nil {
+				diff[test] = testDiff
 			}
 		}
 	}

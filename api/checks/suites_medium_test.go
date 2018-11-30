@@ -21,11 +21,11 @@ func TestGetOrCreateCheckSuite(t *testing.T) {
 	defer done()
 
 	sha := strings.Repeat("abcdef012345", 4)
-	suite, err := getOrCreateCheckSuite(ctx, sha, "owner", "repo", 123)
+	suite, err := getOrCreateCheckSuite(ctx, sha, "owner", "repo", 123, 456)
 	assert.Nil(t, err)
 	assert.NotNil(t, suite)
 
-	suite2, err := getOrCreateCheckSuite(ctx, sha, "owner", "repo", 123)
+	suite2, err := getOrCreateCheckSuite(ctx, sha, "owner", "repo", 123, 456)
 	assert.Nil(t, err)
 	assert.NotNil(t, suite2)
 	assert.Equal(t, *suite, *suite2)

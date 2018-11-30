@@ -25,6 +25,8 @@ type ResultID int64
 type Results interface {
 	// Add stores a RunID => RunResults mapping.
 	Add(RunID, RunResults) error
+	// Delete deletes all result data for a particular WPT test run.
+	Delete(RunID) error
 	// ForRun produces a RunResults interface for a particular WPT test run, or
 	// nil if the input RunID is unknown to this index.
 	ForRun(RunID) RunResults
@@ -67,6 +69,16 @@ func (rs *resultsMap) Add(ru RunID, rr RunResults) error {
 		return fmt.Errorf("Already loaded into results index: %v", ru)
 	}
 
+	return nil
+}
+
+func (rs *resultsMap) Delete(ru RunID) error {
+	_, ok := rs.byRunTest.Load(ru)
+	if !ok {
+		return fmt.Errorf(`No such run in results index; run ID: %v`, ru)
+	}
+
+	rs.byRunTest.Delete(ru)
 	return nil
 }
 
