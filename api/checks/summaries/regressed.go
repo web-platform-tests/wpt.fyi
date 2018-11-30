@@ -4,6 +4,8 @@
 
 package summaries
 
+import "github.com/lukebjerring/go-github/github"
+
 // BeforeAndAfter is a struct summarizing pass rates before and after in a diff.
 type BeforeAndAfter struct {
 	PassingBefore int
@@ -29,4 +31,20 @@ func (r Regressed) GetCheckState() CheckState {
 // GetSummary executes the template for the data.
 func (r Regressed) GetSummary() (string, error) {
 	return compile(&r, "regressed.md")
+}
+
+// GetActions returns the actions that can be taken by the user.
+func (r Regressed) GetActions() []*github.CheckRunAction {
+	return []*github.CheckRunAction{
+		&github.CheckRunAction{
+			Identifier:  "recompute",
+			Label:       "Recompute",
+			Description: "Recompute against the latest master run",
+		},
+		&github.CheckRunAction{
+			Identifier:  "ignore",
+			Label:       "Ignore",
+			Description: "Mark these results as expected (passing)",
+		},
+	}
 }

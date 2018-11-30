@@ -6,6 +6,8 @@ package shared
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 
@@ -217,11 +219,18 @@ func StringSliceContains(ss []string, s string) bool {
 }
 
 // MapStringKeys returns the keys in the given string-keyed map.
-func MapStringKeys(m interface{}) []string {
-	keys := reflect.ValueOf(m).MapKeys()
+func MapStringKeys(m interface{}) ([]string, error) {
+	mapType := reflect.ValueOf(m)
+	if mapType.Kind() != reflect.Map {
+		return nil, errors.New("Interface is not a map type")
+	}
+	keys := mapType.MapKeys()
 	strKeys := make([]string, len(keys))
 	for i, key := range keys {
-		strKeys[i] = key.Interface().(string)
+		var ok bool
+		if strKeys[i], ok = key.Interface().(string); !ok {
+			return nil, fmt.Errorf("Key %v was not a string type", key)
+		}
 	}
-	return strKeys
+	return strKeys, nil
 }

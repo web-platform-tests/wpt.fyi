@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/google/go-github/github"
+	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine"

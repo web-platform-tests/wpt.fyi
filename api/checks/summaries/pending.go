@@ -4,6 +4,8 @@
 
 package summaries
 
+import "github.com/lukebjerring/go-github/github"
+
 // Pending is the struct for pending.md.
 type Pending struct {
 	CheckState
@@ -13,11 +15,16 @@ type Pending struct {
 }
 
 // GetCheckState returns the info needed to update a check.
-func (c Pending) GetCheckState() CheckState {
-	return c.CheckState
+func (p Pending) GetCheckState() CheckState {
+	return p.CheckState
 }
 
 // GetSummary executes the template for the data.
-func (c Pending) GetSummary() (string, error) {
-	return compile(&c, "pending.md")
+func (p Pending) GetSummary() (string, error) {
+	return compile(&p, "pending.md")
+}
+
+// GetActions returns the actions that can be taken by the user.
+func (p Pending) GetActions() []*github.CheckRunAction {
+	return nil
 }

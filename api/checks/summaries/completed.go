@@ -4,7 +4,10 @@
 
 package summaries
 
-import "github.com/web-platform-tests/wpt.fyi/shared"
+import (
+	"github.com/lukebjerring/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+)
 
 // ResultsComparison is all the fields shared across summaries that
 // involve a result comparison.
@@ -34,4 +37,9 @@ func (c Completed) GetCheckState() CheckState {
 // GetSummary executes the template for the data.
 func (c Completed) GetSummary() (string, error) {
 	return compile(&c, "completed.md")
+}
+
+// GetActions returns the actions that can be taken by the user.
+func (c Completed) GetActions() []*github.CheckRunAction {
+	return nil
 }

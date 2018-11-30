@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"text/template"
 
+	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -27,6 +28,9 @@ type Summary interface {
 	// GetCheckState returns the info needed to update a check.
 	GetCheckState() CheckState
 
+	// GetActions returns the actions that can be taken by the user.
+	GetActions() []*github.CheckRunAction
+
 	// GetSummary compiles the summary markdown template.
 	GetSummary() (string, error)
 }
@@ -39,6 +43,13 @@ type CheckState struct {
 	Title      string
 	Status     string  // The current status. Can be one of "queued", "in_progress", or "completed". Default: "queued". (Optional.)
 	Conclusion *string // Can be one of "success", "failure", "neutral", "cancelled", "timed_out", or "action_required". (Optional. Required if you provide a status of "completed".)
+	Actions    []github.CheckRunAction
+}
+
+// GetCheckState returns the info in the CheckState struct.
+// It's a dumb placeholder since we can't define fields on interfaces.
+func (c CheckState) GetCheckState() CheckState {
+	return c
 }
 
 func compile(i interface{}, t string) (string, error) {
