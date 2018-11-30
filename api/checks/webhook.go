@@ -24,6 +24,15 @@ const (
 	wptRepoName           = "wpt"
 )
 
+func isKnownAppID(appID int64) bool {
+	switch appID {
+	case wptfyiCheckAppID:
+	case checksStagingAppID:
+		return true
+	}
+	return false
+}
+
 // checkWebhookHandler listens for check_suite and check_run events,
 // responding to requested and rerequested events.
 func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -98,11 +107,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
-	switch appID {
-	case wptfyiCheckAppID:
-	case checksStagingAppID:
-		break
-	default:
+	if !isKnownAppID(appID) {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -170,7 +175,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 	}
 
 	appID := checkRun.GetCheckRun().GetApp().GetID()
-	if appID != wptfyiCheckAppID {
+	if !isKnownAppID(appID) {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
