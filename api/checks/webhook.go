@@ -184,13 +184,12 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload
 	if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {
-		// TODO(lukebjerring): Add RequestedAction to CheckRunEvent.
-		// actionID := checkRun.GetRequestedAction().GetIdentifier()
-		// if actionID == "recompute" {
-		// 	shouldSchedule = true
-		// } else if actionID == "ignore" {
-		// 	// TODO(lukebjerring): Created IgnoredRegression summary.
-		// }
+		actionID := checkRun.GetRequestedAction().Identifier
+		if actionID == "recompute" {
+			shouldSchedule = true
+		} else if actionID == "ignore" {
+			// TODO(lukebjerring): Created IgnoredRegression summary.
+		}
 	}
 	if !shouldSchedule {
 		log.Debugf("Ignoring %s action for %s check_run", action, status)
