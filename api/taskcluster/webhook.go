@@ -306,7 +306,7 @@ func createAllRuns(
 			spec.BrowserName = bits[0] // chrome-dev => chrome
 			if len(bits) > 1 {
 				if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-					spec.Labels = mapset.NewSet("experimental")
+					spec.Labels = mapset.NewSetWith(label)
 				}
 			}
 			for _, suite := range suites {
