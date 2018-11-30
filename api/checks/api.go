@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
@@ -104,8 +105,9 @@ func (s checksAPIImpl) IgnoreFailure(sender, owner, repo string, run *github.Che
 
 	success := "success"
 	opts := github.UpdateCheckRunOptions{
-		Output:     output,
-		Conclusion: &success,
+		Output:      output,
+		Conclusion:  &success,
+		CompletedAt: &github.Timestamp{Time: time.Now()},
 	}
 	_, _, err = client.Checks.UpdateCheckRun(s.ctx, owner, repo, run.GetID(), opts)
 	return err
