@@ -4,7 +4,7 @@
 
 package summaries
 
-// Pending is the struct for pending.md
+// Pending is the struct for pending.md.
 type Pending struct {
 	CheckState
 

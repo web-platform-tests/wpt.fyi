@@ -17,7 +17,7 @@ type ResultsComparison struct {
 	HostURL       string // Host environment URL, e.g. "https://wpt.fyi"
 }
 
-// Completed is the struct for completed.md
+// Completed is the struct for completed.md.
 type Completed struct {
 	CheckState
 	ResultsComparison
