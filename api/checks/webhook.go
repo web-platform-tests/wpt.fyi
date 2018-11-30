@@ -33,7 +33,12 @@ const wptRepoName = "wpt"
 // checkWebhookHandler listens for check_suite and check_run events,
 // responding to requested and rerequested events.
 func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != "application/json" {
+	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
+
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		log.Errorf("Invalid content-type: %s", contentType)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -44,12 +49,10 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	case "pull_request":
 		break
 	default:
+		log.Debugf("Ignoring %s event", event)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	ctx := shared.NewAppEngineContext(r)
-	log := shared.GetLogger(ctx)
 
 	secret, err := shared.GetSecret(ctx, "github-check-webhook-secret")
 	if err != nil {
@@ -176,19 +179,33 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload
 
 	action := checkRun.GetAction()
 	status := checkRun.GetCheckRun().GetStatus()
+
+	shouldSchedule := false
 	if (action == "created" && status != "completed") || action == "rerequested" {
-		name, sha := checkRun.GetCheckRun().GetName(), checkRun.GetCheckRun().GetHeadSHA()
-		log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
-		spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
-		if err != nil {
-			log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
-			return false, err
-		}
-		suitesAPI.ScheduleResultsProcessing(sha, spec)
-		return true, nil
+		shouldSchedule = true
+	} else if action == "requested_action" {
+		// TODO(lukebjerring): Add RequestedAction to CheckRunEvent.
+		// actionID := checkRun.GetRequestedAction().GetIdentifier()
+		// if actionID == "recompute" {
+		// 	shouldSchedule = true
+		// } else if actionID == "ignore" {
+		// 	// TODO(lukebjerring): Created IgnoredRegression summary.
+		// }
 	}
-	log.Debugf("Ignoring %s action for %s check_run")
-	return false, nil
+	if !shouldSchedule {
+		log.Debugf("Ignoring %s action for %s check_run", action, status)
+		return false, nil
+	}
+
+	name, sha := checkRun.GetCheckRun().GetName(), checkRun.GetCheckRun().GetHeadSHA()
+	log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
+	spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
+	if err != nil {
+		log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
+		return false, err
+	}
+	suitesAPI.ScheduleResultsProcessing(sha, spec)
+	return true, nil
 }
 
 func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
