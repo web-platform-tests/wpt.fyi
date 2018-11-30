@@ -176,7 +176,6 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome"))
 	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
@@ -212,8 +211,6 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome"))
-	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
