@@ -66,6 +66,11 @@ def _process_chunk(report, gcs_path):
         report.load_json(temp)
 
 
+# ==== Beginning of tasks  ====
+# Tasks are supposed to be independent; exceptions are ignored (but logged).
+# Each task is a function that takes (report, test_run_id).
+
+
 def _push_to_spanner(_, test_run_id):
     # Authenticate as "_spanner" for push-to-spanner API.
     secret = _get_uploader_password('_spanner')
@@ -78,6 +83,9 @@ def _push_to_spanner(_, test_run_id):
                    response.status_code)
 
 
+# ==== End of tasks  ====
+
+
 def _after_new_run(report, test_run_id):
     """Runs post-new-run tasks.
 
@@ -88,9 +96,7 @@ def _after_new_run(report, test_run_id):
     Returns:
         A list of strings, names of the tasks that run successfully.
     """
-    # Tasks are supposed to be independent and errors are ignored (bug logged).
-    # Each task is a function that takes (report, test_run_id).
-    tasks = [_push_to_spanner]
+    tasks = []
     success = []
     for task in tasks:
         _log.info('Running post-new-run task: %s', task.__name__)
