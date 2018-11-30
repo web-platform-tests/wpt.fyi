@@ -15,12 +15,14 @@ import (
 )
 
 // NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
-const wptfyiCheckAppID = 19965
-const checksStagingAppID = 21580
-const wptRepoID = 3618133
-const wptRepoInstallationID = 449270
-const wptRepoOwner = "web-platform-tests"
-const wptRepoName = "wpt"
+const (
+	wptfyiCheckAppID      = int64(19965)
+	checksStagingAppID    = int64(21580)
+	wptRepoID             = int64(3618133)
+	wptRepoInstallationID = int64(449270)
+	wptRepoOwner          = "web-platform-tests"
+	wptRepoName           = "wpt"
+)
 
 // checkWebhookHandler listens for check_suite and check_run events,
 // responding to requested and rerequested events.
