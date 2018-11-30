@@ -30,6 +30,24 @@ const StableLabel = "stable"
 // i.e. run from the master branch.
 const MasterLabel = "master"
 
+// ProductChannelToLabel maps known product-specific channel names
+// to the wpt.fyi model's equivalent.
+func ProductChannelToLabel(channel string) string {
+	switch channel {
+	case "release":
+	case "stable":
+		return "stable"
+	case "beta":
+		return "beta"
+	case "dev":
+	case "experimental":
+	case "nightly":
+	case "preview":
+		return "experimental"
+	}
+	return ""
+}
+
 // GetDefaultProducts returns the default set of products to show on wpt.fyi
 func GetDefaultProducts() ProductSpecs {
 	browserNames := GetDefaultBrowserNames()

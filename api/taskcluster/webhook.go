@@ -17,6 +17,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/deckarep/golang-set"
+
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
@@ -300,7 +302,13 @@ func createAllRuns(
 				errors <- err
 			}
 			spec := shared.ProductSpec{}
-			spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
+			bits := strings.Split(browser, "-")
+			spec.BrowserName = bits[0] // chrome-dev => chrome
+			if len(bits) > 1 {
+				if label := shared.ProductChannelToLabel(bits[1]); label != "" {
+					spec.Labels = mapset.NewSet("experimental")
+				}
+			}
 			for _, suite := range suites {
 				suitesAPI.PendingCheckRun(suite, spec)
 			}
