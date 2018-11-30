@@ -98,16 +98,19 @@ func (s checksAPIImpl) IgnoreFailure(sender, owner, repo string, run *github.Che
 	if output == nil {
 		output = &github.CheckRunOutput{}
 	}
-	summary := fmt.Sprintf(`This check was marked as a success by @%s via the _Ignore_ action.
-
-	`, sender) + output.GetSummary()
+	prepend := fmt.Sprintf("This check was marked as a success by @%s via the _Ignore_ action.\n\n", sender)
+	summary := prepend + output.GetSummary()
 	output.Summary = &summary
 
 	success := "success"
 	opts := github.UpdateCheckRunOptions{
+		Name:        run.GetName(),
 		Output:      output,
 		Conclusion:  &success,
 		CompletedAt: &github.Timestamp{Time: time.Now()},
+		Actions: []*github.CheckRunAction{
+			summaries.RecomputeAction(),
+		},
 	}
 	_, _, err = client.Checks.UpdateCheckRun(s.ctx, owner, repo, run.GetID(), opts)
 	return err
