@@ -7,6 +7,7 @@ package checks
 import (
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/deckarep/golang-set"
 
@@ -102,6 +103,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 	updated, err := updateCheckRun(ctx, summaryData, suites...)
 	if err != nil {
+		log.Errorf("Failed to update check_run: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else if updated {
 		w.Write([]byte("Check(s) updated"))
@@ -127,20 +129,14 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 		Status:     "completed",
 	}
 
-	regressed := false
-	for _, d := range diff.Differences {
-		if d[1] != 0 {
-			regressed = true
-			break
-		}
-	}
+	regressions := diff.Regressions()
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
 	checksCanFailAndPass := aeAPI.IsFeatureEnabled("failChecksOnRegression")
 
 	var summary summaries.Summary
 	host := aeAPI.GetHostname()
-	if !regressed {
+	if regressions.Cardinality() > 0 {
 		data := summaries.Completed{
 			CheckState: checkState,
 			HostName:   host,
@@ -164,22 +160,22 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 			MasterDiffURL: diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product).String(),
 			Regressions:   make(map[string]summaries.BeforeAndAfter),
 		}
-		for path, d := range diff.Differences {
-			if d[1] != 0 {
-				if len(data.Regressions) <= 10 {
-					ba := summaries.BeforeAndAfter{}
-					if b, ok := diff.BeforeSummary[path]; ok {
-						ba.PassingBefore = b[0]
-						ba.TotalBefore = b[1]
-					}
-					if a, ok := diff.AfterSummary[path]; ok {
-						ba.PassingAfter = a[0]
-						ba.TotalAfter = a[1]
-					}
-					data.Regressions[path] = ba
-				} else {
-					data.More++
+		tests := shared.ToStringSlice(regressions)
+		sort.Strings(tests)
+		for _, path := range tests {
+			if len(data.Regressions) <= 10 {
+				ba := summaries.BeforeAndAfter{}
+				if b, ok := diff.BeforeSummary[path]; ok {
+					ba.PassingBefore = b[0]
+					ba.TotalBefore = b[1]
 				}
+				if a, ok := diff.AfterSummary[path]; ok {
+					ba.PassingAfter = a[0]
+					ba.TotalAfter = a[1]
+				}
+				data.Regressions[path] = ba
+			} else {
+				data.More++
 			}
 		}
 		if checksCanFailAndPass {

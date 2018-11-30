@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/github"
+	"github.com/lukebjerring/go-github/github"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
