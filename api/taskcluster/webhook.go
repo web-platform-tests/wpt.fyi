@@ -21,7 +21,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 
-	"github.com/google/go-github/github"
+	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )

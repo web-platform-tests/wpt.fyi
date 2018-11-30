@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/appengine/datastore"
 
-	"github.com/google/go-github/github"
+	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -19,10 +19,11 @@ import (
 // interpretation of TestRun results, in order to update the GitHub checks.
 const CheckProcessingQueue = "check-processing"
 
-func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, installation int64) (*shared.CheckSuite, error) {
+func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, appID, installationID int64) (*shared.CheckSuite, error) {
 	query := datastore.NewQuery("CheckSuite").
 		Filter("SHA =", sha).
-		Filter("InstallationID =", installation).
+		Filter("AppID =", appID).
+		Filter("InstallationID =", installationID).
 		Filter("Owner =", owner).
 		Filter("Repo =", repo).
 		KeysOnly()
@@ -38,7 +39,8 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, install
 	suite.SHA = sha
 	suite.Owner = owner
 	suite.Repo = repo
-	suite.InstallationID = installation
+	suite.AppID = appID
+	suite.InstallationID = installationID
 	_, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "CheckSuite", nil), &suite)
 	if err != nil {
 		log.Debugf("Created CheckSuite entity for %s/%s @ %s", owner, repo, sha)
@@ -49,6 +51,7 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, install
 func updateCheckRun(ctx context.Context, summary summaries.Summary, suites ...shared.CheckSuite) (bool, error) {
 	log := shared.GetLogger(ctx)
 	state := summary.GetCheckState()
+	actions := summary.GetActions()
 
 	summaryStr, err := summary.GetSummary()
 	if err != nil {
@@ -67,6 +70,7 @@ func updateCheckRun(ctx context.Context, summary summaries.Summary, suites ...sh
 			Title:   &state.Title,
 			Summary: &summaryStr,
 		},
+		Actions: actions,
 	}
 	if state.Conclusion != nil {
 		opts.CompletedAt = &github.Timestamp{Time: time.Now()}

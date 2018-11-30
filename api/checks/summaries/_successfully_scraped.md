@@ -1,0 +1,1 @@
+Results have successfully been scraped and added to [{{ .HostName }}]({{ .HostURL }}).
