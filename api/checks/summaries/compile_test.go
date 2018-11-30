@@ -32,9 +32,9 @@ func TestGetSummary_Completed(t *testing.T) {
 	foo := Completed{}
 	foo.MasterRun = master
 	foo.PRRun = pr
-	foo.DiffURL = "foo.com/diff?before=chrome[master]&after=chrome@0123456789"
+	foo.DiffURL = "https://foo.com/diff?before=chrome[master]&after=chrome@0123456789"
 	foo.HostName = "foo.com"
-	foo.HostURL = "foo.com/results/"
+	foo.HostURL = "https://foo.com/"
 	foo.Results = map[string][]int{
 		"/foo.html": []int{2, 3},
 	}
@@ -54,8 +54,8 @@ func TestGetSummary_Completed(t *testing.T) {
 
 func TestGetSummary_Pending(t *testing.T) {
 	foo := Pending{
-		HostName: "foo.com",
-		RunsURL:  "foo.com/runs?products=chrome&sha=0123456789",
+		HostName: "https://foo.com",
+		RunsURL:  "https://foo.com/runs?products=chrome&sha=0123456789",
 	}
 	s, err := foo.GetSummary()
 	printOutput(s)
