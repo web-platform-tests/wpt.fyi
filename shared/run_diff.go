@@ -151,13 +151,15 @@ func NewTestDiff(before, after []int, filter DiffFilterParam) TestDiff {
 }
 
 // Regressions returns the set of test paths for tests that have a regression
-// value in their diff. Regression is scored as tests that existed both before
-// and after, where the number of failing tests has increased, which will of
-// course include newly-added tests that are failing.
+// value in their diff. A change is considered a regression when tests that existed
+// both before and after have an increase in the number of failing tests has increased,
+// which will of course include newly-added tests that are failing.
+// Additionally, we flag a decrease in the total number of tests as a regression,
+// since that can often indicate a failure in a test's setup.
 func (r RunDiff) Regressions() mapset.Set {
 	regressions := mapset.NewSet()
 	for test, diff := range r.Differences {
-		if diff.Regressions() > 0 {
+		if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
 			regressions.Add(test)
 		}
 	}
