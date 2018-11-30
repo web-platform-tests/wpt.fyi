@@ -96,7 +96,11 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
-	if appID != wptfyiCheckAppID && appID != checksStagingAppID {
+	switch appID {
+	case wptfyiCheckAppID:
+	case checksStagingAppID:
+		break
+	default:
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
