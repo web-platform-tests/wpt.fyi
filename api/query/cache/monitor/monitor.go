@@ -39,6 +39,36 @@ type Monitor interface {
 	SetMaxHeapBytes(uint64) error
 }
 
+// ProxyMonitor is a proxy implementation of the Monitor interface.
+type ProxyMonitor struct {
+	delegate Monitor
+}
+
+// Start is delegated.
+func (m *ProxyMonitor) Start() error {
+	return m.delegate.Start()
+}
+
+// Stop is delegated.
+func (m *ProxyMonitor) Stop() error {
+	return m.delegate.Stop()
+}
+
+// SetInterval is delegated.
+func (m *ProxyMonitor) SetInterval(i time.Duration) error {
+	return m.delegate.SetInterval(i)
+}
+
+// SetMaxHeapBytes is delegated.
+func (m *ProxyMonitor) SetMaxHeapBytes(b uint64) error {
+	return m.delegate.SetMaxHeapBytes(b)
+}
+
+// NewProxyMonitor instantiates a new proxy monitor bound to the given delegate.
+func NewProxyMonitor(m Monitor) ProxyMonitor {
+	return ProxyMonitor{m}
+}
+
 // GoRuntime is the live go runtime implementation of Runtime.
 type GoRuntime struct{}
 

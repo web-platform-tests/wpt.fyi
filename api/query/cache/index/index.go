@@ -39,6 +39,25 @@ type Index interface {
 	EvictAnyRun() error
 }
 
+// ProxyIndex is a proxy implementation of the Index interface.
+type ProxyIndex struct {
+	delegate Index
+}
+
+// IngestRun is delegated.
+func (i *ProxyIndex) IngestRun(r shared.TestRun) error {
+	return i.delegate.IngestRun(r)
+}
+
+// EvictAnyRun is delegated.
+func (i *ProxyIndex) EvictAnyRun() error {
+	return i.delegate.EvictAnyRun()
+}
+
+func NewProxyIndex(idx Index) ProxyIndex {
+	return ProxyIndex{idx}
+}
+
 // ReportLoader handles loading a WPT test results report based on metadata in
 // a shared.TestRun.
 type ReportLoader interface {
