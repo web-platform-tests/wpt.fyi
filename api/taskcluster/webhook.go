@@ -298,11 +298,12 @@ func createAllRuns(
 			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
-			}
-			spec := shared.ProductSpec{}
-			spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
-			for _, suite := range suites {
-				suitesAPI.PendingCheckRun(suite, spec)
+			} else {
+				spec := shared.ProductSpec{}
+				spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
+				for _, suite := range suites {
+					suitesAPI.PendingCheckRun(suite, spec)
+				}
 			}
 		}(browser, urls)
 	}
