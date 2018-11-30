@@ -89,9 +89,9 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 	//
 	// Create RunResults for each shard's partition of this run's results.
 	numShards := uint64(len(i.shards))
-	runResults := make([]RunResults, 0, numShards)
+	runResults := make([]RunResults, numShards)
 	for j := uint64(0); j < numShards; j++ {
-		runResults = append(runResults, NewRunResults())
+		runResults[j] = NewRunResults()
 	}
 
 	for _, res := range report.Results {
