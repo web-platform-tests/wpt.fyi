@@ -27,7 +27,7 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 0)
 
-	a := suitesAPIImpl{
+	a := checksAPIImpl{
 		ctx:   ctx,
 		queue: "",
 	}

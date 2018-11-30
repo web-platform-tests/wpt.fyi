@@ -161,12 +161,12 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	if status.IsOnMaster() {
 		labels = []string{"master"}
 	}
-	suitesAPI := checks.NewSuitesAPI(ctx)
+	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
 		log,
 		urlfetch.Client(slowCtx),
 		shared.NewAppEngineAPI(ctx),
-		suitesAPI,
+		checksAPI,
 		uploadURL,
 		*status.SHA,
 		username,
@@ -280,7 +280,7 @@ func createAllRuns(
 	log shared.Logger,
 	client *http.Client,
 	aeAPI shared.AppEngineAPI,
-	suitesAPI checks.SuitesAPI,
+	checksAPI checks.API,
 	uploadURL,
 	sha,
 	username,
@@ -290,7 +290,7 @@ func createAllRuns(
 	errors := make(chan error, len(urlsByBrowser))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
-	suites, _ := suitesAPI.GetSuitesForSHA(sha)
+	suites, _ := checksAPI.GetSuitesForSHA(sha)
 	for browser, urls := range urlsByBrowser {
 		go func(browser string, urls []string) {
 			defer wg.Done()
@@ -302,7 +302,7 @@ func createAllRuns(
 			spec := shared.ProductSpec{}
 			spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
 			for _, suite := range suites {
-				suitesAPI.PendingCheckRun(suite, spec)
+				checksAPI.PendingCheckRun(suite, spec)
 			}
 		}(browser, urls)
 	}
