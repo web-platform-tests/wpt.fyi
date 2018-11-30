@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"text/template"
 
+	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -23,6 +24,9 @@ type Summary interface {
 	// GetCheckState returns the info needed to update a check.
 	GetCheckState() CheckState
 
+	// GetActions returns the actions that can be taken by the user.
+	GetActions() []*github.CheckRunAction
+
 	// GetSummary compiles the summary markdown template.
 	GetSummary() (string, error)
 }
@@ -35,6 +39,7 @@ type CheckState struct {
 	Title      string
 	Status     string  // The current status. Can be one of "queued", "in_progress", or "completed". Default: "queued". (Optional.)
 	Conclusion *string // Can be one of "success", "failure", "neutral", "cancelled", "timed_out", or "action_required". (Optional. Required if you provide a status of "completed".)
+	Actions    []github.CheckRunAction
 }
 
 // Completed is the struct for completed.md
@@ -52,6 +57,11 @@ func (c Completed) GetCheckState() CheckState {
 	return c.CheckState
 }
 
+// GetActions returns the actions that can be taken by the user.
+func (c Completed) GetActions() []*github.CheckRunAction {
+	return nil
+}
+
 // GetSummary executes the template for the data.
 func (c Completed) GetSummary() (string, error) {
 	return compile(&c, "completed.md")
@@ -66,13 +76,18 @@ type Pending struct {
 }
 
 // GetCheckState returns the info needed to update a check.
-func (c Pending) GetCheckState() CheckState {
-	return c.CheckState
+func (p Pending) GetCheckState() CheckState {
+	return p.CheckState
+}
+
+// GetActions returns the actions that can be taken by the user.
+func (p Pending) GetActions() []*github.CheckRunAction {
+	return nil
 }
 
 // GetSummary executes the template for the data.
-func (c Pending) GetSummary() (string, error) {
-	return compile(&c, "pending.md")
+func (p Pending) GetSummary() (string, error) {
+	return compile(&p, "pending.md")
 }
 
 func compile(i interface{}, t string) (string, error) {
@@ -113,4 +128,20 @@ func (r Regressed) GetCheckState() CheckState {
 // GetSummary executes the template for the data.
 func (r Regressed) GetSummary() (string, error) {
 	return compile(&r, "regressed.md")
+}
+
+// GetActions returns the actions that can be taken by the user.
+func (r Regressed) GetActions() []*github.CheckRunAction {
+	return []*github.CheckRunAction{
+		&github.CheckRunAction{
+			Identifier:  "recompute",
+			Label:       "Recompute",
+			Description: "Recompute against the latest master run",
+		},
+		&github.CheckRunAction{
+			Identifier:  "ignore",
+			Label:       "Ignore",
+			Description: "Mark these results as expected (passing)",
+		},
+	}
 }
