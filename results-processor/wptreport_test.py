@@ -498,12 +498,12 @@ class HelpersTest(unittest.TestCase):
         }
         self.assertListEqual(
             prepare_labels(r, '', 'blade-runner'),
-            ['blade-runner', 'experimental', 'firefox']
+            ['blade-runner', 'dev', 'experimental', 'firefox']
         )
         r._report['run_info']['browser_channel'] = 'nightly'
         self.assertListEqual(
             prepare_labels(r, '', 'blade-runner'),
-            ['blade-runner', 'experimental', 'firefox']
+            ['blade-runner', 'experimental', 'firefox', 'nightly']
         )
         r._report['run_info']['browser_channel'] = 'beta'
         self.assertListEqual(

@@ -455,12 +455,13 @@ def prepare_labels(report, labels_str, uploader):
         labels.add(label.strip())
 
     # Add the release channel label.
-    if not any([i in labels for i in set(CHANNEL_TO_LABEL.values())]):
-        if report.run_info.get('browser_channel') in CHANNEL_TO_LABEL:
+    if report.run_info.get('browser_channel'):
+        labels.add(report.run_info['browser_channel'])
+        if report.run_info['browser_channel'] in CHANNEL_TO_LABEL:
             labels.add(CHANNEL_TO_LABEL[report.run_info['browser_channel']])
-        else:
-            # Default to "stable".
-            labels.add('stable')
+    elif not any([i in labels for i in set(CHANNEL_TO_LABEL.values())]):
+        # Default to "stable".
+        labels.add('stable')
 
     # Remove any empty labels.
     if '' in labels:
