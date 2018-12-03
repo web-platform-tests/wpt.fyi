@@ -39,6 +39,30 @@ type Index interface {
 	EvictAnyRun() error
 }
 
+// ProxyIndex is a proxy implementation of the Index interface. This type is
+// generally used in type embeddings that wish to override the behaviour of some
+// (but not all) methods, deferring to the delegate for all other behaviours.
+type ProxyIndex struct {
+	delegate Index
+}
+
+// IngestRun loads the given run's results in to the index by deferring ot the
+// proxy's delegate.
+func (i *ProxyIndex) IngestRun(r shared.TestRun) error {
+	return i.delegate.IngestRun(r)
+}
+
+// EvictAnyRun deletes one run's results from the index by deferring to the
+// proxy's delegate.
+func (i *ProxyIndex) EvictAnyRun() error {
+	return i.delegate.EvictAnyRun()
+}
+
+// NewProxyIndex instantiates a new proxy index bound to the given delegate.
+func NewProxyIndex(idx Index) ProxyIndex {
+	return ProxyIndex{idx}
+}
+
 // ReportLoader handles loading a WPT test results report based on metadata in
 // a shared.TestRun.
 type ReportLoader interface {
