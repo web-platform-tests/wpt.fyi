@@ -311,7 +311,13 @@ func createAllRuns(
 				errors <- err
 			} else {
 				spec := shared.ProductSpec{}
-				spec.BrowserName = strings.Split(browser, "-")[0] // chrome-dev => chrome
+				bits := strings.Split(browser, "-") // chrome-dev => [chrome, dev]
+				spec.BrowserName = bits[0]
+				if len(bits) > 1 {
+					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
+						spec.Labels = mapset.NewSetWith(label)
+					}
+				}
 				for _, suite := range suites {
 					checksAPI.PendingCheckRun(suite, spec)
 				}
