@@ -1,12 +1,9 @@
-Results have successfully been scraped and added to [{{ .HostName }}]({{ .HostURL }}).
+{{ template "_successfully_scraped.md" . }}
 
 Uh-oh - it looks like there are some newly-failing results when we compared the affected tests
 to the latest run against the `master` branch.
 
-Run | Spec
---- | ---
-`master` | {{ .MasterRun.String }}
-`{{ printf "%.7s" .PRRun.FullRevisionHash }}` | {{ .PRRun.String }}
+{{ template "_pr_and_master_specs.md" . }}
 
 ### Regressions
 

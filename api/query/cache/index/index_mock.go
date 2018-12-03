@@ -6,6 +6,7 @@ package index
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	metrics "github.com/web-platform-tests/results-analysis/metrics"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	reflect "reflect"
 )
@@ -55,4 +56,40 @@ func (m *MockIndex) EvictAnyRun() error {
 // EvictAnyRun indicates an expected call of EvictAnyRun
 func (mr *MockIndexMockRecorder) EvictAnyRun() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EvictAnyRun", reflect.TypeOf((*MockIndex)(nil).EvictAnyRun))
+}
+
+// MockReportLoader is a mock of ReportLoader interface
+type MockReportLoader struct {
+	ctrl     *gomock.Controller
+	recorder *MockReportLoaderMockRecorder
+}
+
+// MockReportLoaderMockRecorder is the mock recorder for MockReportLoader
+type MockReportLoaderMockRecorder struct {
+	mock *MockReportLoader
+}
+
+// NewMockReportLoader creates a new mock instance
+func NewMockReportLoader(ctrl *gomock.Controller) *MockReportLoader {
+	mock := &MockReportLoader{ctrl: ctrl}
+	mock.recorder = &MockReportLoaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockReportLoader) EXPECT() *MockReportLoaderMockRecorder {
+	return m.recorder
+}
+
+// Load mocks base method
+func (m *MockReportLoader) Load(arg0 shared.TestRun) (*metrics.TestResultsReport, error) {
+	ret := m.ctrl.Call(m, "Load", arg0)
+	ret0, _ := ret[0].(*metrics.TestResultsReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Load indicates an expected call of Load
+func (mr *MockReportLoaderMockRecorder) Load(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Load", reflect.TypeOf((*MockReportLoader)(nil).Load), arg0)
 }
