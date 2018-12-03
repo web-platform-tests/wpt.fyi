@@ -6,29 +6,31 @@ package checks
 
 import (
 	"context"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
-	"time"
-
-	jwt "github.com/dgrijalva/jwt-go"
 
 	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/oauth2"
 )
 
 // NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
-const wptfyiCheckAppID = 19965
-const checksStagingAppID = 21580
-const wptRepoID = 3618133
-const wptRepoInstallationID = 449270
-const wptRepoOwner = "web-platform-tests"
-const wptRepoName = "wpt"
+const (
+	wptfyiCheckAppID      = int64(19965)
+	checksStagingAppID    = int64(21580)
+	wptRepoID             = int64(3618133)
+	wptRepoInstallationID = int64(449270)
+	wptRepoOwner          = "web-platform-tests"
+	wptRepoName           = "wpt"
+)
+
+func isKnownAppID(appID int64) bool {
+	switch appID {
+	case wptfyiCheckAppID, checksStagingAppID:
+		return true
+	}
+	return false
+}
 
 // checkWebhookHandler listens for check_suite and check_run events,
 // responding to requested and rerequested events.
@@ -44,9 +46,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	event := r.Header.Get("X-GitHub-Event")
 	switch event {
-	case "check_suite":
-	case "check_run":
-	case "pull_request":
+	case "check_suite", "check_run", "pull_request":
 		break
 	default:
 		log.Debugf("Ignoring %s event", event)
@@ -74,8 +74,8 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		processed, err = handleCheckSuiteEvent(ctx, payload)
 	} else if event == "check_run" {
 		aeAPI := shared.NewAppEngineAPI(ctx)
-		suitesAPI := NewSuitesAPI(ctx)
-		processed, err = handleCheckRunEvent(aeAPI, suitesAPI, payload)
+		checksAPI := NewAPI(ctx)
+		processed, err = handleCheckRunEvent(aeAPI, checksAPI, payload)
 	} else if event == "pull_request" {
 		processed, err = handlePullRequestEvent(ctx, payload)
 	}
@@ -104,7 +104,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
-	if appID != wptfyiCheckAppID && appID != checksStagingAppID {
+	if !isKnownAppID(appID) {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -164,7 +164,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
-func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload []byte) (bool, error) {
+func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
 	log := shared.GetLogger(aeAPI.Context())
 	var checkRun github.CheckRunEvent
 	if err := json.Unmarshal(payload, &checkRun); err != nil {
@@ -172,7 +172,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload
 	}
 
 	appID := checkRun.GetCheckRun().GetApp().GetID()
-	if appID != wptfyiCheckAppID {
+	if !isKnownAppID(appID) {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -188,7 +188,16 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload
 		if actionID == "recompute" {
 			shouldSchedule = true
 		} else if actionID == "ignore" {
-			// TODO(lukebjerring): Created IgnoredRegression summary.
+			err := checksAPI.IgnoreFailure(
+				checkRun.GetSender().GetLogin(),
+				checkRun.GetRepo().GetOwner().GetLogin(),
+				checkRun.GetRepo().GetName(),
+				checkRun.GetCheckRun(),
+				checkRun.GetInstallation())
+			return err == nil, err
+		} else {
+			log.Debugf("Ignoring %s action with id %s", action, actionID)
+			return false, nil
 		}
 	}
 	if !shouldSchedule {
@@ -203,7 +212,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, suitesAPI SuitesAPI, payload
 		log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
 		return false, err
 	}
-	suitesAPI.ScheduleResultsProcessing(sha, spec)
+	checksAPI.ScheduleResultsProcessing(sha, spec)
 	return true, nil
 }
 
@@ -214,8 +223,7 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	switch pullRequest.GetAction() {
-	case "opened":
-	case "synchronize":
+	case "opened", "synchronize":
 		break
 	default:
 		return false, nil
@@ -238,7 +246,7 @@ func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
-	api := NewSuitesAPI(ctx)
+	api := NewAPI(ctx)
 	for _, rbp := range runsByProduct {
 		if len(rbp.TestRuns) > 0 {
 			err := api.ScheduleResultsProcessing(sha, rbp.Product)
@@ -257,11 +265,10 @@ func createWPTCheckSuite(ctx context.Context, appID, installationID int64, sha s
 	log := shared.GetLogger(ctx)
 	log.Debugf("Creating check_suite for web-platform-tests/wpt @ %s", sha)
 
-	jwtClient, err := getJWTClient(ctx, appID, installationID)
+	client, err := getGitHubClient(ctx, appID, installationID)
 	if err != nil {
 		return false, err
 	}
-	client := github.NewClient(jwtClient)
 
 	opts := github.CreateCheckSuiteOptions{
 		HeadSHA: sha,
@@ -285,11 +292,10 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 	if suite.AppID == 0 {
 		suite.AppID = wptfyiCheckAppID
 	}
-	jwtClient, err := getJWTClient(ctx, suite.AppID, suite.InstallationID)
+	client, err := getGitHubClient(ctx, suite.AppID, suite.InstallationID)
 	if err != nil {
 		return false, err
 	}
-	client := github.NewClient(jwtClient)
 
 	checkRun, resp, err := client.Checks.CreateCheckRun(ctx, suite.Owner, suite.Repo, opts)
 	if err != nil {
@@ -299,79 +305,4 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		log.Infof("Created check_run %v", checkRun.GetID())
 	}
 	return true, nil
-}
-
-// NOTE(lukebjerring): oauth2/jwt has incorrect field-names, and doesn't allow
-// passing in an http.Client (for GitHub's Authorization header flow), so we
-// are forced to copy a little code here :(
-func getJWTClient(ctx context.Context, appID, installation int64) (*http.Client, error) {
-	ss, err := getSignedJWT(ctx, appID)
-	if err != nil {
-		return nil, err
-	}
-	tokenSource := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: ss},
-	)
-	oauthClient := oauth2.NewClient(ctx, tokenSource)
-
-	tokenURL := fmt.Sprintf("https://api.github.com/app/installations/%v/access_tokens", installation)
-	req, _ := http.NewRequest("POST", tokenURL, nil)
-	req.Header.Set("Accept", "application/vnd.github.machine-man-preview+json")
-	resp, err := oauthClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot fetch installation token: %v", err)
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1<<20))
-	if err != nil {
-		return nil, fmt.Errorf("cannot fetch installation token: %v", err)
-	}
-	if c := resp.StatusCode; c < 200 || c > 299 {
-		return nil, &oauth2.RetrieveError{
-			Response: resp,
-			Body:     body,
-		}
-	}
-	// tokenResponse is the JSON response body.
-	var tokenResponse struct {
-		AccessToken string    `json:"token"`
-		ExpiresAt   time.Time `json:"expires_at"`
-	}
-	if err := json.Unmarshal(body, &tokenResponse); err != nil {
-		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
-	}
-	token := &oauth2.Token{
-		AccessToken: tokenResponse.AccessToken,
-		Expiry:      tokenResponse.ExpiresAt,
-	}
-	return oauth2.NewClient(ctx, oauth2.StaticTokenSource(token)), nil
-}
-
-// https://developer.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app
-func getSignedJWT(ctx context.Context, appID int64) (string, error) {
-	secret, err := shared.GetSecret(ctx, fmt.Sprintf("github-app-private-key-%v", appID))
-	if err != nil {
-		return "", err
-	}
-	block, _ := pem.Decode([]byte(secret))
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return "", err
-	}
-
-	/* Create the jwt token */
-	now := time.Now()
-	claims := &jwt.StandardClaims{
-		IssuedAt:  now.Unix(),
-		ExpiresAt: now.Add(time.Minute * 10).Unix(),
-		Issuer:    fmt.Sprintf("%v", appID),
-	}
-
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	return jwtToken.SignedString(key)
-}
-
-func getCheckTitle(product shared.ProductSpec) string {
-	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
 }

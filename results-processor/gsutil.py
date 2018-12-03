@@ -9,42 +9,15 @@ import subprocess
 _log = logging.getLogger(__name__)
 
 
-def _call(command, quiet=False):
-    _log.info('EXEC%s: %s',
-              '(quiet)' if quiet else '',
-              ' '.join(command))
-    if quiet:
-        subprocess.check_call(command,
-                              stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL)
-    else:
-        subprocess.check_call(command)
+def _call(command):
+    _log.info('EXEC: %s', ' '.join(command))
+    subprocess.check_call(command)
 
 
 def gs_to_public_url(gcs_path):
     """Converts a gs:// URI to a HTTP URL."""
     assert gcs_path.startswith('gs://')
     return gcs_path.replace('gs://', 'https://storage.googleapis.com/', 1)
-
-
-def rsync_gzip(path1, path2, quiet=False):
-    """Syncs path1 to path2 with gsutil rsync.
-
-    All files in path1 are considered gzipped, and the 'Content-Encoding:gzip'
-    header will be set for all files.
-
-    Args:
-        path1, path2: The source and destination paths (must be directories).
-    """
-    # Use parallel processes and no multithreading to avoid Python GIL.
-    # https://cloud.google.com/storage/docs/gsutil/commands/rsync#options
-    command = [
-        'gsutil', '-o', 'GSUtil:parallel_process_count=10',
-        '-o', 'GSUtil:parallel_thread_count=1',
-        '-m', '-h', 'Content-Encoding:gzip', 'rsync', '-r',
-        path1, path2
-    ]
-    _call(command, quiet)
 
 
 def copy(path1, path2, gzipped=False, quiet=False):
@@ -55,8 +28,14 @@ def copy(path1, path2, gzipped=False, quiet=False):
         gzipped: Whether path1 is gzipped (if True, 'Content-Encoding:gzip'
             will be added to the headers).
     """
-    command = ['gsutil', '-m']
+    command = [
+        'gsutil', '-m',
+        '-o', 'GSUtil:parallel_process_count=16',
+        '-o', 'GSUtil:parallel_thread_count=5',
+    ]
+    if quiet:
+        command += ['-q']
     if gzipped:
         command += ['-h', 'Content-Encoding:gzip']
     command += ['cp', '-r', path1, path2]
-    _call(command, quiet)
+    _call(command)

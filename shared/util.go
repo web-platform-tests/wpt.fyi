@@ -26,6 +26,9 @@ const LatestSHA = "latest"
 // StableLabel is the implicit label present for runs marked 'stable'.
 const StableLabel = "stable"
 
+// BetaLabel is the implicit label present for runs marked 'beta'.
+const BetaLabel = "beta"
+
 // MasterLabel is the implicit label present for runs marked 'master',
 // i.e. run from the master branch.
 const MasterLabel = "master"
@@ -34,16 +37,12 @@ const MasterLabel = "master"
 // to the wpt.fyi model's equivalent.
 func ProductChannelToLabel(channel string) string {
 	switch channel {
-	case "release":
-	case "stable":
-		return "stable"
-	case "beta":
-		return "beta"
-	case "dev":
-	case "experimental":
-	case "nightly":
-	case "preview":
-		return "experimental"
+	case "release", StableLabel:
+		return StableLabel
+	case BetaLabel:
+		return BetaLabel
+	case "dev", "nightly", "preview", ExperimentalLabel:
+		return ExperimentalLabel
 	}
 	return ""
 }

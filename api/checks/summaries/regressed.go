@@ -33,18 +33,31 @@ func (r Regressed) GetSummary() (string, error) {
 	return compile(&r, "regressed.md")
 }
 
+// RecomputeAction is an action that can be taken to
+// trigger a recompute of the diff, against the latest
+// master run's results.
+func RecomputeAction() *github.CheckRunAction {
+	return &github.CheckRunAction{
+		Identifier:  "recompute",
+		Label:       "Recompute",
+		Description: "Recompute against the latest master run",
+	}
+}
+
+// IgnoreAction is an action that can be taken to ignore a fail
+// outcome, marking it as passing.
+func IgnoreAction() *github.CheckRunAction {
+	return &github.CheckRunAction{
+		Identifier:  "ignore",
+		Label:       "Ignore",
+		Description: "Mark these results as expected (passing)",
+	}
+}
+
 // GetActions returns the actions that can be taken by the user.
 func (r Regressed) GetActions() []*github.CheckRunAction {
 	return []*github.CheckRunAction{
-		&github.CheckRunAction{
-			Identifier:  "recompute",
-			Label:       "Recompute",
-			Description: "Recompute against the latest master run",
-		},
-		&github.CheckRunAction{
-			Identifier:  "ignore",
-			Label:       "Ignore",
-			Description: "Mark these results as expected (passing)",
-		},
+		RecomputeAction(),
+		IgnoreAction(),
 	}
 }

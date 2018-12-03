@@ -17,12 +17,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/deckarep/golang-set"
-
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/lukebjerring/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -79,8 +78,8 @@ type statusEventPayload struct {
 	github.StatusEvent
 }
 
-func (s statusEventPayload) IsSuccess() bool {
-	return s.GetState() == "success"
+func (s statusEventPayload) IsCompleted() bool {
+	return s.GetState() == "success" || s.GetState() == "failure"
 }
 
 func (s statusEventPayload) IsTaskcluster() bool {
@@ -123,11 +122,6 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
-	if !shouldProcessStatus(log, processAllBranches, &status) {
-		return false, nil
-	}
-
 	if status.TargetURL == nil {
 		return false, errors.New("No target_url on taskcluster status event")
 	}
@@ -136,14 +130,19 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
 	}
 
-	log.Infof("Processing task group %s", taskGroupID)
+	log.Debugf("Taskcluster task group %s", taskGroupID)
+	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
+	if !shouldProcessStatus(log, processAllBranches, &status) {
+		return false, nil
+	}
+
 	client := urlfetch.Client(ctx)
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
 	if err != nil {
 		return false, err
 	}
 
-	urlsByBrowser, err := extractResultURLs(taskGroup)
+	urlsByBrowser, err := extractResultURLs(log, taskGroup)
 	if err != nil {
 		return false, err
 	}
@@ -163,12 +162,12 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	if status.IsOnMaster() {
 		labels = []string{"master"}
 	}
-	suitesAPI := checks.NewSuitesAPI(ctx)
+	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
 		log,
 		urlfetch.Client(slowCtx),
 		shared.NewAppEngineAPI(ctx),
-		suitesAPI,
+		checksAPI,
 		uploadURL,
 		*status.SHA,
 		username,
@@ -183,8 +182,8 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 }
 
 func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *statusEventPayload) bool {
-	if !status.IsSuccess() {
-		log.Debugf("Ignoring non-success status: %s", status.GetState())
+	if !status.IsCompleted() {
+		log.Debugf("Ignoring status: %s", status.GetState())
 		return false
 	} else if !status.IsTaskcluster() {
 		log.Debugf("Ignoring non-Taskcluster context: %s", status.GetContext())
@@ -241,28 +240,38 @@ func getTaskGroupInfo(client *http.Client, groupID string) (*taskGroupInfo, erro
 	return &group, nil
 }
 
-func extractResultURLs(group *taskGroupInfo) (map[string][]string, error) {
+func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]string, error) {
+	failures := mapset.NewSet()
 	resultURLs := make(map[string][]string)
 	for _, task := range group.Tasks {
 		taskID := task.Status.TaskID
 		if taskID == "" {
 			return nil, fmt.Errorf("task group %s has a task without taskId", group.TaskGroupID)
 		}
-		if task.Status.State != "completed" {
-			return nil, fmt.Errorf("task group %s has an unfinished task: %s", group.TaskGroupID, taskID)
-		}
 
 		matches := taskNameRegex.FindStringSubmatch(task.Task.Metadata.Name)
 		if len(matches) != 4 { // full match, browser, channel, test type
+			log.Debugf("Ignoring unrecognized task: %s", task.Task.Metadata.Name)
 			continue
 		}
 		browser := fmt.Sprintf("%s-%s", matches[1], matches[2])
+
+		if task.Status.State != "completed" {
+			log.Errorf("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
+				group.TaskGroupID, taskID, browser)
+			failures.Add(browser)
+			continue
+		}
 
 		resultURLs[browser] = append(resultURLs[browser],
 			// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
 			fmt.Sprintf(
 				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", taskID,
 			))
+	}
+
+	for failure := range failures.Iter() {
+		delete(resultURLs, failure.(string))
 	}
 
 	if len(resultURLs) == 0 {
@@ -282,7 +291,7 @@ func createAllRuns(
 	log shared.Logger,
 	client *http.Client,
 	aeAPI shared.AppEngineAPI,
-	suitesAPI checks.SuitesAPI,
+	checksAPI checks.API,
 	uploadURL,
 	sha,
 	username,
@@ -292,7 +301,7 @@ func createAllRuns(
 	errors := make(chan error, len(urlsByBrowser))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByBrowser))
-	suites, _ := suitesAPI.GetSuitesForSHA(sha)
+	suites, _ := checksAPI.GetSuitesForSHA(sha)
 	for browser, urls := range urlsByBrowser {
 		go func(browser string, urls []string) {
 			defer wg.Done()
@@ -300,17 +309,18 @@ func createAllRuns(
 			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labels)
 			if err != nil {
 				errors <- err
-			}
-			spec := shared.ProductSpec{}
-			bits := strings.Split(browser, "-")
-			spec.BrowserName = bits[0] // chrome-dev => chrome
-			if len(bits) > 1 {
-				if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-					spec.Labels = mapset.NewSetWith(label)
+			} else {
+				spec := shared.ProductSpec{}
+				bits := strings.Split(browser, "-") // chrome-dev => [chrome, dev]
+				spec.BrowserName = bits[0]
+				if len(bits) > 1 {
+					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
+						spec.Labels = mapset.NewSetWith(label)
+					}
 				}
-			}
-			for _, suite := range suites {
-				suitesAPI.PendingCheckRun(suite, spec)
+				for _, suite := range suites {
+					checksAPI.PendingCheckRun(suite, spec)
+				}
 			}
 		}(browser, urls)
 	}

@@ -21,7 +21,7 @@ import (
 const InternalUsername = "_processor"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
-func HandleResultsCreate(a AppEngineAPI, s checks.SuitesAPI, w http.ResponseWriter, r *http.Request) {
+func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r *http.Request) {
 	username, password, ok := r.BasicAuth()
 	if !ok || username != InternalUsername || !a.authenticateUploader(username, password) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
