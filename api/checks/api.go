@@ -24,6 +24,7 @@ type API interface {
 	PendingCheckRun(checkSuite shared.CheckSuite, browser shared.ProductSpec) (bool, error)
 	GetSuitesForSHA(sha string) ([]shared.CheckSuite, error)
 	IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
+	CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 }
 
 type checksAPIImpl struct {
@@ -107,6 +108,33 @@ func (s checksAPIImpl) IgnoreFailure(sender, owner, repo string, run *github.Che
 		Name:        run.GetName(),
 		Output:      output,
 		Conclusion:  &success,
+		CompletedAt: &github.Timestamp{Time: time.Now()},
+		Actions: []*github.CheckRunAction{
+			summaries.RecomputeAction(),
+		},
+	}
+	_, _, err = client.Checks.UpdateCheckRun(s.ctx, owner, repo, run.GetID(), opts)
+	return err
+}
+
+// CancelRun updates the given CheckRun's outcome to cancelled, even if it failed.
+func (s checksAPIImpl) CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error {
+	client, err := getGitHubClient(s.ctx, run.GetApp().GetID(), installation.GetID())
+	if err != nil {
+		return err
+	}
+
+	// Keep the previous output, if applicable, but prefix it with an indication that
+	// somebody ignored the failure.
+	output := &github.CheckRunOutput{}
+	summary := fmt.Sprintf("This check was cancelled by @%s via the _Cancel_ action.", sender)
+	output.Summary = &summary
+
+	cancelled := "cancelled"
+	opts := github.UpdateCheckRunOptions{
+		Name:        run.GetName(),
+		Output:      output,
+		Conclusion:  &cancelled,
 		CompletedAt: &github.Timestamp{Time: time.Now()},
 		Actions: []*github.CheckRunAction{
 			summaries.RecomputeAction(),
