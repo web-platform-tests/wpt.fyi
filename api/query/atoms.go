@@ -29,10 +29,13 @@ type RunQuery struct {
 	AbstractQuery
 }
 
+// TestNamePattern is a query atom that matches test names to a pattern string.
 type TestNamePattern struct {
 	Pattern string
 }
 
+// BindToRuns for TestNamePattern is a no-op: TestNamePattern implements both
+// AbstractQuery and ConcreteQuery because it is independent of test runs.
 func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	return tnp
 }
@@ -149,6 +152,8 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for TestNamePattern attempts to interpret a query atom as as
+// {"pattern":<test name pattern string>}.
 func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Pattern string `json:"pattern"`

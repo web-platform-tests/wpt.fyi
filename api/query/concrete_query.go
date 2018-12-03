@@ -39,10 +39,12 @@ type True struct{}
 // False is a false-valued ConcreteQuery.
 type False struct{}
 
+// Size of TestNamePattern has a size of 1: servicing such a query requires a
+// substring match per test.
 func (TestNamePattern) Size() int { return 1 }
 
 // Size of RunTestStatusConstraint is 1: servicing such a query requires a
-// single lookup in a test run result mapping.
+// single lookup in a test run result mapping per test.
 func (RunTestStatusConstraint) Size() int { return 1 }
 
 // Size of Or is the sum of the sizes of its constituent ConcretQuery instances.
