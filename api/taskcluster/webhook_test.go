@@ -152,11 +152,11 @@ func TestCreateAllRuns_success(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	checksAPI := checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
-	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome"))
-	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox"))
+	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
@@ -164,7 +164,7 @@ func TestCreateAllRuns_success(t *testing.T) {
 		logrus.New(),
 		&http.Client{},
 		aeAPI,
-		suitesAPI,
+		checksAPI,
 		server.URL,
 		sha,
 		"username",
@@ -195,10 +195,10 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	checksAPI := checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
-	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	suitesAPI.EXPECT().PendingCheckRun(suite, gomock.Any())
+	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
+	checksAPI.EXPECT().PendingCheckRun(suite, gomock.Any())
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
@@ -206,7 +206,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 		logrus.New(),
 		&http.Client{},
 		aeAPI,
-		suitesAPI,
+		checksAPI,
 		server.URL,
 		sha,
 		"username",
@@ -230,9 +230,9 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	suitesAPI := checks.NewMockSuitesAPI(mockC)
+	checksAPI := checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
-	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
+	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
@@ -240,7 +240,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 		logrus.New(),
 		&http.Client{Timeout: time.Second},
 		aeAPI,
-		suitesAPI,
+		checksAPI,
 		server.URL,
 		sha,
 		"username",

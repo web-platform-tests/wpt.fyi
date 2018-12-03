@@ -16,6 +16,10 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// CheckProcessingQueue is the name of the TaskQueue that handles processing and
+// interpretation of TestRun results, in order to update the GitHub checks.
+const CheckProcessingQueue = "check-processing"
+
 // updateCheckHandler handles /api/checks/[commit] POST requests.
 func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
@@ -93,7 +97,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	suites, err := NewSuitesAPI(ctx).GetSuitesForSHA(sha)
+	suites, err := NewAPI(ctx).GetSuitesForSHA(sha)
 	if err != nil {
 		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

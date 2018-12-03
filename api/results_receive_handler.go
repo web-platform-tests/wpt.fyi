@@ -31,6 +31,6 @@ func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := shared.NewAppEngineContext(r)
 	a := receiver.NewAppEngineAPI(ctx)
-	s := checks.NewSuitesAPI(ctx)
+	s := checks.NewAPI(ctx)
 	receiver.HandleResultsCreate(a, s, w, r)
 }
