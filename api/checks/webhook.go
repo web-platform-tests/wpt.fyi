@@ -142,7 +142,7 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			for _, p := range pullRequests {
 				destRepoID := p.GetBase().GetRepo().GetID()
 				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
-					createWPTCheckSuite(ctx, sha)
+					createWPTCheckSuite(ctx, appID, installationID, sha)
 				}
 			}
 		}
