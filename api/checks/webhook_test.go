@@ -83,9 +83,7 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 	event := github.CheckRunEvent{
 		Action: &created,
 		CheckRun: &github.CheckRun{
-			App: &github.App{
-				ID: &id,
-			},
+			App:     &github.App{ID: &id},
 			Name:    &chrome,
 			Status:  &pending,
 			HeadSHA: &sha,

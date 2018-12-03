@@ -26,8 +26,7 @@ const (
 
 func isKnownAppID(appID int64) bool {
 	switch appID {
-	case wptfyiCheckAppID:
-	case checksStagingAppID:
+	case wptfyiCheckAppID, checksStagingAppID:
 		return true
 	}
 	return false
@@ -47,9 +46,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	event := r.Header.Get("X-GitHub-Event")
 	switch event {
-	case "check_suite":
-	case "check_run":
-	case "pull_request":
+	case "check_suite", "check_run", "pull_request":
 		break
 	default:
 		log.Debugf("Ignoring %s event", event)
@@ -226,8 +223,7 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	switch pullRequest.GetAction() {
-	case "opened":
-	case "synchronize":
+	case "opened", "synchronize":
 		break
 	default:
 		return false, nil
