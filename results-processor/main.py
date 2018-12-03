@@ -27,7 +27,9 @@ TIMESTAMP_FILE = '/tmp/results-processor.last'
 # smaller than the 60-minute timeout of AppEngine to give a safe margin.
 TIMEOUT = 3500
 
-
+# Hack to work around the bad logging setup of google.cloud.*:
+# https://github.com/googleapis/google-cloud-python/issues/6742
+logging.getLogger().handlers = []
 logging.basicConfig(level=logging.INFO)
 # Suppress the lock acquire/release logs from filelock.
 logging.getLogger('filelock').setLevel(logging.WARNING)
@@ -86,7 +88,7 @@ def liveness_check():
             assert time.time() - last_locked <= TIMEOUT
         # Respectively: file not found, invalid content, old timestamp.
         except (IOError, ValueError, AssertionError):
-            app.logger.warn('Liveness check failed.')
+            app.logger.warning('Liveness check failed.')
             return ('The current task has taken too long.',
                     HTTPStatus.INTERNAL_SERVER_ERROR)
     return 'Service alive'
