@@ -141,3 +141,44 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
+
+func TestHandleCheckRunEvent_ActionRequested_Cancel(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	id := int64(wptfyiCheckAppID)
+	sha := strings.Repeat("0123456789", 4)
+	chrome := "chrome"
+	requestedAction := "requested_action"
+	pending := "pending"
+	username := "username"
+	owner := wptRepoOwner
+	repo := wptRepoName
+	appID := int64(wptfyiCheckAppID)
+	event := github.CheckRunEvent{
+		Action: &requestedAction,
+		CheckRun: &github.CheckRun{
+			App:     &github.App{ID: &id},
+			Name:    &chrome,
+			Status:  &pending,
+			HeadSHA: &sha,
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{Login: &owner},
+			Name:  &repo,
+		},
+		RequestedAction: &github.RequestedAction{Identifier: "cancel"},
+		Installation:    &github.Installation{AppID: &appID},
+		Sender:          &github.User{Login: &username},
+	}
+	payload, _ := json.Marshal(event)
+
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
+	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	checksAPI := NewMockAPI(mockCtrl)
+	checksAPI.EXPECT().CancelRun(username, owner, repo, event.GetCheckRun(), event.GetInstallation())
+
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	assert.Nil(t, err)
+	assert.True(t, processed)
+}

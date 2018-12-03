@@ -182,9 +182,10 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 		shouldSchedule = true
 	} else if action == "requested_action" {
 		actionID := checkRun.GetRequestedAction().Identifier
-		if actionID == "recompute" {
+		switch actionID {
+		case "recompute":
 			shouldSchedule = true
-		} else if actionID == "ignore" {
+		case "ignore":
 			err := checksAPI.IgnoreFailure(
 				checkRun.GetSender().GetLogin(),
 				checkRun.GetRepo().GetOwner().GetLogin(),
@@ -192,7 +193,15 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 				checkRun.GetCheckRun(),
 				checkRun.GetInstallation())
 			return err == nil, err
-		} else {
+		case "cancel":
+			err := checksAPI.CancelRun(
+				checkRun.GetSender().GetLogin(),
+				checkRun.GetRepo().GetOwner().GetLogin(),
+				checkRun.GetRepo().GetName(),
+				checkRun.GetCheckRun(),
+				checkRun.GetInstallation())
+			return err == nil, err
+		default:
 			log.Debugf("Ignoring %s action with id %s", action, actionID)
 			return false, nil
 		}
