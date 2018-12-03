@@ -39,27 +39,31 @@ type Monitor interface {
 	SetMaxHeapBytes(uint64) error
 }
 
-// ProxyMonitor is a proxy implementation of the Monitor interface.
+// ProxyMonitor is a proxy implementation of the Monitor interface. This type is
+// generally used in type embeddings that wish to override the behaviour of some
+// (but not all) methods, deferring to the delegate for all other behaviours.
 type ProxyMonitor struct {
 	delegate Monitor
 }
 
-// Start is delegated.
+// Start initiates monitoring by deferring to the proxy's delegate.
 func (m *ProxyMonitor) Start() error {
 	return m.delegate.Start()
 }
 
-// Stop is delegated.
+// Stop halts monitoring by deferring to the proxy's delegate.
 func (m *ProxyMonitor) Stop() error {
 	return m.delegate.Stop()
 }
 
-// SetInterval is delegated.
+// SetInterval changes the interval at which monitoring operations are performed
+// by deferring to the proxy's delegated.
 func (m *ProxyMonitor) SetInterval(i time.Duration) error {
 	return m.delegate.SetInterval(i)
 }
 
-// SetMaxHeapBytes is delegated.
+// SetMaxHeapBytes sets the soft limit on heap memory usage by deferring to the
+// proxy's delegated.
 func (m *ProxyMonitor) SetMaxHeapBytes(b uint64) error {
 	return m.delegate.SetMaxHeapBytes(b)
 }
