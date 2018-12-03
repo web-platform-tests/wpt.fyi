@@ -27,19 +27,20 @@ func strPtr(s string) *string {
 	return &s
 }
 
-func TestShouldProcessStatus_ok(t *testing.T) {
+func TestShouldProcessStatus_states(t *testing.T) {
 	status := statusEventPayload{}
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
 	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
-}
 
-func TestShouldProcessStatus_unsuccessful(t *testing.T) {
-	status := statusEventPayload{}
+	status.State = strPtr("failure")
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+
 	status.State = strPtr("error")
-	status.Context = strPtr("Taskcluster")
-	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
+	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+
+	status.State = strPtr("pending")
 	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 }
 
@@ -91,7 +92,7 @@ func TestExtractTaskGroupID(t *testing.T) {
 		extractTaskGroupID("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg"))
 }
 
-func TestExtractResultURLs(t *testing.T) {
+func TestExtractResultURLs_all_success(t *testing.T) {
 	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
 	group.Tasks[0].Status.State = "completed"
 	group.Tasks[0].Status.TaskID = "foo"
@@ -103,13 +104,34 @@ func TestExtractResultURLs(t *testing.T) {
 	group.Tasks[2].Status.TaskID = "baz"
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
 
-	urls, err := extractResultURLs(group)
+	urls, err := extractResultURLs(shared.NewNilLogger(), group)
 	assert.Nil(t, err)
 	assert.Equal(t, map[string][]string{
 		"firefox-nightly": {
 			"https://queue.taskcluster.net/v1/task/foo/artifacts/public/results/wpt_report.json.gz",
 			"https://queue.taskcluster.net/v1/task/bar/artifacts/public/results/wpt_report.json.gz",
 		},
+		"chrome-dev": {
+			"https://queue.taskcluster.net/v1/task/baz/artifacts/public/results/wpt_report.json.gz",
+		},
+	}, urls)
+}
+
+func TestExtractResultURLs_with_failures(t *testing.T) {
+	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
+	group.Tasks[0].Status.State = "failed"
+	group.Tasks[0].Status.TaskID = "foo"
+	group.Tasks[0].Task.Metadata.Name = "wpt-firefox-nightly-testharness-1"
+	group.Tasks[1].Status.State = "completed"
+	group.Tasks[1].Status.TaskID = "bar"
+	group.Tasks[1].Task.Metadata.Name = "wpt-firefox-nightly-testharness-2"
+	group.Tasks[2].Status.State = "completed"
+	group.Tasks[2].Status.TaskID = "baz"
+	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
+
+	urls, err := extractResultURLs(shared.NewNilLogger(), group)
+	assert.Nil(t, err)
+	assert.Equal(t, map[string][]string{
 		"chrome-dev": {
 			"https://queue.taskcluster.net/v1/task/baz/artifacts/public/results/wpt_report.json.gz",
 		},
