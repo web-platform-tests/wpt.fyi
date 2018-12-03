@@ -176,7 +176,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	suitesAPI := checks.NewMockSuitesAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	suitesAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	suitesAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox"))
+	suitesAPI.EXPECT().PendingCheckRun(suite, gomock.Any())
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
