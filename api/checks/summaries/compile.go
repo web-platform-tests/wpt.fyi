@@ -52,6 +52,18 @@ func (c CheckState) GetCheckState() CheckState {
 	return c
 }
 
+// FileIssueURL returns a URL for filing an issue in wpt.fyi repo about checks.
+func (c CheckState) FileIssueURL() *url.URL {
+	result, _ := url.Parse("https://github.com/web-platform-tests/wpt.fyi/issues/new")
+	q := result.Query()
+	q.Set("title", "Regression checks issue")
+	q.Set("projects", "web-platform-tests/wpt.fyi/6")
+	q.Set("template", "checks.md")
+	q.Set("labels", "bug")
+	result.RawQuery = q.Encode()
+	return result
+}
+
 func compile(i interface{}, t string) (string, error) {
 	var dest bytes.Buffer
 	if err := templates.ExecuteTemplate(&dest, t, i); err != nil {
