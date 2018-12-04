@@ -503,6 +503,16 @@ found in the LICENSE file.
               };
               this.fetchDiff();
             }
+
+            // Load a manifest.
+            if (this.fetchManifestForTestList) {
+              const shas = (runs || []).reduce((set, run) => {
+                set.add(run.revision);
+                return set;
+              }, new Set());
+              const sha = shas.size == 1 ? Array.from(shas)[0] : 'latest';
+              this.fetchManifestForSHA(sha);
+            }
           }),
           () => {
             this.resultsLoadFailed = true;
@@ -544,7 +554,9 @@ found in the LICENSE file.
             this.searchResults = json.results;
             this.refreshDisplayedNodes();
           }),
-          () => {
+          (e) => {
+            // eslint-disable-next-line no-console
+            console.log(`Failed to load: ${e}`);
             this.resultsLoadFailed = true;
           }
         );
@@ -569,19 +581,33 @@ found in the LICENSE file.
         );
       }
 
+      fetchManifestForSHA(sha) {
+        const url = new URL('/api/manifest', window.location);
+        const isSpecificSHA = sha && !this.computeIsLatest(sha);
+        if (isSpecificSHA) {
+          url.searchParams.set('sha', sha);
+        }
+        this.load(
+          fetch(url).then(
+            async r => {
+              if (!r.ok) {
+                // Fall back to the latest manifest if we 404 for a specific SHA.
+                return r.status === 404
+                  && isSpecificSHA
+                  && this.fetchManifestForSHA('latest')
+              }
+              let manifest = await r.json();
+              manifest.sha = sha || r.headers && r.headers['x-wpt-sha'];
+              this.manifest = manifest;
+              this.refreshDisplayedNodes();
+            }
+          )
+        );
+      }
+
       pathUpdated(path) {
         super.pathUpdated(path);
         this.refreshDisplayedNodes();
-        this.fetchManifest(path);
-      }
-
-      async fetchManifest(path) {
-        if (!this.computePathIsATestFile(path)) {
-          return;
-        }
-        path = this.encodeTestPath(path);
-        this.manifest = null; // Clear ASAP.
-        this.manifest = await fetch(`/api/manifest?path=${path}`).then(r => r.json());
       }
 
       nodeSort(a, b) {
@@ -597,85 +623,100 @@ found in the LICENSE file.
       refreshDisplayedNodes() {
         // Prefix: includes trailing slash.
         const prefix = this.path === '/' ? '/' : `${this.path}/`;
-        const pLen = prefix.length;
-        this.displayedNodes = this.searchResults
+        const collapsePathOnto = (testPath, nodes, opt_results) => {
+          const suffix = testPath.substring(prefix.length);
+          const slashIdx = suffix.indexOf('/');
+          const isDir = slashIdx !== -1;
+          const name = isDir ? suffix.substring(0, slashIdx): suffix;
+          // Either add new node to acc, or add passes, total to an
+          // existing node.
+          if (!nodes.hasOwnProperty(name)) {
+            nodes[name] = {
+              path: `${prefix}${name}`,
+              isDir,
+              results: this.testRuns.map(() => ({
+                passes: 0,
+                total: 0,
+              })),
+            };
+          }
+          return name;
+        };
+
+        // Add an empty row for all the tests known from the manifest.
+        const knownNodes = {};
+        if (this.manifest) {
+          for (const type of Object.keys(this.manifest.items)) {
+            if (['manual', 'reftest', 'testharness', 'wdspec'].includes(type)) {
+              for (const file of Object.keys(this.manifest.items[type])) {
+                for (const test of this.manifest.items[type][file]) {
+                  collapsePathOnto(test[0], knownNodes);
+                }
+              }
+            }
+          }
+        }
+
+        const resultsByPath = this.searchResults
           // Filter out files not in this directory.
           .filter(r => r.test.startsWith(prefix))
           // Accumulate displayedNodes from remaining files.
-          .reduce((() => {
-            // Bookkeeping of the form:
-            //   {<displayed dir/file name>: <index in acc>}.
-            let nodes = {};
-            return (acc, r) => {
-              // Compute dir/file name that is direct descendant of this.path.
-              let testPath = r.test;
-              let previousTestPath;
-              if (this.diffResults && this.diffResults.renames) {
-                if (testPath in this.diffResults.renames) {
-                  // This path was renamed; ignore.
-                  return acc;
-                }
-                const rename = Object.entries(this.diffResults.renames).find(e => e[1] === testPath);
-                if (rename) {
-                  // This is the new path name; store the old one.
-                  previousTestPath = rename[0];
-                }
+          .reduce((nodes, r) => {
+            // Compute dir/file name that is direct descendant of this.path.
+            let testPath = r.test;
+            let previousTestPath;
+            if (this.diffResults && this.diffResults.renames) {
+              if (testPath in this.diffResults.renames) {
+                // This path was renamed; ignore.
+                return nodes;
               }
-              const suffix = testPath.substring(pLen);
-              const slashIdx = suffix.indexOf('/');
-              const isDir = slashIdx !== -1;
-              const name = isDir ? suffix.substring(0, slashIdx): suffix;
+              const rename = Object.entries(this.diffResults.renames).find(e => e[1] === testPath);
+              if (rename) {
+                // This is the new path name; store the old one.
+                previousTestPath = rename[0];
+              }
+            }
+            const name = collapsePathOnto(testPath, nodes);
 
-              // Either add new node to acc, or add passes, total to an
-              // existing node.
-              if (!nodes.hasOwnProperty(name)) {
-                nodes[name] = acc.length;
-                const row = {
-                  path: `${prefix}${name}`,
-                  isDir,
-                  results: r.legacy_status.map(() => ({
-                    passes: 0,
-                    total: 0,
-                  })),
+            // Accumulate the sums.
+            const rs = r.legacy_status;
+            if (!rs) {
+              return nodes;
+            }
+            const row = nodes[name];
+            for (let i = 0; i < rs.length; i++) {
+              row.results[i].passes += rs[i].passes;
+              row.results[i].total += rs[i].total;
+            }
+            if (previousTestPath) {
+              const previous = this.searchResults.find(r => r.test === previousTestPath);
+              if (previous) {
+                row.results[0].passes += previous.legacy_status[0].passes;
+                row.results[0].total += previous.legacy_status[0].total;
+              }
+            }
+            if (this.diff && rs.length === 2) {
+              let diff;
+              if (this.diffResults) {
+                diff = this.diffResults.diff[r.test];
+              } else {
+                const [before, after] = rs;
+                diff = this.computeDifferences(before, after);
+              }
+              if (diff) {
+                row.diff = row.diff || {
+                  passes: 0,
+                  regressions: 0,
+                  total: 0,
                 };
-                acc.push(row);
+                row.diff.passes += diff[0];
+                row.diff.regressions += diff[1];
+                row.diff.total += diff[2];
               }
-              // Accumulate the sums.
-              const rs = r.legacy_status;
-              const row = acc[nodes[name]];
-              for (let i = 0; i < rs.length; i++) {
-                row.results[i].passes += rs[i].passes;
-                row.results[i].total += rs[i].total;
-              }
-              if (previousTestPath) {
-                const previous = this.searchResults.find(r => r.test === previousTestPath);
-                if (previous) {
-                  row.results[0].passes += previous.legacy_status[0].passes;
-                  row.results[0].total += previous.legacy_status[0].total;
-                }
-              }
-              if (this.diff && rs.length === 2) {
-                let diff;
-                if (this.diffResults) {
-                  diff = this.diffResults.diff[r.test];
-                } else {
-                  const [before, after] = rs;
-                  diff = this.computeDifferences(before, after);
-                }
-                if (diff) {
-                  row.diff = row.diff || {
-                    passes: 0,
-                    regressions: 0,
-                    total: 0,
-                  };
-                  row.diff.passes += diff[0];
-                  row.diff.regressions += diff[1];
-                  row.diff.total += diff[2];
-                }
-              }
-              return acc;
-            };
-          })(), [])
+            }
+            return nodes;
+          }, knownNodes);
+        this.displayedNodes = Object.values(resultsByPath)
           .filter(row => {
             if (!this.onlyShowDifferences) {
               return true;

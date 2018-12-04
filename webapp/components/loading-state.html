@@ -42,6 +42,8 @@ still being loaded (generally, fetched).
         try {
           return await promise;
         } catch (e) {
+          // eslint-disable-next-line no-console
+          console.log(`Failed to load: ${e}`);
           if (opt_errHandler) {
             opt_errHandler(e);
           }
