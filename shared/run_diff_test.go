@@ -158,18 +158,26 @@ func getDeltaResultsMaps(before []int, after []int) (map[string][]int, map[strin
 }
 
 func TestRegressions(t *testing.T) {
-	diff := ResultsDiff{
-		"/foo.html": TestDiff{0, 1, 0},
-	}
+	// Note: TestDiff items are {passing, regressed, total-delta}.
+	regressed := TestDiff{0, 1, 0}
+	assert.Equal(t, 1, regressed.Regressions())
+	diff := ResultsDiff{"/foo.html": regressed}
 	regressions := diff.Regressions()
 	assert.Equal(t, 1, regressions.Cardinality())
 	assert.True(t, regressions.Contains("/foo.html"))
 
-	diff = ResultsDiff{"/bar.html": TestDiff{1, 0, 1}}
+	newlyPassed := TestDiff{1, 0, 1}
+	assert.Equal(t, 0, newlyPassed.Regressions())
+	diff = ResultsDiff{"/bar.html": newlyPassed}
 	regressions = diff.Regressions()
 	assert.Equal(t, 0, regressions.Cardinality())
+	assert.False(t, regressions.Contains("/bar.html"))
 
-	diff = ResultsDiff{"/baz.html": TestDiff{0, 0, -2}}
+	// A reduction in test-count is treated as though that test regressed,
+	// in spite of there being zero newly-failing tests.
+	droppedTests := TestDiff{0, 0, -2}
+	assert.Equal(t, 0, droppedTests.Regressions())
+	diff = ResultsDiff{"/baz.html": droppedTests}
 	regressions = diff.Regressions()
 	assert.Equal(t, 1, regressions.Cardinality())
 	assert.True(t, regressions.Contains("/baz.html"))

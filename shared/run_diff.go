@@ -150,7 +150,7 @@ func NewTestDiff(before, after []int, filter DiffFilterParam) TestDiff {
 	}
 }
 
-// ResultsDiff is a collection of test diffs, mapped by the test path.
+// ResultsDiff is a collection of test diffs, keyed by the test path.
 type ResultsDiff map[string]TestDiff
 
 // Regressions returns the set of test paths for tests that have a regression
