@@ -126,9 +126,12 @@ func (s checksAPIImpl) CancelRun(sender, owner, repo string, run *github.CheckRu
 
 	// Keep the previous output, if applicable, but prefix it with an indication that
 	// somebody ignored the failure.
-	output := &github.CheckRunOutput{}
 	summary := fmt.Sprintf("This check was cancelled by @%s via the _Cancel_ action.", sender)
-	output.Summary = &summary
+	title := run.GetOutput().GetTitle()
+	output := &github.CheckRunOutput{
+		Title:   &title,
+		Summary: &summary,
+	}
 
 	cancelled := "cancelled"
 	opts := github.UpdateCheckRunOptions{
