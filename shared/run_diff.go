@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/lukebjerring/go-github/github"
+	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine/urlfetch"
 )

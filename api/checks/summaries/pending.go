@@ -4,7 +4,7 @@
 
 package summaries
 
-import "github.com/lukebjerring/go-github/github"
+import "github.com/google/go-github/github"
 
 // Pending is the struct for pending.md.
 type Pending struct {
@@ -24,7 +24,18 @@ func (p Pending) GetSummary() (string, error) {
 	return compile(&p, "pending.md")
 }
 
+// CancelAction is an action that can be taken to cancel a pending check run.
+func CancelAction() *github.CheckRunAction {
+	return &github.CheckRunAction{
+		Identifier:  "cancel",
+		Label:       "Cancel",
+		Description: "Cancel this pending check run",
+	}
+}
+
 // GetActions returns the actions that can be taken by the user.
 func (p Pending) GetActions() []*github.CheckRunAction {
-	return nil
+	return []*github.CheckRunAction{
+		CancelAction(),
+	}
 }

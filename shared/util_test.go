@@ -41,3 +41,14 @@ func TestMapStringKeys_NotAStringKeyedMap(t *testing.T) {
 	assert.Nil(t, keys)
 	assert.NotNil(t, err)
 }
+
+func TestProductChannelToLabel(t *testing.T) {
+	assert.Equal(t, StableLabel, ProductChannelToLabel("release"))
+	assert.Equal(t, StableLabel, ProductChannelToLabel("stable"))
+	assert.Equal(t, BetaLabel, ProductChannelToLabel("beta"))
+	assert.Equal(t, ExperimentalLabel, ProductChannelToLabel("dev"))
+	assert.Equal(t, ExperimentalLabel, ProductChannelToLabel("nightly"))
+	assert.Equal(t, ExperimentalLabel, ProductChannelToLabel("preview"))
+	assert.Equal(t, ExperimentalLabel, ProductChannelToLabel("experimental"))
+	assert.Equal(t, "", ProductChannelToLabel("not-a-channel"))
+}

@@ -148,7 +148,8 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 		MasterDiffURL: diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product).String(),
 	}
 
-	if regressions.Cardinality() > 0 {
+	hasRegressions := regressions.Cardinality() > 0
+	if !hasRegressions {
 		data := summaries.Completed{
 			CheckState:        checkState,
 			ResultsComparison: resultsComparison,

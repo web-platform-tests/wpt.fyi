@@ -14,7 +14,7 @@ import (
 
 	"github.com/deckarep/golang-set"
 
-	"github.com/lukebjerring/go-github/github"
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -67,6 +67,18 @@ func (c CheckState) Title() string {
 // It's a dumb placeholder since we can't define fields on interfaces.
 func (c CheckState) GetCheckState() CheckState {
 	return c
+}
+
+// FileIssueURL returns a URL for filing an issue in wpt.fyi repo about checks.
+func (c CheckState) FileIssueURL() *url.URL {
+	result, _ := url.Parse("https://github.com/web-platform-tests/wpt.fyi/issues/new")
+	q := result.Query()
+	q.Set("title", "Regression checks issue")
+	q.Set("projects", "web-platform-tests/wpt.fyi/6")
+	q.Set("template", "checks.md")
+	q.Set("labels", "bug")
+	result.RawQuery = q.Encode()
+	return result
 }
 
 func compile(i interface{}, t string) (string, error) {

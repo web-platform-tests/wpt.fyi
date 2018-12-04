@@ -6,10 +6,11 @@ package checks
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
-	github "github.com/lukebjerring/go-github/github"
-	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	github "github.com/google/go-github/github"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // MockAPI is a mock of API interface
@@ -95,4 +96,29 @@ func (m *MockAPI) IgnoreFailure(sender, owner, repo string, run *github.CheckRun
 // IgnoreFailure indicates an expected call of IgnoreFailure
 func (mr *MockAPIMockRecorder) IgnoreFailure(sender, owner, repo, run, installation interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IgnoreFailure", reflect.TypeOf((*MockAPI)(nil).IgnoreFailure), sender, owner, repo, run, installation)
+}
+
+// CancelRun mocks base method
+func (m *MockAPI) CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error {
+	ret := m.ctrl.Call(m, "CancelRun", sender, owner, repo, run, installation)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CancelRun indicates an expected call of CancelRun
+func (mr *MockAPIMockRecorder) CancelRun(sender, owner, repo, run, installation interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelRun", reflect.TypeOf((*MockAPI)(nil).CancelRun), sender, owner, repo, run, installation)
+}
+
+// CreateWPTCheckSuite mocks base method
+func (m *MockAPI) CreateWPTCheckSuite(appID, installationID int64, sha string) (bool, error) {
+	ret := m.ctrl.Call(m, "CreateWPTCheckSuite", appID, installationID, sha)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateWPTCheckSuite indicates an expected call of CreateWPTCheckSuite
+func (mr *MockAPIMockRecorder) CreateWPTCheckSuite(appID, installationID, sha interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWPTCheckSuite", reflect.TypeOf((*MockAPI)(nil).CreateWPTCheckSuite), appID, installationID, sha)
 }

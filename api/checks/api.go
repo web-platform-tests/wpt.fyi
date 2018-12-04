@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/lukebjerring/go-github/github"
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
@@ -24,6 +24,8 @@ type API interface {
 	PendingCheckRun(checkSuite shared.CheckSuite, browser shared.ProductSpec) (bool, error)
 	GetSuitesForSHA(sha string) ([]shared.CheckSuite, error)
 	IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
+	CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
+	CreateWPTCheckSuite(appID, installationID int64, sha string) (bool, error)
 }
 
 type checksAPIImpl struct {
@@ -113,4 +115,62 @@ func (s checksAPIImpl) IgnoreFailure(sender, owner, repo string, run *github.Che
 	}
 	_, _, err = client.Checks.UpdateCheckRun(s.ctx, owner, repo, run.GetID(), opts)
 	return err
+}
+
+// CancelRun updates the given CheckRun's outcome to cancelled, even if it failed.
+func (s checksAPIImpl) CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error {
+	client, err := getGitHubClient(s.ctx, run.GetApp().GetID(), installation.GetID())
+	if err != nil {
+		return err
+	}
+
+	// Keep the previous output, if applicable, but prefix it with an indication that
+	// somebody ignored the failure.
+	summary := fmt.Sprintf("This check was cancelled by @%s via the _Cancel_ action.", sender)
+	title := run.GetOutput().GetTitle()
+	output := &github.CheckRunOutput{
+		Title:   &title,
+		Summary: &summary,
+	}
+
+	cancelled := "cancelled"
+	opts := github.UpdateCheckRunOptions{
+		Name:        run.GetName(),
+		Output:      output,
+		Conclusion:  &cancelled,
+		CompletedAt: &github.Timestamp{Time: time.Now()},
+		Actions: []*github.CheckRunAction{
+			summaries.RecomputeAction(),
+		},
+	}
+	_, _, err = client.Checks.UpdateCheckRun(s.ctx, owner, repo, run.GetID(), opts)
+	return err
+}
+
+// CreateWPTCheckSuite creates a check_suite on the main wpt repo for the given
+// SHA. This is needed when a PR comes from a different fork of the repo.
+func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha string) (bool, error) {
+	log := shared.GetLogger(s.ctx)
+	log.Debugf("Creating check_suite for web-platform-tests/wpt @ %s", sha)
+
+	client, err := getGitHubClient(s.ctx, appID, installationID)
+	if err != nil {
+		return false, err
+	}
+
+	opts := github.CreateCheckSuiteOptions{
+		HeadSHA: sha,
+	}
+	suite, _, err := client.Checks.CreateCheckSuite(s.ctx, wptRepoOwner, wptRepoName, opts)
+	if err != nil {
+		log.Errorf("Failed to create GitHub check suite: %s", err.Error())
+	} else if suite != nil {
+		log.Infof("check_suite %v created", suite.GetID())
+		getOrCreateCheckSuite(s.ctx, sha, wptRepoOwner, wptRepoName, appID, installationID)
+	}
+	return suite != nil, err
+}
+
+func getCheckTitle(product shared.ProductSpec) string {
+	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
 }

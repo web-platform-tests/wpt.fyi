@@ -10,23 +10,27 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/lukebjerring/go-github/github"
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
 const (
-	wptfyiCheckAppID      = int64(19965)
-	checksStagingAppID    = int64(21580)
-	wptRepoID             = int64(3618133)
-	wptRepoInstallationID = int64(449270)
-	wptRepoOwner          = "web-platform-tests"
-	wptRepoName           = "wpt"
+	wptfyiCheckAppID         = int64(19965)
+	checksStagingAppID       = int64(21580)
+	azurePipelinesAppID      = int64(9426)
+	wptRepoID                = int64(3618133)
+	wptRepoInstallationID    = int64(449270)
+	wptRepoOwner             = "web-platform-tests"
+	wptRepoName              = "wpt"
+	checksForAllUsersFeature = "checksAllUsers"
 )
 
 func isKnownAppID(appID int64) bool {
 	switch appID {
-	case wptfyiCheckAppID, checksStagingAppID:
+	case wptfyiCheckAppID,
+		checksStagingAppID:
+		// TODO(lukebjerring): Handle azure events too.
 		return true
 	}
 	return false
@@ -70,14 +74,14 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	var processed bool
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	checksAPI := NewAPI(ctx)
 	if event == "check_suite" {
-		processed, err = handleCheckSuiteEvent(ctx, payload)
+		processed, err = handleCheckSuiteEvent(aeAPI, checksAPI, payload)
 	} else if event == "check_run" {
-		aeAPI := shared.NewAppEngineAPI(ctx)
-		checksAPI := NewAPI(ctx)
 		processed, err = handleCheckRunEvent(aeAPI, checksAPI, payload)
 	} else if event == "pull_request" {
-		processed, err = handlePullRequestEvent(ctx, payload)
+		processed, err = handlePullRequestEvent(aeAPI, checksAPI, payload)
 	}
 	if err != nil {
 		log.Errorf("%v", err)
@@ -96,8 +100,8 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 // handleCheckSuiteEvent handles a check_suite (re)requested event by ensuring
 // that a check_run exists for each product that contains results for the head SHA.
-func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
-	log := shared.GetLogger(ctx)
+func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
+	log := shared.GetLogger(aeAPI.Context())
 	var checkSuite github.CheckSuiteEvent
 	if err := json.Unmarshal(payload, &checkSuite); err != nil {
 		return false, err
@@ -109,22 +113,10 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, nil
 	}
 
-	if !shared.IsFeatureEnabled(ctx, "checksAllUsers") {
-		whitelist := []string{
-			"autofoolip",
-			"chromium-wpt-export-bot",
-			"foolip",
-			"jgraham",
-			"lukebjerring",
-		}
-		sender := ""
-		if checkSuite.Sender != nil && checkSuite.Sender.Login != nil {
-			sender = *checkSuite.Sender.Login
-		}
-		if !shared.StringSliceContains(whitelist, sender) {
-			log.Infof("Sender %s not whitelisted for wpt.fyi checks", sender)
-			return false, nil
-		}
+	login := checkSuite.GetSender().GetLogin()
+	if !isUserWhitelisted(aeAPI, login) {
+		log.Infof("Sender %s not whitelisted for wpt.fyi checks", login)
+		return false, nil
 	}
 
 	action := checkSuite.GetAction()
@@ -142,18 +134,18 @@ func handleCheckSuiteEvent(ctx context.Context, payload []byte) (bool, error) {
 			for _, p := range pullRequests {
 				destRepoID := p.GetBase().GetRepo().GetID()
 				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
-					createWPTCheckSuite(ctx, appID, installationID, sha)
+					checksAPI.CreateWPTCheckSuite(appID, installationID, sha)
 				}
 			}
 		}
 
-		suite, err := getOrCreateCheckSuite(ctx, sha, owner, repo, appID, installationID)
+		suite, err := getOrCreateCheckSuite(aeAPI.Context(), sha, owner, repo, appID, installationID)
 		if err != nil || suite == nil {
 			return false, err
 		}
 
 		if action == "rerequested" {
-			return scheduleProcessingForExistingRuns(ctx, sha)
+			return scheduleProcessingForExistingRuns(aeAPI.Context(), sha)
 		}
 	}
 	return false, nil
@@ -174,6 +166,12 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 		return false, nil
 	}
 
+	login := checkRun.GetSender().GetLogin()
+	if !isUserWhitelisted(aeAPI, login) {
+		log.Infof("Sender %s not whitelisted for wpt.fyi checks", login)
+		return false, nil
+	}
+
 	action := checkRun.GetAction()
 	status := checkRun.GetCheckRun().GetStatus()
 
@@ -182,9 +180,10 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 		shouldSchedule = true
 	} else if action == "requested_action" {
 		actionID := checkRun.GetRequestedAction().Identifier
-		if actionID == "recompute" {
+		switch actionID {
+		case "recompute":
 			shouldSchedule = true
-		} else if actionID == "ignore" {
+		case "ignore":
 			err := checksAPI.IgnoreFailure(
 				checkRun.GetSender().GetLogin(),
 				checkRun.GetRepo().GetOwner().GetLogin(),
@@ -192,7 +191,15 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 				checkRun.GetCheckRun(),
 				checkRun.GetInstallation())
 			return err == nil, err
-		} else {
+		case "cancel":
+			err := checksAPI.CancelRun(
+				checkRun.GetSender().GetLogin(),
+				checkRun.GetRepo().GetOwner().GetLogin(),
+				checkRun.GetRepo().GetName(),
+				checkRun.GetCheckRun(),
+				checkRun.GetInstallation())
+			return err == nil, err
+		default:
 			log.Debugf("Ignoring %s action with id %s", action, actionID)
 			return false, nil
 		}
@@ -213,16 +220,24 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 	return true, nil
 }
 
-func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
+func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
+	log := shared.GetLogger(aeAPI.Context())
 	var pullRequest github.PullRequestEvent
 	if err := json.Unmarshal(payload, &pullRequest); err != nil {
 		return false, err
+	}
+
+	login := pullRequest.GetPullRequest().GetUser().GetLogin()
+	if !isUserWhitelisted(aeAPI, login) {
+		log.Infof("Sender %s not whitelisted for wpt.fyi checks", login)
+		return false, nil
 	}
 
 	switch pullRequest.GetAction() {
 	case "opened", "synchronize":
 		break
 	default:
+		log.Debugf("Skipping pull request action %s", pullRequest.GetAction())
 		return false, nil
 	}
 
@@ -230,7 +245,7 @@ func handlePullRequestEvent(ctx context.Context, payload []byte) (bool, error) {
 	destRepoID := pullRequest.GetPullRequest().GetBase().GetRepo().GetID()
 	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
 		// Pull is across forks; request a check suite on the main fork too.
-		return createWPTCheckSuite(ctx, wptfyiCheckAppID, wptRepoInstallationID, sha)
+		return checksAPI.CreateWPTCheckSuite(wptfyiCheckAppID, wptRepoInstallationID, sha)
 	}
 	return false, nil
 }
@@ -254,30 +269,6 @@ func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products
 		}
 	}
 	return createdSome, nil
-}
-
-// createWPTCheckSuite creates a check_suite on the main wpt repo for the given
-// SHA. This is needed when a PR comes from a different fork of the repo.
-func createWPTCheckSuite(ctx context.Context, appID, installationID int64, sha string) (bool, error) {
-	log := shared.GetLogger(ctx)
-	log.Debugf("Creating check_suite for web-platform-tests/wpt @ %s", sha)
-
-	client, err := getGitHubClient(ctx, appID, installationID)
-	if err != nil {
-		return false, err
-	}
-
-	opts := github.CreateCheckSuiteOptions{
-		HeadSHA: sha,
-	}
-	suite, _, err := client.Checks.CreateCheckSuite(ctx, wptRepoOwner, wptRepoName, opts)
-	if err != nil {
-		log.Errorf("Failed to create GitHub check suite: %s", err.Error())
-	} else if suite != nil {
-		log.Infof("check_suite %v created", suite.GetID())
-		getOrCreateCheckSuite(ctx, sha, wptRepoOwner, wptRepoName, appID, installationID)
-	}
-	return suite != nil, err
 }
 
 // createCheckRun submits an http POST to create the check run on GitHub, handling JWT auth for the app.
@@ -305,4 +296,18 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		log.Infof("Created check_run %v", checkRun.GetID())
 	}
 	return true, nil
+}
+
+func isUserWhitelisted(aeAPI shared.AppEngineAPI, login string) bool {
+	if aeAPI.IsFeatureEnabled(checksForAllUsersFeature) {
+		return true
+	}
+	whitelist := []string{
+		"autofoolip",
+		"chromium-wpt-export-bot",
+		"foolip",
+		"jgraham",
+		"lukebjerring",
+	}
+	return shared.StringSliceContains(whitelist, login)
 }
