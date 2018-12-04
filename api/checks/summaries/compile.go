@@ -6,10 +6,13 @@ package summaries
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 	"path/filepath"
 	"runtime"
 	"text/template"
+
+	"github.com/deckarep/golang-set"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -40,10 +43,24 @@ type CheckState struct {
 	Product    shared.ProductSpec
 	HeadSHA    string
 	DetailsURL *url.URL
-	Title      string
 	Status     string  // The current status. Can be one of "queued", "in_progress", or "completed". Default: "queued". (Optional.)
 	Conclusion *string // Can be one of "success", "failure", "neutral", "cancelled", "timed_out", or "action_required". (Optional. Required if you provide a status of "completed".)
 	Actions    []github.CheckRunAction
+}
+
+// Name returns the check run's name, based on the product.
+func (c CheckState) Name() string {
+	spec := shared.ProductSpec{}
+	spec.BrowserName = c.Product.BrowserName
+	if c.Product.IsExperimental() {
+		spec.Labels = mapset.NewSetWith(shared.ExperimentalLabel)
+	}
+	return spec.String()
+}
+
+// Title returns the check run's title, based on the product.
+func (c CheckState) Title() string {
+	return fmt.Sprintf("wpt.fyi - %s results", c.Product.DisplayName())
 }
 
 // GetCheckState returns the info in the CheckState struct.

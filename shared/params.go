@@ -59,6 +59,12 @@ func (p ProductSpec) Matches(run TestRun) bool {
 	return true
 }
 
+// IsExperimental returns true if the product spec is restricted to experimental
+// runs (i.e. has the label "experimental").
+func (p ProductSpec) IsExperimental() bool {
+	return p.Labels != nil && p.Labels.Contains(ExperimentalLabel)
+}
+
 // DisplayName returns a capitalized version of the product's name.
 func (p ProductSpec) DisplayName() string {
 	switch p.BrowserName {

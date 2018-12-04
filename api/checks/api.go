@@ -70,7 +70,6 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 		CheckState: summaries.CheckState{
 			Product:    product,
 			HeadSHA:    suite.SHA,
-			Title:      getCheckTitle(product),
 			DetailsURL: shared.NewDiffAPI(s.ctx).GetMasterDiffURL(suite.SHA, product),
 			Status:     "in_progress",
 		},
