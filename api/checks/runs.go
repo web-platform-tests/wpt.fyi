@@ -25,14 +25,15 @@ func updateCheckRun(ctx context.Context, summary summaries.Summary, suites ...sh
 	}
 
 	detailsURLStr := state.DetailsURL.String()
+	title := state.Title()
 	opts := github.CreateCheckRunOptions{
-		Name:       state.Product.String(),
+		Name:       state.Name(),
 		HeadSHA:    state.HeadSHA,
 		DetailsURL: &detailsURLStr,
 		Status:     &state.Status,
 		Conclusion: state.Conclusion,
 		Output: &github.CheckRunOutput{
-			Title:   &state.Title,
+			Title:   &title,
 			Summary: &summaryStr,
 		},
 		Actions: actions,

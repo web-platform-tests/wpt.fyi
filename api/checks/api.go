@@ -68,7 +68,6 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 		CheckState: summaries.CheckState{
 			Product:    product,
 			HeadSHA:    suite.SHA,
-			Title:      getCheckTitle(product),
 			DetailsURL: shared.NewDiffAPI(s.ctx).GetMasterDiffURL(suite.SHA, product),
 			Status:     "in_progress",
 		},
@@ -114,8 +113,4 @@ func (s checksAPIImpl) IgnoreFailure(sender, owner, repo string, run *github.Che
 	}
 	_, _, err = client.Checks.UpdateCheckRun(s.ctx, owner, repo, run.GetID(), opts)
 	return err
-}
-
-func getCheckTitle(product shared.ProductSpec) string {
-	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
 }
