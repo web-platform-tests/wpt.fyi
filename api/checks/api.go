@@ -25,6 +25,7 @@ type API interface {
 	GetSuitesForSHA(sha string) ([]shared.CheckSuite, error)
 	IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
+	CreateWPTCheckSuite(appID, installationID int64, sha string) (bool, error)
 }
 
 type checksAPIImpl struct {
@@ -142,6 +143,30 @@ func (s checksAPIImpl) CancelRun(sender, owner, repo string, run *github.CheckRu
 	}
 	_, _, err = client.Checks.UpdateCheckRun(s.ctx, owner, repo, run.GetID(), opts)
 	return err
+}
+
+// CreateWPTCheckSuite creates a check_suite on the main wpt repo for the given
+// SHA. This is needed when a PR comes from a different fork of the repo.
+func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha string) (bool, error) {
+	log := shared.GetLogger(s.ctx)
+	log.Debugf("Creating check_suite for web-platform-tests/wpt @ %s", sha)
+
+	client, err := getGitHubClient(s.ctx, appID, installationID)
+	if err != nil {
+		return false, err
+	}
+
+	opts := github.CreateCheckSuiteOptions{
+		HeadSHA: sha,
+	}
+	suite, _, err := client.Checks.CreateCheckSuite(s.ctx, wptRepoOwner, wptRepoName, opts)
+	if err != nil {
+		log.Errorf("Failed to create GitHub check suite: %s", err.Error())
+	} else if suite != nil {
+		log.Infof("check_suite %v created", suite.GetID())
+		getOrCreateCheckSuite(s.ctx, sha, wptRepoOwner, wptRepoName, appID, installationID)
+	}
+	return suite != nil, err
 }
 
 func getCheckTitle(product shared.ProductSpec) string {
