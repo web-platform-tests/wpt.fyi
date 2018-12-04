@@ -21,3 +21,5 @@ Other views that might be useful:
 - [`{{ printf "%.7s" .PRRun.FullRevisionHash }}` vs `master`@`{{ printf "%.7s" .MasterRun.FullRevisionHash }}`]({{ .DiffURL }})
 - [`{{ printf "%.7s" .PRRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})
 - [Latest results for `{{ printf "%.7s" .PRRun.FullRevisionHash }}`]({{.HostURL}}?sha={{.PRRun.Revision}})
+
+{{ template "_file_an_issue.md" . }}

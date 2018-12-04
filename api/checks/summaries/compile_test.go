@@ -50,6 +50,7 @@ func TestGetSummary_Completed(t *testing.T) {
 	assert.Contains(t, s, foo.DiffURL)
 	assert.Contains(t, s, "2 / 3")
 	assert.Contains(t, s, "And 1 others...")
+	assert.Contains(t, s, foo.FileIssueURL().String())
 }
 
 func TestGetSummary_Pending(t *testing.T) {
@@ -64,6 +65,7 @@ func TestGetSummary_Pending(t *testing.T) {
 	}
 	assert.Contains(t, s, foo.HostName)
 	assert.Contains(t, s, foo.RunsURL)
+	assert.Contains(t, s, foo.FileIssueURL().String())
 }
 
 func TestGetSummary_Regressed(t *testing.T) {
@@ -105,6 +107,7 @@ func TestGetSummary_Regressed(t *testing.T) {
 	assert.Contains(t, s, "0 / 1")
 	assert.Contains(t, s, "1 / 1")
 	assert.Contains(t, s, "And 1 others...")
+	assert.Contains(t, s, foo.FileIssueURL().String())
 }
 
 func printOutput(s string) {
