@@ -22,7 +22,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/lukebjerring/go-github/github"
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )

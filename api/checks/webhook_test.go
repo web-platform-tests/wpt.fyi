@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/lukebjerring/go-github/github"
+	"github.com/google/go-github/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
