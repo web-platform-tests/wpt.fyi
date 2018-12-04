@@ -4,7 +4,7 @@
 
 package summaries
 
-import "github.com/lukebjerring/go-github/github"
+import "github.com/google/go-github/github"
 
 // BeforeAndAfter is a struct summarizing pass rates before and after in a diff.
 type BeforeAndAfter struct {
