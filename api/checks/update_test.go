@@ -19,12 +19,7 @@ func TestGetDiffSummary_Regressed(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	before := shared.TestRun{}
-	before.FullRevisionHash = strings.Repeat("0", 40)
-	before.BrowserName = "chrome"
-	after := shared.TestRun{}
-	after.FullRevisionHash = strings.Repeat("1", 40)
-	after.BrowserName = "chrome"
+	before, after := getBeforeAndAfterRuns()
 	runDiff := shared.RunDiff{
 		Differences: shared.ResultsDiff{"/foo.html": shared.TestDiff{0, 1, 0}},
 	}
@@ -49,12 +44,7 @@ func TestGetDiffSummary_Completed(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	before := shared.TestRun{}
-	before.FullRevisionHash = strings.Repeat("0", 40)
-	before.BrowserName = "chrome"
-	after := shared.TestRun{}
-	after.FullRevisionHash = strings.Repeat("1", 40)
-	after.BrowserName = "chrome"
+	before, after := getBeforeAndAfterRuns()
 	runDiff := shared.RunDiff{
 		Differences: shared.ResultsDiff{"/foo.html": shared.TestDiff{1, 0, 1}},
 	}
@@ -73,4 +63,12 @@ func TestGetDiffSummary_Completed(t *testing.T) {
 	assert.Nil(t, err)
 	_, ok := summary.(summaries.Completed)
 	assert.True(t, ok)
+}
+
+func getBeforeAndAfterRuns() (before, after shared.TestRun) {
+	before.FullRevisionHash = strings.Repeat("0", 40)
+	before.BrowserName = "chrome"
+	after.FullRevisionHash = strings.Repeat("1", 40)
+	after.BrowserName = "chrome"
+	return before, after
 }
