@@ -217,13 +217,11 @@ func TestStructuredQuery_bindStatusNoRuns(t *testing.T) {
 }
 
 func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
-	assert.Equal(t, RunTestStatusConstraint{
-		Run:    1,
-		Status: 1,
-	}, testStatusConstraint{
+	q := testStatusConstraint{
 		browserName: "Firefox",
 		status:      1,
-	}.BindToRuns([]shared.TestRun{
+	}
+	runs := []shared.TestRun{
 		shared.TestRun{
 			ID: 1,
 			ProductAtRevision: shared.ProductAtRevision{
@@ -240,25 +238,21 @@ func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
 				},
 			},
 		},
-	}))
+	}
+	// Only Firefox run ID=1.
+	expected := RunTestStatusConstraint{
+		Run:    1,
+		Status: 1,
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
 }
 
 func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
-	assert.Equal(t, Or{
-		Args: []ConcreteQuery{
-			RunTestStatusConstraint{
-				Run:    1,
-				Status: 1,
-			},
-			RunTestStatusConstraint{
-				Run:    3,
-				Status: 1,
-			},
-		},
-	}, testStatusConstraint{
+	q := testStatusConstraint{
 		browserName: "Firefox",
 		status:      1,
-	}.BindToRuns([]shared.TestRun{
+	}
+	runs := []shared.TestRun{
 		shared.TestRun{
 			ID: 1,
 			ProductAtRevision: shared.ProductAtRevision{
@@ -283,21 +277,25 @@ func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
 				},
 			},
 		},
-	}))
-}
-
-func TestStructuredQuery_bindAnd(t *testing.T) {
-	assert.Equal(t, And{
+	}
+	// Two Firefox runs: ID=1, ID=3.
+	expected := Or{
 		Args: []ConcreteQuery{
-			TestNamePattern{
-				Pattern: "/",
-			},
 			RunTestStatusConstraint{
 				Run:    1,
 				Status: 1,
 			},
+			RunTestStatusConstraint{
+				Run:    3,
+				Status: 1,
+			},
 		},
-	}, and{
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindAnd(t *testing.T) {
+	q := and{
 		and: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "/",
@@ -307,7 +305,8 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 				status:      1,
 			},
 		},
-	}.BindToRuns([]shared.TestRun{
+	}
+	runs := []shared.TestRun{
 		shared.TestRun{
 			ID: 1,
 			ProductAtRevision: shared.ProductAtRevision{
@@ -316,11 +315,9 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 				},
 			},
 		},
-	}))
-}
-
-func TestStructuredQuery_bindOr(t *testing.T) {
-	assert.Equal(t, Or{
+	}
+	// Only run is Edge, ID=1.
+	expected := And{
 		Args: []ConcreteQuery{
 			TestNamePattern{
 				Pattern: "/",
@@ -330,7 +327,12 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 				Status: 1,
 			},
 		},
-	}, or{
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindOr(t *testing.T) {
+	q := or{
 		or: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "/",
@@ -340,7 +342,8 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 				status:      1,
 			},
 		},
-	}.BindToRuns([]shared.TestRun{
+	}
+	runs := []shared.TestRun{
 		shared.TestRun{
 			ID: 1,
 			ProductAtRevision: shared.ProductAtRevision{
@@ -349,21 +352,30 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 				},
 			},
 		},
-	}))
+	}
+	// Only run is Edge, ID=1.
+	expected := Or{
+		Args: []ConcreteQuery{
+			TestNamePattern{
+				Pattern: "/",
+			},
+			RunTestStatusConstraint{
+				Run:    1,
+				Status: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
 }
 
 func TestStructuredQuery_bindNot(t *testing.T) {
-	assert.Equal(t, Not{
-		Arg: RunTestStatusConstraint{
-			Run:    1,
-			Status: 1,
-		},
-	}, not{
+	q := not{
 		not: testStatusConstraint{
 			browserName: "Edge",
 			status:      1,
 		},
-	}.BindToRuns([]shared.TestRun{
+	}
+	runs := []shared.TestRun{
 		shared.TestRun{
 			ID: 1,
 			ProductAtRevision: shared.ProductAtRevision{
@@ -372,13 +384,19 @@ func TestStructuredQuery_bindNot(t *testing.T) {
 				},
 			},
 		},
-	}))
+	}
+	// Only run is Edge, ID=1.
+	expected := Not{
+		Arg: RunTestStatusConstraint{
+			Run:    1,
+			Status: 1,
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
 }
 
 func TestStructuredQuery_bindAndReduce(t *testing.T) {
-	assert.Equal(t, TestNamePattern{
-		Pattern: "/",
-	}, and{
+	q := and{
 		and: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "/",
@@ -388,7 +406,8 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 				status:      1,
 			},
 		},
-	}.BindToRuns([]shared.TestRun{
+	}
+	runs := []shared.TestRun{
 		shared.TestRun{
 			ID: 1,
 			ProductAtRevision: shared.ProductAtRevision{
@@ -397,11 +416,17 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 				},
 			},
 		},
-	}))
+	}
+	// No runs match Safari constraint; it becomes True,
+	// True && Pattern="/" => Pattern="/".
+	expected := TestNamePattern{
+		Pattern: "/",
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
 }
 
 func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
-	assert.Equal(t, True{}, and{
+	q := and{
 		and: []AbstractQuery{
 			testStatusConstraint{
 				browserName: "Chrome",
@@ -412,7 +437,8 @@ func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 				status:      1,
 			},
 		},
-	}.BindToRuns([]shared.TestRun{
+	}
+	runs := []shared.TestRun{
 		shared.TestRun{
 			ID: 1,
 			ProductAtRevision: shared.ProductAtRevision{
@@ -421,11 +447,14 @@ func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 				},
 			},
 		},
-	}))
+	}
+	// No runs match any constraint; reduce to True.
+	expected := True{}
+	assert.Equal(t, expected, q.BindToRuns(runs))
 }
 
 func TestStructuredQuery_bindOrReduce(t *testing.T) {
-	assert.Equal(t, True{}, or{
+	q := or{
 		or: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "/",
@@ -435,7 +464,8 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 				status:      1,
 			},
 		},
-	}.BindToRuns([]shared.TestRun{
+	}
+	runs := []shared.TestRun{
 		shared.TestRun{
 			ID: 1,
 			ProductAtRevision: shared.ProductAtRevision{
@@ -444,11 +474,70 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 				},
 			},
 		},
-	}))
+	}
+	// No runs match Safari constraint; it becomes True,
+	// Pattern="/" || True => True.
+	expected := True{}
+	assert.Equal(t, expected, q.BindToRuns(runs))
 }
 
 func TestStructuredQuery_bindComplex(t *testing.T) {
-	assert.Equal(t, Or{
+	q := or{
+		or: []AbstractQuery{
+			TestNamePattern{
+				Pattern: "cssom",
+			},
+			and{
+				and: []AbstractQuery{
+					not{
+						not: TestNamePattern{
+							Pattern: "css",
+						},
+					},
+					testStatusConstraint{
+						browserName: "Safari",
+						status:      1,
+					},
+					testStatusConstraint{
+						browserName: "Chrome",
+						status:      1,
+					},
+				},
+			},
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Chrome",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 2,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 3,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Chrome",
+				},
+			},
+		},
+	}
+	// No runs match Safari constraint; two Chrome runs expand to disjunction over
+	// their values:
+	// Pattern="cssom" || (!Pattern="css" && Safari(status=1) && Chrome(status=1))
+	// => Pattern="cssom" || (!Pattern="css" && (RunID=1(status=1) ||
+	//                                           RunID=3(status=1))
+	expected := Or{
 		Args: []ConcreteQuery{
 			TestNamePattern{
 				Pattern: "cssom",
@@ -475,53 +564,6 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 				},
 			},
 		},
-	}, or{
-		or: []AbstractQuery{
-			TestNamePattern{
-				Pattern: "cssom",
-			},
-			and{
-				and: []AbstractQuery{
-					not{
-						not: TestNamePattern{
-							Pattern: "css",
-						},
-					},
-					testStatusConstraint{
-						browserName: "Safari",
-						status:      1,
-					},
-					testStatusConstraint{
-						browserName: "Chrome",
-						status:      1,
-					},
-				},
-			},
-		},
-	}.BindToRuns([]shared.TestRun{
-		shared.TestRun{
-			ID: 1,
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName: "Chrome",
-				},
-			},
-		},
-		shared.TestRun{
-			ID: 2,
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName: "Edge",
-				},
-			},
-		},
-		shared.TestRun{
-			ID: 3,
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName: "Chrome",
-				},
-			},
-		},
-	}))
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
 }
