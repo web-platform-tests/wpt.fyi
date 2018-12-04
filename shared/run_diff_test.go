@@ -158,16 +158,19 @@ func getDeltaResultsMaps(before []int, after []int) (map[string][]int, map[strin
 }
 
 func TestRegressions(t *testing.T) {
-	diff := RunDiff{
-		Differences: map[string]TestDiff{
-			"/foo.html": TestDiff{0, 1, 0},
-		},
+	diff := ResultsDiff{
+		"/foo.html": TestDiff{0, 1, 0},
 	}
 	regressions := diff.Regressions()
 	assert.Equal(t, 1, regressions.Cardinality())
 	assert.True(t, regressions.Contains("/foo.html"))
 
-	diff.Differences["/foo.html"] = TestDiff{1, 0, 1}
+	diff = ResultsDiff{"/bar.html": TestDiff{1, 0, 1}}
 	regressions = diff.Regressions()
 	assert.Equal(t, 0, regressions.Cardinality())
+
+	diff = ResultsDiff{"/baz.html": TestDiff{0, 0, -2}}
+	regressions = diff.Regressions()
+	assert.Equal(t, 1, regressions.Cardinality())
+	assert.True(t, regressions.Contains("/baz.html"))
 }

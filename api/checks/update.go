@@ -20,6 +20,8 @@ import (
 // interpretation of TestRun results, in order to update the GitHub checks.
 const CheckProcessingQueue = "check-processing"
 
+const failChecksOnRegressionFeature = "failChecksOnRegression"
+
 // updateCheckHandler handles /api/checks/[commit] POST requests.
 func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
@@ -133,10 +135,10 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 		Status:     "completed",
 	}
 
-	regressions := diff.Regressions()
+	regressions := diff.Differences.Regressions()
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
-	checksCanFailAndPass := aeAPI.IsFeatureEnabled("failChecksOnRegression")
+	checksCanFailAndPass := aeAPI.IsFeatureEnabled(failChecksOnRegressionFeature)
 
 	var summary summaries.Summary
 	host := aeAPI.GetHostname()

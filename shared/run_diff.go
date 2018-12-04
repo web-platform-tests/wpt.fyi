@@ -78,12 +78,12 @@ type RunDiff struct {
 	// Differences is a map from test-path to an array of
 	// [newly-passing, newly-failing, total-delta],
 	// where newly-pa
-	Before        TestRun             `json:"-"`
-	BeforeSummary map[string][]int    `json:"-"`
-	After         TestRun             `json:"-"`
-	AfterSummary  map[string][]int    `json:"-"`
-	Differences   map[string]TestDiff `json:"diff"`
-	Renames       map[string]string   `json:"renames"`
+	Before        TestRun           `json:"-"`
+	BeforeSummary map[string][]int  `json:"-"`
+	After         TestRun           `json:"-"`
+	AfterSummary  map[string][]int  `json:"-"`
+	Differences   ResultsDiff       `json:"diff"`
+	Renames       map[string]string `json:"renames"`
 }
 
 // TestDiff is an array of differences between 2 tests.
@@ -150,15 +150,18 @@ func NewTestDiff(before, after []int, filter DiffFilterParam) TestDiff {
 	}
 }
 
+// ResultsDiff is a collection of test diffs, mapped by the test path.
+type ResultsDiff map[string]TestDiff
+
 // Regressions returns the set of test paths for tests that have a regression
 // value in their diff. A change is considered a regression when tests that existed
 // both before and after have an increase in the number of failing tests has increased,
 // which will of course include newly-added tests that are failing.
 // Additionally, we flag a decrease in the total number of tests as a regression,
 // since that can often indicate a failure in a test's setup.
-func (r RunDiff) Regressions() mapset.Set {
+func (r ResultsDiff) Regressions() mapset.Set {
 	regressions := mapset.NewSet()
-	for test, diff := range r.Differences {
+	for test, diff := range r {
 		if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
 			regressions.Add(test)
 		}
