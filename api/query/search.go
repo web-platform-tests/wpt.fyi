@@ -100,14 +100,14 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
 	}
 
-	var rq runQuery
+	var rq RunQuery
 	err = json.Unmarshal(data, &rq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	simpleQ, ok := rq.query.(testNamePattern)
+	simpleQ, ok := rq.AbstractQuery.(TestNamePattern)
 	if !ok {
 		// TODO: Implement serving complex queries.
 		http.Error(w, "Query pattern is valid, but processing of this query configuration is not yet implemented", http.StatusServiceUnavailable)
@@ -126,7 +126,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
 	}
 	runIDsStr := strings.Join(runIDStrs, ",")
-	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.pattern))
+	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
 }
 

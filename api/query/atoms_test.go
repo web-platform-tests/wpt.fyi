@@ -15,13 +15,13 @@ import (
 )
 
 func TestStructuredQuery_empty(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{}`), &rq)
 	assert.NotNil(t, err)
 }
 
 func TestStructuredQuery_missingRunIDs(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"query": {
 			"pattern": "/2dcontext/"
@@ -31,7 +31,7 @@ func TestStructuredQuery_missingRunIDs(t *testing.T) {
 }
 
 func TestStructuredQuery_missingQuery(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2]
 	}`), &rq)
@@ -39,7 +39,7 @@ func TestStructuredQuery_missingQuery(t *testing.T) {
 }
 
 func TestStructuredQuery_emptyRunIDs(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [],
 		"query": {
@@ -50,7 +50,7 @@ func TestStructuredQuery_emptyRunIDs(t *testing.T) {
 }
 
 func TestStructuredQuery_emptyBrowserName(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -62,7 +62,7 @@ func TestStructuredQuery_emptyBrowserName(t *testing.T) {
 }
 
 func TestStructuredQuery_missingStatus(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -73,7 +73,7 @@ func TestStructuredQuery_missingStatus(t *testing.T) {
 }
 
 func TestStructuredQuery_badStatus(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -84,7 +84,7 @@ func TestStructuredQuery_badStatus(t *testing.T) {
 	assert.NotNil(t, err)
 }
 func TestStructuredQuery_unknownStatus(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -93,11 +93,11 @@ func TestStructuredQuery_unknownStatus(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, runQuery{runIDs: []int64{0, 1, 2}, query: testStatusConstraint{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: testStatusConstraint{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
 }
 
 func TestStructuredQuery_pattern(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -105,11 +105,11 @@ func TestStructuredQuery_pattern(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, runQuery{runIDs: []int64{0, 1, 2}, query: testNamePattern{"/2dcontext/"}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{"/2dcontext/"}}, rq)
 }
 
 func TestStructuredQuery_status(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -118,11 +118,11 @@ func TestStructuredQuery_status(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, runQuery{runIDs: []int64{0, 1, 2}, query: testStatusConstraint{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: testStatusConstraint{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
 }
 
 func TestStructuredQuery_not(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -132,11 +132,11 @@ func TestStructuredQuery_not(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, runQuery{runIDs: []int64{0, 1, 2}, query: not{testNamePattern{"cssom"}}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: not{TestNamePattern{"cssom"}}}, rq)
 }
 
 func TestStructuredQuery_or(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -147,11 +147,11 @@ func TestStructuredQuery_or(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, runQuery{runIDs: []int64{0, 1, 2}, query: or{[]query{testNamePattern{"cssom"}, testNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: or{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_and(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -162,11 +162,11 @@ func TestStructuredQuery_and(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, runQuery{runIDs: []int64{0, 1, 2}, query: and{[]query{testNamePattern{"cssom"}, testNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: and{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_nested(t *testing.T) {
-	var rq runQuery
+	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
@@ -185,18 +185,385 @@ func TestStructuredQuery_nested(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, runQuery{
+	assert.Equal(t, RunQuery{
 		runIDs: []int64{0, 1, 2},
-		query: or{
-			or: []query{
+		AbstractQuery: or{
+			or: []AbstractQuery{
 				and{
-					and: []query{
-						not{testNamePattern{"cssom"}},
-						testNamePattern{"html"},
+					and: []AbstractQuery{
+						not{TestNamePattern{"cssom"}},
+						TestNamePattern{"html"},
 					},
 				},
 				testStatusConstraint{"edge", shared.TestStatusValueFromString("TIMEOUT")},
 			},
 		},
 	}, rq)
+}
+
+func TestStructuredQuery_bindPattern(t *testing.T) {
+	tnp := TestNamePattern{
+		Pattern: "/",
+	}
+	q := tnp.BindToRuns([]shared.TestRun{})
+	assert.Equal(t, tnp, q)
+}
+
+func TestStructuredQuery_bindStatusNoRuns(t *testing.T) {
+	assert.Equal(t, True{}, testStatusConstraint{
+		browserName: "Chrome",
+		status:      1,
+	}.BindToRuns([]shared.TestRun{}))
+}
+
+func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
+	q := testStatusConstraint{
+		browserName: "Firefox",
+		status:      1,
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Firefox",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 2,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Chrome",
+				},
+			},
+		},
+	}
+	// Only Firefox run ID=1.
+	expected := RunTestStatusConstraint{
+		Run:    1,
+		Status: 1,
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
+	q := testStatusConstraint{
+		browserName: "Firefox",
+		status:      1,
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Firefox",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 2,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Chrome",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 3,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Firefox",
+				},
+			},
+		},
+	}
+	// Two Firefox runs: ID=1, ID=3.
+	expected := Or{
+		Args: []ConcreteQuery{
+			RunTestStatusConstraint{
+				Run:    1,
+				Status: 1,
+			},
+			RunTestStatusConstraint{
+				Run:    3,
+				Status: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindAnd(t *testing.T) {
+	q := and{
+		and: []AbstractQuery{
+			TestNamePattern{
+				Pattern: "/",
+			},
+			testStatusConstraint{
+				browserName: "Edge",
+				status:      1,
+			},
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+	}
+	// Only run is Edge, ID=1.
+	expected := And{
+		Args: []ConcreteQuery{
+			TestNamePattern{
+				Pattern: "/",
+			},
+			RunTestStatusConstraint{
+				Run:    1,
+				Status: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindOr(t *testing.T) {
+	q := or{
+		or: []AbstractQuery{
+			TestNamePattern{
+				Pattern: "/",
+			},
+			testStatusConstraint{
+				browserName: "Edge",
+				status:      1,
+			},
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+	}
+	// Only run is Edge, ID=1.
+	expected := Or{
+		Args: []ConcreteQuery{
+			TestNamePattern{
+				Pattern: "/",
+			},
+			RunTestStatusConstraint{
+				Run:    1,
+				Status: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindNot(t *testing.T) {
+	q := not{
+		not: testStatusConstraint{
+			browserName: "Edge",
+			status:      1,
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+	}
+	// Only run is Edge, ID=1.
+	expected := Not{
+		Arg: RunTestStatusConstraint{
+			Run:    1,
+			Status: 1,
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindAndReduce(t *testing.T) {
+	q := and{
+		and: []AbstractQuery{
+			TestNamePattern{
+				Pattern: "/",
+			},
+			testStatusConstraint{
+				browserName: "Safari",
+				status:      1,
+			},
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+	}
+	// No runs match Safari constraint; it becomes True,
+	// True && Pattern="/" => Pattern="/".
+	expected := TestNamePattern{
+		Pattern: "/",
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
+	q := and{
+		and: []AbstractQuery{
+			testStatusConstraint{
+				browserName: "Chrome",
+				status:      1,
+			},
+			testStatusConstraint{
+				browserName: "Safari",
+				status:      1,
+			},
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+	}
+	// No runs match any constraint; reduce to True.
+	expected := True{}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindOrReduce(t *testing.T) {
+	q := or{
+		or: []AbstractQuery{
+			TestNamePattern{
+				Pattern: "/",
+			},
+			testStatusConstraint{
+				browserName: "Safari",
+				status:      1,
+			},
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+	}
+	// No runs match Safari constraint; it becomes True,
+	// Pattern="/" || True => True.
+	expected := True{}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindComplex(t *testing.T) {
+	q := or{
+		or: []AbstractQuery{
+			TestNamePattern{
+				Pattern: "cssom",
+			},
+			and{
+				and: []AbstractQuery{
+					not{
+						not: TestNamePattern{
+							Pattern: "css",
+						},
+					},
+					testStatusConstraint{
+						browserName: "Safari",
+						status:      1,
+					},
+					testStatusConstraint{
+						browserName: "Chrome",
+						status:      1,
+					},
+				},
+			},
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Chrome",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 2,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 3,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Chrome",
+				},
+			},
+		},
+	}
+	// No runs match Safari constraint; two Chrome runs expand to disjunction over
+	// their values:
+	// Pattern="cssom" || (!Pattern="css" && Safari(status=1) && Chrome(status=1))
+	// => Pattern="cssom" || (!Pattern="css" && (RunID=1(status=1) ||
+	//                                           RunID=3(status=1))
+	expected := Or{
+		Args: []ConcreteQuery{
+			TestNamePattern{
+				Pattern: "cssom",
+			},
+			And{
+				Args: []ConcreteQuery{
+					Not{
+						Arg: TestNamePattern{
+							Pattern: "css",
+						},
+					},
+					Or{
+						Args: []ConcreteQuery{
+							RunTestStatusConstraint{
+								Run:    1,
+								Status: 1,
+							},
+							RunTestStatusConstraint{
+								Run:    3,
+								Status: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
 }

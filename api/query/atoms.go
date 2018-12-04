@@ -15,25 +15,29 @@ import (
 
 var browsers = shared.GetDefaultBrowserNames()
 
-type query interface {
-	toPlan(runIDs []int64) plan
+// AbstractQuery is an intermetidate representation of a test results query that
+//  has not been bound to specific shared.TestRun specs for processing.
+type AbstractQuery interface {
+	BindToRuns(runs []shared.TestRun) ConcreteQuery
 }
 
-type runQuery struct {
+// RunQuery is the internal representation of a query recieved from an HTTP
+// client, including the IDs of the test runs to query, and the structured query
+// to run.
+type RunQuery struct {
 	runIDs []int64
-	query
+	AbstractQuery
 }
 
-func (rq runQuery) toPlan() plan {
-	return rq.query.toPlan(rq.runIDs)
+// TestNamePattern is a query atom that matches test names to a pattern string.
+type TestNamePattern struct {
+	Pattern string
 }
 
-type testNamePattern struct {
-	pattern string
-}
-
-func (tnp testNamePattern) toPlan(runIDs []int64) plan {
-	return nil
+// BindToRuns for TestNamePattern is a no-op: TestNamePattern implements both
+// AbstractQuery and ConcreteQuery because it is independent of test runs.
+func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	return tnp
 }
 
 type testStatusConstraint struct {
@@ -41,35 +45,92 @@ type testStatusConstraint struct {
 	status      int64
 }
 
-func (tsc testStatusConstraint) toPlan(runIDs []int64) plan {
-	return nil
+func (tsc testStatusConstraint) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	ids := make([]int64, 0, len(runs))
+	for _, run := range runs {
+		if run.BrowserName == tsc.browserName {
+			ids = append(ids, run.ID)
+		}
+	}
+	if len(ids) == 0 {
+		return True{}
+	}
+	if len(ids) == 1 {
+		return RunTestStatusConstraint{ids[0], tsc.status}
+	}
+
+	q := Or{make([]ConcreteQuery, len(ids))}
+	for i := range ids {
+		q.Args[i] = RunTestStatusConstraint{ids[i], tsc.status}
+	}
+	return q
 }
 
 type not struct {
-	not query
+	not AbstractQuery
 }
 
-func (n not) toPlan(runIDs []int64) plan {
-	return nil
+func (n not) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	return Not{n.not.BindToRuns(runs)}
 }
 
 type or struct {
-	or []query
+	or []AbstractQuery
 }
 
-func (o or) toPlan(runIDs []int64) plan {
-	return nil
+func (o or) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	args := make([]ConcreteQuery, 0, len(o.or))
+	for i := range o.or {
+		sub := o.or[i].BindToRuns(runs)
+		if _, ok := sub.(True); ok {
+			return True{}
+		}
+		if _, ok := sub.(False); ok {
+			continue
+		}
+		args = append(args, sub)
+	}
+	if len(args) == 0 {
+		return True{}
+	}
+	if len(args) == 1 {
+		return args[0]
+	}
+	return Or{
+		Args: args,
+	}
 }
 
 type and struct {
-	and []query
+	and []AbstractQuery
 }
 
-func (a and) toPlan(runIDs []int64) plan {
-	return nil
+func (a and) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	args := make([]ConcreteQuery, 0, len(a.and))
+	for i := range a.and {
+		sub := a.and[i].BindToRuns(runs)
+		if _, ok := sub.(False); ok {
+			return False{}
+		}
+		if _, ok := sub.(True); ok {
+			continue
+		}
+		args = append(args, sub)
+	}
+	if len(args) == 0 {
+		return True{}
+	}
+	if len(args) == 1 {
+		return args[0]
+	}
+	return And{
+		Args: args,
+	}
 }
 
-func (rq *runQuery) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON interprets the JSON representation of a RunQuery, instantiating
+// (an) appropriate Query implementation(s) according to the JSON structure.
+func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 	var data struct {
 		RunIDs []int64         `json:"run_ids"`
 		Query  json.RawMessage `json:"query"`
@@ -91,11 +152,13 @@ func (rq *runQuery) UnmarshalJSON(b []byte) error {
 	}
 
 	rq.runIDs = data.RunIDs
-	rq.query = q
+	rq.AbstractQuery = q
 	return nil
 }
 
-func (tnp *testNamePattern) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON for TestNamePattern attempts to interpret a query atom as as
+// {"pattern":<test name pattern string>}.
+func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Pattern string `json:"pattern"`
 	}
@@ -107,7 +170,7 @@ func (tnp *testNamePattern) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing testn mae pattern property: "pattern"`)
 	}
 
-	tnp.pattern = data.Pattern
+	tnp.Pattern = data.Pattern
 	return nil
 }
 
@@ -177,7 +240,7 @@ func (o *or) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing disjunction property: "or"`)
 	}
 
-	qs := make([]query, 0, len(data.Or))
+	qs := make([]AbstractQuery, 0, len(data.Or))
 	for _, msg := range data.Or {
 		q, err := unmarshalQ(msg)
 		if err != nil {
@@ -201,7 +264,7 @@ func (a *and) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing conjunction property: "and"`)
 	}
 
-	qs := make([]query, 0, len(data.And))
+	qs := make([]AbstractQuery, 0, len(data.And))
 	for _, msg := range data.And {
 		q, err := unmarshalQ(msg)
 		if err != nil {
@@ -213,8 +276,8 @@ func (a *and) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func unmarshalQ(b []byte) (query, error) {
-	var tnp testNamePattern
+func unmarshalQ(b []byte) (AbstractQuery, error) {
+	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
 	if err == nil {
 		return tnp, nil
