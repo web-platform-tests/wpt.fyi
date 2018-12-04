@@ -79,7 +79,7 @@ type or struct {
 }
 
 func (o or) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	q := Or{make([]ConcreteQuery, 0, len(o.or))}
+	args := make([]ConcreteQuery, 0, len(o.or))
 	for i := range o.or {
 		sub := o.or[i].BindToRuns(runs)
 		if _, ok := sub.(True); ok {
@@ -88,15 +88,17 @@ func (o or) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 		if _, ok := sub.(False); ok {
 			continue
 		}
-		q.Args = append(q.Args, sub)
+		args = append(args, sub)
 	}
-	if len(q.Args) == 0 {
+	if len(args) == 0 {
 		return True{}
 	}
-	if len(q.Args) == 1 {
-		return q.Args[0]
+	if len(args) == 1 {
+		return args[0]
 	}
-	return q
+	return Or{
+		Args: args,
+	}
 }
 
 type and struct {
@@ -104,7 +106,7 @@ type and struct {
 }
 
 func (a and) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	q := And{make([]ConcreteQuery, 0, len(a.and))}
+	args := make([]ConcreteQuery, 0, len(a.and))
 	for i := range a.and {
 		sub := a.and[i].BindToRuns(runs)
 		if _, ok := sub.(False); ok {
@@ -113,15 +115,17 @@ func (a and) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 		if _, ok := sub.(True); ok {
 			continue
 		}
-		q.Args = append(q.Args, sub)
+		args = append(args, sub)
 	}
-	if len(q.Args) == 0 {
+	if len(args) == 0 {
 		return True{}
 	}
-	if len(q.Args) == 1 {
-		return q.Args[0]
+	if len(args) == 1 {
+		return args[0]
 	}
-	return q
+	return And{
+		Args: args,
+	}
 }
 
 // UnmarshalJSON interprets the JSON representation of a RunQuery, instantiating
