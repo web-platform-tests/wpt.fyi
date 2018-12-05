@@ -28,12 +28,7 @@ const (
 )
 
 func isWPTFYIApp(appID int64) bool {
-	switch appID {
-	case wptfyiCheckAppID,
-		checksStagingAppID:
-		return true
-	}
-	return false
+	return appID == wptfyiCheckAppID || appID == checksStagingAppID
 }
 
 // checkWebhookHandler listens for check_suite and check_run events,
@@ -258,6 +253,7 @@ func handleAzurePipelinesEvent(log shared.Logger, event checkRunEvent) (bool, er
 		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
 		return false, nil
 	}
+	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 	artifact := fmt.Sprintf(
 		"https://dev.azure.com/%s/%s/_apis/build/builds/%s/artifacts?artifactName=drop&api-version=5.0-preview.5&%%24format=zip",
 		event.GetRepo().GetOwner().GetLogin(),
