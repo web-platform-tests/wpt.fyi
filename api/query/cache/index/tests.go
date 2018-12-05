@@ -6,7 +6,6 @@ package index
 
 import (
 	"fmt"
-	"sync"
 
 	farm "github.com/dgryski/go-farm"
 )
@@ -19,20 +18,19 @@ type TestID struct {
 
 // Tests is an indexing component that provides fast test name lookup by TestID.
 type Tests interface {
-	// Add adds a new named test/subtest to a tests index. An error is returned if
-	// there is a problem assigning a suitable TestID to the test.
-	Add(string, *string) (TestID, error)
+	// Add adds a new named test/subtest to a tests index, using the given TestID
+	// to identify the test/subtest in the index.
+	Add(TestID, string, *string)
 	// GetName retrieves the name/subtest name associated with a given TestID. If
 	// the index does not recognize the TestID, then an error is returned.
 	GetName(TestID) (string, *string, error)
 
-	// TODO: Add filter binding function:
-	// TestFilter(q string) UnboundFilter
+	Range(func(TestID) bool)
 }
 
 // Tests is an indexing component that provides fast test name lookup by TestID.
 type testsMap struct {
-	tests sync.Map
+	tests map[TestID]testName
 }
 
 type testName struct {
@@ -42,31 +40,28 @@ type testName struct {
 
 // NewTests constructs an empty Tests instance.
 func NewTests() Tests {
-	return &testsMap{tests: sync.Map{}}
+	return &testsMap{tests: make(map[TestID]testName)}
 }
 
-func (ts *testsMap) Add(name string, subName *string) (TestID, error) {
-	id, err := computeID(name, subName)
-	if err != nil {
-		return id, err
-	}
-	ts.tests.Store(id, testName{name, subName})
-	return id, nil
+func (ts *testsMap) Add(t TestID, name string, subName *string) {
+	ts.tests[t] = testName{name, subName}
 }
 
 func (ts *testsMap) GetName(id TestID) (string, *string, error) {
-	v, ok := ts.tests.Load(id)
+	name, ok := ts.tests[id]
 	if !ok {
 		return "", nil, fmt.Errorf(`Test not found; ID: %v`, id)
 	}
-	name := v.(testName)
 	return name.name, name.subName, nil
 }
 
-// TODO: Add filter binding function:
-// func TestFilter(q string) UnboundFilter {
-// 	return NewTestNameFilter(q)
-// }
+func (ts *testsMap) Range(f func(TestID) bool) {
+	for t := range ts.tests {
+		if !f(t) {
+			break
+		}
+	}
+}
 
 func computeID(name string, subPtr *string) (TestID, error) {
 	var s uint64
