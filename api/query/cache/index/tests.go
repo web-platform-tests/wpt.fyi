@@ -63,7 +63,7 @@ func (ts *testsMap) Range(f func(TestID) bool) {
 	}
 }
 
-func computeID(name string, subPtr *string) (TestID, error) {
+func computeTestID(name string, subPtr *string) (TestID, error) {
 	var s uint64
 	t := farm.Fingerprint64([]byte(name))
 	if subPtr != nil && *subPtr != "" {

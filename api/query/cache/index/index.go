@@ -128,7 +128,7 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 
 	for _, res := range report.Results {
 		// Add top-level test (i.e., not subtest) result to appropriate shard.
-		t, err := computeID(res.Test, nil)
+		t, err := computeTestID(res.Test, nil)
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 		// Add each subtests' result to the appropriate shard (same shard as
 		// top-level test).
 		for _, sub := range subs {
-			t, err := computeID(res.Test, &sub.Name)
+			t, err := computeTestID(res.Test, &sub.Name)
 			if err != nil {
 				return err
 			}
