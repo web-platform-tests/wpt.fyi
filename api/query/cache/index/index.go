@@ -199,8 +199,7 @@ func (i *shardedWPTIndex) EvictAnyRun() error {
 func (i *shardedWPTIndex) Bind(runs []shared.TestRun, aq query.AbstractQuery) (query.Plan, error) {
 	if len(runs) == 0 {
 		return nil, errNoRuns
-	}
-	if aq == nil {
+	} else if aq == nil {
 		return nil, errNoQuery
 	}
 

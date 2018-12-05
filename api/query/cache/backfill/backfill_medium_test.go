@@ -7,6 +7,7 @@
 package backfill
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -23,6 +24,8 @@ type countingIndex struct {
 
 	count int
 }
+
+const errNotImplemented = errors.New("Not implemented")
 
 func (i *countingIndex) IngestRun(r shared.TestRun) error {
 	err := i.ProxyIndex.IngestRun(r)
@@ -45,7 +48,7 @@ func (i *countingIndex) EvictAnyRun() error {
 }
 
 func (*countingIndex) Bind([]shared.TestRun, query.AbstractQuery) (query.Plan, error) {
-	return nil, nil
+	return nil, errNotImplemented
 }
 
 func TestStopImmediately(t *testing.T) {
