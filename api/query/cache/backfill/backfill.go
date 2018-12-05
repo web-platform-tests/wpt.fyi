@@ -12,6 +12,7 @@ import (
 	"google.golang.org/api/option"
 
 	"cloud.google.com/go/datastore"
+	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -91,6 +92,10 @@ func (i *backfillIndex) EvictAnyRun() error {
 func (m *backfillMonitor) Stop() error {
 	m.idx.backfilling = false
 	return m.ProxyMonitor.Stop()
+}
+
+func (*backfillIndex) Bind([]shared.TestRun, query.AbstractQuery) (query.Plan, error) {
+	return nil, nil
 }
 
 // FillIndex starts backfilling an index given a series of configuration

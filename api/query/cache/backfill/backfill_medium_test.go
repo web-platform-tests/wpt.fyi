@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
@@ -41,6 +42,10 @@ func (i *countingIndex) EvictAnyRun() error {
 
 	i.count--
 	return nil
+}
+
+func (*countingIndex) Bind([]shared.TestRun, query.AbstractQuery) (query.Plan, error) {
+	return nil, nil
 }
 
 func TestStopImmediately(t *testing.T) {

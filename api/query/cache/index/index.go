@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
+	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 
 	log "github.com/sirupsen/logrus"
@@ -29,8 +30,9 @@ var (
 )
 
 // Index is an index of test run results that can ingest and evict runs.
-// FUTURE: Index will also be able to service queries.
 type Index interface {
+	query.Binder
+
 	// IngestRun loads the test run results associated with the input test run
 	// into the index.
 	IngestRun(shared.TestRun) error
@@ -192,6 +194,35 @@ func (i *shardedWPTIndex) EvictAnyRun() error {
 	}
 
 	return nil
+}
+
+func (i *shardedWPTIndex) Bind(runs []shared.TestRun, aq query.AbstractQuery) (query.Plan, error) {
+	if len(runs) == 0 {
+		return nil, errNoRuns
+	}
+	if aq == nil {
+		return nil, errNoQuery
+	}
+
+	ids := make([]RunID, len(runs))
+	for j, run := range runs {
+		ids[j] = RunID(run.ID)
+	}
+	idxs, err := i.syncExtractRuns(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	q := aq.BindToRuns(runs)
+	fs := make(ShardedFilter, len(idxs))
+	for j, idx := range idxs {
+		f, err := newFilter(idx, q)
+		if err != nil {
+			return nil, err
+		}
+		fs[j] = f
+	}
+	return fs, nil
 }
 
 func (l httpReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, error) {
