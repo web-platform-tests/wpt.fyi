@@ -8,7 +8,6 @@ import (
 	"errors"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 )
 
@@ -137,32 +136,23 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 // is that each filter is bound to a different shard, sharded by TestID.
 func (fs ShardedFilter) Execute() interface{} {
 	res := make(chan []TestID, len(fs))
-	log.Infof("Executing plan over %d shards", len(fs))
 	for _, f := range fs {
 		go func(f filter) {
-			log.Infof("Starting shard iteration; ranging over f.Tests...")
 			ts := []TestID{}
 			f.Tests().Range(func(t TestID) bool {
-				log.Infof("Processing %v", t)
 				if f.Filter(t) {
-					log.Infof("Match: %v", t)
 					ts = append(ts, t)
 				}
-				log.Infof("Done processing %v", t)
 				return true
 			})
-			log.Infof("Done shard iteration; sending %d tests via channel", len(ts))
 			res <- ts
 		}(f)
 	}
 
 	ret := make([]TestID, 0)
-	log.Infof("Ranging over results channel...")
 	for i := 0; i < len(fs); i++ {
 		ts := <-res
-		log.Infof("Appending %d new results", len(ts))
 		ret = append(ret, ts...)
-		log.Infof("Got %d new results", len(ts))
 	}
 	return ret
 }
