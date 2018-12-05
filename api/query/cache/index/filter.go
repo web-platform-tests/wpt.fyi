@@ -141,7 +141,7 @@ func (fs ShardedFilter) Execute() interface{} {
 	for _, f := range fs {
 		go func(f filter) {
 			log.Infof("Starting shard iteration; ranging over f.Tests...")
-			ts := make([]TestID, 0)
+			ts := []TestID{}
 			f.Tests().Range(func(t TestID) bool {
 				log.Infof("Processing %v", t)
 				if f.Filter(t) {
