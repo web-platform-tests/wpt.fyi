@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -26,11 +27,10 @@ const (
 	checksForAllUsersFeature = "checksAllUsers"
 )
 
-func isKnownAppID(appID int64) bool {
+func isWPTFYIApp(appID int64) bool {
 	switch appID {
 	case wptfyiCheckAppID,
 		checksStagingAppID:
-		// TODO(lukebjerring): Handle azure events too.
 		return true
 	}
 	return false
@@ -108,7 +108,7 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	}
 
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
-	if !isKnownAppID(appID) {
+	if !isWPTFYIApp(appID) {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -151,17 +151,42 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	return false, nil
 }
 
+type checkRunEvent struct {
+	github.CheckRunEvent
+	CheckRun *checkRun
+}
+
+func (c *checkRunEvent) GetCheckRun() *checkRun {
+	if c == nil {
+		return nil
+	}
+	return c.CheckRun
+}
+
+type checkRun struct {
+	github.CheckRun
+	DetailsURL *string `json:"details_url,omitempty"`
+}
+
+func (c *checkRun) GetDetailsURL() string {
+	if c == nil || c.DetailsURL == nil {
+		return ""
+	}
+	return *c.DetailsURL
+}
+
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
 func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
 	log := shared.GetLogger(aeAPI.Context())
-	var checkRun github.CheckRunEvent
-	if err := json.Unmarshal(payload, &checkRun); err != nil {
+	var checkRunWithDetailsURL checkRunEvent
+	if err := json.Unmarshal(payload, &checkRunWithDetailsURL); err != nil {
 		return false, err
 	}
 
+	checkRun := checkRunWithDetailsURL.CheckRunEvent
 	appID := checkRun.GetCheckRun().GetApp().GetID()
-	if !isKnownAppID(appID) {
+	if !isWPTFYIApp(appID) && appID != azurePipelinesAppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -176,7 +201,9 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 	status := checkRun.GetCheckRun().GetStatus()
 
 	shouldSchedule := false
-	if (action == "created" && status != "completed") || action == "rerequested" {
+	if appID == azurePipelinesAppID {
+		return handleAzurePipelinesEvent(log, checkRunWithDetailsURL)
+	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {
 		actionID := checkRun.GetRequestedAction().Identifier
@@ -204,20 +231,50 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 			return false, nil
 		}
 	}
-	if !shouldSchedule {
-		log.Debugf("Ignoring %s action for %s check_run", action, status)
+	if shouldSchedule {
+		name, sha := checkRun.GetCheckRun().GetName(), checkRun.GetCheckRun().GetHeadSHA()
+		log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
+		spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
+		if err != nil {
+			log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
+			return false, err
+		}
+		checksAPI.ScheduleResultsProcessing(sha, spec)
+		return true, nil
+	}
+	log.Debugf("Ignoring %s action for %s check_run", action, status)
+	return false, nil
+}
+
+func handleAzurePipelinesEvent(log shared.Logger, event checkRunEvent) (bool, error) {
+	status := event.GetCheckRun().GetStatus()
+	if status != "completed" {
+		log.Infof("Ignoring non-completed status %s", status)
 		return false, nil
 	}
-
-	name, sha := checkRun.GetCheckRun().GetName(), checkRun.GetCheckRun().GetHeadSHA()
-	log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
-	spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
-	if err != nil {
-		log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
-		return false, err
+	detailsURL := event.GetCheckRun().GetDetailsURL()
+	buildID := extractAzureBuildID(detailsURL)
+	if buildID == "" {
+		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
+		return false, nil
 	}
-	checksAPI.ScheduleResultsProcessing(sha, spec)
-	return true, nil
+	artifact := fmt.Sprintf(
+		"https://dev.azure.com/%s/%s/_apis/build/builds/%s/artifacts?artifactName=drop&api-version=5.0-preview.5&%%24format=zip",
+		event.GetRepo().GetOwner().GetLogin(),
+		event.GetRepo().GetName(),
+		buildID)
+	log.Infof("Fetching %s", artifact)
+
+	log.Warningf("(TODO: Not actually fetching yet :)")
+	return false, nil
+}
+
+func extractAzureBuildID(detailsURL string) string {
+	parsed, err := url.Parse(detailsURL)
+	if err != nil {
+		return ""
+	}
+	return parsed.Query().Get("buildId")
 }
 
 func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
