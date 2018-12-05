@@ -78,7 +78,7 @@ type shardedWPTIndex struct {
 	inFlight mapset.Set
 	loader   ReportLoader
 	shards   []*wptIndex
-	m        *sync.Mutex
+	m        *sync.RWMutex
 }
 
 // wptIndex is an index of tests and results. Multicore machines should use
@@ -222,7 +222,7 @@ func NewShardedWPTIndex(loader ReportLoader, numShards int) (Index, error) {
 		inFlight: mapset.NewSet(),
 		loader:   loader,
 		shards:   shards,
-		m:        &sync.Mutex{},
+		m:        &sync.RWMutex{},
 	}, nil
 }
 
@@ -316,8 +316,8 @@ func (i *shardedWPTIndex) syncEvictRun() error {
 }
 
 func (i *shardedWPTIndex) syncExtractRuns(ids []RunID) ([]index, error) {
-	i.m.Lock()
-	defer i.m.Unlock()
+	i.m.RLock()
+	defer i.m.RUnlock()
 
 	idxs := make([]index, len(i.shards))
 	for j, shard := range i.shards {
