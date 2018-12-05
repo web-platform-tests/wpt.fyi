@@ -107,7 +107,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		log.Debugf("No CheckSuites found for %s", sha)
 	}
 
-	updated, err := updateCheckRun(ctx, summaryData, suites...)
+	updated, err := updateCheckRunSummary(ctx, summaryData, suites...)
 	if err != nil {
 		log.Errorf("Failed to update check_run: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -126,8 +126,16 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 	}
 
 	diffURL := diffAPI.GetDiffURL(masterRun, prRun, &diffFilter)
+	var labels mapset.Set
+	if prRun.IsExperimental() {
+		labels = mapset.NewSet(shared.ExperimentalLabel)
+	}
 	checkState := summaries.CheckState{
-		Product:    shared.ProductSpec{ProductAtRevision: prRun.ProductAtRevision},
+		TestRun: &prRun,
+		Product: shared.ProductSpec{
+			ProductAtRevision: prRun.ProductAtRevision,
+			Labels:            labels,
+		},
 		HeadSHA:    prRun.FullRevisionHash,
 		DetailsURL: diffURL,
 		Status:     "completed",

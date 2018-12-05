@@ -40,6 +40,7 @@ type Summary interface {
 
 // CheckState represents all the status fields for updating a check.
 type CheckState struct {
+	TestRun    *shared.TestRun // The (completed) TestRun, if applicable.
 	Product    shared.ProductSpec
 	HeadSHA    string
 	DetailsURL *url.URL
