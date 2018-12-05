@@ -26,6 +26,7 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 			for _, run := range runs {
 				if spec, _ := shared.ParseProductSpec(run.GetName()); spec.Matches(*testRun) {
 					existing = run
+					break
 				}
 			}
 		}
