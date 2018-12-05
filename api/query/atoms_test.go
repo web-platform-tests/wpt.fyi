@@ -93,7 +93,7 @@ func TestStructuredQuery_unknownStatus(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: testStatusConstraint{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
 }
 
 func TestStructuredQuery_pattern(t *testing.T) {
@@ -118,7 +118,7 @@ func TestStructuredQuery_status(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: testStatusConstraint{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
 }
 
 func TestStructuredQuery_not(t *testing.T) {
@@ -132,7 +132,7 @@ func TestStructuredQuery_not(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: not{TestNamePattern{"cssom"}}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: AbstractNot{TestNamePattern{"cssom"}}}, rq)
 }
 
 func TestStructuredQuery_or(t *testing.T) {
@@ -147,7 +147,7 @@ func TestStructuredQuery_or(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: or{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: AbstractOr{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_and(t *testing.T) {
@@ -162,7 +162,7 @@ func TestStructuredQuery_and(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: and{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_nested(t *testing.T) {
@@ -187,15 +187,15 @@ func TestStructuredQuery_nested(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{
 		runIDs: []int64{0, 1, 2},
-		AbstractQuery: or{
-			or: []AbstractQuery{
-				and{
-					and: []AbstractQuery{
-						not{TestNamePattern{"cssom"}},
+		AbstractQuery: AbstractOr{
+			Args: []AbstractQuery{
+				AbstractAnd{
+					Args: []AbstractQuery{
+						AbstractNot{TestNamePattern{"cssom"}},
 						TestNamePattern{"html"},
 					},
 				},
-				testStatusConstraint{"edge", shared.TestStatusValueFromString("TIMEOUT")},
+				TestStatusConstraint{"edge", shared.TestStatusValueFromString("TIMEOUT")},
 			},
 		},
 	}, rq)
@@ -210,16 +210,16 @@ func TestStructuredQuery_bindPattern(t *testing.T) {
 }
 
 func TestStructuredQuery_bindStatusNoRuns(t *testing.T) {
-	assert.Equal(t, True{}, testStatusConstraint{
-		browserName: "Chrome",
-		status:      1,
+	assert.Equal(t, True{}, TestStatusConstraint{
+		BrowserName: "Chrome",
+		Status:      1,
 	}.BindToRuns([]shared.TestRun{}))
 }
 
 func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
-	q := testStatusConstraint{
-		browserName: "Firefox",
-		status:      1,
+	q := TestStatusConstraint{
+		BrowserName: "Firefox",
+		Status:      1,
 	}
 	runs := []shared.TestRun{
 		shared.TestRun{
@@ -248,9 +248,9 @@ func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
 }
 
 func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
-	q := testStatusConstraint{
-		browserName: "Firefox",
-		status:      1,
+	q := TestStatusConstraint{
+		BrowserName: "Firefox",
+		Status:      1,
 	}
 	runs := []shared.TestRun{
 		shared.TestRun{
@@ -295,14 +295,14 @@ func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {
-	q := and{
-		and: []AbstractQuery{
+	q := AbstractAnd{
+		Args: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "/",
 			},
-			testStatusConstraint{
-				browserName: "Edge",
-				status:      1,
+			TestStatusConstraint{
+				BrowserName: "Edge",
+				Status:      1,
 			},
 		},
 	}
@@ -332,14 +332,14 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 }
 
 func TestStructuredQuery_bindOr(t *testing.T) {
-	q := or{
-		or: []AbstractQuery{
+	q := AbstractOr{
+		Args: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "/",
 			},
-			testStatusConstraint{
-				browserName: "Edge",
-				status:      1,
+			TestStatusConstraint{
+				BrowserName: "Edge",
+				Status:      1,
 			},
 		},
 	}
@@ -369,10 +369,10 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 }
 
 func TestStructuredQuery_bindNot(t *testing.T) {
-	q := not{
-		not: testStatusConstraint{
-			browserName: "Edge",
-			status:      1,
+	q := AbstractNot{
+		Arg: TestStatusConstraint{
+			BrowserName: "Edge",
+			Status:      1,
 		},
 	}
 	runs := []shared.TestRun{
@@ -396,14 +396,14 @@ func TestStructuredQuery_bindNot(t *testing.T) {
 }
 
 func TestStructuredQuery_bindAndReduce(t *testing.T) {
-	q := and{
-		and: []AbstractQuery{
+	q := AbstractAnd{
+		Args: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "/",
 			},
-			testStatusConstraint{
-				browserName: "Safari",
-				status:      1,
+			TestStatusConstraint{
+				BrowserName: "Safari",
+				Status:      1,
 			},
 		},
 	}
@@ -426,15 +426,15 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 }
 
 func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
-	q := and{
-		and: []AbstractQuery{
-			testStatusConstraint{
-				browserName: "Chrome",
-				status:      1,
+	q := AbstractAnd{
+		Args: []AbstractQuery{
+			TestStatusConstraint{
+				BrowserName: "Chrome",
+				Status:      1,
 			},
-			testStatusConstraint{
-				browserName: "Safari",
-				status:      1,
+			TestStatusConstraint{
+				BrowserName: "Safari",
+				Status:      1,
 			},
 		},
 	}
@@ -454,14 +454,14 @@ func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 }
 
 func TestStructuredQuery_bindOrReduce(t *testing.T) {
-	q := or{
-		or: []AbstractQuery{
+	q := AbstractOr{
+		Args: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "/",
 			},
-			testStatusConstraint{
-				browserName: "Safari",
-				status:      1,
+			TestStatusConstraint{
+				BrowserName: "Safari",
+				Status:      1,
 			},
 		},
 	}
@@ -482,25 +482,25 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 }
 
 func TestStructuredQuery_bindComplex(t *testing.T) {
-	q := or{
-		or: []AbstractQuery{
+	q := AbstractOr{
+		Args: []AbstractQuery{
 			TestNamePattern{
 				Pattern: "cssom",
 			},
-			and{
-				and: []AbstractQuery{
-					not{
-						not: TestNamePattern{
+			AbstractAnd{
+				Args: []AbstractQuery{
+					AbstractNot{
+						Arg: TestNamePattern{
 							Pattern: "css",
 						},
 					},
-					testStatusConstraint{
-						browserName: "Safari",
-						status:      1,
+					TestStatusConstraint{
+						BrowserName: "Safari",
+						Status:      1,
 					},
-					testStatusConstraint{
-						browserName: "Chrome",
-						status:      1,
+					TestStatusConstraint{
+						BrowserName: "Chrome",
+						Status:      1,
 					},
 				},
 			},
