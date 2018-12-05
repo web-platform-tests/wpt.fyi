@@ -68,6 +68,7 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 	host := shared.NewAppEngineAPI(s.ctx).GetHostname()
 	pending := summaries.Pending{
 		CheckState: summaries.CheckState{
+			TestRun:    nil, // It's pending, no run exists yet.
 			Product:    product,
 			HeadSHA:    suite.SHA,
 			DetailsURL: shared.NewDiffAPI(s.ctx).GetMasterDiffURL(suite.SHA, product),
@@ -76,7 +77,7 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 		HostName: host,
 		RunsURL:  fmt.Sprintf("https://%s/runs", host),
 	}
-	return updateCheckRun(s.ctx, pending, suite)
+	return updateCheckRunSummary(s.ctx, pending, suite)
 }
 
 // GetSuitesForSHA gets all existing check suites for the given Head SHA

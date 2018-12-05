@@ -114,6 +114,11 @@ type TestRun struct {
 	Labels []string `json:"labels"`
 }
 
+// IsExperimental returns true if the run is labelled experimental.
+func (r TestRun) IsExperimental() bool {
+	return len(r.Labels) > 0 && r.LabelsSet().Contains(ExperimentalLabel)
+}
+
 // TestRunStatus is an enum for PendingTestRun statuses.
 type TestRunStatus int64
 
@@ -150,9 +155,9 @@ type CheckSuite struct {
 }
 
 // LabelsSet creates a set from the run's labels.
-func (run TestRun) LabelsSet() mapset.Set {
+func (r TestRun) LabelsSet() mapset.Set {
 	runLabels := mapset.NewSet()
-	for _, label := range run.Labels {
+	for _, label := range r.Labels {
 		runLabels.Add(label)
 	}
 	return runLabels
