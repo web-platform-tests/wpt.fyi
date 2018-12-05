@@ -47,7 +47,8 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 
 	// Most form methods (e.g. FormValue, FormFile) will call
 	// ParseMultipartForm and ParseForm if necessary; forms with either
-	// enctype can be parsed.
+	// enctype can be parsed. FormValue gets either query params or form
+	// body entries, favoring the latter.
 	// The default maximum form size is 32MB, which is also the max request
 	// size on AppEngine.
 
@@ -70,10 +71,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		"browser_version": r.FormValue("browser_version"),
 		"os_name":         r.FormValue("os_name"),
 		"os_version":      r.FormValue("os_version"),
-	}
-	callbackURL := r.FormValue("callback_url")
-	if callbackURL != "" {
-		extraParams["callback_url"] = callbackURL
+		"callback_url":    r.FormValue("callback_url"),
 	}
 
 	var t *taskqueue.Task
