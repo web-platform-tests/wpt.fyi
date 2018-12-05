@@ -8,9 +8,12 @@ package index
 
 import (
 	"errors"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/web-platform-tests/wpt.fyi/api/query"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -146,6 +149,127 @@ func TestEvictNonEmpty(t *testing.T) {
 	loader.EXPECT().Load(run).Return(results, nil)
 	assert.Nil(t, i.IngestRun(run))
 	assert.Nil(t, i.EvictAnyRun())
+}
+
+func TestSync(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	i, err := NewShardedWPTIndex(loader, 1)
+	assert.Nil(t, err)
+
+	loader.EXPECT().Load(gomock.Any()).DoAndReturn(func(run shared.TestRun) (*metrics.TestResultsReport, error) {
+		strID := strconv.FormatInt(run.ID, 10)
+		strStatus := shared.TestStatusStringFromValue(run.ID % 7)
+		return &metrics.TestResultsReport{
+			Results: []*metrics.TestResults{
+				&metrics.TestResults{
+					Test:   "shared",
+					Status: strStatus,
+				},
+				&metrics.TestResults{
+					Test:   "test" + strID,
+					Status: "PASS",
+				},
+			},
+		}, nil
+	}).AnyTimes()
+
+	i.IngestRun(makeRun(1))
+	i.IngestRun(makeRun(2))
+	i.IngestRun(makeRun(3))
+	i.IngestRun(makeRun(4))
+	i.IngestRun(makeRun(5))
+	i.IngestRun(makeRun(6))
+	i.IngestRun(makeRun(7))
+	i.IngestRun(makeRun(8))
+
+	var wg sync.WaitGroup
+	for j := 9; j <= 16; j++ {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			i.EvictAnyRun()
+		}(j)
+		wg.Add(1)
+		go func(id int64) {
+			defer wg.Done()
+			i.IngestRun(makeRun(id))
+		}(int64(j))
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			plan, err := i.Bind([]shared.TestRun{
+				makeRun(int64(n - 1)),
+				makeRun(int64(n - 2)),
+				makeRun(int64(n - 3)),
+				makeRun(int64(n - 4)),
+			}, query.TestStatusConstraint{
+				BrowserName: "Chrome",
+				Status:      shared.TestStatusPass,
+			})
+			if err != nil {
+				return
+			}
+
+			plan.Execute()
+		}(j)
+	}
+	wg.Wait()
+
+	// TODO: Should Index have a Runs() getter for purposes such as this check?
+	idx, ok := i.(*shardedWPTIndex)
+	assert.True(t, ok)
+
+	assert.Equal(t, 8, len(idx.runs))
+	sharedTestID, err := computeTestID("shared", nil)
+	assert.Nil(t, err)
+	for _, s := range idx.shards {
+		// TODO: Should Results have a getter for purposes such as this check?
+		results, ok := s.results.(*resultsMap)
+		assert.True(t, ok)
+		numRuns := 0
+		results.byRunTest.Range(func(key, value interface{}) bool {
+			numRuns++
+			return true
+		})
+		assert.Equal(t, 8, numRuns)
+
+		for _, run := range idx.runs {
+			value, ok := results.byRunTest.Load(RunID(run.ID))
+			assert.True(t, ok)
+			// TODO: Should Results have a getter for purposes such as this check?
+			res, ok := value.(*runResultsMap)
+			assert.True(t, ok)
+
+			strID := strconv.FormatInt(run.ID, 10)
+			expectedTestID, err := computeTestID("test"+strID, nil)
+			assert.Nil(t, err)
+
+			for testID, resultID := range res.byTest {
+				assert.True(t, sharedTestID == testID || (expectedTestID == testID && resultID == ResultID(shared.TestStatusPass)))
+			}
+		}
+	}
+}
+
+var browsers = []string{
+	"Chrome",
+	"Edge",
+	"Firefox",
+	"Safari",
+}
+
+func makeRun(id int64) shared.TestRun {
+	browserName := browsers[id%int64(len(browsers))]
+	return shared.TestRun{
+		ID: id,
+		ProductAtRevision: shared.ProductAtRevision{
+			Product: shared.Product{
+				BrowserName: browserName,
+			},
+		},
+	}
 }
 
 // TODO: Add synchronization test to check for race conditions once Bind+Execute
