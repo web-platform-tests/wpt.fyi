@@ -40,15 +40,20 @@ func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
-type testStatusConstraint struct {
-	browserName string
-	status      int64
+// TestStatusConstraint is a query atom that matches tests where the test
+// status/result from at least one test run with the given browser name matches
+// the given status value.
+type TestStatusConstraint struct {
+	BrowserName string
+	Status      int64
 }
 
-func (tsc testStatusConstraint) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+// BindToRuns for TestStatusConstraint expands a TestStatusConstraint to a
+// disjunction of RunTestStatusConstraint values.
+func (tsc TestStatusConstraint) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
-		if run.BrowserName == tsc.browserName {
+		if run.BrowserName == tsc.BrowserName {
 			ids = append(ids, run.ID)
 		}
 	}
@@ -56,32 +61,36 @@ func (tsc testStatusConstraint) BindToRuns(runs []shared.TestRun) ConcreteQuery 
 		return True{}
 	}
 	if len(ids) == 1 {
-		return RunTestStatusConstraint{ids[0], tsc.status}
+		return RunTestStatusConstraint{ids[0], tsc.Status}
 	}
 
 	q := Or{make([]ConcreteQuery, len(ids))}
 	for i := range ids {
-		q.Args[i] = RunTestStatusConstraint{ids[i], tsc.status}
+		q.Args[i] = RunTestStatusConstraint{ids[i], tsc.Status}
 	}
 	return q
 }
 
-type not struct {
-	not AbstractQuery
+// AbstractNot is the AbstractQuery for negation.
+type AbstractNot struct {
+	Arg AbstractQuery
 }
 
-func (n not) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	return Not{n.not.BindToRuns(runs)}
+// BindToRuns for AbstractNot produces a Not with a bound argument.
+func (n AbstractNot) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	return Not{n.Arg.BindToRuns(runs)}
 }
 
-type or struct {
-	or []AbstractQuery
+// AbstractOr is the AbstractQuery for disjunction.
+type AbstractOr struct {
+	Args []AbstractQuery
 }
 
-func (o or) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	args := make([]ConcreteQuery, 0, len(o.or))
-	for i := range o.or {
-		sub := o.or[i].BindToRuns(runs)
+// BindToRuns for AbstractOr produces an Or with bound arguments.
+func (o AbstractOr) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	args := make([]ConcreteQuery, 0, len(o.Args))
+	for i := range o.Args {
+		sub := o.Args[i].BindToRuns(runs)
 		if _, ok := sub.(True); ok {
 			return True{}
 		}
@@ -101,14 +110,16 @@ func (o or) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	}
 }
 
-type and struct {
-	and []AbstractQuery
+// AbstractAnd is the AbstractQuery for conjunction.
+type AbstractAnd struct {
+	Args []AbstractQuery
 }
 
-func (a and) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	args := make([]ConcreteQuery, 0, len(a.and))
-	for i := range a.and {
-		sub := a.and[i].BindToRuns(runs)
+// BindToRuns for AbstractAnd produces an And with bound arguments.
+func (a AbstractAnd) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	args := make([]ConcreteQuery, 0, len(a.Args))
+	for i := range a.Args {
+		sub := a.Args[i].BindToRuns(runs)
 		if _, ok := sub.(False); ok {
 			return False{}
 		}
@@ -156,7 +167,7 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalJSON for TestNamePattern attempts to interpret a query atom as as
+// UnmarshalJSON for TestNamePattern attempts to interpret a query atom as
 // {"pattern":<test name pattern string>}.
 func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	var data struct {
@@ -174,7 +185,9 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (tsc *testStatusConstraint) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON for TestStatusConstraint attempts to interpret a query atom as
+// {"browser_name": <browser name>, "status": <status string>}.
+func (tsc *TestStatusConstraint) UnmarshalJSON(b []byte) error {
 	var data struct {
 		BrowserName string `json:"browser_name"`
 		Status      string `json:"status"`
@@ -206,12 +219,14 @@ func (tsc *testStatusConstraint) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf(`Invalid test status: "%s"`, data.Status)
 	}
 
-	tsc.browserName = browserName
-	tsc.status = status
+	tsc.BrowserName = browserName
+	tsc.Status = status
 	return nil
 }
 
-func (n *not) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON for AbstractNot attempts to interpret a query atom as
+// {"not": <abstract query>}.
+func (n *AbstractNot) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Not json.RawMessage `json:"not"`
 	}
@@ -224,11 +239,13 @@ func (n *not) UnmarshalJSON(b []byte) error {
 	}
 
 	q, err := unmarshalQ(data.Not)
-	n.not = q
+	n.Arg = q
 	return err
 }
 
-func (o *or) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON for AbstractOr attempts to interpret a query atom as
+// {"or": [<abstract queries>]}.
+func (o *AbstractOr) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Or []json.RawMessage `json:"or"`
 	}
@@ -248,11 +265,13 @@ func (o *or) UnmarshalJSON(b []byte) error {
 		}
 		qs = append(qs, q)
 	}
-	o.or = qs
+	o.Args = qs
 	return nil
 }
 
-func (a *and) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON for AbstractAnd attempts to interpret a query atom as
+// {"and": [<abstract queries>]}.
+func (a *AbstractAnd) UnmarshalJSON(b []byte) error {
 	var data struct {
 		And []json.RawMessage `json:"and"`
 	}
@@ -272,7 +291,7 @@ func (a *and) UnmarshalJSON(b []byte) error {
 		}
 		qs = append(qs, q)
 	}
-	a.and = qs
+	a.Args = qs
 	return nil
 }
 
@@ -282,22 +301,22 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	if err == nil {
 		return tnp, nil
 	}
-	var tsc testStatusConstraint
+	var tsc TestStatusConstraint
 	err = json.Unmarshal(b, &tsc)
 	if err == nil {
 		return tsc, nil
 	}
-	var n not
+	var n AbstractNot
 	err = json.Unmarshal(b, &n)
 	if err == nil {
 		return n, nil
 	}
-	var o or
+	var o AbstractOr
 	err = json.Unmarshal(b, &o)
 	if err == nil {
 		return o, nil
 	}
-	var a and
+	var a AbstractAnd
 	err = json.Unmarshal(b, &a)
 	if err == nil {
 		return a, nil
