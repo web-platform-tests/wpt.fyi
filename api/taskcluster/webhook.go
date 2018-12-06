@@ -30,7 +30,9 @@ import (
 const flagTaskclusterAllBranches = "taskclusterAllBranches"
 
 var (
-	taskNameRegex          = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-patch)(?:-\d+)?$`)
+	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
+	// with a notable exception that "*-stability" runs are not included at the moment.
+	taskNameRegex          = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
 	resultsReceiverTimeout = time.Minute
 )
 
@@ -255,8 +257,11 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]st
 			continue
 		}
 		product := matches[1]
-		if matches[2] == "results-without-patch" {
-			product = product + "-" + shared.WithoutPatchLabel
+		switch matches[2] {
+		case "results":
+			product += "-" + shared.PRHeadLabel
+		case "results-without-changes":
+			product += "-" + shared.PRBaseLabel
 		}
 
 		if task.Status.State != "completed" {
@@ -308,28 +313,30 @@ func createAllRuns(
 	for product, urls := range urlsByProduct {
 		go func(product string, urls []string) {
 			defer wg.Done()
-			labelsForRun := labels
 			log.Infof("Reports for %s: %v", product, urls)
-			if strings.HasSuffix(product, shared.WithoutPatchLabel) {
-				labelsForRun = append(labelsForRun, shared.WithoutPatchLabel)
+
+			// chrome-dev-pr_head => [chrome, dev, pr_head]
+			bits := strings.Split(product, "-")
+			labelsForRun := labels
+			if bits[len(bits)-1] == shared.PRBaseLabel || bits[len(bits)-1] == shared.PRHeadLabel {
+				labelsForRun = append(labelsForRun, bits[len(bits)-1])
 			}
 			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labelsForRun)
 			if err != nil {
 				errors <- err
-			} else {
-				spec := shared.ProductSpec{}
-				// chrome-dev-without_patch => [chrome, dev, without_patch]
-				bits := strings.Split(product, "-")
-				spec.BrowserName = bits[0]
-				spec.Labels = shared.NewSetFromStringSlice(labelsForRun)
-				if len(bits) > 1 {
-					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-						spec.Labels.Add(label)
-					}
+				return
+			}
+
+			spec := shared.ProductSpec{}
+			spec.BrowserName = bits[0]
+			spec.Labels = shared.NewSetFromStringSlice(labelsForRun)
+			if len(bits) > 1 {
+				if label := shared.ProductChannelToLabel(bits[1]); label != "" {
+					spec.Labels.Add(label)
 				}
-				for _, suite := range suites {
-					checksAPI.PendingCheckRun(suite, spec)
-				}
+			}
+			for _, suite := range suites {
+				checksAPI.PendingCheckRun(suite, spec)
 			}
 		}(product, urls)
 	}

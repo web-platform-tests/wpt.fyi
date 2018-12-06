@@ -33,9 +33,13 @@ const BetaLabel = "beta"
 // i.e. run from the master branch.
 const MasterLabel = "master"
 
-// WithoutPatchLabel is the label for running just the affected tests on a PR
-// but without the patch.
-const WithoutPatchLabel = "without_patch"
+// PRBaseLabel is the implicit label for running just the affected tests on a
+// PR but without the changes (i.e. against the base branch).
+const PRBaseLabel = "pr_base"
+
+// PRHeadLabel is the implicit label for running just the affected tests on the
+// head of a PR (with the changes).
+const PRHeadLabel = "pr_head"
 
 // ProductChannelToLabel maps known product-specific channel names
 // to the wpt.fyi model's equivalent.

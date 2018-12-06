@@ -121,7 +121,7 @@ func TestExtractResultURLs_all_success_pr(t *testing.T) {
 	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
 	group.Tasks[0].Task.Metadata.Name = "wpt-chrome-dev-results"
 	group.Tasks[1].Task.Metadata.Name = "wpt-chrome-dev-stability"
-	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-results-without-patch"
+	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-results-without-changes"
 	for i := 0; i < len(group.Tasks); i++ {
 		group.Tasks[i].Status.State = "completed"
 		group.Tasks[i].Status.TaskID = fmt.Sprint(i)
@@ -130,10 +130,10 @@ func TestExtractResultURLs_all_success_pr(t *testing.T) {
 	urls, err := extractResultURLs(shared.NewNilLogger(), group)
 	assert.Nil(t, err)
 	assert.Equal(t, map[string][]string{
-		"chrome-dev": {
+		"chrome-dev-pr_head": {
 			"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
 		},
-		"chrome-dev-without_patch": {
+		"chrome-dev-pr_base": {
 			"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
 		},
 	}, urls)
@@ -220,8 +220,10 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 	checksAPI := checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental,without_patch]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[without_patch]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental,pr_base]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental,pr_head]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[pr_base]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[pr_head]"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 
@@ -235,13 +237,15 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 		"username",
 		"password",
 		map[string][]string{
-			"chrome-dev-without_patch": []string{"1"},
-			"firefox-without_patch":    []string{"1", "2"},
+			"chrome-dev-pr_head": []string{"1"},
+			"chrome-dev-pr_base": []string{"1"},
+			"firefox-pr_head":    []string{"1"},
+			"firefox-pr_base":    []string{"1"},
 		},
 		nil,
 	)
 	assert.Nil(t, err)
-	assert.Equal(t, uint32(2), requested)
+	assert.Equal(t, uint32(4), requested)
 }
 
 func TestCreateAllRuns_one_error(t *testing.T) {
@@ -325,6 +329,6 @@ func TestTaskNameRegex(t *testing.T) {
 	assert.Equal(t, []string{"chrome-stable", "reftest"}, taskNameRegex.FindStringSubmatch("wpt-chrome-stable-reftest-1")[1:])
 	assert.Equal(t, []string{"firefox-nightly", "testharness"}, taskNameRegex.FindStringSubmatch("wpt-firefox-nightly-testharness-5")[1:])
 	assert.Equal(t, []string{"firefox-stable", "wdspec"}, taskNameRegex.FindStringSubmatch("wpt-firefox-stable-wdspec-1")[1:])
-	assert.Equal(t, []string{"chrome-dev", "results-without-patch"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results-without-patch")[1:])
+	assert.Equal(t, []string{"chrome-dev", "results-without-changes"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results-without-changes")[1:])
 	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-stability"))
 }
