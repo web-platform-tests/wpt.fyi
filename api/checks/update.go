@@ -5,9 +5,11 @@
 package checks
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/deckarep/golang-set"
 
@@ -56,44 +58,19 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	filter.SHA = sha[:10]
-	one := 1
-	runs, err := shared.LoadTestRuns(ctx, filter.Products, filter.Labels, sha[:10], filter.From, filter.To, &one, nil)
-	allRuns := runs.AllRuns()
-	if err != nil {
-		log.Errorf("Failed to load test runs: %s", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if len(allRuns) < 1 {
-		log.Debugf("No runs found for %s @ %s", filter.Products[0].String(), sha[:7])
-		http.NotFound(w, r)
-		return
-	} else if len(allRuns) > 1 {
-		log.Errorf("Found more that one test run")
-		http.Error(w, fmt.Sprintf("Expected exactly 1 run, but found %v", len(runs)), http.StatusBadRequest)
-		return
-	}
-	prRun := allRuns[0]
-
-	// Get the most recent master run to compare.
-	labels := filter.Labels
-	if labels == nil {
-		labels = mapset.NewSet()
-	}
-	labels.Add("master")
-	masterRuns, err := shared.LoadTestRuns(ctx, filter.Products, labels, "", nil, nil, &one, nil)
-	masterRun := masterRuns.First()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if masterRun == nil {
-		log.Debugf("No masters runs found for %s @ %s", filter.Products[0].String(), sha[:7])
-		http.Error(w, "No master run found to compare differences", http.StatusNotFound)
+	prRun, masterRun, err := loadRunsToCompare(ctx, filter)
+	if prRun == nil || masterRun == nil || err != nil {
+		msg := "Could not find runs to compare"
+		if err != nil {
+			msg = fmt.Sprintf("%s: %s", msg, err.Error())
+		}
+		http.Error(w, msg, http.StatusNotFound)
 		return
 	}
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	diffAPI := shared.NewDiffAPI(ctx)
-	summaryData, err := getDiffSummary(aeAPI, diffAPI, *masterRun, prRun)
+	summaryData, err := getDiffSummary(aeAPI, diffAPI, *masterRun, *prRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -116,6 +93,41 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write([]byte("No check(s) updated"))
 	}
+}
+
+func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (prRun, masterRun *shared.TestRun, err error) {
+	log := shared.GetLogger(ctx)
+	one := 1
+	runs, err := shared.LoadTestRuns(ctx, filter.Products, filter.Labels, filter.SHA, filter.From, filter.To, &one, nil)
+	prRun = runs.First()
+	if err != nil {
+		log.Errorf("Failed to load test runs: %s", err.Error())
+		return nil, nil, err
+	} else if prRun == nil {
+		log.Debugf("No runs found for %s @ %s", filter.Products[0].String(), filter.SHA[:7])
+		return nil, nil, err
+	} else if len(runs.AllRuns()) > 1 {
+		log.Errorf("Found more that one test run")
+		return nil, nil, fmt.Errorf("Expected exactly 1 run, but found %v", len(runs))
+	}
+
+	// Get the most recent, but still earlier, master run to compare.
+	labels := filter.Labels
+	if labels == nil {
+		labels = mapset.NewSet()
+	}
+	labels.Add("master")
+	to := prRun.TimeStart.Add(-time.Millisecond)
+	masterRuns, err := shared.LoadTestRuns(ctx, filter.Products, labels, "", nil, &to, &one, nil)
+	masterRun = masterRuns.First()
+	if err != nil {
+		log.Errorf("Failed to load master run: %s", err.Error())
+		return prRun, nil, err
+	} else if masterRun == nil {
+		log.Debugf("No masters runs found before %s @ %s", filter.Products[0].String(), filter.SHA[:7])
+		return prRun, masterRun, fmt.Errorf("No master run found to compare differences")
+	}
+	return prRun, masterRun, nil
 }
 
 func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun, prRun shared.TestRun) (summaries.Summary, error) {
