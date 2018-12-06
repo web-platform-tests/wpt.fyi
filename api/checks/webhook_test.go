@@ -243,11 +243,7 @@ func TestHandleAzurePipelinesEvent(t *testing.T) {
 
 	sha := strings.Repeat("0123456789", 4)
 	detailsURL := "https://dev.azure.com/web-platform-tests/b14026b4-9423-4454-858f-bf76cf6d1faa/_build/results?buildId=123"
-	ghEvent := getCheckRunCreatedEvent("completed", "lukebjerring", sha)
-	event := checkRunEvent{
-		CheckRunEvent: ghEvent,
-		CheckRun:      &checkRun{CheckRun: *ghEvent.CheckRun},
-	}
+	event := getCheckRunCreatedEvent("completed", "lukebjerring", sha)
 	event.CheckRun.DetailsURL = &detailsURL
 
 	log, hook := logrustest.NewNullLogger()
