@@ -35,6 +35,10 @@ var (
 type Index interface {
 	query.Binder
 
+	// Runs loads the metadata associated with the given RunID values. It returns
+	// an error if the Index does not understand one or more of the given RunID
+	// values.
+	Runs([]RunID) ([]shared.TestRun, error)
 	// IngestRun loads the test run results associated with the input test run
 	// into the index.
 	IngestRun(shared.TestRun) error
@@ -50,7 +54,13 @@ type ProxyIndex struct {
 	delegate Index
 }
 
-// IngestRun loads the given run's results in to the index by deferring ot the
+// Runs loads the metadata for the given run ID values by deferring to the
+// proxy's delegate.
+func (i *ProxyIndex) Runs(ids []RunID) ([]shared.TestRun, error) {
+	return i.delegate.Runs(ids)
+}
+
+// IngestRun loads the given run's results in to the index by deferring to the
 // proxy's delegate.
 func (i *ProxyIndex) IngestRun(r shared.TestRun) error {
 	return i.delegate.IngestRun(r)
@@ -97,7 +107,22 @@ type testData struct {
 	ResultID
 }
 
-type httpReportLoader struct{}
+// HTTPReportLoader loads WPT test run reports from the URL specified in test
+// run metadata.
+type HTTPReportLoader struct{}
+
+func (i *shardedWPTIndex) Runs(ids []RunID) ([]shared.TestRun, error) {
+	runs := make([]shared.TestRun, len(ids))
+	for j := range ids {
+		run, ok := i.runs[ids[j]]
+		if !ok {
+			return nil, fmt.Errorf("Unknown run ID: %v", ids[j])
+		}
+
+		runs[j] = run
+	}
+	return runs, nil
+}
 
 func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 	// Error cases: ID cannot be 0, run cannot be loaded or loading-in-progress.
@@ -210,7 +235,9 @@ func (i *shardedWPTIndex) Bind(runs []shared.TestRun, aq query.AbstractQuery) (q
 	return fs, nil
 }
 
-func (l httpReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, error) {
+// Load for HTTPReportLoader loads WPT test run reports from the URL specified
+// in test run metadata.
+func (l HTTPReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, error) {
 	// Attempt to fetch-and-unmarshal run from run.RawResultsURL.
 	resp, err := http.Get(run.RawResultsURL)
 	if err != nil {
@@ -259,7 +286,7 @@ func NewShardedWPTIndex(loader ReportLoader, numShards int) (Index, error) {
 // NewReportLoader constructs a loader that loads result reports over HTTP from
 // a shared.TestRun.RawResultsURL.
 func NewReportLoader() ReportLoader {
-	return httpReportLoader{}
+	return HTTPReportLoader{}
 }
 
 func (i *shardedWPTIndex) syncMarkInProgress(run shared.TestRun) error {

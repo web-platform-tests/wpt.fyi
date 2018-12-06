@@ -121,8 +121,8 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	r2url := *r.URL
 	r2.URL = &r2url
 	r2.Method = "GET"
-	runIDStrs := make([]string, 0, len(rq.runIDs))
-	for _, id := range rq.runIDs {
+	runIDStrs := make([]string, 0, len(rq.RunIDs))
+	for _, id := range rq.RunIDs {
 		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
 	}
 	runIDsStr := strings.Join(runIDStrs, ",")
