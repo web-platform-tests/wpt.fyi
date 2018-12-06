@@ -13,7 +13,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
-	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
@@ -235,21 +234,4 @@ func getOpenedPREvent(user, sha string) github.PullRequestEvent {
 		},
 		Action: &opened,
 	}
-}
-
-func TestHandleAzurePipelinesEvent(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	sha := strings.Repeat("0123456789", 4)
-	detailsURL := "https://dev.azure.com/web-platform-tests/b14026b4-9423-4454-858f-bf76cf6d1faa/_build/results?buildId=123"
-	event := getCheckRunCreatedEvent("completed", "lukebjerring", sha)
-	event.CheckRun.DetailsURL = &detailsURL
-
-	log, hook := logrustest.NewNullLogger()
-	processed, err := handleAzurePipelinesEvent(log, event)
-	assert.Nil(t, err)
-	assert.False(t, processed)
-	assert.Len(t, hook.Entries, 2)
-	assert.Contains(t, hook.Entries[0].Message, "/123/")
 }

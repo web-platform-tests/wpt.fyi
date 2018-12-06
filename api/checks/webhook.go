@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine/urlfetch"
 )
 
 // NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
@@ -172,7 +173,8 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 
 	shouldSchedule := false
 	if appID == azurePipelinesAppID {
-		return handleAzurePipelinesEvent(log, checkRun)
+		client := urlfetch.Client(aeAPI.Context())
+		return handleAzurePipelinesEvent(log, client, checkRun)
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {
@@ -213,30 +215,6 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 		return true, nil
 	}
 	log.Debugf("Ignoring %s action for %s check_run", action, status)
-	return false, nil
-}
-
-func handleAzurePipelinesEvent(log shared.Logger, event github.CheckRunEvent) (bool, error) {
-	status := event.GetCheckRun().GetStatus()
-	if status != "completed" {
-		log.Infof("Ignoring non-completed status %s", status)
-		return false, nil
-	}
-	detailsURL := event.GetCheckRun().GetDetailsURL()
-	buildID := extractAzureBuildID(detailsURL)
-	if buildID == "" {
-		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
-		return false, nil
-	}
-	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
-	artifact := fmt.Sprintf(
-		"https://dev.azure.com/%s/%s/_apis/build/builds/%s/artifacts?artifactName=drop&api-version=5.0-preview.5&%%24format=zip",
-		event.GetRepo().GetOwner().GetLogin(),
-		event.GetRepo().GetName(),
-		buildID)
-	log.Infof("Fetching %s", artifact)
-
-	log.Warningf("(TODO: Not actually fetching yet :)")
 	return false, nil
 }
 
