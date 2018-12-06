@@ -136,19 +136,12 @@ func TestBindExecute_TestStatus(t *testing.T) {
 	match1Name := "/a/b/c"
 	match2Name := "/d/e/f"
 	match2Sub := "sub"
-	runs := mockTestRuns(loader, idx, []testRunData{
+	data := []testRunData{
 		//
-		// Chrome test run.
+		// [0]: Chrome test run.
 		//
 		testRunData{
-			shared.TestRun{
-				ID: 1,
-				ProductAtRevision: shared.ProductAtRevision{
-					Product: shared.Product{
-						BrowserName: "Chrome",
-					},
-				},
-			},
+			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
 					&metrics.TestResults{
@@ -187,18 +180,11 @@ func TestBindExecute_TestStatus(t *testing.T) {
 			},
 		},
 		//
-		// Safari test run: Several result values differ or are missing. One test
-		// does not appear in Chrome, but does appear here.
+		// [1] Safari test run: Several result values differ or are missing. One
+		//     test does not appear in Chrome, but does appear here.
 		//
 		testRunData{
-			shared.TestRun{
-				ID: 2,
-				ProductAtRevision: shared.ProductAtRevision{
-					Product: shared.Product{
-						BrowserName: "Safari",
-					},
-				},
-			},
+			shared.TestRun{ID: 2},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
 					&metrics.TestResults{
@@ -232,7 +218,13 @@ func TestBindExecute_TestStatus(t *testing.T) {
 				},
 			},
 		},
-	})
+	}
+
+	// Set BrowserName imperatively to avoid multi-layer type embedding.
+	data[0].run.BrowserName = "Chrome"
+	data[1].run.BrowserName = "Safari"
+
+	runs := mockTestRuns(loader, idx, data)
 
 	q := query.TestStatusConstraint{
 		BrowserName: "Chrome",
