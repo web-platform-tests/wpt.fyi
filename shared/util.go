@@ -33,6 +33,10 @@ const BetaLabel = "beta"
 // i.e. run from the master branch.
 const MasterLabel = "master"
 
+// WithoutPatchLabel is the label for running just the affected tests on a PR
+// but without the patch.
+const WithoutPatchLabel = "without_patch"
+
 // ProductChannelToLabel maps known product-specific channel names
 // to the wpt.fyi model's equivalent.
 func ProductChannelToLabel(channel string) string {
