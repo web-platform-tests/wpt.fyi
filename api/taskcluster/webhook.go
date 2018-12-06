@@ -30,7 +30,9 @@ import (
 const flagTaskclusterAllBranches = "taskclusterAllBranches"
 
 var (
-	taskNameRegex          = regexp.MustCompile(`^wpt-(\w+)-(\w+)-(testharness|reftest|wdspec|results)(?:-\d+)?$`)
+	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
+	// with a notable exception that "*-stability" runs are not included at the moment.
+	taskNameRegex          = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
 	resultsReceiverTimeout = time.Minute
 )
 
@@ -142,7 +144,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	urlsByBrowser, err := extractResultURLs(log, taskGroup)
+	urlsByProduct, err := extractResultURLs(log, taskGroup)
 	if err != nil {
 		return false, err
 	}
@@ -172,7 +174,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		*status.SHA,
 		username,
 		password,
-		urlsByBrowser,
+		urlsByProduct,
 		labels)
 	if err != nil {
 		return false, err
@@ -250,20 +252,26 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]st
 		}
 
 		matches := taskNameRegex.FindStringSubmatch(task.Task.Metadata.Name)
-		if len(matches) != 4 { // full match, browser, channel, test type
+		if len(matches) != 3 { // full match, browser-channel, test type
 			log.Debugf("Ignoring unrecognized task: %s", task.Task.Metadata.Name)
 			continue
 		}
-		browser := fmt.Sprintf("%s-%s", matches[1], matches[2])
+		product := matches[1]
+		switch matches[2] {
+		case "results":
+			product += "-" + shared.PRHeadLabel
+		case "results-without-changes":
+			product += "-" + shared.PRBaseLabel
+		}
 
 		if task.Status.State != "completed" {
 			log.Errorf("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
-				group.TaskGroupID, taskID, browser)
-			failures.Add(browser)
+				group.TaskGroupID, taskID, product)
+			failures.Add(product)
 			continue
 		}
 
-		resultURLs[browser] = append(resultURLs[browser],
+		resultURLs[product] = append(resultURLs[product],
 			// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
 			fmt.Sprintf(
 				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", taskID,
@@ -296,33 +304,41 @@ func createAllRuns(
 	sha,
 	username,
 	password string,
-	urlsByBrowser map[string][]string,
+	urlsByProduct map[string][]string,
 	labels []string) error {
-	errors := make(chan error, len(urlsByBrowser))
+	errors := make(chan error, len(urlsByProduct))
 	var wg sync.WaitGroup
-	wg.Add(len(urlsByBrowser))
+	wg.Add(len(urlsByProduct))
 	suites, _ := checksAPI.GetSuitesForSHA(sha)
-	for browser, urls := range urlsByBrowser {
-		go func(browser string, urls []string) {
+	for product, urls := range urlsByProduct {
+		go func(product string, urls []string) {
 			defer wg.Done()
-			log.Infof("Reports for %s: %v", browser, urls)
-			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labels)
+			log.Infof("Reports for %s: %v", product, urls)
+
+			// chrome-dev-pr_head => [chrome, dev, pr_head]
+			bits := strings.Split(product, "-")
+			labelsForRun := labels
+			if bits[len(bits)-1] == shared.PRBaseLabel || bits[len(bits)-1] == shared.PRHeadLabel {
+				labelsForRun = append(labelsForRun, bits[len(bits)-1])
+			}
+			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labelsForRun)
 			if err != nil {
 				errors <- err
-			} else {
-				spec := shared.ProductSpec{}
-				bits := strings.Split(browser, "-") // chrome-dev => [chrome, dev]
-				spec.BrowserName = bits[0]
-				if len(bits) > 1 {
-					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-						spec.Labels = mapset.NewSetWith(label)
-					}
-				}
-				for _, suite := range suites {
-					checksAPI.PendingCheckRun(suite, spec)
+				return
+			}
+
+			spec := shared.ProductSpec{}
+			spec.BrowserName = bits[0]
+			spec.Labels = shared.NewSetFromStringSlice(labelsForRun)
+			if len(bits) > 1 {
+				if label := shared.ProductChannelToLabel(bits[1]); label != "" {
+					spec.Labels.Add(label)
 				}
 			}
-		}(browser, urls)
+			for _, suite := range suites {
+				checksAPI.PendingCheckRun(suite, spec)
+			}
+		}(product, urls)
 	}
 	wg.Wait()
 	close(errors)
