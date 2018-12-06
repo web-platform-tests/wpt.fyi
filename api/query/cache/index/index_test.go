@@ -158,6 +158,7 @@ func TestSync(t *testing.T) {
 	i, err := NewShardedWPTIndex(loader, 1)
 	assert.Nil(t, err)
 
+	// Populate data with predictable set of two results for each run.
 	loader.EXPECT().Load(gomock.Any()).DoAndReturn(func(run shared.TestRun) (*metrics.TestResultsReport, error) {
 		strID := strconv.FormatInt(run.ID, 10)
 		strStatus := shared.TestStatusStringFromValue(run.ID % 7)
@@ -175,6 +176,7 @@ func TestSync(t *testing.T) {
 		}, nil
 	}).AnyTimes()
 
+	// Baseline before running things in parallel: Index already contains 8 runs.
 	i.IngestRun(makeRun(1))
 	i.IngestRun(makeRun(2))
 	i.IngestRun(makeRun(3))
@@ -184,6 +186,11 @@ func TestSync(t *testing.T) {
 	i.IngestRun(makeRun(7))
 	i.IngestRun(makeRun(8))
 
+	// Eight times (from run IDs 9 through 16), in parallel:
+	// - Evict one run,
+	// - Add one run,
+	// - Attempt one query (that may fail to bind if it references an already
+	//   already evicted run).
 	var wg sync.WaitGroup
 	for j := 9; j <= 16; j++ {
 		wg.Add(1)
@@ -217,6 +224,11 @@ func TestSync(t *testing.T) {
 	}
 	wg.Wait()
 
+	// Number of runs should now be 8 + 8 - 8 = 8.
+	// Shards, taken together, should contain data for two predictable run results
+	// for each run still in the index. (See loader.EXPECT()...DoAndReturn(...)
+	// callback above for predictable test names and values.)
+
 	// TODO: Should Index have a Runs() getter for purposes such as this check?
 	idx, ok := i.(*shardedWPTIndex)
 	assert.True(t, ok)
@@ -224,6 +236,7 @@ func TestSync(t *testing.T) {
 	assert.Equal(t, 8, len(idx.runs))
 	sharedTestID, err := computeTestID("shared", nil)
 	assert.Nil(t, err)
+	numResults := 0
 	for _, s := range idx.shards {
 		// TODO: Should Results have a getter for purposes such as this check?
 		results, ok := s.results.(*resultsMap)
@@ -247,10 +260,17 @@ func TestSync(t *testing.T) {
 			assert.Nil(t, err)
 
 			for testID, resultID := range res.byTest {
+				// Either test is the "shared test" with varied result values across
+				// runs or it is the "test-specific test" with name `test<test ID>` and
+				// result value of "PASS".
 				assert.True(t, sharedTestID == testID || (expectedTestID == testID && resultID == ResultID(shared.TestStatusPass)))
+				numResults++
 			}
 		}
 	}
+
+	// Total number of results is 8 runs * 2 results per run = 16.
+	assert.Equal(t, 16, numResults)
 }
 
 var browsers = []string{
