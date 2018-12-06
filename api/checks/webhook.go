@@ -146,40 +146,15 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	return false, nil
 }
 
-type checkRunEvent struct {
-	github.CheckRunEvent
-	CheckRun *checkRun
-}
-
-func (c *checkRunEvent) GetCheckRun() *checkRun {
-	if c == nil {
-		return nil
-	}
-	return c.CheckRun
-}
-
-type checkRun struct {
-	github.CheckRun
-	DetailsURL *string `json:"details_url,omitempty"`
-}
-
-func (c *checkRun) GetDetailsURL() string {
-	if c == nil || c.DetailsURL == nil {
-		return ""
-	}
-	return *c.DetailsURL
-}
-
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
 func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
 	log := shared.GetLogger(aeAPI.Context())
-	var checkRunWithDetailsURL checkRunEvent
-	if err := json.Unmarshal(payload, &checkRunWithDetailsURL); err != nil {
+	var checkRun github.CheckRunEvent
+	if err := json.Unmarshal(payload, &checkRun); err != nil {
 		return false, err
 	}
 
-	checkRun := checkRunWithDetailsURL.CheckRunEvent
 	appID := checkRun.GetCheckRun().GetApp().GetID()
 	if !isWPTFYIApp(appID) && appID != azurePipelinesAppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
@@ -197,7 +172,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 
 	shouldSchedule := false
 	if appID == azurePipelinesAppID {
-		return handleAzurePipelinesEvent(log, checkRunWithDetailsURL)
+		return handleAzurePipelinesEvent(log, checkRun)
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {
@@ -241,7 +216,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 	return false, nil
 }
 
-func handleAzurePipelinesEvent(log shared.Logger, event checkRunEvent) (bool, error) {
+func handleAzurePipelinesEvent(log shared.Logger, event github.CheckRunEvent) (bool, error) {
 	status := event.GetCheckRun().GetStatus()
 	if status != "completed" {
 		log.Infof("Ignoring non-completed status %s", status)
