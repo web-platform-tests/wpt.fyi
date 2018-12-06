@@ -21,8 +21,9 @@ func TestGetName_fail(t *testing.T) {
 func TestAddGetName(t *testing.T) {
 	ts := NewTests()
 	name := "/a/b/c"
-	id, err := ts.Add(name, nil)
+	id, err := computeID(name, nil)
 	assert.Nil(t, err)
+	ts.Add(id, name, nil)
 	actualName, actualSubName, err := ts.GetName(id)
 	assert.Nil(t, err)
 	assert.Equal(t, name, actualName)
@@ -30,8 +31,9 @@ func TestAddGetName(t *testing.T) {
 
 	subNameValue := "some sub name"
 	subName := &subNameValue
-	id, err = ts.Add(name, subName)
+	id, err = computeID(name, subName)
 	assert.Nil(t, err)
+	ts.Add(id, name, subName)
 	actualName, actualSubName, err = ts.GetName(id)
 	assert.Nil(t, err)
 	assert.Equal(t, name, actualName)

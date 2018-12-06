@@ -147,3 +147,6 @@ func TestEvictNonEmpty(t *testing.T) {
 	assert.Nil(t, i.IngestRun(run))
 	assert.Nil(t, i.EvictAnyRun())
 }
+
+// TODO: Add synchronization test to check for race conditions once Bind+Execute
+// are fully implemented over indexes and filters.

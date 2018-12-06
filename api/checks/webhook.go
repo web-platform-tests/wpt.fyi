@@ -306,8 +306,11 @@ func isUserWhitelisted(aeAPI shared.AppEngineAPI, login string) bool {
 		"autofoolip",
 		"chromium-wpt-export-bot",
 		"foolip",
+		"gsnedders",
 		"jgraham",
+		"jugglinmike",
 		"lukebjerring",
+		"Ms2ger",
 	}
 	return shared.StringSliceContains(whitelist, login)
 }
