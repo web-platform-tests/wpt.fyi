@@ -378,7 +378,7 @@ func createRun(
 		return err
 	}
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("API error: %s", string(respBody))
+		return fmt.Errorf("API error: HTTP %v: %s", resp.StatusCode, string(respBody))
 	}
 
 	return nil

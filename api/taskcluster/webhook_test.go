@@ -221,7 +221,8 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	)
 	assert.NotNil(t, err)
 	assert.Equal(t, uint32(2), requested)
-	assert.Contains(t, err.Error(), "API error: Not found")
+	assert.Contains(t, err.Error(), "API error:")
+	assert.Contains(t, err.Error(), "404")
 }
 
 func TestCreateAllRuns_all_errors(t *testing.T) {
