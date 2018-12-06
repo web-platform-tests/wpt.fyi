@@ -25,7 +25,7 @@ type countingIndex struct {
 	count int
 }
 
-const errNotImplemented = errors.New("Not implemented")
+var errNotImplemented = errors.New("Not implemented")
 
 func (i *countingIndex) IngestRun(r shared.TestRun) error {
 	err := i.ProxyIndex.IngestRun(r)
