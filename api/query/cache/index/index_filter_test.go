@@ -7,6 +7,7 @@
 package index
 
 import (
+	"encoding/json"
 	"testing"
 
 	mapset "github.com/deckarep/golang-set"
@@ -34,22 +35,28 @@ func mockTestRuns(loader *MockReportLoader, idx Index, data []testRunData) []sha
 	return runs
 }
 
-func planAndExecute(t *testing.T, runs []shared.TestRun, idx Index, q query.AbstractQuery) []TestID {
+func planAndExecute(t *testing.T, runs []shared.TestRun, idx Index, q query.AbstractQuery) []query.SearchResult {
 	plan, err := idx.Bind(runs, q)
 	assert.Nil(t, err)
 
-	res := plan.Execute()
-	ts, ok := res.([]TestID)
+	res := plan.Execute(runs)
+	srs, ok := res.([]query.SearchResult)
 	assert.True(t, ok)
 
-	return ts
+	return srs
 }
 
-func testSet(t *testing.T, ts []TestID) mapset.Set {
+func resultSet(t *testing.T, srs []query.SearchResult) mapset.Set {
 	s := mapset.NewSet()
-	for _, id := range ts {
-		assert.False(t, s.Contains(id))
-		s.Add(id)
+	for _, sr := range srs {
+		// TODO: The json package should be unnecessary, but for some reason a
+		// {Test: <string>, Results: []{Passes: <int>, Total: <int>}} is not
+		// hashable.
+		data, err := json.Marshal(sr)
+		assert.Nil(t, err)
+		str := string(data)
+		assert.False(t, s.Contains(str))
+		s.Add(str)
 	}
 	return s
 }
@@ -116,12 +123,20 @@ func TestBindExecute_TestNamePattern(t *testing.T) {
 	q := query.TestNamePattern{
 		Pattern: "/a",
 	}
-	ts := planAndExecute(t, runs, idx, q)
+	srs := planAndExecute(t, runs, idx, q)
 
-	expectedTestID, err := computeTestID(matchingTestName, nil)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(ts))
-	assert.Equal(t, expectedTestID, ts[0])
+	assert.Equal(t, 1, len(srs))
+	expectedResult := query.SearchResult{
+		Test: matchingTestName,
+		LegacyStatus: []query.LegacySearchRunResult{
+			query.LegacySearchRunResult{
+				// Only matching test passes.
+				Passes: 1,
+				Total:  1,
+			},
+		},
+	}
+	assert.Equal(t, expectedResult, srs[0])
 }
 
 func TestBindExecute_TestStatus(t *testing.T) {
@@ -230,12 +245,41 @@ func TestBindExecute_TestStatus(t *testing.T) {
 		BrowserName: "Chrome",
 		Status:      shared.TestStatusFail,
 	}
-	ts := planAndExecute(t, runs, idx, q)
+	srs := planAndExecute(t, runs, idx, q)
 
-	id1, err := computeTestID(match1Name, nil)
-	assert.Nil(t, err)
-	id2, err := computeTestID(match2Name, &match2Sub)
-	assert.Nil(t, err)
-	assert.Equal(t, 2, len(ts))
-	assert.Equal(t, testSet(t, []TestID{id1, id2}), testSet(t, ts))
+	assert.Equal(t, 2, len(srs))
+	assert.Equal(t, resultSet(t, []query.SearchResult{
+		query.SearchResult{
+			Test: match1Name,
+			LegacyStatus: []query.LegacySearchRunResult{
+				// Run [0]: Chrome: match1Name status is FAIL: 0 / 1.
+				query.LegacySearchRunResult{
+					Passes: 0,
+					Total:  1,
+				},
+				// Run [1]: Safari: match1Name status is PASS: 1 / 1.
+				query.LegacySearchRunResult{
+					Passes: 1,
+					Total:  1,
+				},
+			},
+		},
+		query.SearchResult{
+			Test: match2Name,
+			// Run [0]: Chrome: match1Name.match2Sub status is FAIL,
+			//                  and no other subtests match: 0 / 1.
+			LegacyStatus: []query.LegacySearchRunResult{
+				query.LegacySearchRunResult{
+					Passes: 0,
+					Total:  1,
+				},
+				// Run [1]: Safari: match1Name.match2Sub is missing,
+				//                  and no other subtests match: 0 / 1.
+				query.LegacySearchRunResult{
+					Passes: 0,
+					Total:  1,
+				},
+			},
+		},
+	}), resultSet(t, srs))
 }
