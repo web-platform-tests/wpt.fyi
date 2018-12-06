@@ -5,8 +5,11 @@
 package receiver
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"sync"
@@ -72,6 +75,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		"os_name":         r.FormValue("os_name"),
 		"os_version":      r.FormValue("os_version"),
 		"callback_url":    r.FormValue("callback_url"),
+		"report_path":     r.FormValue("report_path"),
 	}
 
 	var t *taskqueue.Task
@@ -125,7 +129,7 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 	var wg sync.WaitGroup
 	wg.Add(len(urls))
 	for i := range urls {
-		go saveFileToGCS(a, errors, &wg, urls[i], gcs[i])
+		go saveFileToGCS(a, errors, &wg, urls[i], gcs[i], extraParams["report_path"])
 	}
 	wg.Wait()
 	close(errors)
@@ -141,10 +145,10 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 	return a.scheduleResultsTask(uploader, gcs, payloadType, extraParams)
 }
 
-func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPath string) {
+func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPath, reportPath string) {
 	defer wg.Done()
 
-	f, err := fetchFile(a, url)
+	f, err := fetchFile(a, url, reportPath)
 	if err != nil {
 		e <- err
 		return
@@ -156,12 +160,25 @@ func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPat
 	}
 }
 
-func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
+func fetchFile(a AppEngineAPI, url string, reportPath string) (io.ReadCloser, error) {
 	log := shared.GetLogger(a.Context())
 	sleep := time.Millisecond * 500
 	for retry := 0; retry < NumRetries; retry++ {
 		body, err := a.fetchWithTimeout(url, DownloadTimeout)
 		if err == nil {
+			// Pull out the report file, if relevant.
+			if reportPath != "" {
+				data, err := ioutil.ReadAll(body)
+				if err != nil {
+					return nil, err
+				}
+				z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+				for _, f := range z.File {
+					if f.Name == reportPath {
+						return f.Open()
+					}
+				}
+			}
 			return body, nil
 		}
 		log.Errorf("[%d/%d] error requesting %s: %s", retry+1, NumRetries, url, err.Error())

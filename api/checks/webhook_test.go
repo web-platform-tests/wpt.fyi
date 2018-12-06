@@ -8,6 +8,9 @@ package checks
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -15,6 +18,7 @@ import (
 	"github.com/google/go-github/github"
 	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
@@ -246,10 +250,28 @@ func TestHandleAzurePipelinesEvent(t *testing.T) {
 	event := getCheckRunCreatedEvent("completed", "lukebjerring", sha)
 	event.CheckRun.DetailsURL = &detailsURL
 
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username, password, ok := r.BasicAuth()
+		assert.True(t, ok)
+		assert.Equal(t, username, "azure")
+		assert.Equal(t, password, "123")
+	}))
+	defer server.Close()
+	client := server.Client()
+	serverURL, _ := url.Parse(server.URL)
+
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
+	aeAPI.EXPECT().GetHostname().Return("wpt.fyi")
+	aeAPI.EXPECT().GetResultsUploadURL().Return(serverURL)
+	aeAPI.EXPECT().GetUploader("azure").Return(shared.Uploader{Username: "azure", Password: "123"}, nil)
+	aeAPI.EXPECT().GetHTTPClient().Return(client)
+
 	log, hook := logrustest.NewNullLogger()
-	processed, err := handleAzurePipelinesEvent(log, event)
+	processed, err := handleAzurePipelinesEvent(log, aeAPI, event)
 	assert.Nil(t, err)
 	assert.False(t, processed)
-	assert.Len(t, hook.Entries, 2)
+	if len(hook.Entries) < 1 {
+		assert.FailNow(t, "No logging was found")
+	}
 	assert.Contains(t, hook.Entries[0].Message, "/123/")
 }

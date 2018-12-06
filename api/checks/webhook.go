@@ -8,8 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -172,7 +174,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 
 	shouldSchedule := false
 	if appID == azurePipelinesAppID {
-		return handleAzurePipelinesEvent(log, checkRun)
+		return handleAzurePipelinesEvent(log, aeAPI, checkRun)
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {
@@ -216,7 +218,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 	return false, nil
 }
 
-func handleAzurePipelinesEvent(log shared.Logger, event github.CheckRunEvent) (bool, error) {
+func handleAzurePipelinesEvent(log shared.Logger, aeAPI shared.AppEngineAPI, event github.CheckRunEvent) (bool, error) {
 	status := event.GetCheckRun().GetStatus()
 	if status != "completed" {
 		log.Infof("Ignoring non-completed status %s", status)
@@ -234,10 +236,20 @@ func handleAzurePipelinesEvent(log shared.Logger, event github.CheckRunEvent) (b
 		event.GetRepo().GetOwner().GetLogin(),
 		event.GetRepo().GetName(),
 		buildID)
-	log.Infof("Fetching %s", artifact)
+	log.Infof("Uploading %s", artifact)
 
-	log.Warningf("(TODO: Not actually fetching yet :)")
-	return false, nil
+	err := createAzureRun(
+		log,
+		aeAPI,
+		event.GetCheckRun().GetHeadSHA(),
+		artifact,
+		"drop",
+		nil)
+	if err != nil {
+		log.Errorf("Failed to create run: %s", err.Error())
+	}
+
+	return false, err
 }
 
 func extractAzureBuildID(detailsURL string) string {
@@ -246,6 +258,58 @@ func extractAzureBuildID(detailsURL string) string {
 		return ""
 	}
 	return parsed.Query().Get("buildId")
+}
+
+func createAzureRun(
+	log shared.Logger,
+	aeAPI shared.AppEngineAPI,
+	sha,
+	artifactURL,
+	artifactName string,
+	labels []string) error {
+	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
+	payload := make(url.Values)
+	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
+	// parameter is the full revision hash.
+	payload.Add("revision", sha)
+	payload.Add("result_url", artifactURL)
+	payload.Add("report_path", fmt.Sprintf("%s/wpt_report.json", artifactName))
+	if len(labels) > 0 {
+		payload.Add("labels", strings.Join(labels, ","))
+	}
+	// Ensure we call back to this appengine version instance.
+	host := aeAPI.GetHostname()
+	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
+
+	req, err := http.NewRequest(
+		"POST",
+		aeAPI.GetResultsUploadURL().String(),
+		strings.NewReader(payload.Encode()))
+	if err != nil {
+		return err
+	}
+	uploader, err := aeAPI.GetUploader("azure")
+	if err != nil {
+		log.Errorf("Failed to load azure uploader")
+		return err
+	}
+	req.SetBasicAuth(uploader.Username, uploader.Password)
+
+	client := aeAPI.GetHTTPClient()
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("API error: %s", string(respBody))
+	}
+
+	return nil
 }
 
 func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
