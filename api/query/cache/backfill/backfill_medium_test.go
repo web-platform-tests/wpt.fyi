@@ -7,11 +7,13 @@
 package backfill
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
@@ -22,6 +24,8 @@ type countingIndex struct {
 
 	count int
 }
+
+var errNotImplemented = errors.New("Not implemented")
 
 func (i *countingIndex) IngestRun(r shared.TestRun) error {
 	err := i.ProxyIndex.IngestRun(r)
@@ -41,6 +45,10 @@ func (i *countingIndex) EvictAnyRun() error {
 
 	i.count--
 	return nil
+}
+
+func (*countingIndex) Bind([]shared.TestRun, query.AbstractQuery) (query.Plan, error) {
+	return nil, errNotImplemented
 }
 
 func TestStopImmediately(t *testing.T) {
