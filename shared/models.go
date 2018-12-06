@@ -221,9 +221,9 @@ func (t TestRunsByProduct) AllRuns() TestRuns {
 
 // First returns the first TestRun
 func (t TestRunsByProduct) First() *TestRun {
-	if len(t) > 0 {
-		first := t.AllRuns()[0]
-		return &first
+	all := t.AllRuns()
+	if len(all) > 0 {
+		return &all[0]
 	}
 	return nil
 }
