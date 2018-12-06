@@ -8,7 +8,9 @@ import (
 	"errors"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // TestNamePattern is a query.TestNamePattern bound to an in-memory index.
@@ -48,7 +50,7 @@ type ShardedFilter []filter
 
 type filter interface {
 	Filter(TestID) bool
-	Tests() Tests
+	idx() index
 }
 
 type index struct {
@@ -58,7 +60,7 @@ type index struct {
 
 var errUnknownConcreteQuery = errors.New("Unknown ConcreteQuery type")
 
-func (i index) Tests() Tests { return i.tests }
+func (i index) idx() index { return i }
 
 // Filter interprets a TestNamePattern as a filter function over TestIDs.
 func (tnp TestNamePattern) Filter(t TestID) bool {
@@ -134,26 +136,50 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 // Execute runs each filter in a ShardedFilter in parallel, returning a slice of
 // TestIDs as the result. Note that TestIDs are not deduplicated; the assumption
 // is that each filter is bound to a different shard, sharded by TestID.
-func (fs ShardedFilter) Execute() interface{} {
-	res := make(chan []TestID, len(fs))
+func (fs ShardedFilter) Execute(runs []shared.TestRun) interface{} {
+	rus := make([]RunID, len(runs))
+	for i := range runs {
+		rus[i] = RunID(runs[i].ID)
+	}
+	res := make(chan []query.SearchResult, len(fs))
+	errs := make(chan error)
 	for _, f := range fs {
 		go func(f filter) {
-			ts := []TestID{}
-			f.Tests().Range(func(t TestID) bool {
+			idx := f.idx()
+			agg := newIndexAggregator(idx, rus)
+			idx.tests.Range(func(t TestID) bool {
 				if f.Filter(t) {
-					ts = append(ts, t)
+					err := agg.Add(t)
+					if err != nil {
+						errs <- err
+					}
 				}
 				return true
 			})
-			res <- ts
+			res <- agg.Done()
 		}(f)
 	}
 
-	ret := make([]TestID, 0)
+	ret := make([]query.SearchResult, 0)
 	for i := 0; i < len(fs); i++ {
 		ts := <-res
 		ret = append(ret, ts...)
 	}
+
+	// To keep query execution fast, report errors in a separate goroutine and
+	// return results immediately. The class of errors for query execution (as
+	// apposed to binding) should be extremely rare and can be acted upon by
+	// monitoring logs.
+	close(errs)
+	if len(errs) > 0 {
+		go func() {
+			for err := range errs {
+				// TODO: Should this use a context-based logger?
+				log.Errorf("Error executing filter query: %v: %v", fs, err)
+			}
+		}()
+	}
+
 	return ret
 }
 

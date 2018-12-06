@@ -206,12 +206,13 @@ func TestSync(t *testing.T) {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			plan, err := i.Bind([]shared.TestRun{
+			runs := []shared.TestRun{
 				makeRun(int64(n - 1)),
 				makeRun(int64(n - 2)),
 				makeRun(int64(n - 3)),
 				makeRun(int64(n - 4)),
-			}, query.TestStatusConstraint{
+			}
+			plan, err := i.Bind(runs, query.TestStatusConstraint{
 				BrowserName: "Chrome",
 				Status:      shared.TestStatusPass,
 			})
@@ -219,7 +220,7 @@ func TestSync(t *testing.T) {
 				return
 			}
 
-			plan.Execute()
+			plan.Execute(runs)
 		}(j)
 	}
 	wg.Wait()
