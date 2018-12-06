@@ -40,6 +40,7 @@ found in the LICENSE file.
           'paginationTokens',
           'runsByPRNumber',
           'failChecksOnRegression',
+          'checksAllUsers',
         ];
       }
     });
@@ -217,6 +218,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{failChecksOnRegression}}">
         Fail the wpt.fyi GitHub status check if regressions are found, and pass them if not.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{checksAllUsers}}">
+        Run the wpt.fyi GitHub status check for all users, not just whitelisted ones.
       </paper-checkbox>
     </paper-item>
   </template>
