@@ -4,7 +4,9 @@
 
 package query
 
-import "github.com/web-platform-tests/wpt.fyi/shared"
+import (
+	"github.com/web-platform-tests/wpt.fyi/shared"
+)
 
 // Binder is a mechanism for binding a query over a slice of test runs to
 // a particular query service mechanism.
@@ -21,7 +23,7 @@ type Binder interface {
 type Plan interface {
 	// Execute runs the query execution plan. The result set type depends on the
 	// underlying query service mechanism that the Plan was bound with.
-	Execute() interface{}
+	Execute([]shared.TestRun) interface{}
 }
 
 // ConcreteQuery is an AbstractQuery that has been bound to specific test runs.
