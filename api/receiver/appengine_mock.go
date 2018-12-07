@@ -112,6 +112,19 @@ func (mr *MockAppEngineAPIMockRecorder) GetRunsURL(arg0 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetRunsURL), arg0)
 }
 
+// GetSlowHTTPClient mocks base method
+func (m *MockAppEngineAPI) GetSlowHTTPClient(arg0 time.Duration) (*http.Client, context.CancelFunc) {
+	ret := m.ctrl.Call(m, "GetSlowHTTPClient", arg0)
+	ret0, _ := ret[0].(*http.Client)
+	ret1, _ := ret[1].(context.CancelFunc)
+	return ret0, ret1
+}
+
+// GetSlowHTTPClient indicates an expected call of GetSlowHTTPClient
+func (mr *MockAppEngineAPIMockRecorder) GetSlowHTTPClient(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSlowHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetSlowHTTPClient), arg0)
+}
+
 // GetUploader mocks base method
 func (m *MockAppEngineAPI) GetUploader(arg0 string) (shared.Uploader, error) {
 	ret := m.ctrl.Call(m, "GetUploader", arg0)

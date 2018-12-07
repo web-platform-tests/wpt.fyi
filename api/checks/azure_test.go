@@ -65,6 +65,7 @@ func TestHandleAzurePipelinesEvent(t *testing.T) {
 	aeAPI.EXPECT().GetResultsUploadURL().Return(uploadURL)
 	aeAPI.EXPECT().GetUploader("azure").Return(shared.Uploader{Username: "azure", Password: "123"}, nil)
 	aeAPI.EXPECT().GetHTTPClient().AnyTimes().Return(server.Client())
+	aeAPI.EXPECT().GetSlowHTTPClient(gomock.Any()).AnyTimes().Return(server.Client(), func() {})
 
 	log, hook := logrustest.NewNullLogger()
 	processed, err := handleAzurePipelinesEvent(log, checksAPI, aeAPI, event)

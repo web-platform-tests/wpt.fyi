@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
@@ -18,6 +19,7 @@ type AppEngineAPI interface {
 	Context() context.Context
 
 	GetHTTPClient() *http.Client
+	GetSlowHTTPClient(time.Duration) (*http.Client, context.CancelFunc)
 
 	// The three methods below are exported for webapp.admin_handler.
 	IsLoggedIn() bool
@@ -55,6 +57,13 @@ func (a AppEngineAPIImpl) Context() context.Context {
 // GetHTTPClient returns an HTTP client for the current context.
 func (a AppEngineAPIImpl) GetHTTPClient() *http.Client {
 	return urlfetch.Client(a.ctx)
+}
+
+// GetSlowHTTPClient returns an HTTP client without timeout for the current
+// context.
+func (a AppEngineAPIImpl) GetSlowHTTPClient(timeout time.Duration) (*http.Client, context.CancelFunc) {
+	slowCtx, cancel := context.WithTimeout(a.ctx, timeout)
+	return urlfetch.Client(slowCtx), cancel
 }
 
 // IsLoggedIn returns true if a user is logged in for the current context.

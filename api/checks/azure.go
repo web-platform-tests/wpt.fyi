@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -59,7 +60,9 @@ func handleAzurePipelinesEvent(log shared.Logger, checksAPI API, aeAPI shared.Ap
 	artifactsURL := checksAPI.GetAzureArtifactsURL(owner, repo, buildID)
 	log.Infof("Fetching %s", artifactsURL)
 
-	client := aeAPI.GetHTTPClient()
+	// The default timeout is 5s, not enough for the receiver to download the reports.
+	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
+	defer cancel()
 	resp, err := client.Get(artifactsURL)
 	if err != nil {
 		log.Errorf("Failed to fetch artifacts for %s/%s build %s", owner, repo, buildID)
@@ -82,7 +85,7 @@ func handleAzurePipelinesEvent(log shared.Logger, checksAPI API, aeAPI shared.Ap
 			log.Errorf("Failed to extract report URL: %s", err.Error())
 			continue
 		}
-		log.Infof("Uploading %s for %s/%s build %s...", artifact.Name, owner, repo, buildID)
+		log.Infof("Uploading %s for %s/%s build %v...", artifact.Name, owner, repo, buildID)
 
 		err := createAzureRun(
 			log,
