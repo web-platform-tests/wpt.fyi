@@ -58,8 +58,8 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	filter.SHA = sha[:10]
-	prRun, masterRun, err := loadRunsToCompare(ctx, filter)
-	if prRun == nil || masterRun == nil || err != nil {
+	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
+	if err != nil {
 		msg := "Could not find runs to compare"
 		if err != nil {
 			msg = fmt.Sprintf("%s: %s", msg, err.Error())
@@ -71,7 +71,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	diffAPI := shared.NewDiffAPI(ctx)
-	summaryData, err := getDiffSummary(aeAPI, diffAPI, *masterRun, *prRun)
+	summaryData, err := getDiffSummary(aeAPI, diffAPI, *baseRun, *headRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -157,25 +157,25 @@ func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headR
 	return baseRun, err
 }
 
-func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun, prRun shared.TestRun) (summaries.Summary, error) {
+func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, headRun shared.TestRun) (summaries.Summary, error) {
 	diffFilter := shared.DiffFilterParam{Added: true, Changed: true, Unchanged: true}
-	diff, err := diffAPI.GetRunsDiff(masterRun, prRun, diffFilter, nil)
+	diff, err := diffAPI.GetRunsDiff(baseRun, headRun, diffFilter, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	diffURL := diffAPI.GetDiffURL(masterRun, prRun, &diffFilter)
+	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
 	var labels mapset.Set
-	if prRun.IsExperimental() {
+	if headRun.IsExperimental() {
 		labels = mapset.NewSet(shared.ExperimentalLabel)
 	}
 	checkState := summaries.CheckState{
-		TestRun: &prRun,
+		TestRun: &headRun,
 		Product: shared.ProductSpec{
-			ProductAtRevision: prRun.ProductAtRevision,
+			ProductAtRevision: headRun.ProductAtRevision,
 			Labels:            labels,
 		},
-		HeadSHA:    prRun.FullRevisionHash,
+		HeadSHA:    headRun.FullRevisionHash,
 		DetailsURL: diffURL,
 		Status:     "completed",
 	}
@@ -189,8 +189,8 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun
 	host := aeAPI.GetHostname()
 
 	resultsComparison := summaries.ResultsComparison{
-		MasterRun:     masterRun,
-		PRRun:         prRun,
+		BaseRun:       baseRun,
+		HeadRun:       headRun,
 		HostName:      host,
 		HostURL:       fmt.Sprintf("https://%s/", host),
 		DiffURL:       diffURL.String(),
