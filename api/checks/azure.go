@@ -5,6 +5,9 @@
 package checks
 
 import (
+	"archive/zip"
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -126,14 +129,51 @@ func createAzureRun(
 	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
 	// parameter is the full revision hash.
 	payload.Add("revision", sha)
-	payload.Add("result_url", artifact.Resource.DownloadURL)
-	payload.Add("report_path", fmt.Sprintf("%s/wpt_report.json", artifact.Name))
 	if len(labels) > 0 {
 		payload.Add("labels", strings.Join(labels, ","))
 	}
 	// Ensure we call back to this appengine version instance.
 	host := aeAPI.GetHostname()
 	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
+
+	// The default timeout is 5s, not enough for the receiver to process the reports.
+	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
+	defer cancel()
+	resp, err := client.Get(artifact.Resource.DownloadURL)
+	if err != nil {
+		log.Errorf("Failed to fetch %s: %s", artifact.Resource.DownloadURL, err.Error())
+		return err
+	}
+
+	// Extract the report from the artifact.
+	reportPath := fmt.Sprintf("%s/wpt_report.json", artifact.Name)
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Failed to read response body", err.Error())
+		return err
+	}
+	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	for _, f := range z.File {
+		if f.Name == reportPath {
+			fileData, err := f.Open()
+			if err != nil {
+				log.Errorf("Failed to extract %s", reportPath)
+				return err
+			}
+			var buf bytes.Buffer
+			gzw := gzip.NewWriter(&buf)
+			fileContents, err := ioutil.ReadAll(fileData)
+			if err != nil {
+				log.Errorf("Failed to read zip file")
+				return err
+			}
+			if _, err := gzw.Write(fileContents); err != nil {
+				log.Errorf("Failed to gzip file contents")
+				return err
+			}
+			payload.Add("result_file", buf.String())
+		}
+	}
 
 	req, err := http.NewRequest(
 		"POST",
@@ -148,17 +188,14 @@ func createAzureRun(
 		return err
 	}
 	req.SetBasicAuth(uploader.Username, uploader.Password)
-
-	// The default timeout is 5s, not enough for the receiver to download the reports.
-	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
-	defer cancel()
-	resp, err := client.Do(req)
-	if err != nil {
+	if resp, err = client.Do(req); err != nil {
+		log.Errorf("Failed to send upload request")
 		return err
 	}
 	respBody, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
+		log.Errorf("Failed to read response")
 		return err
 	}
 	if resp.StatusCode >= 300 {

@@ -5,11 +5,8 @@
 package receiver
 
 import (
-	"archive/zip"
-	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"sync"
@@ -38,7 +35,6 @@ const DownloadTimeout = time.Second * 10
 
 // HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	log := shared.GetLogger(a.Context())
 	var uploader string
 	if !a.IsAdmin() {
 		username, password, ok := r.BasicAuth()
@@ -49,17 +45,15 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		uploader = username
 	}
 
-	// Most form methods (e.g. FormValue, FormFile) will call
+	// Most form methods (e.g. PostFormValue, FormFile) will call
 	// ParseMultipartForm and ParseForm if necessary; forms with either
-	// enctype can be parsed. FormValue gets either query params or form
-	// body entries, favoring the latter.
+	// enctype can be parsed.
 	// The default maximum form size is 32MB, which is also the max request
 	// size on AppEngine.
 
 	if uploader == "" {
-		uploader = r.FormValue("user")
+		uploader = r.PostFormValue("user")
 		if uploader == "" {
-			log.Errorf("Cannot identify uploader")
 			http.Error(w, "Cannot identify uploader", http.StatusBadRequest)
 			return
 		}
@@ -69,15 +63,13 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	// Non-existent keys will have empty values, which will later be
 	// filtered out by scheduleResultsTask.
 	extraParams := map[string]string{
-		"labels": r.FormValue("labels"),
+		"labels": r.PostFormValue("labels"),
 		// The following fields will be deprecated when all runners embed metadata in the report.
-		"revision":        r.FormValue("revision"),
-		"browser_name":    r.FormValue("browser_name"),
-		"browser_version": r.FormValue("browser_version"),
-		"os_name":         r.FormValue("os_name"),
-		"os_version":      r.FormValue("os_version"),
-		"callback_url":    r.FormValue("callback_url"),
-		"report_path":     r.FormValue("report_path"),
+		"revision":        r.PostFormValue("revision"),
+		"browser_name":    r.PostFormValue("browser_name"),
+		"browser_version": r.PostFormValue("browser_version"),
+		"os_name":         r.PostFormValue("os_name"),
+		"os_version":      r.PostFormValue("os_version"),
 	}
 
 	var t *taskqueue.Task
@@ -95,11 +87,9 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		t, err = handleFilePayload(a, uploader, f, extraParams)
 	}
 	if err != nil {
-		log.Debugf("Error processing request: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Debugf("Task %s added to queue\n", t.Name)
 	fmt.Fprintf(w, "Task %s added to queue\n", t.Name)
 }
 
@@ -133,7 +123,7 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 	var wg sync.WaitGroup
 	wg.Add(len(urls))
 	for i := range urls {
-		go saveFileToGCS(a, errors, &wg, urls[i], gcs[i], extraParams["report_path"])
+		go saveFileToGCS(a, errors, &wg, urls[i], gcs[i])
 	}
 	wg.Wait()
 	close(errors)
@@ -149,10 +139,10 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 	return a.scheduleResultsTask(uploader, gcs, payloadType, extraParams)
 }
 
-func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPath, reportPath string) {
+func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPath string) {
 	defer wg.Done()
 
-	f, err := fetchFile(a, url, reportPath)
+	f, err := fetchFile(a, url)
 	if err != nil {
 		e <- err
 		return
@@ -164,27 +154,12 @@ func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPat
 	}
 }
 
-func fetchFile(a AppEngineAPI, url string, reportPath string) (io.ReadCloser, error) {
+func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
 	log := shared.GetLogger(a.Context())
 	sleep := time.Millisecond * 500
-	log.Debugf("Fetching %s", url)
 	for retry := 0; retry < NumRetries; retry++ {
 		body, err := a.fetchWithTimeout(url, DownloadTimeout)
 		if err == nil {
-			// Pull out the report file, if relevant.
-			if reportPath != "" {
-				log.Debugf("Extracting %s", reportPath)
-				data, err := ioutil.ReadAll(body)
-				if err != nil {
-					return nil, err
-				}
-				z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-				for _, f := range z.File {
-					if f.Name == reportPath {
-						return f.Open()
-					}
-				}
-			}
 			return body, nil
 		}
 		log.Errorf("[%d/%d] error requesting %s: %s", retry+1, NumRetries, url, err.Error())

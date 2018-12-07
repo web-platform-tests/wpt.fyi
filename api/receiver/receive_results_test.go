@@ -128,8 +128,6 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 		"browser_version": "",
 		"os_name":         "",
 		"os_version":      "",
-		"callback_url":    "",
-		"report_path":     "",
 	}
 	task := &taskqueue.Task{Name: "task"}
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
