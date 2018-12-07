@@ -60,9 +60,7 @@ func handleAzurePipelinesEvent(log shared.Logger, checksAPI API, aeAPI shared.Ap
 	artifactsURL := checksAPI.GetAzureArtifactsURL(owner, repo, buildID)
 	log.Infof("Fetching %s", artifactsURL)
 
-	// The default timeout is 5s, not enough for the receiver to download the reports.
-	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
-	defer cancel()
+	client := aeAPI.GetHTTPClient()
 	resp, err := client.Get(artifactsURL)
 	if err != nil {
 		log.Errorf("Failed to fetch artifacts for %s/%s build %s", owner, repo, buildID)
@@ -151,7 +149,9 @@ func createAzureRun(
 	}
 	req.SetBasicAuth(uploader.Username, uploader.Password)
 
-	client := aeAPI.GetHTTPClient()
+	// The default timeout is 5s, not enough for the receiver to download the reports.
+	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
+	defer cancel()
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
