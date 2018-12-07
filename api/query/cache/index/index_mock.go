@@ -5,12 +5,11 @@
 package index
 
 import (
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
 	metrics "github.com/web-platform-tests/results-analysis/metrics"
 	query "github.com/web-platform-tests/wpt.fyi/api/query"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	reflect "reflect"
 )
 
 // MockIndex is a mock of Index interface
@@ -47,6 +46,19 @@ func (m *MockIndex) Bind(arg0 []shared.TestRun, arg1 query.AbstractQuery) (query
 // Bind indicates an expected call of Bind
 func (mr *MockIndexMockRecorder) Bind(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bind", reflect.TypeOf((*MockIndex)(nil).Bind), arg0, arg1)
+}
+
+// Runs mocks base method
+func (m *MockIndex) Runs(arg0 []RunID) ([]shared.TestRun, error) {
+	ret := m.ctrl.Call(m, "Runs", arg0)
+	ret0, _ := ret[0].([]shared.TestRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Runs indicates an expected call of Runs
+func (mr *MockIndexMockRecorder) Runs(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Runs", reflect.TypeOf((*MockIndex)(nil).Runs), arg0)
 }
 
 // IngestRun mocks base method

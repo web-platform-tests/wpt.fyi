@@ -93,7 +93,7 @@ func TestStructuredQuery_unknownStatus(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
 }
 
 func TestStructuredQuery_pattern(t *testing.T) {
@@ -105,7 +105,7 @@ func TestStructuredQuery_pattern(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{"/2dcontext/"}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{"/2dcontext/"}}, rq)
 }
 
 func TestStructuredQuery_status(t *testing.T) {
@@ -118,7 +118,7 @@ func TestStructuredQuery_status(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
 }
 
 func TestStructuredQuery_not(t *testing.T) {
@@ -132,7 +132,7 @@ func TestStructuredQuery_not(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: AbstractNot{TestNamePattern{"cssom"}}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractNot{TestNamePattern{"cssom"}}}, rq)
 }
 
 func TestStructuredQuery_or(t *testing.T) {
@@ -147,7 +147,7 @@ func TestStructuredQuery_or(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: AbstractOr{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractOr{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_and(t *testing.T) {
@@ -162,7 +162,7 @@ func TestStructuredQuery_and(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{runIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_nested(t *testing.T) {
@@ -186,7 +186,7 @@ func TestStructuredQuery_nested(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{
-		runIDs: []int64{0, 1, 2},
+		RunIDs: []int64{0, 1, 2},
 		AbstractQuery: AbstractOr{
 			Args: []AbstractQuery{
 				AbstractAnd{
