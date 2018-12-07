@@ -7,6 +7,7 @@ package receiver
 import (
 	context "context"
 	io "io"
+	"net/http"
 	url "net/url"
 	reflect "reflect"
 	time "time"
@@ -134,6 +135,18 @@ func (m *MockAppEngineAPI) LoginURL(arg0 string) (string, error) {
 // LoginURL indicates an expected call of LoginURL
 func (mr *MockAppEngineAPIMockRecorder) LoginURL(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAppEngineAPI)(nil).LoginURL), arg0)
+}
+
+// GetHTTPClient mocks base method
+func (m *MockAppEngineAPI) GetHTTPClient() *http.Client {
+	ret := m.ctrl.Call(m, "GetHTTPClient")
+	ret0, _ := ret[0].(*http.Client)
+	return ret0
+}
+
+// GetHTTPClient indicates an expected call of GetHTTPClient
+func (mr *MockAppEngineAPIMockRecorder) GetHTTPClient() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHTTPClient))
 }
 
 // addTestRun mocks base method

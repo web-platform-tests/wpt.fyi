@@ -5,6 +5,7 @@
 package query
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -60,15 +61,26 @@ func (r byName) Len() int           { return len(r) }
 func (r byName) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
 func (r byName) Less(i, j int) bool { return r[i].Test < r[j].Test }
 
+type searchHandler struct {
+	api shared.AppEngineAPI
+}
+
 type unstructuredSearchHandler struct {
 	queryHandler
 }
 
 type structuredSearchHandler struct {
 	queryHandler
+
+	api shared.AppEngineAPI
 }
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
+	api := shared.NewAppEngineAPI(r.Context())
+	searchHandler{api}.ServeHTTP(w, r)
+}
+
+func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "POST" {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
 		return
@@ -80,13 +92,13 @@ func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 	}
-	var sh http.Handler
+	var delegate http.Handler
 	if r.Method == "GET" {
-		sh = unstructuredSearchHandler{queryHandler: qh}
+		delegate = unstructuredSearchHandler{queryHandler: qh}
 	} else {
-		sh = structuredSearchHandler{queryHandler: qh}
+		delegate = structuredSearchHandler{queryHandler: qh, api: sh.api}
 	}
-	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, shouldCacheSearchResponse)
+	ch := shared.NewCachingHandler(ctx, delegate, mc, isRequestCacheable, shared.URLAsCacheKey, shouldCacheSearchResponse)
 	ch.ServeHTTP(w, r)
 }
 
@@ -109,8 +121,26 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	simpleQ, ok := rq.AbstractQuery.(TestNamePattern)
 	if !ok {
-		// TODO: Implement serving complex queries.
-		http.Error(w, "Query pattern is valid, but processing of this query configuration is not yet implemented", http.StatusServiceUnavailable)
+		ctx := r.Context()
+		hostname := sh.api.GetHostname()
+		url := fmt.Sprintf("https://%s/api/search/cache", hostname)
+
+		shared.GetLogger(ctx).Infof("Forwarding structured search request to cache: %s", string(data))
+
+		client := sh.api.GetHTTPClient()
+		resp, err := client.Post(url, "application/json", bytes.NewBuffer(data))
+		if err != nil {
+			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
+			return
+		}
+
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(w, "Error reading response from search API cache", http.StatusInternalServerError)
+		}
+
+		w.WriteHeader(resp.StatusCode)
+		w.Write(data)
 		return
 	}
 

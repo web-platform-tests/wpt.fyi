@@ -3,10 +3,12 @@ package shared
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/urlfetch"
 	"google.golang.org/appengine/user"
 )
 
@@ -17,6 +19,8 @@ type AppEngineAPI interface {
 	IsLoggedIn() bool
 	IsAdmin() bool
 	LoginURL(redirect string) (string, error)
+
+	GetHTTPClient() *http.Client
 
 	IsFeatureEnabled(featureName string) bool
 
@@ -42,6 +46,11 @@ type AppEngineAPIImpl struct {
 // Context returns the context.Context for the API impl.
 func (a AppEngineAPIImpl) Context() context.Context {
 	return a.ctx
+}
+
+// GetHTTPClient returns an HTTP client for the current context.
+func (a AppEngineAPIImpl) GetHTTPClient() *http.Client {
+	return urlfetch.Client(a.ctx)
 }
 
 // IsLoggedIn returns true if a user is logged in for the current context.
