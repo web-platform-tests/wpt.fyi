@@ -229,8 +229,7 @@ func (s checksAPIImpl) FetchAzureArtifact(artifact BuildArtifact) ([]byte, error
 			return buf.Bytes(), nil
 		}
 	}
-	log.Debugf("File %s not found in zip", reportPath)
-	return nil, nil
+	return nil, fmt.Errorf("File %s not found in zip", reportPath)
 }
 
 func getCheckTitle(product shared.ProductSpec) string {

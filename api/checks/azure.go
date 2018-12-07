@@ -136,6 +136,9 @@ func createAzureRun(
 	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	data, err := checksAPI.FetchAzureArtifact(artifact)
+	if err != nil {
+		return err
+	}
 	payload.Add("result_file", string(data))
 
 	req, err := http.NewRequest(
