@@ -25,7 +25,7 @@ type AbstractQuery interface {
 // client, including the IDs of the test runs to query, and the structured query
 // to run.
 type RunQuery struct {
-	runIDs []int64
+	RunIDs []int64
 	AbstractQuery
 }
 
@@ -162,7 +162,7 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	rq.runIDs = data.RunIDs
+	rq.RunIDs = data.RunIDs
 	rq.AbstractQuery = q
 	return nil
 }

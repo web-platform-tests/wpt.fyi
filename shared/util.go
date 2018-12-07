@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"regexp"
+	"strings"
 
 	mapset "github.com/deckarep/golang-set"
 	log "github.com/sirupsen/logrus"
@@ -258,4 +260,19 @@ func MapStringKeys(m interface{}) ([]string, error) {
 		}
 	}
 	return strKeys, nil
+}
+
+// GetResultsURL constructs the URL to the result of a single test file in the
+// given run.
+func GetResultsURL(run TestRun, testFile string) (resultsURL string) {
+	resultsURL = run.ResultsURL
+	if testFile != "" && testFile != "/" {
+		// Assumes that result files are under a directory named SHA[0:10].
+		resultsBase := strings.SplitAfter(resultsURL, "/"+run.Revision)[0]
+		resultsPieces := strings.Split(resultsURL, "/")
+		re := regexp.MustCompile("(-summary)?\\.json\\.gz$")
+		product := re.ReplaceAllString(resultsPieces[len(resultsPieces)-1], "")
+		resultsURL = fmt.Sprintf("%s/%s/%s", resultsBase, product, testFile)
+	}
+	return resultsURL
 }
