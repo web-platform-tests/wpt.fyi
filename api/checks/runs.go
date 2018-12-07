@@ -28,7 +28,7 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 	}
 
 	createdAny := false
-	errors := make(chan error, len(suites))
+	errors := make([]error, 0, len(suites))
 	for _, suite := range suites {
 		// Update, not create, if a run name matches this completed TestRun.
 		var existing *github.CheckRun
@@ -80,14 +80,13 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 		}
 		createdAny = createdAny || created
 		if err != nil {
-			errors <- err
+			errors = append(errors, err)
 			continue
 		}
 		log.Debugf("Check for %s/%s @ %s (%s) updated", suite.Owner, suite.Repo, suite.SHA[:7], product.String())
 	}
-	close(errors)
 	// Return the first error. Others are logged.
-	for err := range errors {
+	for _, err := range errors {
 		return createdAny, err
 	}
 	return createdAny, nil
