@@ -226,6 +226,10 @@ func (s checksAPIImpl) FetchAzureArtifact(artifact BuildArtifact) ([]byte, error
 				log.Errorf("Failed to gzip file contents")
 				return nil, err
 			}
+			if err := gzw.Close(); err != nil {
+				log.Errorf("Failed to close gzip writer")
+				return nil, err
+			}
 			return buf.Bytes(), nil
 		}
 	}

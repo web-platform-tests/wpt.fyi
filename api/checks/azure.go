@@ -5,9 +5,12 @@
 package checks
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -124,40 +127,44 @@ func createAzureRun(
 	artifact BuildArtifact,
 	labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
-	payload := make(url.Values)
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
 	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
 	// parameter is the full revision hash.
-	payload.Add("revision", sha)
+	writer.WriteField("revision", sha)
 	if len(labels) > 0 {
-		payload.Add("labels", strings.Join(labels, ","))
+		writer.WriteField("labels", strings.Join(labels, ","))
 	}
 	// Ensure we call back to this appengine version instance.
 	host := aeAPI.GetHostname()
-	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
+	writer.WriteField("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	data, err := checksAPI.FetchAzureArtifact(artifact)
 	if err != nil {
 		return err
 	}
-	payload.Add("result_file", string(data))
 
-	req, err := http.NewRequest(
-		"POST",
-		aeAPI.GetResultsUploadURL().String(),
-		strings.NewReader(payload.Encode()))
+	fileField, err := writer.CreateFormFile("result_file", "wpt_report.json")
+	_, err = io.Copy(fileField, bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", aeAPI.GetResultsUploadURL().String(), buf)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 	uploader, err := aeAPI.GetUploader("azure")
 	if err != nil {
 		log.Errorf("Failed to load azure uploader")
 		return err
 	}
+	req.SetBasicAuth(uploader.Username, uploader.Password)
 
 	// The default timeout is 5s, not enough for the receiver to process the reports.
 	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
 	defer cancel()
-	req.SetBasicAuth(uploader.Username, uploader.Password)
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Errorf("Failed to send upload request")
