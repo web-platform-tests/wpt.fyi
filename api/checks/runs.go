@@ -85,6 +85,7 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 		}
 		log.Debugf("Check for %s/%s @ %s (%s) updated", suite.Owner, suite.Repo, suite.SHA[:7], product.String())
 	}
+	close(errors)
 	// Return the first error. Others are logged.
 	for err := range errors {
 		return createdAny, err
