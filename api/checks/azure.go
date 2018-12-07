@@ -5,9 +5,6 @@
 package checks
 
 import (
-	"archive/zip"
-	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -90,6 +87,7 @@ func handleAzurePipelinesEvent(log shared.Logger, checksAPI API, aeAPI shared.Ap
 
 		err := createAzureRun(
 			log,
+			checksAPI,
 			aeAPI,
 			event.GetCheckRun().GetHeadSHA(),
 			artifact,
@@ -120,6 +118,7 @@ func extractAzureBuildID(detailsURL string) int64 {
 
 func createAzureRun(
 	log shared.Logger,
+	checksAPI API,
 	aeAPI shared.AppEngineAPI,
 	sha string,
 	artifact BuildArtifact,
@@ -136,44 +135,8 @@ func createAzureRun(
 	host := aeAPI.GetHostname()
 	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
-	// The default timeout is 5s, not enough for the receiver to process the reports.
-	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
-	defer cancel()
-	resp, err := client.Get(artifact.Resource.DownloadURL)
-	if err != nil {
-		log.Errorf("Failed to fetch %s: %s", artifact.Resource.DownloadURL, err.Error())
-		return err
-	}
-
-	// Extract the report from the artifact.
-	reportPath := fmt.Sprintf("%s/wpt_report.json", artifact.Name)
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("Failed to read response body", err.Error())
-		return err
-	}
-	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	for _, f := range z.File {
-		if f.Name == reportPath {
-			fileData, err := f.Open()
-			if err != nil {
-				log.Errorf("Failed to extract %s", reportPath)
-				return err
-			}
-			var buf bytes.Buffer
-			gzw := gzip.NewWriter(&buf)
-			fileContents, err := ioutil.ReadAll(fileData)
-			if err != nil {
-				log.Errorf("Failed to read zip file")
-				return err
-			}
-			if _, err := gzw.Write(fileContents); err != nil {
-				log.Errorf("Failed to gzip file contents")
-				return err
-			}
-			payload.Add("result_file", buf.String())
-		}
-	}
+	data, err := checksAPI.FetchAzureArtifact(artifact)
+	payload.Add("result_file", string(data))
 
 	req, err := http.NewRequest(
 		"POST",
@@ -187,8 +150,13 @@ func createAzureRun(
 		log.Errorf("Failed to load azure uploader")
 		return err
 	}
+
+	// The default timeout is 5s, not enough for the receiver to process the reports.
+	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
+	defer cancel()
 	req.SetBasicAuth(uploader.Username, uploader.Password)
-	if resp, err = client.Do(req); err != nil {
+	resp, err := client.Do(req)
+	if err != nil {
 		log.Errorf("Failed to send upload request")
 		return err
 	}

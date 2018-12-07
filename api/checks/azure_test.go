@@ -30,6 +30,7 @@ func TestHandleAzurePipelinesEvent(t *testing.T) {
 	event := getCheckRunCreatedEvent("completed", "lukebjerring", sha)
 	event.CheckRun.DetailsURL = &detailsURL
 
+	artifact := BuildArtifact{Name: "results"}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/upload":
@@ -42,10 +43,7 @@ func TestHandleAzurePipelinesEvent(t *testing.T) {
 			artifacts := BuildArtifacts{
 				Count: 1,
 				Value: []BuildArtifact{
-					BuildArtifact{
-						Name:     "results",
-						Resource: ArtifactResource{DownloadURL: "http://download.me"},
-					},
+					artifact,
 				},
 			}
 			bytes, _ := json.Marshal(artifacts)
@@ -58,6 +56,7 @@ func TestHandleAzurePipelinesEvent(t *testing.T) {
 
 	checksAPI := NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().GetAzureArtifactsURL(wptRepoOwner, wptRepoName, int64(123)).Return(server.URL + "/123/artifacts")
+	checksAPI.EXPECT().FetchAzureArtifact(artifact).Return([]byte{}, nil)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().GetHostname().Return("wpt.fyi")

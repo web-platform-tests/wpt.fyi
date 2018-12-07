@@ -6,10 +6,11 @@ package checks
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
-	reflect "reflect"
 )
 
 // MockAPI is a mock of API interface
@@ -70,6 +71,19 @@ func (m *MockAPI) CreateWPTCheckSuite(arg0, arg1 int64, arg2 string) (bool, erro
 // CreateWPTCheckSuite indicates an expected call of CreateWPTCheckSuite
 func (mr *MockAPIMockRecorder) CreateWPTCheckSuite(arg0, arg1, arg2 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWPTCheckSuite", reflect.TypeOf((*MockAPI)(nil).CreateWPTCheckSuite), arg0, arg1, arg2)
+}
+
+// FetchAzureArtifact mocks base method
+func (m *MockAPI) FetchAzureArtifact(arg0 BuildArtifact) ([]byte, error) {
+	ret := m.ctrl.Call(m, "FetchAzureArtifact", arg0)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAzureArtifact indicates an expected call of FetchAzureArtifact
+func (mr *MockAPIMockRecorder) FetchAzureArtifact(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAzureArtifact", reflect.TypeOf((*MockAPI)(nil).FetchAzureArtifact), arg0)
 }
 
 // GetAzureArtifactsURL mocks base method
