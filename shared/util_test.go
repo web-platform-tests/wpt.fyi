@@ -12,6 +12,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Case struct {
+	testRun  TestRun
+	testFile string
+	expected string
+}
+
+const shortSHA = "abcdef0123"
+const resultsURLBase = "https://storage.googleapis.com/wptd/" + shortSHA + "/"
+const product = "chrome-63.0-linux"
+const resultsURL = resultsURLBase + "/" + product + "-summary.json.gz"
+
 func TestMapStringKeys(t *testing.T) {
 	m := map[string]int{"foo": 1}
 	keys, err := MapStringKeys(m)
@@ -51,4 +62,57 @@ func TestProductChannelToLabel(t *testing.T) {
 	assert.Equal(t, ExperimentalLabel, ProductChannelToLabel("preview"))
 	assert.Equal(t, ExperimentalLabel, ProductChannelToLabel("experimental"))
 	assert.Equal(t, "", ProductChannelToLabel("not-a-channel"))
+}
+
+func TestGetResultsURL_EmptyFile(t *testing.T) {
+	checkResult(
+		t,
+		Case{
+			TestRun{
+				ProductAtRevision: ProductAtRevision{
+					Revision: shortSHA,
+				},
+				ResultsURL: resultsURL,
+			},
+			"",
+			resultsURL,
+		})
+}
+
+func TestGetResultsURL_TestFile(t *testing.T) {
+	file := "css/vendor-imports/mozilla/mozilla-central-reftests/flexbox/flexbox-root-node-001b.html"
+	checkResult(
+		t,
+		Case{
+			TestRun{
+				ProductAtRevision: ProductAtRevision{
+					Revision: shortSHA,
+				},
+				ResultsURL: resultsURL,
+			},
+			file,
+			resultsURLBase + product + "/" + file,
+		})
+}
+
+func TestGetResultsURL_TrailingSlash(t *testing.T) {
+	checkResult(
+		t,
+		Case{
+			TestRun{
+				ProductAtRevision: ProductAtRevision{
+					Revision: shortSHA,
+				},
+				ResultsURL: resultsURL,
+			},
+			"/",
+			resultsURL,
+		})
+}
+
+func checkResult(t *testing.T, c Case) {
+	got := GetResultsURL(c.testRun, c.testFile)
+	if got != c.expected {
+		t.Errorf("\nGot:\n%q\nExpected:\n%q", got, c.expected)
+	}
 }
