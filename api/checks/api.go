@@ -26,6 +26,7 @@ type API interface {
 	IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CreateWPTCheckSuite(appID, installationID int64, sha string) (bool, error)
+	GetAzureArtifactsURL(owner, repo string, buildID int64) string
 }
 
 type checksAPIImpl struct {
@@ -170,6 +171,14 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 		getOrCreateCheckSuite(s.ctx, sha, wptRepoOwner, wptRepoName, appID, installationID)
 	}
 	return suite != nil, err
+}
+
+func (s checksAPIImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string {
+	return fmt.Sprintf(
+		"https://dev.azure.com/%s/%s/_apis/build/builds/%v/artifacts",
+		owner,
+		repo,
+		buildID)
 }
 
 func getCheckTitle(product shared.ProductSpec) string {

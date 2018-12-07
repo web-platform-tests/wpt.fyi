@@ -8,10 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -174,7 +171,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 
 	shouldSchedule := false
 	if appID == azurePipelinesAppID {
-		return handleAzurePipelinesEvent(log, aeAPI, checkRun)
+		return handleAzurePipelinesEvent(log, checksAPI, aeAPI, checkRun)
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {
@@ -216,100 +213,6 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 	}
 	log.Debugf("Ignoring %s action for %s check_run", action, status)
 	return false, nil
-}
-
-func handleAzurePipelinesEvent(log shared.Logger, aeAPI shared.AppEngineAPI, event github.CheckRunEvent) (bool, error) {
-	status := event.GetCheckRun().GetStatus()
-	if status != "completed" {
-		log.Infof("Ignoring non-completed status %s", status)
-		return false, nil
-	}
-	detailsURL := event.GetCheckRun().GetDetailsURL()
-	buildID := extractAzureBuildID(detailsURL)
-	if buildID == "" {
-		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
-		return false, nil
-	}
-	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
-	artifact := fmt.Sprintf(
-		"https://dev.azure.com/%s/%s/_apis/build/builds/%s/artifacts?artifactName=drop&api-version=5.0-preview.5&%%24format=zip",
-		event.GetRepo().GetOwner().GetLogin(),
-		event.GetRepo().GetName(),
-		buildID)
-	log.Infof("Uploading %s", artifact)
-
-	err := createAzureRun(
-		log,
-		aeAPI,
-		event.GetCheckRun().GetHeadSHA(),
-		artifact,
-		"drop",
-		nil)
-	if err != nil {
-		log.Errorf("Failed to create run: %s", err.Error())
-	}
-
-	return false, err
-}
-
-func extractAzureBuildID(detailsURL string) string {
-	parsed, err := url.Parse(detailsURL)
-	if err != nil {
-		return ""
-	}
-	return parsed.Query().Get("buildId")
-}
-
-func createAzureRun(
-	log shared.Logger,
-	aeAPI shared.AppEngineAPI,
-	sha,
-	artifactURL,
-	artifactName string,
-	labels []string) error {
-	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
-	payload := make(url.Values)
-	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
-	// parameter is the full revision hash.
-	payload.Add("revision", sha)
-	payload.Add("result_url", artifactURL)
-	payload.Add("report_path", fmt.Sprintf("%s/wpt_report.json", artifactName))
-	if len(labels) > 0 {
-		payload.Add("labels", strings.Join(labels, ","))
-	}
-	// Ensure we call back to this appengine version instance.
-	host := aeAPI.GetHostname()
-	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
-
-	req, err := http.NewRequest(
-		"POST",
-		aeAPI.GetResultsUploadURL().String(),
-		strings.NewReader(payload.Encode()))
-	if err != nil {
-		return err
-	}
-	uploader, err := aeAPI.GetUploader("azure")
-	if err != nil {
-		log.Errorf("Failed to load azure uploader")
-		return err
-	}
-	req.SetBasicAuth(uploader.Username, uploader.Password)
-
-	client := aeAPI.GetHTTPClient()
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	respBody, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("API error: %s", string(respBody))
-	}
-
-	return nil
 }
 
 func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
