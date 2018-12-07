@@ -25,6 +25,7 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 			runs, _ := getExistingCheckRuns(ctx, suite)
 			for _, run := range runs {
 				if spec, _ := shared.ParseProductSpec(run.GetName()); spec.Matches(*testRun) {
+					log.Debugf("Found existing run %v for %s @ %s", run.GetID(), run.GetName(), suite.SHA[:7])
 					existing = run
 					break
 				}
@@ -120,5 +121,9 @@ func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summar
 	}
 
 	_, _, err = client.Checks.UpdateCheckRun(ctx, suite.Owner, suite.Repo, run.GetID(), opts)
+	if err != nil {
+		log.Errorf("Failed to update run %v", run.GetID())
+		return false, err
+	}
 	return err != nil, err
 }
