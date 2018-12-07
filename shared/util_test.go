@@ -12,12 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type Case struct {
-	testRun  TestRun
-	testFile string
-	expected string
-}
-
 const shortSHA = "abcdef0123"
 const resultsURLBase = "https://storage.googleapis.com/wptd/" + shortSHA + "/"
 const product = "chrome-63.0-linux"
@@ -65,54 +59,27 @@ func TestProductChannelToLabel(t *testing.T) {
 }
 
 func TestGetResultsURL_EmptyFile(t *testing.T) {
-	checkResult(
-		t,
-		Case{
-			TestRun{
-				ProductAtRevision: ProductAtRevision{
-					Revision: shortSHA,
-				},
-				ResultsURL: resultsURL,
-			},
-			"",
-			resultsURL,
-		})
+	run := TestRun{ResultsURL: resultsURL}
+	run.Revision = shortSHA
+	checkResult(t, run, "", resultsURL)
 }
 
 func TestGetResultsURL_TestFile(t *testing.T) {
+	run := TestRun{ResultsURL: resultsURL}
+	run.Revision = shortSHA
 	file := "css/vendor-imports/mozilla/mozilla-central-reftests/flexbox/flexbox-root-node-001b.html"
-	checkResult(
-		t,
-		Case{
-			TestRun{
-				ProductAtRevision: ProductAtRevision{
-					Revision: shortSHA,
-				},
-				ResultsURL: resultsURL,
-			},
-			file,
-			resultsURLBase + product + "/" + file,
-		})
+	checkResult(t, run, file, resultsURLBase+product+"/"+file)
 }
 
 func TestGetResultsURL_TrailingSlash(t *testing.T) {
-	checkResult(
-		t,
-		Case{
-			TestRun{
-				ProductAtRevision: ProductAtRevision{
-					Revision: shortSHA,
-				},
-				ResultsURL: resultsURL,
-			},
-			"/",
-			resultsURL,
-		})
+	run := TestRun{ResultsURL: resultsURL}
+	run.Revision = shortSHA
+	checkResult(t, run, "/", resultsURL)
 }
 
-func checkResult(t *testing.T, c Case) {
-	got := GetResultsURL(c.testRun, c.testFile)
-	if got != c.expected {
-		t.Errorf("\nGot:\n%q\nExpected:\n%q", got, c.expected)
+func checkResult(t *testing.T, testRun TestRun, testFile string, expected string) {
+	got := GetResultsURL(testRun, testFile)
+	if got != expected {
+		t.Errorf("\nGot:\n%q\nExpected:\n%q", got, expected)
 	}
 }
