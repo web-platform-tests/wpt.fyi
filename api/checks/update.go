@@ -86,7 +86,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 	updated, err := updateCheckRunSummary(ctx, summaryData, suites...)
 	if err != nil {
-		log.Errorf("Failed to update check_run: %s", err.Error())
+		log.Errorf("Failed to update check_run(s): %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else if updated {
 		w.Write([]byte("Check(s) updated"))
