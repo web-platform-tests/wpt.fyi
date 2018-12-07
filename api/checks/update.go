@@ -11,7 +11,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
@@ -51,7 +51,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(filter.Products) < 1 {
+	if len(filter.Products) != 1 {
 		msg := "product param is missing"
 		log.Warningf(msg)
 		http.Error(w, msg, http.StatusBadRequest)
@@ -63,6 +63,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		msg := "Could not find runs to compare"
 		if err != nil {
 			msg = fmt.Sprintf("%s: %s", msg, err.Error())
+			log.Errorf(msg)
 		}
 		http.Error(w, msg, http.StatusNotFound)
 		return
@@ -95,39 +96,65 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (prRun, masterRun *shared.TestRun, err error) {
-	log := shared.GetLogger(ctx)
+func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (headRun, baseRun *shared.TestRun, err error) {
 	one := 1
 	runs, err := shared.LoadTestRuns(ctx, filter.Products, filter.Labels, filter.SHA, filter.From, filter.To, &one, nil)
-	prRun = runs.First()
 	if err != nil {
-		log.Errorf("Failed to load test runs: %s", err.Error())
 		return nil, nil, err
-	} else if prRun == nil {
-		log.Debugf("No runs found for %s @ %s", filter.Products[0].String(), filter.SHA[:7])
-		return nil, nil, err
-	} else if len(runs.AllRuns()) > 1 {
-		log.Errorf("Found more that one test run")
-		return nil, nil, fmt.Errorf("Expected exactly 1 run, but found %v", len(runs))
+	}
+	run := runs.First()
+	if run == nil {
+		return nil, nil, fmt.Errorf("no test run found for %s @ %s", filter.Products[0].String(), filter.SHA[:7])
 	}
 
-	// Get the most recent, but still earlier, master run to compare.
-	labels := filter.Labels
-	if labels == nil {
-		labels = mapset.NewSet()
+	labels := run.LabelsSet()
+	if labels.Contains(shared.MasterLabel) {
+		headRun = run
+		baseRun, err = loadMasterRunBefore(ctx, filter, headRun)
+	} else if labels.Contains(shared.PRBaseLabel) {
+		baseRun = run
+		headRun, err = loadPRRun(ctx, filter, shared.PRHeadLabel)
+	} else if labels.Contains(shared.PRHeadLabel) {
+		headRun = run
+		baseRun, err = loadPRRun(ctx, filter, shared.PRBaseLabel)
+	} else {
+		return nil, nil, fmt.Errorf("test run %d doesn't have pr_base, pr_head or master label", run.ID)
 	}
-	labels.Add("master")
-	to := prRun.TimeStart.Add(-time.Millisecond)
-	masterRuns, err := shared.LoadTestRuns(ctx, filter.Products, labels, "", nil, &to, &one, nil)
-	masterRun = masterRuns.First()
+
+	return headRun, baseRun, err
+}
+
+func loadPRRun(ctx context.Context, filter shared.TestRunFilter, extraLabel string) (*shared.TestRun, error) {
+	// Find the corresponding pr_base or pr_head run.
+	one := 1
+	labels := mapset.NewSetWith(extraLabel)
+	runs, err := shared.LoadTestRuns(ctx, filter.Products, labels, filter.SHA, nil, nil, &one, nil)
+	run := runs.First()
 	if err != nil {
-		log.Errorf("Failed to load master run: %s", err.Error())
-		return prRun, nil, err
-	} else if masterRun == nil {
-		log.Debugf("No masters runs found before %s @ %s", filter.Products[0].String(), filter.SHA[:7])
-		return prRun, masterRun, fmt.Errorf("No master run found to compare differences")
+		return nil, err
 	}
-	return prRun, masterRun, nil
+	if run == nil {
+		err = fmt.Errorf("no test run found for %s @ %s with label %s",
+			filter.Products[0].String(), filter.SHA, extraLabel)
+	}
+	return run, err
+}
+
+func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headRun *shared.TestRun) (*shared.TestRun, error) {
+	// Get the most recent, but still earlier, master run to compare.
+	one := 1
+	to := headRun.TimeStart.Add(-time.Millisecond)
+	labels := mapset.NewSetWith(shared.MasterLabel)
+	runs, err := shared.LoadTestRuns(ctx, filter.Products, labels, shared.LatestSHA, nil, &to, &one, nil)
+	baseRun := runs.First()
+	if err != nil {
+		return nil, err
+	}
+	if baseRun == nil {
+		err = fmt.Errorf("no master run found for %s before %s",
+			filter.Products[0].String(), filter.SHA)
+	}
+	return baseRun, err
 }
 
 func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, masterRun, prRun shared.TestRun) (summaries.Summary, error) {
