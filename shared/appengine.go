@@ -83,7 +83,7 @@ func (a AppEngineAPIImpl) IsFeatureEnabled(featureName string) bool {
 func (a AppEngineAPIImpl) GetUploader(uploader string) (Uploader, error) {
 	result := Uploader{}
 	key := datastore.NewKey(a.ctx, "Uploader", uploader, 0, nil)
-	err := datastore.Get(a.ctx, key, result)
+	err := datastore.Get(a.ctx, key, &result)
 	return result, err
 }
 
