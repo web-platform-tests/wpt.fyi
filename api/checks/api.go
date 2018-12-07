@@ -10,6 +10,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"time"
@@ -215,14 +216,11 @@ func (s checksAPIImpl) FetchAzureArtifact(artifact BuildArtifact) ([]byte, error
 				log.Errorf("Failed to extract %s", reportPath)
 				return nil, err
 			}
+			all, _ := ioutil.ReadAll(fileData)
+			log.Debugf(string(all))
 			var buf bytes.Buffer
 			gzw := gzip.NewWriter(&buf)
-			fileContents, err := ioutil.ReadAll(fileData)
-			if err != nil {
-				log.Errorf("Failed to read zip file")
-				return nil, err
-			}
-			if _, err := gzw.Write(fileContents); err != nil {
+			if _, err := io.Copy(gzw, fileData); err != nil {
 				log.Errorf("Failed to gzip file contents")
 				return nil, err
 			}
