@@ -15,15 +15,28 @@ import (
 
 func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suites ...shared.CheckSuite) (bool, error) {
 	log := shared.GetLogger(ctx)
+	if len(suites) < 1 {
+		return false, nil
+	}
 	product := summary.GetCheckState().Product
-
 	testRun := summary.GetCheckState().TestRun
+
+	// Attempt to update any existing check runs for this SHA.
+	checkRuns, err := getExistingCheckRuns(ctx, suites[0])
+	if err != nil {
+		log.Warningf("Failed to load existing check runs for %s: %s", suites[0].SHA[:7], err.Error())
+	}
+
+	createdAny := false
+	errors := make(chan error, len(suites))
 	for _, suite := range suites {
 		// Update, not create, if a run name matches this completed TestRun.
 		var existing *github.CheckRun
 		if testRun != nil {
-			runs, _ := getExistingCheckRuns(ctx, suite)
-			for _, run := range runs {
+			for _, run := range checkRuns {
+				if run.GetApp().GetID() != suite.AppID {
+					continue
+				}
 				if spec, _ := shared.ParseProductSpec(run.GetName()); spec.Matches(*testRun) {
 					log.Debugf("Found existing run %v for %s @ %s", run.GetID(), run.GetName(), suite.SHA[:7])
 					existing = run
@@ -65,12 +78,18 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 			}
 			created, err = createCheckRun(ctx, suite, opts)
 		}
-		if !created || err != nil {
-			return false, err
+		createdAny = createdAny || created
+		if err != nil {
+			errors <- err
+			continue
 		}
 		log.Debugf("Check for %s/%s @ %s (%s) updated", suite.Owner, suite.Repo, suite.SHA[:7], product.String())
 	}
-	return true, nil
+	// Return the first error. Others are logged.
+	for err := range errors {
+		return createdAny, err
+	}
+	return createdAny, nil
 }
 
 func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*github.CheckRun, error) {
