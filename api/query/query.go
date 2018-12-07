@@ -14,7 +14,6 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -144,7 +143,7 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 
 func (qh queryHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	mkey := getMemcacheKey(testRun)
-	url := api.GetResultsURL(testRun, "")
+	url := shared.GetResultsURL(testRun, "")
 	var data []byte
 	err := qh.dataSource.Get(mkey, url, &data)
 	return data, err
