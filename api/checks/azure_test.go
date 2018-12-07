@@ -112,4 +112,7 @@ func TestParses(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, int64(2), artifacts.Count)
 	assert.Len(t, artifacts.Value, 2)
+	for _, artifact := range artifacts.Value {
+		assert.NotEmpty(t, artifact.Resource.DownloadURL)
+	}
 }

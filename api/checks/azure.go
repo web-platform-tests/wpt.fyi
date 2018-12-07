@@ -36,7 +36,7 @@ type BuildArtifact struct {
 // ArtifactResource is a resource for an artifact.
 type ArtifactResource struct {
 	Data        string `json:"data"`
-	DownloadURL string `json:"download_url"`
+	DownloadURL string `json:"downloadUrl"`
 	Type        string `json:"type"`
 	URL         string `json:"url"`
 }
