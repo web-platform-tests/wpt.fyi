@@ -45,14 +45,15 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		uploader = username
 	}
 
-	// Most form methods (e.g. PostFormValue, FormFile) will call
+	// Most form methods (e.g. FormValue, FormFile) will call
 	// ParseMultipartForm and ParseForm if necessary; forms with either
-	// enctype can be parsed.
+	// enctype can be parsed. FormValue gets either query params or form
+	// body entries, favoring the latter.
 	// The default maximum form size is 32MB, which is also the max request
 	// size on AppEngine.
 
 	if uploader == "" {
-		uploader = r.PostFormValue("user")
+		uploader = r.FormValue("user")
 		if uploader == "" {
 			http.Error(w, "Cannot identify uploader", http.StatusBadRequest)
 			return
@@ -63,13 +64,14 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	// Non-existent keys will have empty values, which will later be
 	// filtered out by scheduleResultsTask.
 	extraParams := map[string]string{
-		"labels": r.PostFormValue("labels"),
+		"labels": r.FormValue("labels"),
 		// The following fields will be deprecated when all runners embed metadata in the report.
-		"revision":        r.PostFormValue("revision"),
-		"browser_name":    r.PostFormValue("browser_name"),
-		"browser_version": r.PostFormValue("browser_version"),
-		"os_name":         r.PostFormValue("os_name"),
-		"os_version":      r.PostFormValue("os_version"),
+		"revision":        r.FormValue("revision"),
+		"browser_name":    r.FormValue("browser_name"),
+		"browser_version": r.FormValue("browser_version"),
+		"os_name":         r.FormValue("os_name"),
+		"os_version":      r.FormValue("os_version"),
+		"callback_url":    r.FormValue("callback_url"),
 	}
 
 	var t *taskqueue.Task
