@@ -5,13 +5,8 @@
 package checks
 
 import (
-	"archive/zip"
-	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/url"
 	"time"
 
@@ -31,8 +26,6 @@ type API interface {
 	IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CreateWPTCheckSuite(appID, installationID int64, sha string) (bool, error)
-	GetAzureArtifactsURL(owner, repo string, buildID int64) string
-	FetchAzureArtifact(BuildArtifact) ([]byte, error)
 }
 
 type checksAPIImpl struct {
@@ -177,63 +170,4 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 		getOrCreateCheckSuite(s.ctx, sha, wptRepoOwner, wptRepoName, appID, installationID)
 	}
 	return suite != nil, err
-}
-
-func (s checksAPIImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string {
-	return fmt.Sprintf(
-		"https://dev.azure.com/%s/%s/_apis/build/builds/%v/artifacts",
-		owner,
-		repo,
-		buildID)
-}
-
-// FetchAzureArtifact gets the gzipped bytes of the wpt_report.json from inside
-// the zip file provided by Azure.
-func (s checksAPIImpl) FetchAzureArtifact(artifact BuildArtifact) ([]byte, error) {
-	aeAPI := shared.NewAppEngineAPI(s.ctx)
-	log := shared.GetLogger(s.ctx)
-	// The default timeout is 5s, not enough to download the reports.
-	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
-	defer cancel()
-	resp, err := client.Get(artifact.Resource.DownloadURL)
-	if err != nil {
-		log.Errorf("Failed to fetch %s: %s", artifact.Resource.DownloadURL, err.Error())
-		return nil, err
-	}
-
-	// Extract the report from the artifact.
-	reportPath := fmt.Sprintf("%s/wpt_report.json", artifact.Name)
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("Failed to read response body", err.Error())
-		return nil, err
-	}
-	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	for _, f := range z.File {
-		if f.Name == reportPath {
-			fileData, err := f.Open()
-			if err != nil {
-				log.Errorf("Failed to extract %s", reportPath)
-				return nil, err
-			}
-			all, _ := ioutil.ReadAll(fileData)
-			log.Debugf(string(all))
-			var buf bytes.Buffer
-			gzw := gzip.NewWriter(&buf)
-			if _, err := io.Copy(gzw, fileData); err != nil {
-				log.Errorf("Failed to gzip file contents")
-				return nil, err
-			}
-			if err := gzw.Close(); err != nil {
-				log.Errorf("Failed to close gzip writer")
-				return nil, err
-			}
-			return buf.Bytes(), nil
-		}
-	}
-	return nil, fmt.Errorf("File %s not found in zip", reportPath)
-}
-
-func getCheckTitle(product shared.ProductSpec) string {
-	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
 }

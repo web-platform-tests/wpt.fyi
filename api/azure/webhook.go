@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package checks
+package azure
 
 import (
 	"bytes"
@@ -21,30 +21,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
-
-// BuildArtifacts is a wrapper for multiple BuildArtifact results.
-type BuildArtifacts struct {
-	Count int64           `json:"count"`
-	Value []BuildArtifact `json:"value"`
-}
-
-// BuildArtifact is an artifact published by a build.
-type BuildArtifact struct {
-	ID       int64            `json:"id"`
-	Name     string           `json:"name"`
-	Resource ArtifactResource `json:"resource"`
-}
-
-// ArtifactResource is a resource for an artifact.
-type ArtifactResource struct {
-	Data        string `json:"data"`
-	DownloadURL string `json:"downloadUrl"`
-	Type        string `json:"type"`
-	URL         string `json:"url"`
-}
-
-func handleAzurePipelinesEvent(log shared.Logger, checksAPI API, aeAPI shared.AppEngineAPI, event github.CheckRunEvent) (bool, error) {
+// handleCheckRunEvent processes an Azure Pipelines check run "completed" event.
+func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
 	status := event.GetCheckRun().GetStatus()
 	if status != "completed" {
 		log.Infof("Ignoring non-completed status %s", status)
@@ -60,7 +38,7 @@ func handleAzurePipelinesEvent(log shared.Logger, checksAPI API, aeAPI shared.Ap
 	}
 
 	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
-	artifactsURL := checksAPI.GetAzureArtifactsURL(owner, repo, buildID)
+	artifactsURL := azureAPI.GetAzureArtifactsURL(owner, repo, buildID)
 	log.Infof("Fetching %s", artifactsURL)
 
 	client := aeAPI.GetHTTPClient()
@@ -90,7 +68,7 @@ func handleAzurePipelinesEvent(log shared.Logger, checksAPI API, aeAPI shared.Ap
 
 		err := createAzureRun(
 			log,
-			checksAPI,
+			azureAPI,
 			aeAPI,
 			event.GetCheckRun().GetHeadSHA(),
 			artifact,
@@ -121,7 +99,7 @@ func extractAzureBuildID(detailsURL string) int64 {
 
 func createAzureRun(
 	log shared.Logger,
-	checksAPI API,
+	azureAPI API,
 	aeAPI shared.AppEngineAPI,
 	sha string,
 	artifact BuildArtifact,
@@ -139,7 +117,7 @@ func createAzureRun(
 	host := aeAPI.GetHostname()
 	writer.WriteField("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
-	data, err := checksAPI.FetchAzureArtifact(artifact)
+	data, err := azureAPI.FetchAzureArtifact(artifact)
 	if err != nil {
 		return err
 	}

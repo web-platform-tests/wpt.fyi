@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package checks
+package azure
 
 import (
 	"encoding/json"
@@ -15,19 +15,42 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/go-github/github"
 	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
-func TestHandleAzurePipelinesEvent(t *testing.T) {
+func TestHandleCheckRunEvent(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	sha := strings.Repeat("0123456789", 4)
 	detailsURL := "https://dev.azure.com/web-platform-tests/b14026b4-9423-4454-858f-bf76cf6d1faa/_build/results?buildId=123"
-	event := getCheckRunCreatedEvent("completed", "lukebjerring", sha)
+
+	id := PipelinesAppID
+	chrome := "chrome"
+	completed := "completed"
+	created := "created"
+	repoName := "wpt"
+	repoOwner := "web-platform-tests"
+	sender := "lukebjerring"
+	event := &github.CheckRunEvent{
+		Action: &created,
+		CheckRun: &github.CheckRun{
+			App:     &github.App{ID: &id},
+			Name:    &chrome,
+			Status:  &completed,
+			HeadSHA: &sha,
+		},
+		Repo: &github.Repository{
+			Name:  &repoName,
+			Owner: &github.User{Login: &repoOwner},
+		},
+		Sender: &github.User{Login: &sender},
+	}
+
 	event.CheckRun.DetailsURL = &detailsURL
 
 	artifact := BuildArtifact{Name: "results"}
@@ -54,9 +77,9 @@ func TestHandleAzurePipelinesEvent(t *testing.T) {
 	}))
 	defer server.Close()
 
-	checksAPI := NewMockAPI(mockCtrl)
-	checksAPI.EXPECT().GetAzureArtifactsURL(wptRepoOwner, wptRepoName, int64(123)).Return(server.URL + "/123/artifacts")
-	checksAPI.EXPECT().FetchAzureArtifact(artifact).Return([]byte{}, nil)
+	azureAPI := NewMockAPI(mockCtrl)
+	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
+	azureAPI.EXPECT().FetchAzureArtifact(artifact).Return([]byte{}, nil)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().GetHostname().Return("wpt.fyi")
@@ -67,7 +90,7 @@ func TestHandleAzurePipelinesEvent(t *testing.T) {
 	aeAPI.EXPECT().GetSlowHTTPClient(gomock.Any()).AnyTimes().Return(server.Client(), func() {})
 
 	log, hook := logrustest.NewNullLogger()
-	processed, err := handleAzurePipelinesEvent(log, checksAPI, aeAPI, event)
+	processed, err := handleCheckRunEvent(log, azureAPI, aeAPI, event)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 	if len(hook.Entries) < 1 {
