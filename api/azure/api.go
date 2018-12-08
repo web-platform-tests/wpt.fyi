@@ -108,8 +108,6 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact) ([]byte, error) {
 				log.Errorf("Failed to extract %s", reportPath)
 				return nil, err
 			}
-			all, _ := ioutil.ReadAll(fileData)
-			log.Debugf(string(all))
 			var buf bytes.Buffer
 			gzw := gzip.NewWriter(&buf)
 			if _, err := io.Copy(gzw, fileData); err != nil {
