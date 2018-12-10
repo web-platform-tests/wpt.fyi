@@ -506,11 +506,8 @@ found in the LICENSE file.
 
             // Load a manifest.
             if (this.fetchManifestForTestList) {
-              const shas = (runs || []).reduce((set, run) => {
-                set.add(run.revision);
-                return set;
-              }, new Set());
-              const sha = shas.size == 1 ? Array.from(shas)[0] : 'latest';
+              const shas = new Set((runs || []).map(r => r.revision));
+              const sha = shas.size === 1 ? Array.from(shas)[0] : 'latest';
               this.fetchManifestForSHA(sha);
             }
           }),
@@ -591,10 +588,12 @@ found in the LICENSE file.
           fetch(url).then(
             async r => {
               if (!r.ok) {
+                // eslint-disable-next-line no-console
+                console.warn(`Failed to load manifest for ${sha}: ${r.status} - ${r.statusText}`);
                 // Fall back to the latest manifest if we 404 for a specific SHA.
                 return r.status === 404
                   && isSpecificSHA
-                  && this.fetchManifestForSHA('latest')
+                  && this.fetchManifestForSHA('latest');
               }
               let manifest = await r.json();
               manifest.sha = sha || r.headers && r.headers['x-wpt-sha'];
@@ -623,7 +622,7 @@ found in the LICENSE file.
       refreshDisplayedNodes() {
         // Prefix: includes trailing slash.
         const prefix = this.path === '/' ? '/' : `${this.path}/`;
-        const collapsePathOnto = (testPath, nodes, opt_results) => {
+        const collapsePathOnto = (testPath, nodes) => {
           const suffix = testPath.substring(prefix.length);
           const slashIdx = suffix.indexOf('/');
           const isDir = slashIdx !== -1;
