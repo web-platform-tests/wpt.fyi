@@ -5,18 +5,14 @@
 package manifest
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"regexp"
-	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/memcache"
 )
 
 // API handles manifest-related fetches and caching.
@@ -35,56 +31,19 @@ func NewAPI(ctx context.Context) API {
 	}
 }
 
-// GetManifestForSHA loads the contents of the manifest JSON for the release associated with
-// the given SHA, if any.
+// GetManifestForSHA loads the (gzipped) contents of the manifest JSON for the release associated
+// with the given SHA, if any.
 func (a apiImpl) GetManifestForSHA(sha string) (fetchedSHA string, manifest []byte, err error) {
 	aeAPI := shared.NewAppEngineAPI(a.ctx)
-	if sha == "" {
-		sha = "latest"
-	}
-	fetchedSHA = sha
-	cached, err := memcache.Get(a.ctx, manifestCacheKey(sha))
-
-	var body io.Reader
-	if err != nil && err != memcache.ErrCacheMiss {
-		return "", nil, err
-	} else if cached != nil {
-		// "latest" caches which SHA is latest; Return the manifest for that SHA.
-		if sha == "latest" {
-			return a.GetManifestForSHA(string(cached.Value))
-		}
-		body = bytes.NewReader(cached.Value)
-	}
-
-	if fetchedSHA, body, err = getGitHubReleaseAssetForSHA(aeAPI, sha); err != nil {
+	fetchedSHA, body, err := getGitHubReleaseAssetForSHA(aeAPI, sha)
+	if err != nil {
 		return fetchedSHA, nil, err
 	}
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
 		return fetchedSHA, nil, err
 	}
-	item := &memcache.Item{
-		Key:   manifestCacheKey(fetchedSHA),
-		Value: data,
-	}
-	memcache.Set(a.ctx, item)
-
-	// Shorter expiry for latest SHA, to keep it current.
-	if sha == "latest" {
-		latestSHAItem := &memcache.Item{
-			Key:        manifestCacheKey("latest"),
-			Value:      []byte(fetchedSHA),
-			Expiration: time.Minute * 5,
-		}
-		memcache.Set(a.ctx, latestSHAItem)
-	}
-
-	gzReader, err := gzip.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return fetchedSHA, nil, err
-	}
-	manifest, err = ioutil.ReadAll(gzReader)
-	return fetchedSHA, manifest, err
+	return fetchedSHA, data, err
 }
 
 // getGitHubReleaseAssetForSHA gets the bytes for the SHA's release's manifest json gzip asset.
@@ -142,8 +101,4 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 		}
 	}
 	return fetchedSHA, nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
-}
-
-func manifestCacheKey(sha string) string {
-	return fmt.Sprintf("MANIFEST-%s", sha)
 }
