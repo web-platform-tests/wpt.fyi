@@ -14,6 +14,7 @@ import (
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
@@ -31,6 +32,8 @@ var (
 	numShards          = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorFrequency   = flag.Duration("monitor_frequency", time.Second*5, "Polling frequency for memory usage monitor")
 	maxHeapBytes       = flag.Uint64("max_heap_bytes", uint64(1e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
+	updateFrequency    = flag.Duration("updated_frequency", time.Second*10, "Update frequency for polling for new runs")
+	updateMaxRuns      = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
 
 	idx index.Index
 	mon monitor.Monitor
@@ -129,10 +132,15 @@ func main() {
 		log.Fatalf("Failed to instantiate index: %v", err)
 	}
 
-	mon, err = backfill.FillIndex(backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger), logger, monitor.GoRuntime{}, *monitorFrequency, *maxHeapBytes, idx)
+	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
+	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorFrequency, *maxHeapBytes, idx)
 	if err != nil {
 		log.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
+
+	// Index, backfiller, monitor now in place. Start polling to load runs added
+	// after backfilling was started.
+	go poll.KeepRunsUpdated(fetcher, logger, *updateFrequency, *updateMaxRuns, idx)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
