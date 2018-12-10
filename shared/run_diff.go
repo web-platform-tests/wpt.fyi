@@ -15,8 +15,6 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/google/go-github/github"
-	"golang.org/x/oauth2"
 	"google.golang.org/appengine/urlfetch"
 )
 
@@ -323,15 +321,11 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 		return nil
 	}
 	log := GetLogger(ctx)
-	secret, err := GetSecret(ctx, "github-api-token")
+	githubClient, err := NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		log.Debugf("Failed to load github-api-token: %s", err.Error())
+		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
 	}
-	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
-		AccessToken: secret,
-	}))
-	githubClient := github.NewClient(oauthClient)
 	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
 	if err != nil || comparison == nil {
 		log.Errorf("Failed to fetch diff for %s...%s: %s", shaBefore[:7], shaAfter[:7], err.Error())

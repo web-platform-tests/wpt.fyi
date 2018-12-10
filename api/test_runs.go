@@ -9,9 +9,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/oauth2"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
@@ -144,15 +142,12 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 
 func getPRCommits(ctx context.Context, pr int) []string {
 	log := shared.GetLogger(ctx)
-	secret, err := shared.GetSecret(ctx, "github-api-token")
+
+	githubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		log.Debugf("Failed to load github-api-token: %s", err.Error())
+		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
 	}
-	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
-		AccessToken: secret,
-	}))
-	githubClient := github.NewClient(oauthClient)
 	commits, _, err := githubClient.PullRequests.ListCommits(ctx, "web-platform-tests", "wpt", pr, nil)
 	if err != nil || commits == nil {
 		log.Errorf("Failed to fetch PR #%v: %s", pr, err.Error())

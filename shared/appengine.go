@@ -3,10 +3,14 @@ package shared
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/urlfetch"
 	"google.golang.org/appengine/user"
 )
 
@@ -24,6 +28,9 @@ type AppEngineAPI interface {
 	GetHostname() string
 	GetResultsURL(filter TestRunFilter) *url.URL
 	GetRunsURL(filter TestRunFilter) *url.URL
+
+	GetHTTPClient() *http.Client
+	GetGitHubClient() (*github.Client, error)
 }
 
 // NewAppEngineAPI returns an AppEngineAPI for the given context.
@@ -37,6 +44,9 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPIImpl {
 // AppEngineAPIImpl implements the AppEngineAPI interface.
 type AppEngineAPIImpl struct {
 	ctx context.Context
+	// Cached client objects.
+	httpClient   *http.Client
+	githubClient *github.Client
 }
 
 // Context returns the context.Context for the API impl.
@@ -97,4 +107,28 @@ func getURL(host, path string, filter TestRunFilter) *url.URL {
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s%s", host, path))
 	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL
+}
+
+// GetHTTPClient returns an HTTP client in the current context.
+func (a AppEngineAPIImpl) GetHTTPClient() *http.Client {
+	if a.httpClient == nil {
+		a.httpClient = urlfetch.Client(a.ctx)
+	}
+	return a.httpClient
+}
+
+// GetGitHubClient returns a github client using the stored API token.
+func (a AppEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
+	if a.githubClient == nil {
+		secret, err := GetSecret(a.ctx, "github-api-token")
+		if err != nil {
+			return nil, err
+		}
+
+		oauthClient := oauth2.NewClient(a.ctx, oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: secret,
+		}))
+		a.githubClient = github.NewClient(oauthClient)
+	}
+	return a.githubClient, nil
 }
