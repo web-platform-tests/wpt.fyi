@@ -13,13 +13,13 @@ import (
 )
 
 // KeepRunsUpdated implements updates to an index.Index via simple polling every
-// freq duration for at most limit runs loaded from fetcher.
-func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, freq time.Duration, limit int, idx index.Index) {
-	// Start by waiting polling frequency. This reduces the chance of false alarms
+// interval duration for at most limit runs loaded from fetcher.
+func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval time.Duration, limit int, idx index.Index) {
+	// Start by waiting polling interval. This reduces the chance of false alarms
 	// from log monitoring when KeepRunsUpdated is invoked around the same time as
 	// index backfilling.
-	logger.Infof("Starting index update via polling; waiting polling frequency first...")
-	time.Sleep(freq)
+	logger.Infof("Starting index update via polling; waiting polling interval first...")
+	time.Sleep(interval)
 	logger.Infof("Index update via polling started")
 
 	lastLoadTime := time.Now()
@@ -29,7 +29,7 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, freq tim
 		runs, err := fetcher.FetchRuns(limit)
 		if err != nil {
 			logger.Errorf("Error fetching runs for update: %v", err)
-			wait(start, freq)
+			wait(start, interval)
 			continue
 		}
 
@@ -59,7 +59,7 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, freq tim
 			logger.Warningf("No runs loaded throughout polling iteration. Last run update was at %v", lastLoadTime)
 		}
 
-		wait(start, freq)
+		wait(start, interval)
 	}
 }
 

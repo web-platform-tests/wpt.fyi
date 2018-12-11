@@ -30,9 +30,9 @@ var (
 	projectID          = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
 	gcpCredentialsFile = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards          = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
-	monitorFrequency   = flag.Duration("monitor_frequency", time.Second*5, "Polling frequency for memory usage monitor")
+	monitorInterval    = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
 	maxHeapBytes       = flag.Uint64("max_heap_bytes", uint64(1e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
-	updateFrequency    = flag.Duration("updated_frequency", time.Second*10, "Update frequency for polling for new runs")
+	updateInterval     = flag.Duration("updated_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns      = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
 
 	idx index.Index
@@ -133,14 +133,14 @@ func main() {
 	}
 
 	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
-	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorFrequency, *maxHeapBytes, idx)
+	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *maxHeapBytes, idx)
 	if err != nil {
 		log.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
 
 	// Index, backfiller, monitor now in place. Start polling to load runs added
 	// after backfilling was started.
-	go poll.KeepRunsUpdated(fetcher, logger, *updateFrequency, *updateMaxRuns, idx)
+	go poll.KeepRunsUpdated(fetcher, logger, *updateInterval, *updateMaxRuns, idx)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
