@@ -6,11 +6,13 @@ package sharedtest
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
-	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	http "net/http"
 	url "net/url"
 	reflect "reflect"
+	time "time"
+
+	gomock "github.com/golang/mock/gomock"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // MockAppEngineAPI is a mock of AppEngineAPI interface
@@ -46,6 +48,31 @@ func (m *MockAppEngineAPI) Context() context.Context {
 // Context indicates an expected call of Context
 func (mr *MockAppEngineAPIMockRecorder) Context() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockAppEngineAPI)(nil).Context))
+}
+
+// GetHTTPClient mocks base method
+func (m *MockAppEngineAPI) GetHTTPClient() *http.Client {
+	ret := m.ctrl.Call(m, "GetHTTPClient")
+	ret0, _ := ret[0].(*http.Client)
+	return ret0
+}
+
+// GetHTTPClient indicates an expected call of GetHTTPClient
+func (mr *MockAppEngineAPIMockRecorder) GetHTTPClient() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHTTPClient))
+}
+
+// GetSlowHTTPClient mocks base method
+func (m *MockAppEngineAPI) GetSlowHTTPClient(arg0 time.Duration) (*http.Client, context.CancelFunc) {
+	ret := m.ctrl.Call(m, "GetSlowHTTPClient", arg0)
+	ret0, _ := ret[0].(*http.Client)
+	ret1, _ := ret[1].(context.CancelFunc)
+	return ret0, ret1
+}
+
+// GetSlowHTTPClient indicates an expected call of GetSlowHTTPClient
+func (mr *MockAppEngineAPIMockRecorder) GetSlowHTTPClient(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSlowHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetSlowHTTPClient), arg0)
 }
 
 // IsLoggedIn mocks base method
@@ -85,18 +112,6 @@ func (mr *MockAppEngineAPIMockRecorder) LoginURL(redirect interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAppEngineAPI)(nil).LoginURL), redirect)
 }
 
-// GetHTTPClient mocks base method
-func (m *MockAppEngineAPI) GetHTTPClient() *http.Client {
-	ret := m.ctrl.Call(m, "GetHTTPClient")
-	ret0, _ := ret[0].(*http.Client)
-	return ret0
-}
-
-// GetHTTPClient indicates an expected call of GetHTTPClient
-func (mr *MockAppEngineAPIMockRecorder) GetHTTPClient() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHTTPClient))
-}
-
 // IsFeatureEnabled mocks base method
 func (m *MockAppEngineAPI) IsFeatureEnabled(featureName string) bool {
 	ret := m.ctrl.Call(m, "IsFeatureEnabled", featureName)
@@ -107,6 +122,19 @@ func (m *MockAppEngineAPI) IsFeatureEnabled(featureName string) bool {
 // IsFeatureEnabled indicates an expected call of IsFeatureEnabled
 func (mr *MockAppEngineAPIMockRecorder) IsFeatureEnabled(featureName interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAppEngineAPI)(nil).IsFeatureEnabled), featureName)
+}
+
+// GetUploader mocks base method
+func (m *MockAppEngineAPI) GetUploader(uploader string) (shared.Uploader, error) {
+	ret := m.ctrl.Call(m, "GetUploader", uploader)
+	ret0, _ := ret[0].(shared.Uploader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUploader indicates an expected call of GetUploader
+func (mr *MockAppEngineAPIMockRecorder) GetUploader(uploader interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAppEngineAPI)(nil).GetUploader), uploader)
 }
 
 // GetHostname mocks base method
@@ -143,4 +171,16 @@ func (m *MockAppEngineAPI) GetRunsURL(filter shared.TestRunFilter) *url.URL {
 // GetRunsURL indicates an expected call of GetRunsURL
 func (mr *MockAppEngineAPIMockRecorder) GetRunsURL(filter interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetRunsURL), filter)
+}
+
+// GetResultsUploadURL mocks base method
+func (m *MockAppEngineAPI) GetResultsUploadURL() *url.URL {
+	ret := m.ctrl.Call(m, "GetResultsUploadURL")
+	ret0, _ := ret[0].(*url.URL)
+	return ret0
+}
+
+// GetResultsUploadURL indicates an expected call of GetResultsUploadURL
+func (mr *MockAppEngineAPIMockRecorder) GetResultsUploadURL() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsUploadURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetResultsUploadURL))
 }
