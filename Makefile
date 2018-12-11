@@ -24,6 +24,7 @@ FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
 USE_FRAME_BUFFER := true
 STAGING := false
+VERBOSE := -v
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
@@ -41,6 +42,7 @@ test: go_test python_test
 
 lint: go_lint eslint
 
+prepush: VERBOSE := $() # Empty out the verbose flag.
 prepush: go_build test lint
 
 python_test: python3 tox
@@ -67,10 +69,10 @@ go_test_tag_lint:
 go_test: go_small_test go_medium_test
 
 go_small_test: go_deps
-	cd $(WPTD_GO_PATH); go test -tags=small -v ./...
+	cd $(WPTD_GO_PATH); go test -tags=small $(VERBOSE) ./...
 
 go_medium_test: go_deps dev_appserver_deps
-	cd $(WPTD_GO_PATH); go test -tags=medium -v $(FLAGS) ./...
+	cd $(WPTD_GO_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
 # of _go_webdriver_test. Variables will be passed into sub-make implicitly.
@@ -94,7 +96,7 @@ _go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webs
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
 	cd $(WPTD_PATH)webdriver; \
-	go test -v -tags=large -args \
+	go test $(VERBOSE) -tags=large -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
