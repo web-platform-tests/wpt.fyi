@@ -96,6 +96,27 @@ func TestStructuredQuery_unknownStatus(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
 }
 
+func TestStructuredQuery_missingPattern(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {}
+	}`), &rq)
+	assert.NotNil(t, err)
+}
+
+func TestStructuredQuery_emptyPattern(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"pattern": ""
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{""}}, rq)
+}
+
 func TestStructuredQuery_pattern(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{

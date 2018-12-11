@@ -170,18 +170,21 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 // UnmarshalJSON for TestNamePattern attempts to interpret a query atom as
 // {"pattern":<test name pattern string>}.
 func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
-	var data struct {
-		Pattern string `json:"pattern"`
-	}
+	var data map[string]*json.RawMessage
 	err := json.Unmarshal(b, &data)
 	if err != nil {
 		return err
 	}
-	if len(data.Pattern) == 0 {
-		return errors.New(`Missing testn mae pattern property: "pattern"`)
+	patternMsg, ok := data["pattern"]
+	if !ok {
+		return errors.New(`Missing test name pattern property: "pattern"`)
+	}
+	var pattern string
+	if err := json.Unmarshal(*patternMsg, &pattern); err != nil {
+		return errors.New(`Missing test name pattern property "pattern" is not a string`)
 	}
 
-	tnp.Pattern = data.Pattern
+	tnp.Pattern = pattern
 	return nil
 }
 
