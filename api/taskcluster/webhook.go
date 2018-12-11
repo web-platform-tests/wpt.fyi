@@ -322,7 +322,7 @@ func createAllRuns(
 				if lastBit == shared.PRBaseLabel {
 					otherLabel = shared.PRHeadLabel
 				}
-				otherProduct := fmt.Sprintf("%s-%s-%s", bits[0], bits[1], otherLabel)
+				otherProduct := strings.Join(append(bits[:len(bits)-1], otherLabel), "-")
 				if _, ok := urlsByProduct[otherProduct]; !ok {
 					log.Warningf("Skipping %s since %s not present", product, otherProduct)
 					return
