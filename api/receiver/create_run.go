@@ -65,9 +65,12 @@ func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r 
 		return
 	}
 
-	spec := shared.ProductSpec{}
-	spec.BrowserName = testRun.BrowserName
-	s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
+	// Do not schedule on pr_base to avoid redundancy with pr_head.
+	if !testRun.LabelsSet().Contains(shared.PRBaseLabel) {
+		spec := shared.ProductSpec{}
+		spec.BrowserName = testRun.BrowserName
+		s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
+	}
 
 	// Copy int64 representation of key into TestRun.ID so that clients can
 	// inspect/use key value.

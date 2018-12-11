@@ -6,11 +6,10 @@ package checks
 
 import (
 	context "context"
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	reflect "reflect"
 )
 
 // MockAPI is a mock of API interface

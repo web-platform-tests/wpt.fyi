@@ -14,7 +14,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func TestFilterManifest_Reftest(t *testing.T) {
+func TestFilter_Reftest(t *testing.T) {
 	bytes := []byte(`{
 	"items": {
 		"reftest": {
@@ -37,7 +37,7 @@ func TestFilterManifest_Reftest(t *testing.T) {
 }`)
 
 	// Specific file
-	filtered, err := filterManifest(bytes, []string{"/css/css-images/tiled-gradients.html"})
+	filtered, err := Filter(bytes, []string{"/css/css-images/tiled-gradients.html"})
 	assert.Nil(t, err)
 	unmarshalled := shared.Manifest{}
 	json.Unmarshal(filtered, &unmarshalled)
@@ -45,7 +45,7 @@ func TestFilterManifest_Reftest(t *testing.T) {
 	assert.Equal(t, 1, len(unmarshalled.Items.Reftest))
 
 	// Prefix
-	filtered, err = filterManifest(bytes, []string{"/css/css-images/"})
+	filtered, err = Filter(bytes, []string{"/css/css-images/"})
 	assert.Nil(t, err)
 	unmarshalled = shared.Manifest{}
 	json.Unmarshal(filtered, &unmarshalled)
@@ -53,7 +53,7 @@ func TestFilterManifest_Reftest(t *testing.T) {
 	assert.Equal(t, 2, len(unmarshalled.Items.Reftest))
 
 	// No matches
-	filtered, err = filterManifest(bytes, []string{"/not-a-folder/test.html"})
+	filtered, err = Filter(bytes, []string{"/not-a-folder/test.html"})
 	assert.Nil(t, err)
 	unmarshalled = shared.Manifest{}
 	json.Unmarshal(filtered, &unmarshalled)

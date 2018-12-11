@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 
 	mapset "github.com/deckarep/golang-set"
@@ -289,10 +288,8 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]st
 }
 
 func getAuth(ctx context.Context) (username string, password string, err error) {
-	var u shared.Uploader
-	key := datastore.NewKey(ctx, "Uploader", "taskcluster", 0, nil)
-	err = datastore.Get(ctx, key, &u)
-	return u.Username, u.Password, err
+	uploader, err := shared.NewAppEngineAPI(ctx).GetUploader("taskcluster")
+	return uploader.Username, uploader.Password, err
 }
 
 func createAllRuns(

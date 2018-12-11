@@ -12,8 +12,8 @@ import (
 // ResultsComparison is all the fields shared across summaries that
 // involve a result comparison.
 type ResultsComparison struct {
-	MasterRun     shared.TestRun
-	PRRun         shared.TestRun
+	BaseRun       shared.TestRun
+	HeadRun       shared.TestRun
 	MasterDiffURL string
 	DiffURL       string // URL for the diff-view of the results
 	HostName      string // Host environment name, e.g. "wpt.fyi"

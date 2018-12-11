@@ -7,12 +7,19 @@
 package query
 
 import (
+	"bytes"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func doTestIC(t *testing.T, p, q string) {
@@ -103,4 +110,63 @@ func TestPrepareSearchResponse_qUC(t *testing.T) {
 
 func TestPrepareSearchResponse_pUC(t *testing.T) {
 	testIC(t, "/b/", false)
+}
+
+func TestStructuredSearchHandler_success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	respBytes := []byte(`{}`)
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "POST", r.Method)
+		assert.Equal(t, "/api/search/cache", r.URL.Path)
+		w.Write(respBytes)
+	}))
+
+	serverURL, err := url.Parse(server.URL)
+	assert.Nil(t, err)
+	hostname := serverURL.Host
+
+	api := sharedtest.NewMockAppEngineAPI(ctrl)
+
+	api.EXPECT().GetHostname().Return(hostname)
+	api.EXPECT().GetHTTPClient().Return(server.Client())
+	r := httptest.NewRequest("POST", "https://example.com/api/query", bytes.NewBuffer([]byte(`{"run_ids":[1,2,3,4],"query":{"browser_name":"chrome","status":"PASS"}}`)))
+	w := httptest.NewRecorder()
+	structuredSearchHandler{queryHandler{}, api}.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, respBytes, w.Body.Bytes())
+}
+
+func TestStructuredSearchHandler_failure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	respBytes := []byte(`Unknown run ID: 42`)
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "POST", r.Method)
+		assert.Equal(t, "/api/search/cache", r.URL.Path)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(respBytes)
+	}))
+
+	serverURL, err := url.Parse(server.URL)
+	assert.Nil(t, err)
+	hostname := serverURL.Host
+
+	api := sharedtest.NewMockAppEngineAPI(ctrl)
+
+	api.EXPECT().GetHostname().Return(hostname)
+	api.EXPECT().GetHTTPClient().DoAndReturn(func() *http.Client {
+		return server.Client()
+	})
+	r := httptest.NewRequest("POST", "https://example.com/api/query", bytes.NewBuffer([]byte(`{"run_ids":[42],"query":{"browser_name":"chrome","status":"PASS"}}`)))
+	w := httptest.NewRecorder()
+	structuredSearchHandler{queryHandler{}, api}.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, respBytes, w.Body.Bytes())
 }

@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 	"google.golang.org/appengine/user"
 )
@@ -17,20 +19,24 @@ import (
 // AppEngineAPI is an abstraction of some appengine context helper methods.
 type AppEngineAPI interface {
 	Context() context.Context
+
+	GetHTTPClient() *http.Client
+	GetSlowHTTPClient(time.Duration) (*http.Client, context.CancelFunc)
+	GetGitHubClient() (*github.Client, error)
+
 	// The three methods below are exported for webapp.admin_handler.
 	IsLoggedIn() bool
 	IsAdmin() bool
 	LoginURL(redirect string) (string, error)
 
 	IsFeatureEnabled(featureName string) bool
+	GetUploader(uploader string) (Uploader, error)
 
 	// GetHostname returns a cleaned-up hostname for the current environment.
 	GetHostname() string
 	GetResultsURL(filter TestRunFilter) *url.URL
 	GetRunsURL(filter TestRunFilter) *url.URL
-
-	GetHTTPClient() *http.Client
-	GetGitHubClient() (*github.Client, error)
+	GetResultsUploadURL() *url.URL
 }
 
 // NewAppEngineAPI returns an AppEngineAPI for the given context.
@@ -54,6 +60,37 @@ func (a AppEngineAPIImpl) Context() context.Context {
 	return a.ctx
 }
 
+// GetHTTPClient returns an HTTP client in the current context.
+func (a AppEngineAPIImpl) GetHTTPClient() *http.Client {
+	if a.httpClient == nil {
+		a.httpClient = urlfetch.Client(a.ctx)
+	}
+	return a.httpClient
+}
+
+// GetSlowHTTPClient returns an HTTP client without timeout for the current
+// context.
+func (a AppEngineAPIImpl) GetSlowHTTPClient(timeout time.Duration) (*http.Client, context.CancelFunc) {
+	slowCtx, cancel := context.WithTimeout(a.ctx, timeout)
+	return urlfetch.Client(slowCtx), cancel
+}
+
+// GetGitHubClient returns a github client using the stored API token.
+func (a AppEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
+	if a.githubClient == nil {
+		secret, err := GetSecret(a.ctx, "github-api-token")
+		if err != nil {
+			return nil, err
+		}
+
+		oauthClient := oauth2.NewClient(a.ctx, oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: secret,
+		}))
+		a.githubClient = github.NewClient(oauthClient)
+	}
+	return a.githubClient, nil
+}
+
 // IsLoggedIn returns true if a user is logged in for the current context.
 func (a AppEngineAPIImpl) IsLoggedIn() bool {
 	return user.Current(a.ctx) != nil
@@ -74,6 +111,14 @@ func (a AppEngineAPIImpl) IsAdmin() bool {
 func (a AppEngineAPIImpl) IsFeatureEnabled(featureName string) bool {
 	// TODO(lukebjerring): Migrate other callers of this signature to AppEngineAPI
 	return IsFeatureEnabled(a.ctx, featureName)
+}
+
+// GetUploader returns the uploader with the given name.
+func (a AppEngineAPIImpl) GetUploader(uploader string) (Uploader, error) {
+	result := Uploader{}
+	key := datastore.NewKey(a.ctx, "Uploader", uploader, 0, nil)
+	err := datastore.Get(a.ctx, key, &result)
+	return result, err
 }
 
 // GetHostname returns a cleaned-up hostname for the current environment.
@@ -101,34 +146,16 @@ func (a AppEngineAPIImpl) GetRunsURL(filter TestRunFilter) *url.URL {
 	return getURL(a.GetHostname(), "/runs", filter)
 }
 
+// GetResultsUploadURL returns a url for uploading results to wpt.fyi.
+func (a AppEngineAPIImpl) GetResultsUploadURL() *url.URL {
+	result, _ := url.Parse(fmt.Sprintf("https://%s%s", a.GetHostname(), "/api/results/upload"))
+	return result
+}
+
 // GetResultsURL returns a url for the wpt.fyi results page for the test runs
 // loaded for the given filter.
 func getURL(host, path string, filter TestRunFilter) *url.URL {
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s%s", host, path))
 	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL
-}
-
-// GetHTTPClient returns an HTTP client in the current context.
-func (a AppEngineAPIImpl) GetHTTPClient() *http.Client {
-	if a.httpClient == nil {
-		a.httpClient = urlfetch.Client(a.ctx)
-	}
-	return a.httpClient
-}
-
-// GetGitHubClient returns a github client using the stored API token.
-func (a AppEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
-	if a.githubClient == nil {
-		secret, err := GetSecret(a.ctx, "github-api-token")
-		if err != nil {
-			return nil, err
-		}
-
-		oauthClient := oauth2.NewClient(a.ctx, oauth2.StaticTokenSource(&oauth2.Token{
-			AccessToken: secret,
-		}))
-		a.githubClient = github.NewClient(oauthClient)
-	}
-	return a.githubClient, nil
 }

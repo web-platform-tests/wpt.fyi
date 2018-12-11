@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/google/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -19,7 +19,6 @@ import (
 const (
 	wptfyiCheckAppID         = int64(19965)
 	checksStagingAppID       = int64(21580)
-	azurePipelinesAppID      = int64(9426)
 	wptRepoID                = int64(3618133)
 	wptRepoInstallationID    = int64(449270)
 	wptRepoOwner             = "web-platform-tests"
@@ -74,7 +73,8 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if event == "check_suite" {
 		processed, err = handleCheckSuiteEvent(aeAPI, checksAPI, payload)
 	} else if event == "check_run" {
-		processed, err = handleCheckRunEvent(aeAPI, checksAPI, payload)
+		azureAPI := azure.NewAPI(ctx)
+		processed, err = handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
 	} else if event == "pull_request" {
 		processed, err = handlePullRequestEvent(aeAPI, checksAPI, payload)
 	}
@@ -148,15 +148,15 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
-func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
+func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azure.API, payload []byte) (bool, error) {
 	log := shared.GetLogger(aeAPI.Context())
-	var checkRun github.CheckRunEvent
-	if err := json.Unmarshal(payload, &checkRun); err != nil {
+	checkRun := new(github.CheckRunEvent)
+	if err := json.Unmarshal(payload, checkRun); err != nil {
 		return false, err
 	}
 
 	appID := checkRun.GetCheckRun().GetApp().GetID()
-	if !isWPTFYIApp(appID) && appID != azurePipelinesAppID {
+	if !isWPTFYIApp(appID) && appID != azure.PipelinesAppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -171,8 +171,8 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 	status := checkRun.GetCheckRun().GetStatus()
 
 	shouldSchedule := false
-	if appID == azurePipelinesAppID {
-		return handleAzurePipelinesEvent(log, checkRun)
+	if appID == azure.PipelinesAppID {
+		return azureAPI.HandleCheckRunEvent(checkRun)
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {
@@ -214,38 +214,6 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byt
 	}
 	log.Debugf("Ignoring %s action for %s check_run", action, status)
 	return false, nil
-}
-
-func handleAzurePipelinesEvent(log shared.Logger, event github.CheckRunEvent) (bool, error) {
-	status := event.GetCheckRun().GetStatus()
-	if status != "completed" {
-		log.Infof("Ignoring non-completed status %s", status)
-		return false, nil
-	}
-	detailsURL := event.GetCheckRun().GetDetailsURL()
-	buildID := extractAzureBuildID(detailsURL)
-	if buildID == "" {
-		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
-		return false, nil
-	}
-	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
-	artifact := fmt.Sprintf(
-		"https://dev.azure.com/%s/%s/_apis/build/builds/%s/artifacts?artifactName=drop&api-version=5.0-preview.5&%%24format=zip",
-		event.GetRepo().GetOwner().GetLogin(),
-		event.GetRepo().GetName(),
-		buildID)
-	log.Infof("Fetching %s", artifact)
-
-	log.Warningf("(TODO: Not actually fetching yet :)")
-	return false, nil
-}
-
-func extractAzureBuildID(detailsURL string) string {
-	parsed, err := url.Parse(detailsURL)
-	if err != nil {
-		return ""
-	}
-	return parsed.Query().Get("buildId")
 }
 
 func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
