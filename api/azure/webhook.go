@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -117,16 +116,11 @@ func createAzureRun(
 	host := aeAPI.GetHostname()
 	writer.WriteField("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
-	data, err := azureAPI.FetchAzureArtifact(artifact)
-	if err != nil {
+	fileField, err := writer.CreateFormFile("result_file", "wpt_report.json")
+	if err = azureAPI.FetchAzureArtifact(artifact, fileField); err != nil {
 		return err
 	}
 
-	fileField, err := writer.CreateFormFile("result_file", "wpt_report.json")
-	_, err = io.Copy(fileField, bytes.NewReader(data))
-	if err != nil {
-		return err
-	}
 	if err := writer.Close(); err != nil {
 		return err
 	}

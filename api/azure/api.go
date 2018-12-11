@@ -48,7 +48,7 @@ type ArtifactResource struct {
 type API interface {
 	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
-	FetchAzureArtifact(BuildArtifact) ([]byte, error)
+	FetchAzureArtifact(BuildArtifact, io.Writer) error
 }
 
 type apiImpl struct {
@@ -80,8 +80,8 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 }
 
 // FetchAzureArtifact gets the gzipped bytes of the wpt_report.json from inside
-// the zip file provided by Azure.
-func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact) ([]byte, error) {
+// the zip file provided by Azure, and writes them to the given writer.
+func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, w io.Writer) error {
 	aeAPI := shared.NewAppEngineAPI(a.ctx)
 	log := shared.GetLogger(a.ctx)
 	// The default timeout is 5s, not enough to download the reports.
@@ -90,7 +90,10 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact) ([]byte, error) {
 	resp, err := client.Get(artifact.Resource.DownloadURL)
 	if err != nil {
 		log.Errorf("Failed to fetch %s: %s", artifact.Resource.DownloadURL, err.Error())
-		return nil, err
+		return err
+	} else if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		log.Errorf("Failed to fetch %s: %s", artifact.Resource.DownloadURL, resp.Status)
+		return err
 	}
 
 	// Extract the report from the artifact.
@@ -98,30 +101,31 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact) ([]byte, error) {
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Failed to read response body")
-		return nil, err
+		return err
 	}
 	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	for _, f := range z.File {
 		if f.Name == reportPath {
-			fileData, err := f.Open()
-			if err != nil {
+			var fileData io.ReadCloser
+			if fileData, err = f.Open(); err != nil {
 				log.Errorf("Failed to extract %s", reportPath)
-				return nil, err
+				return err
 			}
-			var buf bytes.Buffer
-			gzw := gzip.NewWriter(&buf)
+			defer fileData.Close()
+
+			gzw := gzip.NewWriter(w)
 			if _, err := io.Copy(gzw, fileData); err != nil {
 				log.Errorf("Failed to gzip file contents")
-				return nil, err
+				return err
 			}
 			if err := gzw.Close(); err != nil {
 				log.Errorf("Failed to close gzip writer")
-				return nil, err
+				return err
 			}
-			return buf.Bytes(), nil
+			return nil
 		}
 	}
-	return nil, fmt.Errorf("File %s not found in zip", reportPath)
+	return fmt.Errorf("File %s not found in zip", reportPath)
 }
 
 func getCheckTitle(product shared.ProductSpec) string {

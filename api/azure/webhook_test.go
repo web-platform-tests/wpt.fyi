@@ -79,7 +79,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 
 	azureAPI := NewMockAPI(mockCtrl)
 	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
-	azureAPI.EXPECT().FetchAzureArtifact(artifact).Return([]byte{}, nil)
+	azureAPI.EXPECT().FetchAzureArtifact(artifact, gomock.Any()).Return(nil)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().GetHostname().Return("wpt.fyi")
