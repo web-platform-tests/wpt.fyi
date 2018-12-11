@@ -38,7 +38,7 @@ func ErrRunExists() error {
 	return errRunExists
 }
 
-// ErrRunExists returns the error associated with an attempt to perform
+// ErrRunLoading returns the error associated with an attempt to perform
 // operations on a run currently unknown to an Index when the Index, in fact,
 // is currently loading data associated with the run.
 func ErrRunLoading() error {
