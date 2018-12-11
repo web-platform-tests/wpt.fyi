@@ -14,6 +14,7 @@ import (
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
@@ -34,6 +35,39 @@ var (
 
 	idx index.Index
 	mon monitor.Monitor
+
+	// Base query to AND against user's query: only include (sub)tests with
+	// non-UNKNOWN status for at least one of the four major browsers.
+	// I.e.,
+	//     !chrome:UNKNOWN | !edge:UNKOWN | !firefox:UNKNOWN | !safari:UNKNOWN
+	baseQuery = query.AbstractOr{
+		Args: []query.AbstractQuery{
+			query.AbstractNot{
+				Arg: query.TestStatusConstraint{
+					BrowserName: "chrome",
+					Status:      shared.TestStatusUnknown,
+				},
+			},
+			query.AbstractNot{
+				Arg: query.TestStatusConstraint{
+					BrowserName: "edge",
+					Status:      shared.TestStatusUnknown,
+				},
+			},
+			query.AbstractNot{
+				Arg: query.TestStatusConstraint{
+					BrowserName: "firefox",
+					Status:      shared.TestStatusUnknown,
+				},
+			},
+			query.AbstractNot{
+				Arg: query.TestStatusConstraint{
+					BrowserName: "safari",
+					Status:      shared.TestStatusUnknown,
+				},
+			},
+		},
+	}
 )
 
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +98,20 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+	q := rq.AbstractQuery
+
+	// Transfom query to ignore all tests that are status=UNKNOWN across all runs
+	// of interest.
+	if andQ, ok := q.(query.AbstractAnd); ok {
+		andQ.Args = append([]query.AbstractQuery{baseQuery}, andQ.Args...)
+	} else {
+		q = query.AbstractAnd{
+			Args: []query.AbstractQuery{
+				baseQuery,
+				q,
+			},
+		}
 	}
 
 	ids := make([]index.RunID, len(rq.RunIDs))
