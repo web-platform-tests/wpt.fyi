@@ -6,11 +6,11 @@ package sharedtest
 
 import (
 	context "context"
+	gomock "github.com/golang/mock/gomock"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	http "net/http"
 	url "net/url"
 	reflect "reflect"
-
-	gomock "github.com/golang/mock/gomock"
-	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // MockAppEngineAPI is a mock of AppEngineAPI interface
@@ -83,6 +83,18 @@ func (m *MockAppEngineAPI) LoginURL(redirect string) (string, error) {
 // LoginURL indicates an expected call of LoginURL
 func (mr *MockAppEngineAPIMockRecorder) LoginURL(redirect interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAppEngineAPI)(nil).LoginURL), redirect)
+}
+
+// GetHTTPClient mocks base method
+func (m *MockAppEngineAPI) GetHTTPClient() *http.Client {
+	ret := m.ctrl.Call(m, "GetHTTPClient")
+	ret0, _ := ret[0].(*http.Client)
+	return ret0
+}
+
+// GetHTTPClient indicates an expected call of GetHTTPClient
+func (mr *MockAppEngineAPIMockRecorder) GetHTTPClient() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHTTPClient))
 }
 
 // IsFeatureEnabled mocks base method
