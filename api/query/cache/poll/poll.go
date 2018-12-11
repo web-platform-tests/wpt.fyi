@@ -32,10 +32,17 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval
 			wait(start, interval)
 			continue
 		}
+		if len(runs) == 0 {
+			logger.Errorf("Fetcher produced no runs for update")
+			wait(start, interval)
+			continue
+		}
 
+		errs := make([]error, len(runs))
 		found := false
 		for i, run := range runs {
 			err := idx.IngestRun(run)
+			errs[i] = err
 			if err != nil {
 				if err == index.ErrRunExists() {
 					logger.Infof("Not updating run (already exists): %v", run)
@@ -46,10 +53,6 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval
 				}
 			} else {
 				logger.Infof("Updated run index; new run: %v", run)
-
-				if i != 0 && !found {
-					logger.Errorf("Runs loaded out of order: Skipped %d runs: %v, then loaded new run: %v", i, runs[:i], run)
-				}
 				found = true
 				lastLoadTime = time.Now()
 			}
@@ -57,6 +60,14 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval
 
 		if !found {
 			logger.Infof("No runs loaded throughout polling iteration. Last run update was at %v", lastLoadTime)
+		} else {
+			next := errs[1:]
+			for i := range next {
+				if errs[i] != nil && next[i] == nil {
+					logger.Errorf("Ingested run after skipping %d runs; ingest run attempt errors: %v", errs)
+					break
+				}
+			}
 		}
 
 		wait(start, interval)
