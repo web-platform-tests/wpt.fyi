@@ -56,7 +56,7 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval
 		}
 
 		if !found {
-			logger.Warningf("No runs loaded throughout polling iteration. Last run update was at %v", lastLoadTime)
+			logger.Infof("No runs loaded throughout polling iteration. Last run update was at %v", lastLoadTime)
 		}
 
 		wait(start, interval)
