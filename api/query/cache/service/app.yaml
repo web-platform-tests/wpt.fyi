@@ -5,10 +5,13 @@ service: searchcache
 # AppEngine Flex supports custom machine types with up to 32 vCPUs.
 # Custom machine type specifications:
 # https://cloud.google.com/compute/docs/instances/creating-instance-with-custom-machine-type#specifications
+# Relevant AppEngine Flex documentation:
+# https://cloud.google.com/appengine/docs/flexible/nodejs/reference/app-yaml#resource-settings
 resources:
-  # TODO: Would prefer up to 96 CPUs for performance and memory capacity if/when available on AppEngine Flex
+  # TODO: Would prefer up to 96 CPUs for performance and memory capacity if/when
+  # available on AppEngine Flex.
   cpu: 32
-  memory_gb: 208 # Max: 32 vCPU * 6.5 = 208 GB
+  memory_gb: 207.5 # Max: FloorToNearest256MB(32 vCPU * 6.5 - 0.4) = 207.5 GB
 
 manual_scaling:
   instances: 2
