@@ -7,7 +7,7 @@ package receiver
 import (
 	context "context"
 	io "io"
-	http "net/http"
+	"net/http"
 	url "net/url"
 	reflect "reflect"
 	time "time"

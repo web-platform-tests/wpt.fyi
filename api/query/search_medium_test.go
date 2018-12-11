@@ -238,11 +238,15 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
 	// abstracted and tested directly.
+	api := shared.NewAppEngineAPI(ctx)
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
-	sh := structuredSearchHandler{queryHandler{
-		sharedImpl: defaultShared{ctx},
-		dataSource: shared.NewByteCachedStore(ctx, mc, store),
-	}}
+	sh := structuredSearchHandler{
+		queryHandler{
+			sharedImpl: defaultShared{ctx},
+			dataSource: shared.NewByteCachedStore(ctx, mc, store),
+		},
+		api,
+	}
 	sc := NewShouldCache(t, true, shouldCacheSearchResponse)
 
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, sc.ShouldCache)
@@ -459,11 +463,15 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
 	// abstracted and tested directly.
+	api := shared.NewAppEngineAPI(ctx)
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
-	sh := structuredSearchHandler{queryHandler{
-		sharedImpl: defaultShared{ctx},
-		dataSource: shared.NewByteCachedStore(ctx, mc, store),
-	}}
+	sh := structuredSearchHandler{
+		queryHandler{
+			sharedImpl: defaultShared{ctx},
+			dataSource: shared.NewByteCachedStore(ctx, mc, store),
+		},
+		api,
+	}
 	sc := NewShouldCache(t, false, shouldCacheSearchResponse)
 
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, sc.ShouldCache)

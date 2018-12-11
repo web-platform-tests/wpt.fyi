@@ -29,6 +29,7 @@ found in the LICENSE file.
           'masterRunsOnly',
           'experimentalByDefault',
           'experimentalAlignedExceptEdge',
+          'fetchManifestForTestList',
         ];
       }
     });
@@ -124,6 +125,11 @@ found in the LICENSE file.
       <paper-checkbox checked="{{structuredQueries}}">
         Interpret query strings as structured queries over test names and test
         status/result values
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{fetchManifestForTestList}}">
+        Fetch a manifest for a complete (expected) list of tests.
       </paper-checkbox>
     </paper-item>
   </template>
