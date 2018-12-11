@@ -35,39 +35,6 @@ var (
 
 	idx index.Index
 	mon monitor.Monitor
-
-	// Base query to AND against user's query: only include (sub)tests with
-	// non-UNKNOWN status for at least one of the four major browsers.
-	// I.e.,
-	//     !chrome:UNKNOWN | !edge:UNKOWN | !firefox:UNKNOWN | !safari:UNKNOWN
-	baseQuery = query.AbstractOr{
-		Args: []query.AbstractQuery{
-			query.AbstractNot{
-				Arg: query.TestStatusConstraint{
-					BrowserName: "chrome",
-					Status:      shared.TestStatusUnknown,
-				},
-			},
-			query.AbstractNot{
-				Arg: query.TestStatusConstraint{
-					BrowserName: "edge",
-					Status:      shared.TestStatusUnknown,
-				},
-			},
-			query.AbstractNot{
-				Arg: query.TestStatusConstraint{
-					BrowserName: "firefox",
-					Status:      shared.TestStatusUnknown,
-				},
-			},
-			query.AbstractNot{
-				Arg: query.TestStatusConstraint{
-					BrowserName: "safari",
-					Status:      shared.TestStatusUnknown,
-				},
-			},
-		},
-	}
 )
 
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,20 +66,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	q := rq.AbstractQuery
-
-	// Transfom query to ignore all tests that are status=UNKNOWN across all runs
-	// of interest.
-	if andQ, ok := q.(query.AbstractAnd); ok {
-		andQ.Args = append([]query.AbstractQuery{baseQuery}, andQ.Args...)
-	} else {
-		q = query.AbstractAnd{
-			Args: []query.AbstractQuery{
-				baseQuery,
-				q,
-			},
-		}
-	}
 
 	ids := make([]index.RunID, len(rq.RunIDs))
 	for i := range rq.RunIDs {
@@ -129,6 +82,55 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	//
+	// Start: Shim to ignore irrelevant tests.
+	//
+
+	// Interpret execution plan as a concrete query that can be manipulated.
+	q, ok := plan.(query.ConcreteQuery)
+	if !ok {
+		http.Error(w, "Failed bind test runs to abstract query", http.StatusInternalServerError)
+		return
+	}
+
+	// Create base query of the form
+	// OR(!run1-status:UNKNOWN, ..., !runN-status:UNKNOWN).
+	baseQuery := query.Or{
+		Args: make([]query.ConcreteQuery, len(rq.RunIDs)),
+	}
+	for i, runID := range rq.RunIDs {
+		baseQuery.Args[i] = query.Not{
+			Arg: query.RunTestStatusConstraint{
+				Run:    runID,
+				Status: shared.TestStatusUnknown,
+			},
+		}
+	}
+
+	// Add baseQuery to existing AND in q=AND(...), or create AND(baseQuery, q).
+	if andQ, ok := q.(query.And); ok {
+		andQ.Args = append([]query.ConcreteQuery{baseQuery}, andQ.Args...)
+		q = andQ
+	} else {
+		q = query.And{
+			Args: []query.ConcreteQuery{
+				baseQuery,
+				q,
+			},
+		}
+	}
+
+	// Reinterpret modified query as a query execution plan.
+	plan, ok = q.(query.Plan)
+	if !ok {
+		http.Error(w, "Failed to interpret bound query as query execution plan", http.StatusInternalServerError)
+		return
+	}
+
+	//
+	// End: Shim to ignore irrelevant tests.
+	//
 
 	results := plan.Execute(runs)
 	res, ok := results.([]query.SearchResult)
