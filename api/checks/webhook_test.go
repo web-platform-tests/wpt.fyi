@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
-	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
@@ -37,8 +37,9 @@ func TestHandleCheckRunEvent_InvalidApp(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
 	checksAPI := NewMockAPI(mockCtrl)
+	azureAPI := azure.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -55,8 +56,9 @@ func TestHandleCheckRunEvent_Created_Completed(t *testing.T) {
 	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
+	azureAPI := azure.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -73,8 +75,9 @@ func TestHandleCheckRunEvent_Created_Pending_UserNotWhitelisted(t *testing.T) {
 	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
+	azureAPI := azure.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -92,8 +95,9 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome"))
+	azureAPI := azure.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
@@ -134,8 +138,9 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().IgnoreFailure(username, owner, repo, event.GetCheckRun(), event.GetInstallation())
+	azureAPI := azure.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
@@ -157,8 +162,9 @@ func TestHandleCheckRunEvent_ActionRequested_Cancel(t *testing.T) {
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().CancelRun(username, wptRepoOwner, wptRepoName, event.GetCheckRun(), event.GetInstallation())
+	azureAPI := azure.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
@@ -235,21 +241,4 @@ func getOpenedPREvent(user, sha string) github.PullRequestEvent {
 		},
 		Action: &opened,
 	}
-}
-
-func TestHandleAzurePipelinesEvent(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	sha := strings.Repeat("0123456789", 4)
-	detailsURL := "https://dev.azure.com/web-platform-tests/b14026b4-9423-4454-858f-bf76cf6d1faa/_build/results?buildId=123"
-	event := getCheckRunCreatedEvent("completed", "lukebjerring", sha)
-	event.CheckRun.DetailsURL = &detailsURL
-
-	log, hook := logrustest.NewNullLogger()
-	processed, err := handleAzurePipelinesEvent(log, event)
-	assert.Nil(t, err)
-	assert.False(t, processed)
-	assert.Len(t, hook.Entries, 2)
-	assert.Contains(t, hook.Entries[0].Message, "/123/")
 }

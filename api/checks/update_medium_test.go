@@ -17,7 +17,7 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-func TestLoadRunsToCompare(t *testing.T) {
+func TestLoadRunsToCompare_master(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
@@ -25,9 +25,7 @@ func TestLoadRunsToCompare(t *testing.T) {
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
 			Product: shared.Product{
-				BrowserName:    "chrome",
-				BrowserVersion: "63.0",
-				OSName:         "linux",
+				BrowserName: "chrome",
 			},
 		},
 		Labels: []string{"master"},
@@ -42,13 +40,86 @@ func TestLoadRunsToCompare(t *testing.T) {
 
 	chrome, _ := shared.ParseProductSpec("chrome")
 	filter := shared.TestRunFilter{
-		SHA:      strings.Repeat("1", 10),
+		SHA:      "1111111111",
 		Products: shared.ProductSpecs{chrome},
 	}
-	prRun, masterRun, err := loadRunsToCompare(ctx, filter)
+	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
+
 	assert.Nil(t, err)
-	if prRun == nil || masterRun == nil {
-		assert.FailNow(t, "Nil run(s) returned")
+	assert.NotNil(t, headRun)
+	assert.NotNil(t, baseRun)
+	assert.Equal(t, "0000000000", baseRun.Revision)
+	assert.Equal(t, "1111111111", headRun.Revision)
+}
+
+func TestLoadRunsToCompare_pr_base_first(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+
+	labelsForRuns := [][]string{{"pr_base"}, {"pr_head"}}
+	yesterday := time.Now().AddDate(0, 0, -1)
+	for i := 0; i < 2; i++ {
+		testRun := shared.TestRun{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "chrome",
+				},
+				Revision: "1234567890",
+			},
+			TimeStart: yesterday.Add(time.Duration(i) * time.Hour),
+			Labels:    labelsForRuns[i],
+		}
+		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
+		key, _ = datastore.Put(ctx, key, &testRun)
 	}
-	assert.NotEqual(t, prRun.Revision, masterRun.Revision)
+
+	chrome, _ := shared.ParseProductSpec("chrome")
+	filter := shared.TestRunFilter{
+		SHA:      "1234567890",
+		Products: shared.ProductSpecs{chrome},
+	}
+	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, headRun)
+	assert.NotNil(t, baseRun)
+	assert.Equal(t, []string{"pr_base"}, baseRun.Labels)
+	assert.Equal(t, []string{"pr_head"}, headRun.Labels)
+}
+
+func TestLoadRunsToCompare_pr_head_first(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+
+	labelsForRuns := [][]string{{"pr_head"}, {"pr_base"}}
+	yesterday := time.Now().AddDate(0, 0, -1)
+	for i := 0; i < 2; i++ {
+		testRun := shared.TestRun{
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "chrome",
+				},
+				Revision: "1234567890",
+			},
+			TimeStart: yesterday.Add(time.Duration(i) * time.Hour),
+			Labels:    labelsForRuns[i],
+		}
+		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
+		key, _ = datastore.Put(ctx, key, &testRun)
+	}
+
+	chrome, _ := shared.ParseProductSpec("chrome")
+	filter := shared.TestRunFilter{
+		SHA:      "1234567890",
+		Products: shared.ProductSpecs{chrome},
+	}
+	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, headRun)
+	assert.NotNil(t, baseRun)
+	assert.Equal(t, []string{"pr_base"}, baseRun.Labels)
+	assert.Equal(t, []string{"pr_head"}, headRun.Labels)
 }

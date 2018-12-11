@@ -171,7 +171,3 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 	}
 	return suite != nil, err
 }
-
-func getCheckTitle(product shared.ProductSpec) string {
-	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
-}

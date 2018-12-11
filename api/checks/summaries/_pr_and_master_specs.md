@@ -1,4 +1,4 @@
 Run | Spec
 --- | ---
-`master` | {{ .MasterRun.String }}
-`{{ printf "%.7s" .PRRun.FullRevisionHash }}` | {{ .PRRun.String }}
+`master` | {{ .BaseRun.String }}
+`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` | {{ .HeadRun.String }}

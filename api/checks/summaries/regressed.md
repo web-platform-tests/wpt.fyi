@@ -7,7 +7,7 @@ to the latest run against the `master` branch.
 
 ### Regressions
 
-Test | `master` | `{{ printf "%.7s" .PRRun.FullRevisionHash }}`
+Test | `master` | `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`
 --- | --- | ---
 {{ range $test, $results := .Regressions -}}
 {{ $test }} | {{ $results.PassingBefore }} / {{ $results.TotalBefore }} | {{ $results.PassingAfter }} / {{ $results.TotalAfter }}
@@ -19,8 +19,8 @@ And {{ .More }} others...
 [Visual comparison of the results]({{ .DiffURL }})
 
 Other views that might be useful:
-- [`{{ printf "%.7s" .PRRun.FullRevisionHash }}` vs `master`@`{{ printf "%.7s" .MasterRun.FullRevisionHash }}`]({{ .DiffURL }})
-- [`{{ printf "%.7s" .PRRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})
-- [Latest results for `{{ printf "%.7s" .PRRun.FullRevisionHash }}`]({{.HostURL}}?sha={{.PRRun.Revision}})
+- [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs its merge base]({{ .DiffURL }})
+- [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})
+- [Latest results for `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`]({{.HostURL}}?sha={{.HeadRun.Revision}})
 
 {{ template "_file_an_issue.md" . }}

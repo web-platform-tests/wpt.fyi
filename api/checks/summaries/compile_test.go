@@ -30,8 +30,8 @@ func TestGetSummary_Completed(t *testing.T) {
 	pr.Revision = "0123456789"
 	pr.FullRevisionHash = strings.Repeat(pr.Revision, 4)
 	foo := Completed{}
-	foo.MasterRun = master
-	foo.PRRun = pr
+	foo.BaseRun = master
+	foo.HeadRun = pr
 	foo.DiffURL = "https://foo.com/diff?before=chrome[master]&after=chrome@0123456789"
 	foo.HostName = "foo.com"
 	foo.HostURL = "https://foo.com/"
@@ -78,8 +78,8 @@ func TestGetSummary_Regressed(t *testing.T) {
 	pr.Revision = "0123456789"
 	pr.FullRevisionHash = strings.Repeat(pr.Revision, 4)
 	foo := Regressed{}
-	foo.MasterRun = master
-	foo.PRRun = pr
+	foo.BaseRun = master
+	foo.HeadRun = pr
 	foo.HostName = "foo.com"
 	foo.HostURL = "https://foo.com/"
 	foo.DiffURL = "https://foo.com/?products=chrome@0000000000,chrome@0123456789&diff"
