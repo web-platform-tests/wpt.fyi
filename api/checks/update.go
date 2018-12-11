@@ -172,8 +172,12 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 	checkState := summaries.CheckState{
 		TestRun: &headRun,
 		Product: shared.ProductSpec{
-			ProductAtRevision: headRun.ProductAtRevision,
-			Labels:            labels,
+			// [browser]@[sha] is plenty specific, and avoids bad version strings.
+			ProductAtRevision: shared.ProductAtRevision{
+				Product:  shared.Product{BrowserName: headRun.BrowserName},
+				Revision: headRun.Revision,
+			},
+			Labels: labels,
 		},
 		HeadSHA:    headRun.FullRevisionHash,
 		DetailsURL: diffURL,
