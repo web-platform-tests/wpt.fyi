@@ -53,8 +53,12 @@ type sameProductSpec struct {
 	spec string
 }
 
+type stringifiable interface {
+	String() string
+}
+
 func (s sameProductSpec) Matches(x interface{}) bool {
-	if p, ok := x.(shared.ProductSpec); ok && p.String() == s.spec {
+	if p, ok := x.(stringifiable); ok && p.String() == s.spec {
 		return true
 	} else if str, ok := x.(string); ok && str == s.spec {
 		return true

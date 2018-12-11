@@ -71,7 +71,7 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 			TestRun:    nil, // It's pending, no run exists yet.
 			Product:    product,
 			HeadSHA:    suite.SHA,
-			DetailsURL: shared.NewDiffAPI(s.ctx).GetMasterDiffURL(suite.SHA, product),
+			DetailsURL: shared.NewDiffAPI(s.ctx).GetMasterDiffURL(suite.SHA, product.Product),
 			Status:     "in_progress",
 		},
 		HostName: host,

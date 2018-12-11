@@ -198,7 +198,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 		HostName:      host,
 		HostURL:       fmt.Sprintf("https://%s/", host),
 		DiffURL:       diffURL.String(),
-		MasterDiffURL: diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product).String(),
+		MasterDiffURL: diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product.Product).String(),
 	}
 
 	hasRegressions := regressions.Cardinality() > 0

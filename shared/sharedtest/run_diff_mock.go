@@ -5,11 +5,12 @@
 package sharedtest
 
 import (
+	url "net/url"
+	reflect "reflect"
+
 	golang_set "github.com/deckarep/golang-set"
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
-	url "net/url"
-	reflect "reflect"
 )
 
 // MockDiffAPI is a mock of DiffAPI interface
@@ -48,7 +49,7 @@ func (mr *MockDiffAPIMockRecorder) GetDiffURL(arg0, arg1, arg2 interface{}) *gom
 }
 
 // GetMasterDiffURL mocks base method
-func (m *MockDiffAPI) GetMasterDiffURL(arg0 string, arg1 shared.ProductSpec) *url.URL {
+func (m *MockDiffAPI) GetMasterDiffURL(arg0 string, arg1 shared.Product) *url.URL {
 	ret := m.ctrl.Call(m, "GetMasterDiffURL", arg0, arg1)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
