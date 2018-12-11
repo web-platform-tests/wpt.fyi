@@ -41,10 +41,14 @@ func NewDiffAPI(ctx context.Context) DiffAPI {
 }
 
 func (d diffAPIImpl) GetDiffURL(before, after TestRun, diffFilter *DiffFilterParam) *url.URL {
-	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", d.aeAPI.GetHostname()))
+	filter := TestRunFilter{}
+	filter.Products = make(ProductSpecs, 2)
+	filter.Products[0].BrowserName = before.BrowserName
+	filter.Products[0].Revision = before.Revision
+	filter.Products[1].BrowserName = after.BrowserName
+	filter.Products[1].Revision = after.Revision
+	detailsURL := d.aeAPI.GetResultsURL(filter)
 	query := detailsURL.Query()
-	query.Add("run_id", fmt.Sprintf("%v", before.ID))
-	query.Add("run_id", fmt.Sprintf("%v", after.ID))
 	query.Set("diff", "")
 	if diffFilter != nil {
 		query.Set("filter", diffFilter.String())
