@@ -273,11 +273,12 @@ func TestBindExecute_TestStatus(t *testing.T) {
 					Passes: 0,
 					Total:  1,
 				},
-				// Run [1]: Safari: match1Name.match2Sub is missing,
-				//                  and no other subtests match: 0 / 1.
+				// Run [1]: Safari: match1Name.match2Sub is missing;
+				//                  by logic used in legacy test summaries, result
+				//                  should be: 0 / 0.
 				query.LegacySearchRunResult{
 					Passes: 0,
-					Total:  1,
+					Total:  0,
 				},
 			},
 		},
