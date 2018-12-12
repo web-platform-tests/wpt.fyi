@@ -124,9 +124,8 @@ func (r TestRun) Channel() string {
 	for _, label := range r.Labels {
 		switch label {
 		case StableLabel,
-			ExperimentalLabel,
-			DevLabel,
-			BetaLabel:
+			BetaLabel,
+			ExperimentalLabel:
 			return label
 		}
 	}
