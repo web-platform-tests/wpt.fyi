@@ -238,7 +238,7 @@ found in the LICENSE file.
     (() => {
       // TODO(lukebjerring): Support to & from in the builder.
       const testRunsUIQueryComputer =
-        'computeTestRunUIQueryParams(pr, sha, aligned, master, labels, productSpecs, to, from, maxCount, diff, search)';
+        'computeTestRunUIQueryParams(sha, aligned, master, labels, productSpecs, to, from, maxCount, diff, search, pr, runIds)';
       /* global TestRunsQuery */
       window.TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
         superClass,
@@ -260,10 +260,12 @@ found in the LICENSE file.
               type: Number,
               notify: true,
             },
+            // Specific runs, listed by their IDs.
+            runIds: Array,
           };
         }
 
-        computeTestRunUIQueryParams(pr, sha, aligned, master, labels, productSpecs, to, from, maxCount, diff, search) {
+        computeTestRunUIQueryParams(sha, aligned, master, labels, productSpecs, to, from, maxCount, diff, search, pr, runIds) {
           const params = this.computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, to, from, maxCount);
           if (diff || this.diff) {
             params.diff = true;
@@ -274,6 +276,9 @@ found in the LICENSE file.
           if (pr) {
             params.pr = pr;
           }
+          if (runIds) {
+            params['run_id'] = Array.from(this.runIds);
+          }
           return params;
         }
 
@@ -282,6 +287,9 @@ found in the LICENSE file.
           this.pr = params.pr;
           this.search = params.q;
           this.diff = params.diff;
+          if ('run_id' in params) {
+            this.runIds = Array.from(params['run_id']);
+          }
         }
       };
       window.TestRunsUIQuery.Computer = testRunsUIQueryComputer;

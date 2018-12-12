@@ -65,7 +65,8 @@ found in the LICENSE file.
             runs.push(...preloaded);
           }
           // Fetch by products.
-          if (this.productSpecs && this.productSpecs.length) {
+          if ((this.productSpecs && this.productSpecs.length)
+            || (this.runIds && this.runIds.length)) {
             runs.push(
               fetch(`/api/runs${this.query}`)
                 .then(r => r.ok && r.json().then(runs => {
