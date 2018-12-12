@@ -396,7 +396,7 @@ found in the LICENSE file.
     </paper-card>
   </template>
   <script>
-    /* global ProductInfo, CHANNELS, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
+    /* global ProductInfo, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'product-builder';
@@ -455,7 +455,7 @@ found in the LICENSE file.
           },
           channels: {
             type: Array,
-            value: Array.from(CHANNELS),
+            value: Array.from(window.wpt.Channels),
           },
           versionsURL: {
             type: String,
@@ -526,7 +526,7 @@ found in the LICENSE file.
 
       productWithChannel(product, channel) {
         return Object.assign({}, product, {
-          labels: (product.labels || []).filter(l => !CHANNELS.has(l)).concat(channel)
+          labels: (product.labels || []).filter(l => !window.wpt.Channels.has(l)).concat(channel)
         });
       }
 

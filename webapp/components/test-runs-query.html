@@ -12,7 +12,7 @@ found in the LICENSE file.
     /**
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
-    /* global QueryBuilder, ProductInfo, CHANNELS, DEFAULT_PRODUCTS, DEFAULT_PRODUCT_SPECS */
+    /* global QueryBuilder, ProductInfo, DEFAULT_PRODUCTS, DEFAULT_PRODUCT_SPECS */
     // eslint-disable-next-line no-unused-vars
     (() => {
       const testRunsQueryComputer =
@@ -107,7 +107,7 @@ found in the LICENSE file.
           // Collapse a globally shared channel into a single label.
           if (this.products.length) {
             let allChannelsSame = true;
-            const channel = (this.products[0].labels || []).find(l => CHANNELS.has(l));
+            const channel = (this.products[0].labels || []).find(l => window.wpt.Channels.has(l));
             for (const p of this.products) {
               if (!(p.labels || []).find(l => l === channel)) {
                 allChannelsSame = false;
@@ -116,7 +116,7 @@ found in the LICENSE file.
             let productSpecs;
             if (allChannelsSame) {
               productSpecs = this.products.map(p => {
-                const nonChannel = (p.labels || []).filter(l => !CHANNELS.has(l));
+                const nonChannel = (p.labels || []).filter(l => !window.wpt.Channels.has(l));
                 return this.getSpec(Object.assign({}, p, {labels: nonChannel}));
               });
               if (!labels.includes(channel)) {
@@ -177,12 +177,12 @@ found in the LICENSE file.
           // Expand any global channel labels into the separate products
           let sharedChannel;
           if ('label' in params) {
-            sharedChannel = params.label.find(l => CHANNELS.has(l));
-            batchUpdate.labels = params.label.filter(l => !CHANNELS.has(l));
+            sharedChannel = params.label.find(l => window.wpt.Channels.has(l));
+            batchUpdate.labels = params.label.filter(l => !window.wpt.Channels.has(l));
           }
           if (sharedChannel) {
             for (const i in batchUpdate.products) {
-              const labels = batchUpdate.products[i].labels.filter(l => !CHANNELS.has(l) || l === sharedChannel);
+              const labels = batchUpdate.products[i].labels.filter(l => !window.wpt.Channels.has(l) || l === sharedChannel);
               if (!batchUpdate.products[i].labels.includes(sharedChannel)) {
                 labels.push(sharedChannel);
               }

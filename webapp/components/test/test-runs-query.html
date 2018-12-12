@@ -39,7 +39,7 @@
 <body>
   <script>
     document.addEventListener('WebComponentsReady', () => {
-      /* global DEFAULT_PRODUCTS, CHANNELS */
+      /* global DEFAULT_PRODUCTS */
       suite('TestRunsQuery', () => {
         let testRunsQuery, testRunsUIQuery;
 
@@ -60,7 +60,7 @@
         });
 
         suite('collapses shared channels', () => {
-          for (const channel of CHANNELS) {
+          for (const channel of window.wpt.Channels) {
             test(channel, () => {
               testRunsQuery.products = DEFAULT_PRODUCTS
                 .map(p => Object.assign({}, p, { labels: [channel] }));
@@ -70,7 +70,7 @@
         });
 
         suite('expands channel labels', () => {
-          for (const channel of CHANNELS) {
+          for (const channel of window.wpt.Channels) {
             test(channel, () => {
               testRunsQuery.updateQueryParams({ label: [channel] });
               expect(testRunsQuery.products.length).to.equal(DEFAULT_PRODUCTS.length);
@@ -124,7 +124,7 @@
             test('label', () => {
               testRunsQuery.products =
                 DEFAULT_PRODUCTS.map(p => Object.assign({}, p, { labels: ['experimental'] }));
-              for (const channel of CHANNELS) {
+              for (const channel of window.wpt.Channels) {
                 testRunsQuery.updateQueryParams({
                   label: [channel],
                 });
