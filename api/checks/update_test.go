@@ -32,7 +32,7 @@ func TestGetDiffSummary_Regressed(t *testing.T) {
 	diffAPI.EXPECT().GetRunsDiff(before, after, gomock.Any(), gomock.Any()).Return(runDiff, nil)
 	diffURL, _ := url.Parse("https://wpt.fyi/results?diff")
 	diffAPI.EXPECT().GetDiffURL(before, after, gomock.Any()).Return(diffURL)
-	diffAPI.EXPECT().GetMasterDiffURL(after.FullRevisionHash, sharedtest.SameProductSpec(before.BrowserName)).Return(diffURL)
+	diffAPI.EXPECT().GetMasterDiffURL(after, sharedtest.SameDiffFilter("ACU")).Return(diffURL)
 
 	summary, err := getDiffSummary(aeAPI, diffAPI, before, after)
 	assert.Nil(t, err)
@@ -57,7 +57,7 @@ func TestGetDiffSummary_Completed(t *testing.T) {
 	diffAPI.EXPECT().GetRunsDiff(before, after, gomock.Any(), gomock.Any()).Return(runDiff, nil)
 	diffURL, _ := url.Parse("https://wpt.fyi/results?diff")
 	diffAPI.EXPECT().GetDiffURL(before, after, gomock.Any()).Return(diffURL)
-	diffAPI.EXPECT().GetMasterDiffURL(after.FullRevisionHash, sharedtest.SameProductSpec(before.BrowserName)).Return(diffURL)
+	diffAPI.EXPECT().GetMasterDiffURL(after, sharedtest.SameDiffFilter("ACU")).Return(diffURL)
 
 	summary, err := getDiffSummary(aeAPI, diffAPI, before, after)
 	assert.Nil(t, err)
@@ -68,7 +68,9 @@ func TestGetDiffSummary_Completed(t *testing.T) {
 func getBeforeAndAfterRuns() (before, after shared.TestRun) {
 	before.FullRevisionHash = strings.Repeat("0", 40)
 	before.BrowserName = "chrome"
+	before.Labels = []string{shared.PRBaseLabel}
 	after.FullRevisionHash = strings.Repeat("1", 40)
 	after.BrowserName = "chrome"
+	after.Labels = []string{shared.PRHeadLabel}
 	return before, after
 }

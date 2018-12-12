@@ -144,7 +144,7 @@ func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headR
 	// Get the most recent, but still earlier, master run to compare.
 	one := 1
 	to := headRun.TimeStart.Add(-time.Millisecond)
-	labels := mapset.NewSetWith(shared.MasterLabel)
+	labels := mapset.NewSetWith(headRun.Channel(), shared.MasterLabel)
 	runs, err := shared.LoadTestRuns(ctx, filter.Products, labels, shared.LatestSHA, nil, &to, &one, nil)
 	baseRun := runs.First()
 	if err != nil {
@@ -164,17 +164,19 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 		return nil, err
 	}
 
-	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
-	var labels mapset.Set
-	if headRun.IsExperimental() {
-		labels = mapset.NewSet(shared.ExperimentalLabel)
-	}
-	checkState := summaries.CheckState{
-		TestRun: &headRun,
-		Product: shared.ProductSpec{
-			ProductAtRevision: headRun.ProductAtRevision,
-			Labels:            labels,
+	checkProduct := shared.ProductSpec{
+		// [browser]@[sha] is plenty specific, and avoids bad version strings.
+		ProductAtRevision: shared.ProductAtRevision{
+			Product:  shared.Product{BrowserName: headRun.BrowserName},
+			Revision: headRun.Revision,
 		},
+		Labels: mapset.NewSetWith(baseRun.Channel()),
+	}
+
+	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
+	checkState := summaries.CheckState{
+		TestRun:    &headRun,
+		Product:    checkProduct,
 		HeadSHA:    headRun.FullRevisionHash,
 		DetailsURL: diffURL,
 		Status:     "completed",
@@ -189,12 +191,16 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 	host := aeAPI.GetHostname()
 
 	resultsComparison := summaries.ResultsComparison{
-		BaseRun:       baseRun,
-		HeadRun:       headRun,
-		HostName:      host,
-		HostURL:       fmt.Sprintf("https://%s/", host),
-		DiffURL:       diffURL.String(),
-		MasterDiffURL: diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product).String(),
+		BaseRun:  baseRun,
+		HeadRun:  headRun,
+		HostName: host,
+		HostURL:  fmt.Sprintf("https://%s/", host),
+		DiffURL:  diffURL.String(),
+	}
+	if headRun.LabelsSet().Contains(shared.PRHeadLabel) {
+		// Deletions are meaningless and abundant comparing to master; ignore them.
+		masterDiffFilter := shared.DiffFilterParam{Added: true, Changed: true, Unchanged: true}
+		resultsComparison.MasterDiffURL = diffAPI.GetMasterDiffURL(headRun, &masterDiffFilter).String()
 	}
 
 	hasRegressions := regressions.Cardinality() > 0

@@ -48,7 +48,7 @@ func (mr *MockDiffAPIMockRecorder) GetDiffURL(arg0, arg1, arg2 interface{}) *gom
 }
 
 // GetMasterDiffURL mocks base method
-func (m *MockDiffAPI) GetMasterDiffURL(arg0 string, arg1 shared.ProductSpec) *url.URL {
+func (m *MockDiffAPI) GetMasterDiffURL(arg0 shared.TestRun, arg1 *shared.DiffFilterParam) *url.URL {
 	ret := m.ctrl.Call(m, "GetMasterDiffURL", arg0, arg1)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0

@@ -113,13 +113,16 @@ func (p ProductSpecs) Strings() []string {
 
 func (p ProductSpec) String() string {
 	s := p.Product.String()
-	if p.Labels != nil && p.Labels.Cardinality() > 0 {
-		labels := make([]string, 0, p.Labels.Cardinality())
-		for l := range p.Labels.Iter() {
-			labels = append(labels, l.(string))
+	if p.Labels != nil {
+		p.Labels.Remove("") // Remove the empty label, if present.
+		if p.Labels.Cardinality() > 0 {
+			labels := make([]string, 0, p.Labels.Cardinality())
+			for l := range p.Labels.Iter() {
+				labels = append(labels, l.(string))
+			}
+			sort.Strings(labels) // Deterministic String() output.
+			s += "[" + strings.Join(labels, ",") + "]"
 		}
-		sort.Strings(labels) // Deterministic String() output.
-		s += "[" + strings.Join(labels, ",") + "]"
 	}
 	if !IsLatest(p.Revision) {
 		s += "@" + p.Revision
