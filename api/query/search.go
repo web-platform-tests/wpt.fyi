@@ -77,7 +77,7 @@ type structuredSearchHandler struct {
 }
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
-	api := shared.NewAppEngineAPI(r.Context())
+	api := shared.NewAppEngineAPI(shared.NewAppEngineContext(r))
 	searchHandler{api}.ServeHTTP(w, r)
 }
 
