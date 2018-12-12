@@ -45,7 +45,13 @@ See models.go for more details.
       .revision {
         font-size: 14px;
       }
+      .github {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .github img {
+        margin-right: 8px;
         width: 16px;
         height: 16px;
       }
@@ -59,10 +65,10 @@ See models.go for more details.
         <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
           <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
           <template is="dom-if" if="[[githubCommitLinks]]">
-            <div class="github">
+            <a class="github" href="https://github.com/web-platform-tests/wpt/commit/[[testRun.revision]]">
               <img src="/static/github.svg" />
-              <a href="https://github.com/web-platform-tests/wpt/commit/[[testRun.revision]]">[[sevenCharSHA(testRun.revision)]]</a>
-            </div>
+              [[sevenCharSHA(testRun.revision)]]
+            </a>
           </template>
           <template is="dom-if" if="[[!githubCommitLinks]]">
             <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
