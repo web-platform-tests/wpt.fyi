@@ -32,14 +32,14 @@
         });
 
         test('browser test status', () => {
-          assertQueryParse('cHrOmE:oK', {browserName: 'chrome', status: 'OK'});
+          assertQueryParse('cHrOmE:oK', {browser_name: 'chrome', status: 'OK'});
         });
 
         test('pattern + test status', () => {
           assertQueryParse('cssom firefox:timeout', {
             and: [
               {pattern: 'cssom'},
-              {browserName: 'firefox', status: 'TIMEOUT'},
+              {browser_name: 'firefox', status: 'TIMEOUT'},
             ],
           });
         });
@@ -48,7 +48,7 @@
           assertQueryParse('cssom or firefox:timeout', {
             or: [
               {pattern: 'cssom'},
-              {browserName: 'firefox', status: 'TIMEOUT'},
+              {browser_name: 'firefox', status: 'TIMEOUT'},
             ],
           });
         });
@@ -98,13 +98,13 @@
         test('all features', () => {
           assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
             and: [
-              {browserName: 'firefox', status: 'PASS'},
+              {browser_name: 'firefox', status: 'PASS'},
               {
                 or: [
                   {pattern: 'a'},
                   {
                     and: [
-                      {browserName: 'chrome', status: 'FAIL'},
+                      {browser_name: 'chrome', status: 'FAIL'},
                       {
                         and: [
                           {pattern: 'b'},

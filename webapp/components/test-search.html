@@ -147,7 +147,7 @@ found in the LICENSE file.
       nameLiteralChar_quote: (v) => '"',
       statusExp: (l, colon, r) => {
         return {
-          browserName: l.sourceString.toLowerCase(),
+          browser_name: l.sourceString.toLowerCase(),
           status: r.sourceString.toUpperCase(),
         };
       },
