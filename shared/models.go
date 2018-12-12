@@ -119,6 +119,20 @@ func (r TestRun) IsExperimental() bool {
 	return len(r.Labels) > 0 && r.LabelsSet().Contains(ExperimentalLabel)
 }
 
+// Channel return the channel label, if any, for the given run.
+func (r TestRun) Channel() string {
+	for _, label := range r.Labels {
+		switch label {
+		case StableLabel,
+			ExperimentalLabel,
+			DevLabel,
+			BetaLabel:
+			return label
+		}
+	}
+	return ""
+}
+
 // TestRunStatus is an enum for PendingTestRun statuses.
 type TestRunStatus int64
 

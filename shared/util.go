@@ -31,6 +31,9 @@ const StableLabel = "stable"
 // BetaLabel is the implicit label present for runs marked 'beta'.
 const BetaLabel = "beta"
 
+// DevLabel is the implicit label present for runs marked 'dev'.
+const DevLabel = "dev"
+
 // MasterLabel is the implicit label present for runs marked 'master',
 // i.e. run from the master branch.
 const MasterLabel = "master"

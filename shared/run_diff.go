@@ -45,8 +45,10 @@ func (d diffAPIImpl) GetDiffURL(before, after TestRun, diffFilter *DiffFilterPar
 	filter.Products = make(ProductSpecs, 2)
 	filter.Products[0].BrowserName = before.BrowserName
 	filter.Products[0].Revision = before.Revision
+	filter.Products[0].Labels = mapset.NewSet(before.Channel())
 	filter.Products[1].BrowserName = after.BrowserName
 	filter.Products[1].Revision = after.Revision
+	filter.Products[1].Labels = mapset.NewSet(after.Channel())
 	detailsURL := d.aeAPI.GetResultsURL(filter)
 	query := detailsURL.Query()
 	query.Set("diff", "")
