@@ -24,7 +24,7 @@ import (
 type DiffAPI interface {
 	GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (RunDiff, error)
 	GetDiffURL(before, after TestRun, diffFilter *DiffFilterParam) *url.URL
-	GetMasterDiffURL(sha string, product Product) *url.URL
+	GetMasterDiffURL(sha string, product ProductSpec, diffFilter *DiffFilterParam) *url.URL
 }
 
 type diffAPIImpl struct {
@@ -57,21 +57,23 @@ func (d diffAPIImpl) GetDiffURL(before, after TestRun, diffFilter *DiffFilterPar
 	return detailsURL
 }
 
-func (d diffAPIImpl) GetMasterDiffURL(sha string, product Product) *url.URL {
+func (d diffAPIImpl) GetMasterDiffURL(sha string, product ProductSpec, diffFilter *DiffFilterParam) *url.URL {
 	filter := TestRunFilter{}
-	filter.Products = make(ProductSpecs, 2)
-	filter.Products[0].Product = product
-	filter.Products[0].Labels = mapset.NewSet("master")
-	filter.Products[1].Product = product
-	filter.Products[1].Revision = sha // Specific SHA for product.
+	filter.Products = ProductSpecs{product, product}
+	filter.Products[0].Revision = "" // No specific SHA for base (master).
+	if product.Labels == nil {
+		filter.Products[0].Labels = mapset.NewSet()
+	}
+	filter.Products[0].Labels.Add(MasterLabel)
+
+	filter.Products[1].Revision = sha // Specific SHA for head.
+
 	detailsURL := d.aeAPI.GetResultsURL(filter)
 	query := detailsURL.Query()
 	query.Set("diff", "")
-	query.Set("filter", DiffFilterParam{
-		Added:     true,
-		Changed:   true,
-		Unchanged: true,
-	}.String())
+	if diffFilter != nil {
+		query.Set("filter", diffFilter.String())
+	}
 	detailsURL.RawQuery = query.Encode()
 	return detailsURL
 }

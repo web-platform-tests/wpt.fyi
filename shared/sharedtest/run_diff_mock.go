@@ -5,12 +5,11 @@
 package sharedtest
 
 import (
-	url "net/url"
-	reflect "reflect"
-
 	golang_set "github.com/deckarep/golang-set"
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	url "net/url"
+	reflect "reflect"
 )
 
 // MockDiffAPI is a mock of DiffAPI interface
@@ -49,15 +48,15 @@ func (mr *MockDiffAPIMockRecorder) GetDiffURL(arg0, arg1, arg2 interface{}) *gom
 }
 
 // GetMasterDiffURL mocks base method
-func (m *MockDiffAPI) GetMasterDiffURL(arg0 string, arg1 shared.Product) *url.URL {
-	ret := m.ctrl.Call(m, "GetMasterDiffURL", arg0, arg1)
+func (m *MockDiffAPI) GetMasterDiffURL(arg0 string, arg1 shared.ProductSpec, arg2 *shared.DiffFilterParam) *url.URL {
+	ret := m.ctrl.Call(m, "GetMasterDiffURL", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetMasterDiffURL indicates an expected call of GetMasterDiffURL
-func (mr *MockDiffAPIMockRecorder) GetMasterDiffURL(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMasterDiffURL", reflect.TypeOf((*MockDiffAPI)(nil).GetMasterDiffURL), arg0, arg1)
+func (mr *MockDiffAPIMockRecorder) GetMasterDiffURL(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMasterDiffURL", reflect.TypeOf((*MockDiffAPI)(nil).GetMasterDiffURL), arg0, arg1, arg2)
 }
 
 // GetRunsDiff mocks base method
