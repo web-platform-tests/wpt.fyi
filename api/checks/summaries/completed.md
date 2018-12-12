@@ -19,7 +19,9 @@ And {{ .More }} others...
 
 Other views that might be useful:
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs its merge base]({{ .DiffURL }})
+{{- if .MasterDiffURL }}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})
+{{- end }}
 - [Latest results for `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`]({{.HostURL}}?sha={{.HeadRun.Revision}})
 
 {{ template "_file_an_issue.md" . }}

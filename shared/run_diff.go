@@ -24,7 +24,7 @@ import (
 type DiffAPI interface {
 	GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (RunDiff, error)
 	GetDiffURL(before, after TestRun, diffFilter *DiffFilterParam) *url.URL
-	GetMasterDiffURL(sha string, product ProductSpec, diffFilter *DiffFilterParam) *url.URL
+	GetMasterDiffURL(testRun TestRun, diffFilter *DiffFilterParam) *url.URL
 }
 
 type diffAPIImpl struct {
@@ -53,25 +53,28 @@ func (d diffAPIImpl) GetDiffURL(before, after TestRun, diffFilter *DiffFilterPar
 	return detailsURL
 }
 
-func (d diffAPIImpl) GetMasterDiffURL(sha string, product ProductSpec, diffFilter *DiffFilterParam) *url.URL {
-	filter := TestRunFilter{}
-	filter.Products = ProductSpecs{product, product}
-	filter.Products[0].Revision = "" // No specific SHA for base (master).
-	if product.Labels == nil {
-		filter.Products[0].Labels = mapset.NewSet()
+// GetMasterDiffURL returns the diff url for comparing a pr_head run against the most recent
+// master run for the same product channel.
+func (d diffAPIImpl) GetMasterDiffURL(testRun TestRun, diffFilter *DiffFilterParam) *url.URL {
+	runSpec := ProductSpec{}
+	runSpec.ProductAtRevision = testRun.ProductAtRevision
+	runSpec.Labels = mapset.NewSetWith(PRHeadLabel)
+
+	masterSpec := ProductSpec{}
+	masterSpec.BrowserName = testRun.BrowserName
+	masterSpec.Labels = mapset.NewSetWith(testRun.Channel(), MasterLabel)
+
+	filter := TestRunFilter{
+		Products: ProductSpecs{runSpec, masterSpec},
 	}
-	filter.Products[0].Labels.Add(MasterLabel)
-
-	filter.Products[1].Revision = sha // Specific SHA for head.
-
-	detailsURL := d.aeAPI.GetResultsURL(filter)
-	query := detailsURL.Query()
+	diffURL := d.aeAPI.GetResultsURL(filter)
+	query := diffURL.Query()
 	query.Set("diff", "")
 	if diffFilter != nil {
 		query.Set("filter", diffFilter.String())
 	}
-	detailsURL.RawQuery = query.Encode()
-	return detailsURL
+	diffURL.RawQuery = query.Encode()
+	return diffURL
 }
 
 // RunDiff represents a summary of the differences between 2 runs.

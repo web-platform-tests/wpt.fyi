@@ -51,6 +51,15 @@ func TestGetSummary_Completed(t *testing.T) {
 	assert.Contains(t, s, "2 / 3")
 	assert.Contains(t, s, "And 1 others...")
 	assert.Contains(t, s, foo.FileIssueURL().String())
+
+	// And with MasterDiffURL
+	foo.MasterDiffURL = "https://foo.com/?products=chrome[master],chrome@0123456789&diff"
+	s, err = foo.GetSummary()
+	printOutput(s)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	assert.Contains(t, s, foo.MasterDiffURL)
 }
 
 func TestGetSummary_Pending(t *testing.T) {
@@ -83,7 +92,6 @@ func TestGetSummary_Regressed(t *testing.T) {
 	foo.HostName = "foo.com"
 	foo.HostURL = "https://foo.com/"
 	foo.DiffURL = "https://foo.com/?products=chrome@0000000000,chrome@0123456789&diff"
-	foo.MasterDiffURL = "https://foo.com/?products=chrome[master],chrome@0123456789&diff"
 	foo.Regressions = map[string]BeforeAndAfter{
 		"/foo.html": BeforeAndAfter{
 			PassingBefore: 1,
@@ -108,6 +116,15 @@ func TestGetSummary_Regressed(t *testing.T) {
 	assert.Contains(t, s, "1 / 1")
 	assert.Contains(t, s, "And 1 others...")
 	assert.Contains(t, s, foo.FileIssueURL().String())
+
+	// And with MasterDiffURL
+	foo.MasterDiffURL = "https://foo.com/?products=chrome[master],chrome@0123456789&diff"
+	s, err = foo.GetSummary()
+	printOutput(s)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	assert.Contains(t, s, foo.MasterDiffURL)
 }
 
 func printOutput(s string) {

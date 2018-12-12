@@ -164,21 +164,19 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 		return nil, err
 	}
 
-	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
-	var labels mapset.Set
-	if headRun.IsExperimental() {
-		labels = mapset.NewSet(shared.ExperimentalLabel)
-	}
-	checkState := summaries.CheckState{
-		TestRun: &headRun,
-		Product: shared.ProductSpec{
-			// [browser]@[sha] is plenty specific, and avoids bad version strings.
-			ProductAtRevision: shared.ProductAtRevision{
-				Product:  shared.Product{BrowserName: headRun.BrowserName},
-				Revision: headRun.Revision,
-			},
-			Labels: labels,
+	checkProduct := shared.ProductSpec{
+		// [browser]@[sha] is plenty specific, and avoids bad version strings.
+		ProductAtRevision: shared.ProductAtRevision{
+			Product:  shared.Product{BrowserName: headRun.BrowserName},
+			Revision: headRun.Revision,
 		},
+		Labels: mapset.NewSetWith(baseRun.Channel()),
+	}
+
+	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
+	checkState := summaries.CheckState{
+		TestRun:    &headRun,
+		Product:    checkProduct,
 		HeadSHA:    headRun.FullRevisionHash,
 		DetailsURL: diffURL,
 		Status:     "completed",
@@ -193,12 +191,16 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 	host := aeAPI.GetHostname()
 
 	resultsComparison := summaries.ResultsComparison{
-		BaseRun:       baseRun,
-		HeadRun:       headRun,
-		HostName:      host,
-		HostURL:       fmt.Sprintf("https://%s/", host),
-		DiffURL:       diffURL.String(),
-		MasterDiffURL: diffAPI.GetMasterDiffURL(checkState.HeadSHA, checkState.Product, nil).String(),
+		BaseRun:  baseRun,
+		HeadRun:  headRun,
+		HostName: host,
+		HostURL:  fmt.Sprintf("https://%s/", host),
+		DiffURL:  diffURL.String(),
+	}
+	if headRun.LabelsSet().Contains(shared.PRHeadLabel) {
+		// Deletions are meaningless and abundant comparing to master; ignore them.
+		masterDiffFilter := shared.DiffFilterParam{Added: true, Changed: true, Unchanged: true}
+		resultsComparison.MasterDiffURL = diffAPI.GetMasterDiffURL(headRun, &masterDiffFilter).String()
 	}
 
 	hasRegressions := regressions.Cardinality() > 0

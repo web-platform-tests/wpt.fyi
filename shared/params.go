@@ -118,9 +118,7 @@ func (p ProductSpec) String() string {
 		if p.Labels.Cardinality() > 0 {
 			labels := make([]string, 0, p.Labels.Cardinality())
 			for l := range p.Labels.Iter() {
-				if l != "" {
-					labels = append(labels, l.(string))
-				}
+				labels = append(labels, l.(string))
 			}
 			sort.Strings(labels) // Deterministic String() output.
 			s += "[" + strings.Join(labels, ",") + "]"

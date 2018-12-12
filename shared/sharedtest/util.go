@@ -49,7 +49,7 @@ func NewTestContext() context.Context {
 	return ctx
 }
 
-type sameProductSpec struct {
+type sameStringSpec struct {
 	spec string
 }
 
@@ -57,7 +57,7 @@ type stringifiable interface {
 	String() string
 }
 
-func (s sameProductSpec) Matches(x interface{}) bool {
+func (s sameStringSpec) Matches(x interface{}) bool {
 	if p, ok := x.(stringifiable); ok && p.String() == s.spec {
 		return true
 	} else if str, ok := x.(string); ok && str == s.spec {
@@ -65,13 +65,20 @@ func (s sameProductSpec) Matches(x interface{}) bool {
 	}
 	return false
 }
-func (s sameProductSpec) String() string {
+func (s sameStringSpec) String() string {
 	return s.spec
 }
 
 // SameProductSpec returns a gomock matcher for a product spec.
 func SameProductSpec(spec string) gomock.Matcher {
-	return sameProductSpec{
+	return sameStringSpec{
 		spec: spec,
+	}
+}
+
+// SameDiffFilter returns a gomock matcher for a diff filter.
+func SameDiffFilter(filter string) gomock.Matcher {
+	return sameStringSpec{
+		spec: filter,
 	}
 }
