@@ -41,9 +41,14 @@ func (a *indexAggregator) Add(t TestID) error {
 
 	for i, ru := range a.rus {
 		res := int64(a.runResults[ru].GetResult(t))
-		rus[i].Total++
-		if res == shared.TestStatusPass || res == shared.TestStatusOK {
-			rus[i].Passes++
+		// TODO: Switch to a consistent value for Total across all runs.
+		//
+		// Only include tests with non-UNKNOWN status for this run's total.
+		if res != shared.TestStatusUnknown {
+			rus[i].Total++
+			if res == shared.TestStatusPass || res == shared.TestStatusOK {
+				rus[i].Passes++
+			}
 		}
 	}
 	r.LegacyStatus = rus

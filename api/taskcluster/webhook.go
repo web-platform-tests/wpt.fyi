@@ -315,8 +315,19 @@ func createAllRuns(
 			// chrome-dev-pr_head => [chrome, dev, pr_head]
 			bits := strings.Split(product, "-")
 			labelsForRun := labels
-			if bits[len(bits)-1] == shared.PRBaseLabel || bits[len(bits)-1] == shared.PRHeadLabel {
-				labelsForRun = append(labelsForRun, bits[len(bits)-1])
+			// Don't bother with pr_base/pr_head if the other one didn't make it.
+			switch lastBit := bits[len(bits)-1]; lastBit {
+			case shared.PRBaseLabel, shared.PRHeadLabel:
+				otherLabel := shared.PRBaseLabel
+				if lastBit == shared.PRBaseLabel {
+					otherLabel = shared.PRHeadLabel
+				}
+				otherProduct := strings.Join(append(bits[:len(bits)-1], otherLabel), "-")
+				if _, ok := urlsByProduct[otherProduct]; !ok {
+					log.Warningf("Skipping %s since %s not present", product, otherProduct)
+					return
+				}
+				labelsForRun = append(labelsForRun, lastBit)
 			}
 			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labelsForRun)
 			if err != nil {

@@ -65,13 +65,19 @@ func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngine
 		}
 		log.Infof("Uploading %s for %s/%s build %v...", artifact.Name, owner, repo, buildID)
 
+		var labels []string
+		if artifact.Name == "results" {
+			labels = []string{shared.PRHeadLabel}
+		} else if artifact.Name == "results-without-changes" {
+			labels = []string{shared.PRBaseLabel}
+		}
 		err := createAzureRun(
 			log,
 			azureAPI,
 			aeAPI,
 			event.GetCheckRun().GetHeadSHA(),
 			artifact,
-			nil)
+			labels)
 		if err != nil {
 			log.Errorf("Failed to create run: %s", err.Error())
 			errors <- err

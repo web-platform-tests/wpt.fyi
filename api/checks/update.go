@@ -158,7 +158,7 @@ func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headR
 }
 
 func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, headRun shared.TestRun) (summaries.Summary, error) {
-	diffFilter := shared.DiffFilterParam{Added: true, Changed: true, Unchanged: true}
+	diffFilter := shared.DiffFilterParam{Added: true, Changed: true, Deleted: true}
 	diff, err := diffAPI.GetRunsDiff(baseRun, headRun, diffFilter, nil)
 	if err != nil {
 		return nil, err
