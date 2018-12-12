@@ -17,15 +17,16 @@ import (
 )
 
 type testRunUIFilter struct {
-	PR       *int // GitHub PR to fetch the results for.
-	Products string
-	Labels   string
-	SHA      string
-	Aligned  bool
-	MaxCount *int
-	From     string
-	To       string
-	Search   string
+	PR         *int // GitHub PR to fetch the results for.
+	TestRunIDs string
+	Products   string
+	Labels     string
+	SHA        string
+	Aligned    bool
+	MaxCount   *int
+	From       string
+	To         string
+	Search     string
 	// JSON blob of extra (arbitrary) test runs
 	TestRuns string
 }
@@ -86,6 +87,19 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 	filter.PR, err = shared.ParsePRParam(q)
 	if err != nil {
 		return filter, err
+	}
+
+	runIDs, err := shared.ParseRunIDsParam(q)
+	if err != nil {
+		return filter, err
+	}
+
+	if len(runIDs) > 0 {
+		marshalled, err := json.Marshal(runIDs)
+		if err != nil {
+			return filter, err
+		}
+		filter.TestRunIDs = string(marshalled)
 	} else if filter.PR != nil {
 		one := 1
 		filter.MaxCount = &one
