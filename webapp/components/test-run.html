@@ -9,6 +9,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="./display-logo.html">
 <link rel="import" href="./product-info.html">
+<link rel="import" href="./wpt-flags.html">
 
 <!--
 `<test-run>` is a stateless component for displaying the details of a TestRun.
@@ -44,6 +45,11 @@ See models.go for more details.
       .revision {
         font-size: 14px;
       }
+      .github img {
+        margin-top: 1em;
+        width: 16px;
+        height: 16px;
+      }
     </style>
 
     <div>
@@ -71,11 +77,18 @@ See models.go for more details.
         </template>
       </paper-tooltip>
     </div>
+
+    <template is="dom-if" if="[[githubCommitLinks]]">
+      <div class="github">
+        <img src="/static/github.svg" />
+        <a href="https://github.com/web-platform-tests/wpt/commit/[[testRun.revision]]">[[sevenCharSHA(testRun.revision)]]</a>
+      </div>
+    </template>
   </template>
 
   <script>
-    /* global ProductInfo */
-    class TestRun extends ProductInfo(window.Polymer.Element) {
+    /* global WPTFlags, ProductInfo */
+    class TestRun extends WPTFlags(ProductInfo(window.Polymer.Element)) {
       static get is() {
         return 'test-run';
       }
@@ -137,6 +150,10 @@ See models.go for more details.
           return 'Using prefs in /testing/profiles/; some experimental features enabled';
         }
         return '';
+      }
+
+      sevenCharSHA(sha) {
+        return sha.substr(0, 7);
       }
     }
 

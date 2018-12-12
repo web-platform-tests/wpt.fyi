@@ -30,6 +30,7 @@ found in the LICENSE file.
           'experimentalByDefault',
           'experimentalAlignedExceptEdge',
           'fetchManifestForTestList',
+          'githubCommitLinks',
         ];
       }
     });
@@ -130,6 +131,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{fetchManifestForTestList}}">
         Fetch a manifest for a complete (expected) list of tests.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{githubCommitLinks}}">
+        Show links to the commit on GitHub in the header row.
       </paper-checkbox>
     </paper-item>
   </template>
