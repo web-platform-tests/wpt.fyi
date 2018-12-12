@@ -87,7 +87,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := sh.api.Context()
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	qh := queryHandler{
 		sharedImpl: defaultShared{ctx},
@@ -122,7 +122,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	simpleQ, ok := rq.AbstractQuery.(TestNamePattern)
 	if !ok {
-		ctx := shared.NewAppEngineContext(r)
+		ctx := sh.api.Context()
 		hostname := sh.api.GetHostname()
 		// TODO: This will not work when hostname is localhost (http scheme needed).
 		url := fmt.Sprintf("https://%s/api/search/cache", hostname)
