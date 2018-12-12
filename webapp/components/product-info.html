@@ -15,8 +15,10 @@
       // Channels
       m.set('stable', 'Stable');
       m.set('beta', 'Beta');
-      m.set('dev', 'Dev');
       m.set('experimental', 'Experimental');
+      m.set('dev', 'Dev'); // Chrome
+      m.set('preview', 'Technology Preview'); // Safari
+      m.set('nightly', 'Nightly'); // Firefox
       // Sources
       m.set('taskcluster', 'Taskcluster');
       m.set('buildbot', 'Buildbot');
@@ -28,16 +30,20 @@
       major: /(\d+)/,
       majorAndMinor: /(\d+\.\d+)/
     };
-    const CHANNELS = new Set(['stable', 'beta', 'dev', 'experimental']);
-    const SOURCES = new Set(['buildbot', 'taskcluster', 'msedge']);
     const DEFAULT_BROWSER_NAMES = ['chrome', 'edge', 'firefox', 'safari'];
     const DEFAULT_PRODUCT_SPECS = Array.from(DEFAULT_BROWSER_NAMES);
     const DEFAULT_PRODUCTS = DEFAULT_PRODUCT_SPECS.map(p => parseProductSpec(p));
 
+    Object.defineProperty(window.wpt, 'Channels', {
+      get: () => new Set(['stable', 'beta', 'experimental']),
+    });
+    Object.defineProperty(window.wpt, 'Sources', {
+      get: () => new Set(['buildbot', 'taskcluster', 'msedge']),
+    });
     Object.defineProperty(window.wpt, 'SemanticLabels', {
       get: () => [
-        { property: '_channel', values: CHANNELS },
-        { property: '_source', values: SOURCES },
+        { property: '_channel', values: window.wpt.Channels },
+        { property: '_source', values: window.wpt.Sources },
       ],
     });
 

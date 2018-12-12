@@ -33,7 +33,6 @@
   </test-fixture>
 
   <script>
-    /* global CHANNELS */
     document.addEventListener('WebComponentsReady', () => {
       suite('TestRunsQueryBuilder', () => {
         let queryBuilder, sandbox;
@@ -123,7 +122,7 @@
             });
           });
 
-          for (const channel of CHANNELS) {
+          for (const channel of window.wpt.Channels) {
             test(channel, done => {
               flush(() => {
                 for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
@@ -135,7 +134,7 @@
             });
           }
 
-          for (const channel of CHANNELS) {
+          for (const channel of window.wpt.Channels) {
             test(channel, done => {
               flush(() => {
                 queryBuilder.set('labels', [channel]);
@@ -219,8 +218,8 @@
               assert.isTrue(productBuilder.labels.includes('stable'));
             });
             test('updates the spec when value changes', () => {
-              productBuilder._channel = 'dev';
-              assert.equal(productBuilder.spec, 'chrome[dev]');
+              productBuilder._channel = 'experimental';
+              assert.equal(productBuilder.spec, 'chrome[experimental]');
             });
             test('changes value when labels are updated', () => {
               productBuilder.set('labels', ['experimental']);
