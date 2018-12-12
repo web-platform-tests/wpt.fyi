@@ -77,7 +77,7 @@ type structuredSearchHandler struct {
 }
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
-	api := shared.NewAppEngineAPI(r.Context())
+	api := shared.NewAppEngineAPI(shared.NewAppEngineContext(r))
 	searchHandler{api}.ServeHTTP(w, r)
 }
 
@@ -87,7 +87,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := sh.api.Context()
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	qh := queryHandler{
 		sharedImpl: defaultShared{ctx},
@@ -99,7 +99,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		delegate = structuredSearchHandler{queryHandler: qh, api: sh.api}
 	}
-	ch := shared.NewCachingHandler(ctx, delegate, mc, isRequestCacheable, shared.URLAsCacheKey, shouldCacheSearchResponse)
+	ch := shared.NewCachingHandler(ctx, delegate, mc, isRequestCacheable, cacheKey, shouldCacheSearchResponse)
 	ch.ServeHTTP(w, r)
 }
 
@@ -122,15 +122,23 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	simpleQ, ok := rq.AbstractQuery.(TestNamePattern)
 	if !ok {
-		ctx := r.Context()
+		ctx := sh.api.Context()
 		hostname := sh.api.GetHostname()
+		// TODO: This will not work when hostname is localhost (http scheme needed).
 		url := fmt.Sprintf("https://%s/api/search/cache", hostname)
+		logger := shared.GetLogger(ctx)
 
-		shared.GetLogger(ctx).Infof("Forwarding structured search request to cache: %s", string(data))
+		logger.Infof("Forwarding structured search request to cache: %s", string(data))
 
 		client := sh.api.GetHTTPClient()
 		resp, err := client.Post(url, "application/json", bytes.NewBuffer(data))
 		if err != nil {
+			errBody, err2 := ioutil.ReadAll(resp.Body)
+			errMsg := fmt.Sprintf("Error from request:\nPOST %s\n%s\n\nSTATUS %d", url, string(data), resp.StatusCode)
+			if err2 == nil {
+				errMsg = errMsg + "\n" + string(errBody)
+			}
+			logger.Errorf(errMsg)
 			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
 			return
 		}
@@ -138,7 +146,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(resp.StatusCode)
 		_, err = io.Copy(w, resp.Body)
 		if err != nil {
-			shared.GetLogger(ctx).Errorf("Error forwarding response payload from search cache: %v", err)
+			logger.Errorf("Error forwarding response payload from search cache: %v", err)
 		}
 		return
 	}
@@ -209,6 +217,26 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 	sort.Sort(byName(resp.Results))
 
 	return resp
+}
+
+var cacheKey = func(r *http.Request) interface{} {
+	if r.Method == "GET" {
+		return shared.URLAsCacheKey(r)
+	}
+
+	body := r.Body
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to read non-GET request body for generating cache key: %v", err)
+		shared.GetLogger(shared.NewAppEngineContext(r)).Errorf(msg)
+		panic(msg)
+	}
+	defer body.Close()
+
+	// Ensure that r.Body can be read again by other request handling routines.
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+
+	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
 }
 
 // TODO: Sometimes an empty result set is being cached for a query over
