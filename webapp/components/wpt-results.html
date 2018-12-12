@@ -649,7 +649,9 @@ found in the LICENSE file.
             if (['manual', 'reftest', 'testharness', 'wdspec'].includes(type)) {
               for (const file of Object.keys(this.manifest.items[type])) {
                 for (const test of this.manifest.items[type][file]) {
-                  collapsePathOnto(test[0], knownNodes);
+                  if (test[0].startsWith(prefix)) {
+                    collapsePathOnto(test[0], knownNodes);
+                  }
                 }
               }
             }
