@@ -63,6 +63,7 @@ func LoadTestRunKeys(
 		baseQuery = baseQuery.Offset(*offset)
 	}
 	if labels != nil {
+		labels.Remove("") // Ensure the empty string isn't present.
 		for i := range labels.Iter() {
 			baseQuery = baseQuery.Filter("Labels =", i.(string))
 		}

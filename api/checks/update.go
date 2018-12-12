@@ -144,7 +144,7 @@ func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headR
 	// Get the most recent, but still earlier, master run to compare.
 	one := 1
 	to := headRun.TimeStart.Add(-time.Millisecond)
-	labels := mapset.NewSetWith(shared.MasterLabel)
+	labels := mapset.NewSetWith(headRun.Channel(), shared.MasterLabel)
 	runs, err := shared.LoadTestRuns(ctx, filter.Products, labels, shared.LatestSHA, nil, &to, &one, nil)
 	baseRun := runs.First()
 	if err != nil {

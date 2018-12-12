@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -69,6 +70,7 @@ func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r 
 	if !testRun.LabelsSet().Contains(shared.PRBaseLabel) {
 		spec := shared.ProductSpec{}
 		spec.BrowserName = testRun.BrowserName
+		spec.Labels = mapset.NewSet(testRun.Channel())
 		s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
 	}
 
