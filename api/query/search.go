@@ -131,14 +131,24 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		logger.Infof("Forwarding structured search request to cache: %s", string(data))
 
 		client := sh.api.GetHTTPClient()
-		resp, err := client.Post(url, "application/json", bytes.NewBuffer(data))
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 		if err != nil {
-			errBody, err2 := ioutil.ReadAll(resp.Body)
-			errMsg := fmt.Sprintf("Error from request:\nPOST %s\n%s\n\nSTATUS %d", url, string(data), resp.StatusCode)
-			if err2 == nil {
-				errMsg = errMsg + "\n" + string(errBody)
+			logger.Errorf("Failed to create request to POST %s: %v", url, err)
+			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
+			return
+		}
+		req.Header.Add("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			msg := fmt.Sprintf("Error from request: POST %s", url)
+			if resp != nil {
+				msg = fmt.Sprintf("%s: STATUS %d", msg, resp.StatusCode)
+				errBody, err2 := ioutil.ReadAll(resp.Body)
+				if err2 == nil {
+					msg = fmt.Sprintf("%s: %s", msg, string(errBody))
+				}
 			}
-			logger.Errorf(errMsg)
+			logger.Errorf(msg)
 			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
 			return
 		}
