@@ -47,7 +47,7 @@ func (i *countingIndex) EvictAnyRun() error {
 	return nil
 }
 
-func (*countingIndex) Bind([]shared.TestRun, query.AbstractQuery) (query.Plan, error) {
+func (*countingIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, error) {
 	return nil, errNotImplemented
 }
 
