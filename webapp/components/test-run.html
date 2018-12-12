@@ -9,6 +9,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="./display-logo.html">
 <link rel="import" href="./product-info.html">
+<link rel="import" href="./wpt-flags.html">
 
 <!--
 `<test-run>` is a stateless component for displaying the details of a TestRun.
@@ -44,6 +45,16 @@ See models.go for more details.
       .revision {
         font-size: 14px;
       }
+      .github {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .github img {
+        margin-right: 8px;
+        width: 16px;
+        height: 16px;
+      }
     </style>
 
     <div>
@@ -53,7 +64,15 @@ See models.go for more details.
         <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
         <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
           <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
-          <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
+          <template is="dom-if" if="[[githubCommitLinks]]">
+            <a class="github" href="https://github.com/web-platform-tests/wpt/commit/[[testRun.revision]]">
+              <img src="/static/github.svg" />
+              [[sevenCharSHA(testRun.revision)]]
+            </a>
+          </template>
+          <template is="dom-if" if="[[!githubCommitLinks]]">
+            <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
+          </template>
           <div>{{dateFormat(testRun.time_start)}}</div>
         </template>
       </template>
@@ -74,8 +93,8 @@ See models.go for more details.
   </template>
 
   <script>
-    /* global ProductInfo */
-    class TestRun extends ProductInfo(window.Polymer.Element) {
+    /* global WPTFlags, ProductInfo */
+    class TestRun extends WPTFlags(ProductInfo(window.Polymer.Element)) {
       static get is() {
         return 'test-run';
       }
@@ -137,6 +156,10 @@ See models.go for more details.
           return 'Using prefs in /testing/profiles/; some experimental features enabled';
         }
         return '';
+      }
+
+      sevenCharSHA(sha) {
+        return sha.substr(0, 7);
       }
     }
 
