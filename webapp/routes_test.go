@@ -44,7 +44,7 @@ func TestInteropAnomaliesBound(t *testing.T) {
 	assertHandlerIs(t, "/anomalies", "anomaly")
 }
 
-func TestRunsBoundHSTS(t *testing.T) {
+func TestRunsBound(t *testing.T) {
 	assertHandlerIs(t, "/test-runs", "test-runs")
 }
 
