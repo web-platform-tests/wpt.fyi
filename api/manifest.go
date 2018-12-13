@@ -57,6 +57,9 @@ func getManifest(ctx context.Context, manifestAPI manifest.API, sha string, path
 		body = cached.Value
 	} else {
 		fetchedSHA, body, err = manifestAPI.GetManifestForSHA(sha)
+		if err != nil {
+			return fetchedSHA, nil, err
+		}
 		if paths != nil {
 			if body, err = manifest.Filter(body, paths); err != nil {
 				return fetchedSHA, nil, err
