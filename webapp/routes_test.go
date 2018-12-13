@@ -46,7 +46,6 @@ func TestInteropAnomaliesBound(t *testing.T) {
 
 func TestRunsBoundHSTS(t *testing.T) {
 	assertHandlerIs(t, "/test-runs", "test-runs")
-	assertHSTS(t, "/test-runs")
 }
 
 func TestApiDiffBoundCORS(t *testing.T) {
