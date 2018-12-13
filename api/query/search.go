@@ -144,7 +144,9 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			logger.Errorf("Error connecting to search API cache: %v", err)
 			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
 			return
-		} else if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			msg := fmt.Sprintf("Error from request: POST %s: STATUS %d", url, resp.StatusCode)
 			errBody, err2 := ioutil.ReadAll(resp.Body)
 			if err2 == nil {
