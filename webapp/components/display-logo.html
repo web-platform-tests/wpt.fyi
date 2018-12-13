@@ -7,6 +7,7 @@ found in the LICENSE file.
 <link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../components/product-info.html">
 
 <!--
 `<test-run>` is a stateless component for displaying the details of a TestRun.
@@ -61,7 +62,8 @@ See models.go for more details.
     </div>
   </template>
   <script>
-    class DisplayLogo extends window.Polymer.Element {
+    /* global ProductInfo */
+    class DisplayLogo extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'display-logo';
       }
@@ -114,9 +116,8 @@ See models.go for more details.
         if (!showSource || !product.labels) {
           return '';
         }
-        const sources = ['taskcluster', 'buildbot', 'msedge'];
-        const labels = new Set(product.labels);
-        return sources.find(s => labels.has(s));
+        const sources = window.wpt.Sources;
+        return product.labels.find(s => sources.has(s));
       }
     }
 
