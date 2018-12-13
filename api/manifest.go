@@ -43,7 +43,7 @@ func getManifest(ctx context.Context, manifestAPI manifest.API, sha string, path
 	if sha == "" {
 		sha = "latest"
 	}
-	var fetchedSHA string
+	fetchedSHA := sha
 	var body []byte
 	cached, err := memcache.Get(ctx, manifestCacheKey(sha))
 
