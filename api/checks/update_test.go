@@ -4,6 +4,7 @@ package checks
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strings"
 	"testing"
@@ -73,4 +74,88 @@ func getBeforeAndAfterRuns() (before, after shared.TestRun) {
 	after.BrowserName = "chrome"
 	after.Labels = []string{shared.PRHeadLabel}
 	return before, after
+}
+
+func TestCollapseSummary_Nesting(t *testing.T) {
+	diff := shared.ResultsSummary{
+		"/foo/test.html":             shared.TestSummary{1, 1},
+		"/foo/bar/test.html":         shared.TestSummary{1, 1},
+		"/foo/bar/baz/test.html":     shared.TestSummary{1, 1},
+		"/foo/bar/baz/qux/test.html": shared.TestSummary{1, 1},
+	}
+	assert.Equal(t, diff, collapseSummary(diff, 4))
+	assert.Equal(t, shared.ResultsSummary{
+		"/foo/test.html":     shared.TestSummary{1, 1},
+		"/foo/bar/test.html": shared.TestSummary{1, 1},
+		"/foo/bar/baz/":      shared.TestSummary{2, 2},
+	}, collapseSummary(diff, 3))
+	assert.Equal(t, shared.ResultsSummary{
+		"/foo/test.html": shared.TestSummary{1, 1},
+		"/foo/bar/":      shared.TestSummary{3, 3},
+	}, collapseSummary(diff, 2))
+	assert.Equal(t, shared.ResultsSummary{
+		"/foo/": shared.TestSummary{4, 4},
+	}, collapseSummary(diff, 1))
+}
+
+func TestCollapseSummary_ManyFiles(t *testing.T) {
+	diff := shared.ResultsSummary{}
+	for i := 1; i <= 20; i++ {
+		diff[fmt.Sprintf("/foo/test%v.html", i)] = shared.TestSummary{1, 1}
+		diff[fmt.Sprintf("/bar/test%v.html", i)] = shared.TestSummary{1, 1}
+		diff[fmt.Sprintf("/baz/test%v.html", i)] = shared.TestSummary{1, 1}
+	}
+	assert.Equal(t, shared.ResultsSummary{
+		"/foo/": shared.TestSummary{20, 20},
+		"/bar/": shared.TestSummary{20, 20},
+		"/baz/": shared.TestSummary{20, 20},
+	}, collapseSummary(diff, 10))
+	// A number too small still does its best to collapse.
+	assert.Equal(t, shared.ResultsSummary{
+		"/foo/": shared.TestSummary{20, 20},
+		"/bar/": shared.TestSummary{20, 20},
+		"/baz/": shared.TestSummary{20, 20},
+	}, collapseSummary(diff, 1))
+}
+
+func TestCollapseDiff_Nesting(t *testing.T) {
+	diff := shared.ResultsDiff{
+		"/foo/test.html":             shared.TestDiff{1, 1, 1},
+		"/foo/bar/test.html":         shared.TestDiff{1, 1, 1},
+		"/foo/bar/baz/test.html":     shared.TestDiff{1, 1, 1},
+		"/foo/bar/baz/qux/test.html": shared.TestDiff{1, 1, 1},
+	}
+	assert.Equal(t, diff, collapseDiff(diff, 4))
+	assert.Equal(t, shared.ResultsDiff{
+		"/foo/test.html":     shared.TestDiff{1, 1, 1},
+		"/foo/bar/test.html": shared.TestDiff{1, 1, 1},
+		"/foo/bar/baz/":      shared.TestDiff{2, 2, 2},
+	}, collapseDiff(diff, 3))
+	assert.Equal(t, shared.ResultsDiff{
+		"/foo/test.html": shared.TestDiff{1, 1, 1},
+		"/foo/bar/":      shared.TestDiff{3, 3, 3},
+	}, collapseDiff(diff, 2))
+	assert.Equal(t, shared.ResultsDiff{
+		"/foo/": shared.TestDiff{4, 4, 4},
+	}, collapseDiff(diff, 1))
+}
+
+func TestCollapseDiff_ManyFiles(t *testing.T) {
+	diff := shared.ResultsDiff{}
+	for i := 1; i <= 20; i++ {
+		diff[fmt.Sprintf("/foo/test%v.html", i)] = shared.TestDiff{1, 1, 1}
+		diff[fmt.Sprintf("/bar/test%v.html", i)] = shared.TestDiff{1, 1, 1}
+		diff[fmt.Sprintf("/baz/test%v.html", i)] = shared.TestDiff{1, 1, 1}
+	}
+	assert.Equal(t, shared.ResultsDiff{
+		"/foo/": shared.TestDiff{20, 20, 20},
+		"/bar/": shared.TestDiff{20, 20, 20},
+		"/baz/": shared.TestDiff{20, 20, 20},
+	}, collapseDiff(diff, 10))
+	// A number too small still does its best to collapse.
+	assert.Equal(t, shared.ResultsDiff{
+		"/foo/": shared.TestDiff{20, 20, 20},
+		"/bar/": shared.TestDiff{20, 20, 20},
+		"/baz/": shared.TestDiff{20, 20, 20},
+	}, collapseDiff(diff, 1))
 }

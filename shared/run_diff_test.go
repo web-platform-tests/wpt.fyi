@@ -59,8 +59,8 @@ func TestDiffResults_Added(t *testing.T) {
 
 	// Added, but it was a rename.
 	renames := map[string]string{"/foo.html": "/bar.html"}
-	rBefore := map[string][]int{"/foo.html": []int{1, 1}}
-	rAfter := map[string][]int{"/bar.html": []int{1, 1}}
+	rBefore := ResultsSummary{"/foo.html": []int{1, 1}}
+	rAfter := ResultsSummary{"/bar.html": []int{1, 1}}
 	assert.Equal(
 		t,
 		map[string]TestDiff{"/bar.html": {0, 0, 0}},
@@ -89,11 +89,11 @@ func TestDiffResults_Filtered(t *testing.T) {
 	const changedPath = "/mock/changed.html"
 	const addedPath = "/mock/added.html"
 
-	before := map[string][]int{
+	before := ResultsSummary{
 		removedPath: {1, 2},
 		changedPath: {2, 5},
 	}
-	after := map[string][]int{
+	after := ResultsSummary{
 		changedPath: {3, 5},
 		addedPath:   {1, 3},
 	}
@@ -117,11 +117,11 @@ func TestDiffResults_Filtered(t *testing.T) {
 
 	// Filter where one matches
 	mockPath1, mockPath2 := "/mock/path-1.html", "/mock/path-2.html"
-	rBefore = map[string][]int{
+	rBefore = ResultsSummary{
 		mockPath1: {0, 1},
 		mockPath2: {0, 1},
 	}
-	rAfter = map[string][]int{
+	rAfter = ResultsSummary{
 		mockPath1: {2, 2},
 		mockPath2: {2, 2},
 	}
@@ -152,9 +152,9 @@ func assertDeltaWithFilter(t *testing.T, before []int, after []int, delta []int,
 		GetResultsDiff(rBefore, rAfter, filter, paths, nil))
 }
 
-func getDeltaResultsMaps(before []int, after []int) (map[string][]int, map[string][]int) {
-	return map[string][]int{mockTestPath: before},
-		map[string][]int{mockTestPath: after}
+func getDeltaResultsMaps(before []int, after []int) (ResultsSummary, ResultsSummary) {
+	return ResultsSummary{mockTestPath: before},
+		ResultsSummary{mockTestPath: after}
 }
 
 func TestRegressions(t *testing.T) {
