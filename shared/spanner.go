@@ -58,7 +58,7 @@ const (
 
 	// TestStatusNameNotRun is  the string representation for a test result where
 	// the test exists but was not run.
-	TestStatusNameNotRun string = "NOT_RUN"
+	TestStatusNameNotRun string = "NOTRUN"
 
 	// TestStatusNameFail is the string representation of a test result where the
 	// test failed.
