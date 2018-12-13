@@ -54,12 +54,11 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 		return "", nil, err
 	}
 	var release *github.RepositoryRelease
-	var releaseTag string
+	releaseTag := "latest"
 	fetchedSHA = sha
 	if shared.IsLatest(sha) {
 		// Use GitHub's API for latest release.
-		releaseTag = "latest"
-		release, _, err = client.Repositories.GetReleaseByTag(aeAPI.Context(), "web-platform-tests", "wpt", releaseTag)
+		release, _, err = client.Repositories.GetLatestRelease(aeAPI.Context(), "web-platform-tests", "wpt")
 	} else {
 		q := fmt.Sprintf("SHA:%s user:web-platform-tests repo:wpt", sha)
 		issues, _, err := client.Search.Issues(aeAPI.Context(), q, nil)
