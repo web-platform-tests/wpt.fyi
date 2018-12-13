@@ -215,7 +215,7 @@ func TestSync(t *testing.T) {
 			plan, err := i.Bind(runs, query.TestStatusConstraint{
 				BrowserName: "Chrome",
 				Status:      shared.TestStatusPass,
-			})
+			}.BindToRuns(runs))
 			if err != nil {
 				return
 			}

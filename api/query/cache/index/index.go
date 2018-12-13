@@ -221,10 +221,10 @@ func (i *shardedWPTIndex) EvictAnyRun() error {
 	return i.syncEvictRun()
 }
 
-func (i *shardedWPTIndex) Bind(runs []shared.TestRun, aq query.AbstractQuery) (query.Plan, error) {
+func (i *shardedWPTIndex) Bind(runs []shared.TestRun, q query.ConcreteQuery) (query.Plan, error) {
 	if len(runs) == 0 {
 		return nil, errNoRuns
-	} else if aq == nil {
+	} else if q == nil {
 		return nil, errNoQuery
 	}
 
@@ -237,7 +237,6 @@ func (i *shardedWPTIndex) Bind(runs []shared.TestRun, aq query.AbstractQuery) (q
 		return nil, err
 	}
 
-	q := aq.BindToRuns(runs)
 	fs := make(ShardedFilter, len(idxs))
 	for j, idx := range idxs {
 		f, err := newFilter(idx, q)

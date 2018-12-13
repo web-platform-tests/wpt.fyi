@@ -94,7 +94,7 @@ func (m *backfillMonitor) Stop() error {
 	return m.ProxyMonitor.Stop()
 }
 
-func (*backfillIndex) Bind([]shared.TestRun, query.AbstractQuery) (query.Plan, error) {
+func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, error) {
 	return nil, nil
 }
 

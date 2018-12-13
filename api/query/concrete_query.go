@@ -16,7 +16,7 @@ type Binder interface {
 	// given runs are in the cache and extract results data subsets that pertain
 	// to the runs before producing a Plan implementation that can operate over
 	// the subsets directly.
-	Bind([]shared.TestRun, AbstractQuery) (Plan, error)
+	Bind([]shared.TestRun, ConcreteQuery) (Plan, error)
 }
 
 // Plan a query execution plan that returns results.

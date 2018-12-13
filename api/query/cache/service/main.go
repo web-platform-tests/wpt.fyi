@@ -15,8 +15,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
-  "github.com/web-platform-tests/wpt.fyi/shared"
-
+	"github.com/web-platform-tests/wpt.fyi/shared"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
@@ -81,22 +80,11 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	plan, err := idx.Bind(runs, rq.AbstractQuery)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	q := rq.AbstractQuery.BindToRuns(runs)
 
 	//
 	// Start: Shim to ignore irrelevant tests.
 	//
-
-	// Interpret execution plan as a concrete query that can be manipulated.
-	q, ok := plan.(query.ConcreteQuery)
-	if !ok {
-		http.Error(w, "Failed bind test runs to abstract query", http.StatusInternalServerError)
-		return
-	}
 
 	// Create base query of the form
 	// OR(!run1-status:UNKNOWN, ..., !runN-status:UNKNOWN).
@@ -125,16 +113,15 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Reinterpret modified query as a query execution plan.
-	plan, ok = q.(query.Plan)
-	if !ok {
-		http.Error(w, "Failed to interpret bound query as query execution plan", http.StatusInternalServerError)
-		return
-	}
-
 	//
 	// End: Shim to ignore irrelevant tests.
 	//
+
+	plan, err := idx.Bind(runs, q)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	results := plan.Execute(runs)
 	res, ok := results.([]query.SearchResult)
