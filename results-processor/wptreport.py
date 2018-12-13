@@ -409,6 +409,12 @@ class WPTReport(object):
 
         return payload
 
+    def normalize_version(self):
+        m = re.match(r'Technology Preview \(Release (\d+), (.*)\)',
+                     self.run_info.get('browser_version'))
+        if m:
+            self.run_info['browser_version'] = m.group(1) + ' preview'
+
     def finalize(self):
         """Checks and finalizes the report.
 
@@ -419,6 +425,10 @@ class WPTReport(object):
             Exceptions inherited from WPTReportError.
         """
         self.summarize()
+        # Additonal final fixup:
+        self.normalize_version()
+        # Access two property methods which will raise exceptions if any
+        # required field is missing.
         self.sha_product_path
         self.test_run_metadata
 

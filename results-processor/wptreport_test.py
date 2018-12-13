@@ -454,6 +454,14 @@ class WPTReportTest(unittest.TestCase):
                          '0bdaaf9c1622ca49eb140381af1ece6d8001c934/'
                          'firefox-59.0-linux-afa59408e1-summary.json.gz')
 
+    def test_normalize_version(self):
+        r = WPTReport()
+        r._report = {'run_info': {
+            'browser_version': 'Technology Preview (Release 67, 13607.1.9.0.1)'
+        }}
+        r.normalize_version()
+        self.assertEqual(r.run_info['browser_version'], '67 preview')
+
 
 class HelpersTest(unittest.TestCase):
     def test_prepare_labels_from_empty_str(self):
