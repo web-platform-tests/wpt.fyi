@@ -17,7 +17,8 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
 		return
 	}
-
+	ctx := shared.NewAppEngineContext(r)
+	aeAPI := shared.NewAppEngineAPI(ctx)
 	testRunFilter, err := shared.ParseTestRunFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -28,6 +29,9 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 	if testRunFilter.IsDefaultQuery() {
 		aWeekAgo := time.Now().Truncate(time.Hour*24).AddDate(0, 0, -7)
 		testRunFilter.From = &aWeekAgo
+		if aeAPI.IsFeatureEnabled("masterRunsOnly") {
+			testRunFilter = testRunFilter.MasterOnly()
+		}
 	} else if testRunFilter.MaxCount == nil {
 		oneHundred := 100
 		testRunFilter.MaxCount = &oneHundred
