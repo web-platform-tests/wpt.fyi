@@ -138,15 +138,17 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		req.Header.Add("Content-Type", "application/json")
+
 		resp, err := client.Do(req)
 		if err != nil {
-			msg := fmt.Sprintf("Error from request: POST %s", url)
-			if resp != nil {
-				msg = fmt.Sprintf("%s: STATUS %d", msg, resp.StatusCode)
-				errBody, err2 := ioutil.ReadAll(resp.Body)
-				if err2 == nil {
-					msg = fmt.Sprintf("%s: %s", msg, string(errBody))
-				}
+			logger.Errorf("Error connecting to search API cache: %v", err)
+			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
+			return
+		} else if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			msg := fmt.Sprintf("Error from request: POST %s: STATUS %d", url, resp.StatusCode)
+			errBody, err2 := ioutil.ReadAll(resp.Body)
+			if err2 == nil {
+				msg = fmt.Sprintf("%s: %s", msg, string(errBody))
 			}
 			logger.Errorf(msg)
 			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
