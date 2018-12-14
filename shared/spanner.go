@@ -38,6 +38,10 @@ const (
 	// TestStatusSkip indicates that the test was disabled for this test run.
 	TestStatusSkip int64 = 8
 
+	// TestStatusAssert indicates that a non-fatal assertion failed. This test
+	// status is supported by, at least, Mozilla.
+	TestStatusAssert int64 = 9
+
 	// TestStatusNameUnknown is the string representation for an uninitialized
 	// TestStatus and should not be used.
 	TestStatusNameUnknown string = "UNKNOWN"
@@ -75,6 +79,11 @@ const (
 	// test was disabled for this test run.
 	TestStatusNameSkip string = "SKIP"
 
+	// TestStatusNameAssert is the string representation of a test result where
+	// a non-fatal assertion failed. This test status is supported by, at least,
+	// Mozilla.
+	TestStatusNameAssert string = "ASSERT"
+
 	// TestStatusDefault is the default value used when a status string cannot be
 	// interpreted.
 	TestStatusDefault int64 = TestStatusUnknown
@@ -94,6 +103,7 @@ var testStatusValues = map[string]int64{
 	TestStatusNameFail:    TestStatusFail,
 	TestStatusNameCrash:   TestStatusCrash,
 	TestStatusNameSkip:    TestStatusSkip,
+	TestStatusNameAssert:  TestStatusAssert,
 }
 
 var testStatusNames = map[int64]string{
@@ -106,6 +116,7 @@ var testStatusNames = map[int64]string{
 	TestStatusFail:    TestStatusNameFail,
 	TestStatusCrash:   TestStatusNameCrash,
 	TestStatusSkip:    TestStatusNameSkip,
+	TestStatusAssert:  TestStatusNameAssert,
 }
 
 // TestStatusValueFromString returns the enum value associated with str (if
