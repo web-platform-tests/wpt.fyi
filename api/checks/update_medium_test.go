@@ -32,7 +32,8 @@ func TestLoadRunsToCompare_master(t *testing.T) {
 	}
 	yesterday := time.Now().AddDate(0, 0, -1)
 	for i := 0; i < 2; i++ {
-		testRun.Revision = strings.Repeat(strconv.Itoa(i), 10)
+		testRun.FullRevisionHash = strings.Repeat(strconv.Itoa(i), 40)
+		testRun.Revision = testRun.FullRevisionHash[:10]
 		testRun.TimeStart = yesterday.Add(time.Duration(i) * time.Hour)
 		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
 		key, _ = datastore.Put(ctx, key, &testRun)
@@ -65,7 +66,8 @@ func TestLoadRunsToCompare_pr_base_first(t *testing.T) {
 				Product: shared.Product{
 					BrowserName: "chrome",
 				},
-				Revision: "1234567890",
+				Revision:         "1234567890",
+				FullRevisionHash: "1234567890123456789012345678901234567890",
 			},
 			TimeStart: yesterday.Add(time.Duration(i) * time.Hour),
 			Labels:    labelsForRuns[i],
@@ -101,7 +103,8 @@ func TestLoadRunsToCompare_pr_head_first(t *testing.T) {
 				Product: shared.Product{
 					BrowserName: "chrome",
 				},
-				Revision: "1234567890",
+				Revision:         "1234567890",
+				FullRevisionHash: "1234567890123456789012345678901234567890",
 			},
 			TimeStart: yesterday.Add(time.Duration(i) * time.Hour),
 			Labels:    labelsForRuns[i],

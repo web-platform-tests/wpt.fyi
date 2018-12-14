@@ -50,7 +50,6 @@ func TestLoadTestRunsBySHAs(t *testing.T) {
 	testRun.BrowserName = "chrome"
 	testRun.BrowserVersion = "63.0"
 	testRun.OSName = "linux"
-	testRun.Revision = "0000000000"
 	testRun.CreatedAt = time.Now()
 
 	ctx, done, err := sharedtest.NewAEContext(true)
@@ -58,13 +57,23 @@ func TestLoadTestRunsBySHAs(t *testing.T) {
 	defer done()
 
 	for i := 0; i < 5; i++ {
-		testRun.Revision = strings.Repeat(strconv.Itoa(i), 10)
+		testRun.FullRevisionHash = strings.Repeat(strconv.Itoa(i), 40)
+		testRun.Revision = testRun.FullRevisionHash[:10]
 		testRun.CreatedAt = time.Now().AddDate(0, 0, -i)
 		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
 		datastore.Put(ctx, key, &testRun)
 	}
 
 	runs, err := shared.LoadTestRunsBySHAs(ctx, "1111111111", "3333333333")
+	assert.Nil(t, err)
+	assert.Len(t, runs, 2)
+	for _, run := range runs {
+		assert.True(t, run.ID > 0, "ID field should be populated.")
+	}
+	assert.Equal(t, runs[0].Revision, "1111111111")
+	assert.Equal(t, runs[1].Revision, "3333333333")
+
+	runs, err = shared.LoadTestRunsBySHAs(ctx, "11111", "33333")
 	assert.Nil(t, err)
 	assert.Len(t, runs, 2)
 	for _, run := range runs {
@@ -200,14 +209,19 @@ func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
 	testRuns := []shared.TestRun{
 		shared.TestRun{
 			ProductAtRevision: shared.ProductAtRevision{
-				Product:  shared.Product{BrowserName: "chrome"},
-				Revision: "0000000000",
+				Product:          shared.Product{BrowserName: "chrome"},
+				FullRevisionHash: strings.Repeat("0", 40),
+				Revision:         strings.Repeat("0", 10),
 			},
 		},
 		shared.TestRun{
 			ProductAtRevision: shared.ProductAtRevision{
-				Product:  shared.Product{BrowserName: "chrome"},
-				Revision: "1111111111",
+				Product: shared.Product{
+					BrowserName:    "chrome",
+					BrowserVersion: "63.1.1.1",
+				},
+				FullRevisionHash: strings.Repeat("1", 40),
+				Revision:         strings.Repeat("1", 10),
 			},
 		},
 	}
@@ -225,10 +239,24 @@ func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
 
 	products := make([]shared.ProductSpec, 1)
 	products[0].BrowserName = "chrome"
-	products[0].Revision = "1111111111"
-	loaded, err := shared.LoadTestRuns(ctx, products, nil, shared.LatestSHA, nil, nil, nil, nil)
+	products[0].Revision = strings.Repeat("1", 10)
+	loaded, err := shared.LoadTestRuns(ctx, products, nil, "", nil, nil, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
+	assert.Equal(t, 1, len(allRuns))
+	assert.Equal(t, "1111111111", allRuns[0].Revision)
+
+	// Partial SHA
+	products[0].Revision = "11111"
+	loaded, err = shared.LoadTestRuns(ctx, products, nil, "", nil, nil, nil, nil)
+	allRuns = loaded.AllRuns()
+	assert.Equal(t, 1, len(allRuns))
+	assert.Equal(t, "1111111111", allRuns[0].Revision)
+
+	// Partial SHA, Browser version
+	products[0].BrowserVersion = "63"
+	loaded, err = shared.LoadTestRuns(ctx, products, nil, "", nil, nil, nil, nil)
+	allRuns = loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
 	assert.Equal(t, "1111111111", allRuns[0].Revision)
 }

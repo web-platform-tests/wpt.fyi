@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,8 @@ func TestApiSHAsHandler(t *testing.T) {
 		run.BrowserName = browser
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
-	run.Revision = "abcdef0000"
+	run.FullRevisionHash = strings.Repeat("abcdef0000", 4)
+	run.Revision = run.FullRevisionHash[:10]
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 
 	// Aligned
