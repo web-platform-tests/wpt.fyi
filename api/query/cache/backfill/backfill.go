@@ -45,7 +45,7 @@ type backfillMonitor struct {
 // bytesPerRun is a slight over estimate of the memory requirements for one WPT
 // run's indexed data. This value was determined experimentally in the early
 // phases of search cache development.
-const bytesPerRun = uint64(1.45e+8)
+const bytesPerRun = uint64(6.5e+7)
 
 var errNilIndex = errors.New("Index to backfill is nil")
 

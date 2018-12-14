@@ -83,11 +83,32 @@ type RunDiff struct {
 	// [newly-passing, newly-failing, total-delta],
 	// where newly-pa
 	Before        TestRun           `json:"-"`
-	BeforeSummary map[string][]int  `json:"-"`
+	BeforeSummary ResultsSummary    `json:"-"`
 	After         TestRun           `json:"-"`
-	AfterSummary  map[string][]int  `json:"-"`
+	AfterSummary  ResultsSummary    `json:"-"`
 	Differences   ResultsDiff       `json:"diff"`
 	Renames       map[string]string `json:"renames"`
+}
+
+// TestSummary is a pair of [passing, total] counts for a test file.
+type TestSummary []int
+
+// Add adds the other summary counts to this one. Used for summing folders.
+func (s TestSummary) Add(other TestSummary) {
+	s[0] += other[0]
+	s[1] += other[1]
+}
+
+// ResultsSummary is a collection of [pass, total] summary pairs, keyed by test.
+type ResultsSummary map[string]TestSummary
+
+// Add adds the given summary to the summary for the given path, adding it
+// to the map if it's not present already.
+func (s ResultsSummary) Add(k string, other TestSummary) {
+	if _, ok := s[k]; !ok {
+		s[k] = TestSummary{0, 0}
+	}
+	s[k].Add(other)
 }
 
 // TestDiff is an array of differences between 2 tests.
@@ -106,6 +127,13 @@ func (d TestDiff) Regressions() int {
 // TotalDelta is the delta in the number of total subtests when comparing before/after.
 func (d TestDiff) TotalDelta() int {
 	return d[2]
+}
+
+// Add adds the given other TestDiff to this TestDiff's value. Used for summing.
+func (d TestDiff) Add(other TestDiff) {
+	d[0] += other[0]
+	d[1] += other[1]
+	d[2] += other[2]
 }
 
 // NewTestDiff computes the differences between two test-run pass-count summaries,
@@ -157,6 +185,15 @@ func NewTestDiff(before, after []int, filter DiffFilterParam) TestDiff {
 // ResultsDiff is a collection of test diffs, keyed by the test path.
 type ResultsDiff map[string]TestDiff
 
+// Add adds the given diff to the TestDiff for the given key, or
+// puts it in the map if it's not yet present.
+func (r ResultsDiff) Add(k string, diff TestDiff) {
+	if _, ok := r[k]; !ok {
+		r[k] = TestDiff{0, 0, 0}
+	}
+	r[k].Add(diff)
+}
+
 // Regressions returns the set of test paths for tests that have a regression
 // value in their diff. A change is considered a regression when tests that existed
 // both before and after have an increase in the number of failing tests has increased,
@@ -175,7 +212,7 @@ func (r ResultsDiff) Regressions() mapset.Set {
 
 // FetchRunResultsJSONForParam fetches the results JSON blob for the given [product]@[SHA] param.
 func FetchRunResultsJSONForParam(
-	ctx context.Context, r *http.Request, param string) (results map[string][]int, err error) {
+	ctx context.Context, r *http.Request, param string) (results ResultsSummary, err error) {
 	afterDecoded, err := base64.URLEncoding.DecodeString(param)
 	if err == nil {
 		var run TestRun
@@ -193,7 +230,7 @@ func FetchRunResultsJSONForParam(
 
 // FetchRunResultsJSONForSpec fetches the result JSON blob for the given spec.
 func FetchRunResultsJSONForSpec(
-	ctx context.Context, r *http.Request, spec ProductSpec) (results map[string][]int, err error) {
+	ctx context.Context, r *http.Request, spec ProductSpec) (results ResultsSummary, err error) {
 	var run *TestRun
 	if run, err = FetchRunForSpec(ctx, spec); err != nil {
 		return nil, err
@@ -219,7 +256,7 @@ func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 
 // FetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
 // a full run can span 20k files).
-func FetchRunResultsJSON(ctx context.Context, run TestRun) (results map[string][]int, err error) {
+func FetchRunResultsJSON(ctx context.Context, run TestRun) (results ResultsSummary, err error) {
 	client := urlfetch.Client(ctx)
 	url := strings.TrimSpace(run.ResultsURL)
 	var resp *http.Response
@@ -269,8 +306,8 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 // GetResultsDiff returns a map of test name to an array of [newly-passing, newly-failing, total-delta], for tests which had
 // different results counts in their map (which is test name to array of [count-passed, total]).
 func GetResultsDiff(
-	before map[string][]int,
-	after map[string][]int,
+	before ResultsSummary,
+	after ResultsSummary,
 	filter DiffFilterParam,
 	paths mapset.Set,
 	renames map[string]string) map[string]TestDiff {

@@ -31,8 +31,8 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type diffResult struct {
-	Diff    map[string][]int  `json:"diff"`
-	Renames map[string]string `json:"renames,omitempty"`
+	Diff    shared.ResultsDiff `json:"diff"`
+	Renames map[string]string  `json:"renames,omitempty"`
 }
 
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +132,7 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "before param missing", http.StatusBadRequest)
 		return
 	}
-	var beforeJSON map[string][]int
+	var beforeJSON shared.ResultsSummary
 	if beforeJSON, err = shared.FetchRunResultsJSONForParam(ctx, r, specBefore); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -147,7 +147,7 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var afterJSON map[string][]int
+	var afterJSON shared.ResultsSummary
 	if err = json.Unmarshal(body, &afterJSON); err != nil {
 		http.Error(w, "Failed to parse JSON: "+err.Error(), http.StatusBadRequest)
 		return
