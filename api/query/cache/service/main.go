@@ -9,18 +9,17 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"runtime"
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
-	"github.com/web-platform-tests/wpt.fyi/shared"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
-
-	"net/http"
+	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 
 	"cloud.google.com/go/compute/metadata"
 	log "github.com/sirupsen/logrus"
@@ -33,7 +32,7 @@ var (
 	numShards          = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval    = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
 	maxHeapBytes       = flag.Uint64("max_heap_bytes", uint64(1e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
-	updateInterval     = flag.Duration("updated_interval", time.Second*10, "Update interval for polling for new runs")
+	updateInterval     = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns      = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
 
 	idx index.Index
@@ -80,42 +79,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := rq.AbstractQuery.BindToRuns(runs)
-
-	//
-	// Start: Shim to ignore irrelevant tests.
-	//
-
-	// Create base query of the form
-	// OR(!run1-status:UNKNOWN, ..., !runN-status:UNKNOWN).
-	baseQuery := query.Or{
-		Args: make([]query.ConcreteQuery, len(rq.RunIDs)),
-	}
-	for i, runID := range rq.RunIDs {
-		baseQuery.Args[i] = query.Not{
-			Arg: query.RunTestStatusConstraint{
-				Run:    runID,
-				Status: shared.TestStatusUnknown,
-			},
-		}
-	}
-
-	// Add baseQuery to existing AND in q=AND(...), or create AND(baseQuery, q).
-	if andQ, ok := q.(query.And); ok {
-		andQ.Args = append([]query.ConcreteQuery{baseQuery}, andQ.Args...)
-		q = andQ
-	} else {
-		q = query.And{
-			Args: []query.ConcreteQuery{
-				baseQuery,
-				q,
-			},
-		}
-	}
-
-	//
-	// End: Shim to ignore irrelevant tests.
-	//
+	q := cq.PrepareUserQuery(rq.RunIDs, rq.AbstractQuery.BindToRuns(runs))
 
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
