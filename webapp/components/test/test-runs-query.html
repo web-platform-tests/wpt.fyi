@@ -160,6 +160,24 @@
               expect(testRunsQuery.queryParams.aligned).to.not.be.defined;
             });
           });
+
+          suite('computeResultsRangeMessage', () => {
+            test('chrome', () => {
+              testRunsQuery.productSpecs = ['chrome', 'firefox'];
+              expect(testRunsQuery.resultsRangeMessage).to.contain('chrome, firefox');
+            });
+            test('labels', () => {
+              testRunsQuery.labels = ['foo'];
+              expect(testRunsQuery.resultsRangeMessage).to.contain('with label \'foo\'');
+              testRunsQuery.labels = ['foo', 'bar'];
+              expect(testRunsQuery.resultsRangeMessage).to.contain('with labels \'foo\', \'bar\'');
+            });
+            test('master', () => {
+              testRunsQuery.master = true;
+              expect(testRunsQuery.resultsRangeMessage).to.contain('master test runs');
+              expect(testRunsQuery.resultsRangeMessage).to.not.contain('with label');
+            });
+          });
         });
 
         suite('TestRunsUIQuery.prototype.*', () => {
@@ -171,6 +189,7 @@
             expect(testRunsUIQuery.query).to.not.contain('diff');
           });
         });
+
       });
 
     }); // end 'WebComponentsReady' handler.

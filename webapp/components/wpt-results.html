@@ -161,15 +161,13 @@ found in the LICENSE file.
         </div>
       </template>
 
-      <template is="dom-if" if="[[testRuns.length]]">
-        <template is="dom-if" if="[[resultsRangeMessage]]">
-          <info-banner>
-            [[resultsRangeMessage]]
-            <template is="dom-if" if="[[queryBuilder]]">
-              <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
-            </template>
-          </info-banner>
-        </template>
+      <template is="dom-if" if="[[resultsRangeMessage]]">
+        <info-banner>
+          [[resultsRangeMessage]]
+          <template is="dom-if" if="[[queryBuilder]]">
+            <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+          </template>
+        </info-banner>
       </template>
     </section>
 
@@ -506,7 +504,7 @@ found in the LICENSE file.
             }
 
             // Load a manifest.
-            if (this.fetchManifestForTestList) {
+            if (this.fetchManifestForTestList && runs && runs.length) {
               const shas = new Set((runs || []).map(r => r.revision));
               const sha = shas.size === 1 ? Array.from(shas)[0] : 'latest';
               this.fetchManifestForSHA(sha);
@@ -621,6 +619,10 @@ found in the LICENSE file.
       }
 
       refreshDisplayedNodes() {
+        if (!this.searchResults || !this.searchResults.length) {
+          this.displayedNodes = [];
+          return;
+        }
         // Prefix: includes trailing slash.
         const prefix = this.path === '/' ? '/' : `${this.path}/`;
         const collapsePathOnto = (testPath, nodes) => {
