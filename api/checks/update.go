@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -205,16 +206,17 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 
 	hasRegressions := regressions.Cardinality() > 0
 	if !hasRegressions {
+		collapsed := collapseSummary(diff.AfterSummary, 10)
 		data := summaries.Completed{
 			CheckState:        checkState,
 			ResultsComparison: resultsComparison,
 			Results:           make(map[string][]int),
 		}
-		tests, _ := shared.MapStringKeys(diff.AfterSummary)
+		tests, _ := shared.MapStringKeys(collapsed)
 		sort.Strings(tests)
 		for _, test := range tests {
 			if len(data.Results) < 10 {
-				data.Results[test] = diff.AfterSummary[test]
+				data.Results[test] = collapsed[test]
 			} else {
 				data.More++
 			}
@@ -255,4 +257,78 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 		summary = data
 	}
 	return summary, nil
+}
+
+type pathKeys []string
+
+func (e pathKeys) Len() int      { return len(e) }
+func (e pathKeys) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
+func (e pathKeys) Less(i, j int) bool {
+	return len(strings.Split(e[i], "/")) > len(strings.Split(e[j], "/"))
+}
+
+// collapseDiff collapses a tree of file paths into a smaller tree of folders.
+func collapseDiff(diff shared.ResultsDiff, limit int) shared.ResultsDiff {
+	keys, _ := shared.MapStringKeys(diff)
+	paths := shared.ToStringSlice(collapsePaths(keys, limit))
+	result := make(shared.ResultsDiff)
+	for k, v := range diff {
+		for _, p := range paths {
+			if strings.HasPrefix(k, p) {
+				result.Add(p, v)
+				break
+			}
+		}
+	}
+	return result
+}
+
+// collapseSummary collapses a tree of file paths into a smaller tree of folders.
+func collapseSummary(summary shared.ResultsSummary, limit int) shared.ResultsSummary {
+	keys, _ := shared.MapStringKeys(summary)
+	paths := shared.ToStringSlice(collapsePaths(keys, limit))
+	result := make(shared.ResultsSummary)
+	for k, v := range summary {
+		for _, p := range paths {
+			if strings.HasPrefix(k, p) {
+				result.Add(p, v)
+				break
+			}
+		}
+	}
+	return result
+}
+
+func collapsePaths(keys []string, limit int) mapset.Set {
+	result := shared.NewSetFromStringSlice(keys)
+	// 10 iterations to avoid edge-case infinite looping risk.
+	for i := 0; i < 10 && result.Cardinality() > limit; i++ {
+		sort.Sort(pathKeys(keys))
+		collapsed := mapset.NewSet()
+		depth := -1
+		for _, k := range keys {
+			// Something might have already collapsed down 1 dir into this one.
+			if collapsed.Contains(k) {
+				continue
+			}
+			parts := strings.Split(k, "/")
+			if parts[len(parts)-1] == "" {
+				parts = parts[:len(parts)-1]
+			}
+			if len(parts) < depth {
+				collapsed.Add(k)
+				continue
+			}
+
+			path := strings.Join(parts[:len(parts)-1], "/") + "/"
+			collapsed.Add(path)
+			depth = len(parts)
+		}
+		if i > 0 && depth < 3 {
+			break
+		}
+		keys = shared.ToStringSlice(collapsed)
+		result = collapsed
+	}
+	return result
 }
