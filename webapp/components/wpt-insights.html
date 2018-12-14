@@ -48,10 +48,10 @@ found in the LICENSE file.
         const browsers = ['chrome', 'edge', 'firefox', 'safari'];
         return browsers.map(b => {
           const others = browsers.filter(o => o !== b);
-          const othersFailing = others
+          const othersPassing = others
             .map(o => `(${o}:pass|${o}:ok)`)
             .join(' ');
-          const query = `!${b}:pass !${b}:ok ${othersFailing}`;
+          const query = `!${b}:pass !${b}:ok ${othersPassing}`;
           const url = new URL('/results/', window.location);
           url.searchParams.set('q', query);
           return {
