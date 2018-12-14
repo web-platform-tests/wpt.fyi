@@ -25,15 +25,21 @@
       m.set('msedge', 'MS Edge');
       return m;
     })();
-    /*eslint-disable no-unused-vars*/
-    const VERSION_PATTERNS = {
-      major: /(\d+)/,
-      majorAndMinor: /(\d+\.\d+)/
-    };
-    const DEFAULT_BROWSER_NAMES = ['chrome', 'edge', 'firefox', 'safari'];
-    const DEFAULT_PRODUCT_SPECS = Array.from(DEFAULT_BROWSER_NAMES);
-    const DEFAULT_PRODUCTS = DEFAULT_PRODUCT_SPECS.map(p => parseProductSpec(p));
-
+    Object.defineProperty(window.wpt, 'VersionPatterns', {
+      value: Object.freeze({
+        Major: /(\d+)/,
+        MajorAndMinor: /(\d+\.\d+)/,
+      }),
+    });
+    Object.defineProperty(window.wpt, 'DefaultBrowserNames', {
+      get: () => ['chrome', 'edge', 'firefox', 'safari'],
+    });
+    Object.defineProperty(window.wpt, 'DefaultProductSpecs', {
+      get: () => window.wpt.DefaultBrowserNames,
+    });
+    Object.defineProperty(window.wpt, 'DefaultProducts', {
+      get: () => window.wpt.DefaultProductSpecs.map(p => parseProductSpec(p)),
+    });
     Object.defineProperty(window.wpt, 'CommitTypes', {
       get: () => new Set(['pr_head', 'master']),
     });
@@ -97,6 +103,7 @@
       };
     }
 
+    // eslint-disable-next-line no-unused-vars
     const ProductInfo = (superClass) => class extends superClass {
       static get properties() {
         return {
@@ -123,8 +130,9 @@
        * salient information for the specified browser.
        */
       shortVersion(browserName, browserVersion) {
-        const pattern = this.minorIsSignificant(browserName) ?
-          VERSION_PATTERNS.majorAndMinor : VERSION_PATTERNS.major;
+        const pattern = this.minorIsSignificant(browserName)
+          ? window.wpt.VersionPatterns.MajorAndMinor
+          : window.wpt.VersionPatterns.Major;
         const match = pattern.exec(browserVersion);
 
         if (!match) {
