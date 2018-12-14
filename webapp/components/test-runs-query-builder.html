@@ -127,7 +127,7 @@ found in the LICENSE file.
      * Base class for re-use of results-fetching behaviour, between
      * multi-item (wpt-results) and single-test (test-file-results) views.
      */
-    /* global WPTFlags, TestRunsUIQuery, DEFAULT_BROWSER_NAMES */
+    /* global WPTFlags, TestRunsUIQuery */
     class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(window.Polymer.Element)) {
       static get is() {
         return 'test-runs-query-builder';
@@ -289,7 +289,7 @@ found in the LICENSE file.
       handleAddProduct() {
         // TODO(lukebjerring): Make a smart(er) suggestion.
         let next = { browser_name: 'chrome' };
-        for (const d of DEFAULT_BROWSER_NAMES) {
+        for (const d of window.wpt.DefaultBrowserNames) {
           if (this.products.find(p => p.browser_name === d)) {
             continue;
           }
@@ -396,7 +396,7 @@ found in the LICENSE file.
     </paper-card>
   </template>
   <script>
-    /* global ProductInfo, DEFAULT_BROWSER_NAMES, DEFAULT_PRODUCTS */
+    /* global ProductInfo */
     class ProductBuilder extends ProductInfo(window.Polymer.Element) {
       static get is() {
         return 'product-builder';
@@ -406,7 +406,7 @@ found in the LICENSE file.
         return {
           browserName: {
             type: String,
-            value: DEFAULT_BROWSER_NAMES[0],
+            value: window.wpt.DefaultBrowserNames[0],
             notify: true,
           },
           browserVersion: {
@@ -451,11 +451,11 @@ found in the LICENSE file.
           onProductChanged: Function,
           defaultProducts: {
             type: Array,
-            value: Array.from(DEFAULT_PRODUCTS),
+            value: window.wpt.DefaultProducts,
           },
           channels: {
             type: Array,
-            value: Array.from(window.wpt.Channels),
+            value: window.wpt.Channels,
           },
           versionsURL: {
             type: String,

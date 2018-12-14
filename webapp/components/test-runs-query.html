@@ -14,7 +14,7 @@ found in the LICENSE file.
     /**
      * Behaviour class for re-use of test-runs fetching behaviour.
      */
-    /* global pluralize, QueryBuilder, ProductInfo, DEFAULT_PRODUCTS, DEFAULT_PRODUCT_SPECS */
+    /* global pluralize, QueryBuilder, ProductInfo */
     // eslint-disable-next-line no-unused-vars
     (() => {
       const testRunsQueryComputer =
@@ -144,12 +144,12 @@ found in the LICENSE file.
 
         computeIsDefaultProducts(productSpecs) {
           return !productSpecs || !productSpecs.length
-            || DEFAULT_PRODUCT_SPECS.join(',') === (productSpecs || []).join(',');
+            || window.wpt.DefaultProductSpecs.join(',') === (productSpecs || []).join(',');
         }
 
         get emptyQuery() {
           return {
-            products: DEFAULT_PRODUCTS.map(p => Object.assign({}, p)),
+            products: window.wpt.DefaultProducts,
             labels: [],
             maxCount: undefined,
             sha: '',
