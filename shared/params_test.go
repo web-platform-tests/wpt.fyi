@@ -44,7 +44,7 @@ func TestParseSHAParam_FullSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, sha[:10], runSHA)
+	assert.Equal(t, sha, runSHA)
 }
 
 func TestParseSHAParam_NonSHA(t *testing.T) {
@@ -376,7 +376,7 @@ func TestParseProductSpec_FullSHA(t *testing.T) {
 	products := filters.GetProductsOrDefault()
 	assert.Len(t, products, 1)
 	if len(products) > 0 {
-		assert.Equal(t, sha[:10], products[0].Revision)
+		assert.Equal(t, sha, products[0].Revision)
 	}
 }
 
