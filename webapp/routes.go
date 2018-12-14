@@ -41,6 +41,9 @@ func RegisterRoutes() {
 	shared.AddRoute("/interop/", "interop", interopHandler)
 	shared.AddRoute("/interop/{path:.*}", "interop", interopHandler)
 
+	// A list of useful/insightful queries
+	shared.AddRoute("/insights", "insights", insightsHandler)
+
 	// List of all test runs, by SHA[0:10]
 	shared.AddRoute("/runs", "test-runs", testRunsHandler)
 	shared.AddRoute("/test-runs", "test-runs", testRunsHandler) // Legacy name

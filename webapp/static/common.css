@@ -15,18 +15,8 @@ a {
   text-decoration: none;
   color: #0d5de6;
 }
-header {
-  padding: 0.5em 0;
-}
 footer {
   margin: 0.5em 0;
-}
-header h1 {
-  font-size: 1.5em;
-  margin-bottom: 0.2em;
-}
-header nav a {
-  margin-right: 1em;
 }
 
 wpt-results {
@@ -51,10 +41,4 @@ article p, ul {
 }
 article ul {
   margin-left: 2em;
-}
-.caveat {
-  padding: 0.5em;
-  margin: 0.5em 0;
-  background-color: #fde2e3;
-  border-left: solid 4px #f47477;
 }
