@@ -67,6 +67,16 @@ found in the LICENSE file.
         display: block;
         margin-bottom: 32px;
       }
+      .github {
+        display: flex;
+        align-content: center;
+        align-items: center;
+      }
+      .github img {
+        margin-right: 8px;
+        height: 24px;
+        width: 24px;
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -111,7 +121,7 @@ found in the LICENSE file.
       <table>
         <thead>
           <tr>
-            <th width="[[computeThWidth(browsers)]]">SHA</th>
+            <th width="120">SHA</th>
             <template is="dom-repeat" items="{{ browsers }}" as="browser">
               <th width="[[computeThWidth(browsers)]]">[[displayName(browser)]]</th>
             </template>
@@ -122,7 +132,15 @@ found in the LICENSE file.
         <template is="dom-repeat" items="{{ testRunsBySHA }}" as="results">
           <tr>
             <td>
-              <a href="/?sha={{ results.sha }}">{{ results.sha }}</a>
+              <a class="github" href="/?sha={{ results.sha }}">
+                <template is="dom-if" if="[[results.commitType]]">
+                  <img src="/static/[[results.commitType]].svg" />
+                  {{ githubRevision(results.sha) }}
+                </template>
+                <template is="dom-if" if=[[!results.commitType]]>
+                  [[ results.sha ]]
+                </template>
+              </a>
             </td>
             <template is="dom-repeat" items="{{ browsers }}" as="browser">
               <td class$="runs [[ runClass(results.runs, browser) ]]">
@@ -264,7 +282,12 @@ found in the LICENSE file.
             }, new Date()); // Existing runs should be historical...
         };
         const flattened = Object.entries(shaToRunsMap)
-          .map(([sha, runs]) => ({ sha, runs, firstRunDate: firstRunDate(runs) }))
+          .map(([sha, runs]) => ({
+            sha,
+            runs,
+            firstRunDate: firstRunDate(runs),
+            commitType: this.commitType(runs),
+          }))
           .sort((a, b) => b.firstRunDate.getTime() - a.firstRunDate.getTime());
 
         // Append time (day) metadata.
@@ -330,6 +353,25 @@ found in the LICENSE file.
 
       handleLoadNextPage() {
         this.load(this.loadMoreRuns());
+      }
+
+      githubRevision(sha) {
+        return sha.substr(0, 7);
+      }
+
+      commitType(runsByBrowser) {
+        if (!this.githubCommitLinks) {
+          return;
+        }
+        const types = window.wpt.CommitTypes;
+        for (const runs of Object.values(runsByBrowser)) {
+          for (const r of runs) {
+            const label = r.labels && r.labels.find(l => types.has(l));
+            if (label) {
+              return label;
+            }
+          }
+        }
       }
     }
 

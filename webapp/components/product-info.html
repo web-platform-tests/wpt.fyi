@@ -34,6 +34,9 @@
     const DEFAULT_PRODUCT_SPECS = Array.from(DEFAULT_BROWSER_NAMES);
     const DEFAULT_PRODUCTS = DEFAULT_PRODUCT_SPECS.map(p => parseProductSpec(p));
 
+    Object.defineProperty(window.wpt, 'CommitTypes', {
+      get: () => new Set(['pr_head', 'master']),
+    });
     Object.defineProperty(window.wpt, 'Channels', {
       get: () => new Set(['stable', 'beta', 'experimental']),
     });
