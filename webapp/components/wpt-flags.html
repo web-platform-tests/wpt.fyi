@@ -43,6 +43,7 @@ found in the LICENSE file.
           'runsByPRNumber',
           'failChecksOnRegression',
           'checksAllUsers',
+          'insightsTab',
         ];
       }
     });
@@ -235,6 +236,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{checksAllUsers}}">
         Run the wpt.fyi GitHub status check for all users, not just whitelisted ones.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{insightsTab}}">
+        Show the "Insights" tab in the main navigation, (and enable <a href="/insights">/insights</a>).
       </paper-checkbox>
     </paper-item>
   </template>
