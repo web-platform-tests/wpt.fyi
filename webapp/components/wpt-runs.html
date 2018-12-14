@@ -365,9 +365,11 @@ found in the LICENSE file.
         }
         const types = window.wpt.CommitTypes;
         for (const runs of Object.values(runsByBrowser)) {
-          const labelled = runs.map(r => r.labels && r.labels.find(l => types.has(l)));
-          if (labelled && labelled.length) {
-            return labelled[0];
+          for (const r of runs) {
+            const label = r.labels && r.labels.find(l => types.has(l));
+            if (label) {
+              return label;
+            }
           }
         }
       }
