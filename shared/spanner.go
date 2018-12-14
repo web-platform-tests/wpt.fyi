@@ -35,6 +35,9 @@ const (
 	// TestStatusCrash indicates that the WPT test runner crashed attempting to run the test.
 	TestStatusCrash int64 = 7
 
+	// TestStatusSkip indicates that the test was disabled for this test run.
+	TestStatusSkip int64 = 8
+
 	// TestStatusNameUnknown is the string representation for an uninitialized
 	// TestStatus and should not be used.
 	TestStatusNameUnknown string = "UNKNOWN"
@@ -68,6 +71,10 @@ const (
 	// test runner crashed.
 	TestStatusNameCrash string = "CRASH"
 
+	// TestStatusNameSkip is the string representation of a test result where the
+	// test was disabled for this test run.
+	TestStatusNameSkip string = "SKIP"
+
 	// TestStatusDefault is the default value used when a status string cannot be
 	// interpreted.
 	TestStatusDefault int64 = TestStatusUnknown
@@ -86,6 +93,7 @@ var testStatusValues = map[string]int64{
 	TestStatusNameNotRun:  TestStatusNotRun,
 	TestStatusNameFail:    TestStatusFail,
 	TestStatusNameCrash:   TestStatusCrash,
+	TestStatusNameSkip:    TestStatusSkip,
 }
 
 var testStatusNames = map[int64]string{
@@ -97,6 +105,7 @@ var testStatusNames = map[int64]string{
 	TestStatusNotRun:  TestStatusNameNotRun,
 	TestStatusFail:    TestStatusNameFail,
 	TestStatusCrash:   TestStatusNameCrash,
+	TestStatusSkip:    TestStatusNameSkip,
 }
 
 // TestStatusValueFromString returns the enum value associated with str (if
