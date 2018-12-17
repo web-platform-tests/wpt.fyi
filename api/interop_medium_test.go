@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,11 +32,13 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 
 	firstRun := shared.TestRun{}
 	firstRun.Labels = []string{"stable"}
-	firstRun.Revision = "0000000000"
+	firstRun.FullRevisionHash = strings.Repeat("0000000000", 4)
+	firstRun.Revision = firstRun.FullRevisionHash[:10]
 	firstRun.TimeStart = time.Now().AddDate(0, 0, -1)
 
 	secondRun := shared.TestRun{}
-	secondRun.Revision = "1111111111"
+	secondRun.FullRevisionHash = strings.Repeat("1111111111", 4)
+	secondRun.Revision = secondRun.FullRevisionHash[:10]
 	secondRun.TimeStart = time.Now()
 
 	products := shared.GetDefaultProducts()

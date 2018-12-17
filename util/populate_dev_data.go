@@ -45,8 +45,8 @@ func main() {
 	staticDataTime, _ := time.Parse(time.RFC3339, "2017-10-18T00:00:00Z")
 
 	// Follow pattern established in run/*.py data collection code.
-	const staticRunSHA = "b952881825"
-	const summaryURLFmtString = "http://localhost:8080/static/" + staticRunSHA + "/%s"
+	const staticRunSHA = "b952881825e7d3974f5c513e13e544d525c0a631"
+	summaryURLFmtString := "http://localhost:8080/static/" + staticRunSHA[:10] + "/%s"
 	staticTestRuns := shared.TestRuns{
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -56,7 +56,8 @@ func main() {
 					OSName:         "linux",
 					OSVersion:      "3.16",
 				},
-				Revision: staticRunSHA,
+				FullRevisionHash: staticRunSHA,
+				Revision:         staticRunSHA[:10],
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			CreatedAt:  staticDataTime,
@@ -70,7 +71,8 @@ func main() {
 					OSName:         "windows",
 					OSVersion:      "10",
 				},
-				Revision: staticRunSHA,
+				FullRevisionHash: staticRunSHA,
+				Revision:         staticRunSHA[:10],
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
 			CreatedAt:  staticDataTime,
@@ -84,7 +86,8 @@ func main() {
 					OSName:         "linux",
 					OSVersion:      "*",
 				},
-				Revision: staticRunSHA,
+				FullRevisionHash: staticRunSHA,
+				Revision:         staticRunSHA[:10],
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			CreatedAt:  staticDataTime,
@@ -98,7 +101,8 @@ func main() {
 					OSName:         "macos",
 					OSVersion:      "10.12",
 				},
-				Revision: staticRunSHA,
+				FullRevisionHash: staticRunSHA,
+				Revision:         staticRunSHA[:10],
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
 			CreatedAt:  staticDataTime,

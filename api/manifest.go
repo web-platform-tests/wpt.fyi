@@ -22,7 +22,7 @@ import (
 
 func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	sha, err := shared.ParseSHAParamFull(q)
+	sha, err := shared.ParseSHAParam(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

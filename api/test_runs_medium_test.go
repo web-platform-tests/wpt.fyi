@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -101,7 +102,8 @@ func TestGetTestRuns_RunIDs(t *testing.T) {
 	now := time.Now()
 	run := shared.TestRun{}
 	run.BrowserVersion = "66.0.3359.139"
-	run.Revision = "abcdef0123"
+	run.FullRevisionHash = strings.Repeat("abcdef0123", 4)
+	run.Revision = run.FullRevisionHash[:10]
 	run.CreatedAt = now.AddDate(0, 0, -1)
 	keys := make([]*datastore.Key, 2)
 
@@ -148,7 +150,8 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	now := time.Now()
 	run := shared.TestRun{}
 	run.BrowserVersion = "66.0.3359.139"
-	run.Revision = "abcdef0123"
+	run.FullRevisionHash = strings.Repeat("abcdef0123", 4)
+	run.Revision = run.FullRevisionHash[:10]
 	run.CreatedAt = now.AddDate(0, 0, -1)
 
 	run.BrowserName = "chrome"
@@ -156,11 +159,13 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	run.BrowserName = "safari"
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 
-	run.Revision = "9876543210"
+	run.FullRevisionHash = strings.Repeat("9876543210", 4)
+	run.Revision = run.FullRevisionHash[:10]
 	run.BrowserName = "firefox"
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 
-	run.Revision = "9999999999"
+	run.FullRevisionHash = strings.Repeat("9999999999", 4)
+	run.Revision = run.FullRevisionHash[:10]
 	run.BrowserName = "edge"
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 
@@ -191,7 +196,8 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	body, _ = ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
-	run.Revision = "1111111111"
+	run.FullRevisionHash = strings.Repeat("1111111111", 4)
+	run.Revision = run.FullRevisionHash[:10]
 	for _, name := range shared.GetDefaultBrowserNames() {
 		run.BrowserName = name
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)

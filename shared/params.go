@@ -140,39 +140,22 @@ const MaxCountMaxValue = 500
 // MaxCountMinValue is the minimum allowed value for the max-count param.
 const MaxCountMinValue = 1
 
-// SHARegex is a regex for SHA[0:10] slice of a git hash.
-var SHARegex = regexp.MustCompile("[0-9a-fA-F]{10,40}")
+// SHARegex is a regex for 7 to 40 char prefix of a git hash.
+var SHARegex = regexp.MustCompile("[0-9a-fA-F]{7,40}")
 
-// ParseSHAParam parses and validates the 'sha' param for the request,
-// cropping it to 10 chars. It returns "latest" by default. (and in error cases).
+// ParseSHAParam parses and validates the 'sha' param for the request.
+// If the param is not present, it returns "latest" by default (and in error cases).
 func ParseSHAParam(v url.Values) (runSHA string, err error) {
-	sha, err := ParseSHAParamFull(v)
+	sha, err := ParseSHA(v.Get("sha"))
 	if err != nil || !SHARegex.MatchString(sha) {
 		return sha, err
 	}
-	return sha[:10], nil
+	return sha, nil
 }
 
-// ParseSHA validates the given 'sha' value, cropping it to 10 chars.
+// ParseSHA parses and validates the given 'sha'.
 // It returns "latest" by default (and in error cases).
-func ParseSHA(sha string) (runSHA string, err error) {
-	sha, err = ParseSHAFull(sha)
-	if err != nil || !SHARegex.MatchString(sha) {
-		return sha, err
-	}
-	return sha[:10], nil
-}
-
-// ParseSHAParamFull parses and validates the 'sha' param for the request.
-// It returns "latest" by default (and in error cases).
-func ParseSHAParamFull(v url.Values) (runSHA string, err error) {
-	// Get the SHA for the run being loaded (the first part of the path.)
-	return ParseSHAFull(v.Get("sha"))
-}
-
-// ParseSHAFull parses and validates the given 'sha'.
-// It returns "latest" by default (and in error cases).
-func ParseSHAFull(runParam string) (runSHA string, err error) {
+func ParseSHA(runParam string) (runSHA string, err error) {
 	// Get the SHA for the run being loaded (the first part of the path.)
 	runSHA = "latest"
 	if runParam != "" && runParam != "latest" {
