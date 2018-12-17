@@ -290,6 +290,7 @@ func NewShardedWPTIndex(loader ReportLoader, numShards int) (Index, error) {
 
 	return &shardedWPTIndex{
 		runs:     make(map[RunID]shared.TestRun),
+		lru:      lru.NewLRU(),
 		inFlight: mapset.NewSet(),
 		loader:   loader,
 		shards:   shards,
