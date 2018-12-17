@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/web-platform-tests/results-analysis/metrics"
@@ -28,7 +29,7 @@ var (
 )
 
 // StaticTestDataRevision is the SHA for the local (static) test run summaries.
-const StaticTestDataRevision = "b952881825"
+const StaticTestDataRevision = "b952881825e7d3974f5c513e13e544d525c0a631"
 
 // AppServer is an abstraction for navigating an instance of the webapp.
 type AppServer interface {
@@ -258,7 +259,8 @@ func addStaticData(i DevAppServerInstance) (err error) {
 					OSName:         "linux",
 					OSVersion:      "3.16",
 				},
-				Revision: sha,
+				FullRevisionHash: sha,
+				Revision:         sha[:10],
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
@@ -272,7 +274,8 @@ func addStaticData(i DevAppServerInstance) (err error) {
 					OSName:         "windows",
 					OSVersion:      "10",
 				},
-				Revision: sha,
+				FullRevisionHash: sha,
+				Revision:         sha[:10],
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
 			TimeStart:  staticDataTime,
@@ -286,7 +289,8 @@ func addStaticData(i DevAppServerInstance) (err error) {
 					OSName:         "linux",
 					OSVersion:      "*",
 				},
-				Revision: sha,
+				FullRevisionHash: sha,
+				Revision:         sha[:10],
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
@@ -300,7 +304,8 @@ func addStaticData(i DevAppServerInstance) (err error) {
 					OSName:         "macos",
 					OSVersion:      "10.12",
 				},
-				Revision: sha,
+				FullRevisionHash: sha,
+				Revision:         sha[:10],
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
 			TimeStart:  staticDataTime,
@@ -317,7 +322,8 @@ func addStaticData(i DevAppServerInstance) (err error) {
 					OSName:         "linux",
 					OSVersion:      "*",
 				},
-				Revision: "0123456789",
+				FullRevisionHash: strings.Repeat("0123456789", 4),
+				Revision:         "0123456789",
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
@@ -331,7 +337,8 @@ func addStaticData(i DevAppServerInstance) (err error) {
 					OSName:         "linux",
 					OSVersion:      "*",
 				},
-				Revision: "0123456789",
+				FullRevisionHash: strings.Repeat("0123456789", 4),
+				Revision:         "0123456789",
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,

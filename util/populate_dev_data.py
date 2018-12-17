@@ -69,6 +69,7 @@ def main(args):  # type: (argparse.Namespace) -> None
             OSName='linux',
             OSVersion='3.16',
             Revision='b952881825',
+            FullRevisionHash='b952881825e7d3974f5c513e13e544d525c0a631',
             ResultsURL=path % 'chrome-63.0-linux-summary.json.gz'),
         TestRun(
             id='dev-testrun-edge-15',
@@ -77,6 +78,7 @@ def main(args):  # type: (argparse.Namespace) -> None
             OSName='windows',
             OSVersion='10',
             Revision='b952881825',
+            FullRevisionHash='b952881825e7d3974f5c513e13e544d525c0a631',
             ResultsURL=path % 'edge-15-windows-10-sauce-summary.json.gz'),
         TestRun(
             id='dev-testrun-firefox-57',
@@ -85,6 +87,7 @@ def main(args):  # type: (argparse.Namespace) -> None
             OSName='linux',
             OSVersion='*',
             Revision='b952881825',
+            FullRevisionHash='b952881825e7d3974f5c513e13e544d525c0a631',
             ResultsURL=path % 'firefox-57.0-linux-summary.json.gz'),
         TestRun(
             id='dev-testrun-safari-10',
@@ -93,6 +96,7 @@ def main(args):  # type: (argparse.Namespace) -> None
             OSName='macos',
             OSVersion='10.12',
             Revision='b952881825',
+            FullRevisionHash='b952881825e7d3974f5c513e13e544d525c0a631',
             ResultsURL=path % 'safari-10-macos-10.12-sauce-summary.json.gz'),
     ]  # type: List[TestRun]
 
