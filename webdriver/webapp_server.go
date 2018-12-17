@@ -249,7 +249,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	staticDataTime := time.Now()
 	// Follow pattern established in run/*.py data collection code.
 	const sha = StaticTestDataRevision
-	var summaryURLFmtString = i.GetWebappURL("/static/" + sha + "/%s")
+	var summaryURLFmtString = i.GetWebappURL("/static/" + sha[:10] + "/%s")
 	stableTestRuns := shared.TestRuns{
 		{
 			ProductAtRevision: shared.ProductAtRevision{
