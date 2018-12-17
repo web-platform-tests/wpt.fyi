@@ -18,7 +18,11 @@ And {{ .More }} others...
 
 [Visual comparison of the results]({{ .DiffURL }})
 
-Other views that might be useful:
+Other links that might be useful:
+{{- range $pr := .CheckState.PRNumbers }}
+- [PR #{{ $pr }} on GitHub](https://github.com/web-platform-tests/wpt/pull/{{ $pr }})
+- [Latest results for PR #{{ $pr }}]({{ $.HostURL }}?pr={{ $pr }})
+{{- end}}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs its merge base]({{ .DiffURL }})
 {{- if .MasterDiffURL }}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})

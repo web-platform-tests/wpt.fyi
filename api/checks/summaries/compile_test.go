@@ -60,6 +60,16 @@ func TestGetSummary_Completed(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 	assert.Contains(t, s, foo.MasterDiffURL)
+
+	// With PRNumbers
+	foo.PRNumbers = []int{123}
+	s, err = foo.GetSummary()
+	printOutput(s)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	assert.Contains(t, s, "https://github.com/web-platform-tests/wpt/pull/123")
+	assert.Contains(t, s, "https://foo.com/?pr=123")
 }
 
 func TestGetSummary_Pending(t *testing.T) {
@@ -125,6 +135,16 @@ func TestGetSummary_Regressed(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 	assert.Contains(t, s, foo.MasterDiffURL)
+
+	// With PRNumbers
+	foo.PRNumbers = []int{123}
+	s, err = foo.GetSummary()
+	printOutput(s)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	assert.Contains(t, s, "https://github.com/web-platform-tests/wpt/pull/123")
+	assert.Contains(t, s, "https://foo.com/?pr=123")
 }
 
 func printOutput(s string) {
