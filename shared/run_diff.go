@@ -376,8 +376,10 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	renames := make(map[string]string)
 	for _, file := range comparison.Files {
 		if file.GetStatus() == "renamed" {
-			is, was := file.GetFilename(), file.GetPreviousFilename()
-			renames["/"+was] = "/" + is
+			before, after := file.GetPreviousFilename(), file.GetFilename()
+			for was, is := range ExplodePossibleRenames(before, after) {
+				renames["/"+was] = "/" + is
+			}
 		}
 	}
 	if len(renames) < 1 {
