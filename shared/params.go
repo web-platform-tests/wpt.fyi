@@ -632,8 +632,10 @@ func ParseQueryFilterParams(v url.Values) (filter QueryFilter, err error) {
 
 // ParseTestRunFilterParams parses all of the filter params for a TestRun query.
 func ParseTestRunFilterParams(v url.Values) (filter TestRunFilter, err error) {
-	if page, err := ParsePageToken(v); page != nil || err != nil {
+	if page, err := ParsePageToken(v); page != nil {
 		return *page, err
+	} else if err != nil {
+		return filter, err
 	}
 
 	runSHA, err := ParseSHAParam(v)
