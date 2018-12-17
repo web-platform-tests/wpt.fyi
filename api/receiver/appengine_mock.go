@@ -7,12 +7,13 @@ package receiver
 import (
 	context "context"
 	io "io"
-	"net/http"
+	http "net/http"
 	url "net/url"
 	reflect "reflect"
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
+	github "github.com/google/go-github/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	taskqueue "google.golang.org/appengine/taskqueue"
 )
@@ -50,6 +51,19 @@ func (m *MockAppEngineAPI) Context() context.Context {
 // Context indicates an expected call of Context
 func (mr *MockAppEngineAPIMockRecorder) Context() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockAppEngineAPI)(nil).Context))
+}
+
+// GetGitHubClient mocks base method
+func (m *MockAppEngineAPI) GetGitHubClient() (*github.Client, error) {
+	ret := m.ctrl.Call(m, "GetGitHubClient")
+	ret0, _ := ret[0].(*github.Client)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGitHubClient indicates an expected call of GetGitHubClient
+func (mr *MockAppEngineAPIMockRecorder) GetGitHubClient() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetGitHubClient))
 }
 
 // GetHTTPClient mocks base method

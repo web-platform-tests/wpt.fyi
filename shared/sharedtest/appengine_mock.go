@@ -12,6 +12,7 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
+	github "github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -73,6 +74,19 @@ func (m *MockAppEngineAPI) GetSlowHTTPClient(arg0 time.Duration) (*http.Client, 
 // GetSlowHTTPClient indicates an expected call of GetSlowHTTPClient
 func (mr *MockAppEngineAPIMockRecorder) GetSlowHTTPClient(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSlowHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetSlowHTTPClient), arg0)
+}
+
+// GetGitHubClient mocks base method
+func (m *MockAppEngineAPI) GetGitHubClient() (*github.Client, error) {
+	ret := m.ctrl.Call(m, "GetGitHubClient")
+	ret0, _ := ret[0].(*github.Client)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGitHubClient indicates an expected call of GetGitHubClient
+func (mr *MockAppEngineAPIMockRecorder) GetGitHubClient() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetGitHubClient))
 }
 
 // IsLoggedIn mocks base method

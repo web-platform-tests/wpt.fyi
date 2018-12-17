@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
@@ -20,6 +22,7 @@ type AppEngineAPI interface {
 
 	GetHTTPClient() *http.Client
 	GetSlowHTTPClient(time.Duration) (*http.Client, context.CancelFunc)
+	GetGitHubClient() (*github.Client, error)
 
 	// The three methods below are exported for webapp.admin_handler.
 	IsLoggedIn() bool
@@ -47,6 +50,9 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPIImpl {
 // AppEngineAPIImpl implements the AppEngineAPI interface.
 type AppEngineAPIImpl struct {
 	ctx context.Context
+	// Cached client objects.
+	httpClient   *http.Client
+	githubClient *github.Client
 }
 
 // Context returns the context.Context for the API impl.
@@ -54,9 +60,12 @@ func (a AppEngineAPIImpl) Context() context.Context {
 	return a.ctx
 }
 
-// GetHTTPClient returns an HTTP client for the current context.
+// GetHTTPClient returns an HTTP client in the current context.
 func (a AppEngineAPIImpl) GetHTTPClient() *http.Client {
-	return urlfetch.Client(a.ctx)
+	if a.httpClient == nil {
+		a.httpClient = urlfetch.Client(a.ctx)
+	}
+	return a.httpClient
 }
 
 // GetSlowHTTPClient returns an HTTP client without timeout for the current
@@ -64,6 +73,22 @@ func (a AppEngineAPIImpl) GetHTTPClient() *http.Client {
 func (a AppEngineAPIImpl) GetSlowHTTPClient(timeout time.Duration) (*http.Client, context.CancelFunc) {
 	slowCtx, cancel := context.WithTimeout(a.ctx, timeout)
 	return urlfetch.Client(slowCtx), cancel
+}
+
+// GetGitHubClient returns a github client using the stored API token.
+func (a AppEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
+	if a.githubClient == nil {
+		secret, err := GetSecret(a.ctx, "github-api-token")
+		if err != nil {
+			return nil, err
+		}
+
+		oauthClient := oauth2.NewClient(a.ctx, oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: secret,
+		}))
+		a.githubClient = github.NewClient(oauthClient)
+	}
+	return a.githubClient, nil
 }
 
 // IsLoggedIn returns true if a user is logged in for the current context.
