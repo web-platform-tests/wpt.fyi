@@ -102,8 +102,3 @@ func (rrs *runResultsMap) GetResult(t TestID) ResultID {
 	}
 	return re
 }
-
-// TODO: Add filter binding function:
-// func ResultFilter(ru RunID, re ResultID) UnboundFilter {
-// 	return NewResultEQFilter(ru, re)
-// }
