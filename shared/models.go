@@ -183,10 +183,10 @@ func (t TestRuns) Len() int           { return len(t) }
 func (t TestRuns) Less(i, j int) bool { return t[i].TimeStart.Before(t[j].TimeStart) }
 func (t TestRuns) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 
-// SetTestRunIDs sets the ID field for each run, from the given keys.
-func (t TestRuns) SetTestRunIDs(keys []*datastore.Key) {
-	for i := 0; i < len(keys) && i < len(t); i++ {
-		t[i].ID = keys[i].IntID()
+// SetTestRunIDs sets the ID field for each run, from the given ids.
+func (t TestRuns) SetTestRunIDs(ids TestRunIDs) {
+	for i := 0; i < len(ids) && i < len(t); i++ {
+		t[i].ID = ids[i]
 	}
 }
 
@@ -262,6 +262,15 @@ func (t KeysByProduct) AllKeys() []*datastore.Key {
 
 // TestRunIDs is a helper for an array of TestRun IDs.
 type TestRunIDs []int64
+
+// GetTestRunIDs extracts the TestRunIDs from loaded datastore keys.
+func GetTestRunIDs(keys []*datastore.Key) TestRunIDs {
+	result := make(TestRunIDs, len(keys))
+	for i := range keys {
+		result[i] = keys[i].IntID()
+	}
+	return result
+}
 
 // LoadTestRuns is a helper for fetching the TestRuns from the datastore,
 // for the gives TestRunIDs.

@@ -32,19 +32,21 @@ func LoadTestRunsBySHAs(ctx context.Context, shas ...string) (runs TestRuns, err
 			sha = sha[:10]
 		}
 		q := datastore.NewQuery("TestRun")
-		keys, err := loadKeysForRevision(ctx, q, sha)
+		ids, err := loadKeysForRevision(ctx, q, sha)
 		if err != nil {
 			return runs, err
 		}
-		shaRuns := make(TestRuns, len(keys))
-		for i := range keys {
-			run, err := LoadTestRun(ctx, keys[i].IntID())
+		shaRuns := make(TestRuns, len(ids))
+		for i := range ids {
+			run, err := LoadTestRun(ctx, ids[i])
 			if err != nil {
 				return nil, err
 			}
 			shaRuns[i] = *run
 		}
-		shaRuns.SetTestRunIDs(keys)
+		for i := range ids {
+			shaRuns[i].ID = ids[i]
+		}
 		runs = append(runs, shaRuns...)
 	}
 	return runs, err
@@ -75,13 +77,13 @@ func LoadTestRunKeys(
 	}
 	var globalKeyFilter mapset.Set
 	if !IsLatest(sha) {
-		var keys []*datastore.Key
-		if keys, err = loadKeysForRevision(ctx, baseQuery, sha); err != nil {
+		var ids TestRunIDs
+		if ids, err = loadKeysForRevision(ctx, baseQuery, sha); err != nil {
 			return nil, err
 		}
 		globalKeyFilter = mapset.NewSet()
-		for _, k := range keys {
-			globalKeyFilter.Add(k.IntID())
+		for _, id := range ids {
+			globalKeyFilter.Add(id)
 		}
 	}
 	for i, product := range products {
@@ -93,13 +95,13 @@ func LoadTestRunKeys(
 			}
 		}
 		if !IsLatest(product.Revision) {
-			var revKeys []*datastore.Key
-			if revKeys, err = loadKeysForRevision(ctx, query, product.Revision); err != nil {
+			var ids TestRunIDs
+			if ids, err = loadKeysForRevision(ctx, query, product.Revision); err != nil {
 				return nil, err
 			}
 			revKeyFilter := mapset.NewSet()
-			for _, key := range revKeys {
-				revKeyFilter.Add(key.IntID())
+			for _, id := range ids {
+				revKeyFilter.Add(id)
 			}
 			productKeyFilter = merge(productKeyFilter, revKeyFilter)
 		}
@@ -204,7 +206,7 @@ func LoadTestRunsByKeys(ctx context.Context, keysByProduct KeysByProduct) (resul
 	}
 	// Append the keys as ID
 	for i, kbp := range keysByProduct {
-		result[i].TestRuns.SetTestRunIDs(kbp.Keys)
+		result[i].TestRuns.SetTestRunIDs(GetTestRunIDs(kbp.Keys))
 	}
 	return result, err
 }
@@ -219,7 +221,7 @@ func contains(s []string, x string) bool {
 }
 
 // Loads any keys for a revision prefix or full string match
-func loadKeysForRevision(ctx context.Context, query *datastore.Query, sha string) (result []*datastore.Key, err error) {
+func loadKeysForRevision(ctx context.Context, query *datastore.Query, sha string) (result TestRunIDs, err error) {
 	var revQuery *datastore.Query
 	if len(sha) < 40 {
 		revQuery = query.
@@ -235,7 +237,7 @@ func loadKeysForRevision(ctx context.Context, query *datastore.Query, sha string
 	if keys, err = revQuery.KeysOnly().GetAll(ctx, nil); err != nil {
 		return nil, err
 	}
-	return keys, nil
+	return GetTestRunIDs(keys), nil
 }
 
 // Loads any keys for a full string match or a version prefix (Between [version].* and [version].9*).
