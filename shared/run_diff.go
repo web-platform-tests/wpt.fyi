@@ -289,7 +289,11 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 
 	var renames map[string]string
 	if IsFeatureEnabled(d.ctx, "diffRenames") {
-		renames = getDiffRenames(d.ctx, before.FullRevisionHash, after.FullRevisionHash)
+		beforeSHA := before.FullRevisionHash
+		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
+			beforeSHA = "HEAD"
+		}
+		renames = getDiffRenames(d.ctx, beforeSHA, after.FullRevisionHash)
 	}
 	return RunDiff{
 		Before:        before,

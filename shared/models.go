@@ -119,6 +119,11 @@ func (r TestRun) IsExperimental() bool {
 	return len(r.Labels) > 0 && r.LabelsSet().Contains(ExperimentalLabel)
 }
 
+// IsPRBase returns true if the run is labelled pr_base.
+func (r TestRun) IsPRBase() bool {
+	return len(r.Labels) > 0 && r.LabelsSet().Contains(PRBaseLabel)
+}
+
 // Channel return the channel label, if any, for the given run.
 func (r TestRun) Channel() string {
 	for _, label := range r.Labels {
