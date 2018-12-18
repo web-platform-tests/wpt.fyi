@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -692,4 +693,11 @@ func TestExtractRunIDsBodyParam_Replayable(t *testing.T) {
 	replayed, err := ioutil.ReadAll(req.Body)
 	assert.Nil(t, err)
 	assert.Equal(t, payload, replayed)
+}
+
+func TestParseTestRunFilterParams_Page(t *testing.T) {
+	values := make(url.Values)
+	values.Set("page", "bogus value")
+	_, err := ParseTestRunFilterParams(values)
+	assert.NotNil(t, err)
 }
