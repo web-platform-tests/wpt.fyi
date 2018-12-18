@@ -19,8 +19,8 @@ And {{ .More }} others...
 
 Other links that might be useful:
 {{- range $pr := .CheckState.PRNumbers }}
-- [PR #{{ $pr }} on GitHub](https://github.com/web-platform-tests/wpt/pull/{{ $pr }})
-- [Latest results for PR #{{ $pr }}]({{ $.HostURL }}?pr={{ $pr }})
+- [Latest results for PR #{{ $pr }}]({{ $.HostURL }}results/?pr={{ $pr }})
+- [All runs for PR #{{ $pr }}]({{ $.HostURL }}runs/?pr={{ $pr }})
 {{- end}}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs its merge base]({{ .DiffURL }})
 {{- if .MasterDiffURL }}
