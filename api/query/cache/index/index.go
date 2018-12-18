@@ -10,12 +10,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sort"
 	"sync"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/results-analysis/metrics"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/lru"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 
 	log "github.com/sirupsen/logrus"
@@ -28,6 +28,7 @@ var (
 	errRunExists          = errors.New("Run already exists in index")
 	errRunLoading         = errors.New("Run currently being loaded into index")
 	errSomeShardsRequired = errors.New("Index must have at least one shard")
+	errUnexpectedRuns     = errors.New("Unexpected number of runs")
 	errZeroRun            = errors.New("Cannot ingest run with ID of 0")
 )
 
@@ -101,6 +102,7 @@ type ReportLoader interface {
 // exclusive shards.
 type shardedWPTIndex struct {
 	runs     map[RunID]shared.TestRun
+	lru      lru.LRU
 	inFlight mapset.Set
 	loader   ReportLoader
 	shards   []*wptIndex
@@ -290,6 +292,7 @@ func NewShardedWPTIndex(loader ReportLoader, numShards int) (Index, error) {
 
 	return &shardedWPTIndex{
 		runs:     make(map[RunID]shared.TestRun),
+		lru:      lru.NewLRU(),
 		inFlight: mapset.NewSet(),
 		loader:   loader,
 		shards:   shards,
@@ -346,6 +349,7 @@ func (i *shardedWPTIndex) syncStoreRun(run shared.TestRun, data []map[TestID]tes
 		}
 	}
 	i.runs[id] = run
+	i.lru.Access(int64(id))
 
 	return nil
 }
@@ -370,15 +374,15 @@ func (i *shardedWPTIndex) syncEvictRun() error {
 		return errNoRuns
 	}
 
-	// Accumulate runs into sortable collection.
-	runs := make(shared.TestRuns, 0, len(i.runs))
-	for _, run := range i.runs {
-		runs = append(runs, run)
+	// TODO: This logic should be changed to evict a fraction of runs in one
+	// critical section to reduce the amortized cost of hitting the soft memory
+	// limit.
+	runs := i.lru.EvictLRU(0.0)
+	if len(runs) != 1 {
+		return errUnexpectedRuns
 	}
 
-	// Sort and mark oldest run for eviction.
-	sort.Sort(runs)
-	id := RunID(runs[0].ID)
+	id := RunID(runs[0])
 
 	// Delete data from shards, and from runs collection.
 	for _, shard := range i.shards {
@@ -409,6 +413,10 @@ func (i *shardedWPTIndex) syncExtractRuns(ids []RunID) ([]index, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	for _, id := range ids {
+		i.lru.Access(int64(id))
 	}
 
 	return idxs, nil
