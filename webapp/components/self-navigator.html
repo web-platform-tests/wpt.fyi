@@ -87,7 +87,7 @@
        * Defaults to the queryParams property.
        */
       navigationQueryParams() {
-        return Object.assign({}, this.queryParams);
+        return this.queryParams && JSON.parse(JSON.stringify(this.queryParams));
       }
 
       bindNavigate() {
