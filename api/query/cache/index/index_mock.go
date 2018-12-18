@@ -5,12 +5,11 @@
 package index
 
 import (
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
 	metrics "github.com/web-platform-tests/results-analysis/metrics"
 	query "github.com/web-platform-tests/wpt.fyi/api/query"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	reflect "reflect"
 )
 
 // MockIndex is a mock of Index interface
@@ -74,16 +73,17 @@ func (mr *MockIndexMockRecorder) IngestRun(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IngestRun", reflect.TypeOf((*MockIndex)(nil).IngestRun), arg0)
 }
 
-// EvictAnyRun mocks base method
-func (m *MockIndex) EvictAnyRun() error {
-	ret := m.ctrl.Call(m, "EvictAnyRun")
-	ret0, _ := ret[0].(error)
-	return ret0
+// EvictRuns mocks base method
+func (m *MockIndex) EvictRuns(arg0 float64) (int, error) {
+	ret := m.ctrl.Call(m, "EvictRuns", arg0)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// EvictAnyRun indicates an expected call of EvictAnyRun
-func (mr *MockIndexMockRecorder) EvictAnyRun() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EvictAnyRun", reflect.TypeOf((*MockIndex)(nil).EvictAnyRun))
+// EvictRuns indicates an expected call of EvictRuns
+func (mr *MockIndexMockRecorder) EvictRuns(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EvictRuns", reflect.TypeOf((*MockIndex)(nil).EvictRuns), arg0)
 }
 
 // MockReportLoader is a mock of ReportLoader interface

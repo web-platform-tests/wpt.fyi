@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"sync"
 
@@ -57,9 +58,9 @@ type Index interface {
 	// IngestRun loads the test run results associated with the input test run
 	// into the index.
 	IngestRun(shared.TestRun) error
-	// EvictAnyRun reduces memory pressure by evicting the cache's choice of run
-	// from memory.
-	EvictAnyRun() error
+	// EvictRuns reduces memory pressure by evicting the cache's choice of runs
+	// from memory. The parameter is a percentage of current runs to evict.
+	EvictRuns(float64) (int, error)
 }
 
 // ProxyIndex is a proxy implementation of the Index interface. This type is
@@ -81,10 +82,10 @@ func (i *ProxyIndex) IngestRun(r shared.TestRun) error {
 	return i.delegate.IngestRun(r)
 }
 
-// EvictAnyRun deletes one run's results from the index by deferring to the
-// proxy's delegate.
-func (i *ProxyIndex) EvictAnyRun() error {
-	return i.delegate.EvictAnyRun()
+// EvictRuns deletes percent% runs from the index by deferring to the proxy's
+// delegate.
+func (i *ProxyIndex) EvictRuns(percent float64) (int, error) {
+	return i.delegate.EvictRuns(percent)
 }
 
 // NewProxyIndex instantiates a new proxy index bound to the given delegate.
@@ -220,8 +221,8 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 	return nil
 }
 
-func (i *shardedWPTIndex) EvictAnyRun() error {
-	return i.syncEvictRun()
+func (i *shardedWPTIndex) EvictRuns(percent float64) (int, error) {
+	return i.syncEvictRuns(math.Max(0.0, math.Min(1.0, percent)))
 }
 
 func (i *shardedWPTIndex) Bind(runs []shared.TestRun, q query.ConcreteQuery) (query.Plan, error) {
@@ -366,33 +367,32 @@ func syncStoreRunOnShard(shard *wptIndex, id RunID, shardData map[TestID]testDat
 	return shard.results.Add(id, runResults)
 }
 
-func (i *shardedWPTIndex) syncEvictRun() error {
+func (i *shardedWPTIndex) syncEvictRuns(percent float64) (int, error) {
 	i.m.Lock()
 	defer i.m.Unlock()
 
 	if len(i.runs) == 0 {
-		return errNoRuns
+		return 0, errNoRuns
 	}
 
-	// TODO: This logic should be changed to evict a fraction of runs in one
-	// critical section to reduce the amortized cost of hitting the soft memory
-	// limit.
-	runs := i.lru.EvictLRU(0.0)
-	if len(runs) != 1 {
-		return errUnexpectedRuns
+	runIDs := i.lru.EvictLRU(percent)
+	if len(runIDs) == 0 {
+		return 0, errNoRuns
 	}
 
-	id := RunID(runs[0])
+	for _, runID := range runIDs {
+		id := RunID(runID)
 
-	// Delete data from shards, and from runs collection.
-	for _, shard := range i.shards {
-		if err := syncDeleteResultsFromShard(shard, id); err != nil {
-			return err
+		// Delete data from shards, and from runs collection.
+		for _, shard := range i.shards {
+			if err := syncDeleteResultsFromShard(shard, id); err != nil {
+				return 0, err
+			}
 		}
+		delete(i.runs, id)
 	}
-	delete(i.runs, id)
 
-	return nil
+	return len(runIDs), nil
 }
 
 func syncDeleteResultsFromShard(shard *wptIndex, id RunID) error {
