@@ -113,6 +113,7 @@ type shardedWPTIndex struct {
 type wptIndex struct {
 	tests   Tests
 	results Results
+	m       *sync.RWMutex
 }
 
 // testData is a wrapper for a single unit of test+result data from a test run.
@@ -390,28 +391,41 @@ func (i *shardedWPTIndex) syncExtractRuns(ids []RunID) ([]index, error) {
 	defer i.m.RUnlock()
 
 	idxs := make([]index, len(i.shards))
+	var err error
 	for j, shard := range i.shards {
-		tests := shard.tests
-		runResults := make(map[RunID]RunResults)
-		for _, id := range ids {
-			rrs := shard.results.ForRun(id)
-			if rrs == nil {
-				return nil, fmt.Errorf("Run is unknown to shard: RunID=%v", id)
-			}
-			runResults[id] = shard.results.ForRun(id)
-		}
-		idxs[j] = index{
-			tests:      tests,
-			runResults: runResults,
+		idxs[j], err = syncMakeIndex(shard, ids)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	return idxs, nil
 }
 
+func syncMakeIndex(shard *wptIndex, ids []RunID) (index, error) {
+	shard.m.RLock()
+	defer shard.m.RUnlock()
+
+	tests := shard.tests
+	runResults := make(map[RunID]RunResults)
+	for _, id := range ids {
+		rrs := shard.results.ForRun(id)
+		if rrs == nil {
+			return index{}, fmt.Errorf("Run is unknown to shard: RunID=%v", id)
+		}
+		runResults[id] = shard.results.ForRun(id)
+	}
+	return index{
+		tests:      tests,
+		runResults: runResults,
+		m:          shard.m,
+	}, nil
+}
+
 func newWPTIndex(tests Tests) *wptIndex {
 	return &wptIndex{
 		tests:   tests,
 		results: NewResults(),
+		m:       &sync.RWMutex{},
 	}
 }
