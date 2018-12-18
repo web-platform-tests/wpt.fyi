@@ -116,12 +116,16 @@ type TestRun struct {
 
 // IsExperimental returns true if the run is labelled experimental.
 func (r TestRun) IsExperimental() bool {
-	return len(r.Labels) > 0 && r.LabelsSet().Contains(ExperimentalLabel)
+	return r.hasLabel(ExperimentalLabel)
 }
 
-// IsPRBase returns true if the run is labelled pr_base.
+// IsPRBase returns true if the run is labelled experimental.
 func (r TestRun) IsPRBase() bool {
-	return len(r.Labels) > 0 && r.LabelsSet().Contains(PRBaseLabel)
+	return r.hasLabel(PRBaseLabel)
+}
+
+func (r TestRun) hasLabel(label string) bool {
+	return StringSliceContains(r.Labels, label)
 }
 
 // Channel return the channel label, if any, for the given run.
