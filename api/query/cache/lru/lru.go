@@ -51,6 +51,7 @@ func (l *lru) EvictLRU(percent float64) []int64 {
 	if len(l.byRunID) == 0 {
 		return nil
 	}
+	percent = math.Max(0.0, math.Min(1.0, percent))
 	return l.syncEvictLRU(int(math.Max(1.0, math.Floor(float64(len(l.byRunID))*percent))))
 }
 
