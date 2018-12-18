@@ -51,8 +51,17 @@ func TestExplodePossibleRenames_AnyJS(t *testing.T) {
 func TestExplodePossibleRenames_WindowJS(t *testing.T) {
 	before, after := "/test/file.window.js", "/test/file.https.window.js"
 	renames := map[string]string{
-		before: after,
+		before:                   after,
 		"/test/file.window.html": "/test/file.https.window.html",
+	}
+	assert.Equal(t, ExplodePossibleRenames(before, after), renames)
+}
+
+func TestExplodePossibleRenames_WorkerJS(t *testing.T) {
+	before, after := "/test/file.worker.js", "/test/file.https.worker.js"
+	renames := map[string]string{
+		before:                   after,
+		"/test/file.worker.html": "/test/file.https.worker.html",
 	}
 	assert.Equal(t, ExplodePossibleRenames(before, after), renames)
 }

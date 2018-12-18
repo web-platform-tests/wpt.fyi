@@ -6,15 +6,19 @@ package shared
 
 import "strings"
 
-const (
-	windowJSSuffix                 = ".window.js"
-	windowHTMLSuffix               = ".window.html"
-	anyJSSuffix                    = ".any.js"
-	anyJSWindowHTMLSuffix          = ".any.html"
-	anyJSDedicatedWorkerHTMLSuffix = ".any.worker.html"
-	anyJSServiceWorkerHTMLSuffix   = ".any.serviceworker.html"
-	anyJSSharedWorkerHTMLSuffix    = ".any.sharedworker.html"
-)
+// explosions returns a map of the exploded test by filename suffix.
+func explosions() map[string][]string {
+	return map[string][]string{
+		".window.js": []string{".window.html"},
+		".worker.js": []string{".worker.html"},
+		".any.js": []string{
+			".any.html",
+			".any.worker.html",
+			".any.serviceworker.html",
+			".any.sharedworker.html",
+		},
+	}
+}
 
 // ExplodePossibleRenames returns a map of equivalent renames for the given file rename.
 func ExplodePossibleRenames(before, after string) map[string]string {
@@ -35,23 +39,15 @@ func ExplodePossibleRenames(before, after string) map[string]string {
 // could be created for it at runtime.
 func ExplodePossibleFilenames(filePath string) []string {
 	// https://web-platform-tests.org/writing-tests/testharness.html#multi-global-tests
-	if strings.HasSuffix(filePath, anyJSSuffix) {
-		prefix := stripSuffix(filePath, anyJSSuffix)
-		return []string{
-			prefix + anyJSWindowHTMLSuffix,
-			prefix + anyJSDedicatedWorkerHTMLSuffix,
-			prefix + anyJSServiceWorkerHTMLSuffix,
-			prefix + anyJSSharedWorkerHTMLSuffix,
-		}
-	} else if strings.HasSuffix(filePath, windowJSSuffix) {
-		prefix := stripSuffix(filePath, windowJSSuffix)
-		return []string{
-			prefix + windowHTMLSuffix,
+	for suffix, exploded := range explosions() {
+		if strings.HasSuffix(filePath, suffix) {
+			prefix := filePath[:len(filePath)-len(suffix)]
+			result := make([]string, len(exploded))
+			for i := range exploded {
+				result[i] = prefix + exploded[i]
+			}
+			return result
 		}
 	}
 	return nil
-}
-
-func stripSuffix(filename, suffix string) string {
-	return filename[:len(filename)-len(suffix)]
 }
