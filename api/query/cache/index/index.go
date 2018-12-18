@@ -341,19 +341,25 @@ func (i *shardedWPTIndex) syncStoreRun(run shared.TestRun, data []map[TestID]tes
 
 	id := RunID(run.ID)
 	for j, shardData := range data {
-		runResults := NewRunResults()
-		for t, data := range shardData {
-			i.shards[j].tests.Add(t, data.testName.name, data.testName.subName)
-			runResults.Add(data.ResultID, t)
-		}
-		err := i.shards[j].results.Add(id, runResults)
-		if err != nil {
+		if err := syncStoreRunOnShard(i.shards[j], id, shardData); err != nil {
 			return err
 		}
 	}
 	i.runs[id] = run
 
 	return nil
+}
+
+func syncStoreRunOnShard(shard *wptIndex, id RunID, shardData map[TestID]testData) error {
+	shard.m.Lock()
+	defer shard.m.Unlock()
+
+	runResults := NewRunResults()
+	for t, data := range shardData {
+		shard.tests.Add(t, data.testName.name, data.testName.subName)
+		runResults.Add(data.ResultID, t)
+	}
+	return shard.results.Add(id, runResults)
 }
 
 func (i *shardedWPTIndex) syncEvictRun() error {
@@ -376,14 +382,20 @@ func (i *shardedWPTIndex) syncEvictRun() error {
 
 	// Delete data from shards, and from runs collection.
 	for _, shard := range i.shards {
-		err := shard.results.Delete(id)
-		if err != nil {
+		if err := syncDeleteResultsFromShard(shard, id); err != nil {
 			return err
 		}
 	}
 	delete(i.runs, id)
 
 	return nil
+}
+
+func syncDeleteResultsFromShard(shard *wptIndex, id RunID) error {
+	shard.m.Lock()
+	defer shard.m.Unlock()
+
+	return shard.results.Delete(id)
 }
 
 func (i *shardedWPTIndex) syncExtractRuns(ids []RunID) ([]index, error) {
