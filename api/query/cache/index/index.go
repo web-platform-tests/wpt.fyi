@@ -28,6 +28,7 @@ var (
 	errRunExists          = errors.New("Run already exists in index")
 	errRunLoading         = errors.New("Run currently being loaded into index")
 	errSomeShardsRequired = errors.New("Index must have at least one shard")
+	errUnexpectedRuns     = errors.New("Unexpected number of runs")
 	errZeroRun            = errors.New("Cannot ingest run with ID of 0")
 )
 
@@ -366,12 +367,15 @@ func (i *shardedWPTIndex) syncEvictRun() error {
 		return errNoRuns
 	}
 
-	runID, err := i.lru.EvictLRU()
-	if err != nil {
-		return err
+	// TODO: This logic should be changed to evict a fraction of runs in one
+	// critical section to reduce the amortized cost of hitting the soft memory
+	// limit.
+	runs := i.lru.EvictLRU(0.0)
+	if len(runs) != 1 {
+		return errUnexpectedRuns
 	}
 
-	id := RunID(runID)
+	id := RunID(runs[0])
 
 	// Delete data from shards, and from runs collection.
 	for _, shard := range i.shards {

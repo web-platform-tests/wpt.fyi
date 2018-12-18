@@ -6,6 +6,7 @@ package lru
 
 import (
 	"errors"
+	"math"
 	"sort"
 	"sync"
 	"time"
@@ -21,7 +22,7 @@ type LRU interface {
 	Access(int64)
 	// EvictLRU deletes the oldest value from the collection and returns it. If
 	// the collection is empty, then an error is returned.
-	EvictLRU() (int64, error)
+	EvictLRU(float64) []int64
 }
 
 type lru struct {
@@ -54,12 +55,11 @@ func (l *lru) Access(r int64) {
 	l.syncAccess(r)
 }
 
-func (l *lru) EvictLRU() (int64, error) {
+func (l *lru) EvictLRU(percent float64) []int64 {
 	if len(l.byRunID) == 0 {
-		return int64(0), errEmpty
+		return nil
 	}
-
-	return l.syncEvictLRU(), nil
+	return l.syncEvictLRU(int(math.Max(1.0, math.Floor(float64(len(l.byRunID))*percent))))
 }
 
 // NewLRU constructs a new empty LRU.
@@ -77,7 +77,7 @@ func (l *lru) syncAccess(r int64) {
 	l.byRunID[r] = time.Now()
 }
 
-func (l *lru) syncEvictLRU() int64 {
+func (l *lru) syncEvictLRU(num int) []int64 {
 	l.m.Lock()
 	defer l.m.Unlock()
 
@@ -86,8 +86,13 @@ func (l *lru) syncEvictLRU() int64 {
 		rs = append(rs, lruEntry{r, t})
 	}
 	sort.Sort(rs)
-	toRemove := rs[0].int64
-	delete(l.byRunID, toRemove)
+	toRemove := rs[:num]
+	ret := make([]int64, num)
+	for i := range toRemove {
+		id := toRemove[i].int64
+		ret[i] = id
+		delete(l.byRunID, id)
+	}
 
-	return toRemove
+	return ret
 }
