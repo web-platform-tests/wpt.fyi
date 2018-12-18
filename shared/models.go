@@ -174,6 +174,7 @@ type CheckSuite struct {
 	InstallationID int64  `json:"installation"`
 	Owner          string `json:"owner"` // Owner username
 	Repo           string `json:"repo"`
+	PRNumbers      []int  `json:"pr_numbers"`
 }
 
 // LabelsSet creates a set from the run's labels.

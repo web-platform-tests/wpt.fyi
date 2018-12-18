@@ -72,25 +72,30 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	diffAPI := shared.NewDiffAPI(ctx)
-	summaryData, err := getDiffSummary(aeAPI, diffAPI, *baseRun, *headRun)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	suites, err := NewAPI(ctx).GetSuitesForSHA(sha)
-	if err != nil {
-		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else if len(suites) < 1 {
-		log.Debugf("No CheckSuites found for %s", sha)
+	updatedAny := false
+	for _, suite := range suites {
+		summaryData, err := getDiffSummary(aeAPI, diffAPI, suite, *baseRun, *headRun)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err != nil {
+			log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		} else if len(suites) < 1 {
+			log.Debugf("No CheckSuites found for %s", sha)
+		}
+
+		updated, err := updateCheckRunSummary(ctx, summaryData, suites...)
+		updatedAny = updatedAny || updated
 	}
 
-	updated, err := updateCheckRunSummary(ctx, summaryData, suites...)
 	if err != nil {
 		log.Errorf("Failed to update check_run(s): %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else if updated {
+	} else if updatedAny {
 		w.Write([]byte("Check(s) updated"))
 	} else {
 		w.Write([]byte("No check(s) updated"))
@@ -158,7 +163,7 @@ func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headR
 	return baseRun, err
 }
 
-func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, headRun shared.TestRun) (summaries.Summary, error) {
+func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite shared.CheckSuite, baseRun, headRun shared.TestRun) (summaries.Summary, error) {
 	diffFilter := shared.DiffFilterParam{Added: true, Changed: true, Deleted: true}
 	diff, err := diffAPI.GetRunsDiff(baseRun, headRun, diffFilter, nil)
 	if err != nil {
@@ -181,6 +186,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 		HeadSHA:    headRun.FullRevisionHash,
 		DetailsURL: diffURL,
 		Status:     "completed",
+		PRNumbers:  suite.PRNumbers,
 	}
 
 	regressions := diff.Differences.Regressions()

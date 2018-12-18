@@ -121,20 +121,27 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 		sha := checkSuite.GetCheckSuite().GetHeadSHA()
 		log.Debugf("Check suite %s: %s/%s @ %s", action, owner, repo, sha[:7])
 
+		pullRequests := checkSuite.GetCheckSuite().PullRequests
+		prNumbers := []int{}
+		for _, pr := range pullRequests {
+			if pr.GetBase().GetRepo().GetID() == wptRepoID {
+				prNumbers = append(prNumbers, pr.GetNumber())
+			}
+		}
+
 		installationID := checkSuite.GetInstallation().GetID()
 		if action == "requested" {
 			// For new suites, check if the pull is across forks; if so, request a suite
 			// on the main repo (web-platform-tests/wpt) too.
-			pullRequests := checkSuite.GetCheckSuite().PullRequests
 			for _, p := range pullRequests {
 				destRepoID := p.GetBase().GetRepo().GetID()
 				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
-					checksAPI.CreateWPTCheckSuite(appID, installationID, sha)
+					checksAPI.CreateWPTCheckSuite(appID, installationID, sha, prNumbers...)
 				}
 			}
 		}
 
-		suite, err := getOrCreateCheckSuite(aeAPI.Context(), sha, owner, repo, appID, installationID)
+		suite, err := getOrCreateCheckSuite(aeAPI.Context(), sha, owner, repo, appID, installationID, prNumbers...)
 		if err != nil || suite == nil {
 			return false, err
 		}
