@@ -37,17 +37,9 @@ type lruEntry struct {
 
 type byTime []lruEntry
 
-func (s byTime) Len() int {
-	return len(s)
-}
-
-func (s byTime) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (s byTime) Less(i, j int) bool {
-	return s[i].Time.Before(s[j].Time)
-}
+func (s byTime) Len() int           { return len(s) }
+func (s byTime) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s byTime) Less(i, j int) bool { return s[i].Time.Before(s[j].Time) }
 
 var errEmpty = errors.New("LRU is empty")
 
