@@ -110,14 +110,19 @@ func (mr *MockAPIMockRecorder) CancelRun(sender, owner, repo, run, installation 
 }
 
 // CreateWPTCheckSuite mocks base method
-func (m *MockAPI) CreateWPTCheckSuite(appID, installationID int64, sha string) (bool, error) {
-	ret := m.ctrl.Call(m, "CreateWPTCheckSuite", appID, installationID, sha)
+func (m *MockAPI) CreateWPTCheckSuite(appID, installationID int64, sha string, prNumbers ...int) (bool, error) {
+	varargs := []interface{}{appID, installationID, sha}
+	for _, a := range prNumbers {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWPTCheckSuite", varargs...)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWPTCheckSuite indicates an expected call of CreateWPTCheckSuite
-func (mr *MockAPIMockRecorder) CreateWPTCheckSuite(appID, installationID, sha interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWPTCheckSuite", reflect.TypeOf((*MockAPI)(nil).CreateWPTCheckSuite), appID, installationID, sha)
+func (mr *MockAPIMockRecorder) CreateWPTCheckSuite(appID, installationID, sha interface{}, prNumbers ...interface{}) *gomock.Call {
+	varargs := append([]interface{}{appID, installationID, sha}, prNumbers...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWPTCheckSuite", reflect.TypeOf((*MockAPI)(nil).CreateWPTCheckSuite), varargs...)
 }

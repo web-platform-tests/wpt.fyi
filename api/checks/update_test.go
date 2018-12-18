@@ -34,11 +34,15 @@ func TestGetDiffSummary_Regressed(t *testing.T) {
 	diffURL, _ := url.Parse("https://wpt.fyi/results?diff")
 	diffAPI.EXPECT().GetDiffURL(before, after, gomock.Any()).Return(diffURL)
 	diffAPI.EXPECT().GetMasterDiffURL(after, sharedtest.SameDiffFilter("ACU")).Return(diffURL)
+	suite := shared.CheckSuite{
+		PRNumbers: []int{123},
+	}
 
-	summary, err := getDiffSummary(aeAPI, diffAPI, before, after)
+	summary, err := getDiffSummary(aeAPI, diffAPI, suite, before, after)
 	assert.Nil(t, err)
 	_, ok := summary.(summaries.Regressed)
 	assert.True(t, ok)
+	assert.Equal(t, suite.PRNumbers, summary.GetCheckState().PRNumbers)
 }
 
 func TestGetDiffSummary_Completed(t *testing.T) {
@@ -59,11 +63,15 @@ func TestGetDiffSummary_Completed(t *testing.T) {
 	diffURL, _ := url.Parse("https://wpt.fyi/results?diff")
 	diffAPI.EXPECT().GetDiffURL(before, after, gomock.Any()).Return(diffURL)
 	diffAPI.EXPECT().GetMasterDiffURL(after, sharedtest.SameDiffFilter("ACU")).Return(diffURL)
+	suite := shared.CheckSuite{
+		PRNumbers: []int{123},
+	}
 
-	summary, err := getDiffSummary(aeAPI, diffAPI, before, after)
+	summary, err := getDiffSummary(aeAPI, diffAPI, suite, before, after)
 	assert.Nil(t, err)
 	_, ok := summary.(summaries.Completed)
 	assert.True(t, ok)
+	assert.Equal(t, suite.PRNumbers, summary.GetCheckState().PRNumbers)
 }
 
 func getBeforeAndAfterRuns() (before, after shared.TestRun) {

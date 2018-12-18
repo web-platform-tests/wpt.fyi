@@ -17,7 +17,11 @@ And {{ .More }} others...
 
 [Visual comparison of the results]({{ .DiffURL }})
 
-Other views that might be useful:
+Other links that might be useful:
+{{- range $pr := .CheckState.PRNumbers }}
+- [Latest results for PR #{{ $pr }}]({{ $.HostURL }}results/?pr={{ $pr }})
+- [All runs for PR #{{ $pr }}]({{ $.HostURL }}runs/?pr={{ $pr }})
+{{- end}}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs its merge base]({{ .DiffURL }})
 {{- if .MasterDiffURL }}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})

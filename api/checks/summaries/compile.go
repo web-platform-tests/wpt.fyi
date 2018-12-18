@@ -47,6 +47,7 @@ type CheckState struct {
 	Status     string  // The current status. Can be one of "queued", "in_progress", or "completed". Default: "queued". (Optional.)
 	Conclusion *string // Can be one of "success", "failure", "neutral", "cancelled", "timed_out", or "action_required". (Optional. Required if you provide a status of "completed".)
 	Actions    []github.CheckRunAction
+	PRNumbers  []int
 }
 
 // Name returns the check run's name, based on the product.
