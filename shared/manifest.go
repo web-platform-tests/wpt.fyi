@@ -7,6 +7,7 @@ package shared
 import "strings"
 
 // explosions returns a map of the exploded test by filename suffix.
+// https://web-platform-tests.org/writing-tests/testharness.html#multi-global-tests
 func explosions() map[string][]string {
 	return map[string][]string{
 		".window.js": []string{".window.html"},
@@ -38,7 +39,6 @@ func ExplodePossibleRenames(before, after string) map[string]string {
 // ExplodePossibleFilenames explodes the given single filename into the test names that
 // could be created for it at runtime.
 func ExplodePossibleFilenames(filePath string) []string {
-	// https://web-platform-tests.org/writing-tests/testharness.html#multi-global-tests
 	for suffix, exploded := range explosions() {
 		if strings.HasSuffix(filePath, suffix) {
 			prefix := filePath[:len(filePath)-len(suffix)]
