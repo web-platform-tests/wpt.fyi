@@ -415,10 +415,14 @@ func ParseMaxCountParamWithDefault(v url.Values, defaultValue int) (count int, e
 	return defaultValue, nil
 }
 
-// ParseDateTimeParam parses the date/time param named "name" as a timestamp.
+// ParseDateTimeParam flexibly parses a date/time param with the given name as a time.Time.
 func ParseDateTimeParam(v url.Values, name string) (*time.Time, error) {
 	if fromParam := v.Get(name); fromParam != "" {
-		parsed, err := time.Parse(time.RFC3339, fromParam)
+		format := time.RFC3339
+		if len(fromParam) < strings.Index(time.RFC3339, "Z") {
+			format = format[:len(fromParam)]
+		}
+		parsed, err := time.Parse(format, fromParam)
 		if err != nil {
 			return nil, err
 		}
