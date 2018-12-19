@@ -18,7 +18,13 @@ var browsers = shared.GetDefaultBrowserNames()
 // AbstractQuery is an intermetidate representation of a test results query that
 //  has not been bound to specific shared.TestRun specs for processing.
 type AbstractQuery interface {
-	BindToRuns(runs []shared.TestRun) ConcreteQuery
+	BindToRuns(runs shared.TestRuns) []ConcreteQuery
+}
+
+func (a AbstractQuery) GetConcreteQuery(runs shared.TestRuns) ConcreteQuery {
+	return Or{
+		Args: a.BindToRuns(runs),
+	}
 }
 
 // RunQuery is the internal representation of a query recieved from an HTTP
@@ -36,8 +42,8 @@ type TestNamePattern struct {
 
 // BindToRuns for TestNamePattern is a no-op: TestNamePattern implements both
 // AbstractQuery and ConcreteQuery because it is independent of test runs.
-func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	return tnp
+func (tnp TestNamePattern) BindToRuns(runs shared.TestRuns) []ConcreteQuery {
+	return []ConcreteQuery{tnp}
 }
 
 // TestStatusConstraint is a query atom that matches tests where the test
@@ -50,7 +56,7 @@ type TestStatusConstraint struct {
 
 // BindToRuns for TestStatusConstraint expands a TestStatusConstraint to a
 // disjunction of RunTestStatusConstraint values.
-func (tsc TestStatusConstraint) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (tsc TestStatusConstraint) BindToRuns(runs shared.TestRuns) []ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
 		if run.BrowserName == tsc.BrowserName {
@@ -58,17 +64,19 @@ func (tsc TestStatusConstraint) BindToRuns(runs []shared.TestRun) ConcreteQuery 
 		}
 	}
 	if len(ids) == 0 {
-		return True{}
+		return []ConcreteQuery{True{}}
 	}
 	if len(ids) == 1 {
-		return RunTestStatusConstraint{ids[0], tsc.Status}
+		return []ConcreteQuery{
+			RunTestStatusConstraint{ids[0], tsc.Status},
+		}
 	}
 
-	q := Or{make([]ConcreteQuery, len(ids))}
+	runsWithStatus := make([]ConcreteQuery, len(ids))
 	for i := range ids {
-		q.Args[i] = RunTestStatusConstraint{ids[i], tsc.Status}
+		runsWithStatus[i] = RunTestStatusConstraint{ids[i], tsc.Status}
 	}
-	return q
+	return runsWithStatus
 }
 
 // AbstractNot is the AbstractQuery for negation.
@@ -77,8 +85,13 @@ type AbstractNot struct {
 }
 
 // BindToRuns for AbstractNot produces a Not with a bound argument.
-func (n AbstractNot) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	return Not{n.Arg.BindToRuns(runs)}
+func (n AbstractNot) BindToRuns(runs shared.TestRuns) []ConcreteQuery {
+	bound := n.Arg.BindToRuns(runs)
+	notted := make([]ConcreteQuery, len(bound))
+	for i := range bound {
+		notted[i] = Not{bound[i]}
+	}
+	return notted
 }
 
 // AbstractOr is the AbstractQuery for disjunction.
@@ -87,26 +100,29 @@ type AbstractOr struct {
 }
 
 // BindToRuns for AbstractOr produces an Or with bound arguments.
-func (o AbstractOr) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (o AbstractOr) BindToRuns(runs shared.TestRuns) []ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(o.Args))
 	for i := range o.Args {
-		sub := o.Args[i].BindToRuns(runs)
-		if _, ok := sub.(True); ok {
-			return True{}
+		for _, sub := range o.Args[i].BindToRuns(runs) {
+			if _, ok := sub.(True); ok {
+				return []ConcreteQuery{True{}}
+			}
+			if _, ok := sub.(False); ok {
+				continue
+			}
+			args = append(args, sub)
 		}
-		if _, ok := sub.(False); ok {
-			continue
-		}
-		args = append(args, sub)
 	}
 	if len(args) == 0 {
-		return True{}
+		return []ConcreteQuery{True{}}
 	}
 	if len(args) == 1 {
-		return args[0]
+		return []ConcreteQuery{args[0]}
 	}
-	return Or{
-		Args: args,
+	return []ConcreteQuery{
+		Or{
+			Args: args,
+		},
 	}
 }
 
@@ -116,26 +132,34 @@ type AbstractAnd struct {
 }
 
 // BindToRuns for AbstractAnd produces an And with bound arguments.
-func (a AbstractAnd) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (a AbstractAnd) BindToRuns(runs shared.TestRuns) []ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(a.Args))
 	for i := range a.Args {
-		sub := a.Args[i].BindToRuns(runs)
-		if _, ok := sub.(False); ok {
-			return False{}
-		}
-		if _, ok := sub.(True); ok {
+		bound := a.Args[i].BindToRuns(runs)
+		if len(bound) == 0 {
 			continue
+		} else if len(bound) == 1 {
+			if _, ok := bound[0].(False); ok {
+				return []ConcreteQuery{False{}}
+			}
+			if _, ok := bound[0].(True); ok {
+				continue
+			}
+			args = append(args, bound[0])
+		} else {
+			args = append(args, Or{Args: bound})
 		}
-		args = append(args, sub)
 	}
 	if len(args) == 0 {
-		return True{}
+		return []ConcreteQuery{True{}}
 	}
 	if len(args) == 1 {
-		return args[0]
+		return []ConcreteQuery{args[0]}
 	}
-	return And{
-		Args: args,
+	return []ConcreteQuery{
+		And{
+			Args: args,
+		},
 	}
 }
 

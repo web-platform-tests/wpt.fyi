@@ -36,7 +36,7 @@ func mockTestRuns(loader *MockReportLoader, idx Index, data []testRunData) []sha
 }
 
 func planAndExecute(t *testing.T, runs []shared.TestRun, idx Index, q query.AbstractQuery) []query.SearchResult {
-	plan, err := idx.Bind(runs, q.BindToRuns(runs))
+	plan, err := idx.Bind(runs, q.GetConcreteQuery(runs))
 	assert.Nil(t, err)
 
 	res := plan.Execute(runs)
@@ -68,7 +68,7 @@ func TestBindFail_NoRuns(t *testing.T) {
 	idx, err := NewShardedWPTIndex(loader, testNumShards)
 	assert.Nil(t, err)
 
-	_, err = idx.Bind(nil, query.TestNamePattern{Pattern: "/"}.BindToRuns(nil))
+	_, err = idx.Bind(nil, query.TestNamePattern{Pattern: "/"}.GetConcreteQuery(nil))
 	assert.NotNil(t, err)
 }
 
@@ -91,7 +91,7 @@ func TestBindFail_MissingRun(t *testing.T) {
 	assert.Nil(t, err)
 
 	runs := []shared.TestRun{shared.TestRun{ID: 1}}
-	_, err = idx.Bind(runs, query.TestNamePattern{Pattern: "/"}.BindToRuns(runs))
+	_, err = idx.Bind(runs, query.TestNamePattern{Pattern: "/"}.GetConcreteQuery(runs))
 	assert.NotNil(t, err)
 }
 

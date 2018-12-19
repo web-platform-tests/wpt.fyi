@@ -226,12 +226,13 @@ func TestStructuredQuery_bindPattern(t *testing.T) {
 	tnp := TestNamePattern{
 		Pattern: "/",
 	}
-	q := tnp.BindToRuns([]shared.TestRun{})
-	assert.Equal(t, tnp, q)
+	bound := tnp.BindToRuns(shared.TestRuns{})
+	assert.Len(t, bound, 1)
+	assert.Equal(t, tnp, bound[0])
 }
 
 func TestStructuredQuery_bindStatusNoRuns(t *testing.T) {
-	assert.Equal(t, True{}, TestStatusConstraint{
+	assert.Equal(t, []ConcreteQuery{True{}}, TestStatusConstraint{
 		BrowserName: "Chrome",
 		Status:      1,
 	}.BindToRuns([]shared.TestRun{}))
@@ -265,7 +266,9 @@ func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
 		Run:    1,
 		Status: 1,
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }
 
 func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
@@ -300,19 +303,18 @@ func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
 		},
 	}
 	// Two Firefox runs: ID=1, ID=3.
-	expected := Or{
-		Args: []ConcreteQuery{
-			RunTestStatusConstraint{
-				Run:    1,
-				Status: 1,
-			},
-			RunTestStatusConstraint{
-				Run:    3,
-				Status: 1,
-			},
+	expected := []ConcreteQuery{
+		RunTestStatusConstraint{
+			Run:    1,
+			Status: 1,
+		},
+		RunTestStatusConstraint{
+			Run:    3,
+			Status: 1,
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Equal(t, expected, bound)
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {
@@ -349,7 +351,9 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }
 
 func TestStructuredQuery_bindOr(t *testing.T) {
@@ -386,7 +390,9 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }
 
 func TestStructuredQuery_bindNot(t *testing.T) {
@@ -413,7 +419,9 @@ func TestStructuredQuery_bindNot(t *testing.T) {
 			Status: 1,
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }
 
 func TestStructuredQuery_bindAndReduce(t *testing.T) {
@@ -443,7 +451,9 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 	expected := TestNamePattern{
 		Pattern: "/",
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }
 
 func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
@@ -471,7 +481,9 @@ func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 	}
 	// No runs match any constraint; reduce to True.
 	expected := True{}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }
 
 func TestStructuredQuery_bindOrReduce(t *testing.T) {
@@ -499,7 +511,9 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 	// No runs match Safari constraint; it becomes True,
 	// Pattern="/" || True => True.
 	expected := True{}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }
 
 func TestStructuredQuery_bindComplex(t *testing.T) {
@@ -586,7 +600,9 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }
 
 func TestStructuredQuery_bindBoth1AndNot1(t *testing.T) {
@@ -605,9 +621,9 @@ func TestStructuredQuery_bindBoth1AndNot1(t *testing.T) {
 		},
 	}
 	runs := shared.TestRuns{}
-	for i := 0; i < 2; i++ {
+	for i := 1; i <= 2; i++ {
 		runs = append(runs, shared.TestRun{
-			ID: 1,
+			ID: int64(i),
 			ProductAtRevision: shared.ProductAtRevision{
 				Product: shared.Product{
 					BrowserName: "Edge",
@@ -615,21 +631,9 @@ func TestStructuredQuery_bindBoth1AndNot1(t *testing.T) {
 			},
 		})
 	}
-	// Only run is Edge, ID=1.
+	// Two Edge runs, ID=1 and ID=2.
 	expected := And{
 		Args: []ConcreteQuery{
-			Or{
-				Args: []ConcreteQuery{
-					RunTestStatusConstraint{
-						Run:    1,
-						Status: 1,
-					},
-					RunTestStatusConstraint{
-						Run:    2,
-						Status: 1,
-					},
-				},
-			},
 			Or{
 				Args: []ConcreteQuery{
 					Not{
@@ -646,7 +650,21 @@ func TestStructuredQuery_bindBoth1AndNot1(t *testing.T) {
 					},
 				},
 			},
+			Or{
+				Args: []ConcreteQuery{
+					RunTestStatusConstraint{
+						Run:    1,
+						Status: 1,
+					},
+					RunTestStatusConstraint{
+						Run:    2,
+						Status: 1,
+					},
+				},
+			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	bound := q.BindToRuns(runs)
+	assert.Len(t, bound, 1)
+	assert.Equal(t, expected, bound[0])
 }

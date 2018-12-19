@@ -79,7 +79,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := cq.PrepareUserQuery(rq.RunIDs, rq.AbstractQuery.BindToRuns(runs))
+	q := cq.PrepareUserQuery(rq.RunIDs, query.Or{Args: rq.AbstractQuery.BindToRuns(runs)})
 
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
