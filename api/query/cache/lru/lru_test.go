@@ -45,6 +45,14 @@ func TestRoundDown(t *testing.T) {
 	assert.Equal(t, []int64{int64(1)}, removed)
 }
 
+func TestRoundWayDown(t *testing.T) {
+	l := NewLRU()
+	l.Access(1)
+	l.Access(2)
+	removed := l.EvictLRU(1000.0)
+	assert.Equal(t, []int64{int64(1), int64(2)}, removed)
+}
+
 func TestRepeatAccess(t *testing.T) {
 	l := NewLRU()
 	l.Access(1)
