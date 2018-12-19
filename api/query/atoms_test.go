@@ -588,3 +588,65 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs))
 }
+
+func TestStructuredQuery_bindBoth1AndNot1(t *testing.T) {
+	q := AbstractAnd{
+		Args: []AbstractQuery{
+			AbstractNot{
+				Arg: TestStatusConstraint{
+					BrowserName: "Edge",
+					Status:      1,
+				},
+			},
+			TestStatusConstraint{
+				BrowserName: "Edge",
+				Status:      1,
+			},
+		},
+	}
+	runs := shared.TestRuns{}
+	for i := 0; i < 2; i++ {
+		runs = append(runs, shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		})
+	}
+	// Only run is Edge, ID=1.
+	expected := And{
+		Args: []ConcreteQuery{
+			Or{
+				Args: []ConcreteQuery{
+					RunTestStatusConstraint{
+						Run:    1,
+						Status: 1,
+					},
+					RunTestStatusConstraint{
+						Run:    2,
+						Status: 1,
+					},
+				},
+			},
+			Or{
+				Args: []ConcreteQuery{
+					Not{
+						Arg: RunTestStatusConstraint{
+							Run:    1,
+							Status: 1,
+						},
+					},
+					Not{
+						Arg: RunTestStatusConstraint{
+							Run:    2,
+							Status: 1,
+						},
+					},
+				},
+			},
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
