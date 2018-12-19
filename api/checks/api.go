@@ -147,6 +147,7 @@ func (s checksAPIImpl) CancelRun(sender, owner, repo string, run *github.CheckRu
 		CompletedAt: &github.Timestamp{Time: time.Now()},
 		Actions: []*github.CheckRunAction{
 			summaries.RecomputeAction(),
+			summaries.IgnoreAction(),
 		},
 	}
 	_, _, err = client.Checks.UpdateCheckRun(s.ctx, owner, repo, run.GetID(), opts)
