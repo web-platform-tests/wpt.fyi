@@ -39,7 +39,7 @@
         };
         // Push initial state into the stack.
         const params = this.navigationQueryParams();
-        const url = this.getLocation(params);
+        const url = this.getLocation(params, window.location);
         window.history.pushState(params, '', url);
       }
 
@@ -117,7 +117,7 @@
        */
       navigateToLocation(location) {
         const params = this.navigationQueryParams();
-        const url = this.getLocation(params);
+        const url = this.getLocation(params, location);
         if (url.toString() === window.location.toString()) {
           return;
         }
@@ -142,8 +142,8 @@
         this.navigateToLocation(url);
       }
 
-      getLocation(params) {
-        const url = new URL(window.location);
+      getLocation(params, location) {
+        const url = new URL(location);
         url.search = '';
         for (const [k, v] of Object.entries(params)) {
           const list = (v instanceof Array) ? v : [v];
