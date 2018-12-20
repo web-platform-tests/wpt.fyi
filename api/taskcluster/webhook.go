@@ -27,6 +27,7 @@ import (
 )
 
 const flagTaskclusterAllBranches = "taskclusterAllBranches"
+const flagPendingChecks = "pendingChecks"
 
 var (
 	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
@@ -335,16 +336,18 @@ func createAllRuns(
 				return
 			}
 
-			spec := shared.ProductSpec{}
-			spec.BrowserName = bits[0]
-			spec.Labels = shared.NewSetFromStringSlice(labelsForRun)
-			if len(bits) > 1 {
-				if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-					spec.Labels.Add(label)
+			if aeAPI.IsFeatureEnabled(flagPendingChecks) {
+				spec := shared.ProductSpec{}
+				spec.BrowserName = bits[0]
+				spec.Labels = shared.NewSetFromStringSlice(labelsForRun)
+				if len(bits) > 1 {
+					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
+						spec.Labels.Add(label)
+					}
 				}
-			}
-			for _, suite := range suites {
-				checksAPI.PendingCheckRun(suite, spec)
+				for _, suite := range suites {
+					checksAPI.PendingCheckRun(suite, spec)
+				}
 			}
 		}(product, urls)
 	}

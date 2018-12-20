@@ -44,6 +44,7 @@ found in the LICENSE file.
           'runsByPRNumber',
           'failChecksOnRegression',
           'checksAllUsers',
+          'pendingChecks',
         ];
       }
     });
@@ -192,7 +193,7 @@ found in the LICENSE file.
 <dom-module id="wpt-environment-flags-editor">
   <template>
     <!-- WPTFlags template prepended in code, below. -->
-    <h4>Server-side only features</h4>
+    <h3>Server-side only features</h3>
     <paper-item>
       <paper-checkbox checked="{{diffRenames}}">
         Compute renames in diffs with the GitHub API
@@ -228,14 +229,20 @@ found in the LICENSE file.
         Allow /api/runs?pr=[GitHub PR number]
       </paper-checkbox>
     </paper-item>
-    <paper-item>
+    <h5>GitHub Status Checks</h5>
+    <paper-item sub-item>
       <paper-checkbox checked="{{failChecksOnRegression}}">
         Fail the wpt.fyi GitHub status check if regressions are found, and pass them if not.
       </paper-checkbox>
     </paper-item>
-    <paper-item>
+    <paper-item sub-item>
       <paper-checkbox checked="{{checksAllUsers}}">
         Run the wpt.fyi GitHub status check for all users, not just whitelisted ones.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{pendingChecks}}">
+        Create pending GitHub status check when results first arrive, and are being processed.
       </paper-checkbox>
     </paper-item>
     <paper-item>
