@@ -160,9 +160,14 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
 	defer cancel()
-	var labels []string
+	labels := mapset.NewSet()
 	if status.IsOnMaster() {
-		labels = []string{"master"}
+		labels.Add(shared.MasterLabel)
+	} else {
+		sender := status.GetSender().GetLogin()
+		if sender != "" {
+			labels.Add(sender)
+		}
 	}
 	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
@@ -175,7 +180,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		username,
 		password,
 		urlsByProduct,
-		labels)
+		shared.ToStringSlice(labels))
 	if err != nil {
 		return false, err
 	}
