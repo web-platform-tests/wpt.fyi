@@ -59,7 +59,7 @@ func (h PRsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func getPRsByPaths(aeAPI shared.AppEngineAPI, paths ...string) ([]github.Issue, error) {
 	client, err := aeAPI.GetGitHubClient()
-	q := fmt.Sprintf("type:pr user:web-platform-tests repo:wpt %s", strings.Join(paths, " "))
+	q := fmt.Sprintf("type:pr user:web-platform-tests repo:wpt state:open %s", strings.Join(paths, " "))
 	prs, _, err := client.Search.Issues(aeAPI.Context(), q, &github.SearchOptions{
 		Order: "desc",
 		Sort:  "updated",
