@@ -78,8 +78,15 @@ found in the LICENSE file.
       window.customElements.define(WPTPR.is, WPTPR);
     </script>
 </dom-module>
+
 <dom-module id="wpt-prs">
   <template>
+    <style>
+      h4 {
+        margin-bottom: 0.5em;
+      }
+    </style>
+    <h4>Open PRs including <i>[[path]]</i></h4>
     <template is="dom-repeat" items="[[firstThree]]" as="pr">
       <wpt-pr pr="[[pr]]"></wpt-pr>
     </template>
@@ -126,6 +133,10 @@ found in the LICENSE file.
       }
 
       loadData(path) {
+        if (this.others) {
+          this.shadowRoot.querySelector('#toggle').hidden = false;
+          this.shadowRoot.querySelector('#collapsible').opened = false;
+        }
         this.prs = [];
         if (!path) {
           return;
@@ -152,7 +163,7 @@ found in the LICENSE file.
 
       handleOpenCollapsible() {
         this.shadowRoot.querySelector('#toggle').hidden = true;
-        this.shadowRoot.querySelector('#collapsible').toggle();
+        this.shadowRoot.querySelector('#collapsible').opened = true;
       }
     }
 
