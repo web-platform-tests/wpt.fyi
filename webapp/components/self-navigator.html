@@ -142,7 +142,7 @@
       }
 
       getLocation(params) {
-        const url = new URL(location);
+        const url = new URL(window.location);
         url.search = '';
         for (const [k, v] of Object.entries(params)) {
           const list = (v instanceof Array) ? v : [v];
