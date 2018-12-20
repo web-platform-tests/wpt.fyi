@@ -32,6 +32,7 @@ found in the LICENSE file.
           'fetchManifestForTestList',
           'githubCommitLinks',
           'insightsTab',
+          'searchPRsForDirectories',
         ];
       }
     });
@@ -138,6 +139,11 @@ found in the LICENSE file.
     <paper-item>
       <paper-checkbox checked="{{githubCommitLinks}}">
         Show links to the commit on GitHub in the header row.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{searchPRsForDirectories}}">
+        On /results, list open PRs involving the current directory.
       </paper-checkbox>
     </paper-item>
   </template>

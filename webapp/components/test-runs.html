@@ -35,6 +35,10 @@ found in the LICENSE file.
               type: Boolean,
               computed: 'computePathIsATestFile(path)'
             },
+            pathIsASubfolder: {
+              type: Boolean,
+              computed: 'computePathIsASubfolder(path)'
+            },
             nextPageToken: String,
           };
         }
@@ -49,6 +53,10 @@ found in the LICENSE file.
 
         computePathIsATestFile(path) {
           return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
+        }
+
+        computePathIsASubfolder(path) {
+          return !this.computePathIsATestFile(path) && path.split('/').length > 1;
         }
 
         encodeTestPath(path) {

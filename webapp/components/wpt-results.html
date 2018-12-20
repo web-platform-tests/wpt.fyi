@@ -28,6 +28,7 @@ found in the LICENSE file.
 <link rel="import" href="test-search.html">
 <link rel="import" href="wpt-colors.html">
 <link rel="import" href="wpt-flags.html">
+<link rel="import" href="wpt-prs.html">
 
 <dom-module id="wpt-results">
   <template>
@@ -141,6 +142,12 @@ found in the LICENSE file.
           ><span class="path-separator">/</span><a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a
         ></template>
       </div>
+
+      <template is="dom-if" if="[[searchPRsForDirectories]]">
+        <template is="dom-if" if="[[pathIsASubfolder]]">
+          <wpt-prs path="[[path]]/"></wpt-prs>
+        </template>
+      </template>
 
       <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
