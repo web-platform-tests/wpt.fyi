@@ -762,10 +762,6 @@ found in the LICENSE file.
         return '/results';
       }
 
-      navigationQueryParams() {
-        return Object.assign({}, this.queryParams);
-      }
-
       testResultClass(node, index, testRun, prop) {
         // Guard against incomplete data.
         if (!node || !testRun) {

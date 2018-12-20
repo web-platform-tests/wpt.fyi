@@ -84,9 +84,10 @@
 
       /**
        * Get query params to persist when creating history.
+       * Defaults to the queryParams property.
        */
       navigationQueryParams() {
-        return {};
+        return this.queryParams && JSON.parse(JSON.stringify(this.queryParams));
       }
 
       bindNavigate() {

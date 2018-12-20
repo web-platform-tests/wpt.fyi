@@ -308,10 +308,6 @@ found in the LICENSE file.
       return '/interop';
     }
 
-    navigationQueryParams() {
-      return this.queryParams;
-    }
-
     interopQueryParams(sha, aligned, master, labels, productSpecs, maxCount, to, from, search) {
       const params = this.computeTestRunQueryParams(sha, aligned, master, labels, productSpecs, to, from, maxCount);
       if (search) {

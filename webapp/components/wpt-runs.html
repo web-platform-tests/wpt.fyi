@@ -16,6 +16,7 @@ found in the LICENSE file.
 <link rel="import" href="./test-run.html">
 <link rel="import" href="./loading-state.html">
 <link rel="import" href="./product-info.html">
+<link rel="import" href="./self-navigator.html">
 <link rel="import" href="./test-runs-query-builder.html">
 <link rel="import" href="./wpt-flags.html">
 
@@ -185,8 +186,8 @@ found in the LICENSE file.
   </template>
 
   <script>
-    /* global WPTFlags, TestRunsUIBase, LoadingState */
-    class WPTRuns extends WPTFlags(LoadingState(TestRunsUIBase)) {
+    /* global WPTFlags, SelfNavigation, TestRunsUIBase, LoadingState */
+    class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
       static get is() {
         return 'wpt-runs';
       }
@@ -352,6 +353,8 @@ found in the LICENSE file.
         if (queryBefore === this.query) {
           return;
         }
+        // Trigger a virtual navigation.
+        this.navigateToLocation(window.location);
         this.setProperties({
           browsers: [],
           testRuns: [],
