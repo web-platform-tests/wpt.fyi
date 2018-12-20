@@ -182,6 +182,7 @@ func TestCreateAllRuns_success_master(t *testing.T) {
 	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[master]"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
@@ -226,6 +227,7 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[pr_head]"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
@@ -277,6 +279,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	checksAPI.EXPECT().PendingCheckRun(suite, gomock.Any())
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
