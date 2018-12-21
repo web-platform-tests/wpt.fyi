@@ -276,3 +276,12 @@ func GetResultsURL(run TestRun, testFile string) (resultsURL string) {
 	}
 	return resultsURL
 }
+
+// CropString conditionally crops a string to the given length, if it is longer.
+// Returns the original string otherwise.
+func CropString(s string, i int) string {
+	if len(s) <= i {
+		return s
+	}
+	return s[:i]
+}
