@@ -345,10 +345,9 @@ func createAllRuns(
 			if aeAPI.IsFeatureEnabled(flagPendingChecks) {
 				spec := shared.ProductSpec{}
 				spec.BrowserName = bits[0]
-				spec.Labels = shared.NewSetFromStringSlice(labelsForRun)
 				if len(bits) > 1 {
 					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-						spec.Labels.Add(label)
+						spec.Labels = mapset.NewSet(label)
 					}
 				}
 				for _, suite := range suites {

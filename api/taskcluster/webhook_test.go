@@ -31,7 +31,7 @@ func TestShouldProcessStatus_states(t *testing.T) {
 	status := statusEventPayload{}
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
-	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
 	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 
 	status.State = strPtr("failure")
@@ -48,7 +48,7 @@ func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
 	status := statusEventPayload{}
 	status.State = strPtr("success")
 	status.Context = strPtr("Travis")
-	status.Branches = branchInfos{&github.Branch{Name: strPtr("master")}}
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
 	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 }
 
@@ -68,7 +68,7 @@ func TestIsOnMaster(t *testing.T) {
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{
 		&github.Branch{
-			Name:   strPtr("master"),
+			Name:   strPtr(shared.MasterLabel),
 			Commit: &github.RepositoryCommit{SHA: strPtr("a10867b14bb761a232cd80139fbd4c0d33264240")},
 		},
 		&github.Branch{
@@ -80,7 +80,7 @@ func TestIsOnMaster(t *testing.T) {
 			Commit: &github.RepositoryCommit{SHA: strPtr("fd353d4ae7c19d2268397459524f849c129944a7")},
 		},
 	}
-	assert.Equal(t, []string{"master"}, status.HeadingBranches().GetNames())
+	assert.Equal(t, []string{shared.MasterLabel}, status.HeadingBranches().GetNames())
 	assert.True(t, status.IsOnMaster())
 
 	status.Branches = status.Branches[1:]
@@ -177,9 +177,9 @@ func TestCreateAllRuns_success_master(t *testing.T) {
 	checksAPI := checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("safari[experimental,master]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental,master]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[master]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("safari[experimental]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
@@ -196,9 +196,9 @@ func TestCreateAllRuns_success_master(t *testing.T) {
 		map[string][]string{
 			"safari-preview": []string{"1"},
 			"chrome-dev":     []string{"1"},
-			"firefox":        []string{"1", "2"},
+			"firefox-stable": []string{"1", "2"},
 		},
-		[]string{"master"},
+		[]string{shared.MasterLabel, "user:person"},
 	)
 	assert.Nil(t, err)
 	assert.Equal(t, uint32(3), requested)
@@ -221,10 +221,10 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 	checksAPI := checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental,pr_base]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental,pr_head]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[pr_base]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[pr_head]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
+	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
@@ -239,11 +239,11 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 		"username",
 		"password",
 		map[string][]string{
-			"chrome-dev-pr_head": []string{"1"},
-			"chrome-dev-pr_base": []string{"1"},
-			"firefox-pr_head":    []string{"1"},
-			"firefox-pr_base":    []string{"1"},
-			"safari-pr_base":     []string{"1"},
+			"chrome-dev-pr_head":     []string{"1"},
+			"chrome-dev-pr_base":     []string{"1"},
+			"firefox-stable-pr_head": []string{"1"},
+			"firefox-stable-pr_base": []string{"1"},
+			"safari-pr_base":         []string{"1"},
 			// Missing "safari-pr_head": []string{"1"},
 			// Missing "edge-pr_base": []string{"1"},
 			"edge-pr_head": []string{"1"},
@@ -291,7 +291,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 		"username",
 		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
-		[]string{"master"},
+		[]string{shared.MasterLabel},
 	)
 	assert.NotNil(t, err)
 	assert.Equal(t, uint32(2), requested)
@@ -326,7 +326,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 		"username",
 		"password",
 		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
-		[]string{"master"},
+		[]string{shared.MasterLabel},
 	)
 	assert.NotNil(t, err)
 	assert.Equal(t, 2, strings.Count(err.Error(), "Client.Timeout"))
