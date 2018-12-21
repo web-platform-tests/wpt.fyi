@@ -167,7 +167,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	} else {
 		sender := status.GetCommit().GetAuthor().GetLogin()
 		if sender != "" {
-			labels.Add(sender)
+			labels.Add(shared.GetUserLabel(sender))
 		}
 	}
 	checksAPI := checks.NewAPI(ctx)
@@ -345,10 +345,9 @@ func createAllRuns(
 			if aeAPI.IsFeatureEnabled(flagPendingChecks) {
 				spec := shared.ProductSpec{}
 				spec.BrowserName = bits[0]
-				spec.Labels = shared.NewSetFromStringSlice(labelsForRun)
 				if len(bits) > 1 {
 					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-						spec.Labels.Add(label)
+						spec.Labels = mapset.NewSet(label)
 					}
 				}
 				for _, suite := range suites {

@@ -43,6 +43,15 @@ const PRBaseLabel = "pr_base"
 // head of a PR (with the changes).
 const PRHeadLabel = "pr_head"
 
+// UserLabelPrefix is a prefix used to denote a label for a user's GitHub handle,
+// prefixed because usernames are essentially user input.
+const UserLabelPrefix = "user:"
+
+// GetUserLabel prefixes the given username with the prefix for using as a label.
+func GetUserLabel(username string) string {
+	return UserLabelPrefix + username
+}
+
 // ProductChannelToLabel maps known product-specific channel names
 // to the wpt.fyi model's equivalent.
 func ProductChannelToLabel(channel string) string {

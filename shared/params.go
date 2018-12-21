@@ -648,6 +648,9 @@ func ParseTestRunFilterParams(v url.Values) (filter TestRunFilter, err error) {
 	}
 	filter.SHA = runSHA
 	filter.Labels = NewSetFromStringSlice(ParseLabelsParam(v))
+	if user := v.Get("user"); user != "" {
+		filter.Labels.Add(GetUserLabel(user))
+	}
 	if filter.Aligned, err = ParseAlignedParam(v); err != nil {
 		return filter, err
 	}
