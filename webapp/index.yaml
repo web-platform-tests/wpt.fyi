@@ -89,3 +89,31 @@ indexes:
   - name: Repo
   - name: AppID
   - name: InstallationID
+- kind: TestRun
+  properties:
+  - name: FullRevisionHash
+  - name: TimeStart
+    direction: desc
+- kind: TestRun
+  properties:
+  - name: Browser
+  - name: FullRevisionHash
+  - name: TimeStart
+    direction: desc
+- kind: TestRun
+  properties:
+  - name: BrowserName
+  - name: FullRevisionHash
+  - name: TimeStart
+    direction: desc
+- kind: TestRun
+  properties:
+  - name: FullRevisionHash
+  - name: BrowserVersion
+    direction: desc
+- kind: TestRun
+  properties:
+  - name: TimeStart
+    direction: desc
+  - name: BrowserName
+  - name: FullRevisionHash
