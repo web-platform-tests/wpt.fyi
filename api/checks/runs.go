@@ -53,7 +53,8 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 			state := summary.GetCheckState()
 			actions := summary.GetActions()
 
-			summaryStr, err := summary.GetSummary()
+			var summaryStr string
+			summaryStr, err = summary.GetSummary()
 			if err != nil {
 				log.Warningf("Failed to generate summary for %s: %s", state.HeadSHA, err.Error())
 				return false, err

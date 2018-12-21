@@ -289,8 +289,8 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 
 	var renames map[string]string
 	if IsFeatureEnabled(d.ctx, "diffRenames") {
- 		beforeSHA := before.FullRevisionHash
- 		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
+		beforeSHA := before.FullRevisionHash
+		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
 		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
 			beforeSHA = "HEAD"
 		}
@@ -374,7 +374,7 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	}
 	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
 	if err != nil || comparison == nil {
-		log.Errorf("Failed to fetch diff for %s...%s: %s", shaBefore[:7], shaAfter[:7], err.Error())
+		log.Errorf("Failed to fetch diff for %s...%s: %s", CropString(shaBefore, 7), CropString(shaAfter, 7), err.Error())
 		return nil
 	}
 
@@ -388,7 +388,7 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 		}
 	}
 	if len(renames) < 1 {
-		log.Debugf("No renames for %s...%s", shaBefore[:7], shaAfter[:7])
+		log.Debugf("No renames for %s...%s", CropString(shaBefore, 7), CropString(shaAfter, 7))
 	}
 	return renames
 }
