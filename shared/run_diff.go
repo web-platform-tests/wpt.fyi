@@ -241,7 +241,8 @@ func FetchRunResultsJSONForSpec(
 // FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
 func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 	one := 1
-	testRuns, err := LoadTestRuns(ctx, []ProductSpec{spec}, nil, spec.Revision, nil, nil, &one, nil)
+	store := NewAppEngineDatastore(ctx)
+	testRuns, err := LoadTestRuns(store, []ProductSpec{spec}, nil, spec.Revision, nil, nil, &one, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -289,8 +290,8 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 
 	var renames map[string]string
 	if IsFeatureEnabled(d.ctx, "diffRenames") {
- 		beforeSHA := before.FullRevisionHash
- 		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
+		beforeSHA := before.FullRevisionHash
+		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
 		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
 			beforeSHA = "HEAD"
 		}

@@ -23,6 +23,7 @@ const paginationTokenFeatureFlagName = "paginationTokens"
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
+	store := shared.NewAppEngineDatastore(ctx)
 	q := r.URL.Query()
 	ids, err := shared.ParseRunIDsParam(q)
 	if err != nil {
@@ -53,7 +54,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if pr != nil && shared.IsFeatureEnabled(ctx, "runsByPRNumber") {
 		commits := getPRCommits(ctx, *pr)
-		testRuns, err = shared.LoadTestRunsBySHAs(ctx, commits...)
+		testRuns, err = shared.LoadTestRunsBySHAs(store, commits...)
 	} else {
 		var filters shared.TestRunFilter
 		filters, err = shared.ParseTestRunFilterParams(r.URL.Query())
@@ -62,7 +63,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var runsByProduct shared.TestRunsByProduct
-		runsByProduct, err = LoadTestRunsForFilters(ctx, filters)
+		runsByProduct, err = LoadTestRunsForFilters(store, filters)
 
 		if err == nil {
 			testRuns = runsByProduct.AllRuns()
@@ -98,7 +99,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 // LoadTestRunKeysForFilters deciphers the filters and executes a corresponding
 // query to load the TestRun keys.
-func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter) (result shared.KeysByProduct, err error) {
+func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFilter) (result shared.KeysByProduct, err error) {
 	limit := filters.MaxCount
 	offset := filters.Offset
 	from := filters.From
@@ -111,7 +112,7 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 
 	// When ?aligned=true, make sure to show results for the same aligned run (executed for all browsers).
 	if shared.IsLatest(filters.SHA) && filters.Aligned != nil && *filters.Aligned {
-		shas, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, filters.Labels, from, filters.To, limit, filters.Offset)
+		shas, shaKeys, err := shared.GetAlignedRunSHAs(store, products, filters.Labels, from, filters.To, limit, filters.Offset)
 		if err != nil {
 			return result, err
 		}
@@ -127,17 +128,17 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 		}
 		return keys, err
 	}
-	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit, offset)
+	return shared.LoadTestRunKeys(store, products, filters.Labels, filters.SHA, from, filters.To, limit, offset)
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
 // the TestRuns.
-func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (result shared.TestRunsByProduct, err error) {
+func LoadTestRunsForFilters(store shared.Datastore, filters shared.TestRunFilter) (result shared.TestRunsByProduct, err error) {
 	var keys shared.KeysByProduct
-	if keys, err = LoadTestRunKeysForFilters(ctx, filters); err != nil {
+	if keys, err = LoadTestRunKeysForFilters(store, filters); err != nil {
 		return nil, err
 	}
-	return shared.LoadTestRunsByKeys(ctx, keys)
+	return shared.LoadTestRunsByKeys(store, keys)
 }
 
 func getPRCommits(ctx context.Context, pr int) []string {

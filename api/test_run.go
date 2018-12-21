@@ -26,6 +26,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idParam := vars["id"]
 	ctx := shared.NewAppEngineContext(r)
+	store := shared.NewAppEngineDatastore(ctx)
 	var testRun shared.TestRun
 	if idParam != "" {
 		id, err := strconv.ParseInt(idParam, 10, 0)
@@ -33,7 +34,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Invalid id '%s'", idParam), http.StatusBadRequest)
 			return
 		}
-		run, err := shared.LoadTestRun(ctx, id)
+		run, err := shared.LoadTestRun(store, id)
 		if err != nil {
 			if err == datastore.ErrNoSuchEntity {
 				http.NotFound(w, r)
@@ -56,7 +57,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		one := 1
-		testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, filters.SHA, nil, nil, &one, nil)
+		testRuns, err := shared.LoadTestRuns(store, filters.Products, filters.Labels, filters.SHA, nil, nil, &one, nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
