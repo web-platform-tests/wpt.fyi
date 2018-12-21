@@ -91,6 +91,10 @@ indexes:
   - name: InstallationID
 - kind: TestRun
   properties:
+  - name: BrowserName
+  - name: FullRevisionHash
+- kind: TestRun
+  properties:
   - name: FullRevisionHash
   - name: TimeStart
     direction: desc
