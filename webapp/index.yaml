@@ -121,3 +121,7 @@ indexes:
     direction: desc
   - name: BrowserName
   - name: FullRevisionHash
+- kind: TestRun
+  properties:
+  - name: Labels
+  - name: FullRevisionHash
