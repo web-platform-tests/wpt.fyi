@@ -214,8 +214,8 @@ class WPTReportTest(unittest.TestCase):
 
     def test_summarize_zero_results(self):
         r = WPTReport()
-        with self.assertRaises(InsufficientDataError):
-            r.summarize()
+        # Do not throw!
+        r.summarize()
 
     def test_summarize_duplicate_results(self):
         r = WPTReport()
