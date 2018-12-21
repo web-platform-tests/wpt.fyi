@@ -164,7 +164,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	if status.IsOnMaster() {
 		labels.Add(shared.MasterLabel)
 	} else {
-		sender := status.GetSender().GetLogin()
+		sender := status.GetCommit().GetAuthor().GetLogin()
 		if sender != "" {
 			labels.Add(sender)
 		}
