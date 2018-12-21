@@ -408,7 +408,7 @@ class WPTReport(object):
 
     def normalize_version(self):
         m = re.match(r'Technology Preview \(Release (\d+), (.*)\)',
-                     self.run_info.get('browser_version'))
+                     self.run_info.get('browser_version', ''))
         if m:
             self.run_info['browser_version'] = m.group(1) + ' preview'
 

@@ -462,6 +462,13 @@ class WPTReportTest(unittest.TestCase):
         r.normalize_version()
         self.assertEqual(r.run_info['browser_version'], '67 preview')
 
+    def test_normalize_version_missing_version(self):
+        r = WPTReport()
+        r._report = {'run_info': {}}
+        r.normalize_version()
+        # Do not throw!
+        self.assertIsNone(r.run_info.get('browser_version'))
+
 
 class HelpersTest(unittest.TestCase):
     def test_prepare_labels_from_empty_str(self):
