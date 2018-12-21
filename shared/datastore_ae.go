@@ -10,6 +10,8 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+// NewAppEngineDatastore creates a Datastore implementation that is backed by
+// the appengine libraries, used in AppEngine standard.
 func NewAppEngineDatastore(ctx context.Context) Datastore {
 	return aeDatastore{
 		ctx: ctx,

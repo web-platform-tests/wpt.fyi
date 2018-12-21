@@ -16,14 +16,17 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+// Key abstracts an int64 based datastore.Key
 type Key interface {
 	IntID() int64
 }
 
+// Iterator abstracts a datastore.Iterator
 type Iterator interface {
 	Next(dst interface{}) (Key, error)
 }
 
+// Query abstracts a datastore.Query
 type Query interface {
 	Filter(filterStr string, value interface{}) Query
 	Project(project string) Query
@@ -35,6 +38,8 @@ type Query interface {
 	Run(Datastore) Iterator
 }
 
+// Datastore abstracts a datastore, hiding the distinctions between cloud and
+// appengine's datastores.
 type Datastore interface {
 	Context() context.Context
 	NewQuery(typeName string) Query

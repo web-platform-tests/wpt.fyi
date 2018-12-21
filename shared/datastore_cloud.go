@@ -18,6 +18,8 @@ func (k cloudKey) IntID() int64 {
 	return k.key.ID
 }
 
+// NewCloudDatastore creates a Datastore implementation that is backed by a
+// standard cloud datastore client (i.e. not running in AppEngine standard).
 func NewCloudDatastore(ctx context.Context, client *datastore.Client) Datastore {
 	return cloudDatastore{
 		ctx:    ctx,
