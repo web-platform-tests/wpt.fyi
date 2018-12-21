@@ -70,7 +70,7 @@ func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngine
 		labels := mapset.NewSet()
 		sender := event.GetSender().GetLogin()
 		if sender != "" {
-			labels.Add("user:" + sender)
+			labels.Add(shared.GetUserLabel(sender))
 		}
 		if artifact.Name == "results" {
 			labels.Add(shared.PRHeadLabel)
