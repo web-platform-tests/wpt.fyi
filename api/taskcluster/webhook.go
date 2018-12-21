@@ -167,7 +167,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	} else {
 		sender := status.GetCommit().GetAuthor().GetLogin()
 		if sender != "" {
-			labels.Add(sender)
+			labels.Add("user:" + sender)
 		}
 	}
 	checksAPI := checks.NewAPI(ctx)
