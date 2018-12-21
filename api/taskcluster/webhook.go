@@ -124,6 +124,11 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
+	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
+	if !shouldProcessStatus(log, processAllBranches, &status) {
+		return false, nil
+	}
+
 	if status.TargetURL == nil {
 		return false, errors.New("No target_url on taskcluster status event")
 	}
@@ -133,10 +138,6 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	log.Debugf("Taskcluster task group %s", taskGroupID)
-	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
-	if !shouldProcessStatus(log, processAllBranches, &status) {
-		return false, nil
-	}
 
 	client := urlfetch.Client(ctx)
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
