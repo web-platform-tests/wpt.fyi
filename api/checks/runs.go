@@ -102,7 +102,10 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 	}
 
 	runs, _, err := client.Checks.ListCheckRunsForRef(ctx, suite.Owner, suite.Repo, suite.SHA, nil)
-	return runs.CheckRuns, err
+	if err != nil {
+		return nil, err
+	}
+	return runs.CheckRuns, nil
 }
 
 func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summary, suite shared.CheckSuite, run *github.CheckRun) (bool, error) {
