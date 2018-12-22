@@ -82,7 +82,13 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 		HostName: host,
 		RunsURL:  runsURL.String(),
 	}
-	return updateCheckRunSummary(s.ctx, pending, suite)
+	// Attempt to update any existing check runs for this SHA.
+	checkRuns, err := getExistingCheckRuns(s.ctx, suite)
+	if err != nil {
+		log := shared.GetLogger(s.ctx)
+		log.Warningf("Failed to load existing check runs for %s: %s", suite.SHA[:7], err.Error())
+	}
+	return updateCheckRunSummary(s.ctx, pending, suite, checkRuns)
 }
 
 // GetSuitesForSHA gets all existing check suites for the given Head SHA
