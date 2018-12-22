@@ -13,7 +13,7 @@ func RecomputeAction() *github.CheckRunAction {
 	return &github.CheckRunAction{
 		Identifier:  "recompute",
 		Label:       "Recompute",
-		Description: "Recompute against the latest available runs",
+		Description: "Recompute with the latest available runs",
 	}
 }
 
@@ -23,7 +23,7 @@ func IgnoreAction() *github.CheckRunAction {
 	return &github.CheckRunAction{
 		Identifier:  "ignore",
 		Label:       "Ignore",
-		Description: "Mark these results as expected (passing)",
+		Description: "Mark results as expected (passing)",
 	}
 }
 
