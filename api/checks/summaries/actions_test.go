@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// https://developer.github.com/v3/checks/runs/#actions-object
 func TestActionCharacterLimits(t *testing.T) {
 	actions := []*github.CheckRunAction{
 		RecomputeAction(),
