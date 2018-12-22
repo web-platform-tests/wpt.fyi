@@ -69,6 +69,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sha = headRun.FullRevisionHash
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	diffAPI := shared.NewDiffAPI(ctx)
 	suites, err := NewAPI(ctx).GetSuitesForSHA(sha)
