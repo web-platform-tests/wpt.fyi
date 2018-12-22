@@ -43,7 +43,7 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, shared.LatestSHA, filters.From, filters.To, filters.MaxCount, filters.Offset)
+		testRuns, err := shared.LoadTestRuns(ctx, products, filters.Labels, nil, filters.From, filters.To, filters.MaxCount, filters.Offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

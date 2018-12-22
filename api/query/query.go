@@ -23,7 +23,7 @@ type summary map[string][]int
 type sharedInterface interface {
 	ParseQueryParamInt(r *http.Request, key string) (*int, error)
 	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
-	LoadTestRuns(shared.ProductSpecs, mapset.Set, string, *time.Time, *time.Time, *int, *int) (shared.TestRunsByProduct, error)
+	LoadTestRuns(shared.ProductSpecs, mapset.Set, shared.SHAs, *time.Time, *time.Time, *int, *int) (shared.TestRunsByProduct, error)
 	LoadTestRunsByIDs(ids shared.TestRunIDs) (result shared.TestRuns, err error)
 	LoadTestRun(int64) (*shared.TestRun, error)
 }
@@ -40,7 +40,7 @@ func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter
 	return shared.ParseQueryFilterParams(r.URL.Query())
 }
 
-func (sharedImpl defaultShared) LoadTestRuns(ps shared.ProductSpecs, ls mapset.Set, sha string, from *time.Time, to *time.Time, limit *int, offset *int) (shared.TestRunsByProduct, error) {
+func (sharedImpl defaultShared) LoadTestRuns(ps shared.ProductSpecs, ls mapset.Set, sha shared.SHAs, from *time.Time, to *time.Time, limit *int, offset *int) (shared.TestRunsByProduct, error) {
 	return shared.LoadTestRuns(sharedImpl.ctx, ps, ls, sha, from, to, limit, offset)
 }
 
@@ -90,7 +90,7 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns
 		var err error
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
-		runsByProduct, err := qh.sharedImpl.LoadTestRuns(products, runFilters.Labels, sha, runFilters.From, runFilters.To, &limit, nil)
+		runsByProduct, err := qh.sharedImpl.LoadTestRuns(products, runFilters.Labels, []string{sha}, runFilters.From, runFilters.To, &limit, nil)
 		if err != nil {
 			return testRuns, filters, err
 		}

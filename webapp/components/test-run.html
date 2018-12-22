@@ -159,7 +159,9 @@ See models.go for more details.
       }
 
       sevenCharSHA(sha) {
-        return sha.substr(0, 7);
+        return sha.length > 7
+          ? sha.substr(0, 7)
+          : sha;
       }
     }
 

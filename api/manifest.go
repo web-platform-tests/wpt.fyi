@@ -20,12 +20,13 @@ import (
 
 func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	sha, err := shared.ParseSHAParam(q)
+	shas, err := shared.ParseSHAParam(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	paths := shared.ParsePathsParam(q)
+	sha := shas.FirstOrLatest()
 
 	ctx := shared.NewAppEngineContext(r)
 	manifestAPI := manifest.NewAPI(ctx)

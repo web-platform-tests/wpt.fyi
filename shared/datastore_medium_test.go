@@ -38,7 +38,7 @@ func TestLoadTestRuns(t *testing.T) {
 	key, _ = datastore.Put(ctx, key, &testRun)
 
 	chrome, _ := shared.ParseProductSpec("chrome")
-	loaded, err := shared.LoadTestRuns(ctx, shared.ProductSpecs{chrome}, nil, shared.LatestSHA, nil, nil, nil, nil)
+	loaded, err := shared.LoadTestRuns(ctx, shared.ProductSpecs{chrome}, nil, nil, nil, nil, nil, nil)
 	allRuns := loaded.AllRuns()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(allRuns))
@@ -157,7 +157,7 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	labels := mapset.NewSet()
 	labels.Add("experimental")
 	ten := 10
-	loaded, err := shared.LoadTestRuns(ctx, products, labels, shared.LatestSHA, nil, nil, &ten, nil)
+	loaded, err := shared.LoadTestRuns(ctx, products, labels, nil, nil, nil, &ten, nil)
 	allRuns := loaded.AllRuns()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(allRuns))
@@ -198,7 +198,7 @@ func TestLoadTestRuns_LabelinProductSpec(t *testing.T) {
 	products := make([]shared.ProductSpec, 1)
 	products[0].BrowserName = "chrome"
 	products[0].Labels = mapset.NewSetWith("foo")
-	loaded, err := shared.LoadTestRuns(ctx, products, nil, shared.LatestSHA, nil, nil, nil, nil)
+	loaded, err := shared.LoadTestRuns(ctx, products, nil, nil, nil, nil, nil, nil)
 	allRuns := loaded.AllRuns()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(allRuns))
@@ -240,7 +240,7 @@ func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
 	products := make([]shared.ProductSpec, 1)
 	products[0].BrowserName = "chrome"
 	products[0].Revision = strings.Repeat("1", 10)
-	loaded, err := shared.LoadTestRuns(ctx, products, nil, "", nil, nil, nil, nil)
+	loaded, err := shared.LoadTestRuns(ctx, products, nil, nil, nil, nil, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
@@ -248,14 +248,14 @@ func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
 
 	// Partial SHA
 	products[0].Revision = "11111"
-	loaded, err = shared.LoadTestRuns(ctx, products, nil, "", nil, nil, nil, nil)
+	loaded, err = shared.LoadTestRuns(ctx, products, nil, nil, nil, nil, nil, nil)
 	allRuns = loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
 	assert.Equal(t, "1111111111", allRuns[0].Revision)
 
 	// Partial SHA, Browser version
 	products[0].BrowserVersion = "63"
-	loaded, err = shared.LoadTestRuns(ctx, products, nil, "", nil, nil, nil, nil)
+	loaded, err = shared.LoadTestRuns(ctx, products, nil, nil, nil, nil, nil, nil)
 	allRuns = loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
 	assert.Equal(t, "1111111111", allRuns[0].Revision)
@@ -295,7 +295,7 @@ func TestLoadTestRuns_Ordering(t *testing.T) {
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")
-	loaded, err := shared.LoadTestRuns(ctx, []shared.ProductSpec{chrome}, nil, shared.LatestSHA, nil, nil, nil, nil)
+	loaded, err := shared.LoadTestRuns(ctx, []shared.ProductSpec{chrome}, nil, nil, nil, nil, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
 	assert.Equal(t, 2, len(allRuns))
@@ -339,7 +339,7 @@ func TestLoadTestRuns_From(t *testing.T) {
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")
-	loaded, err := shared.LoadTestRuns(ctx, []shared.ProductSpec{chrome}, nil, shared.LatestSHA, &yesterday, nil, nil, nil)
+	loaded, err := shared.LoadTestRuns(ctx, []shared.ProductSpec{chrome}, nil, nil, &yesterday, nil, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
@@ -380,7 +380,7 @@ func TestLoadTestRuns_To(t *testing.T) {
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")
-	loaded, err := shared.LoadTestRuns(ctx, shared.ProductSpecs{chrome}, nil, shared.LatestSHA, nil, &now, nil, nil)
+	loaded, err := shared.LoadTestRuns(ctx, shared.ProductSpecs{chrome}, nil, nil, nil, &now, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))

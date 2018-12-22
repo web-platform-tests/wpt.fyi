@@ -59,7 +59,7 @@ func LoadTestRunKeys(
 	ctx context.Context,
 	products []ProductSpec,
 	labels mapset.Set,
-	sha string,
+	revisions []string,
 	from *time.Time,
 	to *time.Time,
 	limit *int,
@@ -76,14 +76,16 @@ func LoadTestRunKeys(
 		}
 	}
 	var globalKeyFilter mapset.Set
-	if !IsLatest(sha) {
-		var ids TestRunIDs
-		if ids, err = loadKeysForRevision(ctx, baseQuery, sha); err != nil {
-			return nil, err
-		}
-		globalKeyFilter = mapset.NewSet()
-		for _, id := range ids {
-			globalKeyFilter.Add(id)
+	if len(revisions) > 1 || len(revisions) == 1 && !IsLatest(revisions[0]) {
+		for _, sha := range revisions {
+			var ids TestRunIDs
+			if ids, err = loadKeysForRevision(ctx, baseQuery, sha); err != nil {
+				return nil, err
+			}
+			globalKeyFilter = mapset.NewSet()
+			for _, id := range ids {
+				globalKeyFilter.Add(id)
+			}
 		}
 	}
 	for i, product := range products {
@@ -163,12 +165,12 @@ func LoadTestRuns(
 	ctx context.Context,
 	products []ProductSpec,
 	labels mapset.Set,
-	sha string,
+	revisions []string,
 	from *time.Time,
 	to *time.Time,
 	limit,
 	offset *int) (result TestRunsByProduct, err error) {
-	keys, err := LoadTestRunKeys(ctx, products, labels, sha, from, to, limit, offset)
+	keys, err := LoadTestRunKeys(ctx, products, labels, revisions, from, to, limit, offset)
 	if err != nil {
 		return nil, err
 	}
