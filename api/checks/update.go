@@ -88,14 +88,8 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Attempt to update any existing check runs for this SHA.
-		checkRuns, err := getExistingCheckRuns(ctx, suite)
-		if err != nil {
-			log.Warningf("Failed to load existing check runs for %s: %s", suite.SHA[:7], err.Error())
-		}
-
 		var updated bool
-		updated, err = updateCheckRunSummary(ctx, summaryData, suite, checkRuns)
+		updated, err = updateCheckRunSummary(ctx, summaryData, suite)
 		updatedAny = updatedAny || updated
 	}
 

@@ -13,10 +13,16 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite shared.CheckSuite, checkRuns []*github.CheckRun) (bool, error) {
+func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite shared.CheckSuite) (bool, error) {
 	log := shared.GetLogger(ctx)
 	product := summary.GetCheckState().Product
 	testRun := summary.GetCheckState().TestRun
+
+	// Attempt to update any existing check runs for this SHA.
+	checkRuns, err := getExistingCheckRuns(ctx, suite)
+	if err != nil {
+		log.Warningf("Failed to load existing check runs for %s: %s", suite.SHA[:7], err.Error())
+	}
 
 	// Update, not create, if a run name matches this completed TestRun.
 	var existing *github.CheckRun
@@ -34,7 +40,6 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 	}
 
 	var created bool
-	var err error
 	if existing != nil {
 		created, err = updateExistingCheckRunSummary(ctx, summary, suite, existing)
 	} else {
