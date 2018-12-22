@@ -63,7 +63,7 @@ class MissingMetadataError(WPTReportError):
 
 class InsufficientDataError(WPTReportError):
     def __init__(self):
-        super(InsufficientDataError, self).__init__("Zero results available")
+        super(InsufficientDataError, self).__init__("Missing 'results' field")
 
 
 class ConflictingDataError(WPTReportError):
@@ -151,7 +151,7 @@ class WPTReport(object):
             fileobj: A JSON file object (must be in binary mode).
 
         Raises:
-            InsufficientDataError if the dataset contains zero test results;
+            InsufficientDataError if the file does not contain a results field;
             ConflictingDataError if the current file contains information
             conflicting with existing data (from previous files).
         """
@@ -248,14 +248,11 @@ class WPTReport(object):
             A summary dictionary.
 
         Raises:
-            InsufficientDataError if the dataset contains zero test results;
             ConflictingDataError if a test appears multiple times in results.
+            MissingMetadataError if any required metadata is missing.
         """
         if self._summary:
             return self._summary
-
-        if not self.results:
-            raise InsufficientDataError
 
         for result in self.results:
             test_file = result['test']
@@ -411,7 +408,7 @@ class WPTReport(object):
 
     def normalize_version(self):
         m = re.match(r'Technology Preview \(Release (\d+), (.*)\)',
-                     self.run_info.get('browser_version'))
+                     self.run_info.get('browser_version', ''))
         if m:
             self.run_info['browser_version'] = m.group(1) + ' preview'
 

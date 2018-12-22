@@ -31,11 +31,10 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 
 	vars := mux.Vars(r)
-	sha := vars["commit"]
-	if len(sha) != 40 {
-		msg := fmt.Sprintf("Invalid commit: %s", sha)
-		log.Warningf(msg)
-		http.Error(w, msg, http.StatusBadRequest)
+	sha, err := shared.ParseSHA(vars["commit"])
+	if err != nil {
+		log.Warningf(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -58,7 +57,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
-	filter.SHA = sha[:10]
+	filter.SHA = sha
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
 	if err != nil {
 		msg := "Could not find runs to compare"
@@ -70,6 +69,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sha = headRun.FullRevisionHash
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	diffAPI := shared.NewDiffAPI(ctx)
 	suites, err := NewAPI(ctx).GetSuitesForSHA(sha)

@@ -214,8 +214,8 @@ class WPTReportTest(unittest.TestCase):
 
     def test_summarize_zero_results(self):
         r = WPTReport()
-        with self.assertRaises(InsufficientDataError):
-            r.summarize()
+        # Do not throw!
+        r.summarize()
 
     def test_summarize_duplicate_results(self):
         r = WPTReport()
@@ -461,6 +461,13 @@ class WPTReportTest(unittest.TestCase):
         }}
         r.normalize_version()
         self.assertEqual(r.run_info['browser_version'], '67 preview')
+
+    def test_normalize_version_missing_version(self):
+        r = WPTReport()
+        r._report = {'run_info': {}}
+        r.normalize_version()
+        # Do not throw!
+        self.assertIsNone(r.run_info.get('browser_version'))
 
 
 class HelpersTest(unittest.TestCase):

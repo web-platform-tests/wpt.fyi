@@ -155,16 +155,16 @@ func ParseSHAParam(v url.Values) (runSHA string, err error) {
 
 // ParseSHA parses and validates the given 'sha'.
 // It returns "latest" by default (and in error cases).
-func ParseSHA(runParam string) (runSHA string, err error) {
+func ParseSHA(shaParam string) (sha string, err error) {
 	// Get the SHA for the run being loaded (the first part of the path.)
-	runSHA = "latest"
-	if runParam != "" && runParam != "latest" {
-		runSHA = runParam
-		if !SHARegex.MatchString(runParam) {
-			return "latest", fmt.Errorf("Invalid sha param value: %s", runParam)
+	sha = "latest"
+	if shaParam != "" && shaParam != "latest" {
+		sha = shaParam
+		if !SHARegex.MatchString(shaParam) {
+			return "latest", fmt.Errorf("Invalid sha param value: %s", shaParam)
 		}
 	}
-	return runSHA, err
+	return sha, err
 }
 
 // ParseProductSpecs parses multiple product specs
@@ -648,6 +648,9 @@ func ParseTestRunFilterParams(v url.Values) (filter TestRunFilter, err error) {
 	}
 	filter.SHA = runSHA
 	filter.Labels = NewSetFromStringSlice(ParseLabelsParam(v))
+	if user := v.Get("user"); user != "" {
+		filter.Labels.Add(GetUserLabel(user))
+	}
 	if filter.Aligned, err = ParseAlignedParam(v); err != nil {
 		return filter, err
 	}

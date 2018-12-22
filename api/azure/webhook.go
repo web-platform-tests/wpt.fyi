@@ -16,6 +16,8 @@ import (
 	"strings"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
+
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -43,7 +45,7 @@ func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngine
 	client := aeAPI.GetHTTPClient()
 	resp, err := client.Get(artifactsURL)
 	if err != nil {
-		log.Errorf("Failed to fetch artifacts for %s/%s build %s", owner, repo, buildID)
+		log.Errorf("Failed to fetch artifacts for %s/%s build %v", owner, repo, buildID)
 		return false, err
 	}
 
@@ -65,11 +67,15 @@ func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngine
 		}
 		log.Infof("Uploading %s for %s/%s build %v...", artifact.Name, owner, repo, buildID)
 
-		var labels []string
+		labels := mapset.NewSet()
+		sender := event.GetSender().GetLogin()
+		if sender != "" {
+			labels.Add(shared.GetUserLabel(sender))
+		}
 		if artifact.Name == "results" {
-			labels = []string{shared.PRHeadLabel}
+			labels.Add(shared.PRHeadLabel)
 		} else if artifact.Name == "results-without-changes" {
-			labels = []string{shared.PRBaseLabel}
+			labels.Add(shared.PRBaseLabel)
 		}
 		err := createAzureRun(
 			log,
@@ -77,7 +83,7 @@ func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngine
 			aeAPI,
 			event.GetCheckRun().GetHeadSHA(),
 			artifact,
-			labels)
+			shared.ToStringSlice(labels))
 		if err != nil {
 			log.Errorf("Failed to create run: %s", err.Error())
 			errors <- err
