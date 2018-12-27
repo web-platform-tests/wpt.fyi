@@ -56,11 +56,11 @@ type cloudQuery struct {
 }
 
 func (q cloudQuery) Filter(filterStr string, value interface{}) Query {
-	return cloudQuery{query: q.query.Filter(filterStr, value)}
+	return cloudQuery{q.query.Filter(filterStr, value)}
 }
 
 func (q cloudQuery) Project(project string) Query {
-	return cloudQuery{query: q.query.Project(project)}
+	return cloudQuery{q.query.Project(project)}
 }
 
 func (q cloudQuery) Offset(offset int) Query {

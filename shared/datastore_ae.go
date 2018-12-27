@@ -46,11 +46,11 @@ type aeQuery struct {
 }
 
 func (q aeQuery) Filter(filterStr string, value interface{}) Query {
-	return aeQuery{query: q.query.Filter(filterStr, value)}
+	return aeQuery{q.query.Filter(filterStr, value)}
 }
 
 func (q aeQuery) Project(project string) Query {
-	return aeQuery{query: q.query.Project(project)}
+	return aeQuery{q.query.Project(project)}
 }
 
 func (q aeQuery) Offset(offset int) Query {
@@ -66,11 +66,11 @@ func (q aeQuery) Order(order string) Query {
 }
 
 func (q aeQuery) KeysOnly() Query {
-	return aeQuery{query: q.query.KeysOnly()}
+	return aeQuery{q.query.KeysOnly()}
 }
 
 func (q aeQuery) Distinct() Query {
-	return aeQuery{query: q.query.Distinct()}
+	return aeQuery{q.query.Distinct()}
 }
 
 func (q aeQuery) Run(store Datastore) Iterator {
