@@ -47,7 +47,7 @@ func parseTestRunsUIFilter(r *http.Request) (filter testRunUIFilter, err error) 
 		filter.PR = pr
 	} else {
 		if testRunFilter.IsDefaultQuery() {
-			// Get runs from a month ago, onward, by default.
+			// Get runs from a week ago, onward, by default.
 			ctx := shared.NewAppEngineContext(r)
 			aeAPI := shared.NewAppEngineAPI(ctx)
 			aWeekAgo := time.Now().Truncate(time.Hour*24).AddDate(0, 0, -7)
