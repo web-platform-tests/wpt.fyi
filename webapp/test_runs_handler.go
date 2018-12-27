@@ -17,36 +17,49 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
 		return
 	}
-	ctx := shared.NewAppEngineContext(r)
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	testRunFilter, err := shared.ParseTestRunFilterParams(r.URL.Query())
+	filter, err := parseTestRunsUIFilter(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Get runs from a month ago, onward, by default.
-	if testRunFilter.IsDefaultQuery() {
-		aWeekAgo := time.Now().Truncate(time.Hour*24).AddDate(0, 0, -7)
-		testRunFilter.From = &aWeekAgo
-		if aeAPI.IsFeatureEnabled("masterRunsOnly") {
-			testRunFilter = testRunFilter.MasterOnly()
-		}
-	} else if testRunFilter.MaxCount == nil {
-		oneHundred := 100
-		testRunFilter.MaxCount = &oneHundred
-	}
-
-	filter := convertTestRunUIFilter(testRunFilter)
-
-	data := struct {
-		Filter testRunUIFilter
-	}{
-		Filter: filter,
-	}
-
-	if err := templates.ExecuteTemplate(w, "test-runs.html", data); err != nil {
+	if err := templates.ExecuteTemplate(w, "test-runs.html", filter); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+// parseTestRunsUIFilter parses the standard TestRunFilter, as well as the extra
+// pr param.
+func parseTestRunsUIFilter(r *http.Request) (filter testRunUIFilter, err error) {
+	q := r.URL.Query()
+	testRunFilter, err := shared.ParseTestRunFilterParams(q)
+	if err != nil {
+		return filter, err
+	}
+
+	pr, err := shared.ParsePRParam(q)
+	if err != nil {
+		return filter, err
+	}
+
+	if pr != nil {
+		filter.PR = pr
+	} else {
+		if testRunFilter.IsDefaultQuery() {
+			// Get runs from a week ago, onward, by default.
+			ctx := shared.NewAppEngineContext(r)
+			aeAPI := shared.NewAppEngineAPI(ctx)
+			aWeekAgo := time.Now().Truncate(time.Hour*24).AddDate(0, 0, -7)
+			testRunFilter.From = &aWeekAgo
+			if aeAPI.IsFeatureEnabled("masterRunsOnly") {
+				testRunFilter = testRunFilter.MasterOnly()
+			}
+		} else if testRunFilter.MaxCount == nil {
+			oneHundred := 100
+			testRunFilter.MaxCount = &oneHundred
+		}
+		filter = convertTestRunUIFilter(testRunFilter)
+	}
+	return filter, nil
 }
