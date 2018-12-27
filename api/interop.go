@@ -93,7 +93,7 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 		// When ?aligned=true, make sure to show results for the same aligned run.
 		// We don't want to mismatch an interop which has runs from several different SHAs
 		// (but, each SHA being from an aligned run), so we need to keep the keys grouped.
-		if shared.IsLatest(filters.SHA) && filters.Aligned != nil && *filters.Aligned {
+		if filters.SHAs.EmptyOrLatest() && filters.Aligned != nil && *filters.Aligned {
 			ten := 10
 			_, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, &ten, nil)
 			if err != nil {

@@ -51,15 +51,15 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 				err = nil
 			}
 		}
-	} else if pr != nil && shared.IsFeatureEnabled(ctx, "runsByPRNumber") {
-		commits := getPRCommits(ctx, *pr)
-		testRuns, err = shared.LoadTestRunsBySHAs(ctx, commits...)
 	} else {
 		var filters shared.TestRunFilter
 		filters, err = shared.ParseTestRunFilterParams(r.URL.Query())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
+		}
+		if pr != nil && shared.IsFeatureEnabled(ctx, "runsByPRNumber") {
+			filters.SHAs = getPRCommits(ctx, *pr)
 		}
 		var runsByProduct shared.TestRunsByProduct
 		runsByProduct, err = LoadTestRunsForFilters(ctx, filters)
@@ -110,7 +110,7 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 	products := filters.GetProductsOrDefault()
 
 	// When ?aligned=true, make sure to show results for the same aligned run (executed for all browsers).
-	if shared.IsLatest(filters.SHA) && filters.Aligned != nil && *filters.Aligned {
+	if filters.SHAs.EmptyOrLatest() && filters.Aligned != nil && *filters.Aligned {
 		shas, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, filters.Labels, from, filters.To, limit, filters.Offset)
 		if err != nil {
 			return result, err
@@ -127,7 +127,7 @@ func LoadTestRunKeysForFilters(ctx context.Context, filters shared.TestRunFilter
 		}
 		return keys, err
 	}
-	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHA, from, filters.To, limit, offset)
+	return shared.LoadTestRunKeys(ctx, products, filters.Labels, filters.SHAs, from, filters.To, limit, offset)
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
@@ -140,7 +140,7 @@ func LoadTestRunsForFilters(ctx context.Context, filters shared.TestRunFilter) (
 	return shared.LoadTestRunsByKeys(ctx, keys)
 }
 
-func getPRCommits(ctx context.Context, pr int) []string {
+func getPRCommits(ctx context.Context, pr int) shared.SHAs {
 	log := shared.GetLogger(ctx)
 
 	githubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()

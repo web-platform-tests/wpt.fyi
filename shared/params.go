@@ -143,14 +143,17 @@ const MaxCountMinValue = 1
 // SHARegex is a regex for 7 to 40 char prefix of a git hash.
 var SHARegex = regexp.MustCompile("[0-9a-fA-F]{7,40}")
 
-// ParseSHAParam parses and validates the 'sha' param for the request.
-// If the param is not present, it returns "latest" by default (and in error cases).
-func ParseSHAParam(v url.Values) (runSHA string, err error) {
-	sha, err := ParseSHA(v.Get("sha"))
-	if err != nil || !SHARegex.MatchString(sha) {
-		return sha, err
+// ParseSHAParam parses and validates any 'sha' param(s) for the request.
+func ParseSHAParam(v url.Values) (SHAs, error) {
+	shas := ParseRepeatedParam(v, "sha", "shas")
+	var err error
+	for i := range shas {
+		shas[i], err = ParseSHA(shas[i])
+		if err != nil {
+			return nil, err
+		}
 	}
-	return sha, nil
+	return shas, nil
 }
 
 // ParseSHA parses and validates the given 'sha'.
@@ -646,7 +649,7 @@ func ParseTestRunFilterParams(v url.Values) (filter TestRunFilter, err error) {
 	if err != nil {
 		return filter, err
 	}
-	filter.SHA = runSHA
+	filter.SHAs = runSHA
 	filter.Labels = NewSetFromStringSlice(ParseLabelsParam(v))
 	if user := v.Get("user"); user != "" {
 		filter.Labels.Add(GetUserLabel(user))

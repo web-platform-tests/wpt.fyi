@@ -21,7 +21,7 @@ type testRunUIFilter struct {
 	TestRunIDs string
 	Products   string
 	Labels     string
-	SHA        string
+	SHAs       string
 	Aligned    bool
 	MaxCount   *int
 	From       string
@@ -84,7 +84,8 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 	}
 	ctx := shared.NewAppEngineContext(r)
 
-	filter.PR, err = shared.ParsePRParam(q)
+	var pr *int
+	pr, err = shared.ParsePRParam(q)
 	if err != nil {
 		return filter, err
 	}
@@ -100,11 +101,8 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 			return filter, err
 		}
 		filter.TestRunIDs = string(marshalled)
-	} else if filter.PR != nil {
-		one := 1
-		filter.MaxCount = &one
 	} else {
-		if testRunFilter.IsDefaultQuery() {
+		if pr == nil && testRunFilter.IsDefaultQuery() {
 			experimentalByDefault := shared.IsFeatureEnabled(ctx, "experimentalByDefault")
 			experimentalAlignedExceptEdge := shared.IsFeatureEnabled(ctx, "experimentalAlignedExceptEdge")
 			masterRunsOnly := shared.IsFeatureEnabled(ctx, "masterRunsOnly")
@@ -123,6 +121,7 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 		}
 
 		filter.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
+		filter.PR = pr
 	}
 
 	diff, err := shared.ParseBooleanParam(q, "diff")
@@ -160,8 +159,9 @@ func convertTestRunUIFilter(testRunFilter shared.TestRunFilter) (filter testRunU
 		data, _ := json.Marshal(testRunFilter.Labels.ToSlice())
 		filter.Labels = string(data)
 	}
-	if !shared.IsLatest(testRunFilter.SHA) {
-		filter.SHA = testRunFilter.SHA
+	if !testRunFilter.SHAs.EmptyOrLatest() {
+		data, _ := json.Marshal(testRunFilter.SHAs)
+		filter.SHAs = string(data)
 	}
 	if !testRunFilter.IsDefaultProducts() {
 		data, _ := json.Marshal(testRunFilter.Products.Strings())
