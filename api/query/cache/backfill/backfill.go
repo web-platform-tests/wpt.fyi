@@ -116,7 +116,8 @@ func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, int
 }
 
 func startBackfillMonitor(fetcher RunFetcher, logger shared.Logger, maxBytes uint64, m *backfillMonitor) error {
-	runsByProduct, err := fetcher.FetchRuns(int(maxBytes/bytesPerRun) / 4)
+	// FetchRuns will return at most N runs for each product, so divide the upper bound by the number of products.
+	runsByProduct, err := fetcher.FetchRuns(int(maxBytes/bytesPerRun) / len(shared.GetDefaultProducts()))
 	if err != nil {
 		return err
 	}
