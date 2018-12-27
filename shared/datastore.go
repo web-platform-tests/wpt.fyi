@@ -60,33 +60,6 @@ func LoadTestRun(store Datastore, id int64) (*TestRun, error) {
 	return &testRun, nil
 }
 
-// LoadTestRunsBySHAs loads all test runs that belong to any of the given revisions (SHAs).
-func LoadTestRunsBySHAs(store Datastore, shas ...string) (runs TestRuns, err error) {
-	for _, sha := range shas {
-		if len(sha) > 10 {
-			sha = sha[:10]
-		}
-		q := store.NewQuery("TestRun")
-		ids, err := loadKeysForRevision(store, q, sha)
-		if err != nil {
-			return runs, err
-		}
-		shaRuns := make(TestRuns, len(ids))
-		for i := range ids {
-			run, err := LoadTestRun(store, ids[i])
-			if err != nil {
-				return nil, err
-			}
-			shaRuns[i] = *run
-		}
-		for i := range ids {
-			shaRuns[i].ID = ids[i]
-		}
-		runs = append(runs, shaRuns...)
-	}
-	return runs, err
-}
-
 // LoadTestRunKeys loads the keys for the TestRun entities for the given parameters.
 // It is encapsulated because we cannot run single queries with multiple inequality
 // filters, so must load the keys and merge the results.
@@ -94,7 +67,7 @@ func LoadTestRunKeys(
 	store Datastore,
 	products []ProductSpec,
 	labels mapset.Set,
-	sha string,
+	revisions []string,
 	from *time.Time,
 	to *time.Time,
 	limit *int,
@@ -111,14 +84,16 @@ func LoadTestRunKeys(
 		}
 	}
 	var globalKeyFilter mapset.Set
-	if !IsLatest(sha) {
-		var ids TestRunIDs
-		if ids, err = loadKeysForRevision(store, baseQuery, sha); err != nil {
-			return nil, err
-		}
+	if len(revisions) > 1 || len(revisions) == 1 && !IsLatest(revisions[0]) {
 		globalKeyFilter = mapset.NewSet()
-		for _, id := range ids {
-			globalKeyFilter.Add(id)
+		for _, sha := range revisions {
+			var ids TestRunIDs
+			if ids, err = loadKeysForRevision(store, baseQuery, sha); err != nil {
+				return nil, err
+			}
+			for _, id := range ids {
+				globalKeyFilter.Add(id)
+			}
 		}
 	}
 	for i, product := range products {
@@ -198,12 +173,12 @@ func LoadTestRuns(
 	store Datastore,
 	products []ProductSpec,
 	labels mapset.Set,
-	sha string,
+	revisions []string,
 	from *time.Time,
 	to *time.Time,
 	limit,
 	offset *int) (result TestRunsByProduct, err error) {
-	keys, err := LoadTestRunKeys(store, products, labels, sha, from, to, limit, offset)
+	keys, err := LoadTestRunKeys(store, products, labels, revisions, from, to, limit, offset)
 	if err != nil {
 		return nil, err
 	}

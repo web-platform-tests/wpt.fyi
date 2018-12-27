@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -22,14 +23,14 @@ func TestParseSHAParam(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, "latest", runSHA)
+	assert.Equal(t, "latest", runSHA.FirstOrLatest())
 }
 
 func TestParseSHAParam_Latest(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=latest", nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, "latest", runSHA)
+	assert.Equal(t, "latest", runSHA.FirstOrLatest())
 }
 
 func TestParseSHAParam_ShortSHA(t *testing.T) {
@@ -37,7 +38,7 @@ func TestParseSHAParam_ShortSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, sha, runSHA)
+	assert.Equal(t, sha, runSHA.FirstOrLatest())
 }
 
 func TestParseSHAParam_FullSHA(t *testing.T) {
@@ -45,7 +46,7 @@ func TestParseSHAParam_FullSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, sha, runSHA)
+	assert.Equal(t, sha, runSHA.FirstOrLatest())
 }
 
 func TestParseSHAParam_NonSHA(t *testing.T) {
@@ -58,6 +59,19 @@ func TestParseSHAParam_NonSHA_2(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=zapper0123", nil)
 	_, err := ParseSHAParam(r.URL.Query())
 	assert.NotNil(t, err)
+}
+
+func TestParseSHAParam_Multiple(t *testing.T) {
+	for _, r := range []*http.Request{
+		httptest.NewRequest("GET", "http://wpt.fyi/?sha=1111111&sha=2222222", nil),
+		httptest.NewRequest("GET", "http://wpt.fyi/?shas=1111111,2222222", nil),
+	} {
+		shas, err := ParseSHAParam(r.URL.Query())
+		assert.Nil(t, err)
+		assert.Len(t, shas, 2)
+		assert.Equal(t, shas[0], "1111111")
+		assert.Equal(t, shas[1], "2222222")
+	}
 }
 
 func TestParseBrowserParam(t *testing.T) {
