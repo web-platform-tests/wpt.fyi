@@ -39,7 +39,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	var testRuns shared.TestRuns
 	var nextPageToken string
 	if len(ids) > 0 {
-		testRuns, err = ids.LoadTestRuns(ctx)
+		testRuns, err = ids.LoadTestRuns(store)
 		if multiError, ok := err.(appengine.MultiError); ok {
 			all404s := true
 			for _, err := range multiError {

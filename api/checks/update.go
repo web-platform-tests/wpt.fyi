@@ -105,7 +105,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (headRun, baseRun *shared.TestRun, err error) {
 	one := 1
 	store := shared.NewAppEngineDatastore(ctx)
-	runs, err := shared.LoadTestRuns(store, filter.Products, filter.Labels, filter.SHAs, filter.From, filter.To, &one, nil)
+	runs, err := store.LoadTestRuns(filter.Products, filter.Labels, filter.SHAs, filter.From, filter.To, &one, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -138,7 +138,7 @@ func loadPRRun(ctx context.Context, filter shared.TestRunFilter, extraLabel stri
 	one := 1
 	store := shared.NewAppEngineDatastore(ctx)
 	labels := mapset.NewSetWith(extraLabel)
-	runs, err := shared.LoadTestRuns(store, filter.Products, labels, filter.SHAs, nil, nil, &one, nil)
+	runs, err := store.LoadTestRuns(filter.Products, labels, filter.SHAs, nil, nil, &one, nil)
 	run := runs.First()
 	if err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headR
 	one := 1
 	to := headRun.TimeStart.Add(-time.Millisecond)
 	labels := mapset.NewSetWith(headRun.Channel(), shared.MasterLabel)
-	runs, err := shared.LoadTestRuns(store, filter.Products, labels, nil, nil, &to, &one, nil)
+	runs, err := store.LoadTestRuns(filter.Products, labels, nil, nil, &to, &one, nil)
 	baseRun := runs.First()
 	if err != nil {
 		return nil, err

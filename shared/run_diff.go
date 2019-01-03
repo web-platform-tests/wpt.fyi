@@ -242,7 +242,7 @@ func FetchRunResultsJSONForSpec(
 func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 	one := 1
 	store := NewAppEngineDatastore(ctx)
-	testRuns, err := LoadTestRuns(store, []ProductSpec{spec}, nil, SHAs{spec.Revision}, nil, nil, &one, nil)
+	testRuns, err := store.LoadTestRuns([]ProductSpec{spec}, nil, SHAs{spec.Revision}, nil, nil, &one, nil)
 	if err != nil {
 		return nil, err
 	}

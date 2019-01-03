@@ -49,7 +49,7 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 		"https://example.com/1-summary.json.gz",
 		"https://example.com/2-summary.json.gz",
 	}
-	testRuns := []shared.TestRun{
+	testRuns := shared.TestRuns{
 		shared.TestRun{
 			ResultsURL: urls[0],
 		},
@@ -72,14 +72,12 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 		assert.Nil(t, err)
 		ctx := shared.NewAppEngineContext(req)
 
-		for idx, testRun := range testRuns {
-			key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &testRun)
+		for idx := range testRuns {
+			key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &testRuns[idx])
 			assert.Nil(t, err)
 			id := key.IntID()
 			assert.NotEqual(t, 0, id)
-			testRun.ID = id
-			// Copy back testRun after mutating ID.
-			testRuns[idx] = testRun
+			testRuns[idx].ID = id
 		}
 	}
 
@@ -87,14 +85,14 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	// TODO(markdittmer): Should this be hitting GCS instead?
-	store := sharedtest.NewMockReadable(mockCtrl)
+	cache := sharedtest.NewMockReadable(mockCtrl)
 	rs := []*sharedtest.MockReadCloser{
 		sharedtest.NewMockReadCloser(t, summaryBytes[0]),
 		sharedtest.NewMockReadCloser(t, summaryBytes[1]),
 	}
 
-	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
-	store.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
+	cache.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
+	cache.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
 
 	// Same params as TestGetRunsAndFilters_specificRunIDs.
 	q := "/b/"
@@ -111,8 +109,9 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 	// abstracted and tested directly.
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := unstructuredSearchHandler{queryHandler{
+		store:      shared.NewAppEngineDatastore(ctx),
 		sharedImpl: defaultShared{ctx},
-		dataSource: shared.NewByteCachedStore(ctx, mc, store),
+		dataSource: shared.NewByteCachedStore(ctx, mc, cache),
 	}}
 	sc := NewShouldCache(t, true, shouldCacheSearchResponse)
 
@@ -242,6 +241,7 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := structuredSearchHandler{
 		queryHandler{
+			store:      shared.NewAppEngineDatastore(ctx),
 			sharedImpl: defaultShared{ctx},
 			dataSource: shared.NewByteCachedStore(ctx, mc, store),
 		},
@@ -308,7 +308,7 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 		"https://example.com/1-summary.json.gz",
 		"https://example.com/2-summary.json.gz",
 	}
-	testRuns := []shared.TestRun{
+	testRuns := shared.TestRuns{
 		shared.TestRun{
 			ResultsURL: urls[0],
 		},
@@ -369,10 +369,13 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
 	// abstracted and tested directly.
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
-	sh := unstructuredSearchHandler{queryHandler{
-		sharedImpl: defaultShared{ctx},
-		dataSource: shared.NewByteCachedStore(ctx, mc, store),
-	}}
+	sh := unstructuredSearchHandler{
+		queryHandler{
+			store:      shared.NewAppEngineDatastore(ctx),
+			sharedImpl: defaultShared{ctx},
+			dataSource: shared.NewByteCachedStore(ctx, mc, store),
+		},
+	}
 	sc := NewShouldCache(t, false, shouldCacheSearchResponse)
 
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, sc.ShouldCache)
@@ -467,6 +470,7 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := structuredSearchHandler{
 		queryHandler{
+			store:      shared.NewAppEngineDatastore(ctx),
 			sharedImpl: defaultShared{ctx},
 			dataSource: shared.NewByteCachedStore(ctx, mc, store),
 		},

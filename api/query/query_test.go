@@ -119,9 +119,9 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	si := NewMocksharedInterface(mockCtrl)
+	mockStore := sharedtest.NewMockDatastore(mockCtrl)
 	sh := unstructuredSearchHandler{queryHandler{
-		sharedImpl: si,
+		store: mockStore,
 	}}
 
 	runIDs := []int64{1, 2}
@@ -155,7 +155,7 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	}
 	filters := shared.QueryFilter{}
 
-	si.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
+	mockStore.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)
@@ -169,9 +169,9 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	si := NewMocksharedInterface(mockCtrl)
+	mockStore := sharedtest.NewMockDatastore(mockCtrl)
 	sh := unstructuredSearchHandler{queryHandler{
-		sharedImpl: si,
+		store: mockStore,
 	}}
 
 	runIDs := []int64{1, 2}
@@ -207,7 +207,10 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 		RunIDs: runIDs,
 	}
 
-	si.EXPECT().LoadTestRunsByIDs(shared.TestRunIDs(testRuns.AllRuns().GetTestRunIDs())).Return(testRuns.AllRuns(), nil)
+	for _, id := range runIDs {
+		mockStore.EXPECT().NewKey("TestRun", id).Return(sharedtest.MockKey{id})
+	}
+	mockStore.EXPECT().GetMulti(sharedtest.SameKeys(runIDs), gomock.Any()).DoAndReturn(sharedtest.MultiRuns(testRuns.AllRuns()))
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)

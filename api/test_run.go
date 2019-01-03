@@ -34,7 +34,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Invalid id '%s'", idParam), http.StatusBadRequest)
 			return
 		}
-		run, err := shared.LoadTestRun(store, id)
+		run, err := store.LoadTestRun(id)
 		if err != nil {
 			if err == datastore.ErrNoSuchEntity {
 				http.NotFound(w, r)
@@ -57,7 +57,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		one := 1
-		testRuns, err := shared.LoadTestRuns(store, filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil)
+		testRuns, err := store.LoadTestRuns(filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

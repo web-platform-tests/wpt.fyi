@@ -52,9 +52,10 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	store := shared.NewAppEngineDatastore(ctx)
 	var runs shared.TestRuns
 	if len(runIDs) > 0 {
-		runs, err = runIDs.LoadTestRuns(ctx)
+		runs, err = runIDs.LoadTestRuns(store)
 		if err != nil {
 			if multiError, ok := err.(appengine.MultiError); ok {
 				all404s := true
