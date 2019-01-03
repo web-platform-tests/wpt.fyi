@@ -48,6 +48,8 @@ func RegisterRoutes() {
 	shared.AddRoute("/runs", "test-runs", testRunsHandler)
 	shared.AddRoute("/test-runs", "test-runs", testRunsHandler) // Legacy name
 
+	shared.AddRoute("/service-worker.js", "service-worker", serviceWorkerHandler)
+
 	// Admin-only manual results upload.
 	shared.AddRoute("/admin/results/upload", "admin-results-upload", adminUploadHandler)
 
