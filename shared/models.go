@@ -254,7 +254,7 @@ func (t TestRunsByProduct) First() *TestRun {
 // ProductTestRunKeys is a tuple of a product and test run keys loaded for it.
 type ProductTestRunKeys struct {
 	Product ProductSpec
-	Keys    []*datastore.Key
+	Keys    []Key
 }
 
 // KeysByProduct is an array of tuples of {product, matching keys}, returned
@@ -262,8 +262,8 @@ type ProductTestRunKeys struct {
 type KeysByProduct []ProductTestRunKeys
 
 // AllKeys returns an array of all the loaded keys.
-func (t KeysByProduct) AllKeys() []*datastore.Key {
-	var keys []*datastore.Key
+func (t KeysByProduct) AllKeys() []Key {
+	var keys []Key
 	for _, v := range t {
 		keys = append(keys, v.Keys...)
 	}
@@ -274,7 +274,7 @@ func (t KeysByProduct) AllKeys() []*datastore.Key {
 type TestRunIDs []int64
 
 // GetTestRunIDs extracts the TestRunIDs from loaded datastore keys.
-func GetTestRunIDs(keys []*datastore.Key) TestRunIDs {
+func GetTestRunIDs(keys []Key) TestRunIDs {
 	result := make(TestRunIDs, len(keys))
 	for i := range keys {
 		result[i] = keys[i].IntID()

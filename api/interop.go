@@ -58,10 +58,11 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadataLegacy, err error) {
 	// Load default browser runs for SHA.
 	// Force any max-count to one; more than one of each product makes no sense for a interop run.
+	store := shared.NewAppEngineDatastore(ctx)
 	shaFilters := filters
 	limit := 1
 	shaFilters.MaxCount = &limit
-	keys, err := LoadTestRunKeysForFilters(ctx, shaFilters)
+	keys, err := LoadTestRunKeysForFilters(store, shaFilters)
 	if err != nil {
 		return nil, err
 	} else if len(keys) < 1 {
@@ -83,7 +84,8 @@ func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter)
 
 func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadataLegacy, err error) {
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(100)
+	store := shared.NewAppEngineDatastore(ctx)
+	query := store.NewQuery(passRateType).Order("-StartTime").Limit(100)
 
 	// We load non-default queries by fetching any interop result with all their
 	// TestRunIDs present in the TestRuns matching the query.
@@ -95,7 +97,7 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 		// (but, each SHA being from an aligned run), so we need to keep the keys grouped.
 		if filters.SHAs.EmptyOrLatest() && filters.Aligned != nil && *filters.Aligned {
 			ten := 10
-			_, shaKeys, err := shared.GetAlignedRunSHAs(ctx, products, filters.Labels, filters.From, filters.To, &ten, nil)
+			_, shaKeys, err := shared.GetAlignedRunSHAs(store, products, filters.Labels, filters.From, filters.To, &ten, nil)
 			if err != nil {
 				return nil, err
 			} else if len(shaKeys) < 1 {
@@ -107,7 +109,7 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 			shaFilters := filters
 			limit := 16 * len(products)
 			shaFilters.MaxCount = &limit
-			keys, err := LoadTestRunKeysForFilters(ctx, shaFilters)
+			keys, err := LoadTestRunKeysForFilters(store, shaFilters)
 
 			if err != nil {
 				return nil, err
@@ -120,7 +122,7 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 
 	// Iterate until we find interop data where its TestRunIDs match the query.
 	var interop metrics.PassRateMetadataLegacy
-	it := query.Run(ctx)
+	it := query.Run(store)
 	found := false
 	for {
 		_, err := it.Next(&interop)

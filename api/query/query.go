@@ -41,7 +41,7 @@ func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter
 }
 
 func (sharedImpl defaultShared) LoadTestRuns(ps shared.ProductSpecs, ls mapset.Set, sha shared.SHAs, from *time.Time, to *time.Time, limit *int, offset *int) (shared.TestRunsByProduct, error) {
-	return shared.LoadTestRuns(sharedImpl.ctx, ps, ls, sha, from, to, limit, offset)
+	return shared.LoadTestRuns(shared.NewAppEngineDatastore(sharedImpl.ctx), ps, ls, sha, from, to, limit, offset)
 }
 
 func (sharedImpl defaultShared) LoadTestRunsByIDs(ids shared.TestRunIDs) (result shared.TestRuns, err error) {
@@ -49,7 +49,7 @@ func (sharedImpl defaultShared) LoadTestRunsByIDs(ids shared.TestRunIDs) (result
 }
 
 func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
-	return shared.LoadTestRun(sharedImpl.ctx, id)
+	return shared.LoadTestRun(shared.NewAppEngineDatastore(sharedImpl.ctx), id)
 }
 
 type queryHandler struct {
