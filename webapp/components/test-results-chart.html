@@ -56,7 +56,7 @@ found in the LICENSE file.
           },
           browserNames: {
             type: Array,
-            value: wpt.DefaultBrowserNames,
+            value: window.wpt.DefaultBrowserNames,
           },
           cols: {
             type: Array,
@@ -148,6 +148,7 @@ found in the LICENSE file.
         return super.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount);
       }
 
+      // eslint-disable-next-line no-unused-vars
       loadNext(tests, query) {
         if (!this.show || tests.length === 0 || this.values.length >= this.maxRuns) {
           return;

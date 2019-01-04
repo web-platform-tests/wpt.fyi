@@ -62,7 +62,7 @@ found in the LICENSE file.
     <pre id="status">&nbsp;</pre>
   </template>
   <script>
-    /* global TestRunsQuery, TestFileResults */
+    /* global TestFileResults */
     class TestFileResultsTimeSeries extends TestFileResults {
       static get is() {
         return 'test-results-history-grid';
@@ -96,6 +96,7 @@ found in the LICENSE file.
         };
       }
 
+      // eslint-disable-next-line no-unused-vars
       loadResults(path, query) {
         if (!path) {
           return;
