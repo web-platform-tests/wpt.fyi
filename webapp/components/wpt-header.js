@@ -7,7 +7,7 @@ import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import './info-banner.js';
-import './wpt-flags.js';
+import { WPTFlags } from './wpt-flags.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 class WPTHeader extends WPTFlags(PolymerElement) {
   static get template() {

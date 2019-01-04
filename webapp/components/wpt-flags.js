@@ -279,3 +279,5 @@ Object.defineProperty(WPTEnvironmentFlagsEditor, 'template', {
 });
 
 window.customElements.define(WPTEnvironmentFlagsEditor.is, WPTEnvironmentFlagsEditor);
+
+export { WPTFlags };
