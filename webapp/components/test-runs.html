@@ -58,7 +58,7 @@ found in the LICENSE file.
           return '/' + parts.join('/');
         }
 
-        async loadRuns() {
+        loadRuns() {
           const preloaded = this.testRuns;
           const runs = [];
           if (preloaded) {
@@ -75,15 +75,15 @@ found in the LICENSE file.
                 }))
             );
           }
-          const fetches = await Promise.all(runs);
-
-          // Filter unresolved fetches and flatten any array-fetches into the array.
-          const nonEmpty = fetches.filter(e => e);
-          const flattened = nonEmpty.reduce((sum, item) => {
-            return sum.concat(Array.isArray(item) ? item : [item]);
-          }, []);
-          this.testRuns = flattened;
-          return flattened;
+          return Promise.all(runs).then(fetches => {
+            // Filter unresolved fetches and flatten any array-fetches into the array.
+            const nonEmpty = fetches.filter(e => e);
+            const flattened = nonEmpty.reduce((sum, item) => {
+              return sum.concat(Array.isArray(item) ? item : [item]);
+            }, []);
+            this.testRuns = flattened;
+            return flattened;
+          });
         }
 
         /**

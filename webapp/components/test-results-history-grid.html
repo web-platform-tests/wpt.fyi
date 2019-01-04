@@ -63,7 +63,7 @@ found in the LICENSE file.
   </template>
   <script>
     /* global TestRunsQuery, TestFileResults */
-    class TestFileResultsTimeSeries extends TestRunsQuery(TestFileResults) {
+    class TestFileResultsTimeSeries extends TestFileResults {
       static get is() {
         return 'test-results-history-grid';
       }
@@ -83,8 +83,7 @@ found in the LICENSE file.
 
       static get observers() {
         return [
-          'onPathChanged(path)',
-          'onRunsLoaded(testRuns, path)',
+          'loadResults(path, query)',
         ];
       }
 
@@ -97,35 +96,33 @@ found in the LICENSE file.
         };
       }
 
-      async onPathChanged(path) {
+      loadResults(path, query) {
         if (!path) {
           return;
         }
-        this.loadRuns();
-      }
-
-      async onRunsLoaded(runs, path) {
-        if (!runs) {
-          return;
-        }
-        this.results = runs.reduce((acc, run) => {
-          const browserResultsIdx = acc
-            .findIndex(br => br.browserName === run.browser_name);
-          let browserResults = acc[browserResultsIdx];
-          if (!browserResults) {
-            browserResults = {
-              browserName: run.browser_name,
-              runResults: [],
-            };
-            acc.push(browserResults);
+        return this.loadRuns().then(runs => {
+          if (!runs) {
+            return;
           }
-          browserResults.runResults.push({run, results: []});
+          this.results = runs.reduce((acc, run) => {
+            const browserResultsIdx = acc
+              .findIndex(br => br.browserName === run.browser_name);
+            let browserResults = acc[browserResultsIdx];
+            if (!browserResults) {
+              browserResults = {
+                browserName: run.browser_name,
+                runResults: [],
+              };
+              acc.push(browserResults);
+            }
+            browserResults.runResults.push({run, results: []});
 
-          return acc;
-        }, []);
-        this.results.forEach((browserResults, i) => {
-          browserResults.runResults.forEach((runResult, j) => {
-            this.loadRun(runResult, j, browserResults, i, path);
+            return acc;
+          }, []);
+          this.results.forEach((browserResults, i) => {
+            browserResults.runResults.forEach((runResult, j) => {
+              this.loadRun(runResult, j, browserResults, i, path);
+            });
           });
         });
       }
