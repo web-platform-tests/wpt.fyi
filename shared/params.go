@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -28,111 +27,6 @@ type QueryFilter struct {
 	RunIDs []int64
 	Q      string
 }
-
-// ProductSpec is a struct representing a parsed product spec string.
-type ProductSpec struct {
-	ProductAtRevision
-
-	Labels mapset.Set
-}
-
-// Matches returns whether the spec matches the given run.
-func (p ProductSpec) Matches(run TestRun) bool {
-	if run.BrowserName != p.BrowserName {
-		return false
-	}
-	if !IsLatest(p.Revision) && p.Revision != run.Revision {
-		return false
-	}
-	if p.Labels != nil && p.Labels.Cardinality() > 0 {
-		runLabels := run.LabelsSet()
-		if !p.Labels.IsSubset(runLabels) {
-			return false
-		}
-	}
-	if p.BrowserVersion != "" {
-		// Make "6" not match "60.123" by adding trailing dots to both.
-		if !strings.HasPrefix(run.BrowserVersion+".", p.BrowserVersion+".") {
-			return false
-		}
-	}
-	return true
-}
-
-// IsExperimental returns true if the product spec is restricted to experimental
-// runs (i.e. has the label "experimental").
-func (p ProductSpec) IsExperimental() bool {
-	return p.Labels != nil && p.Labels.Contains(ExperimentalLabel)
-}
-
-// DisplayName returns a capitalized version of the product's name.
-func (p ProductSpec) DisplayName() string {
-	switch p.BrowserName {
-	case "chrome":
-		return "Chrome"
-	case "edge":
-		return "Edge"
-	case "firefox":
-		return "Firefox"
-	case "safari":
-		return "Safari"
-	default:
-		return p.BrowserName
-	}
-}
-
-// ProductSpecs is a helper type for a slice of ProductSpec structs.
-type ProductSpecs []ProductSpec
-
-// Products gets the slice of products specified in the ProductSpecs slice.
-func (p ProductSpecs) Products() []Product {
-	result := make([]Product, len(p))
-	for i, spec := range p {
-		result[i] = spec.Product
-	}
-	return result
-}
-
-// OrDefault returns the current product specs, or the default if the set is empty.
-func (p ProductSpecs) OrDefault() ProductSpecs {
-	if len(p) < 1 {
-		return GetDefaultProducts()
-	}
-	return p
-}
-
-// Strings returns the array of the ProductSpec items as their string
-// representations.
-func (p ProductSpecs) Strings() []string {
-	result := make([]string, len(p))
-	for i, spec := range p {
-		result[i] = spec.String()
-	}
-	return result
-}
-
-func (p ProductSpec) String() string {
-	s := p.Product.String()
-	if p.Labels != nil {
-		p.Labels.Remove("") // Remove the empty label, if present.
-		if p.Labels.Cardinality() > 0 {
-			labels := make([]string, 0, p.Labels.Cardinality())
-			for l := range p.Labels.Iter() {
-				labels = append(labels, l.(string))
-			}
-			sort.Strings(labels) // Deterministic String() output.
-			s += "[" + strings.Join(labels, ",") + "]"
-		}
-	}
-	if !IsLatest(p.Revision) {
-		s += "@" + p.Revision
-	}
-	return s
-}
-
-func (p ProductSpecs) Len() int           { return len(p) }
-func (p ProductSpecs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-func (p ProductSpecs) Less(i, j int) bool { return p[i].String() < p[j].String() }
 
 // MaxCountMaxValue is the maximum allowed value for the max-count param.
 const MaxCountMaxValue = 500

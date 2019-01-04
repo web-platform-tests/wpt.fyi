@@ -45,6 +45,32 @@ type TestRunFilter struct {
 	Products ProductSpecs `json:"products,omitempty"`
 }
 
+type testRunFilterNoCustomMarshalling TestRunFilter
+type marshallableTestRunFilter struct {
+	testRunFilterNoCustomMarshalling
+	Labels []string `json:"labels,omitempty"`
+}
+
+// MarshalJSON treats the set as an array so it can be marshalled.
+func (filter TestRunFilter) MarshalJSON() ([]byte, error) {
+	m := marshallableTestRunFilter{
+		testRunFilterNoCustomMarshalling: testRunFilterNoCustomMarshalling(filter),
+	}
+	m.Labels = ToStringSlice(filter.Labels)
+	return json.Marshal(m)
+}
+
+// UnmarshalJSON parses an array so that TestRunFilter can be unmarshalled.
+func (filter *TestRunFilter) UnmarshalJSON(data []byte) error {
+	var m marshallableTestRunFilter
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+	*filter = TestRunFilter(m.testRunFilterNoCustomMarshalling)
+	filter.Labels = ToStringSet(m.Labels)
+	return nil
+}
+
 // IsDefaultQuery returns whether the params are just an empty query (or,
 // the equivalent defaults of an empty query).
 func (filter TestRunFilter) IsDefaultQuery() bool {

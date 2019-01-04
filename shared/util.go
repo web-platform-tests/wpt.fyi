@@ -90,6 +90,18 @@ func ToStringSlice(set mapset.Set) []string {
 	return result
 }
 
+// ToStringSet converts a typed slice to a set.
+func ToStringSet(slice []string) mapset.Set {
+	if slice == nil {
+		return nil
+	}
+	set := mapset.NewSet()
+	for _, item := range slice {
+		set.Add(item)
+	}
+	return set
+}
+
 // IsLatest returns whether a SHA[0:10] is empty or "latest", both
 // of which are treated as looking up the latest run for each browser.
 func IsLatest(sha string) bool {
