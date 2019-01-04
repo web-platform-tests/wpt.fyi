@@ -106,7 +106,8 @@ found in the LICENSE file.
       static get observers() {
         return [
           'updateShowForNow(tests, chunkSize, labels, isFeasible)',
-          'loadNext(tests, query)',
+          'loadResults(tests, query)',
+          'loadNext(tests, nextPageToken)',
         ];
       }
 
@@ -149,31 +150,27 @@ found in the LICENSE file.
       }
 
       // eslint-disable-next-line no-unused-vars
-      loadNext(tests, query) {
-        if (!this.show || tests.length === 0 || this.values.length >= this.maxRuns) {
+      loadResults(tests, query) {
+        if (!this.show || !this.tests || !this.tests.length) {
           return;
         }
         if (this.currentTests !== tests) {
           this.reset();
         }
         this.currentTests = tests;
+        return this.loadRuns().then(runs =>
+          runs && Promise.all(runs.map(run => this.loadRun(this.currentTests, run)))
+        );
+      }
 
-        return this.loadRuns().then(runs => {
-          if (runs.length === 0) {
-            return;
-          }
-
-          // Update "to" parameter for fetching more runs after these runs have
-          // been processed, regardless of whether an error occurs.
-          const latch = () => {
-            const dt = this.getDT(runs[runs.length - 1]);
-            if (!this.to || dt.getTime() < this.to.getTime()) {
-              this.to = dt;
-            }
-          };
-          return Promise.all(runs.map(run => this.loadRun(this.currentTests, run)))
-            .then(latch, latch);
-        });
+      // eslint-disable-next-line no-unused-vars
+      loadNext(tests, nextPageToken) {
+        if (!this.show || this.values.length >= this.maxRuns) {
+          return;
+        }
+        return this.loadMoreRuns().then(runs =>
+          runs && Promise.all(runs.map(run => this.loadRun(this.currentTests, run)))
+        );
       }
 
       // Load results of `tests` from `run`.

@@ -91,7 +91,7 @@ found in the LICENSE file.
          */
         loadMoreRuns() {
           if (!this.nextPageToken) {
-            return;
+            return Promise.resolve();
           }
           const url = new URL('/api/runs', window.location);
           url.searchParams.set('page', this.nextPageToken);
@@ -99,6 +99,7 @@ found in the LICENSE file.
           return fetch(url).then(r => r.ok && r.json().then(runs => {
             this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
             this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
+            return runs;
           }));
         }
 
