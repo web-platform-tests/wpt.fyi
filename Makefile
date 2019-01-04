@@ -122,7 +122,7 @@ apt_update:
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
 
-webapp_deps: go_deps bower_components
+webapp_deps: go_deps node_modules absolute_node_paths
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
@@ -231,8 +231,11 @@ deploy_production: gcloud webapp_deps package_service var-APP_PATH
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
-bower_components: git node-bower
-	cd $(WPTD_PATH)webapp; npm run bower-components
+node_modules: node
+	cd $(WPTD_PATH)webapp; npm install
+
+absolute_node_paths: node_modules
+	find $(WPTD_PATH)webapp/node_modules -type f -name '*.js' | xargs sed -i -E "s#([\"'])@([^/]*)/#\1/node_modules/@\2/#g"
 
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \

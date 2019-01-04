@@ -7,11 +7,11 @@ import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/pluralize/pluralize.js';
 import './test-runs.js';
 import './test-file-results.js';
 import './test-run.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import '../../pluralize/pluralize.js';
 /* global pluralize */
 /**
  * Component for viewing a list of anomalies in a group of TestRuns across

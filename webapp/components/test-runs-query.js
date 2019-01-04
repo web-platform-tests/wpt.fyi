@@ -3,10 +3,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
 */
+import '../node_modules/pluralize/pluralize.js';
 import './product-info.js';
-
 import './results-navigation.js';
-import '../../pluralize/pluralize.js';
 const $_documentContainer = document.createElement('template');
 
 $_documentContainer.innerHTML = `<dom-module id="test-runs-query">

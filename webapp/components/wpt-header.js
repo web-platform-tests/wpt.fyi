@@ -9,7 +9,6 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import './info-banner.js';
 import './wpt-flags.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-/* global WPTFlags */
 class WPTHeader extends WPTFlags(PolymerElement) {
   static get template() {
     return html`

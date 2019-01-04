@@ -4,8 +4,7 @@
  * found in the LICENSE file.
 */
 import '../node_modules/@polymer/polymer/polymer-element.js';
-
-import '../../google-chart/google-chart.js';
+import '../node_modules/google-chart-polymer-3/google-chart.js';
 import './test-file-results.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 /* global TestFileResults */
