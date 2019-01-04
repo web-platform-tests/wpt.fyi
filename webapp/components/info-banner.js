@@ -1,18 +1,19 @@
-<!--
-Copyright 2017 The WPT Dashboard Project. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
--->
-
-<link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/paper-styles/color.html">
-
-<!--
+/*
+ * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+*/
+/*
 `<info-banner>` is a stateless component for displaying an information banner,
 of type info, warning, or error.
--->
-<dom-module id="info-banner">
-  <template>
+*/
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+
+import '../node_modules/@polymer/paper-styles/color.js';
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+class InfoBanner extends PolymerElement {
+  static get template() {
+    return html`
     <style>
       :host {
         display: block;
@@ -39,7 +40,7 @@ of type info, warning, or error.
       }
     </style>
 
-    <section class$="banner [[type]]">
+    <section class\$="banner [[type]]">
       <span class="main">
         <slot></slot>
       </span>
@@ -47,25 +48,22 @@ of type info, warning, or error.
         <slot name="small"></slot>
       </small>
     </section>
-  </template>
+`;
+  }
 
-  <script>
-    class InfoBanner extends window.Polymer.Element {
-      static get is() {
-        return 'info-banner';
-      }
+  static get is() {
+    return 'info-banner';
+  }
 
-      static get properties() {
-        return {
-          type: {
-            type: String,
-            value: 'info',
-            reflectToAttribute: true,
-          },
-        };
-      }
-    }
+  static get properties() {
+    return {
+      type: {
+        type: String,
+        value: 'info',
+        reflectToAttribute: true,
+      },
+    };
+  }
+}
 
-    window.customElements.define(InfoBanner.is, InfoBanner);
-  </script>
-</dom-module>
+window.customElements.define(InfoBanner.is, InfoBanner);

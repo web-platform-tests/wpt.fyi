@@ -1,16 +1,18 @@
-<!--
-Copyright 2017 The WPT Dashboard Project. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
--->
+/*
+ * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+*/
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
-<link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
-<link rel="import" href="info-banner.html">
-<link rel="import" href="wpt-flags.html">
-
-<dom-module id="wpt-header">
-  <template>
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import './info-banner.js';
+import './wpt-flags.js';
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+/* global WPTFlags */
+class WPTHeader extends WPTFlags(PolymerElement) {
+  static get template() {
+    return html`
     <style>
       * {
         margin: 0;
@@ -50,14 +52,11 @@ found in the LICENSE file.
         wpt.fyi is a work in progress. The reported results do not necessarily reflect the true capabilities of each web browser, so they should not be used evaluate or compare feature support.
       </info-banner>
     </header>
-  </template>
-  <script>
-    /* global WPTFlags */
-    class WPTHeader extends WPTFlags(window.Polymer.Element) {
-      static get is() {
-        return 'wpt-header';
-      }
-    }
-    window.customElements.define(WPTHeader.is, WPTHeader);
-  </script>
-</dom-module>
+`;
+  }
+
+  static get is() {
+    return 'wpt-header';
+  }
+}
+window.customElements.define(WPTHeader.is, WPTHeader);

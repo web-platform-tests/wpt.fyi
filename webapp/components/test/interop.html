@@ -2,11 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-  <script src="../../bower_components/web-component-tester/browser.js"></script>
+  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../../wct-browser-legacy/browser.js"></script>
 
-  <link rel="import" href="./util/helpers.html">
-  <link rel="import" href="../interop.html">
+  <script type="module" src="./util/helpers.js"></script>
+  <script type="module" src="../interop.js"></script>
 </head>
 <body>
   <test-fixture id="wpt-interop-fixture">
@@ -14,61 +14,64 @@
       <wpt-interop></wpt-interop>
     </template>
   </test-fixture>
-  <script>
-    /* global WPTInterop, waitingOn */
-    suite('WPTInterop', () => {
-      const fetches = {};
-      let sandbox;
+  <script type="module">
+import './util/helpers.js';
+import '../interop.js';
+import { PolymerElement } from '../../../@polymer/polymer/polymer-element.js';
+/* global WPTInterop, waitingOn */
+suite('WPTInterop', () => {
+  const fetches = {};
+  let sandbox;
 
-      setup(async() => {
-        sandbox = sinon.sandbox.create();
+  setup(async() => {
+    sandbox = sinon.sandbox.create();
 
-        const interop = await fetch('fixtures/interop.json').then(r => r.json());
-        fetches['/api/interop'] = interop;
-        fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
+    const interop = await fetch('fixtures/interop.json').then(r => r.json());
+    fetches['/api/interop'] = interop;
+    fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
 
-        sandbox.stub(window, 'fetch', (url) => {
-          return Promise.resolve(new Response(fetches[url]));
-        });
-      });
-
-      teardown(done => {
-        sandbox.restore();
-        done();
-      });
-
-      test('instanceof Polymer.Element', () => {
-        assert.isTrue(new WPTInterop() instanceof window.Polymer.Element);
-        assert.isTrue(document.createElement('wpt-interop') instanceof window.Polymer.Element);
-      });
-
-      suite('static get is()', () => {
-        test('wpt-interop', () => {
-          assert.equal(WPTInterop.is, 'wpt-interop');
-        });
-      });
-
-      suite('WPTInterop.prototype.*', () => {
-        setup((done) => {
-          sandbox.spy(window.Polymer.Element.prototype, 'ready');
-
-          fixture('wpt-interop-fixture');
-
-          done();
-        });
-
-        suite('async ready()', () => {
-          test('super.ready()', () => {
-            return waitingOn(() => window.Polymer.Element.prototype.ready.called);
-          });
-
-          test('fetches interop', () => {
-            return waitingOn(() => window.fetch.calledWith('/api/interop'));
-          });
-        });
-      });
-
+    sandbox.stub(window, 'fetch', (url) => {
+      return Promise.resolve(new Response(fetches[url]));
     });
-  </script>
+  });
+
+  teardown(done => {
+    sandbox.restore();
+    done();
+  });
+
+  test('instanceof Polymer.Element', () => {
+    assert.isTrue(new WPTInterop() instanceof PolymerElement);
+    assert.isTrue(document.createElement('wpt-interop') instanceof PolymerElement);
+  });
+
+  suite('static get is()', () => {
+    test('wpt-interop', () => {
+      assert.equal(WPTInterop.is, 'wpt-interop');
+    });
+  });
+
+  suite('WPTInterop.prototype.*', () => {
+    setup((done) => {
+      sandbox.spy(PolymerElement.prototype, 'ready');
+
+      fixture('wpt-interop-fixture');
+
+      done();
+    });
+
+    suite('async ready()', () => {
+      test('super.ready()', () => {
+        return waitingOn(() => PolymerElement.prototype.ready.called);
+      });
+
+      test('fetches interop', () => {
+        return waitingOn(() => window.fetch.calledWith('/api/interop'));
+      });
+    });
+  });
+
+});
+</script>
 </body>
 </html>

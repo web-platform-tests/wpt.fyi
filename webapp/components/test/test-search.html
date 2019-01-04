@@ -2,11 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-  <script src="../../bower_components/web-component-tester/browser.js"></script>
+  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../../wct-browser-legacy/browser.js"></script>
 
-  <link rel="import" href="util/helpers.html">
-  <link rel="import" href="../test-search.html">
+  <script type="module" src="./util/helpers.js"></script>
+  <script type="module" src="../test-search.js"></script>
 </head>
 <body>
   <test-fixture id="test-search-fixture">
@@ -15,111 +15,113 @@
     </template>
   </test-fixture>
 
-  <script>
-    /* global TestSearch */
-    suite('<test-search>', () => {
-      suite('Parser/interpreter', () => {
-        const assertQueryParse = (query, structuredQuery) => {
-          const G = TestSearch.QUERY_GRAMMAR;
-          const S = TestSearch.QUERY_SEMANTICS;
-          const p = G.match(query);
-          assert.isTrue(p.succeeded());
-          assert.deepEqual(structuredQuery, S(p).eval());
-        };
+  <script type="module">
+import './util/helpers.js';
+import '../test-search.js';
+/* global TestSearch */
+suite('<test-search>', () => {
+  suite('Parser/interpreter', () => {
+    const assertQueryParse = (query, structuredQuery) => {
+      const G = TestSearch.QUERY_GRAMMAR;
+      const S = TestSearch.QUERY_SEMANTICS;
+      const p = G.match(query);
+      assert.isTrue(p.succeeded());
+      assert.deepEqual(structuredQuery, S(p).eval());
+    };
 
-        test('simple pattern', () => {
-          assertQueryParse('2dcontext', {pattern: '2dcontext'});
-        });
+    test('simple pattern', () => {
+      assertQueryParse('2dcontext', {pattern: '2dcontext'});
+    });
 
-        test('browser test status', () => {
-          assertQueryParse('cHrOmE:oK', {browser_name: 'chrome', status: 'OK'});
-        });
+    test('browser test status', () => {
+      assertQueryParse('cHrOmE:oK', {browser_name: 'chrome', status: 'OK'});
+    });
 
-        test('pattern + test status', () => {
-          assertQueryParse('cssom firefox:timeout', {
-            and: [
-              {pattern: 'cssom'},
-              {browser_name: 'firefox', status: 'TIMEOUT'},
-            ],
-          });
-        });
+    test('pattern + test status', () => {
+      assertQueryParse('cssom firefox:timeout', {
+        and: [
+          {pattern: 'cssom'},
+          {browser_name: 'firefox', status: 'TIMEOUT'},
+        ],
+      });
+    });
 
-        test('pattern | test status', () => {
-          assertQueryParse('cssom or firefox:timeout', {
+    test('pattern | test status', () => {
+      assertQueryParse('cssom or firefox:timeout', {
+        or: [
+          {pattern: 'cssom'},
+          {browser_name: 'firefox', status: 'TIMEOUT'},
+        ],
+      });
+    });
+
+    test('implicit and, or', () => {
+      assertQueryParse('a b or c', {
+        and: [
+          {pattern: 'a'},
+          {
             or: [
-              {pattern: 'cssom'},
-              {browser_name: 'firefox', status: 'TIMEOUT'},
-            ],
-          });
-        });
-
-        test('implicit and, or', () => {
-          assertQueryParse('a b or c', {
-            and: [
-              {pattern: 'a'},
-              {
-                or: [
-                  {pattern: 'b'},
-                  {pattern: 'c'},
-                ],
-              },
-            ],
-          });
-        });
-
-        test('explicit and, or', () => {
-          assertQueryParse('a and b or c', {
-            or: [
-              {
-                and: [
-                  {pattern: 'a'},
-                  {pattern: 'b'},
-                ],
-              },
+              {pattern: 'b'},
               {pattern: 'c'},
             ],
-          });
-        });
+          },
+        ],
+      });
+    });
 
-        test('parens', () => {
-          assertQueryParse('a and ( b or c )', {
+    test('explicit and, or', () => {
+      assertQueryParse('a and b or c', {
+        or: [
+          {
             and: [
               {pattern: 'a'},
-              {
-                or: [
-                  {pattern: 'b'},
-                  {pattern: 'c'},
-                ],
-              },
+              {pattern: 'b'},
             ],
-          });
-        });
+          },
+          {pattern: 'c'},
+        ],
+      });
+    });
 
-        test('all features', () => {
-          assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
-            and: [
-              {browser_name: 'firefox', status: 'PASS'},
+    test('parens', () => {
+      assertQueryParse('a and ( b or c )', {
+        and: [
+          {pattern: 'a'},
+          {
+            or: [
+              {pattern: 'b'},
+              {pattern: 'c'},
+            ],
+          },
+        ],
+      });
+    });
+
+    test('all features', () => {
+      assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
+        and: [
+          {browser_name: 'firefox', status: 'PASS'},
+          {
+            or: [
+              {pattern: 'a'},
               {
-                or: [
-                  {pattern: 'a'},
+                and: [
+                  {browser_name: 'chrome', status: 'FAIL'},
                   {
                     and: [
-                      {browser_name: 'chrome', status: 'FAIL'},
-                      {
-                        and: [
-                          {pattern: 'b'},
-                          {pattern: 'c'},
-                        ],
-                      },
+                      {pattern: 'b'},
+                      {pattern: 'c'},
                     ],
                   },
                 ],
               },
             ],
-          });
-        });
+          },
+        ],
       });
     });
-  </script>
+  });
+});
+</script>
 </body>
 </html>

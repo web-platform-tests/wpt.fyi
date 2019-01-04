@@ -17,8 +17,8 @@ handlers:
 - url: /components
   static_dir: components
   secure: always
-- url: /bower_components
-  static_dir: bower_components
+- url: /node_modules
+  static_dir: node_modules
   secure: always
 - url: /static
   static_dir: static

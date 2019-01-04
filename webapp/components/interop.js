@@ -1,0 +1,437 @@
+/*
+ * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+*/
+import '../node_modules/@polymer/polymer/polymer-element.js';
+
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import '../node_modules/@polymer/paper-styles/color.js';
+import './info-banner.js';
+import './loading-state.js';
+import './path-part.js';
+import './test-runs.js';
+import './test-file-results.js';
+import './test-run.js';
+import './self-navigator.js';
+import './test-search.js';
+import './results-navigation.js';
+import './wpt-colors.js';
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+/* global WPTColors, TestRunsBase, SelfNavigation, LoadingState, QueryBuilder */
+class WPTInterop extends QueryBuilder(
+  WPTColors(SelfNavigation(LoadingState(TestRunsBase))),
+  'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, search)') {
+  static get template() {
+    return html`
+  <style>
+    :host {
+      display: block;
+      font-size: 15px;
+    }
+
+    section.runs {
+      padding: 1em 0;
+      margin: 1em;
+    }
+
+    section.search {
+      border-bottom: solid 1px #ccc;
+      padding-bottom: 1em;
+      margin-bottom: 1em;
+      position: relative;
+    }
+    section.search .path {
+      margin-top: 1em;
+    }
+    section.search paper-spinner-lite {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+
+    /* Direct access to test-search from local shadowRoot prevents using
+     * \`dom-if\` for this. */
+    section.search test-search.search-true {
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+
+    hr {
+      margin: 24px 0;
+      height: 1px;
+      border: 0;
+      background-color: #ccc;
+    }
+
+    .th-label {
+      padding: 0.2em 0.5em;
+    }
+
+    tr.spec {
+      background-color: var(--paper-grey-200);
+    }
+
+    td.score {
+      text-align: center;
+    }
+
+    tr td {
+      padding: 0 0.5em;
+    }
+
+    tr.spec td {
+      padding: 0.2em 0.5em;
+      border: solid 1px var(--paper-grey-300);
+    }
+
+    .path {
+      margin-bottom: 16px;
+    }
+
+    .path-separator {
+      padding: 0 0.1em;
+    }
+
+    .links {
+      margin-bottom: 1em;
+    }
+
+    @media (max-width: 800px) {
+      table tr td:first-child::after {
+        content: "";
+        display: inline-block;
+        vertical-align: top;
+        min-height: 30px;
+      }
+    }
+  </style>
+
+  <results-tabs tab="interop" path="[[encodedPath]]" query="[[query]]">
+  </results-tabs>
+
+  <section class="search">
+    <div class="path">
+      <a href="/interop/[[ query ]]" on-click="navigate">wpt</a>
+      <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
+        <span class="path-separator">/</span>
+        <a href="/interop[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
+      </template>
+    </div>
+
+    <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
+
+    <test-search class\$="search-[[pathIsATestFile]]" query="{{search}}" test-runs="[[testRuns]]" test-paths="[[testPaths]]">
+    </test-search>
+
+    <template is="dom-if" if="{{ pathIsATestFile }}">
+      <div class="links">
+        <ul>
+          <li>
+            <a href\$="https://github.com/web-platform-tests/wpt/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
+          <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
+            browser on w3c-test.org</a></li>
+        </ul>
+      </div>
+    </template>
+  </section>
+
+  <template is="dom-if" if="[[interopLoadFailed]]">
+    <info-banner type="error">
+      Failed to fetch interop data.
+    </info-banner>
+  </template>
+
+  <template is="dom-if" if="[[!pathIsATestFile]]">
+    <section class="runs">
+      <table>
+        <thead>
+        <tr>
+          <template is="dom-repeat" items="{{ passRateMetadata.test_runs }}" as="testRun">
+            <th>
+              <test-run test-run="[[testRun]]"></test-run>
+            </th>
+          </template>
+        </tr>
+
+      </thead></table>
+    </section>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Path</th>
+          <template is="dom-if" if="{{ testRuns }}">
+            <th colspan="100">Tests Passing in <var>X</var> / [[testRuns.length]] Browsers</th>
+          </template>
+        </tr>
+        <tr>
+          <th>&nbsp;</th>
+          <!-- Repeats for as many different browser test runs are available, plus one -->
+          <template is="dom-repeat" items="{{ thLabels }}" as="label">
+            <th class="th-label">{{ label }}</th>
+          </template>
+        </tr>
+      </thead>
+      <tbody>
+        <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
+          <tr>
+            <td>
+              <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}" navigate="{{ bindNavigate() }}"></path-part>
+            </td>
+
+            <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
+              <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+            </template>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </template>
+
+  <template is="dom-if" if="[[ pathIsATestFile ]]">
+    <test-file-results test-runs="[[passRateMetadata.test_runs]]" path="[[path]]">
+    </test-file-results>
+  </template>
+`;
+  }
+
+  static get is() {
+    return 'wpt-interop';
+  }
+
+  static get properties() {
+    return {
+      passRateMetadata: Object,
+      testRuns: {
+        type: Array,
+        computed: 'computeTestRuns(passRateMetadata)',
+      },
+      allMetrics: Object,
+      fileMetrics: {
+        type: Array,
+        value: [],
+        computed: 'computeFileMetrics(allMetrics)',
+      },
+      displayedTests: {
+        type: Array,
+        computed: 'computeDisplayedTests(path, searchResults, fileMetrics)'
+      },
+      displayedNodes: {
+        type: Array,
+        value: [],
+        computed: 'computeDisplayedNodes(path, displayedTests)',
+      },
+      thLabels: {
+        type: Array,
+        computed: 'computeThLabels(testRuns)'
+      },
+      search: {
+        type: String,
+        value: '',
+      },
+      searchResults: Array,
+      onSearchCommit: Function,
+      onSearchAutocomplete: Function,
+      interopLoadFailed: Boolean,
+      testPaths: {
+        type: Set,
+        computed: 'computeTestPaths(fileMetrics)',
+      },
+    };
+  }
+
+  constructor() {
+    super();
+    this.onSearchCommit = (e) => {
+      this.handleSearchCommit(e.detail.query);
+    };
+    this.onSearchAutocomplete = (e) => {
+      this.handleSearchAutocomplete(e.detail.path);
+    };
+    this.onLoadingComplete = () => {
+      // passRateMetadata contains the url for the JSON blob of allMetrics;
+      // both fetches need to succeed + parse.
+      this.interopLoadFailed = !(this.passRateMetadata && this.allMetrics);
+      if (!this.interopLoadFailed && this.search) {
+        this.handleSearchCommit(this.search);
+      }
+    };
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.shadowRoot.querySelector('test-search')
+      .addEventListener('commit', this.onSearchCommit);
+    this.shadowRoot.querySelector('test-search')
+      .addEventListener('autocomplete', this.onSearchAutocomplete);
+  }
+
+  disconnectedCallback() {
+    this.shadowRoot.querySelector('test-search')
+      .removeEventListener('commit', this.onSearchCommit);
+    super.disconnectedCallback();
+  }
+
+  async ready() {
+    await super.ready();
+    this.load(
+      fetch(`/api/interop${this.query}`)
+        .then(async r => {
+          if (!r.ok || r.status !== 200) {
+            Promise.reject('Failed to fetch interop data');
+          }
+          this.passRateMetadata = await r.json();
+          this.allMetrics = await fetch(this.passRateMetadata.url).then(r => r.json());
+        })
+    );
+  }
+
+  navigationPathPrefix() {
+    return '/interop';
+  }
+
+  interopQueryParams(shas, aligned, master, labels, productSpecs, maxCount, to, from, search) {
+    const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount);
+    if (search) {
+      params.q = search;
+    }
+    return params;
+  }
+
+  computeThLabels(testRuns) {
+    if (!testRuns) {
+      return;
+    }
+    const numLabels = testRuns.length + 1;
+    let labels = [];
+    for (let i = 0; i < numLabels; i++) {
+      labels[i] = `${i} / ${numLabels - 1}`;
+    }
+    return labels;
+  }
+
+  computeTestRuns(metadata) {
+    return metadata && metadata.test_runs;
+  }
+
+  computeTestPaths(fileMetrics) {
+    const paths = fileMetrics && fileMetrics.map(m => m.dir) || [];
+    return new Set(paths);
+  }
+
+  computeFileMetrics(allMetrics) {
+    let fileMetrics = [];
+    for (const metric of allMetrics.data) {
+      if (this.computePathIsATestFile(metric.dir)) {
+        fileMetrics.push(metric);
+      }
+    }
+    return fileMetrics;
+  }
+
+  computeDisplayedTests(path, searchResults, fileMetrics) {
+    if (!path || !fileMetrics) {
+      return null;
+    }
+
+    return (searchResults || fileMetrics)
+      .filter(node => node.dir.includes(path));
+  }
+
+  passRateStyle(total, passRate, browserCount) {
+    const fraction = passRate / total;
+    const alpha = Math.round(fraction * 1000) / 1000;
+    return `background-color: ${this.passRateColorRGBA(browserCount, this.testRuns.length, alpha)}`;
+  }
+
+  handleSearchCommit(q) {
+    if (!q || q.length < 1) {
+      this.searchResults = this.fileMetrics;
+      return;
+    }
+    if (!this.fileMetrics) {
+      return;
+    }
+
+    this.searchResults = this.fileMetrics
+      .filter(t => t.dir.toLowerCase().includes(q));
+  }
+
+  handleSearchAutocomplete(path) {
+    this.shadowRoot.querySelector('test-search').clear();
+    this.navigateToPath(path);
+  }
+
+  computeDisplayedNodes(path, displayedTests) {
+    if (!displayedTests) {
+      return [];
+    }
+
+    // Prefix: includes trailing slash.
+    const prefix = path === '/' ? '/' : `${path}/`;
+    const pLen = prefix.length;
+
+    return displayedTests
+      // Filter out files not in this directory.
+      .filter(n => n.dir.startsWith(prefix))
+      // Accumulate displayedNodes from remaining files.
+      .reduce((() => {
+        // Bookkeeping of the form:
+        //   {<displayed dir/file name>: <index in acc>}.
+        let nodes = {};
+        return (acc, t) => {
+          // Compute dir/file name that is direct descendant of this.path.
+          const suffix = t.dir.substring(pLen);
+          const slashIdx = suffix.indexOf('/');
+          const isDir = slashIdx !== -1;
+          const name = isDir ? suffix.substring(0, slashIdx): suffix;
+
+          // Either add new node to acc, or add data to an existing node.
+          if (!nodes.hasOwnProperty(name)) {
+            nodes[name] = acc.length;
+            acc.push({
+              path: `${prefix}${name}`,
+              isDir,
+              pass_rates: Array.from(t.pass_rates),
+              total: t.total,
+            });
+          } else {
+            const prs = t.pass_rates;
+            const n = acc[nodes[name]];
+            const nprs = n.pass_rates;
+
+            for (let i = 0; i < prs.length; i++) {
+              if (i < nprs.length) {
+                nprs[i] += prs[i];
+              } else {
+                nprs[i] = prs[i];
+              }
+            }
+            n.total += t.total;
+          }
+
+          return acc;
+        };
+      })(), [])
+      .sort(this.nodeSort);
+  }
+
+  nodeSort(a, b) {
+    if (a.path < b.path) {
+      return -1;
+    }
+    if (a.path > b.path) {
+      return 1;
+    }
+    return 0;
+  }
+}
+window.customElements.define(WPTInterop.is, WPTInterop);
