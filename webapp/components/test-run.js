@@ -1,8 +1,9 @@
-/*
- * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
+ */
+
 /*
 `<test-run>` is a stateless component for displaying the details of a TestRun.
 
@@ -18,15 +19,13 @@ The schema for the testRun property is as follows:
 
 See models.go for more details.
 */
-import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
-
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import './display-logo.js';
-import './product-info.js';
-import './wpt-flags.js';
+import { ProductInfo } from './product-info.js';
+import { WPTFlags } from './wpt-flags.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-/* global WPTFlags, ProductInfo */
+
 class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
   static get template() {
     return html`

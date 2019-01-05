@@ -1,7 +1,13 @@
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 import '../node_modules/@polymer/paper-styles/color.js';
+import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 const $_documentContainer = document.createElement('template');
 
 $_documentContainer.innerHTML = `<dom-module id="results-navigation">
@@ -129,3 +135,5 @@ class ResultsTabs extends PolymerElement {
 }
 
 window.customElements.define(ResultsTabs.is, ResultsTabs);
+
+export { QueryBuilder };

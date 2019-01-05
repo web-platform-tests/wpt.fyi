@@ -1,18 +1,16 @@
-/*
- * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+ */
 
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
-import './test-runs.js';
-import './test-run.js';
-import './test-file-results-table-terse.js';
-import './test-file-results-table-verbose.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-/* global TestRunsUIQuery, TestRunsQueryLoader */
+import { TestRunsUIQuery } from './test-runs-query.js';
+import { TestRunsQueryLoader } from './test-runs.js';
+
 class TestFileResults extends TestRunsUIQuery(
   TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)) {
   static get template() {
@@ -162,3 +160,5 @@ class TestFileResults extends TestRunsUIQuery(
 }
 
 window.customElements.define(TestFileResults.is, TestFileResults);
+
+export { TestFileResults };

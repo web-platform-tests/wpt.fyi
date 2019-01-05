@@ -1,8 +1,9 @@
-/*
+/**
  * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
+ */
+
 /*
 `<loading-state>` is a behaviour component for indicating when information is
 still being loaded (generally, fetched).
@@ -56,3 +57,5 @@ const LoadingState = (superClass) => class extends superClass {
     }
   }
 };
+
+export { LoadingState };

@@ -1,11 +1,10 @@
-/*
+/**
  * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import './test-runs.js';
-
-import './wpt-colors.js';
+ */
+import { TestRunsBase } from './test-runs.js';
+import { WPTColors } from './wpt-colors.js';
 import { DomModule } from '../node_modules/@polymer/polymer/lib/elements/dom-module.js';
 const $_documentContainer = document.createElement('template');
 
@@ -130,3 +129,5 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
     return 'result';
   }
 }
+
+export { AbstractTestFileResultsTable };

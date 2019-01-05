@@ -1,13 +1,12 @@
-/*
+/**
  * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import '../node_modules/pluralize/pluralize.js';
-import './product-info.js';
-import './results-navigation.js';
-const $_documentContainer = document.createElement('template');
+ */
 
+import { ProductInfo } from './product-info.js';
+import { QueryBuilder } from './results-navigation.js';
+const $_documentContainer = document.createElement('template');
 $_documentContainer.innerHTML = `<dom-module id="test-runs-query">
 
 </dom-module>`;
@@ -15,7 +14,8 @@ $_documentContainer.innerHTML = `<dom-module id="test-runs-query">
 document.head.appendChild($_documentContainer.content);
 const testRunsQueryComputer =
   'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount)';
-window.TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
+
+const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
   ProductInfo(superClass),
   opt_queryCompute || testRunsQueryComputer) {
 
@@ -247,10 +247,8 @@ window.TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuil
     return msg;
   }
 };
-window.TestRunsQuery.Computer = testRunsQueryComputer;
-window.TestRunsUIQuery.Computer = testRunsUIQueryComputer;
-/* global TestRunsQuery */
-window.TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
+
+const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
   superClass,
   opt_queryCompute || testRunsUIQueryComputer) {
 
@@ -305,3 +303,8 @@ window.TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRun
 // TODO(lukebjerring): Support to & from in the builder.
 const testRunsUIQueryComputer =
   'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, diff, search, pr, runIds)';
+
+TestRunsQuery.Computer = testRunsQueryComputer;
+TestRunsUIQuery.Computer = testRunsUIQueryComputer;
+
+export { TestRunsQuery, TestRunsUIQuery };

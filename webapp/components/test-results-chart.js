@@ -1,13 +1,14 @@
-/*
+/**
  * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
+ */
+
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/google-chart-polymer-3/google-chart.js';
-import './test-file-results.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-/* global TestFileResults */
+import { TestFileResults } from './test-file-results.js';
+
 class TestResultsChart extends TestFileResults {
   static get template() {
     return html`

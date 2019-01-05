@@ -1,13 +1,14 @@
-/*
- * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
+ */
 
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import './wpt-flags.js';
+import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { WPTFlags } from './wpt-flags.js';
+
 /**
  * The MIT License (MIT)
  *
@@ -333,3 +334,5 @@ class TestSearch extends WPTFlags(PolymerElement) {
   }
 }
 window.customElements.define(TestSearch.is, TestSearch);
+
+export { TestSearch };

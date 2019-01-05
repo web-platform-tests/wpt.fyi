@@ -1,25 +1,26 @@
-/*
- * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import '../node_modules/@polymer/polymer/polymer-element.js';
+ */
 
+import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/@polymer/paper-styles/color.js';
-import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
-import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
-import './test-runs.js';
-import './test-run.js';
 import './loading-state.js';
 import './product-info.js';
 import './self-navigator.js';
+import './test-run.js';
 import './test-runs-query-builder.js';
+import './test-runs.js';
 import './wpt-flags.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+
 /* global WPTFlags, SelfNavigation, TestRunsUIBase, LoadingState */
 class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
   static get template() {

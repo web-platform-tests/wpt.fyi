@@ -1,16 +1,17 @@
-/*
- * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
+ */
+
 /*
 `<info-banner>` is a stateless component for displaying an information banner,
 of type info, warning, or error.
 */
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-
 import '../node_modules/@polymer/paper-styles/color.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+
 class InfoBanner extends PolymerElement {
   static get template() {
     return html`
@@ -67,3 +68,5 @@ class InfoBanner extends PolymerElement {
 }
 
 window.customElements.define(InfoBanner.is, InfoBanner);
+
+export { InfoBanner };

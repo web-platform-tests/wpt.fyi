@@ -1,6 +1,12 @@
-import '../node_modules/@polymer/polymer/polymer-element.js';
-const $_documentContainer = document.createElement('template');
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
+import '../node_modules/@polymer/polymer/polymer-element.js';
+
+const $_documentContainer = document.createElement('template');
 $_documentContainer.innerHTML = `<dom-module id="self-navigator">
 
 </dom-module>`;
@@ -158,3 +164,5 @@ const SelfNavigation = (superClass) => class SelfNavigation extends superClass {
     return url;
   }
 };
+
+export { SelfNavigation };

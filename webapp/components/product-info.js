@@ -1,10 +1,15 @@
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 const $_documentContainer = document.createElement('template');
-
 $_documentContainer.innerHTML = `<dom-module id="product-info">
-  
-</dom-module>`;
 
+</dom-module>`;
 document.head.appendChild($_documentContainer.content);
+
 window.wpt = window.wpt || {};
 const DISPLAY_NAMES = (() => {
   let m = new Map();
@@ -148,11 +153,11 @@ const ProductInfo = (superClass) => class extends superClass {
   }
 
   parseProductSpec(spec) {
-    return window.parseProductSpec(spec);
+    return parseProductSpec(spec);
   }
 
   parseProduct(name) {
-    return window.parseProduct(name);
+    return parseProduct(name);
   }
 
   getSpec(product) {
@@ -175,4 +180,10 @@ const ProductInfo = (superClass) => class extends superClass {
     }
     return !sha || sha === 'latest';
   }
+};
+
+export {
+  ProductInfo,
+  parseProductSpec,
+  parseProduct,
 };

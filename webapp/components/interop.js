@@ -1,25 +1,21 @@
-/*
- * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import '../node_modules/@polymer/polymer/polymer-element.js';
+ */
 
-import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
-import './info-banner.js';
-import './loading-state.js';
-import './path-part.js';
-import './test-runs.js';
-import './test-file-results.js';
-import './test-run.js';
-import './self-navigator.js';
-import './test-search.js';
-import './results-navigation.js';
-import './wpt-colors.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { LoadingState } from './loading-state.js';
+import { QueryBuilder } from './results-navigation.js';
+import { SelfNavigation } from './self-navigator.js';
+import { TestRunsBase } from './test-runs.js';
+import { WPTColors } from './wpt-colors.js';
+
 /* global WPTColors, TestRunsBase, SelfNavigation, LoadingState, QueryBuilder */
 class WPTInterop extends QueryBuilder(
   WPTColors(SelfNavigation(LoadingState(TestRunsBase))),

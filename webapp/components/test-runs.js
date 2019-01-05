@@ -1,16 +1,16 @@
-/*
- * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import './test-runs-query.js';
+ */
 
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { TestRunsQuery, TestRunsUIQuery } from './test-runs-query.js';
+
 /**
  * Base class for re-use of results-fetching behaviour, between
  * multi-item (wpt-results) and single-test (test-file-results) views.
  */
-/* global TestRunsQuery */
 const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
   class extends TestRunsQuery(superClass, opt_queryCompute) {
     static get properties() {
@@ -122,7 +122,7 @@ class TestRunsBase extends TestRunsQueryLoader(PolymerElement) {
   }
 }
 window.customElements.define(TestRunsBase.is, TestRunsBase);
-/* global TestRunsUIQuery, TestRunsQueryLoader */
+
 class TestRunsUIBase extends TestRunsUIQuery(
   TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)) {
   static get is() {
@@ -130,3 +130,5 @@ class TestRunsUIBase extends TestRunsUIQuery(
   }
 }
 window.customElements.define(TestRunsUIBase.is, TestRunsUIBase);
+
+export { TestRunsQueryLoader, TestRunsBase, TestRunsUIBase };

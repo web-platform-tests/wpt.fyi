@@ -1,14 +1,14 @@
-/*
+/**
  * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+ */
 
-import './test-file-results.js';
-import './test-runs-query.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-/* global TestRunsQuery, TestFileResults */
+import { TestFileResults } from './test-file-results.js';
+import { TestRunsQuery } from './test-runs-query.js';
+
 class TestFileResultsTimeSeries extends TestRunsQuery(TestFileResults) {
   static get template() {
     return html`
@@ -156,3 +156,5 @@ class TestFileResultsTimeSeries extends TestRunsQuery(TestFileResults) {
 }
 
 window.customElements.define(TestFileResultsTimeSeries.is, TestFileResultsTimeSeries);
+
+export { TestFileResultsTimeSeries };

@@ -1,16 +1,17 @@
-/*
+/**
  * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+ */
 
-import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/paper-card/paper-card.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
 import './product-info.js';
 import './wpt-flags.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+
 /* global ProductInfo, WPTFlags */
 class Insights extends ProductInfo(WPTFlags(PolymerElement)) {
   static get template() {

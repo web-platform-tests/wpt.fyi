@@ -1,35 +1,36 @@
-/*
+/**
  * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+ */
 
-import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-card/paper-card.js';
+import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-icon-item.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
-import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
-import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker-light.js';
+import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
 import './display-logo.js';
 import './info-banner.js';
-import './product-info.js';
-import './test-runs-query.js';
-import './wpt-flags.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { ProductInfo } from './product-info.js';
+import { TestRunsUIQuery } from './test-runs-query.js';
+import { WPTFlags } from './wpt-flags.js';
+
+
 /**
  * Base class for re-use of results-fetching behaviour, between
  * multi-item (wpt-results) and single-test (test-file-results) views.
  */
-/* global WPTFlags, TestRunsUIQuery */
 class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   static get template() {
     return html`

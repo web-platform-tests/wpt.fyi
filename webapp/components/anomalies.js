@@ -1,17 +1,19 @@
-/*
- * Copyright 2017 The WPT Dashboard Project. All rights reserved.
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
-*/
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-
+ */
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/pluralize/pluralize.js';
-import './test-runs.js';
-import './test-file-results.js';
-import './test-run.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+
+document.head.appendChild((() => {
+  const s = document.createElement('script');
+  s.src = '/node_modules/pluralize/pluralize.js';
+  return s;
+})());
+
 /* global pluralize */
 /**
  * Component for viewing a list of anomalies in a group of TestRuns across
@@ -135,3 +137,5 @@ function isTestFile(path) {
 }
 
 window.customElements.define(WPTAnomalies.is, WPTAnomalies);
+
+export { WPTAnomalies };

@@ -1,3 +1,9 @@
+/**
+ * Copyright 2018 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 import '../node_modules/@polymer/paper-styles/color.js';
 const $_documentContainer = document.createElement('template');
 
@@ -59,3 +65,5 @@ const WPTColors = superClass => class extends superClass {
     return wpt.passRateColorRGBA(passes, total, alpha);
   }
 };
+
+export { WPTColors };
