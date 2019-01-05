@@ -37,6 +37,8 @@ func RegisterRoutes() {
 	shared.AddRoute("/flags", "flags", flagsHandler)
 	shared.AddRoute("/components/wpt-env-flags.html", "flags-component", flagsComponentHandler)
 
+	shared.AddRoute("/node_modules/{path:.*}", "components", componentsHandler)
+
 	// Test run results, viewed by pass-rate across the browsers
 	shared.AddRoute("/interop/", "interop", interopHandler)
 	shared.AddRoute("/interop/{path:.*}", "interop", interopHandler)

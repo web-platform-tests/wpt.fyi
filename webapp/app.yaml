@@ -17,9 +17,6 @@ handlers:
 - url: /components
   static_dir: components
   secure: always
-- url: /node_modules
-  static_dir: node_modules
-  secure: always
 - url: /static
   static_dir: static
   secure: always
