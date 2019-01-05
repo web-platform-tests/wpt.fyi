@@ -8,12 +8,18 @@ import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
+import './path-part.js';
 import { QueryBuilder } from './results-navigation.js';
 import { SelfNavigation } from './self-navigator.js';
+import './test-file-results.js';
+import './test-file-results-table-terse.js';
+import './test-file-results-table-verbose.js';
+import './test-run.js';
 import { TestRunsBase } from './test-runs.js';
+import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 
 /* global WPTColors, TestRunsBase, SelfNavigation, LoadingState, QueryBuilder */

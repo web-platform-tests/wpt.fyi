@@ -1,13 +1,13 @@
 package webapp
 
 import (
-	"html/template"
 	"net/http"
+	"text/template"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-var componentTemplates = template.Must(template.ParseGlob("dynamic-components/*.html"))
+var componentTemplates = template.Must(template.ParseGlob("dynamic-components/*.js"))
 
 func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
@@ -18,5 +18,5 @@ func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("Error loading flags: %s", err.Error())
 	}
 	data := struct{ Flags []shared.Flag }{flags}
-	componentTemplates.ExecuteTemplate(w, "wpt-env-flags.html", data)
+	componentTemplates.ExecuteTemplate(w, "wpt-env-flags.js", data)
 }

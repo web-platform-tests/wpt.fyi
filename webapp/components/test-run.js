@@ -19,12 +19,13 @@ The schema for the testRun property is as follows:
 
 See models.go for more details.
 */
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import './display-logo.js';
 import { ProductInfo } from './product-info.js';
 import { WPTFlags } from './wpt-flags.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 
 class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
   static get template() {

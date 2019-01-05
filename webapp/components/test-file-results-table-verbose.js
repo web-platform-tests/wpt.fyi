@@ -11,9 +11,7 @@ import { AbstractTestFileResultsTable } from './abstract-test-file-results-table
 /* global AbstractTestFileResultsTable */
 class TestFileResultsTableVerbose extends AbstractTestFileResultsTable {
   static get template() {
-    return html`
-    <!-- superclass template appended below. -->
-`;
+    return html`${super.template}`;
   }
 
   static get is() {
@@ -25,8 +23,6 @@ class TestFileResultsTableVerbose extends AbstractTestFileResultsTable {
       `${result.status} message: ${result.message}`;
   }
 }
-
-AbstractTestFileResultsTable.appendTemplate(TestFileResultsTableVerbose);
 
 window.customElements.define(
   TestFileResultsTableVerbose.is, TestFileResultsTableVerbose);

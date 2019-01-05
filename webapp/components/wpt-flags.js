@@ -7,12 +7,12 @@
 /*
 `<wpt-flags>` is a component for checking wpt.fyi feature flags.
 */
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-
-import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
+import '../node_modules/@polymer/paper-item/paper-item.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { DomModule } from '../node_modules/@polymer/polymer/lib/elements/dom-module.js';
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { WPTEnvironmentFlags } from './wpt-env-flags.js';
+
 const $_documentContainer = document.createElement('template');
 
 $_documentContainer.innerHTML = `<dom-module id="wpt-flags">
@@ -55,8 +55,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
   }
 });
 
-wpt.makeFeatureProperties = function(features, readOnly, useLocalStorage) {
-  const props = {};
+const makeFeatureProperties = function(target, features, readOnly, useLocalStorage) {
   for (const feature of features) {
     let value = null;
     if (useLocalStorage) {
@@ -65,17 +64,16 @@ wpt.makeFeatureProperties = function(features, readOnly, useLocalStorage) {
     }
     // Fall back to env default.
     if (value === null) {
-      value = window.WPTEnvironmentFlags
-        && window.WPTEnvironmentFlags[feature];
+      value = 'WPTEnvironmentFlags' in self
+        && self[WPTEnvironmentFlags][feature];
     }
-    props[feature] = {
+    target[feature] = {
       type: Boolean,
       readOnly: readOnly && !wpt.MUTABLE_FLAGS,
       notify: true,
       value: value,
     };
   }
-  return props;
 };
 
 wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superClass {
@@ -84,14 +82,15 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
   }
 
   static get properties() {
-    return wpt.makeFeatureProperties(wpt.ClientSideFeatures, readOnly, useLocalStorage);
+    const props = {};
+    makeFeatureProperties(props, wpt.ClientSideFeatures, readOnly, useLocalStorage);
+    return props;
   }
 };
 
-// eslint-disable-next-line no-unused-vars
 const WPTFlags = (superClass) => wpt.FlagsClass(superClass, /*readOnly*/ true, /*useLocalStorage*/ true);
-/* global wpt */
-wpt.FlagsEditorClass = (environmentFlags) =>
+
+const FlagsEditorClass = (environmentFlags) =>
   class extends wpt.FlagsClass(PolymerElement, /*readOnly*/ false, /*useLocalStorage*/ !environmentFlags) {
     ready() {
       super.ready();
@@ -104,8 +103,10 @@ wpt.FlagsEditorClass = (environmentFlags) =>
     static get properties() {
       const useLocalStorage = !environmentFlags;
       const readOnly = false;
-      return wpt.makeFeatureProperties(
-        wpt.ServerSideFeatures, readOnly, useLocalStorage);
+      const props = {};
+      makeFeatureProperties(props, wpt.ClientSideFeatures, readOnly, useLocalStorage);
+      makeFeatureProperties(props, wpt.ServerSideFeatures, readOnly, useLocalStorage);
+      return props;
     }
 
     valueChanged(value, feature) {
@@ -128,7 +129,7 @@ wpt.FlagsEditorClass = (environmentFlags) =>
     }
   };
 
-class WPTFlagsEditor extends wpt.FlagsEditorClass(/*environmentFlags*/ false) {
+class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
   static get template() {
     return html`
     <style>
@@ -190,11 +191,13 @@ class WPTFlagsEditor extends wpt.FlagsEditorClass(/*environmentFlags*/ false) {
   }
 }
 window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
-/* global wpt, WPTFlagsEditor */
-class WPTEnvironmentFlagsEditor extends wpt.FlagsEditorClass(/*environmentFlags*/ true) {
+
+/* global wpt */
+class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ true) {
   static get template() {
     return html`
-    <!-- WPTFlags template prepended in code, below. -->
+    ${WPTFlagsEditor.template}
+
     <h3>Server-side only features</h3>
     <paper-item>
       <paper-checkbox checked="{{diffRenames}}">
@@ -267,18 +270,6 @@ class WPTEnvironmentFlagsEditor extends wpt.FlagsEditorClass(/*environmentFlags*
   }
 }
 
-const template = Symbol();
-Object.defineProperty(WPTEnvironmentFlagsEditor, 'template', {
-  get: function() {
-    if (!this[template]) {
-      const envTemplate = DomModule.import(WPTEnvironmentFlagsEditor.is, 'template');
-      this[template] = DomModule.import(WPTFlagsEditor.is, 'template');
-      this[template].content.appendChild(envTemplate.content);
-    }
-    return this[template];
-  }
-});
-
 window.customElements.define(WPTEnvironmentFlagsEditor.is, WPTEnvironmentFlagsEditor);
 
-export { WPTFlags };
+export { WPTFlags, WPTFlagsEditor, WPTEnvironmentFlagsEditor };

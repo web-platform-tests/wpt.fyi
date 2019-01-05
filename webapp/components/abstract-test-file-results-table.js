@@ -6,6 +6,7 @@
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
 import { DomModule } from '../node_modules/@polymer/polymer/lib/elements/dom-module.js';
+import './test-file-results.js';
 const $_documentContainer = document.createElement('template');
 
 $_documentContainer.innerHTML = `<dom-module id="abstract-test-file-results-table">
@@ -82,22 +83,6 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
         value: [],
       },
     };
-  }
-
-  // Sets the template property for the given type to be its template, with
-  // the AbstractTestFileResultsTable template appended.
-  static appendTemplate(type) {
-    const template = Symbol();
-    Object.defineProperty(type, 'template', {
-      get: function() {
-        if (!this[template]) {
-          this[template] = DomModule.import(type.is, 'template');
-          this[template].content.appendChild(
-            document.importNode(AbstractTestFileResultsTable.template.content, true));
-        }
-        return this[template];
-      }
-    });
   }
 
   subtestMessage(result) {

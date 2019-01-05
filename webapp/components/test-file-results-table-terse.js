@@ -6,7 +6,7 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { AbstractTestFileResultsTable} from './abstract-test-file-results-table.js';
+import { AbstractTestFileResultsTable } from './abstract-test-file-results-table.js';
 
 /* global AbstractTestFileResultsTable */
 class TestFileResultsTableTerse extends AbstractTestFileResultsTable {
@@ -39,8 +39,7 @@ class TestFileResultsTableTerse extends AbstractTestFileResultsTable {
         width: max-content;
       }
     </style>
-
-    <!-- superclass template appended below. -->
+    ${super.template}
 `;
   }
 
@@ -124,8 +123,6 @@ class TestFileResultsTableTerse extends AbstractTestFileResultsTable {
     return matchedMsg ? matchedMsg : 'FAIL';
   }
 }
-
-AbstractTestFileResultsTable.appendTemplate(TestFileResultsTableTerse);
 
 window.customElements.define(
   TestFileResultsTableTerse.is, TestFileResultsTableTerse);

@@ -11,7 +11,7 @@ builtins:
 
 handlers:
   # Couple of special-case dynamic components.
-- url: /components/wpt-env-flags.html
+- url: /components/wpt-env-flags.js
   script: _go_app
   secure: always
 - url: /components
