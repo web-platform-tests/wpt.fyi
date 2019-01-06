@@ -9,8 +9,8 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
-import './product-info.js';
-import './wpt-flags.js';
+import { ProductInfo } from './product-info.js';
+import { WPTFlags } from './wpt-flags.js';
 
 /* global ProductInfo, WPTFlags */
 class Insights extends ProductInfo(WPTFlags(PolymerElement)) {
@@ -81,3 +81,5 @@ class Insights extends ProductInfo(WPTFlags(PolymerElement)) {
   }
 }
 window.customElements.define(Insights.is, Insights);
+
+export { Insights };
