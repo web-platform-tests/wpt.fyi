@@ -27,7 +27,7 @@ func componentsHandler(w http.ResponseWriter, r *http.Request) {
 		bytes, err = ioutil.ReadFile(fmt.Sprintf("./node_modules/%s", path))
 	}
 	if err != nil || bytes == nil {
-		http.Error(w, fmt.Sprintf("Invalid component %s", path), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Component %s not found", path), http.StatusNotFound)
 		return
 	}
 	bytes = packageRegex.ReplaceAll(bytes, []byte(packageRegexReplacement))
