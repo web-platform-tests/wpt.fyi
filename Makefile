@@ -106,11 +106,14 @@ _go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webs
 		-browser=$(BROWSER) \
 		$(FLAGS)
 
-web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
+web_components_test: xvfb firefox chrome web_components_tester webserver_deps
 	$(START_XVFB); \
 	cd $(WPTD_PATH)webapp; \
 	npm test || (($(STOP_XVFB)) && exit 1); \
 	$(STOP_XVFB)
+
+web_components_tester: node-bower node-web-component-tester
+	cd $(WPTD_PATH)webapp; bower install
 
 sys_update: apt_update | sys_deps
 	gcloud components update

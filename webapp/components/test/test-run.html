@@ -15,8 +15,8 @@
   </test-fixture>
 
   <script type="module">
-import '../test-run.js';
-/* global TestRun */
+import { TestRun } from '../test-run.js';
+
 suite('<test-run>', () => {
   let trf = null;
 
@@ -26,6 +26,7 @@ suite('<test-run>', () => {
       browser_name: 'firefox',
       time_start: '2018-01-12T12:00:00Z',
       time_end: '2018-01-12T13:20:00Z',
+      revision: '0123456789',
     });
   });
 

@@ -15,16 +15,16 @@
     </template>
   </test-fixture>
   <script type="module">
-import './util/helpers.js';
-import '../test-runs.js';
+import { waitingOn, TEST_RUNS_DATA } from './util/helpers.js';
+import { TestRunsBase } from '../test-runs.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-/* global TestRunsBase, waitingOn, TEST_RUNS_DATA */
+
 suite('TestRunsBase', () => {
   let sandbox;
 
   setup(() => {
     sandbox = sinon.sandbox.create();
-    sandbox.stub(window, 'fetch', () => Promise.resolve(new Response(TEST_RUNS_DATA)));
+    sandbox.stub(window, 'fetch', () => Promise.resolve(new Response(JSON.stringify(TEST_RUNS_DATA))));
   });
 
   teardown(() => {
@@ -76,7 +76,9 @@ suite('TestRunsBase', () => {
         return waitingOn(() => wrbf.testRuns && wrbf.testRuns.length)
           .then(() => {
             assert.equal(wrbf.testRuns.length, 4);
-            assert.equal(wrbf.testRuns[0], TEST_RUNS_DATA[0]);
+            for (const i in wrbf.testRuns) {
+              expect(wrbf.testRuns[i]).to.deep.equal(TEST_RUNS_DATA[i]);
+            }
           });
       });
     });

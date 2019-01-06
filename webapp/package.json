@@ -6,6 +6,7 @@
     "babel-eslint": "^8.2.6",
     "bower": "^1.8.4",
     "eslint": "^4.14.0",
+    "eslint-plugin-html": "^5.0.0",
     "lodash": "^3.10.1",
     "wct-browser-legacy": "^1.0.1",
     "web-component-tester": "^6.8.0"
@@ -13,7 +14,7 @@
   "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
     "test": "npm run lint && npm run wct",
-    "lint": "eslint 'components/**/*.js' ",
+    "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
     "lint-fix": "eslint --fix 'components/**/*.js' ",
     "wctp": "wct -p",
     "wct": "wct"

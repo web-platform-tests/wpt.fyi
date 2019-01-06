@@ -125,3 +125,5 @@ class TestFileResultsTableTerse extends AbstractTestFileResultsTable {
 
 window.customElements.define(
   TestFileResultsTableTerse.is, TestFileResultsTableTerse);
+
+export { TestFileResultsTableTerse };

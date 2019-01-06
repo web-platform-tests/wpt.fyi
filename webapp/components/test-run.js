@@ -159,7 +159,7 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
   }
 
   sevenCharSHA(sha) {
-    return sha.substr(0, 7);
+    return sha && sha.substr(0, 7);
   }
 }
 

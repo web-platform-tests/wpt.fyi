@@ -885,3 +885,5 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 }
 
 window.customElements.define(WPTResults.is, WPTResults);
+
+export { WPTResults };

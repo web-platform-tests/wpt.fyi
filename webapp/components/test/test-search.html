@@ -16,9 +16,8 @@
   </test-fixture>
 
   <script type="module">
-import './util/helpers.js';
-import '../test-search.js';
-/* global TestSearch */
+import { TestSearch } from '../test-search.js';
+
 suite('<test-search>', () => {
   suite('Parser/interpreter', () => {
     const assertQueryParse = (query, structuredQuery) => {

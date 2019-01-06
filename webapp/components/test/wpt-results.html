@@ -18,9 +18,9 @@
   </test-fixture>
 
   <script type="module">
-import '../wpt-results.js';
-import './util/helpers.js';
-/* global WPTResults, TEST_RUNS_DATA */
+import { WPTResults } from '../wpt-results.js';
+import { TEST_RUNS_DATA } from './util/helpers.js';
+
 suite('<wpt-results>', () => {
   let sandbox, trf = null;
 

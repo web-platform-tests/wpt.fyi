@@ -18,11 +18,10 @@
     </template>
   </test-fixture>
   <script type="module">
-import '../test-runs.js';
-import '../test-file-results.js';
-import './util/helpers.js';
+import { TestFileResults } from '../test-file-results.js';
+import { TEST_RUNS_DATA } from './util/helpers.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-/* global TestFileResults, TEST_RUNS_DATA */
+
 suite('TestFileResults', () => {
   let tfr;
 

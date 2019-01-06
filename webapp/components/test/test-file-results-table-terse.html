@@ -17,9 +17,9 @@
     </template>
   </test-fixture>
   <script type="module">
-import '../test-file-results-table-terse.js';
-import './util/helpers.js';
-/* global TestFileResultsTableTerse, TEST_RUNS_DATA */
+import { TestFileResultsTableTerse } from '../test-file-results-table-terse.js';
+import { TEST_RUNS_DATA } from './util/helpers.js';
+
 suite('TestFileResultsTableTerse', () => {
   let trf;
 

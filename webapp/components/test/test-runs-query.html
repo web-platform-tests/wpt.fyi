@@ -12,12 +12,11 @@
 <dom-module id="test-runs-query-concrete">
   <script type="module">
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-import '../test-runs-query.js';
-/* global TestRunsQuery */
+import { TestRunsQuery, TestRunsUIQuery } from '../test-runs-query.js';
+
 class ConcreteType extends TestRunsQuery(PolymerElement) {}
 window.customElements.define('test-runs-query-concrete', ConcreteType);
 
-/* global TestRunsUIQuery */
 class ConcreteUIType extends TestRunsUIQuery(PolymerElement) {}
 window.customElements.define('test-runs-ui-query-concrete', ConcreteUIType);
 </script>

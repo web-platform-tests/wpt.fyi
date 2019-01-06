@@ -7,7 +7,9 @@ package webapp
 import (
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
+	"path/filepath"
 	"regexp"
 
 	"github.com/gorilla/mux"
@@ -31,6 +33,6 @@ func componentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	bytes = packageRegex.ReplaceAll(bytes, []byte(packageRegexReplacement))
-	w.Header().Add("Content-Type", http.DetectContentType(bytes))
+	w.Header().Add("Content-Type", mime.TypeByExtension(filepath.Ext(filePath)))
 	w.Write(bytes)
 }

@@ -13,8 +13,8 @@
 <dom-module id="loading-state-concrete">
   <script type="module">
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-import '../loading-state.js';
-/* global LoadingState */
+import { LoadingState } from '../loading-state.js';
+
 class ConcreteType extends LoadingState(PolymerElement) {}
 
 window.customElements.define('loading-state-concrete', ConcreteType);

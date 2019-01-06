@@ -6,6 +6,8 @@
 
 import { ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
+import { pluralize } from '../pluralize';
+
 const $_documentContainer = document.createElement('template');
 $_documentContainer.innerHTML = `<dom-module id="test-runs-query">
 
@@ -15,7 +17,6 @@ document.head.appendChild($_documentContainer.content);
 const testRunsQueryComputer =
   'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount)';
 
-/* global pluralize */
 const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
   ProductInfo(superClass),
   opt_queryCompute || testRunsQueryComputer) {

@@ -10,6 +10,7 @@ import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
+import './wpt-colors.js';
 
 class TestFileResults extends TestRunsUIQuery(
   TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)) {

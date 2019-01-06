@@ -2,27 +2,6 @@
   "name": "wpt.fyi",
   "private": true,
   "dependencies": {
-    "polymer": "Polymer/polymer#2",
-    "paper-styles": "PolymerElements/paper-styles#^2.1.0",
-    "paper-toast": "PolymerElements/paper-toast#2.1.1",
-    "paper-input": "PolymerElements/paper-input#2",
-    "iron-form": "PolymerElements/iron-form#^2.3.0",
-    "paper-button": "PolymerElements/paper-button#^2.1.1",
-    "paper-card": "PolymerElements/paper-card#2",
-    "webcomponentsjs": "webcomponents/webcomponentsjs#^2.0.0",
-    "paper-tabs": "@Polymer/paper-tabs#^2.1.1",
-    "paper-tooltip": "@Polymer/paper-tooltip#^2.1.1",
-    "google-chart": "^2.0.0",
-    "paper-toggle-button": "PolymerElements/paper-toggle-button#^2.1.1",
-    "paper-spinner": "PolymerElements/paper-spinner#2.1.0",
-    "iron-icons": "2",
-    "paper-dropdown-menu": "2",
-    "paper-listbox": "2",
-    "paper-item": "2",
-    "paper-checkbox": "2",
-    "pluralize": "^7.0.0",
-    "iron-collapse": "2",
-    "vaadin-date-picker": "^3.3.1"
   },
   "devDependencies": {
     "web-component-tester": "^6.4.3"

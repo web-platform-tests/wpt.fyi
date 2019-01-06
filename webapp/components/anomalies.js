@@ -7,14 +7,8 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { pluralize } from './pluralize.js';
 
-document.head.appendChild((() => {
-  const s = document.createElement('script');
-  s.src = '/node_modules/pluralize/pluralize.js';
-  return s;
-})());
-
-/* global pluralize */
 /**
  * Component for viewing a list of anomalies in a group of TestRuns across
  * multiple browsers, where anomalies are tests which are not interoperable
