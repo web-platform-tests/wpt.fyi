@@ -13,13 +13,13 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
-import './loading-state.js';
+import { LoadingState } from './loading-state.js';
 import './product-info.js';
-import './self-navigator.js';
+import { SelfNavigation } from './self-navigator.js';
 import './test-run.js';
 import './test-runs-query-builder.js';
-import './test-runs.js';
-import './wpt-flags.js';
+import { TestRunsUIBase } from './test-runs.js';
+import { WPTFlags } from './wpt-flags.js';
 
 /* global WPTFlags, SelfNavigation, TestRunsUIBase, LoadingState */
 class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {

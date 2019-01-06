@@ -164,3 +164,5 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
 }
 
 window.customElements.define(TestRun.is, TestRun);
+
+export { TestRun };
