@@ -6,7 +6,7 @@
 
 import { ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
-import { pluralize } from '../pluralize';
+import { pluralize } from './pluralize.js';
 
 const $_documentContainer = document.createElement('template');
 $_documentContainer.innerHTML = `<dom-module id="test-runs-query">
