@@ -12,7 +12,6 @@ import './info-banner.js';
 import { ProductInfo } from './product-info.js';
 import { WPTFlags } from './wpt-flags.js';
 
-/* global ProductInfo, WPTFlags */
 class Insights extends ProductInfo(WPTFlags(PolymerElement)) {
   static get template() {
     return html`

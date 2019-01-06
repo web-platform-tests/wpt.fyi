@@ -20,17 +20,17 @@ const packageRegexReplacement = "$1 $2/node_modules/$3"
 // componentsHandler loads a /node_modules/ path, and replaces any
 // npm package loads in the js file with paths on the host.
 func componentsHandler(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)["path"]
+	filePath := mux.Vars(r)["path"]
 	var bytes []byte
 	var err error
-	if path != "" {
-		bytes, err = ioutil.ReadFile(fmt.Sprintf("./node_modules/%s", path))
+	if filePath != "" {
+		bytes, err = ioutil.ReadFile(fmt.Sprintf("./node_modules/%s", filePath))
 	}
 	if err != nil || bytes == nil {
-		http.Error(w, fmt.Sprintf("Component %s not found", path), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("Component %s not found", filePath), http.StatusNotFound)
 		return
 	}
 	bytes = packageRegex.ReplaceAll(bytes, []byte(packageRegexReplacement))
-	w.Header().Add("Content-Type", "text/javascript")
+	w.Header().Add("Content-Type", http.DetectContentType(bytes))
 	w.Write(bytes)
 }

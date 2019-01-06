@@ -3,16 +3,16 @@
 
 <head>
   <meta charset="utf-8">
-  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
-  <script src="../../../wct-browser-legacy/browser.js"></script>
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <script type="module" src="../../../@polymer/polymer/polymer-element.js"></script>
+  <script type="module" src="../../node_modules/@polymer/polymer/polymer-element.js"></script>
   <script type="module" src="../loading-state.js"></script>
 </head>
 
 <dom-module id="loading-state-concrete">
   <script type="module">
-import { PolymerElement } from '../../../@polymer/polymer/polymer-element.js';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import '../loading-state.js';
 /* global LoadingState */
 class ConcreteType extends LoadingState(PolymerElement) {}
@@ -29,7 +29,7 @@ window.customElements.define('loading-state-concrete', ConcreteType);
 
 <body>
   <script type="module">
-import '../../../@polymer/polymer/polymer-element.js';
+import '../../node_modules/@polymer/polymer/polymer-element.js';
 import '../loading-state.js';
 suite('LoadingState', () => {
   let state;

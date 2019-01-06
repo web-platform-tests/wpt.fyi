@@ -321,9 +321,8 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     }
   }
 }
-
 window.customElements.define(TestRunsQueryBuilder.is, TestRunsQueryBuilder);
-/* global ProductInfo */
+
 class ProductBuilder extends ProductInfo(PolymerElement) {
   static get template() {
     return html`

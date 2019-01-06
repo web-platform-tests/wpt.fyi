@@ -22,7 +22,6 @@ import { TestRunsBase } from './test-runs.js';
 import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 
-/* global WPTColors, TestRunsBase, SelfNavigation, LoadingState, QueryBuilder */
 class WPTInterop extends QueryBuilder(
   WPTColors(SelfNavigation(LoadingState(TestRunsBase))),
   'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, search)') {
@@ -437,3 +436,5 @@ class WPTInterop extends QueryBuilder(
   }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);
+
+export { WPTInterop };

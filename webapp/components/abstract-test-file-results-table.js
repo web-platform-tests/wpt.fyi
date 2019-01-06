@@ -5,7 +5,6 @@
  */
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
-import { DomModule } from '../node_modules/@polymer/polymer/lib/elements/dom-module.js';
 import './test-file-results.js';
 const $_documentContainer = document.createElement('template');
 
@@ -51,7 +50,7 @@ $_documentContainer.innerHTML = `<dom-module id="abstract-test-file-results-tabl
             <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
             <template is="dom-repeat" items="{{row.results}}" as="result">
-              <td class\$="[[ colorClass(result.status) ]]">
+              <td class$="[[ colorClass(result.status) ]]">
                 <code>[[ subtestMessage(result) ]]</code>
               </td>
             </template>
@@ -65,8 +64,7 @@ $_documentContainer.innerHTML = `<dom-module id="abstract-test-file-results-tabl
 </dom-module>`;
 
 document.head.appendChild($_documentContainer.content);
-/* global WPTColors, TestRunsBase */
-// eslint-disable-next-line no-unused-vars
+
 class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
   static get is() {
     return 'abstract-test-file-results-table';

@@ -15,6 +15,7 @@ document.head.appendChild($_documentContainer.content);
 const testRunsQueryComputer =
   'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount)';
 
+/* global pluralize */
 const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
   ProductInfo(superClass),
   opt_queryCompute || testRunsQueryComputer) {

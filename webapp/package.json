@@ -1,19 +1,20 @@
 {
   "name": "wptdashboard",
   "devDependencies": {
+    "@polymer/test-fixture": "^4.0.2",
+    "async": "^1.5.2",
     "babel-eslint": "^8.2.6",
     "bower": "^1.8.4",
     "eslint": "^4.14.0",
-    "eslint-plugin-html": "^3.2.2",
-    "web-component-tester": "^6.8.0",
-    "wct-browser-legacy": "^1.0.1"
+    "lodash": "^3.10.1",
+    "wct-browser-legacy": "^1.0.1",
+    "web-component-tester": "^6.8.0"
   },
   "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
-    "bower-components": "bower install",
     "test": "npm run lint && npm run wct",
-    "lint": "eslint --plugin html 'components/**/*.html' ",
-    "lint-fix": "eslint --plugin html --fix 'components/**/*.html' ",
+    "lint": "eslint 'components/**/*.js' ",
+    "lint-fix": "eslint --fix 'components/**/*.js' ",
     "wctp": "wct -p",
     "wct": "wct"
   },

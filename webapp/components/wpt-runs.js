@@ -21,7 +21,6 @@ import './test-runs-query-builder.js';
 import { TestRunsUIBase } from './test-runs.js';
 import { WPTFlags } from './wpt-flags.js';
 
-/* global WPTFlags, SelfNavigation, TestRunsUIBase, LoadingState */
 class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
   static get template() {
     return html`

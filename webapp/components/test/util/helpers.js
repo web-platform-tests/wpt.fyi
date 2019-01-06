@@ -70,3 +70,5 @@ const TEST_RUNS_DATA = [
     created_at: '2018-01-01T17:59:48.129561Z',
   }
 ];
+
+export { waitingOn, TEST_RUNS_DATA };

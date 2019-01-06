@@ -2,16 +2,16 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
-  <script src="../../../wct-browser-legacy/browser.js"></script>
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <script type="module" src="../../../@polymer/polymer/polymer-element.js"></script>
+  <script type="module" src="../../node_modules/@polymer/polymer/polymer-element.js"></script>
   <script type="module" src="../test-runs-query.js"></script>
 </head>
 
 <dom-module id="test-runs-query-concrete">
   <script type="module">
-import { PolymerElement } from '../../../@polymer/polymer/polymer-element.js';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import '../test-runs-query.js';
 /* global TestRunsQuery */
 class ConcreteType extends TestRunsQuery(PolymerElement) {}
@@ -37,7 +37,7 @@ window.customElements.define('test-runs-ui-query-concrete', ConcreteUIType);
 
 <body>
   <script type="module">
-import { PolymerElement } from '../../../@polymer/polymer/polymer-element.js';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import '../test-runs-query.js';
 suite('TestRunsQuery', () => {
   let testRunsQuery, testRunsUIQuery;

@@ -8,7 +8,6 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { AbstractTestFileResultsTable } from './abstract-test-file-results-table.js';
 
-/* global AbstractTestFileResultsTable */
 class TestFileResultsTableVerbose extends AbstractTestFileResultsTable {
   static get template() {
     return html`${super.template}`;

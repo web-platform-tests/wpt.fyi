@@ -33,7 +33,6 @@ import { WPTFlags } from './wpt-flags.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-/* global WPTColors, WPTFlags, SelfNavigation, LoadingState, TestRunsUIBase */
 class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase)))) {
   static get template() {
     return html`
