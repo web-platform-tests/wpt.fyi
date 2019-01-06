@@ -63,9 +63,8 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
       value = stored && JSON.parse(stored);
     }
     // Fall back to env default.
-    if (value === null) {
-      value = 'WPTEnvironmentFlags' in self
-        && self[WPTEnvironmentFlags][feature];
+    if (value === null && typeof(WPTEnvironmentFlags) !== 'undefined') {
+      value = WPTEnvironmentFlags[feature];
     }
     target[feature] = {
       type: Boolean,

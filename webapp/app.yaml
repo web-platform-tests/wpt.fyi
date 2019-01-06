@@ -30,18 +30,7 @@ handlers:
 
 # Don't upload mock-data static files to AppEngine
 skip_files:
-- bower_components/accessibility-developer-tools/
-- bower_components/async/
-- bower_components/chai/
-- bower_components/lodash/
-- bower_components/mocha/
-- bower_components/sinon-chai/
-- bower_components/sinonjs/
-- bower_components/stacky/
-- bower_components/test-fixture/
-- bower_components/web-component-tester/
 - components/test/
-- node_modules/
 - static/b952881825/
 - static/wptd-metrics/
 - test/

@@ -5,18 +5,18 @@
  */
 
 /*
-`<wpt-env-flags>` is a component for checking default enviroment wpt.fyi
-  feature flags.
+WPTEnvironmentFlags is a class containing default enviroment wpt.fyi
+feature flags.
 */
 const WPTEnvironmentFlags = class WPTEnvironmentFlags {}
 {{range .Flags}}
 Object.defineProperty(
-  window.WPTEnvironmentFlags,
-  {{.Name}},
+  WPTEnvironmentFlags,
+  '{{.Name}}',
   {
     writable: false,
     configurable: false,
-    value: {{.Enabled}}
+    value: {{.Enabled}},
   }
 );
 {{end}}

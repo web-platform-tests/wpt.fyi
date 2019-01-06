@@ -10,6 +10,7 @@ import (
 var componentTemplates = template.Must(template.ParseGlob("dynamic-components/*.js"))
 
 func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("content-type", "text/javascript")
 	ctx := shared.NewAppEngineContext(r)
 	flags, err := shared.GetFeatureFlags(ctx)
 	if err != nil {

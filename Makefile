@@ -19,7 +19,7 @@ WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPT_PATH := $(dir $(WPTD_PATH)/../)
 WPT_GO_PATH := $(GOPATH)/src/github.com/web-platform-tests
 WPTD_GO_PATH := $(WPT_GO_PATH)/wpt.fyi
-NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
+NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/webapp_node_modules/selenium-standalone/.selenium/
 FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
 USE_FRAME_BUFFER := true
@@ -122,7 +122,7 @@ apt_update:
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
 
-webapp_deps: go_deps node_modules
+webapp_deps: go_deps webapp_node_modules
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
@@ -231,8 +231,8 @@ deploy_production: gcloud webapp_deps package_service var-APP_PATH
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
-node_modules: node
-	cd $(WPTD_PATH)webapp; npm install
+webapp_node_modules: node
+	cd $(WPTD_PATH)webapp; npm install --production
 
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
