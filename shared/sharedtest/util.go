@@ -132,7 +132,10 @@ func MultiRuns(runs shared.TestRuns) func(keys []shared.Key, dst interface{}) er
 	}
 }
 
-// MockKey is a (very simple) mock shared.Key
+// MockKey is a (very simple) mock shared.Key.MockKey. It is used because gomock
+// can end up in a deadlock when, during a Matcher, we create another Matcher,
+// e.g. mocking Datastore.GetKey(int64) with a DoAndReturn that creates a
+// gomock generated MockKey, for which we'd mock Key.IntID(), resulted in deadlock.
 type MockKey struct {
 	ID int64
 }
