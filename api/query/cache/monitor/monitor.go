@@ -15,8 +15,10 @@ import (
 )
 
 var (
-	errStopped = errors.New("Monitor stopped")
-	errRunning = errors.New("Monitor running")
+	errStopped         = errors.New("Monitor stopped")
+	errRunning         = errors.New("Monitor running")
+	errNegativePercent = errors.New("Invalid percentage (negative)")
+	errPercentTooLarge = errors.New("Invalid percentage (greater than 1.00)")
 )
 
 // Runtime is a wrapper for the go runtime package. It allows tests to mock
@@ -28,15 +30,18 @@ type Runtime interface {
 
 // Monitor is an interface responsible for monitoring runtime conditions.
 type Monitor interface {
-	// Start the monitor; block until the monitor stops.
+	// Start starts the monitor, blocking until the monitor stops.
 	Start() error
-	// Stop the monitor.
+	// Stop stops the monitor.
 	Stop() error
-	// Set the interval at which the monitor polls runtime state.
+	// SetInterval sets the interval at which the monitor polls runtime state.
 	SetInterval(time.Duration) error
-	// Set the limit on heap allocated bytes before attempting to relieve memory
-	// pressure.
+	// SetMaxHeapBytes sets the limit on heap allocated bytes before attempting to
+	// relieve memory pressure.
 	SetMaxHeapBytes(uint64) error
+	// SetEvictionPercent sets the percentage of runs to be evicted when the soft
+	// memory limit (max heap bytes) is reached.
+	SetEvictionPercent(float64) error
 }
 
 // ProxyMonitor is a proxy implementation of the Monitor interface. This type is
@@ -68,6 +73,13 @@ func (m *ProxyMonitor) SetMaxHeapBytes(b uint64) error {
 	return m.delegate.SetMaxHeapBytes(b)
 }
 
+// SetEvictionPercent sets the percentage of runs to be evicted when the soft
+// memory limit (max heap bytes) is reached by deferring to the proxy's
+// delegate.
+func (m *ProxyMonitor) SetEvictionPercent(percent float64) error {
+	return m.delegate.SetEvictionPercent(percent)
+}
+
 // NewProxyMonitor instantiates a new proxy monitor bound to the given delegate.
 func NewProxyMonitor(m Monitor) ProxyMonitor {
 	return ProxyMonitor{m}
@@ -88,6 +100,7 @@ type indexMonitor struct {
 	rt           Runtime
 	interval     time.Duration
 	maxHeapBytes uint64
+	percent      float64
 
 	isRunning bool
 	mutex     *sync.Mutex
@@ -109,7 +122,7 @@ func (m *indexMonitor) Start() error {
 		heapBytes := m.rt.GetHeapBytes()
 		if heapBytes > m.maxHeapBytes {
 			m.logger.Errorf("Out of memory: %d > %d", heapBytes, m.maxHeapBytes)
-			m.idx.EvictAnyRun()
+			m.idx.EvictRuns(m.percent)
 		} else {
 			m.logger.Debugf("Monitor: %d heap-allocated bytes OK", heapBytes)
 		}
@@ -141,6 +154,17 @@ func (m *indexMonitor) SetMaxHeapBytes(maxHeapBytes uint64) error {
 	return nil
 }
 
+func (m *indexMonitor) SetEvictionPercent(percent float64) error {
+	if percent < 0 {
+		return errNegativePercent
+	} else if percent > 1.0 {
+		return errPercentTooLarge
+	}
+
+	m.percent = percent
+	return nil
+}
+
 func (m *indexMonitor) start() error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -152,6 +176,12 @@ func (m *indexMonitor) start() error {
 }
 
 // NewIndexMonitor instantiates a new index.Index monitor.
-func NewIndexMonitor(logger shared.Logger, rt Runtime, interval time.Duration, maxHeapBytes uint64, idx index.Index) Monitor {
-	return &indexMonitor{logger, rt, interval, maxHeapBytes, false, &sync.Mutex{}, idx}
+func NewIndexMonitor(logger shared.Logger, rt Runtime, interval time.Duration, maxHeapBytes uint64, percent float64, idx index.Index) (Monitor, error) {
+	if percent < 0 {
+		return nil, errNegativePercent
+	} else if percent > 1.0 {
+		return nil, errPercentTooLarge
+	}
+
+	return &indexMonitor{logger, rt, interval, maxHeapBytes, percent, false, &sync.Mutex{}, idx}, nil
 }

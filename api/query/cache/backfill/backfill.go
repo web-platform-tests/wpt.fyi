@@ -74,9 +74,9 @@ func (f datastoreRunFetcher) FetchRuns(limit int) (shared.TestRunsByProduct, err
 	return runs, nil
 }
 
-func (i *backfillIndex) EvictAnyRun() error {
+func (i *backfillIndex) EvictRuns(percent float64) (int, error) {
 	i.backfilling = false
-	return i.ProxyIndex.EvictAnyRun()
+	return i.ProxyIndex.EvictRuns(percent)
 }
 
 func (m *backfillMonitor) Stop() error {
@@ -93,7 +93,7 @@ func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, e
 // will halt either:
 // The first time a run is evicted from the index.Index via EvictAnyRun(), OR
 // the first time the returned monitor.Monitor is stopped via Stop().
-func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxBytes uint64, idx index.Index) (monitor.Monitor, error) {
+func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
 	if idx == nil {
 		return nil, errNilIndex
 	}
@@ -102,12 +102,16 @@ func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, int
 		ProxyIndex:  index.NewProxyIndex(idx),
 		backfilling: true,
 	}
+	idxMon, err := monitor.NewIndexMonitor(logger, rt, interval, maxBytes, evictionPercent, bfIdx)
+	if err != nil {
+		return nil, err
+	}
 	bfMon := &backfillMonitor{
-		ProxyMonitor: monitor.NewProxyMonitor(monitor.NewIndexMonitor(logger, rt, interval, maxBytes, bfIdx)),
+		ProxyMonitor: monitor.NewProxyMonitor(idxMon),
 		idx:          bfIdx,
 	}
 
-	err := startBackfillMonitor(fetcher, logger, maxBytes, bfMon)
+	err = startBackfillMonitor(fetcher, logger, maxBytes, bfMon)
 	if err != nil {
 		return nil, err
 	}
