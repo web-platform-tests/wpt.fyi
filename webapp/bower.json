@@ -1,8 +1,6 @@
 {
   "name": "wpt.fyi",
   "private": true,
-  "dependencies": {
-  },
   "devDependencies": {
     "web-component-tester": "^6.4.3"
   },

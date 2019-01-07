@@ -112,8 +112,8 @@ web_components_test: xvfb firefox chrome web_components_tester webserver_deps
 	npm test || (($(STOP_XVFB)) && exit 1); \
 	$(STOP_XVFB)
 
-web_components_tester: node-bower node-web-component-tester
-	cd $(WPTD_PATH)webapp; bower install
+web_components_tester: git node-bower node-web-component-tester
+	cd $(WPTD_PATH)webapp; npm run bower-components
 
 sys_update: apt_update | sys_deps
 	gcloud components update

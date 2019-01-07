@@ -13,6 +13,7 @@
   },
   "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
+    "bower-components": "bower install",
     "test": "npm run lint && npm run wct",
     "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
     "lint-fix": "eslint --fix 'components/**/*.js' ",
