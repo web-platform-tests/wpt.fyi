@@ -5,14 +5,12 @@
 package shared
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	"google.golang.org/appengine/datastore"
 )
 
 // Product uniquely defines a browser version, running on an OS version.
@@ -282,21 +280,28 @@ func GetTestRunIDs(keys []Key) TestRunIDs {
 	return result
 }
 
+// GetKeys returns a slice of keys for the TestRunIDs in the given datastore.
+func (ids TestRunIDs) GetKeys(store Datastore) []Key {
+	keys := make([]Key, len(ids))
+	for i := range ids {
+		keys[i] = store.NewKey("TestRun", ids[i])
+	}
+	return keys
+}
+
 // LoadTestRuns is a helper for fetching the TestRuns from the datastore,
 // for the gives TestRunIDs.
-func (ids TestRunIDs) LoadTestRuns(ctx context.Context) (testRuns TestRuns, err error) {
+func (ids TestRunIDs) LoadTestRuns(store Datastore) (testRuns TestRuns, err error) {
 	if len(ids) > 0 {
-		keys := make([]*datastore.Key, len(ids))
+		keys := make([]Key, len(ids))
 		for i, id := range ids {
-			keys[i] = datastore.NewKey(ctx, "TestRun", "", id, nil)
+			keys[i] = store.NewKey("TestRun", id)
 		}
 		testRuns = make(TestRuns, len(keys))
-		if err = datastore.GetMulti(ctx, keys, testRuns); err != nil {
+		if err = store.GetMulti(keys, testRuns); err != nil {
 			return testRuns, err
 		}
-		for i, id := range ids {
-			testRuns[i].ID = id
-		}
+		testRuns.SetTestRunIDs(ids)
 	}
 	return testRuns, err
 }

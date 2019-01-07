@@ -43,11 +43,27 @@ type Query interface {
 type Datastore interface {
 	Context() context.Context
 	NewQuery(typeName string) Query
+	NewKey(typeName string, id int64) Key
 	GetAll(q Query, dst interface{}) ([]Key, error)
+	GetMulti(keys []Key, dst interface{}) error
+
+	// LoadTestRun loads the TestRun entity for the given key.
+	LoadTestRun(id int64) (*TestRun, error)
+
+	// LoadTestRuns loads the test runs for the TestRun entities for the given parameters.
+	// It is encapsulated because we cannot run single queries with multiple inequality
+	// filters, so must load the keys and merge the results.
+	LoadTestRuns(
+		products []ProductSpec,
+		labels mapset.Set,
+		revisions []string,
+		from *time.Time,
+		to *time.Time,
+		limit,
+		offset *int) (result TestRunsByProduct, err error)
 }
 
-// LoadTestRun loads the TestRun entity for the given key.
-func LoadTestRun(store Datastore, id int64) (*TestRun, error) {
+func loadTestRun(store Datastore, id int64) (*TestRun, error) {
 	var testRun TestRun
 	ctx := store.Context()
 	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
@@ -166,10 +182,7 @@ func merge(s1, s2 mapset.Set) mapset.Set {
 	return s1.Intersect(s2)
 }
 
-// LoadTestRuns loads the test runs for the TestRun entities for the given parameters.
-// It is encapsulated because we cannot run single queries with multiple inequality
-// filters, so must load the keys and merge the results.
-func LoadTestRuns(
+func loadTestRuns(
 	store Datastore,
 	products []ProductSpec,
 	labels mapset.Set,

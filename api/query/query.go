@@ -11,9 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
-	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -23,9 +21,6 @@ type summary map[string][]int
 type sharedInterface interface {
 	ParseQueryParamInt(r *http.Request, key string) (*int, error)
 	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
-	LoadTestRuns(shared.ProductSpecs, mapset.Set, shared.SHAs, *time.Time, *time.Time, *int, *int) (shared.TestRunsByProduct, error)
-	LoadTestRunsByIDs(ids shared.TestRunIDs) (result shared.TestRuns, err error)
-	LoadTestRun(int64) (*shared.TestRun, error)
 }
 
 type defaultShared struct {
@@ -40,19 +35,8 @@ func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter
 	return shared.ParseQueryFilterParams(r.URL.Query())
 }
 
-func (sharedImpl defaultShared) LoadTestRuns(ps shared.ProductSpecs, ls mapset.Set, sha shared.SHAs, from *time.Time, to *time.Time, limit *int, offset *int) (shared.TestRunsByProduct, error) {
-	return shared.LoadTestRuns(shared.NewAppEngineDatastore(sharedImpl.ctx), ps, ls, sha, from, to, limit, offset)
-}
-
-func (sharedImpl defaultShared) LoadTestRunsByIDs(ids shared.TestRunIDs) (result shared.TestRuns, err error) {
-	return ids.LoadTestRuns(sharedImpl.ctx)
-}
-
-func (sharedImpl defaultShared) LoadTestRun(id int64) (*shared.TestRun, error) {
-	return shared.LoadTestRun(shared.NewAppEngineDatastore(sharedImpl.ctx), id)
-}
-
 type queryHandler struct {
+	store      shared.Datastore
 	sharedImpl sharedInterface
 	dataSource shared.CachedStore
 }
@@ -90,7 +74,7 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns
 		var err error
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
-		runsByProduct, err := qh.sharedImpl.LoadTestRuns(products, runFilters.Labels, []string{sha}, runFilters.From, runFilters.To, &limit, nil)
+		runsByProduct, err := qh.store.LoadTestRuns(products, runFilters.Labels, []string{sha}, runFilters.From, runFilters.To, &limit, nil)
 		if err != nil {
 			return testRuns, filters, err
 		}
@@ -101,10 +85,13 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns
 			filters.RunIDs = append(filters.RunIDs, testRun.ID)
 		}
 	} else {
-		testRuns, err = qh.sharedImpl.LoadTestRunsByIDs(shared.TestRunIDs(filters.RunIDs))
+		ids := shared.TestRunIDs(filters.RunIDs)
+		testRuns = make(shared.TestRuns, len(ids))
+		err = qh.store.GetMulti(ids.GetKeys(qh.store), testRuns)
 		if err != nil {
 			return testRuns, filters, err
 		}
+		testRuns.SetTestRunIDs(ids)
 	}
 
 	return testRuns, filters, nil

@@ -6,8 +6,10 @@ package shared
 
 import (
 	"context"
+	"time"
 
 	"cloud.google.com/go/datastore"
+	mapset "github.com/deckarep/golang-set"
 )
 
 type cloudKey struct {
@@ -42,6 +44,12 @@ func (d cloudDatastore) NewQuery(typeName string) Query {
 	}
 }
 
+func (d cloudDatastore) NewKey(typeName string, id int64) Key {
+	return cloudKey{
+		key: datastore.IDKey(typeName, id, nil),
+	}
+}
+
 func (d cloudDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	keys, err := d.client.GetAll(d.ctx, q.(cloudQuery).query, dst)
 	cast := make([]Key, len(keys))
@@ -49,6 +57,29 @@ func (d cloudDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 		cast[i] = cloudKey{key: keys[i]}
 	}
 	return cast, err
+}
+
+func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
+	cast := make([]*datastore.Key, len(keys))
+	for i := range keys {
+		cast[i] = keys[i].(cloudKey).key
+	}
+	return d.client.GetMulti(d.ctx, cast, dst)
+}
+
+func (d cloudDatastore) LoadTestRun(id int64) (*TestRun, error) {
+	return loadTestRun(d, id)
+}
+
+func (d cloudDatastore) LoadTestRuns(
+	products []ProductSpec,
+	labels mapset.Set,
+	revisions []string,
+	from *time.Time,
+	to *time.Time,
+	limit,
+	offset *int) (result TestRunsByProduct, err error) {
+	return loadTestRuns(d, products, labels, revisions, from, to, limit, offset)
 }
 
 type cloudQuery struct {
