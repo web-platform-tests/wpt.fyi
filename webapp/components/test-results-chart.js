@@ -8,6 +8,7 @@ import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/google-chart-polymer-3/google-chart.js';
 import { TestFileResults } from './test-file-results.js';
+import './product-info.js';
 
 class TestResultsChart extends TestFileResults {
   static get template() {
@@ -39,12 +40,6 @@ class TestResultsChart extends TestFileResults {
 
   static get properties() {
     return {
-      labels: {
-        type: Array,
-      },
-      latest: {
-        type: Date,
-      },
       tests: {
         type: Array,
       },
@@ -62,12 +57,7 @@ class TestResultsChart extends TestFileResults {
       },
       browserNames: {
         type: Array,
-        value: [
-          'chrome',
-          'edge',
-          'firefox',
-          'safari',
-        ],
+        value: window.wpt.DefaultBrowserNames,
       },
       cols: {
         type: Array,
@@ -80,10 +70,6 @@ class TestResultsChart extends TestFileResults {
       values: {
         type: Array,
         value: [],
-      },
-      to: {
-        type: Date,
-        value: new Date(),
       },
       currentTests: {
         type: Array,
@@ -121,11 +107,10 @@ class TestResultsChart extends TestFileResults {
   static get observers() {
     return [
       'updateShowForNow(tests, chunkSize, labels, isFeasible)',
-      'loadNext(tests, chunkSize, maxRuns, labels, to, show)',
+      'loadResults(tests, query)',
+      'loadNext(tests, nextPageToken)',
     ];
   }
-
-
 
   computeLabels(labels) {
     return labels ? labels : [];
@@ -158,41 +143,30 @@ class TestResultsChart extends TestFileResults {
     this.showForNow = false;
   }
 
-  // Load results of `tests` from `chunkSize` runs labeled with `labels`
-  // from prior to `to` iff `show`.
-  async loadNext(tests, chunkSize, maxRuns, labels, to, show) {
-    if (!show || tests.length === 0 || this.values.length >= maxRuns) {
+  computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount) {
+    maxCount = this.chunkSize;
+    return super.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount);
+  }
+  // eslint-disable-next-line no-unused-vars
+  async loadResults(tests, query) {
+    if (!this.show || !this.tests || !this.tests.length) {
       return;
     }
     if (this.currentTests !== tests) {
       this.reset();
     }
     this.currentTests = tests;
-    labels = labels || [];
+    const runs = await this.loadRuns();
+    return runs && Promise.all(runs.map(run => this.loadRun(this.currentTests, run)));
+  }
 
-    const url = new URL('/api/runs', window.location);
-    url.searchParams.append('aligned', true);
-    url.searchParams.append('max-count', chunkSize);
-    if (labels && labels.length) {
-      url.searchParams.append('labels', labels.join(','));
-    }
-    const resp = await window.fetch(url.toString());
-    const runs = await resp.json();
-
-    if (runs.length === 0) {
+  // eslint-disable-next-line no-unused-vars
+  async loadNext(tests, nextPageToken) {
+    if (!this.show || this.values.length >= this.maxRuns) {
       return;
     }
-
-    // Update "to" parameter for fetching more runs after these runs have
-    // been processed, regardless of whether an error occurs.
-    const latch = () => {
-      const dt = this.getDT(runs[runs.length - 1]);
-      if (dt.getTime() < this.to.getTime()) {
-        this.to = dt;
-      }
-    };
-    return Promise.all(runs.map(run => this.loadRun(this.currentTests, run)))
-      .then(latch, latch);
+    const runs = await this.loadMoreRuns();
+    return runs && Promise.all(runs.map(run => this.loadRun(this.currentTests, run)));
   }
 
   // Load results of `tests` from `run`.

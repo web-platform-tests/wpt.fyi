@@ -264,11 +264,23 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           <h3>
             History <span>(Experimental)</span>
           </h3>
-          <test-results-chart path="[[path]]" labels="[[labels]]" tests="[[displayedTests]]">
+          <test-results-chart
+              product-specs="[[productSpecs]]"
+              path="[[path]]"
+              labels="[[labels]]"
+              master="true"
+              aligned="[[aligned]]"
+              tests="[[displayedTests]]">
           </test-results-chart>
 
           <template is="dom-if" if="[[pathIsATestFile]]">
-            <test-results-history-grid product-specs="[[productSpecs]]" path="[[path]]" labels="[[labels]]" tests="[[displayedTests]]">
+            <test-results-history-grid
+                product-specs="[[productSpecs]]"
+                path="[[path]]"
+                labels="[[labels]]"
+                master="true"
+                aligned="[[aligned]]"
+                tests="[[displayedTests]]">
             </test-results-history-grid>
           </template>
         </template>

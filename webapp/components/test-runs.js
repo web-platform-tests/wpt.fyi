@@ -87,17 +87,21 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
     /**
      * Fetch the next page of runs, using nextPageToken, if applicable.
      */
-    loadMoreRuns() {
+    async loadMoreRuns() {
       if (!this.nextPageToken) {
         return;
       }
       const url = new URL('/api/runs', window.location);
       url.searchParams.set('page', this.nextPageToken);
       this.nextPageToken = null;
-      return fetch(url).then(r => r.ok && r.json().then(runs => {
-        this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
-        this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
-      }));
+      const r = await fetch(url);
+      if (!r.ok) {
+        return;
+      }
+      const runs = await r.json();
+      this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
+      this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
+      return runs;
     }
 
     splitPathIntoLinkedParts(inputPath) {

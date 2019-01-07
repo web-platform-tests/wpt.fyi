@@ -7,9 +7,8 @@
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { TestFileResults } from './test-file-results.js';
-import { TestRunsQuery } from './test-runs-query.js';
 
-class TestFileResultsTimeSeries extends TestRunsQuery(TestFileResults) {
+class TestFileResultsTimeSeries extends TestFileResults {
   static get template() {
     return html`
     <style>
@@ -82,8 +81,7 @@ class TestFileResultsTimeSeries extends TestRunsQuery(TestFileResults) {
 
   static get observers() {
     return [
-      'onPathChanged(path)',
-      'onRunsLoaded(testRuns, path)',
+      'loadResults(path, query)',
     ];
   }
 
@@ -96,14 +94,12 @@ class TestFileResultsTimeSeries extends TestRunsQuery(TestFileResults) {
     };
   }
 
-  async onPathChanged(path) {
+  // eslint-disable-next-line no-unused-vars
+  async loadResults(path, query) {
     if (!path) {
       return;
     }
-    this.loadRuns();
-  }
-
-  async onRunsLoaded(runs, path) {
+    const runs = await this.loadRuns();
     if (!runs) {
       return;
     }
@@ -122,11 +118,13 @@ class TestFileResultsTimeSeries extends TestRunsQuery(TestFileResults) {
 
       return acc;
     }, []);
+    const promises = [];
     this.results.forEach((browserResults, i) => {
       browserResults.runResults.forEach((runResult, j) => {
-        this.loadRun(runResult, j, browserResults, i, path);
+        promises.push(this.loadRun(runResult, j, browserResults, i, path));
       });
     });
+    return Promise.all(promises);
   }
 
   async loadRun(runResult, j, browserResults, i, path) {
