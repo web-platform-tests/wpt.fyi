@@ -73,6 +73,13 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	diffAPI := shared.NewDiffAPI(ctx)
 	suites, err := NewAPI(ctx).GetSuitesForSHA(sha)
+	if err != nil {
+		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else if len(suites) < 1 {
+		log.Debugf("No CheckSuites found for %s", sha)
+	}
+
 	updatedAny := false
 	for _, suite := range suites {
 		summaryData, err := getDiffSummary(aeAPI, diffAPI, suite, *baseRun, *headRun)
@@ -80,15 +87,10 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		if err != nil {
-			log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		} else if len(suites) < 1 {
-			log.Debugf("No CheckSuites found for %s", sha)
+		updated, updateErr := updateCheckRunSummary(ctx, summaryData, suite)
+		if updateErr != nil {
+			err = updateErr
 		}
-
-		updated, err := updateCheckRunSummary(ctx, summaryData, suites...)
 		updatedAny = updatedAny || updated
 	}
 
