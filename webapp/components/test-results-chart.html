@@ -150,7 +150,7 @@ found in the LICENSE file.
       }
 
       // eslint-disable-next-line no-unused-vars
-      loadResults(tests, query) {
+      async loadResults(tests, query) {
         if (!this.show || !this.tests || !this.tests.length) {
           return;
         }
@@ -158,19 +158,17 @@ found in the LICENSE file.
           this.reset();
         }
         this.currentTests = tests;
-        return this.loadRuns().then(runs =>
-          runs && Promise.all(runs.map(run => this.loadRun(this.currentTests, run)))
-        );
+        const runs = await this.loadRuns();
+        return runs && Promise.all(runs.map(run => this.loadRun(this.currentTests, run)));
       }
 
       // eslint-disable-next-line no-unused-vars
-      loadNext(tests, nextPageToken) {
+      async loadNext(tests, nextPageToken) {
         if (!this.show || this.values.length >= this.maxRuns) {
           return;
         }
-        return this.loadMoreRuns().then(runs =>
-          runs && Promise.all(runs.map(run => this.loadRun(this.currentTests, run)))
-        );
+        const runs = await this.loadMoreRuns();
+        return runs && Promise.all(runs.map(run => this.loadRun(this.currentTests, run)));
       }
 
       // Load results of `tests` from `run`.
