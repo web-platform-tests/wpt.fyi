@@ -20,11 +20,18 @@ type TestNamePattern struct {
 	q query.TestNamePattern
 }
 
-// RunTestStatusConstraint is a query.RunTestStatusConstraint bound to an
+// runTestStatusEq is a query.RunTestStatusEq bound to an
 // in-memory index.
-type RunTestStatusConstraint struct {
+type runTestStatusEq struct {
 	index
-	q query.RunTestStatusConstraint
+	q query.RunTestStatusEq
+}
+
+// runTestStatusNeq is a query.RunTestStatusNeq bound to an
+// in-memory index.
+type runTestStatusNeq struct {
+	index
+	q query.RunTestStatusNeq
 }
 
 // And is a query.And bound to an in-memory index.
@@ -73,10 +80,14 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 	return strings.Contains(name, tnp.q.Pattern)
 }
 
-// Filter interprets a RunTestStatusConstraint as a filter function over
-// TestIDs.
-func (rtsc RunTestStatusConstraint) Filter(t TestID) bool {
-	return rtsc.runResults[RunID(rtsc.q.Run)].GetResult(t) == ResultID(rtsc.q.Status)
+// Filter interprets a runTestStatusEq as a filter function over TestIDs.
+func (rtse runTestStatusEq) Filter(t TestID) bool {
+	return rtse.runResults[RunID(rtse.q.Run)].GetResult(t) == ResultID(rtse.q.Status)
+}
+
+// Filter interprets a runTestStatusNeq as a filter function over TestIDs.
+func (rtsn runTestStatusNeq) Filter(t TestID) bool {
+	return rtsn.runResults[RunID(rtsn.q.Run)].GetResult(t) != ResultID(rtsn.q.Status)
 }
 
 // Filter interprets an And as a filter function over TestIDs.
@@ -110,8 +121,10 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 	switch v := q.(type) {
 	case query.TestNamePattern:
 		return TestNamePattern{idx, v}, nil
-	case query.RunTestStatusConstraint:
-		return RunTestStatusConstraint{idx, v}, nil
+	case query.RunTestStatusEq:
+		return runTestStatusEq{idx, v}, nil
+	case query.RunTestStatusNeq:
+		return runTestStatusNeq{idx, v}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
