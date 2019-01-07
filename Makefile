@@ -216,7 +216,11 @@ gcloud-login: gcloud  $(WPTD_PATH)client-secret.json
 
 deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP_PATH
 	gcloud config set project wptdashboard-staging
-	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
+	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
+		cd $(WPTD_PATH); util/deploy.sh -r -p $(APP_PATH); \
+	else \
+		cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
+	fi
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
@@ -226,7 +230,7 @@ cleanup_staging_versions: gcloud-login
 
 deploy_production: gcloud webapp_deps package_service var-APP_PATH
 	gcloud config set project wptdashboard
-	cd $(WPTD_PATH); util/deploy.sh -p $(APP_PATH)
+	cd $(WPTD_PATH); util/deploy.sh -r $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
