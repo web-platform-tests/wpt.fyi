@@ -10,10 +10,6 @@ builtins:
 - remote_api: on
 
 handlers:
-  # Couple of special-case dynamic components.
-- url: /components/wpt-env-flags.js
-  script: _go_app
-  secure: always
 - url: /components
   static_dir: components
   secure: always
