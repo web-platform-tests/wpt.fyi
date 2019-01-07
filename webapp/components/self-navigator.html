@@ -127,7 +127,9 @@
           this.path = path;
         }
 
-        url.search = url.search.replace(/=true/g, '');
+        url.search = url.search
+          .replace(/=true/g, '')
+          .replace(/%3A00.000Z/g, '');
         window.history.pushState(params, '', url);
 
         // Send Google Analytics pageview event
