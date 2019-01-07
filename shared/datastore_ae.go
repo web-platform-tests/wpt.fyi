@@ -6,7 +6,9 @@ package shared
 
 import (
 	"context"
+	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -32,6 +34,10 @@ func (d aeDatastore) NewQuery(typeName string) Query {
 	}
 }
 
+func (d aeDatastore) NewKey(typeName string, id int64) Key {
+	return datastore.NewKey(d.ctx, typeName, "", id, nil)
+}
+
 func (d aeDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	keys, err := q.(aeQuery).query.GetAll(d.ctx, dst)
 	cast := make([]Key, len(keys))
@@ -39,6 +45,29 @@ func (d aeDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 		cast[i] = keys[i]
 	}
 	return cast, err
+}
+
+func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
+	cast := make([]*datastore.Key, len(keys))
+	for i := range keys {
+		cast[i] = keys[i].(*datastore.Key)
+	}
+	return datastore.GetMulti(d.ctx, cast, dst)
+}
+
+func (d aeDatastore) LoadTestRun(id int64) (*TestRun, error) {
+	return loadTestRun(d, id)
+}
+
+func (d aeDatastore) LoadTestRuns(
+	products []ProductSpec,
+	labels mapset.Set,
+	revisions []string,
+	from *time.Time,
+	to *time.Time,
+	limit,
+	offset *int) (result TestRunsByProduct, err error) {
+	return loadTestRuns(d, products, labels, revisions, from, to, limit, offset)
 }
 
 type aeQuery struct {
