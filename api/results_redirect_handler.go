@@ -29,15 +29,16 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
+	store := shared.NewAppEngineDatastore(ctx)
 	one := 1
-	testRuns, err := shared.LoadTestRuns(ctx, filters.Products, filters.Labels, filters.SHA, nil, nil, &one, nil)
+	testRuns, err := store.LoadTestRuns(filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	allRuns := testRuns.AllRuns()
 	if len(allRuns) == 0 {
-		http.Error(w, fmt.Sprintf("404 - Test run '%s' not found", filters.SHA), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("404 - Test run '%s' not found", filters.SHAs.FirstOrLatest()), http.StatusNotFound)
 		return
 	}
 

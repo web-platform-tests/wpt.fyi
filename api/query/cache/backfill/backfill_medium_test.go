@@ -55,11 +55,14 @@ func TestStopImmediately(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fetcher := NewMockRunFetcher(ctrl)
-	fetcher.EXPECT().FetchRuns(gomock.Any()).Return([]shared.TestRun{
-		shared.TestRun{ID: 1},
-		shared.TestRun{ID: 2},
-		shared.TestRun{ID: 3},
-		shared.TestRun{ID: 4},
+	product, _ := shared.ParseProductSpec("chrome")
+	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(shared.TestRunsByProduct{
+		shared.ProductTestRuns{Product: product, TestRuns: shared.TestRuns{
+			shared.TestRun{ID: 1},
+			shared.TestRun{ID: 2},
+			shared.TestRun{ID: 3},
+			shared.TestRun{ID: 4},
+		}},
 	}, nil)
 	rt := monitor.NewMockRuntime(ctrl)
 	rt.EXPECT().GetHeapBytes().Return(uint64(0)).AnyTimes()
@@ -78,11 +81,17 @@ func TestIngestSomeRuns(t *testing.T) {
 	defer ctrl.Finish()
 
 	fetcher := NewMockRunFetcher(ctrl)
-	fetcher.EXPECT().FetchRuns(gomock.Any()).Return([]shared.TestRun{
-		shared.TestRun{ID: 1},
-		shared.TestRun{ID: 2},
-		shared.TestRun{ID: 3},
-		shared.TestRun{ID: 4},
+	product, _ := shared.ParseProductSpec("chrome")
+	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(shared.TestRunsByProduct{
+		shared.ProductTestRuns{
+			Product: product,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{ID: 1},
+				shared.TestRun{ID: 2},
+				shared.TestRun{ID: 3},
+				shared.TestRun{ID: 4},
+			},
+		},
 	}, nil)
 
 	freq := time.Millisecond * 10

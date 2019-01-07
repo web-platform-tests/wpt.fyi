@@ -148,12 +148,19 @@
           }
         });
 
-        test('sha', () => {
-          const sha = '1234567890';
-          queryBuilder.sha = sha;
-          expect(queryBuilder.query).to.contain(`sha=${sha}`);
+        test('shas', () => {
+          const shas = ['1234567890', '0987654321'];
+          queryBuilder.shas = shas.slice(0, 1);
+          expect(queryBuilder.query).to.contain(`sha=${shas[0]}`);
 
-          queryBuilder.sha = 'latest';
+          queryBuilder.shas = shas;
+          expect(queryBuilder.query).to.contain(`sha=${shas[0]}`);
+          expect(queryBuilder.query).to.contain(`sha=${shas[1]}`);
+
+          queryBuilder.shas = ['latest'];
+          expect(queryBuilder.query).to.not.contain('sha');
+
+          queryBuilder.shas = [];
           expect(queryBuilder.query).to.not.contain('sha');
         });
 

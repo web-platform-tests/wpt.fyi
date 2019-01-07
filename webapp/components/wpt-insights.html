@@ -46,7 +46,7 @@ found in the LICENSE file.
 
       get insights() {
         const browsers = ['chrome', 'edge', 'firefox', 'safari'];
-        return browsers.map(b => {
+        const anomalies = browsers.map(b => {
           const others = browsers.filter(o => o !== b);
           const othersPassing = others
             .map(o => `(${o}:pass|${o}:ok)`)
@@ -61,6 +61,21 @@ found in the LICENSE file.
             desc: `Tests that are failing in ${this.displayName(b)}, but passing in the other browsers (${others.map(this.displayName).join(', ')})`,
           };
         });
+        const flakes = browsers.map(b => {
+          const query = `(${b}:pass|${b}:ok) (${b}:timeout|${b}:error|${b}:fail)`;
+          const url = new URL('/results/', window.location);
+          url.searchParams.set('q', query);
+          url.searchParams.set('product', b);
+          url.searchParams.set('max-count', 10);
+          url.searchParams.set('labels', 'master,experimental');
+          return {
+            name: `Flakes in the last 10 ${this.displayName(b)} runs`,
+            url,
+            query,
+            desc: `Tests that have both passing and non-passing results in the last 10 ${this.displayName(b)} runs`,
+          };
+        });
+        return anomalies.concat(flakes);
       }
     }
     window.customElements.define(Insights.is, Insights);

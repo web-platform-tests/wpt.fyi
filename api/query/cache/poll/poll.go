@@ -40,21 +40,23 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval
 
 		errs := make([]error, len(runs))
 		found := false
-		for i, run := range runs {
-			err := idx.IngestRun(run)
-			errs[i] = err
-			if err != nil {
-				if err == index.ErrRunExists() {
-					logger.Infof("Not updating run (already exists): %v", run)
-				} else if err == index.ErrRunLoading() {
-					logger.Infof("Not updating run (already loading): %v", run)
+		for i, browserRuns := range runs {
+			for _, run := range browserRuns.TestRuns {
+				err := idx.IngestRun(run)
+				errs[i] = err
+				if err != nil {
+					if err == index.ErrRunExists() {
+						logger.Infof("Not updating run (already exists): %v", run)
+					} else if err == index.ErrRunLoading() {
+						logger.Infof("Not updating run (already loading): %v", run)
+					} else {
+						logger.Errorf("Error ingesting run: %v: %v", run, err)
+					}
 				} else {
-					logger.Errorf("Error ingesting run: %v: %v", run, err)
+					logger.Infof("Updated run index; new run: %v", run)
+					found = true
+					lastLoadTime = time.Now()
 				}
-			} else {
-				logger.Infof("Updated run index; new run: %v", run)
-				found = true
-				lastLoadTime = time.Now()
 			}
 		}
 

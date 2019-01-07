@@ -67,7 +67,7 @@ func (s checksAPIImpl) ScheduleResultsProcessing(sha string, product shared.Prod
 func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.ProductSpec) (bool, error) {
 	aeAPI := shared.NewAppEngineAPI(s.ctx)
 	host := aeAPI.GetHostname()
-	filter := shared.TestRunFilter{SHA: suite.SHA[:10]}
+	filter := shared.TestRunFilter{SHAs: shared.SHAs{suite.SHA}}
 	runsURL := aeAPI.GetRunsURL(filter)
 
 	pending := summaries.Pending{
