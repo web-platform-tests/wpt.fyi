@@ -26,7 +26,7 @@ self.addEventListener(
           return fetch(e.request)
             .then(r => {
               if (r.ok) {
-                const components = new RegExp('^/((bower_)?components|static)/');
+                const components = new RegExp('^/((bower_)?components|static|node_modules)/');
                 if (components.test(e.request.url.toString())) {
                   let clone = r.clone();
                   caches.open('{{ .Version }}').then(cache => {
