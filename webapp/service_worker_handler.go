@@ -6,8 +6,8 @@ package webapp
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -42,18 +42,10 @@ func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var files []string
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
 	for _, folder := range []string{"components", "static"} {
-		_, filename, _, _ := runtime.Caller(0)
-		dir := filepath.Dir(filename)
-		err := filepath.Walk(path.Join(dir, folder), func(path string, info os.FileInfo, err error) error {
-			if err == nil && !info.IsDir() {
-				files = append(files, path)
-			}
-			return err
-		})
-		if err != nil {
-			return
-		}
+		appendFiles(path.Join(dir, folder), &files)
 	}
 
 	data := struct {
@@ -64,4 +56,20 @@ func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
 		Files:   files,
 	}
 	swTemplate.Execute(w, data)
+}
+
+func appendFiles(dirPath string, files *[]string) error {
+	dir, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		return err
+	}
+	for _, f := range dir {
+		name := path.Join(dirPath, f.Name())
+		if f.IsDir() {
+			appendFiles(name, files)
+		} else {
+			*files = append(*files, name)
+		}
+	}
+	return nil
 }
