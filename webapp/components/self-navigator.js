@@ -136,8 +136,9 @@ const SelfNavigation = (superClass) => class SelfNavigation extends superClass {
     if (path !== this.path) {
       this.path = path;
     }
-
-    url.search = url.search.replace(/=true/g, '');
+    url.search = url.search
+      .replace(/=true/g, '')
+      .replace(/%3A00.000Z/g, '');
     window.history.pushState(params, '', url);
 
     // Send Google Analytics pageview event
@@ -161,6 +162,9 @@ const SelfNavigation = (superClass) => class SelfNavigation extends superClass {
         url.searchParams.append(k, item);
       }
     }
+    url.search = url.search
+      .replace(/=true/g, '')
+      .replace(/%3A00.000Z/g, '');
     return url;
   }
 };

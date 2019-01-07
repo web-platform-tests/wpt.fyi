@@ -19,6 +19,11 @@ handlers:
   secure: always
 - url: /static
   static_dir: static
+  expiration: "1d"
+  secure: always
+- url: /service-worker-installer.js
+  static_files: service-worker-installer.js
+  upload: service-worker-installer.js
   secure: always
 - url: /favicon.ico
   static_files: static/favicon.ico

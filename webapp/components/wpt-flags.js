@@ -51,6 +51,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'failChecksOnRegression',
       'checksAllUsers',
       'pendingChecks',
+      'serviceWorker',
     ];
   }
 });
@@ -252,6 +253,11 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{insightsTab}}">
         Show the "Insights" tab in the main navigation, (and enable <a href="/insights">/insights</a>).
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{serviceWorker}}">
+        Install a service worker to cache all the web components.
       </paper-checkbox>
     </paper-item>
 `;

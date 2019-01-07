@@ -50,7 +50,9 @@ const QueryBuilder = (superClass, queryParamsComputer) => class extends superCla
         url.searchParams.set(k, params[k]);
       }
     }
-    return `${url.search}`.replace(/=true/g, '');
+    return url.search
+      .replace(/=true/g, '')
+      .replace(/:00.000Z/g, '');
   }
 };
 class ResultsTabs extends PolymerElement {

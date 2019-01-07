@@ -173,20 +173,26 @@ def process_report(params):
     tempdir = tempfile.mkdtemp()
     try:
         report.populate_upload_directory(output_dir=tempdir)
-        # First copy [ID]-summary.json.gz to /wptd/[SHA]/[ID]-summary.json.gz.
+        # 1. Copy [ID]-summary.json.gz to gs://wptd/[SHA]/[ID]-summary.json.gz.
         results_gs_url = 'gs://{}/{}'.format(
             config.results_bucket(), report.sha_summary_path)
         gsutil.copy(
             os.path.join(tempdir, report.sha_summary_path),
             results_gs_url,
             gzipped=True)
-        # Now /wptd/[SHA] is guaranteed to exist. According to `gsutil cp
-        # --help`, copy [ID] to /wptd/[SHA] will create /wptd/[SHA]/[ID].
-        gsutil.copy(
-            os.path.join(tempdir, report.sha_product_path),
-            'gs://{}/{}'.format(config.results_bucket(),
-                                report.run_info['revision']),
-            gzipped=True, quiet=True)
+
+        # 2. Copy the individual results recursively if there is any (i.e. if
+        # the report is not empty).
+        results_dir = os.path.join(tempdir, report.sha_product_path)
+        if os.path.exists(results_dir):
+            # gs://wptd/[SHA] is guaranteed to exist after 1, so copying foo to
+            # gs://wptd/[SHA] will create gs://wptd/[SHA]/foo according to
+            # `gsutil cp --help`.
+            gsutil.copy(
+                results_dir,
+                'gs://{}/{}'.format(config.results_bucket(),
+                                    report.run_info['revision']),
+                gzipped=True, quiet=True)
         resp += "Uploaded to {}\n".format(results_gs_url)
     finally:
         shutil.rmtree(tempdir)

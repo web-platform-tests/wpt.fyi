@@ -54,7 +54,9 @@ func TestEvictAnyRunRelievesMemoryPressure(t *testing.T) {
 	runtime.ReadMemStats(&stats)
 	baseline := stats.HeapAlloc
 
-	assert.Nil(t, i.EvictAnyRun())
+	n, err := i.EvictRuns(0.0)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, n)
 
 	runtime.GC()
 	runtime.ReadMemStats(&stats)
