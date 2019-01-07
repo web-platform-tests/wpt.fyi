@@ -183,7 +183,7 @@ def process_report(params):
 
         # 2. Copy the individual results recursively if there is any (i.e. if
         # the report is not empty).
-        results_dir = os.path.join(tempdir, report.sha_product_path),
+        results_dir = os.path.join(tempdir, report.sha_product_path)
         if os.path.exists(results_dir):
             # gs://wptd/[SHA] is guaranteed to exist after 1, so copying foo to
             # gs://wptd/[SHA] will create gs://wptd/[SHA]/foo according to
