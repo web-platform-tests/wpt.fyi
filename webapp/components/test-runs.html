@@ -95,7 +95,11 @@ found in the LICENSE file.
           const url = new URL('/api/runs', window.location);
           url.searchParams.set('page', this.nextPageToken);
           this.nextPageToken = null;
-          const runs = await fetch(url).then(r => r.ok && r.json());
+          const r = await fetch(url);
+          if (!r.ok) {
+            return;
+          }
+          const runs = await r.json();
           this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
           this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
           return runs;
