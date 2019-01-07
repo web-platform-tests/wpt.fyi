@@ -87,9 +87,10 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		var updated bool
-		updated, err = updateCheckRunSummary(ctx, summaryData, suite)
+		updated, updateErr := updateCheckRunSummary(ctx, summaryData, suite)
+		if updateErr != nil {
+			err = updateErr
+		}
 		updatedAny = updatedAny || updated
 	}
 
