@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var packageRegex = regexp.MustCompile(`(import|from) (['"])(@[^/]*/)`)
+var packageRegex = regexp.MustCompile(`(import \{.*\} from|import) (['"])(@[^/]*/)`)
 
 const packageRegexReplacement = "$1 $2/node_modules/$3"
 
