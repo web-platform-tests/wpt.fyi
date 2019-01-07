@@ -67,7 +67,7 @@ func (filter *TestRunFilter) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*filter = TestRunFilter(m.testRunFilterNoCustomMarshalling)
-	filter.Labels = ToStringSet(m.Labels)
+	filter.Labels = NewSetFromStringSlice(m.Labels)
 	return nil
 }
 

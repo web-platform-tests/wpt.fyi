@@ -117,12 +117,6 @@ func (p ProductSpecs) Len() int           { return len(p) }
 func (p ProductSpecs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 func (p ProductSpecs) Less(i, j int) bool { return p[i].String() < p[j].String() }
 
-type productSpecNoCustomMarshalling ProductSpec
-type marshallableProductSpec struct {
-	productSpecNoCustomMarshalling
-	Labels []string `json:"labels,omitempty"`
-}
-
 // MarshalJSON treats the set as an array so it can be marshalled.
 func (p ProductSpec) MarshalJSON() ([]byte, error) {
 	return json.Marshal(p.String())
