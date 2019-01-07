@@ -31,7 +31,16 @@
         window.onpopstate = () => {
           this.path = this.urlToPath(window.location);
           this.onLocationUpdated && this.onLocationUpdated(this.path, history.state);
+          // Do an extra 'back' for the first (artificially stacked) query state
+          // when we pop off of the stack completely.
+          if (!history.state) {
+            window.history.back();
+          }
         };
+        // Push initial state into the stack.
+        const params = this.navigationQueryParams();
+        const url = this.getLocation(params, window.location);
+        window.history.pushState(params, '', url);
       }
 
       urlToPath(location) {
@@ -84,9 +93,10 @@
 
       /**
        * Get query params to persist when creating history.
+       * Defaults to the queryParams property.
        */
       navigationQueryParams() {
-        return {};
+        return this.queryParams && JSON.parse(JSON.stringify(this.queryParams));
       }
 
       bindNavigate() {
@@ -106,15 +116,8 @@
        * Navigate to the path + query of the given Location object.
        */
       navigateToLocation(location) {
-        const url = new URL(location);
-        url.search = '';
         const params = this.navigationQueryParams();
-        for (const [k, v] of Object.entries(params)) {
-          const list = (v instanceof Array) ? v : [v];
-          for (const item of list) {
-            url.searchParams.append(k, item);
-          }
-        }
+        const url = this.getLocation(params, location);
         if (url.toString() === window.location.toString()) {
           return;
         }
@@ -139,6 +142,18 @@
         const url = new URL(window.location);
         url.pathname = this.navigationPathPrefix() + testPath;
         this.navigateToLocation(url);
+      }
+
+      getLocation(params, location) {
+        const url = new URL(location);
+        url.search = '';
+        for (const [k, v] of Object.entries(params)) {
+          const list = (v instanceof Array) ? v : [v];
+          for (const item of list) {
+            url.searchParams.append(k, item);
+          }
+        }
+        return url;
       }
     };
   </script>

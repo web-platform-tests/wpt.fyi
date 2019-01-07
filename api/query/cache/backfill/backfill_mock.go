@@ -5,9 +5,10 @@
 package backfill
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
-	reflect "reflect"
 )
 
 // MockRunFetcher is a mock of RunFetcher interface
@@ -34,9 +35,9 @@ func (m *MockRunFetcher) EXPECT() *MockRunFetcherMockRecorder {
 }
 
 // FetchRuns mocks base method
-func (m *MockRunFetcher) FetchRuns(limit int) ([]shared.TestRun, error) {
+func (m *MockRunFetcher) FetchRuns(limit int) (shared.TestRunsByProduct, error) {
 	ret := m.ctrl.Call(m, "FetchRuns", limit)
-	ret0, _ := ret[0].([]shared.TestRun)
+	ret0, _ := ret[0].(shared.TestRunsByProduct)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

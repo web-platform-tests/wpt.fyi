@@ -165,6 +165,9 @@
       }
 
       computeIsLatest(sha) {
+        if (Array.isArray(sha)) {
+          return !sha.length || sha.length === 1 && this.computeIsLatest(sha[0]);
+        }
         return !sha || sha === 'latest';
       }
     };

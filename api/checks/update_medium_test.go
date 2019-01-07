@@ -41,7 +41,7 @@ func TestLoadRunsToCompare_master(t *testing.T) {
 
 	chrome, _ := shared.ParseProductSpec("chrome")
 	filter := shared.TestRunFilter{
-		SHA:      "1111111111",
+		SHAs:     shared.SHAs{"1111111111"},
 		Products: shared.ProductSpecs{chrome},
 	}
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
@@ -78,7 +78,7 @@ func TestLoadRunsToCompare_pr_base_first(t *testing.T) {
 
 	chrome, _ := shared.ParseProductSpec("chrome")
 	filter := shared.TestRunFilter{
-		SHA:      "1234567890",
+		SHAs:     shared.SHAs{"1234567890"},
 		Products: shared.ProductSpecs{chrome},
 	}
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
@@ -115,7 +115,7 @@ func TestLoadRunsToCompare_pr_head_first(t *testing.T) {
 
 	chrome, _ := shared.ParseProductSpec("chrome")
 	filter := shared.TestRunFilter{
-		SHA:      "1234567890",
+		SHAs:     shared.SHAs{"1234567890"},
 		Products: shared.ProductSpecs{chrome},
 	}
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)

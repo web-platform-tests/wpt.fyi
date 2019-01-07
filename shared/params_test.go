@@ -10,7 +10,9 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -21,14 +23,14 @@ func TestParseSHAParam(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/", nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, "latest", runSHA)
+	assert.Equal(t, "latest", runSHA.FirstOrLatest())
 }
 
 func TestParseSHAParam_Latest(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=latest", nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, "latest", runSHA)
+	assert.Equal(t, "latest", runSHA.FirstOrLatest())
 }
 
 func TestParseSHAParam_ShortSHA(t *testing.T) {
@@ -36,7 +38,7 @@ func TestParseSHAParam_ShortSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, sha, runSHA)
+	assert.Equal(t, sha, runSHA.FirstOrLatest())
 }
 
 func TestParseSHAParam_FullSHA(t *testing.T) {
@@ -44,7 +46,7 @@ func TestParseSHAParam_FullSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
 	runSHA, err := ParseSHAParam(r.URL.Query())
 	assert.Nil(t, err)
-	assert.Equal(t, sha, runSHA)
+	assert.Equal(t, sha, runSHA.FirstOrLatest())
 }
 
 func TestParseSHAParam_NonSHA(t *testing.T) {
@@ -57,6 +59,19 @@ func TestParseSHAParam_NonSHA_2(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=zapper0123", nil)
 	_, err := ParseSHAParam(r.URL.Query())
 	assert.NotNil(t, err)
+}
+
+func TestParseSHAParam_Multiple(t *testing.T) {
+	for _, r := range []*http.Request{
+		httptest.NewRequest("GET", "http://wpt.fyi/?sha=1111111&sha=2222222", nil),
+		httptest.NewRequest("GET", "http://wpt.fyi/?shas=1111111,2222222", nil),
+	} {
+		shas, err := ParseSHAParam(r.URL.Query())
+		assert.Nil(t, err)
+		assert.Len(t, shas, 2)
+		assert.Equal(t, shas[0], "1111111")
+		assert.Equal(t, shas[1], "2222222")
+	}
 }
 
 func TestParseBrowserParam(t *testing.T) {
@@ -209,6 +224,45 @@ func TestParseMaxCountParam(t *testing.T) {
 	count, err := ParseMaxCountParam(r.URL.Query())
 	assert.Nil(t, err)
 	assert.Equal(t, 2, *count)
+}
+
+func TestParseDateTimeParam(t *testing.T) {
+	values := make(url.Values)
+	values.Set("foo", "1999")
+	parsed, err := ParseDateTimeParam(values, "foo")
+	assert.Nil(t, err)
+	assert.Equal(t, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC), *parsed)
+
+	values.Set("foo", "2001-02")
+	parsed, err = ParseDateTimeParam(values, "foo")
+	assert.Nil(t, err)
+	assert.Equal(t, time.Date(2001, 2, 1, 0, 0, 0, 0, time.UTC), *parsed)
+
+	values.Set("foo", "2002-06-13")
+	parsed, err = ParseDateTimeParam(values, "foo")
+	assert.Nil(t, err)
+	assert.Equal(t, time.Date(2002, 6, 13, 0, 0, 0, 0, time.UTC), *parsed)
+
+	values.Set("foo", "2002-06-13T15:04")
+	parsed, err = ParseDateTimeParam(values, "foo")
+	assert.Nil(t, err)
+	assert.Equal(t, time.Date(2002, 6, 13, 15, 4, 0, 0, time.UTC), *parsed)
+
+	values.Set("foo", "2007-11-21T01:04:55Z")
+	parsed, err = ParseDateTimeParam(values, "foo")
+	assert.Nil(t, err)
+	assert.Equal(t, time.Date(2007, 11, 21, 1, 4, 55, 0, time.UTC), *parsed)
+
+	values.Set("foo", "2007-11-21T01:04:55.123Z")
+	parsed, err = ParseDateTimeParam(values, "foo")
+	assert.Nil(t, err)
+	assert.Equal(t, time.Date(2007, 11, 21, 1, 4, 55, 123000000, time.UTC), *parsed)
+
+	oneHourEastOfUTC := time.FixedZone("Plus One", int((1 * time.Hour).Seconds()))
+	values.Set("foo", "2007-11-21T01:04:55.456+01:00")
+	parsed, err = ParseDateTimeParam(values, "foo")
+	assert.Nil(t, err)
+	assert.Equal(t, time.Date(2007, 11, 21, 1, 4, 55, 456000000, oneHourEastOfUTC).UnixNano(), parsed.UnixNano())
 }
 
 func TestParsePathsParam_Missing(t *testing.T) {
@@ -692,4 +746,11 @@ func TestExtractRunIDsBodyParam_Replayable(t *testing.T) {
 	replayed, err := ioutil.ReadAll(req.Body)
 	assert.Nil(t, err)
 	assert.Equal(t, payload, replayed)
+}
+
+func TestParseTestRunFilterParams_Page(t *testing.T) {
+	values := make(url.Values)
+	values.Set("page", "bogus value")
+	_, err := ParseTestRunFilterParams(values)
+	assert.NotNil(t, err)
 }

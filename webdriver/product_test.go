@@ -28,10 +28,14 @@ func TestProductParam_Labels(t *testing.T) {
 		[]string{"firefox[experimental]", "chrome"})
 }
 
-func TestProductParam_SHA(t *testing.T) {
+func TestProductParam_SHA_Latest(t *testing.T) {
+	testProductParamSets(t, []string{"chrome@latest"})
+}
+func TestProductParam_SHA_Specific(t *testing.T) {
 	testProductParamSets(t,
-		[]string{"chrome@latest"},
-		[]string{fmt.Sprintf("chrome@%s", StaticTestDataRevision)})
+		[]string{fmt.Sprintf("chrome@%s", StaticTestDataRevision[:7])},
+		[]string{fmt.Sprintf("firefox@%s", StaticTestDataRevision)},
+	)
 }
 
 func testProductParamSets(t *testing.T, productSpecs ...[]string) {

@@ -27,6 +27,7 @@ import (
 )
 
 const flagTaskclusterAllBranches = "taskclusterAllBranches"
+const flagPendingChecks = "pendingChecks"
 
 var (
 	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
@@ -123,6 +124,11 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
+	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
+	if !shouldProcessStatus(log, processAllBranches, &status) {
+		return false, nil
+	}
+
 	if status.TargetURL == nil {
 		return false, errors.New("No target_url on taskcluster status event")
 	}
@@ -132,10 +138,6 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	}
 
 	log.Debugf("Taskcluster task group %s", taskGroupID)
-	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
-	if !shouldProcessStatus(log, processAllBranches, &status) {
-		return false, nil
-	}
 
 	client := urlfetch.Client(ctx)
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
@@ -159,9 +161,14 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
 	defer cancel()
-	var labels []string
+	labels := mapset.NewSet()
 	if status.IsOnMaster() {
-		labels = []string{"master"}
+		labels.Add(shared.MasterLabel)
+	} else {
+		sender := status.GetCommit().GetAuthor().GetLogin()
+		if sender != "" {
+			labels.Add(shared.GetUserLabel(sender))
+		}
 	}
 	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
@@ -174,7 +181,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		username,
 		password,
 		urlsByProduct,
-		labels)
+		shared.ToStringSlice(labels))
 	if err != nil {
 		return false, err
 	}
@@ -335,16 +342,17 @@ func createAllRuns(
 				return
 			}
 
-			spec := shared.ProductSpec{}
-			spec.BrowserName = bits[0]
-			spec.Labels = shared.NewSetFromStringSlice(labelsForRun)
-			if len(bits) > 1 {
-				if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-					spec.Labels.Add(label)
+			if aeAPI.IsFeatureEnabled(flagPendingChecks) {
+				spec := shared.ProductSpec{}
+				spec.BrowserName = bits[0]
+				if len(bits) > 1 {
+					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
+						spec.Labels = mapset.NewSet(label)
+					}
 				}
-			}
-			for _, suite := range suites {
-				checksAPI.PendingCheckRun(suite, spec)
+				for _, suite := range suites {
+					checksAPI.PendingCheckRun(suite, spec)
+				}
 			}
 		}(product, urls)
 	}

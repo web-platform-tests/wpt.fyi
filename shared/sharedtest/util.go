@@ -6,6 +6,8 @@ package sharedtest
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/golang/mock/gomock"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -81,4 +83,64 @@ func SameDiffFilter(filter string) gomock.Matcher {
 	return sameStringSpec{
 		spec: filter,
 	}
+}
+
+type sameKeys struct {
+	ids []int64
+}
+
+func (s sameKeys) Matches(x interface{}) bool {
+	if keys, ok := x.([]shared.Key); ok {
+		for i := range keys {
+			if i >= len(s.ids) || keys[i] == nil || s.ids[i] != keys[i].IntID() {
+				return false
+			}
+		}
+		return true
+	}
+	if ids, ok := x.(shared.TestRunIDs); ok {
+		for i := range ids {
+			if i >= len(s.ids) || s.ids[i] != ids[i] {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+func (s sameKeys) String() string {
+	return fmt.Sprintf("%v", s.ids)
+}
+
+// SameKeys returns a gomock matcher for a Key slice.
+func SameKeys(ids []int64) gomock.Matcher {
+	return sameKeys{ids}
+}
+
+// MultiRuns returns a DoAndReturn func that puts the given test runs in the dst interface
+// for a shared.Datastore.GetMulti call.
+func MultiRuns(runs shared.TestRuns) func(keys []shared.Key, dst interface{}) error {
+	return func(keys []shared.Key, dst interface{}) error {
+		out, ok := dst.(shared.TestRuns)
+		if !ok || len(out) != len(keys) || len(runs) != len(out) {
+			return errors.New("invalid destination array")
+		}
+		for i := range runs {
+			out[i] = runs[i]
+		}
+		return nil
+	}
+}
+
+// MockKey is a (very simple) mock shared.Key.MockKey. It is used because gomock
+// can end up in a deadlock when, during a Matcher, we create another Matcher,
+// e.g. mocking Datastore.GetKey(int64) with a DoAndReturn that creates a
+// gomock generated MockKey, for which we'd mock Key.IntID(), resulted in deadlock.
+type MockKey struct {
+	ID int64
+}
+
+// IntID returns the ID.
+func (m MockKey) IntID() int64 {
+	return m.ID
 }

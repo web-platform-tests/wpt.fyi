@@ -241,7 +241,8 @@ func FetchRunResultsJSONForSpec(
 // FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
 func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 	one := 1
-	testRuns, err := LoadTestRuns(ctx, []ProductSpec{spec}, nil, spec.Revision, nil, nil, &one, nil)
+	store := NewAppEngineDatastore(ctx)
+	testRuns, err := store.LoadTestRuns([]ProductSpec{spec}, nil, SHAs{spec.Revision}, nil, nil, &one, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +290,12 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 
 	var renames map[string]string
 	if IsFeatureEnabled(d.ctx, "diffRenames") {
-		renames = getDiffRenames(d.ctx, before.FullRevisionHash, after.FullRevisionHash)
+		beforeSHA := before.FullRevisionHash
+		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
+		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
+			beforeSHA = "HEAD"
+		}
+		renames = getDiffRenames(d.ctx, beforeSHA, after.FullRevisionHash)
 	}
 	return RunDiff{
 		Before:        before,
@@ -369,19 +375,21 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	}
 	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
 	if err != nil || comparison == nil {
-		log.Errorf("Failed to fetch diff for %s...%s: %s", shaBefore[:7], shaAfter[:7], err.Error())
+		log.Errorf("Failed to fetch diff for %s...%s: %s", CropString(shaBefore, 7), CropString(shaAfter, 7), err.Error())
 		return nil
 	}
 
 	renames := make(map[string]string)
 	for _, file := range comparison.Files {
 		if file.GetStatus() == "renamed" {
-			is, was := file.GetFilename(), file.GetPreviousFilename()
-			renames["/"+was] = "/" + is
+			before, after := file.GetPreviousFilename(), file.GetFilename()
+			for was, is := range ExplodePossibleRenames(before, after) {
+				renames["/"+was] = "/" + is
+			}
 		}
 	}
 	if len(renames) < 1 {
-		log.Debugf("No renames for %s...%s", shaBefore[:7], shaAfter[:7])
+		log.Debugf("No renames for %s...%s", CropString(shaBefore, 7), CropString(shaAfter, 7))
 	}
 	return renames
 }

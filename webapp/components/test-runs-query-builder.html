@@ -105,7 +105,7 @@ found in the LICENSE file.
           <input name="os_version"
                  placeholder="(Latest)"
                  list="shas-datalist"
-                 value="{{ sha::input }}"
+                 value="{{ _sha::input }}"
                  slot="input">
           <datalist id="shas-datalist"></datalist>
         </paper-input-container>
@@ -150,7 +150,11 @@ found in the LICENSE file.
             computed: 'computeSHAsURL(query)',
             observer: 'shasURLUpdated',
           },
-          shas: {
+          _sha: {
+            type: String,
+            observer: 'shaUpdated'
+          },
+          matchingSHAs: {
             type: Array,
           },
           shasAutocomplete: {
@@ -188,7 +192,7 @@ found in the LICENSE file.
         this.clearAll = this.handleClearAll.bind(this);
         this.submit = this.handleSubmit.bind(this);
         this._createMethodObserver('labelsUpdated(labels, labels.*)');
-        this._createMethodObserver('shasUpdated(sha, shas)');
+        this._createMethodObserver('shasUpdated(_sha, matchingSHAs)');
       }
 
       ready() {
@@ -239,25 +243,29 @@ found in the LICENSE file.
       // Respond to shas URL changing by fetching the shas
       shasURLUpdated(url) {
         fetch(url).then(r => r.json()).then(s => {
-          this.shas = s;
+          this.matchingSHAs = s;
         });
       }
 
       // Respond to newly fetched shas, or user input, by filtering the autocomplete list.
-      shasUpdated(sha, shas) {
-        if (!shas || !shas.length || !this.queryBuilderSHA) {
+      shasUpdated(sha, matchingSHAs) {
+        if (!matchingSHAs || !matchingSHAs.length || !this.queryBuilderSHA) {
           return;
         }
         if (sha) {
-          shas = shas.filter(s => s.startsWith(sha));
+          matchingSHAs = matchingSHAs.filter(s => s.startsWith(sha));
         }
-        shas = shas.slice(0, 10);
+        matchingSHAs = matchingSHAs.slice(0, 10);
         // Check actually different from current.
         const current = new Set(this.shasAutocomplete || []);
-        if (current.size === shas.length && !shas.find(v => !current.has(v))) {
+        if (current.size === matchingSHAs.length && !matchingSHAs.find(v => !current.has(v))) {
           return;
         }
-        this.shasAutocomplete = shas;
+        this.shasAutocomplete = matchingSHAs;
+      }
+
+      shaUpdated(sha) {
+        this.shas = this.computeIsLatest(sha) ? [] : [sha];
       }
 
       shasAutocompleteUpdated(shasAutocomplete) {
@@ -455,7 +463,7 @@ found in the LICENSE file.
           },
           channels: {
             type: Array,
-            value: window.wpt.Channels,
+            value: Array.from(window.wpt.Channels),
           },
           versionsURL: {
             type: String,

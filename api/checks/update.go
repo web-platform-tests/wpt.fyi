@@ -31,11 +31,10 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 
 	vars := mux.Vars(r)
-	sha := vars["commit"]
-	if len(sha) != 40 {
-		msg := fmt.Sprintf("Invalid commit: %s", sha)
-		log.Warningf(msg)
-		http.Error(w, msg, http.StatusBadRequest)
+	sha, err := shared.ParseSHA(vars["commit"])
+	if err != nil {
+		log.Warningf(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -58,7 +57,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
-	filter.SHA = sha[:10]
+	filter.SHAs = shared.SHAs{sha}
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
 	if err != nil {
 		msg := "Could not find runs to compare"
@@ -70,27 +69,33 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sha = headRun.FullRevisionHash
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	diffAPI := shared.NewDiffAPI(ctx)
-	summaryData, err := getDiffSummary(aeAPI, diffAPI, *baseRun, *headRun)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	suites, err := NewAPI(ctx).GetSuitesForSHA(sha)
-	if err != nil {
-		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else if len(suites) < 1 {
-		log.Debugf("No CheckSuites found for %s", sha)
+	updatedAny := false
+	for _, suite := range suites {
+		summaryData, err := getDiffSummary(aeAPI, diffAPI, suite, *baseRun, *headRun)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err != nil {
+			log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		} else if len(suites) < 1 {
+			log.Debugf("No CheckSuites found for %s", sha)
+		}
+
+		updated, err := updateCheckRunSummary(ctx, summaryData, suites...)
+		updatedAny = updatedAny || updated
 	}
 
-	updated, err := updateCheckRunSummary(ctx, summaryData, suites...)
 	if err != nil {
 		log.Errorf("Failed to update check_run(s): %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else if updated {
+	} else if updatedAny {
 		w.Write([]byte("Check(s) updated"))
 	} else {
 		w.Write([]byte("No check(s) updated"))
@@ -99,13 +104,16 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (headRun, baseRun *shared.TestRun, err error) {
 	one := 1
-	runs, err := shared.LoadTestRuns(ctx, filter.Products, filter.Labels, filter.SHA, filter.From, filter.To, &one, nil)
+	store := shared.NewAppEngineDatastore(ctx)
+	runs, err := store.LoadTestRuns(filter.Products, filter.Labels, filter.SHAs, filter.From, filter.To, &one, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 	run := runs.First()
 	if run == nil {
-		return nil, nil, fmt.Errorf("no test run found for %s @ %s", filter.Products[0].String(), filter.SHA[:7])
+		return nil, nil, fmt.Errorf("no test run found for %s @ %s",
+			filter.Products[0].String(),
+			shared.CropString(filter.SHAs.FirstOrLatest(), 7))
 	}
 
 	labels := run.LabelsSet()
@@ -128,37 +136,39 @@ func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (headRu
 func loadPRRun(ctx context.Context, filter shared.TestRunFilter, extraLabel string) (*shared.TestRun, error) {
 	// Find the corresponding pr_base or pr_head run.
 	one := 1
+	store := shared.NewAppEngineDatastore(ctx)
 	labels := mapset.NewSetWith(extraLabel)
-	runs, err := shared.LoadTestRuns(ctx, filter.Products, labels, filter.SHA, nil, nil, &one, nil)
+	runs, err := store.LoadTestRuns(filter.Products, labels, filter.SHAs, nil, nil, &one, nil)
 	run := runs.First()
 	if err != nil {
 		return nil, err
 	}
 	if run == nil {
 		err = fmt.Errorf("no test run found for %s @ %s with label %s",
-			filter.Products[0].String(), filter.SHA, extraLabel)
+			filter.Products[0].String(), filter.SHAs.FirstOrLatest(), extraLabel)
 	}
 	return run, err
 }
 
 func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headRun *shared.TestRun) (*shared.TestRun, error) {
 	// Get the most recent, but still earlier, master run to compare.
+	store := shared.NewAppEngineDatastore(ctx)
 	one := 1
 	to := headRun.TimeStart.Add(-time.Millisecond)
 	labels := mapset.NewSetWith(headRun.Channel(), shared.MasterLabel)
-	runs, err := shared.LoadTestRuns(ctx, filter.Products, labels, shared.LatestSHA, nil, &to, &one, nil)
+	runs, err := store.LoadTestRuns(filter.Products, labels, nil, nil, &to, &one, nil)
 	baseRun := runs.First()
 	if err != nil {
 		return nil, err
 	}
 	if baseRun == nil {
 		err = fmt.Errorf("no master run found for %s before %s",
-			filter.Products[0].String(), filter.SHA)
+			filter.Products[0].String(), filter.SHAs.FirstOrLatest())
 	}
 	return baseRun, err
 }
 
-func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, headRun shared.TestRun) (summaries.Summary, error) {
+func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite shared.CheckSuite, baseRun, headRun shared.TestRun) (summaries.Summary, error) {
 	diffFilter := shared.DiffFilterParam{Added: true, Changed: true, Deleted: true}
 	diff, err := diffAPI.GetRunsDiff(baseRun, headRun, diffFilter, nil)
 	if err != nil {
@@ -181,6 +191,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, baseRun, 
 		HeadSHA:    headRun.FullRevisionHash,
 		DetailsURL: diffURL,
 		Status:     "completed",
+		PRNumbers:  suite.PRNumbers,
 	}
 
 	regressions := diff.Differences.Regressions()

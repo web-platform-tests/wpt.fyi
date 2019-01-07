@@ -143,28 +143,31 @@ const MaxCountMinValue = 1
 // SHARegex is a regex for 7 to 40 char prefix of a git hash.
 var SHARegex = regexp.MustCompile("[0-9a-fA-F]{7,40}")
 
-// ParseSHAParam parses and validates the 'sha' param for the request.
-// If the param is not present, it returns "latest" by default (and in error cases).
-func ParseSHAParam(v url.Values) (runSHA string, err error) {
-	sha, err := ParseSHA(v.Get("sha"))
-	if err != nil || !SHARegex.MatchString(sha) {
-		return sha, err
+// ParseSHAParam parses and validates any 'sha' param(s) for the request.
+func ParseSHAParam(v url.Values) (SHAs, error) {
+	shas := ParseRepeatedParam(v, "sha", "shas")
+	var err error
+	for i := range shas {
+		shas[i], err = ParseSHA(shas[i])
+		if err != nil {
+			return nil, err
+		}
 	}
-	return sha, nil
+	return shas, nil
 }
 
 // ParseSHA parses and validates the given 'sha'.
 // It returns "latest" by default (and in error cases).
-func ParseSHA(runParam string) (runSHA string, err error) {
+func ParseSHA(shaParam string) (sha string, err error) {
 	// Get the SHA for the run being loaded (the first part of the path.)
-	runSHA = "latest"
-	if runParam != "" && runParam != "latest" {
-		runSHA = runParam
-		if !SHARegex.MatchString(runParam) {
-			return "latest", fmt.Errorf("Invalid sha param value: %s", runParam)
+	sha = "latest"
+	if shaParam != "" && shaParam != "latest" {
+		sha = shaParam
+		if !SHARegex.MatchString(shaParam) {
+			return "latest", fmt.Errorf("Invalid sha param value: %s", shaParam)
 		}
 	}
-	return runSHA, err
+	return sha, err
 }
 
 // ParseProductSpecs parses multiple product specs
@@ -415,10 +418,14 @@ func ParseMaxCountParamWithDefault(v url.Values, defaultValue int) (count int, e
 	return defaultValue, nil
 }
 
-// ParseDateTimeParam parses the date/time param named "name" as a timestamp.
+// ParseDateTimeParam flexibly parses a date/time param with the given name as a time.Time.
 func ParseDateTimeParam(v url.Values, name string) (*time.Time, error) {
 	if fromParam := v.Get(name); fromParam != "" {
-		parsed, err := time.Parse(time.RFC3339, fromParam)
+		format := time.RFC3339
+		if len(fromParam) < strings.Index(time.RFC3339, "Z") {
+			format = format[:len(fromParam)]
+		}
+		parsed, err := time.Parse(format, fromParam)
 		if err != nil {
 			return nil, err
 		}
@@ -632,16 +639,21 @@ func ParseQueryFilterParams(v url.Values) (filter QueryFilter, err error) {
 
 // ParseTestRunFilterParams parses all of the filter params for a TestRun query.
 func ParseTestRunFilterParams(v url.Values) (filter TestRunFilter, err error) {
-	if page, err := ParsePageToken(v); page != nil || err != nil {
+	if page, err := ParsePageToken(v); page != nil {
 		return *page, err
+	} else if err != nil {
+		return filter, err
 	}
 
 	runSHA, err := ParseSHAParam(v)
 	if err != nil {
 		return filter, err
 	}
-	filter.SHA = runSHA
+	filter.SHAs = runSHA
 	filter.Labels = NewSetFromStringSlice(ParseLabelsParam(v))
+	if user := v.Get("user"); user != "" {
+		filter.Labels.Add(GetUserLabel(user))
+	}
 	if filter.Aligned, err = ParseAlignedParam(v); err != nil {
 		return filter, err
 	}
