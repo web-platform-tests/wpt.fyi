@@ -97,35 +97,36 @@ found in the LICENSE file.
       }
 
       // eslint-disable-next-line no-unused-vars
-      loadResults(path, query) {
+      async loadResults(path, query) {
         if (!path) {
           return;
         }
-        return this.loadRuns().then(runs => {
-          if (!runs) {
-            return;
+        const runs = await this.loadRuns();
+        if (!runs) {
+          return;
+        }
+        this.results = runs.reduce((acc, run) => {
+          const browserResultsIdx = acc
+            .findIndex(br => br.browserName === run.browser_name);
+          let browserResults = acc[browserResultsIdx];
+          if (!browserResults) {
+            browserResults = {
+              browserName: run.browser_name,
+              runResults: [],
+            };
+            acc.push(browserResults);
           }
-          this.results = runs.reduce((acc, run) => {
-            const browserResultsIdx = acc
-              .findIndex(br => br.browserName === run.browser_name);
-            let browserResults = acc[browserResultsIdx];
-            if (!browserResults) {
-              browserResults = {
-                browserName: run.browser_name,
-                runResults: [],
-              };
-              acc.push(browserResults);
-            }
-            browserResults.runResults.push({run, results: []});
+          browserResults.runResults.push({run, results: []});
 
-            return acc;
-          }, []);
-          this.results.forEach((browserResults, i) => {
-            browserResults.runResults.forEach((runResult, j) => {
-              this.loadRun(runResult, j, browserResults, i, path);
-            });
+          return acc;
+        }, []);
+        const promises = [];
+        this.results.forEach((browserResults, i) => {
+          browserResults.runResults.forEach((runResult, j) => {
+            promises.push(this.loadRun(runResult, j, browserResults, i, path));
           });
         });
+        return Promise.all(promises);
       }
 
       async loadRun(runResult, j, browserResults, i, path) {

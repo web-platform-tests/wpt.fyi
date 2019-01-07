@@ -58,7 +58,7 @@ found in the LICENSE file.
           return '/' + parts.join('/');
         }
 
-        loadRuns() {
+        async loadRuns() {
           const preloaded = this.testRuns;
           const runs = [];
           if (preloaded) {
@@ -75,32 +75,30 @@ found in the LICENSE file.
                 }))
             );
           }
-          return Promise.all(runs).then(fetches => {
-            // Filter unresolved fetches and flatten any array-fetches into the array.
-            const nonEmpty = fetches.filter(e => e);
-            const flattened = nonEmpty.reduce((sum, item) => {
-              return sum.concat(Array.isArray(item) ? item : [item]);
-            }, []);
-            this.testRuns = flattened;
-            return flattened;
-          });
+          const fetches = await Promise.all(runs);
+          // Filter unresolved fetches and flatten any array-fetches into the array.
+          const nonEmpty = fetches.filter(e => e);
+          const flattened = nonEmpty.reduce((sum, item) => {
+            return sum.concat(Array.isArray(item) ? item : [item]);
+          }, []);
+          this.testRuns = flattened;
+          return flattened;
         }
 
         /**
          * Fetch the next page of runs, using nextPageToken, if applicable.
          */
-        loadMoreRuns() {
+        async loadMoreRuns() {
           if (!this.nextPageToken) {
-            return Promise.resolve();
+            return;
           }
           const url = new URL('/api/runs', window.location);
           url.searchParams.set('page', this.nextPageToken);
           this.nextPageToken = null;
-          return fetch(url).then(r => r.ok && r.json().then(runs => {
-            this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
-            this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
-            return runs;
-          }));
+          const runs = await fetch(url).then(r => r.ok && r.json());
+          this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
+          this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
+          return runs;
         }
 
         splitPathIntoLinkedParts(inputPath) {
