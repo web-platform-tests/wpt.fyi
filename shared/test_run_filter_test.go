@@ -7,9 +7,11 @@
 package shared
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,8 +49,30 @@ func TestTestRunFilter_NextPage_From(t *testing.T) {
 	}
 	twoWeeksAgo := aWeekAgo.AddDate(0, 0, -7)
 	aWeekAgoMinusAMilli := aWeekAgo.Add(-time.Millisecond)
+	nextPage := filter.NextPage(loadedRuns)
 	assert.Equal(t, &TestRunFilter{
 		From: &twoWeeksAgo,
 		To:   &aWeekAgoMinusAMilli,
-	}, filter.NextPage(loadedRuns))
+	}, nextPage)
+}
+
+func TestTestRunFilter_JSONRoundTrip(t *testing.T) {
+	one := 1
+	chrome, _ := ParseProductSpec("chrome[experimental]")
+	page := TestRunFilter{
+		MaxCount: &one,
+		Offset:   &one,
+		Labels:   mapset.NewSet(MasterLabel),
+		Products: ProductSpecs{chrome},
+	}
+
+	// Test a JSON roundtrip.
+	m, err := json.Marshal(page)
+	assert.Nil(t, err)
+	var jsonRoundTrip TestRunFilter
+	err = json.Unmarshal(m, &jsonRoundTrip)
+	assert.Nil(t, err)
+	assert.EqualValues(t, &one, jsonRoundTrip.MaxCount)
+	assert.EqualValues(t, &one, jsonRoundTrip.Offset)
+	assert.Contains(t, ToStringSlice(jsonRoundTrip.Labels), MasterLabel)
 }
