@@ -6,12 +6,8 @@ package webapp
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"path"
-	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"text/template"
 
@@ -41,35 +37,10 @@ func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var files []string
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
-	for _, folder := range []string{"components", "static"} {
-		appendFiles(path.Join(dir, folder), &files)
-	}
-
 	data := struct {
 		Version string
-		Files   []string
 	}{
 		Version: version,
-		Files:   files,
 	}
 	swTemplate.Execute(w, data)
-}
-
-func appendFiles(dirPath string, files *[]string) error {
-	dir, err := ioutil.ReadDir(dirPath)
-	if err != nil {
-		return err
-	}
-	for _, f := range dir {
-		name := path.Join(dirPath, f.Name())
-		if f.IsDir() {
-			appendFiles(name, files)
-		} else {
-			*files = append(*files, name)
-		}
-	}
-	return nil
 }

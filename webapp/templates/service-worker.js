@@ -1,17 +1,4 @@
 self.addEventListener(
-  'install',
-  e => e.waitUntil(
-    caches.open('{{ .Version }}').then(cache => cache.addAll([
-      {{- range .Files }}
-      '/{{ . }}',
-      {{- end }}
-    ])).catch(e => {
-      console.error(e);
-    })
-  )
-);
-
-self.addEventListener(
   'fetch',
   e => {
     return e.respondWith(
@@ -22,9 +9,8 @@ self.addEventListener(
           }
           return fetch(e.request)
             .then(r => {
-              // NOTE(lukebjerring): wait for actually-used bower_components,
-              // to avoid bloating the cache with unused files.
-              if (e.request.url.toString().includes('/bower_components/')) {
+              const components = new RegExp('^/((bower_)?components|static)/');
+              if (components.test(e.request.url.toString())) {
                 let clone = r.clone();
                 caches.open('{{ .Version }}').then(cache => {
                   cache.put(e.request, clone);
