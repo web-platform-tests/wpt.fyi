@@ -31,11 +31,20 @@ type ConcreteQuery interface {
 	Size() int
 }
 
-// RunTestStatusConstraint is constrains search results to include only test
-// results from a particular run that have a particular test status value. Run
-// IDs are those values automatically assigned to shared.TestRun instances by
-// Datastore. Status IDs are those codified in shared.TestStatus* symbols.
-type RunTestStatusConstraint struct {
+// RunTestStatusEq constrains search results to include only test results from a
+// particular run that have a particular test status value. Run IDs are those
+// values automatically assigned to shared.TestRun instances by Datastore.
+// Status IDs are those codified in shared.TestStatus* symbols.
+type RunTestStatusEq struct {
+	Run    int64
+	Status int64
+}
+
+// RunTestStatusNeq constrains search results to include only test results from a
+// particular run that do not have a particular test status value. Run IDs are
+// those values automatically assigned to shared.TestRun instances by Datastore.
+// Status IDs are those codified in shared.TestStatus* symbols.
+type RunTestStatusNeq struct {
 	Run    int64
 	Status int64
 }
@@ -65,9 +74,13 @@ type False struct{}
 // substring match per test.
 func (TestNamePattern) Size() int { return 1 }
 
-// Size of RunTestStatusConstraint is 1: servicing such a query requires a
-// single lookup in a test run result mapping per test.
-func (RunTestStatusConstraint) Size() int { return 1 }
+// Size of RunTestStatusEq is 1: servicing such a query requires a single lookup
+// in a test run result mapping per test.
+func (RunTestStatusEq) Size() int { return 1 }
+
+// Size of RunTestStatusNeq is 1: servicing such a query requires a single
+// lookup in a test run result mapping per test.
+func (RunTestStatusNeq) Size() int { return 1 }
 
 // Size of Or is the sum of the sizes of its constituent ConcretQuery instances.
 func (o Or) Size() int { return size(o.Args) }
