@@ -19,11 +19,9 @@ func PrepareUserQuery(runIDs []int64, q query.ConcreteQuery) query.ConcreteQuery
 		Args: make([]query.ConcreteQuery, len(runIDs)),
 	}
 	for i, runID := range runIDs {
-		baseQuery.Args[i] = query.Not{
-			Arg: query.RunTestStatusConstraint{
-				Run:    runID,
-				Status: shared.TestStatusUnknown,
-			},
+		baseQuery.Args[i] = query.RunTestStatusNeq{
+			Run:    runID,
+			Status: shared.TestStatusUnknown,
 		}
 	}
 

@@ -242,7 +242,7 @@ func TestBindExecute_TestStatus(t *testing.T) {
 
 	runs := mockTestRuns(loader, idx, data)
 
-	q := query.TestStatusConstraint{
+	q := query.TestStatusEq{
 		BrowserName: "Chrome",
 		Status:      shared.TestStatusFail,
 	}
