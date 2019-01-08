@@ -18,6 +18,11 @@ func RegisterRoutes() {
 		shared.WrapApplicationJSON(
 			shared.WrapPermissiveCORS(apiInteropHandler)))
 
+	// API endpoint for fetching all labels.
+	shared.AddRoute("/api/labels", "api-labels",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiLabelsHandler)))
+
 	// API endpoint for fetching a manifest for a commit SHA.
 	shared.AddRoute("/api/manifest", "api-manifest",
 		shared.WrapApplicationJSON(
