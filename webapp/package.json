@@ -2,14 +2,10 @@
   "name": "wptdashboard",
   "devDependencies": {
     "@polymer/test-fixture": "^4.0.2",
-    "async": "^1.5.2",
-    "babel-eslint": "^8.2.6",
     "bower": "^1.8.4",
     "eslint": "^4.14.0",
     "eslint-plugin-html": "^5.0.0",
-    "lodash": "^3.10.1",
-    "wct-browser-legacy": "^1.0.1",
-    "web-component-tester": "^6.8.0"
+    "web-component-tester": "^6.9.2"
   },
   "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
