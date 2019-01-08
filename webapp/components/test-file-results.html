@@ -169,7 +169,7 @@ found in the LICENSE file.
           // Optimization for "next item matches too".
           let offset;
           if (i === lastMatch + 1 && allNames[lastOffset + 1] === name) {
-            offset = lastOffset + i;
+            offset = lastOffset + 1;
           } else {
             offset = allNames.findIndex(n => n === name);
           }

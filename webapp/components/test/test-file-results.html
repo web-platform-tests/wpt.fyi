@@ -51,26 +51,32 @@
           });
         });
 
-        test('mergeNamesInto', () => {
-          let allNames = [];
-          let names = ['a', 'b'];
-          tfr.mergeNamesInto(names, allNames);
-          expect(allNames).to.deep.equal(names);
+        suite('mergeNamesInto', () => {
+          test('empty', () => {
+            const names = ['a', 'b'];
+            const allNames = [];
+            tfr.mergeNamesInto(names, allNames);
+            expect(allNames).to.deep.equal(names);
+          });
 
-          allNames = ['a', 'b'];
-          names = ['a', 'aa', 'ab', 'b', 'c'];
-          tfr.mergeNamesInto(names, allNames);
-          expect(allNames).to.deep.equal(names);
+          test('missing before', () => {
+            const names = ['a', 'aa', 'ab', 'b', 'c'];
+            const allNames = ['a', 'b'];
+            tfr.mergeNamesInto(names, allNames);
+            expect(allNames).to.deep.equal(names);
+          });
 
-          allNames = [...names];
-          names = ['a', 'ab', 'ac'];
-          tfr.mergeNamesInto(names, allNames);
-          expect(allNames).to.deep.equal(['a', 'aa', 'ab', 'ac', 'b', 'c']);
+          test('missing after', () => {
+            const before = ['a', 'x', 'b'];
+            const after = ['a', 'b', 'y', 'z'];
+            let result = [...before];
+            tfr.mergeNamesInto(after, result);
+            expect(result).to.deep.equal(['a', 'x', 'b', 'y', 'z']);
 
-          names = ['a', 'b', 'c'];
-          allNames = [...names];
-          tfr.mergeNamesInto(names, allNames);
-          expect(allNames).to.deep.equal(names);
+            result = [...after];
+            tfr.mergeNamesInto(before, result);
+            expect(result).to.deep.equal(['a', 'x', 'b', 'y', 'z']);
+          });
         });
       });
     });
