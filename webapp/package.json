@@ -2,6 +2,7 @@
   "name": "wptdashboard",
   "devDependencies": {
     "@polymer/test-fixture": "^4.0.2",
+    "babel-eslint": "^10.0.1",
     "bower": "^1.8.4",
     "eslint": "^4.14.0",
     "eslint-plugin-html": "^5.0.0",
@@ -42,7 +43,6 @@
     "@polymer/polymer": "^3.0.0",
     "@vaadin/vaadin-date-picker": "^3.3.2",
     "@webcomponents/webcomponentsjs": "^2.0.0",
-    "babel-eslint": "^10.0.1",
     "google-chart-polymer-3": "^3.0.1",
     "pluralize": "^7.0.0"
   }
