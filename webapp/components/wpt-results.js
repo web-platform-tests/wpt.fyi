@@ -5,7 +5,9 @@
  */
 
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
+import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
+import '../node_modules/@polymer/iron-icons/image-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
@@ -123,6 +125,18 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         display: block;
         margin-bottom: 32px;
       }
+      .test-type {
+        padding: 4px;
+        border-radius: 4px;
+        background-color: var(--paper-blue-100);
+      }
+      .test-type-icon {
+        padding: 0;
+      }
+      .test-type-icon iron-icon {
+        height: 16px;
+        width: 16px;
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -139,8 +153,17 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
     <section class="search">
       <div class="path">
-        <a href="/results/[[ query ]]" on-click="navigate">wpt</a><template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"><span class="path-separator">/</span><a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a></template>
+        <a href="/results/[[ query ]]" on-click="navigate">wpt</a>
+        <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
+          <span class="path-separator">/</span>
+          <a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
+        </template>
       </div>
+      <template is="dom-if" if="[[showTestType]]">
+        <template is="dom-if" if="[[testType]]">
+          <span class$="test-type [[testType]]">[[testType]]</span>
+        </template>
+      </template>
 
       <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
@@ -197,7 +220,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         <table>
           <thead>
             <tr>
-              <th>Path</th>
+              <th colspan="2">Path</th>
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                 <!-- Repeats for as many different browser test runs are available -->
                 <th><test-run test-run="[[testRun]]"></test-run></th>
@@ -217,6 +240,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
             <template is="dom-repeat" items="{{displayedNodes}}" as="node">
               <tr>
+                <td class="test-type-icon">
+                  <template is="dom-if" if="{{showTestType}}">
+                    <template is="dom-if" if="{{node.testTypeIcon}}">
+                      <iron-icon icon="{{node.testTypeIcon}}" title="[[node.testType]] test"></iron-icon>
+                    </template>
+                  </template>
+                </td>
                 <td>
                   <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
                 </td>
@@ -299,9 +329,14 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         type: String,
         computed: 'computeSourcePath(path, manifest)',
       },
+      testType: {
+        type: String,
+        computed: 'computeTestType(path, manifest)',
+        value: '',
+      },
       testCanRunOnW3C: {
         type: Boolean,
-        computed: 'computeTestCanBeRunOnW3C(path, manifest)',
+        computed: 'computeTestCanBeRunOnW3C(testType)',
       },
       searchResults: {
         type: Array,
@@ -351,6 +386,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         value: false,
       },
       onlyShowDifferences: Boolean,
+      manifest: Object,
     };
   }
 
@@ -382,20 +418,30 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     return null;
   }
 
-  computeTestCanBeRunOnW3C(path, manifest) {
+  computeTestCanBeRunOnW3C(testType) {
+    return testType !== 'wdspec';
+  }
+
+  computeTestType(path, manifest) {
     if (!this.computePathIsATestFile(path) || !manifest) {
-      return true;
+      return;
     }
     for (const type of TEST_TYPES) {
       const items = manifest.items[type];
       if (items) {
         const test = Object.keys(items).find(k => items[k].find(i => i[0] === path));
-        if (test && type === 'wdspec') {
-          return false;
+        if (test) {
+          return type;
         }
       }
     }
-    return true;
+  }
+
+  computeTestTypeIcon(testType) {
+    switch (testType) {
+    case 'manual': return 'touch-app';
+    case 'reftest': return 'image:compare';
+    }
   }
 
   computeTestPaths(searchResults) {
@@ -627,6 +673,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
             total: 0,
           })),
         };
+      }
+      if (this.computePathIsATestFile(name)) {
+        nodes[name].testType = this.computeTestType(testPath, this.manifest);
+        nodes[name].testTypeIcon = this.computeTestTypeIcon(nodes[name].testType);
       }
       return name;
     };

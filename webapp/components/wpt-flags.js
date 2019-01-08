@@ -38,6 +38,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'fetchManifestForTestList',
       'githubCommitLinks',
       'insightsTab',
+      'showTestType',
     ];
   }
 });
@@ -176,6 +177,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{fetchManifestForTestList}}">
         Fetch a manifest for a complete (expected) list of tests.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{showTestType}}">
+        Display test types
       </paper-checkbox>
     </paper-item>
     <paper-item>
