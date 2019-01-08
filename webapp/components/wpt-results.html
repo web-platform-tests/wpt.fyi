@@ -118,6 +118,11 @@ found in the LICENSE file.
         display: block;
         margin-bottom: 32px;
       }
+      .test-type {
+        padding: 4px;
+        border-radius: 4px;
+        background-color: var(--paper-blue-100);
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -140,6 +145,11 @@ found in the LICENSE file.
         ><template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
           ><span class="path-separator">/</span><a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a
         ></template>
+        <template is="dom-if" if="[[showTestType]]">
+          <template is="dom-if" if="[[testType]]">
+            <span class$="test-type [[testType]]">[[testType]]</span>
+          </template>
+        </template>
       </div>
 
       <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
@@ -318,9 +328,13 @@ found in the LICENSE file.
             type: String,
             computed: 'computeSourcePath(path, manifest)',
           },
+          testType: {
+            type: String,
+            computed: 'computeTestType(path, manifest)',
+          },
           testCanRunOnW3C: {
             type: Boolean,
-            computed: 'computeTestCanBeRunOnW3C(path, manifest)',
+            computed: 'computeTestCanBeRunOnW3C(testType)',
           },
           searchResults: {
             type: Array,
@@ -401,20 +415,23 @@ found in the LICENSE file.
         return null;
       }
 
-      computeTestCanBeRunOnW3C(path, manifest) {
+      computeTestCanBeRunOnW3C(testType) {
+        return testType !== 'wdspec';
+      }
+
+      computeTestType(path, manifest) {
         if (!this.computePathIsATestFile(path) || !manifest) {
-          return true;
+          return;
         }
         for (const type of TEST_TYPES) {
           const items = manifest.items[type];
           if (items) {
             const test = Object.keys(items).find(k => items[k].find(i => i[0] === path));
-            if (test && type === 'wdspec') {
-              return false;
+            if (test) {
+              return type;
             }
           }
         }
-        return true;
       }
 
       computeTestPaths(searchResults) {
