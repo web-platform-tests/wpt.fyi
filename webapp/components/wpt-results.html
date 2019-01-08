@@ -5,7 +5,9 @@ found in the LICENSE file.
 -->
 
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
@@ -123,6 +125,13 @@ found in the LICENSE file.
         border-radius: 4px;
         background-color: var(--paper-blue-100);
       }
+      .test-type-icon {
+        padding: 0;
+      }
+      .test-type-icon iron-icon {
+        height: 16px;
+        width: 16px;
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -221,7 +230,7 @@ found in the LICENSE file.
         <table>
           <thead>
             <tr>
-              <th>Path</th>
+              <th colspan="2">Path</th>
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                 <!-- Repeats for as many different browser test runs are available -->
                 <th><test-run test-run="[[testRun]]"></test-run></th>
@@ -241,6 +250,13 @@ found in the LICENSE file.
 
             <template is="dom-repeat" items="{{displayedNodes}}" as="node">
               <tr>
+                <td class="test-type-icon">
+                  <template is="dom-if" if="{{showTestType}}">
+                    <template is="dom-if" if="{{node.testTypeIcon}}">
+                      <iron-icon icon="{{node.testTypeIcon}}" title="[[node.testType]] test"></iron-icon>
+                    </template>
+                  </template>
+                </td>
                 <td>
                   <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
                 </td>
@@ -385,6 +401,7 @@ found in the LICENSE file.
             value: false,
           },
           onlyShowDifferences: Boolean,
+          manifest: Object,
         };
       }
 
@@ -432,6 +449,13 @@ found in the LICENSE file.
               return type;
             }
           }
+        }
+      }
+
+      computeTestTypeIcon(testType) {
+        switch (testType) {
+        case 'manual': return 'touch-app';
+        case 'reftest': return 'image:compare';
         }
       }
 
@@ -664,6 +688,10 @@ found in the LICENSE file.
                 total: 0,
               })),
             };
+          }
+          if (this.computePathIsATestFile(name)) {
+            nodes[name].testType = this.computeTestType(testPath, this.manifest);
+            nodes[name].testTypeIcon = this.computeTestTypeIcon(nodes[name].testType);
           }
           return name;
         };
