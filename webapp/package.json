@@ -1,19 +1,52 @@
 {
   "name": "wptdashboard",
   "devDependencies": {
+    "@polymer/test-fixture": "^4.0.2",
+    "async": "^1.5.2",
     "babel-eslint": "^8.2.6",
     "bower": "^1.8.4",
     "eslint": "^4.14.0",
-    "eslint-plugin-html": "^3.2.2",
+    "eslint-plugin-html": "^5.0.0",
+    "lodash": "^3.10.1",
+    "wct-browser-legacy": "^1.0.1",
     "web-component-tester": "^6.8.0"
   },
   "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
     "bower-components": "bower install",
     "test": "npm run lint && npm run wct",
-    "lint": "eslint --plugin html 'components/**/*.html' ",
-    "lint-fix": "eslint --plugin html --fix 'components/**/*.html' ",
+    "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
+    "lint-fix": "eslint --fix 'components/**/*.js' ",
     "wctp": "wct -p",
     "wct": "wct"
+  },
+  "resolutions": {
+    "inherits": "2.0.3",
+    "samsam": "1.1.3",
+    "supports-color": "3.1.2",
+    "type-detect": "1.0.0"
+  },
+  "dependencies": {
+    "@polymer/iron-collapse": "^3.0.0",
+    "@polymer/iron-form": "^3.0.0",
+    "@polymer/iron-icons": "^3.0.0",
+    "@polymer/paper-button": "^3.0.0",
+    "@polymer/paper-card": "^3.0.0",
+    "@polymer/paper-checkbox": "^3.0.0",
+    "@polymer/paper-dropdown-menu": "^3.0.0",
+    "@polymer/paper-input": "^3.0.0",
+    "@polymer/paper-item": "^3.0.0",
+    "@polymer/paper-listbox": "^3.0.0",
+    "@polymer/paper-spinner": "^3.0.0",
+    "@polymer/paper-styles": "^3.0.0",
+    "@polymer/paper-tabs": "^3.0.0",
+    "@polymer/paper-toast": "^3.0.0",
+    "@polymer/paper-toggle-button": "^3.0.0",
+    "@polymer/paper-tooltip": "^3.0.0",
+    "@polymer/polymer": "^3.0.0",
+    "@vaadin/vaadin-date-picker": "^3.3.2",
+    "@webcomponents/webcomponentsjs": "^2.0.0",
+    "google-chart-polymer-3": "^3.0.1",
+    "pluralize": "^7.0.0"
   }
 }
