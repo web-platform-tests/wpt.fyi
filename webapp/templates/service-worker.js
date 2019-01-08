@@ -27,9 +27,8 @@ self.addEventListener(
             .then(r => {
               if (r.ok) {
                 const components = new RegExp('^/((bower_)?components|static|node_modules)/');
-                const wptEnvFlags = new RegExp('^/components/wpt-env-flags.js$');
                 const path = e.request.url.path;
-                if (components.test(path) && !wptEnvFlags.test(path)) {
+                if (components.test(path) && path !== '/components/wpt-env-flags.js') {
                   let clone = r.clone();
                   caches.open('{{ .Version }}').then(cache => {
                     cache.put(e.request, clone);
