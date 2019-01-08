@@ -50,6 +50,28 @@
             assert.equal(tfr.statusName(99), 'Harness status');
           });
         });
+
+        test('mergeNamesInto', () => {
+          let allNames = [];
+          let names = ['a', 'b'];
+          tfr.mergeNamesInto(names, allNames);
+          expect(allNames).to.deep.equal(names);
+
+          allNames = ['a', 'b'];
+          names = ['a', 'aa', 'ab', 'b', 'c'];
+          tfr.mergeNamesInto(names, allNames);
+          expect(allNames).to.deep.equal(names);
+
+          allNames = [...names];
+          names = ['a', 'ab', 'ac'];
+          tfr.mergeNamesInto(names, allNames);
+          expect(allNames).to.deep.equal(['a', 'aa', 'ab', 'ac', 'b', 'c']);
+
+          names = ['a', 'b', 'c'];
+          allNames = [...names];
+          tfr.mergeNamesInto(names, allNames);
+          expect(allNames).to.deep.equal(names);
+        });
       });
     });
   </script>
