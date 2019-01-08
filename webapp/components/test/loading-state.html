@@ -3,23 +3,22 @@
 
 <head>
   <meta charset="utf-8">
-  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-  <script src="../../bower_components/web-component-tester/browser.js"></script>
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <link rel="import" href="../../bower_components/polymer/polymer-element.html">
-  <link rel="import" href="../loading-state.html">
+  <script type="module" src="../../node_modules/@polymer/polymer/polymer-element.js"></script>
+  <script type="module" src="../loading-state.js"></script>
 </head>
 
 <dom-module id="loading-state-concrete">
-  <script>
-    // Needed for FF, which doesn't block on the imports above.
-    document.addEventListener('WebComponentsReady', () => {
-      /* global LoadingState */
-      class ConcreteType extends LoadingState(window.Polymer.Element) {}
+  <script type="module">
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { LoadingState } from '../loading-state.js';
 
-      window.customElements.define('loading-state-concrete', ConcreteType);
-    });
-  </script>
+class ConcreteType extends LoadingState(PolymerElement) {}
+
+window.customElements.define('loading-state-concrete', ConcreteType);
+</script>
 </dom-module>
 
 <test-fixture id="loading-state-fixture">
@@ -29,42 +28,44 @@
 </test-fixture>
 
 <body>
-  <script>
-    suite('LoadingState', () => {
-      let state;
+  <script type="module">
+import '../../node_modules/@polymer/polymer/polymer-element.js';
+import '../loading-state.js';
+suite('LoadingState', () => {
+  let state;
+
+  setup(() => {
+    state = fixture('loading-state-fixture');
+  });
+
+  suite('LoadingState.prototype.*', () => {
+    suite('onLoadingComplete', () => {
+      let completeCallback;
 
       setup(() => {
-        state = fixture('loading-state-fixture');
+        completeCallback = sinon.spy();
+        state.onLoadingComplete = completeCallback;
       });
 
-      suite('LoadingState.prototype.*', () => {
-        suite('onLoadingComplete', () => {
-          let completeCallback;
+      test('executed when count reaches zero', async() => {
+        state.loadingCount++;
+        state.loadingCount--;
+        assert.isTrue(completeCallback.calledOnce);
+      });
 
-          setup(() => {
-            completeCallback = sinon.spy();
-            state.onLoadingComplete = completeCallback;
-          });
+      test('executed when load returns', async() => {
+        await state.load(Promise.resolve());
+        assert.isTrue(completeCallback.calledOnce);
+      });
 
-          test('executed when count reaches zero', async() => {
-            state.loadingCount++;
-            state.loadingCount--;
-            assert.isTrue(completeCallback.calledOnce);
-          });
-
-          test('executed when load returns', async() => {
-            await state.load(Promise.resolve());
-            assert.isTrue(completeCallback.calledOnce);
-          });
-
-          test('but not when already zero', () => {
-            state.loadingCount = 0;
-            assert.isTrue(completeCallback.notCalled);
-          });
-        });
+      test('but not when already zero', () => {
+        state.loadingCount = 0;
+        assert.isTrue(completeCallback.notCalled);
       });
     });
-  </script>
+  });
+});
+</script>
 </body>
 
 </html>

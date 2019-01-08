@@ -93,7 +93,7 @@ func TestStructuredQuery_unknownStatus(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusEq{"chrome", shared.TestStatusValueFromString("UNKNOWN")}}, rq)
 }
 
 func TestStructuredQuery_missingPattern(t *testing.T) {
@@ -139,7 +139,32 @@ func TestStructuredQuery_status(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusConstraint{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusEq{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
+}
+
+func TestStructuredQuery_statusNeq(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"browser_name": "FiReFoX",
+			"status": {"not": "PaSs"}
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusNeq{"firefox", shared.TestStatusValueFromString("PASS")}}, rq)
+}
+
+func TestStructuredQuery_statusUnsupportedAbstractNot(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"browser_name": "FiReFoX",
+			"status": {"not": {"pattern": "cssom"}}
+		}
+	}`), &rq)
+	assert.NotNil(t, err)
 }
 
 func TestStructuredQuery_not(t *testing.T) {
@@ -216,7 +241,7 @@ func TestStructuredQuery_nested(t *testing.T) {
 						TestNamePattern{"html"},
 					},
 				},
-				TestStatusConstraint{"edge", shared.TestStatusValueFromString("TIMEOUT")},
+				TestStatusEq{"edge", shared.TestStatusValueFromString("TIMEOUT")},
 			},
 		},
 	}, rq)
@@ -231,14 +256,14 @@ func TestStructuredQuery_bindPattern(t *testing.T) {
 }
 
 func TestStructuredQuery_bindStatusNoRuns(t *testing.T) {
-	assert.Equal(t, True{}, TestStatusConstraint{
+	assert.Equal(t, True{}, TestStatusEq{
 		BrowserName: "Chrome",
 		Status:      1,
 	}.BindToRuns([]shared.TestRun{}))
 }
 
 func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
-	q := TestStatusConstraint{
+	q := TestStatusEq{
 		BrowserName: "Firefox",
 		Status:      1,
 	}
@@ -261,7 +286,38 @@ func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
 		},
 	}
 	// Only Firefox run ID=1.
-	expected := RunTestStatusConstraint{
+	expected := RunTestStatusEq{
+		Run:    1,
+		Status: 1,
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindStatusSingleRunNeq(t *testing.T) {
+	q := TestStatusNeq{
+		BrowserName: "Firefox",
+		Status:      1,
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Firefox",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 2,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Chrome",
+				},
+			},
+		},
+	}
+	// Only Firefox run ID=1.
+	expected := RunTestStatusNeq{
 		Run:    1,
 		Status: 1,
 	}
@@ -269,7 +325,7 @@ func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
 }
 
 func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
-	q := TestStatusConstraint{
+	q := TestStatusNeq{
 		BrowserName: "Firefox",
 		Status:      1,
 	}
@@ -302,11 +358,11 @@ func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
 	// Two Firefox runs: ID=1, ID=3.
 	expected := Or{
 		Args: []ConcreteQuery{
-			RunTestStatusConstraint{
+			RunTestStatusNeq{
 				Run:    1,
 				Status: 1,
 			},
-			RunTestStatusConstraint{
+			RunTestStatusNeq{
 				Run:    3,
 				Status: 1,
 			},
@@ -321,7 +377,7 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 			TestNamePattern{
 				Pattern: "/",
 			},
-			TestStatusConstraint{
+			TestStatusEq{
 				BrowserName: "Edge",
 				Status:      1,
 			},
@@ -343,7 +399,7 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 			TestNamePattern{
 				Pattern: "/",
 			},
-			RunTestStatusConstraint{
+			RunTestStatusEq{
 				Run:    1,
 				Status: 1,
 			},
@@ -358,7 +414,7 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 			TestNamePattern{
 				Pattern: "/",
 			},
-			TestStatusConstraint{
+			TestStatusEq{
 				BrowserName: "Edge",
 				Status:      1,
 			},
@@ -380,7 +436,7 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 			TestNamePattern{
 				Pattern: "/",
 			},
-			RunTestStatusConstraint{
+			RunTestStatusEq{
 				Run:    1,
 				Status: 1,
 			},
@@ -391,7 +447,7 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 
 func TestStructuredQuery_bindNot(t *testing.T) {
 	q := AbstractNot{
-		Arg: TestStatusConstraint{
+		Arg: TestStatusEq{
 			BrowserName: "Edge",
 			Status:      1,
 		},
@@ -408,7 +464,7 @@ func TestStructuredQuery_bindNot(t *testing.T) {
 	}
 	// Only run is Edge, ID=1.
 	expected := Not{
-		Arg: RunTestStatusConstraint{
+		Arg: RunTestStatusEq{
 			Run:    1,
 			Status: 1,
 		},
@@ -422,7 +478,7 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 			TestNamePattern{
 				Pattern: "/",
 			},
-			TestStatusConstraint{
+			TestStatusEq{
 				BrowserName: "Safari",
 				Status:      1,
 			},
@@ -449,11 +505,11 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 	q := AbstractAnd{
 		Args: []AbstractQuery{
-			TestStatusConstraint{
+			TestStatusEq{
 				BrowserName: "Chrome",
 				Status:      1,
 			},
-			TestStatusConstraint{
+			TestStatusNeq{
 				BrowserName: "Safari",
 				Status:      1,
 			},
@@ -480,7 +536,7 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 			TestNamePattern{
 				Pattern: "/",
 			},
-			TestStatusConstraint{
+			TestStatusEq{
 				BrowserName: "Safari",
 				Status:      1,
 			},
@@ -515,11 +571,11 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 							Pattern: "css",
 						},
 					},
-					TestStatusConstraint{
+					TestStatusEq{
 						BrowserName: "Safari",
 						Status:      1,
 					},
-					TestStatusConstraint{
+					TestStatusNeq{
 						BrowserName: "Chrome",
 						Status:      1,
 					},
@@ -572,11 +628,11 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 					},
 					Or{
 						Args: []ConcreteQuery{
-							RunTestStatusConstraint{
+							RunTestStatusNeq{
 								Run:    1,
 								Status: 1,
 							},
-							RunTestStatusConstraint{
+							RunTestStatusNeq{
 								Run:    3,
 								Status: 1,
 							},

@@ -11,14 +11,11 @@ builtins:
 
 handlers:
   # Couple of special-case dynamic components.
-- url: /components/wpt-env-flags.html
+- url: /components/wpt-env-flags.js
   script: _go_app
   secure: always
 - url: /components
   static_dir: components
-  secure: always
-- url: /bower_components
-  static_dir: bower_components
   secure: always
 - url: /static
   static_dir: static
@@ -38,18 +35,8 @@ handlers:
 
 # Don't upload mock-data static files to AppEngine
 skip_files:
-- bower_components/accessibility-developer-tools/
-- bower_components/async/
-- bower_components/chai/
-- bower_components/lodash/
-- bower_components/mocha/
-- bower_components/sinon-chai/
-- bower_components/sinonjs/
-- bower_components/stacky/
-- bower_components/test-fixture/
-- bower_components/web-component-tester/
+- bower_components/
 - components/test/
-- node_modules/
 - static/b952881825/
 - static/wptd-metrics/
 - test/

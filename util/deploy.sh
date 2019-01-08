@@ -9,7 +9,8 @@ WPTD_PATH=${WPTD_PATH:-$(absdir ${REPO_DIR})}
 
 usage() {
   USAGE="Usage: deploy.sh [-p] [-q] [-b] [-h] [app path]
-    -p : Production deploy (to wptdashboard, no-promote)
+    -p : Promote (i.e. pass --promote flag to deploy)
+    -r : Release (use the git-hash as the version)
     -q : Quiet (no user prompts, debugging off)
     -b : Branch name - defaults to current Git branch
     -h : Show (this) help information
@@ -20,8 +21,9 @@ usage() {
 APP_PATH=${@: -1}
 while getopts ':b:phq:g:' flag; do
   case "${flag}" in
+    r) RELEASE='true' ;;
     b) BRANCH_NAME="${OPTARG}" ;;
-    p) PRODUCTION='true' ;;
+    p) PROMOTE='true' ;;
     q) QUIET='true' ;;
     h|*) usage && exit 0;;
   esac
@@ -46,10 +48,16 @@ USER="$(git remote -v get-url origin | sed -E 's#(https?:\/\/|git@)github.com(\/
 if [[ "${USER}" == "web-platform-tests-" ]]; then USER=""; fi
 
 VERSION="${USER}${VERSION_BRANCH_NAME}"
-PROMOTE="--no-promote"
-
-if [[ -n ${PRODUCTION} ]]
+if [[ -n ${RELEASE} ]]
 then
+  # Use SHA for releases.
+  VERSION="$(git rev-parse --short HEAD)"
+fi
+
+PROMOTE_FLAG="--no-promote"
+if [[ -n ${PROMOTE} ]]
+then
+  PROMOTE_FLAG="--promote"
   if [[ -z "${QUIET}" ]]; then debug "Producing production configuration..."; fi
   if [[ "${USER}" != "" ]]
   then
@@ -59,8 +67,6 @@ then
       if [ "${?}" != "0" ]; then fatal "User cancelled the deploy"; fi
     fi
   fi
-  # Use SHA for prod-pushes.
-  VERSION="$(git rev-parse --short HEAD)"
 fi
 
 if [[ -n "${QUIET}" ]]
@@ -69,7 +75,7 @@ then
 else
     QUIET_FLAG=""
 fi
-COMMAND="gcloud app deploy ${PROMOTE} ${QUIET_FLAG} --version=${VERSION} ${APP_PATH}"
+COMMAND="gcloud app deploy ${PROMOTE_FLAG} ${QUIET_FLAG} --version=${VERSION} ${APP_PATH}"
 
 if [[ -z "${QUIET}" ]]
 then

@@ -2,11 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-  <script src="../../bower_components/web-component-tester/browser.js"></script>
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <link rel="import" href="./util/helpers.html">
-  <link rel="import" href="../test-runs.html">
+  <script type="module" src="./util/helpers.js"></script>
+  <script type="module" src="../test-runs.js"></script>
 </head>
 <body>
   <test-fixture id="wpt-results-base-fixture">
@@ -14,71 +14,76 @@
       <wpt-results-base aligned></wpt-results-base>
     </template>
   </test-fixture>
-  <script>
-    /* global TestRunsBase, waitingOn, TEST_RUNS_DATA */
-    suite('TestRunsBase', () => {
-      let sandbox;
+  <script type="module">
+import { waitingOn, TEST_RUNS_DATA } from './util/helpers.js';
+import { TestRunsBase } from '../test-runs.js';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+
+suite('TestRunsBase', () => {
+  let sandbox;
+
+  setup(() => {
+    sandbox = sinon.sandbox.create();
+    sandbox.stub(window, 'fetch', () => Promise.resolve(new Response(JSON.stringify(TEST_RUNS_DATA))));
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+
+  test('instanceof Polymer.Element', () => {
+    assert.isTrue(new TestRunsBase() instanceof PolymerElement);
+    assert.isTrue(document.createElement('wpt-results-base') instanceof PolymerElement);
+  });
+
+  suite('static get is()', () => {
+    test('wpt-results-base', () => {
+      assert.equal(TestRunsBase.is, 'wpt-results-base');
+    });
+  });
+
+  suite('static get properties()', () => {
+    test('testRuns', () => {
+      assert.property(TestRunsBase.properties, 'testRuns');
+      assert.property(TestRunsBase.properties.testRuns, 'type');
+      assert.equal(TestRunsBase.properties.testRuns.type, Array);
+    });
+  });
+
+  suite('TestRunsBase.prototype.*', () => {
+    suite('async loadRuns()', () => {
+      let wrbf;
 
       setup(() => {
-        sandbox = sinon.sandbox.create();
-        sandbox.stub(window, 'fetch', () => Promise.resolve(new Response(TEST_RUNS_DATA)));
+        wrbf = fixture('wpt-results-base-fixture');
+        wrbf.loadRuns();
       });
 
       teardown(() => {
-        sandbox.restore();
+        sandbox.reset();
       });
 
-      test('instanceof Polymer.Element', () => {
-        assert.isTrue(new TestRunsBase() instanceof window.Polymer.Element);
-        assert.isTrue(document.createElement('wpt-results-base') instanceof window.Polymer.Element);
+      test('calls window.fetch(...)', () => {
+        return waitingOn(() => window.fetch.called)
+          .then(() => {
+            assert.equal(window.fetch.callCount, 1);
+            assert.equal(window.fetch.firstCall.args[0], '/api/runs?aligned');
+          });
       });
 
-      suite('static get is()', () => {
-        test('wpt-results-base', () => {
-          assert.equal(TestRunsBase.is, 'wpt-results-base');
-        });
-      });
-
-      suite('static get properties()', () => {
-        test('testRuns', () => {
-          assert.property(TestRunsBase.properties, 'testRuns');
-          assert.property(TestRunsBase.properties.testRuns, 'type');
-          assert.equal(TestRunsBase.properties.testRuns.type, Array);
-        });
-      });
-
-      suite('TestRunsBase.prototype.*', () => {
-        suite('async loadRuns()', () => {
-          let wrbf;
-
-          setup(() => {
-            wrbf = fixture('wpt-results-base-fixture');
-            wrbf.loadRuns();
+      test('populates testRuns from fetch', () => {
+        assert.equal(wrbf.testRuns, null);
+        return waitingOn(() => wrbf.testRuns && wrbf.testRuns.length)
+          .then(() => {
+            assert.equal(wrbf.testRuns.length, 4);
+            for (const i in wrbf.testRuns) {
+              expect(wrbf.testRuns[i]).to.deep.equal(TEST_RUNS_DATA[i]);
+            }
           });
-
-          teardown(() => {
-            sandbox.reset();
-          });
-
-          test('calls window.fetch(...)', () => {
-            return waitingOn(() => window.fetch.called)
-              .then(() => {
-                assert.equal(window.fetch.callCount, 1);
-                assert.equal(window.fetch.firstCall.args[0], '/api/runs?aligned');
-              });
-          });
-
-          test('populates testRuns from fetch', () => {
-            assert.equal(wrbf.testRuns, null);
-            return waitingOn(() => wrbf.testRuns && wrbf.testRuns.length)
-              .then(() => {
-                assert.equal(wrbf.testRuns.length, 4);
-                assert.equal(wrbf.testRuns[0], TEST_RUNS_DATA[0]);
-              });
-          });
-        });
       });
     });
-  </script>
+  });
+});
+</script>
 </body>
 </html>

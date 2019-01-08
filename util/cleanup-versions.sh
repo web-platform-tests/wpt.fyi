@@ -20,9 +20,10 @@ function cleanup() {
   info "Cleaning stale versions of $1..."
 
   local SERVICE_ARG="-s $1"
+  local FILTER_ARG="traffic_split=0.0 last_deployed_time.datetime<$CUTOFF"
   local versions_to_delete=()
 
-  for version in $( gcloud app versions list $PROJECT_ARG $SERVICE_ARG --filter="last_deployed_time.datetime<$CUTOFF" --format="value(id)" ); do
+  for version in $( gcloud app versions list $PROJECT_ARG $SERVICE_ARG --filter="$FILTER_ARG" --format="value(id)" ); do
     if ! git show-ref --quiet --verify refs/remotes/origin/$version; then
       debug "'$version' is not a branch in upstream and will be deleted."
       versions_to_delete+=($version)

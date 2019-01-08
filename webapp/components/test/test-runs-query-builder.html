@@ -2,15 +2,16 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-  <script src="../../bower_components/web-component-tester/browser.js"></script>
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <script>
-    window.wpt = window.wpt || {};
-    window.wpt.MUTABLE_FLAGS = true;
-  </script>
+  <script type="module">
+import '../test-runs-query-builder.js';
+window.wpt = window.wpt || {};
+window.wpt.MUTABLE_FLAGS = true;
+</script>
 
-  <link rel="import" href="../test-runs-query-builder.html">
+  <script type="module" src="../test-runs-query-builder.js"></script>
 </head>
 <body>
   <test-runs-query-builder id="playground"
@@ -32,215 +33,215 @@
     </template>
   </test-fixture>
 
-  <script>
-    document.addEventListener('WebComponentsReady', () => {
-      suite('TestRunsQueryBuilder', () => {
-        let queryBuilder, sandbox;
+  <script type="module">
+import '../test-runs-query-builder.js';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+suite('TestRunsQueryBuilder', () => {
+  let queryBuilder, sandbox;
 
-        setup(() => {
-          sandbox = sinon.sandbox.create();
-          // Spoof an empty result for /api/shas to speed up tests.
-          const realFetch = window.fetch;
-          sandbox.stub(window, 'fetch', url => {
-            if (url.pathname === '/api/shas') {
-              return Promise.resolve(new Response('[]'));
-            }
-            return realFetch(url);
-          });
+  setup(() => {
+    sandbox = sinon.sandbox.create();
+    // Spoof an empty result for /api/shas to speed up tests.
+    const realFetch = window.fetch;
+    sandbox.stub(window, 'fetch', url => {
+      if (url.pathname === '/api/shas') {
+        return Promise.resolve(new Response('[]'));
+      }
+      return realFetch(url);
+    });
 
-          queryBuilder = fixture('query-builder-fixture');
-          queryBuilder.products = ['chrome', 'edge']
-            .map(s => queryBuilder.parseProductSpec(s));
-        });
+    queryBuilder = fixture('query-builder-fixture');
+    queryBuilder.products = ['chrome', 'edge']
+      .map(s => queryBuilder.parseProductSpec(s));
+  });
 
-        test('instanceof Polymer.Element', () => {
-          assert.isTrue(queryBuilder instanceof window.Polymer.Element);
-        });
+  test('instanceof Polymer.Element', () => {
+    assert.isTrue(queryBuilder instanceof PolymerElement);
+  });
 
-        test('add item', () => {
-          queryBuilder.addProduct();
-          assert.equal(queryBuilder.products.length, 3);
-          assert.equal(queryBuilder.products[2].browser_name, 'firefox');
-          queryBuilder.addProduct();
-          assert.equal(queryBuilder.products.length, 4);
-          assert.equal(queryBuilder.products[3].browser_name, 'safari');
-        });
+  test('add item', () => {
+    queryBuilder.addProduct();
+    assert.equal(queryBuilder.products.length, 3);
+    assert.equal(queryBuilder.products[2].browser_name, 'firefox');
+    queryBuilder.addProduct();
+    assert.equal(queryBuilder.products.length, 4);
+    assert.equal(queryBuilder.products[3].browser_name, 'safari');
+  });
 
-        test('delete item', (done) => {
-          // Wait for shadow DOM.
-          flush(() => {
-            const first = queryBuilder.root.querySelector('product-builder');
-            first.deleteProduct();
-            assert.equal(queryBuilder.products.length, 1);
-            assert.equal(queryBuilder.products[0].browser_name, 'edge');
-            done();
-          });
-        });
+  test('delete item', (done) => {
+    // Wait for shadow DOM.
+    flush(() => {
+      const first = queryBuilder.root.querySelector('product-builder');
+      first.deleteProduct();
+      assert.equal(queryBuilder.products.length, 1);
+      assert.equal(queryBuilder.products[0].browser_name, 'edge');
+      done();
+    });
+  });
 
-        test('clear all items', () => {
-          // Wait for shadow DOM.
-          queryBuilder.clearAll();
-          assert.equal(queryBuilder.products.length, 0);
-        });
+  test('clear all items', () => {
+    // Wait for shadow DOM.
+    queryBuilder.clearAll();
+    assert.equal(queryBuilder.products.length, 0);
+  });
 
-        test('productSpecs', () => {
-          queryBuilder.set('products.0.labels', ['beta']);
-          assert.equal(queryBuilder.productSpecs[0], 'chrome[beta]');
-        });
+  test('productSpecs', () => {
+    queryBuilder.set('products.0.labels', ['beta']);
+    assert.equal(queryBuilder.productSpecs[0], 'chrome[beta]');
+  });
 
-        test('aligned', () => {
-          queryBuilder.aligned = false;
-          expect(queryBuilder.query).to.not.contain('aligned');
-          queryBuilder.aligned = true;
-          expect(queryBuilder.query).to.contain('aligned');
+  test('aligned', () => {
+    queryBuilder.aligned = false;
+    expect(queryBuilder.query).to.not.contain('aligned');
+    queryBuilder.aligned = true;
+    expect(queryBuilder.query).to.contain('aligned');
 
-          const alignedCB = queryBuilder.shadowRoot.querySelector('#aligned-checkbox');
-          expect(alignedCB.checked).to.be.true;
-          alignedCB.checked = false;
-          expect(queryBuilder.query).to.not.contain('aligned');
-          alignedCB.checked = true;
-          expect(queryBuilder.query).to.contain('aligned');
-        });
+    const alignedCB = queryBuilder.shadowRoot.querySelector('#aligned-checkbox');
+    expect(alignedCB.checked).to.be.true;
+    alignedCB.checked = false;
+    expect(queryBuilder.query).to.not.contain('aligned');
+    alignedCB.checked = true;
+    expect(queryBuilder.query).to.contain('aligned');
+  });
 
-        test('labels', () => {
-          queryBuilder.labelsString = '';
-          expect(queryBuilder.query).to.not.contain('label');
-          queryBuilder.labelsString = 'foo,';
-          expect(queryBuilder.query).to.contain('label=foo');
-          expect(queryBuilder.query).to.not.contain('foo,');
-          queryBuilder.labels = ['foo', 'bar'];
-          expect(queryBuilder.query).to.contain('label=foo');
-          expect(queryBuilder.query).to.contain('label=bar');
-        });
+  test('labels', () => {
+    queryBuilder.labelsString = '';
+    expect(queryBuilder.query).to.not.contain('label');
+    queryBuilder.labelsString = 'foo,';
+    expect(queryBuilder.query).to.contain('label=foo');
+    expect(queryBuilder.query).to.not.contain('foo,');
+    queryBuilder.labels = ['foo', 'bar'];
+    expect(queryBuilder.query).to.contain('label=foo');
+    expect(queryBuilder.query).to.contain('label=bar');
+  });
 
-        suite('shared channels', () => {
-          setup(() => {
-            queryBuilder.clearAll();
-            queryBuilder.updateQueryParams({
-              label: ['stable'],
-              product: ['chrome', 'safari'],
-            });
-          });
-
-          for (const channel of window.wpt.Channels) {
-            test(channel, done => {
-              flush(() => {
-                for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
-                  productBuilder._channel = channel;
-                }
-                expect(queryBuilder.queryParams.label).to.contain(channel);
-                done();
-              });
-            });
-          }
-
-          for (const channel of window.wpt.Channels) {
-            test(channel, done => {
-              flush(() => {
-                queryBuilder.set('labels', [channel]);
-                queryBuilder.submit();
-                for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
-                  expect(productBuilder._channel).to.equal(channel);
-                }
-                done();
-              });
-            });
-          }
-        });
-
-        test('shas', () => {
-          const shas = ['1234567890', '0987654321'];
-          queryBuilder.shas = shas.slice(0, 1);
-          expect(queryBuilder.query).to.contain(`sha=${shas[0]}`);
-
-          queryBuilder.shas = shas;
-          expect(queryBuilder.query).to.contain(`sha=${shas[0]}`);
-          expect(queryBuilder.query).to.contain(`sha=${shas[1]}`);
-
-          queryBuilder.shas = ['latest'];
-          expect(queryBuilder.query).to.not.contain('sha');
-
-          queryBuilder.shas = [];
-          expect(queryBuilder.query).to.not.contain('sha');
-        });
-
-        suite('shas autocomplete', () => {
-          let sandbox;
-
-          setup(() => {
-            sandbox = sinon.sandbox.create();
-            sandbox.spy(queryBuilder, 'shasURLUpdated');
-          });
-
-          test('/api/shas fetches', () => {
-            // Should only trigger a single update, in spite of many params changing.
-            queryBuilder.updateQueryParams({ product: ['chrome'], aligned: true, label: ['dev'] });
-            expect(queryBuilder.shasURLUpdated.callCount).to.equal(1);
-          });
-
-          teardown(() => {
-            sandbox.restore();
-          });
-        });
-
-        suite('master runs only', () => {
-          setup(() => {
-            queryBuilder.masterRunsOnly = true;
-          });
-
-          test('updateQueryParams', () => {
-            queryBuilder.updateQueryParams({ label: ['master'] });
-            expect(queryBuilder.master).to.be.true;
-
-            queryBuilder.updateQueryParams({ label: [] });
-            expect(queryBuilder.master).to.be.false;
-          });
-
-          test('queryParams', () => {
-            queryBuilder.master = true;
-            expect(queryBuilder.query).to.contain('master');
-
-            queryBuilder.master = false;
-            expect(queryBuilder.query).to.not.contain('master');
-          });
-        });
-
-        teardown(() => {
-          sandbox.restore();
-        });
-      });
-
-      suite('ProductBuilder', () => {
-        let productBuilder;
-
-        setup(() => {
-          productBuilder = fixture('product-builder-fixture');
-          productBuilder.product = {browser_name: 'chrome'};
-        });
-
-        suite('ProductBuilder.prototype.*', () => {
-          suite('_channel', () => {
-            test('updates the labels when value changes', () => {
-              productBuilder._channel = 'stable';
-              assert.isTrue(productBuilder.labels.includes('stable'));
-            });
-            test('updates the spec when value changes', () => {
-              productBuilder._channel = 'experimental';
-              assert.equal(productBuilder.spec, 'chrome[experimental]');
-            });
-            test('changes value when labels are updated', () => {
-              productBuilder.set('labels', ['experimental']);
-              assert.equal(productBuilder._channel, 'experimental');
-              assert.equal(productBuilder._source, 'any');
-
-              productBuilder.set('labels', ['buildbot']);
-              assert.equal(productBuilder._source, 'buildbot');
-              assert.equal(productBuilder._channel, 'any');
-            });
-          });
-        });
+  suite('shared channels', () => {
+    setup(() => {
+      queryBuilder.clearAll();
+      queryBuilder.updateQueryParams({
+        label: ['stable'],
+        product: ['chrome', 'safari'],
       });
     });
-  </script>
+
+    for (const channel of window.wpt.Channels) {
+      test(channel, done => {
+        flush(() => {
+          for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
+            productBuilder._channel = channel;
+          }
+          expect(queryBuilder.queryParams.label).to.contain(channel);
+          done();
+        });
+      });
+    }
+
+    for (const channel of window.wpt.Channels) {
+      test(channel, done => {
+        flush(() => {
+          queryBuilder.set('labels', [channel]);
+          queryBuilder.submit();
+          for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
+            expect(productBuilder._channel).to.equal(channel);
+          }
+          done();
+        });
+      });
+    }
+  });
+
+  test('shas', () => {
+    const shas = ['1234567890', '0987654321'];
+    queryBuilder.shas = shas.slice(0, 1);
+    expect(queryBuilder.query).to.contain(`sha=${shas[0]}`);
+
+    queryBuilder.shas = shas;
+    expect(queryBuilder.query).to.contain(`sha=${shas[0]}`);
+    expect(queryBuilder.query).to.contain(`sha=${shas[1]}`);
+
+    queryBuilder.shas = ['latest'];
+    expect(queryBuilder.query).to.not.contain('sha');
+
+    queryBuilder.shas = [];
+    expect(queryBuilder.query).to.not.contain('sha');
+  });
+
+  suite('shas autocomplete', () => {
+    let sandbox;
+
+    setup(() => {
+      sandbox = sinon.sandbox.create();
+      sandbox.spy(queryBuilder, 'shasURLUpdated');
+    });
+
+    test('/api/shas fetches', () => {
+      // Should only trigger a single update, in spite of many params changing.
+      queryBuilder.updateQueryParams({ product: ['chrome'], aligned: true, label: ['dev'] });
+      expect(queryBuilder.shasURLUpdated.callCount).to.equal(1);
+    });
+
+    teardown(() => {
+      sandbox.restore();
+    });
+  });
+
+  suite('master runs only', () => {
+    setup(() => {
+      queryBuilder.masterRunsOnly = true;
+    });
+
+    test('updateQueryParams', () => {
+      queryBuilder.updateQueryParams({ label: ['master'] });
+      expect(queryBuilder.master).to.be.true;
+
+      queryBuilder.updateQueryParams({ label: [] });
+      expect(queryBuilder.master).to.be.false;
+    });
+
+    test('queryParams', () => {
+      queryBuilder.master = true;
+      expect(queryBuilder.query).to.contain('master');
+
+      queryBuilder.master = false;
+      expect(queryBuilder.query).to.not.contain('master');
+    });
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+});
+
+suite('ProductBuilder', () => {
+  let productBuilder;
+
+  setup(() => {
+    productBuilder = fixture('product-builder-fixture');
+    productBuilder.product = {browser_name: 'chrome'};
+  });
+
+  suite('ProductBuilder.prototype.*', () => {
+    suite('_channel', () => {
+      test('updates the labels when value changes', () => {
+        productBuilder._channel = 'stable';
+        assert.isTrue(productBuilder.labels.includes('stable'));
+      });
+      test('updates the spec when value changes', () => {
+        productBuilder._channel = 'experimental';
+        assert.equal(productBuilder.spec, 'chrome[experimental]');
+      });
+      test('changes value when labels are updated', () => {
+        productBuilder.set('labels', ['experimental']);
+        assert.equal(productBuilder._channel, 'experimental');
+        assert.equal(productBuilder._source, 'any');
+
+        productBuilder.set('labels', ['buildbot']);
+        assert.equal(productBuilder._source, 'buildbot');
+        assert.equal(productBuilder._channel, 'any');
+      });
+    });
+  });
+});
+</script>
 </body>
 </html>

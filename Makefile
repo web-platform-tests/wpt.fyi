@@ -106,11 +106,14 @@ _go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webs
 		-browser=$(BROWSER) \
 		$(FLAGS)
 
-web_components_test: xvfb firefox chrome node-web-component-tester webserver_deps
+web_components_test: xvfb firefox chrome web_components_tester webserver_deps
 	$(START_XVFB); \
 	cd $(WPTD_PATH)webapp; \
 	npm test || (($(STOP_XVFB)) && exit 1); \
 	$(STOP_XVFB)
+
+web_components_tester: git node-bower node-web-component-tester
+	cd $(WPTD_PATH)webapp; npm run bower-components
 
 sys_update: apt_update | sys_deps
 	gcloud components update
@@ -122,7 +125,7 @@ apt_update:
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
 
-webapp_deps: go_deps bower_components
+webapp_deps: go_deps webapp_node_modules
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
@@ -214,9 +217,15 @@ dev_data: git
 gcloud-login: gcloud  $(WPTD_PATH)client-secret.json
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 
-deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP_PATH
+deployment_state: gcloud-login webapp_deps webapp_node_modules_only package_service var-APP_PATH
+
+deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
-	cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH)
+	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
+		cd $(WPTD_PATH); util/deploy.sh -r -p $(APP_PATH); \
+	else \
+		cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
+	fi
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
@@ -224,15 +233,18 @@ deploy_staging: gcloud-login webapp_deps package_service var-BRANCH_NAME var-APP
 cleanup_staging_versions: gcloud-login
 	$(WPTD_GO_PATH)/util/cleanup-versions.sh
 
-deploy_production: gcloud webapp_deps package_service var-APP_PATH
+deploy_production: deployment_state
 	gcloud config set project wptdashboard
-	cd $(WPTD_PATH); util/deploy.sh -p $(APP_PATH)
+	cd $(WPTD_PATH); util/deploy.sh -r $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
-bower_components: git node-bower
-	cd $(WPTD_PATH)webapp; npm run bower-components
+webapp_node_modules: node
+	cd $(WPTD_PATH)webapp; npm install --production
+
+webapp_node_modules_only: webapp_node_modules
+	cd $(WPTD_PATH)webapp; npm prune --production
 
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
