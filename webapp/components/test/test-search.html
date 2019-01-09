@@ -32,8 +32,12 @@ suite('<test-search>', () => {
       assertQueryParse('2dcontext', {pattern: '2dcontext'});
     });
 
-    test('browser test status', () => {
+    test('browser test status eq', () => {
       assertQueryParse('cHrOmE:oK', {browser_name: 'chrome', status: 'OK'});
+    });
+
+    test('browser test status neq', () => {
+      assertQueryParse('sAfArI:!FaIl', {browser_name: 'safari', status: {not: 'FAIL'}});
     });
 
     test('pattern + test status', () => {

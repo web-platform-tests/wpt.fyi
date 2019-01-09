@@ -76,7 +76,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | "\\"" -- quote
 
     statusExp
-      = browserName ":" statusLiteral
+      = browserName ":!" statusLiteral -- neq
+      | browserName ":" statusLiteral -- eq
 
     browserName
       = caseInsensitive<"chrome">
@@ -88,10 +89,13 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = caseInsensitive<"unknown">
       | caseInsensitive<"pass">
       | caseInsensitive<"ok">
-      | caseInsensitive<"fail">
-      | caseInsensitive<"timeout">
-      | caseInsensitive<"not_run">
       | caseInsensitive<"error">
+      | caseInsensitive<"timeout">
+      | caseInsensitive<"notrun">
+      | caseInsensitive<"fail">
+      | caseInsensitive<"crash">
+      | caseInsensitive<"skip">
+      | caseInsensitive<"assert">
 
     nameFragment = nameFragmentChar+
 
@@ -137,10 +141,16 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   nameLiteralInner: chars => chars.eval(),
   nameLiteralChar_slash: (v) => '\\',
   nameLiteralChar_quote: (v) => '"',
-  statusExp: (l, colon, r) => {
+  statusExp_eq: (l, colon, r) => {
     return {
       browser_name: l.sourceString.toLowerCase(),
       status: r.sourceString.toUpperCase(),
+    };
+  },
+  statusExp_neq: (l, colonBang, r) => {
+    return {
+      browser_name: l.sourceString.toLowerCase(),
+      status: {not: r.sourceString.toUpperCase()},
     };
   },
   nameFragment: (chars) => {
