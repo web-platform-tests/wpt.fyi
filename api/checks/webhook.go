@@ -15,10 +15,10 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// NOTE(lukebjerring): This is https://github.com/apps/staging-wpt-fyi-status-check
 const (
-	wptfyiCheckAppID         = int64(19965)
-	checksStagingAppID       = int64(21580)
+	wptfyiCheckAppID         = int64(23318) // https://github.com/apps/wpt-fyi-status-check
+	wptfyiStagingCheckAppID  = int64(19965) // https://github.com/apps/staging-wpt-fyi-status-check
+	checksStagingAppID       = int64(21580) // https://github.com/apps/checks-staging-instance
 	wptRepoID                = int64(3618133)
 	wptRepoInstallationID    = int64(449270)
 	wptRepoOwner             = "web-platform-tests"
@@ -27,7 +27,11 @@ const (
 )
 
 func isWPTFYIApp(appID int64) bool {
-	return appID == wptfyiCheckAppID || appID == checksStagingAppID
+	switch appID {
+	case wptfyiCheckAppID, wptfyiStagingCheckAppID, checksStagingAppID:
+		return true
+	}
+	return false
 }
 
 // checkWebhookHandler listens for check_suite and check_run events,
@@ -248,7 +252,7 @@ func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []
 	destRepoID := pullRequest.GetPullRequest().GetBase().GetRepo().GetID()
 	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
 		// Pull is across forks; request a check suite on the main fork too.
-		return checksAPI.CreateWPTCheckSuite(wptfyiCheckAppID, wptRepoInstallationID, sha)
+		return checksAPI.CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoInstallationID, sha)
 	}
 	return false, nil
 }
@@ -284,7 +288,7 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 	}
 	log.Debugf("Creating %s %s check_run for %s/%s @ %s", status, opts.Name, suite.Owner, suite.Repo, suite.SHA)
 	if suite.AppID == 0 {
-		suite.AppID = wptfyiCheckAppID
+		suite.AppID = wptfyiStagingCheckAppID
 	}
 	client, err := getGitHubClient(ctx, suite.AppID, suite.InstallationID)
 	if err != nil {
