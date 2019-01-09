@@ -93,7 +93,7 @@ func (i *ProxyIndex) EvictRuns(percent float64) (int, error) {
 	return i.delegate.EvictRuns(percent)
 }
 
-// SetIndexChan sets the channel that synchronizes before ingesting a run by
+// SetIngestChan sets the channel that synchronizes before ingesting a run by
 // deferring to the proxy's delegate.
 func (i *ProxyIndex) SetIngestChan(c chan bool) {
 	i.delegate.SetIngestChan(c)
