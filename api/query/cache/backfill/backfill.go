@@ -21,7 +21,7 @@ import (
 // RunFetcher provides an interface for loading a limited number of runs
 // suitable for backfilling an index.
 type RunFetcher interface {
-	FetchRuns(limit int) ([]shared.TestRun, error)
+	FetchRuns(limit int) (shared.TestRunsByProduct, error)
 }
 
 type datastoreRunFetcher struct {
@@ -55,7 +55,7 @@ func NewDatastoreRunFetcher(projectID string, gcpCredentialsFile *string, logger
 	return datastoreRunFetcher{projectID, gcpCredentialsFile, logger}
 }
 
-func (f datastoreRunFetcher) FetchRuns(limit int) ([]shared.TestRun, error) {
+func (f datastoreRunFetcher) FetchRuns(limit int) (shared.TestRunsByProduct, error) {
 	ctx := context.Background()
 	var client *datastore.Client
 	var err error
@@ -67,26 +67,16 @@ func (f datastoreRunFetcher) FetchRuns(limit int) ([]shared.TestRun, error) {
 	if err != nil {
 		return nil, err
 	}
+	store := shared.NewCloudDatastore(ctx, client)
 
 	// Query Datastore for latest maxBytes/bytesPerRun test runs.
-	q := datastore.NewQuery("TestRun").Order("-TimeStart").Limit(limit)
-	var runs []shared.TestRun
-	keys, err := client.GetAll(ctx, q, &runs)
-	if err != nil {
-		return nil, err
-	}
-
-	// Ensure that runs contain IDs corresponding to Datastore keys.
-	for i := range keys {
-		runs[i].ID = keys[i].ID
-	}
-
+	runs, err := store.LoadTestRuns(nil, nil, nil, nil, nil, &limit, nil)
 	return runs, nil
 }
 
-func (i *backfillIndex) EvictAnyRun() error {
+func (i *backfillIndex) EvictRuns(percent float64) (int, error) {
 	i.backfilling = false
-	return i.ProxyIndex.EvictAnyRun()
+	return i.ProxyIndex.EvictRuns(percent)
 }
 
 func (m *backfillMonitor) Stop() error {
@@ -103,7 +93,7 @@ func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, e
 // will halt either:
 // The first time a run is evicted from the index.Index via EvictAnyRun(), OR
 // the first time the returned monitor.Monitor is stopped via Stop().
-func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxBytes uint64, idx index.Index) (monitor.Monitor, error) {
+func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
 	if idx == nil {
 		return nil, errNilIndex
 	}
@@ -112,12 +102,16 @@ func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, int
 		ProxyIndex:  index.NewProxyIndex(idx),
 		backfilling: true,
 	}
+	idxMon, err := monitor.NewIndexMonitor(logger, rt, interval, maxBytes, evictionPercent, bfIdx)
+	if err != nil {
+		return nil, err
+	}
 	bfMon := &backfillMonitor{
-		ProxyMonitor: monitor.NewProxyMonitor(monitor.NewIndexMonitor(logger, rt, interval, maxBytes, bfIdx)),
+		ProxyMonitor: monitor.NewProxyMonitor(idxMon),
 		idx:          bfIdx,
 	}
 
-	err := startBackfillMonitor(fetcher, logger, maxBytes, bfMon)
+	err = startBackfillMonitor(fetcher, logger, maxBytes, bfMon)
 	if err != nil {
 		return nil, err
 	}
@@ -126,9 +120,13 @@ func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, int
 }
 
 func startBackfillMonitor(fetcher RunFetcher, logger shared.Logger, maxBytes uint64, m *backfillMonitor) error {
-	runs, err := fetcher.FetchRuns(int(maxBytes / bytesPerRun))
+	// FetchRuns will return at most N runs for each product, so divide the upper bound by the number of products.
+	runsByProduct, err := fetcher.FetchRuns(int(maxBytes/bytesPerRun) / len(shared.GetDefaultProducts()))
 	if err != nil {
 		return err
+	}
+	if len(runsByProduct.AllRuns()) < 1 {
+		return nil
 	}
 
 	// Start the monitor to ensure that memory pressure is tracked.
@@ -137,20 +135,31 @@ func startBackfillMonitor(fetcher RunFetcher, logger shared.Logger, maxBytes uin
 	// Backfill index until its backfilling parameter is set to false, or
 	// collection of test runs is exhausted.
 	go func() {
-		for _, run := range runs {
-			if !m.idx.backfilling {
-				logger.Warningf("Backfilling halted mid-iteration")
-				break
-			}
-			logger.Infof("Backfilling index with run %v", run)
-			err = m.idx.IngestRun(run)
-			if err != nil {
-				logger.Errorf("Failed to ingest run during backfill: %v: %v", run, err)
-			} else {
-				logger.Infof("Backfilled index with run %v", run)
+		most := 0
+		for _, productRuns := range runsByProduct {
+			if most < len(productRuns.TestRuns) {
+				most = len(productRuns.TestRuns)
 			}
 		}
-		logger.Infof("Backfilling complete")
+		for i := 0; i < most && m.idx.backfilling; i++ {
+			for _, productRuns := range runsByProduct {
+				if !m.idx.backfilling {
+					logger.Warningf("Backfilling halted mid-iteration")
+					break
+				} else if i >= len(productRuns.TestRuns) {
+					continue
+				}
+				run := productRuns.TestRuns[i]
+				logger.Infof("Backfilling index with run %v", run)
+				err = m.idx.IngestRun(run)
+				if err != nil {
+					logger.Errorf("Failed to ingest run during backfill: %v: %v", run, err)
+				} else {
+					logger.Infof("Backfilled index with run %v", run)
+				}
+			}
+			logger.Infof("Backfilling complete")
+		}
 	}()
 
 	return nil

@@ -22,7 +22,8 @@ func getTestHarness(t *testing.T) (*gomock.Controller, *index.MockIndex, *MockRu
 	ctrl := gomock.NewController(t)
 	idx := index.NewMockIndex(ctrl)
 	rt := NewMockRuntime(ctrl)
-	mon := NewIndexMonitor(shared.NewNilLogger(), rt, time.Microsecond, 1, idx)
+	mon, err := NewIndexMonitor(shared.NewNilLogger(), rt, time.Microsecond, 1, 0.0, idx)
+	assert.Nil(t, err)
 	return ctrl, idx, rt, mon
 }
 
@@ -76,9 +77,9 @@ func TestOOM(t *testing.T) {
 	rt.EXPECT().GetHeapBytes().Return(uint64(0))
 	rt.EXPECT().GetHeapBytes().Return(uint64(10))
 	rt.EXPECT().GetHeapBytes().Return(uint64(0)).AnyTimes()
-	idx.EXPECT().EvictAnyRun().DoAndReturn(func() interface{} {
+	idx.EXPECT().EvictRuns(gomock.Any()).DoAndReturn(func(float64) (int, error) {
 		go func() { mon.Stop() }()
-		return nil
+		return 0, nil
 	})
 	err := mon.Start()
 	assert.Equal(t, errStopped, err)

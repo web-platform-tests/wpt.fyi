@@ -35,7 +35,9 @@ func RegisterRoutes() {
 
 	// Feature flags for wpt.fyi
 	shared.AddRoute("/flags", "flags", flagsHandler)
-	shared.AddRoute("/components/wpt-env-flags.html", "flags-component", flagsComponentHandler)
+	shared.AddRoute("/components/wpt-env-flags.js", "flags-component", flagsComponentHandler)
+
+	shared.AddRoute("/node_modules/{path:.*}", "components", componentsHandler)
 
 	// Test run results, viewed by pass-rate across the browsers
 	shared.AddRoute("/interop/", "interop", interopHandler)
@@ -47,6 +49,8 @@ func RegisterRoutes() {
 	// List of all test runs, by SHA[0:10]
 	shared.AddRoute("/runs", "test-runs", testRunsHandler)
 	shared.AddRoute("/test-runs", "test-runs", testRunsHandler) // Legacy name
+
+	shared.AddRoute("/service-worker.js", "service-worker", serviceWorkerHandler)
 
 	// Admin-only manual results upload.
 	shared.AddRoute("/admin/results/upload", "admin-results-upload", adminUploadHandler)

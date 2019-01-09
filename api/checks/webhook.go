@@ -255,8 +255,9 @@ func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []
 
 func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
 	// Jump straight to completed check_run for already-present runs for the SHA.
+	store := shared.NewAppEngineDatastore(ctx)
 	products = shared.ProductSpecs(products).OrDefault()
-	runsByProduct, err := shared.LoadTestRuns(ctx, products, nil, sha[:10], nil, nil, nil, nil)
+	runsByProduct, err := store.LoadTestRuns(products, nil, shared.SHAs{sha}, nil, nil, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}

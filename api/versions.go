@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
 )
 
 // VersionsHandler is an http.Handler for the /api/versions endpoint.
@@ -40,18 +39,19 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := h.ctx
-	query := datastore.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
+	store := shared.NewAppEngineDatastore(ctx)
+	query := store.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
 	if product.Labels != nil {
 		for label := range product.Labels.Iter() {
 			query = query.Filter("Labels =", label)
 		}
 	}
 	distinctQuery := query.Project("BrowserVersion").Distinct()
-	var queries []*datastore.Query
+	var queries []shared.Query
 	if product.BrowserVersion == "" {
-		queries = []*datastore.Query{distinctQuery}
+		queries = []shared.Query{distinctQuery}
 	} else {
-		queries = []*datastore.Query{
+		queries = []shared.Query{
 			query.Filter("BrowserVersion =", product.BrowserVersion).Limit(1),
 			shared.VersionPrefix(distinctQuery, "BrowserVersion", product.BrowserVersion, false /*desc*/),
 		}
@@ -60,7 +60,7 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var runs shared.TestRuns
 	for _, query := range queries {
 		var someRuns shared.TestRuns
-		if _, err := query.GetAll(ctx, &someRuns); err != nil {
+		if _, err := store.GetAll(query, &someRuns); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

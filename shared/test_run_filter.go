@@ -15,10 +15,27 @@ import (
 	mapset "github.com/deckarep/golang-set"
 )
 
+// SHAs is a helper type for a slice of commit/revision SHAs.
+type SHAs []string
+
+// EmptyOrLatest returns whether the shas slice is empty, or only contains
+// one item, which is the latest keyword.
+func (s SHAs) EmptyOrLatest() bool {
+	return len(s) < 1 || len(s) == 1 && IsLatest(s[0])
+}
+
+// FirstOrLatest returns the first sha in the slice, or the latest keyword.
+func (s SHAs) FirstOrLatest() string {
+	if s.EmptyOrLatest() {
+		return LatestSHA
+	}
+	return s[0]
+}
+
 // TestRunFilter represents the ways TestRun entities can be filtered in
 // the webapp and api.
 type TestRunFilter struct {
-	SHA      string       `json:"sha,omitempty"`
+	SHAs     SHAs         `json:"shas,omitempty"`
 	Labels   mapset.Set   `json:"labels,omitempty"`
 	Aligned  *bool        `json:"aligned,omitempty"`
 	From     *time.Time   `json:"from,omitempty"`
@@ -28,10 +45,36 @@ type TestRunFilter struct {
 	Products ProductSpecs `json:"products,omitempty"`
 }
 
+type testRunFilterNoCustomMarshalling TestRunFilter
+type marshallableTestRunFilter struct {
+	testRunFilterNoCustomMarshalling
+	Labels []string `json:"labels,omitempty"`
+}
+
+// MarshalJSON treats the set as an array so it can be marshalled.
+func (filter TestRunFilter) MarshalJSON() ([]byte, error) {
+	m := marshallableTestRunFilter{
+		testRunFilterNoCustomMarshalling: testRunFilterNoCustomMarshalling(filter),
+	}
+	m.Labels = ToStringSlice(filter.Labels)
+	return json.Marshal(m)
+}
+
+// UnmarshalJSON parses an array so that TestRunFilter can be unmarshalled.
+func (filter *TestRunFilter) UnmarshalJSON(data []byte) error {
+	var m marshallableTestRunFilter
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+	*filter = TestRunFilter(m.testRunFilterNoCustomMarshalling)
+	filter.Labels = NewSetFromStringSlice(m.Labels)
+	return nil
+}
+
 // IsDefaultQuery returns whether the params are just an empty query (or,
 // the equivalent defaults of an empty query).
 func (filter TestRunFilter) IsDefaultQuery() bool {
-	return IsLatest(filter.SHA) &&
+	return filter.SHAs.EmptyOrLatest() &&
 		(filter.Labels == nil || filter.Labels.Cardinality() < 1) &&
 		(filter.Aligned == nil) &&
 		(filter.From == nil) &&
@@ -122,8 +165,10 @@ func (filter TestRunFilter) GetProductsOrDefault() (products ProductSpecs) {
 func (filter TestRunFilter) ToQuery() (q url.Values) {
 	u := url.URL{}
 	q = u.Query()
-	if !IsLatest(filter.SHA) {
-		q.Set("sha", filter.SHA)
+	if !filter.SHAs.EmptyOrLatest() {
+		for _, sha := range filter.SHAs {
+			q.Add("sha", sha)
+		}
 	}
 	if filter.Labels != nil && filter.Labels.Cardinality() > 0 {
 		for label := range filter.Labels.Iter() {

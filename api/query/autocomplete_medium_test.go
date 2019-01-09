@@ -28,7 +28,7 @@ func TestAutocompleteHandler(t *testing.T) {
 		"https://example.com/1-summary.json.gz",
 		"https://example.com/2-summary.json.gz",
 	}
-	testRuns := []shared.TestRun{
+	testRuns := shared.TestRuns{
 		shared.TestRun{
 			ResultsURL: urls[0],
 		},
@@ -66,14 +66,18 @@ func TestAutocompleteHandler(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	// TODO(markdittmer): Should this be hitting GCS instead?
-	store := sharedtest.NewMockReadable(mockCtrl)
+	cache := sharedtest.NewMockReadable(mockCtrl)
 	rs := []*sharedtest.MockReadCloser{
 		sharedtest.NewMockReadCloser(t, summaryBytes[0]),
 		sharedtest.NewMockReadCloser(t, summaryBytes[1]),
 	}
+	mockStore := sharedtest.NewMockDatastore(mockCtrl)
+	mockStore.EXPECT().NewKey("TestRun", testRuns[0].ID).Return(sharedtest.MockKey{testRuns[0].ID})
+	mockStore.EXPECT().NewKey("TestRun", testRuns[1].ID).Return(sharedtest.MockKey{testRuns[1].ID})
+	mockStore.EXPECT().GetMulti(sharedtest.SameKeys(testRuns.GetTestRunIDs()), gomock.Any()).DoAndReturn(sharedtest.MultiRuns(testRuns))
 
-	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
-	store.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
+	cache.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
+	cache.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
 
 	q := "/b/"
 	url := fmt.Sprintf(
@@ -87,8 +91,9 @@ func TestAutocompleteHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	sh := autocompleteHandler{queryHandler{
+		store:      mockStore,
 		sharedImpl: defaultShared{ctx},
-		dataSource: shared.NewByteCachedStore(ctx, shared.NewMemcacheReadWritable(ctx, 48*time.Hour), store),
+		dataSource: shared.NewByteCachedStore(ctx, shared.NewMemcacheReadWritable(ctx, 48*time.Hour), cache),
 	}}
 
 	sh.ServeHTTP(w, r)

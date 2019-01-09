@@ -1,3 +1,7 @@
+// Copyright 2018 The WPT Dashboard Project. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package shared
 
 import (
@@ -12,9 +16,56 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-// LoadTestRun loads the TestRun entity for the given key.
-func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
+// Key abstracts an int64 based datastore.Key
+type Key interface {
+	IntID() int64
+}
+
+// Iterator abstracts a datastore.Iterator
+type Iterator interface {
+	Next(dst interface{}) (Key, error)
+}
+
+// Query abstracts a datastore.Query
+type Query interface {
+	Filter(filterStr string, value interface{}) Query
+	Project(project string) Query
+	Limit(limit int) Query
+	Offset(offset int) Query
+	Order(order string) Query
+	KeysOnly() Query
+	Distinct() Query
+	Run(Datastore) Iterator
+}
+
+// Datastore abstracts a datastore, hiding the distinctions between cloud and
+// appengine's datastores.
+type Datastore interface {
+	Context() context.Context
+	NewQuery(typeName string) Query
+	NewKey(typeName string, id int64) Key
+	GetAll(q Query, dst interface{}) ([]Key, error)
+	GetMulti(keys []Key, dst interface{}) error
+
+	// LoadTestRun loads the TestRun entity for the given key.
+	LoadTestRun(id int64) (*TestRun, error)
+
+	// LoadTestRuns loads the test runs for the TestRun entities for the given parameters.
+	// It is encapsulated because we cannot run single queries with multiple inequality
+	// filters, so must load the keys and merge the results.
+	LoadTestRuns(
+		products []ProductSpec,
+		labels mapset.Set,
+		revisions []string,
+		from *time.Time,
+		to *time.Time,
+		limit,
+		offset *int) (result TestRunsByProduct, err error)
+}
+
+func loadTestRun(store Datastore, id int64) (*TestRun, error) {
 	var testRun TestRun
+	ctx := store.Context()
 	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
 	err := cs.Get(getTestRunMemcacheKey(id), id, &testRun)
 	if err != nil {
@@ -25,47 +76,20 @@ func LoadTestRun(ctx context.Context, id int64) (*TestRun, error) {
 	return &testRun, nil
 }
 
-// LoadTestRunsBySHAs loads all test runs that belong to any of the given revisions (SHAs).
-func LoadTestRunsBySHAs(ctx context.Context, shas ...string) (runs TestRuns, err error) {
-	for _, sha := range shas {
-		if len(sha) > 10 {
-			sha = sha[:10]
-		}
-		q := datastore.NewQuery("TestRun")
-		ids, err := loadKeysForRevision(ctx, q, sha)
-		if err != nil {
-			return runs, err
-		}
-		shaRuns := make(TestRuns, len(ids))
-		for i := range ids {
-			run, err := LoadTestRun(ctx, ids[i])
-			if err != nil {
-				return nil, err
-			}
-			shaRuns[i] = *run
-		}
-		for i := range ids {
-			shaRuns[i].ID = ids[i]
-		}
-		runs = append(runs, shaRuns...)
-	}
-	return runs, err
-}
-
 // LoadTestRunKeys loads the keys for the TestRun entities for the given parameters.
 // It is encapsulated because we cannot run single queries with multiple inequality
 // filters, so must load the keys and merge the results.
 func LoadTestRunKeys(
-	ctx context.Context,
+	store Datastore,
 	products []ProductSpec,
 	labels mapset.Set,
-	sha string,
+	revisions []string,
 	from *time.Time,
 	to *time.Time,
 	limit *int,
 	offset *int) (result KeysByProduct, err error) {
 	result = make(KeysByProduct, len(products))
-	baseQuery := datastore.NewQuery("TestRun")
+	baseQuery := store.NewQuery("TestRun")
 	if offset != nil {
 		baseQuery = baseQuery.Offset(*offset)
 	}
@@ -76,14 +100,16 @@ func LoadTestRunKeys(
 		}
 	}
 	var globalKeyFilter mapset.Set
-	if !IsLatest(sha) {
-		var ids TestRunIDs
-		if ids, err = loadKeysForRevision(ctx, baseQuery, sha); err != nil {
-			return nil, err
-		}
+	if len(revisions) > 1 || len(revisions) == 1 && !IsLatest(revisions[0]) {
 		globalKeyFilter = mapset.NewSet()
-		for _, id := range ids {
-			globalKeyFilter.Add(id)
+		for _, sha := range revisions {
+			var ids TestRunIDs
+			if ids, err = loadKeysForRevision(store, baseQuery, sha); err != nil {
+				return nil, err
+			}
+			for _, id := range ids {
+				globalKeyFilter.Add(id)
+			}
 		}
 	}
 	for i, product := range products {
@@ -96,7 +122,7 @@ func LoadTestRunKeys(
 		}
 		if !IsLatest(product.Revision) {
 			var ids TestRunIDs
-			if ids, err = loadKeysForRevision(ctx, query, product.Revision); err != nil {
+			if ids, err = loadKeysForRevision(store, query, product.Revision); err != nil {
 				return nil, err
 			}
 			revKeyFilter := mapset.NewSet()
@@ -107,7 +133,7 @@ func LoadTestRunKeys(
 		}
 		if product.BrowserVersion != "" {
 			var versionKeys mapset.Set
-			if versionKeys, err = loadKeysForBrowserVersion(ctx, query, product.BrowserVersion); err != nil {
+			if versionKeys, err = loadKeysForBrowserVersion(store, query, product.BrowserVersion); err != nil {
 				return nil, err
 			}
 			productKeyFilter = merge(productKeyFilter, versionKeys)
@@ -122,8 +148,8 @@ func LoadTestRunKeys(
 			query = query.Filter("TimeStart <", *to)
 		}
 
-		var keys []*datastore.Key
-		iter := query.KeysOnly().Run(ctx)
+		var keys []Key
+		iter := query.KeysOnly().Run(store)
 		for {
 			key, err := iter.Next(nil)
 			if err == datastore.Done {
@@ -156,29 +182,27 @@ func merge(s1, s2 mapset.Set) mapset.Set {
 	return s1.Intersect(s2)
 }
 
-// LoadTestRuns loads the test runs for the TestRun entities for the given parameters.
-// It is encapsulated because we cannot run single queries with multiple inequality
-// filters, so must load the keys and merge the results.
-func LoadTestRuns(
-	ctx context.Context,
+func loadTestRuns(
+	store Datastore,
 	products []ProductSpec,
 	labels mapset.Set,
-	sha string,
+	revisions []string,
 	from *time.Time,
 	to *time.Time,
 	limit,
 	offset *int) (result TestRunsByProduct, err error) {
-	keys, err := LoadTestRunKeys(ctx, products, labels, sha, from, to, limit, offset)
+	keys, err := LoadTestRunKeys(store, products, labels, revisions, from, to, limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	return LoadTestRunsByKeys(ctx, keys)
+	return LoadTestRunsByKeys(store, keys)
 }
 
 // LoadTestRunsByKeys loads the given test runs (by key), but also appends the
 // ID to the TestRun entity.
-func LoadTestRunsByKeys(ctx context.Context, keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
+func LoadTestRunsByKeys(store Datastore, keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
 	result = TestRunsByProduct{}
+	ctx := store.Context()
 	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
 	var wg sync.WaitGroup
 	for _, kbp := range keysByProduct {
@@ -221,8 +245,8 @@ func contains(s []string, x string) bool {
 }
 
 // Loads any keys for a revision prefix or full string match
-func loadKeysForRevision(ctx context.Context, query *datastore.Query, sha string) (result TestRunIDs, err error) {
-	var revQuery *datastore.Query
+func loadKeysForRevision(store Datastore, query Query, sha string) (result TestRunIDs, err error) {
+	var revQuery Query
 	if len(sha) < 40 {
 		revQuery = query.
 			Order("FullRevisionHash").
@@ -233,8 +257,8 @@ func loadKeysForRevision(ctx context.Context, query *datastore.Query, sha string
 		revQuery = query.Filter("FullRevisionHash =", sha[:40])
 	}
 
-	var keys []*datastore.Key
-	if keys, err = revQuery.KeysOnly().GetAll(ctx, nil); err != nil {
+	var keys []Key
+	if keys, err = store.GetAll(revQuery.KeysOnly(), nil); err != nil {
 		return nil, err
 	}
 	return GetTestRunIDs(keys), nil
@@ -242,17 +266,17 @@ func loadKeysForRevision(ctx context.Context, query *datastore.Query, sha string
 
 // Loads any keys for a full string match or a version prefix (Between [version].* and [version].9*).
 // Entries in the set are the int64 value of the keys.
-func loadKeysForBrowserVersion(ctx context.Context, query *datastore.Query, version string) (result mapset.Set, err error) {
+func loadKeysForBrowserVersion(store Datastore, query Query, version string) (result mapset.Set, err error) {
 	versionQuery := VersionPrefix(query, "BrowserVersion", version, true)
-	var keys []*datastore.Key
+	var keys []Key
 	keyset := mapset.NewSet()
-	if keys, err = versionQuery.KeysOnly().GetAll(ctx, nil); err != nil {
+	if keys, err = store.GetAll(versionQuery.KeysOnly(), nil); err != nil {
 		return nil, err
 	}
 	for _, key := range keys {
 		keyset.Add(key.IntID())
 	}
-	if keys, err = query.Filter("BrowserVersion =", version).KeysOnly().GetAll(ctx, nil); err != nil {
+	if keys, err = store.GetAll(query.Filter("BrowserVersion =", version).KeysOnly(), nil); err != nil {
 		return nil, err
 	}
 	for _, key := range keys {
@@ -263,7 +287,7 @@ func loadKeysForBrowserVersion(ctx context.Context, query *datastore.Query, vers
 
 // VersionPrefix returns the given query with a prefix filter on the given
 // field name, using the >= and < filters.
-func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc bool) *datastore.Query {
+func VersionPrefix(query Query, fieldName, versionPrefix string, desc bool) Query {
 	order := fieldName
 	if desc {
 		order = "-" + order
@@ -280,7 +304,7 @@ func VersionPrefix(query *datastore.Query, fieldName, versionPrefix string, desc
 // of those SHAs to a KeysByProduct map of products to the TestRun keys, for the
 // runs in the aligned run.
 func GetAlignedRunSHAs(
-	ctx context.Context,
+	store Datastore,
 	products ProductSpecs,
 	labels mapset.Set,
 	from,
@@ -291,7 +315,7 @@ func GetAlignedRunSHAs(
 		maxMax := MaxCountMaxValue
 		limit = &maxMax
 	}
-	query := datastore.
+	query := store.
 		NewQuery("TestRun").
 		Order("-TimeStart")
 
@@ -311,10 +335,10 @@ func GetAlignedRunSHAs(
 	keyCollector := make(map[string]KeysByProduct)
 	keys = make(map[string]KeysByProduct)
 	done := mapset.NewSet()
-	it := query.Run(ctx)
+	it := query.Run(store)
 	for {
 		var testRun TestRun
-		var key *datastore.Key
+		var key Key
 		matchingProduct := -1
 		key, err := it.Next(&testRun)
 		if err == datastore.Done {
@@ -341,7 +365,7 @@ func GetAlignedRunSHAs(
 			continue
 		}
 		set.Add(matchingProduct)
-		keyCollector[testRun.Revision][matchingProduct].Keys = []*datastore.Key{key}
+		keyCollector[testRun.Revision][matchingProduct].Keys = []Key{key}
 		if set.Cardinality() == len(products) && !done.Contains(testRun.Revision) {
 			if offset == nil || done.Cardinality() >= *offset {
 				shas = append(shas, testRun.Revision)

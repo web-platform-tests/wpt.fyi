@@ -36,7 +36,8 @@ func TestEvictEmpty(t *testing.T) {
 	loader := NewMockReportLoader(ctrl)
 	i, err := NewShardedWPTIndex(loader, 1)
 	assert.Nil(t, err)
-	assert.NotNil(t, i.EvictAnyRun())
+	_, err = i.EvictRuns(0.0)
+	assert.NotNil(t, err)
 }
 
 func TestIngestRun_zeroID(t *testing.T) {
@@ -148,7 +149,94 @@ func TestEvictNonEmpty(t *testing.T) {
 	}
 	loader.EXPECT().Load(run).Return(results, nil)
 	assert.Nil(t, i.IngestRun(run))
-	assert.Nil(t, i.EvictAnyRun())
+	n, err := i.EvictRuns(0.0)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, n)
+}
+
+func TestEvictMultiple(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	i, err := NewShardedWPTIndex(loader, 1)
+	assert.Nil(t, err)
+
+	run1 := shared.TestRun{
+		ID:            1,
+		RawResultsURL: "http://example.com/results1.json",
+	}
+	results1 := &metrics.TestResultsReport{
+		Results: []*metrics.TestResults{
+			&metrics.TestResults{
+				Test:     "a",
+				Status:   "PASS",
+				Subtests: []metrics.SubTest{},
+			},
+			&metrics.TestResults{
+				Test:   "b",
+				Status: "OK",
+				Subtests: []metrics.SubTest{
+					metrics.SubTest{
+						Name:   "sub",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	}
+	run2 := shared.TestRun{
+		ID:            2,
+		RawResultsURL: "http://example.com/results2.json",
+	}
+	results2 := &metrics.TestResultsReport{
+		Results: []*metrics.TestResults{
+			&metrics.TestResults{
+				Test:     "a",
+				Status:   "FAIL",
+				Subtests: []metrics.SubTest{},
+			},
+			&metrics.TestResults{
+				Test:   "b",
+				Status: "OK",
+				Subtests: []metrics.SubTest{
+					metrics.SubTest{
+						Name:   "sub",
+						Status: "TIMEOUT",
+					},
+				},
+			},
+		},
+	}
+	run3 := shared.TestRun{
+		ID:            3,
+		RawResultsURL: "http://example.com/results2.json",
+	}
+	results3 := &metrics.TestResultsReport{
+		Results: []*metrics.TestResults{
+			&metrics.TestResults{
+				Test:     "a",
+				Status:   "PASS",
+				Subtests: []metrics.SubTest{},
+			},
+			&metrics.TestResults{
+				Test:     "b",
+				Status:   "TIMEOUT",
+				Subtests: []metrics.SubTest{},
+			},
+		},
+	}
+
+	loader.EXPECT().Load(run1).Return(results1, nil)
+	loader.EXPECT().Load(run2).Return(results2, nil)
+	loader.EXPECT().Load(run3).Return(results3, nil)
+
+	assert.Nil(t, i.IngestRun(run1))
+	assert.Nil(t, i.IngestRun(run2))
+	assert.Nil(t, i.IngestRun(run3))
+
+	n, err := i.EvictRuns(0.7)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, n)
 }
 
 func TestSync(t *testing.T) {
@@ -196,7 +284,9 @@ func TestSync(t *testing.T) {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			i.EvictAnyRun()
+			n, err := i.EvictRuns(0.0)
+			assert.Nil(t, err)
+			assert.Equal(t, 1, n)
 		}(j)
 		wg.Add(1)
 		go func(id int64) {
@@ -212,7 +302,7 @@ func TestSync(t *testing.T) {
 				makeRun(int64(n - 3)),
 				makeRun(int64(n - 4)),
 			}
-			plan, err := i.Bind(runs, query.TestStatusConstraint{
+			plan, err := i.Bind(runs, query.TestStatusEq{
 				BrowserName: "Chrome",
 				Status:      shared.TestStatusPass,
 			}.BindToRuns(runs))

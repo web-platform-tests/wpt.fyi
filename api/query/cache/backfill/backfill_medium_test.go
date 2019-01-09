@@ -37,14 +37,14 @@ func (i *countingIndex) IngestRun(r shared.TestRun) error {
 	return nil
 }
 
-func (i *countingIndex) EvictAnyRun() error {
-	err := i.ProxyIndex.EvictAnyRun()
+func (i *countingIndex) EvictRuns(percent float64) (int, error) {
+	n, err := i.ProxyIndex.EvictRuns(percent)
 	if err != nil {
-		return err
+		return n, err
 	}
 
-	i.count--
-	return nil
+	i.count -= n
+	return n, nil
 }
 
 func (*countingIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, error) {
@@ -55,18 +55,21 @@ func TestStopImmediately(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fetcher := NewMockRunFetcher(ctrl)
-	fetcher.EXPECT().FetchRuns(gomock.Any()).Return([]shared.TestRun{
-		shared.TestRun{ID: 1},
-		shared.TestRun{ID: 2},
-		shared.TestRun{ID: 3},
-		shared.TestRun{ID: 4},
+	product, _ := shared.ParseProductSpec("chrome")
+	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(shared.TestRunsByProduct{
+		shared.ProductTestRuns{Product: product, TestRuns: shared.TestRuns{
+			shared.TestRun{ID: 1},
+			shared.TestRun{ID: 2},
+			shared.TestRun{ID: 3},
+			shared.TestRun{ID: 4},
+		}},
 	}, nil)
 	rt := monitor.NewMockRuntime(ctrl)
 	rt.EXPECT().GetHeapBytes().Return(uint64(0)).AnyTimes()
 	mockIdx := index.NewMockIndex(ctrl)
 	mockIdx.EXPECT().IngestRun(gomock.Any()).Return(nil).AnyTimes()
 	idx := countingIndex{index.NewProxyIndex(mockIdx), 0}
-	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, time.Millisecond*10, 1, &idx)
+	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, time.Millisecond*10, 1, 0.0, &idx)
 	assert.Nil(t, err)
 	m.Stop()
 	time.Sleep(time.Second)
@@ -78,11 +81,17 @@ func TestIngestSomeRuns(t *testing.T) {
 	defer ctrl.Finish()
 
 	fetcher := NewMockRunFetcher(ctrl)
-	fetcher.EXPECT().FetchRuns(gomock.Any()).Return([]shared.TestRun{
-		shared.TestRun{ID: 1},
-		shared.TestRun{ID: 2},
-		shared.TestRun{ID: 3},
-		shared.TestRun{ID: 4},
+	product, _ := shared.ParseProductSpec("chrome")
+	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(shared.TestRunsByProduct{
+		shared.ProductTestRuns{
+			Product: product,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{ID: 1},
+				shared.TestRun{ID: 2},
+				shared.TestRun{ID: 3},
+				shared.TestRun{ID: 4},
+			},
+		},
 	}, nil)
 
 	freq := time.Millisecond * 10
@@ -108,9 +117,9 @@ func TestIngestSomeRuns(t *testing.T) {
 		return nil
 	}).AnyTimes()
 
-	mockIdx.EXPECT().EvictAnyRun().Return(nil).AnyTimes()
+	mockIdx.EXPECT().EvictRuns(gomock.Any()).Return(1, nil).AnyTimes()
 
-	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, freq, maxBytes, &idx)
+	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, freq, maxBytes, 0.0, &idx)
 	assert.Nil(t, err)
 	defer m.Stop()
 

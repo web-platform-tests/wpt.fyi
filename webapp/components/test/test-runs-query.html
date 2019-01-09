@@ -2,26 +2,24 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-  <script src="../../bower_components/web-component-tester/browser.js"></script>
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <link rel="import" href="../../bower_components/polymer/polymer-element.html">
-  <link rel="import" href="../test-runs-query.html">
+  <script type="module" src="../../node_modules/@polymer/polymer/polymer-element.js"></script>
+  <script type="module" src="../test-runs-query.js"></script>
 </head>
 
 <dom-module id="test-runs-query-concrete">
-  <script>
-    // Needed for FF, which doesn't block on the imports above.
-    document.addEventListener('WebComponentsReady', () => {
-      /* global TestRunsQuery */
-      class ConcreteType extends TestRunsQuery(window.Polymer.Element) {}
-      window.customElements.define('test-runs-query-concrete', ConcreteType);
+  <script type="module">
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { TestRunsQuery, TestRunsUIQuery } from '../test-runs-query.js';
 
-      /* global TestRunsUIQuery */
-      class ConcreteUIType extends TestRunsUIQuery(window.Polymer.Element) {}
-      window.customElements.define('test-runs-ui-query-concrete', ConcreteUIType);
-    });
-  </script>
+class ConcreteType extends TestRunsQuery(PolymerElement) {}
+window.customElements.define('test-runs-query-concrete', ConcreteType);
+
+class ConcreteUIType extends TestRunsUIQuery(PolymerElement) {}
+window.customElements.define('test-runs-ui-query-concrete', ConcreteUIType);
+</script>
 </dom-module>
 
 <test-fixture id="test-runs-query-fixture">
@@ -37,163 +35,174 @@
 </test-fixture>
 
 <body>
-  <script>
-    document.addEventListener('WebComponentsReady', () => {
-      suite('TestRunsQuery', () => {
-        let testRunsQuery, testRunsUIQuery;
+  <script type="module">
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import '../test-runs-query.js';
+suite('TestRunsQuery', () => {
+  let testRunsQuery, testRunsUIQuery;
 
-        setup(() => {
-          testRunsQuery = fixture('test-runs-query-fixture');
-          testRunsUIQuery = fixture('test-runs-ui-query-fixture');
-        });
+  setup(() => {
+    testRunsQuery = fixture('test-runs-query-fixture');
+    testRunsUIQuery = fixture('test-runs-ui-query-fixture');
+  });
 
-        test('instanceof Polymer.Element', () => {
-          assert.isTrue(testRunsQuery instanceof window.Polymer.Element);
-        });
+  test('instanceof Polymer.Element', () => {
+    assert.isTrue(testRunsQuery instanceof PolymerElement);
+  });
 
-        test('isDefaultProducts', () => {
-          testRunsQuery.products = window.wpt.DefaultProducts;
-          expect(testRunsQuery.isDefaultProducts).to.equal(true);
-          testRunsQuery.products = window.wpt.DefaultProducts.slice(0, 1);
-          expect(testRunsQuery.isDefaultProducts).to.equal(false);
-        });
+  test('isDefaultProducts', () => {
+    testRunsQuery.products = window.wpt.DefaultProducts;
+    expect(testRunsQuery.isDefaultProducts).to.equal(true);
+    testRunsQuery.products = window.wpt.DefaultProducts.slice(0, 1);
+    expect(testRunsQuery.isDefaultProducts).to.equal(false);
+  });
 
-        suite('collapses shared channels', () => {
-          for (const channel of window.wpt.Channels) {
-            test(channel, () => {
-              testRunsQuery.products = window.wpt.DefaultProducts
-                .map(p => Object.assign({}, p, { labels: [channel] }));
-              expect(testRunsQuery.query).to.equal(`?label=${channel}`);
-            });
-          }
-        });
+  suite('collapses shared channels', () => {
+    for (const channel of window.wpt.Channels) {
+      test(channel, () => {
+        testRunsQuery.products = window.wpt.DefaultProducts
+          .map(p => Object.assign({}, p, { labels: [channel] }));
+        expect(testRunsQuery.query).to.equal(`?label=${channel}`);
+      });
+    }
+  });
 
-        suite('expands channel labels', () => {
-          for (const channel of window.wpt.Channels) {
-            test(channel, () => {
-              testRunsQuery.updateQueryParams({ label: [channel] });
-              expect(testRunsQuery.products.length).to.equal(window.wpt.DefaultProducts.length);
-              for (const product of testRunsQuery.products) {
-                expect(product.labels).to.contain(channel);
-              }
-              expect(testRunsQuery.labels).to.not.contain(channel);
-            });
-          }
-        });
+  suite('expands channel labels', () => {
+    for (const channel of window.wpt.Channels) {
+      test(channel, () => {
+        testRunsQuery.updateQueryParams({ label: [channel] });
+        expect(testRunsQuery.products.length).to.equal(window.wpt.DefaultProducts.length);
+        for (const product of testRunsQuery.products) {
+          expect(product.labels).to.contain(channel);
+        }
+        expect(testRunsQuery.labels).to.not.contain(channel);
+      });
+    }
+  });
 
-        suite('TestRunsQuery.prototype.*', () => {
+  suite('TestRunsQuery.prototype.*', () => {
 
-          const revision = '1234512345';
-          const chrome = 'chrome';
-          const labels = ['foo', 'bar'];
-          const specStr = `${chrome}[${labels.join(',')}]@${revision}`;
-          test(`parseProductSpec("${specStr}")`, () => {
-            const parsed = testRunsQuery.parseProductSpec(specStr);
-            assert.equal(parsed.browser_name, chrome);
-            assert.equal(parsed.revision, revision);
-            for (const label of labels) {
-              expect(Array.from(parsed.labels)).to.include(label);
-            }
-          });
+    const revision = '1234512345';
+    const chrome = 'chrome';
+    const labels = ['foo', 'bar'];
+    const specStr = `${chrome}[${labels.join(',')}]@${revision}`;
+    test(`parseProductSpec("${specStr}")`, () => {
+      const parsed = testRunsQuery.parseProductSpec(specStr);
+      assert.equal(parsed.browser_name, chrome);
+      assert.equal(parsed.revision, revision);
+      for (const label of labels) {
+        expect(Array.from(parsed.labels)).to.include(label);
+      }
+    });
 
-          const version63 = '63.0';
-          const chrome63 = `chrome-${version63}`;
-          test(`parseProduct(${chrome63})`, () => {
-            const parsed = testRunsQuery.parseProduct(chrome63);
-            assert.equal(parsed.browser_name, chrome);
-            assert.equal(parsed.browser_version, version63);
-          });
+    const version63 = '63.0';
+    const chrome63 = `chrome-${version63}`;
+    test(`parseProduct(${chrome63})`, () => {
+      const parsed = testRunsQuery.parseProduct(chrome63);
+      assert.equal(parsed.browser_name, chrome);
+      assert.equal(parsed.browser_version, version63);
+    });
 
-          test('no closing bracket', () => {
-            expect(() => testRunsQuery.parseProductSpec('chrome[foo')).to.throw();
-            expect(() => testRunsQuery.parseProductSpec('chrome[foo]')).to.not.throw();
-          });
+    test('no closing bracket', () => {
+      expect(() => testRunsQuery.parseProductSpec('chrome[foo')).to.throw();
+      expect(() => testRunsQuery.parseProductSpec('chrome[foo]')).to.not.throw();
+    });
 
-          suite('updateQueryParams', () => {
-            test('product', () => {
-              const params = {
-                product: ['safari', 'safari[experimental]'],
-              };
-              testRunsQuery.updateQueryParams(params);
-              expect(testRunsQuery.products[0].browser_name).to.equal('safari');
-              expect(testRunsQuery.products[1].browser_name).to.equal('safari');
-              expect(testRunsQuery.products[1].labels).to.contain('experimental');
-            });
-
-            test('label', () => {
-              testRunsQuery.products = window.wpt.DefaultProducts
-                .map(p => Object.assign({}, p, { labels: ['experimental'] }));
-              for (const channel of window.wpt.Channels) {
-                testRunsQuery.updateQueryParams({
-                  label: [channel],
-                });
-                expect(testRunsQuery.productSpecs.join(',')).to.equal(
-                  window.wpt.DefaultProducts
-                    .map(p => Object.assign({}, p, { labels: [channel] }))
-                    .map(p => testRunsQuery.getSpec(p))
-                    .join(',')
-                );
-              }
-            });
-          });
-
-          suite('queryParams', () => {
-            test('products', () => {
-              testRunsQuery.products = [
-                Object.assign({}, window.wpt.DefaultProducts[0], { labels: ['experimental'] }),
-                Object.assign({}, window.wpt.DefaultProducts[1], { labels: ['stable'] })
-              ];
-              expect(testRunsQuery.queryParams.product).to.contain(
-                `${window.wpt.DefaultProducts[0].browser_name}[experimental]`);
-              expect(testRunsQuery.queryParams.product).to.contain(
-                `${window.wpt.DefaultProducts[1].browser_name}[stable]`);
-            });
-
-            test('aligned', () => {
-              testRunsQuery.aligned = true;
-              expect(testRunsQuery.queryParams.aligned).to.be.true;
-            });
-
-            test('sha', () => {
-              testRunsQuery.sha = '1234567890';
-              testRunsQuery.aligned = true;
-              expect(testRunsQuery.queryParams.sha).to.equal(testRunsQuery.sha);
-              expect(testRunsQuery.queryParams.aligned).to.not.be.defined;
-            });
-          });
-
-          suite('computeResultsRangeMessage', () => {
-            test('chrome', () => {
-              testRunsQuery.productSpecs = ['chrome', 'firefox'];
-              expect(testRunsQuery.resultsRangeMessage).to.contain('chrome, firefox');
-            });
-            test('labels', () => {
-              testRunsQuery.labels = ['foo'];
-              expect(testRunsQuery.resultsRangeMessage).to.contain('with label \'foo\'');
-              testRunsQuery.labels = ['foo', 'bar'];
-              expect(testRunsQuery.resultsRangeMessage).to.contain('with labels \'foo\', \'bar\'');
-            });
-            test('master', () => {
-              testRunsQuery.master = true;
-              expect(testRunsQuery.resultsRangeMessage).to.contain('master test runs');
-              expect(testRunsQuery.resultsRangeMessage).to.not.contain('with label');
-            });
-          });
-        });
-
-        suite('TestRunsUIQuery.prototype.*', () => {
-          test('diff', () => {
-            testRunsUIQuery.diff = true;
-            expect(testRunsUIQuery.query).to.contain('diff');
-
-            testRunsUIQuery.diff = false;
-            expect(testRunsUIQuery.query).to.not.contain('diff');
-          });
-        });
-
+    suite('updateQueryParams', () => {
+      test('product', () => {
+        const params = {
+          product: ['safari', 'safari[experimental]'],
+        };
+        testRunsQuery.updateQueryParams(params);
+        expect(testRunsQuery.products[0].browser_name).to.equal('safari');
+        expect(testRunsQuery.products[1].browser_name).to.equal('safari');
+        expect(testRunsQuery.products[1].labels).to.contain('experimental');
       });
 
-    }); // end 'WebComponentsReady' handler.
-  </script>
+      test('label', () => {
+        testRunsQuery.products = window.wpt.DefaultProducts
+          .map(p => Object.assign({}, p, { labels: ['experimental'] }));
+        for (const channel of window.wpt.Channels) {
+          testRunsQuery.updateQueryParams({
+            label: [channel],
+          });
+          expect(testRunsQuery.productSpecs.join(',')).to.equal(
+            window.wpt.DefaultProducts
+              .map(p => Object.assign({}, p, { labels: [channel] }))
+              .map(p => testRunsQuery.getSpec(p))
+              .join(',')
+          );
+        }
+      });
+    });
+
+    suite('queryParams', () => {
+      test('products', () => {
+        testRunsQuery.products = [
+          Object.assign({}, window.wpt.DefaultProducts[0], { labels: ['experimental'] }),
+          Object.assign({}, window.wpt.DefaultProducts[1], { labels: ['stable'] })
+        ];
+        expect(testRunsQuery.queryParams.product).to.contain(
+          `${window.wpt.DefaultProducts[0].browser_name}[experimental]`);
+        expect(testRunsQuery.queryParams.product).to.contain(
+          `${window.wpt.DefaultProducts[1].browser_name}[stable]`);
+      });
+
+      test('aligned', () => {
+        testRunsQuery.aligned = true;
+        expect(testRunsQuery.queryParams.aligned).to.be.true;
+      });
+
+      test('shas', () => {
+        testRunsQuery.shas = ['1234567890'];
+        testRunsQuery.aligned = true;
+        expect(testRunsQuery.queryParams.sha).to.equal(testRunsQuery.shas);
+        expect(testRunsQuery.queryParams.aligned).to.not.be.defined;
+
+        testRunsQuery.shas = [];
+        expect(testRunsQuery.sha).to.equal('latest');
+      });
+    });
+
+    suite('computeResultsRangeMessage', () => {
+      test('chrome', () => {
+        testRunsQuery.productSpecs = ['chrome', 'firefox'];
+        expect(testRunsQuery.resultsRangeMessage).to.contain('chrome, firefox');
+      });
+      test('labels', () => {
+        testRunsQuery.labels = ['foo'];
+        expect(testRunsQuery.resultsRangeMessage).to.contain('with label \'foo\'');
+        testRunsQuery.labels = ['foo', 'bar'];
+        expect(testRunsQuery.resultsRangeMessage).to.contain('with labels \'foo\', \'bar\'');
+      });
+      test('master', () => {
+        testRunsQuery.master = true;
+        expect(testRunsQuery.resultsRangeMessage).to.contain('master test runs');
+        expect(testRunsQuery.resultsRangeMessage).to.not.contain('with label');
+      });
+      test('shas', () => {
+        const sha = '1234567890';
+        testRunsQuery.shas = [sha];
+        expect(testRunsQuery.resultsRangeMessage).to.contain(`revision ${sha.substr(0, 7)}`);
+
+        const sha2 = 'abcdef1234abcdef1234abcdef1234abcdef1234';
+        testRunsQuery.shas = [sha, sha2];
+        expect(testRunsQuery.resultsRangeMessage).to.contain(`revisions ${sha.substr(0, 7)}, ${sha2.substr(0, 7)}`);
+      });
+    });
+  });
+
+  suite('TestRunsUIQuery.prototype.*', () => {
+    test('diff', () => {
+      testRunsUIQuery.diff = true;
+      expect(testRunsUIQuery.query).to.contain('diff');
+
+      testRunsUIQuery.diff = false;
+      expect(testRunsUIQuery.query).to.not.contain('diff');
+    });
+  });
+
+});
+</script>
 </body>
 </html>

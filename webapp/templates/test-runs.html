@@ -3,13 +3,14 @@
 <head>
 {{ template "_head_common.html" }}
 
-<link rel="import" href="/components/wpt-runs.html">
+<script type="module" src="/components/wpt-runs.js"></script>
 </head>
 <body>
 <div id="content">
   <wpt-header></wpt-header>
   <div>
-    <wpt-runs {{ template "_test_run_query_params.html" .Filter }}></wpt-runs>
+    <wpt-runs {{ template "_test_run_query_params.html" . }}
+              {{- if .PR }} pr="{{.PR}}"{{end}}></wpt-runs>
   </div>
 </div>
 {{ template "_ga.html" }}

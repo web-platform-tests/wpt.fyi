@@ -27,7 +27,10 @@ while getopts ':rh' flag; do
   esac
 done
 
-info "Installing web server code dependencies"
+info "Pruning node_modules so dev_appserver can handle watching file updates..."
+wptd_exec make webapp_node_modules_only
+
+info "Installing other web server code dependencies"
 wptd_exec make webserver_deps
 
 DOCKER_STATUS="${?}"

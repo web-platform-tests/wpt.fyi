@@ -2,7 +2,7 @@
 <html>
 <head>
   {{ template "_head_common.html" }}
-  <link rel="import" href="/components/interop.html">
+  <script type="module" src="/components/interop.js"></script>
 </head>
 <body>
 <div id="content">
@@ -11,7 +11,7 @@
     <wpt-interop {{if .Metadata}}pass-rate-metadata="{{ .Metadata }}"{{end}}
                  {{- with .Filter}}
                    {{- if .Products}} product-specs="{{ .Products }}"{{end}}
-                   {{- if .SHA}} sha="{{ .SHA }}" {{end}}
+                   {{- if .SHAs}} shas="{{ .SHAs }}" {{end}}
                    {{- if .Labels}} labels="{{ .Labels }}"{{end}}
                    {{- if .Aligned}} aligned{{end}}
                  {{- end}}

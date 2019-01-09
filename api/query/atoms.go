@@ -40,20 +40,28 @@ func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
-// TestStatusConstraint is a query atom that matches tests where the test
-// status/result from at least one test run with the given browser name matches
-// the given status value.
-type TestStatusConstraint struct {
+// TestStatusEq is a query atom that matches tests where the test status/result
+// from at least one test run with the given browser name matches the given
+// status value.
+type TestStatusEq struct {
 	BrowserName string
 	Status      int64
 }
 
-// BindToRuns for TestStatusConstraint expands a TestStatusConstraint to a
-// disjunction of RunTestStatusConstraint values.
-func (tsc TestStatusConstraint) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+// TestStatusNeq is a query atom that matches tests where the test status/result
+// from at least one test run with the given browser name does not match the
+// given status value.
+type TestStatusNeq struct {
+	BrowserName string
+	Status      int64
+}
+
+// BindToRuns for TestStatusEq expands to a disjunction of RunTestStatusEq
+// values.
+func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
-		if run.BrowserName == tsc.BrowserName {
+		if run.BrowserName == tse.BrowserName {
 			ids = append(ids, run.ID)
 		}
 	}
@@ -61,12 +69,35 @@ func (tsc TestStatusConstraint) BindToRuns(runs []shared.TestRun) ConcreteQuery 
 		return True{}
 	}
 	if len(ids) == 1 {
-		return RunTestStatusConstraint{ids[0], tsc.Status}
+		return RunTestStatusEq{ids[0], tse.Status}
 	}
 
 	q := Or{make([]ConcreteQuery, len(ids))}
 	for i := range ids {
-		q.Args[i] = RunTestStatusConstraint{ids[i], tsc.Status}
+		q.Args[i] = RunTestStatusEq{ids[i], tse.Status}
+	}
+	return q
+}
+
+// BindToRuns for TestStatusNeq expands to a disjunction of RunTestStatusNeq
+// values.
+func (tsn TestStatusNeq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+	ids := make([]int64, 0, len(runs))
+	for _, run := range runs {
+		if run.BrowserName == tsn.BrowserName {
+			ids = append(ids, run.ID)
+		}
+	}
+	if len(ids) == 0 {
+		return True{}
+	}
+	if len(ids) == 1 {
+		return RunTestStatusNeq{ids[0], tsn.Status}
+	}
+
+	q := Or{make([]ConcreteQuery, len(ids))}
+	for i := range ids {
+		q.Args[i] = RunTestStatusNeq{ids[i], tsn.Status}
 	}
 	return q
 }
@@ -188,9 +219,9 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalJSON for TestStatusConstraint attempts to interpret a query atom as
+// UnmarshalJSON for TestStatusEq attempts to interpret a query atom as
 // {"browser_name": <browser name>, "status": <status string>}.
-func (tsc *TestStatusConstraint) UnmarshalJSON(b []byte) error {
+func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 	var data struct {
 		BrowserName string `json:"browser_name"`
 		Status      string `json:"status"`
@@ -222,8 +253,49 @@ func (tsc *TestStatusConstraint) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf(`Invalid test status: "%s"`, data.Status)
 	}
 
-	tsc.BrowserName = browserName
-	tsc.Status = status
+	tse.BrowserName = browserName
+	tse.Status = status
+	return nil
+}
+
+// UnmarshalJSON for TestStatusNeq attempts to interpret a query atom as
+// {"browser_name": <browser name>, "status": {"not": <status string>}}.
+func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
+	var data struct {
+		BrowserName string `json:"browser_name"`
+		Status      struct {
+			Not string `json:"not"`
+		} `json:"status"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.BrowserName) == 0 {
+		return errors.New(`Missing test status constraint property: "browser_name"`)
+	}
+	if len(data.Status.Not) == 0 {
+		return errors.New(`Missing test status constraint property: "status.not"`)
+	}
+
+	browserName := strings.ToLower(data.BrowserName)
+	browserNameOK := false
+	for _, name := range browsers {
+		browserNameOK = browserNameOK || browserName == name
+	}
+	if !browserNameOK {
+		return fmt.Errorf(`Invalid browser name: "%s"`, data.BrowserName)
+	}
+
+	statusStr := strings.ToUpper(data.Status.Not)
+	status := shared.TestStatusValueFromString(statusStr)
+	statusStr2 := shared.TestStatusStringFromValue(status)
+	if statusStr != statusStr2 {
+		return fmt.Errorf(`Invalid test status: "%s"`, data.Status)
+	}
+
+	tsn.BrowserName = browserName
+	tsn.Status = status
 	return nil
 }
 
@@ -304,10 +376,15 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	if err == nil {
 		return tnp, nil
 	}
-	var tsc TestStatusConstraint
-	err = json.Unmarshal(b, &tsc)
+	var tse TestStatusEq
+	err = json.Unmarshal(b, &tse)
 	if err == nil {
-		return tsc, nil
+		return tse, nil
+	}
+	var tsn TestStatusNeq
+	err = json.Unmarshal(b, &tsn)
+	if err == nil {
+		return tsn, nil
 	}
 	var n AbstractNot
 	err = json.Unmarshal(b, &n)
