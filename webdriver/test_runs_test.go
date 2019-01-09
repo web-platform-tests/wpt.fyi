@@ -3,6 +3,7 @@
 package webdriver
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -26,7 +27,7 @@ func TestTestRuns(t *testing.T) {
 
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL("/test-runs")); err != nil {
-		panic(err)
+		assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
 	}
 
 	// Wait for the results view to load.

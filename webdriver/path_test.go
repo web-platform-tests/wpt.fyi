@@ -3,6 +3,7 @@
 package webdriver
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -34,7 +35,7 @@ func testPath(t *testing.T, path, elementName string) {
 
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL(path + "2dcontext/building-paths")); err != nil {
-		panic(err)
+		assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
 	}
 
 	// Wait for the results view to load.
