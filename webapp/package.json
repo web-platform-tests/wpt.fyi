@@ -6,6 +6,7 @@
     "bower": "^1.8.4",
     "eslint": "^4.14.0",
     "eslint-plugin-html": "^5.0.0",
+    "wct-browser-legacy": "^1.0.2",
     "web-component-tester": "^6.9.2"
   },
   "description": "Node packages leveraged by build rules for the wpt.fyi project.",
