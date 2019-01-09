@@ -53,6 +53,34 @@ suite('TestFileResults', () => {
         assert.equal(tfr.statusName(99), 'Harness status');
       });
     });
+
+    suite('mergeNamesInto', () => {
+      test('empty', () => {
+        const names = ['a', 'b'];
+        const allNames = [];
+        tfr.mergeNamesInto(names, allNames);
+        expect(allNames).to.deep.equal(names);
+      });
+
+      test('missing before', () => {
+        const names = ['a', 'aa', 'ab', 'b', 'c'];
+        const allNames = ['a', 'b'];
+        tfr.mergeNamesInto(names, allNames);
+        expect(allNames).to.deep.equal(names);
+      });
+
+      test('missing after', () => {
+        const before = ['a', 'x', 'b'];
+        const after = ['a', 'b', 'y', 'z'];
+        let result = [...before];
+        tfr.mergeNamesInto(after, result);
+        expect(result).to.deep.equal(['a', 'x', 'b', 'y', 'z']);
+
+        result = [...after];
+        tfr.mergeNamesInto(before, result);
+        expect(result).to.deep.equal(['a', 'x', 'b', 'y', 'z']);
+      });
+    });
   });
 });
 </script>
