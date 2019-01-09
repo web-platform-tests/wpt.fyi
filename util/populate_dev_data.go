@@ -21,9 +21,10 @@ import (
 )
 
 var (
-	host          = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
-	numRemoteRuns = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
-	staticRuns    = flag.Bool("static_runs", false, "Include runs in the /static dir")
+	host           = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
+	numRemoteRuns  = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
+	staticRuns     = flag.Bool("static_runs", false, "Include runs in the /static dir")
+	seenTestRunIDs = mapset.NewSet()
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -209,18 +210,24 @@ func main() {
 
 	log.Print("Adding latest production TestRun data...")
 	filters := shared.TestRunFilter{
-		Labels:   mapset.NewSetWith("stable"),
+		Labels:   mapset.NewSetWith(shared.StableLabel),
 		MaxCount: numRemoteRuns,
 	}
 	copyProdRuns(ctx, filters)
 
+	log.Print("Adding latest master TestRun data...")
+	filters.Labels = mapset.NewSetWith(shared.MasterLabel)
+	copyProdRuns(ctx, filters)
+
 	log.Print("Adding latest experimental TestRun data...")
-	filters.Labels = mapset.NewSetWith("experimental")
+	filters.Labels = mapset.NewSetWith(shared.ExperimentalLabel)
 	copyProdRuns(ctx, filters)
 
 	log.Print("Adding latest beta TestRun data...")
 	filters.Labels = mapset.NewSetWith("beta")
 	copyProdRuns(ctx, filters)
+
+	log.Printf("Successfully copied a total of %v distinct TestRuns", seenTestRunIDs.Cardinality())
 }
 
 func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
@@ -236,9 +243,12 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		}
 		labelRuns(prodTestRuns, "prod")
 
-		latestProductionTestRunMetadata := make([]interface{}, len(prodTestRuns))
+		latestProductionTestRunMetadata := make([]interface{}, 0, len(prodTestRuns))
 		for i := range prodTestRuns {
-			latestProductionTestRunMetadata[i] = &prodTestRuns[i]
+			if !seenTestRunIDs.Contains(prodTestRuns[i].ID) {
+				seenTestRunIDs.Add(prodTestRuns[i].ID)
+				latestProductionTestRunMetadata = append(latestProductionTestRunMetadata, &prodTestRuns[i])
+			}
 		}
 		addData(ctx, "TestRun", latestProductionTestRunMetadata)
 
