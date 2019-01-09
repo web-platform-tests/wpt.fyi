@@ -6,7 +6,7 @@
 
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/google-chart-polymer-3/google-chart.js';
+import '../node_modules/@google-web-components/google-chart/google-chart.js';
 import { TestFileResults } from './test-file-results.js';
 import './product-info.js';
 
