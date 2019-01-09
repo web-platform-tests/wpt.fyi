@@ -222,7 +222,7 @@ deployment_state: gcloud-login webapp_deps webapp_node_modules_only package_serv
 deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
 	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
-		cd $(WPTD_PATH); util/deploy.sh -r -p $(APP_PATH); \
+		cd $(WPTD_PATH); util/deploy.sh -q -r -p $(APP_PATH); \
 	else \
 		cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
 	fi
