@@ -33,11 +33,7 @@ func ChromeWebDriver(port int, options []selenium.ServiceOption) (*selenium.Serv
 		"browserName": "chrome",
 	}
 
-	ChromeCapabilities := chrome.Capabilities{
-		Args: []string{
-			"--no-sandbox",
-		},
-	}
+	ChromeCapabilities := chrome.Capabilities{}
 	chromeAbsPath, err := filepath.Abs(*chromePath)
 	if err != nil {
 		panic(err)
