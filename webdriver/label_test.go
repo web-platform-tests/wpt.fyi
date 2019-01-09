@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tebeka/selenium"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func TestLabelParam(t *testing.T) {
+func TestLabelParam_Results(t *testing.T) {
 	app, err := NewWebserver()
 	if err != nil {
 		panic(err)
@@ -35,9 +35,24 @@ func TestLabelParam(t *testing.T) {
 	} else {
 		testLabel(t, wd, app, "/", "experimental", "wpt-results", 2, false)
 	}
+}
+
+func TestLabelParam_Interop(t *testing.T) {
+	app, err := NewWebserver()
+	if err != nil {
+		panic(err)
+	}
+	defer app.Close()
+
+	service, wd, err := GetWebDriver()
+	if err != nil {
+		panic(err)
+	}
+	defer service.Stop()
+	defer wd.Quit()
 
 	for _, aligned := range []bool{true, false} {
-		testLabel(t, wd, app, "/interop", "stable", "wpt-interop", 4, aligned)
+		testLabel(t, wd, app, "/interop/", shared.StableLabel, "wpt-interop", 4, aligned)
 	}
 }
 
