@@ -224,7 +224,7 @@ func main() {
 	copyProdRuns(ctx, filters)
 
 	log.Print("Adding latest beta TestRun data...")
-	filters.Labels = mapset.NewSetWith("beta")
+	filters.Labels = mapset.NewSetWith(shared.BetaLabel)
 	copyProdRuns(ctx, filters)
 
 	log.Printf("Successfully copied a total of %v distinct TestRuns", seenTestRunIDs.Cardinality())
