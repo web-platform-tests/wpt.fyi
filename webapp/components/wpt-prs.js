@@ -8,6 +8,7 @@ import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import { ensureTrailingSlash } from './utils.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
@@ -85,7 +86,9 @@ class WPTPRs extends LoadingState(PolymerElement) {
         margin-bottom: 0.5em;
       }
     </style>
-    <h4>Open PRs including <i>[[path]]</i></h4>
+    <template is="dom-if" if="[[firstThree]]">
+      <h4>Open PRs including <i>[[path]]</i></h4>
+    </template>
     <template is="dom-repeat" items="[[firstThree]]" as="pr">
       <wpt-pr pr="[[pr]]"></wpt-pr>
     </template>
@@ -138,7 +141,7 @@ class WPTPRs extends LoadingState(PolymerElement) {
       return;
     }
     const url = new URL('/api/prs', window.location);
-    url.searchParams.set('path', this.path);
+    url.searchParams.set('path', ensureTrailingSlash(this.path));
     this.load(
       window.fetch(url).then(r => r.json()).then(prs => {
         this.prs = prs;
@@ -147,7 +150,7 @@ class WPTPRs extends LoadingState(PolymerElement) {
   }
 
   computeFirstThree(prs) {
-    return prs && prs.slice(0, 3);
+    return prs && prs.length && prs.slice(0, 3);
   }
 
   computeOthers(prs) {

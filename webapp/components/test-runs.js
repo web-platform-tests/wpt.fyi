@@ -54,7 +54,8 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
     }
 
     computePathIsASubfolder(path) {
-      return !this.computePathIsATestFile(path) && path.split('/').length > 1;
+      return !this.computePathIsATestFile(path)
+        && path && path.split('/').filter(p => p).length > 0;
     }
 
     encodeTestPath(path) {

@@ -168,7 +168,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
       <template is="dom-if" if="[[searchPRsForDirectories]]">
         <template is="dom-if" if="[[pathIsASubfolder]]">
-          <wpt-prs path="[[path]]/"></wpt-prs>
+          <wpt-prs path="[[path]]"></wpt-prs>
         </template>
       </template>
 

@@ -44,6 +44,7 @@
     "@vaadin/vaadin-date-picker": "^3.3.2",
     "@webcomponents/webcomponentsjs": "^2.0.0",
     "google-chart-polymer-3": "^3.0.1",
+    "polymer-bundler": "^4.0.4",
     "pluralize": "^7.0.0"
   }
 }
