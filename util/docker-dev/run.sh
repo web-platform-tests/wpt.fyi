@@ -54,7 +54,7 @@ done
 # -it                                       Interactive mode (Ctrl+c will halt
 #                                           instance)
 # -v "${WPTD_PATH}":/wpt.fyi                Mount the repository
-# -u $(id -u $USER):$(id -g $USER)          Run as current user and group
+# -u $(id -u $USER)                         Run as current user
 # -p "${WPTD_HOST_WEB_PORT}:8080"           Expose web server port
 # --name "${DOCKER_INSTANCE}"               Name the instance
 # wptd-dev                                  Identify image to use
@@ -106,7 +106,8 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
   docker run -t -d --entrypoint /bin/bash \
       ${VOLUMES} \
-      -u $(id -u $USER):$(id -g $USER) \
+      -u $(id -u $USER) \
+      --cap-add=SYS_ADMIN \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
       -p "${WPTD_HOST_API_WEB_PORT}:9999" \
