@@ -35,12 +35,10 @@ handlers:
 
 # Don't upload mock-data static files to AppEngine
 skip_files:
-- bower_components/
 - components/test/
 - static/b952881825/
 - static/wptd-metrics/
 - test/
 - .eslintrc.json
-- bower.json
 - package.json
 - README.md

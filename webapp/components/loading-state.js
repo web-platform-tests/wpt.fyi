@@ -5,16 +5,10 @@
  */
 
 /*
-`<loading-state>` is a behaviour component for indicating when information is
+LoadingState is a behaviour component for indicating when information is
 still being loaded (generally, fetched).
 */
-const $_documentContainer = document.createElement('template');
 
-$_documentContainer.innerHTML = `<dom-module id="loading-state">
-
-</dom-module>`;
-
-document.head.appendChild($_documentContainer.content);
 // eslint-disable-next-line no-unused-vars
 const LoadingState = (superClass) => class extends superClass {
   static get properties() {
