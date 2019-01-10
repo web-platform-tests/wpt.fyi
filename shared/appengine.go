@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -32,8 +33,14 @@ type AppEngineAPI interface {
 	IsFeatureEnabled(featureName string) bool
 	GetUploader(uploader string) (Uploader, error)
 
-	// GetHostname returns a cleaned-up hostname for the current environment.
+	// GetVersion returns the version name for the current environment.
+	GetVersion() string
+	// GetHostname returns the canonical hostname for the current appengine project,
+	// i.e. staging.wpt.fyi or wpt.fyi
 	GetHostname() string
+	// GetVersionedHostname returns the canonical hostname for the current version,
+	// i.e. version-dot-wptdashboard{,-staging}.appspot.com
+	GetVersionedHostname() string
 	GetResultsURL(filter TestRunFilter) *url.URL
 	GetRunsURL(filter TestRunFilter) *url.URL
 	GetResultsUploadURL() *url.URL
@@ -121,17 +128,35 @@ func (a AppEngineAPIImpl) GetUploader(uploader string) (Uploader, error) {
 	return result, err
 }
 
-// GetHostname returns a cleaned-up hostname for the current environment.
+// GetHostname returns the canonical hostname for the current appengine project,
+// i.e. staging.wpt.fyi or wpt.fyi
 func (a AppEngineAPIImpl) GetHostname() string {
 	hostname := appengine.DefaultVersionHostname(a.ctx)
 	if hostname == "wptdashboard.appspot.com" {
 		return "wpt.fyi"
-	}
-	version := strings.Split(appengine.VersionID(a.ctx), ".")[0]
-	if version == "master" && hostname == "wptdashboard-staging.appspot.com" {
+	} else if hostname == "wptdashboard-staging.appspot.com" {
 		return "staging.wpt.fyi"
 	}
-	return fmt.Sprintf("%s-dot-%s", version, hostname)
+	return hostname
+}
+
+// GetVersion returns the version name for the current environment.
+func (a AppEngineAPIImpl) GetVersion() string {
+	version := strings.Split(appengine.VersionID(a.ctx), ".")[0]
+	if appengine.IsDevAppServer() {
+		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
+		if err == nil && len(out) > 0 {
+			return string(out)
+		}
+	}
+	return version
+}
+
+// GetVersionedHostname returns the canonical hostname for the current version,
+// i.e. version-dot-wptdashboard{,-staging}.appspot.com
+func (a AppEngineAPIImpl) GetVersionedHostname() string {
+	hostname := appengine.DefaultVersionHostname(a.ctx)
+	return fmt.Sprintf("%s-dot-%s", a.GetVersion(), hostname)
 }
 
 // GetResultsURL returns a url for the wpt.fyi results page for the test runs
