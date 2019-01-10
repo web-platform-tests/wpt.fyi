@@ -48,6 +48,21 @@ func (mr *MockIndexMockRecorder) Bind(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bind", reflect.TypeOf((*MockIndex)(nil).Bind), arg0, arg1)
 }
 
+// Run mocks base method
+func (m *MockIndex) Run(arg0 RunID) (shared.TestRun, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Run", arg0)
+	ret0, _ := ret[0].(shared.TestRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Run indicates an expected call of Run
+func (mr *MockIndexMockRecorder) Run(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockIndex)(nil).Run), arg0)
+}
+
 // Runs mocks base method
 func (m *MockIndex) Runs(arg0 []RunID) ([]shared.TestRun, error) {
 	ret := m.ctrl.Call(m, "Runs", arg0)
