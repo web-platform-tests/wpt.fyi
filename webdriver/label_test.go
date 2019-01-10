@@ -109,29 +109,19 @@ func testLabel(
 }
 
 func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	switch *browser {
-	case "firefox":
-		return wd.FindElements(selenium.ByCSSSelector, "test-run")
-	default:
-		e, err := wd.FindElement(selenium.ByCSSSelector, element)
-		if err != nil {
-			return nil, err
-		}
-		return FindShadowElements(wd, e, "test-run")
+	e, err := wd.FindElement(selenium.ByCSSSelector, element)
+	if err != nil {
+		return nil, err
 	}
+	return FindShadowElements(wd, e, "test-run")
 }
 
 func getTabElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	switch *browser {
-	case "firefox":
-		return wd.FindElements(selenium.ByCSSSelector, "results-tabs paper-tab")
-	default:
-		e, err := wd.FindElement(selenium.ByCSSSelector, element)
-		if err != nil {
-			return nil, err
-		}
-		return FindShadowElements(wd, e, "results-tabs", "paper-tab")
+	e, err := wd.FindElement(selenium.ByCSSSelector, element)
+	if err != nil {
+		return nil, err
 	}
+	return FindShadowElements(wd, e, "results-tabs", "paper-tab")
 }
 
 func assertAligned(t *testing.T, wd selenium.WebDriver, testRuns []selenium.WebElement) {

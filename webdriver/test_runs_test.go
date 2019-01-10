@@ -43,14 +43,9 @@ func TestTestRuns(t *testing.T) {
 }
 
 func getRunRowElements(wd selenium.WebDriver) ([]selenium.WebElement, error) {
-	switch *browser {
-	case "firefox":
-		return wd.FindElements(selenium.ByCSSSelector, "wpt-runs tr")
-	default:
-		e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-runs")
-		if err != nil {
-			return nil, err
-		}
-		return FindShadowElements(wd, e, "tr")
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-runs")
+	if err != nil {
+		return nil, err
 	}
+	return FindShadowElements(wd, e, "tr")
 }

@@ -49,16 +49,20 @@ func testSearch(t *testing.T, path, elementName string) {
 	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
 	assert.Nil(t, err)
 
-	// Run the search.
-	searchBox, err := getSearchElement(wd, elementName)
-	if err != nil {
-		assert.FailNow(t, fmt.Sprintf("Error getting search element: %s", err.Error()))
-	}
 	folder := "2dcontext"
-	if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
-		assert.FailNow(t, fmt.Sprintf("Error sending keys: %s", err.Error()))
+	// NOTE(lukebjerring): firefox can't take sendKeys for shadow elements.
+	// https://bugzilla.mozilla.org/show_bug.cgi?id=1503860
+	if *browser != "firefox" {
+		// Type the search.
+		searchBox, err := getSearchElement(wd, elementName)
+		if err != nil {
+			assert.FailNow(t, fmt.Sprintf("Error getting search element: %s", err.Error()))
+		}
+		if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
+			assert.FailNow(t, fmt.Sprintf("Error sending keys: %s", err.Error()))
+		}
+		assertListIsFiltered(t, wd, elementName, folder+"/")
 	}
-	assertListIsFiltered(t, wd, elementName, folder+"/")
 
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
@@ -86,7 +90,7 @@ func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName strin
 		return
 	}
 	for i := range paths {
-		text, err := pathParts[i].Text()
+		text, err := FindShadowText(wd, pathParts[i], "a")
 		if err != nil {
 			assert.Fail(t, err.Error())
 		}
@@ -94,37 +98,22 @@ func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName strin
 	}
 }
 
-// NOTE(lukebjerring): Firefox, annoyingly, throws a TypeError querying
-// shadowRoot because of a circular reference when it tries to serialize to
-// JSON. Also, Firefox hasn't enabled shadow DOM by default, so CSS selectors
-// can directly match elements within web components.
-
 func getSearchElement(wd selenium.WebDriver, element string) (selenium.WebElement, error) {
-	switch *browser {
-	case "firefox":
-		return wd.FindElement(selenium.ByCSSSelector, "input.query")
-	default:
-		e, err := wd.FindElement(selenium.ByCSSSelector, element)
-		if err != nil {
-			return nil, err
-		}
-		inputs, err := FindShadowElements(wd, e, "test-search", "input.query")
-		if err != nil {
-			return nil, err
-		}
-		return inputs[0], err
+	e, err := wd.FindElement(selenium.ByCSSSelector, element)
+	if err != nil {
+		return nil, err
 	}
+	inputs, err := FindShadowElements(wd, e, "test-search", "input.query")
+	if err != nil {
+		return nil, err
+	}
+	return inputs[0], err
 }
 
 func getPathPartElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	switch *browser {
-	case "firefox":
-		return wd.FindElements(selenium.ByCSSSelector, "path-part")
-	default:
-		e, err := wd.FindElement(selenium.ByCSSSelector, element)
-		if err != nil {
-			return nil, err
-		}
-		return FindShadowElements(wd, e, "path-part")
+	e, err := wd.FindElement(selenium.ByTagName, element)
+	if err != nil {
+		return nil, err
 	}
+	return FindShadowElements(wd, e, "path-part")
 }
