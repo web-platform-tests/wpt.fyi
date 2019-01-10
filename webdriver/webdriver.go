@@ -128,6 +128,19 @@ func FindShadowElement(
 	return elements[0], nil
 }
 
+// FindShadowText returns the Text of the element returned by an equivalent
+// call to FindShadowElement.
+func FindShadowText(
+	d selenium.WebDriver,
+	e selenium.WebElement,
+	selectors ...string) (string, error) {
+	element, err := FindShadowElement(d, e, selectors...)
+	if err != nil {
+		return "", err
+	}
+	return element.Text()
+}
+
 func extractScriptRawValue(bytes []byte, key string) (value interface{}, err error) {
 	var parsed map[string]interface{}
 	if err = json.Unmarshal(bytes, &parsed); err != nil {
