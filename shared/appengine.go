@@ -144,7 +144,7 @@ func (a AppEngineAPIImpl) GetHostname() string {
 func (a AppEngineAPIImpl) GetVersion() string {
 	version := strings.Split(appengine.VersionID(a.ctx), ".")[0]
 	if appengine.IsDevAppServer() {
-		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
+		out, err := exec.Command("/usr/bin/git", "rev-parse", "--abbrev-ref", "HEAD").Output()
 		if err == nil && len(out) > 0 {
 			return string(out)
 		}
