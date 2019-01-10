@@ -48,18 +48,6 @@ while getopts ':dhaq' FLAG; do
   esac
 done
 
-# Create a docker instance:
-#
-# --rm                                      Auto-remove when stopped
-# -it                                       Interactive mode (Ctrl+c will halt
-#                                           instance)
-# -v "${WPTD_PATH}":/wpt.fyi                Mount the repository
-# -u $(id -u $USER):$(id -g $USER)          Run as current user and group
-# -p "${WPTD_HOST_WEB_PORT}:8080"           Expose web server port
-# --name "${DOCKER_INSTANCE}"               Name the instance
-# wptd-dev                                  Identify image to use
-# /wpt.fyi/util/docker/inner/watch.sh       Identify code to execute
-
 info "Creating docker instance for dev server. Instance name: wptd-dev-instance"
 docker inspect "${DOCKER_INSTANCE}" > /dev/null 2>&1
 INSPECT_STATUS="${?}"
@@ -97,6 +85,17 @@ fi
 
 set -e
 
+# Create a docker instance:
+#
+# -t                                     Give the container a TTY
+# -v "${WPTD_PATH}":/wpt.fyi             Mount the repository
+# -u $(id -u $USER)                      Run as current user
+# --cap-add=SYS_ADMIN                    Allow Chrome to use sandbox:
+#   https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md
+# -p "${WPTD_HOST_WEB_PORT}:8080"        Expose web server port
+# --name "${DOCKER_INSTANCE}"            Name the instance
+# wptd-dev                               Identify image to use
+
 VOLUMES="-v ${WPTD_PATH}:/home/user/wpt.fyi"
 if [[ "${RESULTS_ANALYSIS}" == "true" ]]; then
   VOLUMES="${VOLUMES} -v ${WPT_PATH}/results-analysis:/home/user/results-analysis"
@@ -106,7 +105,8 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
   docker run -t -d --entrypoint /bin/bash \
       ${VOLUMES} \
-      -u $(id -u $USER):$(id -g $USER) \
+      -u $(id -u $USER) \
+      --cap-add=SYS_ADMIN \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
       -p "${WPTD_HOST_API_WEB_PORT}:9999" \
