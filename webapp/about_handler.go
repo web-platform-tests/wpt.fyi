@@ -6,18 +6,15 @@ package webapp
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	version := "dev_appserver"
-	if !appengine.IsDevAppServer() {
-		version = strings.Split(appengine.VersionID(ctx), ".")[0]
-	}
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	version := aeAPI.GetVersion()
+
 	data := struct {
 		Version string
 	}{

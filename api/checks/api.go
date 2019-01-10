@@ -66,7 +66,6 @@ func (s checksAPIImpl) ScheduleResultsProcessing(sha string, product shared.Prod
 // Returns true if any check_runs were created (i.e. the create succeeded).
 func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.ProductSpec) (bool, error) {
 	aeAPI := shared.NewAppEngineAPI(s.ctx)
-	host := aeAPI.GetHostname()
 	filter := shared.TestRunFilter{SHAs: shared.SHAs{suite.SHA}}
 	runsURL := aeAPI.GetRunsURL(filter)
 
@@ -79,7 +78,7 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 			Status:     "in_progress",
 			PRNumbers:  suite.PRNumbers,
 		},
-		HostName: host,
+		HostName: aeAPI.GetHostname(),
 		RunsURL:  runsURL.String(),
 	}
 	return updateCheckRunSummary(s.ctx, pending, suite)

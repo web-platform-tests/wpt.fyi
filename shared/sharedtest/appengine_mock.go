@@ -13,7 +13,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/github"
-	"github.com/web-platform-tests/wpt.fyi/shared"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // MockAppEngineAPI is a mock of AppEngineAPI interface
@@ -151,6 +151,18 @@ func (mr *MockAppEngineAPIMockRecorder) GetUploader(uploader interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAppEngineAPI)(nil).GetUploader), uploader)
 }
 
+// GetVersion mocks base method
+func (m *MockAppEngineAPI) GetVersion() string {
+	ret := m.ctrl.Call(m, "GetVersion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetVersion indicates an expected call of GetVersion
+func (mr *MockAppEngineAPIMockRecorder) GetVersion() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersion", reflect.TypeOf((*MockAppEngineAPI)(nil).GetVersion))
+}
+
 // GetHostname mocks base method
 func (m *MockAppEngineAPI) GetHostname() string {
 	ret := m.ctrl.Call(m, "GetHostname")
@@ -161,6 +173,18 @@ func (m *MockAppEngineAPI) GetHostname() string {
 // GetHostname indicates an expected call of GetHostname
 func (mr *MockAppEngineAPIMockRecorder) GetHostname() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHostname))
+}
+
+// GetVersionedHostname mocks base method
+func (m *MockAppEngineAPI) GetVersionedHostname() string {
+	ret := m.ctrl.Call(m, "GetVersionedHostname")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetVersionedHostname indicates an expected call of GetVersionedHostname
+func (mr *MockAppEngineAPIMockRecorder) GetVersionedHostname() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersionedHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetVersionedHostname))
 }
 
 // GetResultsURL mocks base method
