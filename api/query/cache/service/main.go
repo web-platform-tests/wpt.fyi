@@ -16,6 +16,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
@@ -26,15 +27,19 @@ import (
 )
 
 var (
-	port               = flag.Int("port", 8080, "Port to listen on")
-	projectID          = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
-	gcpCredentialsFile = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
-	numShards          = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
-	monitorInterval    = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
-	maxHeapBytes       = flag.Uint64("max_heap_bytes", uint64(2e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
-	evictRunsPercent   = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
-	updateInterval     = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
-	updateMaxRuns      = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
+	port                   = flag.Int("port", 8080, "Port to listen on")
+	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
+	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
+	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
+	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
+	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", uint(10), "Maximum number of runs that can be ingested before memory monitor must run")
+	maxHeapBytes           = flag.Uint64("max_heap_bytes", uint64(2e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
+	evictRunsPercent       = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
+	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
+	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
+	maxRunsPerRequest      = flag.Int("max_runs_per_request", 16, "Maximum number of runs that may be queried per request")
+
+	maxRunsPerRequestMsg string
 
 	idx index.Index
 	mon monitor.Monitor
@@ -70,14 +75,27 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(rq.RunIDs) > *maxRunsPerRequest {
+		http.Error(w, maxRunsPerRequestMsg, http.StatusBadRequest)
+		return
+	}
+
 	ids := make([]index.RunID, len(rq.RunIDs))
 	for i := range rq.RunIDs {
 		ids[i] = index.RunID(rq.RunIDs[i])
 	}
-	runs, err := idx.Runs(ids)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+
+	runs := make([]shared.TestRun, len(ids))
+	for i, id := range ids {
+		run, err := idx.Run(id)
+		// If getting run metadata fails, attempt write-on-read for this run.
+		if err != nil {
+			// Load test run details from datastore.
+			// Load test run data into index.
+			// Set `run` var to details from datastore.
+			// If error occurs anywhere, http.Error(...StatusBadRequest).
+		}
+		runs[i] = run
 	}
 
 	q := cq.PrepareUserQuery(rq.RunIDs, rq.AbstractQuery.BindToRuns(runs))
@@ -109,6 +127,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 func init() {
 	flag.Parse()
+
+	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
 }
 
 func main() {
