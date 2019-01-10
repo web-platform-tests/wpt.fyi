@@ -38,7 +38,6 @@ suite('TestRunsQueryBuilder', () => {
       if (ignore.test(url.pathname)) {
         return Promise.resolve(new Response('[]'));
       }
-      console.log(url.pathname);
       return realFetch(url);
     });
 
