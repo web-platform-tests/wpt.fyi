@@ -133,12 +133,10 @@ func (m *indexMonitor) Start() error {
 		for {
 			select {
 			case <-timer:
-				m.check()
 				reqs = 0
 			case <-m.runIngested:
 				reqs++
 				if reqs == m.maxIngestedRuns {
-					m.check()
 					reqs = 0
 				}
 			}
@@ -146,6 +144,8 @@ func (m *indexMonitor) Start() error {
 				break
 			}
 		}
+
+		m.check()
 	}
 }
 
@@ -198,7 +198,7 @@ func (m *indexMonitor) start() error {
 func (m *indexMonitor) check() {
 	heapBytes := m.rt.GetHeapBytes()
 	if heapBytes > m.maxHeapBytes {
-		m.logger.Errorf("Out of memory: %d > %d", heapBytes, m.maxHeapBytes)
+		m.logger.Warningf("Monitor %d bytes allocated, exceeding threshold of %d bytes", heapBytes, m.maxHeapBytes)
 		m.idx.EvictRuns(m.percent)
 	} else {
 		m.logger.Debugf("Monitor: %d heap-allocated bytes OK", heapBytes)
