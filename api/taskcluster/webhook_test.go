@@ -263,7 +263,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 		} else if atomic.CompareAndSwapUint32(&requested, 1, 2) {
 			http.Error(w, "Not found", http.StatusNotFound)
 		} else {
-			panic("requested != 0 && requested != 1")
+			assert.FailNow(t, "requested != 0 && requested != 1")
 		}
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))

@@ -35,7 +35,7 @@ func testSearch(t *testing.T, path, elementName string) {
 
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL(path)); err != nil {
-		panic(err)
+		assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
 	}
 
 	// Wait for the results view to load.
@@ -52,18 +52,19 @@ func testSearch(t *testing.T, path, elementName string) {
 	// Run the search.
 	searchBox, err := getSearchElement(wd, elementName)
 	if err != nil {
-		panic(err)
+		assert.FailNow(t, fmt.Sprintf("Error getting search element: %s", err.Error()))
 	}
 	folder := "2dcontext"
 	if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
-		panic(err)
+		assert.FailNow(t, fmt.Sprintf("Error sending keys: %s", err.Error()))
 	}
 	assertListIsFiltered(t, wd, elementName, folder+"/")
 
 	// Navigate to the wpt.fyi homepage.
 	if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
-		panic(err)
+		assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
 	}
+
 	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
 	assert.Nil(t, err)
 	assertListIsFiltered(t, wd, elementName, folder+"/")

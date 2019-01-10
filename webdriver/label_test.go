@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tebeka/selenium"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func TestLabelParam(t *testing.T) {
+func TestLabelParam_Results(t *testing.T) {
 	app, err := NewWebserver()
 	if err != nil {
 		panic(err)
@@ -35,9 +35,24 @@ func TestLabelParam(t *testing.T) {
 	} else {
 		testLabel(t, wd, app, "/", "experimental", "wpt-results", 2, false)
 	}
+}
+
+func TestLabelParam_Interop(t *testing.T) {
+	app, err := NewWebserver()
+	if err != nil {
+		panic(err)
+	}
+	defer app.Close()
+
+	service, wd, err := GetWebDriver()
+	if err != nil {
+		panic(err)
+	}
+	defer service.Stop()
+	defer wd.Quit()
 
 	for _, aligned := range []bool{true, false} {
-		testLabel(t, wd, app, "/interop", "stable", "wpt-interop", 4, aligned)
+		testLabel(t, wd, app, "/interop/", shared.StableLabel, "wpt-interop", 4, aligned)
 	}
 }
 
@@ -55,7 +70,7 @@ func testLabel(
 	}
 	url := fmt.Sprintf("%s?%s", path, filters.ToQuery().Encode())
 	if err := wd.Get(app.GetWebappURL(url)); err != nil {
-		panic(fmt.Sprintf("Failed to load %s: %s", url, err.Error()))
+		assert.FailNow(t, fmt.Sprintf("Failed to load %s: %s", url, err.Error()))
 	}
 
 	// Wait for the results view to load.
@@ -67,13 +82,13 @@ func testLabel(
 		return len(testRuns) > 0, nil
 	}
 	if err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10); err != nil {
-		panic(fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
+		assert.FailNow(t, fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
 	}
 
 	// Check loaded test runs
 	testRuns, err := getTestRunElements(wd, elementName)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to get test runs: %s", err.Error()))
+		assert.FailNow(t, fmt.Sprintf("Failed to get test runs: %s", err.Error()))
 	}
 	assert.Lenf(t, testRuns, runs, "Expected exactly %v TestRuns search result.", runs)
 	if aligned {

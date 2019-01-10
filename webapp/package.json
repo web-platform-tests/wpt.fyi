@@ -6,6 +6,7 @@
     "bower": "^1.8.4",
     "eslint": "^4.14.0",
     "eslint-plugin-html": "^5.0.0",
+    "wct-browser-legacy": "^1.0.2",
     "web-component-tester": "^6.9.2"
   },
   "description": "Node packages leveraged by build rules for the wpt.fyi project.",
@@ -43,8 +44,7 @@
     "@polymer/polymer": "^3.0.0",
     "@vaadin/vaadin-date-picker": "^3.3.2",
     "@webcomponents/webcomponentsjs": "^2.0.0",
-    "google-chart-polymer-3": "^3.0.1",
-    "polymer-bundler": "^4.0.4",
+    "@google-web-components/google-chart": "^3.0.0",
     "pluralize": "^7.0.0"
   }
 }
