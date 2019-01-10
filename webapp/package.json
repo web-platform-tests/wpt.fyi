@@ -12,7 +12,7 @@
   "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
     "bower-components": "bower install",
-    "test": "npm run lint && npm run wct",
+    "test": "npm run wct",
     "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
     "lint-fix": "eslint --fix 'components/**/*.js' ",
     "wctp": "wct -p",
@@ -25,6 +25,7 @@
     "type-detect": "1.0.0"
   },
   "dependencies": {
+    "@google-web-components/google-chart": "^3.0.0",
     "@polymer/iron-collapse": "^3.0.0",
     "@polymer/iron-form": "^3.0.0",
     "@polymer/iron-icons": "^3.0.0",
@@ -43,8 +44,7 @@
     "@polymer/paper-tooltip": "^3.0.0",
     "@polymer/polymer": "^3.0.0",
     "@vaadin/vaadin-date-picker": "^3.3.2",
-    "@webcomponents/webcomponentsjs": "^2.0.0",
-    "@google-web-components/google-chart": "^3.0.0",
+    "@webcomponents/webcomponentsjs": "^2.2.3",
     "pluralize": "^7.0.0"
   }
 }
