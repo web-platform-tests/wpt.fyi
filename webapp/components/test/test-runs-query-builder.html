@@ -5,22 +5,12 @@
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <script type="module">
-import '../test-runs-query-builder.js';
-window.wpt = window.wpt || {};
-window.wpt.MUTABLE_FLAGS = true;
-</script>
-
-  <script type="module" src="../test-runs-query-builder.js"></script>
+  <script>
+    window.wpt = window.wpt || {};
+    window.wpt.MUTABLE_FLAGS = true;
+  </script>
 </head>
 <body>
-  <test-runs-query-builder id="playground"
-                           product-specs='["chrome","firefox[experimental]"]'
-                           from="2018-11-10T00:00:00.000Z"
-                           show-time-range
-                           edit
-                           debug></test-runs-query-builder>
-
   <test-fixture id="query-builder-fixture">
     <template>
       <test-runs-query-builder></test-runs-query-builder>
@@ -44,15 +34,21 @@ suite('TestRunsQueryBuilder', () => {
     // Spoof an empty result for /api/shas to speed up tests.
     const realFetch = window.fetch;
     sandbox.stub(window, 'fetch', url => {
-      if (url.pathname === '/api/shas') {
+      const ignore = new RegExp('/api/(shas|versions)');
+      if (ignore.test(url.pathname)) {
         return Promise.resolve(new Response('[]'));
       }
+      console.log(url.pathname);
       return realFetch(url);
     });
 
     queryBuilder = fixture('query-builder-fixture');
     queryBuilder.products = ['chrome', 'edge']
       .map(s => queryBuilder.parseProductSpec(s));
+  });
+
+  teardown(() => {
+    sandbox.restore();
   });
 
   test('instanceof Polymer.Element', () => {
@@ -174,14 +170,14 @@ suite('TestRunsQueryBuilder', () => {
       sandbox.spy(queryBuilder, 'shasURLUpdated');
     });
 
+    teardown(() => {
+      sandbox.restore();
+    });
+
     test('/api/shas fetches', () => {
       // Should only trigger a single update, in spite of many params changing.
       queryBuilder.updateQueryParams({ product: ['chrome'], aligned: true, label: ['dev'] });
       expect(queryBuilder.shasURLUpdated.callCount).to.equal(1);
-    });
-
-    teardown(() => {
-      sandbox.restore();
     });
   });
 
@@ -207,41 +203,38 @@ suite('TestRunsQueryBuilder', () => {
     });
   });
 
-  teardown(() => {
-    sandbox.restore();
-  });
-});
+  suite('ProductBuilder', () => {
+    let productBuilder;
 
-suite('ProductBuilder', () => {
-  let productBuilder;
+    setup(() => {
+      productBuilder = fixture('product-builder-fixture');
+      productBuilder.product = {browser_name: 'chrome'};
+    });
 
-  setup(() => {
-    productBuilder = fixture('product-builder-fixture');
-    productBuilder.product = {browser_name: 'chrome'};
-  });
+    suite('ProductBuilder.prototype.*', () => {
+      suite('_channel', () => {
+        test('updates the labels when value changes', () => {
+          productBuilder._channel = 'stable';
+          assert.isTrue(productBuilder.labels.includes('stable'));
+        });
+        test('updates the spec when value changes', () => {
+          productBuilder._channel = 'experimental';
+          assert.equal(productBuilder.spec, 'chrome[experimental]');
+        });
+        test('changes value when labels are updated', () => {
+          productBuilder.set('labels', ['experimental']);
+          assert.equal(productBuilder._channel, 'experimental');
+          assert.equal(productBuilder._source, 'any');
 
-  suite('ProductBuilder.prototype.*', () => {
-    suite('_channel', () => {
-      test('updates the labels when value changes', () => {
-        productBuilder._channel = 'stable';
-        assert.isTrue(productBuilder.labels.includes('stable'));
-      });
-      test('updates the spec when value changes', () => {
-        productBuilder._channel = 'experimental';
-        assert.equal(productBuilder.spec, 'chrome[experimental]');
-      });
-      test('changes value when labels are updated', () => {
-        productBuilder.set('labels', ['experimental']);
-        assert.equal(productBuilder._channel, 'experimental');
-        assert.equal(productBuilder._source, 'any');
-
-        productBuilder.set('labels', ['buildbot']);
-        assert.equal(productBuilder._source, 'buildbot');
-        assert.equal(productBuilder._channel, 'any');
+          productBuilder.set('labels', ['buildbot']);
+          assert.equal(productBuilder._source, 'buildbot');
+          assert.equal(productBuilder._channel, 'any');
+        });
       });
     });
   });
 });
+
 </script>
 </body>
 </html>

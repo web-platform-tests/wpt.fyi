@@ -30,7 +30,7 @@ suite('WPTInterop', () => {
     fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
 
     sandbox.stub(window, 'fetch', (url) => {
-      return Promise.resolve(new Response(fetches[url]));
+      return Promise.resolve(new Response(JSON.stringify(fetches[url])));
     });
   });
 
