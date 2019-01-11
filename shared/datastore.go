@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -61,19 +60,10 @@ type Datastore interface {
 		to *time.Time,
 		limit,
 		offset *int) (result TestRunsByProduct, err error)
-}
 
-func loadTestRun(store Datastore, id int64) (*TestRun, error) {
-	var testRun TestRun
-	ctx := store.Context()
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
-	err := cs.Get(getTestRunMemcacheKey(id), id, &testRun)
-	if err != nil {
-		return nil, err
-	}
-
-	testRun.ID = id
-	return &testRun, nil
+	// LoadTestRunsByKeys loads the given test runs (by key), but also appends
+	// the ID to the TestRun entity.
+	LoadTestRunsByKeys(KeysByProduct) (result TestRunsByProduct, err error)
 }
 
 // LoadTestRunKeys loads the keys for the TestRun entities for the given parameters.
@@ -195,44 +185,7 @@ func loadTestRuns(
 	if err != nil {
 		return nil, err
 	}
-	return LoadTestRunsByKeys(store, keys)
-}
-
-// LoadTestRunsByKeys loads the given test runs (by key), but also appends the
-// ID to the TestRun entity.
-func LoadTestRunsByKeys(store Datastore, keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
-	result = TestRunsByProduct{}
-	ctx := store.Context()
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
-	var wg sync.WaitGroup
-	for _, kbp := range keysByProduct {
-		runs := make(TestRuns, len(kbp.Keys))
-		for i := range kbp.Keys {
-			wg.Add(1)
-			go func(i int) {
-				defer wg.Done()
-
-				localErr := cs.Get(getTestRunMemcacheKey(kbp.Keys[i].IntID()), kbp.Keys[i].IntID(), &runs[i])
-				if localErr != nil {
-					err = localErr
-				}
-			}(i)
-		}
-		result = append(result, ProductTestRuns{
-			Product:  kbp.Product,
-			TestRuns: runs,
-		})
-		wg.Wait()
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	// Append the keys as ID
-	for i, kbp := range keysByProduct {
-		result[i].TestRuns.SetTestRunIDs(GetTestRunIDs(kbp.Keys))
-	}
-	return result, err
+	return store.LoadTestRunsByKeys(keys)
 }
 
 func contains(s []string, x string) bool {
