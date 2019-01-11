@@ -61,6 +61,11 @@ type Index interface {
 	// EvictRuns reduces memory pressure by evicting the cache's choice of runs
 	// from memory. The parameter is a percentage of current runs to evict.
 	EvictRuns(float64) (int, error)
+	// SetIndexChan sets the channel that synchronizes before ingesting a run.
+	// This channel is used by index monitors to ensure that the monitor is
+	// scheduled to run frequently enough to keep pace with any influx of ingested
+	// runs.
+	SetIngestChan(chan bool)
 }
 
 // ProxyIndex is a proxy implementation of the Index interface. This type is
@@ -88,6 +93,12 @@ func (i *ProxyIndex) EvictRuns(percent float64) (int, error) {
 	return i.delegate.EvictRuns(percent)
 }
 
+// SetIngestChan sets the channel that synchronizes before ingesting a run by
+// deferring to the proxy's delegate.
+func (i *ProxyIndex) SetIngestChan(c chan bool) {
+	i.delegate.SetIngestChan(c)
+}
+
 // NewProxyIndex instantiates a new proxy index bound to the given delegate.
 func NewProxyIndex(idx Index) ProxyIndex {
 	return ProxyIndex{idx}
@@ -108,6 +119,7 @@ type shardedWPTIndex struct {
 	loader   ReportLoader
 	shards   []*wptIndex
 	m        *sync.RWMutex
+	c        chan bool
 }
 
 // wptIndex is an index of tests and results. Multicore machines should use
@@ -147,6 +159,13 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 	if r.ID == 0 {
 		return errZeroRun
 	}
+
+	// Synchronize with anything that may be monitoring run ingestion. Do this
+	// before any i.sync* routines to avoid deadlock.
+	if i.c != nil {
+		i.c <- true
+	}
+
 	if err := i.syncMarkInProgress(r); err != nil {
 		return err
 	}
@@ -250,6 +269,10 @@ func (i *shardedWPTIndex) Bind(runs []shared.TestRun, q query.ConcreteQuery) (qu
 		fs[j] = f
 	}
 	return fs, nil
+}
+
+func (i *shardedWPTIndex) SetIngestChan(c chan bool) {
+	i.c = c
 }
 
 // Load for HTTPReportLoader loads WPT test run reports from the URL specified

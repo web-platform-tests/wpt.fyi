@@ -26,15 +26,16 @@ import (
 )
 
 var (
-	port               = flag.Int("port", 8080, "Port to listen on")
-	projectID          = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
-	gcpCredentialsFile = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
-	numShards          = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
-	monitorInterval    = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
-	maxHeapBytes       = flag.Uint64("max_heap_bytes", uint64(2e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
-	evictRunsPercent   = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
-	updateInterval     = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
-	updateMaxRuns      = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
+	port                   = flag.Int("port", 8080, "Port to listen on")
+	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
+	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
+	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
+	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
+	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", uint(10), "Maximum number of runs that can be ingested before memory monitor must run")
+	maxHeapBytes           = flag.Uint64("max_heap_bytes", uint64(2e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
+	evictRunsPercent       = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
+	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
+	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
 
 	idx index.Index
 	mon monitor.Monitor
@@ -136,7 +137,7 @@ func main() {
 	}
 
 	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
-	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *maxHeapBytes, *evictRunsPercent, idx)
+	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
 		log.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
