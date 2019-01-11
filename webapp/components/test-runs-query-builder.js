@@ -22,7 +22,7 @@ import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker-light.js';
 import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
 import './display-logo.js';
 import './info-banner.js';
-import { ProductInfo, DefaultBrowserNames, DefaultProducts, Channels, SemanticLabels } from './product-info.js';
+import { Channels, DefaultBrowserNames, DefaultProducts, ProductInfo, SemanticLabels } from './product-info.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { WPTFlags } from './wpt-flags.js';
 
