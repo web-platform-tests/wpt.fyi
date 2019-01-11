@@ -152,6 +152,30 @@ func (mr *MockAppEngineAPIMockRecorder) GetUploader(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAppEngineAPI)(nil).GetUploader), arg0)
 }
 
+// GetVersion mocks base method
+func (m *MockAppEngineAPI) GetVersion() string {
+	ret := m.ctrl.Call(m, "GetVersion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetVersion indicates an expected call of GetVersion
+func (mr *MockAppEngineAPIMockRecorder) GetVersion() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersion", reflect.TypeOf((*MockAppEngineAPI)(nil).GetVersion))
+}
+
+// GetVersionedHostname mocks base method
+func (m *MockAppEngineAPI) GetVersionedHostname() string {
+	ret := m.ctrl.Call(m, "GetVersionedHostname")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetVersionedHostname indicates an expected call of GetVersionedHostname
+func (mr *MockAppEngineAPIMockRecorder) GetVersionedHostname() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersionedHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetVersionedHostname))
+}
+
 // IsAdmin mocks base method
 func (m *MockAppEngineAPI) IsAdmin() bool {
 	ret := m.ctrl.Call(m, "IsAdmin")

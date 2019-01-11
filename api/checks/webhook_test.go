@@ -106,7 +106,7 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	id := int64(wptfyiCheckAppID)
+	id := int64(wptfyiStagingCheckAppID)
 	sha := strings.Repeat("0123456789", 4)
 	chrome := "chrome"
 	requestedAction := "requested_action"
@@ -114,7 +114,7 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 	username := "lukebjerring"
 	owner := wptRepoOwner
 	repo := wptRepoName
-	appID := int64(wptfyiCheckAppID)
+	appID := int64(wptfyiStagingCheckAppID)
 	event := github.CheckRunEvent{
 		Action: &requestedAction,
 		CheckRun: &github.CheckRun{
@@ -170,7 +170,7 @@ func TestHandleCheckRunEvent_ActionRequested_Cancel(t *testing.T) {
 }
 
 func getCheckRunCreatedEvent(status, sender, sha string) github.CheckRunEvent {
-	id := int64(wptfyiCheckAppID)
+	id := int64(wptfyiStagingCheckAppID)
 	chrome := "chrome"
 	created := "created"
 	repoName := wptRepoName
@@ -221,7 +221,7 @@ func TestHandlePullRequestEvent_UserWhitelisted(t *testing.T) {
 	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
-	checksAPI.EXPECT().CreateWPTCheckSuite(wptfyiCheckAppID, wptRepoInstallationID, sha).Return(true, nil)
+	checksAPI.EXPECT().CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoInstallationID, sha).Return(true, nil)
 
 	processed, err := handlePullRequestEvent(aeAPI, checksAPI, payload)
 	assert.Nil(t, err)

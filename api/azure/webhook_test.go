@@ -82,7 +82,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	azureAPI.EXPECT().FetchAzureArtifact(artifact, gomock.Any()).Return(nil)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().GetHostname().Return("wpt.fyi")
+	aeAPI.EXPECT().GetVersionedHostname().Return("wpt.fyi")
 	uploadURL, _ := url.Parse(server.URL + "/upload")
 	aeAPI.EXPECT().GetResultsUploadURL().Return(uploadURL)
 	aeAPI.EXPECT().GetUploader("azure").Return(shared.Uploader{Username: "azure", Password: "123"}, nil)

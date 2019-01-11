@@ -44,14 +44,9 @@ func TestAnomalies(t *testing.T) {
 }
 
 func getAnomalyElements(wd selenium.WebDriver) ([]selenium.WebElement, error) {
-	switch *browser {
-	case "firefox":
-		return wd.FindElements(selenium.ByCSSSelector, "wpt-anomalies h2 ~ a")
-	default:
-		e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-anomalies")
-		if err != nil {
-			return nil, err
-		}
-		return FindShadowElements(wd, e, "h2 ~ a")
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-anomalies")
+	if err != nil {
+		return nil, err
 	}
+	return FindShadowElements(wd, e, "h2 ~ a")
 }

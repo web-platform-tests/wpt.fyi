@@ -41,14 +41,9 @@ func TestFileResults(t *testing.T) {
 }
 
 func getFileResultRows(wd selenium.WebDriver) ([]selenium.WebElement, error) {
-	switch *browser {
-	case "firefox":
-		return wd.FindElements(selenium.ByCSSSelector, "tbody tr")
-	default:
-		e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-results")
-		if err != nil {
-			return nil, err
-		}
-		return FindShadowElements(wd, e, "test-file-results", "tbody tr")
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-results")
+	if err != nil {
+		return nil, err
 	}
+	return FindShadowElements(wd, e, "test-file-results", "tbody tr")
 }

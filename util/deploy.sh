@@ -41,6 +41,7 @@ if [[ -z "${QUIET}" ]]; then info "Installing dependencies..."; fi
 cd ${WPTD_PATH}
 if [[ "${APP_PATH}" == "webapp" ]]; then
   make webapp_deps || fatal "Error installing deps"
+  make webapp_node_modules_prune || fatal "Error pruning node_modules"
 fi
 
 # Create a name for this version
