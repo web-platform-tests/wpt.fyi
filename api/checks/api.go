@@ -19,6 +19,20 @@ import (
 	"google.golang.org/appengine/taskqueue"
 )
 
+const (
+	wptfyiCheckAppID        = int64(23318) // https://github.com/apps/wpt-fyi-status-check
+	wptfyiStagingCheckAppID = int64(19965) // https://github.com/apps/staging-wpt-fyi-status-check
+	checksStagingAppID      = int64(21580) // https://github.com/apps/checks-staging-instance
+
+	wptRepoInstallationID        = int64(577173)
+	wptRepoStagingInstallationID = int64(449270)
+
+	wptRepoID                = int64(3618133)
+	wptRepoOwner             = "web-platform-tests"
+	wptRepoName              = "wpt"
+	checksForAllUsersFeature = "checksAllUsers"
+)
+
 // API abstracts all the API calls used externally.
 type API interface {
 	Context() context.Context
@@ -182,6 +196,7 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 
 func (s checksAPIImpl) GetWPTRepoAppInstallationIDs() (appID, installationID int64) {
 	aeID := appengine.AppID(s.ctx)
+	// ID is either "appid" or "custom-domain.com:appid"
 	domainAndID := strings.Split(aeID, ":")
 	if len(domainAndID) > 1 {
 		aeID = domainAndID[1]

@@ -15,20 +15,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-const (
-	wptfyiCheckAppID        = int64(23318) // https://github.com/apps/wpt-fyi-status-check
-	wptfyiStagingCheckAppID = int64(19965) // https://github.com/apps/staging-wpt-fyi-status-check
-	checksStagingAppID      = int64(21580) // https://github.com/apps/checks-staging-instance
-
-	wptRepoInstallationID        = int64(577173)
-	wptRepoStagingInstallationID = int64(449270)
-
-	wptRepoID                = int64(3618133)
-	wptRepoOwner             = "web-platform-tests"
-	wptRepoName              = "wpt"
-	checksForAllUsersFeature = "checksAllUsers"
-)
-
 func isWPTFYIApp(appID int64) bool {
 	switch appID {
 	case wptfyiCheckAppID, wptfyiStagingCheckAppID, checksStagingAppID:
