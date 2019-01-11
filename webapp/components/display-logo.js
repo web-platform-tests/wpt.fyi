@@ -116,8 +116,7 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
     if (!showSource || !product.labels) {
       return '';
     }
-    const sources = Sources;
-    return product.labels.find(s => sources.has(s));
+    return product.labels.find(s => Sources.has(s));
   }
 }
 
