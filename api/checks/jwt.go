@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -83,6 +84,9 @@ func getSignedJWT(ctx context.Context, appID int64) (string, error) {
 		return "", err
 	}
 	block, _ := pem.Decode([]byte(secret))
+	if block == nil {
+		return "", errors.New("Failed to decode private key")
+	}
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return "", err
