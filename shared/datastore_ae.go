@@ -61,11 +61,8 @@ func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 	return datastore.GetMulti(d.ctx, cast, dst)
 }
 
-// TODO: This layering seems broken. A Datastore implementation should be
-// responsible for interacting with Cloud Datastore; that's it. If what the
-// client wants is memcache-fallback-to-datastore, then the client should
-// compose a cached store and use that. Caching probably should not be the
-// responsibility of a Datastore interface implementation.
+// LoadTestRun wraps a standard "get by key" functionality of appengine
+//  datastore with a 48h memcache layer.
 func (d aeDatastore) LoadTestRun(id int64) (*TestRun, error) {
 	var testRun TestRun
 	ctx := d.Context()
@@ -93,7 +90,8 @@ func (d aeDatastore) LoadTestRuns(
 	return loadTestRuns(d, products, labels, revisions, from, to, limit, offset)
 }
 
-// TODO: Same layering issue as `LoadTestRun()` above.
+// LoadTestRunsByKeys wraps a standard "get by key" functionality of appengine
+//  datastore with a 48h memcache layer.
 func (d aeDatastore) LoadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
 	result = TestRunsByProduct{}
 	ctx := d.Context()
