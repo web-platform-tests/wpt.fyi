@@ -69,7 +69,7 @@ func testProducts(
 	}
 	path := fmt.Sprintf("/results?%s", filters.ToQuery().Encode())
 	if err := wd.Get(app.GetWebappURL(path)); err != nil {
-		panic(fmt.Sprintf("Failed to load %s: %s", path, err.Error()))
+		assert.FailNow(t, fmt.Sprintf("Failed to load %s: %s", path, err.Error()))
 	}
 
 	// Wait for the results view to load.
@@ -81,13 +81,13 @@ func testProducts(
 		return len(testRuns) > 0, nil
 	}
 	if err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10); err != nil {
-		panic(fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
+		assert.FailNow(t, fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
 	}
 
 	// Check loaded test runs
 	testRuns, err := getTestRunElements(wd, "wpt-results")
 	if err != nil {
-		panic(fmt.Sprintf("Failed to get test runs: %s", err.Error()))
+		assert.FailNow(t, fmt.Sprintf("Failed to get test runs: %s", err.Error()))
 	}
 
 	// Check tab URLs propagate label

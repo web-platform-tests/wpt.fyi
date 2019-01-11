@@ -125,7 +125,7 @@ func createAzureRun(
 		writer.WriteField("labels", strings.Join(labels, ","))
 	}
 	// Ensure we call back to this appengine version instance.
-	host := aeAPI.GetHostname()
+	host := aeAPI.GetVersionedHostname()
 	writer.WriteField("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	fileField, err := writer.CreateFormFile("result_file", "wpt_report.json")

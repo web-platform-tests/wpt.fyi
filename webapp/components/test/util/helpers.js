@@ -3,13 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-const $_documentContainer = document.createElement('template');
 
-$_documentContainer.innerHTML = `<dom-module id="components-test-helper">
-
-</dom-module>`;
-
-document.head.appendChild($_documentContainer.content);
 /* eslint-disable no-unused-vars */
 function Response(jsonValue) {
   this.ok = true;

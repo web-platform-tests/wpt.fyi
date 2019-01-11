@@ -8,7 +8,7 @@ source "${REPO_DIR}/util/path.sh"
 WPTD_PATH=${WPTD_PATH:-$(absdir ${REPO_DIR})}
 
 usage() {
-  USAGE="Usage: deploy.sh [-p] [-q] [-b] [-h] [app path]
+  USAGE="Usage: deploy.sh [-p] [-r] [-q] [-b] [-h] [app path]
     -p : Promote (i.e. pass --promote flag to deploy)
     -r : Release (use the git-hash as the version)
     -q : Quiet (no user prompts, debugging off)
@@ -19,13 +19,14 @@ usage() {
 }
 
 APP_PATH=${@: -1}
-while getopts ':b:phq:g:' flag; do
+while getopts ':b:prhq' flag; do
   case "${flag}" in
     r) RELEASE='true' ;;
     b) BRANCH_NAME="${OPTARG}" ;;
     p) PROMOTE='true' ;;
     q) QUIET='true' ;;
-    h|*) usage && exit 0;;
+    :) echo "Option -$OPTARG requires an argument." && exit 1;;
+    h|*) usage && exit 1;;
   esac
 done
 
@@ -40,6 +41,7 @@ if [[ -z "${QUIET}" ]]; then info "Installing dependencies..."; fi
 cd ${WPTD_PATH}
 if [[ "${APP_PATH}" == "webapp" ]]; then
   make webapp_deps || fatal "Error installing deps"
+  make webapp_node_modules_prune || fatal "Error pruning node_modules"
 fi
 
 # Create a name for this version

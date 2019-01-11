@@ -181,7 +181,7 @@ func TestCreateAllRuns_success_master(t *testing.T) {
 	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental]"))
 	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
 
 	err := createAllRuns(
@@ -226,7 +226,7 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
 	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
 
 	err := createAllRuns(
@@ -263,7 +263,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 		} else if atomic.CompareAndSwapUint32(&requested, 1, 2) {
 			http.Error(w, "Not found", http.StatusNotFound)
 		} else {
-			panic("requested != 0 && requested != 1")
+			assert.FailNow(t, "requested != 0 && requested != 1")
 		}
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
@@ -278,7 +278,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	checksAPI.EXPECT().PendingCheckRun(suite, gomock.Any())
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
 
 	err := createAllRuns(
@@ -314,7 +314,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	suite := shared.CheckSuite{SHA: sha}
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 
 	err := createAllRuns(
 		shared.NewNilLogger(),

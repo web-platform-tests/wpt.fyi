@@ -29,13 +29,6 @@ VERBOSE := -v
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 
-# Recursively expanded variables so that USE_FRAME_BUFFER can be expanded.
-# These two macros are intended to run in the same shell as the test runners,
-# which means they need to be in the same (continued) line.
-START_XVFB = if [ "$(USE_FRAME_BUFFER)" == "true" ]; then \
-	export DISPLAY=:99; (Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &); fi
-STOP_XVFB = if [ "$(USE_FRAME_BUFFER)" == "true" ]; then killall Xvfb; fi
-
 build: go_build
 
 test: go_test python_test
@@ -106,14 +99,8 @@ _go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webs
 		-browser=$(BROWSER) \
 		$(FLAGS)
 
-web_components_test: xvfb firefox chrome web_components_tester webserver_deps
-	$(START_XVFB); \
-	cd $(WPTD_PATH)webapp; \
-	npm test || (($(STOP_XVFB)) && exit 1); \
-	$(STOP_XVFB)
-
-web_components_tester: git node-bower node-web-component-tester
-	cd $(WPTD_PATH)webapp; npm run bower-components
+web_components_test: xvfb firefox chrome webapp_node_modules_all
+	util/wct.sh $(USE_FRAME_BUFFER)
 
 sys_update: apt_update | sys_deps
 	gcloud components update
@@ -217,12 +204,12 @@ dev_data: git
 gcloud-login: gcloud  $(WPTD_PATH)client-secret.json
 	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
 
-deployment_state: gcloud-login webapp_deps webapp_node_modules_only package_service var-APP_PATH
+deployment_state: gcloud-login webapp_deps package_service var-APP_PATH
 
 deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
 	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
-		cd $(WPTD_PATH); util/deploy.sh -r -p $(APP_PATH); \
+		cd $(WPTD_PATH); util/deploy.sh -q -r -p $(APP_PATH); \
 	else \
 		cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
 	fi
@@ -243,7 +230,10 @@ deploy_production: deployment_state
 webapp_node_modules: node
 	cd $(WPTD_PATH)webapp; npm install --production
 
-webapp_node_modules_only: webapp_node_modules
+webapp_node_modules_all: node
+	cd $(WPTD_PATH)webapp; npm install
+
+webapp_node_modules_prune: webapp_node_modules
 	cd $(WPTD_PATH)webapp; npm prune --production
 
 xvfb:

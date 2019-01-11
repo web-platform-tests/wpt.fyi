@@ -28,7 +28,7 @@ while getopts ':rh' flag; do
 done
 
 info "Pruning node_modules so dev_appserver can handle watching file updates..."
-wptd_exec make webapp_node_modules_only
+wptd_exec make webapp_node_modules_prune
 
 info "Installing other web server code dependencies"
 wptd_exec make webserver_deps

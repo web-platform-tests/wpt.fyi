@@ -7,7 +7,6 @@
 
   <script type="module" src="../test-runs.js"></script>
   <script type="module" src="../test-file-results.js"></script>
-  <script type="module" src="./util/helpers.js"></script>
 </head>
 <body>
   <test-fixture id="test-file-results-fixture">
@@ -51,6 +50,34 @@ suite('TestFileResults', () => {
       test('> 0 subtests', () => {
         assert.equal(tfr.statusName(1), 'Harness status');
         assert.equal(tfr.statusName(99), 'Harness status');
+      });
+    });
+
+    suite('mergeNamesInto', () => {
+      test('empty', () => {
+        const names = ['a', 'b'];
+        const allNames = [];
+        tfr.mergeNamesInto(names, allNames);
+        expect(allNames).to.deep.equal(names);
+      });
+
+      test('missing before', () => {
+        const names = ['a', 'aa', 'ab', 'b', 'c'];
+        const allNames = ['a', 'b'];
+        tfr.mergeNamesInto(names, allNames);
+        expect(allNames).to.deep.equal(names);
+      });
+
+      test('missing after', () => {
+        const before = ['a', 'x', 'b'];
+        const after = ['a', 'b', 'y', 'z'];
+        let result = [...before];
+        tfr.mergeNamesInto(after, result);
+        expect(result).to.deep.equal(['a', 'x', 'b', 'y', 'z']);
+
+        result = [...after];
+        tfr.mergeNamesInto(before, result);
+        expect(result).to.deep.equal(['a', 'x', 'b', 'y', 'z']);
       });
     });
   });
