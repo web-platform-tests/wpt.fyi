@@ -21,6 +21,7 @@
   <script type="module">
 import '../test-runs-query-builder.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { Channels } from '../product-info.js';
 suite('TestRunsQueryBuilder', () => {
   let queryBuilder, sandbox;
 
@@ -114,7 +115,7 @@ suite('TestRunsQueryBuilder', () => {
       });
     });
 
-    for (const channel of window.wpt.Channels) {
+    for (const channel of Channels) {
       test(channel, done => {
         flush(() => {
           for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
@@ -126,7 +127,7 @@ suite('TestRunsQueryBuilder', () => {
       });
     }
 
-    for (const channel of window.wpt.Channels) {
+    for (const channel of Channels) {
       test(channel, done => {
         flush(() => {
           queryBuilder.set('labels', [channel]);

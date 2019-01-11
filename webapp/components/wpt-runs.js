@@ -14,7 +14,7 @@ import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
 import { LoadingState } from './loading-state.js';
-import './product-info.js';
+import { CommitTypes } from './product-info.js';
 import { SelfNavigation } from './self-navigator.js';
 import './test-run.js';
 import './test-runs-query-builder.js';
@@ -364,7 +364,7 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
     if (!this.githubCommitLinks) {
       return;
     }
-    const types = window.wpt.CommitTypes;
+    const types = CommitTypes;
     for (const runs of Object.values(runsByBrowser)) {
       for (const r of runs) {
         const label = r.labels && r.labels.find(l => types.has(l));

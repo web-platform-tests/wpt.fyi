@@ -22,7 +22,7 @@ import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker-light.js';
 import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
 import './display-logo.js';
 import './info-banner.js';
-import { ProductInfo } from './product-info.js';
+import { Channels, DefaultBrowserNames, DefaultProducts, ProductInfo, SemanticLabels } from './product-info.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { WPTFlags } from './wpt-flags.js';
 
@@ -208,7 +208,7 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   handleSubmit() {
     // Handle the edge-case that the user typed a label for channel or source, etc.
     const productBuilders = this.shadowRoot.querySelectorAll('product-builder');
-    for (const semantic of window.wpt.SemanticLabels) {
+    for (const semantic of SemanticLabels) {
       for (const label of semantic.values) {
         if (this.labels.includes(label)) {
           this.labels = this.labels.filter(l => l !== label);
@@ -285,7 +285,7 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   handleAddProduct() {
     // TODO(lukebjerring): Make a smart(er) suggestion.
     let next = { browser_name: 'chrome' };
-    for (const d of window.wpt.DefaultBrowserNames) {
+    for (const d of DefaultBrowserNames) {
       if (this.products.find(p => p.browser_name === d)) {
         continue;
       }
@@ -394,7 +394,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
     return {
       browserName: {
         type: String,
-        value: window.wpt.DefaultBrowserNames[0],
+        value: DefaultBrowserNames[0],
         notify: true,
       },
       browserVersion: {
@@ -439,11 +439,11 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
       onProductChanged: Function,
       defaultProducts: {
         type: Array,
-        value: window.wpt.DefaultProducts,
+        value: DefaultProducts,
       },
       channels: {
         type: Array,
-        value: Array.from(window.wpt.Channels),
+        value: Array.from(Channels),
       },
       versionsURL: {
         type: String,
@@ -485,7 +485,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
   labelsChanged(labels) {
     // Configure the channel from the labels.
     labels = new Set(labels || []);
-    for (const semantic of window.wpt.SemanticLabels) {
+    for (const semantic of SemanticLabels) {
       const value = Array.from(semantic.values).find(c => labels.has(c)) || 'any';
       if (this[semantic.property] !== value) {
         this[semantic.property] = value;
@@ -514,7 +514,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
 
   productWithChannel(product, channel) {
     return Object.assign({}, product, {
-      labels: (product.labels || []).filter(l => !window.wpt.Channels.has(l)).concat(channel)
+      labels: (product.labels || []).filter(l => !Channels.has(l)).concat(channel)
     });
   }
 

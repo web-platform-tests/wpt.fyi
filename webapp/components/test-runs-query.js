@@ -3,17 +3,10 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
-import { ProductInfo } from './product-info.js';
+import { Channels, DefaultProducts, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
 import { pluralize } from './pluralize.js';
 
-const $_documentContainer = document.createElement('template');
-$_documentContainer.innerHTML = `<dom-module id="test-runs-query">
-
-</dom-module>`;
-
-document.head.appendChild($_documentContainer.content);
 const testRunsQueryComputer =
   'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount)';
 
@@ -113,7 +106,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     // Collapse a globally shared channel into a single label.
     if (this.products.length) {
       let allChannelsSame = true;
-      const channel = (this.products[0].labels || []).find(l => window.wpt.Channels.has(l));
+      const channel = (this.products[0].labels || []).find(l => Channels.has(l));
       for (const p of this.products) {
         if (!(p.labels || []).find(l => l === channel)) {
           allChannelsSame = false;
@@ -122,7 +115,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       let productSpecs;
       if (allChannelsSame) {
         productSpecs = this.products.map(p => {
-          const nonChannel = (p.labels || []).filter(l => !window.wpt.Channels.has(l));
+          const nonChannel = (p.labels || []).filter(l => !Channels.has(l));
           return this.getSpec(Object.assign({}, p, {labels: nonChannel}));
         });
         if (!labels.includes(channel)) {
@@ -148,12 +141,12 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
   computeIsDefaultProducts(productSpecs) {
     return !productSpecs || !productSpecs.length
-      || window.wpt.DefaultProductSpecs.join(',') === (productSpecs || []).join(',');
+      || DefaultProductSpecs.join(',') === (productSpecs || []).join(',');
   }
 
   get emptyQuery() {
     return {
-      products: window.wpt.DefaultProducts,
+      products: DefaultProducts.map(p => Object.assign({}, p)),
       labels: [],
       maxCount: undefined,
       shas: [],
@@ -183,12 +176,12 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     // Expand any global channel labels into the separate products
     let sharedChannel;
     if ('label' in params) {
-      sharedChannel = params.label.find(l => window.wpt.Channels.has(l));
-      batchUpdate.labels = params.label.filter(l => !window.wpt.Channels.has(l));
+      sharedChannel = params.label.find(l => Channels.has(l));
+      batchUpdate.labels = params.label.filter(l => !Channels.has(l));
     }
     if (sharedChannel) {
       for (const i in batchUpdate.products) {
-        const labels = batchUpdate.products[i].labels.filter(l => !window.wpt.Channels.has(l) || l === sharedChannel);
+        const labels = batchUpdate.products[i].labels.filter(l => !Channels.has(l) || l === sharedChannel);
         if (!batchUpdate.products[i].labels.includes(sharedChannel)) {
           labels.push(sharedChannel);
         }

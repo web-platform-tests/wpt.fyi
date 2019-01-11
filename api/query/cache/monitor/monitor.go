@@ -96,14 +96,16 @@ func (r GoRuntime) GetHeapBytes() uint64 {
 }
 
 type indexMonitor struct {
-	logger       shared.Logger
-	rt           Runtime
-	interval     time.Duration
-	maxHeapBytes uint64
-	percent      float64
+	logger          shared.Logger
+	rt              Runtime
+	interval        time.Duration
+	maxIngestedRuns uint
+	maxHeapBytes    uint64
+	percent         float64
 
-	isRunning bool
-	mutex     *sync.Mutex
+	isRunning   bool
+	mutex       *sync.Mutex
+	runIngested chan bool
 
 	idx index.Index
 }
@@ -114,19 +116,36 @@ func (m *indexMonitor) Start() error {
 		return err
 	}
 
+	m.idx.SetIngestChan(m.runIngested)
+
+	reqs := uint(0)
 	for {
 		if !m.isRunning {
 			return errStopped
 		}
 
-		heapBytes := m.rt.GetHeapBytes()
-		if heapBytes > m.maxHeapBytes {
-			m.logger.Errorf("Out of memory: %d > %d", heapBytes, m.maxHeapBytes)
-			m.idx.EvictRuns(m.percent)
-		} else {
-			m.logger.Debugf("Monitor: %d heap-allocated bytes OK", heapBytes)
+		timer := make(chan bool, 1)
+		go func() {
+			time.Sleep(m.interval)
+			timer <- true
+		}()
+
+		for {
+			select {
+			case <-timer:
+				reqs = 0
+			case <-m.runIngested:
+				reqs++
+				if reqs == m.maxIngestedRuns {
+					reqs = 0
+				}
+			}
+			if reqs == 0 {
+				break
+			}
 		}
-		time.Sleep(m.interval)
+
+		m.check()
 	}
 }
 
@@ -137,6 +156,7 @@ func (m *indexMonitor) Stop() error {
 		return errStopped
 	}
 	m.isRunning = false
+	m.runIngested = make(chan bool)
 	return nil
 }
 
@@ -175,13 +195,23 @@ func (m *indexMonitor) start() error {
 	return nil
 }
 
+func (m *indexMonitor) check() {
+	heapBytes := m.rt.GetHeapBytes()
+	if heapBytes > m.maxHeapBytes {
+		m.logger.Warningf("Monitor %d bytes allocated, exceeding threshold of %d bytes", heapBytes, m.maxHeapBytes)
+		m.idx.EvictRuns(m.percent)
+	} else {
+		m.logger.Debugf("Monitor: %d heap-allocated bytes OK", heapBytes)
+	}
+}
+
 // NewIndexMonitor instantiates a new index.Index monitor.
-func NewIndexMonitor(logger shared.Logger, rt Runtime, interval time.Duration, maxHeapBytes uint64, percent float64, idx index.Index) (Monitor, error) {
+func NewIndexMonitor(logger shared.Logger, rt Runtime, interval time.Duration, maxIngestedRuns uint, maxHeapBytes uint64, percent float64, idx index.Index) (Monitor, error) {
 	if percent < 0 {
 		return nil, errNegativePercent
 	} else if percent > 1.0 {
 		return nil, errPercentTooLarge
 	}
 
-	return &indexMonitor{logger, rt, interval, maxHeapBytes, percent, false, &sync.Mutex{}, idx}, nil
+	return &indexMonitor{logger, rt, interval, maxIngestedRuns, maxHeapBytes, percent, false, &sync.Mutex{}, make(chan bool), idx}, nil
 }

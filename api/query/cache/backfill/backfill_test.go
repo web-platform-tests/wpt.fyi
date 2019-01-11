@@ -19,7 +19,7 @@ func TestNilIndex(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fetcher := NewMockRunFetcher(ctrl)
-	_, err := FillIndex(fetcher, nil, nil, 1, uint64(1), 0.0, nil)
+	_, err := FillIndex(fetcher, nil, nil, 1, uint(10), uint64(1), 0.0, nil)
 	assert.Equal(t, errNilIndex, err)
 }
 
@@ -30,6 +30,6 @@ func TestFetchErr(t *testing.T) {
 	idx := index.NewMockIndex(ctrl)
 	expected := errors.New("Fetch error")
 	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(nil, expected)
-	_, err := FillIndex(fetcher, nil, nil, 1, uint64(1), 0.0, idx)
+	_, err := FillIndex(fetcher, nil, nil, 1, uint(10), uint64(1), 0.0, idx)
 	assert.Equal(t, expected, err)
 }
