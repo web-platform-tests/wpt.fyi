@@ -146,7 +146,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
   get emptyQuery() {
     return {
-      products: DefaultProducts,
+      products: DefaultProducts.map(p => Object.assign({}, p)),
       labels: [],
       maxCount: undefined,
       shas: [],

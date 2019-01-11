@@ -31,9 +31,9 @@ const versionPatterns = Object.freeze({
   Major: /(\d+)/,
   MajorAndMinor: /(\d+\.\d+)/,
 });
-const DefaultBrowserNames = ['chrome', 'edge', 'firefox', 'safari'];
+const DefaultBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari']);
 const DefaultProductSpecs = DefaultBrowserNames;
-const DefaultProducts = DefaultProductSpecs.map(p => parseProductSpec(p));
+const DefaultProducts = DefaultProductSpecs.map(p => Object.freeze(parseProductSpec(p)));
 const CommitTypes = new Set(['pr_head', 'master']);
 const Channels = new Set(['stable', 'beta', 'experimental']);
 const Sources = new Set(['buildbot', 'taskcluster', 'msedge', 'azure']);

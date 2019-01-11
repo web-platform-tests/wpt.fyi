@@ -49,7 +49,7 @@ suite('TestRunsQuery', () => {
   });
 
   test('isDefaultProducts', () => {
-    testRunsQuery.products = DefaultProducts;
+    testRunsQuery.products = DefaultProducts.map(p => Object.assign({}, p));
     expect(testRunsQuery.isDefaultProducts).to.equal(true);
     testRunsQuery.products = DefaultProducts.slice(0, 1);
     expect(testRunsQuery.isDefaultProducts).to.equal(false);
