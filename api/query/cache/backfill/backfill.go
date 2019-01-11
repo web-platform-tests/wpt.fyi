@@ -93,7 +93,7 @@ func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, e
 // will halt either:
 // The first time a run is evicted from the index.Index via EvictAnyRun(), OR
 // the first time the returned monitor.Monitor is stopped via Stop().
-func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
+func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxIngestedRuns uint, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
 	if idx == nil {
 		return nil, errNilIndex
 	}
@@ -102,7 +102,7 @@ func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, int
 		ProxyIndex:  index.NewProxyIndex(idx),
 		backfilling: true,
 	}
-	idxMon, err := monitor.NewIndexMonitor(logger, rt, interval, maxBytes, evictionPercent, bfIdx)
+	idxMon, err := monitor.NewIndexMonitor(logger, rt, interval, maxIngestedRuns, maxBytes, evictionPercent, bfIdx)
 	if err != nil {
 		return nil, err
 	}

@@ -184,7 +184,7 @@ func main() {
 	}
 
 	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
-	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *maxHeapBytes, *evictRunsPercent, idx)
+	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
 		log.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
