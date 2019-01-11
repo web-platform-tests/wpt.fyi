@@ -138,7 +138,7 @@ func LoadTestRunsForFilters(store shared.Datastore, filters shared.TestRunFilter
 	if keys, err = LoadTestRunKeysForFilters(store, filters); err != nil {
 		return nil, err
 	}
-	return shared.LoadTestRunsByKeys(store, keys)
+	return store.LoadTestRunsByKeys(keys)
 }
 
 func getPRCommits(ctx context.Context, pr int) shared.SHAs {

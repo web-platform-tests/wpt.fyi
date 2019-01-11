@@ -6,6 +6,7 @@ package shared
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -22,6 +23,16 @@ func NewAppEngineDatastore(ctx context.Context) Datastore {
 
 type aeDatastore struct {
 	ctx context.Context
+}
+
+func (d aeDatastore) Get(iID, value interface{}) error {
+	id, ok := iID.(int64)
+	if !ok {
+		return errDatastoreObjectStoreExpectedInt64
+	}
+	var err error
+	value, err = d.LoadTestRun(id)
+	return err
 }
 
 func (d aeDatastore) Context() context.Context {
@@ -55,8 +66,22 @@ func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 	return datastore.GetMulti(d.ctx, cast, dst)
 }
 
+// TODO: This layering seems broken. A Datastore implementation should be
+// responsible for interacting with Cloud Datastore; that's it. If what the
+// client wants is memcache-fallback-to-datastore, then the client should
+// compose a cached store and use that. Caching probably should not be the
+// responsibility of a Datastore interface implementation.
 func (d aeDatastore) LoadTestRun(id int64) (*TestRun, error) {
-	return loadTestRun(d, id)
+	var testRun TestRun
+	ctx := d.Context()
+	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), d)
+	err := cs.Get(getTestRunMemcacheKey(id), id, &testRun)
+	if err != nil {
+		return nil, err
+	}
+
+	testRun.ID = id
+	return &testRun, nil
 }
 
 func (d aeDatastore) LoadTestRuns(
@@ -68,6 +93,42 @@ func (d aeDatastore) LoadTestRuns(
 	limit,
 	offset *int) (result TestRunsByProduct, err error) {
 	return loadTestRuns(d, products, labels, revisions, from, to, limit, offset)
+}
+
+// TODO: Same layering issue as `LoadTestRun()` above.
+func (d aeDatastore) LoadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
+	result = TestRunsByProduct{}
+	ctx := d.Context()
+	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), d)
+	var wg sync.WaitGroup
+	for _, kbp := range keysByProduct {
+		runs := make(TestRuns, len(kbp.Keys))
+		for i := range kbp.Keys {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+
+				localErr := cs.Get(getTestRunMemcacheKey(kbp.Keys[i].IntID()), kbp.Keys[i].IntID(), &runs[i])
+				if localErr != nil {
+					err = localErr
+				}
+			}(i)
+		}
+		result = append(result, ProductTestRuns{
+			Product:  kbp.Product,
+			TestRuns: runs,
+		})
+		wg.Wait()
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	// Append the keys as ID
+	for i, kbp := range keysByProduct {
+		result[i].TestRuns.SetTestRunIDs(GetTestRunIDs(kbp.Keys))
+	}
+	return result, err
 }
 
 type aeQuery struct {
