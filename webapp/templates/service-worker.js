@@ -33,7 +33,8 @@ self.addEventListener(
 
           return fetch(request)
             .then(r => {
-              if (r.ok) {
+              // Do not cache failed or CORS requests.
+              if (r.ok && r.type === 'basic') {
                 if (cacheablePath.test(path) && path !== '/components/wpt-env-flags.js') {
                   // IMPORTANT: Clone the response to reuse in caches.
                   const responseToCache = r.clone();
