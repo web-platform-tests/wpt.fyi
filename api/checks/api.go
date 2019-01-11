@@ -8,11 +8,13 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
 )
@@ -26,6 +28,7 @@ type API interface {
 	IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CreateWPTCheckSuite(appID, installationID int64, sha string, prNumbers ...int) (bool, error)
+	GetWPTRepoAppInstallationIDs() (appID, installationID int64)
 }
 
 type checksAPIImpl struct {
@@ -175,4 +178,18 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 		getOrCreateCheckSuite(s.ctx, sha, wptRepoOwner, wptRepoName, appID, installationID, prNumbers...)
 	}
 	return suite != nil, err
+}
+
+func (s checksAPIImpl) GetWPTRepoAppInstallationIDs() (appID, installationID int64) {
+	aeID := appengine.AppID(s.ctx)
+	domainAndID := strings.Split(aeID, ":")
+	if len(domainAndID) > 1 {
+		aeID = domainAndID[1]
+	}
+	// Production
+	if aeID == "wptdashboard" {
+		return wptfyiCheckAppID, wptRepoInstallationID
+	}
+	// Default to staging
+	return wptfyiStagingCheckAppID, wptRepoStagingInstallationID
 }
