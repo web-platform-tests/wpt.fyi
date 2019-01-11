@@ -29,7 +29,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'queryBuilder',
       'queryBuilderSHA',
       'diffFromAPI',
-      'diffFilterUIToggle',
       'colorHomepage',
       'structuredQueries',
       'masterRunsOnly',
@@ -156,11 +155,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{diffFromAPI}}">
         Compute diffs using /api/diff
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{diffFilterUIToggle}}">
-        Filter toggle for diff view
       </paper-checkbox>
     </paper-item>
     <paper-item>

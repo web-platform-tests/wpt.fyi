@@ -228,9 +228,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
               <template is="dom-if" if="[[diffShown]]">
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
-                  <template is="dom-if" if="[[diffFilterUIToggle]]">
                   <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
-                  </template>
                 </th>
               </template>
             </tr>
