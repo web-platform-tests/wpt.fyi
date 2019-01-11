@@ -93,7 +93,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     }
     // Convert bool master to label 'master'
     labels = labels && Array.from(labels) || [];
-    if (this.masterRunsOnly && master && !labels.includes('master')) {
+    if (master && !labels.includes('master')) {
       labels.push('master');
     }
     if (labels.length) {
@@ -207,12 +207,9 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     if ('aligned' in params) {
       batchUpdate.aligned = params.aligned;
     }
-    if (this.masterRunsOnly) {
-      batchUpdate.master = batchUpdate.labels
-        && batchUpdate.labels.includes('master');
-      if (batchUpdate.master) {
-        batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
-      }
+    if (batchUpdate.labels && batchUpdate.labels.includes('master')) {
+      batchUpdate.master = true;
+      batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
     }
     this.setProperties(batchUpdate);
   }

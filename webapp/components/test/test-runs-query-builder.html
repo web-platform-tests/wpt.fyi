@@ -4,11 +4,6 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script>
-    window.wpt = window.wpt || {};
-    window.wpt.MUTABLE_FLAGS = true;
-  </script>
 </head>
 <body>
   <test-fixture id="query-builder-fixture">
@@ -181,10 +176,6 @@ suite('TestRunsQueryBuilder', () => {
   });
 
   suite('master runs only', () => {
-    setup(() => {
-      queryBuilder.masterRunsOnly = true;
-    });
-
     test('updateQueryParams', () => {
       queryBuilder.updateQueryParams({ label: ['master'] });
       expect(queryBuilder.master).to.be.true;
