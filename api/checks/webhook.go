@@ -252,7 +252,7 @@ func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []
 	destRepoID := pullRequest.GetPullRequest().GetBase().GetRepo().GetID()
 	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
 		// Pull is across forks; request a check suite on the main fork too.
-		return checksAPI.CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoInstallationID, sha)
+		return checksAPI.CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoInstallationID, sha, pullRequest.GetNumber())
 	}
 	return false, nil
 }
