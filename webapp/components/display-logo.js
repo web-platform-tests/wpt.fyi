@@ -22,7 +22,7 @@ import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { ProductInfo } from './product-info.js';
+import { ProductInfo, Sources } from './product-info.js';
 
 class DisplayLogo extends ProductInfo(PolymerElement) {
   static get template() {
@@ -116,7 +116,7 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
     if (!showSource || !product.labels) {
       return '';
     }
-    const sources = window.wpt.Sources;
+    const sources = Sources;
     return product.labels.find(s => sources.has(s));
   }
 }
