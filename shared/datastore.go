@@ -6,6 +6,7 @@ package shared
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -15,6 +16,8 @@ import (
 
 	"google.golang.org/appengine/datastore"
 )
+
+var errNoProducts = errors.New("No products specified in request to load test runs")
 
 // Key abstracts an int64 based datastore.Key
 type Key interface {
@@ -191,6 +194,10 @@ func loadTestRuns(
 	to *time.Time,
 	limit,
 	offset *int) (result TestRunsByProduct, err error) {
+	if len(products) == 0 {
+		return nil, errNoProducts
+	}
+
 	keys, err := LoadTestRunKeys(store, products, labels, revisions, from, to, limit, offset)
 	if err != nil {
 		return nil, err
