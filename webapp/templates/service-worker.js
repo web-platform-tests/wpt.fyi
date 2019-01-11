@@ -13,6 +13,8 @@ self.addEventListener(
   }
 );
 
+const cacheablePath = new RegExp('^/(components|static|node_modules)/');
+
 // Locally cache eligible components/files.
 self.addEventListener(
   'fetch',
@@ -23,16 +25,20 @@ self.addEventListener(
           if (r) {
             return r;
           }
-          return fetch(e.request)
+
+          // IMPORTANT: Clone the request to reuse in fetch.
+          const request = e.request.clone();
+          const url = new URL(e.request.url);
+          const path = url.pathname;
+
+          return fetch(request)
             .then(r => {
               if (r.ok) {
-                const components = new RegExp('^/((bower_)?components|static|node_modules)/');
-                const path = e.request.url.path;
-                if (components.test(path) && path !== '/components/wpt-env-flags.js') {
-                  let clone = r.clone();
-                  caches.open('{{ .Version }}').then(cache => {
-                    cache.put(e.request, clone);
-                  });
+                if (cacheablePath.test(path) && path !== '/components/wpt-env-flags.js') {
+                  // IMPORTANT: Clone the response to reuse in caches.
+                  const responseToCache = r.clone();
+                  caches.open('{{ .Version }}')
+                    .then(cache => cache.put(e.request, responseToCache));
                 }
               }
               return r;
