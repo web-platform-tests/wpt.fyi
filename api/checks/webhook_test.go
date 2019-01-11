@@ -221,7 +221,8 @@ func TestHandlePullRequestEvent_UserWhitelisted(t *testing.T) {
 	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
-	checksAPI.EXPECT().CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoInstallationID, sha).Return(true, nil)
+	checksAPI.EXPECT().GetWPTRepoAppInstallationIDs().Return(wptfyiStagingCheckAppID, wptRepoStagingInstallationID)
+	checksAPI.EXPECT().CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoStagingInstallationID, sha, 123).Return(true, nil)
 
 	processed, err := handlePullRequestEvent(aeAPI, checksAPI, payload)
 	assert.Nil(t, err)
@@ -231,7 +232,9 @@ func TestHandlePullRequestEvent_UserWhitelisted(t *testing.T) {
 func getOpenedPREvent(user, sha string) github.PullRequestEvent {
 	opened := "opened"
 	repoID := wptRepoID
+	number := 123
 	return github.PullRequestEvent{
+		Number: &number,
 		PullRequest: &github.PullRequest{
 			User: &github.User{Login: &user},
 			Head: &github.PullRequestBranch{SHA: &sha},

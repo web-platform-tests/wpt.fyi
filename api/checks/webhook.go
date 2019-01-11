@@ -15,17 +15,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-const (
-	wptfyiCheckAppID         = int64(23318) // https://github.com/apps/wpt-fyi-status-check
-	wptfyiStagingCheckAppID  = int64(19965) // https://github.com/apps/staging-wpt-fyi-status-check
-	checksStagingAppID       = int64(21580) // https://github.com/apps/checks-staging-instance
-	wptRepoID                = int64(3618133)
-	wptRepoInstallationID    = int64(449270)
-	wptRepoOwner             = "web-platform-tests"
-	wptRepoName              = "wpt"
-	checksForAllUsersFeature = "checksAllUsers"
-)
-
 func isWPTFYIApp(appID int64) bool {
 	switch appID {
 	case wptfyiCheckAppID, wptfyiStagingCheckAppID, checksStagingAppID:
@@ -252,7 +241,8 @@ func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []
 	destRepoID := pullRequest.GetPullRequest().GetBase().GetRepo().GetID()
 	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
 		// Pull is across forks; request a check suite on the main fork too.
-		return checksAPI.CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoInstallationID, sha)
+		appID, installationID := checksAPI.GetWPTRepoAppInstallationIDs()
+		return checksAPI.CreateWPTCheckSuite(appID, installationID, sha, pullRequest.GetNumber())
 	}
 	return false, nil
 }
