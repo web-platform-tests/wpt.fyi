@@ -3,15 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
-const $_documentContainer = document.createElement('template');
-$_documentContainer.innerHTML = `<dom-module id="product-info">
-
-</dom-module>`;
-document.head.appendChild($_documentContainer.content);
-
-window.wpt = window.wpt || {};
-const DISPLAY_NAMES = (() => {
+const DisplayNames = (() => {
   let m = new Map();
   ['chrome', 'chrome-experimental'].forEach(n => m.set(n, 'Chrome'));
   ['edge', 'edge-experimental'].forEach(n => m.set(n, 'Edge'));
@@ -35,36 +27,20 @@ const DISPLAY_NAMES = (() => {
   m.set('msedge', 'MS Edge');
   return m;
 })();
-Object.defineProperty(window.wpt, 'VersionPatterns', {
-  value: Object.freeze({
-    Major: /(\d+)/,
-    MajorAndMinor: /(\d+\.\d+)/,
-  }),
+const versionPatterns = Object.freeze({
+  Major: /(\d+)/,
+  MajorAndMinor: /(\d+\.\d+)/,
 });
-Object.defineProperty(window.wpt, 'DefaultBrowserNames', {
-  get: () => ['chrome', 'edge', 'firefox', 'safari'],
-});
-Object.defineProperty(window.wpt, 'DefaultProductSpecs', {
-  get: () => window.wpt.DefaultBrowserNames,
-});
-Object.defineProperty(window.wpt, 'DefaultProducts', {
-  get: () => window.wpt.DefaultProductSpecs.map(p => parseProductSpec(p)),
-});
-Object.defineProperty(window.wpt, 'CommitTypes', {
-  get: () => new Set(['pr_head', 'master']),
-});
-Object.defineProperty(window.wpt, 'Channels', {
-  get: () => new Set(['stable', 'beta', 'experimental']),
-});
-Object.defineProperty(window.wpt, 'Sources', {
-  get: () => new Set(['buildbot', 'taskcluster', 'msedge', 'azure']),
-});
-Object.defineProperty(window.wpt, 'SemanticLabels', {
-  get: () => [
-    { property: '_channel', values: window.wpt.Channels },
-    { property: '_source', values: window.wpt.Sources },
-  ],
-});
+const DefaultBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari']);
+const DefaultProductSpecs = DefaultBrowserNames;
+const DefaultProducts = DefaultProductSpecs.map(p => Object.freeze(parseProductSpec(p)));
+const CommitTypes = new Set(['pr_head', 'master']);
+const Channels = new Set(['stable', 'beta', 'experimental']);
+const Sources = new Set(['buildbot', 'taskcluster', 'msedge', 'azure']);
+const SemanticLabels = [
+  { property: '_channel', values: Channels },
+  { property: '_source', values: Sources },
+];
 
 function parseProductSpec(spec) {
   // @sha (optional)
@@ -121,7 +97,7 @@ const ProductInfo = (superClass) => class extends superClass {
   }
 
   displayName(name) {
-    return DISPLAY_NAMES.get(name) || name;
+    return DisplayNames.get(name) || name;
   }
 
   displayLabels(labels) {
@@ -141,8 +117,8 @@ const ProductInfo = (superClass) => class extends superClass {
    */
   shortVersion(browserName, browserVersion) {
     const pattern = this.minorIsSignificant(browserName)
-      ? window.wpt.VersionPatterns.MajorAndMinor
-      : window.wpt.VersionPatterns.Major;
+      ? versionPatterns.MajorAndMinor
+      : versionPatterns.Major;
     const match = pattern.exec(browserVersion);
 
     if (!match) {
@@ -183,6 +159,14 @@ const ProductInfo = (superClass) => class extends superClass {
 };
 
 export {
+  DisplayNames,
+  DefaultBrowserNames,
+  DefaultProductSpecs,
+  DefaultProducts,
+  CommitTypes,
+  Channels,
+  Sources,
+  SemanticLabels,
   ProductInfo,
   parseProductSpec,
   parseProduct,

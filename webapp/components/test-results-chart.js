@@ -8,7 +8,7 @@ import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@google-web-components/google-chart/google-chart.js';
 import { TestFileResults } from './test-file-results.js';
-import './product-info.js';
+import { DefaultBrowserNames } from './product-info.js';
 
 class TestResultsChart extends TestFileResults {
   static get template() {
@@ -57,7 +57,7 @@ class TestResultsChart extends TestFileResults {
       },
       browserNames: {
         type: Array,
-        value: window.wpt.DefaultBrowserNames,
+        value: DefaultBrowserNames,
       },
       cols: {
         type: Array,
