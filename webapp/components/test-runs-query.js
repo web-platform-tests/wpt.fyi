@@ -200,8 +200,8 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     if ('aligned' in params) {
       batchUpdate.aligned = params.aligned;
     }
-    if (batchUpdate.labels && batchUpdate.labels.includes('master')) {
-      batchUpdate.master = true;
+    batchUpdate.master = batchUpdate.labels && batchUpdate.labels.includes('master');
+    if (batchUpdate.master) {
       batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
     }
     this.setProperties(batchUpdate);
