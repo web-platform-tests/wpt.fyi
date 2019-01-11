@@ -25,16 +25,6 @@ type aeDatastore struct {
 	ctx context.Context
 }
 
-func (d aeDatastore) Get(iID, value interface{}) error {
-	id, ok := iID.(int64)
-	if !ok {
-		return errDatastoreObjectStoreExpectedInt64
-	}
-	var err error
-	value, err = d.LoadTestRun(id)
-	return err
-}
-
 func (d aeDatastore) Context() context.Context {
 	return d.ctx
 }
@@ -58,6 +48,11 @@ func (d aeDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	return cast, err
 }
 
+func (d aeDatastore) Get(k Key, dst interface{}) error {
+	cast := k.(*datastore.Key)
+	return datastore.Get(d.ctx, cast, dst)
+}
+
 func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 	cast := make([]*datastore.Key, len(keys))
 	for i := range keys {
@@ -74,7 +69,10 @@ func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 func (d aeDatastore) LoadTestRun(id int64) (*TestRun, error) {
 	var testRun TestRun
 	ctx := d.Context()
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), d)
+	cs := NewObjectCachedStore(
+		ctx,
+		NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)),
+		testRunCachedStore{store: d})
 	err := cs.Get(getTestRunMemcacheKey(id), id, &testRun)
 	if err != nil {
 		return nil, err
@@ -99,7 +97,10 @@ func (d aeDatastore) LoadTestRuns(
 func (d aeDatastore) LoadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
 	result = TestRunsByProduct{}
 	ctx := d.Context()
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), d)
+	cs := NewObjectCachedStore(
+		ctx,
+		NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)),
+		testRunCachedStore{store: d})
 	var wg sync.WaitGroup
 	for _, kbp := range keysByProduct {
 		runs := make(TestRuns, len(kbp.Keys))

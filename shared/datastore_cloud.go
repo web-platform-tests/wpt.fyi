@@ -60,6 +60,11 @@ func (d cloudDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	return cast, err
 }
 
+func (d cloudDatastore) Get(k Key, dst interface{}) error {
+	cast := k.(cloudKey).key
+	return d.client.Get(d.ctx, cast, dst)
+}
+
 func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 	cast := make([]*datastore.Key, len(keys))
 	for i := range keys {

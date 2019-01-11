@@ -43,6 +43,7 @@ type Datastore interface {
 	Context() context.Context
 	NewQuery(typeName string) Query
 	NewKey(typeName string, id int64) Key
+	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
 
