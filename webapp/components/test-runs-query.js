@@ -3,7 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-import { ProductInfo, DefaultProducts, DefaultProductSpecs, Channels } from './product-info.js';
+import { Channels, DefaultProducts, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
 import { pluralize } from './pluralize.js';
 
