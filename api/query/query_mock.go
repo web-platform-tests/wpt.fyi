@@ -88,16 +88,3 @@ func (m *MocksharedInterface) LoadTestRunsByIDs(ids shared.TestRunIDs) (shared.T
 func (mr *MocksharedInterfaceMockRecorder) LoadTestRunsByIDs(ids interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRunsByIDs", reflect.TypeOf((*MocksharedInterface)(nil).LoadTestRunsByIDs), ids)
 }
-
-// LoadTestRun mocks base method
-func (m *MocksharedInterface) LoadTestRun(arg0 int64) (*shared.TestRun, error) {
-	ret := m.ctrl.Call(m, "LoadTestRun", arg0)
-	ret0, _ := ret[0].(*shared.TestRun)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadTestRun indicates an expected call of LoadTestRun
-func (mr *MocksharedInterfaceMockRecorder) LoadTestRun(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRun", reflect.TypeOf((*MocksharedInterface)(nil).LoadTestRun), arg0)
-}

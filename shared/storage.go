@@ -410,16 +410,3 @@ func (cs objectCachedStore) Get(cacheID, storeID, value interface{}) error {
 func NewObjectCachedStore(ctx context.Context, cache ObjectCache, store ObjectStore) CachedStore {
 	return objectCachedStore{ctx, cache, store}
 }
-
-// testRunCachedStore is a TestRun typed wrapper for ObjectCachedStore.
-type testRunCachedStore struct {
-	store Datastore
-}
-
-func (cache testRunCachedStore) Get(iID, value interface{}) error {
-	id, ok := iID.(int64)
-	if !ok {
-		return errDatastoreObjectStoreExpectedInt64
-	}
-	return cache.store.Get(cache.store.NewKey("TestRun", id), value)
-}

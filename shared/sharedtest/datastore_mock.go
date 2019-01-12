@@ -86,19 +86,6 @@ func (mr *MockDatastoreMockRecorder) GetMulti(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockDatastore)(nil).GetMulti), arg0, arg1)
 }
 
-// LoadTestRun mocks base method
-func (m *MockDatastore) LoadTestRun(arg0 int64) (*shared.TestRun, error) {
-	ret := m.ctrl.Call(m, "LoadTestRun", arg0)
-	ret0, _ := ret[0].(*shared.TestRun)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadTestRun indicates an expected call of LoadTestRun
-func (mr *MockDatastoreMockRecorder) LoadTestRun(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRun", reflect.TypeOf((*MockDatastore)(nil).LoadTestRun), arg0)
-}
-
 // LoadTestRuns mocks base method
 func (m *MockDatastore) LoadTestRuns(arg0 []shared.ProductSpec, arg1 golang_set.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.TestRunsByProduct, error) {
 	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5, arg6)

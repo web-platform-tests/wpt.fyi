@@ -21,6 +21,7 @@ var errNoProducts = errors.New("No products specified in request to load test ru
 // Key abstracts an int64 based datastore.Key
 type Key interface {
 	IntID() int64
+	Kind() string // Type name, e.g. TestRun
 }
 
 // Iterator abstracts a datastore.Iterator
@@ -49,9 +50,6 @@ type Datastore interface {
 	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
-
-	// LoadTestRun loads the TestRun entity for the given key.
-	LoadTestRun(id int64) (*TestRun, error)
 
 	// LoadTestRuns loads the test runs for the TestRun entities for the given parameters.
 	// It is encapsulated because we cannot run single queries with multiple inequality
