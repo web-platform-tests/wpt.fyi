@@ -126,3 +126,16 @@ func (mr *MockAPIMockRecorder) CreateWPTCheckSuite(appID, installationID, sha in
 	varargs := append([]interface{}{appID, installationID, sha}, prNumbers...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWPTCheckSuite", reflect.TypeOf((*MockAPI)(nil).CreateWPTCheckSuite), varargs...)
 }
+
+// GetWPTRepoAppInstallationIDs mocks base method
+func (m *MockAPI) GetWPTRepoAppInstallationIDs() (int64, int64) {
+	ret := m.ctrl.Call(m, "GetWPTRepoAppInstallationIDs")
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(int64)
+	return ret0, ret1
+}
+
+// GetWPTRepoAppInstallationIDs indicates an expected call of GetWPTRepoAppInstallationIDs
+func (mr *MockAPIMockRecorder) GetWPTRepoAppInstallationIDs() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWPTRepoAppInstallationIDs", reflect.TypeOf((*MockAPI)(nil).GetWPTRepoAppInstallationIDs))
+}

@@ -6,6 +6,7 @@ package shared
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -18,6 +19,27 @@ func NewAppEngineDatastore(ctx context.Context) Datastore {
 	return aeDatastore{
 		ctx: ctx,
 	}
+}
+
+// aeCachedStore is an appengine-query backed ObjectCachedStore.
+type aeCachedStore struct {
+	ctx        context.Context
+	entityName string
+}
+
+func (cache aeCachedStore) Get(iID, value interface{}) error {
+	id, ok := iID.(int64)
+	if !ok {
+		return errDatastoreObjectStoreExpectedInt64
+	}
+	err := datastore.Get(cache.ctx, datastore.NewKey(cache.ctx, cache.entityName, "", id, nil), value)
+	if err == nil {
+		// Set the TestRun.ID field on the way past.
+		if run, ok := value.(*TestRun); ok {
+			(*run).ID = id
+		}
+	}
+	return err
 }
 
 type aeDatastore struct {
@@ -47,16 +69,25 @@ func (d aeDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	return cast, err
 }
 
+// Get wraps a standard "get by key" functionality of appengine
+// datastore with a 48h memcache layer.
+func (d aeDatastore) Get(k Key, dst interface{}) error {
+	cs := NewObjectCachedStore(
+		d.ctx,
+		NewJSONObjectCache(d.ctx, NewMemcacheReadWritable(d.ctx, 48*time.Hour)),
+		aeCachedStore{
+			ctx:        d.ctx,
+			entityName: k.Kind(),
+		})
+	return cs.Get(getTestRunMemcacheKey(k.IntID()), k.IntID(), dst)
+}
+
 func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 	cast := make([]*datastore.Key, len(keys))
 	for i := range keys {
 		cast[i] = keys[i].(*datastore.Key)
 	}
 	return datastore.GetMulti(d.ctx, cast, dst)
-}
-
-func (d aeDatastore) LoadTestRun(id int64) (*TestRun, error) {
-	return loadTestRun(d, id)
 }
 
 func (d aeDatastore) LoadTestRuns(
@@ -68,6 +99,48 @@ func (d aeDatastore) LoadTestRuns(
 	limit,
 	offset *int) (result TestRunsByProduct, err error) {
 	return loadTestRuns(d, products, labels, revisions, from, to, limit, offset)
+}
+
+// LoadTestRunsByKeys wraps a standard "get by key" functionality of appengine
+//  datastore with a 48h memcache layer.
+func (d aeDatastore) LoadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
+	result = TestRunsByProduct{}
+	cs := NewObjectCachedStore(
+		d.ctx,
+		NewJSONObjectCache(d.ctx, NewMemcacheReadWritable(d.ctx, 48*time.Hour)),
+		aeCachedStore{
+			ctx:        d.ctx,
+			entityName: "TestRun",
+		})
+	var wg sync.WaitGroup
+	for _, kbp := range keysByProduct {
+		runs := make(TestRuns, len(kbp.Keys))
+		for i := range kbp.Keys {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+
+				localErr := cs.Get(getTestRunMemcacheKey(kbp.Keys[i].IntID()), kbp.Keys[i].IntID(), &runs[i])
+				if localErr != nil {
+					err = localErr
+				}
+			}(i)
+		}
+		result = append(result, ProductTestRuns{
+			Product:  kbp.Product,
+			TestRuns: runs,
+		})
+		wg.Wait()
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	// Append the keys as ID
+	for i, kbp := range keysByProduct {
+		result[i].TestRuns.SetTestRunIDs(GetTestRunIDs(kbp.Keys))
+	}
+	return result, err
 }
 
 type aeQuery struct {

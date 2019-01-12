@@ -137,10 +137,16 @@ func MultiRuns(runs shared.TestRuns) func(keys []shared.Key, dst interface{}) er
 // e.g. mocking Datastore.GetKey(int64) with a DoAndReturn that creates a
 // gomock generated MockKey, for which we'd mock Key.IntID(), resulted in deadlock.
 type MockKey struct {
-	ID int64
+	ID       int64
+	TypeName string
 }
 
 // IntID returns the ID.
 func (m MockKey) IntID() int64 {
 	return m.ID
+}
+
+// Kind returns the TypeName
+func (m MockKey) Kind() string {
+	return m.TypeName
 }
