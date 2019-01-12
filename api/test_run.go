@@ -34,7 +34,8 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Invalid id '%s'", idParam), http.StatusBadRequest)
 			return
 		}
-		run, err := store.LoadTestRun(id)
+		run := new(shared.TestRun)
+		err = store.Get(store.NewKey("TestRun", id), run)
 		if err != nil {
 			if err == datastore.ErrNoSuchEntity {
 				http.NotFound(w, r)

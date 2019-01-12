@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -22,6 +21,7 @@ var errNoProducts = errors.New("No products specified in request to load test ru
 // Key abstracts an int64 based datastore.Key
 type Key interface {
 	IntID() int64
+	Kind() string // Type name, e.g. TestRun
 }
 
 // Iterator abstracts a datastore.Iterator
@@ -47,11 +47,9 @@ type Datastore interface {
 	Context() context.Context
 	NewQuery(typeName string) Query
 	NewKey(typeName string, id int64) Key
+	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
-
-	// LoadTestRun loads the TestRun entity for the given key.
-	LoadTestRun(id int64) (*TestRun, error)
 
 	// LoadTestRuns loads the test runs for the TestRun entities for the given parameters.
 	// It is encapsulated because we cannot run single queries with multiple inequality
@@ -64,19 +62,10 @@ type Datastore interface {
 		to *time.Time,
 		limit,
 		offset *int) (result TestRunsByProduct, err error)
-}
 
-func loadTestRun(store Datastore, id int64) (*TestRun, error) {
-	var testRun TestRun
-	ctx := store.Context()
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
-	err := cs.Get(getTestRunMemcacheKey(id), id, &testRun)
-	if err != nil {
-		return nil, err
-	}
-
-	testRun.ID = id
-	return &testRun, nil
+	// LoadTestRunsByKeys loads the given test runs (by key), but also appends
+	// the ID to the TestRun entity.
+	LoadTestRunsByKeys(KeysByProduct) (result TestRunsByProduct, err error)
 }
 
 // LoadTestRunKeys loads the keys for the TestRun entities for the given parameters.
@@ -202,44 +191,7 @@ func loadTestRuns(
 	if err != nil {
 		return nil, err
 	}
-	return LoadTestRunsByKeys(store, keys)
-}
-
-// LoadTestRunsByKeys loads the given test runs (by key), but also appends the
-// ID to the TestRun entity.
-func LoadTestRunsByKeys(store Datastore, keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
-	result = TestRunsByProduct{}
-	ctx := store.Context()
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), NewDatastoreObjectStore(ctx, "TestRun"))
-	var wg sync.WaitGroup
-	for _, kbp := range keysByProduct {
-		runs := make(TestRuns, len(kbp.Keys))
-		for i := range kbp.Keys {
-			wg.Add(1)
-			go func(i int) {
-				defer wg.Done()
-
-				localErr := cs.Get(getTestRunMemcacheKey(kbp.Keys[i].IntID()), kbp.Keys[i].IntID(), &runs[i])
-				if localErr != nil {
-					err = localErr
-				}
-			}(i)
-		}
-		result = append(result, ProductTestRuns{
-			Product:  kbp.Product,
-			TestRuns: runs,
-		})
-		wg.Wait()
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	// Append the keys as ID
-	for i, kbp := range keysByProduct {
-		result[i].TestRuns.SetTestRunIDs(GetTestRunIDs(kbp.Keys))
-	}
-	return result, err
+	return store.LoadTestRunsByKeys(keys)
 }
 
 func contains(s []string, x string) bool {
