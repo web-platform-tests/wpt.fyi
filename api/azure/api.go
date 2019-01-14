@@ -98,20 +98,27 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, writer *multipart.Wr
 		return err
 	}
 
-	// Extract the report from the artifact.
-	reportPath, err := regexp.Compile(fmt.Sprintf(`%s/wpt_report.*\.json$`, artifact.Name))
-	if err != nil {
-		return err
-	}
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Failed to read response body")
 		return err
 	}
+
+	// Extract the report from the artifact.
+	return extractReports(a.ctx, artifact.Name, data, writer)
+}
+
+// extractReports extracts report files from the given zip.
+func extractReports(ctx context.Context, artifactName string, data []byte, writer *multipart.Writer) error {
+	log := shared.GetLogger(ctx)
+	reportPath, err := regexp.Compile(fmt.Sprintf(`%s/wpt_report.*\.json$`, artifactName))
+	if err != nil {
+		return err
+	}
 	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	for _, f := range z.File {
 		if reportPath.MatchString(f.Name) {
-			fileName := f.Name[len(artifact.Name)+1:]
+			fileName := f.Name[len(artifactName)+1:]
 			fileField, err := writer.CreateFormFile("result_file", fileName)
 			var fileData io.ReadCloser
 			if fileData, err = f.Open(); err != nil {
