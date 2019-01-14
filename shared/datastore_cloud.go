@@ -6,7 +6,6 @@ package shared
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -19,6 +18,10 @@ type cloudKey struct {
 
 func (k cloudKey) IntID() int64 {
 	return k.key.ID
+}
+
+func (k cloudKey) Kind() string {
+	return k.key.Kind
 }
 
 // NewCloudDatastore creates a Datastore implementation that is backed by a
@@ -60,20 +63,17 @@ func (d cloudDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	return cast, err
 }
 
+func (d cloudDatastore) Get(k Key, dst interface{}) error {
+	cast := k.(cloudKey).key
+	return d.client.Get(d.ctx, cast, dst)
+}
+
 func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 	cast := make([]*datastore.Key, len(keys))
 	for i := range keys {
 		cast[i] = keys[i].(cloudKey).key
 	}
 	return d.client.GetMulti(d.ctx, cast, dst)
-}
-
-func (d cloudDatastore) LoadTestRun(id int64) (*TestRun, error) {
-	var testRun TestRun
-	ctx := d.Context()
-	err := d.client.Get(ctx, &datastore.Key{Kind: "TestRun", ID: id}, &testRun)
-	testRun.ID = id
-	return &testRun, err
 }
 
 func (d cloudDatastore) LoadTestRuns(
@@ -89,29 +89,17 @@ func (d cloudDatastore) LoadTestRuns(
 
 func (d cloudDatastore) LoadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
 	result = TestRunsByProduct{}
-	var wg sync.WaitGroup
 	for _, kbp := range keysByProduct {
 		runs := make(TestRuns, len(kbp.Keys))
-		for i := range kbp.Keys {
-			wg.Add(1)
-			go func(i int) {
-				defer wg.Done()
-
-				run, localErr := d.LoadTestRun(kbp.Keys[i].IntID())
-				if localErr != nil {
-					err = localErr
-				} else {
-					runs[i] = *run
-				}
-			}(i)
+		err := d.GetMulti(kbp.Keys, runs)
+		if err != nil {
+			break
 		}
 		result = append(result, ProductTestRuns{
 			Product:  kbp.Product,
 			TestRuns: runs,
 		})
-		wg.Wait()
 	}
-
 	if err != nil {
 		return nil, err
 	}

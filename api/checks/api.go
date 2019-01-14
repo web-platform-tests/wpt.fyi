@@ -8,13 +8,29 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
+)
+
+const (
+	wptfyiCheckAppID        = int64(23318) // https://github.com/apps/wpt-fyi-status-check
+	wptfyiStagingCheckAppID = int64(19965) // https://github.com/apps/staging-wpt-fyi-status-check
+	checksStagingAppID      = int64(21580) // https://github.com/apps/checks-staging-instance
+
+	wptRepoInstallationID        = int64(577173)
+	wptRepoStagingInstallationID = int64(449270)
+
+	wptRepoID                = int64(3618133)
+	wptRepoOwner             = "web-platform-tests"
+	wptRepoName              = "wpt"
+	checksForAllUsersFeature = "checksAllUsers"
 )
 
 // API abstracts all the API calls used externally.
@@ -26,6 +42,7 @@ type API interface {
 	IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CreateWPTCheckSuite(appID, installationID int64, sha string, prNumbers ...int) (bool, error)
+	GetWPTRepoAppInstallationIDs() (appID, installationID int64)
 }
 
 type checksAPIImpl struct {
@@ -175,4 +192,19 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 		getOrCreateCheckSuite(s.ctx, sha, wptRepoOwner, wptRepoName, appID, installationID, prNumbers...)
 	}
 	return suite != nil, err
+}
+
+func (s checksAPIImpl) GetWPTRepoAppInstallationIDs() (appID, installationID int64) {
+	aeID := appengine.AppID(s.ctx)
+	// ID is either "appid" or "custom-domain.com:appid"
+	domainAndID := strings.Split(aeID, ":")
+	if len(domainAndID) > 1 {
+		aeID = domainAndID[1]
+	}
+	// Production
+	if aeID == "wptdashboard" {
+		return wptfyiCheckAppID, wptRepoInstallationID
+	}
+	// Default to staging
+	return wptfyiStagingCheckAppID, wptRepoStagingInstallationID
 }

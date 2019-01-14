@@ -21,18 +21,29 @@ func NewAppEngineDatastore(ctx context.Context) Datastore {
 	}
 }
 
-type aeDatastore struct {
-	ctx context.Context
+// aeCachedStore is an appengine-query backed ObjectCachedStore.
+type aeCachedStore struct {
+	ctx        context.Context
+	entityName string
 }
 
-func (d aeDatastore) Get(iID, value interface{}) error {
+func (cache aeCachedStore) Get(iID, value interface{}) error {
 	id, ok := iID.(int64)
 	if !ok {
 		return errDatastoreObjectStoreExpectedInt64
 	}
-	var err error
-	value, err = d.LoadTestRun(id)
+	err := datastore.Get(cache.ctx, datastore.NewKey(cache.ctx, cache.entityName, "", id, nil), value)
+	if err == nil {
+		// Set the TestRun.ID field on the way past.
+		if run, ok := value.(*TestRun); ok {
+			(*run).ID = id
+		}
+	}
 	return err
+}
+
+type aeDatastore struct {
+	ctx context.Context
 }
 
 func (d aeDatastore) Context() context.Context {
@@ -58,30 +69,25 @@ func (d aeDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	return cast, err
 }
 
+// Get wraps a standard "get by key" functionality of appengine
+// datastore with a 48h memcache layer.
+func (d aeDatastore) Get(k Key, dst interface{}) error {
+	cs := NewObjectCachedStore(
+		d.ctx,
+		NewJSONObjectCache(d.ctx, NewMemcacheReadWritable(d.ctx, 48*time.Hour)),
+		aeCachedStore{
+			ctx:        d.ctx,
+			entityName: k.Kind(),
+		})
+	return cs.Get(getTestRunMemcacheKey(k.IntID()), k.IntID(), dst)
+}
+
 func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 	cast := make([]*datastore.Key, len(keys))
 	for i := range keys {
 		cast[i] = keys[i].(*datastore.Key)
 	}
 	return datastore.GetMulti(d.ctx, cast, dst)
-}
-
-// TODO: This layering seems broken. A Datastore implementation should be
-// responsible for interacting with Cloud Datastore; that's it. If what the
-// client wants is memcache-fallback-to-datastore, then the client should
-// compose a cached store and use that. Caching probably should not be the
-// responsibility of a Datastore interface implementation.
-func (d aeDatastore) LoadTestRun(id int64) (*TestRun, error) {
-	var testRun TestRun
-	ctx := d.Context()
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), d)
-	err := cs.Get(getTestRunMemcacheKey(id), id, &testRun)
-	if err != nil {
-		return nil, err
-	}
-
-	testRun.ID = id
-	return &testRun, nil
 }
 
 func (d aeDatastore) LoadTestRuns(
@@ -95,11 +101,17 @@ func (d aeDatastore) LoadTestRuns(
 	return loadTestRuns(d, products, labels, revisions, from, to, limit, offset)
 }
 
-// TODO: Same layering issue as `LoadTestRun()` above.
+// LoadTestRunsByKeys wraps a standard "get by key" functionality of appengine
+//  datastore with a 48h memcache layer.
 func (d aeDatastore) LoadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
 	result = TestRunsByProduct{}
-	ctx := d.Context()
-	cs := NewObjectCachedStore(ctx, NewJSONObjectCache(ctx, NewMemcacheReadWritable(ctx, 48*time.Hour)), d)
+	cs := NewObjectCachedStore(
+		d.ctx,
+		NewJSONObjectCache(d.ctx, NewMemcacheReadWritable(d.ctx, 48*time.Hour)),
+		aeCachedStore{
+			ctx:        d.ctx,
+			entityName: "TestRun",
+		})
 	var wg sync.WaitGroup
 	for _, kbp := range keysByProduct {
 		runs := make(TestRuns, len(kbp.Keys))

@@ -104,7 +104,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			err = idx.IngestRun(*runPtr)
 			if err != nil {
-				http.Error(w, fmt.Sprintf("Failed to load test run data for run ID %d", id), http.StatusInternalServerError)
+				http.Error(w, fmt.Sprintf("Failed to load test run data for run %d: %v", id, err), http.StatusInternalServerError)
 				return
 			}
 			run = *runPtr
@@ -150,7 +150,15 @@ func getTestRun(id int64) (*shared.TestRun, error) {
 	if err != nil {
 		return nil, err
 	}
-	return shared.NewCloudDatastore(ctx, client).LoadTestRun(id)
+	d := shared.NewCloudDatastore(ctx, client)
+	testRun := new(shared.TestRun)
+	err = d.Get(d.NewKey("TestRun", id), testRun)
+	if err != nil {
+		return nil, err
+	}
+
+	testRun.ID = id
+	return testRun, nil
 }
 
 func init() {

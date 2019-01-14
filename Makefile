@@ -201,8 +201,10 @@ dev_data: git
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
 
-gcloud-login: gcloud  $(WPTD_PATH)client-secret.json
-	gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json
+gcloud-login: gcloud
+	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
+		gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json; \
+	fi
 
 deployment_state: gcloud-login webapp_deps package_service var-APP_PATH
 
