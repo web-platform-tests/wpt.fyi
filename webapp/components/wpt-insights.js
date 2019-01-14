@@ -9,8 +9,9 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
-import { ProductInfo } from './product-info.js';
+import { ProductInfo, DefaultBrowserNames } from './product-info.js';
 import { WPTFlags } from './wpt-flags.js';
+import './browser-picker.js';
 
 class Insights extends ProductInfo(WPTFlags(PolymerElement)) {
   static get template() {
@@ -19,66 +20,165 @@ class Insights extends ProductInfo(WPTFlags(PolymerElement)) {
       info-banner {
         margin: 0;
       }
-      paper-card {
-        margin: 1em;
+      wpt-anomalies, wpt-flakes {
+        display: block;
       }
     </style>
-    <template is="dom-repeat" items="[[insights]]" as="item">
-      <paper-card>
-        <div class="card-content">
-          <h3>[[item.name]]</h3>
-          <info-banner>
-            <a class="query" href="[[item.url]]">
-              [[item.query]]
-            </a>
-          </info-banner>
-          <p>
-            [[item.desc]]
-          </p>
-        </div>
-      </paper-card>
-    </template>
+
+    <wpt-anomalies></wpt-anomalies>
+    <wpt-flakes></wpt-flakes>
 `;
   }
 
   static get is() {
     return 'wpt-insights';
   }
-
-  get insights() {
-    const browsers = ['chrome', 'edge', 'firefox', 'safari'];
-    const anomalies = browsers.map(b => {
-      const others = browsers.filter(o => o !== b);
-      const othersPassing = others
-        .map(o => `(${o}:pass|${o}:ok)`)
-        .join(' ');
-      const query = `!${b}:pass !${b}:ok ${othersPassing}`;
-      const url = new URL('/results/', window.location);
-      url.searchParams.set('q', query);
-      return {
-        name: `${this.displayName(b)}-only failures`,
-        url,
-        query,
-        desc: `Tests that are failing in ${this.displayName(b)}, but passing in the other browsers (${others.map(this.displayName).join(', ')})`,
-      };
-    });
-    const flakes = browsers.map(b => {
-      const query = `(${b}:pass|${b}:ok) (${b}:timeout|${b}:error|${b}:fail)`;
-      const url = new URL('/results/', window.location);
-      url.searchParams.set('q', query);
-      url.searchParams.set('product', b);
-      url.searchParams.set('max-count', 10);
-      url.searchParams.set('labels', 'master,experimental');
-      return {
-        name: `Flakes in the last 10 ${this.displayName(b)} runs`,
-        url,
-        query,
-        desc: `Tests that have both passing and non-passing results in the last 10 ${this.displayName(b)} runs`,
-      };
-    });
-    return anomalies.concat(flakes);
-  }
 }
 window.customElements.define(Insights.is, Insights);
 
-export { Insights };
+const cardStyle = html`
+  <style>
+    paper-card {
+      display: block;
+      margin-top: 1em;
+      width: 100%;
+    }
+  </style>
+`;
+
+class Flakes extends ProductInfo(PolymerElement) {
+  static get is() {
+    return 'wpt-flakes';
+  }
+
+  static get template() {
+    return html`
+    ${cardStyle}
+    <paper-card>
+      <div class="card-content">
+        <h3>Flakes</h3>
+        <browser-picker browser="{{browser}}"></browser-picker>
+        <info-banner>
+          <a class="query" href="[[url]]">[[query]]</a>
+        </info-banner>
+        <p>
+          Tests that have both passing and non-passing results in the last 10 [[browserDisplayName]] runs
+        </p>
+      </div>
+    </paper-card>
+`;
+  }
+
+  static get properties() {
+    return {
+      browser: String,
+      browserDisplayName: {
+        type: String,
+        computed: 'displayName(browser)',
+      },
+      others: {
+        type: String,
+        computed: 'computeOthers(browser)',
+      },
+      query: {
+        type: String,
+        computed: 'computeQuery(browser)',
+      },
+      url: {
+        type: URL,
+        computed: 'computeURL(browser, query)',
+      }
+    };
+  }
+
+  computeOthers(browser) {
+    return DefaultBrowserNames
+      .filter(b => b !== browser)
+      .map(b => this.displayName(b))
+      .join(', ');
+  }
+
+  computeQuery(browser) {
+    return `(${browser}:pass|${browser}:ok) (${browser}:timeout|${browser}:error|${browser}:fail)`;
+  }
+
+  computeURL(browser, query) {
+    const url = new URL('/results/', window.location);
+    url.searchParams.set('q', query);
+    url.searchParams.set('product', browser);
+    url.searchParams.set('max-count', 10);
+    url.searchParams.set('labels', 'master,experimental');
+    return url;
+  }
+}
+window.customElements.define(Flakes.is, Flakes);
+
+class Anomalies extends ProductInfo(PolymerElement) {
+  static get is() {
+    return 'wpt-anomalies';
+  }
+
+  static get template() {
+    return html`
+    ${cardStyle}
+    <paper-card>
+      <div class="card-content">
+        <h3>Anomalies</h3>
+        <browser-picker browser="{{browser}}"></browser-picker>
+        <info-banner>
+          <a class="query" href="[[url]]">[[query]]</a>
+        </info-banner>
+        <p>
+          Tests that are failing in [[browserDisplayName]], but passing in the other browsers ([[others]])
+        </p>
+      </div>
+    </paper-card>
+`;
+  }
+
+  static get properties() {
+    return {
+      browser: String,
+      browserDisplayName: {
+        type: String,
+        computed: 'displayName(browser)',
+      },
+      others: {
+        type: String,
+        computed: 'computeOthers(browser)',
+      },
+      query: {
+        type: String,
+        computed: 'computeQuery(browser)',
+      },
+      url: {
+        type: URL,
+        computed: 'computeURL(query)',
+      }
+    };
+  }
+
+  computeOthers(browser) {
+    return DefaultBrowserNames
+      .filter(b => b !== browser)
+      .map(b => this.displayName(b))
+      .join(', ');
+  }
+
+  computeQuery(browser) {
+    const othersPassing = DefaultBrowserNames
+      .filter(b => b !== browser)
+      .map(o => `(${o}:pass|${o}:ok)`)
+      .join(' ');
+    return `!${browser}:pass !${browser}:ok ${othersPassing}`;
+  }
+
+  computeURL(query) {
+    const url = new URL('/results/', window.location);
+    url.searchParams.set('q', query);
+    return url;
+  }
+}
+window.customElements.define(Anomalies.is, Anomalies);
+
+export { Insights, Anomalies, Flakes };

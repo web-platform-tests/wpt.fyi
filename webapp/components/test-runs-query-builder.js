@@ -20,6 +20,7 @@ import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker-light.js';
 import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
+import './browser-picker.js';
 import './display-logo.js';
 import './info-banner.js';
 import { Channels, DefaultBrowserNames, DefaultProducts, ProductInfo, SemanticLabels } from './product-info.js';
@@ -344,16 +345,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         </template>
 
         <br>
-        <paper-dropdown-menu label="Browser" no-animations="">
-          <paper-listbox slot="dropdown-content" selected="{{ browserName }}" attr-for-selected="value">
-            <template is="dom-repeat" items="[[defaultProducts]]" as="product">
-              <paper-icon-item value="[[product.browser_name]]">
-                <display-logo slot="item-icon" product="[[product]]" small=""></display-logo>
-                [[displayName(product.browser_name)]]
-              </paper-icon-item>
-            </template>
-          </paper-listbox>
-        </paper-dropdown-menu>
+        <browser-picker browser="{{browserName}}"></browser-picker>
 
         <br>
         <paper-dropdown-menu label="Channel" no-animations="">
