@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -115,6 +116,7 @@ func extractReports(ctx context.Context, artifactName string, data []byte, write
 	if err != nil {
 		return err
 	}
+	extracted := 0
 	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	for _, f := range z.File {
 		if reportPath.MatchString(f.Name) {
@@ -122,7 +124,7 @@ func extractReports(ctx context.Context, artifactName string, data []byte, write
 			fileField, err := writer.CreateFormFile("result_file", fileName)
 			var fileData io.ReadCloser
 			if fileData, err = f.Open(); err != nil {
-				log.Errorf("Failed to extract %s", reportPath)
+				log.Errorf("Failed to extract %s", f.Name)
 				return err
 			}
 			defer fileData.Close()
@@ -136,10 +138,13 @@ func extractReports(ctx context.Context, artifactName string, data []byte, write
 				log.Errorf("Failed to close gzip writer")
 				return err
 			}
-			return nil
+			extracted++
 		}
 	}
-	return fmt.Errorf("File %s not found in zip", reportPath)
+	if extracted < 1 {
+		return errors.New("No wpt_report.json files found in zip")
+	}
+	return nil
 }
 
 func getCheckTitle(product shared.ProductSpec) string {
