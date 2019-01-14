@@ -1,5 +1,5 @@
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { html } from '../../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
