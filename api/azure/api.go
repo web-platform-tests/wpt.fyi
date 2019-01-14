@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
+	"regexp"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -48,7 +50,7 @@ type ArtifactResource struct {
 type API interface {
 	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
-	FetchAzureArtifact(BuildArtifact, io.Writer) error
+	FetchAzureArtifact(BuildArtifact, *multipart.Writer) error
 }
 
 type apiImpl struct {
@@ -81,7 +83,7 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 
 // FetchAzureArtifact gets the gzipped bytes of the wpt_report.json from inside
 // the zip file provided by Azure, and writes them to the given writer.
-func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, w io.Writer) error {
+func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, writer *multipart.Writer) error {
 	aeAPI := shared.NewAppEngineAPI(a.ctx)
 	log := shared.GetLogger(a.ctx)
 	// The default timeout is 5s, not enough to download the reports.
@@ -97,7 +99,10 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, w io.Writer) error {
 	}
 
 	// Extract the report from the artifact.
-	reportPath := fmt.Sprintf("%s/wpt_report.json", artifact.Name)
+	reportPath, err := regexp.Compile(fmt.Sprintf(`%s/wpt_report.*\.json$`, artifact.Name))
+	if err != nil {
+		return err
+	}
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Failed to read response body")
@@ -105,7 +110,9 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, w io.Writer) error {
 	}
 	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	for _, f := range z.File {
-		if f.Name == reportPath {
+		if reportPath.MatchString(f.Name) {
+			fileName := f.Name[len(artifact.Name)+1:]
+			fileField, err := writer.CreateFormFile("result_file", fileName)
 			var fileData io.ReadCloser
 			if fileData, err = f.Open(); err != nil {
 				log.Errorf("Failed to extract %s", reportPath)
@@ -113,7 +120,7 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, w io.Writer) error {
 			}
 			defer fileData.Close()
 
-			gzw := gzip.NewWriter(w)
+			gzw := gzip.NewWriter(fileField)
 			if _, err := io.Copy(gzw, fileData); err != nil {
 				log.Errorf("Failed to gzip file contents")
 				return err
