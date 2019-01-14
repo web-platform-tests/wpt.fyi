@@ -42,6 +42,8 @@ var (
 	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
 	maxRunsPerRequest      = flag.Int("max_runs_per_request", 16, "Maximum number of runs that may be queried per request")
 
+	// User-facing message for when runs in a request exceeds maxRunsPerRequest.
+	// Set in init() after parsing flags.
 	maxRunsPerRequestMsg string
 
 	idx index.Index

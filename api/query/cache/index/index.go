@@ -340,7 +340,7 @@ func (i *shardedWPTIndex) syncGetRun(id RunID) (shared.TestRun, error) {
 
 	run, loaded := i.runs[id]
 	if !loaded {
-		return shared.TestRun{}, errNilRun
+		return shared.TestRun{}, fmt.Errorf("Unknown run ID: %v", id)
 	}
 
 	return run, nil
