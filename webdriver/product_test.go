@@ -39,21 +39,22 @@ func TestProductParam_SHA_Specific(t *testing.T) {
 }
 
 func testProductParamSets(t *testing.T, productSpecs ...[]string) {
-	app, err := NewWebserver()
-	if err != nil {
-		panic(err)
-	}
-	defer app.Close()
-
-	service, wd, err := GetWebDriver()
-	if err != nil {
-		panic(err)
-	}
-	defer service.Stop()
-	defer wd.Quit()
-
 	for _, specs := range productSpecs {
-		testProducts(t, wd, app, specs...)
+		t.Run(strings.Join(specs, ","), func(t *testing.T) {
+			app, err := NewWebserver()
+			if err != nil {
+				panic(err)
+			}
+			defer app.Close()
+
+			service, wd, err := GetWebDriver()
+			if err != nil {
+				panic(err)
+			}
+			defer service.Stop()
+			defer wd.Quit()
+			testProducts(t, wd, app, specs...)
+		})
 	}
 }
 
