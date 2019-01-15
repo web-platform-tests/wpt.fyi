@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -16,12 +17,15 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/api/option"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 
 	"cloud.google.com/go/compute/metadata"
+	"cloud.google.com/go/datastore"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,6 +40,11 @@ var (
 	evictRunsPercent       = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
 	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
+	maxRunsPerRequest      = flag.Int("max_runs_per_request", 16, "Maximum number of runs that may be queried per request")
+
+	// User-facing message for when runs in a request exceeds maxRunsPerRequest.
+	// Set in init() after parsing flags.
+	maxRunsPerRequestMsg string
 
 	idx index.Index
 	mon monitor.Monitor
@@ -71,21 +80,44 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(rq.RunIDs) > *maxRunsPerRequest {
+		http.Error(w, maxRunsPerRequestMsg, http.StatusBadRequest)
+		return
+	}
+
 	ids := make([]index.RunID, len(rq.RunIDs))
 	for i := range rq.RunIDs {
 		ids[i] = index.RunID(rq.RunIDs[i])
 	}
-	runs, err := idx.Runs(ids)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+
+	// Ensure runs are loaded before executing query. This is best effort: It is
+	// possible, though unlikely, that a run may exist in the cache at this point
+	// and be evicted before binding the query to a query execution plan. In such
+	// a case, `idx.Bind()` below will return an error.
+	runs := make([]shared.TestRun, len(ids))
+	for i, id := range ids {
+		run, err := idx.Run(id)
+		// If getting run metadata fails, attempt write-on-read for this run.
+		if err != nil {
+			runPtr, err := getTestRun(int64(id))
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
+				return
+			}
+			err = idx.IngestRun(*runPtr)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Failed to load test run data for run %d: %v", id, err), http.StatusInternalServerError)
+				return
+			}
+			run = *runPtr
+		}
+		runs[i] = run
 	}
 
 	q := cq.PrepareUserQuery(rq.RunIDs, rq.AbstractQuery.BindToRuns(runs))
-
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -108,8 +140,33 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
+func getTestRun(id int64) (*shared.TestRun, error) {
+	ctx := context.Background()
+	var client *datastore.Client
+	var err error
+	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
+		client, err = datastore.NewClient(ctx, *projectID, option.WithCredentialsFile(*gcpCredentialsFile))
+	} else {
+		client, err = datastore.NewClient(ctx, *projectID)
+	}
+	if err != nil {
+		return nil, err
+	}
+	d := shared.NewCloudDatastore(ctx, client)
+	testRun := new(shared.TestRun)
+	err = d.Get(d.NewKey("TestRun", id), testRun)
+	if err != nil {
+		return nil, err
+	}
+
+	testRun.ID = id
+	return testRun, nil
+}
+
 func init() {
 	flag.Parse()
+
+	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
 }
 
 func main() {
