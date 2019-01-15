@@ -32,7 +32,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'diffFilterUIToggle',
       'colorHomepage',
       'structuredQueries',
-      'masterRunsOnly',
       'experimentalByDefault',
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
@@ -148,11 +147,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         SHA input
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
-      <paper-checkbox checked="{{masterRunsOnly}}">
-        'Master only' input
-      </paper-checkbox>
-    </paper-item>
     <paper-item>
       <paper-checkbox checked="{{diffFromAPI}}">
         Compute diffs using /api/diff
@@ -218,11 +212,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item sub-item="">
       <paper-checkbox checked="{{experimentalAlignedExceptEdge}}">
         All experimental, except edge, and aligned
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item="">
-      <paper-checkbox checked="{{masterRunsOnly}}">
-        Master runs only
       </paper-checkbox>
     </paper-item>
     <paper-item>
