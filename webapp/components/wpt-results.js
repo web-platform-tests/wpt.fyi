@@ -572,13 +572,19 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       }
     }
 
-    this.load(
-      window.fetch(url, fetchOpts).then(r => {
-        if (!r.ok || r.status !== 200) {
-          return Promise.reject('Failed to fetch results data.');
+    // Fetch search results and refresh display nodes. If fetch error is HTTP'
+    // 422, expect backend to attempt write-on-read of missing data. In such
+    // cases, retry fetch up to 5 times with 5000ms waits in between.
+    this.load(this.retry(() => window.fetch(url, fetchOpts).then(r => {
+      if (r.status === 422) {
+        throw r.status;
         }
+      if (!r.ok) {
+        throw 'Failed to fetch results data.';
+      }
+
         return r.json();
-      }).then(json => {
+    }, err => err === 422, 5, 5000)).then(json => {
         this.searchResults = json.results;
         this.refreshDisplayedNodes();
       }),
@@ -586,8 +592,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         // eslint-disable-next-line no-console
         console.log(`Failed to load: ${e}`);
         this.resultsLoadFailed = true;
-      }
-    );
+    });
   }
 
   fetchDiff() {
@@ -943,6 +948,20 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.searchResults = [];
     this.refreshDisplayedNodes();
     this.loadData();
+  }
+
+  retry(f, shouldRetry, num, wait) {
+    let count = 0;
+    const retry = () => {
+      count++;
+      return f().catch(err => {
+        if (count >= num || !shouldRetry(err)) {
+          throw err;
+        }
+        window.setTimeout(retry, wait);
+      });
+    };
+    return retry();
   }
 }
 
