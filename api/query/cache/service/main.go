@@ -94,8 +94,13 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// possible, though unlikely, that a run may exist in the cache at this point
 	// and be evicted before binding the query to a query execution plan. In such
 	// a case, `idx.Bind()` below will return an error.
-	runs := make([]shared.TestRun, len(ids))
-	for i, id := range ids {
+	//
+	// Accumulate missing runs in `missing` to report which runs have initiated
+	// write-on-read. Return to client `http.StatusUnprocessableEntity`
+	// immediately if any runs are missing.
+	runs := make([]shared.TestRun, 0, len(ids))
+	missing := make([]shared.TestRun, 0, len(ids))
+	for _, id := range ids {
 		run, err := idx.Run(id)
 		// If getting run metadata fails, attempt write-on-read for this run.
 		if err != nil {
@@ -104,14 +109,18 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
 				return
 			}
-			err = idx.IngestRun(*runPtr)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("Failed to load test run data for run %d: %v", id, err), http.StatusInternalServerError)
-				return
-			}
-			run = *runPtr
+			go idx.IngestRun(*runPtr)
+			missing = append(missing, *runPtr)
+		} else {
+			runs = append(runs, run)
 		}
-		runs[i] = run
+	}
+
+	// Return to client `http.StatusUnprocessableEntity`immediately if any runs
+	// are missing.
+	if len(missing) != 0 {
+		http.Error(w, fmt.Sprintf("Test run(s) with ID(s) %v not loaded into cache. Try again later.", missing), http.StatusUnprocessableEntity)
+		return
 	}
 
 	q := cq.PrepareUserQuery(rq.RunIDs, rq.AbstractQuery.BindToRuns(runs))
