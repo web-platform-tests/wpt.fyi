@@ -32,6 +32,7 @@ import { TestRunsUIBase } from './test-runs.js';
 import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
+import './wpt-prs.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
@@ -162,6 +163,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       <template is="dom-if" if="[[showTestType]]">
         <template is="dom-if" if="[[testType]]">
           <span class$="test-type [[testType]]">[[testType]]</span>
+        </template>
+      </template>
+
+      <template is="dom-if" if="[[searchPRsForDirectories]]">
+        <template is="dom-if" if="[[pathIsASubfolder]]">
+          <wpt-prs path="[[path]]"></wpt-prs>
         </template>
       </template>
 
