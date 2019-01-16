@@ -593,11 +593,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         this.searchResults = json.results;
         this.refreshDisplayedNodes();
       }),
-    (e) => {
-      // eslint-disable-next-line no-console
-      console.log(`Failed to load: ${e}`);
-      this.resultsLoadFailed = true;
-    });
+      (e) => {
+        // eslint-disable-next-line no-console
+        console.log(`Failed to load: ${e}`);
+        this.resultsLoadFailed = true;
+      }
+    );
   }
 
   fetchDiff() {
@@ -963,11 +964,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         if (count >= num || !shouldRetry(err)) {
           throw err;
         }
-        return new Promise((resolve, reject) => {
-          window.setTimeout(() => {
-            return retry().then(resolve, reject)
-          }, wait);
-        })
+        return new Promise((resolve, reject) => window.setTimeout(
+          () => retry().then(resolve, reject), 
+          wait
+        ));
       });
     };
     return retry();
