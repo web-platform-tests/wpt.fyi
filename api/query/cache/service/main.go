@@ -118,8 +118,15 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Return to client `http.StatusUnprocessableEntity`immediately if any runs
 	// are missing.
-	if len(missing) != 0 {
-		http.Error(w, fmt.Sprintf("Test run(s) with ID(s) %v not loaded into cache. Try again later.", missing), http.StatusUnprocessableEntity)
+	if len(runs) == 0 {
+		data, err = json.Marshal(query.SearchResponse{
+			IgnoredRuns: missing,
+		})
+		if err != nil {
+			http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
+		}
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Write(data)
 		return
 	}
 
@@ -137,13 +144,24 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = json.Marshal(query.SearchResponse{
+	// Response always contains Runs and Results. If some runs are missing, then:
+	// - Add missing runs to IgnoredRuns;
+	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
+	//   client.
+	resp := query.SearchResponse{
 		Runs:    runs,
 		Results: res,
-	})
+	}
+	if len(missing) != 0 {
+		resp.IgnoredRuns = missing
+	}
+	data, err = json.Marshal(resp)
 	if err != nil {
 		http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
 		return
+	}
+	if len(missing) != 0 {
+		w.WriteHeader(http.StatusUnprocessableEntity)
 	}
 
 	w.Write(data)
