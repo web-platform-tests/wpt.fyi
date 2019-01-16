@@ -197,7 +197,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       </paper-toast>
     </template>
 
-    <paper-toast id="runsNotInCache" duration="5" text="One or more of the runs requested is currently being loaded into the cache. Try again in 30 seconds."></paper-toast>
+    <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Try again in 30 seconds."></paper-toast>
 
     <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
