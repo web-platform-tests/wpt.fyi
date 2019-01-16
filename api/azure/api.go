@@ -149,7 +149,7 @@ func extractReports(ctx context.Context, artifactName string, data []byte, write
 		}
 	}
 	if extracted < 1 {
-		return errors.New("No wpt_report.json files found in zip")
+		return errors.New(`No "wpt_report.*\.json" files found in zip`)
 	}
 	return mWriter.Close()
 }
