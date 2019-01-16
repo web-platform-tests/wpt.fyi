@@ -52,6 +52,11 @@ type SearchResponse struct {
 	// Runs is the specific runs for which results were retrieved. Each run, in
 	// order, corresponds to a Status entry in each SearchResult in Results.
 	Runs []shared.TestRun `json:"runs"`
+	// IgnoredRuns is any runs that the client requested to be included in the
+	// query, but were not included. This optional field may be non-nil if, for
+	// example, results are being served from an incompelte cache of runs and some
+	// runs described in the query request are not resident in the cache.
+	IgnoredRuns []shared.TestRun `json:"ignored_runs,omitempty"`
 	// Results is the collection of test results, grouped by test file name.
 	Results []SearchResult `json:"results"`
 }
