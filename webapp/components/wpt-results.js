@@ -578,20 +578,20 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.load(this.retry(() => window.fetch(url, fetchOpts).then(r => {
       if (r.status === 422) {
         throw r.status;
-        }
+      }
       if (!r.ok) {
         throw 'Failed to fetch results data.';
       }
 
-        return r.json();
+      return r.json();
     }, err => err === 422, 5, 5000)).then(json => {
-        this.searchResults = json.results;
-        this.refreshDisplayedNodes();
-      }),
-      (e) => {
-        // eslint-disable-next-line no-console
-        console.log(`Failed to load: ${e}`);
-        this.resultsLoadFailed = true;
+      this.searchResults = json.results;
+      this.refreshDisplayedNodes();
+    }),
+    (e) => {
+      // eslint-disable-next-line no-console
+      console.log(`Failed to load: ${e}`);
+      this.resultsLoadFailed = true;
     });
   }
 
