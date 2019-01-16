@@ -128,7 +128,7 @@ func createAzureRun(
 	host := aeAPI.GetVersionedHostname()
 	writer.WriteField("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
-	if err := azureAPI.FetchAzureArtifact(artifact, writer); err != nil {
+	if err := azureAPI.FetchAzureArtifact(artifact, buf); err != nil {
 		return err
 	}
 	if err := writer.Close(); err != nil {

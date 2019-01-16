@@ -5,7 +5,7 @@
 package azure
 
 import (
-	multipart "mime/multipart"
+	io "io"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -36,7 +36,7 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // FetchAzureArtifact mocks base method
-func (m *MockAPI) FetchAzureArtifact(arg0 BuildArtifact, arg1 *multipart.Writer) error {
+func (m *MockAPI) FetchAzureArtifact(arg0 BuildArtifact, arg1 io.Writer) error {
 	ret := m.ctrl.Call(m, "FetchAzureArtifact", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0

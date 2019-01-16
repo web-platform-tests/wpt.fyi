@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"context"
 	"io/ioutil"
-	"mime/multipart"
 	"path"
 	"runtime"
 	"testing"
@@ -20,17 +19,16 @@ import (
 
 func TestExtractFiles(t *testing.T) {
 	_, filename, _, _ := runtime.Caller(0)
+	// artifact_test.zip has a single dir, artifact_test/, containing 2 files, wpt_report_{1,2}.json
 	data, err := ioutil.ReadFile(path.Join(path.Dir(filename), "artifact_test.zip"))
 	if err != nil {
 		assert.FailNow(t, "Failed to read artifact_test.zip", err.Error())
 	}
 	buf := new(bytes.Buffer)
-	writer := multipart.NewWriter(buf)
-	err = extractReports(context.Background(), "artifact_test", data, writer)
+	err = extractReports(context.Background(), "artifact_test", data, buf)
 	if err != nil {
 		assert.FailNow(t, "Failed to extract reports", err.Error())
 	}
-	writer.Close()
 	assert.Nil(t, err)
 	content := string(buf.Bytes())
 	assert.Contains(t, content, "wpt_report_1.json")
