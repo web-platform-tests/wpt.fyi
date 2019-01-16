@@ -55,6 +55,11 @@ func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+	if idx == nil || mon == nil {
+		http.Error(w, "Cache not yet ready", http.StatusServiceUnavailable)
+		return
+	}
+
 	w.Write([]byte("Ready"))
 }
 
