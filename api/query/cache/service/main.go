@@ -116,9 +116,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Return to client `http.StatusUnprocessableEntity`immediately if any runs
+	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
 	// are missing.
-	if len(runs) == 0 {
+	if len(runs) == 0 && len(missing) > 0 {
 		data, err = json.Marshal(query.SearchResponse{
 			IgnoredRuns: missing,
 		})
