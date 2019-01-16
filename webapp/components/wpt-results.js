@@ -575,19 +575,24 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     // Fetch search results and refresh display nodes. If fetch error is HTTP'
     // 422, expect backend to attempt write-on-read of missing data. In such
     // cases, retry fetch up to 5 times with 5000ms waits in between.
-    this.load(this.retry(() => window.fetch(url, fetchOpts).then(r => {
-      if (r.status === 422) {
-        throw r.status;
-      }
-      if (!r.ok) {
-        throw 'Failed to fetch results data.';
-      }
-
-      return r.json();
-    }, err => err === 422, 5, 5000)).then(json => {
-      this.searchResults = json.results;
-      this.refreshDisplayedNodes();
-    }),
+    this.load(
+      this.retry(
+        async () => {
+          const r = await window.fetch(url, fetchOpts);
+          if (r.status === 422) {
+            throw r.status;
+          } else if (!r.ok) {
+            throw 'Failed to fetch results data.';
+          }
+          return r.json();
+        },
+        err => err === 422,
+        5,
+        5000
+      ).then(json => {
+        this.searchResults = json.results;
+        this.refreshDisplayedNodes();
+      }),
     (e) => {
       // eslint-disable-next-line no-console
       console.log(`Failed to load: ${e}`);
@@ -958,7 +963,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         if (count >= num || !shouldRetry(err)) {
           throw err;
         }
-        window.setTimeout(retry, wait);
+        return new Promise((resolve, reject) => {
+          window.setTimeout(() => {
+            return retry().then(resolve, reject)
+          }, wait);
+        })
       });
     };
     return retry();
