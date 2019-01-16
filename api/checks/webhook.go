@@ -288,7 +288,11 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 
 	checkRun, resp, err := client.Checks.CreateCheckRun(ctx, suite.Owner, suite.Repo, opts)
 	if err != nil {
-		log.Warningf("Failed to create check_run: %s", resp.Status)
+		msg := "Failed to create check_run"
+		if resp != nil {
+			msg = fmt.Sprintf("%s: %s", msg, resp.Status)
+		}
+		log.Warningf(msg)
 		return false, err
 	} else if checkRun != nil {
 		log.Infof("Created check_run %v", checkRun.GetID())
