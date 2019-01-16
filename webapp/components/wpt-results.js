@@ -577,7 +577,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     // cases, retry fetch up to 5 times with 5000ms waits in between.
     this.load(
       this.retry(
-        async () => {
+        async() => {
           const r = await window.fetch(url, fetchOpts);
           if (r.status === 422) {
             throw r.status;
@@ -965,7 +965,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           throw err;
         }
         return new Promise((resolve, reject) => window.setTimeout(
-          () => retry().then(resolve, reject), 
+          () => retry().then(resolve, reject),
           wait
         ));
       });
