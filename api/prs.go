@@ -57,6 +57,8 @@ func (h PRsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getPRsByPaths searches GitHub for PRs that are (probably) related to the given paths.
+// It searches indiscriminately for the paths, so may overmatch.
 func getPRsByPaths(aeAPI shared.AppEngineAPI, paths ...string) ([]github.Issue, error) {
 	client, err := aeAPI.GetGitHubClient()
 	q := fmt.Sprintf("type:pr user:web-platform-tests repo:wpt state:open %s", strings.Join(paths, " "))
