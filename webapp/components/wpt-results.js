@@ -970,7 +970,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     const builder = this.shadowRoot.querySelector('test-runs-query-builder');
     builder.master = true;
     this.handleSubmitQuery();
-    this.handleDismissToast();
+    this.dismissToast();
   }
 }
 
