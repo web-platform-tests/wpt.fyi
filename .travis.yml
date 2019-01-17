@@ -44,9 +44,6 @@ matrix:
       - DEPLOY_PR_STAGING_TARGET=revisions/service
     - if: type = pull_request
       env:
-      - DEPLOY_PR_STAGING_TARGET=api/spanner/service
-    - if: type = pull_request
-      env:
       - DEPLOY_PR_STAGING_TARGET=api/query/cache/service
 
     # master branch deployments
@@ -61,9 +58,6 @@ matrix:
     - if: (type = push) AND (branch = master)
       env:
       - DEPLOY_STAGING_TARGET=revisions/service
-    - if: (type = push) AND (branch = master)
-      env:
-      - DEPLOY_STAGING_TARGET=api/spanner/service
     - if: (type = push) AND (branch = master)
       env:
       - DEPLOY_STAGING_TARGET=api/query/cache/service
