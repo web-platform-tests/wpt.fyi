@@ -355,7 +355,8 @@ __`callback_url`__: (Optional) A URL that the processor should `POST` when succe
 create the TestRun. Defaults to /api/results/create in the current project's environment (e.g. wpt.fyi for
 wptdashboard, staging.wpt.fyi for wptdashboard-staging).
 
-__`result_file`__: A **gzipped** JSON file produced by `wpt run --log-wptreport`.
+__`result_file`__: A **gzipped** JSON file produced by `wpt run --log-wptreport`. This field can be
+repeated to include multiple files (for chunked reports).
 
 The JSON file roughly looks like this:
 
