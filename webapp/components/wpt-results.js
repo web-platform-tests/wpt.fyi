@@ -32,6 +32,7 @@ import { TestRunsUIBase } from './test-runs.js';
 import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
+import './wpt-prs.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
@@ -165,6 +166,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         </template>
       </template>
 
+      <template is="dom-if" if="[[searchPRsForDirectories]]">
+        <template is="dom-if" if="[[pathIsASubfolder]]">
+          <wpt-prs path="[[path]]"></wpt-prs>
+        </template>
+      </template>
+
       <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
       <test-search class\$="search-[[pathIsATestFile]]" query="{{search}}" test-runs="[[testRuns]]" test-paths="[[testPaths]]">
@@ -192,10 +199,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     </section>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
-      <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened="">
+      <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
         <paper-button on-click="hideDiffInvalidToast" class="yellow-button">Close</paper-button>
       </paper-toast>
     </template>
+
+    <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
 
     <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
@@ -228,9 +237,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
               <template is="dom-if" if="[[diffShown]]">
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
-                  <template is="dom-if" if="[[diffFilterUIToggle]]">
                   <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
-                  </template>
                 </th>
               </template>
             </tr>
@@ -286,7 +293,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     <template is="dom-if" if="[[isSubfolder]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
-          <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised="">
+          <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
             Show history
           </paper-button>
         </template>
@@ -575,13 +582,16 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     // Fetch search results and refresh display nodes. If fetch error is HTTP'
     // 422, expect backend to attempt write-on-read of missing data. In such
     // cases, retry fetch up to 5 times with 5000ms waits in between.
+    const toast = this.shadowRoot.querySelector('#runsNotInCache');
     this.load(
       this.retry(
         async() => {
           const r = await window.fetch(url, fetchOpts);
-          if (r.status === 422) {
-            throw r.status;
-          } else if (!r.ok) {
+          if (!r.ok) {
+            if (fetchOpts.method === 'POST' && r.status === 422) {
+              toast.open();
+              throw r.status;
+            }
             throw 'Failed to fetch results data.';
           }
           return r.json();
@@ -589,15 +599,18 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         err => err === 422,
         5,
         5000
-      ).then(json => {
-        this.searchResults = json.results;
-        this.refreshDisplayedNodes();
-      }),
-      (e) => {
-        // eslint-disable-next-line no-console
-        console.log(`Failed to load: ${e}`);
-        this.resultsLoadFailed = true;
-      }
+      ).then(
+        json => {
+          this.searchResults = json.results;
+          this.refreshDisplayedNodes();
+        },
+        (e) => {
+          toast.close();
+          // eslint-disable-next-line no-console
+          console.log(`Failed to load: ${e}`);
+          this.resultsLoadFailed = true;
+        }
+      )
     );
   }
 

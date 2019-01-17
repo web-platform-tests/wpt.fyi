@@ -33,6 +33,10 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
           type: Boolean,
           computed: 'computePathIsATestFile(path)'
         },
+        pathIsASubfolder: {
+          type: Boolean,
+          computed: 'computePathIsASubfolder(path)'
+        },
         nextPageToken: String,
       };
     }
@@ -47,6 +51,11 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
 
     computePathIsATestFile(path) {
       return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
+    }
+
+    computePathIsASubfolder(path) {
+      return !this.computePathIsATestFile(path)
+        && path && path.split('/').filter(p => p).length > 0;
     }
 
     encodeTestPath(path) {

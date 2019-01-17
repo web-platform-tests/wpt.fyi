@@ -29,7 +29,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'queryBuilder',
       'queryBuilderSHA',
       'diffFromAPI',
-      'diffFilterUIToggle',
       'colorHomepage',
       'structuredQueries',
       'experimentalByDefault',
@@ -38,6 +37,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'githubCommitLinks',
       'insightsTab',
       'showTestType',
+      'searchPRsForDirectories',
     ];
   }
 });
@@ -153,11 +153,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{diffFilterUIToggle}}">
-        Filter toggle for diff view
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
       <paper-checkbox checked="{{colorHomepage}}">
         Use pass-rate colors on the homepage
       </paper-checkbox>
@@ -181,6 +176,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{githubCommitLinks}}">
         Show links to the commit on GitHub in the header row.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{searchPRsForDirectories}}">
+        On /results, list open PRs involving the current directory.
       </paper-checkbox>
     </paper-item>
 `;

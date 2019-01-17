@@ -55,6 +55,11 @@ func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+	if idx == nil || mon == nil {
+		http.Error(w, "Cache not yet ready", http.StatusServiceUnavailable)
+		return
+	}
+
 	w.Write([]byte("Ready"))
 }
 
@@ -94,8 +99,13 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// possible, though unlikely, that a run may exist in the cache at this point
 	// and be evicted before binding the query to a query execution plan. In such
 	// a case, `idx.Bind()` below will return an error.
-	runs := make([]shared.TestRun, len(ids))
-	for i, id := range ids {
+	//
+	// Accumulate missing runs in `missing` to report which runs have initiated
+	// write-on-read. Return to client `http.StatusUnprocessableEntity`
+	// immediately if any runs are missing.
+	runs := make([]shared.TestRun, 0, len(ids))
+	missing := make([]shared.TestRun, 0, len(ids))
+	for _, id := range ids {
 		run, err := idx.Run(id)
 		// If getting run metadata fails, attempt write-on-read for this run.
 		if err != nil {
@@ -104,14 +114,25 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
 				return
 			}
-			err = idx.IngestRun(*runPtr)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("Failed to load test run data for run %d: %v", id, err), http.StatusInternalServerError)
-				return
-			}
-			run = *runPtr
+			go idx.IngestRun(*runPtr)
+			missing = append(missing, *runPtr)
+		} else {
+			runs = append(runs, run)
 		}
-		runs[i] = run
+	}
+
+	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
+	// are missing.
+	if len(runs) == 0 && len(missing) > 0 {
+		data, err = json.Marshal(query.SearchResponse{
+			IgnoredRuns: missing,
+		})
+		if err != nil {
+			http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
+		}
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Write(data)
+		return
 	}
 
 	q := cq.PrepareUserQuery(rq.RunIDs, rq.AbstractQuery.BindToRuns(runs))
@@ -128,13 +149,24 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = json.Marshal(query.SearchResponse{
+	// Response always contains Runs and Results. If some runs are missing, then:
+	// - Add missing runs to IgnoredRuns;
+	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
+	//   client.
+	resp := query.SearchResponse{
 		Runs:    runs,
 		Results: res,
-	})
+	}
+	if len(missing) != 0 {
+		resp.IgnoredRuns = missing
+	}
+	data, err = json.Marshal(resp)
 	if err != nil {
 		http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
 		return
+	}
+	if len(missing) != 0 {
+		w.WriteHeader(http.StatusUnprocessableEntity)
 	}
 
 	w.Write(data)
