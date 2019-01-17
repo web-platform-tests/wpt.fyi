@@ -69,7 +69,7 @@ suite('LoadingState', () => {
           // Expected: Invoke this function once.
           // Unexpected: Invoke this function more than once.
           throw count === 1 ? 'Expected' : 'Unexpected';
-        }, () => false, 2, 0).then(v => {
+        }, () => false, 2, 0).then(() => {
           // Unexpected: Promise resolved.
           throw new Error('Expected promise to reject; it resolved.');
         }).catch(err => {
@@ -82,7 +82,7 @@ suite('LoadingState', () => {
         await state.retry(async() => {
           count++;
           throw count;
-        }, () => true, 2, 0).then(v => {
+        }, () => true, 2, 0).then(() => {
           // Unexpected: Promise resolved.
           throw new Error('Expected promise to reject; it resolved.');
         }).catch(err => {
