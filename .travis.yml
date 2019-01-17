@@ -34,33 +34,42 @@ matrix:
 
     # pr branch deployments
     - if: type = pull_request
-      - env:
-        - DEPLOY_PR_STAGING_TARGET=webapp
-      - env:
-        - DEPLOY_PR_STAGING_TARGET=results-processor
-      - env:
-        - DEPLOY_PR_STAGING_TARGET=revisions/service
-      - env:
-        - DEPLOY_PR_STAGING_TARGET=api/spanner/service
-      - env:
-        - DEPLOY_PR_STAGING_TARGET=api/query/cache/service
+      env:
+      - DEPLOY_PR_STAGING_TARGET=webapp
+    - if: type = pull_request
+      env:
+      - DEPLOY_PR_STAGING_TARGET=results-processor
+    - if: type = pull_request
+      env:
+      - DEPLOY_PR_STAGING_TARGET=revisions/service
+    - if: type = pull_request
+      env:
+      - DEPLOY_PR_STAGING_TARGET=api/spanner/service
+    - if: type = pull_request
+      env:
+      - DEPLOY_PR_STAGING_TARGET=api/query/cache/service
 
     # master branch deployments
     - if: (type = push) AND (branch = master)
-      - env:
-        - DEPLOY_STAGING_TARGET=webapp
-        - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
-        - MAKE_TEST_FLAGS="STAGING=true"
-      - env:
-        - DEPLOY_STAGING_TARGET=results-processor
-      - env:
-        - DEPLOY_STAGING_TARGET=revisions/service
-      - env:
-        - DEPLOY_STAGING_TARGET=api/spanner/service
-      - env:
-        - DEPLOY_STAGING_TARGET=api/query/cache/service
-      - env:
-        - MAKE_TEST_TARGET=cleanup_staging_versions
+      env:
+      - DEPLOY_STAGING_TARGET=webapp
+      - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
+      - MAKE_TEST_FLAGS="STAGING=true"
+    - if: (type = push) AND (branch = master)
+      env:
+      - DEPLOY_STAGING_TARGET=results-processor
+    - if: (type = push) AND (branch = master)
+      env:
+      - DEPLOY_STAGING_TARGET=revisions/service
+    - if: (type = push) AND (branch = master)
+      env:
+      - DEPLOY_STAGING_TARGET=api/spanner/service
+    - if: (type = push) AND (branch = master)
+      env:
+      - DEPLOY_STAGING_TARGET=api/query/cache/service
+    - if: (type = push) AND (branch = master)
+      env:
+      - MAKE_TEST_TARGET=cleanup_staging_versions
 
 before_install: |
   export DOCKER_IMAGE=wptd-dev
