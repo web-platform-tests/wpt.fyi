@@ -7,7 +7,6 @@ package receiver
 import (
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"sync"
 	"time"
@@ -45,10 +44,10 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		uploader = username
 	}
 
-	// Most form methods (e.g. FormValue, FormFile) will call
-	// ParseMultipartForm and ParseForm if necessary; forms with either
-	// enctype can be parsed. FormValue gets either query params or form
-	// body entries, favoring the latter.
+	// Most form methods (e.g. FormValue) will call ParseMultipartForm and
+	// ParseForm if necessary; forms with either enctype can be parsed.
+	// FormValue gets either query params or form body entries, favoring
+	// the latter.
 	// The default maximum form size is 32MB, which is also the max request
 	// size on AppEngine.
 
@@ -60,34 +59,38 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	f, _, err := r.FormFile("result_file")
 	// Non-existent keys will have empty values, which will later be
 	// filtered out by scheduleResultsTask.
 	extraParams := map[string]string{
-		"labels": r.FormValue("labels"),
+		"labels":       r.FormValue("labels"),
+		"callback_url": r.FormValue("callback_url"),
 		// The following fields will be deprecated when all runners embed metadata in the report.
 		"revision":        r.FormValue("revision"),
 		"browser_name":    r.FormValue("browser_name"),
 		"browser_version": r.FormValue("browser_version"),
 		"os_name":         r.FormValue("os_name"),
 		"os_version":      r.FormValue("os_version"),
-		"callback_url":    r.FormValue("callback_url"),
 	}
 
-	var t *taskqueue.Task
-	if err != nil {
-		urls := r.PostForm["result_url"]
-		if len(urls) == 0 {
-			http.Error(w, "No result_file or result_url found", http.StatusBadRequest)
-			return
+	var results int
+	var getFile func(i int) (io.ReadCloser, error)
+	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
+		// result_file[] payload
+		files := r.MultipartForm.File["result_file"]
+		results = len(files)
+		getFile = func(i int) (io.ReadCloser, error) {
+			return files[i].Open()
 		}
-		// result_url[] payload
-		t, err = handleURLPayload(a, uploader, urls, extraParams)
 	} else {
-		// result_file payload
-		defer f.Close()
-		t, err = handleFilePayload(a, uploader, f, extraParams)
+		// result_url payload
+		urls := r.PostForm["result_url"]
+		results = len(urls)
+		getFile = func(i int) (io.ReadCloser, error) {
+			return fetchFile(a, urls[i])
+		}
 	}
+
+	t, err := sendResultsToProcessor(a, uploader, results, getFile, extraParams)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -95,23 +98,19 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	fmt.Fprintf(w, "Task %s added to queue\n", t.Name)
 }
 
-func handleFilePayload(a AppEngineAPI, uploader string, f multipart.File, extraParams map[string]string) (*taskqueue.Task, error) {
-	gcsPath := fmt.Sprintf("/%s/%s/%s.json", BufferBucket, uploader, uuid.New().String())
-
-	if err := a.uploadToGCS(gcsPath, f, true); err != nil {
-		return nil, err
+func sendResultsToProcessor(
+	a AppEngineAPI, uploader string, results int, getFile func(int) (io.ReadCloser, error),
+	extraParams map[string]string) (*taskqueue.Task, error) {
+	if results == 0 {
+		return nil, fmt.Errorf("nothing uploaded")
 	}
-	return a.scheduleResultsTask(uploader, []string{gcsPath}, "single", extraParams)
-}
 
-func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParams map[string]string) (*taskqueue.Task, error) {
 	id := uuid.New()
-
 	var payloadType string
-	gcs := make([]string, 0, len(urls))
-	if len(urls) > 1 {
+	gcs := make([]string, 0, results)
+	if results > 1 {
 		payloadType = "multiple"
-		for i := range urls {
+		for i := 0; i < results; i++ {
 			gcsPath := fmt.Sprintf("/%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
 			gcs = append(gcs, gcsPath)
 		}
@@ -121,11 +120,23 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 		gcs = append(gcs, gcsPath)
 	}
 
-	errors := make(chan error, len(urls))
+	errors := make(chan error, results)
 	var wg sync.WaitGroup
-	wg.Add(len(urls))
-	for i := range urls {
-		go saveFileToGCS(a, errors, &wg, urls[i], gcs[i])
+	wg.Add(results)
+	for i, gcsPath := range gcs {
+		go func(i int, gcsPath string) {
+			defer wg.Done()
+			f, err := getFile(i)
+			if err != nil {
+				errors <- err
+				return
+			}
+			defer f.Close()
+			// TODO: Detect whether the fetched blob is gzipped.
+			if err := a.uploadToGCS(gcsPath, f, true); err != nil {
+				errors <- err
+			}
+		}(i, gcsPath)
 	}
 	wg.Wait()
 	close(errors)
@@ -139,21 +150,6 @@ func handleURLPayload(a AppEngineAPI, uploader string, urls []string, extraParam
 	}
 
 	return a.scheduleResultsTask(uploader, gcs, payloadType, extraParams)
-}
-
-func saveFileToGCS(a AppEngineAPI, e chan error, wg *sync.WaitGroup, url, gcsPath string) {
-	defer wg.Done()
-
-	f, err := fetchFile(a, url)
-	if err != nil {
-		e <- err
-		return
-	}
-	defer f.Close()
-	// TODO: Detect whether the fetched blob is gzipped.
-	if err := a.uploadToGCS(gcsPath, f, true); err != nil {
-		e <- err
-	}
 }
 
 func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {

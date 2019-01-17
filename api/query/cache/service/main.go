@@ -90,11 +90,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ids := make([]index.RunID, len(rq.RunIDs))
-	for i := range rq.RunIDs {
-		ids[i] = index.RunID(rq.RunIDs[i])
-	}
-
 	// Ensure runs are loaded before executing query. This is best effort: It is
 	// possible, though unlikely, that a run may exist in the cache at this point
 	// and be evicted before binding the query to a query execution plan. In such
@@ -103,9 +98,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// Accumulate missing runs in `missing` to report which runs have initiated
 	// write-on-read. Return to client `http.StatusUnprocessableEntity`
 	// immediately if any runs are missing.
-	runs := make([]shared.TestRun, 0, len(ids))
-	missing := make([]shared.TestRun, 0, len(ids))
-	for _, id := range ids {
+	//
+	// `ids` and `runs` tracks run IDs and run metadata for requested runs that
+	// are currently resident in `idx`.
+	ids := make([]int64, 0, len(rq.RunIDs))
+	runs := make([]shared.TestRun, 0, len(rq.RunIDs))
+	missing := make([]shared.TestRun, 0, len(rq.RunIDs))
+	for i := range rq.RunIDs {
+		id := index.RunID(rq.RunIDs[i])
 		run, err := idx.Run(id)
 		// If getting run metadata fails, attempt write-on-read for this run.
 		if err != nil {
@@ -117,6 +117,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			go idx.IngestRun(*runPtr)
 			missing = append(missing, *runPtr)
 		} else {
+			// Ensure that both `ids` and `runs` correspond to the same test runs.
+			ids = append(ids, rq.RunIDs[i])
 			runs = append(runs, run)
 		}
 	}
@@ -135,7 +137,10 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := cq.PrepareUserQuery(rq.RunIDs, rq.AbstractQuery.BindToRuns(runs))
+	// Prepare user query based on `ids` that are (or at least were a moment ago)
+	// resident in `idx`. In the unlikely event that a run in `ids`/`runs` is no
+	// longer in `idx`, `idx.Bind()` below will return an error.
+	q := cq.PrepareUserQuery(ids, rq.AbstractQuery.BindToRuns(runs))
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

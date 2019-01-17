@@ -15,44 +15,25 @@ import (
 )
 
 func TestLabelParam_Results(t *testing.T) {
-	app, err := NewWebserver()
-	if err != nil {
-		panic(err)
-	}
-	defer app.Close()
+	runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
+		// Local static data only have 2 experimental browsers, and neither has aligned
+		// experimental runs.
+		if *staging {
+			testLabel(t, wd, app, "/", "experimental", "wpt-results", 4, false)
+		} else {
+			testLabel(t, wd, app, "/", "experimental", "wpt-results", 2, false)
+		}
+	})
 
-	service, wd, err := GetWebDriver()
-	if err != nil {
-		panic(err)
-	}
-	defer service.Stop()
-	defer wd.Quit()
-
-	// Local static data only have 2 experimental browsers, and neither has aligned
-	// experimental runs.
-	if *staging {
-		testLabel(t, wd, app, "/", "experimental", "wpt-results", 4, false)
-	} else {
-		testLabel(t, wd, app, "/", "experimental", "wpt-results", 2, false)
-	}
 }
 
 func TestLabelParam_Interop(t *testing.T) {
-	app, err := NewWebserver()
-	if err != nil {
-		panic(err)
-	}
-	defer app.Close()
-
-	service, wd, err := GetWebDriver()
-	if err != nil {
-		panic(err)
-	}
-	defer service.Stop()
-	defer wd.Quit()
-
 	for _, aligned := range []bool{true, false} {
-		testLabel(t, wd, app, "/interop/", shared.StableLabel, "wpt-interop", 4, aligned)
+		t.Run(fmt.Sprintf("?aligned=%v", aligned), func(t *testing.T) {
+			runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
+				testLabel(t, wd, app, "/interop/", shared.StableLabel, "wpt-interop", 4, aligned)
+			})
+		})
 	}
 }
 

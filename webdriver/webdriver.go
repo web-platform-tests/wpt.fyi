@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"runtime"
+	"testing"
 
 	"github.com/tebeka/selenium"
 )
@@ -44,6 +45,26 @@ func pickUnusedPort() int {
 		panic(err)
 	}
 	return port
+}
+
+type webdriverTest func(t *testing.T, app AppServer, wd selenium.WebDriver)
+
+// runWebdriverTest is a helper for starting a webdriver, and using it for a test.
+func runWebdriverTest(t *testing.T, test webdriverTest) {
+	app, err := NewWebserver()
+	if err != nil {
+		panic(err)
+	}
+	defer app.Close()
+
+	service, wd, err := GetWebDriver()
+	if err != nil {
+		panic(err)
+	}
+	defer service.Stop()
+	defer wd.Quit()
+
+	test(t, app, wd)
 }
 
 // GetWebDriver starts a WebDriver service (server) and creates a remote

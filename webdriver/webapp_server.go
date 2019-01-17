@@ -423,5 +423,8 @@ func addStaticData(i DevAppServerInstance) (err error) {
 		}
 	}
 
+	// Enable tested features
+	shared.SetFeature(ctx, shared.Flag{Name: "queryBuilder", Enabled: true})
+
 	return nil
 }

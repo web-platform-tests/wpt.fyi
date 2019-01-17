@@ -204,7 +204,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       </paper-toast>
     </template>
 
-    <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Try again in 30 seconds."></paper-toast>
+    <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
     <paper-toast id="masterLabelMissing" duration="15000">
       <div style="display: flex;">
         wpt.fyi now includes affected tests results from PRs. <br>
@@ -590,24 +590,38 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       }
     }
 
+    // Fetch search results and refresh display nodes. If fetch error is HTTP'
+    // 422, expect backend to attempt write-on-read of missing data. In such
+    // cases, retry fetch up to 5 times with 5000ms waits in between.
+    const toast = this.shadowRoot.querySelector('#runsNotInCache');
     this.load(
-      window.fetch(url, fetchOpts).then(r => {
-        if (!r.ok || r.status !== 200) {
-          if (fetchOpts.method === 'POST' && r.status === 422) {
-            this.shadowRoot.querySelector('#runsNotInCache').open();
+      this.retry(
+        async() => {
+          const r = await window.fetch(url, fetchOpts);
+          if (!r.ok) {
+            if (fetchOpts.method === 'POST' && r.status === 422) {
+              toast.open();
+              throw r.status;
+            }
+            throw 'Failed to fetch results data.';
           }
-          return Promise.reject('Failed to fetch results data.');
+          return r.json();
+        },
+        err => err === 422,
+        5,
+        5000
+      ).then(
+        json => {
+          this.searchResults = json.results;
+          this.refreshDisplayedNodes();
+        },
+        (e) => {
+          toast.close();
+          // eslint-disable-next-line no-console
+          console.log(`Failed to load: ${e}`);
+          this.resultsLoadFailed = true;
         }
-        return r.json();
-      }).then(json => {
-        this.searchResults = json.results;
-        this.refreshDisplayedNodes();
-      }),
-      (e) => {
-        // eslint-disable-next-line no-console
-        console.log(`Failed to load: ${e}`);
-        this.resultsLoadFailed = true;
-      }
+      )
     );
   }
 
