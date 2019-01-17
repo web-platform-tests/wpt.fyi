@@ -89,7 +89,7 @@ _go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webs
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
 	cd $(WPTD_PATH)webdriver; \
-	go test $(VERBOSE) -tags=large -args \
+	go test $(VERBOSE) -timeout=15m -tags=large -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
