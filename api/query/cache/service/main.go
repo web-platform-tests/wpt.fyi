@@ -117,6 +117,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			go idx.IngestRun(*runPtr)
 			missing = append(missing, *runPtr)
 		} else {
+			// Ensure that both `ids` and `runs` correspond to the same test runs.
 			ids = append(ids, rq.RunIDs[i])
 			runs = append(runs, run)
 		}
@@ -137,7 +138,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare user query based on `ids` that are (or at least were a moment ago)
-	// resident in `idx`.
+	// resident in `idx`. In the unlikely event that a run in `ids`/`runs` is no
+	// longer in `idx`, `idx.Bind()` below will return an error.
 	q := cq.PrepareUserQuery(ids, rq.AbstractQuery.BindToRuns(runs))
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
