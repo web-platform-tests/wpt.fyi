@@ -199,10 +199,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     </section>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
-      <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened="">
+      <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
         <paper-button on-click="hideDiffInvalidToast" class="yellow-button">Close</paper-button>
       </paper-toast>
     </template>
+
+    <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Try again in 30 seconds."></paper-toast>
 
     <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
@@ -291,7 +293,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     <template is="dom-if" if="[[isSubfolder]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
-          <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised="">
+          <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
             Show history
           </paper-button>
         </template>
@@ -580,6 +582,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.load(
       window.fetch(url, fetchOpts).then(r => {
         if (!r.ok || r.status !== 200) {
+          if (fetchOpts.method === 'POST' && r.status === 422) {
+            this.shadowRoot.querySelector('#runsNotInCache').open();
+          }
           return Promise.reject('Failed to fetch results data.');
         }
         return r.json();
