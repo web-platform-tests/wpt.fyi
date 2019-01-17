@@ -60,6 +60,59 @@ suite('LoadingState', () => {
         assert.isTrue(completeCallback.notCalled);
       });
     });
+
+    suite('retry', () => {
+      test('should not retry', async() => {
+        let count = 0;
+        await state.retry(async() => {
+          count++;
+          // Expected: Invoke this function once.
+          // Unexpected: Invoke this function more than once.
+          throw count === 1 ? 'Expected' : 'Unexpected';
+        }, () => false, 2, 0).then(v => {
+          // Unexpected: Promise resolved.
+          throw new Error('Expected promise to reject; it resolved.');
+        }).catch(err => {
+          assert.equal('Expected', err);
+        });
+      });
+
+      test('retry n times', async() => {
+        let count = 0;
+        await state.retry(async() => {
+          count++;
+          throw count;
+        }, () => true, 2, 0).then(v => {
+          // Unexpected: Promise resolved.
+          throw new Error('Expected promise to reject; it resolved.');
+        }).catch(err => {
+          assert.equal(2, err);
+        });
+      });
+
+      test('stop after success', async() => {
+        let count = 0;
+        await state.retry(async() => {
+          count++;
+          if (count === 2) {
+            return count;
+          }
+
+          throw count;
+        }, () => true, 5, 0).then(v => {
+          assert.equal(2, v);
+        });
+      });
+
+      test('wait prescribed timeout', async() => {
+        let count = 0;
+        window.setTimeout(() => assert.isTrue(count > 1 && count < 5), 30);
+        await state.retry(async() => {
+          count++;
+          throw count;
+        }, () => true, 5, 10).catch(() => true);
+      });
+    });
   });
 });
 </script>

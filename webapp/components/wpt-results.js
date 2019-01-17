@@ -955,23 +955,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.refreshDisplayedNodes();
     this.loadData();
   }
-
-  retry(f, shouldRetry, num, wait) {
-    let count = 0;
-    const retry = () => {
-      count++;
-      return f().catch(err => {
-        if (count >= num || !shouldRetry(err)) {
-          throw err;
-        }
-        return new Promise((resolve, reject) => window.setTimeout(
-          () => retry().then(resolve, reject),
-          wait
-        ));
-      });
-    };
-    return retry();
-  }
 }
 
 window.customElements.define(WPTResults.is, WPTResults);
