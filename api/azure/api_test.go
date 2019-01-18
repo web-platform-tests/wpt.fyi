@@ -9,6 +9,7 @@ package azure
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io/ioutil"
 	"path"
 	"runtime"
@@ -19,18 +20,26 @@ import (
 
 func TestExtractFiles(t *testing.T) {
 	_, filename, _, _ := runtime.Caller(0)
-	// artifact_test.zip has a single dir, artifact_test/, containing 2 files, wpt_report_{1,2}.json
-	data, err := ioutil.ReadFile(path.Join(path.Dir(filename), "artifact_test.zip"))
-	if err != nil {
-		assert.FailNow(t, "Failed to read artifact_test.zip", err.Error())
+	for i, name := range []string{"artifact_test", "artifact_test_2"} {
+		t.Run(name, func(t *testing.T) {
+			// artifact_test.zip has a single dir, artifact_test/, containing 2 files, wpt_report_{1,2}.json
+			data, err := ioutil.ReadFile(path.Join(path.Dir(filename), fmt.Sprintf("%s.zip", name)))
+			if err != nil {
+				assert.FailNow(t, fmt.Sprintf("Failed to read %s.zip", name), err.Error())
+			}
+			buf := new(bytes.Buffer)
+			err = extractReports(context.Background(), name, data, buf)
+			if err != nil {
+				assert.FailNow(t, "Failed to extract reports", err.Error())
+			}
+			assert.Nil(t, err)
+			content := string(buf.Bytes())
+			if i == 0 {
+				assert.Contains(t, content, "wpt_report.json")
+			} else {
+				assert.Contains(t, content, "wpt_report_1.json")
+				assert.Contains(t, content, "wpt_report_2.json")
+			}
+		})
 	}
-	buf := new(bytes.Buffer)
-	err = extractReports(context.Background(), "artifact_test", data, buf)
-	if err != nil {
-		assert.FailNow(t, "Failed to extract reports", err.Error())
-	}
-	assert.Nil(t, err)
-	content := string(buf.Bytes())
-	assert.Contains(t, content, "wpt_report_1.json")
-	assert.Contains(t, content, "wpt_report_2.json")
 }

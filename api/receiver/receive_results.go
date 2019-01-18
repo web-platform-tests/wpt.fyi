@@ -74,6 +74,14 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 
 	var results int
 	var getFile func(i int) (io.ReadCloser, error)
+	// "To access multiple values of the same key, call ParseForm and then inspect Request.Form directly."
+	// 100 MB max in memory, remainder on disk.
+	if r.Header.Get("Content-Type") == "multipart/form-data" {
+		if err := r.ParseMultipartForm(100 * 1024 * 1024); err != nil {
+			http.Error(w, "Failed to parse multipart form: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
 		// result_file[] payload
 		files := r.MultipartForm.File["result_file"]
