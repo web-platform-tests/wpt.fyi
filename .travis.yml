@@ -85,7 +85,7 @@ script:
     set -e
     if [ -n "${DEPLOY_STAGING_TARGET}" ]; then
       bash util/travis-deploy-staging.sh -f "${DEPLOY_STAGING_TARGET}";
-    elif [ "${DEPLOY_PR_STAGING_TARGET}" == "true" ]; then
+    elif [ -n "${DEPLOY_PR_STAGING_TARGET}" ]; then
       bash util/travis-deploy-staging.sh "${DEPLOY_PR_STAGING_TARGET}";
     else
       echo "Not on master or a PR. Skipping deployment.";
