@@ -76,10 +76,6 @@ class Flakes extends ProductInfo(PolymerElement) {
         type: String,
         computed: 'displayName(browser)',
       },
-      others: {
-        type: String,
-        computed: 'computeOthers(browser)',
-      },
       query: {
         type: String,
         computed: 'computeQuery(browser)',
@@ -91,15 +87,8 @@ class Flakes extends ProductInfo(PolymerElement) {
     };
   }
 
-  computeOthers(browser) {
-    return DefaultBrowserNames
-      .filter(b => b !== browser)
-      .map(b => this.displayName(b))
-      .join(', ');
-  }
-
   computeQuery(browser) {
-    return `(${browser}:pass|${browser}:ok) (${browser}:timeout|${browser}:error|${browser}:fail)`;
+    return `(${browser}:pass|${browser}:ok) ${browser}:!pass ${browser}:!ok`;
   }
 
   computeURL(browser, query) {

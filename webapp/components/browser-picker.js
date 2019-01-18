@@ -14,11 +14,11 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
 
   static get template() {
     return html`
-  <paper-dropdown-menu label="Browser" no-animations="">
+  <paper-dropdown-menu label="Browser" no-animations>
     <paper-listbox slot="dropdown-content" selected="{{ browser }}" attr-for-selected="value">
       <template is="dom-repeat" items="[[defaultProducts]]" as="product">
         <paper-icon-item value="[[product.browser_name]]">
-          <display-logo slot="item-icon" product="[[product]]" small=""></display-logo>
+          <display-logo slot="item-icon" product="[[product]]" small></display-logo>
           [[displayName(product.browser_name)]]
         </paper-icon-item>
       </template>
