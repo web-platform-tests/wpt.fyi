@@ -4,13 +4,13 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
-import '../node_modules/@polymer/paper-item/paper-item.js';
-import '../node_modules/@polymer/paper-toast/paper-toast.js';
-import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
+import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
+import '../node_modules/@polymer/paper-input/paper-input.js';
+import '../node_modules/@polymer/paper-item/paper-item.js';
+import '../node_modules/@polymer/paper-tab/paper-tab.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
-import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { QueryBuilder } from './results-navigation.js';
@@ -103,6 +103,9 @@ class Permalinks extends QueryBuilder(PolymerElement) {
       params = {};
       if (testRuns && testRuns.length) {
         params.run_id = testRuns.map(r => r.id);
+      }
+      if (queryParams.diff) {
+        params.diff = queryParams.diff;
       }
     } else {
       params = Object.assign({}, this.queryParams);

@@ -38,7 +38,6 @@
     "@polymer/polymer": "^3.0.0",
     "@vaadin/vaadin-date-picker": "^3.3.2",
     "@webcomponents/webcomponentsjs": "^2.2.4",
-    "clipboard": "^2.0.4",
     "pluralize": "^7.0.0"
   }
 }
