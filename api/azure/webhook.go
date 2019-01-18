@@ -128,11 +128,9 @@ func createAzureRun(
 	host := aeAPI.GetVersionedHostname()
 	writer.WriteField("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
-	fileField, err := writer.CreateFormFile("result_file", "wpt_report.json")
-	if err = azureAPI.FetchAzureArtifact(artifact, fileField); err != nil {
+	if err := azureAPI.FetchAzureArtifact(artifact, buf); err != nil {
 		return err
 	}
-
 	if err := writer.Close(); err != nil {
 		return err
 	}

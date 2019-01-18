@@ -32,6 +32,7 @@ import { TestRunsUIBase } from './test-runs.js';
 import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
+import './wpt-prs.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
@@ -165,6 +166,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         </template>
       </template>
 
+      <template is="dom-if" if="[[searchPRsForDirectories]]">
+        <template is="dom-if" if="[[pathIsASubfolder]]">
+          <wpt-prs path="[[path]]"></wpt-prs>
+        </template>
+      </template>
+
       <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
       <test-search class\$="search-[[pathIsATestFile]]" query="{{search}}" test-runs="[[testRuns]]" test-paths="[[testPaths]]">
@@ -192,10 +199,20 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     </section>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
-      <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened="">
-        <paper-button on-click="hideDiffInvalidToast" class="yellow-button">Close</paper-button>
+      <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
+        <paper-button onclick="[[dismissToast]]" class="yellow-button">Close</paper-button>
       </paper-toast>
     </template>
+
+    <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
+    <paper-toast id="masterLabelMissing" duration="15000">
+      <div style="display: flex;">
+        wpt.fyi now includes affected tests results from PRs. <br>
+        Did you intend to view results for complete (master) runs only?
+        <paper-button onclick="[[addMasterLabel]]">View master runs</paper-button>
+        <paper-button onclick="[[dismissToast]]">Dismiss</paper-button>
+      </div>
+    </paper-toast>
 
     <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
@@ -228,9 +245,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
               <template is="dom-if" if="[[diffShown]]">
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
-                  <template is="dom-if" if="[[diffFilterUIToggle]]">
                   <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
-                  </template>
                 </th>
               </template>
             </tr>
@@ -286,7 +301,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     <template is="dom-if" if="[[isSubfolder]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
-          <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised="">
+          <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
             Show history
           </paper-button>
         </template>
@@ -398,10 +413,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     return diff && testRuns && testRuns.length !== 2;
   }
 
-  hideDiffInvalidToast() {
-    this.shadowRoot.querySelector('#diffInvalid').toggle();
-  }
-
   computeSourcePath(path, manifest) {
     if (!this.computePathIsATestFile(path) || !manifest) {
       return path;
@@ -482,6 +493,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       this.refreshDisplayedNodes();
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
+    this.dismissToast = e => e.target.closest('paper-toast').close();
+    this.addMasterLabel = this.handleAddMasterLabel.bind(this);
   }
 
   connectedCallback() {
@@ -514,6 +527,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         }
       }
     };
+    // Show warning about ?label=experimental missing the master label.
+    const labels = this.queryParams && this.queryParams.label;
+    if (labels && labels.includes('experimental') && !labels.includes('master')) {
+      this.shadowRoot.querySelector('#masterLabelMissing').show();
+    }
     this.loadData();
   }
 
@@ -572,21 +590,38 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       }
     }
 
+    // Fetch search results and refresh display nodes. If fetch error is HTTP'
+    // 422, expect backend to attempt write-on-read of missing data. In such
+    // cases, retry fetch up to 5 times with 5000ms waits in between.
+    const toast = this.shadowRoot.querySelector('#runsNotInCache');
     this.load(
-      window.fetch(url, fetchOpts).then(r => {
-        if (!r.ok || r.status !== 200) {
-          return Promise.reject('Failed to fetch results data.');
+      this.retry(
+        async() => {
+          const r = await window.fetch(url, fetchOpts);
+          if (!r.ok) {
+            if (fetchOpts.method === 'POST' && r.status === 422) {
+              toast.open();
+              throw r.status;
+            }
+            throw 'Failed to fetch results data.';
+          }
+          return r.json();
+        },
+        err => err === 422,
+        5,
+        5000
+      ).then(
+        json => {
+          this.searchResults = json.results;
+          this.refreshDisplayedNodes();
+        },
+        (e) => {
+          toast.close();
+          // eslint-disable-next-line no-console
+          console.log(`Failed to load: ${e}`);
+          this.resultsLoadFailed = true;
         }
-        return r.json();
-      }).then(json => {
-        this.searchResults = json.results;
-        this.refreshDisplayedNodes();
-      }),
-      (e) => {
-        // eslint-disable-next-line no-console
-        console.log(`Failed to load: ${e}`);
-        this.resultsLoadFailed = true;
-      }
+      )
     );
   }
 
@@ -943,6 +978,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.searchResults = [];
     this.refreshDisplayedNodes();
     this.loadData();
+  }
+
+  handleAddMasterLabel() {
+    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
+    builder.master = true;
+    this.handleSubmitQuery();
+    this.dismissToast();
   }
 }
 

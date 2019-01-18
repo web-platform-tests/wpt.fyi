@@ -89,11 +89,9 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     <paper-item>
       <paper-checkbox checked="{{diff}}" disabled="{{!canShowDiff}}">Show diff</paper-checkbox>
     </paper-item>
-    <template is="dom-if" if="[[masterRunsOnly]]">
-      <paper-item>
-        <paper-checkbox id="master-checkbox" checked="{{master}}">Only master branch</paper-checkbox>
-      </paper-item>
-    </template>
+    <paper-item>
+      <paper-checkbox id="master-checkbox" checked="{{master}}">Only master branch</paper-checkbox>
+    </paper-item>
     <paper-item>
       <paper-input label="Labels" always-float-label="" placeholder="e.g. stable,buildbot" value="{{ labelsString::input }}">
       </paper-input>

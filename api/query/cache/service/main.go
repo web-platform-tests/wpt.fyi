@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -16,12 +17,15 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/api/option"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 
 	"cloud.google.com/go/compute/metadata"
+	"cloud.google.com/go/datastore"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,6 +40,11 @@ var (
 	evictRunsPercent       = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
 	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
+	maxRunsPerRequest      = flag.Int("max_runs_per_request", 16, "Maximum number of runs that may be queried per request")
+
+	// User-facing message for when runs in a request exceeds maxRunsPerRequest.
+	// Set in init() after parsing flags.
+	maxRunsPerRequestMsg string
 
 	idx index.Index
 	mon monitor.Monitor
@@ -46,6 +55,11 @@ func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+	if idx == nil || mon == nil {
+		http.Error(w, "Cache not yet ready", http.StatusServiceUnavailable)
+		return
+	}
+
 	w.Write([]byte("Ready"))
 }
 
@@ -71,21 +85,65 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ids := make([]index.RunID, len(rq.RunIDs))
-	for i := range rq.RunIDs {
-		ids[i] = index.RunID(rq.RunIDs[i])
-	}
-	runs, err := idx.Runs(ids)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if len(rq.RunIDs) > *maxRunsPerRequest {
+		http.Error(w, maxRunsPerRequestMsg, http.StatusBadRequest)
 		return
 	}
 
-	q := cq.PrepareUserQuery(rq.RunIDs, rq.AbstractQuery.BindToRuns(runs))
+	// Ensure runs are loaded before executing query. This is best effort: It is
+	// possible, though unlikely, that a run may exist in the cache at this point
+	// and be evicted before binding the query to a query execution plan. In such
+	// a case, `idx.Bind()` below will return an error.
+	//
+	// Accumulate missing runs in `missing` to report which runs have initiated
+	// write-on-read. Return to client `http.StatusUnprocessableEntity`
+	// immediately if any runs are missing.
+	//
+	// `ids` and `runs` tracks run IDs and run metadata for requested runs that
+	// are currently resident in `idx`.
+	ids := make([]int64, 0, len(rq.RunIDs))
+	runs := make([]shared.TestRun, 0, len(rq.RunIDs))
+	missing := make([]shared.TestRun, 0, len(rq.RunIDs))
+	for i := range rq.RunIDs {
+		id := index.RunID(rq.RunIDs[i])
+		run, err := idx.Run(id)
+		// If getting run metadata fails, attempt write-on-read for this run.
+		if err != nil {
+			runPtr, err := getTestRun(int64(id))
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
+				return
+			}
+			go idx.IngestRun(*runPtr)
+			missing = append(missing, *runPtr)
+		} else {
+			// Ensure that both `ids` and `runs` correspond to the same test runs.
+			ids = append(ids, rq.RunIDs[i])
+			runs = append(runs, run)
+		}
+	}
 
+	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
+	// are missing.
+	if len(runs) == 0 && len(missing) > 0 {
+		data, err = json.Marshal(query.SearchResponse{
+			IgnoredRuns: missing,
+		})
+		if err != nil {
+			http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
+		}
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Write(data)
+		return
+	}
+
+	// Prepare user query based on `ids` that are (or at least were a moment ago)
+	// resident in `idx`. In the unlikely event that a run in `ids`/`runs` is no
+	// longer in `idx`, `idx.Bind()` below will return an error.
+	q := cq.PrepareUserQuery(ids, rq.AbstractQuery.BindToRuns(runs))
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -96,20 +154,56 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = json.Marshal(query.SearchResponse{
+	// Response always contains Runs and Results. If some runs are missing, then:
+	// - Add missing runs to IgnoredRuns;
+	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
+	//   client.
+	resp := query.SearchResponse{
 		Runs:    runs,
 		Results: res,
-	})
+	}
+	if len(missing) != 0 {
+		resp.IgnoredRuns = missing
+	}
+	data, err = json.Marshal(resp)
 	if err != nil {
 		http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
 		return
+	}
+	if len(missing) != 0 {
+		w.WriteHeader(http.StatusUnprocessableEntity)
 	}
 
 	w.Write(data)
 }
 
+func getTestRun(id int64) (*shared.TestRun, error) {
+	ctx := context.Background()
+	var client *datastore.Client
+	var err error
+	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
+		client, err = datastore.NewClient(ctx, *projectID, option.WithCredentialsFile(*gcpCredentialsFile))
+	} else {
+		client, err = datastore.NewClient(ctx, *projectID)
+	}
+	if err != nil {
+		return nil, err
+	}
+	d := shared.NewCloudDatastore(ctx, client)
+	testRun := new(shared.TestRun)
+	err = d.Get(d.NewKey("TestRun", id), testRun)
+	if err != nil {
+		return nil, err
+	}
+
+	testRun.ID = id
+	return testRun, nil
+}
+
 func init() {
 	flag.Parse()
+
+	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
 }
 
 func main() {

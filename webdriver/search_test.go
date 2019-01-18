@@ -11,34 +11,17 @@ import (
 	"github.com/tebeka/selenium"
 )
 
-func TestSearch_Results(t *testing.T) {
-	testSearch(t, "/", "wpt-results")
-}
-
-func TestSearch_Interop(t *testing.T) {
-	testSearch(t, "/interop/", "wpt-interop")
+func TestSearch(t *testing.T) {
+	t.Run("wpt-results", func(t *testing.T) {
+		testSearch(t, "/", "wpt-results")
+	})
+	t.Run("wpt-interop", func(t *testing.T) {
+		testSearch(t, "/interop/", "wpt-interop")
+	})
 }
 
 func testSearch(t *testing.T, path, elementName string) {
-	app, err := NewWebserver()
-	if err != nil {
-		panic(err)
-	}
-	defer app.Close()
-
-	service, wd, err := GetWebDriver()
-	if err != nil {
-		panic(err)
-	}
-	defer service.Stop()
-	defer wd.Quit()
-
-	// Navigate to the wpt.fyi homepage.
-	if err := wd.Get(app.GetWebappURL(path)); err != nil {
-		assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
-	}
-
-	// Wait for the results view to load.
+	folder := "2dcontext"
 	resultsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
 		pathParts, err := getPathPartElements(wd, elementName)
 		if err != nil {
@@ -46,32 +29,42 @@ func testSearch(t *testing.T, path, elementName string) {
 		}
 		return len(pathParts) > 0, nil
 	}
-	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
-	assert.Nil(t, err)
 
-	folder := "2dcontext"
 	// NOTE(lukebjerring): firefox can't take sendKeys for shadow elements.
 	// https://bugzilla.mozilla.org/show_bug.cgi?id=1503860
 	if *browser != "firefox" {
-		// Type the search.
-		searchBox, err := getSearchElement(wd, elementName)
-		if err != nil {
-			assert.FailNow(t, fmt.Sprintf("Error getting search element: %s", err.Error()))
-		}
-		if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
-			assert.FailNow(t, fmt.Sprintf("Error sending keys: %s", err.Error()))
-		}
-		assertListIsFiltered(t, wd, elementName, folder+"/")
+		t.Run("search-input", func(t *testing.T) {
+			runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
+				if err := wd.Get(app.GetWebappURL(path)); err != nil {
+					assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
+				}
+				err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+				assert.Nil(t, err)
+
+				// Type the search.
+				searchBox, err := getSearchElement(wd, elementName)
+				if err != nil {
+					assert.FailNow(t, fmt.Sprintf("Error getting search element: %s", err.Error()))
+				}
+				if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
+					assert.FailNow(t, fmt.Sprintf("Error sending keys: %s", err.Error()))
+				}
+				assertListIsFiltered(t, wd, elementName, folder+"/")
+			})
+		})
 	}
 
-	// Navigate to the wpt.fyi homepage.
-	if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
-		assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
-	}
+	t.Run("search-param", func(t *testing.T) {
+		runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
+			if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
+				assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
+			}
 
-	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
-	assert.Nil(t, err)
-	assertListIsFiltered(t, wd, elementName, folder+"/")
+			err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+			assert.Nil(t, err)
+			assertListIsFiltered(t, wd, elementName, folder+"/")
+		})
+	})
 }
 
 func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName string, paths ...string) {

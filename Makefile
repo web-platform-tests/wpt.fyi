@@ -89,7 +89,7 @@ _go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webs
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
 	cd $(WPTD_PATH)webdriver; \
-	go test $(VERBOSE) -tags=large -args \
+	go test $(VERBOSE) -timeout=15m -tags=large -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
@@ -180,7 +180,7 @@ gpg:
 
 node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
-		curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; \
+		curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -; \
 		sudo apt-get install -qqy nodejs; \
 	fi
 
