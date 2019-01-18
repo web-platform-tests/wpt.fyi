@@ -200,11 +200,19 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
       <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
-        <paper-button on-click="hideDiffInvalidToast" class="yellow-button">Close</paper-button>
+        <paper-button onclick="[[dismissToast]]" class="yellow-button">Close</paper-button>
       </paper-toast>
     </template>
 
     <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
+    <paper-toast id="masterLabelMissing" duration="15000">
+      <div style="display: flex;">
+        wpt.fyi now includes affected tests results from PRs. <br>
+        Did you intend to view results for complete (master) runs only?
+        <paper-button onclick="[[addMasterLabel]]">View master runs</paper-button>
+        <paper-button onclick="[[dismissToast]]">Dismiss</paper-button>
+      </div>
+    </paper-toast>
 
     <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
@@ -405,10 +413,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     return diff && testRuns && testRuns.length !== 2;
   }
 
-  hideDiffInvalidToast() {
-    this.shadowRoot.querySelector('#diffInvalid').toggle();
-  }
-
   computeSourcePath(path, manifest) {
     if (!this.computePathIsATestFile(path) || !manifest) {
       return path;
@@ -489,6 +493,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       this.refreshDisplayedNodes();
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
+    this.dismissToast = e => e.target.closest('paper-toast').close();
+    this.addMasterLabel = this.handleAddMasterLabel.bind(this);
   }
 
   connectedCallback() {
@@ -521,6 +527,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         }
       }
     };
+    // Show warning about ?label=experimental missing the master label.
+    const labels = this.queryParams && this.queryParams.label;
+    if (labels && labels.includes('experimental') && !labels.includes('master')) {
+      this.shadowRoot.querySelector('#masterLabelMissing').show();
+    }
     this.loadData();
   }
 
@@ -967,6 +978,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.searchResults = [];
     this.refreshDisplayedNodes();
     this.loadData();
+  }
+
+  handleAddMasterLabel() {
+    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
+    builder.master = true;
+    this.handleSubmitQuery();
+    this.dismissToast();
   }
 }
 
