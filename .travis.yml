@@ -14,8 +14,9 @@ branches:
 services:
   - docker
 
-# client-secret.json
-secure: "wQIAV/OJdWTKkqnnL6pKQC8R0nChV6yRT2MK49qZV0ulA/0a6V9G+oIlbixI04CgLbsjExGDUY6ZiSYgd8rPixuWNIP1sG//AwUfNggpyQF0rFqPRrGOKJD+TkvGgTu8c8nSK0Rxlw3d+Yy7wXKdtzsP/4euub7eYLHhYlDXhw6ANE9jmtwyTCyM+MdHvnEsvDEXkXExvpurGSsXxPwG8CCLKLRp1O2BJwh9PPn+likU9AT6HFedhoW+Jv9YFnrqCtgCNzucQTTILDoLLvz4+Kk7FYmLriWXPT+QWL87tYFGI0gZev3+XdpTLJWjh1XUw35pYZzZsgRkl7y7uVUPFsYWoUXLoX9gv6Qp1sR+2hN9Z/CNSMNwrTVIAyE+db9q+wWpesy7L72bmaVri2PFqhz+uvNQ3hM2Lu4e/mjj4E8uVE9nTiWtBwnb7376nDemeHxeV3ADbEZceTHuIKxtyP1A6gXCxswGGzPJLrmCjq0XSPgskcpWOR4xRSKYior0Bhd+ULPKO7GzX2AMKxMpkELUf8XjhVpJXZjdemqV+ppV69JBmRQLDWsZQgmT0y/aclgSNVk3lVr/c2STHpmdhAWlgkjnaxqofLt5JIh1YHkJYaDxWbLyuuMTcpPKCdbJGAg4/PvCMo6bwurVBCS2+mqTxD6SfYXm7eFwhd7aJDA="
+# ${GITHUB_TOKEN}
+env:
+  - secure: "wQIAV/OJdWTKkqnnL6pKQC8R0nChV6yRT2MK49qZV0ulA/0a6V9G+oIlbixI04CgLbsjExGDUY6ZiSYgd8rPixuWNIP1sG//AwUfNggpyQF0rFqPRrGOKJD+TkvGgTu8c8nSK0Rxlw3d+Yy7wXKdtzsP/4euub7eYLHhYlDXhw6ANE9jmtwyTCyM+MdHvnEsvDEXkXExvpurGSsXxPwG8CCLKLRp1O2BJwh9PPn+likU9AT6HFedhoW+Jv9YFnrqCtgCNzucQTTILDoLLvz4+Kk7FYmLriWXPT+QWL87tYFGI0gZev3+XdpTLJWjh1XUw35pYZzZsgRkl7y7uVUPFsYWoUXLoX9gv6Qp1sR+2hN9Z/CNSMNwrTVIAyE+db9q+wWpesy7L72bmaVri2PFqhz+uvNQ3hM2Lu4e/mjj4E8uVE9nTiWtBwnb7376nDemeHxeV3ADbEZceTHuIKxtyP1A6gXCxswGGzPJLrmCjq0XSPgskcpWOR4xRSKYior0Bhd+ULPKO7GzX2AMKxMpkELUf8XjhVpJXZjdemqV+ppV69JBmRQLDWsZQgmT0y/aclgSNVk3lVr/c2STHpmdhAWlgkjnaxqofLt5JIh1YHkJYaDxWbLyuuMTcpPKCdbJGAg4/PvCMo6bwurVBCS2+mqTxD6SfYXm7eFwhd7aJDA="
 
 matrix:
   include:
@@ -85,7 +86,7 @@ script:
     set -e
     if [ -n "${DEPLOY_STAGING_TARGET}" ]; then
       bash util/travis-deploy-staging.sh -f "${DEPLOY_STAGING_TARGET}";
-    elif [ "${DEPLOY_PR_STAGING_TARGET}" == "true" ]; then
+    elif [ -n "${DEPLOY_PR_STAGING_TARGET}" ]; then
       bash util/travis-deploy-staging.sh "${DEPLOY_PR_STAGING_TARGET}";
     else
       echo "Not on master or a PR. Skipping deployment.";

@@ -51,7 +51,7 @@ type ArtifactResource struct {
 type API interface {
 	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
-	FetchAzureArtifact(BuildArtifact, io.Writer) error
+	FetchAzureArtifact(BuildArtifact, *multipart.Writer) error
 }
 
 type apiImpl struct {
@@ -84,7 +84,7 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 
 // FetchAzureArtifact gets the gzipped bytes of the wpt_report.json from inside
 // the zip file provided by Azure, and writes them to the given writer.
-func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, writer io.Writer) error {
+func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, mWriter *multipart.Writer) error {
 	aeAPI := shared.NewAppEngineAPI(a.ctx)
 	log := shared.GetLogger(a.ctx)
 	// The default timeout is 5s, not enough to download the reports.
@@ -106,18 +106,17 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, writer io.Writer) er
 	}
 
 	// Extract the report from the artifact.
-	return extractReports(a.ctx, artifact.Name, data, writer)
+	return extractReports(a.ctx, artifact.Name, data, mWriter)
 }
 
 // extractReports extracts report files from the given zip.
-func extractReports(ctx context.Context, artifactName string, data []byte, writer io.Writer) error {
+func extractReports(ctx context.Context, artifactName string, data []byte, mWriter *multipart.Writer) error {
 	log := shared.GetLogger(ctx)
 	reportPath, err := regexp.Compile(fmt.Sprintf(`%s/wpt_report.*\.json$`, artifactName))
 	if err != nil {
 		return err
 	}
 	extracted := 0
-	mWriter := multipart.NewWriter(writer)
 	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	for _, f := range z.File {
 		if reportPath.MatchString(f.Name) {

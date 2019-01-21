@@ -33,6 +33,7 @@ import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
 import './wpt-prs.js';
+import './wpt-permalinks.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
@@ -138,6 +139,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         height: 16px;
         width: 16px;
       }
+      .query-actions paper-button {
+        display: inline-block;
+      }
 
       @media (max-width: 800px) {
         table tr td:first-child::after {
@@ -191,6 +195,14 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       <template is="dom-if" if="[[resultsRangeMessage]]">
         <info-banner>
           [[resultsRangeMessage]]
+          <template is="dom-if" if="[[permalinks]]">
+            <wpt-permalinks path="[[path]]"
+                            path-prefix="/results/"
+                            query-params="[[queryParams]]"
+                            test-runs="[[testRuns]]">
+            </wpt-permalinks>
+            <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
+          </template>
           <template is="dom-if" if="[[queryBuilder]]">
             <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
           </template>
@@ -488,6 +500,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.toggleQueryEdit = () => {
       this.editingQuery = !this.editingQuery;
     };
+    this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;
       this.refreshDisplayedNodes();

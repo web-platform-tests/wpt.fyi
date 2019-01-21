@@ -38,6 +38,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'insightsTab',
       'showTestType',
       'searchPRsForDirectories',
+      'permalinks',
     ];
   }
 });
@@ -181,6 +182,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{searchPRsForDirectories}}">
         On /results, list open PRs involving the current directory.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{permalinks}}">
+        Show dialog for copying a permalink (on /results page).
       </paper-checkbox>
     </paper-item>
 `;

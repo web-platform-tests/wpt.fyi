@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"io/ioutil"
+	multipart "mime/multipart"
 	"path"
 	"runtime"
 	"testing"
@@ -25,7 +26,8 @@ func TestExtractFiles(t *testing.T) {
 		assert.FailNow(t, "Failed to read artifact_test.zip", err.Error())
 	}
 	buf := new(bytes.Buffer)
-	err = extractReports(context.Background(), "artifact_test", data, buf)
+	w := multipart.NewWriter(buf)
+	err = extractReports(context.Background(), "artifact_test", data, w)
 	if err != nil {
 		assert.FailNow(t, "Failed to extract reports", err.Error())
 	}
