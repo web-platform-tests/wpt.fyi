@@ -20,9 +20,9 @@ document.head.appendChild($_documentContainer.content);
  * an object of params.
  */
 // eslint-disable-next-line no-unused-vars
-const QueryBuilder = (superClass, queryParamsComputer) => class extends superClass {
+const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends superClass {
   static get properties() {
-    return {
+    const props = {
       query: {
         type: String,
         computed: 'computeQuery(queryParams)',
@@ -32,9 +32,12 @@ const QueryBuilder = (superClass, queryParamsComputer) => class extends superCla
       queryParams: {
         type: Object,
         notify: true,
-        computed: queryParamsComputer,
       },
     };
+    if (opts_queryParamsComputer) {
+      props.queryParams.computed = opts_queryParamsComputer;
+    }
+    return props;
   }
 
   computeQuery(params) {
