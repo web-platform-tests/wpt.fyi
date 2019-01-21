@@ -12,5 +12,6 @@ func RegisterRoutes() {
 	// the results of an Azure Pipelines build (by the provided ID).
 	// The endpoint is insecure, because we'll only try to fetch (specifically) a
 	// web-platform-tests/wpt build with the given ID.
-	shared.AddRoute("/api/checks/azure/{id:[0-9]+}", "azure-notify", notifyHandler)
+	shared.AddRoute("/api/checks/azure/{id:[0-9]+}", "azure-notify", notifyHandler).
+		Methods("POST")
 }
