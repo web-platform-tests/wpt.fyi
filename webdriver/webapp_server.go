@@ -264,7 +264,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
-			Labels:     []string{"chrome", "linux", "stable"},
+			Labels:     []string{"chrome", "linux", shared.StableLabel, shared.MasterLabel},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -279,7 +279,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
 			TimeStart:  staticDataTime,
-			Labels:     []string{"edge", "windows", "stable"},
+			Labels:     []string{"edge", "windows", shared.StableLabel, shared.MasterLabel},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -294,7 +294,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
-			Labels:     []string{"firefox", "linux", "stable"},
+			Labels:     []string{"firefox", "linux", shared.StableLabel, shared.MasterLabel},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -309,7 +309,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
 			TimeStart:  staticDataTime,
-			Labels:     []string{"safari", "macos", "stable"},
+			Labels:     []string{"safari", "macos", shared.StableLabel, shared.MasterLabel},
 		},
 	}
 	experimentalTestRuns := shared.TestRuns{
@@ -327,7 +327,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
-			Labels:     []string{"chrome", "linux", "experimental"},
+			Labels:     []string{"chrome", "linux", shared.ExperimentalLabel, shared.MasterLabel},
 		},
 		{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -342,7 +342,7 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			},
 			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
 			TimeStart:  staticDataTime,
-			Labels:     []string{"firefox", "linux", "experimental"},
+			Labels:     []string{"firefox", "linux", shared.ExperimentalLabel, shared.MasterLabel},
 		},
 	}
 
@@ -422,6 +422,9 @@ func addStaticData(i DevAppServerInstance) (err error) {
 			return err
 		}
 	}
+
+	// Enable tested features
+	shared.SetFeature(ctx, shared.Flag{Name: "queryBuilder", Enabled: true})
 
 	return nil
 }

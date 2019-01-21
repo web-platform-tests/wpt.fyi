@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"time"
 
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/memcache"
 	"google.golang.org/appengine/urlfetch"
 )
@@ -371,26 +370,6 @@ func (oc jsonObjectCache) Put(id, value interface{}) error {
 // context.Context and delgating to the input ReadWritable.
 func NewJSONObjectCache(ctx context.Context, delegate ReadWritable) ObjectCache {
 	return jsonObjectCache{ctx, delegate}
-}
-
-type datastoreObjectStore struct {
-	ctx  context.Context
-	kind string
-}
-
-func (s datastoreObjectStore) Get(iID, value interface{}) error {
-	id, ok := iID.(int64)
-	if !ok {
-		return errDatastoreObjectStoreExpectedInt64
-	}
-	key := datastore.NewKey(s.ctx, s.kind, "", id, nil)
-	return datastore.Get(s.ctx, key, value)
-}
-
-// NewDatastoreObjectStore constructs a new ObjectStore backed by datastore
-// objects of a particular kind.
-func NewDatastoreObjectStore(ctx context.Context, kind string) ObjectStore {
-	return datastoreObjectStore{ctx, kind}
 }
 
 type objectCachedStore struct {

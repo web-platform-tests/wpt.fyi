@@ -221,7 +221,8 @@ func TestHandlePullRequestEvent_UserWhitelisted(t *testing.T) {
 	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
-	checksAPI.EXPECT().CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoInstallationID, sha, 123).Return(true, nil)
+	checksAPI.EXPECT().GetWPTRepoAppInstallationIDs().Return(wptfyiStagingCheckAppID, wptRepoStagingInstallationID)
+	checksAPI.EXPECT().CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoStagingInstallationID, sha, 123).Return(true, nil)
 
 	processed, err := handlePullRequestEvent(aeAPI, checksAPI, payload)
 	assert.Nil(t, err)

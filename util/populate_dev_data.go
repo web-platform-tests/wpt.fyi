@@ -183,7 +183,6 @@ func main() {
 	addFlag(ctx, "experimentalAlignedExceptEdge", enabledFlag)
 	addFlag(ctx, "structuredQueries", enabledFlag)
 	addFlag(ctx, "diffRenames", enabledFlag)
-	addFlag(ctx, "masterRunsOnly", enabledFlag)
 	addFlag(ctx, "paginationTokens", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")
@@ -275,7 +274,7 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 			}
 			if len(shas) > 0 {
 				sha = shas[0]
-				if loaded, err := shared.LoadTestRunsByKeys(store, keys[sha]); err != nil {
+				if loaded, err := store.LoadTestRunsByKeys(keys[sha]); err != nil {
 					log.Printf("Failed to load test runs by keys: %s", err.Error())
 					continue
 				} else {

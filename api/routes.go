@@ -33,6 +33,11 @@ func RegisterRoutes() {
 		shared.WrapApplicationJSON(
 			shared.WrapPermissiveCORS(apiSHAsHandler)))
 
+	// API endpoint for searching PRs for the test runs.
+	shared.AddRoute("/api/prs", "api-prs",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(apiPRsHandler)))
+
 	// API endpoint for listing SHAs for the test runs.
 	shared.AddRoute("/api/versions", "api-versions",
 		shared.WrapApplicationJSON(

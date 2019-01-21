@@ -9,9 +9,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	multipart "mime/multipart"
+	"regexp"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -81,7 +84,7 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 
 // FetchAzureArtifact gets the gzipped bytes of the wpt_report.json from inside
 // the zip file provided by Azure, and writes them to the given writer.
-func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, w io.Writer) error {
+func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, writer io.Writer) error {
 	aeAPI := shared.NewAppEngineAPI(a.ctx)
 	log := shared.GetLogger(a.ctx)
 	// The default timeout is 5s, not enough to download the reports.
@@ -96,36 +99,59 @@ func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, w io.Writer) error {
 		return err
 	}
 
-	// Extract the report from the artifact.
-	reportPath := fmt.Sprintf("%s/wpt_report.json", artifact.Name)
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Failed to read response body")
 		return err
 	}
+
+	// Extract the report from the artifact.
+	return extractReports(a.ctx, artifact.Name, data, writer)
+}
+
+// extractReports extracts report files from the given zip.
+func extractReports(ctx context.Context, artifactName string, data []byte, writer io.Writer) error {
+	log := shared.GetLogger(ctx)
+	reportPath, err := regexp.Compile(fmt.Sprintf(`%s/wpt_report.*\.json$`, artifactName))
+	if err != nil {
+		return err
+	}
+	extracted := 0
+	mWriter := multipart.NewWriter(writer)
 	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	for _, f := range z.File {
-		if f.Name == reportPath {
-			var fileData io.ReadCloser
-			if fileData, err = f.Open(); err != nil {
-				log.Errorf("Failed to extract %s", reportPath)
-				return err
-			}
-			defer fileData.Close()
+		if reportPath.MatchString(f.Name) {
+			// Wrap extraction in a function, to scope the "defer fileData.Close()"
+			if err := func() error {
+				fileName := f.Name[len(artifactName)+1:]
+				fileField, err := mWriter.CreateFormFile("result_file", fileName)
+				var fileData io.ReadCloser
+				if fileData, err = f.Open(); err != nil {
+					log.Errorf("Failed to extract %s", f.Name)
+					return err
+				}
+				defer fileData.Close()
 
-			gzw := gzip.NewWriter(w)
-			if _, err := io.Copy(gzw, fileData); err != nil {
-				log.Errorf("Failed to gzip file contents")
+				gzw := gzip.NewWriter(fileField)
+				if _, err := io.Copy(gzw, fileData); err != nil {
+					log.Errorf("Failed to gzip file contents")
+					return err
+				}
+				if err := gzw.Close(); err != nil {
+					log.Errorf("Failed to close gzip writer")
+					return err
+				}
+				return nil
+			}(); err != nil {
 				return err
 			}
-			if err := gzw.Close(); err != nil {
-				log.Errorf("Failed to close gzip writer")
-				return err
-			}
-			return nil
+			extracted++
 		}
 	}
-	return fmt.Errorf("File %s not found in zip", reportPath)
+	if extracted < 1 {
+		return errors.New(`No "wpt_report.*\.json" files found in zip`)
+	}
+	return mWriter.Close()
 }
 
 func getCheckTitle(product shared.ProductSpec) string {

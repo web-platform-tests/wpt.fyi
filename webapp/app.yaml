@@ -42,3 +42,4 @@ skip_files:
 - .eslintrc.json
 - package.json
 - README.md
+- .*/artifact_test.zip

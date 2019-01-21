@@ -12,6 +12,7 @@ import (
 	"google.golang.org/api/option"
 
 	"cloud.google.com/go/datastore"
+	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
@@ -56,7 +57,9 @@ func NewDatastoreRunFetcher(projectID string, gcpCredentialsFile *string, logger
 }
 
 func (f datastoreRunFetcher) FetchRuns(limit int) (shared.TestRunsByProduct, error) {
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), log.WithFields(log.Fields{
+		"fetch_runs_limit": limit,
+	}))
 	var client *datastore.Client
 	var err error
 	if f.gcpCredentialsFile != nil && *f.gcpCredentialsFile != "" {
@@ -70,7 +73,7 @@ func (f datastoreRunFetcher) FetchRuns(limit int) (shared.TestRunsByProduct, err
 	store := shared.NewCloudDatastore(ctx, client)
 
 	// Query Datastore for latest maxBytes/bytesPerRun test runs.
-	runs, err := store.LoadTestRuns(nil, nil, nil, nil, nil, &limit, nil)
+	runs, err := store.LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil)
 	return runs, nil
 }
 
@@ -93,7 +96,7 @@ func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, e
 // will halt either:
 // The first time a run is evicted from the index.Index via EvictAnyRun(), OR
 // the first time the returned monitor.Monitor is stopped via Stop().
-func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
+func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxIngestedRuns uint, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
 	if idx == nil {
 		return nil, errNilIndex
 	}
@@ -102,7 +105,7 @@ func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, int
 		ProxyIndex:  index.NewProxyIndex(idx),
 		backfilling: true,
 	}
-	idxMon, err := monitor.NewIndexMonitor(logger, rt, interval, maxBytes, evictionPercent, bfIdx)
+	idxMon, err := monitor.NewIndexMonitor(logger, rt, interval, maxIngestedRuns, maxBytes, evictionPercent, bfIdx)
 	if err != nil {
 		return nil, err
 	}

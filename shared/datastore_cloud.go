@@ -20,6 +20,10 @@ func (k cloudKey) IntID() int64 {
 	return k.key.ID
 }
 
+func (k cloudKey) Kind() string {
+	return k.key.Kind
+}
+
 // NewCloudDatastore creates a Datastore implementation that is backed by a
 // standard cloud datastore client (i.e. not running in AppEngine standard).
 func NewCloudDatastore(ctx context.Context, client *datastore.Client) Datastore {
@@ -59,16 +63,17 @@ func (d cloudDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	return cast, err
 }
 
+func (d cloudDatastore) Get(k Key, dst interface{}) error {
+	cast := k.(cloudKey).key
+	return d.client.Get(d.ctx, cast, dst)
+}
+
 func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 	cast := make([]*datastore.Key, len(keys))
 	for i := range keys {
 		cast[i] = keys[i].(cloudKey).key
 	}
 	return d.client.GetMulti(d.ctx, cast, dst)
-}
-
-func (d cloudDatastore) LoadTestRun(id int64) (*TestRun, error) {
-	return loadTestRun(d, id)
 }
 
 func (d cloudDatastore) LoadTestRuns(
@@ -80,6 +85,29 @@ func (d cloudDatastore) LoadTestRuns(
 	limit,
 	offset *int) (result TestRunsByProduct, err error) {
 	return loadTestRuns(d, products, labels, revisions, from, to, limit, offset)
+}
+
+func (d cloudDatastore) LoadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
+	result = TestRunsByProduct{}
+	for _, kbp := range keysByProduct {
+		runs := make(TestRuns, len(kbp.Keys))
+		err := d.GetMulti(kbp.Keys, runs)
+		if err != nil {
+			break
+		}
+		result = append(result, ProductTestRuns{
+			Product:  kbp.Product,
+			TestRuns: runs,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	// Append the keys as ID
+	for i, kbp := range keysByProduct {
+		result[i].TestRuns.SetTestRunIDs(GetTestRunIDs(kbp.Keys))
+	}
+	return result, err
 }
 
 type cloudQuery struct {

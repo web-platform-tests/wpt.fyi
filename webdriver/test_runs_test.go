@@ -12,34 +12,23 @@ import (
 )
 
 func TestTestRuns(t *testing.T) {
-	app, err := NewWebserver()
-	if err != nil {
-		panic(err)
-	}
-	defer app.Close()
-
-	service, wd, err := GetWebDriver()
-	if err != nil {
-		panic(err)
-	}
-	defer service.Stop()
-	defer wd.Quit()
-
-	// Navigate to the wpt.fyi homepage.
-	if err := wd.Get(app.GetWebappURL("/test-runs")); err != nil {
-		assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
-	}
-
-	// Wait for the results view to load.
-	runsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
-		rows, err := getRunRowElements(wd)
-		if err != nil {
-			return false, err
+	runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
+		// Navigate to the wpt.fyi homepage.
+		if err := wd.Get(app.GetWebappURL("/test-runs")); err != nil {
+			assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
 		}
-		return len(rows) > 1, nil
-	}
-	err = wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
-	assert.Nil(t, err)
+
+		// Wait for the results view to load.
+		runsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
+			rows, err := getRunRowElements(wd)
+			if err != nil {
+				return false, err
+			}
+			return len(rows) > 1, nil
+		}
+		err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
+		assert.Nil(t, err)
+	})
 }
 
 func getRunRowElements(wd selenium.WebDriver) ([]selenium.WebElement, error) {

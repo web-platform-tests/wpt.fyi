@@ -4,11 +4,6 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script>
-    window.wpt = window.wpt || {};
-    window.wpt.MUTABLE_FLAGS = true;
-  </script>
 </head>
 <body>
   <test-fixture id="query-builder-fixture">
@@ -26,6 +21,7 @@
   <script type="module">
 import '../test-runs-query-builder.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { Channels } from '../product-info.js';
 suite('TestRunsQueryBuilder', () => {
   let queryBuilder, sandbox;
 
@@ -119,7 +115,7 @@ suite('TestRunsQueryBuilder', () => {
       });
     });
 
-    for (const channel of window.wpt.Channels) {
+    for (const channel of Channels) {
       test(channel, done => {
         flush(() => {
           for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
@@ -131,7 +127,7 @@ suite('TestRunsQueryBuilder', () => {
       });
     }
 
-    for (const channel of window.wpt.Channels) {
+    for (const channel of Channels) {
       test(channel, done => {
         flush(() => {
           queryBuilder.set('labels', [channel]);
@@ -181,10 +177,6 @@ suite('TestRunsQueryBuilder', () => {
   });
 
   suite('master runs only', () => {
-    setup(() => {
-      queryBuilder.masterRunsOnly = true;
-    });
-
     test('updateQueryParams', () => {
       queryBuilder.updateQueryParams({ label: ['master'] });
       expect(queryBuilder.master).to.be.true;

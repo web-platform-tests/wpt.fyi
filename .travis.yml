@@ -14,6 +14,9 @@ branches:
 services:
   - docker
 
+# client-secret.json
+secure: "wQIAV/OJdWTKkqnnL6pKQC8R0nChV6yRT2MK49qZV0ulA/0a6V9G+oIlbixI04CgLbsjExGDUY6ZiSYgd8rPixuWNIP1sG//AwUfNggpyQF0rFqPRrGOKJD+TkvGgTu8c8nSK0Rxlw3d+Yy7wXKdtzsP/4euub7eYLHhYlDXhw6ANE9jmtwyTCyM+MdHvnEsvDEXkXExvpurGSsXxPwG8CCLKLRp1O2BJwh9PPn+likU9AT6HFedhoW+Jv9YFnrqCtgCNzucQTTILDoLLvz4+Kk7FYmLriWXPT+QWL87tYFGI0gZev3+XdpTLJWjh1XUw35pYZzZsgRkl7y7uVUPFsYWoUXLoX9gv6Qp1sR+2hN9Z/CNSMNwrTVIAyE+db9q+wWpesy7L72bmaVri2PFqhz+uvNQ3hM2Lu4e/mjj4E8uVE9nTiWtBwnb7376nDemeHxeV3ADbEZceTHuIKxtyP1A6gXCxswGGzPJLrmCjq0XSPgskcpWOR4xRSKYior0Bhd+ULPKO7GzX2AMKxMpkELUf8XjhVpJXZjdemqV+ppV69JBmRQLDWsZQgmT0y/aclgSNVk3lVr/c2STHpmdhAWlgkjnaxqofLt5JIh1YHkJYaDxWbLyuuMTcpPKCdbJGAg4/PvCMo6bwurVBCS2+mqTxD6SfYXm7eFwhd7aJDA="
+
 matrix:
   include:
     - env:
@@ -28,20 +31,39 @@ matrix:
         - MAKE_TEST_TARGET=lint
     - env:
         - MAKE_TEST_TARGET=go_test
+
+    # pr branch deployments
     - if: type = pull_request
       env:
-        - secure: "wQIAV/OJdWTKkqnnL6pKQC8R0nChV6yRT2MK49qZV0ulA/0a6V9G+oIlbixI04CgLbsjExGDUY6ZiSYgd8rPixuWNIP1sG//AwUfNggpyQF0rFqPRrGOKJD+TkvGgTu8c8nSK0Rxlw3d+Yy7wXKdtzsP/4euub7eYLHhYlDXhw6ANE9jmtwyTCyM+MdHvnEsvDEXkXExvpurGSsXxPwG8CCLKLRp1O2BJwh9PPn+likU9AT6HFedhoW+Jv9YFnrqCtgCNzucQTTILDoLLvz4+Kk7FYmLriWXPT+QWL87tYFGI0gZev3+XdpTLJWjh1XUw35pYZzZsgRkl7y7uVUPFsYWoUXLoX9gv6Qp1sR+2hN9Z/CNSMNwrTVIAyE+db9q+wWpesy7L72bmaVri2PFqhz+uvNQ3hM2Lu4e/mjj4E8uVE9nTiWtBwnb7376nDemeHxeV3ADbEZceTHuIKxtyP1A6gXCxswGGzPJLrmCjq0XSPgskcpWOR4xRSKYior0Bhd+ULPKO7GzX2AMKxMpkELUf8XjhVpJXZjdemqV+ppV69JBmRQLDWsZQgmT0y/aclgSNVk3lVr/c2STHpmdhAWlgkjnaxqofLt5JIh1YHkJYaDxWbLyuuMTcpPKCdbJGAg4/PvCMo6bwurVBCS2+mqTxD6SfYXm7eFwhd7aJDA="
-        - DEPLOY_PR_STAGING=true
+      - DEPLOY_PR_STAGING_TARGET=webapp
+    - if: type = pull_request
+      env:
+      - DEPLOY_PR_STAGING_TARGET=results-processor
+    - if: type = pull_request
+      env:
+      - DEPLOY_PR_STAGING_TARGET=revisions/service
+    - if: type = pull_request
+      env:
+      - DEPLOY_PR_STAGING_TARGET=api/query/cache/service
+
+    # master branch deployments
     - if: (type = push) AND (branch = master)
       env:
-        - secure: "wQIAV/OJdWTKkqnnL6pKQC8R0nChV6yRT2MK49qZV0ulA/0a6V9G+oIlbixI04CgLbsjExGDUY6ZiSYgd8rPixuWNIP1sG//AwUfNggpyQF0rFqPRrGOKJD+TkvGgTu8c8nSK0Rxlw3d+Yy7wXKdtzsP/4euub7eYLHhYlDXhw6ANE9jmtwyTCyM+MdHvnEsvDEXkXExvpurGSsXxPwG8CCLKLRp1O2BJwh9PPn+likU9AT6HFedhoW+Jv9YFnrqCtgCNzucQTTILDoLLvz4+Kk7FYmLriWXPT+QWL87tYFGI0gZev3+XdpTLJWjh1XUw35pYZzZsgRkl7y7uVUPFsYWoUXLoX9gv6Qp1sR+2hN9Z/CNSMNwrTVIAyE+db9q+wWpesy7L72bmaVri2PFqhz+uvNQ3hM2Lu4e/mjj4E8uVE9nTiWtBwnb7376nDemeHxeV3ADbEZceTHuIKxtyP1A6gXCxswGGzPJLrmCjq0XSPgskcpWOR4xRSKYior0Bhd+ULPKO7GzX2AMKxMpkELUf8XjhVpJXZjdemqV+ppV69JBmRQLDWsZQgmT0y/aclgSNVk3lVr/c2STHpmdhAWlgkjnaxqofLt5JIh1YHkJYaDxWbLyuuMTcpPKCdbJGAg4/PvCMo6bwurVBCS2+mqTxD6SfYXm7eFwhd7aJDA="
-        - DEPLOY_STAGING=true
-        - MAKE_TEST_TARGET=go_large_test
-        - MAKE_TEST_FLAGS="STAGING=true"
+      - DEPLOY_STAGING_TARGET=webapp
+      - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
+      - MAKE_TEST_FLAGS="STAGING=true"
     - if: (type = push) AND (branch = master)
       env:
-        - secure: "wQIAV/OJdWTKkqnnL6pKQC8R0nChV6yRT2MK49qZV0ulA/0a6V9G+oIlbixI04CgLbsjExGDUY6ZiSYgd8rPixuWNIP1sG//AwUfNggpyQF0rFqPRrGOKJD+TkvGgTu8c8nSK0Rxlw3d+Yy7wXKdtzsP/4euub7eYLHhYlDXhw6ANE9jmtwyTCyM+MdHvnEsvDEXkXExvpurGSsXxPwG8CCLKLRp1O2BJwh9PPn+likU9AT6HFedhoW+Jv9YFnrqCtgCNzucQTTILDoLLvz4+Kk7FYmLriWXPT+QWL87tYFGI0gZev3+XdpTLJWjh1XUw35pYZzZsgRkl7y7uVUPFsYWoUXLoX9gv6Qp1sR+2hN9Z/CNSMNwrTVIAyE+db9q+wWpesy7L72bmaVri2PFqhz+uvNQ3hM2Lu4e/mjj4E8uVE9nTiWtBwnb7376nDemeHxeV3ADbEZceTHuIKxtyP1A6gXCxswGGzPJLrmCjq0XSPgskcpWOR4xRSKYior0Bhd+ULPKO7GzX2AMKxMpkELUf8XjhVpJXZjdemqV+ppV69JBmRQLDWsZQgmT0y/aclgSNVk3lVr/c2STHpmdhAWlgkjnaxqofLt5JIh1YHkJYaDxWbLyuuMTcpPKCdbJGAg4/PvCMo6bwurVBCS2+mqTxD6SfYXm7eFwhd7aJDA="
-        - MAKE_TEST_TARGET=cleanup_staging_versions
+      - DEPLOY_STAGING_TARGET=results-processor
+    - if: (type = push) AND (branch = master)
+      env:
+      - DEPLOY_STAGING_TARGET=revisions/service
+    - if: (type = push) AND (branch = master)
+      env:
+      - DEPLOY_STAGING_TARGET=api/query/cache/service
+    - if: (type = push) AND (branch = master)
+      env:
+      - MAKE_TEST_TARGET=cleanup_staging_versions
 
 before_install: |
   export DOCKER_IMAGE=wptd-dev
@@ -61,18 +83,10 @@ script:
     # Deploy PR to staging environment (only when Travis secrets are available).
     # Note: Done here (in 'script', not 'deploy') because we need deploy to happen before staging webdriver test.
     set -e
-    if [ "${DEPLOY_STAGING}" == "true" ]; then
-      bash util/travis-deploy-staging.sh -f webapp;
-      bash util/travis-deploy-staging.sh -f results-processor;
-      bash util/travis-deploy-staging.sh -f revisions/service;
-      bash util/travis-deploy-staging.sh -f api/spanner/service;
-      bash util/travis-deploy-staging.sh -f api/query/cache/service;
-    elif [ "${DEPLOY_PR_STAGING}" == "true" ]; then
-      bash util/travis-deploy-staging.sh webapp;
-      bash util/travis-deploy-staging.sh results-processor;
-      bash util/travis-deploy-staging.sh revisions/service;
-      bash util/travis-deploy-staging.sh api/spanner/service;
-      bash util/travis-deploy-staging.sh api/query/cache/service;
+    if [ -n "${DEPLOY_STAGING_TARGET}" ]; then
+      bash util/travis-deploy-staging.sh -f "${DEPLOY_STAGING_TARGET}";
+    elif [ -n "${DEPLOY_PR_STAGING_TARGET}" ]; then
+      bash util/travis-deploy-staging.sh "${DEPLOY_PR_STAGING_TARGET}";
     else
       echo "Not on master or a PR. Skipping deployment.";
     fi

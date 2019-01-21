@@ -51,6 +51,9 @@ func ErrRunLoading() error {
 type Index interface {
 	query.Binder
 
+	// Run loads the metadata associated with the given RunID value. It returns
+	// an error if the Index does not understand the given RunID value.
+	Run(RunID) (shared.TestRun, error)
 	// Runs loads the metadata associated with the given RunID values. It returns
 	// an error if the Index does not understand one or more of the given RunID
 	// values.
@@ -61,6 +64,11 @@ type Index interface {
 	// EvictRuns reduces memory pressure by evicting the cache's choice of runs
 	// from memory. The parameter is a percentage of current runs to evict.
 	EvictRuns(float64) (int, error)
+	// SetIndexChan sets the channel that synchronizes before ingesting a run.
+	// This channel is used by index monitors to ensure that the monitor is
+	// scheduled to run frequently enough to keep pace with any influx of ingested
+	// runs.
+	SetIngestChan(chan bool)
 }
 
 // ProxyIndex is a proxy implementation of the Index interface. This type is
@@ -68,6 +76,12 @@ type Index interface {
 // (but not all) methods, deferring to the delegate for all other behaviours.
 type ProxyIndex struct {
 	delegate Index
+}
+
+// Run loads the metadata for the given run ID value by deferring to the
+// proxy's delegate.
+func (i *ProxyIndex) Run(id RunID) (shared.TestRun, error) {
+	return i.delegate.Run(id)
 }
 
 // Runs loads the metadata for the given run ID values by deferring to the
@@ -86,6 +100,12 @@ func (i *ProxyIndex) IngestRun(r shared.TestRun) error {
 // delegate.
 func (i *ProxyIndex) EvictRuns(percent float64) (int, error) {
 	return i.delegate.EvictRuns(percent)
+}
+
+// SetIngestChan sets the channel that synchronizes before ingesting a run by
+// deferring to the proxy's delegate.
+func (i *ProxyIndex) SetIngestChan(c chan bool) {
+	i.delegate.SetIngestChan(c)
 }
 
 // NewProxyIndex instantiates a new proxy index bound to the given delegate.
@@ -108,6 +128,7 @@ type shardedWPTIndex struct {
 	loader   ReportLoader
 	shards   []*wptIndex
 	m        *sync.RWMutex
+	c        chan bool
 }
 
 // wptIndex is an index of tests and results. Multicore machines should use
@@ -129,17 +150,12 @@ type testData struct {
 // run metadata.
 type HTTPReportLoader struct{}
 
-func (i *shardedWPTIndex) Runs(ids []RunID) ([]shared.TestRun, error) {
-	runs := make([]shared.TestRun, len(ids))
-	for j := range ids {
-		run, ok := i.runs[ids[j]]
-		if !ok {
-			return nil, fmt.Errorf("Unknown run ID: %v", ids[j])
-		}
+func (i *shardedWPTIndex) Run(id RunID) (shared.TestRun, error) {
+	return i.syncGetRun(id)
+}
 
-		runs[j] = run
-	}
-	return runs, nil
+func (i *shardedWPTIndex) Runs(ids []RunID) ([]shared.TestRun, error) {
+	return i.syncGetRuns(ids)
 }
 
 func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
@@ -147,6 +163,13 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 	if r.ID == 0 {
 		return errZeroRun
 	}
+
+	// Synchronize with anything that may be monitoring run ingestion. Do this
+	// before any i.sync* routines to avoid deadlock.
+	if i.c != nil {
+		i.c <- true
+	}
+
 	if err := i.syncMarkInProgress(r); err != nil {
 		return err
 	}
@@ -252,6 +275,10 @@ func (i *shardedWPTIndex) Bind(runs []shared.TestRun, q query.ConcreteQuery) (qu
 	return fs, nil
 }
 
+func (i *shardedWPTIndex) SetIngestChan(c chan bool) {
+	i.c = c
+}
+
 // Load for HTTPReportLoader loads WPT test run reports from the URL specified
 // in test run metadata.
 func (l HTTPReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, error) {
@@ -305,6 +332,34 @@ func NewShardedWPTIndex(loader ReportLoader, numShards int) (Index, error) {
 // a shared.TestRun.RawResultsURL.
 func NewReportLoader() ReportLoader {
 	return HTTPReportLoader{}
+}
+
+func (i *shardedWPTIndex) syncGetRun(id RunID) (shared.TestRun, error) {
+	i.m.RLock()
+	defer i.m.RUnlock()
+
+	run, loaded := i.runs[id]
+	if !loaded {
+		return shared.TestRun{}, fmt.Errorf("Unknown run ID: %v", id)
+	}
+
+	return run, nil
+}
+
+func (i *shardedWPTIndex) syncGetRuns(ids []RunID) ([]shared.TestRun, error) {
+	i.m.RLock()
+	defer i.m.RUnlock()
+
+	runs := make([]shared.TestRun, len(ids))
+	for j := range ids {
+		run, ok := i.runs[ids[j]]
+		if !ok {
+			return nil, fmt.Errorf("Unknown run ID: %v", ids[j])
+		}
+
+		runs[j] = run
+	}
+	return runs, nil
 }
 
 func (i *shardedWPTIndex) syncMarkInProgress(run shared.TestRun) error {

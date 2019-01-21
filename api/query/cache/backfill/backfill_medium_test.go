@@ -68,8 +68,9 @@ func TestStopImmediately(t *testing.T) {
 	rt.EXPECT().GetHeapBytes().Return(uint64(0)).AnyTimes()
 	mockIdx := index.NewMockIndex(ctrl)
 	mockIdx.EXPECT().IngestRun(gomock.Any()).Return(nil).AnyTimes()
+	mockIdx.EXPECT().SetIngestChan(gomock.Any())
 	idx := countingIndex{index.NewProxyIndex(mockIdx), 0}
-	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, time.Millisecond*10, 1, 0.0, &idx)
+	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, time.Millisecond*10, 10, 1, 0.0, &idx)
 	assert.Nil(t, err)
 	m.Stop()
 	time.Sleep(time.Second)
@@ -95,6 +96,7 @@ func TestIngestSomeRuns(t *testing.T) {
 	}, nil)
 
 	freq := time.Millisecond * 10
+	maxIngestedRuns := uint(10)
 	maxBytes := uint64(1)
 	rt := monitor.NewMockRuntime(ctrl)
 
@@ -119,7 +121,8 @@ func TestIngestSomeRuns(t *testing.T) {
 
 	mockIdx.EXPECT().EvictRuns(gomock.Any()).Return(1, nil).AnyTimes()
 
-	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, freq, maxBytes, 0.0, &idx)
+	mockIdx.EXPECT().SetIngestChan(gomock.Any())
+	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, freq, maxIngestedRuns, maxBytes, 0.0, &idx)
 	assert.Nil(t, err)
 	defer m.Stop()
 

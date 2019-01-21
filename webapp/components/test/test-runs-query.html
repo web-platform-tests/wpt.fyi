@@ -35,6 +35,7 @@ window.customElements.define('test-runs-ui-query-concrete', ConcreteUIType);
   <script type="module">
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import '../test-runs-query.js';
+import { DefaultProducts, Channels } from '../product-info.js';
 suite('TestRunsQuery', () => {
   let testRunsQuery, testRunsUIQuery;
 
@@ -48,16 +49,16 @@ suite('TestRunsQuery', () => {
   });
 
   test('isDefaultProducts', () => {
-    testRunsQuery.products = window.wpt.DefaultProducts;
+    testRunsQuery.products = DefaultProducts.map(p => Object.assign({}, p));
     expect(testRunsQuery.isDefaultProducts).to.equal(true);
-    testRunsQuery.products = window.wpt.DefaultProducts.slice(0, 1);
+    testRunsQuery.products = DefaultProducts.slice(0, 1);
     expect(testRunsQuery.isDefaultProducts).to.equal(false);
   });
 
   suite('collapses shared channels', () => {
-    for (const channel of window.wpt.Channels) {
+    for (const channel of Channels) {
       test(channel, () => {
-        testRunsQuery.products = window.wpt.DefaultProducts
+        testRunsQuery.products = DefaultProducts
           .map(p => Object.assign({}, p, { labels: [channel] }));
         expect(testRunsQuery.query).to.equal(`?label=${channel}`);
       });
@@ -65,10 +66,10 @@ suite('TestRunsQuery', () => {
   });
 
   suite('expands channel labels', () => {
-    for (const channel of window.wpt.Channels) {
+    for (const channel of Channels) {
       test(channel, () => {
         testRunsQuery.updateQueryParams({ label: [channel] });
-        expect(testRunsQuery.products.length).to.equal(window.wpt.DefaultProducts.length);
+        expect(testRunsQuery.products.length).to.equal(DefaultProducts.length);
         for (const product of testRunsQuery.products) {
           expect(product.labels).to.contain(channel);
         }
@@ -117,14 +118,14 @@ suite('TestRunsQuery', () => {
       });
 
       test('label', () => {
-        testRunsQuery.products = window.wpt.DefaultProducts
+        testRunsQuery.products = DefaultProducts
           .map(p => Object.assign({}, p, { labels: ['experimental'] }));
-        for (const channel of window.wpt.Channels) {
+        for (const channel of Channels) {
           testRunsQuery.updateQueryParams({
             label: [channel],
           });
           expect(testRunsQuery.productSpecs.join(',')).to.equal(
-            window.wpt.DefaultProducts
+            DefaultProducts
               .map(p => Object.assign({}, p, { labels: [channel] }))
               .map(p => testRunsQuery.getSpec(p))
               .join(',')
@@ -136,13 +137,13 @@ suite('TestRunsQuery', () => {
     suite('queryParams', () => {
       test('products', () => {
         testRunsQuery.products = [
-          Object.assign({}, window.wpt.DefaultProducts[0], { labels: ['experimental'] }),
-          Object.assign({}, window.wpt.DefaultProducts[1], { labels: ['stable'] })
+          Object.assign({}, DefaultProducts[0], { labels: ['experimental'] }),
+          Object.assign({}, DefaultProducts[1], { labels: ['stable'] })
         ];
         expect(testRunsQuery.queryParams.product).to.contain(
-          `${window.wpt.DefaultProducts[0].browser_name}[experimental]`);
+          `${DefaultProducts[0].browser_name}[experimental]`);
         expect(testRunsQuery.queryParams.product).to.contain(
-          `${window.wpt.DefaultProducts[1].browser_name}[stable]`);
+          `${DefaultProducts[1].browser_name}[stable]`);
       });
 
       test('aligned', () => {

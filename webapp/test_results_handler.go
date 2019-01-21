@@ -105,7 +105,6 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 		if pr == nil && testRunFilter.IsDefaultQuery() {
 			experimentalByDefault := shared.IsFeatureEnabled(ctx, "experimentalByDefault")
 			experimentalAlignedExceptEdge := shared.IsFeatureEnabled(ctx, "experimentalAlignedExceptEdge")
-			masterRunsOnly := shared.IsFeatureEnabled(ctx, "masterRunsOnly")
 			if experimentalByDefault {
 				if experimentalAlignedExceptEdge {
 					testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
@@ -115,9 +114,7 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 			} else {
 				testRunFilter = testRunFilter.OrAlignedStableRuns()
 			}
-			if masterRunsOnly {
-				testRunFilter = testRunFilter.MasterOnly()
-			}
+			testRunFilter = testRunFilter.MasterOnly()
 		}
 
 		filter.testRunUIFilter = convertTestRunUIFilter(testRunFilter)

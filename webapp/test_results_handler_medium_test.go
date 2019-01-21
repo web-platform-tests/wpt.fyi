@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestParseTestResultsUIFilter(t *testing.T) {
@@ -46,8 +44,6 @@ func TestParseTestResultsUIFilter(t *testing.T) {
 	assert.Equal(t, true, f.Diff)
 
 	// MasterOnly default query.
-	ctx := appengine.NewContext(r)
-	datastore.Put(ctx, datastore.NewKey(ctx, "Flag", "masterRunsOnly", 0, nil), &shared.Flag{Enabled: true})
 	r, _ = i.NewRequest("GET", "/results/", nil)
 	f, err = parseTestResultsUIFilter(r)
 	assert.Nil(t, err)

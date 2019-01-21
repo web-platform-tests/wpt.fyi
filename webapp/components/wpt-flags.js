@@ -29,16 +29,15 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'queryBuilder',
       'queryBuilderSHA',
       'diffFromAPI',
-      'diffFilterUIToggle',
       'colorHomepage',
       'structuredQueries',
-      'masterRunsOnly',
       'experimentalByDefault',
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
       'insightsTab',
       'showTestType',
+      'searchPRsForDirectories',
     ];
   }
 });
@@ -148,19 +147,9 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         SHA input
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
-      <paper-checkbox checked="{{masterRunsOnly}}">
-        'Master only' input
-      </paper-checkbox>
-    </paper-item>
     <paper-item>
       <paper-checkbox checked="{{diffFromAPI}}">
         Compute diffs using /api/diff
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{diffFilterUIToggle}}">
-        Filter toggle for diff view
       </paper-checkbox>
     </paper-item>
     <paper-item>
@@ -187,6 +176,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{githubCommitLinks}}">
         Show links to the commit on GitHub in the header row.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{searchPRsForDirectories}}">
+        On /results, list open PRs involving the current directory.
       </paper-checkbox>
     </paper-item>
 `;
@@ -218,11 +212,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item sub-item="">
       <paper-checkbox checked="{{experimentalAlignedExceptEdge}}">
         All experimental, except edge, and aligned
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item="">
-      <paper-checkbox checked="{{masterRunsOnly}}">
-        Master runs only
       </paper-checkbox>
     </paper-item>
     <paper-item>

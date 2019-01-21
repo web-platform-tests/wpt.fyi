@@ -46,13 +46,9 @@ func parseTestRunsUIFilter(r *http.Request) (filter testRunUIFilter, err error) 
 	isDefault := testRunFilter.IsDefaultQuery() && pr == nil
 	if isDefault {
 		// Get runs from a week ago, onward, by default.
-		ctx := shared.NewAppEngineContext(r)
-		aeAPI := shared.NewAppEngineAPI(ctx)
 		aWeekAgo := time.Now().Truncate(time.Hour*24).AddDate(0, 0, -7)
 		testRunFilter.From = &aWeekAgo
-		if aeAPI.IsFeatureEnabled("masterRunsOnly") {
-			testRunFilter = testRunFilter.MasterOnly()
-		}
+		testRunFilter = testRunFilter.MasterOnly()
 	} else if testRunFilter.MaxCount == nil {
 		oneHundred := 100
 		testRunFilter.MaxCount = &oneHundred

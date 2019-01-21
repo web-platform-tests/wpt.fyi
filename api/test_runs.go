@@ -103,8 +103,8 @@ func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFil
 	limit := filters.MaxCount
 	offset := filters.Offset
 	from := filters.From
-	if limit == nil && from == nil {
-		// Default to a single, latest run when from & max-count both empty.
+	// Default to a single, latest run when not using any "more than one results" filters.
+	if limit == nil && from == nil && len(filters.SHAs) < 2 {
 		one := 1
 		limit = &one
 	}
@@ -138,7 +138,7 @@ func LoadTestRunsForFilters(store shared.Datastore, filters shared.TestRunFilter
 	if keys, err = LoadTestRunKeysForFilters(store, filters); err != nil {
 		return nil, err
 	}
-	return shared.LoadTestRunsByKeys(store, keys)
+	return store.LoadTestRunsByKeys(keys)
 }
 
 func getPRCommits(ctx context.Context, pr int) shared.SHAs {
