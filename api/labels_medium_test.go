@@ -25,8 +25,8 @@ func TestLabelsHandler(t *testing.T) {
 	defer done()
 
 	key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-	_, err = datastore.Put(ctx, key, &shared.TestRun{Labels: []string{"a"}})
 	_, err = datastore.Put(ctx, key, &shared.TestRun{Labels: []string{"b", "c"}})
+	_, err = datastore.Put(ctx, key, &shared.TestRun{Labels: []string{"b", "a"}})
 	assert.Nil(t, err)
 
 	handler := LabelsHandler{ctx: ctx}
@@ -34,7 +34,7 @@ func TestLabelsHandler(t *testing.T) {
 	r := httptest.NewRequest("GET", "/api/labels", nil)
 	handler.ServeHTTP(w, r)
 	labels := parseLabelsResponse(t, w)
-	assert.Equal(t, labels, []string{"a", "b", "c"})
+	assert.Equal(t, labels, []string{"a", "b", "c"}) // Ordered and deduped
 }
 
 func TestLabelsHandler_Caches(t *testing.T) {

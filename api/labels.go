@@ -20,7 +20,7 @@ type LabelsHandler struct {
 	ctx context.Context
 }
 
-// apiLabelsHandler is responsible for emitting just the revision SHAs for test runs.
+// apiLabelsHandler is responsible for emitting just all labels used for test runs.
 func apiLabelsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to LabelsHandler on cache miss.
 	ctx := shared.NewAppEngineContext(r)
