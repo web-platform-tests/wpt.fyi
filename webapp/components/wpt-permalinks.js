@@ -8,7 +8,7 @@ import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
-import '../node_modules/@polymer/paper-tab/paper-tab.js';
+import '../node_modules/@polymer/paper-tabs/paper-tab.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
