@@ -92,6 +92,8 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 
 	t, err := sendResultsToProcessor(a, uploader, results, getFile, extraParams)
 	if err != nil {
+		log := shared.GetLogger(a.Context())
+		log.Errorf("%s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -143,10 +145,10 @@ func sendResultsToProcessor(
 
 	var errStr string
 	for err := range errors {
-		errStr += err.Error() + "\n"
+		errStr += err.Error()
 	}
 	if errStr != "" {
-		return nil, fmt.Errorf("error(s) occured when retrieving results from %s:\n%s", uploader, errStr)
+		return nil, fmt.Errorf("error(s) occured when transferring results from %s to GCS:\n%s", uploader, errStr)
 	}
 
 	return a.scheduleResultsTask(uploader, gcs, payloadType, extraParams)
