@@ -25,9 +25,6 @@ then fatal "Travis pull request is required";
 else debug "Travis pull request: ${TRAVIS_PULL_REQUEST}";
 fi
 
-set -e
-set -o pipefail
-
 info "Checking whether ${TRAVIS_REPO_SLUG} #${TRAVIS_PULL_REQUEST} mentions the deployed URL on GitHub..."
 # Only make a comment mentioning the deploy if no other comment has posted the URL yet.
 
@@ -37,7 +34,10 @@ curl -s \
      -X GET \
      https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments \
      | tee ${TEMP_CURL_FILE}
-if [ "${CURL_EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then fatal "Failed to fetch comments" ${CURL_EXIT_CODE}; fi
+if [ "${CURL_EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ];
+then
+    fatal "Failed to fetch comments" ${CURL_EXIT_CODE};
+fi
 
 if [[ -z "$(grep ${STAGING_URL} ${TEMP_CURL_FILE})" ]];
 then
@@ -49,6 +49,8 @@ then
           -d "${POST_BODY}" \
           -s \
           "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments"
+    exit $?
 else
     info "Found existing comment mentioning link:\n${STAGING_URL}"
+    exit 0
 fi
