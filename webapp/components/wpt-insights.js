@@ -9,6 +9,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
+import { TestStatuses } from './test-info.js';
 import { ProductInfo, DefaultBrowserNames } from './product-info.js';
 import { WPTFlags } from './wpt-flags.js';
 import './browser-picker.js';
@@ -42,6 +43,9 @@ const cardStyle = html`
       display: block;
       margin-top: 1em;
       width: 100%;
+    }
+    .query {
+      word-break: break-all;
     }
   </style>
 `;
@@ -88,7 +92,9 @@ class Flakes extends ProductInfo(PolymerElement) {
   }
 
   computeQuery(browser) {
-    return `(${browser}:pass|${browser}:ok) ${browser}:!pass ${browser}:!ok`;
+    const passing = Object.values(TestStatuses).filter(s => s.isPass).map(s => `${browser}:${s}`).join('|');
+    const notPassing = Object.values(TestStatuses).filter(s => !s.isPass).map(s => `${browser}:${s}`).join('|');
+    return `(${passing}) (${notPassing})`;
   }
 
   computeURL(browser, query) {
