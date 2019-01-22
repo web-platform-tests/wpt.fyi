@@ -81,6 +81,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
 		// result_file[] payload
 		files := r.MultipartForm.File["result_file"]
+		log.Debugf("Found %v multipart form files", len(files))
 		results = len(files)
 		getFile = func(i int) (io.ReadCloser, error) {
 			return files[i].Open()
@@ -88,8 +89,9 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	} else {
 		// result_url payload
 		urls := r.PostForm["result_url"]
-		artifactName := ""
 		results = len(urls)
+		log.Debugf("Found %v urls", results)
+		artifactName := ""
 		if results == 1 {
 			if match := artifactRegex.FindStringSubmatch(urls[0]); len(match) > 1 {
 				artifactName = match[1]
@@ -129,7 +131,6 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 
 	t, err := sendResultsToProcessor(a, uploader, results, getFile, extraParams)
 	if err != nil {
-		log := shared.GetLogger(a.Context())
 		log.Errorf("%s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
