@@ -119,6 +119,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 				return
 			}
 			results = len(artifactFiles)
+			log.Debugf("Found %v report files in artifact", results)
 			getFile = func(i int) (io.ReadCloser, error) {
 				return artifactFiles[i].Open()
 			}
@@ -135,6 +136,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log.Debugf("Task %s added to queue", t.Name)
 	fmt.Fprintf(w, "Task %s added to queue\n", t.Name)
 }
 
