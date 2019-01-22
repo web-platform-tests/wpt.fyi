@@ -331,7 +331,9 @@ func createAllRuns(
 				labelsForRun = append(labelsForRun, lastBit)
 			}
 
-			uploadClient := uc.NewClient(client, aeAPI)
+			slowClient, cancel := aeAPI.GetSlowHTTPClient(resultsReceiverTimeout)
+			defer cancel()
+			uploadClient := uc.NewClient(slowClient, aeAPI)
 			err := uploadClient.CreateRun(sha, username, password, urls, labelsForRun)
 			if err != nil {
 				errors <- err
