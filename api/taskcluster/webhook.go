@@ -11,18 +11,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/urlfetch"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
+	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -155,9 +154,6 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#results-creation
-	uploadURL := fmt.Sprintf("https://%s/api/results/upload", appengine.DefaultVersionHostname(ctx))
-
 	// The default timeout is 5s, not enough for the receiver to download the reports.
 	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
 	defer cancel()
@@ -176,7 +172,6 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		urlfetch.Client(slowCtx),
 		shared.NewAppEngineAPI(ctx),
 		checksAPI,
-		uploadURL,
 		*status.SHA,
 		username,
 		password,
@@ -304,7 +299,6 @@ func createAllRuns(
 	client *http.Client,
 	aeAPI shared.AppEngineAPI,
 	checksAPI checks.API,
-	uploadURL,
 	sha,
 	username,
 	password string,
@@ -336,7 +330,7 @@ func createAllRuns(
 				}
 				labelsForRun = append(labelsForRun, lastBit)
 			}
-			err := createRun(log, client, aeAPI, sha, uploadURL, username, password, urls, labelsForRun)
+			err := receiver.CreateRun(client, aeAPI, sha, username, password, urls, labelsForRun)
 			if err != nil {
 				errors <- err
 				return
@@ -364,54 +358,7 @@ func createAllRuns(
 		errStr += err.Error() + "\n"
 	}
 	if errStr != "" {
-		return fmt.Errorf("error(s) occured when talking to %s:\n%s", uploadURL, errStr)
+		return fmt.Errorf("error(s) occured when uploading:\n%s", errStr)
 	}
-	return nil
-}
-
-func createRun(
-	log shared.Logger,
-	client *http.Client,
-	aeAPI shared.AppEngineAPI,
-	sha,
-	api string,
-	username string,
-	password string,
-	reportURLs []string,
-	labels []string) error {
-	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
-	payload := make(url.Values)
-	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
-	// parameter is the full revision hash.
-	payload.Add("revision", sha)
-	for _, url := range reportURLs {
-		payload.Add("result_url", url)
-	}
-	if labels != nil {
-		payload.Add("labels", strings.Join(labels, ","))
-	}
-	// Ensure we call back to this appengine version instance.
-	host := aeAPI.GetVersionedHostname()
-	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
-
-	req, err := http.NewRequest("POST", api, strings.NewReader(payload.Encode()))
-	if err != nil {
-		return err
-	}
-	req.SetBasicAuth(username, password)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	respBody, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("API error: HTTP %v: %s", resp.StatusCode, string(respBody))
-	}
-
 	return nil
 }
