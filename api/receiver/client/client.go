@@ -62,9 +62,8 @@ func (c client) CreateRun(
 	host := c.aeAPI.GetVersionedHostname()
 	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
-	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#results-creation
-	uploadURL := fmt.Sprintf("https://%s/api/results/upload", c.aeAPI.GetVersionedHostname())
-	req, err := http.NewRequest("POST", uploadURL, strings.NewReader(payload.Encode()))
+	uploadURL := c.aeAPI.GetResultsUploadURL()
+	req, err := http.NewRequest("POST", uploadURL.String(), strings.NewReader(payload.Encode()))
 	if err != nil {
 		return err
 	}

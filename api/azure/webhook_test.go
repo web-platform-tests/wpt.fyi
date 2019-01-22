@@ -79,11 +79,11 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	defer server.Close()
 
 	azureAPI := NewMockAPI(mockCtrl)
+	serverURL, _ := url.Parse(server.URL)
 	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
-	azureAPI.EXPECT().FetchAzureArtifact(artifact, gomock.Any()).Return(nil)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().GetVersionedHostname().Return("wpt.fyi")
+	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return(serverURL.Host)
 	uploadURL, _ := url.Parse(server.URL + "/upload")
 	aeAPI.EXPECT().GetResultsUploadURL().Return(uploadURL)
 	aeAPI.EXPECT().GetUploader("azure").Return(shared.Uploader{Username: "azure", Password: "123"}, nil)
@@ -94,7 +94,9 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	ctx := context.WithValue(sharedtest.NewTestContext(), shared.DefaultLoggerCtxKey(), log)
 	aeAPI.EXPECT().Context().AnyTimes().Return(ctx)
 	processed, err := handleCheckRunEvent(azureAPI, aeAPI, event)
-	assert.Nil(t, err)
+	if err != nil {
+		assert.FailNow(t, "Error isn't nil", err.Error())
+	}
 	assert.True(t, processed)
 	if len(hook.Entries) < 1 {
 		assert.FailNow(t, "No logging was found")

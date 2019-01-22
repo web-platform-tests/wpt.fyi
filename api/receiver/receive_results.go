@@ -33,7 +33,7 @@ const NumRetries = 3
 // DownloadTimeout is the timeout for downloading results.
 const DownloadTimeout = time.Second * 10
 
-var artifactRegex = regexp.MustCompile("build/builds/[0-9]+/artifacts?artifactName=([^&]+)")
+var artifactRegex = regexp.MustCompile(`/_apis/build/builds/[0-9]+/artifacts\?artifactName=([^&]+)`)
 
 // HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {

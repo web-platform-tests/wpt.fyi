@@ -4,13 +4,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package azure
+package receiver
 
 import (
 	"bytes"
-	"context"
 	"io/ioutil"
-	multipart "mime/multipart"
 	"path"
 	"runtime"
 	"testing"
@@ -25,14 +23,12 @@ func TestExtractFiles(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, "Failed to read artifact_test.zip", err.Error())
 	}
-	buf := new(bytes.Buffer)
-	w := multipart.NewWriter(buf)
-	err = extractReports(context.Background(), "artifact_test", data, w)
+
+	artifact, err := newAzureArtifact("artifact_test", bytes.NewReader(data))
+	files, err := artifact.getReportFiles()
 	if err != nil {
-		assert.FailNow(t, "Failed to extract reports", err.Error())
+		assert.FailNow(t, "Failed to read zip", err.Error())
 	}
-	assert.Nil(t, err)
-	content := string(buf.Bytes())
-	assert.Contains(t, content, "wpt_report_1.json")
-	assert.Contains(t, content, "wpt_report_2.json")
+	assert.Equal(t, files[0].Name, "artifact_test/wpt_report_1.json")
+	assert.Equal(t, files[1].Name, "artifact_test/wpt_report_2.json")
 }

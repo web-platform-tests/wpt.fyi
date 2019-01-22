@@ -298,3 +298,9 @@ func TestHandleResultsUpload_fail_uploading(t *testing.T) {
 	HandleResultsUpload(mockAE, resp, req)
 	assert.Equal(t, resp.Code, http.StatusInternalServerError)
 }
+
+func TestArtifactRegex(t *testing.T) {
+	url := "https://dev.azure.com/web-platform-tests/b14026b4-9423-4454-858f-bf76cf6d1faa/_apis/build/builds/4230/artifacts?artifactName=results&api-version=5.0&%24format=zip"
+	m := artifactRegex.FindStringSubmatch(url)
+	assert.Equal(t, "results", m[1])
+}
