@@ -7,6 +7,7 @@
 package azure
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -90,7 +91,9 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	aeAPI.EXPECT().GetSlowHTTPClient(gomock.Any()).AnyTimes().Return(server.Client(), func() {})
 
 	log, hook := logrustest.NewNullLogger()
-	processed, err := handleCheckRunEvent(log, azureAPI, aeAPI, event)
+	ctx := context.WithValue(sharedtest.NewTestContext(), shared.DefaultLoggerCtxKey(), log)
+	aeAPI.EXPECT().Context().AnyTimes().Return(ctx)
+	processed, err := handleCheckRunEvent(azureAPI, aeAPI, event)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 	if len(hook.Entries) < 1 {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
@@ -31,6 +32,8 @@ const NumRetries = 3
 
 // DownloadTimeout is the timeout for downloading results.
 const DownloadTimeout = time.Second * 10
+
+var artifactRegex = regexp.MustCompile("build/builds/[0-9]+/artifacts?artifactName=([^&]+)")
 
 // HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
@@ -72,6 +75,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		"os_version":      r.FormValue("os_version"),
 	}
 
+	log := shared.GetLogger(a.Context())
 	var results int
 	var getFile func(i int) (io.ReadCloser, error)
 	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
@@ -84,9 +88,42 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	} else {
 		// result_url payload
 		urls := r.PostForm["result_url"]
+		artifactName := ""
 		results = len(urls)
-		getFile = func(i int) (io.ReadCloser, error) {
-			return fetchFile(a, urls[i])
+		if results == 1 {
+			if match := artifactRegex.FindStringSubmatch(urls[0]); len(match) > 1 {
+				artifactName = match[1]
+			}
+		}
+		if artifactName != "" {
+			log.Debugf("Detected azure artifact %s", artifactName)
+			artifactZip, err := fetchFile(a, urls[0])
+			if err != nil {
+				log.Errorf("Failed to fetch %s: %s", urls[0], err.Error())
+				http.Error(w, "Failed to fetch azure artifact", http.StatusBadRequest)
+				return
+			}
+			defer artifactZip.Close()
+			artifact, err := newAzureArtifact(artifactName, artifactZip)
+			if err != nil {
+				log.Errorf("Failed to read zip: %s", err.Error())
+				http.Error(w, "Invalid artifact contents", http.StatusBadRequest)
+				return
+			}
+			artifactFiles, err := artifact.getReportFiles()
+			if err != nil {
+				log.Errorf("Failed to extract files: %s", err.Error())
+				http.Error(w, "Invalid artifact contents", http.StatusBadRequest)
+				return
+			}
+			results = len(artifactFiles)
+			getFile = func(i int) (io.ReadCloser, error) {
+				return artifactFiles[i].Open()
+			}
+		} else {
+			getFile = func(i int) (io.ReadCloser, error) {
+				return fetchFile(a, urls[i])
+			}
 		}
 	}
 

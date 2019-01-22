@@ -1,8 +1,8 @@
-// Copyright 2018 The WPT Dashboard Project. All rights reserved.
+// Copyright 2019 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package receiver
+package client
 
 import (
 	"fmt"
@@ -12,16 +12,36 @@ import (
 	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
+
+// Client is the interface for the client.
+type Client interface {
+	CreateRun(
+		sha,
+		username string,
+		password string,
+		reportURLs []string,
+		labels []string) error
+}
+
+// NewClient returns a client impl.
+func NewClient(httpClient *http.Client, aeAPI shared.AppEngineAPI) Client {
+	return client{
+		httpClient: httpClient,
+		aeAPI:      aeAPI,
+	}
+}
+
+type client struct {
+	httpClient *http.Client
+	aeAPI      shared.AppEngineAPI
+}
 
 // CreateRun takes the given requirements and issues a POST request to collect the
 // given reportURLs
-func CreateRun(
-	client *http.Client,
-	aeAPI shared.AppEngineAPI,
+func (c client) CreateRun(
 	sha,
-	username string,
+	username,
 	password string,
 	reportURLs []string,
 	labels []string) error {
@@ -39,18 +59,18 @@ func CreateRun(
 		payload.Add("labels", strings.Join(labels, ","))
 	}
 	// Ensure we call back to this appengine version instance.
-	host := aeAPI.GetVersionedHostname()
+	host := c.aeAPI.GetVersionedHostname()
 	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#results-creation
-	uploadURL := fmt.Sprintf("https://%s/api/results/upload", appengine.DefaultVersionHostname(aeAPI.Context()))
+	uploadURL := fmt.Sprintf("https://%s/api/results/upload", c.aeAPI.GetVersionedHostname())
 	req, err := http.NewRequest("POST", uploadURL, strings.NewReader(payload.Encode()))
 	if err != nil {
 		return err
 	}
 	req.SetBasicAuth(username, password)
 
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}

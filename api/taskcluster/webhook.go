@@ -21,7 +21,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
-	"github.com/web-platform-tests/wpt.fyi/api/receiver"
+	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -330,7 +330,9 @@ func createAllRuns(
 				}
 				labelsForRun = append(labelsForRun, lastBit)
 			}
-			err := receiver.CreateRun(client, aeAPI, sha, username, password, urls, labelsForRun)
+
+			uploadClient := uc.NewClient(client, aeAPI)
+			err := uploadClient.CreateRun(sha, username, password, urls, labelsForRun)
 			if err != nil {
 				errors <- err
 				return
