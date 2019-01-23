@@ -396,6 +396,32 @@ func (a *AbstractAnd) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractExists attempts to interpret a query atom as
+// {"exists": [<abstract queries>]}.
+func (e *AbstractExists) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Exists []json.RawMessage `json:"exists"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Exists) == 0 {
+		return errors.New(`Missing conjunction property: "exists"`)
+	}
+
+	qs := make([]AbstractQuery, 0, len(data.Exists))
+	for _, msg := range data.Exists {
+		q, err := unmarshalQ(msg)
+		if err != nil {
+			return err
+		}
+		qs = append(qs, q)
+	}
+	e.Args = qs
+	return nil
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -427,6 +453,10 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	if err == nil {
 		return a, nil
 	}
-
+	var e AbstractExists
+	err = json.Unmarshal(b, &e)
+	if err == nil {
+		return e, nil
+	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, or conjunction`)
 }

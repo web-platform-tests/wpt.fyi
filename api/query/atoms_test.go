@@ -211,6 +211,21 @@ func TestStructuredQuery_and(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
+func TestStructuredQuery_exists(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{"pattern": "cssom"},
+				{"pattern": "html"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+}
+
 func TestStructuredQuery_nested(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -365,6 +380,55 @@ func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
 			RunTestStatusNeq{
 				Run:    3,
 				Status: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindExists(t *testing.T) {
+	q := AbstractExists{
+		Args: []AbstractQuery{
+			AbstractAnd{
+				Args: []AbstractQuery{
+					TestNamePattern{
+						Pattern: "/",
+					},
+					TestStatusEq{
+						BrowserName: "Edge",
+						Status:      1,
+					},
+				},
+			},
+		},
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Edge",
+				},
+			},
+		},
+	}
+	// Only run is Edge, ID=1.
+	expected := And{
+		Args: []ConcreteQuery{
+			Or{
+				Args: []ConcreteQuery{
+					And{
+						Args: []ConcreteQuery{
+							TestNamePattern{
+								Pattern: "/",
+							},
+							RunTestStatusEq{
+								Run:    1,
+								Status: 1,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
