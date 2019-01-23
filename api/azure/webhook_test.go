@@ -91,7 +91,6 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	aeAPI.EXPECT().GetSlowHTTPClient(gomock.Any()).AnyTimes().Return(server.Client(), func() {})
 
 	log, hook := logrustest.NewNullLogger()
-	ctx := context.WithValue(sharedtest.NewTestContext(), shared.DefaultLoggerCtxKey(), log)
 	aeAPI.EXPECT().Context().AnyTimes().Return(ctx)
 	processed, err := handleCheckRunEvent(azureAPI, aeAPI, event)
 	if err != nil {
