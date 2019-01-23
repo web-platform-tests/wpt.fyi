@@ -129,7 +129,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	simpleQ, ok := rq.AbstractQuery.(TestNamePattern)
 	if !ok {
 		ctx := sh.api.Context()
-		hostname := sh.api.GetHostname()
+		hostname := sh.api.GetServiceHostname("searchcache")
 		// TODO: This will not work when hostname is localhost (http scheme needed).
 		url := fmt.Sprintf("https://%s/api/search/cache", hostname)
 		logger := shared.GetLogger(ctx)

@@ -41,6 +41,7 @@ type AppEngineAPI interface {
 	// GetVersionedHostname returns the canonical hostname for the current version,
 	// i.e. version-dot-wptdashboard{,-staging}.appspot.com
 	GetVersionedHostname() string
+	GetServiceHostname(service string) string
 	GetResultsURL(filter TestRunFilter) *url.URL
 	GetRunsURL(filter TestRunFilter) *url.URL
 	GetResultsUploadURL() *url.URL
@@ -159,6 +160,20 @@ func (a AppEngineAPIImpl) GetVersion() string {
 func (a AppEngineAPIImpl) GetVersionedHostname() string {
 	hostname := appengine.DefaultVersionHostname(a.ctx)
 	return fmt.Sprintf("%s-dot-%s", a.GetVersion(), hostname)
+}
+
+// GetServiceHostname returns a versioned canonical hostname for the given service (module).
+func (a AppEngineAPIImpl) GetServiceHostname(service string) string {
+	// version and instance (last 2 params) left blank means that the version of the current
+	// instance will be used. This is desirable for branches that push multiple services, and
+	// means that we should keep service production versions in sync.
+	hostname, err := appengine.ModuleHostname(a.ctx, service, "", "")
+	if err == nil {
+		return hostname
+	}
+	// Fallback to roughly the same strategy.
+	hostname = appengine.DefaultVersionHostname(a.ctx)
+	return fmt.Sprintf("%s-dot-%s-dot-%s", a.GetVersion(), service, hostname)
 }
 
 // GetResultsURL returns a url for the wpt.fyi results page for the test runs
