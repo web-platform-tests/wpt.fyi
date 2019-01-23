@@ -32,3 +32,9 @@ func TestExtractFiles(t *testing.T) {
 	assert.Equal(t, files[0].Name, "artifact_test/wpt_report_1.json")
 	assert.Equal(t, files[1].Name, "artifact_test/wpt_report_2.json")
 }
+
+func TestGetAzureArtifactName(t *testing.T) {
+	url := "https://dev.azure.com/web-platform-tests/b14026b4-9423-4454-858f-bf76cf6d1faa/_apis/build/builds/4230/artifacts?artifactName=results&api-version=5.0&%24format=zip"
+	a := getAzureArtifactName(url)
+	assert.Equal(t, "results", a)
+}

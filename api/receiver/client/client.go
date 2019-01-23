@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Package client is a package for simplifying the upload request made by a
+// client to the results receiver upload endpoint (/api/results/upload).
 package client
 
 import (
@@ -10,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -25,16 +28,14 @@ type Client interface {
 }
 
 // NewClient returns a client impl.
-func NewClient(httpClient *http.Client, aeAPI shared.AppEngineAPI) Client {
+func NewClient(aeAPI shared.AppEngineAPI) Client {
 	return client{
-		httpClient: httpClient,
-		aeAPI:      aeAPI,
+		aeAPI: aeAPI,
 	}
 }
 
 type client struct {
-	httpClient *http.Client
-	aeAPI      shared.AppEngineAPI
+	aeAPI shared.AppEngineAPI
 }
 
 // CreateRun takes the given requirements and issues a POST request to collect the
@@ -69,7 +70,9 @@ func (c client) CreateRun(
 	}
 	req.SetBasicAuth(username, password)
 
-	resp, err := c.httpClient.Do(req)
+	client, cancel := c.aeAPI.GetSlowHTTPClient(time.Minute)
+	defer cancel()
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

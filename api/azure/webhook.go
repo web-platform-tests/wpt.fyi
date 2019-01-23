@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"strconv"
-	"time"
 
 	mapset "github.com/deckarep/golang-set"
 
@@ -90,9 +89,7 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo
 			return false, err
 		}
 
-		slowClient, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
-		defer cancel()
-		uploadClient := uc.NewClient(slowClient, aeAPI)
+		uploadClient := uc.NewClient(aeAPI)
 		err = uploadClient.CreateRun(
 			sha,
 			uploader.Username,

@@ -5,14 +5,9 @@
 package receiver
 
 import (
-	"bytes"
-	"compress/gzip"
-	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"regexp"
 	"sync"
 	"time"
 
@@ -36,8 +31,6 @@ const NumRetries = 3
 
 // DownloadTimeout is the timeout for downloading results.
 const DownloadTimeout = time.Second * 10
-
-var artifactRegex = regexp.MustCompile(`/_apis/build/builds/[0-9]+/artifacts\?artifactName=([^&]+)`)
 
 // HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
@@ -95,22 +88,19 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		urls := r.PostForm["result_url"]
 		results = len(urls)
 		log.Debugf("Found %v urls", results)
-		artifactName := ""
-		if results == 1 {
-			if match := artifactRegex.FindStringSubmatch(urls[0]); len(match) > 1 {
-				artifactName = match[1]
-			}
+		getFile = func(i int) (io.ReadCloser, error) {
+			return fetchFile(a, urls[i])
 		}
-		if artifactName != "" {
-			var err error
-			results, getFile, err = handleAzureArtifact(a, artifactName, urls[0])
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-		} else {
-			getFile = func(i int) (io.ReadCloser, error) {
-				return fetchFile(a, urls[i])
+		// Check for azure artifact URL, for unzipping.
+		if results == 1 {
+			artifactName := getAzureArtifactName(urls[0])
+			if artifactName != "" {
+				var err error
+				results, getFile, err = handleAzureArtifact(a, artifactName, urls[0])
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
 			}
 		}
 	}
@@ -193,39 +183,4 @@ func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
 		sleep *= 2
 	}
 	return nil, fmt.Errorf("failed to fetch %s", url)
-}
-
-func handleAzureArtifact(a AppEngineAPI, artifactName string, url string) (int, func(int) (io.ReadCloser, error), error) {
-	log := shared.GetLogger(a.Context())
-	log.Debugf("Detected azure artifact %s", artifactName)
-	artifactZip, err := fetchFile(a, url)
-	if err != nil {
-		log.Errorf("Failed to fetch %s: %s", url, err.Error())
-		return 0, nil, errors.New("Failed to fetch azure artifact")
-	}
-	defer artifactZip.Close()
-	artifact, err := newAzureArtifact(artifactName, artifactZip)
-	if err != nil {
-		log.Errorf("Failed to read zip: %s", err.Error())
-		return 0, nil, errors.New("Invalid artifact contents")
-	}
-	artifactFiles, err := artifact.getReportFiles()
-	if err != nil {
-		log.Errorf("Failed to extract files: %s", err.Error())
-		return 0, nil, errors.New("Invalid artifact contents")
-	}
-	results := len(artifactFiles)
-	log.Debugf("Found %v report files in artifact", results)
-	getFile := func(i int) (io.ReadCloser, error) {
-		zipR, err := artifactFiles[i].Open()
-		if err != nil {
-			return nil, err
-		}
-		buf := new(bytes.Buffer)
-		w := gzip.NewWriter(buf)
-		io.Copy(w, zipR)
-		w.Close()
-		return ioutil.NopCloser(buf), nil
-	}
-	return results, getFile, nil
 }
