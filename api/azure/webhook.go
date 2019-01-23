@@ -75,9 +75,12 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo
 		if sender != "" {
 			labels.Add(shared.GetUserLabel(sender))
 		}
-		if artifact.Name == "results" {
+		switch artifact.Name {
+		case "results":
+			labels.Add(shared.MasterLabel)
+		case "affected-tests":
 			labels.Add(shared.PRHeadLabel)
-		} else if artifact.Name == "results-without-changes" {
+		case "affected-tests-without-changes":
 			labels.Add(shared.PRBaseLabel)
 		}
 
