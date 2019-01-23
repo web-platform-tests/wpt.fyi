@@ -18,7 +18,7 @@ var browsers = shared.GetDefaultBrowserNames()
 // AbstractQuery is an intermetidate representation of a test results query that
 //  has not been bound to specific shared.TestRun specs for processing.
 type AbstractQuery interface {
-	BindToRuns(runs []shared.TestRun) ConcreteQuery
+	BindToRuns(runs ...shared.TestRun) ConcreteQuery
 }
 
 // RunQuery is the internal representation of a query recieved from an HTTP
@@ -36,8 +36,34 @@ type TestNamePattern struct {
 
 // BindToRuns for TestNamePattern is a no-op: TestNamePattern implements both
 // AbstractQuery and ConcreteQuery because it is independent of test runs.
-func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
+}
+
+// AbstractExists represents an array of abstract queries, each of which must be
+// satifisfied by some run. It represents the root of a structured query.
+type AbstractExists struct {
+	Args []AbstractQuery
+}
+
+// BindToRuns binds each abstract query to an or-combo of that query against
+// each specific/individual run.
+func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	queries := make([]ConcreteQuery, len(e.Args))
+	for i := range e.Args {
+		byRun := make([]ConcreteQuery, len(runs))
+		for j, run := range runs {
+			byRun[j] = e.Args[i].BindToRuns(run)
+		}
+		// Each separate Exists query is true if there exists a run that makes its concrete query true.
+		queries[i] = Or{
+			Args: byRun,
+		}
+	}
+	// And the overall node is true if all its exists queries are true.
+	return And{
+		Args: queries, // T
+	}
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result
@@ -58,7 +84,7 @@ type TestStatusNeq struct {
 
 // BindToRuns for TestStatusEq expands to a disjunction of RunTestStatusEq
 // values.
-func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (tse TestStatusEq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
 		if run.BrowserName == tse.BrowserName {
@@ -81,7 +107,7 @@ func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 
 // BindToRuns for TestStatusNeq expands to a disjunction of RunTestStatusNeq
 // values.
-func (tsn TestStatusNeq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (tsn TestStatusNeq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
 		if run.BrowserName == tsn.BrowserName {
@@ -108,8 +134,8 @@ type AbstractNot struct {
 }
 
 // BindToRuns for AbstractNot produces a Not with a bound argument.
-func (n AbstractNot) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	return Not{n.Arg.BindToRuns(runs)}
+func (n AbstractNot) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return Not{n.Arg.BindToRuns(runs...)}
 }
 
 // AbstractOr is the AbstractQuery for disjunction.
@@ -118,10 +144,10 @@ type AbstractOr struct {
 }
 
 // BindToRuns for AbstractOr produces an Or with bound arguments.
-func (o AbstractOr) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (o AbstractOr) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(o.Args))
 	for i := range o.Args {
-		sub := o.Args[i].BindToRuns(runs)
+		sub := o.Args[i].BindToRuns(runs...)
 		if _, ok := sub.(True); ok {
 			return True{}
 		}
@@ -147,10 +173,10 @@ type AbstractAnd struct {
 }
 
 // BindToRuns for AbstractAnd produces an And with bound arguments.
-func (a AbstractAnd) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (a AbstractAnd) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(a.Args))
 	for i := range a.Args {
-		sub := a.Args[i].BindToRuns(runs)
+		sub := a.Args[i].BindToRuns(runs...)
 		if _, ok := sub.(False); ok {
 			return False{}
 		}

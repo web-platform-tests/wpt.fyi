@@ -251,7 +251,7 @@ func TestStructuredQuery_bindPattern(t *testing.T) {
 	tnp := TestNamePattern{
 		Pattern: "/",
 	}
-	q := tnp.BindToRuns([]shared.TestRun{})
+	q := tnp.BindToRuns()
 	assert.Equal(t, tnp, q)
 }
 
@@ -259,7 +259,7 @@ func TestStructuredQuery_bindStatusNoRuns(t *testing.T) {
 	assert.Equal(t, True{}, TestStatusEq{
 		BrowserName: "Chrome",
 		Status:      1,
-	}.BindToRuns([]shared.TestRun{}))
+	}.BindToRuns())
 }
 
 func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
@@ -290,7 +290,7 @@ func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
 		Run:    1,
 		Status: 1,
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindStatusSingleRunNeq(t *testing.T) {
@@ -321,7 +321,7 @@ func TestStructuredQuery_bindStatusSingleRunNeq(t *testing.T) {
 		Run:    1,
 		Status: 1,
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
@@ -368,7 +368,7 @@ func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {
@@ -405,7 +405,7 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindOr(t *testing.T) {
@@ -442,7 +442,7 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindNot(t *testing.T) {
@@ -469,7 +469,7 @@ func TestStructuredQuery_bindNot(t *testing.T) {
 			Status: 1,
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAndReduce(t *testing.T) {
@@ -499,7 +499,7 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 	expected := TestNamePattern{
 		Pattern: "/",
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
@@ -527,7 +527,7 @@ func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 	}
 	// No runs match any constraint; reduce to True.
 	expected := True{}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindOrReduce(t *testing.T) {
@@ -555,7 +555,7 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 	// No runs match Safari constraint; it becomes True,
 	// Pattern="/" || True => True.
 	expected := True{}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindComplex(t *testing.T) {
@@ -642,5 +642,5 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
