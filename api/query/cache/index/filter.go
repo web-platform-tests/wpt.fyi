@@ -16,6 +16,16 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// True is a query.True equivalent, bound to an in-memory index.
+type True struct {
+	index
+}
+
+// False is a query.False equivalent, bound to an in-memory index.
+type False struct {
+	index
+}
+
 // TestNamePattern is a query.TestNamePattern bound to an in-memory index.
 type TestNamePattern struct {
 	index
@@ -71,6 +81,16 @@ type index struct {
 
 func (i index) idx() index { return i }
 
+// Filter always returns true for true.
+func (True) Filter(t TestID) bool {
+	return true
+}
+
+// Filter always returns false for false.
+func (False) Filter(t TestID) bool {
+	return false
+}
+
 // Filter interprets a TestNamePattern as a filter function over TestIDs.
 func (tnp TestNamePattern) Filter(t TestID) bool {
 	name, _, err := tnp.tests.GetName(t)
@@ -122,6 +142,10 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return nil, errors.New("Nil ConcreteQuery provided")
 	}
 	switch v := q.(type) {
+	case query.True:
+		return True{idx}, nil
+	case query.False:
+		return False{idx}, nil
 	case query.TestNamePattern:
 		return TestNamePattern{idx, v}, nil
 	case query.RunTestStatusEq:
