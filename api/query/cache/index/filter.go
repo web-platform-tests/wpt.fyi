@@ -6,6 +6,8 @@ package index
 
 import (
 	"errors"
+	"fmt"
+	reflect "reflect"
 	"strings"
 	"sync"
 
@@ -67,8 +69,6 @@ type index struct {
 	m          *sync.RWMutex
 }
 
-var errUnknownConcreteQuery = errors.New("Unknown ConcreteQuery type")
-
 func (i index) idx() index { return i }
 
 // Filter interprets a TestNamePattern as a filter function over TestIDs.
@@ -118,6 +118,9 @@ func (n Not) Filter(t TestID) bool {
 }
 
 func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
+	if q == nil {
+		return nil, errors.New("Nil ConcreteQuery provided")
+	}
 	switch v := q.(type) {
 	case query.TestNamePattern:
 		return TestNamePattern{idx, v}, nil
@@ -144,7 +147,7 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		}
 		return Not{idx, f}, nil
 	default:
-		return nil, errUnknownConcreteQuery
+		return nil, fmt.Errorf("Unknown ConcreteQuery type %s", reflect.TypeOf(q))
 	}
 }
 
