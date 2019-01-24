@@ -72,11 +72,13 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		"os_version":      r.FormValue("os_version"),
 	}
 
+	log := shared.GetLogger(a.Context())
 	var results int
 	var getFile func(i int) (io.ReadCloser, error)
 	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
 		// result_file[] payload
 		files := r.MultipartForm.File["result_file"]
+		log.Debugf("Found %v multipart form files", len(files))
 		results = len(files)
 		getFile = func(i int) (io.ReadCloser, error) {
 			return files[i].Open()
@@ -85,18 +87,31 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 		// result_url payload
 		urls := r.PostForm["result_url"]
 		results = len(urls)
+		log.Debugf("Found %v urls", results)
 		getFile = func(i int) (io.ReadCloser, error) {
 			return fetchFile(a, urls[i])
+		}
+		// Check for azure artifact URL, for unzipping.
+		if results == 1 {
+			artifactName := getAzureArtifactName(urls[0])
+			if artifactName != "" {
+				var err error
+				results, getFile, err = handleAzureArtifact(a, artifactName, urls[0])
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+			}
 		}
 	}
 
 	t, err := sendResultsToProcessor(a, uploader, results, getFile, extraParams)
 	if err != nil {
-		log := shared.GetLogger(a.Context())
 		log.Errorf("%s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log.Debugf("Task %s added to queue", t.Name)
 	fmt.Fprintf(w, "Task %s added to queue\n", t.Name)
 }
 
