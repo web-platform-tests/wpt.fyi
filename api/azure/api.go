@@ -5,17 +5,8 @@
 package azure
 
 import (
-	"archive/zip"
-	"bytes"
-	"compress/gzip"
 	"context"
-	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
-	multipart "mime/multipart"
-	"regexp"
-	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -51,7 +42,6 @@ type ArtifactResource struct {
 type API interface {
 	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
-	FetchAzureArtifact(BuildArtifact, *multipart.Writer) error
 }
 
 type apiImpl struct {
@@ -67,11 +57,7 @@ func NewAPI(ctx context.Context) API {
 
 // HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.
 func (a apiImpl) HandleCheckRunEvent(checkRun *github.CheckRunEvent) (bool, error) {
-	return handleCheckRunEvent(
-		shared.GetLogger(a.ctx),
-		a,
-		shared.NewAppEngineAPI(a.ctx),
-		checkRun)
+	return handleCheckRunEvent(a, shared.NewAppEngineAPI(a.ctx), checkRun)
 }
 
 func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string {
@@ -80,77 +66,6 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 		owner,
 		repo,
 		buildID)
-}
-
-// FetchAzureArtifact gets the gzipped bytes of the wpt_report.json from inside
-// the zip file provided by Azure, and writes them to the given writer.
-func (a apiImpl) FetchAzureArtifact(artifact BuildArtifact, mWriter *multipart.Writer) error {
-	aeAPI := shared.NewAppEngineAPI(a.ctx)
-	log := shared.GetLogger(a.ctx)
-	// The default timeout is 5s, not enough to download the reports.
-	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
-	defer cancel()
-	resp, err := client.Get(artifact.Resource.DownloadURL)
-	if err != nil {
-		log.Errorf("Failed to fetch %s: %s", artifact.Resource.DownloadURL, err.Error())
-		return err
-	} else if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		log.Errorf("Failed to fetch %s: %s", artifact.Resource.DownloadURL, resp.Status)
-		return err
-	}
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("Failed to read response body")
-		return err
-	}
-
-	// Extract the report from the artifact.
-	return extractReports(a.ctx, artifact.Name, data, mWriter)
-}
-
-// extractReports extracts report files from the given zip.
-func extractReports(ctx context.Context, artifactName string, data []byte, mWriter *multipart.Writer) error {
-	log := shared.GetLogger(ctx)
-	reportPath, err := regexp.Compile(fmt.Sprintf(`%s/wpt_report.*\.json$`, artifactName))
-	if err != nil {
-		return err
-	}
-	extracted := 0
-	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	for _, f := range z.File {
-		if reportPath.MatchString(f.Name) {
-			// Wrap extraction in a function, to scope the "defer fileData.Close()"
-			if err := func() error {
-				fileName := f.Name[len(artifactName)+1:]
-				fileField, err := mWriter.CreateFormFile("result_file", fileName)
-				var fileData io.ReadCloser
-				if fileData, err = f.Open(); err != nil {
-					log.Errorf("Failed to extract %s", f.Name)
-					return err
-				}
-				defer fileData.Close()
-
-				gzw := gzip.NewWriter(fileField)
-				if _, err := io.Copy(gzw, fileData); err != nil {
-					log.Errorf("Failed to gzip file contents")
-					return err
-				}
-				if err := gzw.Close(); err != nil {
-					log.Errorf("Failed to close gzip writer")
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-			extracted++
-		}
-	}
-	if extracted < 1 {
-		return errors.New(`No "wpt_report.*\.json" files found in zip`)
-	}
-	return mWriter.Close()
 }
 
 func getCheckTitle(product shared.ProductSpec) string {

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -183,13 +184,15 @@ func TestCreateAllRuns_success_master(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
+	aeAPI.EXPECT().GetSlowHTTPClient(resultsReceiverTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Second}, func() {})
+	serverURL, _ := url.Parse(server.URL)
+	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
 		&http.Client{},
 		aeAPI,
 		checksAPI,
-		server.URL,
 		sha,
 		"username",
 		"password",
@@ -228,13 +231,15 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
+	aeAPI.EXPECT().GetSlowHTTPClient(resultsReceiverTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Second}, func() {})
+	serverURL, _ := url.Parse(server.URL)
+	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
 		&http.Client{},
 		aeAPI,
 		checksAPI,
-		server.URL,
 		sha,
 		"username",
 		"password",
@@ -280,13 +285,15 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
+	aeAPI.EXPECT().GetSlowHTTPClient(resultsReceiverTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Second}, func() {})
+	serverURL, _ := url.Parse(server.URL)
+	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
 		&http.Client{},
 		aeAPI,
 		checksAPI,
-		server.URL,
 		sha,
 		"username",
 		"password",
@@ -315,13 +322,15 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().GetSlowHTTPClient(resultsReceiverTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Second}, func() {})
+	serverURL, _ := url.Parse(server.URL)
+	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
 		&http.Client{Timeout: time.Second},
 		aeAPI,
 		checksAPI,
-		server.URL,
 		sha,
 		"username",
 		"password",

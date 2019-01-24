@@ -191,7 +191,7 @@ func (a AppEngineAPIImpl) GetRunsURL(filter TestRunFilter) *url.URL {
 
 // GetResultsUploadURL returns a url for uploading results to wpt.fyi.
 func (a AppEngineAPIImpl) GetResultsUploadURL() *url.URL {
-	result, _ := url.Parse(fmt.Sprintf("https://%s%s", a.GetHostname(), "/api/results/upload"))
+	result, _ := url.Parse(fmt.Sprintf("https://%s%s", a.GetVersionedHostname(), "/api/results/upload"))
 	return result
 }
 

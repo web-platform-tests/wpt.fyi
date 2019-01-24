@@ -8,6 +8,7 @@ import (
 	"html/template"
 
 	"github.com/web-platform-tests/wpt.fyi/api"
+	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
@@ -19,9 +20,10 @@ var templates = template.Must(template.ParseGlob("templates/*.html"))
 func init() {
 	// webapp.RegisterRoutes has a catch-all, so needs to go last.
 	api.RegisterRoutes()
+	azure.RegisterRoutes()
+	checks.RegisterRoutes()
 	query.RegisterRoutes()
 	taskcluster.RegisterRoutes()
-	checks.RegisterRoutes()
 	RegisterRoutes()
 }
 

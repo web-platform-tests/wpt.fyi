@@ -5,25 +5,21 @@
 package azure
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"mime/multipart"
-	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
-	"time"
 
 	mapset "github.com/deckarep/golang-set"
 
 	"github.com/google/go-github/github"
+	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // handleCheckRunEvent processes an Azure Pipelines check run "completed" event.
-func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
+func handleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
+	log := shared.GetLogger(aeAPI.Context())
 	status := event.GetCheckRun().GetStatus()
 	if status != "completed" {
 		log.Infof("Ignoring non-completed status %s", status)
@@ -31,15 +27,22 @@ func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngine
 	}
 	owner := event.GetRepo().GetOwner().GetLogin()
 	repo := event.GetRepo().GetName()
+	sender := event.GetSender().GetLogin()
 	detailsURL := event.GetCheckRun().GetDetailsURL()
+	sha := event.GetCheckRun().GetHeadSHA()
 	buildID := extractAzureBuildID(detailsURL)
 	if buildID == 0 {
 		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
 		return false, nil
 	}
+	return processAzureBuild(aeAPI, azureAPI, sha, owner, repo, sender, buildID)
+}
 
+func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo, sender string, buildID int64) (bool, error) {
 	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 	artifactsURL := azureAPI.GetAzureArtifactsURL(owner, repo, buildID)
+
+	log := shared.GetLogger(aeAPI.Context())
 	log.Infof("Fetching %s", artifactsURL)
 
 	client := aeAPI.GetHTTPClient()
@@ -68,7 +71,6 @@ func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngine
 		log.Infof("Uploading %s for %s/%s build %v...", artifact.Name, owner, repo, buildID)
 
 		labels := mapset.NewSet()
-		sender := event.GetSender().GetLogin()
 		if sender != "" {
 			labels.Add(shared.GetUserLabel(sender))
 		}
@@ -80,12 +82,19 @@ func handleCheckRunEvent(log shared.Logger, azureAPI API, aeAPI shared.AppEngine
 		case "affected-tests-without-changes":
 			labels.Add(shared.PRBaseLabel)
 		}
-		err := createAzureRun(
-			log,
-			azureAPI,
-			aeAPI,
-			event.GetCheckRun().GetHeadSHA(),
-			artifact,
+
+		uploader, err := aeAPI.GetUploader("azure")
+		if err != nil {
+			log.Errorf("Failed to load azure uploader")
+			return false, err
+		}
+
+		uploadClient := uc.NewClient(aeAPI)
+		err = uploadClient.CreateRun(
+			sha,
+			uploader.Username,
+			uploader.Password,
+			[]string{artifact.Resource.DownloadURL},
 			shared.ToStringSlice(labels))
 		if err != nil {
 			log.Errorf("Failed to create run: %s", err.Error())
@@ -109,61 +118,4 @@ func extractAzureBuildID(detailsURL string) int64 {
 	id := parsedURL.Query().Get("buildId")
 	parsedID, _ := strconv.ParseInt(id, 0, 0)
 	return parsedID
-}
-
-func createAzureRun(
-	log shared.Logger,
-	azureAPI API,
-	aeAPI shared.AppEngineAPI,
-	sha string,
-	artifact BuildArtifact,
-	labels []string) error {
-	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
-	buf := new(bytes.Buffer)
-	writer := multipart.NewWriter(buf)
-	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
-	// parameter is the full revision hash.
-	writer.WriteField("revision", sha)
-	if len(labels) > 0 {
-		writer.WriteField("labels", strings.Join(labels, ","))
-	}
-	// Ensure we call back to this appengine version instance.
-	host := aeAPI.GetVersionedHostname()
-	writer.WriteField("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
-
-	if err := azureAPI.FetchAzureArtifact(artifact, writer); err != nil {
-		return err
-	}
-	if err := writer.Close(); err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("POST", aeAPI.GetResultsUploadURL().String(), buf)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	uploader, err := aeAPI.GetUploader("azure")
-	if err != nil {
-		log.Errorf("Failed to load azure uploader")
-		return err
-	}
-	req.SetBasicAuth(uploader.Username, uploader.Password)
-
-	// The default timeout is 5s, not enough for the receiver to process the reports.
-	client, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
-	defer cancel()
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Errorf("Failed to send upload request")
-		return err
-	}
-	respBody, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		log.Errorf("Failed to read response")
-		return err
-	}
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("API error: %s", string(respBody))
-	}
-
-	return nil
 }
