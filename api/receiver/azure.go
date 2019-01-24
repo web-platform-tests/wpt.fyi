@@ -16,6 +16,11 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+var (
+	azureArtifactRegex = regexp.MustCompile(`/_apis/build/builds/[0-9]+/artifacts\?artifactName=([^&]+)`)
+	reportPathRegex    = regexp.MustCompile(`/wpt_report.*\.json$`)
+)
+
 type azureArtifact struct {
 	name string
 	data []byte
@@ -32,7 +37,6 @@ func newAzureArtifact(artifactName string, zip io.Reader) (azureArtifact, error)
 
 // extractReports extracts report files from the given zip.
 func (a azureArtifact) getReportFiles() ([]*zip.File, error) {
-	reportPath := regexp.MustCompile(`/wpt_report.*\.json$`)
 	if a.z == nil {
 		r, err := zip.NewReader(bytes.NewReader(a.data), int64(len(a.data)))
 		if err != nil {
@@ -42,7 +46,7 @@ func (a azureArtifact) getReportFiles() ([]*zip.File, error) {
 	}
 	files := make([]*zip.File, 0, len(a.z.File))
 	for _, f := range a.z.File {
-		if reportPath.MatchString(f.Name) {
+		if reportPathRegex.MatchString(f.Name) {
 			files = append(files, f)
 		}
 	}
@@ -50,7 +54,6 @@ func (a azureArtifact) getReportFiles() ([]*zip.File, error) {
 }
 
 func getAzureArtifactName(url string) string {
-	azureArtifactRegex := regexp.MustCompile(`/_apis/build/builds/[0-9]+/artifacts\?artifactName=([^&]+)`)
 	if match := azureArtifactRegex.FindStringSubmatch(url); len(match) > 1 {
 		return match[1]
 	}
