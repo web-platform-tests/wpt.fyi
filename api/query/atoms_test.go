@@ -402,35 +402,36 @@ func TestStructuredQuery_bindExists(t *testing.T) {
 			},
 		},
 	}
-	runs := []shared.TestRun{
-		shared.TestRun{
-			ID: 1,
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName: "Edge",
-				},
-			},
-		},
-	}
-	// Only run is Edge, ID=1.
-	expected := And{
-		Args: []ConcreteQuery{
-			Or{
-				Args: []ConcreteQuery{
-					And{
-						Args: []ConcreteQuery{
-							TestNamePattern{
-								Pattern: "/",
-							},
-							RunTestStatusEq{
-								Run:    1,
-								Status: 1,
-							},
-						},
+
+	runs := shared.TestRuns{}
+	or := Or{}
+	for i := 1; i <= 10; i++ {
+		runs = append(
+			runs,
+			shared.TestRun{
+				ID: int64(i),
+				ProductAtRevision: shared.ProductAtRevision{
+					Product: shared.Product{
+						BrowserName: "Edge",
 					},
 				},
-			},
-		},
+			})
+		or.Args = append(
+			or.Args,
+			And{
+				Args: []ConcreteQuery{
+					TestNamePattern{
+						Pattern: "/",
+					},
+					RunTestStatusEq{
+						Run:    int64(i),
+						Status: 1,
+					},
+				},
+			})
+	}
+	expected := And{
+		Args: []ConcreteQuery{or},
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
