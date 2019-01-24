@@ -10,8 +10,7 @@ import "github.com/google/go-github/github"
 type Pending struct {
 	CheckState
 
-	HostName string // Host environment name
-	RunsURL  string // URL for the list of test runs
+	RunsURL string // URL for the list of test runs
 }
 
 // GetCheckState returns the info needed to update a check.

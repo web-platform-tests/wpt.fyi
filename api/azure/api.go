@@ -67,7 +67,3 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 		repo,
 		buildID)
 }
-
-func getCheckTitle(product shared.ProductSpec) string {
-	return fmt.Sprintf("wpt.fyi - %s results", product.DisplayName())
-}

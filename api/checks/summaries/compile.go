@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"text/template"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -40,6 +40,7 @@ type Summary interface {
 
 // CheckState represents all the status fields for updating a check.
 type CheckState struct {
+	HostName   string          // The host (e.g. wpt.fyi)
 	TestRun    *shared.TestRun // The (completed) TestRun, if applicable.
 	Product    shared.ProductSpec
 	HeadSHA    string
@@ -62,7 +63,11 @@ func (c CheckState) Name() string {
 
 // Title returns the check run's title, based on the product.
 func (c CheckState) Title() string {
-	return fmt.Sprintf("wpt.fyi - %s results", c.Product.DisplayName())
+	host := c.HostName
+	if host == "" {
+		host = "wpt.fyi"
+	}
+	return fmt.Sprintf("%s - %s results", host, c.Product.DisplayName())
 }
 
 // GetCheckState returns the info in the CheckState struct.
