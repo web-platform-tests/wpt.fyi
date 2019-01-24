@@ -19,15 +19,14 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Exp = NonemptyListOf<OrPart, or>
 
-    OrPart
-      = NonemptyListOf<AndPart, and>
-      | not Exp     -- not
-      | "(" Exp ")" -- paren
-      | Fragment    -- fragment
+    NestedExp
+      = "(" Exp ")"   -- paren
+      | not NestedExp -- not
+
+    OrPart = NonemptyListOf<AndPart, and>
 
     AndPart
-      = not Exp     -- not
-      | "(" Exp ")" -- paren
+      = NestedExp
       | Fragment    -- fragment
 
     or
@@ -43,7 +42,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | "not"
 
     Fragment
-      = nameLiteral
+      = not Fragment -- not
+      | nameLiteral
       | statusExp
       | nameFragment
 
@@ -90,6 +90,10 @@ const QUERY_GRAMMAR = ohm.grammar(`
   }
 `);
 /* eslint-disable */
+const evalNot = (n, p) => {
+  return {not: p.eval()};
+};
+const evalSelf = p => p.eval();
 const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   _terminal: function() {
     return this.sourceString;
@@ -113,21 +117,16 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     const ps = l.eval();
     return ps.length === 1 ? ps[0] : {or: ps};
   },
+  NestedExp: evalSelf,
+  NestedExp_paren: (_, p, __) => p.eval(),
+  NestedExp_not: evalNot,
   OrPart: l => {
     const ps = l.eval();
     return ps.length === 1 ? ps[0] : {and: ps};
   },
-  OrPart_not: (n, p) => {
-    return {not: p.eval()};
-  },
-  OrPart_paren: (_, p, __) => p.eval(),
-  OrPart_fragment: p => p.eval(),
-  AndPart_not: (n, p) => {
-    return {not: p.eval()};
-  },
-  AndPart_paren: (_, p, __) => p.eval(),
-  AndPart_fragment: p => p.eval(),
-  Fragment: f => f.eval(),
+  AndPart_fragment: evalSelf,
+  Fragment: evalSelf,
+  Fragment_not: evalNot,
   nameLiteral: (_, l, __) => {
     return {pattern: l.eval().join('')};
   },

@@ -136,6 +136,26 @@ suite('<test-search>', () => {
           },
         ]
       });
+      assertQueryParse(
+        'chrome:pass (!(firefox:pass or firefox:ok) and !(safari:pass or safari:ok) and !(edge:pass or edge:ok))',
+        {
+          exists: [
+            {browser_name: 'chrome', status: 'PASS'},
+            {
+              and: ['firefox','safari','edge'].map(b => {
+                return {
+                  not: {
+                    or: [
+                      {browser_name: b, status: 'PASS'},
+                      {browser_name: b, status: 'OK'},
+                    ]
+                  }
+                };
+              })
+            },
+          ]
+        }
+      );
     });
 
     test('all features', () => {
