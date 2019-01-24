@@ -48,3 +48,4 @@ fi
 cleanup "default"
 cleanup "processor"
 cleanup "announcer"
+cleanup "searchcache"
