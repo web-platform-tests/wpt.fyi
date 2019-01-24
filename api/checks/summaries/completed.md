@@ -9,7 +9,7 @@ There were no regressions detected in the results.
 Test | `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`
 --- | ---
 {{ range $test, $results := .Results -}}
-{{ $test }} | {{ index $results 0 }} / {{ index $results 1 }}
+{{ escapeMD $test }} | {{ index $results 0 }} / {{ index $results 1 }}
 {{end}}
 {{ if gt .More 0 -}}
 And {{ .More }} others...

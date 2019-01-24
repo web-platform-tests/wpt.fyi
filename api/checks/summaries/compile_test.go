@@ -35,8 +35,9 @@ func TestGetSummary_Completed(t *testing.T) {
 	foo.DiffURL = "https://foo.com/diff?before=chrome[master]&after=chrome@0123456789"
 	foo.HostName = "foo.com"
 	foo.HostURL = "https://foo.com/"
+	testName := "/foo.html?exclude=(Document|window|HTML.*)"
 	foo.Results = map[string][]int{
-		"/foo.html": []int{2, 3},
+		testName: []int{2, 3},
 	}
 	foo.More = 1
 
@@ -68,6 +69,7 @@ func TestGetSummary_Completed(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
+	assert.Contains(t, s, escapeMD(testName))
 	assert.Contains(t, s, "https://foo.com/runs/?pr=123")
 	assert.Contains(t, s, "https://foo.com/results/?pr=123")
 }
@@ -102,8 +104,9 @@ func TestGetSummary_Regressed(t *testing.T) {
 	foo.HostName = "foo.com"
 	foo.HostURL = "https://foo.com/"
 	foo.DiffURL = "https://foo.com/?products=chrome@0000000000,chrome@0123456789&diff"
+	testName := "/foo.html?exclude=(Document|window|HTML.*)"
 	foo.Regressions = map[string]BeforeAndAfter{
-		"/foo.html": BeforeAndAfter{
+		testName: BeforeAndAfter{
 			PassingBefore: 1,
 			TotalBefore:   1,
 			PassingAfter:  0,
