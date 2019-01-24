@@ -62,7 +62,7 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 	// And the overall node is true if all its exists queries are true.
 	return And{
-		Args: queries, // T
+		Args: queries,
 	}
 }
 
