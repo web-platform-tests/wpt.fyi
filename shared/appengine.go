@@ -163,6 +163,7 @@ func (a AppEngineAPIImpl) GetVersionedHostname() string {
 }
 
 // GetServiceHostname returns a versioned canonical hostname for the given service (module).
+// If the service does not have the current version, AppEngine routing will fall back to its default version.
 func (a AppEngineAPIImpl) GetServiceHostname(service string) string {
 	// version and instance (last 2 params) left blank means that the version of the current
 	// instance will be used. This is desirable for branches that push multiple services, and
