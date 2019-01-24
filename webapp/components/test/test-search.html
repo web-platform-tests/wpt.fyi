@@ -119,6 +119,25 @@ suite('<test-search>', () => {
       });
     });
 
+    test('nested or/and/not', () => {
+      assertQueryParse('(chrome:pass or edge:pass) (firefox:!pass and firefox:!ok)', {
+        exists: [
+          {
+            or: [
+              {browser_name: 'chrome', status: 'PASS'},
+              {browser_name: 'edge', status: 'PASS'},
+            ]
+          },
+          {
+            and: [
+              {browser_name: 'firefox', status: { not: 'PASS'} },
+              {browser_name: 'firefox', status: { not: 'OK'} },
+            ],
+          },
+        ]
+      });
+    });
+
     test('all features', () => {
       assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
         exists: [

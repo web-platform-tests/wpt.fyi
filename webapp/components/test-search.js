@@ -19,7 +19,11 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Exp = NonemptyListOf<OrPart, or>
 
-    OrPart = NonemptyListOf<AndPart, and>
+    OrPart
+      = NonemptyListOf<AndPart, and>
+      | not Exp     -- not
+      | "(" Exp ")" -- paren
+      | Fragment    -- fragment
 
     AndPart
       = not Exp     -- not
@@ -113,6 +117,11 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     const ps = l.eval();
     return ps.length === 1 ? ps[0] : {and: ps};
   },
+  OrPart_not: (n, p) => {
+    return {not: p.eval()};
+  },
+  OrPart_paren: (_, p, __) => p.eval(),
+  OrPart_fragment: p => p.eval(),
   AndPart_not: (n, p) => {
     return {not: p.eval()};
   },
