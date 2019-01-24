@@ -40,10 +40,6 @@ func TestInteropBound(t *testing.T) {
 	assertHandlerIs(t, "/interop/BackgroundSync/interfaces.any.html", "interop")
 }
 
-func TestInteropAnomaliesBound(t *testing.T) {
-	assertHandlerIs(t, "/anomalies", "anomaly")
-}
-
 func TestRunsBound(t *testing.T) {
 	assertHandlerIs(t, "/test-runs", "test-runs")
 }

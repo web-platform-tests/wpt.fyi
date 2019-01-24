@@ -32,9 +32,6 @@ func RegisterRoutes() {
 	// About wpt.fyi
 	shared.AddRoute("/about", "about", aboutHandler)
 
-	// Lists of test run results which have poor interoperability
-	shared.AddRoute("/anomalies", "anomaly", anomalyHandler)
-
 	// Feature flags for wpt.fyi
 	shared.AddRoute("/flags", "flags", flagsHandler)
 	shared.AddRoute("/components/wpt-env-flags.js", "flags-component", flagsComponentHandler)

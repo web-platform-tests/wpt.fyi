@@ -8,11 +8,6 @@ indexes:
   - name: TestRunIDs
   - name: StartTime
     direction: desc
-- kind: github.com.web-platform-tests.results-analysis.metrics.FailuresMetadata
-  properties:
-  - name: BrowserName
-  - name: StartTime
-    direction: desc
 - kind: TestRun
   properties:
   - name: BrowserName
