@@ -106,6 +106,9 @@ class Permalinks extends QueryBuilder(PolymerElement) {
       }
       if (queryParams.diff) {
         params.diff = queryParams.diff;
+        if (queryParams.filter) {
+          params.filter = queryParams.filter;
+        }
       }
     } else {
       params = Object.assign({}, this.queryParams);
