@@ -5,7 +5,7 @@
 package shared
 
 //
-// Shared data types used for string WPT test results in Cloud Spanner.
+// Shared data types used for string WPT test results in query cache.
 //
 
 const (
