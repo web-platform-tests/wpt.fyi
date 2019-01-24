@@ -379,50 +379,6 @@ func addStaticData(i DevAppServerInstance) (err error) {
 		}
 	}
 
-	log.Println("Adding static anomalies data...")
-	staticFailuresMetadata := []interface{}{
-		&metrics.FailuresMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "chrome-failures"),
-			},
-			BrowserName: "chrome",
-		},
-		&metrics.FailuresMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "edge-failures"),
-			},
-			BrowserName: "edge",
-		},
-		&metrics.FailuresMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "firefox-failures"),
-			},
-			BrowserName: "firefox",
-		},
-		&metrics.FailuresMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "safari-failures"),
-			},
-			BrowserName: "safari",
-		},
-	}
-	for i := range staticFailuresMetadata {
-		md := staticFailuresMetadata[i].(*metrics.FailuresMetadata)
-		md.TestRunIDs = stableTestRuns.GetTestRunIDs()
-		key := datastore.NewIncompleteKey(ctx, metrics.GetDatastoreKindName(metrics.FailuresMetadata{}), nil)
-		if _, err := datastore.Put(ctx, key, md); err != nil {
-			return err
-		}
-	}
-
 	// Enable tested features
 	shared.SetFeature(ctx, shared.Flag{Name: "queryBuilder", Enabled: true})
 

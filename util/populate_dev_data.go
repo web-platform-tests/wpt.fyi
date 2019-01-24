@@ -130,46 +130,9 @@ func main() {
 		},
 	}
 
-	staticFailuresMetadata := []interface{}{
-		&metrics.FailuresMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "chrome-failures"),
-			},
-			BrowserName: "chrome",
-		},
-		&metrics.FailuresMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "edge-failures"),
-			},
-			BrowserName: "edge",
-		},
-		&metrics.FailuresMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "firefox-failures"),
-			},
-			BrowserName: "firefox",
-		},
-		&metrics.FailuresMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "safari-failures"),
-			},
-			BrowserName: "safari",
-		},
-	}
-
 	testRunKindName := "TestRun"
 	passRateMetadataKindName := metrics.GetDatastoreKindName(
 		metrics.PassRateMetadata{})
-	failuresMetadataKindName := metrics.GetDatastoreKindName(
-		metrics.FailuresMetadata{})
 
 	log.Print("Adding local (empty) secrets...")
 	addSecretToken(ctx, "upload-token", emptySecretToken)
@@ -199,12 +162,7 @@ func main() {
 			md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
 			md.TestRunIDs = staticTestRuns.GetTestRunIDs()
 		}
-		for i := range staticFailuresMetadata {
-			md := staticFailuresMetadata[i].(*metrics.FailuresMetadata)
-			md.TestRunIDs = staticTestRuns.GetTestRunIDs()
-		}
 		addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
-		addData(ctx, failuresMetadataKindName, staticFailuresMetadata)
 	}
 
 	log.Print("Adding latest production TestRun data...")
