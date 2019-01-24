@@ -31,7 +31,7 @@ while getopts ':b:prhq' flag; do
 done
 
 if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
-if [[ "${APP_PATH}" != "webapp" && "${APP_PATH}" != "results-processor" && "${APP_PATH}" != "revisions/service" && "${APP_PATH}" != "api/spanner/service" && "${APP_PATH}" != "api/query/cache/service" ]];
+if [[ "${APP_PATH}" != "webapp" && "${APP_PATH}" != "results-processor" && "${APP_PATH}" != "revisions/service" && "${APP_PATH}" != "api/query/cache/service" ]];
 then
   fatal "Unrecognized app path \"${APP_PATH}\"."
 fi
