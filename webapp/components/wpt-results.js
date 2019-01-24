@@ -993,11 +993,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.loadData();
   }
 
-  handleAddMasterLabel() {
+  handleAddMasterLabel(e) {
     const builder = this.shadowRoot.querySelector('test-runs-query-builder');
     builder.master = true;
     this.handleSubmitQuery();
-    this.dismissToast();
+    this.dismissToast(e);
   }
 }
 
