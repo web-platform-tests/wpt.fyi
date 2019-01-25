@@ -162,6 +162,26 @@ class WPTReportTest(unittest.TestCase):
             with self.assertRaises(ConflictingDataError):
                 r.load_json(f)
 
+    def test_load_json_multiple_chunks_ignored_conflicting_data(self):
+        tmp_path = os.path.join(self.tmp_dir, 'test.json')
+        r = WPTReport()
+        with open(tmp_path, 'wt') as f:
+            json.dump({
+                'results': [{'test1': 'foo'}],
+                'run_info': {'browser_build_id': '1'},
+            }, f)
+        with open(tmp_path, 'rb') as f:
+            r.load_json(f)
+
+        with open(tmp_path, 'wt') as f:
+            json.dump({
+                'results': [{'test2': 'bar'}],
+                'run_info': {'browser_build_id': '2'},
+            }, f)
+        with open(tmp_path, 'rb') as f:
+            r.load_json(f)
+        self.assertIsNone(r.run_info['browser_build_id'])
+
     def test_load_gzip_json(self):
         # This case also covers the Unicode testing of load_json().
         obj = {

@@ -135,9 +135,17 @@ class WPTReport(object):
                 target[key] = source[key]
 
         if 'run_info' in chunk:
+            def ignore_conflict(a, b):
+                return a if a == b else None
+
             for key in chunk['run_info']:
                 update_property(
-                    key, chunk['run_info'], self._report['run_info'])
+                    key, chunk['run_info'], self._report['run_info'],
+                    # Ignore inconsistent browser_build_id for now.
+                    # TODO(Hexcles): Remove this exception once the decision
+                    # task is implemented on Taskcluster.
+                    ignore_conflict if key == 'browser_build_id' else None,
+                )
 
         update_property('time_start', chunk, self._report, min)
         update_property('time_end', chunk, self._report, max)
