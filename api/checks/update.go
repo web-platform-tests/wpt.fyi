@@ -187,7 +187,9 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	}
 
 	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
+	host := aeAPI.GetHostname()
 	checkState := summaries.CheckState{
+		HostName:   host,
 		TestRun:    &headRun,
 		Product:    checkProduct,
 		HeadSHA:    headRun.FullRevisionHash,
@@ -202,14 +204,12 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	checksCanFailAndPass := aeAPI.IsFeatureEnabled(failChecksOnRegressionFeature)
 
 	var summary summaries.Summary
-	host := aeAPI.GetHostname()
 
 	resultsComparison := summaries.ResultsComparison{
-		BaseRun:  baseRun,
-		HeadRun:  headRun,
-		HostName: host,
-		HostURL:  fmt.Sprintf("https://%s/", host),
-		DiffURL:  diffURL.String(),
+		BaseRun: baseRun,
+		HeadRun: headRun,
+		HostURL: fmt.Sprintf("https://%s/", host),
+		DiffURL: diffURL.String(),
 	}
 	if headRun.LabelsSet().Contains(shared.PRHeadLabel) {
 		// Deletions are meaningless and abundant comparing to master; ignore them.

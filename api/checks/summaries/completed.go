@@ -16,7 +16,6 @@ type ResultsComparison struct {
 	HeadRun       shared.TestRun
 	MasterDiffURL string
 	DiffURL       string // URL for the diff-view of the results
-	HostName      string // Host environment name, e.g. "wpt.fyi"
 	HostURL       string // Host environment URL, e.g. "https://wpt.fyi"
 }
 

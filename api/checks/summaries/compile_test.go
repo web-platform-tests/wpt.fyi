@@ -76,9 +76,9 @@ func TestGetSummary_Completed(t *testing.T) {
 
 func TestGetSummary_Pending(t *testing.T) {
 	foo := Pending{
-		HostName: "https://foo.com",
-		RunsURL:  "https://foo.com/runs?products=chrome&sha=0123456789",
+		RunsURL: "https://foo.com/runs?products=chrome&sha=0123456789",
 	}
+	foo.HostName = "https://foo.com"
 	s, err := foo.GetSummary()
 	printOutput(s)
 	if err != nil {
