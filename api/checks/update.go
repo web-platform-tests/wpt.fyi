@@ -199,7 +199,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	regressions := diff.Differences.Regressions()
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
-	checksCanFailAndPass := aeAPI.IsFeatureEnabled(failChecksOnRegressionFeature)
+	checksCanBeNonNeutral := aeAPI.IsFeatureEnabled(failChecksOnRegressionFeature)
 
 	var summary summaries.Summary
 	host := aeAPI.GetHostname()
@@ -234,10 +234,8 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 				data.More++
 			}
 		}
-		if checksCanFailAndPass {
-			success := "success"
-			data.CheckState.Conclusion = &success
-		}
+		success := "success"
+		data.CheckState.Conclusion = &success
 		summary = data
 	} else {
 		data := summaries.Regressed{
@@ -263,9 +261,9 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 				data.More++
 			}
 		}
-		if checksCanFailAndPass {
-			failure := "failure"
-			data.CheckState.Conclusion = &failure
+		if checksCanBeNonNeutral {
+			actionRequired := "action_required"
+			data.CheckState.Conclusion = &actionRequired
 		}
 		summary = data
 	}
