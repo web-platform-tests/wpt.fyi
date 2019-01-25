@@ -54,11 +54,11 @@ func TestStructuredQuery_emptyBrowserName(t *testing.T) {
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
-			"browser_name": "",
 			"status": "PASS"
 		}
 	}`), &rq)
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusEq{Status: shared.TestStatusValueFromString("PASS")}}, rq)
 }
 
 func TestStructuredQuery_missingStatus(t *testing.T) {

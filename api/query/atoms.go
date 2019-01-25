@@ -235,11 +235,7 @@ func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 	}
 
 	browserName := strings.ToLower(data.BrowserName)
-	browserNameOK := false
-	for _, name := range browsers {
-		browserNameOK = browserNameOK || browserName == name
-	}
-	if !browserNameOK {
+	if browserName != "" && !shared.StringSliceContains(browsers, browserName) {
 		return fmt.Errorf(`Invalid browser name: "%s"`, data.BrowserName)
 	}
 
@@ -273,11 +269,7 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 	}
 
 	browserName := strings.ToLower(data.BrowserName)
-	browserNameOK := false
-	for _, name := range browsers {
-		browserNameOK = browserNameOK || browserName == name
-	}
-	if !browserNameOK {
+	if browserName != "" && !shared.StringSliceContains(browsers, browserName) {
 		return fmt.Errorf(`Invalid browser name: "%s"`, data.BrowserName)
 	}
 
