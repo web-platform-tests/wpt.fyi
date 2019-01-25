@@ -17,8 +17,9 @@ type aggregator interface {
 type indexAggregator struct {
 	index
 
-	rus []RunID
-	agg map[uint64]query.SearchResult
+	rus             []RunID
+	agg             map[uint64]query.SearchResult
+	includeSubtests bool
 }
 
 func (a *indexAggregator) Add(t TestID) error {
@@ -48,6 +49,12 @@ func (a *indexAggregator) Add(t TestID) error {
 			rus[i].Total++
 			if res == shared.TestStatusPass || res == shared.TestStatusOK {
 				rus[i].Passes++
+			}
+		}
+
+		if a.includeSubtests {
+			if _, name, err := ts.GetName(t); err == nil && name != nil {
+				r.Subtests = append(r.Subtests, *name)
 			}
 		}
 	}
