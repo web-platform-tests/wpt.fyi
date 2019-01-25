@@ -10,7 +10,7 @@ to the latest run against the `master` branch.
 Test | `master` | `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`
 --- | --- | ---
 {{ range $test, $results := .Regressions -}}
-{{ $test }} | {{ $results.PassingBefore }} / {{ $results.TotalBefore }} | {{ $results.PassingAfter }} / {{ $results.TotalAfter }}
+{{ escapeMD $test }} | {{ $results.PassingBefore }} / {{ $results.TotalBefore }} | {{ $results.PassingAfter }} / {{ $results.TotalAfter }}
 {{end}}
 {{ if gt .More 0 -}}
 And {{ .More }} others...
