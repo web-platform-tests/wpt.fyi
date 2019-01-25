@@ -238,7 +238,7 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <h5>GitHub Status Checks</h5>
     <paper-item sub-item="">
       <paper-checkbox checked="{{failChecksOnRegression}}">
-        Fail the wpt.fyi GitHub status check if regressions are found, and pass them if not.
+        Set the wpt.fyi GitHub status check to action_required if regressions are found.
       </paper-checkbox>
     </paper-item>
     <paper-item sub-item="">
