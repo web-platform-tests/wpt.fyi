@@ -128,6 +128,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         margin-bottom: 32px;
       }
       .test-type {
+        margin-left: 8px;
         padding: 4px;
         border-radius: 4px;
         background-color: var(--paper-blue-100);
@@ -163,12 +164,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           <span class="path-separator">/</span>
           <a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
         </template>
-      </div>
-      <template is="dom-if" if="[[showTestType]]">
-        <template is="dom-if" if="[[testType]]">
-          <span class$="test-type [[testType]]">[[testType]]</span>
+
+        <template is="dom-if" if="[[showTestType]]">
+          <template is="dom-if" if="[[testType]]">
+            <span class$="test-type [[testType]]">[[testType]]</span>
+          </template>
         </template>
-      </template>
+      </div>
 
       <template is="dom-if" if="[[searchPRsForDirectories]]">
         <template is="dom-if" if="[[pathIsASubfolder]]">
@@ -185,8 +187,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         <div class="links">
           <ul>
             <li><a href\$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
-            <template is="dom-if" if="{{ testCanRunOnW3C }}">
-              <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+            <template is="dom-if" if="{{ testW3CURL }}">
+              <li><a href="[[testW3CURL]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+            </template>
+            <template is="dom-if" if="[[ testW3CRefURL ]]">
+              <li><a href="[[testW3CRefURL]]" target="_blank">View ref in your browser on w3c-test.org</a></li>
             </template>
           </ul>
         </div>
@@ -361,9 +366,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         computed: 'computeTestType(path, manifest)',
         value: '',
       },
-      testCanRunOnW3C: {
+      testW3CURL: {
         type: Boolean,
-        computed: 'computeTestCanBeRunOnW3C(testType)',
+        computed: 'computeTestW3CURL(testType, path)',
+      },
+      testW3CRefURL: {
+        type: String,
+        computed: 'computeTestRefURL(testType, path, manifest)',
       },
       searchResults: {
         type: Array,
@@ -441,8 +450,22 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     return null;
   }
 
-  computeTestCanBeRunOnW3C(testType) {
-    return testType !== 'wdspec';
+  computeTestW3CURL(testType, path) {
+    if (testType === 'wdspec') {
+      return;
+    }
+    return new URL(`${this.scheme}://w3c-test.org${path}`);
+  }
+
+  computeTestRefURL(testType, path, manifest) {
+    if (!this.showTestRefURL || testType !== 'reftest') {
+      return;
+    }
+    const item = Object.values(manifest.items['reftest']).find(v => v.find(i => i[0] === path));
+    // In item[0], the 2nd item is the refs array, and we take the first ref (0).
+    // Then, the ref's 1st item is the url (0). (2nd is the condition, e.g. "==".)
+    const refPath = item && item[0][1][0][0];
+    return this.computeTestW3CURL(testType, refPath);
   }
 
   computeTestType(path, manifest) {
@@ -452,7 +475,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     for (const type of TEST_TYPES) {
       const items = manifest.items[type];
       if (items) {
-        const test = Object.keys(items).find(k => items[k].find(i => i[0] === path));
+        const test = Object.values(items).find(v => v.find(i => i[0] === path));
         if (test) {
           return type;
         }
