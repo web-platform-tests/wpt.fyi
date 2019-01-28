@@ -31,6 +31,14 @@ suite('<test-search>', () => {
       assertQueryParse('2dcontext', {exists: [{pattern: '2dcontext'}]});
     });
 
+    test('test status eq', () => {
+      assertQueryParse('sTaTuS:oK', {status: 'OK'});
+    });
+
+    test('test status neq', () => {
+      assertQueryParse('StAtUs:!FaIl', {status: {not: 'FAIL'}});
+    });
+
     test('browser test status eq', () => {
       assertQueryParse('cHrOmE:oK', {exists: [{browser_name: 'chrome', status: 'OK'}]});
     });
