@@ -237,14 +237,14 @@ func TestBindExecute_TestStatus(t *testing.T) {
 	}
 
 	// Set BrowserName imperatively to avoid multi-layer type embedding.
-	data[0].run.BrowserName = "Chrome"
-	data[1].run.BrowserName = "Safari"
+	data[0].run.BrowserName = "chrome"
+	data[1].run.BrowserName = "safari"
 
 	runs := mockTestRuns(loader, idx, data)
 
 	q := query.TestStatusEq{
-		BrowserName: "Chrome",
-		Status:      shared.TestStatusFail,
+		Product: shared.ParseProductSpecUnsafe("Chrome"),
+		Status:  shared.TestStatusFail,
 	}
 	srs := planAndExecute(t, runs, idx, q)
 

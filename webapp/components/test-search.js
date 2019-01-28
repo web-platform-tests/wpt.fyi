@@ -76,14 +76,18 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | "\\"" -- quote
 
     statusExp
-      = browserName ":!" statusLiteral -- neq
-      | browserName ":" statusLiteral -- eq
+      = productSpec ":!" statusLiteral -- neq
+      | productSpec ":" statusLiteral -- eq
+
+    productSpec = browserName ("-" browserVersion)?
 
     browserName
       = caseInsensitive<"chrome">
       | caseInsensitive<"edge">
       | caseInsensitive<"firefox">
       | caseInsensitive<"safari">
+
+    browserVersion = number ("." number)*
 
     statusLiteral
       = caseInsensitive<"unknown">
@@ -103,6 +107,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = "\\x00".."\\x08"
       | "\\x0E".."\\x1F"
       | "\\x21".."\\uFFFF"
+
+    number = digit+
   }
 `);
 /* eslint-disable */
@@ -143,13 +149,13 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   nameLiteralChar_quote: (v) => '"',
   statusExp_eq: (l, colon, r) => {
     return {
-      browser_name: l.sourceString.toLowerCase(),
+      product: l.sourceString.toLowerCase(),
       status: r.sourceString.toUpperCase(),
     };
   },
   statusExp_neq: (l, colonBang, r) => {
     return {
-      browser_name: l.sourceString.toLowerCase(),
+      product: l.sourceString.toLowerCase(),
       status: {not: r.sourceString.toUpperCase()},
     };
   },

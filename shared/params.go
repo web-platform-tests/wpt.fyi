@@ -120,6 +120,12 @@ func ParseProductSpec(spec string) (productSpec ProductSpec, err error) {
 	return productSpec, nil
 }
 
+// ParseProductSpecUnsafe ignores any potential error parsing the given product spec.
+func ParseProductSpecUnsafe(s string) ProductSpec {
+	parsed, _ := ParseProductSpec(s)
+	return parsed
+}
+
 // ParseProduct parses the `browser-version-os-version` input as a Product struct.
 func ParseProduct(product string) (result Product, err error) {
 	pieces := strings.Split(product, "-")
@@ -127,7 +133,7 @@ func ParseProduct(product string) (result Product, err error) {
 		return result, fmt.Errorf("invalid product: %s", product)
 	}
 	result = Product{
-		BrowserName: pieces[0],
+		BrowserName: strings.ToLower(pieces[0]),
 	}
 	if !IsBrowserName(result.BrowserName) {
 		return result, fmt.Errorf("invalid browser name: %s", result.BrowserName)

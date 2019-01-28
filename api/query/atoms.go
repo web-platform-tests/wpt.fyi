@@ -44,16 +44,16 @@ func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 // from at least one test run with the given browser name matches the given
 // status value.
 type TestStatusEq struct {
-	BrowserName string
-	Status      int64
+	Product shared.ProductSpec
+	Status  int64
 }
 
 // TestStatusNeq is a query atom that matches tests where the test status/result
 // from at least one test run with the given browser name does not match the
 // given status value.
 type TestStatusNeq struct {
-	BrowserName string
-	Status      int64
+	Product shared.ProductSpec
+	Status  int64
 }
 
 // BindToRuns for TestStatusEq expands to a disjunction of RunTestStatusEq
@@ -61,7 +61,7 @@ type TestStatusNeq struct {
 func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
-		if run.BrowserName == tse.BrowserName {
+		if tse.Product.Matches(run) {
 			ids = append(ids, run.ID)
 		}
 	}
@@ -84,7 +84,7 @@ func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 func (tsn TestStatusNeq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
-		if run.BrowserName == tsn.BrowserName {
+		if tsn.Product.Matches(run) {
 			ids = append(ids, run.ID)
 		}
 	}
@@ -220,30 +220,30 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON for TestStatusEq attempts to interpret a query atom as
-// {"browser_name": <browser name>, "status": <status string>}.
+// {"product": <browser name>, "status": <status string>}.
 func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 	var data struct {
-		BrowserName string `json:"browser_name"`
+		BrowserName string `json:"browser_name"` // Legacy
+		Product     string `json:"product"`
 		Status      string `json:"status"`
 	}
 	err := json.Unmarshal(b, &data)
 	if err != nil {
 		return err
 	}
-	if len(data.BrowserName) == 0 {
-		return errors.New(`Missing test status constraint property: "browser_name"`)
+	if data.Product == "" && data.BrowserName != "" {
+		data.Product = data.BrowserName
+	}
+	if len(data.Product) == 0 {
+		return errors.New(`Missing test status constraint property: "product"`)
 	}
 	if len(data.Status) == 0 {
 		return errors.New(`Missing test status constraint property: "status"`)
 	}
 
-	browserName := strings.ToLower(data.BrowserName)
-	browserNameOK := false
-	for _, name := range browsers {
-		browserNameOK = browserNameOK || browserName == name
-	}
-	if !browserNameOK {
-		return fmt.Errorf(`Invalid browser name: "%s"`, data.BrowserName)
+	product, err := shared.ParseProductSpec(data.Product)
+	if err != nil {
+		return err
 	}
 
 	statusStr := strings.ToUpper(data.Status)
@@ -253,16 +253,17 @@ func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf(`Invalid test status: "%s"`, data.Status)
 	}
 
-	tse.BrowserName = browserName
+	tse.Product = product
 	tse.Status = status
 	return nil
 }
 
 // UnmarshalJSON for TestStatusNeq attempts to interpret a query atom as
-// {"browser_name": <browser name>, "status": {"not": <status string>}}.
+// {"product": <browser name>, "status": {"not": <status string>}}.
 func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 	var data struct {
-		BrowserName string `json:"browser_name"`
+		BrowserName string `json:"browser_name"` // Legacy
+		Product     string `json:"product"`
 		Status      struct {
 			Not string `json:"not"`
 		} `json:"status"`
@@ -271,20 +272,19 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	if len(data.BrowserName) == 0 {
-		return errors.New(`Missing test status constraint property: "browser_name"`)
+	if data.Product == "" && data.BrowserName != "" {
+		data.Product = data.BrowserName
+	}
+	if len(data.Product) == 0 {
+		return errors.New(`Missing test status constraint property: "product"`)
 	}
 	if len(data.Status.Not) == 0 {
 		return errors.New(`Missing test status constraint property: "status.not"`)
 	}
 
-	browserName := strings.ToLower(data.BrowserName)
-	browserNameOK := false
-	for _, name := range browsers {
-		browserNameOK = browserNameOK || browserName == name
-	}
-	if !browserNameOK {
-		return fmt.Errorf(`Invalid browser name: "%s"`, data.BrowserName)
+	product, err := shared.ParseProductSpec(data.Product)
+	if err != nil {
+		return err
 	}
 
 	statusStr := strings.ToUpper(data.Status.Not)
@@ -294,7 +294,7 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf(`Invalid test status: "%s"`, data.Status)
 	}
 
-	tsn.BrowserName = browserName
+	tsn.Product = product
 	tsn.Status = status
 	return nil
 }

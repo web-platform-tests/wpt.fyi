@@ -303,8 +303,8 @@ func TestSync(t *testing.T) {
 				makeRun(int64(n - 4)),
 			}
 			plan, err := i.Bind(runs, query.TestStatusEq{
-				BrowserName: "Chrome",
-				Status:      shared.TestStatusPass,
+				Product: shared.ParseProductSpecUnsafe("Chrome"),
+				Status:  shared.TestStatusPass,
 			}.BindToRuns(runs))
 			if err != nil {
 				return
