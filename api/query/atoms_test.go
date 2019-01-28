@@ -54,11 +54,11 @@ func TestStructuredQuery_emptyBrowserName(t *testing.T) {
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
 		"query": {
-			"browser_name": "",
 			"status": "PASS"
 		}
 	}`), &rq)
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestStatusEq{Status: shared.TestStatusValueFromString("PASS")}}, rq)
 }
 
 func TestStructuredQuery_missingStatus(t *testing.T) {
@@ -255,14 +255,14 @@ func TestStructuredQuery_bindPattern(t *testing.T) {
 	assert.Equal(t, tnp, q)
 }
 
-func TestStructuredQuery_bindStatusNoRuns(t *testing.T) {
+func TestStructuredQuery_bindBrowserStatusNoRuns(t *testing.T) {
 	assert.Equal(t, True{}, TestStatusEq{
 		BrowserName: "Chrome",
 		Status:      1,
 	}.BindToRuns([]shared.TestRun{}))
 }
 
-func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
+func TestStructuredQuery_bindBrowserStatusSingleRun(t *testing.T) {
 	q := TestStatusEq{
 		BrowserName: "Firefox",
 		Status:      1,
@@ -293,7 +293,7 @@ func TestStructuredQuery_bindStatusSingleRun(t *testing.T) {
 	assert.Equal(t, expected, q.BindToRuns(runs))
 }
 
-func TestStructuredQuery_bindStatusSingleRunNeq(t *testing.T) {
+func TestStructuredQuery_bindBrowserStatusSingleRunNeq(t *testing.T) {
 	q := TestStatusNeq{
 		BrowserName: "Firefox",
 		Status:      1,
@@ -325,6 +325,44 @@ func TestStructuredQuery_bindStatusSingleRunNeq(t *testing.T) {
 }
 
 func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
+	q := TestStatusNeq{
+		Status: 1,
+	}
+	runs := []shared.TestRun{
+		shared.TestRun{
+			ID: 1,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Firefox",
+				},
+			},
+		},
+		shared.TestRun{
+			ID: 2,
+			ProductAtRevision: shared.ProductAtRevision{
+				Product: shared.Product{
+					BrowserName: "Chrome",
+				},
+			},
+		},
+	}
+	// Two Firefox runs: ID=1, ID=3.
+	expected := Or{
+		Args: []ConcreteQuery{
+			RunTestStatusNeq{
+				Run:    1,
+				Status: 1,
+			},
+			RunTestStatusNeq{
+				Run:    2,
+				Status: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs))
+}
+
+func TestStructuredQuery_bindBrowserStatusSomeRuns(t *testing.T) {
 	q := TestStatusNeq{
 		BrowserName: "Firefox",
 		Status:      1,

@@ -41,16 +41,16 @@ func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result
-// from at least one test run with the given browser name matches the given
-// status value.
+// from at least one test run matches the given status value, optionally filtered
+// to a specific browser name.
 type TestStatusEq struct {
 	BrowserName string
 	Status      int64
 }
 
 // TestStatusNeq is a query atom that matches tests where the test status/result
-// from at least one test run with the given browser name does not match the
-// given status value.
+// from at least one test run does not match the given status value, optionally
+// filtered to a specific browser name.
 type TestStatusNeq struct {
 	BrowserName string
 	Status      int64
@@ -61,7 +61,7 @@ type TestStatusNeq struct {
 func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
-		if run.BrowserName == tse.BrowserName {
+		if tse.BrowserName == "" || run.BrowserName == tse.BrowserName {
 			ids = append(ids, run.ID)
 		}
 	}
@@ -84,7 +84,7 @@ func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 func (tsn TestStatusNeq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
-		if run.BrowserName == tsn.BrowserName {
+		if tsn.BrowserName == "" || run.BrowserName == tsn.BrowserName {
 			ids = append(ids, run.ID)
 		}
 	}
@@ -230,19 +230,12 @@ func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	if len(data.BrowserName) == 0 {
-		return errors.New(`Missing test status constraint property: "browser_name"`)
-	}
 	if len(data.Status) == 0 {
 		return errors.New(`Missing test status constraint property: "status"`)
 	}
 
 	browserName := strings.ToLower(data.BrowserName)
-	browserNameOK := false
-	for _, name := range browsers {
-		browserNameOK = browserNameOK || browserName == name
-	}
-	if !browserNameOK {
+	if browserName != "" && !shared.StringSliceContains(browsers, browserName) {
 		return fmt.Errorf(`Invalid browser name: "%s"`, data.BrowserName)
 	}
 
@@ -271,19 +264,12 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	if len(data.BrowserName) == 0 {
-		return errors.New(`Missing test status constraint property: "browser_name"`)
-	}
 	if len(data.Status.Not) == 0 {
 		return errors.New(`Missing test status constraint property: "status.not"`)
 	}
 
 	browserName := strings.ToLower(data.BrowserName)
-	browserNameOK := false
-	for _, name := range browsers {
-		browserNameOK = browserNameOK || browserName == name
-	}
-	if !browserNameOK {
+	if browserName != "" && !shared.StringSliceContains(browsers, browserName) {
 		return fmt.Errorf(`Invalid browser name: "%s"`, data.BrowserName)
 	}
 
