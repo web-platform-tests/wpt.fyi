@@ -464,6 +464,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     const item = Object.values(manifest.items['reftest']).find(v => v.find(i => i[0] === path));
     // In item[0], the 2nd item is the refs array, and we take the first ref (0).
     // Then, the ref's 1st item is the url (0). (2nd is the condition, e.g. "==".)
+    // See https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py#L141
     const refPath = item && item[0][1][0][0];
     return this.computeTestW3CURL(testType, refPath);
   }
