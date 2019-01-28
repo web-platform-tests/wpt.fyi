@@ -271,7 +271,7 @@ func TestStructuredQuery_bindPattern(t *testing.T) {
 }
 
 func TestStructuredQuery_bindStatusNoRuns(t *testing.T) {
-	assert.Equal(t, True{}, TestStatusEq{
+	assert.Equal(t, False{}, TestStatusEq{
 		BrowserName: "Chrome",
 		Status:      1,
 	}.BindToRuns())
@@ -400,11 +400,17 @@ func TestStructuredQuery_bindExists(t *testing.T) {
 					},
 				},
 			},
+			TestStatusNeq{
+				BrowserName: "Firefox",
+				Status:      1,
+			},
 		},
 	}
 
 	runs := shared.TestRuns{}
-	or := Or{}
+	or1 := Or{}
+	or2 := Or{}
+	names := []string{"Edge", "Firefox"}
 	for i := 1; i <= 10; i++ {
 		runs = append(
 			runs,
@@ -412,26 +418,34 @@ func TestStructuredQuery_bindExists(t *testing.T) {
 				ID: int64(i),
 				ProductAtRevision: shared.ProductAtRevision{
 					Product: shared.Product{
-						BrowserName: "Edge",
+						BrowserName: names[i%2],
 					},
 				},
 			})
-		or.Args = append(
-			or.Args,
-			And{
-				Args: []ConcreteQuery{
-					TestNamePattern{
-						Pattern: "/",
+		if i%2 == 0 { // Evens are edge
+			or1.Args = append(or1.Args,
+				And{
+					Args: []ConcreteQuery{
+						TestNamePattern{
+							Pattern: "/",
+						},
+						RunTestStatusEq{
+							Run:    int64(i),
+							Status: 1,
+						},
 					},
-					RunTestStatusEq{
-						Run:    int64(i),
-						Status: 1,
-					},
+				})
+		} else { // Odds are firefox
+			or2.Args = append(or2.Args,
+				RunTestStatusNeq{
+					Run:    int64(i),
+					Status: 1,
 				},
-			})
+			)
+		}
 	}
 	expected := And{
-		Args: []ConcreteQuery{or},
+		Args: []ConcreteQuery{or1, or2},
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
@@ -559,12 +573,9 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 			},
 		},
 	}
-	// No runs match Safari constraint; it becomes True,
-	// True && Pattern="/" => Pattern="/".
-	expected := TestNamePattern{
-		Pattern: "/",
-	}
-	assert.Equal(t, expected, q.BindToRuns(runs...))
+	// No runs match Safari constraint; it becomes False,
+	// False && Pattern="/" => Pattern="/".
+	assert.Equal(t, False{}, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
@@ -590,9 +601,8 @@ func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 			},
 		},
 	}
-	// No runs match any constraint; reduce to True.
-	expected := True{}
-	assert.Equal(t, expected, q.BindToRuns(runs...))
+	// No runs match any constraint; reduce to False.
+	assert.Equal(t, False{}, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindOrReduce(t *testing.T) {
@@ -617,9 +627,9 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 			},
 		},
 	}
-	// No runs match Safari constraint; it becomes True,
-	// Pattern="/" || True => True.
-	expected := True{}
+	// No runs match Safari constraint; it becomes False,
+	// Pattern="/" || False => Pattern.
+	expected := TestNamePattern{"/"}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
@@ -674,38 +684,11 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 			},
 		},
 	}
-	// No runs match Safari constraint; two Chrome runs expand to disjunction over
-	// their values:
-	// Pattern="cssom" || (!Pattern="css" && Safari(status=1) && Chrome(status=1))
-	// => Pattern="cssom" || (!Pattern="css" && (RunID=1(status=1) ||
-	//                                           RunID=3(status=1))
-	expected := Or{
-		Args: []ConcreteQuery{
-			TestNamePattern{
-				Pattern: "cssom",
-			},
-			And{
-				Args: []ConcreteQuery{
-					Not{
-						Arg: TestNamePattern{
-							Pattern: "css",
-						},
-					},
-					Or{
-						Args: []ConcreteQuery{
-							RunTestStatusNeq{
-								Run:    1,
-								Status: 1,
-							},
-							RunTestStatusNeq{
-								Run:    3,
-								Status: 1,
-							},
-						},
-					},
-				},
-			},
-		},
+	// No runs match Safari constraint, so False; two Chrome runs expand to disjunction over
+	// their values, but are combined with false in an AND, so False; leaving only
+	// Pattern="cssom"
+	expected := TestNamePattern{
+		Pattern: "cssom",
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }

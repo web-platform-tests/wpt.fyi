@@ -50,10 +50,13 @@ type AbstractExists struct {
 // each specific/individual run.
 func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
-	for i := range e.Args {
-		byRun := make([]ConcreteQuery, len(runs))
-		for j, run := range runs {
-			byRun[j] = e.Args[i].BindToRuns(run)
+	for i, arg := range e.Args {
+		byRun := make([]ConcreteQuery, 0, len(runs))
+		for _, run := range runs {
+			bound := arg.BindToRuns(run)
+			if _, ok := bound.(False); !ok {
+				byRun = append(byRun, bound)
+			}
 		}
 		// Each separate Exists query is true if there exists a run that makes its concrete query true.
 		queries[i] = Or{
@@ -92,7 +95,7 @@ func (tse TestStatusEq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 		}
 	}
 	if len(ids) == 0 {
-		return True{}
+		return False{}
 	}
 	if len(ids) == 1 {
 		return RunTestStatusEq{ids[0], tse.Status}
@@ -115,7 +118,7 @@ func (tsn TestStatusNeq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 		}
 	}
 	if len(ids) == 0 {
-		return True{}
+		return False{}
 	}
 	if len(ids) == 1 {
 		return RunTestStatusNeq{ids[0], tsn.Status}
@@ -148,8 +151,8 @@ func (o AbstractOr) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(o.Args))
 	for i := range o.Args {
 		sub := o.Args[i].BindToRuns(runs...)
-		if _, ok := sub.(True); ok {
-			return True{}
+		if t, ok := sub.(True); ok {
+			return t
 		}
 		if _, ok := sub.(False); ok {
 			continue
@@ -157,7 +160,7 @@ func (o AbstractOr) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 		args = append(args, sub)
 	}
 	if len(args) == 0 {
-		return True{}
+		return False{}
 	}
 	if len(args) == 1 {
 		return args[0]
@@ -186,7 +189,7 @@ func (a AbstractAnd) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 		args = append(args, sub)
 	}
 	if len(args) == 0 {
-		return True{}
+		return False{}
 	}
 	if len(args) == 1 {
 		return args[0]
