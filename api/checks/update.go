@@ -187,7 +187,9 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	}
 
 	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
+	host := aeAPI.GetHostname()
 	checkState := summaries.CheckState{
+		HostName:   host,
 		TestRun:    &headRun,
 		Product:    checkProduct,
 		HeadSHA:    headRun.FullRevisionHash,
@@ -199,17 +201,15 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	regressions := diff.Differences.Regressions()
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
-	checksCanFailAndPass := aeAPI.IsFeatureEnabled(failChecksOnRegressionFeature)
+	checksCanBeNonNeutral := aeAPI.IsFeatureEnabled(failChecksOnRegressionFeature)
 
 	var summary summaries.Summary
-	host := aeAPI.GetHostname()
 
 	resultsComparison := summaries.ResultsComparison{
-		BaseRun:  baseRun,
-		HeadRun:  headRun,
-		HostName: host,
-		HostURL:  fmt.Sprintf("https://%s/", host),
-		DiffURL:  diffURL.String(),
+		BaseRun: baseRun,
+		HeadRun: headRun,
+		HostURL: fmt.Sprintf("https://%s/", host),
+		DiffURL: diffURL.String(),
 	}
 	if headRun.LabelsSet().Contains(shared.PRHeadLabel) {
 		// Deletions are meaningless and abundant comparing to master; ignore them.
@@ -234,10 +234,8 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 				data.More++
 			}
 		}
-		if checksCanFailAndPass {
-			success := "success"
-			data.CheckState.Conclusion = &success
-		}
+		success := "success"
+		data.CheckState.Conclusion = &success
 		summary = data
 	} else {
 		data := summaries.Regressed{
@@ -263,9 +261,9 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 				data.More++
 			}
 		}
-		if checksCanFailAndPass {
-			failure := "failure"
-			data.CheckState.Conclusion = &failure
+		if checksCanBeNonNeutral {
+			actionRequired := "action_required"
+			data.CheckState.Conclusion = &actionRequired
 		}
 		summary = data
 	}

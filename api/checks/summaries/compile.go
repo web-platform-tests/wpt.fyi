@@ -10,9 +10,10 @@ import (
 	"net/url"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"text/template"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -23,7 +24,19 @@ var templates *template.Template
 func init() {
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filename)
-	templates = template.Must(template.ParseGlob(dir + "/*.md"))
+	templates = template.Must(
+		template.
+			New("all.md").
+			Funcs(template.FuncMap{
+				"escapeMD": escapeMD,
+			}).
+			ParseGlob(dir + "/*.md"),
+	)
+}
+
+// escapeMD returns the escaped MD equivalent of the plain text data s.
+func escapeMD(s string) string {
+	return strings.Replace(s, `|`, `\|`, -1)
 }
 
 // Summary is the generic interface of a summary template data type.
@@ -40,6 +53,7 @@ type Summary interface {
 
 // CheckState represents all the status fields for updating a check.
 type CheckState struct {
+	HostName   string          // The host (e.g. wpt.fyi)
 	TestRun    *shared.TestRun // The (completed) TestRun, if applicable.
 	Product    shared.ProductSpec
 	HeadSHA    string
@@ -62,7 +76,11 @@ func (c CheckState) Name() string {
 
 // Title returns the check run's title, based on the product.
 func (c CheckState) Title() string {
-	return fmt.Sprintf("wpt.fyi - %s results", c.Product.DisplayName())
+	host := c.HostName
+	if host == "" {
+		host = "wpt.fyi"
+	}
+	return fmt.Sprintf("%s - %s results", host, c.Product.DisplayName())
 }
 
 // GetCheckState returns the info in the CheckState struct.

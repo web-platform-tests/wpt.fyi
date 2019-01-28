@@ -1,4 +1,4 @@
-# Production deployment spec for spanner write service.
+# Production deployment spec for query cache service.
 
 # Base golang 1.10 image.
 FROM gcr.io/gcp-runtimes/go1-builder:1.10 as builder

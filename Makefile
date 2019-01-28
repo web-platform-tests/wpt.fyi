@@ -147,7 +147,7 @@ golint_deps: git
 	fi
 
 package_service: var-APP_PATH
-	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/spanner/service" || "$(APP_PATH)" == "api/query/cache/service" ]]; then \
+	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/query/cache/service" ]]; then \
 		export TMP_DIR=$$(mktemp -d); \
 		rm -rf $(WPTD_PATH)$(APP_PATH)/wpt.fyi; \
 		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
@@ -216,7 +216,6 @@ deploy_staging: deployment_state var-BRANCH_NAME
 		cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
 	fi
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
-	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 cleanup_staging_versions: gcloud-login
@@ -226,7 +225,6 @@ deploy_production: deployment_state
 	gcloud config set project wptdashboard
 	cd $(WPTD_PATH); util/deploy.sh -r $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
-	rm -rf $(WPTD_PATH)api/spanner/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 webapp_node_modules: node

@@ -37,6 +37,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'githubCommitLinks',
       'insightsTab',
       'showTestType',
+      'showTestRefURL',
       'searchPRsForDirectories',
       'permalinks',
     ];
@@ -174,6 +175,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Display test types
       </paper-checkbox>
     </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{showTestRefURL}}">
+        Display link to ref (for reftests)
+      </paper-checkbox>
+    </paper-item>
     <paper-item>
       <paper-checkbox checked="{{githubCommitLinks}}">
         Show links to the commit on GitHub in the header row.
@@ -238,7 +244,7 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <h5>GitHub Status Checks</h5>
     <paper-item sub-item="">
       <paper-checkbox checked="{{failChecksOnRegression}}">
-        Fail the wpt.fyi GitHub status check if regressions are found, and pass them if not.
+        Set the wpt.fyi GitHub status check to action_required if regressions are found.
       </paper-checkbox>
     </paper-item>
     <paper-item sub-item="">

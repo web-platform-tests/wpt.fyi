@@ -88,6 +88,7 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 
 	pending := summaries.Pending{
 		CheckState: summaries.CheckState{
+			HostName:   aeAPI.GetHostname(),
 			TestRun:    nil, // It's pending, no run exists yet.
 			Product:    product,
 			HeadSHA:    suite.SHA,
@@ -95,8 +96,7 @@ func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.P
 			Status:     "in_progress",
 			PRNumbers:  suite.PRNumbers,
 		},
-		HostName: aeAPI.GetHostname(),
-		RunsURL:  runsURL.String(),
+		RunsURL: runsURL.String(),
 	}
 	return updateCheckRunSummary(s.ctx, pending, suite)
 }
