@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+</head>
+<body>
+  <test-fixture id="wpt-permalinks-fixture">
+    <template>
+      <wpt-permalinks></wpt-permalinks>
+    </template>
+  </test-fixture>
+
+  <script type="module">
+import '../wpt-permalinks.js';
+
+suite('wpt-permalinks', () => {
+  let sandbox, permalinks;
+
+  setup(() => {
+    permalinks = fixture('wpt-permalinks-fixture');
+    sandbox = sinon.sandbox.create();
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+
+  suite('include search', () => {
+    test('run ids', () => {
+      permalinks.queryParams = {q: 'foo'};
+      permalinks.selectedTab = 0;
+      permalinks.includeSearch = true;
+      expect(`${permalinks.url}`).to.include('q=foo');
+      permalinks.includeSearch = false;
+      expect(`${permalinks.url}`).to.not.include('q=foo');
+    });
+
+    test('query params', () => {
+      permalinks.queryParams = {q: 'bar'};
+      permalinks.selectedTab = 1;
+      permalinks.includeSearch = true;
+      expect(`${permalinks.url}`).to.include('q=bar');
+      permalinks.includeSearch = false;
+      expect(`${permalinks.url}`).to.not.include('q=bar');
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -57,7 +57,10 @@ class Permalinks extends QueryBuilder(PolymerElement) {
   static get properties() {
     return {
       path: String,
-      queryParams: Object,
+      queryParams: {
+        type: Object,
+        value: {}
+      },
       // Path lead-up, instead of '/', e.g. '/results/'.
       pathPrefix: String,
       testRuns: Array,
@@ -101,11 +104,14 @@ class Permalinks extends QueryBuilder(PolymerElement) {
     let params;
     if (selectedTab === 0) {
       params = {};
-      if (testRuns && testRuns.length) {
-        params.run_id = testRuns.map(r => r.id);
+      if (queryParams.q) {
+        params.q = queryParams.q;
       }
       if (queryParams.diff) {
         params.diff = queryParams.diff;
+      }
+      if (testRuns && testRuns.length) {
+        params.run_id = testRuns.map(r => r.id);
       }
     } else {
       params = Object.assign({}, this.queryParams);
