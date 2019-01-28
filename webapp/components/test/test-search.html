@@ -35,6 +35,14 @@ suite('<test-search>', () => {
       assertQueryParse('chrome-64:fail', {product: 'chrome-64', status: 'FAIL'});
     });
 
+    test('test status eq', () => {
+      assertQueryParse('sTaTuS:oK', {status: 'OK'});
+    });
+
+    test('test status neq', () => {
+      assertQueryParse('StAtUs:!FaIl', {status: {not: 'FAIL'}});
+    });
+
     test('browser test status eq', () => {
       assertQueryParse('cHrOmE:oK', {product: 'chrome', status: 'OK'});
     });

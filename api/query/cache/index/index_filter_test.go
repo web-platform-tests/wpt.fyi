@@ -242,8 +242,9 @@ func TestBindExecute_TestStatus(t *testing.T) {
 
 	runs := mockTestRuns(loader, idx, data)
 
+	p := shared.ParseProductSpecUnsafe("Chrome")
 	q := query.TestStatusEq{
-		Product: shared.ParseProductSpecUnsafe("Chrome"),
+		Product: &p,
 		Status:  shared.TestStatusFail,
 	}
 	srs := planAndExecute(t, runs, idx, q)

@@ -76,8 +76,10 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | "\\"" -- quote
 
     statusExp
-      = productSpec ":!" statusLiteral -- neq
-      | productSpec ":" statusLiteral -- eq
+      = caseInsensitive<"status"> ":" statusLiteral  -- eq
+      | caseInsensitive<"status"> ":!" statusLiteral -- neq
+      | productSpec ":!" statusLiteral               -- product_eq
+      | productSpec ":" statusLiteral                -- product_neq
 
     productSpec = browserName ("-" browserVersion)?
 
@@ -148,12 +150,18 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   nameLiteralChar_slash: (v) => '\\',
   nameLiteralChar_quote: (v) => '"',
   statusExp_eq: (l, colon, r) => {
+    return { status: r.sourceString.toUpperCase() };
+  },
+  statusExp_product_eq: (l, colon, r) => {
     return {
       product: l.sourceString.toLowerCase(),
       status: r.sourceString.toUpperCase(),
     };
   },
   statusExp_neq: (l, colonBang, r) => {
+    return { status: {not: r.sourceString.toUpperCase() } };
+  },
+  statusExp_product_neq: (l, colonBang, r) => {
     return {
       product: l.sourceString.toLowerCase(),
       status: {not: r.sourceString.toUpperCase()},

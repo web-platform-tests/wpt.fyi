@@ -41,18 +41,18 @@ func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result
-// from at least one test run with the given browser name matches the given
-// status value.
+// from at least one test run matches the given status value, optionally filtered
+// to a specific browser name.
 type TestStatusEq struct {
-	Product shared.ProductSpec
+	Product *shared.ProductSpec
 	Status  int64
 }
 
 // TestStatusNeq is a query atom that matches tests where the test status/result
-// from at least one test run with the given browser name does not match the
-// given status value.
+// from at least one test run does not match the given status value, optionally
+// filtered to a specific browser name.
 type TestStatusNeq struct {
-	Product shared.ProductSpec
+	Product *shared.ProductSpec
 	Status  int64
 }
 
@@ -61,7 +61,7 @@ type TestStatusNeq struct {
 func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
-		if tse.Product.Matches(run) {
+		if tse.Product == nil || tse.Product.Matches(run) {
 			ids = append(ids, run.ID)
 		}
 	}
@@ -84,7 +84,7 @@ func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 func (tsn TestStatusNeq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
-		if tsn.Product.Matches(run) {
+		if tsn.Product == nil || tsn.Product.Matches(run) {
 			ids = append(ids, run.ID)
 		}
 	}
@@ -234,16 +234,17 @@ func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 	if data.Product == "" && data.BrowserName != "" {
 		data.Product = data.BrowserName
 	}
-	if len(data.Product) == 0 {
-		return errors.New(`Missing test status constraint property: "product"`)
-	}
 	if len(data.Status) == 0 {
 		return errors.New(`Missing test status constraint property: "status"`)
 	}
 
-	product, err := shared.ParseProductSpec(data.Product)
-	if err != nil {
-		return err
+	var product *shared.ProductSpec
+	if data.Product != "" {
+		p, err := shared.ParseProductSpec(data.Product)
+		if err != nil {
+			return err
+		}
+		product = &p
 	}
 
 	statusStr := strings.ToUpper(data.Status)
@@ -275,16 +276,17 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 	if data.Product == "" && data.BrowserName != "" {
 		data.Product = data.BrowserName
 	}
-	if len(data.Product) == 0 {
-		return errors.New(`Missing test status constraint property: "product"`)
-	}
 	if len(data.Status.Not) == 0 {
 		return errors.New(`Missing test status constraint property: "status.not"`)
 	}
 
-	product, err := shared.ParseProductSpec(data.Product)
-	if err != nil {
-		return err
+	var product *shared.ProductSpec
+	if data.Product != "" {
+		p, err := shared.ParseProductSpec(data.Product)
+		if err != nil {
+			return err
+		}
+		product = &p
 	}
 
 	statusStr := strings.ToUpper(data.Status.Not)
