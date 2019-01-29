@@ -307,6 +307,8 @@ func GetSharedPath(paths ...string) string {
 				if part == otherParts[i] {
 					continue
 				}
+				// Crop to the matching parts, append empty last-part
+				// so that we have a trailing slash.
 				parts = append(parts[:i], "")
 				break
 			}
