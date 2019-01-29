@@ -31,6 +31,10 @@ suite('<test-search>', () => {
       assertQueryParse('2dcontext', {pattern: '2dcontext'});
     });
 
+    test('versioned browser', () => {
+      assertQueryParse('chrome-64:fail', {product: 'chrome-64', status: 'FAIL'});
+    });
+
     test('test status eq', () => {
       assertQueryParse('sTaTuS:oK', {status: 'OK'});
     });
@@ -40,18 +44,18 @@ suite('<test-search>', () => {
     });
 
     test('browser test status eq', () => {
-      assertQueryParse('cHrOmE:oK', {browser_name: 'chrome', status: 'OK'});
+      assertQueryParse('cHrOmE:oK', {product: 'chrome', status: 'OK'});
     });
 
     test('browser test status neq', () => {
-      assertQueryParse('sAfArI:!FaIl', {browser_name: 'safari', status: {not: 'FAIL'}});
+      assertQueryParse('sAfArI:!FaIl', {product: 'safari', status: {not: 'FAIL'}});
     });
 
     test('pattern + test status', () => {
       assertQueryParse('cssom firefox:timeout', {
         and: [
           {pattern: 'cssom'},
-          {browser_name: 'firefox', status: 'TIMEOUT'},
+          {product: 'firefox', status: 'TIMEOUT'},
         ],
       });
     });
@@ -60,7 +64,7 @@ suite('<test-search>', () => {
       assertQueryParse('cssom or firefox:timeout', {
         or: [
           {pattern: 'cssom'},
-          {browser_name: 'firefox', status: 'TIMEOUT'},
+          {product: 'firefox', status: 'TIMEOUT'},
         ],
       });
     });
@@ -110,13 +114,13 @@ suite('<test-search>', () => {
     test('all features', () => {
       assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
         and: [
-          {browser_name: 'firefox', status: 'PASS'},
+          {product: 'firefox', status: 'PASS'},
           {
             or: [
               {pattern: 'a'},
               {
                 and: [
-                  {browser_name: 'chrome', status: 'FAIL'},
+                  {product: 'chrome', status: 'FAIL'},
                   {
                     and: [
                       {pattern: 'b'},

@@ -78,14 +78,18 @@ const QUERY_GRAMMAR = ohm.grammar(`
     statusExp
       = caseInsensitive<"status"> ":" statusLiteral  -- eq
       | caseInsensitive<"status"> ":!" statusLiteral -- neq
-      | browserName ":" statusLiteral                -- browser_eq
-      | browserName ":!" statusLiteral               -- browser_neq
+      | productSpec ":" statusLiteral                -- product_eq
+      | productSpec ":!" statusLiteral               -- product_neq
+
+    productSpec = browserName ("-" browserVersion)?
 
     browserName
       = caseInsensitive<"chrome">
       | caseInsensitive<"edge">
       | caseInsensitive<"firefox">
       | caseInsensitive<"safari">
+
+    browserVersion = number ("." number)*
 
     statusLiteral
       = caseInsensitive<"unknown">
@@ -105,6 +109,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = "\\x00".."\\x08"
       | "\\x0E".."\\x1F"
       | "\\x21".."\\uFFFF"
+
+    number = digit+
   }
 `);
 /* eslint-disable */
@@ -146,18 +152,18 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   statusExp_eq: (l, colon, r) => {
     return { status: r.sourceString.toUpperCase() };
   },
-  statusExp_browser_eq: (l, colon, r) => {
+  statusExp_product_eq: (l, colon, r) => {
     return {
-      browser_name: l.sourceString.toLowerCase(),
+      product: l.sourceString.toLowerCase(),
       status: r.sourceString.toUpperCase(),
     };
   },
   statusExp_neq: (l, colonBang, r) => {
     return { status: {not: r.sourceString.toUpperCase() } };
   },
-  statusExp_browser_neq: (l, colonBang, r) => {
+  statusExp_product_neq: (l, colonBang, r) => {
     return {
-      browser_name: l.sourceString.toLowerCase(),
+      product: l.sourceString.toLowerCase(),
       status: {not: r.sourceString.toUpperCase()},
     };
   },
