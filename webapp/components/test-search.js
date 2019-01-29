@@ -78,8 +78,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
     statusExp
       = caseInsensitive<"status"> ":" statusLiteral  -- eq
       | caseInsensitive<"status"> ":!" statusLiteral -- neq
-      | productSpec ":!" statusLiteral               -- product_eq
-      | productSpec ":" statusLiteral                -- product_neq
+      | productSpec ":" statusLiteral                -- product_eq
+      | productSpec ":!" statusLiteral               -- product_neq
 
     productSpec = browserName ("-" browserVersion)?
 
