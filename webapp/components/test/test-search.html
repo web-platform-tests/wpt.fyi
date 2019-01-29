@@ -32,15 +32,15 @@ suite('<test-search>', () => {
     });
 
     test('versioned browser', () => {
-      assertQueryParse('chrome-64:fail', {product: 'chrome-64', status: 'FAIL'});
+      assertQueryParse('chrome-64:fail', {exists: [{product: 'chrome-64', status: 'FAIL'}]});
     });
 
     test('test status eq', () => {
-      assertQueryParse('sTaTuS:oK', {status: 'OK'});
+      assertQueryParse('sTaTuS:oK', {exists: [{status: 'OK'}]});
     });
 
     test('test status neq', () => {
-      assertQueryParse('StAtUs:!FaIl', {status: {not: 'FAIL'}});
+      assertQueryParse('StAtUs:!FaIl', {exists: [{status: {not: 'FAIL'}}]});
     });
 
     test('browser test status eq', () => {
@@ -136,14 +136,14 @@ suite('<test-search>', () => {
         exists: [
           {
             or: [
-              {browser_name: 'chrome', status: 'PASS'},
-              {browser_name: 'edge', status: 'PASS'},
+              {product: 'chrome', status: 'PASS'},
+              {product: 'edge', status: 'PASS'},
             ]
           },
           {
             and: [
-              {browser_name: 'firefox', status: { not: 'PASS'} },
-              {browser_name: 'firefox', status: { not: 'OK'} },
+              {product: 'firefox', status: { not: 'PASS'} },
+              {product: 'firefox', status: { not: 'OK'} },
             ],
           },
         ]
@@ -152,14 +152,14 @@ suite('<test-search>', () => {
         'chrome:pass (!(firefox:pass or firefox:ok) and !(safari:pass or safari:ok) and !(edge:pass or edge:ok))',
         {
           exists: [
-            {browser_name: 'chrome', status: 'PASS'},
+            {product: 'chrome', status: 'PASS'},
             {
               and: ['firefox','safari','edge'].map(b => {
                 return {
                   not: {
                     or: [
-                      {browser_name: b, status: 'PASS'},
-                      {browser_name: b, status: 'OK'},
+                      {product: b, status: 'PASS'},
+                      {product: b, status: 'OK'},
                     ]
                   }
                 };
