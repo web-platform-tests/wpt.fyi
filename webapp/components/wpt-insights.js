@@ -82,7 +82,7 @@ class Flakes extends ProductInfo(PolymerElement) {
       },
       query: {
         type: String,
-        computed: 'computeQuery(browser)',
+        computed: 'computeQuery()',
       },
       url: {
         type: URL,
@@ -91,9 +91,10 @@ class Flakes extends ProductInfo(PolymerElement) {
     };
   }
 
-  computeQuery(browser) {
-    const passing = Object.values(TestStatuses).filter(s => s.isPass).map(s => `${browser}:${s}`).join('|');
-    const notPassing = Object.values(TestStatuses).filter(s => !s.isPass).map(s => `${browser}:${s}`).join('|');
+  computeQuery() {
+    const passStatuses =Object.values(TestStatuses).filter(s => s.isPass);
+    const passing = passStatuses.map(s => `status:${s}`).join('|');
+    const notPassing = passStatuses.map(s => `status:!${s}`).join('&');
     return `(${passing}) (${notPassing})`;
   }
 
