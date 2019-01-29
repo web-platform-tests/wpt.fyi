@@ -227,9 +227,7 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	url := "/api/search"
 	r, err := i.NewRequest("POST", url, bytes.NewBuffer([]byte(fmt.Sprintf(`{
 		"run_ids": [%d, %d],
-		"query": {
-			"pattern": %s
-		}
+		"query": {"exists": [{"pattern": %s}] }
 	}`, testRuns[0].ID, testRuns[1].ID, string(q)))))
 	assert.Nil(t, err)
 	ctx := shared.NewAppEngineContext(r)
@@ -256,7 +254,7 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	assert.Nil(t, err)
 	var data SearchResponse
 	err = json.Unmarshal(bytes, &data)
-	assert.Nil(t, err)
+	assert.Nil(t, err, "Error unmarshalling \"%s\"", string(bytes))
 
 	// Same result as TestGetRunsAndFilters_specificRunIDs.
 	assert.Equal(t, SearchResponse{
@@ -456,9 +454,7 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	url := "/api/search"
 	r, err := i.NewRequest("POST", url, bytes.NewBuffer([]byte(fmt.Sprintf(`{
 		"run_ids": [%d, %d],
-		"query": {
-			"pattern": %s
-		}
+		"query": {"exists": [{"pattern": %s}] }
 	}`, testRuns[0].ID, testRuns[1].ID, string(q)))))
 	assert.Nil(t, err)
 	ctx := shared.NewAppEngineContext(r)
