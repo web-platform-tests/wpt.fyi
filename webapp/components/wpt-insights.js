@@ -94,7 +94,8 @@ class Flakes extends ProductInfo(PolymerElement) {
   computeQuery() {
     const passStatuses =Object.values(TestStatuses).filter(s => s.isPass);
     const passing = passStatuses.map(s => `status:${s}`).join('|');
-    const notPassing = passStatuses.map(s => `status:!${s}`).join('&');
+    // Ignore UNKNOWN - that's just a missing test.
+    const notPassing = passStatuses.concat(['unknown']).map(s => `status:!${s}`).join('&');
     return `(${passing}) (${notPassing})`;
   }
 
