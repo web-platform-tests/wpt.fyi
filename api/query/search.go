@@ -126,8 +126,17 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	simpleQ, ok := rq.AbstractQuery.(TestNamePattern)
-	if !ok {
+	// Check if the query is a simple (empty, or test name only) query
+	var simpleQ TestNamePattern
+	var isSimpleQ bool
+	{
+		exists, ok := rq.AbstractQuery.(AbstractExists)
+		if ok && len(exists.Args) == 1 {
+			simpleQ, isSimpleQ = exists.Args[0].(TestNamePattern)
+		}
+	}
+
+	if !isSimpleQ {
 		ctx := sh.api.Context()
 		hostname := sh.api.GetServiceHostname("searchcache")
 		// TODO: This will not work when hostname is localhost (http scheme needed).
