@@ -755,7 +755,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
     // Add an empty row for all the tests known from the manifest.
     const knownNodes = {};
-    if (this.manifest) {
+    if (this.manifest && !this.search) {
       for (const type of Object.keys(this.manifest.items)) {
         if (['manual', 'reftest', 'testharness', 'wdspec'].includes(type)) {
           for (const file of Object.keys(this.manifest.items[type])) {
