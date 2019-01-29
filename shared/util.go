@@ -294,3 +294,25 @@ func CropString(s string, i int) string {
 	}
 	return s[:i]
 }
+
+// GetSharedPath gets the longest path shared between the given paths.
+func GetSharedPath(paths ...string) string {
+	var parts []string
+	for _, path := range paths {
+		if parts == nil {
+			parts = strings.Split(path, "/")
+		} else {
+			otherParts := strings.Split(path, "/")
+			for i, part := range parts {
+				if part == otherParts[i] {
+					continue
+				}
+				// Crop to the matching parts, append empty last-part
+				// so that we have a trailing slash.
+				parts = append(parts[:i], "")
+				break
+			}
+		}
+	}
+	return strings.Join(parts, "/")
+}

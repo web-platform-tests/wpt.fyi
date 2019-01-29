@@ -83,3 +83,10 @@ func checkResult(t *testing.T, testRun TestRun, testFile string, expected string
 		t.Errorf("\nGot:\n%q\nExpected:\n%q", got, expected)
 	}
 }
+
+func TestGetSharedPath(t *testing.T) {
+	assert.Equal(t, "/a/b/c.html", GetSharedPath("/a/b/c.html"))
+	assert.Equal(t, "/a/b/", GetSharedPath("/a/b/c.html", "/a/b/d.html"))
+	assert.Equal(t, "/", GetSharedPath("/a/b/c.html", "/d/e/f.html"))
+	assert.Equal(t, "/a/", GetSharedPath("/a/z.html", "/a/b/x.html", "/a/b/y.html"))
+}
