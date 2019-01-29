@@ -131,3 +131,13 @@ func (p *ProductSpec) UnmarshalJSON(data []byte) (err error) {
 	*p, err = ParseProductSpec(s)
 	return err
 }
+
+// UnmarshalYAML parses an array so that ProductSpec can be unmarshalled.
+func (p *ProductSpec) UnmarshalYAML(unmarshal func(interface{}) error) (err error) {
+	var s string
+	if err := unmarshal(&s); err != nil {
+		return err
+	}
+	*p, err = ParseProductSpec(s)
+	return err
+}
