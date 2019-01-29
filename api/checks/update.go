@@ -207,9 +207,9 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	// Set URL path to deepest shared dir.
 	var tests []string
 	if hasRegressions {
-		tests, _ = shared.MapStringKeys(diff.AfterSummary)
-	} else {
 		tests = shared.ToStringSlice(regressions)
+	} else {
+		tests, _ = shared.MapStringKeys(diff.AfterSummary)
 	}
 	sharedPath := "/results" + shared.GetSharedPath(tests...)
 	diffURL.Path = sharedPath
