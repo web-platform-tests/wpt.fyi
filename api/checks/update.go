@@ -199,9 +199,20 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	}
 
 	regressions := diff.Differences.Regressions()
+	hasRegressions := regressions.Cardinality() > 0
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
 	checksCanBeNonNeutral := aeAPI.IsFeatureEnabled(failChecksOnRegressionFeature)
+
+	// Set URL path to deepest shared dir.
+	var tests []string
+	if hasRegressions {
+		tests, _ = shared.MapStringKeys(diff.AfterSummary)
+	} else {
+		tests = shared.ToStringSlice(regressions)
+	}
+	sharedPath := "/results" + shared.GetSharedPath(tests...)
+	diffURL.Path = sharedPath
 
 	var summary summaries.Summary
 
@@ -214,10 +225,11 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	if headRun.LabelsSet().Contains(shared.PRHeadLabel) {
 		// Deletions are meaningless and abundant comparing to master; ignore them.
 		masterDiffFilter := shared.DiffFilterParam{Added: true, Changed: true, Unchanged: true}
-		resultsComparison.MasterDiffURL = diffAPI.GetMasterDiffURL(headRun, &masterDiffFilter).String()
+		masterDiffURL := diffAPI.GetMasterDiffURL(headRun, &masterDiffFilter)
+		masterDiffURL.Path = sharedPath
+		resultsComparison.MasterDiffURL = masterDiffURL.String()
 	}
 
-	hasRegressions := regressions.Cardinality() > 0
 	if !hasRegressions {
 		collapsed := collapseSummary(diff.AfterSummary, 10)
 		data := summaries.Completed{
