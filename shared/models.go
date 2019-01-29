@@ -293,10 +293,7 @@ func (ids TestRunIDs) GetKeys(store Datastore) []Key {
 // for the gives TestRunIDs.
 func (ids TestRunIDs) LoadTestRuns(store Datastore) (testRuns TestRuns, err error) {
 	if len(ids) > 0 {
-		keys := make([]Key, len(ids))
-		for i, id := range ids {
-			keys[i] = store.NewKey("TestRun", id)
-		}
+		keys := ids.GetKeys(store)
 		testRuns = make(TestRuns, len(keys))
 		if err = store.GetMulti(keys, testRuns); err != nil {
 			return testRuns, err

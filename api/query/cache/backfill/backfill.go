@@ -73,7 +73,7 @@ func (f datastoreRunFetcher) FetchRuns(limit int) (shared.TestRunsByProduct, err
 	store := shared.NewCloudDatastore(ctx, client)
 
 	// Query Datastore for latest maxBytes/bytesPerRun test runs.
-	runs, err := store.LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil)
+	runs, err := store.TestRunQuery().LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil)
 	return runs, nil
 }
 

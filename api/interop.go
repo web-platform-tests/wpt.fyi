@@ -97,7 +97,8 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 		// (but, each SHA being from an aligned run), so we need to keep the keys grouped.
 		if filters.SHAs.EmptyOrLatest() && filters.Aligned != nil && *filters.Aligned {
 			ten := 10
-			_, shaKeys, err := shared.GetAlignedRunSHAs(store, products, filters.Labels, filters.From, filters.To, &ten, nil)
+			_, shaKeys, err := store.TestRunQuery().GetAlignedRunSHAs(
+				products, filters.Labels, filters.From, filters.To, &ten, nil)
 			if err != nil {
 				return nil, err
 			} else if len(shaKeys) < 1 {

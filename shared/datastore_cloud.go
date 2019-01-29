@@ -6,10 +6,9 @@ package shared
 
 import (
 	"context"
-	"time"
 
 	"cloud.google.com/go/datastore"
-	mapset "github.com/deckarep/golang-set"
+	"google.golang.org/api/iterator"
 )
 
 type cloudKey struct {
@@ -38,8 +37,16 @@ type cloudDatastore struct {
 	client *datastore.Client
 }
 
+func (d cloudDatastore) TestRunQuery() TestRunQuery {
+	return testRunQueryImpl{store: d}
+}
+
 func (d cloudDatastore) Context() context.Context {
 	return d.ctx
+}
+
+func (d cloudDatastore) Done() interface{} {
+	return iterator.Done
 }
 
 func (d cloudDatastore) NewQuery(typeName string) Query {
@@ -74,40 +81,6 @@ func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 		cast[i] = keys[i].(cloudKey).key
 	}
 	return d.client.GetMulti(d.ctx, cast, dst)
-}
-
-func (d cloudDatastore) LoadTestRuns(
-	products []ProductSpec,
-	labels mapset.Set,
-	revisions []string,
-	from *time.Time,
-	to *time.Time,
-	limit,
-	offset *int) (result TestRunsByProduct, err error) {
-	return loadTestRuns(d, products, labels, revisions, from, to, limit, offset)
-}
-
-func (d cloudDatastore) LoadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
-	result = TestRunsByProduct{}
-	for _, kbp := range keysByProduct {
-		runs := make(TestRuns, len(kbp.Keys))
-		err := d.GetMulti(kbp.Keys, runs)
-		if err != nil {
-			break
-		}
-		result = append(result, ProductTestRuns{
-			Product:  kbp.Product,
-			TestRuns: runs,
-		})
-	}
-	if err != nil {
-		return nil, err
-	}
-	// Append the keys as ID
-	for i, kbp := range keysByProduct {
-		result[i].TestRuns.SetTestRunIDs(GetTestRunIDs(kbp.Keys))
-	}
-	return result, err
 }
 
 type cloudQuery struct {

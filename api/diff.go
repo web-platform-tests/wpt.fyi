@@ -52,7 +52,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineCachedDatastore(ctx)
 	var runs shared.TestRuns
 	if len(runIDs) > 0 {
 		runs, err = runIDs.LoadTestRuns(store)
@@ -87,7 +87,6 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 			runFilter.Products = beforeAndAfter
 		}
 		var runsByProduct shared.TestRunsByProduct
-		store := shared.NewAppEngineDatastore(ctx)
 		runsByProduct, err = LoadTestRunsForFilters(store, runFilter)
 		if err != nil {
 			runs = runsByProduct.AllRuns()
