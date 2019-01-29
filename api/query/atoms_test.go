@@ -593,7 +593,7 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 		},
 	}
 	// No runs match Safari constraint; it becomes False,
-	// False && Pattern="/" => Pattern="/".
+	// False && Pattern="/" => False.
 	assert.Equal(t, False{}, q.BindToRuns(runs...))
 }
 
