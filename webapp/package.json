@@ -12,7 +12,7 @@
   "scripts": {
     "test": "npm run wct",
     "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
-    "lint-fix": "eslint --fix 'components/**/*.js' ",
+    "lint-fix": "eslint --fix 'components/**/*.js' && eslint --fix --plugin html 'components/test/*.html' ",
     "wctp": "wct --npm -p",
     "wct": "wct --npm"
   },

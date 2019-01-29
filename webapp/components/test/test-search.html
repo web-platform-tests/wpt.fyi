@@ -28,32 +28,32 @@ suite('<test-search>', () => {
     };
 
     test('simple pattern', () => {
-      assertQueryParse('2dcontext', {pattern: '2dcontext'});
+      assertQueryParse('2dcontext', {exists: [{pattern: '2dcontext'}]});
     });
 
     test('versioned browser', () => {
-      assertQueryParse('chrome-64:fail', {product: 'chrome-64', status: 'FAIL'});
+      assertQueryParse('chrome-64:fail', {exists: [{product: 'chrome-64', status: 'FAIL'}]});
     });
 
     test('test status eq', () => {
-      assertQueryParse('sTaTuS:oK', {status: 'OK'});
+      assertQueryParse('sTaTuS:oK', {exists: [{status: 'OK'}]});
     });
 
     test('test status neq', () => {
-      assertQueryParse('StAtUs:!FaIl', {status: {not: 'FAIL'}});
+      assertQueryParse('StAtUs:!FaIl', {exists: [{status: {not: 'FAIL'}}]});
     });
 
     test('browser test status eq', () => {
-      assertQueryParse('cHrOmE:oK', {product: 'chrome', status: 'OK'});
+      assertQueryParse('cHrOmE:oK', {exists: [{product: 'chrome', status: 'OK'}]});
     });
 
     test('browser test status neq', () => {
-      assertQueryParse('sAfArI:!FaIl', {product: 'safari', status: {not: 'FAIL'}});
+      assertQueryParse('sAfArI:!FaIl', {exists: [{product: 'safari', status: {not: 'FAIL'}}]});
     });
 
     test('pattern + test status', () => {
       assertQueryParse('cssom firefox:timeout', {
-        and: [
+        exists: [
           {pattern: 'cssom'},
           {product: 'firefox', status: 'TIMEOUT'},
         ],
@@ -62,16 +62,18 @@ suite('<test-search>', () => {
 
     test('pattern | test status', () => {
       assertQueryParse('cssom or firefox:timeout', {
-        or: [
-          {pattern: 'cssom'},
-          {product: 'firefox', status: 'TIMEOUT'},
-        ],
+        exists: [{
+          or: [
+            {pattern: 'cssom'},
+            {product: 'firefox', status: 'TIMEOUT'},
+          ]
+        }],
       });
     });
 
     test('implicit and, or', () => {
       assertQueryParse('a b or c', {
-        and: [
+        exists: [
           {pattern: 'a'},
           {
             or: [
@@ -85,35 +87,92 @@ suite('<test-search>', () => {
 
     test('explicit and, or', () => {
       assertQueryParse('a and b or c', {
-        or: [
-          {
-            and: [
-              {pattern: 'a'},
-              {pattern: 'b'},
-            ],
-          },
-          {pattern: 'c'},
-        ],
+        exists: [{
+          or: [
+            {
+              and: [
+                {pattern: 'a'},
+                {pattern: 'b'},
+              ],
+            },
+            {pattern: 'c'},
+          ],
+        }]
       });
     });
 
     test('parens', () => {
       assertQueryParse('a and ( b or c )', {
-        and: [
-          {pattern: 'a'},
+        exists: [{
+          and: [
+            {pattern: 'a'},
+            {
+              or: [
+                {pattern: 'b'},
+                {pattern: 'c'},
+              ],
+            },
+          ],
+        }]
+      });
+
+      assertQueryParse('a or ( b and c )', {
+        exists: [{
+          or: [
+            {pattern: 'a'},
+            {
+              and: [
+                {pattern: 'b'},
+                {pattern: 'c'},
+              ],
+            },
+          ],
+        }],
+      });
+    });
+
+    test('nested or/and/not', () => {
+      assertQueryParse('(chrome:pass or edge:pass) (firefox:!pass and firefox:!ok)', {
+        exists: [
           {
             or: [
-              {pattern: 'b'},
-              {pattern: 'c'},
+              {product: 'chrome', status: 'PASS'},
+              {product: 'edge', status: 'PASS'},
+            ]
+          },
+          {
+            and: [
+              {product: 'firefox', status: { not: 'PASS'} },
+              {product: 'firefox', status: { not: 'OK'} },
             ],
           },
-        ],
+        ]
       });
+      assertQueryParse(
+        'chrome:pass (!(firefox:pass or firefox:ok) and !(safari:pass or safari:ok) and !(edge:pass or edge:ok))',
+        {
+          exists: [
+            {product: 'chrome', status: 'PASS'},
+            {
+              and: ['firefox','safari','edge'].map(b => {
+                return {
+                  not: {
+                    or: [
+                      {product: b, status: 'PASS'},
+                      {product: b, status: 'OK'},
+                    ]
+                  }
+                };
+              })
+            },
+          ]
+        }
+      );
     });
 
     test('all features', () => {
       assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
-        and: [
+        exists: [
           {product: 'firefox', status: 'PASS'},
           {
             or: [
@@ -131,7 +190,7 @@ suite('<test-search>', () => {
               },
             ],
           },
-        ],
+        ]
       });
     });
   });

@@ -306,7 +306,7 @@ func TestSync(t *testing.T) {
 			plan, err := i.Bind(runs, query.TestStatusEq{
 				Product: &c,
 				Status:  shared.TestStatusPass,
-			}.BindToRuns(runs))
+			}.BindToRuns(runs...))
 			if err != nil {
 				return
 			}

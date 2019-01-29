@@ -237,6 +237,21 @@ func TestStructuredQuery_and(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
+func TestStructuredQuery_exists(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{"pattern": "cssom"},
+				{"pattern": "html"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+}
+
 func TestStructuredQuery_nested(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -278,16 +293,16 @@ func TestStructuredQuery_bindPattern(t *testing.T) {
 	tnp := TestNamePattern{
 		Pattern: "/",
 	}
-	q := tnp.BindToRuns([]shared.TestRun{})
+	q := tnp.BindToRuns()
 	assert.Equal(t, tnp, q)
 }
 
 func TestStructuredQuery_bindBrowserStatusNoRuns(t *testing.T) {
 	p := shared.ParseProductSpecUnsafe("Chrome")
-	assert.Equal(t, True{}, TestStatusEq{
+	assert.Equal(t, False{}, TestStatusEq{
 		Product: &p,
 		Status:  1,
-	}.BindToRuns([]shared.TestRun{}))
+	}.BindToRuns())
 }
 
 func TestStructuredQuery_bindBrowserStatusSingleRun(t *testing.T) {
@@ -311,7 +326,7 @@ func TestStructuredQuery_bindBrowserStatusSingleRun(t *testing.T) {
 		Run:    1,
 		Status: 1,
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindBrowserStatusSingleRunNeq(t *testing.T) {
@@ -335,14 +350,14 @@ func TestStructuredQuery_bindBrowserStatusSingleRunNeq(t *testing.T) {
 		Run:    1,
 		Status: 1,
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
 	q := TestStatusNeq{
 		Status: 1,
 	}
-	runs := []shared.TestRun{
+	runs := shared.TestRuns{
 		shared.TestRun{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Firefox").ProductAtRevision,
@@ -365,7 +380,7 @@ func TestStructuredQuery_bindStatusSomeRuns(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindBrowserStatusSomeRuns(t *testing.T) {
@@ -401,7 +416,69 @@ func TestStructuredQuery_bindBrowserStatusSomeRuns(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindExists(t *testing.T) {
+	e := shared.ParseProductSpecUnsafe("edge")
+	f := shared.ParseProductSpecUnsafe("firefox")
+	q := AbstractExists{
+		Args: []AbstractQuery{
+			AbstractAnd{
+				Args: []AbstractQuery{
+					TestNamePattern{
+						Pattern: "/",
+					},
+					TestStatusEq{
+						Product: &e,
+						Status:  1,
+					},
+				},
+			},
+			TestStatusNeq{
+				Product: &f,
+				Status:  1,
+			},
+		},
+	}
+
+	runs := shared.TestRuns{}
+	or1 := Or{}
+	or2 := Or{}
+	products := []shared.ProductSpec{e, f}
+	for i := 1; i <= 10; i++ {
+		runs = append(
+			runs,
+			shared.TestRun{
+				ID:                int64(i),
+				ProductAtRevision: products[i%2].ProductAtRevision,
+			})
+		if i%2 == 0 { // Evens are edge
+			or1.Args = append(or1.Args,
+				And{
+					Args: []ConcreteQuery{
+						TestNamePattern{
+							Pattern: "/",
+						},
+						RunTestStatusEq{
+							Run:    int64(i),
+							Status: 1,
+						},
+					},
+				})
+		} else { // Odds are firefox
+			or2.Args = append(or2.Args,
+				RunTestStatusNeq{
+					Run:    int64(i),
+					Status: 1,
+				},
+			)
+		}
+	}
+	expected := And{
+		Args: []ConcreteQuery{or1, or2},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {
@@ -435,7 +512,7 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindOr(t *testing.T) {
@@ -469,7 +546,7 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindNot(t *testing.T) {
@@ -493,7 +570,7 @@ func TestStructuredQuery_bindNot(t *testing.T) {
 			Status: 1,
 		},
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAndReduce(t *testing.T) {
@@ -515,12 +592,9 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
 	}
-	// No runs match Safari constraint; it becomes True,
-	// True && Pattern="/" => Pattern="/".
-	expected := TestNamePattern{
-		Pattern: "/",
-	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	// No runs match Safari constraint; it becomes False,
+	// False && Pattern="/" => False.
+	assert.Equal(t, False{}, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
@@ -544,9 +618,8 @@ func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
 	}
-	// No runs match any constraint; reduce to True.
-	expected := True{}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	// No runs match any constraint; reduce to False.
+	assert.Equal(t, False{}, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindOrReduce(t *testing.T) {
@@ -568,10 +641,10 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
 	}
-	// No runs match Safari constraint; it becomes True,
-	// Pattern="/" || True => True.
-	expected := True{}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	// No runs match Safari constraint; it becomes False,
+	// Pattern="/" || False => Pattern.
+	expected := TestNamePattern{"/"}
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindComplex(t *testing.T) {
@@ -615,38 +688,11 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Chrome").ProductAtRevision,
 		},
 	}
-	// No runs match Safari constraint; two Chrome runs expand to disjunction over
-	// their values:
-	// Pattern="cssom" || (!Pattern="css" && Safari(status=1) && Chrome(status=1))
-	// => Pattern="cssom" || (!Pattern="css" && (RunID=1(status=1) ||
-	//                                           RunID=3(status=1))
-	expected := Or{
-		Args: []ConcreteQuery{
-			TestNamePattern{
-				Pattern: "cssom",
-			},
-			And{
-				Args: []ConcreteQuery{
-					Not{
-						Arg: TestNamePattern{
-							Pattern: "css",
-						},
-					},
-					Or{
-						Args: []ConcreteQuery{
-							RunTestStatusNeq{
-								Run:    1,
-								Status: 1,
-							},
-							RunTestStatusNeq{
-								Run:    3,
-								Status: 1,
-							},
-						},
-					},
-				},
-			},
-		},
+	// No runs match Safari constraint, so False; two Chrome runs expand to disjunction over
+	// their values, but are combined with false in an AND, so False; leaving only
+	// Pattern="cssom"
+	expected := TestNamePattern{
+		Pattern: "cssom",
 	}
-	assert.Equal(t, expected, q.BindToRuns(runs))
+	assert.Equal(t, expected, q.BindToRuns(runs...))
 }

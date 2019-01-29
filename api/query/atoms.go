@@ -18,7 +18,7 @@ var browsers = shared.GetDefaultBrowserNames()
 // AbstractQuery is an intermetidate representation of a test results query that
 //  has not been bound to specific shared.TestRun specs for processing.
 type AbstractQuery interface {
-	BindToRuns(runs []shared.TestRun) ConcreteQuery
+	BindToRuns(runs ...shared.TestRun) ConcreteQuery
 }
 
 // RunQuery is the internal representation of a query recieved from an HTTP
@@ -36,8 +36,37 @@ type TestNamePattern struct {
 
 // BindToRuns for TestNamePattern is a no-op: TestNamePattern implements both
 // AbstractQuery and ConcreteQuery because it is independent of test runs.
-func (tnp TestNamePattern) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
+}
+
+// AbstractExists represents an array of abstract queries, each of which must be
+// satifisfied by some run. It represents the root of a structured query.
+type AbstractExists struct {
+	Args []AbstractQuery
+}
+
+// BindToRuns binds each abstract query to an or-combo of that query against
+// each specific/individual run.
+func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	queries := make([]ConcreteQuery, len(e.Args))
+	for i, arg := range e.Args {
+		byRun := make([]ConcreteQuery, 0, len(runs))
+		for _, run := range runs {
+			bound := arg.BindToRuns(run)
+			if _, ok := bound.(False); !ok {
+				byRun = append(byRun, bound)
+			}
+		}
+		// Each separate Exists query is true if there exists a run that makes its concrete query true.
+		queries[i] = Or{
+			Args: byRun,
+		}
+	}
+	// And the overall node is true if all its exists queries are true.
+	return And{
+		Args: queries,
+	}
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result
@@ -58,7 +87,7 @@ type TestStatusNeq struct {
 
 // BindToRuns for TestStatusEq expands to a disjunction of RunTestStatusEq
 // values.
-func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (tse TestStatusEq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
 		if tse.Product == nil || tse.Product.Matches(run) {
@@ -66,7 +95,7 @@ func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 		}
 	}
 	if len(ids) == 0 {
-		return True{}
+		return False{}
 	}
 	if len(ids) == 1 {
 		return RunTestStatusEq{ids[0], tse.Status}
@@ -81,7 +110,7 @@ func (tse TestStatusEq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 
 // BindToRuns for TestStatusNeq expands to a disjunction of RunTestStatusNeq
 // values.
-func (tsn TestStatusNeq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (tsn TestStatusNeq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
 		if tsn.Product == nil || tsn.Product.Matches(run) {
@@ -89,7 +118,7 @@ func (tsn TestStatusNeq) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 		}
 	}
 	if len(ids) == 0 {
-		return True{}
+		return False{}
 	}
 	if len(ids) == 1 {
 		return RunTestStatusNeq{ids[0], tsn.Status}
@@ -108,8 +137,8 @@ type AbstractNot struct {
 }
 
 // BindToRuns for AbstractNot produces a Not with a bound argument.
-func (n AbstractNot) BindToRuns(runs []shared.TestRun) ConcreteQuery {
-	return Not{n.Arg.BindToRuns(runs)}
+func (n AbstractNot) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return Not{n.Arg.BindToRuns(runs...)}
 }
 
 // AbstractOr is the AbstractQuery for disjunction.
@@ -118,12 +147,12 @@ type AbstractOr struct {
 }
 
 // BindToRuns for AbstractOr produces an Or with bound arguments.
-func (o AbstractOr) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (o AbstractOr) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(o.Args))
 	for i := range o.Args {
-		sub := o.Args[i].BindToRuns(runs)
-		if _, ok := sub.(True); ok {
-			return True{}
+		sub := o.Args[i].BindToRuns(runs...)
+		if t, ok := sub.(True); ok {
+			return t
 		}
 		if _, ok := sub.(False); ok {
 			continue
@@ -131,7 +160,7 @@ func (o AbstractOr) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 		args = append(args, sub)
 	}
 	if len(args) == 0 {
-		return True{}
+		return False{}
 	}
 	if len(args) == 1 {
 		return args[0]
@@ -147,10 +176,10 @@ type AbstractAnd struct {
 }
 
 // BindToRuns for AbstractAnd produces an And with bound arguments.
-func (a AbstractAnd) BindToRuns(runs []shared.TestRun) ConcreteQuery {
+func (a AbstractAnd) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(a.Args))
 	for i := range a.Args {
-		sub := a.Args[i].BindToRuns(runs)
+		sub := a.Args[i].BindToRuns(runs...)
 		if _, ok := sub.(False); ok {
 			return False{}
 		}
@@ -160,7 +189,7 @@ func (a AbstractAnd) BindToRuns(runs []shared.TestRun) ConcreteQuery {
 		args = append(args, sub)
 	}
 	if len(args) == 0 {
-		return True{}
+		return False{}
 	}
 	if len(args) == 1 {
 		return args[0]
@@ -372,6 +401,32 @@ func (a *AbstractAnd) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractExists attempts to interpret a query atom as
+// {"exists": [<abstract queries>]}.
+func (e *AbstractExists) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Exists []json.RawMessage `json:"exists"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Exists) == 0 {
+		return errors.New(`Missing conjunction property: "exists"`)
+	}
+
+	qs := make([]AbstractQuery, 0, len(data.Exists))
+	for _, msg := range data.Exists {
+		q, err := unmarshalQ(msg)
+		if err != nil {
+			return err
+		}
+		qs = append(qs, q)
+	}
+	e.Args = qs
+	return nil
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -403,6 +458,10 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	if err == nil {
 		return a, nil
 	}
-
+	var e AbstractExists
+	err = json.Unmarshal(b, &e)
+	if err == nil {
+		return e, nil
+	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, or conjunction`)
 }
