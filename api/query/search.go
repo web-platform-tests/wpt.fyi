@@ -44,6 +44,9 @@ type SearchResult struct {
 	// counts as 1, and each subtest counts as 1. The "pass count" contains any
 	// status values that are "PASS" or "OK".
 	LegacyStatus []LegacySearchRunResult `json:"legacy_status"`
+
+	// Subtests (names) which are included in the LegacyStatus summary.
+	Subtests []string `json:"subtests,omitempty"`
 }
 
 // SearchResponse contains a response to search API calls, including specific
