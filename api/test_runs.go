@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -40,17 +39,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	var nextPageToken string
 	if len(ids) > 0 {
 		testRuns, err = ids.LoadTestRuns(store)
-		if multiError, ok := err.(appengine.MultiError); ok {
-			all404s := true
-			for _, err := range multiError {
-				if err != datastore.ErrNoSuchEntity {
-					all404s = false
-				}
-			}
-			if all404s {
-				w.WriteHeader(http.StatusNotFound)
-				err = nil
-			}
+		if err == datastore.ErrNoSuchEntity {
+			w.WriteHeader(http.StatusNotFound)
+			err = nil
 		}
 	} else {
 		var filters shared.TestRunFilter

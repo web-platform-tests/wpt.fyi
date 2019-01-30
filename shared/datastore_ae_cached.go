@@ -61,43 +61,6 @@ func (d aeCachedDatastore) GetMulti(keys []Key, dst interface{}) error {
 	return err
 }
 
-func (d aeCachedDatastore) loadTestRunsByKeys(keysByProduct KeysByProduct) (result TestRunsByProduct, err error) {
-	result = TestRunsByProduct{}
-	cs := NewObjectCachedStore(
-		d.ctx,
-		NewJSONObjectCache(d.ctx, NewMemcacheReadWritable(d.ctx, aeTestRunCacheTTL)),
-		aeTestRunObjectStore{d})
-	var wg sync.WaitGroup
-	for _, kbp := range keysByProduct {
-		runs := make(TestRuns, len(kbp.Keys))
-		for i := range kbp.Keys {
-			wg.Add(1)
-			go func(i int) {
-				defer wg.Done()
-
-				localErr := cs.Get(getTestRunMemcacheKey(kbp.Keys[i].IntID()), kbp.Keys[i].IntID(), &runs[i])
-				if localErr != nil {
-					err = localErr
-				}
-			}(i)
-		}
-		result = append(result, ProductTestRuns{
-			Product:  kbp.Product,
-			TestRuns: runs,
-		})
-		wg.Wait()
-
-		if err != nil {
-			break
-		}
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
 // aeTestRunObjectStore is an adapter from Datastore to ObjectStore.
 type aeTestRunObjectStore struct {
 	aeCachedDatastore
@@ -109,5 +72,10 @@ func (d aeTestRunObjectStore) Get(id, dst interface{}) error {
 		return errDatastoreObjectStoreExpectedInt64
 	}
 	key := d.NewKey("TestRun", intID)
-	return d.aeCachedDatastore.Get(key, dst)
+	err := d.aeDatastore.Get(key, dst)
+	if err == nil {
+		run := dst.(*TestRun)
+		run.ID = key.IntID()
+	}
+	return d.aeDatastore.Get(key, dst)
 }
