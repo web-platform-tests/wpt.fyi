@@ -35,9 +35,6 @@ type Query interface {
 
 // Datastore abstracts a datastore, hiding the distinctions between cloud and
 // appengine's datastores.
-//
-// This is a sealed interface because of an unexported function that should not
-// be used directly.
 type Datastore interface {
 	Context() context.Context
 	Done() interface{}

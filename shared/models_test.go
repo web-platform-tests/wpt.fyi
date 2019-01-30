@@ -1,6 +1,6 @@
 // +build medium
 
-package shared
+package shared_test
 
 import (
 	"testing"
