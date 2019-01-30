@@ -170,7 +170,7 @@ suite('<test-search>', () => {
       );
     });
 
-    test('all features', () => {
+    test('or of and of and', () => {
       assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
         exists: [
           {product: 'firefox', status: 'PASS'},
@@ -188,6 +188,21 @@ suite('<test-search>', () => {
                   },
                 ],
               },
+            ],
+          },
+        ]
+      });
+    });
+
+    test('sequential', () => {
+      // A pass turning into a fail on the next run.
+      assertQueryParse('seq (status:PASS or status:OK) (status:!PASS and status:!OK)', {
+        sequential: [
+          { or: [{status: 'PASS'}, {status: 'OK'}] },
+          {
+            and: [
+              {status: {not: 'PASS'}},
+              {status: {not: 'OK'}},
             ],
           },
         ]

@@ -69,6 +69,30 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 }
 
+// AbstractSequential represents the root of a sequential queries, where the first
+// query must be satisfied by some run such that the next run, sequentially, also
+// satisfies the next query, and so on.
+type AbstractSequential struct {
+	Args []AbstractQuery
+}
+
+// BindToRuns binds each sequential query to an and-combo of those queries against
+// specific sequential runs, for each combination of sequential runs.
+func (e AbstractSequential) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	numSeqQueries := len(e.Args)
+	byRuns := make([]ConcreteQuery, 0, len(runs)+1-numSeqQueries)
+	for i := 0; i+numSeqQueries < len(runs); i++ {
+		all := And{}
+		for j, arg := range e.Args {
+			all.Args = append(all.Args, arg.BindToRuns(runs[i+j]))
+		}
+		byRuns = append(byRuns, all)
+	}
+	return Or{
+		Args: byRuns,
+	}
+}
+
 // TestStatusEq is a query atom that matches tests where the test status/result
 // from at least one test run matches the given status value, optionally filtered
 // to a specific browser name.
@@ -427,6 +451,32 @@ func (e *AbstractExists) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractSequential attempts to interpret a query atom as
+// {"exists": [<abstract queries>]}.
+func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Sequential []json.RawMessage `json:"sequential"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Sequential) == 0 {
+		return errors.New(`Missing conjunction property: "sequential"`)
+	}
+
+	qs := make([]AbstractQuery, 0, len(data.Sequential))
+	for _, msg := range data.Sequential {
+		q, err := unmarshalQ(msg)
+		if err != nil {
+			return err
+		}
+		qs = append(qs, q)
+	}
+	e.Args = qs
+	return nil
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -460,6 +510,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	}
 	var e AbstractExists
 	err = json.Unmarshal(b, &e)
+	if err == nil {
+		return e, nil
+	}
+	var s AbstractSequential
+	err = json.Unmarshal(b, &s)
 	if err == nil {
 		return e, nil
 	}

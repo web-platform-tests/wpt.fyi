@@ -15,7 +15,9 @@ import './ohm.js';
 /* global ohm */
 const QUERY_GRAMMAR = ohm.grammar(`
   Query {
-    Q = ListOf<Exp, space*>
+    Q
+      = "seq " ListOf<Exp, space*> -- sequential
+      | ListOf<Exp, space*>        -- exists
 
     Exp = NonemptyListOf<OrPart, or>
 
@@ -102,6 +104,7 @@ const evalNot = (n, p) => {
   return {not: p.eval()};
 };
 const evalSelf = p => p.eval();
+const emptyQuery = Object.freeze({exists: [{pattern: ''}]});
 const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   _terminal: function() {
     return this.sourceString;
@@ -112,14 +115,16 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   NonemptyListOf: function(fst, seps, rest) {
     return [fst.eval()].concat(rest.eval());
   },
-  Q: l => {
+  Q_exists: l => {
     const ps = l.eval();
     // Separate atoms are each treated as "there exists a run where ...",
     // and the root is grouped by AND of the separated atoms.
     // Nested ands, on the other hand, require all conditions to be met by the same run.
-    return ps.length === 0
-      ? {exists: [{pattern: ''}]}
-      : {exists: ps };
+    return ps.length === 0 ? emptyQuery : {exists: ps };
+  },
+  Q_sequential: (seq, l) => {
+    const ps = l.eval();
+    return ps.length === 0 ? emptyQuery : {sequential: ps };
   },
   Exp: l => {
     const ps = l.eval();
