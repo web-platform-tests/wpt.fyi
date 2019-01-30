@@ -34,7 +34,7 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := h.ctx
-	store := shared.NewAppEngineCachedDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, true)
 	q := store.TestRunQuery()
 
 	var shas []string

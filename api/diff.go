@@ -52,7 +52,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	store := shared.NewAppEngineCachedDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, true)
 	var runs shared.TestRuns
 	if len(runIDs) > 0 {
 		runs, err = runIDs.LoadTestRuns(store)

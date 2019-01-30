@@ -22,7 +22,7 @@ const paginationTokenFeatureFlagName = "paginationTokens"
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	store := shared.NewAppEngineCachedDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, true)
 	q := r.URL.Query()
 	ids, err := shared.ParseRunIDsParam(q)
 	if err != nil {

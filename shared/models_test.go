@@ -39,7 +39,7 @@ func TestTestRunIDs_LoadTestRuns(t *testing.T) {
 		testRuns[i].ID = key.IntID()
 	}
 
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	trs, err := testRuns.GetTestRunIDs().LoadTestRuns(store)
 	assert.Nil(t, err)
 	assert.Equal(t, testRuns, trs)

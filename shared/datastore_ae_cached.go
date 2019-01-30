@@ -5,7 +5,6 @@
 package shared
 
 import (
-	"context"
 	"sync"
 	"time"
 )
@@ -15,15 +14,6 @@ var aeTestRunCacheTTL = 48 * time.Hour
 
 type aeCachedDatastore struct {
 	aeDatastore
-}
-
-// NewAppEngineCachedDatastore creates a Datastore implementation with Memcache
-// in front to cache all TestRun reads. It is backed by the appengine libraries,
-// used in AppEngine standard.
-func NewAppEngineCachedDatastore(ctx context.Context) Datastore {
-	return aeCachedDatastore{
-		aeDatastore{ctx: ctx},
-	}
 }
 
 func (d aeCachedDatastore) Get(k Key, dst interface{}) error {

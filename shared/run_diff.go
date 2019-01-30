@@ -241,7 +241,7 @@ func FetchRunResultsJSONForSpec(
 // FetchRunForSpec loads the wpt.fyi TestRun metadata for the given spec.
 func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 	one := 1
-	store := NewAppEngineCachedDatastore(ctx)
+	store := NewAppEngineDatastore(ctx, true)
 	q := store.TestRunQuery()
 	testRuns, err := q.LoadTestRuns(ProductSpecs{spec}, nil, SHAs{spec.Revision}, nil, nil, &one, nil)
 	if err != nil {

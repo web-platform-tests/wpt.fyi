@@ -29,7 +29,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	store := shared.NewAppEngineCachedDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, true)
 	one := 1
 	testRuns, err := store.TestRunQuery().LoadTestRuns(
 		filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil)

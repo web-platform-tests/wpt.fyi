@@ -10,9 +10,18 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-// NewAppEngineDatastore creates a Datastore implementation that is backed by
-// the appengine libraries, used in AppEngine standard.
-func NewAppEngineDatastore(ctx context.Context) Datastore {
+// NewAppEngineDatastore creates a Datastore implementation, or a Datastore
+// implementation with Memcache in front to cache all TestRun reads if cached
+// is true.
+//
+// Both variants are backed by the appengine libraries and to be used in
+// AppEngine standard.
+func NewAppEngineDatastore(ctx context.Context, cached bool) Datastore {
+	if cached {
+		return aeCachedDatastore{
+			aeDatastore{ctx: ctx},
+		}
+	}
 	return aeDatastore{ctx: ctx}
 }
 

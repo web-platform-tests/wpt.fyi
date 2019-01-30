@@ -106,7 +106,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (headRun, baseRun *shared.TestRun, err error) {
 	one := 1
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	runs, err := store.TestRunQuery().LoadTestRuns(filter.Products, filter.Labels, filter.SHAs, filter.From, filter.To, &one, nil)
 	if err != nil {
 		return nil, nil, err
@@ -138,7 +138,7 @@ func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (headRu
 func loadPRRun(ctx context.Context, filter shared.TestRunFilter, extraLabel string) (*shared.TestRun, error) {
 	// Find the corresponding pr_base or pr_head run.
 	one := 1
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	labels := mapset.NewSetWith(extraLabel)
 	runs, err := store.TestRunQuery().LoadTestRuns(filter.Products, labels, filter.SHAs, nil, nil, &one, nil)
 	run := runs.First()
@@ -154,7 +154,7 @@ func loadPRRun(ctx context.Context, filter shared.TestRunFilter, extraLabel stri
 
 func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headRun *shared.TestRun) (*shared.TestRun, error) {
 	// Get the most recent, but still earlier, master run to compare.
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	one := 1
 	to := headRun.TimeStart.Add(-time.Millisecond)
 	labels := mapset.NewSetWith(headRun.Channel(), shared.MasterLabel)

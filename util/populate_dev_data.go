@@ -188,7 +188,7 @@ func main() {
 }
 
 func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	q := store.TestRunQuery()
 	for _, aligned := range []bool{false, true} {
 		if aligned {
