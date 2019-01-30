@@ -252,6 +252,38 @@ func TestStructuredQuery_exists(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
+func TestStructuredQuery_sequential(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{ "sequential":[
+					{"or":[{"status":"PASS"},{"status":"OK"}]},
+					{"and":[{"status":{"not":"PASS"}},{"status":{"not":"OK"}},{"status":{"not":"UNKNOWN"}}]}
+				]}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(
+		t,
+		RunQuery{RunIDs: []int64{0, 1, 2},
+			AbstractQuery: AbstractExists{[]AbstractQuery{
+				AbstractSequential{[]AbstractQuery{
+					AbstractOr{[]AbstractQuery{
+						TestStatusEq{Status: shared.TestStatusValueFromString("PASS")},
+						TestStatusEq{Status: shared.TestStatusValueFromString("OK")},
+					}},
+					AbstractAnd{[]AbstractQuery{
+						TestStatusNeq{Status: shared.TestStatusValueFromString("PASS")},
+						TestStatusNeq{Status: shared.TestStatusValueFromString("OK")},
+						TestStatusNeq{Status: shared.TestStatusValueFromString("UNKNOWN")},
+					}},
+				}},
+			}}}, rq)
+}
+
 func TestStructuredQuery_nested(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{

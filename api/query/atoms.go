@@ -521,7 +521,7 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var s AbstractSequential
 	err = json.Unmarshal(b, &s)
 	if err == nil {
-		return e, nil
+		return s, nil
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, or conjunction`)
 }
