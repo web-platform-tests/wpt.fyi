@@ -108,12 +108,11 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	}
 
 	action := checkSuite.GetAction()
+	owner := checkSuite.GetRepo().GetOwner().GetLogin()
+	repo := checkSuite.GetRepo().GetName()
+	sha := checkSuite.GetCheckSuite().GetHeadSHA()
+	log.Debugf("Check suite %s: %s/%s @ %s", action, owner, repo, shared.CropString(sha, 7))
 	if action == "requested" || action == "rerequested" {
-		owner := checkSuite.GetRepo().GetOwner().GetLogin()
-		repo := checkSuite.GetRepo().GetName()
-		sha := checkSuite.GetCheckSuite().GetHeadSHA()
-		log.Debugf("Check suite %s: %s/%s @ %s", action, owner, repo, sha[:7])
-
 		pullRequests := checkSuite.GetCheckSuite().PullRequests
 		prNumbers := []int{}
 		for _, pr := range pullRequests {
@@ -155,6 +154,12 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azur
 		return false, err
 	}
 
+	action := checkRun.GetAction()
+	owner := checkRun.GetRepo().GetOwner().GetLogin()
+	repo := checkRun.GetRepo().GetName()
+	sha := checkRun.GetCheckRun().GetHeadSHA()
+	log.Debugf("Check run %s: %s/%s @ %s", action, owner, repo, shared.CropString(sha, 7))
+
 	appID := checkRun.GetCheckRun().GetApp().GetID()
 	if !isWPTFYIApp(appID) && appID != azure.PipelinesAppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
@@ -167,9 +172,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azur
 		return false, nil
 	}
 
-	action := checkRun.GetAction()
 	status := checkRun.GetCheckRun().GetStatus()
-
 	shouldSchedule := false
 	if appID == azure.PipelinesAppID {
 		return azureAPI.HandleCheckRunEvent(checkRun)
@@ -182,17 +185,17 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azur
 			shouldSchedule = true
 		case "ignore":
 			err := checksAPI.IgnoreFailure(
-				checkRun.GetSender().GetLogin(),
-				checkRun.GetRepo().GetOwner().GetLogin(),
-				checkRun.GetRepo().GetName(),
+				login,
+				owner,
+				repo,
 				checkRun.GetCheckRun(),
 				checkRun.GetInstallation())
 			return err == nil, err
 		case "cancel":
 			err := checksAPI.CancelRun(
-				checkRun.GetSender().GetLogin(),
-				checkRun.GetRepo().GetOwner().GetLogin(),
-				checkRun.GetRepo().GetName(),
+				login,
+				owner,
+				repo,
 				checkRun.GetCheckRun(),
 				checkRun.GetInstallation())
 			return err == nil, err
@@ -202,7 +205,7 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azur
 		}
 	}
 	if shouldSchedule {
-		name, sha := checkRun.GetCheckRun().GetName(), checkRun.GetCheckRun().GetHeadSHA()
+		name := checkRun.GetCheckRun().GetName()
 		log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
 		spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
 		if err != nil {
