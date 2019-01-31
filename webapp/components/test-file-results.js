@@ -111,17 +111,12 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
     }
 
     // Combine the query with " and [path]".
-    const q = Object.assign({}, structuredSearch);
-    if (q.exists) {
-      q.exists = q.exists.map(node => {
-        return {
-          and: [
-            node,
-            {pattern: path}
-          ]
-        };
-      });
-    }
+    let q = {
+      and: [
+        {pattern: path},
+        structuredSearch,
+      ]
+    };
 
     let url = new URL('/api/search', window.location);
     url.searchParams.set('subtests', '');
