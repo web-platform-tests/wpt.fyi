@@ -59,11 +59,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         top: 0;
         right: 0;
       }
-      /* Direct access to test-search from local shadowRoot prevents using
-       * \`dom-if\` for this. */
-      section.search test-search.search-true {
-        display: none;
-      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -180,8 +175,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
       <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-      <test-search class\$="search-[[pathIsATestFile]]" query="{{search}}" test-runs="[[testRuns]]" test-paths="[[testPaths]]">
-      </test-search>
+      <test-search query="{{search}}"
+                   structured-query="{{structuredSearch}}"
+                   test-runs="[[testRuns]]"
+                   test-paths="[[testPaths]]"></test-search>
 
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <div class="links">
@@ -374,6 +371,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         type: String,
         computed: 'computeTestRefURL(testType, path, manifest)',
       },
+      structuredSearch: Object,
       searchResults: {
         type: Array,
         value: [],
