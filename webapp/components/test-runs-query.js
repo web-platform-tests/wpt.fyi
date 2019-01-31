@@ -256,6 +256,10 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
         value: false,
         notify: true,
       },
+      diffFilter: {
+        type: String,
+        value: 'ADC', // Added, Deleted, Changed
+      },
       pr: {
         type: Number,
         notify: true,
@@ -269,6 +273,9 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount);
     if (diff || this.diff) {
       params.diff = true;
+      if (this.diffFilter) {
+        params.filter = this.diffFilter;
+      }
     }
     if (search) {
       params.q = search;
@@ -284,12 +291,17 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
 
   updateQueryParams(params) {
     super.updateQueryParams(params);
-    this.pr = params.pr;
-    this.search = params.q;
-    this.diff = params.diff;
-    if ('run_id' in params) {
-      this.runIds = Array.from(params['run_id']);
+    let batchUpdate = {};
+    batchUpdate.pr = params.pr;
+    batchUpdate.search = params.q;
+    batchUpdate.diff = params.diff;
+    if (batchUpdate.diff) {
+      batchUpdate.diffFilter = params.filter;
     }
+    if ('run_id' in params) {
+      batchUpdate.runIds = Array.from(params['run_id']);
+    }
+    this.setProperties(batchUpdate);
   }
 };
 // TODO(lukebjerring): Support to & from in the builder.
