@@ -218,7 +218,10 @@ class TestSearch extends WPTFlags(PolymerElement) {
         notify: true,
         observer: 'queryUpdated',
       },
-      structuredQuery: Object,
+      structuredQuery: {
+        type: Object,
+        notify: true,
+      },
       results: {
         type: Array,
         notify: true,
@@ -254,7 +257,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
     this.queryInput = query;
     if (this.structuredQueries) {
       try {
-        this.structuredQuery = this.parseAndInterpretQuery(query);
+        this.structuredQuery = Object.freeze(this.parseAndInterpretQuery(query));
       } catch (err) {
         // TODO: Handle query parse/interpret error.
       }
