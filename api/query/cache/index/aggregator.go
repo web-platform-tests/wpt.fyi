@@ -5,6 +5,7 @@
 package index
 
 import (
+	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -32,7 +33,13 @@ func (a *indexAggregator) Add(t TestID) error {
 			return err
 		}
 
-		r = query.SearchResult{Test: name, LegacyStatus: nil}
+		r = query.SearchResult{
+			Test:         name,
+			LegacyStatus: nil,
+		}
+		if a.includeSubtests {
+			r.Subtests = mapset.NewSet()
+		}
 	}
 
 	rus := r.LegacyStatus

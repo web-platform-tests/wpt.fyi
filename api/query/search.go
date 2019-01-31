@@ -47,13 +47,13 @@ type SearchResult struct {
 	LegacyStatus []LegacySearchRunResult `json:"legacy_status"`
 
 	// Subtests (names) which are included in the LegacyStatus summary.
-	Subtests mapset.Set `json:"subtests,omitempty"`
+	Subtests mapset.Set `json:"-"`
 }
 
 type searchResultNoCustomMarshalling SearchResult
 type marshallableSearchResult struct {
 	searchResultNoCustomMarshalling
-	Subtests []string `json:"labels,omitempty"`
+	Subtests []string `json:"subtests,omitempty"`
 }
 
 // MarshalJSON treats the set as an array so it can be marshalled.
