@@ -3,7 +3,7 @@ runtime: custom
 env: flex
 
 manual_scaling:
-  instances: 2
+  instances: 5
 resources:
   cpu: 2
   memory_gb: 4
