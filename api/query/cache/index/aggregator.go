@@ -72,10 +72,11 @@ func (a *indexAggregator) Done() []query.SearchResult {
 	return res
 }
 
-func newIndexAggregator(idx index, rus []RunID) aggregator {
+func newIndexAggregator(idx index, rus []RunID, opts query.AggregationOpts) aggregator {
 	return &indexAggregator{
-		index: idx,
-		rus:   rus,
-		agg:   make(map[uint64]query.SearchResult),
+		index:           idx,
+		rus:             rus,
+		agg:             make(map[uint64]query.SearchResult),
+		includeSubtests: opts.IncludeSubtests,
 	}
 }

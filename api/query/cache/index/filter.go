@@ -178,11 +178,7 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 // Execute runs each filter in a ShardedFilter in parallel, returning a slice of
 // TestIDs as the result. Note that TestIDs are not deduplicated; the assumption
 // is that each filter is bound to a different shard, sharded by TestID.
-func (fs ShardedFilter) Execute(runs []shared.TestRun) interface{} {
-	return fs.syncExecute(runs)
-}
-
-func (fs ShardedFilter) syncExecute(runs []shared.TestRun) interface{} {
+func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpts) interface{} {
 	rus := make([]RunID, len(runs))
 	for i := range runs {
 		rus[i] = RunID(runs[i].ID)
@@ -190,7 +186,7 @@ func (fs ShardedFilter) syncExecute(runs []shared.TestRun) interface{} {
 	res := make(chan []query.SearchResult, len(fs))
 	errs := make(chan error)
 	for _, f := range fs {
-		go syncRunFilter(rus, f, res, errs)
+		go syncRunFilter(rus, f, opts, res, errs)
 	}
 
 	ret := make([]query.SearchResult, 0)
@@ -216,12 +212,12 @@ func (fs ShardedFilter) syncExecute(runs []shared.TestRun) interface{} {
 	return ret
 }
 
-func syncRunFilter(rus []RunID, f filter, res chan []query.SearchResult, errs chan error) {
+func syncRunFilter(rus []RunID, f filter, opts query.AggregationOpts, res chan []query.SearchResult, errs chan error) {
 	idx := f.idx()
 	idx.m.RLock()
 	defer idx.m.RUnlock()
 
-	agg := newIndexAggregator(idx, rus)
+	agg := newIndexAggregator(idx, rus, opts)
 	idx.tests.Range(func(t TestID) bool {
 		if f.Filter(t) {
 			err := agg.Add(t)

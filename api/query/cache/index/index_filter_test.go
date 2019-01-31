@@ -39,7 +39,7 @@ func planAndExecute(t *testing.T, runs []shared.TestRun, idx Index, q query.Abst
 	plan, err := idx.Bind(runs, q.BindToRuns(runs...))
 	assert.Nil(t, err)
 
-	res := plan.Execute(runs)
+	res := plan.Execute(runs, query.AggregationOpts{})
 	srs, ok := res.([]query.SearchResult)
 	assert.True(t, ok)
 
