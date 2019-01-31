@@ -22,9 +22,10 @@ const DisplayNames = (() => {
   m.set('preview', 'Technology Preview'); // Safari
   m.set('nightly', 'Nightly'); // Firefox
   // Sources
-  m.set('taskcluster', 'Taskcluster');
+  m.set('azure', 'Azure Pipelines');
   m.set('buildbot', 'Buildbot');
   m.set('msedge', 'MS Edge');
+  m.set('taskcluster', 'Taskcluster');
   return m;
 })();
 const versionPatterns = Object.freeze({
