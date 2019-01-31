@@ -120,6 +120,8 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockStore := sharedtest.NewMockDatastore(mockCtrl)
+	mockQuery := sharedtest.NewMockTestRunQuery(mockCtrl)
+	mockStore.EXPECT().TestRunQuery().Return(mockQuery)
 	sh := unstructuredSearchHandler{queryHandler{
 		store: mockStore,
 	}}
@@ -155,7 +157,7 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 	}
 	filters := shared.QueryFilter{}
 
-	mockStore.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
+	mockQuery.EXPECT().LoadTestRuns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(testRuns, nil)
 
 	trs, fs, err := sh.getRunsAndFilters(filters)
 	assert.Nil(t, err)

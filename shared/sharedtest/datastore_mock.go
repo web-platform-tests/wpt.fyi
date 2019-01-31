@@ -6,12 +6,9 @@ package sharedtest
 
 import (
 	context "context"
-	reflect "reflect"
-	time "time"
-
-	golang_set "github.com/deckarep/golang-set"
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	reflect "reflect"
 )
 
 // MockDatastore is a mock of Datastore interface
@@ -51,8 +48,23 @@ func (mr *MockDatastoreMockRecorder) Context() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockDatastore)(nil).Context))
 }
 
+// Done mocks base method
+func (m *MockDatastore) Done() interface{} {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Done")
+	ret0, _ := ret[0].(interface{})
+	return ret0
+}
+
+// Done indicates an expected call of Done
+func (mr *MockDatastoreMockRecorder) Done() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Done", reflect.TypeOf((*MockDatastore)(nil).Done))
+}
+
 // Get mocks base method
 func (m *MockDatastore) Get(arg0 shared.Key, arg1 interface{}) error {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -60,6 +72,7 @@ func (m *MockDatastore) Get(arg0 shared.Key, arg1 interface{}) error {
 
 // Get indicates an expected call of Get
 func (mr *MockDatastoreMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockDatastore)(nil).Get), arg0, arg1)
 }
 
@@ -92,34 +105,6 @@ func (mr *MockDatastoreMockRecorder) GetMulti(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockDatastore)(nil).GetMulti), arg0, arg1)
 }
 
-// LoadTestRuns mocks base method
-func (m *MockDatastore) LoadTestRuns(arg0 []shared.ProductSpec, arg1 golang_set.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.TestRunsByProduct, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
-	ret0, _ := ret[0].(shared.TestRunsByProduct)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadTestRuns indicates an expected call of LoadTestRuns
-func (mr *MockDatastoreMockRecorder) LoadTestRuns(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRuns", reflect.TypeOf((*MockDatastore)(nil).LoadTestRuns), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
-}
-
-// LoadTestRunsByKeys mocks base method
-func (m *MockDatastore) LoadTestRunsByKeys(arg0 shared.KeysByProduct) (shared.TestRunsByProduct, error) {
-	ret := m.ctrl.Call(m, "LoadTestRunsByKeys", arg0)
-	ret0, _ := ret[0].(shared.TestRunsByProduct)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadTestRunsByKeys indicates an expected call of LoadTestRunsByKeys
-func (mr *MockDatastoreMockRecorder) LoadTestRunsByKeys(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRunsByKeys", reflect.TypeOf((*MockDatastore)(nil).LoadTestRunsByKeys), arg0)
-}
-
 // NewKey mocks base method
 func (m *MockDatastore) NewKey(arg0 string, arg1 int64) shared.Key {
 	m.ctrl.T.Helper()
@@ -146,4 +131,18 @@ func (m *MockDatastore) NewQuery(arg0 string) shared.Query {
 func (mr *MockDatastoreMockRecorder) NewQuery(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewQuery", reflect.TypeOf((*MockDatastore)(nil).NewQuery), arg0)
+}
+
+// TestRunQuery mocks base method
+func (m *MockDatastore) TestRunQuery() shared.TestRunQuery {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TestRunQuery")
+	ret0, _ := ret[0].(shared.TestRunQuery)
+	return ret0
+}
+
+// TestRunQuery indicates an expected call of TestRunQuery
+func (mr *MockDatastoreMockRecorder) TestRunQuery() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TestRunQuery", reflect.TypeOf((*MockDatastore)(nil).TestRunQuery))
 }

@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -23,7 +22,7 @@ const paginationTokenFeatureFlagName = "paginationTokens"
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, true)
 	q := r.URL.Query()
 	ids, err := shared.ParseRunIDsParam(q)
 	if err != nil {
@@ -40,17 +39,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	var nextPageToken string
 	if len(ids) > 0 {
 		testRuns, err = ids.LoadTestRuns(store)
-		if multiError, ok := err.(appengine.MultiError); ok {
-			all404s := true
-			for _, err := range multiError {
-				if err != datastore.ErrNoSuchEntity {
-					all404s = false
-				}
-			}
-			if all404s {
-				w.WriteHeader(http.StatusNotFound)
-				err = nil
-			}
+		if err == datastore.ErrNoSuchEntity {
+			w.WriteHeader(http.StatusNotFound)
+			err = nil
 		}
 	} else {
 		var filters shared.TestRunFilter
@@ -100,6 +91,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 // LoadTestRunKeysForFilters deciphers the filters and executes a corresponding
 // query to load the TestRun keys.
 func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFilter) (result shared.KeysByProduct, err error) {
+	q := store.TestRunQuery()
 	limit := filters.MaxCount
 	offset := filters.Offset
 	from := filters.From
@@ -112,7 +104,7 @@ func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFil
 
 	// When ?aligned=true, make sure to show results for the same aligned run (executed for all browsers).
 	if filters.SHAs.EmptyOrLatest() && filters.Aligned != nil && *filters.Aligned {
-		shas, shaKeys, err := shared.GetAlignedRunSHAs(store, products, filters.Labels, from, filters.To, limit, filters.Offset)
+		shas, shaKeys, err := q.GetAlignedRunSHAs(products, filters.Labels, from, filters.To, limit, filters.Offset)
 		if err != nil {
 			return result, err
 		}
@@ -128,7 +120,7 @@ func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFil
 		}
 		return keys, err
 	}
-	return shared.LoadTestRunKeys(store, products, filters.Labels, filters.SHAs, from, filters.To, limit, offset)
+	return q.LoadTestRunKeys(products, filters.Labels, filters.SHAs, from, filters.To, limit, offset)
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
@@ -138,7 +130,7 @@ func LoadTestRunsForFilters(store shared.Datastore, filters shared.TestRunFilter
 	if keys, err = LoadTestRunKeysForFilters(store, filters); err != nil {
 		return nil, err
 	}
-	return store.LoadTestRunsByKeys(keys)
+	return store.TestRunQuery().LoadTestRunsByKeys(keys)
 }
 
 func getPRCommits(ctx context.Context, pr int) shared.SHAs {

@@ -39,7 +39,7 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := h.ctx
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	query := store.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
 	if product.Labels != nil {
 		for label := range product.Labels.Iter() {

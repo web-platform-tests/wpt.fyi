@@ -58,7 +58,7 @@ func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
 func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadataLegacy, err error) {
 	// Load default browser runs for SHA.
 	// Force any max-count to one; more than one of each product makes no sense for a interop run.
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	shaFilters := filters
 	limit := 1
 	shaFilters.MaxCount = &limit
@@ -84,7 +84,7 @@ func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter)
 
 func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (result *metrics.PassRateMetadataLegacy, err error) {
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	query := store.NewQuery(passRateType).Order("-StartTime").Limit(100)
 
 	// We load non-default queries by fetching any interop result with all their
@@ -97,7 +97,8 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 		// (but, each SHA being from an aligned run), so we need to keep the keys grouped.
 		if filters.SHAs.EmptyOrLatest() && filters.Aligned != nil && *filters.Aligned {
 			ten := 10
-			_, shaKeys, err := shared.GetAlignedRunSHAs(store, products, filters.Labels, filters.From, filters.To, &ten, nil)
+			_, shaKeys, err := store.TestRunQuery().GetAlignedRunSHAs(
+				products, filters.Labels, filters.From, filters.To, &ten, nil)
 			if err != nil {
 				return nil, err
 			} else if len(shaKeys) < 1 {

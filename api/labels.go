@@ -28,7 +28,7 @@ func apiLabelsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h LabelsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	store := shared.NewAppEngineDatastore(h.ctx)
+	store := shared.NewAppEngineDatastore(h.ctx, false)
 	var runs shared.TestRuns
 	_, err := store.GetAll(store.NewQuery("TestRun").Project("Labels").Distinct(), &runs)
 	if err != nil {

@@ -109,7 +109,7 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 	// abstracted and tested directly.
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := unstructuredSearchHandler{queryHandler{
-		store:      shared.NewAppEngineDatastore(ctx),
+		store:      shared.NewAppEngineDatastore(ctx, false),
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, cache),
 	}}
@@ -239,7 +239,7 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := structuredSearchHandler{
 		queryHandler{
-			store:      shared.NewAppEngineDatastore(ctx),
+			store:      shared.NewAppEngineDatastore(ctx, false),
 			sharedImpl: defaultShared{ctx},
 			dataSource: shared.NewByteCachedStore(ctx, mc, store),
 		},
@@ -369,7 +369,7 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := unstructuredSearchHandler{
 		queryHandler{
-			store:      shared.NewAppEngineDatastore(ctx),
+			store:      shared.NewAppEngineDatastore(ctx, false),
 			sharedImpl: defaultShared{ctx},
 			dataSource: shared.NewByteCachedStore(ctx, mc, store),
 		},
@@ -466,7 +466,7 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := structuredSearchHandler{
 		queryHandler{
-			store:      shared.NewAppEngineDatastore(ctx),
+			store:      shared.NewAppEngineDatastore(ctx, false),
 			sharedImpl: defaultShared{ctx},
 			dataSource: shared.NewByteCachedStore(ctx, mc, store),
 		},

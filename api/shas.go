@@ -34,17 +34,18 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := h.ctx
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, true)
+	q := store.TestRunQuery()
 
 	var shas []string
 	products := filters.GetProductsOrDefault()
 	if filters.Aligned != nil && *filters.Aligned {
-		if shas, _, err = shared.GetAlignedRunSHAs(store, products, filters.Labels, filters.From, filters.To, filters.MaxCount, filters.Offset); err != nil {
+		if shas, _, err = q.GetAlignedRunSHAs(products, filters.Labels, filters.From, filters.To, filters.MaxCount, filters.Offset); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} else {
-		testRuns, err := store.LoadTestRuns(products, filters.Labels, nil, filters.From, filters.To, filters.MaxCount, filters.Offset)
+		testRuns, err := q.LoadTestRuns(products, filters.Labels, nil, filters.From, filters.To, filters.MaxCount, filters.Offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

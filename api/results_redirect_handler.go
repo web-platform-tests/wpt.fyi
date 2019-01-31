@@ -29,9 +29,10 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	store := shared.NewAppEngineDatastore(ctx)
+	store := shared.NewAppEngineDatastore(ctx, true)
 	one := 1
-	testRuns, err := store.LoadTestRuns(filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil)
+	testRuns, err := store.TestRunQuery().LoadTestRuns(
+		filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
