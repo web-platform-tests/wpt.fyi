@@ -1,7 +1,7 @@
 queue:
 - name: results-arrival
   target: processor
-  max_concurrent_requests: 2
+  max_concurrent_requests: 5
   rate: 1/m
 - name: check-processing
   rate: 1/s
