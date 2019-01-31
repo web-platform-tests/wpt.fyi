@@ -93,7 +93,7 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
       this.fetchTestFile(path, testRuns),
     ]);
 
-    if (searchResults) {
+    if (resultsTable && searchResults) {
       const test = searchResults.results.find(r => r.test === path);
       if (test) {
         let subtests = new Set(test.subtests);
