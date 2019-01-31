@@ -8,6 +8,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// AggregationOpts are options for the aggregation format used when collecting
+// the results.
 type AggregationOpts struct {
 	IncludeSubtests bool
 }
