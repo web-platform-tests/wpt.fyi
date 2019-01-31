@@ -54,7 +54,7 @@ func (a *indexAggregator) Add(t TestID) error {
 
 		if a.includeSubtests {
 			if _, name, err := ts.GetName(t); err == nil && name != nil {
-				r.Subtests = append(r.Subtests, *name)
+				r.Subtests.Add(*name)
 			}
 		}
 	}

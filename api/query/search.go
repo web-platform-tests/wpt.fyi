@@ -18,6 +18,7 @@ import (
 	"strings"
 	time "time"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -46,7 +47,22 @@ type SearchResult struct {
 	LegacyStatus []LegacySearchRunResult `json:"legacy_status"`
 
 	// Subtests (names) which are included in the LegacyStatus summary.
-	Subtests []string `json:"subtests,omitempty"`
+	Subtests mapset.Set `json:"subtests,omitempty"`
+}
+
+type searchResultNoCustomMarshalling SearchResult
+type marshallableSearchResult struct {
+	searchResultNoCustomMarshalling
+	Subtests []string `json:"labels,omitempty"`
+}
+
+// MarshalJSON treats the set as an array so it can be marshalled.
+func (filter SearchResult) MarshalJSON() ([]byte, error) {
+	m := marshallableSearchResult{
+		searchResultNoCustomMarshalling: searchResultNoCustomMarshalling(filter),
+	}
+	m.Subtests = shared.ToStringSlice(filter.Subtests)
+	return json.Marshal(m)
 }
 
 // SearchResponse contains a response to search API calls, including specific
