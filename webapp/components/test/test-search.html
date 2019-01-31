@@ -211,7 +211,7 @@ suite('<test-search>', () => {
     test('sequential', () => {
       // Canon: flip-flopping, which is usually flakiness:
       // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
-      assertQueryParse('seq status:PASS status:!PASS', {
+      assertQueryParse('seq(status:PASS status:!PASS)', {
         exists: [
           {
             sequential: [

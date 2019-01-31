@@ -18,7 +18,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
     Q = ListOf<RootExp, space*>
 
     RootExp
-      | "seq(" ListOf<Exp, space*> ")" -- sequential
+      = "seq(" ListOf<Exp, space*> ")" -- sequential
       | Exp
 
     Exp = NonemptyListOf<OrPart, or>
