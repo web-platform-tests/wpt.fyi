@@ -54,11 +54,11 @@ func (a *indexAggregator) Add(t TestID) error {
 				rus[i].Passes++
 			}
 		}
-	}
-	if a.includeSubtests {
-		if _, subtest, err := ts.GetName(t); err == nil && subtest != nil {
-			name := *subtest
-			r.Subtests = append(r.Subtests, name)
+
+		if a.includeSubtests {
+			if _, name, err := ts.GetName(t); err == nil && name != nil {
+				r.Subtests.Add(*name)
+			}
 		}
 	}
 	r.LegacyStatus = rus
