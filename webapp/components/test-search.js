@@ -18,8 +18,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
     Q = ListOf<RootExp, space*>
 
     RootExp
-      = "seq " ListOf<Exp, space*>     -- sequential
-      | "seq(" ListOf<Exp, space*> ")" -- sequential_parens
+      | "seq(" ListOf<Exp, space*> ")" -- sequential
       | Exp
 
     Exp = NonemptyListOf<OrPart, or>
@@ -108,10 +107,6 @@ const evalNot = (n, p) => {
   return {not: p.eval()};
 };
 const evalSelf = p => p.eval();
-const evalSequential = l => {
-  const ps = l.eval();
-  return ps.length === 0 ? emptyQuery : {sequential: ps };
-};
 const emptyQuery = Object.freeze({exists: [{pattern: ''}]});
 const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   _terminal: function() {
@@ -130,8 +125,10 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     // Nested ands, on the other hand, require all conditions to be met by the same run.
     return ps.length === 0 ? emptyQuery : {exists: ps };
   },
-  RootExp_sequential: (_, l) => evalSequential(l),
-  RootExp_sequential_parens: (_, l, __) => evalSequential(l),
+  RootExp_sequential: (_, l, __) => {
+    const ps = l.eval();
+    return ps.length === 0 ? emptyQuery : {sequential: ps };
+  },
   Exp: l => {
     const ps = l.eval();
     return ps.length === 1 ? ps[0] : {or: ps};

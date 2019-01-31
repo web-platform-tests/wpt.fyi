@@ -85,7 +85,7 @@ type AbstractSequential struct {
 // specific sequential runs, for each combination of sequential runs.
 func (e AbstractSequential) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	numSeqQueries := len(e.Args)
-	byRuns := make([]ConcreteQuery, 0, len(runs)+1-numSeqQueries)
+	byRuns := []ConcreteQuery{}
 	for i := 0; i+numSeqQueries < len(runs); i++ {
 		all := And{}
 		for j, arg := range e.Args {
