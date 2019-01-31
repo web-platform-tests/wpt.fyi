@@ -98,7 +98,8 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
       if (test) {
         let subtests = new Set(test.subtests);
         let [first, ...others] = resultsTable;
-        resultsTable = [first, others.filter(t => subtests.has(t.name))];
+        const matches = others.filter(t => subtests.has(t.name));
+        resultsTable = [first, ...matches];
       }
     }
     this.resultsTable = resultsTable;
@@ -131,7 +132,7 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
         query: q,
       }),
     };
-    this.retry(
+    return await this.retry(
       async() => {
         const r = await window.fetch(url, fetchOpts);
         if (!r.ok) {
@@ -145,15 +146,6 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
       err => err === 422,
       testRuns.length + 1,
       5000
-    ).then(
-      json => {
-        this.searchResults = json.results;
-        this.refreshDisplayedNodes();
-      },
-      (e) => {
-        // eslint-disable-next-line no-console
-        console.log(`Failed to load: ${e}`);
-      }
     );
   }
 

@@ -243,7 +243,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
-        <test-file-results test-runs="[[testRuns]]" path="[[path]]" labels="[[labels]]" products="[[products]]">
+        <test-file-results test-runs="[[testRuns]]"
+                           path="[[path]]"
+                           structured-search="[[structuredSearch]]"
+                           labels="[[labels]]"
+                           products="[[products]]">
         </test-file-results>
       </template>
 
