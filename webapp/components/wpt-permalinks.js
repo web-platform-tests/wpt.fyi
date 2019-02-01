@@ -109,6 +109,9 @@ class Permalinks extends QueryBuilder(PolymerElement) {
       }
       if (queryParams.diff) {
         params.diff = queryParams.diff;
+        if (queryParams.filter) {
+          params.filter = queryParams.filter;
+        }
       }
       if (testRuns && testRuns.length) {
         params.run_id = testRuns.map(r => r.id);

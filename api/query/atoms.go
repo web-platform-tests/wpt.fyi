@@ -51,21 +51,50 @@ type AbstractExists struct {
 func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
 	for i, arg := range e.Args {
-		byRun := make([]ConcreteQuery, 0, len(runs))
-		for _, run := range runs {
-			bound := arg.BindToRuns(run)
-			if _, ok := bound.(False); !ok {
-				byRun = append(byRun, bound)
+		var query ConcreteQuery
+		if _, isSeq := arg.(AbstractSequential); isSeq {
+			// For sequential, we pass all runs.
+			query = arg.BindToRuns(runs...)
+		} else {
+			// Everything else is split, one run must satisfy the whole tree.
+			byRun := make([]ConcreteQuery, 0, len(runs))
+			for _, run := range runs {
+				bound := arg.BindToRuns(run)
+				if _, ok := bound.(False); !ok {
+					byRun = append(byRun, bound)
+				}
 			}
+			query = Or{Args: byRun}
 		}
-		// Each separate Exists query is true if there exists a run that makes its concrete query true.
-		queries[i] = Or{
-			Args: byRun,
-		}
+		queries[i] = query
 	}
 	// And the overall node is true if all its exists queries are true.
 	return And{
 		Args: queries,
+	}
+}
+
+// AbstractSequential represents the root of a sequential queries, where the first
+// query must be satisfied by some run such that the next run, sequentially, also
+// satisfies the next query, and so on.
+type AbstractSequential struct {
+	Args []AbstractQuery
+}
+
+// BindToRuns binds each sequential query to an and-combo of those queries against
+// specific sequential runs, for each combination of sequential runs.
+func (e AbstractSequential) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	numSeqQueries := len(e.Args)
+	byRuns := []ConcreteQuery{}
+	for i := 0; i+numSeqQueries < len(runs); i++ {
+		all := And{}
+		for j, arg := range e.Args {
+			all.Args = append(all.Args, arg.BindToRuns(runs[i+j]))
+		}
+		byRuns = append(byRuns, all)
+	}
+	return Or{
+		Args: byRuns,
 	}
 }
 
@@ -427,6 +456,32 @@ func (e *AbstractExists) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractSequential attempts to interpret a query atom as
+// {"exists": [<abstract queries>]}.
+func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Sequential []json.RawMessage `json:"sequential"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Sequential) == 0 {
+		return errors.New(`Missing conjunction property: "sequential"`)
+	}
+
+	qs := make([]AbstractQuery, 0, len(data.Sequential))
+	for _, msg := range data.Sequential {
+		q, err := unmarshalQ(msg)
+		if err != nil {
+			return err
+		}
+		qs = append(qs, q)
+	}
+	e.Args = qs
+	return nil
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -462,6 +517,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err = json.Unmarshal(b, &e)
 	if err == nil {
 		return e, nil
+	}
+	var s AbstractSequential
+	err = json.Unmarshal(b, &s)
+	if err == nil {
+		return s, nil
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, or conjunction`)
 }
