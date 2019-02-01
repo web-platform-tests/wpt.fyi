@@ -222,17 +222,18 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 
 		// Add each subtests' result to the appropriate shard (same shard as
 		// top-level test).
-		for _, sub := range subs {
-			t, err := computeTestID(res.Test, &sub.Name)
+		for i := range subs {
+			name := subs[i].Name
+			t, err := computeTestID(res.Test, &name)
 			if err != nil {
 				return err
 			}
 
-			re := ResultID(shared.TestStatusValueFromString(sub.Status))
+			re := ResultID(shared.TestStatusValueFromString(subs[i].Status))
 			dataForShard[t] = testData{
 				testName: testName{
 					name:    res.Test,
-					subName: &sub.Name,
+					subName: &name,
 				},
 				ResultID: re,
 			}
