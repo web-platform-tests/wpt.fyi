@@ -2,7 +2,7 @@ queue:
 - name: results-arrival
   target: processor
   max_concurrent_requests: 5
-  rate: 1/m
+  rate: 6/m
 - name: check-processing
   rate: 1/s
   retry_parameters:
