@@ -5,7 +5,6 @@
 package index
 
 import (
-	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -37,9 +36,6 @@ func (a *indexAggregator) Add(t TestID) error {
 			Test:         name,
 			LegacyStatus: nil,
 		}
-		if a.includeSubtests {
-			r.Subtests = mapset.NewSet()
-		}
 	}
 
 	rus := r.LegacyStatus
@@ -58,11 +54,11 @@ func (a *indexAggregator) Add(t TestID) error {
 				rus[i].Passes++
 			}
 		}
-
-		if a.includeSubtests {
-			if _, name, err := ts.GetName(t); err == nil && name != nil {
-				r.Subtests.Add(*name)
-			}
+	}
+	if a.includeSubtests {
+		if _, subtest, err := ts.GetName(t); err == nil && subtest != nil {
+			name := *subtest
+			r.Subtests = append(r.Subtests, name)
 		}
 	}
 	r.LegacyStatus = rus
