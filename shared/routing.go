@@ -41,11 +41,15 @@ func WrapHSTS(h http.Handler) http.HandlerFunc {
 
 // WrapPermissiveCORS wraps the given handler func in one that sets an
 // all-permissive CORS header on the response.
-func WrapPermissiveCORS(h http.HandlerFunc) http.HandlerFunc {
-	cors := handlers.CORS(
+func WrapPermissiveCORS(h http.HandlerFunc, methods ...string) http.HandlerFunc {
+	opts := []handlers.CORSOption{
 		handlers.AllowedOrigins([]string{"*"}),
-	)
-	return cors(h).ServeHTTP
+		handlers.AllowedHeaders([]string{"Content-Type"}),
+	}
+	if len(methods) > 0 {
+		opts = append(opts, handlers.AllowedMethods(methods))
+	}
+	return handlers.CORS(opts...)(h).ServeHTTP
 }
 
 // WrapApplicationJSON wraps the given handler func in one that sets a Content-Type

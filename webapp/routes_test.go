@@ -133,6 +133,7 @@ func assertHSTS(t *testing.T, path string) {
 
 func assertCORS(t *testing.T, path string) {
 	req := httptest.NewRequest("OPTIONS", path, nil)
+	req.Header.Set("Access-Control-Request-Headers", "content-type")
 	rr := httptest.NewRecorder()
 	handler, _ := http.DefaultServeMux.Handler(req)
 	handler.ServeHTTP(rr, req)
