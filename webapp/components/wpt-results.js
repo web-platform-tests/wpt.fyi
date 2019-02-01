@@ -407,10 +407,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         type: String,
         computed: 'computeDiffURL(testRuns)',
       },
-      diffFilter: {
-        type: String,
-        value: 'ADC', // Added, Deleted, Changed
-      },
       showHistory: {
         type: Boolean,
         value: false,

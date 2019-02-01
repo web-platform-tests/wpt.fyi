@@ -23,12 +23,26 @@ suite('<test-search>', () => {
       const G = TestSearch.QUERY_GRAMMAR;
       const S = TestSearch.QUERY_SEMANTICS;
       const p = G.match(query);
-      assert.isTrue(p.succeeded());
+      assert.isTrue(p.succeeded(), p.message);
       assert.deepEqual(structuredQuery, S(p).eval());
     };
 
     test('simple pattern', () => {
       assertQueryParse('2dcontext', {exists: [{pattern: '2dcontext'}]});
+      assertQueryParse(
+        '/2dcontext/building-paths/canvas_complexshapes_arcto_001.htm',
+        {exists: [{pattern: '/2dcontext/building-paths/canvas_complexshapes_arcto_001.htm'}]}
+      );
+    });
+
+    suite('quoted pattern', () => {
+      test('basic', () => {
+        assertQueryParse('"foo"', {exists: [{pattern: 'foo'}]});
+        assertQueryParse('"/foo.html"', {exists: [{pattern: '/foo.html'}]});
+      });
+      test('complex', () => {
+        assertQueryParse('"/foo.html?exclude=(Document|window|HTML.*)"', {exists: [{pattern: '/foo.html?exclude=(Document|window|HTML.*)'}]});
+      });
     });
 
     test('versioned browser', () => {
@@ -170,7 +184,7 @@ suite('<test-search>', () => {
       );
     });
 
-    test('all features', () => {
+    test('or of and of and', () => {
       assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
         exists: [
           {product: 'firefox', status: 'PASS'},
@@ -191,6 +205,45 @@ suite('<test-search>', () => {
             ],
           },
         ]
+      });
+    });
+
+    test('sequential', () => {
+      // Canon: flip-flopping, which is usually flakiness:
+      // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
+      assertQueryParse('seq(status:PASS status:!PASS)', {
+        exists: [
+          {
+            sequential: [
+              {status: 'PASS'},
+              {status: {not: 'PASS'} },
+            ]
+          },
+        ],
+      });
+      // Canon: flip-flopping, which is usually flakiness:
+      // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
+      assertQueryParse('seq((status:!PASS and status:!OK) (status:PASS or status:OK)) seq((status:PASS or status:OK) (status:!PASS and status:!OK))', {
+        exists: [
+          { sequential: [
+            {
+              and: [
+                {status: {not: 'PASS'}},
+                {status: {not: 'OK'}},
+              ],
+            },
+            { or: [{status: 'PASS'}, {status: 'OK'}] },
+          ]},
+          { sequential: [
+            { or: [{status: 'PASS'}, {status: 'OK'}] },
+            {
+              and: [
+                {status: {not: 'PASS'}},
+                {status: {not: 'OK'}},
+              ],
+            },
+          ]},
+        ],
       });
     });
   });

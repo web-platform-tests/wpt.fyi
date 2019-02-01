@@ -15,7 +15,11 @@ import './ohm.js';
 /* global ohm */
 const QUERY_GRAMMAR = ohm.grammar(`
   Query {
-    Q = ListOf<Exp, space*>
+    Q = ListOf<RootExp, space*>
+
+    RootExp
+      = "seq(" ListOf<Exp, space*> ")" -- sequential
+      | Exp
 
     Exp = NonemptyListOf<OrPart, or>
 
@@ -43,21 +47,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Fragment
       = not Fragment -- not
-      | nameLiteral
       | statusExp
       | nameFragment
-
-    nameLiteral
-      = "\\"" nameLiteralInner "\\""
-
-    nameLiteralInner
-      = nameLiteralChar*
-
-    nameLiteralChar
-      = "\\x00".."\\x21"
-      | "\\x5D".."\\uFFFF"
-      | "\\\\" -- slash
-      | "\\"" -- quote
 
     statusExp
       = caseInsensitive<"status"> ":" statusLiteral  -- eq
@@ -87,14 +78,28 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | caseInsensitive<"skip">
       | caseInsensitive<"assert">
 
-    nameFragment = nameFragmentChar+
+    nameFragment
+      = basicNameFragmentChar+                -- basic
+      | quotemark nameFragmentChar+ quotemark -- quoted
+
+    basicNameFragmentChar
+      = letter
+      | digit
+      | "/"
+      | "."
+      | "-"
+      | "_"
+      | "?"
 
     nameFragmentChar
       = "\\x00".."\\x08"
       | "\\x0E".."\\x1F"
-      | "\\x21".."\\uFFFF"
+      | "\\x21"
+      | "\\x23".."\\uFFFF"
 
     number = digit+
+    quotemark = "\\""
+    backslash = "\\\\"
   }
 `);
 /* eslint-disable */
@@ -102,6 +107,7 @@ const evalNot = (n, p) => {
   return {not: p.eval()};
 };
 const evalSelf = p => p.eval();
+const emptyQuery = Object.freeze({exists: [{pattern: ''}]});
 const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   _terminal: function() {
     return this.sourceString;
@@ -117,9 +123,11 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     // Separate atoms are each treated as "there exists a run where ...",
     // and the root is grouped by AND of the separated atoms.
     // Nested ands, on the other hand, require all conditions to be met by the same run.
-    return ps.length === 0
-      ? {exists: [{pattern: ''}]}
-      : {exists: ps };
+    return ps.length === 0 ? emptyQuery : {exists: ps };
+  },
+  RootExp_sequential: (_, l, __) => {
+    const ps = l.eval();
+    return ps.length === 0 ? emptyQuery : {sequential: ps };
   },
   Exp: l => {
     const ps = l.eval();
@@ -135,12 +143,6 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   AndPart_fragment: evalSelf,
   Fragment: evalSelf,
   Fragment_not: evalNot,
-  nameLiteral: (_, l, __) => {
-    return {pattern: l.eval().join('')};
-  },
-  nameLiteralInner: chars => chars.eval(),
-  nameLiteralChar_slash: (v) => '\\',
-  nameLiteralChar_quote: (v) => '"',
   statusExp_eq: (l, colon, r) => {
     return { status: r.sourceString.toUpperCase() };
   },
@@ -159,9 +161,14 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
       status: {not: r.sourceString.toUpperCase()},
     };
   },
-  nameFragment: (chars) => {
-    return {pattern: chars.eval().join('')};
+  nameFragment_basic: (basic) => {
+    return {pattern: basic.sourceString};
   },
+  nameFragment_quoted: (_, chars, __) => {
+    return {pattern: chars.sourceString};
+  },
+  backslash: (v) => '\\',
+  quotemark: (v) => '"',
 });
 /* eslint-enable */
 

@@ -23,7 +23,7 @@ import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
 import './browser-picker.js';
 import './display-logo.js';
 import './info-banner.js';
-import { Channels, DefaultBrowserNames, DefaultProducts, ProductInfo, SemanticLabels } from './product-info.js';
+import { Channels, DefaultBrowserNames, DefaultProducts, ProductInfo, SemanticLabels, Sources } from './product-info.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { WPTFlags } from './wpt-flags.js';
 
@@ -332,6 +332,10 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
       display-logo[small] {
         margin-top: 16px;
       }
+      .source {
+        height: 24px;
+        width: 24px;
+      }
     </style>
     <paper-card>
       <div class="card-content">
@@ -362,9 +366,12 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         <paper-dropdown-menu label="Source" no-animations="">
           <paper-listbox slot="dropdown-content" selected="{{ _source }}" attr-for-selected="value">
             <paper-item value="any">Any</paper-item>
-            <paper-item value="taskcluster">[[displayName("taskcluster")]]</paper-item>
-            <paper-item value="buildbot">[[displayName("buildbot")]]</paper-item>
-            <paper-item value="msedge">[[displayName("msedge")]]</paper-item>
+            <template is="dom-repeat" items="[[sources]]" as="source">
+              <paper-icon-item value="[[source]]">
+                <img slot="item-icon" class="source" src="/static/[[source]].svg">
+                [[displayName(source)]]
+              </paper-icon-item>
+            </template>
           </paper-listbox>
         </paper-dropdown-menu>
 
@@ -436,6 +443,10 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
       channels: {
         type: Array,
         value: Array.from(Channels),
+      },
+      sources: {
+        type: Array,
+        value: Array.from(Sources),
       },
       versionsURL: {
         type: String,
