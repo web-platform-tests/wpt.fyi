@@ -44,7 +44,7 @@ func TestRunsBound(t *testing.T) {
 	assertHandlerIs(t, "/test-runs", "test-runs")
 }
 
-func TestApiDiffBoundCORS(t *testing.T) {
+func TestApiDiffBound(t *testing.T) {
 	assertHandlerIs(t, "/api/diff", "api-diff")
 }
 
@@ -71,6 +71,7 @@ func TestApiRunBound(t *testing.T) {
 
 func TestApiResultsBoundCORS(t *testing.T) {
 	assertHandlerIs(t, "/api/results", "api-results")
+	assertHSTS(t, "/api/results/upload")
 	assertCORS(t, "/api/results")
 }
 
@@ -131,15 +132,23 @@ func assertHSTS(t *testing.T, path string) {
 }
 
 func assertCORS(t *testing.T, path string) {
-	req := httptest.NewRequest("GET", path, nil)
+	req := httptest.NewRequest("OPTIONS", path, nil)
+	req.Header.Set("Access-Control-Request-Headers", "content-type")
 	rr := httptest.NewRecorder()
 	handler, _ := http.DefaultServeMux.Handler(req)
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Result().StatusCode)
+
+	req = httptest.NewRequest("GET", path, nil)
+	req.Header.Add("Origin", "localhost:8080")
+	rr = httptest.NewRecorder()
+	handler, _ = http.DefaultServeMux.Handler(req)
 	handler.ServeHTTP(rr, req)
 	res := rr.Result()
 	assert.Equal(
 		t,
-		"[*]",
-		fmt.Sprintf("%s", res.Header["Access-Control-Allow-Origin"]))
+		"*",
+		res.Header.Get("Access-Control-Allow-Origin"))
 }
 
 func assertNoCORS(t *testing.T, path string) {

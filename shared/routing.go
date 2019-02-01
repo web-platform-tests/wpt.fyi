@@ -7,6 +7,7 @@ package shared
 import (
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -24,34 +25,38 @@ func Router() *mux.Router {
 
 // AddRoute is a helper for registering a handler for an http path (route).
 // Note that it adds an HSTS header to the response.
-func AddRoute(route, name string, handler func(http.ResponseWriter, *http.Request)) *mux.Route {
-	return Router().HandleFunc(route, WrapHSTS(handler)).Name(name)
+func AddRoute(route, name string, h http.HandlerFunc) *mux.Route {
+	return Router().Handle(route, WrapHSTS(h)).Name(name)
 }
 
 // WrapHSTS wraps the given handler func in one that sets the
 // Strict-Transport-Security header on the response.
-func WrapHSTS(h http.HandlerFunc) http.HandlerFunc {
+func WrapHSTS(h http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		value := "max-age=31536000; preload"
 		w.Header().Add("Strict-Transport-Security", value)
-		h(w, r)
+		h.ServeHTTP(w, r)
 	})
 }
 
 // WrapPermissiveCORS wraps the given handler func in one that sets an
 // all-permissive CORS header on the response.
-func WrapPermissiveCORS(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Access-Control-Allow-Origin", "*")
-		h(w, r)
-	})
+func WrapPermissiveCORS(h http.HandlerFunc, methods ...string) http.HandlerFunc {
+	opts := []handlers.CORSOption{
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedHeaders([]string{"Content-Type"}),
+	}
+	if len(methods) > 0 {
+		opts = append(opts, handlers.AllowedMethods(methods))
+	}
+	return handlers.CORS(opts...)(h).ServeHTTP
 }
 
 // WrapApplicationJSON wraps the given handler func in one that sets a Content-Type
 // header of "text/json" on the response.
-func WrapApplicationJSON(h http.HandlerFunc) http.HandlerFunc {
+func WrapApplicationJSON(h http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
-		h(w, r)
+		h.ServeHTTP(w, r)
 	})
 }
