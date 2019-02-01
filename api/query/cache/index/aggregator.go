@@ -20,6 +20,7 @@ type indexAggregator struct {
 	rus             []RunID
 	agg             map[uint64]query.SearchResult
 	includeSubtests bool
+	interopFormat   bool
 }
 
 func (a *indexAggregator) Add(t TestID) error {
@@ -35,7 +36,23 @@ func (a *indexAggregator) Add(t TestID) error {
 		r = query.SearchResult{
 			Test:         name,
 			LegacyStatus: nil,
+			Interop:      nil,
 		}
+	}
+
+	if a.interopFormat {
+		if r.Interop == nil {
+			r.Interop = make([]int, len(a.rus)+1)
+		}
+		passing := 0
+		for _, ru := range a.rus {
+			res := shared.TestStatus(a.runResults[ru].GetResult(t))
+			// Only include tests with non-UNKNOWN status for this run's total.
+			if res.IsPassOrOK() {
+				passing++
+			}
+		}
+		r.Interop[passing]++
 	}
 
 	rus := r.LegacyStatus
@@ -44,13 +61,13 @@ func (a *indexAggregator) Add(t TestID) error {
 	}
 
 	for i, ru := range a.rus {
-		res := int64(a.runResults[ru].GetResult(t))
+		res := shared.TestStatus(a.runResults[ru].GetResult(t))
 		// TODO: Switch to a consistent value for Total across all runs.
 		//
 		// Only include tests with non-UNKNOWN status for this run's total.
 		if res != shared.TestStatusUnknown {
 			rus[i].Total++
-			if res == shared.TestStatusPass || res == shared.TestStatusOK {
+			if res.IsPassOrOK() {
 				rus[i].Passes++
 			}
 		}
@@ -81,5 +98,6 @@ func newIndexAggregator(idx index, rus []RunID, opts query.AggregationOpts) aggr
 		rus:             rus,
 		agg:             make(map[uint64]query.SearchResult),
 		includeSubtests: opts.IncludeSubtests,
+		interopFormat:   opts.InteropFormat,
 	}
 }

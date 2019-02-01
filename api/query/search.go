@@ -45,6 +45,11 @@ type SearchResult struct {
 	// status values that are "PASS" or "OK".
 	LegacyStatus []LegacySearchRunResult `json:"legacy_status"`
 
+	// Interoperability scores. For N browsers, we have an array of
+	// N+1 items, where the index X is the number of items passing in exactly
+	// X of the N browsers. e.g. for 4 browsers, [0/4, 1/4, 2/4, 3/4, 4/4].
+	Interop []int `json:"interop"`
+
 	// Subtests (names) which are included in the LegacyStatus summary.
 	Subtests []string `json:"subtests,omitempty"`
 }

@@ -103,7 +103,7 @@ func (e AbstractSequential) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 // to a specific browser name.
 type TestStatusEq struct {
 	Product *shared.ProductSpec
-	Status  int64
+	Status  shared.TestStatus
 }
 
 // TestStatusNeq is a query atom that matches tests where the test status/result
@@ -111,7 +111,7 @@ type TestStatusEq struct {
 // filtered to a specific browser name.
 type TestStatusNeq struct {
 	Product *shared.ProductSpec
-	Status  int64
+	Status  shared.TestStatus
 }
 
 // BindToRuns for TestStatusEq expands to a disjunction of RunTestStatusEq
