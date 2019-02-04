@@ -71,12 +71,6 @@ type Not struct {
 	Arg ConcreteQuery
 }
 
-// True is a true-valued ConcreteQuery.
-type True struct{}
-
-// False is a false-valued ConcreteQuery.
-type False struct{}
-
 // Size of TestNamePattern has a size of 1: servicing such a query requires a
 // substring match per test.
 func (TestNamePattern) Size() int { return 1 }
