@@ -353,9 +353,9 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
           toast.close();
           // eslint-disable-next-line no-console
           console.log(`Failed to load: ${e}`);
-          this.resultsLoadFailed = true;
+          this.interopLoadFailed = true;
         }
-      )
+      );
     });
   }
 
