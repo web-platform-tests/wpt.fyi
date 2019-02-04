@@ -311,7 +311,7 @@ func TestSync(t *testing.T) {
 				return
 			}
 
-			plan.Execute(runs)
+			plan.Execute(runs, query.AggregationOpts{})
 		}(j)
 	}
 	wg.Wait()

@@ -143,15 +143,16 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		ctx := sh.api.Context()
 		hostname := sh.api.GetServiceHostname("searchcache")
 		// TODO: This will not work when hostname is localhost (http scheme needed).
-		url := fmt.Sprintf("https://%s/api/search/cache", hostname)
-		logger := shared.GetLogger(ctx)
+		fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
+		fwdURL.RawQuery = r.URL.RawQuery
 
-		logger.Infof("Forwarding structured search request to cache: %s", string(data))
+		logger := shared.GetLogger(ctx)
+		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
 		client := sh.api.GetHTTPClient()
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+		req, err := http.NewRequest("POST", fwdURL.String(), bytes.NewBuffer(data))
 		if err != nil {
-			logger.Errorf("Failed to create request to POST %s: %v", url, err)
+			logger.Errorf("Failed to create request to POST %s: %v", fwdURL.String(), err)
 			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
 			return
 		}
@@ -165,7 +166,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			msg := fmt.Sprintf("Error from request: POST %s: STATUS %d", url, resp.StatusCode)
+			msg := fmt.Sprintf("Error from request: POST %s: STATUS %d", fwdURL.String(), resp.StatusCode)
 			errBody, err2 := ioutil.ReadAll(resp.Body)
 			if err2 == nil {
 				msg = fmt.Sprintf("%s: %s", msg, string(errBody))

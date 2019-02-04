@@ -10,10 +10,12 @@ import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
+import { LoadingState } from './loading-state.js';
 import './wpt-colors.js';
+import { WPTFlags } from './wpt-flags.js';
 
-class TestFileResults extends TestRunsUIQuery(
-  TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)) {
+class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
+  TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -62,6 +64,7 @@ class TestFileResults extends TestRunsUIQuery(
 
   static get properties() {
     return {
+      structuredSearch: Object,
       resultsTable: {
         type: Array,
         value: [],
@@ -80,7 +83,65 @@ class TestFileResults extends TestRunsUIQuery(
   }
 
   static get observers() {
-    return ['fetchTestFile(path, testRuns)'];
+    return ['loadData(path, testRuns, structuredSearch)'];
+  }
+
+  async loadData(path, testRuns, structuredSearch) {
+    // Run a search query, including subtests, as well as fetching the results file.
+    let [searchResults, resultsTable] = await Promise.all([
+      this.fetchSearchResults(path, testRuns, structuredSearch),
+      this.fetchTestFile(path, testRuns),
+    ]);
+
+    if (resultsTable && searchResults) {
+      const test = searchResults.results.find(r => r.test === path);
+      if (test) {
+        const subtests = new Set(test.subtests);
+        const [first, ...others] = resultsTable;
+        const matches = others.filter(t => subtests.has(t.name));
+        resultsTable = [first, ...matches];
+      }
+    }
+    this.resultsTable = resultsTable;
+  }
+
+  async fetchSearchResults(path, testRuns, structuredSearch) {
+    if (!testRuns || !testRuns.length || !this.structuredQueries || !structuredSearch) {
+      return;
+    }
+
+    // Combine the query with " and [path]".
+    const q = {
+      and: [
+        {pattern: path},
+        structuredSearch,
+      ]
+    };
+
+    const url = new URL('/api/search', window.location);
+    url.searchParams.set('subtests', '');
+    const fetchOpts = {
+      method: 'POST',
+      body: JSON.stringify({
+        run_ids: testRuns.map(r => r.id),
+        query: q,
+      }),
+    };
+    return await this.retry(
+      async() => {
+        const r = await window.fetch(url, fetchOpts);
+        if (!r.ok) {
+          if (fetchOpts.method === 'POST' && r.status === 422) {
+            throw r.status;
+          }
+          throw 'Failed to fetch results data.';
+        }
+        return r.json();
+      },
+      err => err === 422,
+      testRuns.length + 1,
+      5000
+    );
   }
 
   async fetchTestFile(path, testRuns) {
@@ -129,8 +190,7 @@ class TestFileResults extends TestRunsUIQuery(
     // Set name for test-level status entry after subtests discovered.
     // Parameter is number of subtests.
     resultsTable[0].name = this.statusName(resultsTable.length - 1);
-
-    this.resultsTable = resultsTable;
+    return resultsTable;
   }
 
   async loadResultFile(testRun) {

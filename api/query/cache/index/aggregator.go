@@ -32,7 +32,10 @@ func (a *indexAggregator) Add(t TestID) error {
 			return err
 		}
 
-		r = query.SearchResult{Test: name, LegacyStatus: nil}
+		r = query.SearchResult{
+			Test:         name,
+			LegacyStatus: nil,
+		}
 	}
 
 	rus := r.LegacyStatus
@@ -51,11 +54,11 @@ func (a *indexAggregator) Add(t TestID) error {
 				rus[i].Passes++
 			}
 		}
-
-		if a.includeSubtests {
-			if _, name, err := ts.GetName(t); err == nil && name != nil {
-				r.Subtests = append(r.Subtests, *name)
-			}
+	}
+	if a.includeSubtests {
+		if _, subtest, err := ts.GetName(t); err == nil && subtest != nil {
+			name := *subtest
+			r.Subtests = append(r.Subtests, name)
 		}
 	}
 	r.LegacyStatus = rus
@@ -72,10 +75,11 @@ func (a *indexAggregator) Done() []query.SearchResult {
 	return res
 }
 
-func newIndexAggregator(idx index, rus []RunID) aggregator {
+func newIndexAggregator(idx index, rus []RunID, opts query.AggregationOpts) aggregator {
 	return &indexAggregator{
-		index: idx,
-		rus:   rus,
-		agg:   make(map[uint64]query.SearchResult),
+		index:           idx,
+		rus:             rus,
+		agg:             make(map[uint64]query.SearchResult),
+		includeSubtests: opts.IncludeSubtests,
 	}
 }

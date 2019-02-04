@@ -64,6 +64,7 @@ func TestDoubleStart(t *testing.T) {
 		defer wg.Done()
 		err1 = mon.Start()
 	}()
+	time.Sleep(time.Microsecond * 100)
 	go func() {
 		defer wg.Done()
 		err2 = mon.Start()

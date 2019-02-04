@@ -141,13 +141,19 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// resident in `idx`. In the unlikely event that a run in `ids`/`runs` is no
 	// longer in `idx`, `idx.Bind()` below will return an error.
 	q := cq.PrepareUserQuery(ids, rq.AbstractQuery.BindToRuns(runs...))
+
+	// Configure format, from request params.
+	_, subtests := r.URL.Query()["subtests"]
+	opts := query.AggregationOpts{
+		IncludeSubtests: subtests,
+	}
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	results := plan.Execute(runs)
+	results := plan.Execute(runs, opts)
 	res, ok := results.([]query.SearchResult)
 	if !ok {
 		http.Error(w, "Search index returned bad results", http.StatusInternalServerError)
