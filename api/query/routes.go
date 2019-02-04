@@ -9,7 +9,10 @@ import "github.com/web-platform-tests/wpt.fyi/shared"
 // RegisterRoutes binds query API handlers to URL routes.
 func RegisterRoutes() {
 	// API endpoint for searching results over given runs.
-	shared.AddRoute("/api/search", "api-search", apiSearchHandler)
+	shared.AddRoute(
+		"/api/search",
+		"api-search",
+		shared.WrapPermissiveCORS(apiSearchHandler))
 	// API endpoint for search autocomplete.
 	shared.AddRoute("/api/autocomplete", "api-autocomplete", apiAutocompleteHandler)
 }
