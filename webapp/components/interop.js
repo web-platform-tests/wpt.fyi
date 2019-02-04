@@ -161,15 +161,15 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     <section class="runs">
       <table>
         <thead>
-        <tr>
-          <template is="dom-repeat" items="{{ passRateMetadata.test_runs }}" as="testRun">
-            <th>
-              <test-run test-run="[[testRun]]"></test-run>
-            </th>
-          </template>
-        </tr>
-
-      </thead></table>
+          <tr>
+            <template is="dom-repeat" items="[[testRuns]]" as="testRun">
+              <th>
+                <test-run test-run="[[testRun]]"></test-run>
+              </th>
+            </template>
+          </tr>
+        </thead>
+      </table>
     </section>
 
     <table>
@@ -205,8 +205,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   </template>
 
   <template is="dom-if" if="[[ pathIsATestFile ]]">
-    <test-file-results test-runs="[[passRateMetadata.test_runs]]" path="[[path]]">
-    </test-file-results>
+    <test-file-results test-runs="[[testRuns]]" path="[[path]]"></test-file-results>
   </template>
 
   <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
@@ -221,10 +220,8 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     return {
       passRateMetadata: Object,
       testRuns: Array,
-      allMetrics: Object,
-      searchResults: {
-        type: Object,
-      },
+      precomputedInterop: Object,
+      searchResults: Object,
       displayedTests: {
         type: Array,
         computed: 'computeDisplayedTests(path, searchResults)'
@@ -263,9 +260,9 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       this.handleSearchAutocomplete(e.detail.path);
     };
     this.onLoadingComplete = () => {
-      // passRateMetadata contains the url for the JSON blob of allMetrics;
+      // passRateMetadata contains the url for the JSON blob of precomputedInterop;
       // both fetches need to succeed + parse.
-      this.interopLoadFailed = !(this.passRateMetadata && this.allMetrics);
+      this.interopLoadFailed = !(this.passRateMetadata && this.precomputedInterop);
       if (!this.interopLoadFailed && this.search) {
         this.handleSearchCommit(this.search);
       }
@@ -274,62 +271,66 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
 
   connectedCallback() {
     super.connectedCallback();
-    this.shadowRoot.querySelector('test-search')
-      .addEventListener('commit', this.onSearchCommit);
-    this.shadowRoot.querySelector('test-search')
-      .addEventListener('autocomplete', this.onSearchAutocomplete);
+    this.testSearch.addEventListener('commit', this.onSearchCommit);
+    this.testSearch.addEventListener('autocomplete', this.onSearchAutocomplete);
   }
 
   disconnectedCallback() {
-    this.shadowRoot.querySelector('test-search')
-      .removeEventListener('commit', this.onSearchCommit);
+    this.testSearch.removeEventListener('commit', this.onSearchCommit);
     super.disconnectedCallback();
   }
 
   async ready() {
     await super.ready();
-    this._createMethodObserver('precomputedInteropLoaded(allMetrics)');
+    this._createMethodObserver('precomputedInteropLoaded(precomputedInterop)');
     if (this.structuredQueries && this.searchCacheInterop) {
       this.fetchSearchCacheInterop();
     } else {
-      // Precomputed interop.
-      this.load(
-        fetch(`/api/interop${this.query}`)
-          .then(async r => {
-            if (!r.ok || r.status !== 200) {
-              Promise.reject('Failed to fetch interop data');
-            }
-            const metadata = await r.json();
-            this.passRateMetadata = metadata;
-            this.testRuns = metadata && metadata.test_runs;
-            this.allMetrics = await fetch(this.passRateMetadata.url).then(r => r.json());
-          })
-      );
+      this.fetchPrecomputedInterop();
     }
   }
 
-  async fetchSearchCacheInterop() {
-    this.testRuns = await this.loadRuns();
-    if (!this.testRuns) {
-      return;
-    }
+  get testSearch() {
+    return this.shadowRoot.querySelector('test-search');
+  }
 
-    let url = new URL('/api/search', window.location);
-    url.searchParams.set('interop', ''); // Include interop scores
-    let fetchOpts = {
-      method: 'POST',
-      body: JSON.stringify({
-        run_ids: this.testRuns.map(r => r.id),
-        query: this.structuredSearch,
-      }),
-    };
-
-    // Fetch search results and refresh display nodes. If fetch error is HTTP'
-    // 422, expect backend to attempt write-on-read of missing data. In such
-    // cases, retry fetch up to 5 times with 5000ms waits in between.
-    const toast = this.shadowRoot.querySelector('#runsNotInCache');
+  fetchPrecomputedInterop() {
     this.load(
-      this.retry(
+      fetch(`/api/interop${this.query}`)
+        .then(async r => {
+          if (!r.ok || r.status !== 200) {
+            Promise.reject('Failed to fetch interop data');
+          }
+          const metadata = await r.json();
+          this.passRateMetadata = metadata;
+          this.testRuns = metadata && metadata.test_runs;
+          this.precomputedInterop = await fetch(this.passRateMetadata.url).then(r => r.json());
+        })
+    );
+  }
+
+  fetchSearchCacheInterop() {
+    this.load(async() => {
+      this.testRuns = await this.loadRuns();
+      if (!this.testRuns) {
+        return;
+      }
+
+      let url = new URL('/api/search', window.location);
+      url.searchParams.set('interop', ''); // Include interop scores
+      let fetchOpts = {
+        method: 'POST',
+        body: JSON.stringify({
+          run_ids: this.testRuns.map(r => r.id),
+          query: this.structuredSearch,
+        }),
+      };
+
+      // Fetch search results and refresh display nodes. If fetch error is HTTP'
+      // 422, expect backend to attempt write-on-read of missing data. In such
+      // cases, retry fetch up to 5 times with 5000ms waits in between.
+      const toast = this.shadowRoot.querySelector('#runsNotInCache');
+      return this.retry(
         async() => {
           const r = await window.fetch(url, fetchOpts);
           if (!r.ok) {
@@ -347,7 +348,6 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       ).then(
         results => {
           this.searchResults = results;
-          this.refreshDisplayedNodes();
         },
         (e) => {
           toast.close();
@@ -356,7 +356,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
           this.resultsLoadFailed = true;
         }
       )
-    );
+    });
   }
 
   navigationPathPrefix() {
@@ -388,13 +388,13 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     return new Set(paths);
   }
 
-  precomputedInteropLoaded(allMetrics) {
+  precomputedInteropLoaded(precomputedInterop) {
     const searchResults = {
       runs: this.testRuns,
       results: [],
     };
-    if (allMetrics) {
-      for (const metric of allMetrics.data) {
+    if (precomputedInterop) {
+      for (const metric of precomputedInterop.data) {
         if (this.computePathIsATestFile(metric.dir)) {
           searchResults.results.push({
             test: metric.dir,
@@ -424,7 +424,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   }
 
   handleSearchCommit() {
-    this.precomputedInteropLoaded(this.allMetrics);
+    this.precomputedInteropLoaded(this.precomputedInterop);
     // Trigger a virtual navigation.
     this.navigateToLocation(window.location);
   }
