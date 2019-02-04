@@ -12,6 +12,7 @@ import (
 // the results.
 type AggregationOpts struct {
 	IncludeSubtests bool
+	InteropFormat   bool
 }
 
 // Binder is a mechanism for binding a query over a slice of test runs to
@@ -43,7 +44,7 @@ type ConcreteQuery interface {
 // Status IDs are those codified in shared.TestStatus* symbols.
 type RunTestStatusEq struct {
 	Run    int64
-	Status int64
+	Status shared.TestStatus
 }
 
 // RunTestStatusNeq constrains search results to include only test results from a
@@ -52,7 +53,7 @@ type RunTestStatusEq struct {
 // Status IDs are those codified in shared.TestStatus* symbols.
 type RunTestStatusNeq struct {
 	Run    int64
-	Status int64
+	Status shared.TestStatus
 }
 
 // Or is a logical disjunction of ConcreteQuery instances.
@@ -69,12 +70,6 @@ type And struct {
 type Not struct {
 	Arg ConcreteQuery
 }
-
-// True is a true-valued ConcreteQuery.
-type True struct{}
-
-// False is a false-valued ConcreteQuery.
-type False struct{}
 
 // Size of TestNamePattern has a size of 1: servicing such a query requires a
 // substring match per test.

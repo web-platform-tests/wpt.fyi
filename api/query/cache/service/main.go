@@ -144,8 +144,10 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Configure format, from request params.
 	_, subtests := r.URL.Query()["subtests"]
+	_, interop := r.URL.Query()["interop"]
 	opts := query.AggregationOpts{
 		IncludeSubtests: subtests,
+		InteropFormat:   interop,
 	}
 	plan, err := idx.Bind(runs, q)
 	if err != nil {

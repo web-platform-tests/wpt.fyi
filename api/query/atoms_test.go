@@ -35,7 +35,8 @@ func TestStructuredQuery_missingQuery(t *testing.T) {
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2]
 	}`), &rq)
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: True{}}, rq)
 }
 
 func TestStructuredQuery_emptyRunIDs(t *testing.T) {

@@ -8,39 +8,42 @@ package shared
 // Shared data types used for string WPT test results in query cache.
 //
 
+// TestStatus represents the possible test result statuses.
+type TestStatus int64
+
 const (
 	// TestStatusUnknown is an uninitialized TestStatus and should
 	// not be used.
-	TestStatusUnknown int64 = 0
+	TestStatusUnknown TestStatus = 0
 
 	// TestStatusPass indicates that all tests completed successfully and passed.
-	TestStatusPass int64 = 1
+	TestStatusPass TestStatus = 1
 
 	// TestStatusOK indicates that all tests completed successfully.
-	TestStatusOK int64 = 2
+	TestStatusOK TestStatus = 2
 
 	// TestStatusError indicates that some tests did not complete
 	// successfully.
-	TestStatusError int64 = 3
+	TestStatusError TestStatus = 3
 
 	// TestStatusTimeout indicates that some tests timed out.
-	TestStatusTimeout int64 = 4
+	TestStatusTimeout TestStatus = 4
 
 	// TestStatusNotRun indicates that a test was not run.
-	TestStatusNotRun int64 = 5
+	TestStatusNotRun TestStatus = 5
 
 	// TestStatusFail indicates that a test failed.
-	TestStatusFail int64 = 6
+	TestStatusFail TestStatus = 6
 
 	// TestStatusCrash indicates that the WPT test runner crashed attempting to run the test.
-	TestStatusCrash int64 = 7
+	TestStatusCrash TestStatus = 7
 
 	// TestStatusSkip indicates that the test was disabled for this test run.
-	TestStatusSkip int64 = 8
+	TestStatusSkip TestStatus = 8
 
 	// TestStatusAssert indicates that a non-fatal assertion failed. This test
 	// status is supported by, at least, Mozilla.
-	TestStatusAssert int64 = 9
+	TestStatusAssert TestStatus = 9
 
 	// TestStatusNameUnknown is the string representation for an uninitialized
 	// TestStatus and should not be used.
@@ -86,14 +89,14 @@ const (
 
 	// TestStatusDefault is the default value used when a status string cannot be
 	// interpreted.
-	TestStatusDefault int64 = TestStatusUnknown
+	TestStatusDefault TestStatus = TestStatusUnknown
 
 	// TestStatusNameDefault is the default string used when a status value cannot
 	// be interpreted.
 	TestStatusNameDefault string = TestStatusNameUnknown
 )
 
-var testStatusValues = map[string]int64{
+var testStatusValues = map[string]TestStatus{
 	TestStatusNameUnknown: TestStatusUnknown,
 	TestStatusNamePass:    TestStatusPass,
 	TestStatusNameOK:      TestStatusOK,
@@ -106,7 +109,7 @@ var testStatusValues = map[string]int64{
 	TestStatusNameAssert:  TestStatusAssert,
 }
 
-var testStatusNames = map[int64]string{
+var testStatusNames = map[TestStatus]string{
 	TestStatusUnknown: TestStatusNameUnknown,
 	TestStatusPass:    TestStatusNamePass,
 	TestStatusOK:      TestStatusNameOK,
@@ -119,9 +122,14 @@ var testStatusNames = map[int64]string{
 	TestStatusAssert:  TestStatusNameAssert,
 }
 
+// IsPassOrOK is true if the value is TestStatusPass or TestStatusOK
+func (s TestStatus) IsPassOrOK() bool {
+	return s == TestStatusOK || s == TestStatusPass
+}
+
 // TestStatusValueFromString returns the enum value associated with str (if
 // any), or else TestStatusDefault.
-func TestStatusValueFromString(str string) int64 {
+func TestStatusValueFromString(str string) TestStatus {
 	v, ok := testStatusValues[str]
 	if !ok {
 		return TestStatusDefault
@@ -131,7 +139,7 @@ func TestStatusValueFromString(str string) int64 {
 
 // TestStatusStringFromValue returns the string associated with s (if any), or
 // else TestStatusStringDefault.
-func TestStatusStringFromValue(s int64) string {
+func TestStatusStringFromValue(s TestStatus) string {
 	str, ok := testStatusNames[s]
 	if !ok {
 		return TestStatusNameDefault

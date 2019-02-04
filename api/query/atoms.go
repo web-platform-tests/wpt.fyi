@@ -29,13 +29,28 @@ type RunQuery struct {
 	AbstractQuery
 }
 
+// True is a true-valued ConcreteQuery.
+type True struct{}
+
+// BindToRuns for True is a no-op; it is independent of test runs.
+func (t True) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return t
+}
+
+// False is a false-valued ConcreteQuery.
+type False struct{}
+
+// BindToRuns for False is a no-op; it is independent of test runs.
+func (f False) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return f
+}
+
 // TestNamePattern is a query atom that matches test names to a pattern string.
 type TestNamePattern struct {
 	Pattern string
 }
 
-// BindToRuns for TestNamePattern is a no-op: TestNamePattern implements both
-// AbstractQuery and ConcreteQuery because it is independent of test runs.
+// BindToRuns for TestNamePattern is a no-op; it is independent of test runs.
 func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
@@ -103,7 +118,7 @@ func (e AbstractSequential) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 // to a specific browser name.
 type TestStatusEq struct {
 	Product *shared.ProductSpec
-	Status  int64
+	Status  shared.TestStatus
 }
 
 // TestStatusNeq is a query atom that matches tests where the test status/result
@@ -111,7 +126,7 @@ type TestStatusEq struct {
 // filtered to a specific browser name.
 type TestStatusNeq struct {
 	Product *shared.ProductSpec
-	Status  int64
+	Status  shared.TestStatus
 }
 
 // BindToRuns for TestStatusEq expands to a disjunction of RunTestStatusEq
@@ -242,17 +257,17 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 	if len(data.RunIDs) == 0 {
 		return errors.New(`Missing run query property: "run_ids"`)
 	}
-	if len(data.Query) == 0 {
-		return errors.New(`Missing run query property: "query"`)
-	}
-
-	q, err := unmarshalQ(data.Query)
-	if err != nil {
-		return err
-	}
-
 	rq.RunIDs = data.RunIDs
-	rq.AbstractQuery = q
+
+	if len(data.Query) > 0 {
+		q, err := unmarshalQ(data.Query)
+		if err != nil {
+			return err
+		}
+		rq.AbstractQuery = q
+	} else {
+		rq.AbstractQuery = True{}
+	}
 	return nil
 }
 
