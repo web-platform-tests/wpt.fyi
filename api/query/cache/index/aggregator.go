@@ -54,20 +54,20 @@ func (a *indexAggregator) Add(t TestID) error {
 		r.Interop[passing]++
 	}
 
-	rus := r.LegacyStatus
-	if rus == nil {
-		rus = make([]query.LegacySearchRunResult, len(a.runIDs))
+	results := r.LegacyStatus
+	if results == nil {
+		results = make([]query.LegacySearchRunResult, len(a.runIDs))
 	}
 
-	for i, ru := range a.runIDs {
-		res := shared.TestStatus(a.runResults[ru].GetResult(t))
+	for i, id := range a.runIDs {
+		res := shared.TestStatus(a.runResults[id].GetResult(t))
 		// TODO: Switch to a consistent value for Total across all runs.
 		//
 		// Only include tests with non-UNKNOWN status for this run's total.
 		if res != shared.TestStatusUnknown {
-			rus[i].Total++
+			results[i].Total++
 			if res.IsPassOrOK() {
-				rus[i].Passes++
+				results[i].Passes++
 			}
 		}
 	}
@@ -77,7 +77,7 @@ func (a *indexAggregator) Add(t TestID) error {
 			r.Subtests = append(r.Subtests, name)
 		}
 	}
-	r.LegacyStatus = rus
+	r.LegacyStatus = results
 	a.agg[id] = r
 
 	return nil
