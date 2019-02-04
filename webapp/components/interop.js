@@ -345,8 +345,8 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
         5,
         5000
       ).then(
-        json => {
-          this.searchResults = json.results;
+        results => {
+          this.searchResults = results;
           this.refreshDisplayedNodes();
         },
         (e) => {
