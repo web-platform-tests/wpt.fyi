@@ -4,27 +4,30 @@
  * found in the LICENSE file.
  */
 
+import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
+import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import './path-part.js';
-import { QueryBuilder } from './results-navigation.js';
 import { SelfNavigation } from './self-navigator.js';
 import './test-file-results.js';
 import './test-file-results-table-terse.js';
 import './test-file-results-table-verbose.js';
 import './test-run.js';
-import { TestRunsBase } from './test-runs.js';
+import { TestRunsQueryLoader} from './test-runs.js';
 import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
+import { WPTFlags } from './wpt-flags.js';
 
-class WPTInterop extends QueryBuilder(
-  WPTColors(SelfNavigation(LoadingState(TestRunsBase))),
-  'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, search)') {
+class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
+  TestRunsQueryLoader(
+    PolymerElement,
+    'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, search)'))))) {
   static get template() {
     return html`
   <style>
@@ -129,7 +132,11 @@ class WPTInterop extends QueryBuilder(
 
     <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-    <test-search class\$="search-[[pathIsATestFile]]" query="{{search}}" test-runs="[[testRuns]]" test-paths="[[testPaths]]">
+    <test-search class\$="search-[[pathIsATestFile]]"
+                 query="{{search}}"
+                 structured-query="{{structuredSearch}}"
+                 test-runs="[[testRuns]]"
+                 test-paths="[[testPaths]]">
     </test-search>
 
     <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -188,7 +195,7 @@ class WPTInterop extends QueryBuilder(
               <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}" navigate="{{ bindNavigate() }}"></path-part>
             </td>
 
-            <template is="dom-repeat" items="{{node.pass_rates}}" as="passRate" index-as="i">
+            <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
               <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
             </template>
           </tr>
@@ -201,6 +208,8 @@ class WPTInterop extends QueryBuilder(
     <test-file-results test-runs="[[passRateMetadata.test_runs]]" path="[[path]]">
     </test-file-results>
   </template>
+
+  <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
 `;
   }
 
@@ -211,19 +220,14 @@ class WPTInterop extends QueryBuilder(
   static get properties() {
     return {
       passRateMetadata: Object,
-      testRuns: {
-        type: Array,
-        computed: 'computeTestRuns(passRateMetadata)',
-      },
+      testRuns: Array,
       allMetrics: Object,
-      fileMetrics: {
-        type: Array,
-        value: [],
-        computed: 'computeFileMetrics(allMetrics)',
+      searchResults: {
+        type: Object,
       },
       displayedTests: {
         type: Array,
-        computed: 'computeDisplayedTests(path, searchResults, fileMetrics)'
+        computed: 'computeDisplayedTests(path, searchResults)'
       },
       displayedNodes: {
         type: Array,
@@ -237,14 +241,15 @@ class WPTInterop extends QueryBuilder(
       search: {
         type: String,
         value: '',
+        notify: true,
       },
-      searchResults: Array,
+      structuredSearch: Object,
       onSearchCommit: Function,
       onSearchAutocomplete: Function,
       interopLoadFailed: Boolean,
       testPaths: {
         type: Set,
-        computed: 'computeTestPaths(fileMetrics)',
+        computed: 'computeTestPaths(searchResults)',
       },
     };
   }
@@ -283,15 +288,69 @@ class WPTInterop extends QueryBuilder(
 
   async ready() {
     await super.ready();
+    this._createMethodObserver('precomputedInteropLoaded(allMetrics)');
+    if (this.structuredQueries && this.searchCacheInterop) {
+      this.fetchSearchCacheInterop();
+    } else {
+      // Precomputed interop.
+      this.load(
+        fetch(`/api/interop${this.query}`)
+          .then(async r => {
+            if (!r.ok || r.status !== 200) {
+              Promise.reject('Failed to fetch interop data');
+            }
+            const metadata = await r.json();
+            this.passRateMetadata = metadata;
+            this.testRuns = metadata && metadata.test_runs;
+            this.allMetrics = await fetch(this.passRateMetadata.url).then(r => r.json());
+          })
+      );
+    }
+  }
+
+  fetchSearchCacheInterop() {
+    let url = new URL('/api/search', window.location);
+    url.searchParams.set('interop', ''); // Include interop scores
+    let fetchOpts = {
+      method: 'POST',
+      body: JSON.stringify({
+        run_ids: this.testRuns.map(r => r.id),
+        query: this.structuredSearch,
+      }),
+    };
+
+    // Fetch search results and refresh display nodes. If fetch error is HTTP'
+    // 422, expect backend to attempt write-on-read of missing data. In such
+    // cases, retry fetch up to 5 times with 5000ms waits in between.
+    const toast = this.shadowRoot.querySelector('#runsNotInCache');
     this.load(
-      fetch(`/api/interop${this.query}`)
-        .then(async r => {
-          if (!r.ok || r.status !== 200) {
-            Promise.reject('Failed to fetch interop data');
+      this.retry(
+        async() => {
+          const r = await window.fetch(url, fetchOpts);
+          if (!r.ok) {
+            if (fetchOpts.method === 'POST' && r.status === 422) {
+              toast.open();
+              throw r.status;
+            }
+            throw 'Failed to fetch results data.';
           }
-          this.passRateMetadata = await r.json();
-          this.allMetrics = await fetch(this.passRateMetadata.url).then(r => r.json());
-        })
+          return r.json();
+        },
+        err => err === 422,
+        5,
+        5000
+      ).then(
+        json => {
+          this.searchResults = json.results;
+          this.refreshDisplayedNodes();
+        },
+        (e) => {
+          toast.close();
+          // eslint-disable-next-line no-console
+          console.log(`Failed to load: ${e}`);
+          this.resultsLoadFailed = true;
+        }
+      )
     );
   }
 
@@ -319,32 +378,38 @@ class WPTInterop extends QueryBuilder(
     return labels;
   }
 
-  computeTestRuns(metadata) {
-    return metadata && metadata.test_runs;
-  }
-
-  computeTestPaths(fileMetrics) {
-    const paths = fileMetrics && fileMetrics.map(m => m.dir) || [];
+  computeTestPaths(searchResults) {
+    const paths = searchResults && searchResults.results.map(r => r.test) || [];
     return new Set(paths);
   }
 
-  computeFileMetrics(allMetrics) {
-    let fileMetrics = [];
-    for (const metric of allMetrics.data) {
-      if (this.computePathIsATestFile(metric.dir)) {
-        fileMetrics.push(metric);
+  precomputedInteropLoaded(allMetrics) {
+    const searchResults = {
+      runs: this.testRuns,
+      results: [],
+    };
+    if (allMetrics) {
+      for (const metric of allMetrics.data) {
+        if (this.computePathIsATestFile(metric.dir)) {
+          searchResults.results.push({
+            test: metric.dir,
+            interop: metric.pass_rates,
+          });
+        }
+      }
+      const q = this.search;
+      if (q  && q.length) {
+        searchResults.results = searchResults.results.filter(t => t.test.toLowerCase().includes(q));
       }
     }
-    return fileMetrics;
+    this.searchResults = searchResults;
   }
 
-  computeDisplayedTests(path, searchResults, fileMetrics) {
-    if (!path || !fileMetrics) {
+  computeDisplayedTests(path, searchResults) {
+    if (!path || !searchResults) {
       return null;
     }
-
-    return (searchResults || fileMetrics)
-      .filter(node => node.dir.includes(path));
+    return searchResults.results.filter(node => node.test.includes(path));
   }
 
   passRateStyle(total, passRate, browserCount) {
@@ -353,17 +418,10 @@ class WPTInterop extends QueryBuilder(
     return `background-color: ${this.passRateColorRGBA(browserCount, this.testRuns.length, alpha)}`;
   }
 
-  handleSearchCommit(q) {
-    if (!q || q.length < 1) {
-      this.searchResults = this.fileMetrics;
-      return;
-    }
-    if (!this.fileMetrics) {
-      return;
-    }
-
-    this.searchResults = this.fileMetrics
-      .filter(t => t.dir.toLowerCase().includes(q));
+  handleSearchCommit() {
+    this.precomputedInteropLoaded(this.allMetrics);
+    // Trigger a virtual navigation.
+    this.navigateToLocation(window.location);
   }
 
   handleSearchAutocomplete(path) {
@@ -382,15 +440,16 @@ class WPTInterop extends QueryBuilder(
 
     return displayedTests
       // Filter out files not in this directory.
-      .filter(n => n.dir.startsWith(prefix))
+      .filter(n => n.test.startsWith(prefix))
       // Accumulate displayedNodes from remaining files.
       .reduce((() => {
         // Bookkeeping of the form:
         //   {<displayed dir/file name>: <index in acc>}.
         let nodes = {};
+        const sum = (acc, next) => acc + next;
         return (acc, t) => {
           // Compute dir/file name that is direct descendant of this.path.
-          const suffix = t.dir.substring(pLen);
+          const suffix = t.test.substring(pLen);
           const slashIdx = suffix.indexOf('/');
           const isDir = slashIdx !== -1;
           const name = isDir ? suffix.substring(0, slashIdx): suffix;
@@ -401,22 +460,21 @@ class WPTInterop extends QueryBuilder(
             acc.push({
               path: `${prefix}${name}`,
               isDir,
-              pass_rates: Array.from(t.pass_rates),
-              total: t.total,
+              interop: Array.from(t.interop),
+              total: t.interop.reduce(sum, 0),
             });
           } else {
-            const prs = t.pass_rates;
             const n = acc[nodes[name]];
-            const nprs = n.pass_rates;
+            const nprs = n.interop;
 
-            for (let i = 0; i < prs.length; i++) {
+            for (let i = 0; i < t.interop.length; i++) {
               if (i < nprs.length) {
-                nprs[i] += prs[i];
+                nprs[i] += t.interop[i];
               } else {
-                nprs[i] = prs[i];
+                nprs[i] = t.interop[i];
               }
             }
-            n.total += t.total;
+            n.total += t.interop.reduce(sum, 0);
           }
 
           return acc;

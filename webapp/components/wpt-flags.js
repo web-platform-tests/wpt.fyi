@@ -165,6 +165,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         status/result values
       </paper-checkbox>
     </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{searchCacheInterop}}">
+        Compute interop results the fly, using the searchcache
+      </paper-checkbox>
+    </paper-item>
     <paper-item>
       <paper-checkbox checked="{{fetchManifestForTestList}}">
         Fetch a manifest for a complete (expected) list of tests.
