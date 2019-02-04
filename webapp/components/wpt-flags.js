@@ -26,20 +26,21 @@ window.wpt = window.wpt || {};
 Object.defineProperty(wpt, 'ClientSideFeatures', {
   get: function() {
     return [
-      'queryBuilder',
-      'queryBuilderSHA',
-      'diffFromAPI',
       'colorHomepage',
-      'structuredQueries',
+      'diffFromAPI',
       'experimentalByDefault',
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
       'insightsTab',
+      'permalinks',
+      'queryBuilder',
+      'queryBuilderSHA',
+      'searchCacheInterop',
       'showTestType',
       'showTestRefURL',
+      'structuredQueries',
       'searchPRsForDirectories',
-      'permalinks',
     ];
   }
 });
