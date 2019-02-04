@@ -263,10 +263,14 @@ class TestSearch extends WPTFlags(PolymerElement) {
   queryUpdated(query) {
     this.queryInput = query;
     if (this.structuredQueries) {
-      try {
-        this.structuredQuery = Object.freeze(this.parseAndInterpretQuery(query));
-      } catch (err) {
-        // TODO: Handle query parse/interpret error.
+      if (!query) {
+        this.structuredQuery = null;
+      } else {
+        try {
+          this.structuredQuery = Object.freeze(this.parseAndInterpretQuery(query));
+        } catch (err) {
+          // TODO: Handle query parse/interpret error.
+        }
       }
     }
   }
