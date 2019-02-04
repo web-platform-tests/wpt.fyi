@@ -308,7 +308,12 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     }
   }
 
-  fetchSearchCacheInterop() {
+  async fetchSearchCacheInterop() {
+    this.testRuns = await this.loadRuns();
+    if (!this.testRuns) {
+      return;
+    }
+
     let url = new URL('/api/search', window.location);
     url.searchParams.set('interop', ''); // Include interop scores
     let fetchOpts = {
