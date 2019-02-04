@@ -96,8 +96,8 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
     if (resultsTable && searchResults) {
       const test = searchResults.results.find(r => r.test === path);
       if (test) {
-        let subtests = new Set(test.subtests);
-        let [first, ...others] = resultsTable;
+        const subtests = new Set(test.subtests);
+        const [first, ...others] = resultsTable;
         const matches = others.filter(t => subtests.has(t.name));
         resultsTable = [first, ...matches];
       }
@@ -111,14 +111,14 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
     }
 
     // Combine the query with " and [path]".
-    let q = {
+    const q = {
       and: [
         {pattern: path},
         structuredSearch,
       ]
     };
 
-    let url = new URL('/api/search', window.location);
+    const url = new URL('/api/search', window.location);
     url.searchParams.set('subtests', '');
     const fetchOpts = {
       method: 'POST',
