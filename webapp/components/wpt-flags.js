@@ -26,20 +26,21 @@ window.wpt = window.wpt || {};
 Object.defineProperty(wpt, 'ClientSideFeatures', {
   get: function() {
     return [
-      'queryBuilder',
-      'queryBuilderSHA',
-      'diffFromAPI',
       'colorHomepage',
-      'structuredQueries',
+      'diffFromAPI',
       'experimentalByDefault',
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
       'insightsTab',
+      'permalinks',
+      'queryBuilder',
+      'queryBuilderSHA',
+      'searchCacheInterop',
       'showTestType',
       'showTestRefURL',
+      'structuredQueries',
       'searchPRsForDirectories',
-      'permalinks',
     ];
   }
 });
@@ -163,6 +164,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       <paper-checkbox checked="{{structuredQueries}}">
         Interpret query strings as structured queries over test names and test
         status/result values
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{searchCacheInterop}}">
+        Compute interop results the fly, using the searchcache
       </paper-checkbox>
     </paper-item>
     <paper-item>
