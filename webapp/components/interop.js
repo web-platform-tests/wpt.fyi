@@ -264,9 +264,6 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       // both fetches need to succeed + parse.
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
-      if (!this.interopLoadFailed && this.search) {
-        this.handleSearchCommit(this.search);
-      }
     };
   }
 
@@ -307,19 +304,24 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
           this.testRuns = metadata && metadata.test_runs;
           this.precomputedInterop = await fetch(this.passRateMetadata.url).then(r => r.json());
         })
+        .then(() => {
+          if (this.search) {
+            this.handleSearchCommit(this.search);
+          }
+        })
     );
   }
 
   fetchSearchCacheInterop() {
     this.load(
-      this.loadRuns()
+      Promise.resolve(this.testRuns || this.loadRuns())
         .then(runs => {
           if (!runs) {
             return;
           }
           const body = {
             run_ids: this.testRuns.map(r => r.id),
-          }
+          };
           if (this.structuredSearch) {
             body.query = this.structuredSearch;
           }
@@ -429,7 +431,12 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   }
 
   handleSearchCommit() {
-    this.precomputedInteropLoaded(this.precomputedInterop);
+    if (this.structuredQueries && this.searchCacheInterop) {
+      this.fetchSearchCacheInterop();
+    } else {
+      this.precomputedInteropLoaded(this.precomputedInterop);
+    }
+
     // Trigger a virtual navigation.
     this.navigateToLocation(window.location);
   }
