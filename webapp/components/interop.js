@@ -310,53 +310,54 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   }
 
   fetchSearchCacheInterop() {
-    this.load(async() => {
-      this.testRuns = await this.loadRuns();
-      if (!this.testRuns) {
-        return;
-      }
-
-      let url = new URL('/api/search', window.location);
-      url.searchParams.set('interop', ''); // Include interop scores
-      let fetchOpts = {
-        method: 'POST',
-        body: JSON.stringify({
-          run_ids: this.testRuns.map(r => r.id),
-          query: this.structuredSearch,
-        }),
-      };
-
-      // Fetch search results and refresh display nodes. If fetch error is HTTP'
-      // 422, expect backend to attempt write-on-read of missing data. In such
-      // cases, retry fetch up to 5 times with 5000ms waits in between.
-      const toast = this.shadowRoot.querySelector('#runsNotInCache');
-      return this.retry(
-        async() => {
-          const r = await window.fetch(url, fetchOpts);
-          if (!r.ok) {
-            if (fetchOpts.method === 'POST' && r.status === 422) {
-              toast.open();
-              throw r.status;
-            }
-            throw 'Failed to fetch results data.';
+    this.load(
+      this.loadRuns()
+        .then(runs => {
+          if (!runs) {
+            return;
           }
-          return r.json();
-        },
-        err => err === 422,
-        5,
-        5000
-      ).then(
-        results => {
-          this.searchResults = results;
-        },
-        (e) => {
-          toast.close();
-          // eslint-disable-next-line no-console
-          console.log(`Failed to load: ${e}`);
-          this.interopLoadFailed = true;
-        }
-      );
-    });
+          let url = new URL('/api/search', window.location);
+          url.searchParams.set('interop', ''); // Include interop scores
+          let fetchOpts = {
+            method: 'POST',
+            body: JSON.stringify({
+              run_ids: this.testRuns.map(r => r.id),
+              query: this.structuredSearch,
+            }),
+          };
+
+          // Fetch search results and refresh display nodes. If fetch error is HTTP'
+          // 422, expect backend to attempt write-on-read of missing data. In such
+          // cases, retry fetch up to 5 times with 5000ms waits in between.
+          const toast = this.shadowRoot.querySelector('#runsNotInCache');
+          return this.retry(
+            async() => {
+              const r = await window.fetch(url, fetchOpts);
+              if (!r.ok) {
+                if (fetchOpts.method === 'POST' && r.status === 422) {
+                  toast.open();
+                  throw r.status;
+                }
+                throw 'Failed to fetch results data.';
+              }
+              return r.json();
+            },
+            err => err === 422,
+            5,
+            5000
+          ).then(
+            results => {
+              this.searchResults = results;
+            },
+            (e) => {
+              toast.close();
+              // eslint-disable-next-line no-console
+              console.log(`Failed to load: ${e}`);
+              this.interopLoadFailed = true;
+            }
+          );
+        })
+    );
   }
 
   navigationPathPrefix() {
