@@ -34,10 +34,20 @@ npm install
 npm test
 ```
 
+## Testing your code
+
+There is a number of `make` rule for testing. To run tests in docker:
+
+```sh
+docker exec -t -u $(id -u $USER):$(id -g $USER) wptd-dev-instance make test
+```
+
+See [`Makefile`](/Makefile) for more fine grained targets which take less time to run.
+
 ## Git prepush
 
 You should set up your repo to run `make prepush` in docker when you're pushing, to help catch trivial build/lint errors.
-See [the git hooks folder](/web-platform-tests/wpt.fyi/tree/master/git/hooks) for instructions.
+See [the git hooks folder](/git/hooks) for instructions.
 
 # Coding Guidelines
 
