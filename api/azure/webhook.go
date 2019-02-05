@@ -22,9 +22,9 @@ import (
 // For master runs, artifact name may be either just "results" or something
 // like "safari-results".
 var (
-	masterRegex = regexp.MustCompile(`[^-]results$`)
-	prHeadRegex = regexp.MustCompile(`[^-]affected-tests$`)
-	prBaseRegex = regexp.MustCompile(`[^-]affected-tests-without-changes$`)
+	masterRegex = regexp.MustCompile(`\bresults$`)
+	prHeadRegex = regexp.MustCompile(`\baffected-tests$`)
+	prBaseRegex = regexp.MustCompile(`\baffected-tests-without-changes$`)
 )
 
 // handleCheckRunEvent processes an Azure Pipelines check run "completed" event.
