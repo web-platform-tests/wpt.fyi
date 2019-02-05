@@ -1,0 +1,13 @@
+# This is the configuration file for Azure Pipelines.
+# Documentation to help understand this setup:
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/process/conditions
+
+jobs:
+- job: Weekly release
+  condition: eq(variables['Build.Reason'], 'Schedule')
+  pool:
+    vmImage: 'ubuntu-16.04'
+  steps:
+  - script: date
+    displayName: 'Show the current time'
