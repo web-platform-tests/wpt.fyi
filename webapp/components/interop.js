@@ -316,14 +316,17 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
           if (!runs) {
             return;
           }
+          const body = {
+            run_ids: this.testRuns.map(r => r.id),
+          }
+          if (this.structuredSearch) {
+            body.query = this.structuredSearch;
+          }
           let url = new URL('/api/search', window.location);
           url.searchParams.set('interop', ''); // Include interop scores
           let fetchOpts = {
             method: 'POST',
-            body: JSON.stringify({
-              run_ids: this.testRuns.map(r => r.id),
-              query: this.structuredSearch,
-            }),
+            body: JSON.stringify(body),
           };
 
           // Fetch search results and refresh display nodes. If fetch error is HTTP'
