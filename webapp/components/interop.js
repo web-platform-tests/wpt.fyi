@@ -260,8 +260,6 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       this.handleSearchAutocomplete(e.detail.path);
     };
     this.onLoadingComplete = () => {
-      // passRateMetadata contains the url for the JSON blob of precomputedInterop;
-      // both fetches need to succeed + parse.
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
     };
@@ -303,8 +301,6 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
           this.passRateMetadata = metadata;
           this.testRuns = metadata && metadata.test_runs;
           this.precomputedInterop = await fetch(this.passRateMetadata.url).then(r => r.json());
-        })
-        .then(() => {
           if (this.search) {
             this.handleSearchCommit(this.search);
           }
@@ -320,7 +316,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
             return;
           }
           const body = {
-            run_ids: this.testRuns.map(r => r.id),
+            run_ids: runs.map(r => r.id),
           };
           if (this.structuredSearch) {
             body.query = this.structuredSearch;
@@ -340,7 +336,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
             async() => {
               const r = await window.fetch(url, fetchOpts);
               if (!r.ok) {
-                if (fetchOpts.method === 'POST' && r.status === 422) {
+                if (r.status === 422) {
                   toast.open();
                   throw r.status;
                 }
@@ -396,23 +392,25 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   }
 
   precomputedInteropLoaded(precomputedInterop) {
+    if (!precomputedInterop) {
+      this.searchResults = null;
+      return;
+    }
     const searchResults = {
       runs: this.testRuns,
       results: [],
     };
-    if (precomputedInterop) {
-      for (const metric of precomputedInterop.data) {
-        if (this.computePathIsATestFile(metric.dir)) {
-          searchResults.results.push({
-            test: metric.dir,
-            interop: metric.pass_rates,
-          });
-        }
+    for (const metric of precomputedInterop.data) {
+      if (this.computePathIsATestFile(metric.dir)) {
+        searchResults.results.push({
+          test: metric.dir,
+          interop: metric.pass_rates,
+        });
       }
-      const q = this.search;
-      if (q  && q.length) {
-        searchResults.results = searchResults.results.filter(t => t.test.toLowerCase().includes(q));
-      }
+    }
+    const q = this.search;
+    if (q  && q.length) {
+      searchResults.results = searchResults.results.filter(t => t.test.toLowerCase().includes(q));
     }
     this.searchResults = searchResults;
   }
