@@ -167,7 +167,7 @@ class Anomalies extends ProductInfo(PolymerElement) {
       .filter(b => b !== browser)
       .map(o => `(${o}:pass|${o}:ok)`)
       .join(' ');
-    return `!${browser}:pass !${browser}:ok ${othersPassing}`;
+    return `(${browser}:!pass&${browser}:!ok) ${othersPassing}`;
   }
 
   computeURL(query) {
