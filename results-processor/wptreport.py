@@ -14,11 +14,29 @@ import os
 import re
 import tempfile
 from datetime import datetime, timezone
+from typing import Any, Callable, Dict, Iterator, IO, List, Optional, Union
 
 import requests
 
 import config
 import gsutil
+
+from mypy_extensions import TypedDict
+
+
+class RunInfo(TypedDict, total=False):
+    product: str
+    browser_version: str
+    browser_channel: str
+    revision: str
+    os: str
+    os_version: str
+
+class WptReport(TypedDict):
+    results: List[Dict]
+    run_info: RunInfo
+    time_start: Optional[float]
+    time_end: Optional[float]
 
 
 DEFAULT_PROJECT = 'wptdashboard'
@@ -40,7 +58,7 @@ _log = logging.getLogger(__name__)
 
 class WPTReportError(Exception):
     """Base class for all input-related exceptions."""
-    def __init__(self, message, path=None):
+    def __init__(self, message: str, path: Optional[str] = None) -> None:
         self.message = message
         self.path = path
 
@@ -52,12 +70,12 @@ class WPTReportError(Exception):
 
 
 class InvalidJSONError(WPTReportError):
-    def __init__(self):
+    def __init__(self) -> None:
         super(InvalidJSONError, self).__init__("Invalid JSON")
 
 
 class MissingMetadataError(WPTReportError):
-    def __init__(self, key):
+    def __init__(self, key: str) -> None:
         super(MissingMetadataError, self).__init__(
             "Missing required metadata '%s'" %
             (key,)
@@ -65,12 +83,12 @@ class MissingMetadataError(WPTReportError):
 
 
 class InsufficientDataError(WPTReportError):
-    def __init__(self):
+    def __init__(self) -> None:
         super(InsufficientDataError, self).__init__("Missing 'results' field")
 
 
 class ConflictingDataError(WPTReportError):
-    def __init__(self, key):
+    def __init__(self, key: str) -> None:
         super(ConflictingDataError, self).__init__(
             "Conflicting '%s' found in the merged report" % (key,)
         )
@@ -79,12 +97,12 @@ class ConflictingDataError(WPTReportError):
 class BufferedHashsum(object):
     """A simple buffered hash calculator."""
 
-    def __init__(self, hash_ctor=hashlib.sha1, block_size=1024*1024):
+    def __init__(self, hash_ctor: Callable = hashlib.sha1, block_size: int = 1024*1024) -> None:
         assert block_size > 0
         self._hash = hash_ctor()
         self._block_size = block_size
 
-    def hash_file(self, fileobj):
+    def hash_file(self, fileobj: Union[IO[bytes], gzip.GzipFile]) -> None:
         """Updates the hashsum from a given file.
 
         Calling this method on multiple files is equivalent to computing the
@@ -102,7 +120,7 @@ class BufferedHashsum(object):
             self._hash.update(buf)
             buf = fileobj.read(self._block_size)
 
-    def hashsum(self):
+    def hashsum(self) -> str:
         """Returns the hexadecimal digest of the current hash."""
         return self._hash.hexdigest()
 
@@ -110,15 +128,15 @@ class BufferedHashsum(object):
 class WPTReport(object):
     """An abstraction of wptreport.json with some transformation features."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._hash = BufferedHashsum()
-        self._report = {
+        self._report: WptReport = {
             'results': [],
             'run_info': {},
         }
-        self._summary = dict()
+        self._summary: Dict[str, List[int]] = {}
 
-    def _add_chunk(self, chunk):
+    def _add_chunk(self, chunk: WptReport) -> None:
         self._report['results'].extend(chunk['results'])
 
         def update_property(key, source, target, conflict_func=None):
@@ -163,7 +181,7 @@ class WPTReport(object):
             else:
                 self.load_json(f)
 
-    def load_json(self, fileobj):
+    def load_json(self, fileobj: Union[gzip.GzipFile, IO[bytes]]) -> None:
         """Loads wptreport from a JSON file.
 
         This method can be called multiple times to load and merge new chunks.
@@ -181,7 +199,7 @@ class WPTReport(object):
         fileobj.seek(0)
 
         # JSON files are always encoded in UTF-8 (RFC 8529).
-        with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:
+        with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:  # type: ignore
             try:
                 report = json.load(text_file, strict=False)
             except json.JSONDecodeError as e:
@@ -191,7 +209,7 @@ class WPTReport(object):
                 raise InsufficientDataError
             self._add_chunk(report)
 
-    def load_gzip_json(self, fileobj):
+    def load_gzip_json(self, fileobj: IO[bytes]) -> None:
         """Loads wptreport from a gzipped JSON file.
 
         Args:
@@ -201,8 +219,8 @@ class WPTReport(object):
         with gzip.GzipFile(fileobj=fileobj, mode='rb') as gzip_file:
             self.load_json(gzip_file)
 
-    def update_metadata(self, revision='', browser_name='', browser_version='',
-                        os_name='', os_version=''):
+    def update_metadata(self, revision: str = '', browser_name: str = '', browser_version: str = '',
+                        os_name: str = '', os_version: str = '') -> None:
         """Overwrites metadata of the report."""
         # Unfortunately, the names of the keys don't exactly match.
         if revision:
@@ -217,7 +235,7 @@ class WPTReport(object):
             self._report['run_info']['os_version'] = os_version
 
     @staticmethod
-    def write_json(fileobj, payload):
+    def write_json(fileobj: Union[IO[bytes], gzip.GzipFile], payload: Any) -> None:
         """Encode an object to JSON and writes it to disk.
 
         Args:
@@ -228,11 +246,11 @@ class WPTReport(object):
         if isinstance(fileobj, io.TextIOBase):
             json.dump(payload, fileobj)
         else:
-            with io.TextIOWrapper(fileobj, encoding='ascii') as text_file:
+            with io.TextIOWrapper(fileobj, encoding='ascii') as text_file:  # type: ignore
                 json.dump(payload, text_file)
 
     @staticmethod
-    def write_gzip_json(filepath, payload):
+    def write_gzip_json(filepath: str, payload: Any) -> None:
         """Encode an object to JSON and writes it to disk.
 
         Args:
@@ -247,20 +265,20 @@ class WPTReport(object):
                 WPTReport.write_json(gz, payload)
 
     @property
-    def results(self):
+    def results(self) -> List[Dict]:
         """The 'results' field of the report."""
         return self._report['results']
 
     @property
-    def run_info(self):
+    def run_info(self) -> RunInfo:
         """The 'run_info' field of the report."""
         return self._report['run_info']
 
-    def hashsum(self):
+    def hashsum(self) -> str:
         """Hex checksum of the decompressed, concatenated report."""
         return self._hash.hashsum()
 
-    def summarize(self):
+    def summarize(self) -> Dict[str, List[int]]:
         """Creates a summary of all the test results.
 
         The summary will be cached after the first call to this method.
@@ -293,7 +311,7 @@ class WPTReport(object):
 
         return self._summary
 
-    def each_result(self):
+    def each_result(self) -> Iterator[Any]:
         """Iterates over all the individual test results.
 
         Returns:
@@ -301,7 +319,7 @@ class WPTReport(object):
         """
         return (result for result in self.results)
 
-    def write_summary(self, filepath):
+    def write_summary(self, filepath: str) -> None:
         """Writes the summary JSON file to disk.
 
         Args:
@@ -309,7 +327,7 @@ class WPTReport(object):
         """
         self.write_gzip_json(filepath, self.summarize())
 
-    def write_result_directory(self, directory):
+    def write_result_directory(self, directory: str) -> None:
         """Writes individual test results to a directory.
 
         Args:
@@ -323,7 +341,7 @@ class WPTReport(object):
             filepath = directory + test_file
             self.write_gzip_json(filepath, result)
 
-    def product_id(self, separator='-', sanitize=False):
+    def product_id(self, separator: str = '-', sanitize: bool = False) -> str:
         """Returns an ID string for the product configuration.
 
         Args:
@@ -349,7 +367,7 @@ class WPTReport(object):
 
         return name
 
-    def populate_upload_directory(self, output_dir=None):
+    def populate_upload_directory(self, output_dir: Optional[str] = None) -> str:
         """Populates a directory suitable for uploading to GCS.
 
         The directory structure is as follows:
@@ -374,7 +392,7 @@ class WPTReport(object):
         return output_dir
 
     @property
-    def sha_product_path(self):
+    def sha_product_path(self) -> str:
         """A relative path: sha/product_id"""
         try:
             return os.path.join(self.run_info['revision'],
@@ -384,12 +402,12 @@ class WPTReport(object):
             raise MissingMetadataError(str(e)) from e
 
     @property
-    def sha_summary_path(self):
+    def sha_summary_path(self) -> str:
         """A relative path: sha/product_id-summary.json.gz"""
         return self.sha_product_path + '-summary.json.gz'
 
     @property
-    def test_run_metadata(self):
+    def test_run_metadata(self) -> Dict[str, str]:
         """Returns a dict of metadata.
 
         The dict can be used as the payload for the test run creation API.
@@ -427,7 +445,7 @@ class WPTReport(object):
 
         return payload
 
-    def normalize_version(self):
+    def normalize_version(self) -> None:
         m = re.match(r'Technology Preview \(Release (\d+), (.*)\)',
                      self.run_info.get('browser_version', ''))
         if m:
@@ -459,7 +477,7 @@ class WPTReport(object):
         self.write_gzip_json(filepath, self._report)
 
 
-def prepare_labels(report, labels_str, uploader):
+def prepare_labels(report: WPTReport, labels_str: str, uploader: str) -> List[str]:
     """Prepares the list of labels for a test run.
 
     The following labels will be automatically added:
