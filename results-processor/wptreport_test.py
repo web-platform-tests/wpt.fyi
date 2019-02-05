@@ -16,7 +16,8 @@ from wptreport import (
     InvalidJSONError,
     MissingMetadataError,
     WPTReport,
-    prepare_labels
+    prepare_labels,
+    normalize_product
 )
 
 
@@ -501,33 +502,33 @@ class HelpersTest(unittest.TestCase):
     def test_prepare_labels_from_empty_str(self):
         r = WPTReport()
         r.update_metadata(browser_name='firefox')
-        self.assertListEqual(
+        self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            ['blade-runner', 'firefox', 'stable']
+            {'blade-runner', 'firefox', 'stable'}
         )
 
     def test_prepare_labels_from_custom_labels(self):
         r = WPTReport()
         r.update_metadata(browser_name='firefox')
-        self.assertListEqual(
+        self.assertSetEqual(
             prepare_labels(r, 'foo,bar', 'blade-runner'),
-            ['bar', 'blade-runner', 'firefox', 'foo', 'stable']
+            {'bar', 'blade-runner', 'firefox', 'foo', 'stable'}
         )
 
     def test_prepare_labels_from_experimental_label(self):
         r = WPTReport()
         r.update_metadata(browser_name='firefox')
-        self.assertListEqual(
+        self.assertSetEqual(
             prepare_labels(r, 'experimental', 'blade-runner'),
-            ['blade-runner', 'experimental', 'firefox']
+            {'blade-runner', 'experimental', 'firefox'}
         )
 
     def test_prepare_labels_from_stable_label(self):
         r = WPTReport()
         r.update_metadata(browser_name='firefox')
-        self.assertListEqual(
+        self.assertSetEqual(
             prepare_labels(r, 'stable', 'blade-runner'),
-            ['blade-runner', 'firefox', 'stable']
+            {'blade-runner', 'firefox', 'stable'}
         )
 
     def test_prepare_labels_from_browser_channel(self):
@@ -538,17 +539,49 @@ class HelpersTest(unittest.TestCase):
                 'browser_channel': 'dev',
             }
         }
-        self.assertListEqual(
+        self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            ['blade-runner', 'dev', 'experimental', 'firefox']
+            {'blade-runner', 'dev', 'experimental', 'firefox'}
         )
         r._report['run_info']['browser_channel'] = 'nightly'
-        self.assertListEqual(
+        self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            ['blade-runner', 'experimental', 'firefox', 'nightly']
+            {'blade-runner', 'experimental', 'firefox', 'nightly'}
         )
         r._report['run_info']['browser_channel'] = 'beta'
-        self.assertListEqual(
+        self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            ['beta', 'blade-runner', 'firefox']
+            {'beta', 'blade-runner', 'firefox'}
+        )
+
+    def test_normalize_product(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'edge_webdriver',
+            }
+        }
+        self.assertSetEqual(
+            normalize_product(r),
+            {'webdriver'}
+        )
+        self.assertEqual(
+            r.run_info['product'],
+            'edge'
+        )
+
+    def test_normalize_product_noop(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'firefox',
+            }
+        }
+        self.assertSetEqual(
+            normalize_product(r),
+            set()
+        )
+        self.assertEqual(
+            r.run_info['product'],
+            'firefox'
         )
