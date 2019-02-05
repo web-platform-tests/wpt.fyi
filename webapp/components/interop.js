@@ -262,7 +262,8 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     this.onLoadingComplete = () => {
       // passRateMetadata contains the url for the JSON blob of precomputedInterop;
       // both fetches need to succeed + parse.
-      this.interopLoadFailed = !(this.passRateMetadata && this.precomputedInterop);
+      this.interopLoadFailed =
+        !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
       if (!this.interopLoadFailed && this.search) {
         this.handleSearchCommit(this.search);
       }
