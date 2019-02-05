@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/url"
+	"regexp"
 	"strconv"
 
 	mapset "github.com/deckarep/golang-set"
@@ -15,6 +16,15 @@ import (
 	"github.com/google/go-github/github"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+)
+
+// Labels for runs from Azure Pipelines are determined from the artifact names.
+// For master runs, artifact name may be either just "results" or something
+// like "safari-results".
+var (
+	masterRegex = regexp.MustCompile(`\bresults$`)
+	prHeadRegex = regexp.MustCompile(`\baffected-tests$`)
+	prBaseRegex = regexp.MustCompile(`\baffected-tests-without-changes$`)
 )
 
 // handleCheckRunEvent processes an Azure Pipelines check run "completed" event.
@@ -74,12 +84,12 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo
 		if sender != "" {
 			labels.Add(shared.GetUserLabel(sender))
 		}
-		switch artifact.Name {
-		case "results":
+
+		if masterRegex.MatchString(artifact.Name) {
 			labels.Add(shared.MasterLabel)
-		case "affected-tests":
+		} else if prHeadRegex.MatchString(artifact.Name) {
 			labels.Add(shared.PRHeadLabel)
-		case "affected-tests-without-changes":
+		} else if prBaseRegex.MatchString(artifact.Name) {
 			labels.Add(shared.PRBaseLabel)
 		}
 

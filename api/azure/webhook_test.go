@@ -143,3 +143,25 @@ func TestParses(t *testing.T) {
 		assert.NotEmpty(t, artifact.Resource.DownloadURL)
 	}
 }
+
+func TestArtifactRegexes(t *testing.T) {
+	// Names before https://github.com/web-platform-tests/wpt/pull/15110
+	assert.True(t, masterRegex.MatchString("results"))
+	assert.True(t, prHeadRegex.MatchString("affected-tests"))
+	assert.True(t, prBaseRegex.MatchString("affected-tests-without-changes"))
+
+	// Names after https://github.com/web-platform-tests/wpt/pull/15110
+	assert.True(t, masterRegex.MatchString("edge-results"))
+	assert.True(t, prHeadRegex.MatchString("safari-preview-affected-tests"))
+	assert.True(t, prBaseRegex.MatchString("safari-preview-affected-tests-without-changes"))
+
+	// Don't accept the other order
+	assert.False(t, masterRegex.MatchString("results-edge"))
+
+	// Don't accept any string ending with the right pattern
+	assert.False(t, masterRegex.MatchString("nodashresults"))
+
+	// Base and Head could be confused with substring matching
+	assert.False(t, prBaseRegex.MatchString("affected-tests"))
+	assert.False(t, prHeadRegex.MatchString("affected-tests-without-changes"))
+}
