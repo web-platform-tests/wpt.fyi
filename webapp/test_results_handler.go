@@ -24,6 +24,7 @@ type testRunUIFilter struct {
 	SHAs       string
 	Aligned    bool
 	MaxCount   *int
+	Offset     *int
 	From       string
 	To         string
 	Search     string
@@ -165,6 +166,7 @@ func convertTestRunUIFilter(testRunFilter shared.TestRunFilter) (filter testRunU
 		filter.Products = string(data)
 	}
 	filter.MaxCount = testRunFilter.MaxCount
+	filter.Offset = testRunFilter.Offset
 	filter.Aligned = testRunFilter.Aligned != nil && *testRunFilter.Aligned
 	if testRunFilter.From != nil {
 		filter.From = testRunFilter.From.Format(time.RFC3339)

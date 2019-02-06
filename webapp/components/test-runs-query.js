@@ -8,7 +8,7 @@ import { QueryBuilder } from './results-navigation.js';
 import { pluralize } from './pluralize.js';
 
 const testRunsQueryComputer =
-  'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount)';
+  'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset)';
 
 const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
   ProductInfo(superClass),
@@ -37,6 +37,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
         value: [],
       },
       maxCount: Number,
+      offset: Number,
       shas: Array,
       aligned: Boolean,
       master: Boolean,
@@ -79,7 +80,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   /**
   * Convert the UI property values into their equivalent URI query params.
   */
-  computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount) {
+  computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset) {
     const params = {};
     if (!this.computeIsLatest(shas)) {
       params.sha = shas;
@@ -95,6 +96,9 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     maxCount = maxCount || this.defaultMaxCount;
     if (maxCount) {
       params['max-count'] = maxCount;
+    }
+    if (offset) {
+      params['offset'] = offset;
     }
     if (from) {
       params.from = from.toISOString();
@@ -191,6 +195,9 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     if ('max-count' in params) {
       batchUpdate.maxCount = params['max-count'];
     }
+    if ('offset' in params) {
+      batchUpdate.offset = params['offset'];
+    }
     if ('from' in params) {
       batchUpdate.from = new Date(params['from']);
     }
@@ -269,8 +276,8 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     };
   }
 
-  computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, diff, search, pr, runIds) {
-    const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount);
+  computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds) {
+    const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
     if (diff || this.diff) {
       params.diff = true;
       if (this.diffFilter) {
@@ -306,7 +313,7 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
 };
 // TODO(lukebjerring): Support to & from in the builder.
 const testRunsUIQueryComputer =
-  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, diff, search, pr, runIds)';
+  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds)';
 
 TestRunsQuery.Computer = testRunsQueryComputer;
 TestRunsUIQuery.Computer = testRunsUIQueryComputer;

@@ -143,9 +143,9 @@ class TestResultsChart extends TestFileResults {
     this.showForNow = false;
   }
 
-  computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount) {
+  computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset) {
     maxCount = this.chunkSize;
-    return super.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount);
+    return super.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
   }
   // eslint-disable-next-line no-unused-vars
   async loadResults(tests, query) {

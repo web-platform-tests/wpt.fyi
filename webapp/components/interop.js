@@ -31,7 +31,7 @@ import './wpt-permalinks.js';
 class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   TestRunsQueryLoader(
     PolymerElement,
-    'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, search)'))))) {
+    'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)'))))) {
   static get template() {
     return html`
   <style>
@@ -410,8 +410,8 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     return '/interop';
   }
 
-  interopQueryParams(shas, aligned, master, labels, productSpecs, maxCount, to, from, search) {
-    const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount);
+  interopQueryParams(shas, aligned, master, labels, productSpecs, maxCount, offset, to, from, search) {
+    const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
     if (search) {
       params.q = search;
     }
