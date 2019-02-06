@@ -609,12 +609,15 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     let url = new URL('/api/search', window.location);
     let fetchOpts;
     if (this.structuredQueries) {
+      const body = {
+        run_ids: this.testRuns.map(r => r.id),
+      };
+      if (q) {
+        body.query = q;
+      }
       fetchOpts = {
         method: 'POST',
-        body: JSON.stringify({
-          run_ids: this.testRuns.map(r => r.id),
-          query: q,
-        }),
+        body: JSON.stringify(body),
       };
     } else {
       url.searchParams.set(
