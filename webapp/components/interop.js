@@ -4,9 +4,11 @@
  * found in the LICENSE file.
  */
 
+import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
@@ -20,9 +22,11 @@ import './test-file-results-table-terse.js';
 import './test-file-results-table-verbose.js';
 import './test-run.js';
 import { TestRunsQueryLoader} from './test-runs.js';
+import './test-runs-query-builder.js';
 import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
+import './wpt-permalinks.js';
 
 class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   TestRunsQueryLoader(
@@ -107,6 +111,9 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     .links {
       margin-bottom: 1em;
     }
+    .query-actions paper-button {
+      display: inline-block;
+    }
 
     @media (max-width: 800px) {
       table tr td:first-child::after {
@@ -149,12 +156,36 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
         </ul>
       </div>
     </template>
+
+    <template is="dom-if" if="[[resultsRangeMessage]]">
+      <info-banner>
+        [[resultsRangeMessage]]
+        <template is="dom-if" if="[[permalinks]]">
+          <wpt-permalinks path="[[path]]"
+                          path-prefix="/interop/"
+                          query-params="[[queryParams]]"
+                          test-runs="[[testRuns]]">
+          </wpt-permalinks>
+          <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
+        </template>
+        <template is="dom-if" if="[[queryBuilder]]">
+          <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+        </template>
+      </info-banner>
+    </template>
   </section>
 
   <template is="dom-if" if="[[interopLoadFailed]]">
     <info-banner type="error">
       Failed to fetch interop data.
     </info-banner>
+  </template>
+
+  <template is="dom-if" if="[[queryBuilder]]">
+    <iron-collapse opened="[[editingQuery]]">
+      <test-runs-query-builder product-specs="[[productSpecs]]" labels="[[labels]]" master="[[master]]" shas="[[shas]]" aligned="[[aligned]]" on-submit="[[submitQuery]]" from="[[from]]" to="[[to]]" diff="[[diff]]">
+      </test-runs-query-builder>
+    </iron-collapse>
   </template>
 
   <template is="dom-if" if="[[!pathIsATestFile]]">
@@ -248,6 +279,10 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
         type: Set,
         computed: 'computeTestPaths(searchResults)',
       },
+      editingQuery: {
+        type: Boolean,
+        value: false,
+      },
     };
   }
 
@@ -259,6 +294,11 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     this.onSearchAutocomplete = (e) => {
       this.handleSearchAutocomplete(e.detail.path);
     };
+    this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
+    this.toggleQueryEdit = () => {
+      this.editingQuery = !this.editingQuery;
+    };
+    this.submitQuery = this.handleSubmitQuery.bind(this);
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
@@ -279,6 +319,10 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   async ready() {
     await super.ready();
     this._createMethodObserver('precomputedInteropLoaded(precomputedInterop)');
+    this.loadData();
+  }
+
+  loadData() {
     if (this.structuredQueries && this.searchCacheInterop) {
       this.fetchSearchCacheInterop();
     } else {
@@ -506,6 +550,25 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       return 1;
     }
     return 0;
+  }
+
+  handleSubmitQuery() {
+    const queryBefore = this.query;
+    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
+    this.editingQuery = false;
+    this.updateQueryParams(builder.queryParams);
+    if (queryBefore === this.query) {
+      return;
+    }
+    // Trigger a virtual navigation.
+    this.navigateToLocation(window.location);
+    // Reload the data.
+    if (!this.diff) {
+      this.diffRun = null;
+    }
+    this.testRuns = null;
+    this.searchResults = null;
+    this.loadData();
   }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);
