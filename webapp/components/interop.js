@@ -566,11 +566,8 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     if (!this.diff) {
       this.diffRun = null;
     }
-    this.testRuns = [];
-    this.searchResults = {
-      runs: [],
-      results: [],
-    };
+    this.testRuns = null;
+    this.searchResults = null;
     this.loadData();
   }
 }
