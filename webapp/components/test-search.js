@@ -184,12 +184,19 @@ class TestSearch extends WPTFlags(PolymerElement) {
         padding: 0.5em 0;
         width: 100%;
       }
+      .help {
+        font-size: x-small;
+        float: right;
+      }
     </style>
 
     <div>
-      <input value="{{ queryInput::input }}" class="query" list="query-list" placeholder="[[queryPlaceholder]]" onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
-      <!-- TODO(markdittmer): Static id will break multiple search
-        components. -->
+      <input value="{{ queryInput::input }}" class="query" list="query-list" placeholder="[[placeholder]]" onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
+      <span class="help">
+        For information on the search syntax, <a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/search/README.md">view the search documentation</a>
+      </span>
+
+      <!-- TODO(markdittmer): Static id will break multiple search components. -->
       <datalist id="query-list"></datalist>
       <paper-tooltip position="top" manual-mode="true">
         Press &lt;Enter&gt; to commit query
@@ -232,10 +239,6 @@ class TestSearch extends WPTFlags(PolymerElement) {
       results: {
         type: Array,
         notify: true,
-      },
-      queryPlaceholder: {
-        type: String,
-        computed: 'computeQueryPlaceholder()'
       },
       testPaths: Array,
       onKeyUp: Function,

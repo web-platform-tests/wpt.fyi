@@ -139,8 +139,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
 
     <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-    <test-search class\$="search-[[pathIsATestFile]]"
-                 query="{{search}}"
+    <test-search query="{{search}}"
                  structured-query="{{structuredSearch}}"
                  test-runs="[[testRuns]]"
                  test-paths="[[testPaths]]">
