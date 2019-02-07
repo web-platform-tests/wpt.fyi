@@ -186,6 +186,9 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 	if filter.MaxCount != nil {
 		q.Set("max-count", fmt.Sprintf("%v", *filter.MaxCount))
 	}
+	if filter.Offset != nil {
+		q.Set("offset", fmt.Sprintf("%v", *filter.Offset))
+	}
 	if filter.From != nil {
 		q.Set("from", filter.From.Format(time.RFC3339))
 	}

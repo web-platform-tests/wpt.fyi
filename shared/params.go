@@ -307,6 +307,18 @@ func ParseMaxCountParam(v url.Values) (*int, error) {
 	return nil, nil
 }
 
+// ParseOffsetParam parses the 'offset' parameter as an integer
+func ParseOffsetParam(v url.Values) (*int, error) {
+	if offsetParam := v.Get("offset"); offsetParam != "" {
+		offset, err := strconv.Atoi(offsetParam)
+		if err != nil {
+			return nil, err
+		}
+		return &offset, nil
+	}
+	return nil, nil
+}
+
 // ParseMaxCountParamWithDefault parses the 'max-count' parameter as an integer, or returns the
 // default when no param is present, or on error.
 func ParseMaxCountParamWithDefault(v url.Values, defaultValue int) (count int, err error) {
@@ -561,6 +573,9 @@ func ParseTestRunFilterParams(v url.Values) (filter TestRunFilter, err error) {
 		return filter, err
 	}
 	if filter.MaxCount, err = ParseMaxCountParam(v); err != nil {
+		return filter, err
+	}
+	if filter.Offset, err = ParseOffsetParam(v); err != nil {
 		return filter, err
 	}
 	if filter.From, err = ParseDateTimeParam(v, "from"); err != nil {
