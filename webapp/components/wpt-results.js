@@ -47,9 +47,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       }
       section.search {
         position: relative;
-        border-bottom: solid 1px var(--paper-grey-300);
-        padding-bottom: 1em;
-        margin-bottom: 1em;
       }
       section.search .path {
         margin-top: 1em;
@@ -58,6 +55,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         position: absolute;
         top: 0;
         right: 0;
+      }
+      .separator {
+        border-bottom: solid 1px var(--paper-grey-300);
+        padding-bottom: 1em;
+        margin-bottom: 1em;
       }
       table {
         width: 100%;
@@ -147,6 +149,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           min-height: 30px;
         }
       }
+
+      .compare {
+        display: flex;
+      }
     </style>
 
     <results-tabs tab="results" path="[[encodedPath]]" query="[[query]]">
@@ -211,6 +217,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         </info-banner>
       </template>
     </section>
+
+    <div class="separator"></div>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
       <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
@@ -349,6 +357,29 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         </template>
       </div>
     </template>
+
+    <template is="dom-if" if="[[isRefTest]]">
+      <template is="dom-if" if="[[ reftestIframes ]]">
+        <div class="separator"></div>
+        <section>
+          <h4>[[activeBrowser.name]] [[activeBrowser.version]] - [[path]]</h4>
+          <div class='compare'>
+            <div>
+              <h5>Result</h5>
+              <template is="dom-if" if="[[testW3CURL]]">
+                <iframe src="[[testW3CURL]]"></iframe>
+              </template>
+            </div>
+            <div>
+              <h5>Reference</h5>
+              <template is="dom-if" if="[[testW3CRefURL]]">
+                <iframe src="[[testW3CRefURL]]"></iframe>
+              </template>
+            </div>
+          </div>
+        </template>
+      </section>
+    </template>
 `;
   }
 
@@ -366,6 +397,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         type: String,
         computed: 'computeTestType(path, manifest)',
         value: '',
+      },
+      isRefTest: {
+        type: Boolean,
+        computed: 'computeIsRefTest(testType)'
       },
       testW3CURL: {
         type: Boolean,
@@ -446,6 +481,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       }
     }
     return null;
+  }
+
+  computeIsRefTest(testType) {
+    return testType === 'reftest';
   }
 
   computeTestW3CURL(testType, path) {

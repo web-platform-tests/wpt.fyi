@@ -36,6 +36,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'permalinks',
       'queryBuilder',
       'queryBuilderSHA',
+      'reftestIframes',
       'searchCacheInterop',
       'showTestType',
       'showTestRefURL',
@@ -184,6 +185,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item sub-item>
       <paper-checkbox checked="{{showTestRefURL}}">
         Display link to ref (for reftests)
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{reftestIframes}}">
+        Display comparitive iframes for reftests
       </paper-checkbox>
     </paper-item>
     <paper-item>
