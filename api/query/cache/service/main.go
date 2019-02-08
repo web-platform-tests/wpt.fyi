@@ -171,6 +171,15 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Cull unchanged diffs, if applicable.
+	if opts.IncludeDiff && !opts.DiffFilter.Unchanged {
+		for _, r := range res {
+			if r.Diff.IsEmpty() {
+				r.Diff = nil
+			}
+		}
+	}
+
 	// Response always contains Runs and Results. If some runs are missing, then:
 	// - Add missing runs to IgnoredRuns;
 	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
