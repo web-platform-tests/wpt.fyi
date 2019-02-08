@@ -17,10 +17,9 @@ type aggregator interface {
 type indexAggregator struct {
 	index
 
-	runIDs          []RunID
-	agg             map[uint64]query.SearchResult
-	includeSubtests bool
-	interopFormat   bool
+	runIDs []RunID
+	agg    map[uint64]query.SearchResult
+	opts   query.AggregationOpts
 }
 
 func (a *indexAggregator) Add(t TestID) error {
@@ -37,10 +36,11 @@ func (a *indexAggregator) Add(t TestID) error {
 			Test:         name,
 			LegacyStatus: nil,
 			Interop:      nil,
+			Diff:         nil,
 		}
 	}
 
-	if a.interopFormat {
+	if a.opts.InteropFormat {
 		if r.Interop == nil {
 			r.Interop = make([]int, len(a.runIDs)+1)
 		}
@@ -71,11 +71,20 @@ func (a *indexAggregator) Add(t TestID) error {
 			}
 		}
 	}
-	if a.includeSubtests {
+	if a.opts.IncludeSubtests {
 		if _, subtest, err := ts.GetName(t); err == nil && subtest != nil {
 			name := *subtest
 			r.Subtests = append(r.Subtests, name)
 		}
+	}
+	if a.opts.IncludeDiff && len(a.runIDs) == 2 {
+		if r.Diff == nil {
+			r.Diff = shared.TestDiff{0, 0, 0}
+		}
+		r.Diff.Append(
+			shared.TestStatus(a.runResults[a.runIDs[0]].GetResult(t)),
+			shared.TestStatus(a.runResults[a.runIDs[1]].GetResult(t)),
+			&a.opts.DiffFilter)
 	}
 	r.LegacyStatus = results
 	a.agg[id] = r
@@ -93,10 +102,9 @@ func (a *indexAggregator) Done() []query.SearchResult {
 
 func newIndexAggregator(idx index, runIDs []RunID, opts query.AggregationOpts) aggregator {
 	return &indexAggregator{
-		index:           idx,
-		runIDs:          runIDs,
-		agg:             make(map[uint64]query.SearchResult),
-		includeSubtests: opts.IncludeSubtests,
-		interopFormat:   opts.InteropFormat,
+		index:  idx,
+		runIDs: runIDs,
+		agg:    make(map[uint64]query.SearchResult),
+		opts:   opts,
 	}
 }

@@ -13,6 +13,8 @@ import (
 type AggregationOpts struct {
 	IncludeSubtests bool
 	InteropFormat   bool
+	IncludeDiff     bool
+	DiffFilter      shared.DiffFilterParam
 }
 
 // Binder is a mechanism for binding a query over a slice of test runs to

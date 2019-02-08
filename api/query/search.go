@@ -52,6 +52,9 @@ type SearchResult struct {
 
 	// Subtests (names) which are included in the LegacyStatus summary.
 	Subtests []string `json:"subtests,omitempty"`
+
+	// Diff count of subtests which are included in the LegacyStatus summary.
+	Diff shared.TestDiff `json:"diff,omitempty"`
 }
 
 // SearchResponse contains a response to search API calls, including specific
