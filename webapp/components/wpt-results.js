@@ -367,13 +367,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
             <div>
               <h5>Result</h5>
               <template is="dom-if" if="[[testW3CURL]]">
-                <iframe src="[[testW3CURL]]"></iframe>
+                <iframe src="[[https(testW3CURL)]]"></iframe>
               </template>
             </div>
             <div>
               <h5>Reference</h5>
               <template is="dom-if" if="[[testW3CRefURL]]">
-                <iframe src="[[testW3CRefURL]]"></iframe>
+                <iframe src="[[https(testW3CRefURL)]]"></iframe>
               </template>
             </div>
           </div>
@@ -504,6 +504,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     // See https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py#L141
     const refPath = item && item[0][1][0][0];
     return this.computeTestW3CURL(testType, refPath);
+  }
+
+  https(url) {
+    return `${url}`.replace(/^http:/, 'https:');
   }
 
   computeTestType(path, manifest) {
