@@ -149,7 +149,8 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		q := r.URL.Query()
 		_, interop := q["interop"]
 		_, subtests := q["subtests"]
-		isSimpleQ = isSimpleQ && !interop && !subtests
+		_, diff := q["diff"]
+		isSimpleQ = isSimpleQ && !interop && !subtests && !diff
 	}
 
 	if !isSimpleQ {
