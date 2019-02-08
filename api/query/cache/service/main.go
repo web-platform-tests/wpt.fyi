@@ -143,11 +143,20 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	q := cq.PrepareUserQuery(ids, rq.AbstractQuery.BindToRuns(runs...))
 
 	// Configure format, from request params.
-	_, subtests := r.URL.Query()["subtests"]
-	_, interop := r.URL.Query()["interop"]
+	urlQuery := r.URL.Query()
+	_, subtests := urlQuery["subtests"]
+	_, interop := urlQuery["interop"]
+	_, diff := urlQuery["diff"]
+	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	opts := query.AggregationOpts{
 		IncludeSubtests: subtests,
 		InteropFormat:   interop,
+		IncludeDiff:     diff,
+		DiffFilter:      diffFilter,
 	}
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
