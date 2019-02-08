@@ -818,6 +818,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           let diff;
           if (this.diffResults) {
             diff = this.diffResults.diff[r.test];
+          } else if (r.diff) {
+            diff = r.diff;
           } else {
             const [before, after] = rs;
             diff = this.computeDifferences(before, after);
