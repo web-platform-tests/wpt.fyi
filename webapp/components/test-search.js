@@ -384,10 +384,12 @@ class TestSearch extends WPTFlags(PolymerElement) {
       if (autocompleteSelection.getAttribute('atom')) {
         return;
       }
-      this.dispatchEvent(new CustomEvent('autocomplete', {
-        detail: {path: path},
-      }));
-      this.shadowRoot.querySelector('.query').blur();
+      if (autocompleteSelection.value === path) {
+        this.dispatchEvent(new CustomEvent('autocomplete', {
+          detail: {path: path},
+        }));
+        this.shadowRoot.querySelector('.query').blur();
+      }
     }
   }
 
