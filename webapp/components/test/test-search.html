@@ -24,6 +24,7 @@ suite('<test-search>', () => {
       const S = TestSearch.QUERY_SEMANTICS;
       const p = G.match(query);
       assert.isTrue(p.succeeded(), p.message);
+      console.log(S(p).eval());
       assert.deepEqual(structuredQuery, S(p).eval());
     };
 
@@ -43,6 +44,14 @@ suite('<test-search>', () => {
       test('complex', () => {
         assertQueryParse('"/foo.html?exclude=(Document|window|HTML.*)"', {exists: [{pattern: '/foo.html?exclude=(Document|window|HTML.*)'}]});
       });
+    });
+
+    test('path', () => {
+      assertQueryParse('path:/dom/', {exists: [{path: '/dom/'}]});
+    });
+
+    test('path quoted', () => {
+      assertQueryParse('path:"/foo.html?exclude=(Document|window|HTML.*)"', {exists: [{path: '/foo.html?exclude=(Document|window|HTML.*)'}]});
     });
 
     test('versioned browser', () => {

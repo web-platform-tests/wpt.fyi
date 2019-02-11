@@ -69,13 +69,19 @@ const QUERY_GRAMMAR = ohm.grammar(`
     Fragment
       = not Fragment -- not
       | statusExp
-      | nameFragment
+      | pathExp
+      | patternExp
 
     statusExp
       = caseInsensitive<"status"> ":" statusLiteral  -- eq
       | caseInsensitive<"status"> ":!" statusLiteral -- neq
       | productSpec ":" statusLiteral                -- product_eq
       | productSpec ":!" statusLiteral               -- product_neq
+
+    pathExp
+      = caseInsensitive<"path"> ":" nameFragment
+
+    patternExp = nameFragment
 
     productSpec = browserName ("-" browserVersion)?
 
@@ -170,11 +176,17 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
       status: {not: r.sourceString.toUpperCase()},
     };
   },
-  nameFragment_basic: (basic) => {
-    return {pattern: basic.sourceString};
+  pathExp: (l, colon, r) => {
+    return { path: r.eval() };
+  },
+  patternExp: (p) => {
+    return { pattern: p.eval() };
+  },
+  nameFragment_basic: (p) => {
+    return p.sourceString;
   },
   nameFragment_quoted: (_, chars, __) => {
-    return {pattern: chars.sourceString};
+    return chars.sourceString;
   },
   backslash: (v) => '\\',
   quotemark: (v) => '"',
