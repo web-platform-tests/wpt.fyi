@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+</head>
+<body>
+  <reftest-analyzer></reftest-analyzer>
+
+  <test-fixture id="reftest-analyzer-fixture">
+    <template>
+      <reftest-analyzer></reftest-analyzer>
+    </template>
+  </test-fixture>
+
+  <script type="module">
+import '../reftest-analyzer.js';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+
+// Playground:
+const analyzer = document.querySelector('reftest-analyzer');
+analyzer.images = [
+  '/static/chrome_64x64.png',
+  '/static/chrome-beta_64x64.png',
+];
+
+suite('ReftestAnalyzer', () => {
+  let analyzer, sandbox;
+
+  setup(() => {
+    sandbox = sinon.sandbox.create();
+
+    analyzer = fixture('reftest-analyzer-fixture');
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+
+  test('instanceof Polymer.Element', () => {
+    assert.isTrue(analyzer instanceof PolymerElement);
+  });
+});
+
+</script>
+</body>
+</html>
