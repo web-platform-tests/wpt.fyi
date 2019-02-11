@@ -77,6 +77,10 @@ type Not struct {
 // substring match per test.
 func (TestNamePattern) Size() int { return 1 }
 
+// Size of TestPath has a size of 1: servicing such a query requires a
+// substring match per test.
+func (TestPath) Size() int { return 1 }
+
 // Size of RunTestStatusEq is 1: servicing such a query requires a single lookup
 // in a test run result mapping per test.
 func (RunTestStatusEq) Size() int { return 1 }

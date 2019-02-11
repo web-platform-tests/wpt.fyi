@@ -32,6 +32,12 @@ type TestNamePattern struct {
 	q query.TestNamePattern
 }
 
+// TestPath is a query.TestPath bound to an in-memory index.
+type TestPath struct {
+	index
+	q query.TestPath
+}
+
 // runTestStatusEq is a query.RunTestStatusEq bound to an
 // in-memory index.
 type runTestStatusEq struct {
@@ -100,6 +106,15 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 	return strings.Contains(name, tnp.q.Pattern)
 }
 
+// Filter interprets a TestPath as a filter function over TestIDs.
+func (tp TestPath) Filter(t TestID) bool {
+	name, _, err := tp.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+	return strings.HasPrefix(name, tp.q.Path)
+}
+
 // Filter interprets a runTestStatusEq as a filter function over TestIDs.
 func (rtse runTestStatusEq) Filter(t TestID) bool {
 	return rtse.runResults[RunID(rtse.q.Run)].GetResult(t) == ResultID(rtse.q.Status)
@@ -148,6 +163,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return False{idx}, nil
 	case query.TestNamePattern:
 		return TestNamePattern{idx, v}, nil
+	case query.TestPath:
+		return TestPath{idx, v}, nil
 	case query.RunTestStatusEq:
 		return runTestStatusEq{idx, v}, nil
 	case query.RunTestStatusNeq:

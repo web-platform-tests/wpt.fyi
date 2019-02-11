@@ -55,6 +55,17 @@ func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
+// TestPath is a query atom that matches exact test path prefixes.
+// It is an inflexible equivalent of TestNamePattern.
+type TestPath struct {
+	Path string
+}
+
+// BindToRuns for TestNamePattern is a no-op; it is independent of test runs.
+func (tp TestPath) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return tp
+}
+
 // AbstractExists represents an array of abstract queries, each of which must be
 // satifisfied by some run. It represents the root of a structured query.
 type AbstractExists struct {
@@ -292,6 +303,27 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for TestPath attempts to interpret a query atom as
+// {"path":<test name pattern string>}.
+func (tp *TestPath) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	pathMsg, ok := data["path"]
+	if !ok {
+		return errors.New(`Missing test name path property: "path"`)
+	}
+	var path string
+	if err := json.Unmarshal(*pathMsg, &path); err != nil {
+		return errors.New(`Missing test name path property "path" is not a string`)
+	}
+
+	tp.Path = path
+	return nil
+}
+
 // UnmarshalJSON for TestStatusEq attempts to interpret a query atom as
 // {"product": <browser name>, "status": <status string>}.
 func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
@@ -502,6 +534,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err := json.Unmarshal(b, &tnp)
 	if err == nil {
 		return tnp, nil
+	}
+	var tp TestPath
+	err = json.Unmarshal(b, &tp)
+	if err == nil {
+		return tp, nil
 	}
 	var tse TestStatusEq
 	err = json.Unmarshal(b, &tse)
