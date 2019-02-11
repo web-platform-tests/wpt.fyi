@@ -244,7 +244,16 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
     <template is="dom-if" if="[[queryBuilder]]">
       <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder product-specs="[[productSpecs]]" labels="[[labels]]" master="[[master]]" shas="[[shas]]" aligned="[[aligned]]" on-submit="[[submitQuery]]" from="[[from]]" to="[[to]]" diff="[[diff]]">
+        <test-runs-query-builder product-specs="[[productSpecs]]"
+                                 search="[[search]]"
+                                 labels="[[labels]]"
+                                 master="[[master]]"
+                                 shas="[[shas]]"
+                                 aligned="[[aligned]]"
+                                 on-submit="[[submitQuery]]"
+                                 from="[[from]]"
+                                 to="[[to]]"
+                                 diff="[[diff]]">
         </test-runs-query-builder>
       </iron-collapse>
     </template>
