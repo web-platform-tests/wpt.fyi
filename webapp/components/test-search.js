@@ -28,6 +28,7 @@ const statuses = [
 const atoms = {
   status: statuses,
 };
+
 for (const b of DefaultBrowserNames) {
   atoms[b] = statuses;
 }
