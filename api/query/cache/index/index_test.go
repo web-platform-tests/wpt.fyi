@@ -249,7 +249,7 @@ func TestSync(t *testing.T) {
 	// Populate data with predictable set of two results for each run.
 	loader.EXPECT().Load(gomock.Any()).DoAndReturn(func(run shared.TestRun) (*metrics.TestResultsReport, error) {
 		strID := strconv.FormatInt(run.ID, 10)
-		strStatus := shared.TestStatusStringFromValue(shared.TestStatus(run.ID % 7))
+		strStatus := shared.TestStatus(run.ID % 7).String()
 		return &metrics.TestResultsReport{
 			Results: []*metrics.TestResults{
 				&metrics.TestResults{

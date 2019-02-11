@@ -137,9 +137,8 @@ func TestStatusValueFromString(str string) TestStatus {
 	return v
 }
 
-// TestStatusStringFromValue returns the string associated with s (if any), or
-// else TestStatusStringDefault.
-func TestStatusStringFromValue(s TestStatus) string {
+// String returns the string associated with s (if any), or else TestStatusStringDefault.
+func (s TestStatus) String() string {
 	str, ok := testStatusNames[s]
 	if !ok {
 		return TestStatusNameDefault

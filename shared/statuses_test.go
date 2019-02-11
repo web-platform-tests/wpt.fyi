@@ -28,10 +28,10 @@ func TestDefaults(t *testing.T) {
 
 func TestPass(t *testing.T) {
 	assert.Equal(t, TestStatusPass, TestStatusValueFromString("PASS"))
-	assert.Equal(t, "PASS", TestStatusStringFromValue(TestStatusPass))
+	assert.Equal(t, "PASS", TestStatusPass.String())
 }
 
 func TestDefaultsFromAPI(t *testing.T) {
 	assert.Equal(t, TestStatusDefault, TestStatusValueFromString("NOT_A_TEST_VALUE_STRING"))
-	assert.Equal(t, TestStatusNameDefault, TestStatusStringFromValue(7919))
+	assert.Equal(t, TestStatusNameDefault, TestStatus(7919).String())
 }

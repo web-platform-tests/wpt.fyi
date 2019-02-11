@@ -52,6 +52,9 @@ type SearchResult struct {
 
 	// Subtests (names) which are included in the LegacyStatus summary.
 	Subtests []string `json:"subtests,omitempty"`
+
+	// Diff count of subtests which are included in the LegacyStatus summary.
+	Diff shared.TestDiff `json:"diff,omitempty"`
 }
 
 // SearchResponse contains a response to search API calls, including specific
@@ -146,7 +149,8 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		q := r.URL.Query()
 		_, interop := q["interop"]
 		_, subtests := q["subtests"]
-		isSimpleQ = isSimpleQ && !interop && !subtests
+		_, diff := q["diff"]
+		isSimpleQ = isSimpleQ && !interop && !subtests && !diff
 	}
 
 	if !isSimpleQ {

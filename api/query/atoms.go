@@ -322,7 +322,7 @@ func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 
 	statusStr := strings.ToUpper(data.Status)
 	status := shared.TestStatusValueFromString(statusStr)
-	statusStr2 := shared.TestStatusStringFromValue(status)
+	statusStr2 := status.String()
 	if statusStr != statusStr2 {
 		return fmt.Errorf(`Invalid test status: "%s"`, data.Status)
 	}
@@ -364,7 +364,7 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 
 	statusStr := strings.ToUpper(data.Status.Not)
 	status := shared.TestStatusValueFromString(statusStr)
-	statusStr2 := shared.TestStatusStringFromValue(status)
+	statusStr2 := status.String()
 	if statusStr != statusStr2 {
 		return fmt.Errorf(`Invalid test status: "%s"`, data.Status)
 	}

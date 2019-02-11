@@ -112,26 +112,73 @@ func (s ResultsSummary) Add(k string, other TestSummary) {
 // TestDiff is an array of differences between 2 tests.
 type TestDiff []int
 
+// IsEmpty returns true if the diff is empty (all zeroes)
+func (d TestDiff) IsEmpty() bool {
+	for _, x := range d {
+		if x > 0 {
+			return false
+		}
+	}
+	return true
+}
+
+const (
+	newlyPassingIndex = 0
+	newlyFailingIndex = 1
+	totalDeltaIndex   = 2
+)
+
 // NewlyPassing is the delta/increase in the number of passing tests when comparing before/after.
 func (d TestDiff) NewlyPassing() int {
-	return d[0]
+	return d[newlyPassingIndex]
 }
 
 // Regressions is the delta/increase in the number of failing tests when comparing before/after.
 func (d TestDiff) Regressions() int {
-	return d[1]
+	return d[newlyFailingIndex]
 }
 
 // TotalDelta is the delta in the number of total subtests when comparing before/after.
 func (d TestDiff) TotalDelta() int {
-	return d[2]
+	return d[totalDeltaIndex]
 }
 
 // Add adds the given other TestDiff to this TestDiff's value. Used for summing.
 func (d TestDiff) Add(other TestDiff) {
-	d[0] += other[0]
-	d[1] += other[1]
-	d[2] += other[2]
+	d[newlyPassingIndex] += other[newlyPassingIndex]
+	d[newlyFailingIndex] += other[newlyFailingIndex]
+	d[totalDeltaIndex] += other[totalDeltaIndex]
+}
+
+// Appends the difference between the two given statuses, if any.
+func (d TestDiff) Append(before, after TestStatus, filter *DiffFilterParam) {
+	if before == TestStatusUnknown {
+		if after == TestStatusUnknown || !filter.Added {
+			return
+		}
+		if after.IsPassOrOK() {
+			d[newlyPassingIndex]++
+		} else {
+			d[newlyFailingIndex]++
+		}
+		return
+	}
+	if after == TestStatusUnknown {
+		if filter.Deleted {
+			d[totalDeltaIndex]--
+		}
+		return
+	}
+	wasPassing, isPassing := before.IsPassOrOK(), after.IsPassOrOK()
+	changed := wasPassing != isPassing
+	if !changed || !filter.Changed {
+		return
+	}
+	if wasPassing {
+		d[newlyFailingIndex]++
+	} else {
+		d[newlyPassingIndex]++
+	}
 }
 
 // NewTestDiff computes the differences between two test-run pass-count summaries,

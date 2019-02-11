@@ -585,7 +585,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
             revision: 'diff',
             browser_name: 'diff',
           };
-          this.fetchDiff();
+          if (!this.structuredQueries) {
+            this.fetchDiff();
+          }
         }
 
         // Load a manifest.
@@ -614,6 +616,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       };
       if (q) {
         body.query = q;
+      }
+      if (this.diffFromAPI) {
+        url.searchParams.set('diff', true);
+        url.searchParams.set('filter', this.diffFilter);
       }
       fetchOpts = {
         method: 'POST',
@@ -812,6 +818,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           let diff;
           if (this.diffResults) {
             diff = this.diffResults.diff[r.test];
+          } else if (r.diff) {
+            diff = r.diff;
           } else {
             const [before, after] = rs;
             diff = this.computeDifferences(before, after);
