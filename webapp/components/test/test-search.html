@@ -45,6 +45,14 @@ suite('<test-search>', () => {
       });
     });
 
+    test('path', () => {
+      assertQueryParse('path:/dom/', {exists: [{path: '/dom/'}]});
+    });
+
+    test('path quoted', () => {
+      assertQueryParse('path:"/foo.html?exclude=(Document|window|HTML.*)"', {exists: [{path: '/foo.html?exclude=(Document|window|HTML.*)'}]});
+    });
+
     test('versioned browser', () => {
       assertQueryParse('chrome-64:fail', {exists: [{product: 'chrome-64', status: 'FAIL'}]});
     });
