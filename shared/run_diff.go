@@ -150,7 +150,7 @@ func (d TestDiff) Add(other TestDiff) {
 	d[totalDeltaIndex] += other[totalDeltaIndex]
 }
 
-// Appends the difference between the two given statuses, if any.
+// Append the difference between the two given statuses, if any.
 func (d TestDiff) Append(before, after TestStatus, filter *DiffFilterParam) {
 	if before == TestStatusUnknown {
 		if after == TestStatusUnknown || !filter.Added {

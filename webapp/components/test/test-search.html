@@ -24,7 +24,6 @@ suite('<test-search>', () => {
       const S = TestSearch.QUERY_SEMANTICS;
       const p = G.match(query);
       assert.isTrue(p.succeeded(), p.message);
-      console.log(S(p).eval());
       assert.deepEqual(structuredQuery, S(p).eval());
     };
 
