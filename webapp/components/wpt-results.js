@@ -362,7 +362,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       <template is="dom-if" if="[[ reftestIframes ]]">
         <div class="separator"></div>
         <section>
-          <h4>[[activeBrowser.name]] [[activeBrowser.version]] - [[path]]</h4>
+          <h4>[[path]] in this browser</h4>
           <div class='compare'>
             <div>
               <h5>Result</h5>
