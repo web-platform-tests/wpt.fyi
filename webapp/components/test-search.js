@@ -9,8 +9,29 @@ import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTFlags } from './wpt-flags.js';
 import './ohm.js';
+import { DefaultBrowserNames } from './product-info.js';
 
 /* eslint-enable */
+const statuses = [
+  'pass',
+  'ok',
+  'error',
+  'timeout',
+  'notrun',
+  'fail',
+  'crash',
+  'skip',
+  'assert',
+  'unknown',
+];
+
+const atoms = {
+  status: statuses,
+};
+
+for (const b of DefaultBrowserNames) {
+  atoms[b] = statuses;
+}
 
 /* global ohm */
 const QUERY_GRAMMAR = ohm.grammar(`
@@ -59,24 +80,12 @@ const QUERY_GRAMMAR = ohm.grammar(`
     productSpec = browserName ("-" browserVersion)?
 
     browserName
-      = caseInsensitive<"chrome">
-      | caseInsensitive<"edge">
-      | caseInsensitive<"firefox">
-      | caseInsensitive<"safari">
+      = ${DefaultBrowserNames.map(b => 'caseInsensitive<"' + b + '">').join('\n      |')}
 
     browserVersion = number ("." number)*
 
     statusLiteral
-      = caseInsensitive<"unknown">
-      | caseInsensitive<"pass">
-      | caseInsensitive<"ok">
-      | caseInsensitive<"error">
-      | caseInsensitive<"timeout">
-      | caseInsensitive<"notrun">
-      | caseInsensitive<"fail">
-      | caseInsensitive<"crash">
-      | caseInsensitive<"skip">
-      | caseInsensitive<"assert">
+      = ${statuses.map(s => 'caseInsensitive<"' + s + '">').join('\n      |')}
 
     nameFragment
       = basicNameFragmentChar+                -- basic
@@ -184,12 +193,19 @@ class TestSearch extends WPTFlags(PolymerElement) {
         padding: 0.5em 0;
         width: 100%;
       }
+      .help {
+        font-size: x-small;
+        float: right;
+      }
     </style>
 
     <div>
-      <input value="{{ queryInput::input }}" class="query" list="query-list" placeholder="[[queryPlaceholder]]" onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
-      <!-- TODO(markdittmer): Static id will break multiple search
-        components. -->
+      <input value="{{ queryInput::input }}" class="query" list="query-list" placeholder="[[placeholder]]" onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
+      <span class="help">
+        For information on the search syntax, <a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/query/README.md">view the search documentation</a>
+      </span>
+
+      <!-- TODO(markdittmer): Static id will break multiple search components. -->
       <datalist id="query-list"></datalist>
       <paper-tooltip position="top" manual-mode="true">
         Press &lt;Enter&gt; to commit query
@@ -233,10 +249,6 @@ class TestSearch extends WPTFlags(PolymerElement) {
         type: Array,
         notify: true,
       },
-      queryPlaceholder: {
-        type: String,
-        computed: 'computeQueryPlaceholder()'
-      },
       testPaths: Array,
       onKeyUp: Function,
       onChange: Function,
@@ -252,6 +264,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
     this.onFocus = this.handleFocus.bind(this);
     this.onBlur = this.handleBlur.bind(this);
     this.onKeyUp = this.handleKeyUp.bind(this);
+    this.onKeyDown = this.handleKeyDown.bind(this);
   }
 
   ready() {
@@ -285,22 +298,38 @@ class TestSearch extends WPTFlags(PolymerElement) {
   }
 
   updateDatalist(query, paths) {
-    if (!paths) {
-      return;
-    }
     const datalist = this.shadowRoot.querySelector('datalist');
     datalist.innerHTML = '';
-    let matches = Array.from(paths);
-    if (query) {
-      matches = matches
-        .filter(p => p.toLowerCase())
-        .filter(p => p.includes(query))
-        .sort((p1, p2) => p1.indexOf(query) - p2.indexOf(query));
+    for (const atomPrefix of Object.keys(atoms)) {
+      if (!query || atomPrefix.startsWith(query)) {
+        const option = document.createElement('option');
+        option.setAttribute('value', atomPrefix + ':');
+        option.setAttribute('atom', atomPrefix);
+        datalist.appendChild(option);
+      } else if (query) {
+        for (const value of atoms[atomPrefix].map(v => `${atomPrefix}:${v}`)) {
+          if (value.startsWith(query)) {
+            const option = document.createElement('option');
+            option.setAttribute('value', value);
+            option.setAttribute('atom', value);
+            datalist.appendChild(option);
+          }
+        }
+      }
     }
-    for (const match of matches.slice(0, 10)) {
-      const option = document.createElement('option');
-      option.setAttribute('value', match);
-      datalist.appendChild(option);
+    if (paths) {
+      let matches = Array.from(paths);
+      if (query) {
+        matches = matches
+          .filter(p => p.toLowerCase())
+          .filter(p => p.includes(query))
+          .sort((p1, p2) => p1.indexOf(query) - p2.indexOf(query));
+      }
+      for (const match of matches.slice(0, 10 - datalist.children.length)) {
+        const option = document.createElement('option');
+        option.setAttribute('value', match);
+        datalist.appendChild(option);
+      }
     }
   }
 
@@ -330,27 +359,38 @@ class TestSearch extends WPTFlags(PolymerElement) {
     this.shadowRoot.querySelector('.query').blur();
   }
 
-  handleKeyUp(e) {
-    if (e.keyCode !== 13) {
-      return;
+  handleKeyDown(e) {
+    if (e.keyCode === 9) {
+      e.preventDefault();
+      return false;
     }
+  }
 
-    this.commitQuery();
+  handleKeyUp(e) {
+    if (e.keyCode === 13) {
+      this.commitQuery();
+    }
   }
 
   handleChange(e) {
-    const opts = Array.from(this.shadowRoot.querySelectorAll('option'))
-      .map(elem => elem.getAttribute('value').toLowerCase());
+    const opts = Array.from(this.shadowRoot.querySelectorAll('option'));
     if (opts.length === 0) {
       return;
     }
 
     const path = e.target.value;
-    if (opts.includes(path.toLowerCase())) {
-      this.dispatchEvent(new CustomEvent('autocomplete', {
-        detail: {path: path},
-      }));
-      this.shadowRoot.querySelector('.query').blur();
+    const autocompleteSelection =
+      opts.find(o => o.getAttribute('value').toLowerCase().includes(path.toLowerCase()));
+    if (autocompleteSelection) {
+      if (autocompleteSelection.getAttribute('atom')) {
+        return;
+      }
+      if (autocompleteSelection.value === path) {
+        this.dispatchEvent(new CustomEvent('autocomplete', {
+          detail: {path: path},
+        }));
+        this.shadowRoot.querySelector('.query').blur();
+      }
     }
   }
 
