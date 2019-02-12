@@ -21,10 +21,8 @@ import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-elem
 
 // Playground:
 const analyzer = document.querySelector('reftest-analyzer');
-analyzer.images = [
-  '/static/chrome_64x64.png',
-  '/static/chrome-beta_64x64.png',
-];
+analyzer.before = '/static/chrome_64x64.png';
+analyzer.after = '/static/chrome-beta_64x64.png';
 
 suite('ReftestAnalyzer', () => {
   let analyzer, sandbox;
