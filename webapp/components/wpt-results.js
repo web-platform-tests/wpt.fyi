@@ -153,6 +153,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       .compare {
         display: flex;
       }
+      .compare .column {
+        flex-grow: 1;
+      }
+      .compare .column iframe {
+        width: 100%;
+        height: 600px;
+      }
     </style>
 
     <results-tabs tab="results" path="[[encodedPath]]" query="[[query]]">
@@ -372,14 +379,14 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         <div class="separator"></div>
         <section>
           <h4>[[path]] in this browser</h4>
-          <div class='compare'>
-            <div>
+          <div class="compare">
+            <div class="column">
               <h5>Result</h5>
               <template is="dom-if" if="[[testW3CURL]]">
                 <iframe src="[[https(testW3CURL)]]"></iframe>
               </template>
             </div>
-            <div>
+            <div class="column">
               <h5>Reference</h5>
               <template is="dom-if" if="[[testW3CRefURL]]">
                 <iframe src="[[https(testW3CRefURL)]]"></iframe>
