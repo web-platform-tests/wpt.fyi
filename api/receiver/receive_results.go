@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -160,7 +161,7 @@ func sendResultsToProcessor(
 
 	var errStr string
 	for err := range errors {
-		errStr += err.Error()
+		errStr += strings.TrimSpace(err.Error()) + "\n"
 	}
 	if errStr != "" {
 		return nil, fmt.Errorf("error(s) occured when transferring results from %s to GCS:\n%s", uploader, errStr)

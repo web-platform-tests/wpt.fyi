@@ -14,7 +14,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	"google.golang.org/appengine/urlfetch"
 
@@ -31,8 +30,7 @@ const flagPendingChecks = "pendingChecks"
 var (
 	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
 	// with a notable exception that "*-stability" runs are not included at the moment.
-	taskNameRegex          = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
-	resultsReceiverTimeout = time.Minute
+	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
 )
 
 func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -154,9 +152,6 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	// The default timeout is 5s, not enough for the receiver to download the reports.
-	slowCtx, cancel := context.WithTimeout(ctx, resultsReceiverTimeout)
-	defer cancel()
 	labels := mapset.NewSet()
 	if status.IsOnMaster() {
 		labels.Add(shared.MasterLabel)
@@ -169,7 +164,6 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
 		log,
-		urlfetch.Client(slowCtx),
 		shared.NewAppEngineAPI(ctx),
 		checksAPI,
 		*status.SHA,
@@ -296,7 +290,6 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 
 func createAllRuns(
 	log shared.Logger,
-	client *http.Client,
 	aeAPI shared.AppEngineAPI,
 	checksAPI checks.API,
 	sha,

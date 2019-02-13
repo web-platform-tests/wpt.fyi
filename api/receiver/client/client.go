@@ -70,9 +70,9 @@ func (c client) CreateRun(
 	}
 	req.SetBasicAuth(username, password)
 
-	client, cancel := c.aeAPI.GetSlowHTTPClient(time.Minute)
+	slowClient, cancel := c.aeAPI.GetSlowHTTPClient(time.Minute)
 	defer cancel()
-	resp, err := client.Do(req)
+	resp, err := slowClient.Do(req)
 	if err != nil {
 		return err
 	}
