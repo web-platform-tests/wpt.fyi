@@ -17,6 +17,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// UploadTimeout is the timeout to upload results to the results receiver.
+const UploadTimeout = time.Minute
+
 // Client is the interface for the client.
 type Client interface {
 	CreateRun(
@@ -70,7 +73,7 @@ func (c client) CreateRun(
 	}
 	req.SetBasicAuth(username, password)
 
-	slowClient, cancel := c.aeAPI.GetSlowHTTPClient(time.Minute)
+	slowClient, cancel := c.aeAPI.GetSlowHTTPClient(UploadTimeout)
 	defer cancel()
 	resp, err := slowClient.Do(req)
 	if err != nil {
