@@ -171,7 +171,7 @@ func sendResultsToProcessor(
 
 func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
 	log := shared.GetLogger(a.Context())
-	sleep := time.Millisecond * 500
+	sleep := time.Second
 	for retry := 0; retry < NumRetries; retry++ {
 		body, err := a.fetchWithTimeout(url, DownloadTimeout)
 		if err == nil {
