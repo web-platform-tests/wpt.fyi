@@ -7,7 +7,6 @@
 package shared_test
 
 import (
-	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -40,7 +39,7 @@ func TestNoCaching404(t *testing.T) {
 	cache := sharedtest.NewMockReadWritable(mockCtrl)
 	cache.EXPECT().NewReadCloser("/some/url").Return(ioutil.NopCloser(failReader{}), nil)
 	h := shared.NewCachingHandler(
-		context.Background(),
+		sharedtest.NewTestContext(),
 		http.NotFoundHandler(),
 		cache,
 		shared.AlwaysCachable,
@@ -60,7 +59,7 @@ func TestCaching200(t *testing.T) {
 	wc := sharedtest.NewMockWriteCloser(t)
 	cache.EXPECT().NewWriteCloser("/some/url").Return(wc, nil)
 	h := shared.NewCachingHandler(
-		context.Background(),
+		sharedtest.NewTestContext(),
 		okHandler{},
 		cache,
 		shared.AlwaysCachable,

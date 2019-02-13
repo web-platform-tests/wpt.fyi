@@ -6,7 +6,6 @@
 package checks
 
 import (
-	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -35,7 +34,7 @@ func TestHandleCheckRunEvent_InvalidApp(t *testing.T) {
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	checksAPI := NewMockAPI(mockCtrl)
 	azureAPI := azure.NewMockAPI(mockCtrl)
 
@@ -53,7 +52,7 @@ func TestHandleCheckRunEvent_Created_Completed(t *testing.T) {
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 	azureAPI := azure.NewMockAPI(mockCtrl)
@@ -72,7 +71,7 @@ func TestHandleCheckRunEvent_Created_Pending_UserNotWhitelisted(t *testing.T) {
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 	azureAPI := azure.NewMockAPI(mockCtrl)
@@ -91,7 +90,7 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome"))
@@ -134,7 +133,7 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().IgnoreFailure(username, owner, repo, event.GetCheckRun(), event.GetInstallation())
@@ -158,7 +157,7 @@ func TestHandleCheckRunEvent_ActionRequested_Cancel(t *testing.T) {
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().CancelRun(username, wptRepoOwner, wptRepoName, event.GetCheckRun(), event.GetInstallation())
@@ -200,7 +199,7 @@ func TestHandlePullRequestEvent_UserNotWhitelisted(t *testing.T) {
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := NewMockAPI(mockCtrl)
 
