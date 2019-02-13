@@ -9,9 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"testing"
 	"time"
-
-	"log"
 
 	agit "github.com/web-platform-tests/wpt.fyi/revisions/git"
 	billy "gopkg.in/src-d/go-billy.v4"
@@ -68,13 +67,13 @@ func NewMockIter(refs []*plumbing.Reference) MockReferenceIter {
 	return MockReferenceIter{refs, 0, false}
 }
 
-func NewHash(hashStr string) plumbing.Hash {
+func NewHash(t *testing.T, hashStr string) plumbing.Hash {
 	hashSlice, err := hex.DecodeString(hashStr)
 	if err != nil {
-		log.Fatalf("NewHash() expects hex string, but got %s", hashStr)
+		t.Fatalf("NewHash() expects hex string, but got %s", hashStr)
 	}
 	if len(hashSlice) > 20 {
-		log.Fatalf("NewHashRef() expects hex string constituting no more than 20 bytes but got %d bytes from %s", len(hashSlice), hashStr)
+		t.Fatalf("NewHashRef() expects hex string constituting no more than 20 bytes but got %d bytes from %s", len(hashSlice), hashStr)
 	}
 	padStop := 20 - len(hashSlice)
 	var fixedHash [20]byte
@@ -85,7 +84,8 @@ func NewHash(hashStr string) plumbing.Hash {
 			fixedHash[i] = hashSlice[i-padStop]
 		}
 	}
-	log.Printf("INFO: %x", fixedHash)
+	// Uncomment this line when debugging.
+	// t.Logf("INFO: %x", fixedHash)
 	return plumbing.Hash(fixedHash)
 }
 
@@ -94,8 +94,8 @@ func NewTagRefFromHash(hash plumbing.Hash, name string) *plumbing.Reference {
 	return plumbing.NewHashReference("refs/tags/"+refName, hash)
 }
 
-func NewTagRef(name, hashStr string) *plumbing.Reference {
-	return NewTagRefFromHash(NewHash(hashStr), name)
+func NewTagRef(t *testing.T, name, hashStr string) *plumbing.Reference {
+	return NewTagRefFromHash(NewHash(t, hashStr), name)
 }
 
 type Tag struct {
@@ -108,11 +108,11 @@ type Tag struct {
 	commit *object.Commit
 }
 
-func (t Tag) GetHash() plumbing.Hash {
+func (t Tag) GetHash(T *testing.T) plumbing.Hash {
 	if t.hash != nil {
 		return *t.hash
 	}
-	hash := NewHash(t.Hash)
+	hash := NewHash(T, t.Hash)
 	t.hash = &hash
 	return hash
 }
@@ -121,30 +121,30 @@ func (t Tag) GetCommitTime() time.Time {
 	return t.CommitTime
 }
 
-func (t Tag) GetTag() *plumbing.Reference {
+func (t Tag) GetTag(T *testing.T) *plumbing.Reference {
 	if t.tag != nil {
 		return t.tag
 	}
-	tag := NewTagRefFromHash(t.GetHash(), t.TagName)
+	tag := NewTagRefFromHash(t.GetHash(T), t.TagName)
 	t.tag = tag
 	return tag
 }
 
-func (t Tag) GetCommit() *object.Commit {
+func (t Tag) GetCommit(T *testing.T) *object.Commit {
 	if t.commit != nil {
 		return t.commit
 	}
-	commit := NewCommitFromHash(t.GetHash(), t.CommitTime)
+	commit := NewCommitFromHash(t.GetHash(T), t.CommitTime)
 	t.commit = commit
 	return commit
 }
 
 type Tags []Tag
 
-func (ts Tags) Refs() []*plumbing.Reference {
+func (ts Tags) Refs(T *testing.T) []*plumbing.Reference {
 	refs := make([]*plumbing.Reference, 0, len(ts))
 	for _, t := range ts {
-		refs = append(refs, t.GetTag())
+		refs = append(refs, t.GetTag(T))
 	}
 	return refs
 }
@@ -182,12 +182,12 @@ func (mr *MockRepository) Clone(s storage.Storer, worktree billy.Filesystem, o *
 	return mr, nil
 }
 
-func NewMockRepository(tags []Tag, fetchImpl FetchImpl) *MockRepository {
+func NewMockRepository(t *testing.T, tags []Tag, fetchImpl FetchImpl) *MockRepository {
 	refs := make([]*plumbing.Reference, 0, len(tags))
 	commits := make(map[plumbing.Hash]*object.Commit)
 	for _, tag := range tags {
-		refs = append(refs, tag.GetTag())
-		commits[tag.GetHash()] = tag.GetCommit()
+		refs = append(refs, tag.GetTag(t))
+		commits[tag.GetHash(t)] = tag.GetCommit(t)
 	}
 	return &MockRepository{
 		refs,
@@ -205,7 +205,7 @@ func NewCommitFromHash(hash plumbing.Hash, commitTime time.Time) *object.Commit 
 	}
 }
 
-func NewCommit(hashStr string, commitTime time.Time) *object.Commit {
-	hash := NewHash(hashStr)
+func NewCommit(t *testing.T, hashStr string, commitTime time.Time) *object.Commit {
+	hash := NewHash(t, hashStr)
 	return NewCommitFromHash(hash, commitTime)
 }

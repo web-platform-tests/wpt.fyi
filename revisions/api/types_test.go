@@ -56,7 +56,7 @@ func TestFromEpoch_ID(t *testing.T) {
 
 func TestLatestFromEpochs_missing(t *testing.T) {
 	a := agit.RevisionData{
-		Hash:       test.NewHash("0a"),
+		Hash:       test.NewHash(t, "0a"),
 		CommitTime: today,
 	}
 	revs := map[epoch.Epoch][]agit.Revision{
@@ -70,27 +70,27 @@ func TestLatestFromEpochs_missing(t *testing.T) {
 
 func TestLatestFromEpochs(t *testing.T) {
 	a := agit.RevisionData{
-		Hash:       test.NewHash("0a"),
+		Hash:       test.NewHash(t, "0a"),
 		CommitTime: today,
 	}
 	b := agit.RevisionData{
-		Hash:       test.NewHash("0b"),
+		Hash:       test.NewHash(t, "0b"),
 		CommitTime: yesterday,
 	}
 	c := agit.RevisionData{
-		Hash:       test.NewHash("0c"),
+		Hash:       test.NewHash(t, "0c"),
 		CommitTime: today,
 	}
 	d := agit.RevisionData{
-		Hash:       test.NewHash("0d"),
+		Hash:       test.NewHash(t, "0d"),
 		CommitTime: yesterday,
 	}
 	e := agit.RevisionData{
-		Hash:       test.NewHash("0e"),
+		Hash:       test.NewHash(t, "0e"),
 		CommitTime: yesterday,
 	}
 	f := agit.RevisionData{
-		Hash:       test.NewHash("0f"),
+		Hash:       test.NewHash(t, "0f"),
 		CommitTime: today,
 	}
 	revs := map[epoch.Epoch][]agit.Revision{
@@ -127,27 +127,27 @@ func TestRevisionsFromEpochs_err(t *testing.T) {
 
 func TestRevisionsFromEpochs_several(t *testing.T) {
 	a := agit.RevisionData{
-		Hash:       test.NewHash("0a"),
+		Hash:       test.NewHash(t, "0a"),
 		CommitTime: today,
 	}
 	b := agit.RevisionData{
-		Hash:       test.NewHash("0b"),
+		Hash:       test.NewHash(t, "0b"),
 		CommitTime: yesterday,
 	}
 	c := agit.RevisionData{
-		Hash:       test.NewHash("0c"),
+		Hash:       test.NewHash(t, "0c"),
 		CommitTime: today,
 	}
 	d := agit.RevisionData{
-		Hash:       test.NewHash("0d"),
+		Hash:       test.NewHash(t, "0d"),
 		CommitTime: yesterday,
 	}
 	e := agit.RevisionData{
-		Hash:       test.NewHash("0e"),
+		Hash:       test.NewHash(t, "0e"),
 		CommitTime: yesterday,
 	}
 	f := agit.RevisionData{
-		Hash:       test.NewHash("0f"),
+		Hash:       test.NewHash(t, "0f"),
 		CommitTime: today,
 	}
 	revs := map[epoch.Epoch][]agit.Revision{
@@ -189,27 +189,27 @@ func TestRevisionsFromEpochs_several(t *testing.T) {
 
 func TestRevisionsFromEpochs_several_err(t *testing.T) {
 	a := agit.RevisionData{
-		Hash:       test.NewHash("0a"),
+		Hash:       test.NewHash(t, "0a"),
 		CommitTime: today,
 	}
 	b := agit.RevisionData{
-		Hash:       test.NewHash("0b"),
+		Hash:       test.NewHash(t, "0b"),
 		CommitTime: yesterday,
 	}
 	c := agit.RevisionData{
-		Hash:       test.NewHash("0c"),
+		Hash:       test.NewHash(t, "0c"),
 		CommitTime: today,
 	}
 	d := agit.RevisionData{
-		Hash:       test.NewHash("0d"),
+		Hash:       test.NewHash(t, "0d"),
 		CommitTime: yesterday,
 	}
 	e := agit.RevisionData{
-		Hash:       test.NewHash("0e"),
+		Hash:       test.NewHash(t, "0e"),
 		CommitTime: yesterday,
 	}
 	f := agit.RevisionData{
-		Hash:       test.NewHash("0f"),
+		Hash:       test.NewHash(t, "0f"),
 		CommitTime: today,
 	}
 	revs := map[epoch.Epoch][]agit.Revision{
