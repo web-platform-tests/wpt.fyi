@@ -131,7 +131,7 @@ func TestStructuredSearchHandler_success(t *testing.T) {
 	api := sharedtest.NewMockAppEngineAPI(ctrl)
 	r := httptest.NewRequest("POST", "https://example.com/api/query", bytes.NewBuffer([]byte(`{"run_ids":[1,2,3,4],"query":{"browser_name":"chrome","status":"PASS"}}`)))
 
-	api.EXPECT().Context().Return(r.Context())
+	api.EXPECT().Context().Return(sharedtest.NewTestContext())
 	api.EXPECT().GetServiceHostname("searchcache").Return(hostname)
 	api.EXPECT().GetHTTPClient().Return(server.Client())
 	w := httptest.NewRecorder()
@@ -161,7 +161,7 @@ func TestStructuredSearchHandler_failure(t *testing.T) {
 	api := sharedtest.NewMockAppEngineAPI(ctrl)
 	r := httptest.NewRequest("POST", "https://example.com/api/query", bytes.NewBuffer([]byte(`{"run_ids":[42],"query":{"browser_name":"chrome","status":"PASS"}}`)))
 
-	api.EXPECT().Context().Return(r.Context())
+	api.EXPECT().Context().Return(sharedtest.NewTestContext())
 	api.EXPECT().GetServiceHostname("searchcache").Return(hostname)
 	api.EXPECT().GetHTTPClient().DoAndReturn(func() *http.Client {
 		return server.Client()

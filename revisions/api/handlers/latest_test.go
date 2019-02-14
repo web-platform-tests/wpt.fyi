@@ -139,7 +139,7 @@ func TestLatestHandler_FailedMarshal(t *testing.T) {
 	revs := map[epoch.Epoch][]agit.Revision{
 		epoch.Hourly{}: []agit.Revision{
 			agit.RevisionData{
-				Hash:       test.NewHash("01"),
+				Hash:       test.NewHash(t, "01"),
 				CommitTime: time.Now(),
 			},
 		},
@@ -176,13 +176,13 @@ func TestLatestHandler_Success(t *testing.T) {
 	revs := map[epoch.Epoch][]agit.Revision{
 		epoch.Hourly{}: []agit.Revision{
 			agit.RevisionData{
-				Hash:       test.NewHash("01"),
+				Hash:       test.NewHash(t, "01"),
 				CommitTime: now,
 			},
 		},
 		epoch.Daily{}: []agit.Revision{
 			agit.RevisionData{
-				Hash:       test.NewHash("02"),
+				Hash:       test.NewHash(t, "02"),
 				CommitTime: yesterday,
 			},
 		},
@@ -190,11 +190,11 @@ func TestLatestHandler_Success(t *testing.T) {
 	latestResp := api.LatestResponse{
 		Revisions: map[string]api.Revision{
 			api.FromEpoch(epoch.Hourly{}).ID: api.Revision{
-				Hash:       test.NewHash("01").String(),
+				Hash:       test.NewHash(t, "01").String(),
 				CommitTime: api.UTCTime(now),
 			},
 			api.FromEpoch(epoch.Daily{}).ID: api.Revision{
-				Hash:       test.NewHash("02").String(),
+				Hash:       test.NewHash(t, "02").String(),
 				CommitTime: api.UTCTime(yesterday),
 			},
 		},

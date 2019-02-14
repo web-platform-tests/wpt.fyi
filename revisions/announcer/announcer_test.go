@@ -50,7 +50,7 @@ func TestBoundedMergedPRIterFactory_GetIter_Fake(t *testing.T) {
 
 func TestBoundedMergedPRIterFactory_GetIter(t *testing.T) {
 	// Out-of-order tags 1-6; 2, 4, 5, 6 marked as PRs; iter to start just after 5's commit time, going back to (including) 4's commit time.
-	iter, err := factory.GetIter(test.NewMockRepository([]test.Tag{
+	iter, err := factory.GetIter(test.NewMockRepository(t, []test.Tag{
 		test.Tag{
 			TagName:    "not_a_pr_1",
 			Hash:       "01",
@@ -144,7 +144,7 @@ func TestGitRemoteAnnouncer_Init_NilRepo(t *testing.T) {
 
 func TestGitRemoteAnnouncer_Init_OK(t *testing.T) {
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
-		Git: test.NewMockRepository([]test.Tag{}, test.NilFetchImpl),
+		Git: test.NewMockRepository(t, []test.Tag{}, test.NilFetchImpl),
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -191,13 +191,13 @@ func TestGitRemoteAnnouncer_GetRevisions_ErrFake(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	repo := test.NewMockRepository([]test.Tag{}, test.NilFetchImpl)
+	repo := test.NewMockRepository(t, []test.Tag{}, test.NilFetchImpl)
 	mockFactory := announcer.NewMockEpochReferenceIterFactory(mockCtrl)
 	mockFactory.EXPECT().GetIter(repo, gomock.Any()).Return(nil, errFake)
 
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		EpochReferenceIterFactory: mockFactory,
-		Git: repo,
+		Git:                       repo,
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -212,7 +212,7 @@ func TestGitRemoteAnnouncer_GetRevisions_ErrEmptyEpochs(t *testing.T) {
 		EpochReferenceIterFactory: SliceReferenceIterFactory{
 			&SliceReferenceIter{},
 		},
-		Git: test.NewMockRepository([]test.Tag{}, test.NilFetchImpl),
+		Git: test.NewMockRepository(t, []test.Tag{}, test.NilFetchImpl),
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -227,7 +227,7 @@ func TestGitRemoteAnnouncer_GetRevisions_ErrNotAllEpochsConsumed(t *testing.T) {
 		EpochReferenceIterFactory: SliceReferenceIterFactory{
 			&SliceReferenceIter{},
 		},
-		Git: test.NewMockRepository([]test.Tag{}, test.NilFetchImpl),
+		Git: test.NewMockRepository(t, []test.Tag{}, test.NilFetchImpl),
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -247,14 +247,14 @@ func TestGitRemoteAnnouncer_GetRevisions_Single(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 1, 23, 59, 59, 999999999, time.UTC),
 		},
 	}
-	refs := test.Tags(tags).Refs()
+	refs := test.Tags(tags).Refs(t)
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		EpochReferenceIterFactory: SliceReferenceIterFactory{
 			&SliceReferenceIter{
 				refs: refs,
 			},
 		},
-		Git: test.NewMockRepository(tags, test.NilFetchImpl),
+		Git: test.NewMockRepository(t, tags, test.NilFetchImpl),
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -273,7 +273,7 @@ func TestGitRemoteAnnouncer_GetRevisions_Single(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(dailyRevs))
 	assert.Equal(t, agit.RevisionData{
-		Hash:       tags[0].GetHash(),
+		Hash:       tags[0].GetHash(t),
 		CommitTime: tags[0].GetCommitTime(),
 	}, dailyRevs[0])
 }
@@ -306,14 +306,14 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiSameEpoch(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
 		},
 	}
-	refs := test.Tags(tags).Refs()
+	refs := test.Tags(tags).Refs(t)
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		EpochReferenceIterFactory: SliceReferenceIterFactory{
 			&SliceReferenceIter{
 				refs: refs,
 			},
 		},
-		Git: test.NewMockRepository(tags, test.NilFetchImpl),
+		Git: test.NewMockRepository(t, tags, test.NilFetchImpl),
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -337,15 +337,15 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiSameEpoch(t *testing.T) {
 	// "three" [0], "two-two" [1], "one-one" [3].
 	expected := [3]agit.Revision{
 		agit.RevisionData{
-			Hash:       tags[0].GetHash(),
+			Hash:       tags[0].GetHash(t),
 			CommitTime: tags[0].GetCommitTime(),
 		},
 		agit.RevisionData{
-			Hash:       tags[1].GetHash(),
+			Hash:       tags[1].GetHash(t),
 			CommitTime: tags[1].GetCommitTime(),
 		},
 		agit.RevisionData{
-			Hash:       tags[3].GetHash(),
+			Hash:       tags[3].GetHash(t),
 			CommitTime: tags[3].GetCommitTime(),
 		},
 	}
@@ -372,14 +372,14 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiEpochs(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
 		},
 	}
-	refs := test.Tags(tags).Refs()
+	refs := test.Tags(tags).Refs(t)
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		EpochReferenceIterFactory: SliceReferenceIterFactory{
 			&SliceReferenceIter{
 				refs: refs,
 			},
 		},
-		Git: test.NewMockRepository(tags, test.NilFetchImpl),
+		Git: test.NewMockRepository(t, tags, test.NilFetchImpl),
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -401,7 +401,7 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiEpochs(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(hourlyRevs))
 	assert.Equal(t, agit.RevisionData{
-		Hash:       tags[0].GetHash(),
+		Hash:       tags[0].GetHash(t),
 		CommitTime: tags[0].GetCommitTime(),
 	}, hourlyRevs[0])
 
@@ -409,7 +409,7 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiEpochs(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(twoHourlyRevs))
 	assert.Equal(t, agit.RevisionData{
-		Hash:       tags[1].GetHash(),
+		Hash:       tags[1].GetHash(t),
 		CommitTime: tags[1].GetCommitTime(),
 	}, twoHourlyRevs[0])
 
@@ -417,7 +417,7 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiEpochs(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(dailyRevs))
 	assert.Equal(t, agit.RevisionData{
-		Hash:       tags[2].GetHash(),
+		Hash:       tags[2].GetHash(t),
 		CommitTime: tags[2].GetCommitTime(),
 	}, dailyRevs[0])
 }
@@ -440,14 +440,14 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiMultiEpochs(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
 		},
 	}
-	refs := test.Tags(tags).Refs()
+	refs := test.Tags(tags).Refs(t)
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		EpochReferenceIterFactory: SliceReferenceIterFactory{
 			&SliceReferenceIter{
 				refs: refs,
 			},
 		},
-		Git: test.NewMockRepository(tags, test.NilFetchImpl),
+		Git: test.NewMockRepository(t, tags, test.NilFetchImpl),
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -469,11 +469,11 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiMultiEpochs(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 2, len(hourlyRevs))
 	assert.Equal(t, agit.RevisionData{
-		Hash:       tags[0].GetHash(),
+		Hash:       tags[0].GetHash(t),
 		CommitTime: tags[0].GetCommitTime(),
 	}, hourlyRevs[0])
 	assert.Equal(t, agit.RevisionData{
-		Hash:       tags[1].GetHash(),
+		Hash:       tags[1].GetHash(t),
 		CommitTime: tags[1].GetCommitTime(),
 	}, hourlyRevs[1])
 
@@ -481,7 +481,7 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiMultiEpochs(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(twoHourlyRevs))
 	assert.Equal(t, agit.RevisionData{
-		Hash:       tags[1].GetHash(),
+		Hash:       tags[1].GetHash(t),
 		CommitTime: tags[1].GetCommitTime(),
 	}, twoHourlyRevs[0])
 
@@ -489,23 +489,24 @@ func TestGitRemoteAnnouncer_GetRevisions_MultiMultiEpochs(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(dailyRevs))
 	assert.Equal(t, agit.RevisionData{
-		Hash:       tags[2].GetHash(),
+		Hash:       tags[2].GetHash(t),
 		CommitTime: tags[2].GetCommitTime(),
 	}, dailyRevs[0])
 }
 
 type MockRepositoryProducer struct {
+	t      *testing.T
 	clones int
 }
 
 func (g *MockRepositoryProducer) Clone(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (agit.Repository, error) {
 	g.clones++
-	return test.NewMockRepository([]test.Tag{}, test.NilFetchImpl), nil
+	return test.NewMockRepository(g.t, []test.Tag{}, test.NilFetchImpl), nil
 }
 
 // TODO(markdittmer): Should test that gitRemoteAnnouncer droppped reference to initial repository. Not possible with black box testing.
 func TestGitRemoteAnnouncer_Reset(t *testing.T) {
-	g := MockRepositoryProducer{}
+	g := MockRepositoryProducer{t: t}
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		Git: &g,
 	})
@@ -555,7 +556,7 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 		Hash:       "01",
 		CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
 	}
-	bRepo := test.NewMockRepository([]test.Tag{updatedTag}, test.NilFetchImpl)
+	bRepo := test.NewMockRepository(t, []test.Tag{updatedTag}, test.NilFetchImpl)
 	pValue := ProxyRepository{}
 	pRepo := &pValue
 
@@ -563,7 +564,7 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 	// that aRepo setup will invoke Fetch() exactly once to ensure that its tags
 	// are fetched. Consider switching to mockgen mocks for Repository objects.
 	aFetchCount := 0
-	aRepo := test.NewMockRepository([]test.Tag{}, func(mr *test.MockRepository, o *git.FetchOptions) error {
+	aRepo := test.NewMockRepository(t, []test.Tag{}, func(mr *test.MockRepository, o *git.FetchOptions) error {
 		aFetchCount++
 		if aFetchCount == 1 {
 			return nil
@@ -575,7 +576,7 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 	pRepo.Set(aRepo)
 	a, err := announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 		EpochReferenceIterFactory: pRepo,
-		Git: pRepo,
+		Git:                       pRepo,
 	})
 	assert.NotNil(t, a)
 	assert.Nil(t, err)
@@ -604,7 +605,7 @@ func TestGitRemoteAnnouncer_Update(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(dailyRevs))
 	assert.Equal(t, agit.RevisionData{
-		Hash:       updatedTag.GetHash(),
+		Hash:       updatedTag.GetHash(t),
 		CommitTime: updatedTag.GetCommitTime(),
 	}, dailyRevs[0])
 }

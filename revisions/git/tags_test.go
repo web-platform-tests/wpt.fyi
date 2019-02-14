@@ -8,7 +8,6 @@ package git_test
 
 import (
 	"io"
-	"log"
 	"testing"
 	"time"
 
@@ -53,10 +52,10 @@ func TestTimeOrderedReferenceIter_ReorderTaggedCommitsByCommitTime(t *testing.T)
 			CommitTime: now.AddDate(0, 0, 3),
 		},
 	}
-	refs := test.Tags(tags).Refs()
+	refs := test.Tags(tags).Refs(t)
 	iterFactory := func(t *testing.T) storer.ReferenceIter {
 		baseIter := test.NewMockIter(refs)
-		iter, err := agit.NewTimeOrderedReferenceIter(&baseIter, test.NewMockRepository(tags, test.NilFetchImpl))
+		iter, err := agit.NewTimeOrderedReferenceIter(&baseIter, test.NewMockRepository(t, tags, test.NilFetchImpl))
 		assert.True(t, err == nil)
 		return iter
 	}
@@ -118,10 +117,10 @@ func TestMergedPRIter_MergePRTagsInCommitTimeOrder(t *testing.T) {
 			CommitTime: now.AddDate(0, 0, 5),
 		},
 	}
-	refs := test.Tags(tags).Refs()
+	refs := test.Tags(tags).Refs(t)
 	// merge_pr_* from refs in reverse cronological order.
 	prs := [2]*plumbing.Reference{refs[5], refs[3]}
-	repo := test.NewMockRepository(tags, test.NilFetchImpl)
+	repo := test.NewMockRepository(t, tags, test.NilFetchImpl)
 	baseIter := test.NewMockIter(refs)
 	filteredIter, err := agit.NewMergedPRIter(&baseIter, repo)
 	assert.True(t, err == nil)
@@ -144,32 +143,32 @@ func TestMergedPRIter_MergePRTagsInCommitTimeOrder(t *testing.T) {
 	assert.True(t, i == len(prs))
 }
 
-func stopAtHash(h plumbing.Hash) func(ref *plumbing.Reference) bool {
+func stopAtHash(t *testing.T, h plumbing.Hash) func(ref *plumbing.Reference) bool {
 	return func(ref *plumbing.Reference) bool {
 		if ref == nil {
-			log.Fatal("Unexpected nil reference in test stopAtHash function")
+			t.Fatal("Unexpected nil reference in test stopAtHash function")
 		}
 		return ref.Hash() == h
 	}
 }
 
 func TestStopReferenceIter_StopAtFourthOfSixTags(t *testing.T) {
-	stopAt := test.NewHash("04")
+	stopAt := test.NewHash(t, "04")
 	includedRefs := []*plumbing.Reference{
-		test.NewTagRef("some_tag_1", "01"),
-		test.NewTagRef("some_tag_2", "02"),
-		test.NewTagRef("some_tag_3", "03"),
+		test.NewTagRef(t, "some_tag_1", "01"),
+		test.NewTagRef(t, "some_tag_2", "02"),
+		test.NewTagRef(t, "some_tag_3", "03"),
 	}
 	var allRefs []*plumbing.Reference
 	allRefs = append(allRefs, includedRefs...)
 	allRefs = append(allRefs, []*plumbing.Reference{
-		test.NewTagRef("some_tag_4", "04"),
-		test.NewTagRef("some_tag_5", "05"),
-		test.NewTagRef("some_tag_6", "06"),
+		test.NewTagRef(t, "some_tag_4", "04"),
+		test.NewTagRef(t, "some_tag_5", "05"),
+		test.NewTagRef(t, "some_tag_6", "06"),
 	}...)
 
 	baseIter := test.NewMockIter(allRefs)
-	filteredIter := agit.NewStopReferenceIter(&baseIter, stopAtHash(stopAt))
+	filteredIter := agit.NewStopReferenceIter(&baseIter, stopAtHash(t, stopAt))
 	i := 0
 	for ref, err := filteredIter.Next(); err == nil; ref, err = filteredIter.Next() {
 		assert.True(t, ref == includedRefs[i])
@@ -178,7 +177,7 @@ func TestStopReferenceIter_StopAtFourthOfSixTags(t *testing.T) {
 	assert.True(t, i == len(includedRefs))
 
 	baseIter = test.NewMockIter(allRefs)
-	filteredIter = agit.NewStopReferenceIter(&baseIter, stopAtHash(stopAt))
+	filteredIter = agit.NewStopReferenceIter(&baseIter, stopAtHash(t, stopAt))
 	i = 0
 	filteredIter.ForEach(func(ref *plumbing.Reference) error {
 		assert.True(t, ref == includedRefs[i])
@@ -226,17 +225,17 @@ func TestMergedPRIter_StopReferenceIter_Compose(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 7, 0, 0, 0, 0, time.UTC),
 		},
 	}
-	refs := test.Tags(tags).Refs()
+	refs := test.Tags(tags).Refs(t)
 	// Stop at (reverse cronological) merge_pr_6.
-	stopAt := tags[5].GetHash()
+	stopAt := tags[5].GetHash(t)
 	// Included in iteration: merge_pr_7 only.
 	includedPrs := [1]*plumbing.Reference{refs[6]}
 
-	repo := test.NewMockRepository(tags, test.NilFetchImpl)
+	repo := test.NewMockRepository(t, tags, test.NilFetchImpl)
 	baseIter := test.NewMockIter(refs)
 	filteredIter, err := agit.NewMergedPRIter(&baseIter, repo)
 	assert.True(t, err == nil)
-	iter := agit.NewStopReferenceIter(filteredIter, stopAtHash(stopAt))
+	iter := agit.NewStopReferenceIter(filteredIter, stopAtHash(t, stopAt))
 	i := 0
 	for ref, err := iter.Next(); err == nil; ref, err = iter.Next() {
 		assert.True(t, ref == includedPrs[i])
@@ -247,7 +246,7 @@ func TestMergedPRIter_StopReferenceIter_Compose(t *testing.T) {
 	baseIter = test.NewMockIter(refs)
 	filteredIter, err = agit.NewMergedPRIter(&baseIter, repo)
 	assert.True(t, err == nil)
-	iter = agit.NewStopReferenceIter(filteredIter, stopAtHash(stopAt))
+	iter = agit.NewStopReferenceIter(filteredIter, stopAtHash(t, stopAt))
 	assert.True(t, err == nil)
 	i = 0
 	err = iter.ForEach(func(ref *plumbing.Reference) error {
