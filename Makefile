@@ -41,10 +41,14 @@ prepush: go_build test lint
 python_test: python3 tox
 	cd $(WPTD_PATH)results-processor; tox
 
-go_build: go_deps
-	cd $(WPTD_GO_PATH); go build ./...
+go_build: git mockgen
+	cd $(WPTD_GO_PATH); go get ./...
+	cd $(WPTD_GO_PATH); go generate ./...
 
-go_lint: go_deps golint_deps go_test_tag_lint
+go_build_test: go_build
+	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
+
+go_lint: golint_deps go_test_tag_lint
 	@echo "# Linting the go packages..."
 	golint -set_exit_status $(WPTD_GO_PATH)/api/...
 	# Skip revisions/test
@@ -61,10 +65,10 @@ go_test_tag_lint:
 
 go_test: go_small_test go_medium_test
 
-go_small_test: go_deps
+go_small_test: go_build_test
 	cd $(WPTD_GO_PATH); go test -tags=small $(VERBOSE) ./...
 
-go_medium_test: go_deps dev_appserver_deps
+go_medium_test: go_build_test dev_appserver_deps
 	cd $(WPTD_GO_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
@@ -81,7 +85,7 @@ go_chrome_test: chrome | _go_webdriver_test
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-_go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
+_go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-tester webserver_deps
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
 	# paths before installing node-web-component-tester as the paths
@@ -112,7 +116,7 @@ apt_update:
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
 
-webapp_deps: go_deps webapp_node_modules
+webapp_deps: go_build webapp_node_modules
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
@@ -136,14 +140,14 @@ firefox_install: firefox_deps bzip2 wget java
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox-esr | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
-go_deps: go_packages $(GO_FILES)
-
-go_packages: git
-	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
-
 golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \
 		go get -u golang.org/x/lint/golint; \
+	fi
+
+mockgen: git
+	if [ "$$(which mockgen)" == "" ]; then \
+		go get -u github.com/golang/mock/mockgen; \
 	fi
 
 package_service: var-APP_PATH
