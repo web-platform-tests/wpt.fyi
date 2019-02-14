@@ -72,6 +72,11 @@ func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 	return datastore.GetMulti(d.ctx, cast, dst)
 }
 
+func (d aeDatastore) Delete(key Key) error {
+	cast := key.(*datastore.Key)
+	return datastore.Delete(d.ctx, cast)
+}
+
 type aeQuery struct {
 	query *datastore.Query
 }

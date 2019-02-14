@@ -49,3 +49,24 @@ self.addEventListener(
     );
   }
 );
+
+self.addEventListener('message', function (event) {
+  if (event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener('push', async (event) => {
+  const data = await event.data.json();
+  registration.showNotification(data.title, data.options);
+});
+
+self.addEventListener('notificationclick', function (event) {
+  const clickedNotification = event.notification;
+  clickedNotification.close();
+  const url = new URL(clickedNotification.data.url || '/', location);
+
+  if ('openWindow' in clients) {
+    event.waitUntil(clients.openWindow(url));
+  }
+});

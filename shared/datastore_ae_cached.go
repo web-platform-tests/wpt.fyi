@@ -51,6 +51,11 @@ func (d aeCachedDatastore) GetMulti(keys []Key, dst interface{}) error {
 	return err
 }
 
+func (d aeCachedDatastore) Delete(k Key) error {
+	// TODO: Clear item from cache?
+	return d.aeDatastore.Delete(k)
+}
+
 // aeTestRunObjectStore is an adapter from Datastore to ObjectStore.
 type aeTestRunObjectStore struct {
 	aeCachedDatastore

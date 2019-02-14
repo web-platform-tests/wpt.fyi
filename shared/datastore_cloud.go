@@ -83,6 +83,11 @@ func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 	return d.client.GetMulti(d.ctx, cast, dst)
 }
 
+func (d cloudDatastore) Delete(key Key) error {
+	cast := key.(cloudKey).key
+	return d.client.Delete(d.ctx, cast)
+}
+
 type cloudQuery struct {
 	query *datastore.Query
 }

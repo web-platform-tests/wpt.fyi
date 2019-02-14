@@ -126,6 +126,14 @@ func (r TestRun) hasLabel(label string) bool {
 	return StringSliceContains(r.Labels, label)
 }
 
+// ProductSpec returns an equivalent ProductSpec for the run.
+func (r *TestRun) ProductSpec() ProductSpec {
+	return ProductSpec{
+		ProductAtRevision: r.ProductAtRevision,
+		Labels:            r.LabelsSet(),
+	}
+}
+
 // Channel return the channel label, if any, for the given run.
 func (r TestRun) Channel() string {
 	for _, label := range r.Labels {

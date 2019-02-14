@@ -6,6 +6,7 @@ package shared
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -62,6 +63,17 @@ func (p ProductSpec) DisplayName() string {
 	default:
 		return p.BrowserName
 	}
+}
+
+// IconPath provides a webapp path to an icon for the spec.
+func (p ProductSpec) IconPath() string {
+	product := p.BrowserName
+	if p.IsExperimental() {
+		product += "-dev"
+	} else if p.Labels != nil && p.Labels.Contains(BetaLabel) {
+		product += "-beta"
+	}
+	return fmt.Sprintf("/static/%s_64x64.png", product)
 }
 
 // ProductSpecs is a helper type for a slice of ProductSpec structs.

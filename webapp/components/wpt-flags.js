@@ -22,6 +22,26 @@ $_documentContainer.innerHTML = `<dom-module id="wpt-flags">
 document.head.appendChild($_documentContainer.content);
 window.wpt = window.wpt || {};
 
+const publicKey = 'BGf5diO3W8TqDldUEAUSFDbKLztmzAgoU14oRjrvMQZn0ceeRdq6hJCvF526DmXyljXmeVM6avvjkRyXI7PYebk';
+
+// https://developers.google.com/web/fundamentals/codelabs/push-notifications/
+function urlB64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+function pushManager() {
+  return window.serviceWorkerRegistration && window.serviceWorkerRegistration.pushManager;
+}
+
 /* global wpt */
 Object.defineProperty(wpt, 'ClientSideFeatures', {
   get: function() {
@@ -102,12 +122,28 @@ const FlagsEditorClass = (environmentFlags) =>
       for (const feature of features) {
         this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
       }
+      const pm = pushManager();
+      if (pm) {
+        pm.getSubscription().then(s => {
+          this.subscribed = !!s;
+          this.subscription = s;
+          this.canSubscribe = !!pm;
+          this._createMethodObserver('subscribedChanged(subscribed)');
+        });
+      }
     }
 
     static get properties() {
       const useLocalStorage = !environmentFlags;
       const readOnly = false;
-      const props = {};
+      const props = {
+        canSubscribe: {
+          type: Boolean,
+          value: false,
+        },
+        subscription: Object,
+        subscribed: Boolean,
+      };
       makeFeatureProperties(props, wpt.ClientSideFeatures, readOnly, useLocalStorage);
       makeFeatureProperties(props, wpt.ServerSideFeatures, readOnly, useLocalStorage);
       return props;
@@ -131,6 +167,59 @@ const FlagsEditorClass = (environmentFlags) =>
           JSON.stringify(value));
       }
     }
+
+    subscribedChanged(subscribed) {
+      if (subscribed === !!this.subscription) {
+        return;
+      }
+      if (subscribed) {
+        this.subscription || this.subscribeToNotifications()
+          .then(
+            sub => { // Success.
+              this.subscription = sub;
+            },
+            resp => { // Error (returns the response).
+              // eslint-disable-next-line no-console
+              console.error('Failed to subscribe', resp);
+              this.subscribed = false;
+            },
+          );
+      } else {
+        if (this.subscription) {
+          this.subscription.unsubscribe()
+            .then(
+              () => {
+                this.subscription = false;
+              },
+              () => {
+                this.subscribed = true;
+              },
+            );
+        }
+      }
+    }
+
+    subscribeToNotifications() {
+      const key = urlB64ToUint8Array(publicKey);
+      const opts = {
+        userVisibleOnly: true,
+        applicationServerKey: key,
+      };
+      const saveUrl = new URL('/api/subscription', window.location);
+      return pushManager()
+        .subscribe(opts)
+        .then(sub => {
+          return fetch(saveUrl, {
+            method: 'POST',
+            body: JSON.stringify(sub),
+          }).then(resp => {
+            if (!resp.ok) {
+              throw resp;
+            }
+            return sub;
+          });
+        });
+    }
   };
 
 class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
@@ -141,6 +230,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         margin-left: 32px;
       }
     </style>
+    <paper-item>
+      <paper-checkbox disabled="{{!canSubscribe}}" checked="{{subscribed}}">
+        Receive push-notifications on this device when runs arrive
+      </paper-checkbox>
+    </paper-item>
     <paper-item>
       <paper-checkbox checked="{{queryBuilder}}">
         Query Builder component

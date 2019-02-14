@@ -38,6 +38,10 @@ func RegisterRoutes() {
 		shared.WrapApplicationJSON(
 			shared.WrapPermissiveCORS(apiSHAsHandler)))
 
+	// API endpoint for webpush notification subscription.
+	shared.AddRoute("/api/subscription", "api-subscription",
+		shared.WrapApplicationJSON(apiSubscriptionHandler))
+
 	// API endpoint for searching PRs for the test runs.
 	shared.AddRoute("/api/prs", "api-prs",
 		shared.WrapApplicationJSON(

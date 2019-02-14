@@ -5,7 +5,6 @@
 package webapp
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -26,15 +25,15 @@ func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	if !aeAPI.IsFeatureEnabled("serviceWorker") {
-		http.NotFound(w, r)
-		return
+		// http.NotFound(w, r)
+		// return
 	}
 
 	w.Header().Add("Content-Type", "application/javascript")
 	version := strings.Split(appengine.VersionID(ctx), ".")[0]
 	if !sevenCharSHA.MatchString(version) {
-		http.Error(w, fmt.Sprintf("Service worker not implemented for version '%s'", version), http.StatusNotImplemented)
-		return
+		// http.Error(w, fmt.Sprintf("Service worker not implemented for version '%s'", version), http.StatusNotImplemented)
+		// return
 	}
 
 	data := struct {

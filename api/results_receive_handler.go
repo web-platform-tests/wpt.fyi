@@ -32,5 +32,6 @@ func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	a := receiver.NewAppEngineAPI(ctx)
 	s := checks.NewAPI(ctx)
-	receiver.HandleResultsCreate(a, s, w, r)
+	n := shared.NewNotificationsAPI(a)
+	receiver.HandleResultsCreate(a, s, n, w, r)
 }

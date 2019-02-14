@@ -22,7 +22,7 @@ import (
 const InternalUsername = "_processor"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
-func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r *http.Request) {
+func HandleResultsCreate(a AppEngineAPI, s checks.API, n shared.NotificationsAPI, w http.ResponseWriter, r *http.Request) {
 	username, password, ok := r.BasicAuth()
 	if !ok || username != InternalUsername || !a.authenticateUploader(username, password) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
@@ -85,6 +85,19 @@ func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r 
 	}
 	log := shared.GetLogger(a.Context())
 	log.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())
+	sendResultsAvailableNotifications(a, n, &testRun)
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonOutput)
+}
+
+func sendResultsAvailableNotifications(aeAPI shared.AppEngineAPI, n shared.NotificationsAPI, run *shared.TestRun) {
+	log := shared.GetLogger(aeAPI.Context())
+	spec := run.ProductSpec()
+	title := fmt.Sprintf("New %s results available", spec.DisplayName())
+	msg := fmt.Sprintf("Results are now available for %s", run.String())
+	path := fmt.Sprintf("/results/?run_id=%v", run.ID)
+	icon := spec.IconPath()
+	if err := n.SendPushNotification(title, msg, path, &icon); err != nil {
+		log.Errorf("Failed to send push notifications: %s", err.Error())
+	}
 }

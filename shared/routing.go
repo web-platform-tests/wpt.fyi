@@ -54,7 +54,7 @@ func WrapPermissiveCORS(h http.HandlerFunc, methods ...string) http.HandlerFunc 
 
 // WrapApplicationJSON wraps the given handler func in one that sets a Content-Type
 // header of "text/json" on the response.
-func WrapApplicationJSON(h http.Handler) http.HandlerFunc {
+func WrapApplicationJSON(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 		h.ServeHTTP(w, r)

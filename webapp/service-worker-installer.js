@@ -11,6 +11,7 @@ if ('serviceWorker' in navigator) {
       } else if (reg.active) {
         console.log('Service worker active');
       }
+      window.serviceWorkerRegistration = reg;
     }).catch(function (error) {
       // registration failed
       console.log(`Registration failed with ${error}`);

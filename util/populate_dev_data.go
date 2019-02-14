@@ -137,6 +137,7 @@ func main() {
 	log.Print("Adding local (empty) secrets...")
 	addSecretToken(ctx, "upload-token", emptySecretToken)
 	addSecretToken(ctx, "github-api-token", emptySecretToken)
+	addSecretToken(ctx, "webpush-private-key", emptySecretToken)
 
 	log.Print("Adding flag defaults...")
 	addFlag(ctx, "queryBuilder", enabledFlag)
@@ -148,10 +149,9 @@ func main() {
 	addFlag(ctx, "diffRenames", enabledFlag)
 	addFlag(ctx, "paginationTokens", enabledFlag)
 
-	log.Print("Adding uploader \"test\"...")
-	addData(ctx, "Uploader", []interface{}{
-		&shared.Uploader{Username: "test", Password: "123"},
-	})
+	log.Print("Adding uploader \"_processor\" (password 123)...")
+	key := datastore.NewKey(ctx, "Uploader", "_processor", 0, nil)
+	datastore.Put(ctx, key, &shared.Uploader{Username: "_processor", Password: "123"})
 
 	if *staticRuns {
 		log.Print("Adding local mock data (static/)...")
