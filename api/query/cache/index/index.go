@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// TODO(Hexcles): Extract type RunID to another package (shared) so that Index
+// can be mocked into a different package without cyclic imports.
+
 package index
 
 import (

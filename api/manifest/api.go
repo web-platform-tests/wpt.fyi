@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// DISABLED(unused): go:generate mockgen -destination mock_manifest/api_mock.go github.com/web-platform-tests/wpt.fyi/api/manifest API
+
 package manifest
 
 import (

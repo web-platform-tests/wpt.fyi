@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// TODO(Hexcles): Export interfaces that need to be mocked for testing and
+// generate the mock into a different package (using reflect mode).
+
+//go:generate mockgen -destination query_mock.go -package query -source=query.go
+
 package query
 
 import (

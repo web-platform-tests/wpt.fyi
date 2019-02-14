@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate mockgen -destination sharedtest/datastore_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared Datastore
+
 package shared
 
 import (

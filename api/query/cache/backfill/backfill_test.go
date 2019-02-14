@@ -12,13 +12,14 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill/mock_backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 )
 
 func TestNilIndex(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	fetcher := NewMockRunFetcher(ctrl)
+	fetcher := mock_backfill.NewMockRunFetcher(ctrl)
 	_, err := FillIndex(fetcher, nil, nil, 1, uint(10), uint64(1), 0.0, nil)
 	assert.Equal(t, errNilIndex, err)
 }
@@ -26,7 +27,7 @@ func TestNilIndex(t *testing.T) {
 func TestFetchErr(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	fetcher := NewMockRunFetcher(ctrl)
+	fetcher := mock_backfill.NewMockRunFetcher(ctrl)
 	idx := index.NewMockIndex(ctrl)
 	expected := errors.New("Fetch error")
 	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(nil, expected)

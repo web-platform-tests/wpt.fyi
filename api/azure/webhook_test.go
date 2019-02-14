@@ -19,6 +19,8 @@ import (
 	"github.com/google/go-github/github"
 	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/web-platform-tests/wpt.fyi/api/azure/mock_azure"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
@@ -78,7 +80,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	}))
 	defer server.Close()
 
-	azureAPI := NewMockAPI(mockCtrl)
+	azureAPI := mock_azure.NewMockAPI(mockCtrl)
 	serverURL, _ := url.Parse(server.URL)
 	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
 

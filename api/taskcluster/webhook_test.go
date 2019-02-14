@@ -19,7 +19,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/api/checks"
+	"github.com/web-platform-tests/wpt.fyi/api/checks/mock_checks"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
@@ -176,7 +176,7 @@ func TestCreateAllRuns_success_master(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	checksAPI := checks.NewMockAPI(mockC)
+	checksAPI := mock_checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("safari[experimental]"))
@@ -221,7 +221,7 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	checksAPI := checks.NewMockAPI(mockC)
+	checksAPI := mock_checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental]"))
@@ -277,7 +277,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	checksAPI := checks.NewMockAPI(mockC)
+	checksAPI := mock_checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	checksAPI.EXPECT().PendingCheckRun(suite, gomock.Any())
@@ -318,7 +318,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	checksAPI := checks.NewMockAPI(mockC)
+	checksAPI := mock_checks.NewMockAPI(mockC)
 	suite := shared.CheckSuite{SHA: sha}
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
