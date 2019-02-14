@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"time"
 
 	mapset "github.com/deckarep/golang-set"
 
@@ -55,8 +56,9 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo
 	log := shared.GetLogger(aeAPI.Context())
 	log.Infof("Fetching %s", artifactsURL)
 
-	client := aeAPI.GetHTTPClient()
-	resp, err := client.Get(artifactsURL)
+	slowClient, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
+	defer cancel()
+	resp, err := slowClient.Get(artifactsURL)
 	if err != nil {
 		log.Errorf("Failed to fetch artifacts for %s/%s build %v", owner, repo, buildID)
 		return false, err

@@ -20,6 +20,7 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
+	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
@@ -184,13 +185,12 @@ func TestCreateAllRuns_success_master(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
-	aeAPI.EXPECT().GetSlowHTTPClient(resultsReceiverTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Second}, func() {})
+	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).Times(3).Return(&http.Client{}, func() {})
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
-		&http.Client{},
 		aeAPI,
 		checksAPI,
 		sha,
@@ -231,13 +231,12 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
-	aeAPI.EXPECT().GetSlowHTTPClient(resultsReceiverTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Second}, func() {})
+	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).Times(4).Return(&http.Client{}, func() {})
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
-		&http.Client{},
 		aeAPI,
 		checksAPI,
 		sha,
@@ -285,19 +284,21 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
-	aeAPI.EXPECT().GetSlowHTTPClient(resultsReceiverTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Second}, func() {})
+	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).Times(2).Return(&http.Client{}, func() {})
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
-		&http.Client{},
 		aeAPI,
 		checksAPI,
 		sha,
 		"username",
 		"password",
-		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+		map[string][]string{
+			"chrome":  []string{"1"},
+			"firefox": []string{"1", "2"},
+		},
 		[]string{shared.MasterLabel},
 	)
 	assert.NotNil(t, err)
@@ -322,19 +323,22 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
-	aeAPI.EXPECT().GetSlowHTTPClient(resultsReceiverTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Second}, func() {})
+	// Give a very short timeout (instead of the asked 1min) to make tests faster.
+	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Microsecond}, func() {})
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	err := createAllRuns(
 		shared.NewNilLogger(),
-		&http.Client{Timeout: time.Second},
 		aeAPI,
 		checksAPI,
 		sha,
 		"username",
 		"password",
-		map[string][]string{"chrome": []string{"1"}, "firefox": []string{"1", "2"}},
+		map[string][]string{
+			"chrome":  []string{"1"},
+			"firefox": []string{"1", "2"},
+		},
 		[]string{shared.MasterLabel},
 	)
 	assert.NotNil(t, err)

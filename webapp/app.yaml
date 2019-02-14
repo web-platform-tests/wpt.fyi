@@ -9,6 +9,9 @@ instance_class: F4_1G
 builtins:
 - remote_api: on
 
+inbound_services:
+- warmup
+
 handlers:
   # Couple of special-case dynamic components.
 - url: /components/wpt-env-flags.js
