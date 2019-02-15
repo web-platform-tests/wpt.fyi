@@ -39,6 +39,7 @@ func NewAEContext(stronglyConsistentDatastore bool) (context.Context, func(), er
 		return nil, nil, err
 	}
 	ctx := appengine.NewContext(req)
+	ctx = context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
 	return ctx, func() {
 		inst.Close()
 	}, nil
