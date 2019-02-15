@@ -115,7 +115,7 @@ type TestDiff []int
 // IsEmpty returns true if the diff is empty (all zeroes)
 func (d TestDiff) IsEmpty() bool {
 	for _, x := range d {
-		if x > 0 {
+		if x != 0 {
 			return false
 		}
 	}
