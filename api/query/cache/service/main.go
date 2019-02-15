@@ -173,9 +173,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Cull unchanged diffs, if applicable.
 	if opts.IncludeDiff && !opts.DiffFilter.Unchanged {
-		for _, r := range res {
-			if r.Diff.IsEmpty() {
-				r.Diff = nil
+		for i := range res {
+			if res[i].Diff.IsEmpty() {
+				res[i].Diff = nil
 			}
 		}
 	}
