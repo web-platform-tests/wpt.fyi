@@ -66,21 +66,21 @@ type CheckState struct {
 
 // Name returns the check run's name, based on the product.
 func (c CheckState) Name() string {
+	host := c.HostName
+	if host == "" {
+		host = "wpt.fyi"
+	}
 	spec := shared.ProductSpec{}
 	spec.BrowserName = c.Product.BrowserName
 	if c.Product.IsExperimental() {
 		spec.Labels = mapset.NewSetWith(shared.ExperimentalLabel)
 	}
-	return spec.String()
+	return fmt.Sprintf("%s - %s", host, spec.String())
 }
 
 // Title returns the check run's title, based on the product.
 func (c CheckState) Title() string {
-	host := c.HostName
-	if host == "" {
-		host = "wpt.fyi"
-	}
-	return fmt.Sprintf("%s - %s results", host, c.Product.DisplayName())
+	return fmt.Sprintf("%s results", c.Product.DisplayName())
 }
 
 // GetCheckState returns the info in the CheckState struct.
