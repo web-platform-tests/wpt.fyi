@@ -207,9 +207,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         </div>
       </template>
 
-      <template is="dom-if" if="[[resultsRangeMessage]]">
+      <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>
-          [[resultsRangeMessage]]
+          [[resultsTotalsRangeMessage]]
           <template is="dom-if" if="[[permalinks]]">
             <wpt-permalinks path="[[path]]"
                             path-prefix="/results/"
@@ -430,6 +430,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       searchResults: {
         type: Array,
         value: [],
+      },
+      resultsTotalsRangeMessage: {
+        type: String,
+        computed: 'computeResultsTotalsRangeMessage(searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
       },
       testPaths: {
         type: Set,
@@ -1090,6 +1094,23 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     builder.master = true;
     this.handleSubmitQuery();
     this.dismissToast(e);
+  }
+
+  computeResultsTotalsRangeMessage(searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
+    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
+    if (searchResults) {
+      let subtests = 0, tests = 0;
+      for (const r of searchResults) {
+        if (r.test.startsWith(this.path)) {
+          tests++;
+          subtests += Math.max(...r.legacy_status.map(s => s.total));
+        }
+      }
+      return msg.replace(
+        'Showing ',
+        `Showing ${tests} tests (${subtests} subtests) from `);
+    }
+    return msg;
   }
 }
 
