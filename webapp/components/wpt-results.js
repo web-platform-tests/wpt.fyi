@@ -558,8 +558,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
   }
 
   computeDisplayedTests(path, searchResults) {
-    return searchResults.map(r => r.test)
-      .filter(name => name.startsWith(path));
+    return searchResults
+      && searchResults.map(r => r.test) .filter(name => name.startsWith(path))
+      || [];
   }
 
   computeDiffURL(testRuns) {
