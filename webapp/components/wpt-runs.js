@@ -81,7 +81,7 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
         width: 24px;
       }
 
-      @media (max-width: 800px) {
+      @media (max-width: 1200px) {
         table tr td:first-child::after {
           content: "";
           display: inline-block;

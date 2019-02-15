@@ -115,7 +115,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       display: inline-block;
     }
 
-    @media (max-width: 800px) {
+    @media (max-width: 1200px) {
       table tr td:first-child::after {
         content: "";
         display: inline-block;
