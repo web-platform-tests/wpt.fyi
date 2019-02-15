@@ -98,5 +98,5 @@ func (n notificationsAPIImpl) SendPushNotification(
 			}
 		}
 	}
-	return err
+	return nil
 }

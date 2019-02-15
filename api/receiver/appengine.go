@@ -39,6 +39,7 @@ type AppEngineAPI interface {
 	scheduleResultsTask(
 		uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (
 		*taskqueue.Task, error)
+	scheduleResultsNotifications(*shared.TestRun) error
 }
 
 // appEngineAPIImpl is backed by real AppEngine APIs.
@@ -136,6 +137,22 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
 	t, err := taskqueue.Add(a.Context(), t, a.queue)
 	return t, err
+}
+
+func (a *appEngineAPIImpl) scheduleResultsNotifications(run *shared.TestRun) error {
+	ctx := a.Context()
+	log := shared.GetLogger(ctx)
+	target := "/api/results/notify"
+	q := url.Values{}
+	q.Set("run_id", fmt.Sprintf("%v", run.ID))
+	t := taskqueue.NewPOSTTask(target, q)
+	t, err := taskqueue.Add(ctx, t, ResultsNotifyQueue)
+	if err != nil {
+		log.Warningf("Failed to queue run %v for notification: %s", run.ID, err.Error())
+		return err
+	}
+	log.Infof("Added run %v to notification queue", run.ID)
+	return nil
 }
 
 func (a *appEngineAPIImpl) fetchWithTimeout(url string, timeout time.Duration) (io.ReadCloser, error) {

@@ -47,8 +47,7 @@ func TestHandleResultsCreate(t *testing.T) {
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	mockN := sharedtest.NewMockNotificationsAPI(mockCtrl)
-	mockN.EXPECT().SendPushNotification(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockAE.EXPECT().scheduleResultsNotifications(gomock.Any()).AnyTimes()
 	mockS := checks.NewMockAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
@@ -56,7 +55,7 @@ func TestHandleResultsCreate(t *testing.T) {
 		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 	)
 
-	HandleResultsCreate(mockAE, mockS, mockN, w, req)
+	HandleResultsCreate(mockAE, mockS, w, req)
 	resp := w.Result()
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
@@ -89,8 +88,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	mockN := sharedtest.NewMockNotificationsAPI(mockCtrl)
-	mockN.EXPECT().SendPushNotification(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockAE.EXPECT().scheduleResultsNotifications(gomock.Any()).AnyTimes()
 	mockS := checks.NewMockAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
@@ -98,7 +96,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 	)
 
-	HandleResultsCreate(mockAE, mockS, mockN, w, req)
+	HandleResultsCreate(mockAE, mockS, w, req)
 	resp := w.Result()
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
@@ -128,13 +126,12 @@ func TestHandleResultsCreate_BadRevision(t *testing.T) {
 	w := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	mockN := sharedtest.NewMockNotificationsAPI(mockCtrl)
 	mockS := checks.NewMockAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
 	)
 
-	HandleResultsCreate(mockAE, mockS, mockN, w, req)
+	HandleResultsCreate(mockAE, mockS, w, req)
 	resp := w.Result()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -147,7 +144,7 @@ func TestHandleResultsCreate_BadRevision(t *testing.T) {
 	req = httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
 	req.SetBasicAuth("_processor", "secret-token")
 
-	HandleResultsCreate(mockAE, mockS, mockN, w, req)
+	HandleResultsCreate(mockAE, mockS, w, req)
 	resp = w.Result()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
@@ -160,10 +157,9 @@ func TestHandleResultsCreate_NoBasicAuth(t *testing.T) {
 	resp := httptest.NewRecorder()
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	mockN := sharedtest.NewMockNotificationsAPI(mockCtrl)
 	mockS := checks.NewMockAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, mockS, mockN, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
@@ -177,9 +173,8 @@ func TestHandleResultsCreate_WrongUser(t *testing.T) {
 	mockAE := NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	mockS := checks.NewMockAPI(mockCtrl)
-	mockN := sharedtest.NewMockNotificationsAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, mockS, mockN, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
@@ -194,8 +189,7 @@ func TestHandleResultsCreate_WrongPassword(t *testing.T) {
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	mockAE.EXPECT().authenticateUploader("_processor", "wrong-password").Return(false)
 	mockS := checks.NewMockAPI(mockCtrl)
-	mockN := sharedtest.NewMockNotificationsAPI(mockCtrl)
 
-	HandleResultsCreate(mockAE, mockS, mockN, resp, req)
+	HandleResultsCreate(mockAE, mockS, resp, req)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
