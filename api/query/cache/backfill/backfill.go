@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate mockgen -destination mock_backfill/backfill_mock.go github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill RunFetcher
+
 package backfill
 
 import (
