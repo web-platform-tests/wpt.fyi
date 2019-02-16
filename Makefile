@@ -267,7 +267,7 @@ results_analysis_symlink:
 	fi
 
 gcloud-%: gcloud
-	gcloud components list --filter="state[name]=Installed AND id=$*" | grep " $* " \
+	gcloud components list --only-local-state --format="value(id)" 2>/dev/null | grep -q "$*" \
 		|| gcloud components install --quiet $*
 
 node-%: node
