@@ -676,7 +676,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       if (q) {
         body.query = q;
       }
-      if (this.diffFromAPI) {
+      if (this.diff && this.diffFromAPI) {
         url.searchParams.set('diff', true);
         url.searchParams.set('filter', this.diffFilter);
       }
