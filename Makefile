@@ -212,6 +212,8 @@ gcloud-login: gcloud
 
 deployment_state: gcloud-login webapp_deps package_service var-APP_PATH
 
+deploy_staging: git
+deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
 deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
 	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
