@@ -6,7 +6,7 @@
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
 import './test-file-results.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 
 class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
