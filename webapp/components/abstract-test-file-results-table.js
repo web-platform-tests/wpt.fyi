@@ -6,68 +6,71 @@
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
 import './test-file-results.js';
-const $_documentContainer = document.createElement('template');
+import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 
-$_documentContainer.innerHTML = `<dom-module id="abstract-test-file-results-table">
-  <template>
-    <style include="wpt-colors">
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      td {
-        padding: 0;
-        height: 1.5em;
-      }
-      td code {
-        padding: 0.25em;
-      }
-      td.sub-test-name {
-        font-family: monospace;
-      }
-      td.result {
-        background-color: #eee;
-      }
-      tbody tr:first-child {
-        border-bottom: 8px solid white;
-      }
-    </style>
-
-    <table>
-      <thead>
-        <tr>
-          <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
-          <template is="dom-repeat" items="[[testRuns]]" as="testRun">
-            <th width="[[computeRunThWidth(testRuns)]]">
-              <test-run test-run="[[testRun]]"></test-run>
-            </th>
-          </template>
-        </tr>
-      </thead>
-      <tbody>
-        <template is="dom-repeat" items="[[resultsTable]]" as="row">
-          <tr>
-            <td class="sub-test-name"><code>[[ row.name ]]</code></td>
-
-            <template is="dom-repeat" items="{{row.results}}" as="result">
-              <td class$="[[ colorClass(result.status) ]]">
-                <code>[[ subtestMessage(result) ]]</code>
-              </td>
-            </template>
-          </tr>
-        </template>
-      </tbody>
-    </table>
-  </template>
-
-
-</dom-module>`;
-
-document.head.appendChild($_documentContainer.content);
 
 class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
   static get is() {
     return 'abstract-test-file-results-table';
+  }
+
+  static get template() {
+    return html`
+<style include="wpt-colors">
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  td {
+    padding: 0;
+    height: 1.5em;
+  }
+  td code {
+    padding: 0.25em;
+  }
+  td.sub-test-name {
+    font-family: monospace;
+  }
+  td.result {
+    background-color: #eee;
+  }
+  tbody tr:first-child {
+    border-bottom: 8px solid white;
+  }
+</style>
+
+<table>
+  <thead>
+    <tr>
+      <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
+      <template is="dom-repeat" items="[[testRuns]]" as="testRun">
+        <th width="[[computeRunThWidth(testRuns)]]">
+          <test-run test-run="[[testRun]]"></test-run>
+        </th>
+      </template>
+    </tr>
+  </thead>
+  <tbody>
+    <template is="dom-repeat" items="[[resultsTable]]" as="row">
+      <tr>
+        <td class="sub-test-name"><code>[[ row.name ]]</code></td>
+
+        <template is="dom-repeat" items="{{row.results}}" as="result">
+          <td class$="[[ colorClass(result.status) ]]">
+            <code>[[ subtestMessage(result) ]]</code>
+          </td>
+        </template>
+      </tr>
+    </template>
+  </tbody>
+</table>
+`;
   }
 
   static get properties() {
