@@ -78,6 +78,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       thead {
         border-bottom: 8px solid white;
       }
+      th {
+        background: white;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
       .path {
         margin-bottom: 16px;
       }
