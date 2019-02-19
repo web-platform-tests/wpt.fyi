@@ -9,8 +9,7 @@
 */
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTEnvironmentFlags } from './wpt-env-flags.js';
 
 const $_documentContainer = document.createElement('template');
@@ -297,3 +296,4 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
 window.customElements.define(WPTEnvironmentFlagsEditor.is, WPTEnvironmentFlagsEditor);
 
 export { WPTFlags, WPTFlagsEditor, WPTEnvironmentFlagsEditor };
+

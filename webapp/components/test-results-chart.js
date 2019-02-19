@@ -4,11 +4,11 @@
  * found in the LICENSE file.
  */
 
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@google-web-components/google-chart/google-chart.js';
-import { TestFileResults } from './test-file-results.js';
+import '../node_modules/@polymer/polymer/polymer-element.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { DefaultBrowserNames } from './product-info.js';
+import { TestFileResults } from './test-file-results.js';
 
 class TestResultsChart extends TestFileResults {
   static get template() {

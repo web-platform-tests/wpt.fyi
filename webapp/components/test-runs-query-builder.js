@@ -16,7 +16,7 @@ import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker-light.js';
 import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';

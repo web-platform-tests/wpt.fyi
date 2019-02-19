@@ -9,8 +9,7 @@
 of type info, warning, or error.
 */
 import '../node_modules/@polymer/paper-styles/color.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 class InfoBanner extends PolymerElement {
   static get template() {

@@ -15,25 +15,25 @@ import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
 import { LoadingState } from './loading-state.js';
 import './path-part.js';
 import { SelfNavigation } from './self-navigator.js';
-import './test-results-chart.js';
-import './test-results-history-grid.js';
-import './test-file-results.js';
 import './test-file-results-table-terse.js';
 import './test-file-results-table-verbose.js';
-import './test-runs-query-builder.js';
+import './test-file-results.js';
+import './test-results-chart.js';
+import './test-results-history-grid.js';
 import './test-run.js';
+import './test-runs-query-builder.js';
 import { TestRunsUIBase } from './test-runs.js';
 import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
-import './wpt-prs.js';
 import './wpt-permalinks.js';
+import './wpt-prs.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
@@ -1096,3 +1096,4 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 window.customElements.define(WPTResults.is, WPTResults);
 
 export { WPTResults };
+
