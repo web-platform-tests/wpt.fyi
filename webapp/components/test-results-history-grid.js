@@ -5,7 +5,7 @@
  */
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestFileResults } from './test-file-results.js';
 
 class TestFileResultsTimeSeries extends TestFileResults {
@@ -156,3 +156,4 @@ class TestFileResultsTimeSeries extends TestFileResults {
 window.customElements.define(TestFileResultsTimeSeries.is, TestFileResultsTimeSeries);
 
 export { TestFileResultsTimeSeries };
+

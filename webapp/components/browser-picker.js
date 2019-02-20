@@ -1,11 +1,10 @@
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
+import '../node_modules/@polymer/paper-item/paper-icon-item.js';
 import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/@polymer/paper-item/paper-icon-item.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './display-logo.js';
-import {ProductInfo, DefaultProducts, DefaultBrowserNames} from './product-info.js';
+import { DefaultBrowserNames, DefaultProducts, ProductInfo } from './product-info.js';
 
 class BrowserPicker extends ProductInfo(PolymerElement) {
   static get is() {
@@ -42,4 +41,5 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
   }
 }
 window.customElements.define(BrowserPicker.is, BrowserPicker);
-export {BrowserPicker};
+export { BrowserPicker };
+

@@ -6,11 +6,10 @@
 
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { LoadingState } from './loading-state.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
-import { LoadingState } from './loading-state.js';
 import './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
 
@@ -241,3 +240,4 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
 window.customElements.define(TestFileResults.is, TestFileResults);
 
 export { TestFileResults };
+

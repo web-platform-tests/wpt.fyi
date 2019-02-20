@@ -6,8 +6,7 @@
 
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 const $_documentContainer = document.createElement('template');
 
 $_documentContainer.innerHTML = `<dom-module id="results-navigation">
@@ -142,3 +141,4 @@ class ResultsTabs extends PolymerElement {
 window.customElements.define(ResultsTabs.is, ResultsTabs);
 
 export { QueryBuilder };
+

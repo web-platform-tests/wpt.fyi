@@ -5,7 +5,7 @@
  */
 
 import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTFlags } from './wpt-flags.js';
 import './ohm.js';

@@ -20,8 +20,7 @@ See models.go for more details.
 */
 import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { ProductInfo, Sources } from './product-info.js';
 
 class DisplayLogo extends ProductInfo(PolymerElement) {

@@ -11,8 +11,7 @@ import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/paper-tabs/paper-tab.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { QueryBuilder } from './results-navigation.js';
 
 class Permalinks extends QueryBuilder(PolymerElement) {
