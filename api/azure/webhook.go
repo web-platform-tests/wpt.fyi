@@ -46,10 +46,10 @@ func handleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.
 		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
 		return false, nil
 	}
-	return processAzureBuild(aeAPI, azureAPI, sha, owner, repo, sender, buildID)
+	return processAzureBuild(aeAPI, azureAPI, sha, owner, repo, sender, "", buildID)
 }
 
-func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo, sender string, buildID int64) (bool, error) {
+func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
 	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 	artifactsURL := azureAPI.GetAzureArtifactsURL(owner, repo, buildID)
 
@@ -76,8 +76,8 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo
 	uploadedAny := false
 	errors := make(chan (error), artifacts.Count)
 	for _, artifact := range artifacts.Value {
-		if err != nil {
-			log.Errorf("Failed to extract report URL: %s", err.Error())
+		if artifactName != "" && artifactName != artifact.Name {
+			log.Infof("Skipping artifact %s (looking for %s)", artifact.Name, artifactName)
 			continue
 		}
 		log.Infof("Uploading %s for %s/%s build %v...", artifact.Name, owner, repo, buildID)
