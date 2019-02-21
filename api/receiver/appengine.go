@@ -65,7 +65,7 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
 	ctx := a.Context()
 	var key *datastore.Key
-	if testRun.ID > 0 {
+	if testRun.ID != 0 {
 		key = datastore.NewKey(ctx, "TestRun", "", testRun.ID, nil)
 		err := datastore.Get(ctx, key, new(shared.TestRun))
 		if err == nil || err != datastore.ErrNoSuchEntity {
