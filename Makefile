@@ -128,8 +128,8 @@ chrome: wget
     # When this occurs, attempt to use the system package manager to fetch the \
     # required packages and retry. \
     if ! sudo dpkg --install $${ARCHIVE}; then \
-      sudo apt-get install --fix-broken; \
-      sudo dpkg --install $${ARCHIVE}; \
+      sudo apt-get install --fix-broken -qqy; \
+      DEBIAN_FRONTEND=noninteractive sudo dpkg --install $${ARCHIVE}; \
     fi; \
 	fi
 
