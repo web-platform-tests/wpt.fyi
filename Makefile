@@ -130,7 +130,7 @@ chrome:
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
 chromedriver: wget unzip chrome
-	if [[ -z "$$(which chromedriver)" ]]; then \
+	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]]; then \
 		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
 		CHROMEDRIVER_VERSION=$$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$${CHROME_VERSION}); \
 		wget -q https://chromedriver.storage.googleapis.com/$${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip; \
