@@ -22,6 +22,7 @@ WPTD_GO_PATH := $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
+CHROMEDRIVER_PATH=/usr/bin/chromedriver
 USE_FRAME_BUFFER := true
 STAGING := false
 VERBOSE := -v
@@ -81,7 +82,7 @@ go_firefox_test: BROWSER := firefox
 go_firefox_test: firefox | _go_webdriver_test
 
 go_chrome_test: BROWSER := chrome
-go_chrome_test: chrome | _go_webdriver_test
+go_chrome_test: chrome chromedriver | _go_webdriver_test
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
@@ -91,13 +92,12 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-teste
 	# paths before installing node-web-component-tester as the paths
 	# include version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
-	CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
 	cd $(WPTD_PATH)webdriver; \
 	go test $(VERBOSE) -timeout=15m -tags=large -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
-		-chromedriver_path=$$CHROMEDRIVER_PATH \
+		-chromedriver_path=$(CHROMEDRIVER_PATH) \
 		-frame_buffer=$(USE_FRAME_BUFFER) \
 		-staging=$(STAGING) \
 		-browser=$(BROWSER) \
@@ -120,12 +120,23 @@ webapp_deps: go_build webapp_node_modules
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
-chrome:
+chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		if [[ -z "$$(which chromium)" ]]; then \
-			make apt-get-chromium; \
-		fi; \
-		sudo ln -s "$$(which chromium)" $(CHROME_PATH); \
+		ARCHIVE=google-chrome-stable_current_amd64.deb; \
+		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
+		sudo dpkg --install $${ARCHIVE} || true; \
+		sudo apt-get install --fix-broken -qqy; \
+		sudo dpkg --install $${ARCHIVE}; \
+	fi
+
+# https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
+chromedriver: wget unzip chrome
+	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]]; then \
+		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
+		CHROMEDRIVER_VERSION=$$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$${CHROME_VERSION}); \
+		wget -q https://chromedriver.storage.googleapis.com/$${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip; \
+		sudo unzip chromedriver_linux64.zip -d $$(dirname $(CHROMEDRIVER_PATH)); \
+		sudo chmod +x $(CHROMEDRIVER_PATH); \
 	fi
 
 firefox:
@@ -169,6 +180,7 @@ python: apt-get-python
 tox: apt-get-tox
 wget: apt-get-wget
 bzip2: apt-get-bzip2
+unzip: apt-get-unzip
 
 java:
 	@ # java has a different apt-get package name.
