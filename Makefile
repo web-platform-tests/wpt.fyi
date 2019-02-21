@@ -122,15 +122,11 @@ dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-d
 
 chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		ARCHIVE=google-chrome-stable_current_amd64.deb; \
-    wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
-		# Installation will fail in cases where the package has unmet dependencies. \
-    # When this occurs, attempt to use the system package manager to fetch the \
-    # required packages and retry. \
-    if ! sudo dpkg --install $${ARCHIVE}; then \
-      sudo apt-get install --fix-broken -qqy; \
-      DEBIAN_FRONTEND=noninteractive sudo dpkg --install $${ARCHIVE}; \
-    fi; \
+	    ARCHIVE=google-chrome-stable_current_amd64.deb; \
+	    wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
+	    sudo dpkg --install $${ARCHIVE} || true; \
+	    sudo apt-get install --fix-broken -qqy; \
+	    sudo dpkg --install $${ARCHIVE}; \
 	fi
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
