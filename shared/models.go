@@ -284,7 +284,7 @@ func GetTestRunIDs(keys []Key) TestRunIDs {
 func (ids TestRunIDs) GetKeys(store Datastore) []Key {
 	keys := make([]Key, len(ids))
 	for i := range ids {
-		keys[i] = store.NewKey("TestRun", ids[i])
+		keys[i] = store.NewIDKey("TestRun", ids[i])
 	}
 	return keys
 }

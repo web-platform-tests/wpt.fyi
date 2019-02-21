@@ -7,13 +7,12 @@ package checks
 import (
 	"context"
 
-	"google.golang.org/appengine/datastore"
-
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, appID, installationID int64, prNumbers ...int) (*shared.CheckSuite, error) {
-	query := datastore.NewQuery("CheckSuite").
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	query := ds.NewQuery("CheckSuite").
 		Filter("SHA =", sha).
 		Filter("AppID =", appID).
 		Filter("InstallationID =", installationID).
@@ -21,10 +20,10 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, appID, 
 		Filter("Repo =", repo).
 		KeysOnly()
 	var suite shared.CheckSuite
-	if keys, err := query.GetAll(ctx, nil); err != nil {
+	if keys, err := ds.GetAll(query, nil); err != nil {
 		return nil, err
 	} else if len(keys) > 0 {
-		err := datastore.Get(ctx, keys[0], &suite)
+		err := ds.Get(keys[0], &suite)
 		return &suite, err
 	}
 
@@ -35,7 +34,7 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, appID, 
 	suite.AppID = appID
 	suite.InstallationID = installationID
 	suite.PRNumbers = prNumbers
-	_, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "CheckSuite", nil), &suite)
+	_, err := ds.Put(ds.NewIDKey("CheckSuite", 0), &suite)
 	if err != nil {
 		log.Debugf("Created CheckSuite entity for %s/%s @ %s", owner, repo, sha)
 	}

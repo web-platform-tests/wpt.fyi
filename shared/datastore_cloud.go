@@ -55,9 +55,15 @@ func (d cloudDatastore) NewQuery(typeName string) Query {
 	}
 }
 
-func (d cloudDatastore) NewKey(typeName string, id int64) Key {
+func (d cloudDatastore) NewIDKey(typeName string, id int64) Key {
 	return cloudKey{
 		key: datastore.IDKey(typeName, id, nil),
+	}
+}
+
+func (d cloudDatastore) NewNameKey(typeName string, name string) Key {
+	return cloudKey{
+		key: datastore.NameKey(typeName, name, nil),
 	}
 }
 
@@ -81,6 +87,11 @@ func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 		cast[i] = keys[i].(cloudKey).key
 	}
 	return d.client.GetMulti(d.ctx, cast, dst)
+}
+
+func (d cloudDatastore) Put(key Key, src interface{}) (Key, error) {
+	newkey, err := d.client.Put(d.ctx, key.(cloudKey).key, src)
+	return cloudKey{newkey}, err
 }
 
 type cloudQuery struct {

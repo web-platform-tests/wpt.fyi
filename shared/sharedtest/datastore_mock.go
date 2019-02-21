@@ -105,18 +105,32 @@ func (mr *MockDatastoreMockRecorder) GetMulti(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockDatastore)(nil).GetMulti), arg0, arg1)
 }
 
-// NewKey mocks base method
-func (m *MockDatastore) NewKey(arg0 string, arg1 int64) shared.Key {
+// NewIDKey mocks base method
+func (m *MockDatastore) NewIDKey(arg0 string, arg1 int64) shared.Key {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewKey", arg0, arg1)
+	ret := m.ctrl.Call(m, "NewIDKey", arg0, arg1)
 	ret0, _ := ret[0].(shared.Key)
 	return ret0
 }
 
-// NewKey indicates an expected call of NewKey
-func (mr *MockDatastoreMockRecorder) NewKey(arg0, arg1 interface{}) *gomock.Call {
+// NewIDKey indicates an expected call of NewIDKey
+func (mr *MockDatastoreMockRecorder) NewIDKey(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewKey", reflect.TypeOf((*MockDatastore)(nil).NewKey), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIDKey", reflect.TypeOf((*MockDatastore)(nil).NewIDKey), arg0, arg1)
+}
+
+// NewNameKey mocks base method
+func (m *MockDatastore) NewNameKey(arg0, arg1 string) shared.Key {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewNameKey", arg0, arg1)
+	ret0, _ := ret[0].(shared.Key)
+	return ret0
+}
+
+// NewNameKey indicates an expected call of NewNameKey
+func (mr *MockDatastoreMockRecorder) NewNameKey(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewNameKey", reflect.TypeOf((*MockDatastore)(nil).NewNameKey), arg0, arg1)
 }
 
 // NewQuery mocks base method
@@ -131,6 +145,21 @@ func (m *MockDatastore) NewQuery(arg0 string) shared.Query {
 func (mr *MockDatastoreMockRecorder) NewQuery(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewQuery", reflect.TypeOf((*MockDatastore)(nil).NewQuery), arg0)
+}
+
+// Put mocks base method
+func (m *MockDatastore) Put(arg0 shared.Key, arg1 interface{}) (shared.Key, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Put", arg0, arg1)
+	ret0, _ := ret[0].(shared.Key)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Put indicates an expected call of Put
+func (mr *MockDatastoreMockRecorder) Put(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockDatastore)(nil).Put), arg0, arg1)
 }
 
 // TestRunQuery mocks base method

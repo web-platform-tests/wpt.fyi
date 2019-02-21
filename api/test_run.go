@@ -35,7 +35,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		run := new(shared.TestRun)
-		err = store.Get(store.NewKey("TestRun", id), run)
+		err = store.Get(store.NewIDKey("TestRun", id), run)
 		if err != nil {
 			if err == datastore.ErrNoSuchEntity {
 				http.NotFound(w, r)
