@@ -120,12 +120,17 @@ webapp_deps: go_build webapp_node_modules
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
-chrome:
+chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		if [[ -z "$$(which chromium)" ]]; then \
-			make apt-get-chromium; \
-		fi; \
-		sudo ln -s "$$(which chromium)" $(CHROME_PATH); \
+		ARCHIVE=google-chrome-stable_current_amd64.deb; \
+    wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
+		# Installation will fail in cases where the package has unmet dependencies. \
+    # When this occurs, attempt to use the system package manager to fetch the \
+    # required packages and retry. \
+    if ! sudo dpkg --install $${ARCHIVE}; then \
+      sudo apt-get install --fix-broken; \
+      sudo dpkg --install $${ARCHIVE}; \
+    fi; \
 	fi
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
