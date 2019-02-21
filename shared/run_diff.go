@@ -339,7 +339,7 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 	}
 
 	var renames map[string]string
-	if IsFeatureEnabled(d.ctx, "diffRenames") {
+	if d.aeAPI.IsFeatureEnabled("diffRenames") {
 		beforeSHA := before.FullRevisionHash
 		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
 		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {

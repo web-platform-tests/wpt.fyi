@@ -19,6 +19,10 @@ func (k cloudKey) IntID() int64 {
 	return k.key.ID
 }
 
+func (k cloudKey) StringID() string {
+	return k.key.Name
+}
+
 func (k cloudKey) Kind() string {
 	return k.key.Kind
 }

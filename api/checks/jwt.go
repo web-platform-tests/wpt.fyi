@@ -79,7 +79,8 @@ func getJWTClient(ctx context.Context, appID, installation int64) (*http.Client,
 
 // https://developer.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app
 func getSignedJWT(ctx context.Context, appID int64) (string, error) {
-	secret, err := shared.GetSecret(ctx, fmt.Sprintf("github-app-private-key-%v", appID))
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	secret, err := shared.GetSecret(ds, fmt.Sprintf("github-app-private-key-%v", appID))
 	if err != nil {
 		return "", err
 	}

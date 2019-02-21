@@ -41,7 +41,8 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	secret, err := shared.GetSecret(ctx, "github-tc-webhook-secret")
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	secret, err := shared.GetSecret(ds, "github-tc-webhook-secret")
 	if err != nil {
 		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
 		return
@@ -116,12 +117,13 @@ func (b branchInfos) GetNames() []string {
 
 func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	log := shared.GetLogger(ctx)
+	aeAPI := shared.NewAppEngineAPI(ctx)
 	var status statusEventPayload
 	if err := json.Unmarshal(payload, &status); err != nil {
 		return false, err
 	}
 
-	processAllBranches := shared.IsFeatureEnabled(ctx, flagTaskclusterAllBranches)
+	processAllBranches := aeAPI.IsFeatureEnabled(flagTaskclusterAllBranches)
 	if !shouldProcessStatus(log, processAllBranches, &status) {
 		return false, nil
 	}
@@ -164,7 +166,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
 		log,
-		shared.NewAppEngineAPI(ctx),
+		aeAPI,
 		checksAPI,
 		*status.SHA,
 		username,
