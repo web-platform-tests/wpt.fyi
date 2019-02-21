@@ -51,6 +51,14 @@ func (d aeDatastore) NewKey(typeName string, id int64) Key {
 	return datastore.NewKey(d.ctx, typeName, "", id, nil)
 }
 
+func (d aeDatastore) ReserveKey(typeName string) (Key, error) {
+	id, _, err := datastore.AllocateIDs(d.ctx, typeName, nil, 1)
+	if err != nil {
+		return nil, err
+	}
+	return d.NewKey(typeName, id), nil
+}
+
 func (d aeDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 	keys, err := q.(aeQuery).query.GetAll(d.ctx, dst)
 	cast := make([]Key, len(keys))

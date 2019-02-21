@@ -6,6 +6,7 @@ package shared
 
 import (
 	"context"
+	"errors"
 
 	"cloud.google.com/go/datastore"
 	"google.golang.org/api/iterator"
@@ -59,6 +60,18 @@ func (d cloudDatastore) NewKey(typeName string, id int64) Key {
 	return cloudKey{
 		key: datastore.IDKey(typeName, id, nil),
 	}
+}
+
+func (d cloudDatastore) ReserveKey(typeName string) (Key, error) {
+	keys, err := d.client.AllocateIDs(d.ctx, []*datastore.Key{datastore.IncompleteKey(typeName, nil)})
+	if err != nil {
+		return nil, err
+	} else if len(keys) < 1 {
+		return nil, errors.New("Failed to create a key")
+	}
+	return cloudKey{
+		key: keys[0],
+	}, nil
 }
 
 func (d cloudDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {

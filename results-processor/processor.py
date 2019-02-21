@@ -115,6 +115,7 @@ def process_report(params):
     gcs_paths = params.getlist('gcs')
     result_type = params['type']
     # Optional fields:
+    run_id = params.get('run_id') or '0'
     callback_url = params.get('callback_url')
     labels = params.get('labels', '')
 
@@ -210,6 +211,7 @@ def process_report(params):
     secret = _get_uploader_password('_processor')
     test_run_id = wptreport.create_test_run(
         report,
+        run_id,
         labels,
         uploader,
         secret,

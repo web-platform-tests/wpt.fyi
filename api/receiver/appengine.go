@@ -49,6 +49,7 @@ type appEngineAPIImpl struct {
 	shared.AppEngineAPIImpl
 
 	gcs   gcs
+	store shared.Datastore
 	queue string
 }
 
@@ -57,12 +58,24 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 	return &appEngineAPIImpl{
 		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
 		queue:            ResultsQueue,
+		store:            shared.NewAppEngineDatastore(ctx, false),
 	}
 }
 
 func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
-	key := datastore.NewIncompleteKey(a.Context(), "TestRun", nil)
-	key, err := datastore.Put(a.Context(), key, testRun)
+	ctx := a.Context()
+	var key *datastore.Key
+	if testRun.ID > 0 {
+		key = datastore.NewKey(ctx, "TestRun", "", testRun.ID, nil)
+		err := datastore.Get(ctx, key, new(shared.TestRun))
+		if err == nil || err != datastore.ErrNoSuchEntity {
+			return nil, fmt.Errorf("Entity with ID %v already exists", testRun.ID)
+		}
+	} else {
+		key = datastore.NewIncompleteKey(ctx, "TestRun", nil)
+	}
+
+	key, err := datastore.Put(ctx, key, testRun)
 	if err != nil {
 		return nil, err
 	}
@@ -126,18 +139,27 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 		return nil, errors.New("empty payloadType")
 	}
 
-	payload := url.Values{
-		"uploader": []string{uploader},
-		"gcs":      gcsPaths,
-		"type":     []string{payloadType},
+	key, err := a.store.ReserveKey("TestRun")
+	if err != nil {
+		return nil, err
 	}
+	// TODO(lukebjerring): Create a PendingTestRun entity.
+
+	payload := url.Values{
+		"gcs": gcsPaths,
+	}
+	payload.Set("id", fmt.Sprintf("%v", key.IntID()))
+	payload.Set("uploader", uploader)
+	payload.Set("type", payloadType)
+
 	for k, v := range extraParams {
 		if v != "" {
 			payload.Set(k, v)
 		}
 	}
 	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
-	t, err := taskqueue.Add(a.Context(), t, a.queue)
+	t.Name = fmt.Sprintf("%v", key.IntID())
+	t, err = taskqueue.Add(a.Context(), t, a.queue)
 	return t, err
 }
 

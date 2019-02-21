@@ -42,6 +42,7 @@ type Datastore interface {
 	Done() interface{}
 	NewQuery(typeName string) Query
 	NewKey(typeName string, id int64) Key
+	ReserveKey(typeName string) (Key, error)
 	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error

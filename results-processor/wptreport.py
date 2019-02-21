@@ -504,7 +504,7 @@ def normalize_product(report):
         return set()
 
 
-def create_test_run(report, labels_str, uploader, secret,
+def create_test_run(report, run_id, labels_str, uploader, secret,
                     results_url, raw_results_url, callback_url=None):
     """Creates a TestRun on the dashboard.
 
@@ -532,6 +532,7 @@ def create_test_run(report, labels_str, uploader, secret,
     labels |= normalize_product(report)
 
     payload = report.test_run_metadata
+    payload['id'] = run_id
     payload['results_url'] = results_url
     payload['raw_results_url'] = raw_results_url
     payload['labels'] = sorted(labels)

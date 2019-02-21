@@ -133,6 +133,21 @@ func (mr *MockDatastoreMockRecorder) NewQuery(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewQuery", reflect.TypeOf((*MockDatastore)(nil).NewQuery), arg0)
 }
 
+// ReserveKey mocks base method
+func (m *MockDatastore) ReserveKey(arg0 string) (shared.Key, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReserveKey", arg0)
+	ret0, _ := ret[0].(shared.Key)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReserveKey indicates an expected call of ReserveKey
+func (mr *MockDatastoreMockRecorder) ReserveKey(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReserveKey", reflect.TypeOf((*MockDatastore)(nil).ReserveKey), arg0)
+}
+
 // TestRunQuery mocks base method
 func (m *MockDatastore) TestRunQuery() shared.TestRunQuery {
 	m.ctrl.T.Helper()
