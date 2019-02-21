@@ -129,13 +129,12 @@ chrome:
 	fi
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
-chromedriver: curl grep unzip chrome
+chromedriver: wget unzip chrome
 	if [[ -z "$$(which chromedriver)" ]]; then \
 		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
 		CHROMEDRIVER_VERSION=$$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$${CHROME_VERSION}); \
-		sudo curl https://chromedriver.storage.googleapis.com/$${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip -o $(CHROMEDRIVER_PATH).zip; \
-		sudo unzip $(CHROMEDRIVER_PATH).zip -d $$(dirname $(CHROMEDRIVER_PATH)); \
-		sudo chmod +x $(CHROMEDRIVER_PATH); \
+		wget -q https://chromedriver.storage.googleapis.com/$${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip; \
+		sudo unzip chromedriver_linux64.zip -d $$(dirname $(CHROMEDRIVER_PATH)); \
 	fi
 
 firefox:
@@ -174,7 +173,6 @@ sys_deps: curl gpg node gcloud git
 
 curl: apt-get-curl
 git: apt-get-git
-grep: apt-get-grep
 python3: apt-get-python3
 python: apt-get-python
 tox: apt-get-tox
