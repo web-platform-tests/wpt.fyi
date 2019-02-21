@@ -135,6 +135,7 @@ chromedriver: wget unzip chrome
 		CHROMEDRIVER_VERSION=$$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$${CHROME_VERSION}); \
 		wget -q https://chromedriver.storage.googleapis.com/$${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip; \
 		sudo unzip chromedriver_linux64.zip -d $$(dirname $(CHROMEDRIVER_PATH)); \
+		sudo chmod +x $(CHROMEDRIVER_PATH); \
 	fi
 
 firefox:
