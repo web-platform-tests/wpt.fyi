@@ -175,7 +175,11 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azur
 	status := checkRun.GetCheckRun().GetStatus()
 	shouldSchedule := false
 	if appID == azure.PipelinesAppID {
-		return azureAPI.HandleCheckRunEvent(checkRun)
+		if aeAPI.IsFeatureEnabled("processAzureCheckRunEvents") {
+			return azureAPI.HandleCheckRunEvent(checkRun)
+		}
+		log.Infof("Ignoring Azure pipelines event")
+		return false, nil
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {
