@@ -61,7 +61,7 @@ func (d aeTestRunObjectStore) Get(id, dst interface{}) error {
 	if !ok {
 		return errDatastoreObjectStoreExpectedInt64
 	}
-	key := d.NewKey("TestRun", intID)
+	key := d.NewIDKey("TestRun", intID)
 	err := d.aeDatastore.Get(key, dst)
 	if err == nil {
 		run := dst.(*TestRun)

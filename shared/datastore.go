@@ -41,10 +41,12 @@ type Datastore interface {
 	Context() context.Context
 	Done() interface{}
 	NewQuery(typeName string) Query
-	NewKey(typeName string, id int64) Key
+	NewIDKey(typeName string, id int64) Key
+	NewNameKey(typeName string, name string) Key
 	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
+	Put(key Key, src interface{}) (Key, error)
 
 	TestRunQuery() TestRunQuery
 }
