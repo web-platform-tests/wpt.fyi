@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
 	"github.com/tebeka/selenium"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -66,6 +67,7 @@ func testProducts(
 	// Navigate to the wpt.fyi homepage.
 	products, _ := shared.ParseProductSpecs(productSpecs...)
 	filters := shared.TestRunFilter{
+		Labels:   mapset.NewSetWith(shared.MasterLabel),
 		Products: products,
 	}
 	path := fmt.Sprintf("/results?%s", filters.ToQuery().Encode())
