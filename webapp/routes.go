@@ -11,6 +11,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
+	"github.com/web-platform-tests/wpt.fyi/api/screenshot"
 	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -23,6 +24,7 @@ func init() {
 	azure.RegisterRoutes()
 	checks.RegisterRoutes()
 	query.RegisterRoutes()
+	screenshot.RegisterRoutes()
 	taskcluster.RegisterRoutes()
 	RegisterRoutes()
 }
