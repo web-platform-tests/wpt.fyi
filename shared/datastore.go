@@ -47,6 +47,7 @@ type Datastore interface {
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
 	Put(key Key, src interface{}) (Key, error)
+	Insert(key Key, src interface{}) error
 
 	TestRunQuery() TestRunQuery
 }

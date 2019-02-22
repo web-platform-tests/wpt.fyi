@@ -7,6 +7,7 @@ package shared
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"cloud.google.com/go/datastore"
 	"google.golang.org/api/iterator"
@@ -109,6 +110,21 @@ func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 func (d cloudDatastore) Put(key Key, src interface{}) (Key, error) {
 	newkey, err := d.client.Put(d.ctx, key.(cloudKey).key, src)
 	return cloudKey{newkey}, err
+}
+
+func (d cloudDatastore) Insert(key Key, src interface{}) error {
+	_, err := d.client.RunInTransaction(d.ctx, func(txn *datastore.Transaction) error {
+		var empty map[string]interface{}
+		err := txn.Get(key.(cloudKey).key, &empty)
+		if err == nil {
+			return fmt.Errorf("Entity %v already exists", key.IntID())
+		} else if err != datastore.ErrNoSuchEntity {
+			return err
+		}
+		_, err = txn.Put(key.(cloudKey).key, src)
+		return err
+	}, nil)
+	return err
 }
 
 type cloudQuery struct {

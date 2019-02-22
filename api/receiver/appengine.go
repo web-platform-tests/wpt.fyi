@@ -64,18 +64,15 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 
 func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
 	ctx := a.Context()
-	var key *datastore.Key
+	var key shared.Key
+	var err error
+	store := shared.NewAppEngineDatastore(ctx, false)
+	key = store.NewIDKey("TestRun", testRun.ID)
 	if testRun.ID != 0 {
-		key = datastore.NewKey(ctx, "TestRun", "", testRun.ID, nil)
-		err := datastore.Get(ctx, key, new(shared.TestRun))
-		if err == nil || err != datastore.ErrNoSuchEntity {
-			return nil, fmt.Errorf("Entity with ID %v already exists", testRun.ID)
-		}
+		err = store.Insert(key, testRun)
 	} else {
-		key = datastore.NewIncompleteKey(ctx, "TestRun", nil)
+		key, err = store.Put(key, testRun)
 	}
-
-	key, err := datastore.Put(ctx, key, testRun)
 	if err != nil {
 		return nil, err
 	}
