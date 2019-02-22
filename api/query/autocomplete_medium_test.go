@@ -72,8 +72,8 @@ func TestAutocompleteHandler(t *testing.T) {
 		sharedtest.NewMockReadCloser(t, summaryBytes[1]),
 	}
 	mockStore := sharedtest.NewMockDatastore(mockCtrl)
-	mockStore.EXPECT().NewKey("TestRun", testRuns[0].ID).Return(sharedtest.MockKey{ID: testRuns[0].ID})
-	mockStore.EXPECT().NewKey("TestRun", testRuns[1].ID).Return(sharedtest.MockKey{ID: testRuns[1].ID})
+	mockStore.EXPECT().NewIDKey("TestRun", testRuns[0].ID).Return(sharedtest.MockKey{ID: testRuns[0].ID})
+	mockStore.EXPECT().NewIDKey("TestRun", testRuns[1].ID).Return(sharedtest.MockKey{ID: testRuns[1].ID})
 	mockStore.EXPECT().GetMulti(sharedtest.SameKeys(testRuns.GetTestRunIDs()), gomock.Any()).DoAndReturn(sharedtest.MultiRuns(testRuns))
 
 	cache.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)

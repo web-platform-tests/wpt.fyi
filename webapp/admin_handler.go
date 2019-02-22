@@ -29,6 +29,7 @@ func showAdminUploadForm(a receiver.AppEngineAPI, w http.ResponseWriter, r *http
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	a := receiver.NewAppEngineAPI(ctx)
+	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	data := struct {
 		Host string
@@ -49,7 +50,7 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 		} else if err = json.Unmarshal(bytes, &flag); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to unmarshal flag: %s", err.Error()), http.StatusBadRequest)
 			return
-		} else if err = shared.SetFeature(a.Context(), flag); err != nil {
+		} else if err = shared.SetFeature(ds, flag); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to save feature %s: %s", flag.Name, err.Error()), http.StatusInternalServerError)
 			return
 		}

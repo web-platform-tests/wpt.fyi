@@ -47,16 +47,20 @@ func (d aeDatastore) NewQuery(typeName string) Query {
 	}
 }
 
-func (d aeDatastore) NewKey(typeName string, id int64) Key {
+func (d aeDatastore) NewIDKey(typeName string, id int64) Key {
 	return datastore.NewKey(d.ctx, typeName, "", id, nil)
 }
 
-func (d aeDatastore) ReserveKey(typeName string) (Key, error) {
+func (d aeDatastore) ReserveID(typeName string) (Key, error) {
 	id, _, err := datastore.AllocateIDs(d.ctx, typeName, nil, 1)
 	if err != nil {
 		return nil, err
 	}
-	return d.NewKey(typeName, id), nil
+	return d.NewIDKey(typeName, id), nil
+}
+
+func (d aeDatastore) NewNameKey(typeName string, name string) Key {
+	return datastore.NewKey(d.ctx, typeName, name, 0, nil)
 }
 
 func (d aeDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
@@ -78,6 +82,10 @@ func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 		cast[i] = keys[i].(*datastore.Key)
 	}
 	return datastore.GetMulti(d.ctx, cast, dst)
+}
+
+func (d aeDatastore) Put(key Key, src interface{}) (Key, error) {
+	return datastore.Put(d.ctx, key.(*datastore.Key), src)
 }
 
 type aeQuery struct {

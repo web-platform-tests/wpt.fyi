@@ -5,7 +5,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -23,6 +22,7 @@ const paginationTokenFeatureFlagName = "paginationTokens"
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	store := shared.NewAppEngineDatastore(ctx, true)
+	aeAPI := shared.NewAppEngineAPI(ctx)
 	q := r.URL.Query()
 	ids, err := shared.ParseRunIDsParam(q)
 	if err != nil {
@@ -50,15 +50,15 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if pr != nil && shared.IsFeatureEnabled(ctx, "runsByPRNumber") {
-			filters.SHAs = getPRCommits(ctx, *pr)
+		if pr != nil && aeAPI.IsFeatureEnabled("runsByPRNumber") {
+			filters.SHAs = getPRCommits(aeAPI, *pr)
 		}
 		var runsByProduct shared.TestRunsByProduct
 		runsByProduct, err = LoadTestRunsForFilters(store, filters)
 
 		if err == nil {
 			testRuns = runsByProduct.AllRuns()
-			if shared.IsFeatureEnabled(ctx, paginationTokenFeatureFlagName) {
+			if aeAPI.IsFeatureEnabled(paginationTokenFeatureFlagName) {
 				nextPage := filters.NextPage(runsByProduct)
 				if nextPage != nil {
 					nextPageToken, _ = nextPage.Token()
@@ -133,15 +133,15 @@ func LoadTestRunsForFilters(store shared.Datastore, filters shared.TestRunFilter
 	return store.TestRunQuery().LoadTestRunsByKeys(keys)
 }
 
-func getPRCommits(ctx context.Context, pr int) shared.SHAs {
-	log := shared.GetLogger(ctx)
+func getPRCommits(aeAPI shared.AppEngineAPI, pr int) shared.SHAs {
+	log := shared.GetLogger(aeAPI.Context())
 
-	githubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
+	githubClient, err := aeAPI.GetGitHubClient()
 	if err != nil {
 		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
 	}
-	commits, _, err := githubClient.PullRequests.ListCommits(ctx, "web-platform-tests", "wpt", pr, nil)
+	commits, _, err := githubClient.PullRequests.ListCommits(aeAPI.Context(), "web-platform-tests", "wpt", pr, nil)
 	if err != nil || commits == nil {
 		log.Errorf("Failed to fetch PR #%v: %s", pr, err.Error())
 		return nil

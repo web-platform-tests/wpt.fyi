@@ -139,7 +139,7 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 		return nil, errors.New("empty payloadType")
 	}
 
-	key, err := a.store.ReserveKey("TestRun")
+	key, err := a.store.ReserveID("TestRun")
 	if err != nil {
 		return nil, err
 	}

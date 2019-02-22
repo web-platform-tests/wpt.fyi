@@ -217,7 +217,7 @@ func getTestRun(id int64) (*shared.TestRun, error) {
 	}
 	d := shared.NewCloudDatastore(ctx, client)
 	testRun := new(shared.TestRun)
-	err = d.Get(d.NewKey("TestRun", id), testRun)
+	err = d.Get(d.NewIDKey("TestRun", id), testRun)
 	if err != nil {
 		return nil, err
 	}

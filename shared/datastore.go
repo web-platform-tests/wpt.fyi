@@ -8,13 +8,12 @@ package shared
 
 import (
 	"context"
-
-	"google.golang.org/appengine/datastore"
 )
 
 // Key abstracts an int64 based datastore.Key
 type Key interface {
 	IntID() int64
+	StringID() string
 	Kind() string // Type name, e.g. TestRun
 }
 
@@ -41,19 +40,21 @@ type Datastore interface {
 	Context() context.Context
 	Done() interface{}
 	NewQuery(typeName string) Query
-	NewKey(typeName string, id int64) Key
-	ReserveKey(typeName string) (Key, error)
+	NewIDKey(typeName string, id int64) Key
+	NewNameKey(typeName string, name string) Key
+	ReserveID(typeName string) (Key, error)
 	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
+	Put(key Key, src interface{}) (Key, error)
 
 	TestRunQuery() TestRunQuery
 }
 
 // GetFeatureFlags returns all feature flag defaults set in the datastore.
-func GetFeatureFlags(ctx context.Context) (flags []Flag, err error) {
-	var keys []*datastore.Key
-	keys, err = datastore.NewQuery("Flag").GetAll(ctx, &flags)
+func GetFeatureFlags(ds Datastore) (flags []Flag, err error) {
+	q := ds.NewQuery("Flag")
+	keys, err := ds.GetAll(q, &flags)
 	for i := range keys {
 		flags[i].Name = keys[i].StringID()
 	}
@@ -62,28 +63,28 @@ func GetFeatureFlags(ctx context.Context) (flags []Flag, err error) {
 
 // IsFeatureEnabled returns true if a feature with the given flag name exists,
 // and Enabled is set to true.
-func IsFeatureEnabled(ctx context.Context, flagName string) bool {
-	key := datastore.NewKey(ctx, "Flag", flagName, 0, nil)
+func IsFeatureEnabled(ds Datastore, flagName string) bool {
+	key := ds.NewNameKey("Flag", flagName)
 	flag := Flag{}
-	if err := datastore.Get(ctx, key, &flag); err != nil {
+	if err := ds.Get(key, &flag); err != nil {
 		return false
 	}
 	return flag.Enabled
 }
 
 // SetFeature puts a feature with the given flag name and enabled state.
-func SetFeature(ctx context.Context, flag Flag) error {
-	key := datastore.NewKey(ctx, "Flag", flag.Name, 0, nil)
-	_, err := datastore.Put(ctx, key, &flag)
+func SetFeature(ds Datastore, flag Flag) error {
+	key := ds.NewNameKey("Flag", flag.Name)
+	_, err := ds.Put(key, &flag)
 	return err
 }
 
 // GetSecret is a helper wrapper for loading a token's secret from the datastore
 // by name.
-func GetSecret(ctx context.Context, tokenName string) (string, error) {
-	key := datastore.NewKey(ctx, "Token", tokenName, 0, nil)
+func GetSecret(ds Datastore, tokenName string) (string, error) {
+	key := ds.NewNameKey("Token", tokenName)
 	var token Token
-	if err := datastore.Get(ctx, key, &token); err != nil {
+	if err := ds.Get(key, &token); err != nil {
 		return "", err
 	}
 	return token.Secret, nil

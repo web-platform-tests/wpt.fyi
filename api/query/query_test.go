@@ -210,7 +210,7 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 	}
 
 	for _, id := range runIDs {
-		mockStore.EXPECT().NewKey("TestRun", id).Return(sharedtest.MockKey{ID: id})
+		mockStore.EXPECT().NewIDKey("TestRun", id).Return(sharedtest.MockKey{ID: id})
 	}
 	mockStore.EXPECT().GetMulti(sharedtest.SameKeys(runIDs), gomock.Any()).DoAndReturn(sharedtest.MultiRuns(testRuns.AllRuns()))
 

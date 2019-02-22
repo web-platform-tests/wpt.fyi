@@ -380,7 +380,10 @@ func addStaticData(i DevAppServerInstance) (err error) {
 	}
 
 	// Enable tested features
-	shared.SetFeature(ctx, shared.Flag{Name: "queryBuilder", Enabled: true})
+	_, err = datastore.Put(ctx, datastore.NewKey(ctx, "Flag", "queryBuilder", 0, nil), &shared.Flag{Enabled: true})
+	if err != nil {
+		panic(err)
+	}
 
 	return nil
 }

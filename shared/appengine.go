@@ -92,7 +92,8 @@ func (a AppEngineAPIImpl) GetSlowHTTPClient(timeout time.Duration) (*http.Client
 // GetGitHubClient returns a github client using the stored API token.
 func (a AppEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
 	if a.githubClient == nil {
-		secret, err := GetSecret(a.ctx, "github-api-token")
+		ds := NewAppEngineDatastore(a.ctx, false)
+		secret, err := GetSecret(ds, "github-api-token")
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +125,8 @@ func (a AppEngineAPIImpl) IsAdmin() bool {
 // and its Enabled property is true.
 func (a AppEngineAPIImpl) IsFeatureEnabled(featureName string) bool {
 	// TODO(lukebjerring): Migrate other callers of this signature to AppEngineAPI
-	return IsFeatureEnabled(a.ctx, featureName)
+	ds := NewAppEngineDatastore(a.ctx, false)
+	return IsFeatureEnabled(ds, featureName)
 }
 
 // GetUploader returns the uploader with the given name.
