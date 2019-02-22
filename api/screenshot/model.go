@@ -5,8 +5,10 @@
 package screenshot
 
 import (
+	"crypto/sha1"
 	"errors"
-	"strings"
+	"fmt"
+	"io"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -21,6 +23,9 @@ const MaxItemsInResponse = 10000
 var (
 	// ErrInvalidHash is the error when a hash string is invalid.
 	ErrInvalidHash = errors.New("invalid hash string")
+	// ErrUnsupportedHashMethod is the error when the requested hash method
+	// is not supported.
+	ErrUnsupportedHashMethod = errors.New("hash method unsupported")
 )
 
 // Screenshot is the entity stored in Datastore for a known screenshot hash and
@@ -34,23 +39,16 @@ type Screenshot struct {
 	LastUsed time.Time
 }
 
-// NewScreenshotFromHash creates a new Screenshot from a hash string with the
-// form of "HASH_METHOD:HASH_DIGEST".
-func NewScreenshotFromHash(hash string, labels []string) (*Screenshot, error) {
-	split := strings.Split(hash, ":")
-	if len(split) != 2 {
-		return nil, ErrInvalidHash
-	}
-	s := &Screenshot{
-		HashDigest: split[1],
-		HashMethod: split[0],
-	}
+// NewScreenshot creates a new Screenshot with the given labels (empty labels
+// are omitted).
+func NewScreenshot(labels []string) *Screenshot {
+	s := &Screenshot{}
 	for _, l := range labels {
 		if l != "" {
 			s.Labels = append(s.Labels, l)
 		}
 	}
-	return s, nil
+	return s
 }
 
 // Hash returns the "HASH_METHOD:HASH_DIGEST" representation of the screenshot
@@ -65,6 +63,20 @@ func (s *Screenshot) Hash() string {
 // space distribution.
 func (s *Screenshot) Key() string {
 	return s.HashDigest + ":" + s.HashMethod
+}
+
+// SetHashFromFile hashes a file and sets the HashMethod and HashDigest fields.
+func (s *Screenshot) SetHashFromFile(f io.Reader, hashMethod string) error {
+	if hashMethod != "sha1" {
+		return ErrUnsupportedHashMethod
+	}
+	h := sha1.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	s.HashMethod = hashMethod
+	s.HashDigest = fmt.Sprintf("%x", h.Sum(nil))
+	return nil
 }
 
 // Store finalizes the struct and stores it to Datastore.
@@ -120,8 +132,7 @@ func RecentScreenshotHashes(ds shared.Datastore, browser, browserVersion, os, os
 		query.Limit(totalLimit)
 
 		var hits []Screenshot
-		_, err := ds.GetAll(query, &hits)
-		if err != nil {
+		if _, err := ds.GetAll(query, &hits); err != nil {
 			return shared.ToStringSlice(all), err
 		}
 		for _, s := range hits {

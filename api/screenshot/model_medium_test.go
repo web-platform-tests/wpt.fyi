@@ -9,6 +9,7 @@ package screenshot
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,24 +18,32 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
-func TestNewScreenshotFromHash(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		s, err := NewScreenshotFromHash("hash:0000abcd", nil)
-		assert.Nil(t, err)
-		assert.Equal(t, "hash", s.HashMethod)
-		assert.Equal(t, "0000abcd", s.HashDigest)
-	})
-	t.Run("error", func(t *testing.T) {
-		s, err := NewScreenshotFromHash("invalidhash", nil)
-		assert.Nil(t, s)
-		assert.Equal(t, ErrInvalidHash, err)
-	})
+func TestNewScreenshot(t *testing.T) {
+	s := NewScreenshot([]string{"", "chrome"})
+	assert.Equal(t, s.Labels, []string{"chrome"})
 }
 
 func TestKeyAndHash(t *testing.T) {
-	s, _ := NewScreenshotFromHash("hash:0000abcd", nil)
+	s := &Screenshot{
+		HashMethod: "hash",
+		HashDigest: "0000abcd",
+	}
 	assert.Equal(t, "hash:0000abcd", s.Hash())
 	assert.Equal(t, "0000abcd:hash", s.Key())
+}
+
+func TestSetHashFromFile(t *testing.T) {
+	s := &Screenshot{}
+	err := s.SetHashFromFile(strings.NewReader("Hello, world!"), "sha1")
+	assert.Nil(t, err)
+	assert.Equal(t, "sha1", s.HashMethod)
+	assert.Equal(t, "943a702d06f34599aee1f8da8ef9f7296031d699", s.HashDigest)
+}
+
+func TestSetHashFromFile_error(t *testing.T) {
+	s := &Screenshot{}
+	err := s.SetHashFromFile(strings.NewReader(""), "hash")
+	assert.Equal(t, ErrUnsupportedHashMethod, err)
 }
 
 func TestStore(t *testing.T) {

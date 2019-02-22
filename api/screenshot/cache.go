@@ -44,7 +44,7 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	browserVersion := r.FormValue("browser_version")
 	os := r.FormValue("os")
 	osVersion := r.FormValue("os_version")
-	hash := r.FormValue("hash")
+	hashMethod := r.FormValue("hash_method")
 	file, _, err := r.FormFile("screenshot")
 	if err != nil {
 		http.Error(w, "no screenshot file found", http.StatusBadRequest)
@@ -52,7 +52,7 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	err = storeScreenshot(ctx, hash, browser, browserVersion, os, osVersion, file)
+	err = storeScreenshot(ctx, hashMethod, browser, browserVersion, os, osVersion, file)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -61,14 +61,19 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func storeScreenshot(ctx context.Context, hash, browser, browserVersion, os, osVersion string, f io.Reader) error {
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	ds := shared.NewAppEngineDatastore(ctx, false)
-
-	s, err := NewScreenshotFromHash(hash, []string{browser, browserVersion, os, osVersion})
-	if err != nil {
+func storeScreenshot(ctx context.Context, hashMethod, browser, browserVersion, os, osVersion string, f io.ReadSeeker) error {
+	if hashMethod == "" {
+		hashMethod = "sha1"
+	}
+	s := NewScreenshot([]string{browser, browserVersion, os, osVersion})
+	if err := s.SetHashFromFile(f, hashMethod); err != nil {
 		return err
 	}
+	// Need to reset the file after hashing it.
+	f.Seek(0, io.SeekStart)
+
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	// TODO(Hexcles): Abstract and mock the GCS utilities in shared.
 	gcs, err := storage.NewClient(ctx)
@@ -82,7 +87,7 @@ func storeScreenshot(ctx context.Context, hash, browser, browserVersion, os, osV
 		bucketName = "wptd-screenshots-staging"
 	}
 	bucket := gcs.Bucket(bucketName)
-	w := bucket.Object(hash + ".png").NewWriter(ctx)
+	w := bucket.Object(s.Hash() + ".png").NewWriter(ctx)
 	if _, err := io.Copy(w, f); err != nil {
 		return err
 	}
