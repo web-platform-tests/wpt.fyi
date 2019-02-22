@@ -24,7 +24,7 @@ func TestNewScreenshot(t *testing.T) {
 }
 
 func TestKeyAndHash(t *testing.T) {
-	s := &Screenshot{
+	s := Screenshot{
 		HashMethod: "hash",
 		HashDigest: "0000abcd",
 	}
@@ -33,7 +33,7 @@ func TestKeyAndHash(t *testing.T) {
 }
 
 func TestSetHashFromFile(t *testing.T) {
-	s := &Screenshot{}
+	s := Screenshot{}
 	err := s.SetHashFromFile(strings.NewReader("Hello, world!"), "sha1")
 	assert.Nil(t, err)
 	assert.Equal(t, "sha1", s.HashMethod)
@@ -41,7 +41,7 @@ func TestSetHashFromFile(t *testing.T) {
 }
 
 func TestSetHashFromFile_error(t *testing.T) {
-	s := &Screenshot{}
+	s := Screenshot{}
 	err := s.SetHashFromFile(strings.NewReader(""), "hash")
 	assert.Equal(t, ErrUnsupportedHashMethod, err)
 }
@@ -52,6 +52,11 @@ func TestStore(t *testing.T) {
 	defer done()
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
+	t.Run("error", func(t *testing.T) {
+		s := Screenshot{}
+		err := s.Store(ds)
+		assert.Equal(t, ErrInvalidHash, err)
+	})
 	t.Run("create new screenshot", func(t *testing.T) {
 		s := Screenshot{
 			HashDigest: "fa52883da345b2525304b54c8bc7bbb1e88b5e3e",

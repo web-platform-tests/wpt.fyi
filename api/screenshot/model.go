@@ -88,6 +88,9 @@ func (s *Screenshot) SetHashFromFile(f io.Reader, hashMethod string) error {
 // are auxiliary information that is OK to lose in a race condition). Lastly,
 // LastUsed is populated with the current timestamp.
 func (s *Screenshot) Store(ds shared.Datastore) error {
+	if s.Key() == ":" {
+		return ErrInvalidHash
+	}
 	key := ds.NewNameKey("Screenshot", s.Key())
 	var oldS Screenshot
 	err := ds.Get(key, &oldS)
