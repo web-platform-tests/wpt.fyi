@@ -30,10 +30,6 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
   static get template() {
     return html`
     <style>
-      :host {
-        display: block;
-        font-size: 16px;
-      }
       a {
         text-decoration: none;
         color: #0d5de6;
