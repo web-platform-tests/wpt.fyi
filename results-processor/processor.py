@@ -115,7 +115,7 @@ def process_report(params):
     gcs_paths = params.getlist('gcs')
     result_type = params['type']
     # Optional fields:
-    run_id = params.get('run_id') or '0'
+    run_id = params.get('run_id', '0')
     callback_url = params.get('callback_url')
     labels = params.get('labels', '')
 
