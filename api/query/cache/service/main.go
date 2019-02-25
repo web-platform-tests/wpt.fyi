@@ -173,9 +173,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Cull unchanged diffs, if applicable.
 	if opts.IncludeDiff && !opts.DiffFilter.Unchanged {
-		for _, r := range res {
-			if r.Diff.IsEmpty() {
-				r.Diff = nil
+		for i := range res {
+			if res[i].Diff.IsEmpty() {
+				res[i].Diff = nil
 			}
 		}
 	}
@@ -217,7 +217,7 @@ func getTestRun(id int64) (*shared.TestRun, error) {
 	}
 	d := shared.NewCloudDatastore(ctx, client)
 	testRun := new(shared.TestRun)
-	err = d.Get(d.NewKey("TestRun", id), testRun)
+	err = d.Get(d.NewIDKey("TestRun", id), testRun)
 	if err != nil {
 		return nil, err
 	}

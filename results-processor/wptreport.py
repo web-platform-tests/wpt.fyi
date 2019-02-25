@@ -460,7 +460,7 @@ def prepare_labels(report, labels_str, uploader):
         uploader: The name of the uploader.
 
     Returns:
-        A sorted list of unique strings.
+        A set of strings.
     """
     labels = set()
     labels.add(report.run_info['product'])
@@ -481,7 +481,27 @@ def prepare_labels(report, labels_str, uploader):
     # Remove any empty labels.
     if '' in labels:
         labels.remove('')
-    return sorted(labels)
+    return labels
+
+
+def normalize_product(report):
+    """Normalizes the product identifier.
+
+    Computes what labels need to be added while normalizing the product.
+
+    Args:
+        report: A WPTReport
+
+    Returns:
+       A set of strings.
+    """
+    product = report.run_info['product']
+    if "_" in product:
+        tokens = product.split("_")
+        report.run_info['product'] = tokens[0]
+        return set(tokens[1:])
+    else:
+        return set()
 
 
 def create_test_run(report, labels_str, uploader, secret,
@@ -509,10 +529,12 @@ def create_test_run(report, labels_str, uploader, secret,
     labels = prepare_labels(report, labels_str, uploader)
     assert len(labels) > 0
 
+    labels |= normalize_product(report)
+
     payload = report.test_run_metadata
     payload['results_url'] = results_url
     payload['raw_results_url'] = raw_results_url
-    payload['labels'] = labels
+    payload['labels'] = sorted(labels)
 
     response = requests.post(
         callback_url,

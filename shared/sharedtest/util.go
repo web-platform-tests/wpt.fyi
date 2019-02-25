@@ -39,6 +39,7 @@ func NewAEContext(stronglyConsistentDatastore bool) (context.Context, func(), er
 		return nil, nil, err
 	}
 	ctx := appengine.NewContext(req)
+	ctx = context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
 	return ctx, func() {
 		inst.Close()
 	}, nil
@@ -138,12 +139,18 @@ func MultiRuns(runs shared.TestRuns) func(keys []shared.Key, dst interface{}) er
 // gomock generated MockKey, for which we'd mock Key.IntID(), resulted in deadlock.
 type MockKey struct {
 	ID       int64
+	Name     string
 	TypeName string
 }
 
 // IntID returns the ID.
 func (m MockKey) IntID() int64 {
 	return m.ID
+}
+
+// StringID returns the Name.
+func (m MockKey) StringID() string {
+	return m.Name
 }
 
 // Kind returns the TypeName

@@ -6,13 +6,12 @@
 
 import '../node_modules/@polymer/paper-card/paper-card.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
-import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import './info-banner.js';
-import { TestStatuses } from './test-info.js';
-import { ProductInfo, DefaultBrowserNames } from './product-info.js';
-import { WPTFlags } from './wpt-flags.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './browser-picker.js';
+import './info-banner.js';
+import { DefaultBrowserNames, ProductInfo } from './product-info.js';
+import { TestStatuses } from './test-info.js';
+import { WPTFlags } from './wpt-flags.js';
 
 class Insights extends ProductInfo(WPTFlags(PolymerElement)) {
   static get template() {
@@ -179,3 +178,4 @@ class Anomalies extends ProductInfo(PolymerElement) {
 window.customElements.define(Anomalies.is, Anomalies);
 
 export { Insights, Anomalies, Flakes };
+

@@ -139,6 +139,50 @@ suite('<wpt-results>', () => {
         }
       });
     });
+
+    suite('computeResultsRangeMessage', () => {
+      test('chrome', () => {
+        trf.productSpecs = ['chrome', 'firefox'];
+        expect(trf.resultsRangeMessage).to.contain('chrome, firefox');
+      });
+      test('labels', () => {
+        trf.labels = ['foo'];
+        expect(trf.resultsRangeMessage).to.contain('with label \'foo\'');
+        trf.labels = ['foo', 'bar'];
+        expect(trf.resultsRangeMessage).to.contain('with labels \'foo\', \'bar\'');
+      });
+      test('master', () => {
+        trf.master = true;
+        expect(trf.resultsRangeMessage).to.contain('master test runs');
+        expect(trf.resultsRangeMessage).to.not.contain('with label');
+      });
+      test('shas', () => {
+        const sha = '1234567890';
+        trf.shas = [sha];
+        expect(trf.resultsRangeMessage).to.contain(`revision ${sha.substr(0, 7)}`);
+
+        const sha2 = 'abcdef1234abcdef1234abcdef1234abcdef1234';
+        trf.shas = [sha, sha2];
+        expect(trf.resultsRangeMessage).to.contain(`revisions ${sha.substr(0, 7)}, ${sha2.substr(0, 7)}`);
+      });
+    });
+
+    suite('computeResultsTotalsRangeMessage', () => {
+      test('absent/zero', () => {
+        trf.searchResults = null;
+        expect(trf.resultsTotalsRangeMessage).to.not.contain('0 tests');
+        trf.searchResults = [];
+        expect(trf.resultsTotalsRangeMessage).to.contain('0 tests');
+      });
+      test('some sum', () => {
+        trf.searchResults = [
+          {test: '/abc.html', legacy_status: [{total: 1}, {total: 5}]},
+          {test: '/def.html', legacy_status: [{total: 2}, {total: 1}]},
+        ];
+        expect(trf.resultsTotalsRangeMessage).to.contain('2 tests');
+        expect(trf.resultsTotalsRangeMessage).to.contain('7 subtests');
+      });
+    });
   });
 
   teardown(() => {

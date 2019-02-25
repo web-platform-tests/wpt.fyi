@@ -5,7 +5,7 @@
  */
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { AbstractTestFileResultsTable } from './abstract-test-file-results-table.js';
 
 class TestFileResultsTableTerse extends AbstractTestFileResultsTable {

@@ -14,9 +14,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill/mock_backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
-	shared "github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 type countingIndex struct {
@@ -54,7 +55,7 @@ func (*countingIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, e
 func TestStopImmediately(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	fetcher := NewMockRunFetcher(ctrl)
+	fetcher := mock_backfill.NewMockRunFetcher(ctrl)
 	product, _ := shared.ParseProductSpec("chrome")
 	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(shared.TestRunsByProduct{
 		shared.ProductTestRuns{Product: product, TestRuns: shared.TestRuns{
@@ -81,7 +82,7 @@ func TestIngestSomeRuns(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	fetcher := NewMockRunFetcher(ctrl)
+	fetcher := mock_backfill.NewMockRunFetcher(ctrl)
 	product, _ := shared.ParseProductSpec("chrome")
 	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(shared.TestRunsByProduct{
 		shared.ProductTestRuns{

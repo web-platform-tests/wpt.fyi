@@ -28,6 +28,7 @@ func isWPTFYIApp(appID int64) bool {
 func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
+	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
@@ -45,7 +46,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	secret, err := shared.GetSecret(ctx, "github-check-webhook-secret")
+	secret, err := shared.GetSecret(ds, "github-check-webhook-secret")
 	if err != nil {
 		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
 		return
@@ -175,7 +176,11 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azur
 	status := checkRun.GetCheckRun().GetStatus()
 	shouldSchedule := false
 	if appID == azure.PipelinesAppID {
-		return azureAPI.HandleCheckRunEvent(checkRun)
+		if aeAPI.IsFeatureEnabled("processAzureCheckRunEvents") {
+			return azureAPI.HandleCheckRunEvent(checkRun)
+		}
+		log.Infof("Ignoring Azure pipelines event")
+		return false, nil
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
 	} else if action == "requested_action" {

@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate mockgen -destination sharedtest/run_diff_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared DiffAPI
+
 package shared
 
 import (
@@ -115,7 +117,7 @@ type TestDiff []int
 // IsEmpty returns true if the diff is empty (all zeroes)
 func (d TestDiff) IsEmpty() bool {
 	for _, x := range d {
-		if x > 0 {
+		if x != 0 {
 			return false
 		}
 	}
@@ -337,7 +339,7 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 	}
 
 	var renames map[string]string
-	if IsFeatureEnabled(d.ctx, "diffRenames") {
+	if d.aeAPI.IsFeatureEnabled("diffRenames") {
 		beforeSHA := before.FullRevisionHash
 		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
 		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {

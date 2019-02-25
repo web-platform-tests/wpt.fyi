@@ -76,9 +76,10 @@ before_install: |
   travis_retry docker build -t "${DOCKER_IMAGE}" .
   travis_retry bash ./util/docker-dev/run.sh -d -q
 
-install: |
-  # FIXME: go_packages is required by many, but not all make targets.
-  travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_packages
+install:
+  # Retry `go get` to avoid intermittent network issues.
+  # FIXME: not all make targets require building go packages.
+  - travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_build
 
 script:
   - |

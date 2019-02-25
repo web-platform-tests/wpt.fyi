@@ -4,14 +4,16 @@
  * found in the LICENSE file.
  */
 
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
 import { LoadingState } from './loading-state.js';
 import { CommitTypes } from './product-info.js';
@@ -20,8 +22,9 @@ import './test-run.js';
 import './test-runs-query-builder.js';
 import { TestRunsUIBase } from './test-runs.js';
 import { WPTFlags } from './wpt-flags.js';
+import { Pluralizer } from './pluralize.js';
 
-class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
+class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase)))) {
   static get template() {
     return html`
     <style>
@@ -80,8 +83,32 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
         height: 24px;
         width: 24px;
       }
+      test-run {
+        display: inline-block;
+        pointer: cursor;
+      }
+      test-run[selected] {
+        padding: 4px;
+        background: var(--paper-blue-700);
+        border-radius: 50%;
+      }
+      paper-toast {
+        min-width: 320px;
+      }
+      paper-toast div {
+        display: flex;
+        align-items: center;
+      }
+      paper-toast span {
+        flex-grow: 1;
+      }
+      paper-toast paper-button {
+        display: inline-block;
+        flex-grow: 0;
+        flex-shrink: 0;
+      }
 
-      @media (max-width: 800px) {
+      @media (max-width: 1200px) {
         table tr td:first-child::after {
           content: "";
           display: inline-block;
@@ -90,6 +117,16 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
         }
       }
     </style>
+
+    <paper-toast id="selected-toast" duration="0">
+      <div style="display: flex;">
+        <span>[[selectedRuns.length]] [[runPlural]] selected</span>
+        <paper-button onclick="[[showRuns]]">View [[runPlural]]</paper-button>
+        <template is="dom-if" if="[[twoRunsSelected]]">
+          <paper-button onclick="[[showDiff]]">View diff</paper-button>
+        </template>
+      </div>
+    </paper-toast>
 
     <template is="dom-if" if="[[resultsRangeMessage]]">
       <info-banner>
@@ -100,7 +137,16 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
 
     <template is="dom-if" if="[[queryBuilder]]">
       <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder product-specs="[[productSpecs]]" labels="[[labels]]" master="[[master]]" shas="[[shas]]" aligned="[[aligned]]" on-submit="[[submitQuery]]" from="[[from]]" to="[[to]]" diff="[[diff]]" show-time-range="">
+        <test-runs-query-builder product-specs="[[productSpecs]]"
+                                 labels="[[labels]]"
+                                 master="[[master]]"
+                                 shas="[[shas]]"
+                                 aligned="[[aligned]]"
+                                 on-submit="[[submitQuery]]"
+                                 from="[[from]]"
+                                 to="[[to]]"
+                                 diff="[[diff]]"
+                                 show-time-range>
         </test-runs-query-builder>
       </iron-collapse>
     </template>
@@ -145,9 +191,7 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
             <template is="dom-repeat" items="{{ browsers }}" as="browser">
               <td class\$="runs [[ runClass(results.runs, browser) ]]">
                 <template is="dom-repeat" items="[[runList(results.runs, browser)]]" as="run">
-                  <a href="[[runLink(run)]]">
-                    <test-run small="" show-source="" test-run="[[run]]"></test-run>
-                  </a>
+                  <test-run onclick="[[selectRun]]" data-run-id$="[[run.id]]" small show-source test-run="[[run]]"></test-run>
                 </template>
               </td>
             </template>
@@ -202,6 +246,18 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
       editingQuery: Boolean,
       toggleBuilder: Function,
       submitQuery: Function,
+      selectedRuns: {
+        type: Array,
+        value: [],
+      },
+      runPlural: {
+        type: String,
+        computed: 'computeRunPlural(selectedRuns)',
+      },
+      twoRunsSelected: {
+        type: Boolean,
+        computed: 'computeTwoRunsSelected(selectedRuns)',
+      }
     };
   }
 
@@ -216,6 +272,15 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.loadNextPage = this.handleLoadNextPage.bind(this);
+    this.selectRun = this.handleSelectRun.bind(this);
+    this.showRuns = () => this._showRuns(false);
+    this.showDiff = () => this._showRuns(true);
+  }
+
+  async ready() {
+    super.ready();
+    this.load(this.loadRuns());
+    this._createMethodObserver('testRunsLoaded(testRuns, testRuns.*)');
   }
 
   computeDateDisplay(results) {
@@ -244,12 +309,6 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
       minute: '2-digit',
       hour12: false,
     });
-  }
-
-  async ready() {
-    super.ready();
-    this.load(this.loadRuns());
-    this._createMethodObserver('testRunsLoaded(testRuns, testRuns.*)');
   }
 
   testRunsLoaded(testRuns) {
@@ -373,6 +432,42 @@ class WPTRuns extends WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase))) {
         }
       }
     }
+  }
+
+  _showRuns(diff) {
+    const url = new URL('/results', window.location);
+    for (const id of this.selectedRuns) {
+      url.searchParams.append('run_id', id);
+    }
+    if (diff) {
+      url.searchParams.set('diff', true);
+    }
+    window.location = url;
+  }
+
+  handleSelectRun(e) {
+    const id = e.target.getAttribute('data-run-id');
+    if (this.selectedRuns.find(r => r === id)) {
+      this.selectedRuns = this.selectedRuns.filter(r => r !== id);
+      e.target.removeAttribute('selected');
+    } else {
+      this.selectedRuns = [...this.selectedRuns, id];
+      e.target.setAttribute('selected', 'selected');
+    }
+    const toast = this.shadowRoot.querySelector('#selected-toast');
+    if (this.selectedRuns.length) {
+      toast.show();
+    } else {
+      toast.hide();
+    }
+  }
+
+  computeRunPlural(selectedRuns) {
+    return this.pluralize('run', selectedRuns.length);
+  }
+
+  computeTwoRunsSelected(selectedRuns) {
+    return selectedRuns.length === 2;
   }
 }
 

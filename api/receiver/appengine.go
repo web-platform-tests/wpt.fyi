@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// TODO(Hexcles): Reuse shared abstractions of AppEngine API, remove unexported
+// functions from AppEngineAPI and use go generate.
+
 package receiver
 
 import (

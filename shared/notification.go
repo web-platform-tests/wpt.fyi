@@ -74,7 +74,7 @@ func (n notificationsAPIImpl) SendPushNotification(
 	// Push notifications
 	ctx := n.aeAPI.Context()
 	store := NewAppEngineDatastore(ctx, true)
-	subscriptionsPrivateKey, err := GetSecret(ctx, "webpush-private-key")
+	subscriptionsPrivateKey, err := GetSecret(store, "webpush-private-key")
 	if err != nil {
 		return err
 	}

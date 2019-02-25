@@ -22,6 +22,7 @@ WPTD_GO_PATH := $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
+CHROMEDRIVER_PATH=/usr/bin/chromedriver
 USE_FRAME_BUFFER := true
 STAGING := false
 VERBOSE := -v
@@ -41,10 +42,14 @@ prepush: go_build test lint
 python_test: python3 tox
 	cd $(WPTD_PATH)results-processor; tox
 
-go_build: go_deps
-	cd $(WPTD_GO_PATH); go build ./...
+go_build: git mockgen
+	cd $(WPTD_GO_PATH); go get ./...
+	cd $(WPTD_GO_PATH); go generate ./...
 
-go_lint: go_deps golint_deps go_test_tag_lint
+go_build_test: go_build
+	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
+
+go_lint: golint_deps go_test_tag_lint
 	@echo "# Linting the go packages..."
 	golint -set_exit_status $(WPTD_GO_PATH)/api/...
 	# Skip revisions/test
@@ -61,10 +66,10 @@ go_test_tag_lint:
 
 go_test: go_small_test go_medium_test
 
-go_small_test: go_deps
+go_small_test: go_build_test
 	cd $(WPTD_GO_PATH); go test -tags=small $(VERBOSE) ./...
 
-go_medium_test: go_deps dev_appserver_deps
+go_medium_test: go_build_test dev_appserver_deps
 	cd $(WPTD_GO_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
@@ -77,23 +82,22 @@ go_firefox_test: BROWSER := firefox
 go_firefox_test: firefox | _go_webdriver_test
 
 go_chrome_test: BROWSER := chrome
-go_chrome_test: chrome | _go_webdriver_test
+go_chrome_test: chrome chromedriver | _go_webdriver_test
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-_go_webdriver_test: var-BROWSER java go_deps xvfb node-web-component-tester webserver_deps
+_go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-tester webserver_deps
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
 	# paths before installing node-web-component-tester as the paths
 	# include version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
-	CHROMEDRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)chromedriver/ -type f -name '*chromedriver')"; \
 	cd $(WPTD_PATH)webdriver; \
 	go test $(VERBOSE) -timeout=15m -tags=large -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
-		-chromedriver_path=$$CHROMEDRIVER_PATH \
+		-chromedriver_path=$(CHROMEDRIVER_PATH) \
 		-frame_buffer=$(USE_FRAME_BUFFER) \
 		-staging=$(STAGING) \
 		-browser=$(BROWSER) \
@@ -112,16 +116,27 @@ apt_update:
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
 
-webapp_deps: go_deps webapp_node_modules
+webapp_deps: go_build webapp_node_modules
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
-chrome:
+chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		if [[ -z "$$(which chromium)" ]]; then \
-			make apt-get-chromium; \
-		fi; \
-		sudo ln -s "$$(which chromium)" $(CHROME_PATH); \
+		ARCHIVE=google-chrome-stable_current_amd64.deb; \
+		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
+		sudo dpkg --install $${ARCHIVE} || true; \
+		sudo apt-get install --fix-broken -qqy; \
+		sudo dpkg --install $${ARCHIVE}; \
+	fi
+
+# https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
+chromedriver: wget unzip chrome
+	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]]; then \
+		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
+		CHROMEDRIVER_VERSION=$$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$${CHROME_VERSION}); \
+		wget -q https://chromedriver.storage.googleapis.com/$${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip; \
+		sudo unzip chromedriver_linux64.zip -d $$(dirname $(CHROMEDRIVER_PATH)); \
+		sudo chmod +x $(CHROMEDRIVER_PATH); \
 	fi
 
 firefox:
@@ -136,14 +151,14 @@ firefox_install: firefox_deps bzip2 wget java
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox-esr | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
-go_deps: go_packages $(GO_FILES)
-
-go_packages: git
-	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
-
 golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \
 		go get -u golang.org/x/lint/golint; \
+	fi
+
+mockgen: git
+	if [ "$$(which mockgen)" == "" ]; then \
+		go get -u github.com/golang/mock/mockgen; \
 	fi
 
 package_service: var-APP_PATH
@@ -165,6 +180,7 @@ python: apt-get-python
 tox: apt-get-tox
 wget: apt-get-wget
 bzip2: apt-get-bzip2
+unzip: apt-get-unzip
 
 java:
 	@ # java has a different apt-get package name.
@@ -208,6 +224,8 @@ gcloud-login: gcloud
 
 deployment_state: gcloud-login webapp_deps package_service var-APP_PATH
 
+deploy_staging: git
+deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
 deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
 	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
@@ -263,7 +281,7 @@ results_analysis_symlink:
 	fi
 
 gcloud-%: gcloud
-	gcloud components list --filter="state[name]=Installed AND id=$*" | grep " $* " \
+	gcloud components list --only-local-state --format="value(id)" 2>/dev/null | grep -q "$*" \
 		|| gcloud components install --quiet $*
 
 node-%: node

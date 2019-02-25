@@ -57,7 +57,7 @@ func apiResultsNotifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	store := shared.NewAppEngineDatastore(ctx, true)
 	run := new(shared.TestRun)
-	if err = store.Get(store.NewKey("TestRun", runID), run); err != nil {
+	if err = store.Get(store.NewIDKey("TestRun", runID), run); err != nil {
 		log.Errorf("run_id %s not found", runIDStr)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

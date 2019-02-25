@@ -15,25 +15,25 @@ import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import { html } from '../node_modules/@polymer/polymer/lib/utils/html-tag.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
 import { LoadingState } from './loading-state.js';
 import './path-part.js';
 import { SelfNavigation } from './self-navigator.js';
-import './test-results-chart.js';
-import './test-results-history-grid.js';
-import './test-file-results.js';
 import './test-file-results-table-terse.js';
 import './test-file-results-table-verbose.js';
-import './test-runs-query-builder.js';
+import './test-file-results.js';
+import './test-results-chart.js';
+import './test-results-history-grid.js';
 import './test-run.js';
+import './test-runs-query-builder.js';
 import { TestRunsUIBase } from './test-runs.js';
 import './test-search.js';
 import { WPTColors } from './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
-import './wpt-prs.js';
 import './wpt-permalinks.js';
+import './wpt-prs.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
@@ -77,6 +77,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       }
       thead {
         border-bottom: 8px solid white;
+      }
+      th {
+        background: white;
+        position: sticky;
+        top: 0;
+        z-index: 1;
       }
       .path {
         margin-bottom: 16px;
@@ -141,7 +147,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         display: inline-block;
       }
 
-      @media (max-width: 800px) {
+      @media (max-width: 1200px) {
         table tr td:first-child::after {
           content: "";
           display: inline-block;
@@ -152,6 +158,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
       .compare {
         display: flex;
+      }
+      .compare .column {
+        flex-grow: 1;
+      }
+      .compare .column iframe {
+        width: 100%;
+        height: 600px;
       }
     </style>
 
@@ -200,9 +213,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         </div>
       </template>
 
-      <template is="dom-if" if="[[resultsRangeMessage]]">
+      <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>
-          [[resultsRangeMessage]]
+          [[resultsTotalsRangeMessage]]
           <template is="dom-if" if="[[permalinks]]">
             <wpt-permalinks path="[[path]]"
                             path-prefix="/results/"
@@ -372,14 +385,14 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         <div class="separator"></div>
         <section>
           <h4>[[path]] in this browser</h4>
-          <div class='compare'>
-            <div>
+          <div class="compare">
+            <div class="column">
               <h5>Result</h5>
               <template is="dom-if" if="[[testW3CURL]]">
                 <iframe src="[[https(testW3CURL)]]"></iframe>
               </template>
             </div>
-            <div>
+            <div class="column">
               <h5>Reference</h5>
               <template is="dom-if" if="[[testW3CRefURL]]">
                 <iframe src="[[https(testW3CRefURL)]]"></iframe>
@@ -423,6 +436,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       searchResults: {
         type: Array,
         value: [],
+      },
+      resultsTotalsRangeMessage: {
+        type: String,
+        computed: 'computeResultsTotalsRangeMessage(searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
       },
       testPaths: {
         type: Set,
@@ -547,8 +564,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
   }
 
   computeDisplayedTests(path, searchResults) {
-    return searchResults.map(r => r.test)
-      .filter(name => name.startsWith(path));
+    return searchResults
+      && searchResults.map(r => r.test) .filter(name => name.startsWith(path))
+      || [];
   }
 
   computeDiffURL(testRuns) {
@@ -669,7 +687,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       if (q) {
         body.query = q;
       }
-      if (this.diffFromAPI) {
+      if (this.diff && this.diffFromAPI) {
         url.searchParams.set('diff', true);
         url.searchParams.set('filter', this.diffFilter);
       }
@@ -1084,8 +1102,26 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.handleSubmitQuery();
     this.dismissToast(e);
   }
+
+  computeResultsTotalsRangeMessage(searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
+    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
+    if (searchResults) {
+      let subtests = 0, tests = 0;
+      for (const r of searchResults) {
+        if (r.test.startsWith(this.path)) {
+          tests++;
+          subtests += Math.max(...r.legacy_status.map(s => s.total));
+        }
+      }
+      return msg.replace(
+        'Showing ',
+        `Showing ${tests} tests (${subtests} subtests) from `);
+    }
+    return msg;
+  }
 }
 
 window.customElements.define(WPTResults.is, WPTResults);
 
 export { WPTResults };
+

@@ -15,7 +15,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/api/manifest"
+	"github.com/web-platform-tests/wpt.fyi/api/manifest/mock_manifest"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/memcache"
 )
@@ -32,7 +32,7 @@ func TestGetGitHubReleaseAsset_Caches(t *testing.T) {
 	content := "latest data"
 	data := getManifestPayload(content)
 
-	manifestAPI := manifest.NewMockAPI(mockCtrl)
+	manifestAPI := mock_manifest.NewMockAPI(mockCtrl)
 	manifestAPI.EXPECT().GetManifestForSHA("latest").Return(fullSHA, data, nil)
 
 	// Should be added to cache

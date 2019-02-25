@@ -220,6 +220,7 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 	assert.Nil(t, err)
 
 	ctx := shared.NewAppEngineContext(r)
+	ds := shared.NewAppEngineDatastore(ctx, false)
 	now := time.Now()
 	run := shared.TestRun{}
 	run.BrowserName = "chrome"
@@ -237,7 +238,7 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 	assert.Equal(t, "", next)
 
 	// Feature enabled
-	shared.SetFeature(ctx, shared.Flag{Name: paginationTokenFeatureFlagName, Enabled: true})
+	shared.SetFeature(ds, shared.Flag{Name: paginationTokenFeatureFlagName, Enabled: true})
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
 	next = resp.Header().Get(nextPageTokenHeaderName)

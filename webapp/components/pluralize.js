@@ -512,4 +512,10 @@ const pluralize = (function (root, pluralize) {
   return pluralize;
 });
 
-export { pluralize };
+const Pluralizer = (superClass) => class Pluralizer extends superClass {
+  pluralize(word, count) {
+    return pluralize(word, count);
+  }
+};
+
+export { pluralize, Pluralizer };

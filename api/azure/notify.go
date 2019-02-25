@@ -34,7 +34,8 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 		"", // SHA is embedded in the wpt_report.json metadata
 		"web-platform-tests",
 		"wpt",
-		"", // No sender info.
+		"",                            // No sender info.
+		r.URL.Query().Get("artifact"), // ?artifact=foo will only process foo.
 		buildID)
 
 	if err != nil {

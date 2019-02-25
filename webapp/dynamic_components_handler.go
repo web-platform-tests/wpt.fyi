@@ -12,7 +12,8 @@ var componentTemplates = template.Must(template.ParseGlob("dynamic-components/*.
 func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "text/javascript")
 	ctx := shared.NewAppEngineContext(r)
-	flags, err := shared.GetFeatureFlags(ctx)
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	flags, err := shared.GetFeatureFlags(ds)
 	if err != nil {
 		// Errors aren't a big deal; log them and ignore.
 		log := shared.GetLogger(ctx)

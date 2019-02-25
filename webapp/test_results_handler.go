@@ -84,6 +84,7 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 		return filter, err
 	}
 	ctx := shared.NewAppEngineContext(r)
+	aeAPI := shared.NewAppEngineAPI(ctx)
 
 	var pr *int
 	pr, err = shared.ParsePRParam(q)
@@ -104,8 +105,8 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 		filter.TestRunIDs = string(marshalled)
 	} else {
 		if pr == nil && testRunFilter.IsDefaultQuery() {
-			experimentalByDefault := shared.IsFeatureEnabled(ctx, "experimentalByDefault")
-			experimentalAlignedExceptEdge := shared.IsFeatureEnabled(ctx, "experimentalAlignedExceptEdge")
+			experimentalByDefault := aeAPI.IsFeatureEnabled("experimentalByDefault")
+			experimentalAlignedExceptEdge := aeAPI.IsFeatureEnabled("experimentalAlignedExceptEdge")
 			if experimentalByDefault {
 				if experimentalAlignedExceptEdge {
 					testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
