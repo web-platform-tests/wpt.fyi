@@ -122,7 +122,10 @@ func TestAddTestRun(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
+	a := appEngineAPIImpl{
+		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
+		store:            shared.NewAppEngineDatastore(ctx, false),
+	}
 
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
