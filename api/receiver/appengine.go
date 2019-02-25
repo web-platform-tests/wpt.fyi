@@ -63,15 +63,13 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 }
 
 func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
-	ctx := a.Context()
 	var key shared.Key
 	var err error
-	store := shared.NewAppEngineDatastore(ctx, false)
-	key = store.NewIDKey("TestRun", testRun.ID)
+	key = a.store.NewIDKey("TestRun", testRun.ID)
 	if testRun.ID != 0 {
-		err = store.Insert(key, testRun)
+		err = a.store.Insert(key, testRun)
 	} else {
-		key, err = store.Put(key, testRun)
+		key, err = a.store.Put(key, testRun)
 	}
 	if err != nil {
 		return nil, err
