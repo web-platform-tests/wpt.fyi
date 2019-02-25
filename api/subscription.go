@@ -27,7 +27,7 @@ func apiSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
+	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	err = shared.AddSubscription(aeAPI, sub)
 	if err != nil {
