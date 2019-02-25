@@ -11,7 +11,6 @@ import (
 
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 )
 
 func apiSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
