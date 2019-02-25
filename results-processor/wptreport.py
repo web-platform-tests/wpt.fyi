@@ -499,7 +499,7 @@ def normalize_product(report):
     if "_" in product:
         tokens = product.split("_")
         report.run_info['product'] = tokens[0]
-        return set(tokens[1:])
+        return set(tokens)
     else:
         return set()
 
