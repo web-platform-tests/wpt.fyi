@@ -42,11 +42,11 @@ type ArtifactResource struct {
 	URL         string `json:"url"`
 }
 
-type AzureBuild struct {
-	TriggerInfo AzureBuildTriggerInfo `json:"triggerInfo"`
+type azureBuild struct {
+	TriggerInfo azureBuildTriggerInfo `json:"triggerInfo"`
 }
 
-type AzureBuildTriggerInfo struct {
+type azureBuildTriggerInfo struct {
 	SourceBranch string `json:"pr.sourceBranch"`
 }
 
@@ -103,7 +103,7 @@ func (a apiImpl) IsMasterBranch(owner, repo string, buildID int64) bool {
 		log.Errorf("Failed to read request response: %s", err.Error())
 		return false
 	}
-	var build AzureBuild
+	var build azureBuild
 	if err := json.Unmarshal(data, &build); err != nil {
 		log.Errorf("Failed to unmarshal request response: %s", err.Error())
 		return false

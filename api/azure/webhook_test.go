@@ -83,6 +83,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
 	serverURL, _ := url.Parse(server.URL)
 	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
+	azureAPI.EXPECT().IsMasterBranch(repoOwner, repoName, int64(123)).Return(true)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return(serverURL.Host)
