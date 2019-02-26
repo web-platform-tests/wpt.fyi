@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"regexp"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -18,6 +19,8 @@ import (
 
 // PipelinesAppID is the ID of the Azure Pipelines GitHub app.
 const PipelinesAppID = int64(9426)
+
+var epochBranchesRegex = regexp.MustCompile("^refs/heads/epochs/.*")
 
 // https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 
@@ -43,7 +46,8 @@ type ArtifactResource struct {
 }
 
 type azureBuild struct {
-	TriggerInfo azureBuildTriggerInfo `json:"triggerInfo"`
+	SourceBranch string                `json:"sourceBranch"`
+	TriggerInfo  azureBuildTriggerInfo `json:"triggerInfo"`
 }
 
 type azureBuildTriggerInfo struct {
@@ -108,6 +112,8 @@ func (a apiImpl) IsMasterBranch(owner, repo string, buildID int64) bool {
 		log.Errorf("Failed to unmarshal request response: %s", err.Error())
 		return false
 	}
-	log.Debugf("Source branch: %s", build.TriggerInfo.SourceBranch)
-	return build.TriggerInfo.SourceBranch == "master"
+	log.Debugf("Source branch: %s", build.SourceBranch)
+	log.Debugf("Trigger PR branch: %s", build.TriggerInfo.SourceBranch)
+	return epochBranchesRegex.MatchString(build.SourceBranch) ||
+		build.TriggerInfo.SourceBranch == "master"
 }
