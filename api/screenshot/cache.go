@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
+	"sync"
 
 	"cloud.google.com/go/storage"
 
@@ -44,29 +46,62 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	// TODO(Hexcles): Abstract and mock the GCS utilities in shared.
+	gcs, err := storage.NewClient(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	bucketName := "wptd-screenshots-staging"
+	if aeAPI.GetHostname() == "wpt.fyi" {
+		bucketName = "wptd-screenshots"
+	}
+	bucket := gcs.Bucket(bucketName)
 
 	browser := r.FormValue("browser")
 	browserVersion := r.FormValue("browser_version")
 	os := r.FormValue("os")
 	osVersion := r.FormValue("os_version")
 	hashMethod := r.FormValue("hash_method")
-	file, _, err := r.FormFile("screenshot")
-	if err != nil {
+	if r.MultipartForm == nil || r.MultipartForm.File == nil || len(r.MultipartForm.File["screenshot"]) == 0 {
 		http.Error(w, "no screenshot file found", http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
 
-	err = storeScreenshot(ctx, hashMethod, browser, browserVersion, os, osVersion, file)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	fhs := r.MultipartForm.File["screenshot"]
+	errors := make(chan error, len(fhs))
+	var wg sync.WaitGroup
+	wg.Add(len(fhs))
+	for i := range fhs {
+		go func(i int) {
+			f, err := fhs[i].Open()
+			if err != nil {
+				errors <- err
+				return
+			}
+			defer f.Close()
+			if err := storeScreenshot(ctx, bucket, hashMethod, browser, browserVersion, os, osVersion, f); err != nil {
+				errors <- err
+			}
+		}(i)
+	}
+	wg.Wait()
+	close(errors)
+
+	var errStr string
+	for err := range errors {
+		errStr += strings.TrimSpace(err.Error()) + "\n"
+	}
+	if errStr != "" {
+		http.Error(w, errStr, http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 }
 
-func storeScreenshot(ctx context.Context, hashMethod, browser, browserVersion, os, osVersion string, f io.ReadSeeker) error {
+func storeScreenshot(ctx context.Context, bucket *storage.BucketHandle, hashMethod, browser, browserVersion, os, osVersion string, f io.ReadSeeker) error {
 	if hashMethod == "" {
 		hashMethod = "sha1"
 	}
@@ -77,22 +112,11 @@ func storeScreenshot(ctx context.Context, hashMethod, browser, browserVersion, o
 	// Need to reset the file after hashing it.
 	f.Seek(0, io.SeekStart)
 
-	aeAPI := shared.NewAppEngineAPI(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
-	// TODO(Hexcles): Abstract and mock the GCS utilities in shared.
-	gcs, err := storage.NewClient(ctx)
-	if err != nil {
-		return err
-	}
-	var bucketName string
-	if aeAPI.GetHostname() == "wpt.fyi" {
-		bucketName = "wptd-screenshots"
-	} else {
-		bucketName = "wptd-screenshots-staging"
-	}
-	bucket := gcs.Bucket(bucketName)
 	w := bucket.Object(s.Hash() + ".png").NewWriter(ctx)
+	// Screenshots are small; disable chunking for better performance.
+	w.ChunkSize = 0
 	if _, err := io.Copy(w, f); err != nil {
 		return err
 	}
