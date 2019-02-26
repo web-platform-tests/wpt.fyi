@@ -38,6 +38,11 @@ func getHashesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
+		return
+	}
+
 	ctx := shared.NewAppEngineContext(r)
 
 	browser := r.FormValue("browser")

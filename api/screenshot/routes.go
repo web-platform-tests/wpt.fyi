@@ -9,9 +9,9 @@ import "github.com/web-platform-tests/wpt.fyi/shared"
 // RegisterRoutes adds all the screenshot route handlers.
 func RegisterRoutes() {
 	// API endpoint for getting a list of recent screenshot hashes.
-	shared.AddRoute("/api/screenshots/hashes", "api-screenshots-hashes", getHashesHandler).Methods("GET")
+	shared.AddRoute("/api/screenshots/hashes", "api-screenshots-hashes", getHashesHandler)
 
 	// PRIVATE API endpoint for creating a screenshot.
 	// Only this AppEngine project can access.
-	shared.AddRoute("/api/screenshots/upload", "api-screenshots-upload", uploadScreenshotHandler).Methods("POST")
+	shared.AddRoute("/api/screenshots/upload", "api-screenshots-upload", uploadScreenshotHandler)
 }
