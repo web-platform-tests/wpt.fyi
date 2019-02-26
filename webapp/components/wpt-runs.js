@@ -178,7 +178,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         <template is="dom-repeat" items="{{ testRunsBySHA }}" as="results">
           <tr>
             <td>
-              <a class="github" href="/?sha={{ results.sha }}">
+              <a class="github" href="{{ revisionLink(results) }}">
                 <template is="dom-if" if="[[results.commitType]]">
                   <img src="/static/[[results.commitType]].svg">
                   {{ githubRevision(results.sha) }}
@@ -387,6 +387,15 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       }
     }
     return link.toString();
+  }
+
+  revisionLink(results) {
+    const url = new URL('/results', window.location);
+    url.search = this.query;
+    url.searchParams.set('sha', results.sha);
+    url.searchParams.set('max-count', 1);
+    url.searchParams.delete('from');
+    return url;
   }
 
   computeThWidth(browsers) {
