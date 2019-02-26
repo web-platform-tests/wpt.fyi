@@ -75,6 +75,7 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	wg.Add(len(fhs))
 	for i := range fhs {
 		go func(i int) {
+			defer wg.Done()
 			f, err := fhs[i].Open()
 			if err != nil {
 				errors <- err
