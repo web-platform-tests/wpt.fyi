@@ -115,14 +115,17 @@ func storeScreenshot(ctx context.Context, bucket *storage.BucketHandle, hashMeth
 
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
-	w := bucket.Object(s.Hash() + ".png").NewWriter(ctx)
-	// Screenshots are small; disable chunking for better performance.
-	w.ChunkSize = 0
-	if _, err := io.Copy(w, f); err != nil {
-		return err
-	}
-	if err := w.Close(); err != nil {
-		return err
+	o := bucket.Object(s.Hash() + ".png")
+	if _, err := o.Attrs(ctx); err == storage.ErrObjectNotExist {
+		w := o.NewWriter(ctx)
+		// Screenshots are small; disable chunking for better performance.
+		w.ChunkSize = 0
+		if _, err := io.Copy(w, f); err != nil {
+			return err
+		}
+		if err := w.Close(); err != nil {
+			return err
+		}
 	}
 
 	// Write to Datastore last.
