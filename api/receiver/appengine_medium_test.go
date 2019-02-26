@@ -87,7 +87,10 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 0)
 
-	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
+	a := appEngineAPIImpl{
+		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
+		store:            shared.NewAppEngineDatastore(ctx, false),
+	}
 	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", nil)
 	assert.Nil(t, err)
 
@@ -119,7 +122,10 @@ func TestAddTestRun(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
+	a := appEngineAPIImpl{
+		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
+		store:            shared.NewAppEngineDatastore(ctx, false),
+	}
 
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{

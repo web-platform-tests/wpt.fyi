@@ -63,6 +63,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	// Non-existent keys will have empty values, which will later be
 	// filtered out by scheduleResultsTask.
 	extraParams := map[string]string{
+		"id":           r.FormValue("id"),
 		"labels":       r.FormValue("labels"),
 		"callback_url": r.FormValue("callback_url"),
 		// The following fields will be deprecated when all runners embed metadata in the report.

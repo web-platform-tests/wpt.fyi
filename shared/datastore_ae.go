@@ -6,6 +6,7 @@ package shared
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/appengine/datastore"
 )
@@ -51,6 +52,14 @@ func (d aeDatastore) NewIDKey(typeName string, id int64) Key {
 	return datastore.NewKey(d.ctx, typeName, "", id, nil)
 }
 
+func (d aeDatastore) ReserveID(typeName string) (Key, error) {
+	id, _, err := datastore.AllocateIDs(d.ctx, typeName, nil, 1)
+	if err != nil {
+		return nil, err
+	}
+	return d.NewIDKey(typeName, id), nil
+}
+
 func (d aeDatastore) NewNameKey(typeName string, name string) Key {
 	return datastore.NewKey(d.ctx, typeName, name, 0, nil)
 }
@@ -78,6 +87,20 @@ func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 
 func (d aeDatastore) Put(key Key, src interface{}) (Key, error) {
 	return datastore.Put(d.ctx, key.(*datastore.Key), src)
+}
+
+func (d aeDatastore) Insert(key Key, src interface{}) error {
+	return datastore.RunInTransaction(d.ctx, func(ctx context.Context) error {
+		var empty map[string]interface{}
+		err := datastore.Get(ctx, key.(*datastore.Key), &empty)
+		if err == nil {
+			return fmt.Errorf("Entity %v already exists", key.IntID())
+		} else if err != datastore.ErrNoSuchEntity {
+			return err
+		}
+		_, err = datastore.Put(d.ctx, key.(*datastore.Key), src)
+		return err
+	}, nil)
 }
 
 type aeQuery struct {
