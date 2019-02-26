@@ -88,7 +88,9 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo
 		}
 
 		if masterRegex.MatchString(artifact.Name) {
-			labels.Add(shared.MasterLabel)
+			if azureAPI.IsMasterBranch(owner, repo, buildID) {
+				labels.Add(shared.MasterLabel)
+			}
 		} else if prHeadRegex.MatchString(artifact.Name) {
 			labels.Add(shared.PRHeadLabel)
 		} else if prBaseRegex.MatchString(artifact.Name) {
