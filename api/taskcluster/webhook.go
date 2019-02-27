@@ -19,7 +19,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
-	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -33,7 +32,10 @@ var (
 	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
 )
 
-func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
+// tcStatusWebhookHandler reacts to GitHub status webhook events. This is juxtaposed with
+// handleCheckRunEvent below, which is how we react to the (new) CheckRun implementation
+// of Taskcluster.
+func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" ||
 		r.Header.Get("X-GitHub-Event") != "status" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -57,7 +59,45 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
-	processed, err := handleStatusEvent(ctx, payload)
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	var status statusEventPayload
+	if err := json.Unmarshal(payload, &status); err != nil {
+		log.Errorf("%v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	processAllBranches := aeAPI.IsFeatureEnabled(flagTaskclusterAllBranches)
+	var processed bool
+	if !shouldProcessStatus(log, processAllBranches, &status) {
+		processed = false
+	} else {
+		processed, err = func() (bool, error) {
+			sha := *status.SHA
+
+			if status.TargetURL == nil {
+				return false, errors.New("No target_url on taskcluster status event")
+			}
+			taskGroupID := extractTaskGroupID(*status.TargetURL)
+			if taskGroupID == "" {
+				return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
+			}
+
+			log.Debugf("Taskcluster task group %s", taskGroupID)
+
+			labels := mapset.NewSet()
+			if status.IsOnMaster() {
+				labels.Add(shared.MasterLabel)
+			}
+			sender := status.GetCommit().GetAuthor().GetLogin()
+			if sender != "" {
+				labels.Add(shared.GetUserLabel(sender))
+			}
+
+			return processTaskclusterBuild(ctx, taskGroupID, sha, shared.ToStringSlice(labels)...)
+		}()
+	}
+
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -115,27 +155,8 @@ func (b branchInfos) GetNames() []string {
 	return names
 }
 
-func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
+func processTaskclusterBuild(ctx context.Context, taskGroupID, sha string, labels ...string) (bool, error) {
 	log := shared.GetLogger(ctx)
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	var status statusEventPayload
-	if err := json.Unmarshal(payload, &status); err != nil {
-		return false, err
-	}
-
-	processAllBranches := aeAPI.IsFeatureEnabled(flagTaskclusterAllBranches)
-	if !shouldProcessStatus(log, processAllBranches, &status) {
-		return false, nil
-	}
-
-	if status.TargetURL == nil {
-		return false, errors.New("No target_url on taskcluster status event")
-	}
-	taskGroupID := extractTaskGroupID(*status.TargetURL)
-	if taskGroupID == "" {
-		return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
-	}
-
 	log.Debugf("Taskcluster task group %s", taskGroupID)
 
 	client := urlfetch.Client(ctx)
@@ -154,25 +175,14 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	labels := mapset.NewSet()
-	if status.IsOnMaster() {
-		labels.Add(shared.MasterLabel)
-	} else {
-		sender := status.GetCommit().GetAuthor().GetLogin()
-		if sender != "" {
-			labels.Add(shared.GetUserLabel(sender))
-		}
-	}
-	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
 		log,
-		aeAPI,
-		checksAPI,
-		*status.SHA,
+		shared.NewAppEngineAPI(ctx),
+		sha,
 		username,
 		password,
 		urlsByProduct,
-		shared.ToStringSlice(labels))
+		labels)
 	if err != nil {
 		return false, err
 	}
@@ -192,6 +202,31 @@ func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *sta
 		return false
 	}
 	return true
+}
+
+// handleCheckRunEvent processes an Azure Pipelines check run "completed" event.
+func handleCheckRunEvent(aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
+	log := shared.GetLogger(aeAPI.Context())
+	status := event.GetCheckRun().GetStatus()
+	if status != "completed" {
+		log.Infof("Ignoring non-completed status %s", status)
+		return false, nil
+	}
+	detailsURL := event.GetCheckRun().GetDetailsURL()
+	sha := event.GetCheckRun().GetHeadSHA()
+
+	labels := mapset.NewSet()
+	sender := event.GetSender().GetLogin()
+	if sender != "" {
+		labels.Add(shared.GetUserLabel(sender))
+	}
+
+	taskGroupID := extractTaskGroupID(detailsURL)
+	if taskGroupID == "" {
+		return false, fmt.Errorf("unrecognized target_url: %s", detailsURL)
+	}
+
+	return processTaskclusterBuild(aeAPI.Context(), taskGroupID, sha, shared.ToStringSlice(labels)...)
 }
 
 func extractTaskGroupID(targetURL string) string {
@@ -293,7 +328,6 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 func createAllRuns(
 	log shared.Logger,
 	aeAPI shared.AppEngineAPI,
-	checksAPI checks.API,
 	sha,
 	username,
 	password string,
@@ -302,7 +336,6 @@ func createAllRuns(
 	errors := make(chan error, len(urlsByProduct))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByProduct))
-	suites, _ := checksAPI.GetSuitesForSHA(sha)
 	for product, urls := range urlsByProduct {
 		go func(product string, urls []string) {
 			defer wg.Done()
@@ -331,19 +364,6 @@ func createAllRuns(
 			if err != nil {
 				errors <- err
 				return
-			}
-
-			if aeAPI.IsFeatureEnabled(flagPendingChecks) {
-				spec := shared.ProductSpec{}
-				spec.BrowserName = bits[0]
-				if len(bits) > 1 {
-					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-						spec.Labels = mapset.NewSet(label)
-					}
-				}
-				for _, suite := range suites {
-					checksAPI.PendingCheckRun(suite, spec)
-				}
 			}
 		}(product, urls)
 	}

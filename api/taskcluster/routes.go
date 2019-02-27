@@ -9,5 +9,5 @@ import "github.com/web-platform-tests/wpt.fyi/shared"
 // RegisterRoutes adds route handlers for webhooks.
 func RegisterRoutes() {
 	// GitHub webhook for responding to status updates from Taskcluster
-	shared.AddRoute("/api/webhook/taskcluster", "api-webhook-taskcluster", tcWebhookHandler)
+	shared.AddRoute("/api/webhook/taskcluster", "api-webhook-taskcluster", tcStatusWebhookHandler)
 }

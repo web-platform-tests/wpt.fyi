@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
+	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -68,7 +69,8 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		processed, err = handleCheckSuiteEvent(aeAPI, checksAPI, payload)
 	} else if event == "check_run" {
 		azureAPI := azure.NewAPI(ctx)
-		processed, err = handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
+		taskclusterAPI := taskcluster.NewAPI(ctx)
+		processed, err = handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	} else if event == "pull_request" {
 		processed, err = handlePullRequestEvent(aeAPI, checksAPI, payload)
 	}
@@ -148,7 +150,13 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
-func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azure.API, payload []byte) (bool, error) {
+func handleCheckRunEvent(
+	aeAPI shared.AppEngineAPI,
+	checksAPI API,
+	azureAPI azure.API,
+	taskclusterAPI taskcluster.API,
+	payload []byte) (bool, error) {
+
 	log := shared.GetLogger(aeAPI.Context())
 	checkRun := new(github.CheckRunEvent)
 	if err := json.Unmarshal(payload, checkRun); err != nil {
@@ -180,6 +188,12 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, checksAPI API, azureAPI azur
 			return azureAPI.HandleCheckRunEvent(checkRun)
 		}
 		log.Infof("Ignoring Azure pipelines event")
+		return false, nil
+	} else if appID == taskcluster.AppID {
+		if aeAPI.IsFeatureEnabled("processTaskclusterCheckRunEvents") {
+			return taskclusterAPI.HandleCheckRunEvent(checkRun)
+		}
+		log.Infof("Ignoring Taskcluster CheckRun event")
 		return false, nil
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
