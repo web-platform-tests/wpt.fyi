@@ -526,6 +526,39 @@ func TestStructuredQuery_bindExists(t *testing.T) {
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
+func TestStructuredQuery_bindSequential(t *testing.T) {
+	e := shared.ParseProductSpecUnsafe("edge")
+	f := shared.ParseProductSpecUnsafe("firefox")
+	q := AbstractSequential{
+		Args: []AbstractQuery{
+			TestStatusEq{Product: &e, Status: 1},
+			TestStatusNeq{Product: &f, Status: 1},
+		},
+	}
+
+	runs := shared.TestRuns{}
+	runs = shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: e.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: f.ProductAtRevision,
+		},
+	}
+	seq := And{
+		Args: []ConcreteQuery{
+			RunTestStatusEq{Run: int64(0), Status: 1},
+			RunTestStatusNeq{Run: int64(1), Status: 1},
+		},
+	}
+	expected := Or{
+		Args: []ConcreteQuery{seq},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs...))
+}
+
 func TestStructuredQuery_bindAnd(t *testing.T) {
 	p := shared.ParseProductSpecUnsafe("edge")
 	q := AbstractAnd{
