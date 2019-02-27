@@ -41,7 +41,7 @@ type Screenshot struct {
 
 // NewScreenshot creates a new Screenshot with the given labels (empty labels
 // are omitted).
-func NewScreenshot(labels []string) *Screenshot {
+func NewScreenshot(labels ...string) *Screenshot {
 	s := &Screenshot{}
 	for _, l := range labels {
 		if l != "" {
@@ -129,10 +129,10 @@ func RecentScreenshotHashes(ds shared.Datastore, browser, browserVersion, os, os
 	for all.Cardinality() < totalLimit {
 		query := ds.NewQuery("Screenshot")
 		for _, l := range labels {
-			query.Filter("Labels =", l)
+			query = query.Filter("Labels =", l)
 		}
-		query.Order("-LastUsed")
-		query.Limit(totalLimit)
+		query = query.Order("-LastUsed").Limit(totalLimit)
+		// TODO(Hexcles): only project HashMethod, HashDigest fields.
 
 		var hits []Screenshot
 		if _, err := ds.GetAll(query, &hits); err != nil {

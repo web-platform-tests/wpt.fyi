@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -19,7 +20,7 @@ import (
 )
 
 func TestNewScreenshot(t *testing.T) {
-	s := NewScreenshot([]string{"", "chrome"})
+	s := NewScreenshot("", "chrome")
 	assert.Equal(t, s.Labels, []string{"chrome"})
 }
 
@@ -102,7 +103,7 @@ func TestStore(t *testing.T) {
 	})
 }
 
-func TestRecentScreenshotHashes(t *testing.T) {
+func TestRecentScreenshotHashes_filtering(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
@@ -153,4 +154,44 @@ func TestRecentScreenshotHashes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRecentScreenshotHashes_ordering(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+	ds := shared.NewAppEngineDatastore(ctx, false)
+
+	screenshots := []Screenshot{
+		// The order matters: we want the smallest ID to have the
+		// oldest timestamp to avoid accidentally passing the test even
+		// without ordering.
+		Screenshot{
+			HashDigest: "0001",
+			HashMethod: "hash",
+			LastUsed:   time.Now().Add(-time.Minute * 3),
+		},
+		Screenshot{
+			HashDigest: "0002",
+			HashMethod: "hash",
+			LastUsed:   time.Now().Add(-time.Minute * 2),
+		},
+		Screenshot{
+			HashDigest: "0003",
+			HashMethod: "hash",
+			LastUsed:   time.Now().Add(-time.Minute * 1),
+		},
+	}
+	for _, s := range screenshots {
+		key := ds.NewNameKey("Screenshot", s.Key())
+		_, err := ds.Put(key, &s)
+		assert.Nil(t, err)
+	}
+
+	two := 2
+	// Intentionally provide a label without any matches to test the query fallback.
+	hashes, err := RecentScreenshotHashes(ds, "chrome", "", "", "", &two)
+	assert.Nil(t, err)
+	sort.Strings(hashes)
+	assert.Equal(t, []string{"hash:0002", "hash:0003"}, hashes)
 }

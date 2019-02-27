@@ -106,7 +106,7 @@ func storeScreenshot(ctx context.Context, bucket *storage.BucketHandle, hashMeth
 	if hashMethod == "" {
 		hashMethod = "sha1"
 	}
-	s := NewScreenshot([]string{browser, browserVersion, os, osVersion})
+	s := NewScreenshot(browser, browserVersion, os, osVersion)
 	if err := s.SetHashFromFile(f, hashMethod); err != nil {
 		return err
 	}
