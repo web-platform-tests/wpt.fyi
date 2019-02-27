@@ -78,7 +78,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 			if status.TargetURL == nil {
 				return false, errors.New("No target_url on taskcluster status event")
 			}
-			taskGroupID := extractTaskGroupID(*status.TargetURL)
+			taskGroupID, taskID := extractTaskGroupID(*status.TargetURL)
 			if taskGroupID == "" {
 				return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
 			}
@@ -94,7 +94,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 				labels.Add(shared.GetUserLabel(sender))
 			}
 
-			return processTaskclusterBuild(ctx, taskGroupID, sha, shared.ToStringSlice(labels)...)
+			return processTaskclusterBuild(ctx, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
 		}()
 	}
 
@@ -155,7 +155,7 @@ func (b branchInfos) GetNames() []string {
 	return names
 }
 
-func processTaskclusterBuild(ctx context.Context, taskGroupID, sha string, labels ...string) (bool, error) {
+func processTaskclusterBuild(ctx context.Context, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
 	log := shared.GetLogger(ctx)
 	log.Debugf("Taskcluster task group %s", taskGroupID)
 
@@ -165,7 +165,7 @@ func processTaskclusterBuild(ctx context.Context, taskGroupID, sha string, label
 		return false, err
 	}
 
-	urlsByProduct, err := extractResultURLs(log, taskGroup)
+	urlsByProduct, err := extractResultURLs(log, taskGroup, taskID)
 	if err != nil {
 		return false, err
 	}
@@ -221,20 +221,23 @@ func handleCheckRunEvent(aeAPI shared.AppEngineAPI, event *github.CheckRunEvent)
 		labels.Add(shared.GetUserLabel(sender))
 	}
 
-	taskGroupID := extractTaskGroupID(detailsURL)
+	taskGroupID, taskID := extractTaskGroupID(detailsURL)
 	if taskGroupID == "" {
 		return false, fmt.Errorf("unrecognized target_url: %s", detailsURL)
 	}
 
-	return processTaskclusterBuild(aeAPI.Context(), taskGroupID, sha, shared.ToStringSlice(labels)...)
+	return processTaskclusterBuild(aeAPI.Context(), taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
 }
 
-func extractTaskGroupID(targetURL string) string {
-	lastSlash := strings.LastIndex(targetURL, "/")
-	if lastSlash == -1 {
-		return ""
+func extractTaskGroupID(targetURL string) (string, string) {
+	regex := regexp.MustCompile("(?:/task-group-inspector/#/|/groups/)([^/]*)(?:/tasks/([^/]*))?")
+	matches := regex.FindStringSubmatch(targetURL)
+	if len(matches) < 2 {
+		return "", ""
+	} else if len(matches) < 3 {
+		return matches[1], ""
 	}
-	return targetURL[lastSlash+1:]
+	return matches[1], matches[2]
 }
 
 // https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#response-2
@@ -274,13 +277,16 @@ func getTaskGroupInfo(client *http.Client, groupID string) (*taskGroupInfo, erro
 	return &group, nil
 }
 
-func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]string, error) {
+func extractResultURLs(log shared.Logger, group *taskGroupInfo, taskID string) (map[string][]string, error) {
 	failures := mapset.NewSet()
 	resultURLs := make(map[string][]string)
 	for _, task := range group.Tasks {
-		taskID := task.Status.TaskID
-		if taskID == "" {
+		id := task.Status.TaskID
+		if id == "" {
 			return nil, fmt.Errorf("task group %s has a task without taskId", group.TaskGroupID)
+		} else if taskID != "" && taskID != id {
+			log.Debugf("Skipping task %s", id)
+			continue
 		}
 
 		matches := taskNameRegex.FindStringSubmatch(task.Task.Metadata.Name)
@@ -298,7 +304,7 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]st
 
 		if task.Status.State != "completed" {
 			log.Errorf("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
-				group.TaskGroupID, taskID, product)
+				group.TaskGroupID, id, product)
 			failures.Add(product)
 			continue
 		}
@@ -306,7 +312,7 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]st
 		resultURLs[product] = append(resultURLs[product],
 			// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
 			fmt.Sprintf(
-				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", taskID,
+				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", id,
 			))
 	}
 

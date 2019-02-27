@@ -89,8 +89,16 @@ func TestIsOnMaster(t *testing.T) {
 }
 
 func TestExtractTaskGroupID(t *testing.T) {
-	assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg",
-		extractTaskGroupID("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg"))
+	t.Run("Status", func(t *testing.T) {
+		group, task := extractTaskGroupID("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg", group)
+		assert.Equal(t, "", task)
+	})
+	t.Run("CheckRun", func(t *testing.T) {
+		group, task := extractTaskGroupID("https://tools.taskcluster.net/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
+		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
+		assert.Equal(t, "NOToWHr0T-u62B9yGQnD5w", task)
+	})
 }
 
 func TestExtractResultURLs_all_success_master(t *testing.T) {
@@ -104,18 +112,30 @@ func TestExtractResultURLs_all_success_master(t *testing.T) {
 		group.Tasks[i].Status.TaskID = fmt.Sprint(i)
 	}
 
-	urls, err := extractResultURLs(shared.NewNilLogger(), group)
-	assert.Nil(t, err)
-	assert.Equal(t, map[string][]string{
-		"firefox-nightly": {
-			"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
-			"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_report.json.gz",
-		},
-		"chrome-dev": {
-			"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
-			"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_report.json.gz",
-		},
-	}, urls)
+	t.Run("All", func(t *testing.T) {
+		urls, err := extractResultURLs(shared.NewNilLogger(), group, "")
+		assert.Nil(t, err)
+		assert.Equal(t, map[string][]string{
+			"firefox-nightly": {
+				"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+				"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_report.json.gz",
+			},
+			"chrome-dev": {
+				"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+				"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_report.json.gz",
+			},
+		}, urls)
+	})
+
+	t.Run("Filtered", func(t *testing.T) {
+		urls, err := extractResultURLs(shared.NewNilLogger(), group, "0")
+		assert.Nil(t, err)
+		assert.Equal(t, map[string][]string{
+			"firefox-nightly": {
+				"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+			},
+		}, urls)
+	})
 }
 
 func TestExtractResultURLs_all_success_pr(t *testing.T) {
@@ -128,16 +148,28 @@ func TestExtractResultURLs_all_success_pr(t *testing.T) {
 		group.Tasks[i].Status.TaskID = fmt.Sprint(i)
 	}
 
-	urls, err := extractResultURLs(shared.NewNilLogger(), group)
-	assert.Nil(t, err)
-	assert.Equal(t, map[string][]string{
-		"chrome-dev-pr_head": {
-			"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
-		},
-		"chrome-dev-pr_base": {
-			"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
-		},
-	}, urls)
+	t.Run("All", func(t *testing.T) {
+		urls, err := extractResultURLs(shared.NewNilLogger(), group, "")
+		assert.Nil(t, err)
+		assert.Equal(t, map[string][]string{
+			"chrome-dev-pr_head": {
+				"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+			},
+			"chrome-dev-pr_base": {
+				"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+			},
+		}, urls)
+	})
+
+	t.Run("Filtered", func(t *testing.T) {
+		urls, err := extractResultURLs(shared.NewNilLogger(), group, "2")
+		assert.Nil(t, err)
+		assert.Equal(t, map[string][]string{
+			"chrome-dev-pr_base": {
+				"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+			},
+		}, urls)
+	})
 }
 
 func TestExtractResultURLs_with_failures(t *testing.T) {
@@ -152,7 +184,7 @@ func TestExtractResultURLs_with_failures(t *testing.T) {
 	group.Tasks[2].Status.TaskID = "baz"
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
 
-	urls, err := extractResultURLs(shared.NewNilLogger(), group)
+	urls, err := extractResultURLs(shared.NewNilLogger(), group, "")
 	assert.Nil(t, err)
 	assert.Equal(t, map[string][]string{
 		"chrome-dev": {
