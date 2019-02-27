@@ -17,15 +17,19 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+func parseParams(r *http.Request) (browser, browserVersion, os, osVersion string) {
+	browser = r.FormValue("browser")
+	browserVersion = r.FormValue("browser_version")
+	os = r.FormValue("os")
+	osVersion = r.FormValue("os_version")
+	return browser, browserVersion, os, osVersion
+}
+
 func getHashesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
-	browser := r.FormValue("browser")
-	browserVersion := r.FormValue("browser_version")
-	os := r.FormValue("os")
-	osVersion := r.FormValue("os_version")
-
+	browser, browserVersion, os, osVersion := parseParams(r)
 	hashes, err := RecentScreenshotHashes(ds, browser, browserVersion, os, osVersion, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -59,10 +63,7 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	bucket := gcs.Bucket(bucketName)
 
-	browser := r.FormValue("browser")
-	browserVersion := r.FormValue("browser_version")
-	os := r.FormValue("os")
-	osVersion := r.FormValue("os_version")
+	browser, browserVersion, os, osVersion := parseParams(r)
 	hashMethod := r.FormValue("hash_method")
 	if r.MultipartForm == nil || r.MultipartForm.File == nil || len(r.MultipartForm.File["screenshot"]) == 0 {
 		http.Error(w, "no screenshot file found", http.StatusBadRequest)
