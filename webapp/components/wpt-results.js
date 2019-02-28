@@ -172,12 +172,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     </results-tabs>
 
     <section class="search">
-      <div class="path">
-        <a href="/results/[[ query ]]" on-click="navigate">wpt</a>
-        <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
-          <span class="path-separator">/</span>
-          <a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
-        </template>
+      <!-- NOTE: Tag wrapping below is deliberate to avoid whitespace throughout the path. -->
+      <div class="path"
+        ><a href="/results/[[ query ]]" on-click="navigate">wpt</a
+        ><template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
+          ><span class="path-separator">/</span
+        ><a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a
+        ></template>
 
         <template is="dom-if" if="[[showTestType]]">
           <template is="dom-if" if="[[testType]]">
