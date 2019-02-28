@@ -47,6 +47,20 @@ func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(arg0, arg1, arg2 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureArtifactsURL", reflect.TypeOf((*MockAPI)(nil).GetAzureArtifactsURL), arg0, arg1, arg2)
 }
 
+// GetAzureBuildURL mocks base method
+func (m *MockAPI) GetAzureBuildURL(arg0, arg1 string, arg2 int64) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAzureBuildURL", arg0, arg1, arg2)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetAzureBuildURL indicates an expected call of GetAzureBuildURL
+func (mr *MockAPIMockRecorder) GetAzureBuildURL(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureBuildURL", reflect.TypeOf((*MockAPI)(nil).GetAzureBuildURL), arg0, arg1, arg2)
+}
+
 // HandleCheckRunEvent mocks base method
 func (m *MockAPI) HandleCheckRunEvent(arg0 *github.CheckRunEvent) (bool, error) {
 	m.ctrl.T.Helper()
@@ -60,4 +74,18 @@ func (m *MockAPI) HandleCheckRunEvent(arg0 *github.CheckRunEvent) (bool, error) 
 func (mr *MockAPIMockRecorder) HandleCheckRunEvent(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleCheckRunEvent", reflect.TypeOf((*MockAPI)(nil).HandleCheckRunEvent), arg0)
+}
+
+// IsMasterBranch mocks base method
+func (m *MockAPI) IsMasterBranch(arg0, arg1 string, arg2 int64) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsMasterBranch", arg0, arg1, arg2)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsMasterBranch indicates an expected call of IsMasterBranch
+func (mr *MockAPIMockRecorder) IsMasterBranch(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsMasterBranch", reflect.TypeOf((*MockAPI)(nil).IsMasterBranch), arg0, arg1, arg2)
 }

@@ -42,10 +42,12 @@ type Datastore interface {
 	NewQuery(typeName string) Query
 	NewIDKey(typeName string, id int64) Key
 	NewNameKey(typeName string, name string) Key
+	ReserveID(typeName string) (Key, error)
 	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
 	Put(key Key, src interface{}) (Key, error)
+	Insert(key Key, src interface{}) error
 
 	TestRunQuery() TestRunQuery
 }

@@ -499,12 +499,12 @@ def normalize_product(report):
     if "_" in product:
         tokens = product.split("_")
         report.run_info['product'] = tokens[0]
-        return set(tokens[1:])
+        return set(tokens)
     else:
         return set()
 
 
-def create_test_run(report, labels_str, uploader, secret,
+def create_test_run(report, run_id, labels_str, uploader, secret,
                     results_url, raw_results_url, callback_url=None):
     """Creates a TestRun on the dashboard.
 
@@ -512,6 +512,7 @@ def create_test_run(report, labels_str, uploader, secret,
 
     Args:
         report: A WPTReport.
+        run_id: The pre-allocated Datastore ID for this run.
         labels_str: A comma-separated string of labels from the uploader.
         uploader: The name of the uploader.
         secret: A secret token.
@@ -532,6 +533,8 @@ def create_test_run(report, labels_str, uploader, secret,
     labels |= normalize_product(report)
 
     payload = report.test_run_metadata
+    if int(run_id) != 0:
+        payload['id'] = int(run_id)
     payload['results_url'] = results_url
     payload['raw_results_url'] = raw_results_url
     payload['labels'] = sorted(labels)

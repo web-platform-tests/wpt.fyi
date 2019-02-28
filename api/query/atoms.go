@@ -112,7 +112,7 @@ type AbstractSequential struct {
 func (e AbstractSequential) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	numSeqQueries := len(e.Args)
 	byRuns := []ConcreteQuery{}
-	for i := 0; i+numSeqQueries < len(runs); i++ {
+	for i := 0; i+numSeqQueries-1 < len(runs); i++ {
 		all := And{}
 		for j, arg := range e.Args {
 			all.Args = append(all.Args, arg.BindToRuns(runs[i+j]))

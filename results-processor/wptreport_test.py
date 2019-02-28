@@ -563,7 +563,7 @@ class HelpersTest(unittest.TestCase):
         }
         self.assertSetEqual(
             normalize_product(r),
-            {'webdriver'}
+            {'edge', 'webdriver'}
         )
         self.assertEqual(
             r.run_info['product'],

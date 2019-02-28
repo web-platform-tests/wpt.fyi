@@ -50,6 +50,7 @@ func matchRegex(r string) *regexMatcher {
 
 // An empty (default) extraParams
 var emptyParams = map[string]string{
+	"id":              "",
 	"browser_name":    "",
 	"labels":          "",
 	"revision":        "",
@@ -94,6 +95,7 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	payload := url.Values{
+		"id":            {"123"},
 		"result_url":    {"http://wpt.fyi/test.json.gz"},
 		"browser_name":  {"firefox"},
 		"labels":        {"stable"},
@@ -106,6 +108,7 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 
 	f := &os.File{}
 	extraParams := map[string]string{
+		"id":              "123",
 		"browser_name":    "firefox",
 		"labels":          "stable",
 		"revision":        "",

@@ -6,6 +6,8 @@ package shared
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"cloud.google.com/go/datastore"
 	"google.golang.org/api/iterator"
@@ -65,6 +67,18 @@ func (d cloudDatastore) NewIDKey(typeName string, id int64) Key {
 	}
 }
 
+func (d cloudDatastore) ReserveID(typeName string) (Key, error) {
+	keys, err := d.client.AllocateIDs(d.ctx, []*datastore.Key{datastore.IncompleteKey(typeName, nil)})
+	if err != nil {
+		return nil, err
+	} else if len(keys) < 1 {
+		return nil, errors.New("Failed to create a key")
+	}
+	return cloudKey{
+		key: keys[0],
+	}, nil
+}
+
 func (d cloudDatastore) NewNameKey(typeName string, name string) Key {
 	return cloudKey{
 		key: datastore.NameKey(typeName, name, nil),
@@ -96,6 +110,21 @@ func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 func (d cloudDatastore) Put(key Key, src interface{}) (Key, error) {
 	newkey, err := d.client.Put(d.ctx, key.(cloudKey).key, src)
 	return cloudKey{newkey}, err
+}
+
+func (d cloudDatastore) Insert(key Key, src interface{}) error {
+	_, err := d.client.RunInTransaction(d.ctx, func(txn *datastore.Transaction) error {
+		var empty map[string]interface{}
+		err := txn.Get(key.(cloudKey).key, &empty)
+		if err == nil {
+			return fmt.Errorf("Entity %v already exists", key.IntID())
+		} else if err != datastore.ErrNoSuchEntity {
+			return err
+		}
+		_, err = txn.Put(key.(cloudKey).key, src)
+		return err
+	}, nil)
+	return err
 }
 
 type cloudQuery struct {

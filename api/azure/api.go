@@ -8,7 +8,10 @@ package azure
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"regexp"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -16,6 +19,8 @@ import (
 
 // PipelinesAppID is the ID of the Azure Pipelines GitHub app.
 const PipelinesAppID = int64(9426)
+
+var epochBranchesRegex = regexp.MustCompile("^refs/heads/epochs/.*")
 
 // https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 
@@ -40,10 +45,21 @@ type ArtifactResource struct {
 	URL         string `json:"url"`
 }
 
+type azureBuild struct {
+	SourceBranch string                `json:"sourceBranch"`
+	TriggerInfo  azureBuildTriggerInfo `json:"triggerInfo"`
+}
+
+type azureBuildTriggerInfo struct {
+	SourceBranch string `json:"pr.sourceBranch"`
+}
+
 // API is for Azure Pipelines related requests.
 type API interface {
 	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
+	GetAzureBuildURL(owner, repo string, buildID int64) string
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
+	IsMasterBranch(owner, repo string, buildID int64) bool
 }
 
 type apiImpl struct {
@@ -62,10 +78,42 @@ func (a apiImpl) HandleCheckRunEvent(checkRun *github.CheckRunEvent) (bool, erro
 	return handleCheckRunEvent(a, shared.NewAppEngineAPI(a.ctx), checkRun)
 }
 
+func (a apiImpl) GetAzureBuildURL(owner, repo string, buildID int64) string {
+	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/builds/get?view=azure-devops-rest-4.1#build
+	return fmt.Sprintf(
+		"https://dev.azure.com/%s/%s/_apis/build/builds/%v", owner, repo, buildID)
+}
+
 func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string {
 	return fmt.Sprintf(
 		"https://dev.azure.com/%s/%s/_apis/build/builds/%v/artifacts",
 		owner,
 		repo,
 		buildID)
+}
+
+func (a apiImpl) IsMasterBranch(owner, repo string, buildID int64) bool {
+	buildURL := a.GetAzureBuildURL(owner, repo, buildID)
+	client := shared.NewAppEngineAPI(a.ctx).GetHTTPClient()
+	log := shared.GetLogger(a.ctx)
+	resp, err := client.Get(buildURL)
+	if err != nil {
+		log.Errorf("Failed to fetch build: %s", err.Error())
+		return false
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Failed to read request response: %s", err.Error())
+		return false
+	}
+	var build azureBuild
+	if err := json.Unmarshal(data, &build); err != nil {
+		log.Errorf("Failed to unmarshal request response: %s", err.Error())
+		return false
+	}
+	log.Debugf("Source branch: %s", build.SourceBranch)
+	log.Debugf("Trigger PR branch: %s", build.TriggerInfo.SourceBranch)
+	return epochBranchesRegex.MatchString(build.SourceBranch) ||
+		build.TriggerInfo.SourceBranch == "master"
 }
