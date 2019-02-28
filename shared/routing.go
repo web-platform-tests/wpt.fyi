@@ -31,7 +31,7 @@ func AddRoute(route, name string, h http.HandlerFunc) *mux.Route {
 
 // WrapHSTS wraps the given handler func in one that sets the
 // Strict-Transport-Security header on the response.
-func WrapHSTS(h http.Handler) http.HandlerFunc {
+func WrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		value := "max-age=31536000; preload"
 		w.Header().Add("Strict-Transport-Security", value)
@@ -54,7 +54,7 @@ func WrapPermissiveCORS(h http.HandlerFunc, methods ...string) http.HandlerFunc 
 
 // WrapApplicationJSON wraps the given handler func in one that sets a Content-Type
 // header of "text/json" on the response.
-func WrapApplicationJSON(h http.Handler) http.HandlerFunc {
+func WrapApplicationJSON(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 		h.ServeHTTP(w, r)
