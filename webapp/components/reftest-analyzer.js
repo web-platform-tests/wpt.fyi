@@ -7,15 +7,17 @@
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
 import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
-import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
+import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import { LoadingState } from './loading-state.js';
 
 const nsSVG = 'http://www.w3.org/2000/svg';
 const nsXLINK = 'http://www.w3.org/1999/xlink';
 const blankFill = 'white';
 
-class ReftestAnalyzer extends PolymerElement {
+class ReftestAnalyzer extends LoadingState(PolymerElement) {
   static get template() {
     return html`
       <style>
@@ -47,6 +49,12 @@ class ReftestAnalyzer extends PolymerElement {
           height: 100%;
           width: 100%;
         }
+        #options {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px;
+        }
       </style>
 
       <div id='zoom'>
@@ -58,13 +66,15 @@ class ReftestAnalyzer extends PolymerElement {
       </div>
 
       <div id="source" class$="[[selectedImage]]">
-        <div>
+        <div id="options">
           <paper-radio-group selected="{{selectedImage}}">
             <paper-radio-button name="before">Image before</paper-radio-button>
             <paper-radio-button name="after">Image after</paper-radio-button>
           </paper-radio-group>
           <paper-checkbox name="diff" checked="{{showDiff}}">Differences</paper-checkbox>
+          <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
         </div>
+
 
         <div id="display">
           <img id="before" onmousemove="[[zoom]]" src="[[before]]" />
@@ -82,7 +92,7 @@ class ReftestAnalyzer extends PolymerElement {
                   <feFlood result="red" flood-color="#f00" />
                   <feComposite result="highlight" in="red" in2="border" operator="in" />
 
-                  <feFlood result="shadow" flood-color="#000" flood-opacity="0.2" />
+                  <feFlood id="shadow" result="shadow" flood-color="#000" flood-opacity="0.2" />
                   <feMerge>
                     <feMergeNode in="highlight" />
                     <feMergeNode in="shadow" />
@@ -172,40 +182,46 @@ class ReftestAnalyzer extends PolymerElement {
     this.paths = paths;
   }
 
-  async computeDiff(canvasBefore, canvasAfter) {
+  computeDiff(canvasBefore, canvasAfter) {
     if (!canvasBefore || !canvasAfter) {
       return;
     }
-    const before = this.shadowRoot.querySelector('#before');
-    const after = this.shadowRoot.querySelector('#after');
+    return this.load(new Promise(resolve => {
+      const before = this.shadowRoot.querySelector('#before');
+      const after = this.shadowRoot.querySelector('#after');
 
-    const beforeCtx = canvasBefore.getContext('2d');
-    const afterCtx = canvasAfter.getContext('2d');
+      const beforeCtx = canvasBefore.getContext('2d');
+      const afterCtx = canvasAfter.getContext('2d');
 
-    const out = document.createElement('canvas');
-    out.width = Math.max(before.width, after.width);
-    out.height = Math.max(before.height, after.height);
-    const outCtx = out.getContext('2d');
+      const out = document.createElement('canvas');
+      out.width = Math.max(before.width, after.width);
+      out.height = Math.max(before.height, after.height);
+      const outCtx = out.getContext('2d');
 
-    for (let y = 0; y < Math.min(before.height, after.height); y++) {
-      const beforePixels = beforeCtx.getImageData(0, y, before.width, 1).data;
-      const afterPixels = afterCtx.getImageData(0, y, after.width, 1).data;
-      for (let x = 0; x < Math.min(before.width, after.width); x++) {
-        for (let i = 0; i < 4; i++) {
-          const pxlBefore = beforePixels[(x * 4) + i];
-          const pxlAfter = afterPixels[(x * 4) + i];
-          if (pxlBefore !== pxlAfter) {
-            outCtx.fillRect(x, y, 1, 1);
-            break;
+      for (let y = 0; y < Math.min(before.height, after.height); y++) {
+        const beforePixels = beforeCtx.getImageData(0, y, before.width, 1).data;
+        const afterPixels = afterCtx.getImageData(0, y, after.width, 1).data;
+        for (let x = 0; x < Math.min(before.width, after.width); x++) {
+          for (let i = 0; i < 4; i++) {
+            const pxlBefore = beforePixels[(x * 4) + i];
+            const pxlAfter = afterPixels[(x * 4) + i];
+            if (pxlBefore !== pxlAfter) {
+              outCtx.fillRect(x, y, 1, 1);
+              break;
+            }
           }
         }
       }
-    }
-    this.diff = out.toDataURL('image/png');
-    const display = this.shadowRoot.querySelector('#different-pixels');
-    display.setAttribute('width', out.width);
-    display.setAttribute('height', out.height);
-    display.setAttributeNS(nsXLINK, 'xlink:href', this.diff);
+      this.diff = out.toDataURL('image/png');
+      const display = this.shadowRoot.querySelector('#different-pixels');
+      display.setAttribute('width', out.width);
+      display.setAttribute('height', out.height);
+      display.setAttributeNS(nsXLINK, 'xlink:href', this.diff);
+      const rect = this.shadowRoot.querySelector('#diff-layer');
+      rect.setAttribute('width', out.width);
+      rect.setAttribute('height', out.height);
+      resolve();
+    }));
   }
 
   handleZoom(e) {
