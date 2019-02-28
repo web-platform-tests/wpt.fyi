@@ -19,7 +19,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
-	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -33,7 +32,10 @@ var (
 	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
 )
 
-func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
+// tcStatusWebhookHandler reacts to GitHub status webhook events. This is juxtaposed with
+// handleCheckRunEvent below, which is how we react to the (new) CheckRun implementation
+// of Taskcluster.
+func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" ||
 		r.Header.Get("X-GitHub-Event") != "status" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -57,7 +59,45 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
-	processed, err := handleStatusEvent(ctx, payload)
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	var status statusEventPayload
+	if err := json.Unmarshal(payload, &status); err != nil {
+		log.Errorf("%v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	processAllBranches := aeAPI.IsFeatureEnabled(flagTaskclusterAllBranches)
+	var processed bool
+	if !shouldProcessStatus(log, processAllBranches, &status) {
+		processed = false
+	} else {
+		processed, err = func() (bool, error) {
+			sha := *status.SHA
+
+			if status.TargetURL == nil {
+				return false, errors.New("No target_url on taskcluster status event")
+			}
+			taskGroupID, taskID := extractTaskGroupID(*status.TargetURL)
+			if taskGroupID == "" {
+				return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
+			}
+
+			log.Debugf("Taskcluster task group %s", taskGroupID)
+
+			labels := mapset.NewSet()
+			if status.IsOnMaster() {
+				labels.Add(shared.MasterLabel)
+			}
+			sender := status.GetCommit().GetAuthor().GetLogin()
+			if sender != "" {
+				labels.Add(shared.GetUserLabel(sender))
+			}
+
+			return processTaskclusterBuild(aeAPI, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
+		}()
+	}
+
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -115,28 +155,13 @@ func (b branchInfos) GetNames() []string {
 	return names
 }
 
-func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
+func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
+	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	var status statusEventPayload
-	if err := json.Unmarshal(payload, &status); err != nil {
-		return false, err
-	}
-
-	processAllBranches := aeAPI.IsFeatureEnabled(flagTaskclusterAllBranches)
-	if !shouldProcessStatus(log, processAllBranches, &status) {
-		return false, nil
-	}
-
-	if status.TargetURL == nil {
-		return false, errors.New("No target_url on taskcluster status event")
-	}
-	taskGroupID := extractTaskGroupID(*status.TargetURL)
-	if taskGroupID == "" {
-		return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
-	}
-
 	log.Debugf("Taskcluster task group %s", taskGroupID)
+	if taskID != "" {
+		log.Debugf("Taskcluster task %s", taskID)
+	}
 
 	client := urlfetch.Client(ctx)
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
@@ -144,7 +169,7 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	urlsByProduct, err := extractResultURLs(log, taskGroup)
+	urlsByProduct, err := extractResultURLs(log, taskGroup, taskID)
 	if err != nil {
 		return false, err
 	}
@@ -154,25 +179,14 @@ func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
 		return false, err
 	}
 
-	labels := mapset.NewSet()
-	if status.IsOnMaster() {
-		labels.Add(shared.MasterLabel)
-	} else {
-		sender := status.GetCommit().GetAuthor().GetLogin()
-		if sender != "" {
-			labels.Add(shared.GetUserLabel(sender))
-		}
-	}
-	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
 		log,
-		aeAPI,
-		checksAPI,
-		*status.SHA,
+		shared.NewAppEngineAPI(ctx),
+		sha,
 		username,
 		password,
 		urlsByProduct,
-		shared.ToStringSlice(labels))
+		labels)
 	if err != nil {
 		return false, err
 	}
@@ -194,12 +208,18 @@ func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *sta
 	return true
 }
 
-func extractTaskGroupID(targetURL string) string {
-	lastSlash := strings.LastIndex(targetURL, "/")
-	if lastSlash == -1 {
-		return ""
+func extractTaskGroupID(targetURL string) (string, string) {
+	inspectorRegex := regexp.MustCompile("/task-group-inspector/#/([^/]*)")
+	matches := inspectorRegex.FindStringSubmatch(targetURL)
+	if len(matches) > 1 {
+		return matches[1], ""
 	}
-	return targetURL[lastSlash+1:]
+	taskRegex := regexp.MustCompile("/groups/([^/]*)/tasks/([^/]*)")
+	matches = taskRegex.FindStringSubmatch(targetURL)
+	if len(matches) > 2 {
+		return matches[1], matches[2]
+	}
+	return "", ""
 }
 
 // https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#response-2
@@ -239,13 +259,16 @@ func getTaskGroupInfo(client *http.Client, groupID string) (*taskGroupInfo, erro
 	return &group, nil
 }
 
-func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]string, error) {
+func extractResultURLs(log shared.Logger, group *taskGroupInfo, taskID string) (map[string][]string, error) {
 	failures := mapset.NewSet()
 	resultURLs := make(map[string][]string)
 	for _, task := range group.Tasks {
-		taskID := task.Status.TaskID
-		if taskID == "" {
+		id := task.Status.TaskID
+		if id == "" {
 			return nil, fmt.Errorf("task group %s has a task without taskId", group.TaskGroupID)
+		} else if taskID != "" && taskID != id {
+			log.Debugf("Skipping task %s", id)
+			continue
 		}
 
 		matches := taskNameRegex.FindStringSubmatch(task.Task.Metadata.Name)
@@ -263,7 +286,7 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]st
 
 		if task.Status.State != "completed" {
 			log.Errorf("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
-				group.TaskGroupID, taskID, product)
+				group.TaskGroupID, id, product)
 			failures.Add(product)
 			continue
 		}
@@ -271,7 +294,7 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]st
 		resultURLs[product] = append(resultURLs[product],
 			// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
 			fmt.Sprintf(
-				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", taskID,
+				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", id,
 			))
 	}
 
@@ -293,7 +316,6 @@ func getAuth(ctx context.Context) (username string, password string, err error) 
 func createAllRuns(
 	log shared.Logger,
 	aeAPI shared.AppEngineAPI,
-	checksAPI checks.API,
 	sha,
 	username,
 	password string,
@@ -302,7 +324,6 @@ func createAllRuns(
 	errors := make(chan error, len(urlsByProduct))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByProduct))
-	suites, _ := checksAPI.GetSuitesForSHA(sha)
 	for product, urls := range urlsByProduct {
 		go func(product string, urls []string) {
 			defer wg.Done()
@@ -311,18 +332,8 @@ func createAllRuns(
 			// chrome-dev-pr_head => [chrome, dev, pr_head]
 			bits := strings.Split(product, "-")
 			labelsForRun := labels
-			// Don't bother with pr_base/pr_head if the other one didn't make it.
 			switch lastBit := bits[len(bits)-1]; lastBit {
 			case shared.PRBaseLabel, shared.PRHeadLabel:
-				otherLabel := shared.PRBaseLabel
-				if lastBit == shared.PRBaseLabel {
-					otherLabel = shared.PRHeadLabel
-				}
-				otherProduct := strings.Join(append(bits[:len(bits)-1], otherLabel), "-")
-				if _, ok := urlsByProduct[otherProduct]; !ok {
-					log.Warningf("Skipping %s since %s not present", product, otherProduct)
-					return
-				}
 				labelsForRun = append(labelsForRun, lastBit)
 			}
 
@@ -331,19 +342,6 @@ func createAllRuns(
 			if err != nil {
 				errors <- err
 				return
-			}
-
-			if aeAPI.IsFeatureEnabled(flagPendingChecks) {
-				spec := shared.ProductSpec{}
-				spec.BrowserName = bits[0]
-				if len(bits) > 1 {
-					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-						spec.Labels = mapset.NewSet(label)
-					}
-				}
-				for _, suite := range suites {
-					checksAPI.PendingCheckRun(suite, spec)
-				}
 			}
 		}(product, urls)
 	}
