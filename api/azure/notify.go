@@ -31,10 +31,9 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	processed, err := processAzureBuild(
 		aeAPI,
 		azureAPI,
-		"", // SHA is embedded in the wpt_report.json metadata
 		"web-platform-tests",
 		"wpt",
-		"", // No sender info.
+		"",                      // No sender info.
 		r.FormValue("artifact"), // artifact=foo will only process foo.
 		buildID)
 

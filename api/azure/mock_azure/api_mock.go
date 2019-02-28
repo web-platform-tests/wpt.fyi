@@ -7,6 +7,7 @@ package mock_azure
 import (
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/github"
+	azure "github.com/web-platform-tests/wpt.fyi/api/azure"
 	reflect "reflect"
 )
 
@@ -47,6 +48,20 @@ func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(arg0, arg1, arg2 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureArtifactsURL", reflect.TypeOf((*MockAPI)(nil).GetAzureArtifactsURL), arg0, arg1, arg2)
 }
 
+// GetAzureBuild mocks base method
+func (m *MockAPI) GetAzureBuild(arg0, arg1 string, arg2 int64) *azure.AzureBuild {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAzureBuild", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*azure.AzureBuild)
+	return ret0
+}
+
+// GetAzureBuild indicates an expected call of GetAzureBuild
+func (mr *MockAPIMockRecorder) GetAzureBuild(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureBuild", reflect.TypeOf((*MockAPI)(nil).GetAzureBuild), arg0, arg1, arg2)
+}
+
 // GetAzureBuildURL mocks base method
 func (m *MockAPI) GetAzureBuildURL(arg0, arg1 string, arg2 int64) string {
 	m.ctrl.T.Helper()
@@ -74,18 +89,4 @@ func (m *MockAPI) HandleCheckRunEvent(arg0 *github.CheckRunEvent) (bool, error) 
 func (mr *MockAPIMockRecorder) HandleCheckRunEvent(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleCheckRunEvent", reflect.TypeOf((*MockAPI)(nil).HandleCheckRunEvent), arg0)
-}
-
-// IsMasterBranch mocks base method
-func (m *MockAPI) IsMasterBranch(arg0, arg1 string, arg2 int64) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsMasterBranch", arg0, arg1, arg2)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsMasterBranch indicates an expected call of IsMasterBranch
-func (mr *MockAPIMockRecorder) IsMasterBranch(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsMasterBranch", reflect.TypeOf((*MockAPI)(nil).IsMasterBranch), arg0, arg1, arg2)
 }

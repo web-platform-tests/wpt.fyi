@@ -45,13 +45,18 @@ type ArtifactResource struct {
 	URL         string `json:"url"`
 }
 
-type azureBuild struct {
+type AzureBuild struct {
 	SourceBranch string                `json:"sourceBranch"`
-	TriggerInfo  azureBuildTriggerInfo `json:"triggerInfo"`
+	HeadSHA      string                `json:"sourceVersion"`
+	TriggerInfo  AzureBuildTriggerInfo `json:"triggerInfo"`
 }
 
-type azureBuildTriggerInfo struct {
+type AzureBuildTriggerInfo struct {
 	SourceBranch string `json:"pr.sourceBranch"`
+}
+
+func (a *AzureBuild) IsMasterBranch() bool {
+	return a.TriggerInfo.SourceBranch == "master"
 }
 
 // API is for Azure Pipelines related requests.
@@ -59,7 +64,7 @@ type API interface {
 	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
 	GetAzureBuildURL(owner, repo string, buildID int64) string
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
-	IsMasterBranch(owner, repo string, buildID int64) bool
+	GetAzureBuild(owner, repo string, buildID int64) *AzureBuild
 }
 
 type apiImpl struct {
@@ -75,7 +80,7 @@ func NewAPI(ctx context.Context) API {
 
 // HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.
 func (a apiImpl) HandleCheckRunEvent(checkRun *github.CheckRunEvent) (bool, error) {
-	return handleCheckRunEvent(a, shared.NewAppEngineAPI(a.ctx), checkRun)
+	return HandleCheckRunEvent(a, shared.NewAppEngineAPI(a.ctx), checkRun)
 }
 
 func (a apiImpl) GetAzureBuildURL(owner, repo string, buildID int64) string {
@@ -92,28 +97,27 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 		buildID)
 }
 
-func (a apiImpl) IsMasterBranch(owner, repo string, buildID int64) bool {
+func (a apiImpl) GetAzureBuild(owner, repo string, buildID int64) *AzureBuild {
 	buildURL := a.GetAzureBuildURL(owner, repo, buildID)
 	client := shared.NewAppEngineAPI(a.ctx).GetHTTPClient()
 	log := shared.GetLogger(a.ctx)
 	resp, err := client.Get(buildURL)
 	if err != nil {
 		log.Errorf("Failed to fetch build: %s", err.Error())
-		return false
+		return nil
 	}
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Failed to read request response: %s", err.Error())
-		return false
+		return nil
 	}
-	var build azureBuild
+	var build AzureBuild
 	if err := json.Unmarshal(data, &build); err != nil {
 		log.Errorf("Failed to unmarshal request response: %s", err.Error())
-		return false
+		return nil
 	}
 	log.Debugf("Source branch: %s", build.SourceBranch)
 	log.Debugf("Trigger PR branch: %s", build.TriggerInfo.SourceBranch)
-	return epochBranchesRegex.MatchString(build.SourceBranch) ||
-		build.TriggerInfo.SourceBranch == "master"
+	return &build
 }

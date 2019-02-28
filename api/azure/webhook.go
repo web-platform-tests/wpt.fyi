@@ -23,13 +23,13 @@ import (
 // For master runs, artifact name may be either just "results" or something
 // like "safari-results".
 var (
-	masterRegex = regexp.MustCompile(`\bresults$`)
-	prHeadRegex = regexp.MustCompile(`\baffected-tests$`)
-	prBaseRegex = regexp.MustCompile(`\baffected-tests-without-changes$`)
+	MasterRegex = regexp.MustCompile(`\bresults$`)
+	PRHeadRegex = regexp.MustCompile(`\baffected-tests$`)
+	PRBaseRegex = regexp.MustCompile(`\baffected-tests-without-changes$`)
 )
 
-// handleCheckRunEvent processes an Azure Pipelines check run "completed" event.
-func handleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
+// HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.
+func HandleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
 	log := shared.GetLogger(aeAPI.Context())
 	status := event.GetCheckRun().GetStatus()
 	if status != "completed" {
@@ -40,16 +40,17 @@ func handleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.
 	repo := event.GetRepo().GetName()
 	sender := event.GetSender().GetLogin()
 	detailsURL := event.GetCheckRun().GetDetailsURL()
-	sha := event.GetCheckRun().GetHeadSHA()
 	buildID := extractAzureBuildID(detailsURL)
 	if buildID == 0 {
 		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
 		return false, nil
 	}
-	return processAzureBuild(aeAPI, azureAPI, sha, owner, repo, sender, "", buildID)
+	return processAzureBuild(aeAPI, azureAPI, owner, repo, sender, "", buildID)
 }
 
-func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
+func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
+	build := azureAPI.GetAzureBuild(owner, repo, buildID)
+
 	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 	artifactsURL := azureAPI.GetAzureArtifactsURL(owner, repo, buildID)
 
@@ -87,13 +88,13 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo
 			labels.Add(shared.GetUserLabel(sender))
 		}
 
-		if masterRegex.MatchString(artifact.Name) {
-			if azureAPI.IsMasterBranch(owner, repo, buildID) {
+		if MasterRegex.MatchString(artifact.Name) {
+			if build.IsMasterBranch() {
 				labels.Add(shared.MasterLabel)
 			}
-		} else if prHeadRegex.MatchString(artifact.Name) {
+		} else if PRHeadRegex.MatchString(artifact.Name) {
 			labels.Add(shared.PRHeadLabel)
-		} else if prBaseRegex.MatchString(artifact.Name) {
+		} else if PRBaseRegex.MatchString(artifact.Name) {
 			labels.Add(shared.PRBaseLabel)
 		}
 
@@ -105,7 +106,7 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, sha, owner, repo
 
 		uploadClient := uc.NewClient(aeAPI)
 		err = uploadClient.CreateRun(
-			sha,
+			build.HeadSHA,
 			uploader.Username,
 			uploader.Password,
 			[]string{artifact.Resource.DownloadURL},
