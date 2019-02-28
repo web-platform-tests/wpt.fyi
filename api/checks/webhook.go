@@ -170,7 +170,9 @@ func handleCheckRunEvent(
 	log.Debugf("Check run %s: %s/%s @ %s", action, owner, repo, shared.CropString(sha, 7))
 
 	appID := checkRun.GetCheckRun().GetApp().GetID()
-	if !isWPTFYIApp(appID) && appID != azure.PipelinesAppID {
+	if !isWPTFYIApp(appID) &&
+		appID != azure.PipelinesAppID &&
+		appID != taskcluster.AppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
