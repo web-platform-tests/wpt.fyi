@@ -167,19 +167,27 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
   async setupZoomSVG() {
     const zoomed = this.shadowRoot.querySelector('#zoomed');
-    const paths = [];
-    for (let x = 0; x < 5; x++) {
-      paths.push([]);
-      for (let y = 0; y < 5; y++) {
-        const path = document.createElementNS(nsSVG, 'path');
-        const offsetX = x * 50 + 1;
-        const offsetY = y * 50 + 1;
-        path.setAttribute('d', `M${offsetX},${offsetY} H${offsetX + 48} V${offsetY + 48} H${offsetX} V${offsetY}`);
-        path.setAttribute('fill', blankFill);
-        paths[x].push(zoomed.appendChild(path));
+    const pathsBefore = [], pathsAfter = [];
+    for (const before of [true, false]) {
+      const paths = before ? pathsBefore : pathsAfter;
+      for (let x = 0; x < 5; x++) {
+        paths.push([]);
+        for (let y = 0; y < 5; y++) {
+          const path = document.createElementNS(nsSVG, 'path');
+          const offsetX = x * 50 + 1;
+          const offsetY = y * 50 + 1;
+          if (before) {
+            path.setAttribute('d', `M${offsetX},${offsetY} H${offsetX + 48} L${offsetX},${offsetY + 48} V${offsetY}`);
+          } else {
+            path.setAttribute('d', `M${offsetX + 48},${offsetY} V${offsetY + 48} H${offsetX} L${offsetX + 48},${offsetY}`);
+          }
+          path.setAttribute('fill', blankFill);
+          paths[x].push(zoomed.appendChild(path));
+        }
       }
     }
-    this.paths = paths;
+    this.pathsBefore = pathsBefore;
+    this.pathsAfter = pathsAfter;
   }
 
   computeDiff(canvasBefore, canvasAfter) {
@@ -225,23 +233,27 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   }
 
   handleZoom(e) {
-    const canvas = this.selectedImage === 'after' ? this.canvasAfter : this.canvasBefore;
-    if (!canvas) {
+    if (!this.canvasAfter || !this.canvasBefore) {
       return;
     }
-    const ctx = canvas.getContext('2d');
-    const c = e.target.getBoundingClientRect();
-    const x = e.clientX - c.left - 2;
-    const y = e.clientY - c.top - 2;
-    for (let i = 0; i < 5; i++) {
-      for (let j = 0; j < 5; j++) {
-        if (x + i < 0 || x + i >= canvas.width || y + j < 0 || y + j >= canvas.height) {
-          this.paths[i][j].fill = blankFill;
-        } else {
-          const p = ctx.getImageData(x+i, y+j, 1, 1).data;
-          const [r,g,b] = p;
-          const a = p[3]/255;
-          this.paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a}`);
+
+    for (const before of [true, false]) {
+      const canvas = before ? this.canvasBefore : this.canvasAfter;
+      const paths = before ? this.pathsBefore : this.pathsAfter;
+      const ctx = canvas.getContext('2d');
+      const c = e.target.getBoundingClientRect();
+      const x = e.clientX - c.left - 2;
+      const y = e.clientY - c.top - 2;
+      for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+          if (x + i < 0 || x + i >= canvas.width || y + j < 0 || y + j >= canvas.height) {
+            paths[i][j].fill = blankFill;
+          } else {
+            const p = ctx.getImageData(x+i, y+j, 1, 1).data;
+            const [r,g,b] = p;
+            const a = p[3]/255;
+            paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a}`);
+          }
         }
       }
     }
