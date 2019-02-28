@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+{{ template "_head_common.html" }}
+<script type="module" src="/components/reftest-analyzer.js"></script>
+</head>
+<body>
+<div id="content">
+  <reftest-analyzer before="{{.Before}}" after="{{.After}}"></reftest-analyzer>
+</div>
+{{ template "_ga.html" }}
+</body>
+</html>

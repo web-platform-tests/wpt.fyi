@@ -46,12 +46,16 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
     </div>
 
     <template is="dom-if" if="{{!isVerbose}}">
-      <test-file-results-table-terse test-runs="[[testRuns]]" results-table="[[resultsTable]]">
+      <test-file-results-table-terse test-runs="[[testRuns]]"
+                                     results-table="[[resultsTable]]"
+                                     on-reftest-compare="[[onReftestCompare]]">
       </test-file-results-table-terse>
     </template>
 
     <template is="dom-if" if="{{isVerbose}}">
-      <test-file-results-table-verbose test-runs="[[testRuns]]" results-table="[[resultsTable]]">
+      <test-file-results-table-verbose test-runs="[[testRuns]]"
+                                       results-table="[[resultsTable]]"
+                                       on-reftest-compare="[[onReftestCompare]]">
       </test-file-results-table-verbose>
     </template>
 `;
@@ -72,6 +76,7 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
         type: Boolean,
         value: false,
       },
+      onReftestCompare: Function,
     };
   }
 
@@ -154,10 +159,14 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
     // resultsTable[0].name set after discovering subtests.
     let resultsTable = [{
       results: resultsPerTestRun.map(data => {
-        return {
+        const result = {
           status: data && data.status,
           message: data && data.message,
         };
+        if (this.reftestAnalyzer) {
+          result.screenshots = data && data.screenshots;
+        }
+        return result;
       }),
     }];
 
@@ -198,7 +207,15 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
     if (!response.ok) {
       return null;
     }
-    return response.json();
+    if (!this.reftestAnalyzerMockScreenshots) {
+      return response.json();
+    }
+    // Use some arbitrary screenshots for any without them.
+    const screenshots = {};
+    screenshots[this.path] = 'sha1:000c495e8f587dac40894d0cacb5a7ca769410c6';
+    screenshots[this.path.replace(/.html$/, '-ref.html')] = 'sha1:000c495e8f587dac40894d0cacb5a7ca769410c6';
+    return response.json()
+      .then(r => Object.assign({ screenshots }, r));
   }
 
   mergeNamesInto(names, allNames) {
