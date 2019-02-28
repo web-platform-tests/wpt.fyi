@@ -50,6 +50,10 @@ func HandleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.
 
 func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
 	build := azureAPI.GetAzureBuild(owner, repo, buildID)
+	sha := ""
+	if build != nil {
+		sha = build.HeadSHA
+	}
 
 	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 	artifactsURL := azureAPI.GetAzureArtifactsURL(owner, repo, buildID)
@@ -106,7 +110,7 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sen
 
 		uploadClient := uc.NewClient(aeAPI)
 		err = uploadClient.CreateRun(
-			build.HeadSHA,
+			sha,
 			uploader.Username,
 			uploader.Password,
 			[]string{artifact.Resource.DownloadURL},
