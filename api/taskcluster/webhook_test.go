@@ -261,10 +261,6 @@ func TestCreateAllRuns_success_pr(t *testing.T) {
 			"chrome-dev-pr_base":     []string{"1"},
 			"firefox-stable-pr_head": []string{"1"},
 			"firefox-stable-pr_base": []string{"1"},
-			"safari-pr_base":         []string{"1"},
-			// Missing "safari-pr_head": []string{"1"},
-			// Missing "edge-pr_base": []string{"1"},
-			"edge-pr_head": []string{"1"},
 		},
 		nil,
 	)
