@@ -94,7 +94,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 				labels.Add(shared.GetUserLabel(sender))
 			}
 
-			return processTaskclusterBuild(ctx, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
+			return processTaskclusterBuild(aeAPI, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
 		}()
 	}
 
@@ -155,9 +155,13 @@ func (b branchInfos) GetNames() []string {
 	return names
 }
 
-func processTaskclusterBuild(ctx context.Context, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
+func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
+	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
 	log.Debugf("Taskcluster task group %s", taskGroupID)
+	if taskID != "" {
+		log.Debugf("Taskcluster task %s", taskID)
+	}
 
 	client := urlfetch.Client(ctx)
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
@@ -204,40 +208,18 @@ func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *sta
 	return true
 }
 
-// handleCheckRunEvent processes an Azure Pipelines check run "completed" event.
-func handleCheckRunEvent(aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
-	log := shared.GetLogger(aeAPI.Context())
-	status := event.GetCheckRun().GetStatus()
-	if status != "completed" {
-		log.Infof("Ignoring non-completed status %s", status)
-		return false, nil
-	}
-	detailsURL := event.GetCheckRun().GetDetailsURL()
-	sha := event.GetCheckRun().GetHeadSHA()
-
-	labels := mapset.NewSet()
-	sender := event.GetSender().GetLogin()
-	if sender != "" {
-		labels.Add(shared.GetUserLabel(sender))
-	}
-
-	taskGroupID, taskID := extractTaskGroupID(detailsURL)
-	if taskGroupID == "" {
-		return false, fmt.Errorf("unrecognized target_url: %s", detailsURL)
-	}
-
-	return processTaskclusterBuild(aeAPI.Context(), taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
-}
-
 func extractTaskGroupID(targetURL string) (string, string) {
-	regex := regexp.MustCompile("(?:/task-group-inspector/#/|/groups/)([^/]*)(?:/tasks/([^/]*))?")
-	matches := regex.FindStringSubmatch(targetURL)
-	if len(matches) < 2 {
-		return "", ""
-	} else if len(matches) < 3 {
+	inspectorRegex := regexp.MustCompile("/task-group-inspector/#/([^/]*)")
+	matches := inspectorRegex.FindStringSubmatch(targetURL)
+	if len(matches) > 1 {
 		return matches[1], ""
 	}
-	return matches[1], matches[2]
+	taskRegex := regexp.MustCompile("/groups/([^/]*)/tasks/([^/]*)")
+	matches = taskRegex.FindStringSubmatch(targetURL)
+	if len(matches) > 2 {
+		return matches[1], matches[2]
+	}
+	return "", ""
 }
 
 // https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#response-2
