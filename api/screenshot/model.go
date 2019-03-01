@@ -131,8 +131,8 @@ func RecentScreenshotHashes(ds shared.Datastore, browser, browserVersion, os, os
 		for _, l := range labels {
 			query = query.Filter("Labels =", l)
 		}
+		query = query.Project("HashDigest", "HashMethod")
 		query = query.Order("-LastUsed").Limit(totalLimit)
-		// TODO(Hexcles): only project HashMethod, HashDigest fields.
 
 		var hits []Screenshot
 		if _, err := ds.GetAll(query, &hits); err != nil {

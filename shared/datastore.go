@@ -25,7 +25,7 @@ type Iterator interface {
 // Query abstracts a datastore.Query
 type Query interface {
 	Filter(filterStr string, value interface{}) Query
-	Project(project string) Query
+	Project(fields ...string) Query
 	Limit(limit int) Query
 	Offset(offset int) Query
 	Order(order string) Query

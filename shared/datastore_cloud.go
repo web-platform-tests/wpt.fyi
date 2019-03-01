@@ -135,8 +135,8 @@ func (q cloudQuery) Filter(filterStr string, value interface{}) Query {
 	return cloudQuery{q.query.Filter(filterStr, value)}
 }
 
-func (q cloudQuery) Project(project string) Query {
-	return cloudQuery{q.query.Project(project)}
+func (q cloudQuery) Project(fields ...string) Query {
+	return cloudQuery{q.query.Project(fields...)}
 }
 
 func (q cloudQuery) Offset(offset int) Query {
