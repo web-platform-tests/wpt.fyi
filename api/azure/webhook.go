@@ -40,16 +40,16 @@ func HandleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.
 	repo := event.GetRepo().GetName()
 	sender := event.GetSender().GetLogin()
 	detailsURL := event.GetCheckRun().GetDetailsURL()
-	buildID := extractAzureBuildID(detailsURL)
+	buildID := extractBuildID(detailsURL)
 	if buildID == 0 {
 		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
 		return false, nil
 	}
-	return processAzureBuild(aeAPI, azureAPI, owner, repo, sender, "", buildID)
+	return processBuild(aeAPI, azureAPI, owner, repo, sender, "", buildID)
 }
 
-func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
-	build := azureAPI.GetAzureBuild(owner, repo, buildID)
+func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
+	build := azureAPI.GetBuild(owner, repo, buildID)
 	sha := ""
 	if build != nil {
 		sha = build.HeadSHA
@@ -129,7 +129,7 @@ func processAzureBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sen
 	return uploadedAny, nil
 }
 
-func extractAzureBuildID(detailsURL string) int64 {
+func extractBuildID(detailsURL string) int64 {
 	parsedURL, err := url.Parse(detailsURL)
 	if err != nil {
 		return 0

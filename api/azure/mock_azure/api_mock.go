@@ -48,32 +48,32 @@ func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(arg0, arg1, arg2 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureArtifactsURL", reflect.TypeOf((*MockAPI)(nil).GetAzureArtifactsURL), arg0, arg1, arg2)
 }
 
-// GetAzureBuild mocks base method
-func (m *MockAPI) GetAzureBuild(arg0, arg1 string, arg2 int64) *azure.AzureBuild {
+// GetBuild mocks base method
+func (m *MockAPI) GetBuild(arg0, arg1 string, arg2 int64) *azure.Build {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAzureBuild", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*azure.AzureBuild)
+	ret := m.ctrl.Call(m, "GetBuild", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*azure.Build)
 	return ret0
 }
 
-// GetAzureBuild indicates an expected call of GetAzureBuild
-func (mr *MockAPIMockRecorder) GetAzureBuild(arg0, arg1, arg2 interface{}) *gomock.Call {
+// GetBuild indicates an expected call of GetBuild
+func (mr *MockAPIMockRecorder) GetBuild(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureBuild", reflect.TypeOf((*MockAPI)(nil).GetAzureBuild), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuild", reflect.TypeOf((*MockAPI)(nil).GetBuild), arg0, arg1, arg2)
 }
 
-// GetAzureBuildURL mocks base method
-func (m *MockAPI) GetAzureBuildURL(arg0, arg1 string, arg2 int64) string {
+// GetBuildURL mocks base method
+func (m *MockAPI) GetBuildURL(arg0, arg1 string, arg2 int64) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAzureBuildURL", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetBuildURL", arg0, arg1, arg2)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
-// GetAzureBuildURL indicates an expected call of GetAzureBuildURL
-func (mr *MockAPIMockRecorder) GetAzureBuildURL(arg0, arg1, arg2 interface{}) *gomock.Call {
+// GetBuildURL indicates an expected call of GetBuildURL
+func (mr *MockAPIMockRecorder) GetBuildURL(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureBuildURL", reflect.TypeOf((*MockAPI)(nil).GetAzureBuildURL), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuildURL", reflect.TypeOf((*MockAPI)(nil).GetBuildURL), arg0, arg1, arg2)
 }
 
 // HandleCheckRunEvent mocks base method

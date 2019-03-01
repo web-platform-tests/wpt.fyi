@@ -81,8 +81,8 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	}))
 	defer server.Close()
 
-	build := azure.AzureBuild{
-		TriggerInfo: azure.AzureBuildTriggerInfo{
+	build := azure.Build{
+		TriggerInfo: azure.BuildTriggerInfo{
 			SourceBranch: "master",
 		},
 	}
@@ -90,7 +90,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
 	serverURL, _ := url.Parse(server.URL)
 	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
-	azureAPI.EXPECT().GetAzureBuild(repoOwner, repoName, int64(123)).Return(&build)
+	azureAPI.EXPECT().GetBuild(repoOwner, repoName, int64(123)).Return(&build)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return(serverURL.Host)

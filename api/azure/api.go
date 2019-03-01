@@ -45,26 +45,29 @@ type ArtifactResource struct {
 	URL         string `json:"url"`
 }
 
-type AzureBuild struct {
-	SourceBranch string                `json:"sourceBranch"`
-	HeadSHA      string                `json:"sourceVersion"`
-	TriggerInfo  AzureBuildTriggerInfo `json:"triggerInfo"`
+// Build is an Azure Pipelines build object.
+type Build struct {
+	SourceBranch string           `json:"sourceBranch"`
+	HeadSHA      string           `json:"sourceVersion"`
+	TriggerInfo  BuildTriggerInfo `json:"triggerInfo"`
 }
 
-type AzureBuildTriggerInfo struct {
+// BuildTriggerInfo is information about what triggered the build.
+type BuildTriggerInfo struct {
 	SourceBranch string `json:"pr.sourceBranch"`
 }
 
-func (a *AzureBuild) IsMasterBranch() bool {
+// IsMasterBranch returns whether the source branch for the build is the master branch.
+func (a *Build) IsMasterBranch() bool {
 	return a != nil && a.TriggerInfo.SourceBranch == "master"
 }
 
 // API is for Azure Pipelines related requests.
 type API interface {
 	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
-	GetAzureBuildURL(owner, repo string, buildID int64) string
+	GetBuildURL(owner, repo string, buildID int64) string
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
-	GetAzureBuild(owner, repo string, buildID int64) *AzureBuild
+	GetBuild(owner, repo string, buildID int64) *Build
 }
 
 type apiImpl struct {
@@ -83,7 +86,7 @@ func (a apiImpl) HandleCheckRunEvent(checkRun *github.CheckRunEvent) (bool, erro
 	return HandleCheckRunEvent(a, shared.NewAppEngineAPI(a.ctx), checkRun)
 }
 
-func (a apiImpl) GetAzureBuildURL(owner, repo string, buildID int64) string {
+func (a apiImpl) GetBuildURL(owner, repo string, buildID int64) string {
 	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/builds/get?view=azure-devops-rest-4.1#build
 	return fmt.Sprintf(
 		"https://dev.azure.com/%s/%s/_apis/build/builds/%v", owner, repo, buildID)
@@ -97,8 +100,8 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 		buildID)
 }
 
-func (a apiImpl) GetAzureBuild(owner, repo string, buildID int64) *AzureBuild {
-	buildURL := a.GetAzureBuildURL(owner, repo, buildID)
+func (a apiImpl) GetBuild(owner, repo string, buildID int64) *Build {
+	buildURL := a.GetBuildURL(owner, repo, buildID)
 	client := shared.NewAppEngineAPI(a.ctx).GetHTTPClient()
 	log := shared.GetLogger(a.ctx)
 	resp, err := client.Get(buildURL)
@@ -112,7 +115,7 @@ func (a apiImpl) GetAzureBuild(owner, repo string, buildID int64) *AzureBuild {
 		log.Errorf("Failed to read request response: %s", err.Error())
 		return nil
 	}
-	var build AzureBuild
+	var build Build
 	if err := json.Unmarshal(data, &build); err != nil {
 		log.Errorf("Failed to unmarshal request response: %s", err.Error())
 		return nil

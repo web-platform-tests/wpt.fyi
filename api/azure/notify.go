@@ -28,12 +28,12 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	azureAPI := NewAPI(ctx)
 	log := shared.GetLogger(ctx)
 
-	processed, err := processAzureBuild(
+	processed, err := processBuild(
 		aeAPI,
 		azureAPI,
 		"web-platform-tests",
 		"wpt",
-		"",                      // No sender info.
+		"", // No sender info.
 		r.FormValue("artifact"), // artifact=foo will only process foo.
 		buildID)
 
