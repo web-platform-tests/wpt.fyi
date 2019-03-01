@@ -39,7 +39,7 @@ def _upload(images):
     files = []
     for i in range(len(images)):
         files.append((
-            'screenshot', (('{}.png').format(i), images[i], 'image/png')))
+            'screenshot', ('%d.png' % i, images[i], 'image/png')))
 
     data = {'browser': _run_info.get('product'),
             'browser_version': _run_info.get('browser_version'),
