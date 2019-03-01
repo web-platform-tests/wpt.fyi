@@ -74,6 +74,7 @@ class WPTScreenshot(object):
             run_info: A finalized WPTReport.run_info dict (important fields:
                 product, browser_version, os, os_version) (optional).
             api: The URL of the API (optional).
+            processes: The number of worker processes (defaults to cpu*2).
         """
         self._filename = filename
         self._run_info = run_info or {}
