@@ -7,15 +7,17 @@
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
 import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
-import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
+import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import { LoadingState } from './loading-state.js';
 
 const nsSVG = 'http://www.w3.org/2000/svg';
 const nsXLINK = 'http://www.w3.org/1999/xlink';
 const blankFill = 'white';
 
-class ReftestAnalyzer extends PolymerElement {
+class ReftestAnalyzer extends LoadingState(PolymerElement) {
   static get template() {
     return html`
       <style>
@@ -47,6 +49,12 @@ class ReftestAnalyzer extends PolymerElement {
           height: 100%;
           width: 100%;
         }
+        #options {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px;
+        }
       </style>
 
       <div id='zoom'>
@@ -58,13 +66,15 @@ class ReftestAnalyzer extends PolymerElement {
       </div>
 
       <div id="source" class$="[[selectedImage]]">
-        <div>
+        <div id="options">
           <paper-radio-group selected="{{selectedImage}}">
             <paper-radio-button name="before">Image before</paper-radio-button>
             <paper-radio-button name="after">Image after</paper-radio-button>
           </paper-radio-group>
           <paper-checkbox name="diff" checked="{{showDiff}}">Differences</paper-checkbox>
+          <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
         </div>
+
 
         <div id="display">
           <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="Anonymous" />
@@ -82,7 +92,7 @@ class ReftestAnalyzer extends PolymerElement {
                   <feFlood result="red" flood-color="#f00" />
                   <feComposite result="highlight" in="red" in2="border" operator="in" />
 
-                  <feFlood result="shadow" flood-color="#000" flood-opacity="0.2" />
+                  <feFlood id="shadow" result="shadow" flood-color="#000" flood-opacity="0.2" />
                   <feMerge>
                     <feMergeNode in="highlight" />
                     <feMergeNode in="shadow" />
@@ -157,75 +167,93 @@ class ReftestAnalyzer extends PolymerElement {
 
   async setupZoomSVG() {
     const zoomed = this.shadowRoot.querySelector('#zoomed');
-    const paths = [];
-    for (let x = 0; x < 5; x++) {
-      paths.push([]);
-      for (let y = 0; y < 5; y++) {
-        const path = document.createElementNS(nsSVG, 'path');
-        const offsetX = x * 50 + 1;
-        const offsetY = y * 50 + 1;
-        path.setAttribute('d', `M${offsetX},${offsetY} H${offsetX + 48} V${offsetY + 48} H${offsetX} V${offsetY}`);
-        path.setAttribute('fill', blankFill);
-        paths[x].push(zoomed.appendChild(path));
-      }
-    }
-    this.paths = paths;
-  }
-
-  async computeDiff(canvasBefore, canvasAfter) {
-    if (!canvasBefore || !canvasAfter) {
-      return;
-    }
-    const before = this.shadowRoot.querySelector('#before');
-    const after = this.shadowRoot.querySelector('#after');
-
-    const beforeCtx = canvasBefore.getContext('2d');
-    const afterCtx = canvasAfter.getContext('2d');
-
-    const out = document.createElement('canvas');
-    out.width = Math.max(before.width, after.width);
-    out.height = Math.max(before.height, after.height);
-    const outCtx = out.getContext('2d');
-
-    for (let y = 0; y < Math.min(before.height, after.height); y++) {
-      const beforePixels = beforeCtx.getImageData(0, y, before.width, 1).data;
-      const afterPixels = afterCtx.getImageData(0, y, after.width, 1).data;
-      for (let x = 0; x < Math.min(before.width, after.width); x++) {
-        for (let i = 0; i < 4; i++) {
-          const pxlBefore = beforePixels[(x * 4) + i];
-          const pxlAfter = afterPixels[(x * 4) + i];
-          if (pxlBefore !== pxlAfter) {
-            outCtx.fillRect(x, y, 1, 1);
-            break;
+    const pathsBefore = [], pathsAfter = [];
+    for (const before of [true, false]) {
+      const paths = before ? pathsBefore : pathsAfter;
+      for (let x = 0; x < 5; x++) {
+        paths.push([]);
+        for (let y = 0; y < 5; y++) {
+          const path = document.createElementNS(nsSVG, 'path');
+          const offsetX = x * 50 + 1;
+          const offsetY = y * 50 + 1;
+          if (before) {
+            path.setAttribute('d', `M${offsetX},${offsetY} H${offsetX + 48} L${offsetX},${offsetY + 48} V${offsetY}`);
+          } else {
+            path.setAttribute('d', `M${offsetX + 48},${offsetY} V${offsetY + 48} H${offsetX} L${offsetX + 48},${offsetY}`);
           }
+          path.setAttribute('fill', blankFill);
+          paths[x].push(zoomed.appendChild(path));
         }
       }
     }
-    this.diff = out.toDataURL('image/png');
-    const display = this.shadowRoot.querySelector('#different-pixels');
-    display.setAttribute('width', out.width);
-    display.setAttribute('height', out.height);
-    display.setAttributeNS(nsXLINK, 'xlink:href', this.diff);
+    this.pathsBefore = pathsBefore;
+    this.pathsAfter = pathsAfter;
+  }
+
+  computeDiff(canvasBefore, canvasAfter) {
+    if (!canvasBefore || !canvasAfter) {
+      return;
+    }
+    return this.load(new Promise(resolve => {
+      const before = this.shadowRoot.querySelector('#before');
+      const after = this.shadowRoot.querySelector('#after');
+
+      const beforeCtx = canvasBefore.getContext('2d');
+      const afterCtx = canvasAfter.getContext('2d');
+
+      const out = document.createElement('canvas');
+      out.width = Math.max(before.width, after.width);
+      out.height = Math.max(before.height, after.height);
+      const outCtx = out.getContext('2d');
+
+      for (let y = 0; y < Math.min(before.height, after.height); y++) {
+        const beforePixels = beforeCtx.getImageData(0, y, before.width, 1).data;
+        const afterPixels = afterCtx.getImageData(0, y, after.width, 1).data;
+        for (let x = 0; x < Math.min(before.width, after.width); x++) {
+          for (let i = 0; i < 4; i++) {
+            const pxlBefore = beforePixels[(x * 4) + i];
+            const pxlAfter = afterPixels[(x * 4) + i];
+            if (pxlBefore !== pxlAfter) {
+              outCtx.fillRect(x, y, 1, 1);
+              break;
+            }
+          }
+        }
+      }
+      this.diff = out.toDataURL('image/png');
+      const display = this.shadowRoot.querySelector('#different-pixels');
+      display.setAttribute('width', out.width);
+      display.setAttribute('height', out.height);
+      display.setAttributeNS(nsXLINK, 'xlink:href', this.diff);
+      const rect = this.shadowRoot.querySelector('#diff-layer');
+      rect.setAttribute('width', out.width);
+      rect.setAttribute('height', out.height);
+      resolve();
+    }));
   }
 
   handleZoom(e) {
-    const canvas = this.selectedImage === 'after' ? this.canvasAfter : this.canvasBefore;
-    if (!canvas) {
+    if (!this.canvasAfter || !this.canvasBefore) {
       return;
     }
-    const ctx = canvas.getContext('2d');
-    const c = e.target.getBoundingClientRect();
-    const x = e.clientX - c.left - 2;
-    const y = e.clientY - c.top - 2;
-    for (let i = 0; i < 5; i++) {
-      for (let j = 0; j < 5; j++) {
-        if (x + i < 0 || x + i >= canvas.width || y + j < 0 || y + j >= canvas.height) {
-          this.paths[i][j].fill = blankFill;
-        } else {
-          const p = ctx.getImageData(x+i, y+j, 1, 1).data;
-          const [r,g,b] = p;
-          const a = p[3]/255;
-          this.paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a}`);
+
+    for (const before of [true, false]) {
+      const canvas = before ? this.canvasBefore : this.canvasAfter;
+      const paths = before ? this.pathsBefore : this.pathsAfter;
+      const ctx = canvas.getContext('2d');
+      const c = e.target.getBoundingClientRect();
+      const x = e.clientX - c.left - 2;
+      const y = e.clientY - c.top - 2;
+      for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+          if (x + i < 0 || x + i >= canvas.width || y + j < 0 || y + j >= canvas.height) {
+            paths[i][j].fill = blankFill;
+          } else {
+            const p = ctx.getImageData(x+i, y+j, 1, 1).data;
+            const [r,g,b] = p;
+            const a = p[3]/255;
+            paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a}`);
+          }
         }
       }
     }

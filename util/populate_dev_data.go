@@ -185,8 +185,8 @@ func main() {
 	copyProdRuns(ctx, filters)
 
 	log.Print("Adding latest aligned Edge stable and Chrome/Firefox/Safari experimental data...")
-	filters.Labels = nil
-	filters.Products, _ = shared.ParseProductSpecs("chrome[experimental]", "edge", "firefox[experimental]", "safari[experimental]")
+	filters.Labels = mapset.NewSet(shared.MasterLabel)
+	filters.Products, _ = shared.ParseProductSpecs("chrome[experimental]", "edge[stable]", "firefox[experimental]", "safari[experimental]")
 	copyProdRuns(ctx, filters)
 
 	log.Printf("Successfully copied a total of %v distinct TestRuns", seenTestRunIDs.Cardinality())

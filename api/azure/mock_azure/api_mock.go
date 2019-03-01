@@ -7,6 +7,7 @@ package mock_azure
 import (
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/github"
+	azure "github.com/web-platform-tests/wpt.fyi/api/azure"
 	reflect "reflect"
 )
 
@@ -47,18 +48,32 @@ func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(arg0, arg1, arg2 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureArtifactsURL", reflect.TypeOf((*MockAPI)(nil).GetAzureArtifactsURL), arg0, arg1, arg2)
 }
 
-// GetAzureBuildURL mocks base method
-func (m *MockAPI) GetAzureBuildURL(arg0, arg1 string, arg2 int64) string {
+// GetBuild mocks base method
+func (m *MockAPI) GetBuild(arg0, arg1 string, arg2 int64) *azure.Build {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAzureBuildURL", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetBuild", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*azure.Build)
+	return ret0
+}
+
+// GetBuild indicates an expected call of GetBuild
+func (mr *MockAPIMockRecorder) GetBuild(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuild", reflect.TypeOf((*MockAPI)(nil).GetBuild), arg0, arg1, arg2)
+}
+
+// GetBuildURL mocks base method
+func (m *MockAPI) GetBuildURL(arg0, arg1 string, arg2 int64) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBuildURL", arg0, arg1, arg2)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
-// GetAzureBuildURL indicates an expected call of GetAzureBuildURL
-func (mr *MockAPIMockRecorder) GetAzureBuildURL(arg0, arg1, arg2 interface{}) *gomock.Call {
+// GetBuildURL indicates an expected call of GetBuildURL
+func (mr *MockAPIMockRecorder) GetBuildURL(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureBuildURL", reflect.TypeOf((*MockAPI)(nil).GetAzureBuildURL), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuildURL", reflect.TypeOf((*MockAPI)(nil).GetBuildURL), arg0, arg1, arg2)
 }
 
 // HandleCheckRunEvent mocks base method
@@ -74,18 +89,4 @@ func (m *MockAPI) HandleCheckRunEvent(arg0 *github.CheckRunEvent) (bool, error) 
 func (mr *MockAPIMockRecorder) HandleCheckRunEvent(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleCheckRunEvent", reflect.TypeOf((*MockAPI)(nil).HandleCheckRunEvent), arg0)
-}
-
-// IsMasterBranch mocks base method
-func (m *MockAPI) IsMasterBranch(arg0, arg1 string, arg2 int64) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsMasterBranch", arg0, arg1, arg2)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsMasterBranch indicates an expected call of IsMasterBranch
-func (mr *MockAPIMockRecorder) IsMasterBranch(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsMasterBranch", reflect.TypeOf((*MockAPI)(nil).IsMasterBranch), arg0, arg1, arg2)
 }

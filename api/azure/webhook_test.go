@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package azure
+package azure_test
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/azure/mock_azure"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
@@ -32,7 +33,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	sha := strings.Repeat("0123456789", 4)
 	detailsURL := "https://dev.azure.com/web-platform-tests/b14026b4-9423-4454-858f-bf76cf6d1faa/_build/results?buildId=123"
 
-	id := PipelinesAppID
+	id := azure.PipelinesAppID
 	chrome := "chrome"
 	completed := "completed"
 	created := "created"
@@ -56,7 +57,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 
 	event.CheckRun.DetailsURL = &detailsURL
 
-	artifact := BuildArtifact{Name: "results"}
+	artifact := azure.BuildArtifact{Name: "results"}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/upload":
@@ -66,9 +67,9 @@ func TestHandleCheckRunEvent(t *testing.T) {
 			assert.Equal(t, password, "123")
 			w.WriteHeader(200)
 		case "/123/artifacts":
-			artifacts := BuildArtifacts{
+			artifacts := azure.BuildArtifacts{
 				Count: 1,
-				Value: []BuildArtifact{
+				Value: []azure.BuildArtifact{
 					artifact,
 				},
 			}
@@ -80,10 +81,16 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	}))
 	defer server.Close()
 
+	build := azure.Build{
+		TriggerInfo: azure.BuildTriggerInfo{
+			SourceBranch: "master",
+		},
+	}
+
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
 	serverURL, _ := url.Parse(server.URL)
 	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
-	azureAPI.EXPECT().IsMasterBranch(repoOwner, repoName, int64(123)).Return(true)
+	azureAPI.EXPECT().GetBuild(repoOwner, repoName, int64(123)).Return(&build)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return(serverURL.Host)
@@ -96,7 +103,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	log, hook := logrustest.NewNullLogger()
 	ctx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), log)
 	aeAPI.EXPECT().Context().AnyTimes().Return(ctx)
-	processed, err := handleCheckRunEvent(azureAPI, aeAPI, event)
+	processed, err := azure.HandleCheckRunEvent(azureAPI, aeAPI, event)
 	if err != nil {
 		assert.FailNow(t, "Error isn't nil", err.Error())
 	}
@@ -137,7 +144,7 @@ const artifactsJSON = `{
 }`
 
 func TestParses(t *testing.T) {
-	var artifacts BuildArtifacts
+	var artifacts azure.BuildArtifacts
 	err := json.Unmarshal([]byte(artifactsJSON), &artifacts)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(2), artifacts.Count)
@@ -149,22 +156,22 @@ func TestParses(t *testing.T) {
 
 func TestArtifactRegexes(t *testing.T) {
 	// Names before https://github.com/web-platform-tests/wpt/pull/15110
-	assert.True(t, masterRegex.MatchString("results"))
-	assert.True(t, prHeadRegex.MatchString("affected-tests"))
-	assert.True(t, prBaseRegex.MatchString("affected-tests-without-changes"))
+	assert.True(t, azure.MasterRegex.MatchString("results"))
+	assert.True(t, azure.PRHeadRegex.MatchString("affected-tests"))
+	assert.True(t, azure.PRBaseRegex.MatchString("affected-tests-without-changes"))
 
 	// Names after https://github.com/web-platform-tests/wpt/pull/15110
-	assert.True(t, masterRegex.MatchString("edge-results"))
-	assert.True(t, prHeadRegex.MatchString("safari-preview-affected-tests"))
-	assert.True(t, prBaseRegex.MatchString("safari-preview-affected-tests-without-changes"))
+	assert.True(t, azure.MasterRegex.MatchString("edge-results"))
+	assert.True(t, azure.PRHeadRegex.MatchString("safari-preview-affected-tests"))
+	assert.True(t, azure.PRBaseRegex.MatchString("safari-preview-affected-tests-without-changes"))
 
 	// Don't accept the other order
-	assert.False(t, masterRegex.MatchString("results-edge"))
+	assert.False(t, azure.MasterRegex.MatchString("results-edge"))
 
 	// Don't accept any string ending with the right pattern
-	assert.False(t, masterRegex.MatchString("nodashresults"))
+	assert.False(t, azure.MasterRegex.MatchString("nodashresults"))
 
 	// Base and Head could be confused with substring matching
-	assert.False(t, prBaseRegex.MatchString("affected-tests"))
-	assert.False(t, prHeadRegex.MatchString("affected-tests-without-changes"))
+	assert.False(t, azure.PRBaseRegex.MatchString("affected-tests"))
+	assert.False(t, azure.PRHeadRegex.MatchString("affected-tests-without-changes"))
 }
