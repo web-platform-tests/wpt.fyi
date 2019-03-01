@@ -48,13 +48,13 @@ type ArtifactResource struct {
 // Build is an Azure Pipelines build object.
 type Build struct {
 	SourceBranch string           `json:"sourceBranch"`
-	HeadSHA      string           `json:"sourceVersion"`
 	TriggerInfo  BuildTriggerInfo `json:"triggerInfo"`
 }
 
 // BuildTriggerInfo is information about what triggered the build.
 type BuildTriggerInfo struct {
 	SourceBranch string `json:"pr.sourceBranch"`
+	SourceSHA    string `json:"pr.sourceSha"`
 }
 
 // IsMasterBranch returns whether the source branch for the build is the master branch.
