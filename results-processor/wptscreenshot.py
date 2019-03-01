@@ -61,38 +61,47 @@ class WPTScreenshot(object):
     """
     MAXIMUM_BATCH_SIZE = 100
 
-    def __init__(self, filename, run_info, api=None):
-        """Creates a WPTScreenshot instance.
+    def __init__(self, filename, run_info=None, api=None, processes=None):
+        """Creates a WPTScreenshot context manager.
+
+        Usage:
+            with WPTScreenshot(...) as s:
+                s.process()
 
         Args:
             filename: Filename of the screenshots database (the file can be
                 gzipped if the extension is ".gz").
             run_info: A finalized WPTReport.run_info dict (important fields:
-                product, browser_version, os, os_version).
+                product, browser_version, os, os_version) (optional).
             api: The URL of the API (optional).
         """
-        if filename.endswith('.gz'):
-            self._f = gzip.open(filename, 'rt', encoding='ascii')
-        else:
-            self._f = open(filename, 'rt', encoding='ascii')
-        self._run_info = run_info
-        self._api = (api if api else
-                     config.project_baseurl() + '/api/screenshots/upload')
+        self._filename = filename
+        self._run_info = run_info or {}
+        self._api = api or config.project_baseurl() + '/api/screenshots/upload'
+        self._processes = processes or os.cpu_count() * 2
+
+        self._f = None
         self._pool = None
 
-    def start(self, processes=None):
+    def __enter__(self):
         """Starts and initializes all workers."""
         assert self._pool is None
-        if not processes:
-            processes = os.cpu_count() * 2
+        assert self._f is None
         self._pool = multiprocessing.Pool(
-            processes, _initialize, [self._api, self._run_info])
+            self._processes, _initialize, [self._api, self._run_info])
+        if self._filename.endswith('.gz'):
+            self._f = gzip.open(self._filename, 'rt', encoding='ascii')
+        else:
+            self._f = open(self._filename, 'rt', encoding='ascii')
+        return self
 
-    def wait(self):
-        """Waits for all workers to finish and terminates them."""
-        assert self._pool is not None
-        self._pool.close()
-        self._pool.join()
+    def __exit__(self, *args):
+        """Waits for work to finish and frees all resources."""
+        if self._pool is not None:
+            self._pool.close()
+            self._pool.join()
+        if self._f is not None:
+            self._f.close()
 
     def process(self):
         batch = []
@@ -112,4 +121,3 @@ class WPTScreenshot(object):
                 batch = []
         if len(batch) > 0:
             self._pool.apply_async(_upload, [batch])
-        self._f.close()

@@ -62,10 +62,8 @@ class WPTScreenshotTest(unittest.TestCase):
             f.write(b'data:image/png;base64,0001\n')
             f.write(b'data:image/png;base64,0002\n')
             f.flush()
-            s = WPTScreenshot(f.name, run_info={}, api=self.api)
-            s.start(processes=1)
-            s.process()
-            s.wait()
+            with WPTScreenshot(f.name, api=self.api, processes=1) as s:
+                s.process()
         self.server.terminate()
         _, err = self.server.communicate()
         sizes = self._batch_sizes(err)
@@ -77,14 +75,36 @@ class WPTScreenshotTest(unittest.TestCase):
                 g.write(b'data:image/png;base64,0001\n')
                 g.write(b'data:image/png;base64,0002\n')
             f.flush()
-            s = WPTScreenshot(f.name, run_info={}, api=self.api)
-            s.start(processes=1)
-            s.process()
-            s.wait()
+            with WPTScreenshot(f.name, api=self.api, processes=1) as s:
+                s.process()
         self.server.terminate()
         _, err = self.server.communicate()
         sizes = self._batch_sizes(err)
         self.assertListEqual(sizes, [2])
+
+    def test_invalid_encoding(self):
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(b'\xc8\n')
+            f.flush()
+            with self.assertRaises(UnicodeDecodeError):
+                with WPTScreenshot(f.name, api=self.api, processes=1) as s:
+                    s.process()
+        self.server.terminate()
+        _, err = self.server.communicate()
+        sizes = self._batch_sizes(err)
+        self.assertListEqual(sizes, [])
+
+    def test_invalid_gzip(self):
+        with tempfile.NamedTemporaryFile(suffix=".gz") as f:
+            f.write(b'Hello\n')
+            f.flush()
+            with self.assertRaises(OSError):
+                with WPTScreenshot(f.name, api=self.api, processes=1) as s:
+                    s.process()
+        self.server.terminate()
+        _, err = self.server.communicate()
+        sizes = self._batch_sizes(err)
+        self.assertListEqual(sizes, [])
 
     def test_multiple_batches(self):
         with tempfile.NamedTemporaryFile() as f:
@@ -92,11 +112,9 @@ class WPTScreenshotTest(unittest.TestCase):
             f.write(b'data:image/png;base64,0002\n')
             f.write(b'data:image/png;base64,0003\n')
             f.flush()
-            s = WPTScreenshot(f.name, run_info={}, api=self.api)
-            s.MAXIMUM_BATCH_SIZE = 2
-            s.start(processes=2)
-            s.process()
-            s.wait()
+            with WPTScreenshot(f.name, api=self.api, processes=2) as s:
+                s.MAXIMUM_BATCH_SIZE = 2
+                s.process()
         self.server.terminate()
         _, err = self.server.communicate()
         sizes = self._batch_sizes(err)
@@ -108,11 +126,9 @@ class WPTScreenshotTest(unittest.TestCase):
             f.write(b'data:image/png;base64,0002\n')
             f.write(b'data:image/png;base64,0\n')
             f.flush()
-            s = WPTScreenshot(f.name, run_info={}, api=self.api)
-            s.start(processes=1)
             with self.assertLogs() as lm:
-                s.process()
-            s.wait()
+                with WPTScreenshot(f.name, api=self.api, processes=1) as s:
+                    s.process()
         self.server.terminate()
         _, err = self.server.communicate()
         sizes = self._batch_sizes(err)
