@@ -289,7 +289,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
               <th colspan="2">Path</th>
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                 <!-- Repeats for as many different browser test runs are available -->
-                <th><test-run test-run="[[testRun]]"></test-run></th>
+                <th><test-run test-run="[[testRun]]" show-source></test-run></th>
               </template>
               <template is="dom-if" if="[[diffShown]]">
                 <th>
