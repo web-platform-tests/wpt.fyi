@@ -2,11 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import contextlib
+import gzip
 import random
 import subprocess
 import tempfile
 import time
 import unittest
+import warnings
 
 import requests
 
@@ -31,9 +34,22 @@ class WPTScreenshotTest(unittest.TestCase):
             except Exception:
                 pass
 
+        # We would like to make ResourceWarning (unclosed files) fatal, but
+        # -Werror::ResourceWarning does not work since the error is often
+        # "unraisable", so we have to use a context manager to record warnings.
+        self.context = contextlib.ExitStack()
+        # This is equivalent to a test-scope
+        # `with warnings.catch_warnings(record=True) as self.warnings`.
+        self.warnings = self.context.enter_context(
+            warnings.catch_warnings(record=True))
+
     def tearDown(self):
         if self.server.poll() is None:
             self.server.kill()
+
+        self.context.close()
+        messages = [w.message for w in self.warnings]
+        self.assertListEqual(messages, [])
 
     def _batch_sizes(self, err_text):
         s = []
@@ -45,6 +61,21 @@ class WPTScreenshotTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as f:
             f.write(b'data:image/png;base64,0001\n')
             f.write(b'data:image/png;base64,0002\n')
+            f.flush()
+            s = WPTScreenshot(f.name, run_info={}, api=self.api)
+            s.start(processes=1)
+            s.process()
+            s.wait()
+        self.server.terminate()
+        _, err = self.server.communicate()
+        sizes = self._batch_sizes(err)
+        self.assertListEqual(sizes, [2])
+
+    def test_gzip(self):
+        with tempfile.NamedTemporaryFile(suffix='.gz') as f:
+            with gzip.GzipFile(filename=f.name, mode='wb') as g:
+                g.write(b'data:image/png;base64,0001\n')
+                g.write(b'data:image/png;base64,0002\n')
             f.flush()
             s = WPTScreenshot(f.name, run_info={}, api=self.api)
             s.start(processes=1)
