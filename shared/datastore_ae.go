@@ -111,8 +111,8 @@ func (q aeQuery) Filter(filterStr string, value interface{}) Query {
 	return aeQuery{q.query.Filter(filterStr, value)}
 }
 
-func (q aeQuery) Project(project string) Query {
-	return aeQuery{q.query.Project(project)}
+func (q aeQuery) Project(fields ...string) Query {
+	return aeQuery{q.query.Project(fields...)}
 }
 
 func (q aeQuery) Offset(offset int) Query {
