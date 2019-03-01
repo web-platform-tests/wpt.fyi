@@ -52,7 +52,7 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 	build := azureAPI.GetBuild(owner, repo, buildID)
 	sha := ""
 	if build != nil {
-		sha = build.HeadSHA
+		sha = build.TriggerInfo.SourceSHA
 	}
 
 	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
