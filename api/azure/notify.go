@@ -28,10 +28,9 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	azureAPI := NewAPI(ctx)
 	log := shared.GetLogger(ctx)
 
-	processed, err := processAzureBuild(
+	processed, err := processBuild(
 		aeAPI,
 		azureAPI,
-		"", // SHA is embedded in the wpt_report.json metadata
 		"web-platform-tests",
 		"wpt",
 		"", // No sender info.
