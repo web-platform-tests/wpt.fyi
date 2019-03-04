@@ -78,8 +78,10 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
 	for i, arg := range e.Args {
 		var query ConcreteQuery
+		// For sequential + count, we pass all runs.
 		if _, isSeq := arg.(AbstractSequential); isSeq {
-			// For sequential, we pass all runs.
+			query = arg.BindToRuns(runs...)
+		} else if _, isCount := arg.(AbstractCount); isCount {
 			query = arg.BindToRuns(runs...)
 		} else {
 			// Everything else is split, one run must satisfy the whole tree.
@@ -121,6 +123,26 @@ func (e AbstractSequential) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 	return Or{
 		Args: byRuns,
+	}
+}
+
+// AbstractCount represents the root of a count query, where the exact number of
+// runs that satisfy the query must match the expected count.
+type AbstractCount struct {
+	Count int
+	Where AbstractQuery
+}
+
+// BindToRuns binds each count query to all of the runs, so that it can count the
+// number of runs that match the criteria.
+func (c AbstractCount) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	byRun := []ConcreteQuery{}
+	for _, run := range runs {
+		byRun = append(byRun, c.Where.BindToRuns(run))
+	}
+	return Count{
+		Count: c.Count,
+		Args:  byRun,
 	}
 }
 
@@ -529,6 +551,35 @@ func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractCount attempts to interpret a query atom as
+// {"count": int, "where": query}.
+func (c *AbstractCount) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Count json.RawMessage `json:"count"`
+		Where json.RawMessage `json:"where"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Count) == 0 {
+		return errors.New(`Missing count property: "count"`)
+	}
+	if len(data.Where) == 0 {
+		return errors.New(`Missing count property: "where"`)
+	}
+
+	err = json.Unmarshal(data.Count, &c.Count)
+	if err != nil {
+		return err
+	}
+	c.Where, err = unmarshalQ(data.Where)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -574,6 +625,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err = json.Unmarshal(b, &s)
 	if err == nil {
 		return s, nil
+	}
+	var c AbstractCount
+	err = json.Unmarshal(b, &c)
+	if err == nil {
+		return c, nil
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, or conjunction`)
 }
