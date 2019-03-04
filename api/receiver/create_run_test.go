@@ -17,11 +17,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/mock_checks"
+	"github.com/web-platform-tests/wpt.fyi/api/receiver/mock_receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
-
-var testDatastoreKey = &DatastoreKey{"TestRun", 1}
 
 func TestHandleResultsCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
@@ -45,12 +44,13 @@ func TestHandleResultsCreate(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
-	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	mockS := mock_checks.NewMockAPI(mockCtrl)
+	testDatastoreKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 1}
 	gomock.InOrder(
-		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
-		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockAE.EXPECT().AuthenticateUploader("_processor", "secret-token").Return(true),
+		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(testDatastoreKey, nil),
 		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 	)
 
@@ -85,12 +85,13 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
-	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	mockS := mock_checks.NewMockAPI(mockCtrl)
+	testDatastoreKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 1}
 	gomock.InOrder(
-		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
-		mockAE.EXPECT().addTestRun(gomock.Any()).Return(testDatastoreKey, nil),
+		mockAE.EXPECT().AuthenticateUploader("_processor", "secret-token").Return(true),
+		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(testDatastoreKey, nil),
 		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 	)
 
@@ -122,11 +123,11 @@ func TestHandleResultsCreate_BadRevision(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
 	req.SetBasicAuth("_processor", "secret-token")
 	w := httptest.NewRecorder()
-	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	mockS := mock_checks.NewMockAPI(mockCtrl)
 	gomock.InOrder(
-		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
+		mockAE.EXPECT().AuthenticateUploader("_processor", "secret-token").Return(true),
 	)
 
 	HandleResultsCreate(mockAE, mockS, w, req)
@@ -135,7 +136,7 @@ func TestHandleResultsCreate_BadRevision(t *testing.T) {
 
 	payload["full_revision_hash"] = "9876543210987654321098765432109876543210"
 	gomock.InOrder(
-		mockAE.EXPECT().authenticateUploader("_processor", "secret-token").Return(true),
+		mockAE.EXPECT().AuthenticateUploader("_processor", "secret-token").Return(true),
 	)
 	body, err = json.Marshal(payload)
 	assert.Nil(t, err)
@@ -153,7 +154,7 @@ func TestHandleResultsCreate_NoBasicAuth(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/api/results/create", nil)
 	resp := httptest.NewRecorder()
-	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	mockS := mock_checks.NewMockAPI(mockCtrl)
 
@@ -168,7 +169,7 @@ func TestHandleResultsCreate_WrongUser(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", nil)
 	req.SetBasicAuth("wrong-user", "secret-token")
 	resp := httptest.NewRecorder()
-	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	mockS := mock_checks.NewMockAPI(mockCtrl)
 
@@ -183,9 +184,9 @@ func TestHandleResultsCreate_WrongPassword(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", nil)
 	req.SetBasicAuth("_processor", "wrong-password")
 	resp := httptest.NewRecorder()
-	mockAE := NewMockAppEngineAPI(mockCtrl)
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	mockAE.EXPECT().authenticateUploader("_processor", "wrong-password").Return(false)
+	mockAE.EXPECT().AuthenticateUploader("_processor", "wrong-password").Return(false)
 	mockS := mock_checks.NewMockAPI(mockCtrl)
 
 	HandleResultsCreate(mockAE, mockS, resp, req)

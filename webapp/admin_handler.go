@@ -10,25 +10,24 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/web-platform-tests/wpt.fyi/api/receiver"
-	"github.com/web-platform-tests/wpt.fyi/shared"
-
 	"google.golang.org/appengine/memcache"
+
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 	showAdminUploadForm(a, w, r)
 }
 
-func showAdminUploadForm(a receiver.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
+func showAdminUploadForm(a shared.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
 	assertLoginAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", nil)
 }
 
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	data := struct {
@@ -58,7 +57,7 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func assertLoginAndRenderTemplate(
-	a receiver.AppEngineAPI,
+	a shared.AppEngineAPI,
 	w http.ResponseWriter,
 	r *http.Request,
 	redirectPath,
@@ -86,7 +85,7 @@ func assertLoginAndRenderTemplate(
 
 func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 
 	if !a.IsLoggedIn() || !a.IsAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)

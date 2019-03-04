@@ -22,9 +22,9 @@ import (
 const InternalUsername = "_processor"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
-func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r *http.Request) {
+func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Request) {
 	username, password, ok := r.BasicAuth()
-	if !ok || username != InternalUsername || !a.authenticateUploader(username, password) {
+	if !ok || username != InternalUsername || !a.AuthenticateUploader(username, password) {
 		http.Error(w, "Authentication error", http.StatusUnauthorized)
 		return
 	}
@@ -60,7 +60,7 @@ func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r 
 	}
 	testRun.Revision = testRun.FullRevisionHash[:10]
 
-	key, err := a.addTestRun(&testRun)
+	key, err := a.AddTestRun(&testRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -76,7 +76,7 @@ func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r 
 
 	// Copy int64 representation of key into TestRun.ID so that clients can
 	// inspect/use key value.
-	testRun.ID = key.ID
+	testRun.ID = key.IntID()
 
 	jsonOutput, err := json.Marshal(testRun)
 	if err != nil {

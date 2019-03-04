@@ -14,7 +14,8 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/api/receiver"
+
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func TestShowAdminUploadForm_not_logged_in(t *testing.T) {
@@ -23,7 +24,7 @@ func TestShowAdminUploadForm_not_logged_in(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/results/upload", new(strings.Reader))
 	resp := httptest.NewRecorder()
-	mockAE := receiver.NewMockAppEngineAPI(mockCtrl)
+	mockAE := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().IsLoggedIn().Return(false)
 	mockAE.EXPECT().LoginURL("/admin/results/upload").Return("/login", nil)
 
@@ -39,7 +40,7 @@ func TestShowAdminUploadForm_not_admin(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/results/upload", new(strings.Reader))
 	resp := httptest.NewRecorder()
-	mockAE := receiver.NewMockAppEngineAPI(mockCtrl)
+	mockAE := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().IsLoggedIn().Return(true)
 	mockAE.EXPECT().IsAdmin().Return(false)
 
@@ -55,7 +56,7 @@ func TestShowAdminUploadForm_admin(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/results/upload", new(strings.Reader))
 	resp := httptest.NewRecorder()
-	mockAE := receiver.NewMockAppEngineAPI(mockCtrl)
+	mockAE := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().IsLoggedIn().Return(true)
 	mockAE.EXPECT().IsAdmin().Return(true)
 
