@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"regexp"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -19,8 +18,6 @@ import (
 
 // PipelinesAppID is the ID of the Azure Pipelines GitHub app.
 const PipelinesAppID = int64(9426)
-
-var epochBranchesRegex = regexp.MustCompile("^refs/heads/epochs/.*")
 
 // https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 
