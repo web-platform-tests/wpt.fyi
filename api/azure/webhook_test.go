@@ -175,3 +175,12 @@ func TestArtifactRegexes(t *testing.T) {
 	assert.False(t, azure.PRBaseRegex.MatchString("affected-tests"))
 	assert.False(t, azure.PRHeadRegex.MatchString("affected-tests-without-changes"))
 }
+
+func TestEpochBranchesRegex(t *testing.T) {
+	assert.True(t, azure.EpochBranchesRegex.MatchString("refs/heads/epochs/twelve_hourly"))
+	assert.True(t, azure.EpochBranchesRegex.MatchString("refs/heads/epochs/six_hourly"))
+	assert.True(t, azure.EpochBranchesRegex.MatchString("refs/heads/epochs/weekly"))
+	assert.True(t, azure.EpochBranchesRegex.MatchString("refs/heads/epochs/daily"))
+
+	assert.False(t, azure.EpochBranchesRegex.MatchString("refs/heads/weekly"))
+}
