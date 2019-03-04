@@ -77,7 +77,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
 
         <div id="display">
-          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="Anonymous" />
+          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" />
           <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="Anonymous" />
 
           <template is="dom-if" if="[[showDiff]]">
