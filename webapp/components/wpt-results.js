@@ -278,7 +278,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
-                           products="[[products]]">
+                           products="[[products]]"
+                           on-reftest-compare="[[showAnalyzer]]">
         </test-file-results>
       </template>
 
@@ -400,8 +401,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
               </template>
             </div>
           </div>
-        </template>
-      </section>
+        </section>
+      </template>
     </template>
 `;
   }
@@ -483,6 +484,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       },
       onlyShowDifferences: Boolean,
       manifest: Object,
+      screenshots: Array,
     };
   }
 
@@ -601,6 +603,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.dismissToast = e => e.target.closest('paper-toast').close();
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
+    this.showAnalyzer = this.handleShowAnalyzer.bind(this);
   }
 
   connectedCallback() {
@@ -1119,6 +1122,22 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         `Showing ${tests} tests (${subtests} subtests) from `);
     }
     return msg;
+  }
+
+  handleShowAnalyzer(result) {
+    if (!result.screenshots) {
+      this.screenshots = null;
+      return;
+    }
+    const url = new URL('/analyzer', window.location);
+    if (this.path in result.screenshots) {
+      url.searchParams.append('screenshot', result.screenshots[this.path]);
+      delete result.screenshots[this.path];
+    }
+    for (const s of Object.values(result.screenshots)) {
+      url.searchParams.append('screenshot', s);
+    }
+    window.location = url;
   }
 }
 
