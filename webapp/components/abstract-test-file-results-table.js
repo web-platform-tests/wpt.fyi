@@ -142,4 +142,3 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
 }
 
 export { AbstractTestFileResultsTable };
-
