@@ -8,7 +8,6 @@ package receiver
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,7 +28,7 @@ type API interface {
 	FetchGzip(url string, timeout time.Duration) (io.ReadCloser, error)
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 	ScheduleResultsTask(
-		uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (
+		uploader string, resultGCS, screenshotGCS []string, extraParams map[string]string) (
 		*taskqueue.Task, error)
 }
 
@@ -107,17 +106,7 @@ func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 }
 
 func (a *apiImpl) ScheduleResultsTask(
-	uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (*taskqueue.Task, error) {
-	if uploader == "" {
-		return nil, errors.New("empty uploader")
-	}
-	if len(gcsPaths) == 0 || gcsPaths[0] == "" {
-		return nil, errors.New("empty GCS paths")
-	}
-	if payloadType == "" {
-		return nil, errors.New("empty payloadType")
-	}
-
+	uploader string, resultGCS, screenshotGCS []string, extraParams map[string]string) (*taskqueue.Task, error) {
 	key, err := a.store.ReserveID("TestRun")
 	if err != nil {
 		return nil, err
@@ -125,11 +114,11 @@ func (a *apiImpl) ScheduleResultsTask(
 	// TODO(lukebjerring): Create a PendingTestRun entity.
 
 	payload := url.Values{
-		"gcs": gcsPaths,
+		"gcs":         resultGCS,
+		"screenshots": screenshotGCS,
 	}
 	payload.Set("id", fmt.Sprintf("%v", key.IntID()))
 	payload.Set("uploader", uploader)
-	payload.Set("type", payloadType)
 
 	for k, v := range extraParams {
 		if v != "" {
