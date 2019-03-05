@@ -40,6 +40,15 @@ func (a *indexAggregator) Add(t TestID) error {
 		}
 	}
 
+	if a.opts.IgnoreTestHarnessResult {
+		for _, id := range a.runIDs {
+			res := shared.TestStatus(a.runResults[id].GetResult(t))
+			if res.IsHarnessStatus() {
+				return nil
+			}
+		}
+	}
+
 	if a.opts.InteropFormat {
 		if r.Interop == nil {
 			r.Interop = make([]int, len(a.runIDs)+1)

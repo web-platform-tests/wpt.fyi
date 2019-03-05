@@ -127,6 +127,12 @@ func (s TestStatus) IsPassOrOK() bool {
 	return s == TestStatusOK || s == TestStatusPass
 }
 
+// IsHarnessStatus is true if the value is TestStatusPass or TestStatusError,
+// statuses which are used for the harness-level result.
+func (s TestStatus) IsHarnessStatus() bool {
+	return s == TestStatusOK || s == TestStatusError
+}
+
 // TestStatusValueFromString returns the enum value associated with str (if
 // any), or else TestStatusDefault.
 func TestStatusValueFromString(str string) TestStatus {
