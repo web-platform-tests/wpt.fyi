@@ -49,14 +49,15 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
 Object.defineProperty(wpt, 'ServerSideFeatures', {
   get: function() {
     return [
-      'diffRenames',
-      'taskclusterAllBranches',
-      'paginationTokens',
-      'runsByPRNumber',
-      'failChecksOnRegression',
       'checksAllUsers',
+      'diffRenames',
+      'failChecksOnRegression',
+      'ignoreHarnessInTotal',
+      'paginationTokens',
       'pendingChecks',
+      'runsByPRNumber',
       'serviceWorker',
+      'taskclusterAllBranches',
     ];
   }
 });
@@ -288,6 +289,11 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{serviceWorker}}">
         Install a service worker to cache all the web components.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{ignoreHarnessInTotal}}">
+        Ignore "OK" harness status in test summary numbers.
       </paper-checkbox>
     </paper-item>
 `;

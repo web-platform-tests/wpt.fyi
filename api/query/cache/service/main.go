@@ -101,6 +101,12 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	//
 	// `ids` and `runs` tracks run IDs and run metadata for requested runs that
 	// are currently resident in `idx`.
+	store, err := getDatastore()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to open datastore: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
 	ids := make([]int64, 0, len(rq.RunIDs))
 	runs := make([]shared.TestRun, 0, len(rq.RunIDs))
 	missing := make([]shared.TestRun, 0, len(rq.RunIDs))
@@ -109,7 +115,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		run, err := idx.Run(id)
 		// If getting run metadata fails, attempt write-on-read for this run.
 		if err != nil {
-			runPtr, err := getTestRun(int64(id))
+			runPtr := new(shared.TestRun)
+			err := store.Get(store.NewIDKey("TestRun", int64(id)), runPtr)
 			if err != nil {
 				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
 				return
@@ -153,10 +160,11 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	opts := query.AggregationOpts{
-		IncludeSubtests: subtests,
-		InteropFormat:   interop,
-		IncludeDiff:     diff,
-		DiffFilter:      diffFilter,
+		IncludeSubtests:         subtests,
+		InteropFormat:           interop,
+		IncludeDiff:             diff,
+		DiffFilter:              diffFilter,
+		IgnoreTestHarnessResult: shared.IsFeatureEnabled(store, "ignoreHarnessInTotal"),
 	}
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
@@ -203,7 +211,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func getTestRun(id int64) (*shared.TestRun, error) {
+func getDatastore() (shared.Datastore, error) {
 	ctx := context.Background()
 	var client *datastore.Client
 	var err error
@@ -216,14 +224,7 @@ func getTestRun(id int64) (*shared.TestRun, error) {
 		return nil, err
 	}
 	d := shared.NewCloudDatastore(ctx, client)
-	testRun := new(shared.TestRun)
-	err = d.Get(d.NewIDKey("TestRun", id), testRun)
-	if err != nil {
-		return nil, err
-	}
-
-	testRun.ID = id
-	return testRun, nil
+	return d, nil
 }
 
 func init() {
