@@ -146,7 +146,8 @@ func sendResultsToProcessor(
 		screenshotGCS[i] = fmt.Sprintf("/%s/%s/%s/%d.db", BufferBucket, uploader, id, i)
 	}
 
-	moveFile := func(wg *sync.WaitGroup, errors chan error, getFile func(int) (io.ReadCloser, error), i int, gcsPath string) {
+	var wg sync.WaitGroup
+	moveFile := func(errors chan error, getFile func(int) (io.ReadCloser, error), i int, gcsPath string) {
 		defer wg.Done()
 		f, err := getFile(i)
 		if err != nil {
@@ -160,19 +161,16 @@ func sendResultsToProcessor(
 		}
 	}
 
-	var wg1, wg2 sync.WaitGroup
-	wg1.Add(results)
-	wg2.Add(screenshots)
 	errors1 := make(chan error, results)
 	errors2 := make(chan error, screenshots)
+	wg.Add(results + screenshots)
 	for i, gcsPath := range resultGCS {
-		moveFile(&wg1, errors1, getResult, i, gcsPath)
+		moveFile(errors1, getResult, i, gcsPath)
 	}
 	for i, gcsPath := range screenshotGCS {
-		moveFile(&wg2, errors2, getScreenshot, i, gcsPath)
+		moveFile(errors2, getScreenshot, i, gcsPath)
 	}
-	wg1.Wait()
-	wg2.Wait()
+	wg.Wait()
 	close(errors1)
 	close(errors2)
 
