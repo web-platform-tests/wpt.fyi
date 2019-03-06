@@ -77,12 +77,17 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	var getResult, getScreenshot func(i int) (io.ReadCloser, error)
 	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
 		// result_file[] payload
-		// TODO(Hexcles): Support "screenshot_file".
 		files := r.MultipartForm.File["result_file"]
-		log.Debugf("Found %v multipart form files", len(files))
 		results = len(files)
+		sFiles := r.MultipartForm.File["screenshot_file"]
+		screenshots = len(sFiles)
+		log.Debugf("Found %d result files, %d screenshot files", results, screenshots)
+
 		getResult = func(i int) (io.ReadCloser, error) {
 			return files[i].Open()
+		}
+		getScreenshot = func(i int) (io.ReadCloser, error) {
+			return sFiles[i].Open()
 		}
 	} else {
 		// result_url payload
