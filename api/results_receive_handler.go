@@ -19,7 +19,7 @@ func apiResultsUploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := receiver.NewAPI(ctx)
 	receiver.HandleResultsUpload(a, w, r)
 }
 
@@ -30,7 +30,7 @@ func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := receiver.NewAPI(ctx)
 	s := checks.NewAPI(ctx)
 	receiver.HandleResultsCreate(a, s, w, r)
 }

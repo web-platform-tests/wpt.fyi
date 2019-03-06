@@ -34,11 +34,11 @@ const NumRetries = 3
 const DownloadTimeout = time.Second * 10
 
 // HandleResultsUpload handles the POST requests for uploading results.
-func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
+func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	var uploader string
 	if !a.IsAdmin() {
 		username, password, ok := r.BasicAuth()
-		if !ok || !a.authenticateUploader(username, password) {
+		if !ok || !a.AuthenticateUploader(username, password) {
 			http.Error(w, "Authentication error", http.StatusUnauthorized)
 			return
 		}
@@ -63,7 +63,6 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	// Non-existent keys will have empty values, which will later be
 	// filtered out by scheduleResultsTask.
 	extraParams := map[string]string{
-		"id":           r.FormValue("id"),
 		"labels":       r.FormValue("labels"),
 		"callback_url": r.FormValue("callback_url"),
 		// The following fields will be deprecated when all runners embed metadata in the report.
@@ -118,7 +117,7 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 }
 
 func sendResultsToProcessor(
-	a AppEngineAPI, uploader string, results int, getFile func(int) (io.ReadCloser, error),
+	a API, uploader string, results int, getFile func(int) (io.ReadCloser, error),
 	extraParams map[string]string) (*taskqueue.Task, error) {
 	if results == 0 {
 		return nil, fmt.Errorf("nothing uploaded")
@@ -152,7 +151,7 @@ func sendResultsToProcessor(
 			}
 			defer f.Close()
 			// TODO: Detect whether the fetched blob is gzipped.
-			if err := a.uploadToGCS(gcsPath, f, true); err != nil {
+			if err := a.UploadToGCS(gcsPath, f, true); err != nil {
 				errors <- err
 			}
 		}(i, gcsPath)
@@ -168,14 +167,14 @@ func sendResultsToProcessor(
 		return nil, fmt.Errorf("error(s) occured when transferring results from %s to GCS:\n%s", uploader, errStr)
 	}
 
-	return a.scheduleResultsTask(uploader, gcs, payloadType, extraParams)
+	return a.ScheduleResultsTask(uploader, gcs, payloadType, extraParams)
 }
 
-func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
+func fetchFile(a API, url string) (io.ReadCloser, error) {
 	log := shared.GetLogger(a.Context())
 	sleep := time.Second
 	for retry := 0; retry < NumRetries; retry++ {
-		body, err := a.fetchWithTimeout(url, DownloadTimeout)
+		body, err := a.FetchGzip(url, DownloadTimeout)
 		if err == nil {
 			return body, nil
 		}

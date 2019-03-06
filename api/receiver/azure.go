@@ -60,7 +60,7 @@ func getAzureArtifactName(url string) string {
 	return ""
 }
 
-func handleAzureArtifact(a AppEngineAPI, artifactName string, url string) (int, func(int) (io.ReadCloser, error), error) {
+func handleAzureArtifact(a API, artifactName string, url string) (int, func(int) (io.ReadCloser, error), error) {
 	log := shared.GetLogger(a.Context())
 	log.Debugf("Detected azure artifact %s", artifactName)
 	artifactZip, err := fetchFile(a, url)

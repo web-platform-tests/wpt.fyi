@@ -2,8 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// TODO(Hexcles): Reuse shared abstractions of AppEngine API, remove unexported
-// functions from AppEngineAPI and use go generate.
+//go:generate mockgen -destination mock_receiver/api_mock.go github.com/web-platform-tests/wpt.fyi/api/receiver API
 
 package receiver
 
@@ -18,34 +17,23 @@ import (
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/taskqueue"
-	"google.golang.org/appengine/urlfetch"
 )
 
-// DatastoreKey is a context-free constructable form of datastore.Key that
-// contains identifying data for a datastore object that was assigned an
-// integral ID with no parent key.
-type DatastoreKey struct {
-	Kind string
-	ID   int64
-}
-
-// AppEngineAPI abstracts all AppEngine APIs used by the results receiver.
-type AppEngineAPI interface {
+// API abstracts all AppEngine/GCP APIs used by the results receiver.
+type API interface {
 	shared.AppEngineAPI
 
-	addTestRun(testRun *shared.TestRun) (*DatastoreKey, error)
-	authenticateUploader(username, password string) bool
-	fetchWithTimeout(url string, timeout time.Duration) (io.ReadCloser, error)
-	uploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
-	scheduleResultsTask(
+	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
+	AuthenticateUploader(username, password string) bool
+	FetchGzip(url string, timeout time.Duration) (io.ReadCloser, error)
+	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
+	ScheduleResultsTask(
 		uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (
 		*taskqueue.Task, error)
 }
 
-// appEngineAPIImpl is backed by real AppEngine APIs.
-type appEngineAPIImpl struct {
+type apiImpl struct {
 	shared.AppEngineAPIImpl
 
 	gcs   gcs
@@ -53,19 +41,18 @@ type appEngineAPIImpl struct {
 	queue string
 }
 
-// NewAppEngineAPI creates a real AppEngineAPI from a given context.
-func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
-	return &appEngineAPIImpl{
+// NewAPI creates a real API from a given context.
+func NewAPI(ctx context.Context) API {
+	return &apiImpl{
 		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
-		queue:            ResultsQueue,
 		store:            shared.NewAppEngineDatastore(ctx, false),
+		queue:            ResultsQueue,
 	}
 }
 
-func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, error) {
-	var key shared.Key
+func (a *apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
+	key := a.store.NewIDKey("TestRun", testRun.ID)
 	var err error
-	key = a.store.NewIDKey("TestRun", testRun.ID)
 	if testRun.ID != 0 {
 		err = a.store.Insert(key, testRun)
 	} else {
@@ -74,22 +61,19 @@ func (a *appEngineAPIImpl) addTestRun(testRun *shared.TestRun) (*DatastoreKey, e
 	if err != nil {
 		return nil, err
 	}
-	return &DatastoreKey{
-		Kind: key.Kind(),
-		ID:   key.IntID(),
-	}, nil
+	return key, nil
 }
 
-func (a *appEngineAPIImpl) authenticateUploader(username, password string) bool {
-	key := datastore.NewKey(a.Context(), "Uploader", username, 0, nil)
+func (a *apiImpl) AuthenticateUploader(username, password string) bool {
+	key := a.store.NewNameKey("Uploader", username)
 	var uploader shared.Uploader
-	if err := datastore.Get(a.Context(), key, &uploader); err != nil || uploader.Password != password {
+	if err := a.store.Get(key, &uploader); err != nil || uploader.Password != password {
 		return false
 	}
 	return true
 }
 
-func (a *appEngineAPIImpl) uploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
+func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	// Expecting gcsPath to be /bucket/path/to/file
 	split := strings.SplitN(gcsPath, "/", 3)
 	if len(split) != 3 || split[0] != "" {
@@ -122,7 +106,7 @@ func (a *appEngineAPIImpl) uploadToGCS(gcsPath string, f io.Reader, gzipped bool
 	return nil
 }
 
-func (a *appEngineAPIImpl) scheduleResultsTask(
+func (a *apiImpl) ScheduleResultsTask(
 	uploader string, gcsPaths []string, payloadType string, extraParams map[string]string) (*taskqueue.Task, error) {
 	if uploader == "" {
 		return nil, errors.New("empty uploader")
@@ -158,15 +142,14 @@ func (a *appEngineAPIImpl) scheduleResultsTask(
 	return t, err
 }
 
-func (a *appEngineAPIImpl) fetchWithTimeout(url string, timeout time.Duration) (io.ReadCloser, error) {
+func (a *apiImpl) FetchGzip(url string, timeout time.Duration) (io.ReadCloser, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Accept-Encoding", "gzip")
-	ctx, cancel := context.WithTimeout(a.Context(), timeout)
+	client, cancel := a.GetSlowHTTPClient(timeout)
 	defer cancel()
-	client := urlfetch.Client(ctx)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
