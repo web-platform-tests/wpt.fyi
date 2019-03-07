@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -74,30 +73,43 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	}
 
 	log := shared.GetLogger(a.Context())
-	var results int
-	var getFile func(i int) (io.ReadCloser, error)
+	var results, screenshots int
+	var getResult, getScreenshot func(i int) (io.ReadCloser, error)
 	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
 		// result_file[] payload
 		files := r.MultipartForm.File["result_file"]
-		log.Debugf("Found %v multipart form files", len(files))
 		results = len(files)
-		getFile = func(i int) (io.ReadCloser, error) {
+		sFiles := r.MultipartForm.File["screenshot_file"]
+		screenshots = len(sFiles)
+		log.Debugf("Found %d result files, %d screenshot files", results, screenshots)
+
+		getResult = func(i int) (io.ReadCloser, error) {
 			return files[i].Open()
+		}
+		getScreenshot = func(i int) (io.ReadCloser, error) {
+			return sFiles[i].Open()
 		}
 	} else {
 		// result_url payload
 		urls := r.PostForm["result_url"]
 		results = len(urls)
-		log.Debugf("Found %v urls", results)
-		getFile = func(i int) (io.ReadCloser, error) {
+		sUrls := r.PostForm["screenshot_url"]
+		screenshots = len(sUrls)
+		log.Debugf("Found %d result URLs, %d screenshot URLs", results, screenshots)
+
+		getResult = func(i int) (io.ReadCloser, error) {
 			return fetchFile(a, urls[i])
 		}
+		getScreenshot = func(i int) (io.ReadCloser, error) {
+			return fetchFile(a, sUrls[i])
+		}
 		// Check for azure artifact URL, for unzipping.
+		// TODO(Hexcles): Support "screenshot_url" on Azure.
 		if results == 1 {
 			artifactName := getAzureArtifactName(urls[0])
 			if artifactName != "" {
 				var err error
-				results, getFile, err = handleAzureArtifact(a, artifactName, urls[0])
+				results, getResult, err = handleAzureArtifact(a, artifactName, urls[0])
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
@@ -106,7 +118,7 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	t, err := sendResultsToProcessor(a, uploader, results, getFile, extraParams)
+	t, err := sendResultsToProcessor(a, uploader, results, getResult, screenshots, getScreenshot, extraParams)
 	if err != nil {
 		log.Errorf("%s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -117,57 +129,69 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 }
 
 func sendResultsToProcessor(
-	a API, uploader string, results int, getFile func(int) (io.ReadCloser, error),
+	a API, uploader string,
+	results int, getResult func(int) (io.ReadCloser, error),
+	screenshots int, getScreenshot func(int) (io.ReadCloser, error),
 	extraParams map[string]string) (*taskqueue.Task, error) {
+
+	if uploader == "" {
+		return nil, fmt.Errorf("empty uploader")
+	}
 	if results == 0 {
 		return nil, fmt.Errorf("nothing uploaded")
 	}
 
 	id := uuid.New()
-	var payloadType string
-	gcs := make([]string, 0, results)
-	if results > 1 {
-		payloadType = "multiple"
-		for i := 0; i < results; i++ {
-			gcsPath := fmt.Sprintf("/%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
-			gcs = append(gcs, gcsPath)
-		}
-	} else {
-		payloadType = "single"
-		gcsPath := fmt.Sprintf("/%s/%s/%s.json", BufferBucket, uploader, id)
-		gcs = append(gcs, gcsPath)
+	resultGCS := make([]string, results)
+	screenshotGCS := make([]string, screenshots)
+	for i := 0; i < results; i++ {
+		resultGCS[i] = fmt.Sprintf("/%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
+	}
+	for i := 0; i < screenshots; i++ {
+		screenshotGCS[i] = fmt.Sprintf("/%s/%s/%s/%d.db", BufferBucket, uploader, id, i)
 	}
 
-	errors := make(chan error, results)
 	var wg sync.WaitGroup
-	wg.Add(results)
-	for i, gcsPath := range gcs {
-		go func(i int, gcsPath string) {
-			defer wg.Done()
-			f, err := getFile(i)
-			if err != nil {
-				errors <- err
-				return
-			}
-			defer f.Close()
-			// TODO: Detect whether the fetched blob is gzipped.
-			if err := a.UploadToGCS(gcsPath, f, true); err != nil {
-				errors <- err
-			}
-		}(i, gcsPath)
+	moveFile := func(errors chan error, getFile func(int) (io.ReadCloser, error), i int, gcsPath string) {
+		defer wg.Done()
+		f, err := getFile(i)
+		if err != nil {
+			errors <- err
+			return
+		}
+		defer f.Close()
+		// TODO: Detect whether the fetched blob is gzipped.
+		if err := a.UploadToGCS(gcsPath, f, true); err != nil {
+			errors <- err
+		}
+	}
+
+	errors1 := make(chan error, results)
+	errors2 := make(chan error, screenshots)
+	wg.Add(results + screenshots)
+	for i, gcsPath := range resultGCS {
+		moveFile(errors1, getResult, i, gcsPath)
+	}
+	for i, gcsPath := range screenshotGCS {
+		moveFile(errors2, getScreenshot, i, gcsPath)
 	}
 	wg.Wait()
-	close(errors)
+	close(errors1)
+	close(errors2)
 
-	var errStr string
-	for err := range errors {
-		errStr += strings.TrimSpace(err.Error()) + "\n"
+	mErr := shared.NewMultiErrorFromChan(errors1, fmt.Sprintf("transferring results from %s to GCS", uploader))
+	if mErr != nil {
+		// Result errors are fatal.
+		return nil, mErr
 	}
-	if errStr != "" {
-		return nil, fmt.Errorf("error(s) occured when transferring results from %s to GCS:\n%s", uploader, errStr)
+	mErr = shared.NewMultiErrorFromChan(errors2, fmt.Sprintf("transferring screenshots from %s to GCS", uploader))
+	if mErr != nil {
+		// Screenshot errors are not fatal.
+		shared.GetLogger(a.Context()).Warningf(mErr.Error())
+		screenshotGCS = nil
 	}
 
-	return a.ScheduleResultsTask(uploader, gcs, payloadType, extraParams)
+	return a.ScheduleResultsTask(uploader, resultGCS, screenshotGCS, extraParams)
 }
 
 func fetchFile(a API, url string) (io.ReadCloser, error) {

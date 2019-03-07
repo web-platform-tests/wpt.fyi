@@ -4,18 +4,17 @@
 
 import logging
 import os
-import re
 import shutil
 import sys
 import tempfile
 import traceback
 
 from google.cloud import datastore, storage
-import requests
 
 import config
 import gsutil
 import wptreport
+from wptscreenshot import WPTScreenshot
 
 
 _log = logging.getLogger(__name__)
@@ -52,41 +51,36 @@ def _process_chunk(report, gcs_path):
         report: A WPTReport into which the chunk is merged.
         gcs_path: A gs:// URI to a chunk of report.
     """
-    match = re.match(r'/([^/]+)/(.*)', gcs_path)
-    assert match
-    bucket_name, blob_path = match.groups()
-
+    bucket_name, blob_path = gsutil.split_gcs_path(gcs_path)
     gcs = storage.Client()
     bucket = gcs.get_bucket(bucket_name)
     blob = bucket.blob(blob_path)
-
     with tempfile.NamedTemporaryFile(suffix='.json') as temp:
         blob.download_to_file(temp)
         temp.seek(0)
         report.load_json(temp)
 
 
-# ==== Beginning of tasks  ====
+# ==== Beginning of tasks ====
 # Tasks are supposed to be independent; exceptions are ignored (but logged).
-# Each task is a function that takes (report, test_run_id).
+# Each task is a function that takes (report, test_run_id, screenshots_gcs).
+
+def _upload_screenshots(report, _, screenshots_gcs):
+    gcs = storage.Client()
+    for screenshot in screenshots_gcs:
+        bucket_name, blob_path = gsutil.split_gcs_path(screenshot)
+        bucket = gcs.get_bucket(bucket_name)
+        blob = bucket.blob(blob_path)
+        with tempfile.NamedTemporaryFile(suffix='.db') as temp:
+            blob.download_to_file(temp)
+            temp.flush()
+            with WPTScreenshot(temp.name, report.run_info) as s:
+                s.process()
+
+# ==== End of tasks ====
 
 
-def _push_to_spanner(_, test_run_id):
-    # Authenticate as "_spanner" for push-to-spanner API.
-    secret = _get_uploader_password('_spanner')
-    response = requests.put(
-        '{}/api/spanner_push_run?run_id={}'.format(
-            config.project_baseurl(), test_run_id),
-        auth=('_spanner', secret))
-    if not response.ok:
-        _log.error('Bad status code from push-to-spanner API: %d',
-                   response.status_code)
-
-
-# ==== End of tasks  ====
-
-
-def _after_new_run(report, test_run_id):
+def _after_new_run(report, test_run_id, screenshots_gcs):
     """Runs post-new-run tasks.
 
     Args:
@@ -96,12 +90,12 @@ def _after_new_run(report, test_run_id):
     Returns:
         A list of strings, names of the tasks that run successfully.
     """
-    tasks = []
+    tasks = [_upload_screenshots]
     success = []
     for task in tasks:
         _log.info('Running post-new-run task: %s', task.__name__)
         try:
-            task(report, test_run_id)
+            task(report, test_run_id, screenshots_gcs)
         except Exception:
             traceback.print_exc()
         else:
@@ -112,21 +106,16 @@ def _after_new_run(report, test_run_id):
 def process_report(params):
     # Mandatory fields:
     uploader = params['uploader']
-    gcs_paths = params.getlist('gcs')
-    result_type = params['type']
+    results_gcs = params.getlist('gcs')
+    screenshots_gcs = params.getlist('screenshots')
     # Optional fields:
     run_id = params.get('run_id', '0')
     callback_url = params.get('callback_url')
     labels = params.get('labels', '')
 
-    assert (
-        (result_type == 'single' and len(gcs_paths) == 1) or
-        (result_type == 'multiple' and len(gcs_paths) > 1)
-    )
-
     report = wptreport.WPTReport()
     try:
-        for gcs_path in gcs_paths:
+        for gcs_path in results_gcs:
             _process_chunk(report, gcs_path)
         # To be deprecated once all reports have all the required metadata.
         report.update_metadata(
@@ -139,7 +128,7 @@ def process_report(params):
         report.finalize()
     except wptreport.WPTReportError:
         etype, e, tb = sys.exc_info()
-        e.path = str(gcs_paths)
+        e.path = str(results_gcs)
         # This will register an error in Stackdriver.
         traceback.print_exception(etype, e, tb)
         # The input is invalid and there is no point to retry, so we return an
@@ -147,7 +136,7 @@ def process_report(params):
         return ''
 
     resp = "{} results loaded from: {}\n".format(
-        len(report.results), ' '.join(gcs_paths))
+        len(report.results), ' '.join(results_gcs))
 
     raw_results_gs_url = 'gs://{}/{}/report.json'.format(
         config.raw_results_bucket(), report.sha_product_path)
@@ -162,10 +151,10 @@ def process_report(params):
             raw_results_url)
         return ''
 
-    if result_type == 'single':
+    if len(results_gcs) == 1:
         # If the original report isn't chunked, we store it directly without
         # the roundtrip to serialize it back.
-        gsutil.copy('gs:/' + gcs_paths[0], raw_results_gs_url)
+        gsutil.copy('gs:/' + results_gcs[0], raw_results_gs_url)
     else:
         with tempfile.NamedTemporaryFile(suffix='.json.gz') as temp:
             report.serialize_gzip(temp.name)
@@ -220,7 +209,7 @@ def process_report(params):
         callback_url)
     assert test_run_id
 
-    success = _after_new_run(report, test_run_id)
+    success = _after_new_run(report, test_run_id, screenshots_gcs)
     if success:
         resp += "Successfully ran hooks: {}\n".format(', '.join(success))
 

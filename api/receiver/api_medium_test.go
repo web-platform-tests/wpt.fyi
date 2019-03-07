@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -94,31 +95,21 @@ func TestScheduleResultsTask(t *testing.T) {
 	a := NewAPI(ctx).(*apiImpl)
 	// dev_appserver does not support non-default queues, so we override the name of the queue here.
 	a.queue = ""
-	_, err = a.ScheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", nil)
+	results := []string{"/blade-runner/test.json"}
+	screenshots := []string{"/blade-runner/test.db"}
+	task, err := a.ScheduleResultsTask("blade-runner", results, screenshots, nil)
 	assert.Nil(t, err)
+
+	payload, err := url.ParseQuery(string(task.Payload))
+	assert.Nil(t, err)
+	assert.Equal(t, task.Name, payload.Get("id"))
+	assert.Equal(t, "blade-runner", payload.Get("uploader"))
+	assert.Equal(t, results, payload["gcs"])
+	assert.Equal(t, screenshots, payload["screenshots"])
 
 	stats, err = taskqueue.QueueStats(ctx, []string{""})
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 1)
-}
-
-func TestScheduleResultsTask_error(t *testing.T) {
-	ctx, done, err := sharedtest.NewAEContext(false)
-	assert.Nil(t, err)
-	defer done()
-	a := NewAPI(ctx)
-
-	_, err = a.ScheduleResultsTask("", []string{"/blade-runner/test.json"}, "single", nil)
-	assert.NotNil(t, err)
-
-	_, err = a.ScheduleResultsTask("blade-runner", []string{""}, "single", nil)
-	assert.NotNil(t, err)
-
-	_, err = a.ScheduleResultsTask("blade-runner", nil, "single", nil)
-	assert.NotNil(t, err)
-
-	_, err = a.ScheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "", nil)
-	assert.NotNil(t, err)
 }
 
 func TestAddTestRun(t *testing.T) {
