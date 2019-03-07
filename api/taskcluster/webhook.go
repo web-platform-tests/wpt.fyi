@@ -347,13 +347,5 @@ func createAllRuns(
 	}
 	wg.Wait()
 	close(errors)
-
-	var errStr string
-	for err := range errors {
-		errStr += err.Error() + "\n"
-	}
-	if errStr != "" {
-		return fmt.Errorf("error(s) occured when uploading:\n%s", errStr)
-	}
-	return nil
+	return shared.NewMultiErrorFromChan(errors, "sending Taskcluster runs to results receiver")
 }
