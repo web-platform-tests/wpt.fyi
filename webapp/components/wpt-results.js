@@ -544,9 +544,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
   computeLiveTestDomain() {
     if (this.webPlatformTestsLive) {
-      return 'web-platform-tests.live'
+      return 'web-platform-tests.live';
     }
-    return 'w3c-test.org'
+    return 'w3c-test.org';
   }
 
   https(url) {
