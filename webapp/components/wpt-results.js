@@ -205,20 +205,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           <ul>
             <li><a href\$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
             <template is="dom-if" if="[[ showTestURL ]]">
-              <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
-                <li><a href="[[showTestURL]]" target="_blank">Run in your browser on w3c-test.org</a></li>
-              </template>
-              <template is="dom-if" if="[[ webPlatformTestsLive ]]">
-               <li><a href="[[showTestURL]]" target="_blank">Run in your browser on web-platform-tests.live</a></li>
-              </template>
+              <li><a href="[[showTestURL]]" target="_blank">Run in your browser on [[ liveTestDomain ]]</a></li>
             </template>
             <template is="dom-if" if="[[ showTestRefURL ]]">
-              <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
-                <li><a href="[[showTestRefURL]]" target="_blank">View ref in your browser on w3c-test.org</a></li>
-              </template>
-              <template is="dom-if" if="[[ webPlatformTestsLive ]]">
-                <li><a href="[[showTestRefURL]]" target="_blank">View ref in your browser on web-platform-tests.live</a></li>
-            </template>
+              <li><a href="[[showTestRefURL]]" target="_blank">View ref in your browser on [[ liveTestDomain ]]</a></li>
             </template>
           </ul>
         </div>
@@ -444,6 +434,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         type: String,
         computed: 'computeTestRefURL(testType, path, manifest)',
       },
+      liveTestDomain: {
+        type: String,
+        computed: 'computeLiveTestDomain()',
+      },
       structuredSearch: Object,
       searchResults: {
         type: Array,
@@ -546,6 +540,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     // See https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py#L141
     const refPath = item && item[0][1][0][0];
     return this.computeTestURL(testType, refPath);
+  }
+
+  computeLiveTestDomain() {
+    if (this.webPlatformTestsLive) {
+      return 'web-platform-tests.live'
+    }
+    return 'w3c-test.org'
   }
 
   https(url) {
