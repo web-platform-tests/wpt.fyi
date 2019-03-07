@@ -300,9 +300,9 @@ __Parameters__
 __`sha`__ : SHA of the [WPT](https://github.com/web-platform-tests/wpt) repo PR for which to fetch,
     the manifest, or the keyword `latest`. (Defaults to `latest`.)
 
-NOTE: The full SHA of the fetched manifest is returned in the HTTP response header `x-wpt-sha`, e.g.
+NOTE: The full SHA of the fetched manifest is returned in the HTTP response header `wpt-sha`, e.g.
 
-    x-wpt-sha: abcdef0123456789abcdef0123456789abcdef01
+    wpt-sha: abcdef0123456789abcdef0123456789abcdef01
 
 __Response format__
 
