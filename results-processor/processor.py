@@ -95,7 +95,7 @@ def _after_new_run(report, test_run_id, screenshots_gcs):
     for task in tasks:
         _log.info('Running post-new-run task: %s', task.__name__)
         try:
-            task(report, test_run_id)
+            task(report, test_run_id, screenshots_gcs)
         except Exception:
             traceback.print_exc()
         else:
