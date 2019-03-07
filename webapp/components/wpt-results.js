@@ -204,11 +204,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         <div class="links">
           <ul>
             <li><a href\$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
-            <template is="dom-if" if="{{ testW3CURL }}">
-              <li><a href="[[testW3CURL]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+            <template is="dom-if" if="[[ showTestURL ]]">
+              <li><a href="[[showTestURL]]" target="_blank">Run in your browser on [[ liveTestDomain ]]</a></li>
             </template>
-            <template is="dom-if" if="[[ testW3CRefURL ]]">
-              <li><a href="[[testW3CRefURL]]" target="_blank">View ref in your browser on w3c-test.org</a></li>
+            <template is="dom-if" if="[[ showTestRefURL ]]">
+              <li><a href="[[showTestRefURL]]" target="_blank">View ref in your browser on [[ liveTestDomain ]]</a></li>
             </template>
           </ul>
         </div>
@@ -390,14 +390,14 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           <div class="compare">
             <div class="column">
               <h5>Result</h5>
-              <template is="dom-if" if="[[testW3CURL]]">
-                <iframe src="[[https(testW3CURL)]]"></iframe>
+              <template is="dom-if" if="[[showTestURL]]">
+                <iframe src="[[https(showTestURL)]]"></iframe>
               </template>
             </div>
             <div class="column">
               <h5>Reference</h5>
-              <template is="dom-if" if="[[testW3CRefURL]]">
-                <iframe src="[[https(testW3CRefURL)]]"></iframe>
+              <template is="dom-if" if="[[showTestRefURL]]">
+                <iframe src="[[https(showTestRefURL)]]"></iframe>
               </template>
             </div>
           </div>
@@ -426,13 +426,17 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         type: Boolean,
         computed: 'computeIsRefTest(testType)'
       },
-      testW3CURL: {
+      showTestURL: {
         type: Boolean,
-        computed: 'computeTestW3CURL(testType, path)',
+        computed: 'computeTestURL(testType, path)',
       },
-      testW3CRefURL: {
+      showTestRefURL: {
         type: String,
         computed: 'computeTestRefURL(testType, path, manifest)',
+      },
+      liveTestDomain: {
+        type: String,
+        computed: 'computeLiveTestDomain()',
       },
       structuredSearch: Object,
       searchResults: {
@@ -516,9 +520,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     return testType === 'reftest';
   }
 
-  computeTestW3CURL(testType, path) {
+  computeTestURL(testType, path) {
     if (testType === 'wdspec') {
       return;
+    }
+    if (this.webPlatformTestsLive) {
+      return new URL(`${this.scheme}://web-platform-tests.live${path}`);
     }
     return new URL(`${this.scheme}://w3c-test.org${path}`);
   }
@@ -532,7 +539,14 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     // Then, the ref's 1st item is the url (0). (2nd is the condition, e.g. "==".)
     // See https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py#L141
     const refPath = item && item[0][1][0][0];
-    return this.computeTestW3CURL(testType, refPath);
+    return this.computeTestURL(testType, refPath);
+  }
+
+  computeLiveTestDomain() {
+    if (this.webPlatformTestsLive) {
+      return 'web-platform-tests.live';
+    }
+    return 'w3c-test.org';
   }
 
   https(url) {
