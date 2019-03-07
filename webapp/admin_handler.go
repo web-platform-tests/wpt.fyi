@@ -22,7 +22,7 @@ func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func showAdminUploadForm(a shared.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	assertLoginAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", nil)
+	assertAdminAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", nil)
 }
 
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 		Host: a.GetHostname(),
 	}
 	if r.Method == "GET" {
-		assertLoginAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)
+		assertAdminAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)
 	} else if r.Method == "POST" {
 		if !a.IsAdmin() {
 			http.Error(w, "Admin only", http.StatusUnauthorized)
@@ -56,22 +56,13 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func assertLoginAndRenderTemplate(
+func assertAdminAndRenderTemplate(
 	a shared.AppEngineAPI,
 	w http.ResponseWriter,
 	r *http.Request,
 	redirectPath,
 	template string,
 	data interface{}) {
-	if !a.IsLoggedIn() {
-		loginURL, err := a.LoginURL(redirectPath)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
-		return
-	}
 	if !a.IsAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)
 		return
@@ -87,7 +78,7 @@ func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	a := shared.NewAppEngineAPI(ctx)
 
-	if !a.IsLoggedIn() || !a.IsAdmin() {
+	if !a.IsAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)
 		return
 	}
