@@ -204,11 +204,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         <div class="links">
           <ul>
             <li><a href\$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
-            <template is="dom-if" if="{{ showTestURL }}">
-              <template is="dom-if" if="{{ !webPlatformTestsLive }}">
+            <template is="dom-if" if="[[ showTestURL ]]">
+              <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
                 <li><a href="[[showTestURL]]" target="_blank">Run in your browser on w3c-test.org</a></li>
               </template>
-              <template is="dom-if" if="{{ webPlatformTestsLive }}">
+              <template is="dom-if" if="[[ webPlatformTestsLive ]]">
                <li><a href="[[showTestURL]]" target="_blank">Run in your browser on web-platform-tests.live</a></li>
               </template>
             </template>
