@@ -43,6 +43,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
+      'interopScoreColumn',
     ];
   }
 });
@@ -217,6 +218,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{permalinks}}">
         Show dialog for copying a permalink (on /results page).
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{interopScoreColumn}}">
+        Show score column in the <a href="/interop">interop</a> view.
       </paper-checkbox>
     </paper-item>
 `;

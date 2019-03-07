@@ -34,6 +34,7 @@
     "@polymer/paper-input": "^3.0.0",
     "@polymer/paper-item": "^3.0.0",
     "@polymer/paper-listbox": "^3.0.0",
+    "@polymer/paper-progress": "^3.0.1",
     "@polymer/paper-radio-button": "^3.0.1",
     "@polymer/paper-radio-group": "^3.0.1",
     "@polymer/paper-spinner": "^3.0.2",

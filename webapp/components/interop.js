@@ -206,7 +206,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
         <tr>
           <th>Path</th>
           <template is="dom-if" if="{{ testRuns }}">
-            <th colspan="100">Tests Passing in <var>X</var> / [[testRuns.length]] Browsers</th>
+            <th colspan$="[[thLabels.length]]">Tests Passing in <var>X</var> / [[testRuns.length]] Browsers</th>
           </template>
         </tr>
         <tr>
@@ -214,6 +214,9 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
           <!-- Repeats for as many different browser test runs are available, plus one -->
           <template is="dom-repeat" items="{{ thLabels }}" as="label">
             <th class="th-label">{{ label }}</th>
+          </template>
+          <template is="dom-if" if="[[ interopScoreColumn ]]">
+            <th>Interop score</th>
           </template>
         </tr>
       </thead>
@@ -226,6 +229,12 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
               <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+            </template>
+
+            <template is="dom-if" if="[[ interopScoreColumn ]]">
+              <td>
+                <paper-progress value="[[ interopScore(node) ]]"></paper-progress>
+              </td>
             </template>
           </tr>
         </template>
@@ -307,6 +316,10 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     super.connectedCallback();
     this.testSearch.addEventListener('commit', this.onSearchCommit);
     this.testSearch.addEventListener('autocomplete', this.onSearchAutocomplete);
+
+    if (this.interopScoreColumn) {
+      import('../node_modules/@polymer/paper-progress/paper-progress.js');
+    }
   }
 
   disconnectedCallback() {
@@ -567,6 +580,18 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     this.testRuns = null;
     this.searchResults = null;
     this.loadData();
+  }
+
+  // interopScore is a percentage.
+  interopScore(node) {
+    let score = 0;
+    const products = node.interop.length - 1;
+    for (let i = 0; i < node.interop.length; i++) {
+      // 0.5 (half) of the products implementing a feature is worst-case, so we
+      // score by the distance from that.
+      score += 2 * Math.abs(0.5 - (i / products)) * node.interop[i] / node.total;
+    }
+    return Math.round(score * 100);
   }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);

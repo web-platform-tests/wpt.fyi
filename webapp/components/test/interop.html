@@ -4,8 +4,6 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../interop.js"></script>
 </head>
 <body>
   <test-fixture id="wpt-interop-fixture">
@@ -25,9 +23,9 @@ suite('WPTInterop', () => {
   setup(async() => {
     sandbox = sinon.sandbox.create();
 
-    const interop = await fetch('fixtures/interop.json').then(r => r.json());
-    fetches['/api/interop'] = interop;
-    fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
+    const interopScores = await fetch('fixtures/interop.json').then(r => r.json());
+    fetches['/api/interop'] = interopScores;
+    fetches[interopScores.url] = await fetch('fixtures/passrates.json').then(r => r.json());
 
     sandbox.stub(window, 'fetch', (url) => {
       return Promise.resolve(new Response(JSON.stringify(fetches[url])));
@@ -51,12 +49,10 @@ suite('WPTInterop', () => {
   });
 
   suite('WPTInterop.prototype.*', () => {
-    setup((done) => {
+    let interop;
+    setup(() => {
       sandbox.spy(PolymerElement.prototype, 'ready');
-
-      fixture('wpt-interop-fixture');
-
-      done();
+      interop = fixture('wpt-interop-fixture');
     });
 
     suite('async ready()', () => {
@@ -66,6 +62,35 @@ suite('WPTInterop', () => {
 
       test('fetches interop', () => {
         return waitingOn(() => window.fetch.calledWith('/api/interop'));
+      });
+    });
+
+    suite('interopScore()', () => {
+      const allFail = [10];
+      const allPass = [10];
+      for (let n = 1; n < 10; n++) {
+        allFail.push(0);
+        allPass.splice(0, 0, 0);
+        test(`all ${n} products failing`, () => {
+          expect(interop.interopScore({
+            interop: allFail,
+            total: 10,
+          })).to.equal(100);
+        });
+        test(`all ${n} products passing`, () => {
+          expect(interop.interopScore({
+            interop: allPass,
+            total: 10,
+          })).to.equal(100);
+        });
+      }
+
+      test('1,1,1,1,1', () => {
+        // 1 + 0.5 + 0 + 0.5 + 1 / 5 = 0.6
+        expect(interop.interopScore({
+          interop: [1,1,1,1,1],
+          total: 5,
+        })).to.equal(60);
       });
     });
   });
