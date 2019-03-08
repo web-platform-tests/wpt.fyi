@@ -313,7 +313,7 @@ func (mr *MockAPIMockRecorder) LoginURL(arg0 interface{}) *gomock.Call {
 }
 
 // ScheduleResultsTask mocks base method
-func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1 []string, arg2 string, arg3 map[string]string) (*taskqueue.Task, error) {
+func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1, arg2 []string, arg3 map[string]string) (*taskqueue.Task, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ScheduleResultsTask", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*taskqueue.Task)

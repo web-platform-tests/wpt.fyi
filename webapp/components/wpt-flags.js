@@ -43,6 +43,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
+      'webPlatformTestsLive',
     ];
   }
 });
@@ -217,6 +218,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{permalinks}}">
         Show dialog for copying a permalink (on /results page).
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{webPlatformTestsLive}}">
+        Use web-platform-tests.live.
       </paper-checkbox>
     </paper-item>
 `;

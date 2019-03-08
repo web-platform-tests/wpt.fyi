@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import logging
+import re
 import subprocess
 
 
@@ -14,10 +15,17 @@ def _call(command):
     subprocess.check_call(command)
 
 
-def gs_to_public_url(gcs_path):
+def split_gcs_path(gcs_path):
+    """Splits /bucket/path into (bucket, path)."""
+    match = re.match(r'/([^/]+)/(.*)', gcs_path)
+    assert match
+    return match.groups()
+
+
+def gs_to_public_url(gs_url):
     """Converts a gs:// URI to a HTTP URL."""
-    assert gcs_path.startswith('gs://')
-    return gcs_path.replace('gs://', 'https://storage.googleapis.com/', 1)
+    assert gs_url.startswith('gs://')
+    return gs_url.replace('gs://', 'https://storage.googleapis.com/', 1)
 
 
 def copy(path1, path2, gzipped=False, quiet=False):
