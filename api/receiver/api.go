@@ -33,7 +33,7 @@ type API interface {
 }
 
 type apiImpl struct {
-	shared.AppEngineAPIImpl
+	shared.AppEngineAPI
 
 	gcs   gcs
 	store shared.Datastore
@@ -42,14 +42,14 @@ type apiImpl struct {
 
 // NewAPI creates a real API from a given context.
 func NewAPI(ctx context.Context) API {
-	return &apiImpl{
-		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
-		store:            shared.NewAppEngineDatastore(ctx, false),
-		queue:            ResultsQueue,
+	return apiImpl{
+		AppEngineAPI: shared.NewAppEngineAPI(ctx),
+		store:        shared.NewAppEngineDatastore(ctx, false),
+		queue:        ResultsQueue,
 	}
 }
 
-func (a *apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
+func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 	key := a.store.NewIDKey("TestRun", testRun.ID)
 	var err error
 	if testRun.ID != 0 {
@@ -63,7 +63,7 @@ func (a *apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 	return key, nil
 }
 
-func (a *apiImpl) AuthenticateUploader(username, password string) bool {
+func (a apiImpl) AuthenticateUploader(username, password string) bool {
 	key := a.store.NewNameKey("Uploader", username)
 	var uploader shared.Uploader
 	if err := a.store.Get(key, &uploader); err != nil || uploader.Password != password {
@@ -72,7 +72,7 @@ func (a *apiImpl) AuthenticateUploader(username, password string) bool {
 	return true
 }
 
-func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
+func (a apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	// Expecting gcsPath to be /bucket/path/to/file
 	split := strings.SplitN(gcsPath, "/", 3)
 	if len(split) != 3 || split[0] != "" {
@@ -105,7 +105,7 @@ func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	return nil
 }
 
-func (a *apiImpl) ScheduleResultsTask(
+func (a apiImpl) ScheduleResultsTask(
 	uploader string, resultGCS, screenshotGCS []string, extraParams map[string]string) (*taskqueue.Task, error) {
 	key, err := a.store.ReserveID("TestRun")
 	if err != nil {
@@ -131,7 +131,7 @@ func (a *apiImpl) ScheduleResultsTask(
 	return t, err
 }
 
-func (a *apiImpl) FetchGzip(url string, timeout time.Duration) (io.ReadCloser, error) {
+func (a apiImpl) FetchGzip(url string, timeout time.Duration) (io.ReadCloser, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err

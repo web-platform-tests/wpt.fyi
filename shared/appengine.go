@@ -55,7 +55,7 @@ type AppEngineAPI interface {
 
 // NewAppEngineAPI returns an AppEngineAPI for the given context.
 // Note that the context should be created using NewAppEngineContext
-func NewAppEngineAPI(ctx context.Context) AppEngineAPIImpl {
+func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 	return AppEngineAPIImpl{
 		ctx: ctx,
 	}

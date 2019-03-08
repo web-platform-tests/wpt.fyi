@@ -53,7 +53,7 @@ func (m *mockGcs) NewWriter(bucketName, fileName, contentType, contentEncoding s
 
 func TestUploadToGCS(t *testing.T) {
 	ctx := context.Background()
-	a := NewAPI(ctx).(*apiImpl)
+	a := NewAPI(ctx).(apiImpl)
 	mGcs := mockGcs{}
 	a.gcs = &mGcs
 
@@ -66,7 +66,7 @@ func TestUploadToGCS(t *testing.T) {
 
 func TestUploadToGCS_handlesErrors(t *testing.T) {
 	ctx := context.Background()
-	a := NewAPI(ctx).(*apiImpl)
+	a := NewAPI(ctx).(apiImpl)
 
 	errNew := fmt.Errorf("error creating writer")
 	a.gcs = &mockGcs{errOnNew: errNew}
@@ -92,7 +92,7 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 0)
 
-	a := NewAPI(ctx).(*apiImpl)
+	a := NewAPI(ctx).(apiImpl)
 	// dev_appserver does not support non-default queues, so we override the name of the queue here.
 	a.queue = ""
 	results := []string{"/blade-runner/test.json"}
