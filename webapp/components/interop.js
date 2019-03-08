@@ -6,6 +6,7 @@
 
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-progress/paper-progress.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
@@ -324,10 +325,6 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     super.connectedCallback();
     this.testSearch.addEventListener('commit', this.onSearchCommit);
     this.testSearch.addEventListener('autocomplete', this.onSearchAutocomplete);
-
-    if (this.interopScoreColumn) {
-      import('../node_modules/@polymer/paper-progress/paper-progress.js');
-    }
   }
 
   disconnectedCallback() {
