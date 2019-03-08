@@ -121,6 +121,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
 				return
 			}
+			runPtr.ID = int64(id)
 			go idx.IngestRun(*runPtr)
 			missing = append(missing, *runPtr)
 		} else {
