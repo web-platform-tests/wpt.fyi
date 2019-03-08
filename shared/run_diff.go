@@ -29,7 +29,7 @@ type DiffAPI interface {
 
 type diffAPIImpl struct {
 	ctx   context.Context
-	aeAPI AppEngineAPIImpl
+	aeAPI AppEngineAPI
 }
 
 // NewDiffAPI return and implementation of the DiffAPI interface.
