@@ -32,6 +32,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'fetchManifestForTestList',
       'githubCommitLinks',
       'insightsTab',
+      'interopScoreColumn',
       'permalinks',
       'queryBuilder',
       'queryBuilderSHA',
@@ -43,7 +44,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
-      'interopScoreColumn',
+      'webPlatformTestsLive',
     ];
   }
 });
@@ -223,6 +224,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{interopScoreColumn}}">
         Show score column in the <a href="/interop">interop</a> view.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{webPlatformTestsLive}}">
+        Use web-platform-tests.live.
       </paper-checkbox>
     </paper-item>
 `;
