@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
 
 	"cloud.google.com/go/storage"
@@ -91,15 +90,11 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 	close(errors)
 
-	var errStr string
-	for err := range errors {
-		errStr += strings.TrimSpace(err.Error()) + "\n"
-	}
-	if errStr != "" {
-		http.Error(w, errStr, http.StatusInternalServerError)
+	me := shared.NewMultiErrorFromChan(errors, "storing screenshots to GCS")
+	if me != nil {
+		http.Error(w, me.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.WriteHeader(http.StatusCreated)
 }
 

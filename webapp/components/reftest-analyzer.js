@@ -77,8 +77,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
 
         <div id="display">
-          <img id="before" onmousemove="[[zoom]]" src="[[before]]" />
-          <img id="after" onmousemove="[[zoom]]" src="[[after]]" />
+          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" />
+          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" />
 
           <template is="dom-if" if="[[showDiff]]">
             <svg id="diff-layer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">

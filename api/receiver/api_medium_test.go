@@ -8,11 +8,13 @@ package receiver
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -50,11 +52,12 @@ func (m *mockGcs) NewWriter(bucketName, fileName, contentType, contentEncoding s
 }
 
 func TestUploadToGCS(t *testing.T) {
-	a := appEngineAPIImpl{}
+	ctx := context.Background()
+	a := NewAPI(ctx).(apiImpl)
 	mGcs := mockGcs{}
 	a.gcs = &mGcs
 
-	err := a.uploadToGCS("/test_bucket/path/to/test.json", strings.NewReader("test content"), false)
+	err := a.UploadToGCS("/test_bucket/path/to/test.json", strings.NewReader("test content"), false)
 	assert.Nil(t, err)
 	assert.Equal(t, "test_bucket", mGcs.mockWriter.bucketName)
 	assert.Equal(t, "path/to/test.json", mGcs.mockWriter.fileName)
@@ -62,19 +65,21 @@ func TestUploadToGCS(t *testing.T) {
 }
 
 func TestUploadToGCS_handlesErrors(t *testing.T) {
+	ctx := context.Background()
+	a := NewAPI(ctx).(apiImpl)
+
 	errNew := fmt.Errorf("error creating writer")
-	a := appEngineAPIImpl{}
 	a.gcs = &mockGcs{errOnNew: errNew}
-	err := a.uploadToGCS("/bucket/test.json", strings.NewReader(""), false)
+	err := a.UploadToGCS("/bucket/test.json", strings.NewReader(""), false)
 	assert.Equal(t, errNew, err)
 
 	errClose := fmt.Errorf("error closing writer")
 	a.gcs = &mockGcs{mockWriter: mockGcsWriter{errOnClose: errClose}}
-	err = a.uploadToGCS("/bucket/test.json", strings.NewReader(""), false)
+	err = a.UploadToGCS("/bucket/test.json", strings.NewReader(""), false)
 	assert.Equal(t, errClose, err)
 
 	a.gcs = &mockGcs{}
-	err = a.uploadToGCS("test.json", strings.NewReader(""), false)
+	err = a.UploadToGCS("test.json", strings.NewReader(""), false)
 	assert.EqualError(t, err, "invalid GCS path: test.json")
 }
 
@@ -87,45 +92,31 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 0)
 
-	a := appEngineAPIImpl{
-		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
-		store:            shared.NewAppEngineDatastore(ctx, false),
-	}
-	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "single", nil)
+	a := NewAPI(ctx).(apiImpl)
+	// dev_appserver does not support non-default queues, so we override the name of the queue here.
+	a.queue = ""
+	results := []string{"/blade-runner/test.json"}
+	screenshots := []string{"/blade-runner/test.db"}
+	task, err := a.ScheduleResultsTask("blade-runner", results, screenshots, nil)
 	assert.Nil(t, err)
+
+	payload, err := url.ParseQuery(string(task.Payload))
+	assert.Nil(t, err)
+	assert.Equal(t, task.Name, payload.Get("id"))
+	assert.Equal(t, "blade-runner", payload.Get("uploader"))
+	assert.Equal(t, results, payload["gcs"])
+	assert.Equal(t, screenshots, payload["screenshots"])
 
 	stats, err = taskqueue.QueueStats(ctx, []string{""})
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 1)
 }
 
-func TestScheduleResultsTask_error(t *testing.T) {
-	ctx, done, err := sharedtest.NewAEContext(false)
-	assert.Nil(t, err)
-	defer done()
-	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
-
-	_, err = a.scheduleResultsTask("", []string{"/blade-runner/test.json"}, "single", nil)
-	assert.NotNil(t, err)
-
-	_, err = a.scheduleResultsTask("blade-runner", []string{""}, "single", nil)
-	assert.NotNil(t, err)
-
-	_, err = a.scheduleResultsTask("blade-runner", nil, "single", nil)
-	assert.NotNil(t, err)
-
-	_, err = a.scheduleResultsTask("blade-runner", []string{"/blade-runner/test.json"}, "", nil)
-	assert.NotNil(t, err)
-}
-
 func TestAddTestRun(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{
-		AppEngineAPIImpl: shared.NewAppEngineAPI(ctx),
-		store:            shared.NewAppEngineDatastore(ctx, false),
-	}
+	a := NewAPI(ctx)
 
 	testRun := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
@@ -133,12 +124,12 @@ func TestAddTestRun(t *testing.T) {
 		},
 	}
 
-	key, err := a.addTestRun(&testRun)
+	key, err := a.AddTestRun(&testRun)
 	assert.Nil(t, err)
-	assert.Equal(t, "TestRun", key.Kind)
+	assert.Equal(t, "TestRun", key.Kind())
 
 	var testRun2 shared.TestRun
-	datastore.Get(ctx, datastore.NewKey(ctx, key.Kind, "", key.ID, nil), &testRun2)
+	datastore.Get(ctx, datastore.NewKey(ctx, key.Kind(), "", key.IntID(), nil), &testRun2)
 	assert.Equal(t, testRun, testRun2)
 }
 
@@ -146,20 +137,20 @@ func TestAuthenticateUploader(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
+	a := NewAPI(ctx)
 
-	assert.False(t, a.authenticateUploader("user", "123"))
+	assert.False(t, a.AuthenticateUploader("user", "123"))
 
 	key := datastore.NewKey(ctx, "Uploader", "user", 0, nil)
 	datastore.Put(ctx, key, &shared.Uploader{Username: "user", Password: "123"})
-	assert.True(t, a.authenticateUploader("user", "123"))
+	assert.True(t, a.AuthenticateUploader("user", "123"))
 }
 
 func TestFetchWithTimeout_success(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
+	a := NewAPI(ctx)
 
 	hello := []byte("Hello, world!")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +159,7 @@ func TestFetchWithTimeout_success(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	body, err := a.fetchWithTimeout(server.URL, time.Second)
+	body, err := a.FetchGzip(server.URL, time.Second)
 	assert.Nil(t, err)
 	defer body.Close()
 	content, err := ioutil.ReadAll(body)
@@ -180,12 +171,12 @@ func TestFetchWithTimeout_404(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
-	a := appEngineAPIImpl{AppEngineAPIImpl: shared.NewAppEngineAPI(ctx)}
+	a := NewAPI(ctx)
 
 	server := httptest.NewServer(http.NotFoundHandler())
 	defer server.Close()
 
-	body, err := a.fetchWithTimeout(server.URL, time.Second)
+	body, err := a.FetchGzip(server.URL, time.Second)
 	assert.Nil(t, body)
 	assert.EqualError(t, err, "server returned 404 Not Found")
 }

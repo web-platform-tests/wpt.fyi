@@ -23,9 +23,10 @@ import (
 // For master runs, artifact name may be either just "results" or something
 // like "safari-results".
 var (
-	MasterRegex = regexp.MustCompile(`\bresults$`)
-	PRHeadRegex = regexp.MustCompile(`\baffected-tests$`)
-	PRBaseRegex = regexp.MustCompile(`\baffected-tests-without-changes$`)
+	MasterRegex        = regexp.MustCompile(`\bresults$`)
+	PRHeadRegex        = regexp.MustCompile(`\baffected-tests$`)
+	PRBaseRegex        = regexp.MustCompile(`\baffected-tests-without-changes$`)
+	EpochBranchesRegex = regexp.MustCompile("^refs/heads/epochs/.*")
 )
 
 // HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.
@@ -93,7 +94,7 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 		}
 
 		if MasterRegex.MatchString(artifact.Name) {
-			if build.IsMasterBranch() {
+			if build.IsMasterBranch() || EpochBranchesRegex.MatchString(build.SourceBranch) {
 				labels.Add(shared.MasterLabel)
 			}
 		} else if PRHeadRegex.MatchString(artifact.Name) {

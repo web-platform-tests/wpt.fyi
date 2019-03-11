@@ -35,26 +35,30 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'permalinks',
       'queryBuilder',
       'queryBuilderSHA',
+      'reftestAnalyzer',
+      'reftestAnalyzerMockScreenshots',
       'reftestIframes',
       'searchCacheInterop',
       'showTestType',
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
+      'webPlatformTestsLive',
     ];
   }
 });
 Object.defineProperty(wpt, 'ServerSideFeatures', {
   get: function() {
     return [
-      'diffRenames',
-      'taskclusterAllBranches',
-      'paginationTokens',
-      'runsByPRNumber',
-      'failChecksOnRegression',
       'checksAllUsers',
+      'diffRenames',
+      'failChecksOnRegression',
+      'ignoreHarnessInTotal',
+      'paginationTokens',
       'pendingChecks',
+      'runsByPRNumber',
       'serviceWorker',
+      'taskclusterAllBranches',
     ];
   }
 });
@@ -191,6 +195,16 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Display comparitive iframes for reftests
       </paper-checkbox>
     </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{reftestAnalyzer}}">
+        Show the reftest analyzer for reftests
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{reftestAnalyzerMockScreenshots}}">
+        Use mock screenshots for all the reftests
+      </paper-checkbox>
+    </paper-item>
     <paper-item>
       <paper-checkbox checked="{{githubCommitLinks}}">
         Show links to the commit on GitHub in the header row.
@@ -204,6 +218,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{permalinks}}">
         Show dialog for copying a permalink (on /results page).
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{webPlatformTestsLive}}">
+        Use web-platform-tests.live.
       </paper-checkbox>
     </paper-item>
 `;
@@ -276,6 +295,11 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{serviceWorker}}">
         Install a service worker to cache all the web components.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{ignoreHarnessInTotal}}">
+        Ignore "OK" harness status in test summary numbers.
       </paper-checkbox>
     </paper-item>
 `;

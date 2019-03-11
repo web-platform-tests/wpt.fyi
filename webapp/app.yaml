@@ -12,17 +12,20 @@ builtins:
 inbound_services:
 - warmup
 
+default_expiration: "1d"
+
+# Also refer to dispatch.yaml for higher-priority routing rules.
 handlers:
-  # Couple of special-case dynamic components.
+  # Special dynamic components:
 - url: /components/wpt-env-flags.js
   script: _go_app
   secure: always
+  # Static files:
 - url: /components
   static_dir: components
   secure: always
 - url: /static
   static_dir: static
-  expiration: "1d"
   secure: always
 - url: /service-worker-installer.js
   static_files: service-worker-installer.js
@@ -32,17 +35,25 @@ handlers:
   static_files: static/favicon.ico
   upload: static/favicon.ico
   secure: always
+  # Admin-only pages:
+- url: /admin/.*
+  script: _go_app
+  secure: always
+  login: admin
+  # Everything else (templates & APIs):
 - url: /.*
   script: _go_app
   secure: always
 
-# Don't upload mock-data static files to AppEngine
+# Don't upload test data, package config, etc. to AppEngine.
 skip_files:
 - components/test/
 - static/b952881825/
 - static/wptd-metrics/
 - test/
 - .eslintrc.json
-- package.json
 - README.md
+- package-lock.json
+- package.json
+- wct.conf.json
 - .*/artifact_test.zip

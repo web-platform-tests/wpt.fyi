@@ -29,6 +29,10 @@ func TestAboutBound(t *testing.T) {
 	assertHandlerIs(t, "/about", "about")
 }
 
+func TestAnalyzerBound(t *testing.T) {
+	assertHandlerIs(t, "/analyzer", "analyzer")
+}
+
 func TestFlagsBound(t *testing.T) {
 	assertHandlerIs(t, "/flags", "flags")
 }

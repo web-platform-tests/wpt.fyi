@@ -10,25 +10,24 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/web-platform-tests/wpt.fyi/api/receiver"
-	"github.com/web-platform-tests/wpt.fyi/shared"
-
 	"google.golang.org/appengine/memcache"
+
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 	showAdminUploadForm(a, w, r)
 }
 
-func showAdminUploadForm(a receiver.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	assertLoginAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", nil)
+func showAdminUploadForm(a shared.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
+	assertAdminAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", nil)
 }
 
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	data := struct {
@@ -37,7 +36,7 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 		Host: a.GetHostname(),
 	}
 	if r.Method == "GET" {
-		assertLoginAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)
+		assertAdminAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)
 	} else if r.Method == "POST" {
 		if !a.IsAdmin() {
 			http.Error(w, "Admin only", http.StatusUnauthorized)
@@ -57,22 +56,13 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func assertLoginAndRenderTemplate(
-	a receiver.AppEngineAPI,
+func assertAdminAndRenderTemplate(
+	a shared.AppEngineAPI,
 	w http.ResponseWriter,
 	r *http.Request,
 	redirectPath,
 	template string,
 	data interface{}) {
-	if !a.IsLoggedIn() {
-		loginURL, err := a.LoginURL(redirectPath)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
-		return
-	}
 	if !a.IsAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)
 		return
@@ -86,9 +76,9 @@ func assertLoginAndRenderTemplate(
 
 func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 
-	if !a.IsLoggedIn() || !a.IsAdmin() {
+	if !a.IsAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)
 		return
 	}

@@ -34,6 +34,9 @@ func RegisterRoutes() {
 	// About wpt.fyi
 	shared.AddRoute("/about", "about", aboutHandler)
 
+	// Reftest analyzer
+	shared.AddRoute("/analyzer", "analyzer", analyzerHandler)
+
 	// Feature flags for wpt.fyi
 	shared.AddRoute("/flags", "flags", flagsHandler)
 	shared.AddRoute("/components/wpt-env-flags.js", "flags-component", flagsComponentHandler)

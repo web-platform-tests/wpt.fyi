@@ -11,10 +11,11 @@ import (
 // AggregationOpts are options for the aggregation format used when collecting
 // the results.
 type AggregationOpts struct {
-	IncludeSubtests bool
-	InteropFormat   bool
-	IncludeDiff     bool
-	DiffFilter      shared.DiffFilterParam
+	IncludeSubtests         bool
+	InteropFormat           bool
+	IncludeDiff             bool
+	IgnoreTestHarnessResult bool // Don't +1 the "OK" status for testharness tests.
+	DiffFilter              shared.DiffFilterParam
 }
 
 // Binder is a mechanism for binding a query over a slice of test runs to
