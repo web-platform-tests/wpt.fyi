@@ -14,8 +14,6 @@ import (
 	"strings"
 	"sync"
 
-	"google.golang.org/appengine/urlfetch"
-
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
@@ -30,6 +28,10 @@ var (
 	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
 	// with a notable exception that "*-stability" runs are not included at the moment.
 	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
+	// This is the pattern for task detail URLs coming from Checks API.
+	inspectorURLRegex = regexp.MustCompile("/task-group-inspector/#/([^/]*)")
+	// This is the pattern for task detail URLs coming from Status API.
+	taskURLRegex = regexp.MustCompile("/groups/([^/]*)/tasks/([^/]*)")
 )
 
 // tcStatusWebhookHandler reacts to GitHub status webhook events. This is juxtaposed with
@@ -163,13 +165,13 @@ func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID stri
 		log.Debugf("Taskcluster task %s", taskID)
 	}
 
-	client := urlfetch.Client(ctx)
+	client := aeAPI.GetHTTPClient()
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
 	if err != nil {
 		return false, err
 	}
 
-	urlsByProduct, err := extractResultURLs(log, taskGroup, taskID)
+	urlsByProduct, err := extractArtifactURLs(log, taskGroup, taskID)
 	if err != nil {
 		return false, err
 	}
@@ -210,14 +212,10 @@ func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *sta
 }
 
 func extractTaskGroupID(targetURL string) (string, string) {
-	inspectorRegex := regexp.MustCompile("/task-group-inspector/#/([^/]*)")
-	matches := inspectorRegex.FindStringSubmatch(targetURL)
-	if len(matches) > 1 {
+	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); len(matches) > 1 {
 		return matches[1], ""
 	}
-	taskRegex := regexp.MustCompile("/groups/([^/]*)/tasks/([^/]*)")
-	matches = taskRegex.FindStringSubmatch(targetURL)
-	if len(matches) > 2 {
+	if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
 		return matches[1], matches[2]
 	}
 	return "", ""
@@ -260,9 +258,15 @@ func getTaskGroupInfo(client *http.Client, groupID string) (*taskGroupInfo, erro
 	return &group, nil
 }
 
-func extractResultURLs(log shared.Logger, group *taskGroupInfo, taskID string) (map[string][]string, error) {
+type artifactURLs struct {
+	Results     []string
+	Screenshots []string
+}
+
+func extractArtifactURLs(log shared.Logger, group *taskGroupInfo, taskID string) (
+	urlsByProduct map[string]artifactURLs, err error) {
+	urlsByProduct = make(map[string]artifactURLs)
 	failures := mapset.NewSet()
-	resultURLs := make(map[string][]string)
 	for _, task := range group.Tasks {
 		id := task.Status.TaskID
 		if id == "" {
@@ -292,21 +296,29 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo, taskID string) (
 			continue
 		}
 
-		resultURLs[product] = append(resultURLs[product],
-			// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
+		urls := urlsByProduct[product]
+		// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
+		urls.Results = append(urls.Results,
 			fmt.Sprintf(
 				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", id,
 			))
+		// wpt_screenshot.db.gz might not exist, which is NOT a fatal error in the receiver.
+		urls.Screenshots = append(urls.Screenshots,
+			fmt.Sprintf(
+				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_screenshot.db.gz", id,
+			))
+		// urls is a *copy* of the value so we must store it back to the map.
+		urlsByProduct[product] = urls
 	}
 
 	for failure := range failures.Iter() {
-		delete(resultURLs, failure.(string))
+		delete(urlsByProduct, failure.(string))
 	}
 
-	if len(resultURLs) == 0 {
+	if len(urlsByProduct) == 0 {
 		return nil, fmt.Errorf("no result URLs found in task group")
 	}
-	return resultURLs, nil
+	return urlsByProduct, nil
 }
 
 func createAllRuns(
@@ -315,13 +327,13 @@ func createAllRuns(
 	sha,
 	username,
 	password string,
-	urlsByProduct map[string][]string,
+	urlsByProduct map[string]artifactURLs,
 	labels []string) error {
 	errors := make(chan error, len(urlsByProduct))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByProduct))
 	for product, urls := range urlsByProduct {
-		go func(product string, urls []string) {
+		go func(product string, urls artifactURLs) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", product, urls)
 
@@ -334,7 +346,7 @@ func createAllRuns(
 			}
 
 			uploadClient := uc.NewClient(aeAPI)
-			err := uploadClient.CreateRun(sha, username, password, urls, labelsForRun)
+			err := uploadClient.CreateRun(sha, username, password, urls.Results, urls.Screenshots, labelsForRun)
 			if err != nil {
 				errors <- err
 				return
