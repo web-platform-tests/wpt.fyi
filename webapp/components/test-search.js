@@ -68,9 +68,13 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Fragment
       = not Fragment -- not
+      | containsExp
       | statusExp
       | pathExp
       | patternExp
+
+    containsExp
+      = caseInsensitive<"contains"> ":" nameFragment
 
     statusExp
       = caseInsensitive<"status"> ":" statusLiteral  -- eq
@@ -175,6 +179,9 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
       product: l.sourceString.toLowerCase(),
       status: {not: r.sourceString.toUpperCase()},
     };
+  },
+  containsExp: (l, colon, r) => {
+    return { contains: r.eval() };
   },
   pathExp: (l, colon, r) => {
     return { path: r.eval() };

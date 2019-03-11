@@ -254,6 +254,12 @@ suite('<test-search>', () => {
         ],
       });
     });
+
+    test('contains', () => {
+      assertQueryParse('contains:abc', {
+        exists: [{contains: 'abc'}],
+      });
+    });
   });
 });
 </script>
