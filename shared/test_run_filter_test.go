@@ -34,7 +34,8 @@ func TestTestRunFilter_NextPage_MaxCount(t *testing.T) {
 }
 
 func TestTestRunFilter_NextPage_From(t *testing.T) {
-	now := time.Now()
+	// Use UTC to avoid DST craziness.
+	now := time.Now().UTC()
 	aWeekAgo := now.AddDate(0, 0, -7)
 	filter := TestRunFilter{
 		From: &aWeekAgo,
