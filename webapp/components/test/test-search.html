@@ -254,6 +254,27 @@ suite('<test-search>', () => {
         ],
       });
     });
+
+    test('count', () => {
+      assertQueryParse('count:5(status:PASS or status:OK)', {
+        exists: [{
+          count: 5,
+          where: {
+            or: [{status: 'PASS'}, {status: 'OK'}],
+          },
+        }]
+      });
+      for (const [atom, count] of [['three', 3], ['two', 2], ['one', 1]]) {
+        assertQueryParse(`${atom}(status:!PASS and status:!OK)`, {
+          exists: [{
+            count,
+            where: {
+              and: [{status: {not: 'PASS'}}, {status: {not: 'OK'}}],
+            },
+          }]
+        });
+      }
+    });
   });
 });
 </script>

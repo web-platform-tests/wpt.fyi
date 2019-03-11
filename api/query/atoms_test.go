@@ -297,6 +297,34 @@ func TestStructuredQuery_sequential(t *testing.T) {
 			}}}, rq)
 }
 
+func TestStructuredQuery_count(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"count": 3,
+				"where": {
+					"or": [{"status":"PASS"},{"status":"OK"}]
+				}
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(
+		t,
+		RunQuery{RunIDs: []int64{0, 1, 2},
+			AbstractQuery: AbstractExists{[]AbstractQuery{
+				AbstractCount{
+					Count: 3,
+					Where: AbstractOr{[]AbstractQuery{
+						TestStatusEq{Status: shared.TestStatusValueFromString("PASS")},
+						TestStatusEq{Status: shared.TestStatusValueFromString("OK")},
+					}},
+				}},
+			}}, rq)
+}
+
 func TestStructuredQuery_nested(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -555,6 +583,35 @@ func TestStructuredQuery_bindSequential(t *testing.T) {
 	}
 	expected := Or{
 		Args: []ConcreteQuery{seq},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindCount(t *testing.T) {
+	e := shared.ParseProductSpecUnsafe("edge")
+	f := shared.ParseProductSpecUnsafe("firefox")
+	q := AbstractCount{
+		Count: 1,
+		Where: TestStatusEq{Status: 1},
+	}
+
+	runs := shared.TestRuns{}
+	runs = shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: e.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: f.ProductAtRevision,
+		},
+	}
+	expected := Count{
+		Count: 1,
+		Args: []ConcreteQuery{
+			RunTestStatusEq{Run: int64(0), Status: 1},
+			RunTestStatusEq{Run: int64(1), Status: 1},
+		},
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
