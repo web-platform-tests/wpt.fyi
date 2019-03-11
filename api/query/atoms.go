@@ -314,23 +314,23 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON for FileContentsQuery attempts to interpret a query atom as
-// {"pattern":<test name pattern string>}.
+// {"contains":<test contents contains string>}.
 func (fcq *FileContentsQuery) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
 	err := json.Unmarshal(b, &data)
 	if err != nil {
 		return err
 	}
-	contentsData, ok := data["contents"]
+	containsData, ok := data["contains"]
 	if !ok {
-		return errors.New(`Missing test contents property: "contents"`)
+		return errors.New(`Missing test contents property: "contains"`)
 	}
-	var contents string
-	if err := json.Unmarshal(*contentsData, &contents); err != nil {
-		return errors.New(`Test contents property "contents" is not a string`)
+	var contains string
+	if err := json.Unmarshal(*containsData, &contains); err != nil {
+		return errors.New(`Test contents property "contains" is not a string`)
 	}
 
-	fcq.Query = contents
+	fcq.Query = contains
 	return nil
 }
 

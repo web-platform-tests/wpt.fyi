@@ -134,6 +134,18 @@ func TestStructuredQuery_pattern(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{"/2dcontext/"}}, rq)
 }
 
+func TestStructuredQuery_contains(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"contains": "shadowRoot"
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: FileContentsQuery{"shadowRoot"}}, rq)
+}
+
 func TestStructuredQuery_path(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
