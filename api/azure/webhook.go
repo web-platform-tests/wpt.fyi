@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"regexp"
-	"time"
 
 	mapset "github.com/deckarep/golang-set"
 
@@ -41,9 +40,8 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 	log := shared.GetLogger(aeAPI.Context())
 	log.Infof("Fetching %s", artifactsURL)
 
-	slowClient, cancel := aeAPI.GetSlowHTTPClient(time.Minute)
-	defer cancel()
-	resp, err := slowClient.Get(artifactsURL)
+	client := aeAPI.GetHTTPClient()
+	resp, err := client.Get(artifactsURL)
 	if err != nil {
 		log.Errorf("Failed to fetch artifacts for %s/%s build %v", owner, repo, buildID)
 		return false, err
@@ -93,7 +91,9 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 			sha,
 			uploader.Username,
 			uploader.Password,
+			// Azure has a single zip artifact, special-cased by the receiver.
 			[]string{artifact.Resource.DownloadURL},
+			nil,
 			shared.ToStringSlice(labels))
 		if err != nil {
 			log.Errorf("Failed to create run: %s", err.Error())
