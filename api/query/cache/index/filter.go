@@ -46,7 +46,7 @@ type FileContentsQuery struct {
 	searchResults mapset.Set
 }
 
-func (fcq *FileContentsQuery) LoadSearchResults() {
+func (fcq *FileContentsQuery) loadSearchResults() {
 	fcq.searchResults = mapset.NewSet()
 
 	ctx := context.Background()
@@ -176,7 +176,7 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 
 // Filter interprets a FileContentsQuery as a filter function over TestIDs.
 func (fcq FileContentsQuery) Filter(t TestID) bool {
-	fcq.LoadSearchResults()
+	fcq.loadSearchResults()
 	name, _, err := fcq.tests.GetName(t)
 	if err != nil {
 		return false
