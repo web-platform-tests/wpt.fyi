@@ -631,5 +631,5 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	if err == nil {
 		return c, nil
 	}
-	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, or conjunction`)
+	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
 }
