@@ -55,6 +55,16 @@ func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
+// FileContentsQuery is a query atom that matches test contents to a query string.
+type FileContentsQuery struct {
+	Query string
+}
+
+// BindToRuns for FileContentsQuery is a no-op; it is independent of test runs.
+func (fcq FileContentsQuery) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return fcq
+}
+
 // TestPath is a query atom that matches exact test path prefixes.
 // It is an inflexible equivalent of TestNamePattern.
 type TestPath struct {
@@ -303,6 +313,27 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for FileContentsQuery attempts to interpret a query atom as
+// {"pattern":<test name pattern string>}.
+func (fcq *FileContentsQuery) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	contentsData, ok := data["contents"]
+	if !ok {
+		return errors.New(`Missing test contents property: "contents"`)
+	}
+	var contents string
+	if err := json.Unmarshal(*contentsData, &contents); err != nil {
+		return errors.New(`Test contents property "contents" is not a string`)
+	}
+
+	fcq.Query = contents
+	return nil
+}
+
 // UnmarshalJSON for TestPath attempts to interpret a query atom as
 // {"path":<test name pattern string>}.
 func (tp *TestPath) UnmarshalJSON(b []byte) error {
@@ -534,6 +565,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err := json.Unmarshal(b, &tnp)
 	if err == nil {
 		return tnp, nil
+	}
+	var fcq FileContentsQuery
+	err = json.Unmarshal(b, &fcq)
+	if err == nil {
+		return fcq, nil
 	}
 	var tp TestPath
 	err = json.Unmarshal(b, &tp)

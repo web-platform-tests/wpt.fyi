@@ -24,15 +24,12 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 
-	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
 	port                   = flag.Int("port", 8080, "Port to listen on")
-	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
-	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
 	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", uint(10), "Maximum number of runs that can be ingested before memory monitor must run")
@@ -216,10 +213,10 @@ func getDatastore() (shared.Datastore, error) {
 	ctx := context.Background()
 	var client *datastore.Client
 	var err error
-	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
-		client, err = datastore.NewClient(ctx, *projectID, option.WithCredentialsFile(*gcpCredentialsFile))
+	if shared.GCPCredentialsFile != nil && *shared.GCPCredentialsFile != "" {
+		client, err = datastore.NewClient(ctx, *shared.ProjectID, option.WithCredentialsFile(*shared.GCPCredentialsFile))
 	} else {
-		client, err = datastore.NewClient(ctx, *projectID)
+		client, err = datastore.NewClient(ctx, *shared.ProjectID)
 	}
 	if err != nil {
 		return nil, err
@@ -235,30 +232,19 @@ func init() {
 }
 
 func main() {
-	autoProjectID, err := metadata.ProjectID()
-	if err != nil {
-		log.Warningf("Failed to get project ID from metadata service")
-	} else {
-		if *projectID == "" {
-			log.Infof(`Using project ID from metadata service: "%s"`, *projectID)
-			*projectID = autoProjectID
-		} else if *projectID != autoProjectID {
-			log.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
-		} else {
-			log.Infof(`Using project ID: "%s"`, *projectID)
-		}
-	}
+	flag.Parse()
+	shared.InitProjectID()
 
 	log.Infof("Serving index with %d shards", *numShards)
 	// TODO: Use different field configurations for index, backfiller, monitor?
 	logger := log.StandardLogger()
 
-	idx, err = index.NewShardedWPTIndex(index.HTTPReportLoader{}, *numShards)
+	idx, err := index.NewShardedWPTIndex(index.HTTPReportLoader{}, *numShards)
 	if err != nil {
 		log.Fatalf("Failed to instantiate index: %v", err)
 	}
 
-	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
+	fetcher := backfill.NewDatastoreRunFetcher(*shared.ProjectID, shared.GCPCredentialsFile, logger)
 	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
 		log.Fatalf("Failed to initiate index backkfill: %v", err)

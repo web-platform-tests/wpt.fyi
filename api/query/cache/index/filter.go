@@ -5,15 +5,22 @@
 package index
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	reflect "reflect"
 	"strings"
 	"sync"
 
+	mapset "github.com/deckarep/golang-set"
 	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/appengine/remote_api"
+	"google.golang.org/appengine/search"
 )
 
 // True is a query.True equivalent, bound to an in-memory index.
@@ -30,6 +37,67 @@ type False struct {
 type TestNamePattern struct {
 	index
 	q query.TestNamePattern
+}
+
+// FileContentsQuery is a query.FileContentsQuery bound to an in-memory index.
+type FileContentsQuery struct {
+	index
+	q             query.FileContentsQuery
+	searchResults mapset.Set
+}
+
+func (fcq *FileContentsQuery) LoadSearchResults() {
+	fcq.searchResults = mapset.NewSet()
+
+	ctx := context.Background()
+	b, err := ioutil.ReadFile(shared.GCPCredentialsFileOrDefault())
+	if err != nil {
+		log.Errorf("Failed to read GCP creds file: %s", err.Error())
+		return
+	}
+	creds, err := google.CredentialsFromJSON(ctx, b,
+		"https://www.googleapis.com/auth/appengine.apis",
+		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/cloud_search",
+		"https://www.googleapis.com/auth/userinfo.email",
+	)
+	if err != nil {
+		log.Errorf("Failed to get creds from JSON: %s", err.Error())
+		return
+	}
+
+	hc, err := oauth2.NewClient(ctx, creds.TokenSource), nil
+	if err != nil {
+		log.Errorf("Failed to create http client: %s", err.Error())
+	}
+
+	host := fmt.Sprintf("%s.appspot.com", *shared.ProjectID)
+	remoteCtx, err := remote_api.NewRemoteContext(host, hc)
+	if err != nil {
+		log.Errorf("Failed to open remote context: %s", err.Error())
+		return
+	}
+	index, err := search.Open("test-content")
+	if err != nil {
+		log.Errorf("Failed to open search index: %s", err.Error())
+		return
+	}
+	iter := index.Search(remoteCtx, fcq.q.Query, &search.SearchOptions{
+		IDsOnly: true,
+	})
+	count := 0
+	for {
+		id, err := iter.Next(nil)
+		if err == search.Done {
+			break
+		} else if err != nil {
+			log.Errorf("Failed to fetch next result: %s", err.Error())
+			break
+		}
+		fcq.searchResults.Add(id)
+		count++
+	}
+	log.Debugf("Loaded %v results", count)
 }
 
 // TestPath is a query.TestPath bound to an in-memory index.
@@ -104,6 +172,16 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 		return false
 	}
 	return strings.Contains(name, tnp.q.Pattern)
+}
+
+// Filter interprets a FileContentsQuery as a filter function over TestIDs.
+func (fcq FileContentsQuery) Filter(t TestID) bool {
+	fcq.LoadSearchResults()
+	name, _, err := fcq.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+	return fcq.searchResults.Contains(name)
 }
 
 // Filter interprets a TestPath as a filter function over TestIDs.
