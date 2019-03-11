@@ -239,7 +239,8 @@ func main() {
 	// TODO: Use different field configurations for index, backfiller, monitor?
 	logger := log.StandardLogger()
 
-	idx, err := index.NewShardedWPTIndex(index.HTTPReportLoader{}, *numShards)
+	var err error
+	idx, err = index.NewShardedWPTIndex(index.HTTPReportLoader{}, *numShards)
 	if err != nil {
 		log.Fatalf("Failed to instantiate index: %v", err)
 	}
