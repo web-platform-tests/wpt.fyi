@@ -241,6 +241,11 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return False{idx}, nil
 	case query.TestNamePattern:
 		return TestNamePattern{idx, v}, nil
+	case query.FileContentsQuery:
+		return FileContentsQuery{
+			index: idx,
+			q:     v,
+		}, nil
 	case query.TestPath:
 		return TestPath{idx, v}, nil
 	case query.RunTestStatusEq:
