@@ -68,4 +68,7 @@ func RegisterRoutes() {
 	// PRIVATE API endpoint for creating a test run in Datastore.
 	// This API is authenticated. Only this AppEngine project has the credential.
 	shared.AddRoute("/api/results/create", "api-results-create", apiResultsCreateHandler)
+
+	// API endpoint for redirecting to a screenshot png blob.
+	shared.AddRoute("/api/screenshot/{screenshot:.*}", "api-screenshot", shared.WrapPermissiveCORS(apiScreenshotRedirectHandler))
 }

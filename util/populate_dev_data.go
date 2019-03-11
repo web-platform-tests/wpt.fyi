@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -24,6 +25,7 @@ var (
 	host           = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
 	numRemoteRuns  = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
 	staticRuns     = flag.Bool("static_runs", false, "Include runs in the /static dir")
+	labels         = flag.String("labels", "", "Labels for which to fetch runs")
 	seenTestRunIDs = mapset.NewSet()
 )
 
@@ -166,26 +168,34 @@ func main() {
 	}
 
 	log.Print("Adding latest production TestRun data...")
+	extraLabels := mapset.NewSet()
+	if labels != nil {
+		for _, s := range strings.Split(*labels, ",") {
+			if s != "" {
+				extraLabels.Add(s)
+			}
+		}
+	}
 	filters := shared.TestRunFilter{
-		Labels:   mapset.NewSetWith(shared.StableLabel),
+		Labels:   extraLabels.Union(mapset.NewSetWith(shared.StableLabel)),
 		MaxCount: numRemoteRuns,
 	}
 	copyProdRuns(ctx, filters)
 
 	log.Print("Adding latest master TestRun data...")
-	filters.Labels = mapset.NewSetWith(shared.MasterLabel)
+	filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.MasterLabel))
 	copyProdRuns(ctx, filters)
 
 	log.Print("Adding latest experimental TestRun data...")
-	filters.Labels = mapset.NewSetWith(shared.ExperimentalLabel)
+	filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.ExperimentalLabel))
 	copyProdRuns(ctx, filters)
 
 	log.Print("Adding latest beta TestRun data...")
-	filters.Labels = mapset.NewSetWith(shared.BetaLabel)
+	filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.BetaLabel))
 	copyProdRuns(ctx, filters)
 
 	log.Print("Adding latest aligned Edge stable and Chrome/Firefox/Safari experimental data...")
-	filters.Labels = mapset.NewSet(shared.MasterLabel)
+	filters.Labels = extraLabels.Union(mapset.NewSet(shared.MasterLabel))
 	filters.Products, _ = shared.ParseProductSpecs("chrome[experimental]", "edge[stable]", "firefox[experimental]", "safari[experimental]")
 	copyProdRuns(ctx, filters)
 
