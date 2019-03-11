@@ -89,8 +89,20 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		getScreenshot = func(i int) (io.ReadCloser, error) {
 			return sFiles[i].Open()
 		}
+	} else if artifactName := getAzureArtifactName(r.PostForm.Get("result_url")); artifactName != "" {
+		// Special Azure case for result_url payload
+		// Azure cannot provide a direct link to the report JSON, but a
+		// link to a zip file containing all artifacts and we have to
+		// extract the useful ones ourselves.
+		// TODO(Hexcles): Support "screenshot_url" on Azure.
+		var err error
+		results, screenshots, getResult, getScreenshot, err = handleAzureArtifact(a, artifactName, r.PostForm.Get("result_url"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	} else {
-		// result_url payload
+		// General result_url[] payload
 		urls := r.PostForm["result_url"]
 		results = len(urls)
 		sUrls := r.PostForm["screenshot_url"]
@@ -102,19 +114,6 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		}
 		getScreenshot = func(i int) (io.ReadCloser, error) {
 			return fetchFile(a, sUrls[i])
-		}
-		// Check for azure artifact URL, for unzipping.
-		// TODO(Hexcles): Support "screenshot_url" on Azure.
-		if results == 1 {
-			artifactName := getAzureArtifactName(urls[0])
-			if artifactName != "" {
-				var err error
-				results, getResult, err = handleAzureArtifact(a, artifactName, urls[0])
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-			}
 		}
 	}
 

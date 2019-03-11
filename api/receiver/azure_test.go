@@ -8,7 +8,8 @@ package receiver
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
+	"os"
 	"path"
 	"runtime"
 	"testing"
@@ -16,21 +17,55 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExtractFiles(t *testing.T) {
-	_, filename, _, _ := runtime.Caller(0)
-	// artifact_test.zip has a single dir, artifact_test/, containing 2 files, wpt_report_{1,2}.json
-	data, err := ioutil.ReadFile(path.Join(path.Dir(filename), "artifact_test.zip"))
-	if err != nil {
-		assert.FailNow(t, "Failed to read artifact_test.zip", err.Error())
-	}
+// artifact_test.zip has a single dir, artifact_test/, containing 4 files: wpt_report_{1,2}.json, wpt_screenshot_{1,2}.db.
 
-	artifact, err := newAzureArtifact("artifact_test", bytes.NewReader(data))
-	files, err := artifact.getReportFiles()
+func readZip(t *testing.T) *os.File {
+	_, filename, _, _ := runtime.Caller(0)
+	file, err := os.Open(path.Join(path.Dir(filename), "artifact_test.zip"))
 	if err != nil {
-		assert.FailNow(t, "Failed to read zip", err.Error())
+		assert.FailNow(t, "Failed to open artifact_test.zip")
 	}
-	assert.Equal(t, files[0].Name, "artifact_test/wpt_report_1.json")
-	assert.Equal(t, files[1].Name, "artifact_test/wpt_report_2.json")
+	return file
+}
+
+func TestGetFilesMatchingPattern(t *testing.T) {
+	file := readZip(t)
+	defer file.Close()
+	artifact, err := newAzureArtifact("artifact_test", file)
+	assert.NoError(t, err)
+
+	num, files, err := artifact.getFilesMatchingPattern(reportPathRegex)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, num)
+	assert.Equal(t, "artifact_test/wpt_report_1.json", files[0].Name)
+	assert.Equal(t, "artifact_test/wpt_report_2.json", files[1].Name)
+
+	num, files, err = artifact.getFilesMatchingPattern(screenshotPathRegex)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, num)
+	assert.Equal(t, "artifact_test/wpt_screenshot_1.db", files[0].Name)
+	assert.Equal(t, "artifact_test/wpt_screenshot_2.db", files[1].Name)
+}
+
+func TestGzipReaderFromZip(t *testing.T) {
+	file := readZip(t)
+	defer file.Close()
+	artifact, err := newAzureArtifact("artifact_test", file)
+	assert.NoError(t, err)
+
+	_, files, err := artifact.getFilesMatchingPattern(screenshotPathRegex)
+	assert.NoError(t, err)
+	getFile := gzipReaderFromZip(files)
+	reader, err := getFile(0)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+	written, err := io.Copy(&buf, reader)
+	assert.NoError(t, err)
+	// 10-byte header:
+	assert.True(t, written > 10)
+	// Gzip magic number: 1f8b
+	assert.Equal(t, []byte("\x1f\x8b"), buf.Bytes()[:2])
 }
 
 func TestGetAzureArtifactName(t *testing.T) {
