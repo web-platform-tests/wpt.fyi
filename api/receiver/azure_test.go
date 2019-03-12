@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// artifact_test.zip has a single dir, artifact_test/, containing 4 files: wpt_report_{1,2}.json, wpt_screenshot_{1,2}.db.
+// artifact_test.zip has a single dir, artifact_test/, containing 4 files: wpt_report_{1,2}.json, wpt_screenshot_{1,2}.txt.
 
 func readZip(t *testing.T) *os.File {
 	_, filename, _, _ := runtime.Caller(0)
@@ -43,8 +43,8 @@ func TestGetFilesMatchingPattern(t *testing.T) {
 	num, files, err = artifact.getFilesMatchingPattern(screenshotPathRegex)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, num)
-	assert.Equal(t, "artifact_test/wpt_screenshot_1.db", files[0].Name)
-	assert.Equal(t, "artifact_test/wpt_screenshot_2.db", files[1].Name)
+	assert.Equal(t, "artifact_test/wpt_screenshot_1.txt", files[0].Name)
+	assert.Equal(t, "artifact_test/wpt_screenshot_2.txt", files[1].Name)
 }
 
 func TestGzipReaderFromZip(t *testing.T) {
