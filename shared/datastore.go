@@ -90,3 +90,11 @@ func GetSecret(ds Datastore, tokenName string) (string, error) {
 	}
 	return token.Secret, nil
 }
+
+// GetUploader gets the Uploader by the given name.
+func GetUploader(ds Datastore, uploader string) (Uploader, error) {
+	var result Uploader
+	key := ds.NewNameKey("Uploader", uploader)
+	err := ds.Get(key, &result)
+	return result, err
+}

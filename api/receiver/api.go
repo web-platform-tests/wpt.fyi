@@ -64,9 +64,8 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 }
 
 func (a apiImpl) AuthenticateUploader(username, password string) bool {
-	key := a.store.NewNameKey("Uploader", username)
-	var uploader shared.Uploader
-	if err := a.store.Get(key, &uploader); err != nil || uploader.Password != password {
+	uploader, err := a.GetUploader(username)
+	if err != nil || uploader.Password != password {
 		return false
 	}
 	return true

@@ -19,6 +19,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+const uploaderName = "azure"
+
 // Labels for runs from Azure Pipelines are determined from the artifact names.
 // For master runs, artifact name may be either just "results" or something
 // like "safari-results".
@@ -103,9 +105,9 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 			labels.Add(shared.PRBaseLabel)
 		}
 
-		uploader, err := aeAPI.GetUploader("azure")
+		uploader, err := aeAPI.GetUploader(uploaderName)
 		if err != nil {
-			log.Errorf("Failed to load azure uploader")
+			log.Errorf("Failed to get uploader creds from Datastore")
 			return false, err
 		}
 

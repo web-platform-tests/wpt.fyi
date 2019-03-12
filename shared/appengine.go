@@ -18,7 +18,6 @@ import (
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/urlfetch"
 	"google.golang.org/appengine/user"
 )
@@ -62,7 +61,7 @@ type AppEngineAPI interface {
 	// GetResultsUploadURL returns a URL for uploading results (i.e. results receiver).
 	GetResultsUploadURL() *url.URL
 
-	// Simple wrapper of shared.IsFeatureEnabled (delegates to Datastore)
+	// Simple wrappers that delegate to Datastore
 	IsFeatureEnabled(featureName string) bool
 	GetUploader(uploader string) (Uploader, error)
 }
@@ -133,10 +132,8 @@ func (a appEngineAPIImpl) IsFeatureEnabled(featureName string) bool {
 }
 
 func (a appEngineAPIImpl) GetUploader(uploader string) (Uploader, error) {
-	result := Uploader{}
-	key := datastore.NewKey(a.ctx, "Uploader", uploader, 0, nil)
-	err := datastore.Get(a.ctx, key, &result)
-	return result, err
+	ds := NewAppEngineDatastore(a.ctx, false)
+	return GetUploader(ds, uploader)
 }
 
 func (a appEngineAPIImpl) GetHostname() string {
