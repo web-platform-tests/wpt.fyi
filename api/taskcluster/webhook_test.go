@@ -122,8 +122,8 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 					"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.db.gz",
-					"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_screenshot.db.gz",
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 			"chrome-dev": {
@@ -132,8 +132,8 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 					"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.db.gz",
-					"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_screenshot.db.gz",
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
@@ -148,7 +148,7 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.db.gz",
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
@@ -174,7 +174,7 @@ func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.db.gz",
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 			"chrome-dev-pr_base": {
@@ -182,7 +182,7 @@ func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.db.gz",
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
@@ -197,7 +197,7 @@ func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.db.gz",
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
