@@ -23,12 +23,10 @@ const InternalUsername = "_processor"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
 func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Request) {
-	username, password, ok := r.BasicAuth()
-	if !ok || username != InternalUsername || !a.AuthenticateUploader(username, password) {
-		http.Error(w, "Authentication error", http.StatusUnauthorized)
+	if AuthenticateUploader(a, r) != InternalUsername {
+		http.Error(w, "This is a private API.", http.StatusUnauthorized)
 		return
 	}
-
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
