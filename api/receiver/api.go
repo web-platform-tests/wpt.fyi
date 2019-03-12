@@ -19,12 +19,27 @@ import (
 	"google.golang.org/appengine/taskqueue"
 )
 
+// AuthenticateUploader checks the HTTP basic auth against Datastore, and returns the username if
+// it's valid or "" otherwise.
+//
+// This function is not defined on API interface for easier reuse in other packages.
+func AuthenticateUploader(aeAPI shared.AppEngineAPI, r *http.Request) string {
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		return ""
+	}
+	user, err := aeAPI.GetUploader(username)
+	if err != nil || user.Password != password {
+		return ""
+	}
+	return user.Username
+}
+
 // API abstracts all AppEngine/GCP APIs used by the results receiver.
 type API interface {
 	shared.AppEngineAPI
 
 	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
-	AuthenticateUploader(username, password string) bool
 	FetchGzip(url string, timeout time.Duration) (io.ReadCloser, error)
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 	ScheduleResultsTask(
@@ -61,14 +76,6 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 		return nil, err
 	}
 	return key, nil
-}
-
-func (a apiImpl) AuthenticateUploader(username, password string) bool {
-	uploader, err := a.GetUploader(username)
-	if err != nil || uploader.Password != password {
-		return false
-	}
-	return true
 }
 
 func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {

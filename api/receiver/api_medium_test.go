@@ -139,11 +139,18 @@ func TestAuthenticateUploader(t *testing.T) {
 	defer done()
 	a := NewAPI(ctx)
 
-	assert.False(t, a.AuthenticateUploader("user", "123"))
+	req := httptest.NewRequest("", "/api/foo", &bytes.Buffer{})
+	assert.Equal(t, "", AuthenticateUploader(a, req))
 
-	key := datastore.NewKey(ctx, "Uploader", "user", 0, nil)
-	datastore.Put(ctx, key, &shared.Uploader{Username: "user", Password: "123"})
-	assert.True(t, a.AuthenticateUploader("user", "123"))
+	req.SetBasicAuth(InternalUsername, "123")
+	assert.Equal(t, "", AuthenticateUploader(a, req))
+
+	key := datastore.NewKey(ctx, "Uploader", InternalUsername, 0, nil)
+	datastore.Put(ctx, key, &shared.Uploader{Username: InternalUsername, Password: "123"})
+	assert.Equal(t, InternalUsername, AuthenticateUploader(a, req))
+
+	req.SetBasicAuth(InternalUsername, "456")
+	assert.Equal(t, "", AuthenticateUploader(a, req))
 }
 
 func TestFetchWithTimeout_success(t *testing.T) {

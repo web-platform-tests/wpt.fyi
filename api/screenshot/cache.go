@@ -13,6 +13,7 @@ import (
 
 	"cloud.google.com/go/storage"
 
+	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -50,6 +51,11 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
+	if receiver.AuthenticateUploader(aeAPI, r) != receiver.InternalUsername {
+		http.Error(w, "This is a private API.", http.StatusUnauthorized)
+		return
+	}
+
 	// TODO(Hexcles): Abstract and mock the GCS utilities in shared.
 	gcs, err := storage.NewClient(ctx)
 	if err != nil {
