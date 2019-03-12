@@ -55,20 +55,6 @@ func (mr *MockAPIMockRecorder) AddTestRun(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTestRun", reflect.TypeOf((*MockAPI)(nil).AddTestRun), arg0)
 }
 
-// AuthenticateUploader mocks base method
-func (m *MockAPI) AuthenticateUploader(arg0, arg1 string) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AuthenticateUploader", arg0, arg1)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// AuthenticateUploader indicates an expected call of AuthenticateUploader
-func (mr *MockAPIMockRecorder) AuthenticateUploader(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticateUploader", reflect.TypeOf((*MockAPI)(nil).AuthenticateUploader), arg0, arg1)
-}
-
 // Context mocks base method
 func (m *MockAPI) Context() context.Context {
 	m.ctrl.T.Helper()

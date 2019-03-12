@@ -35,16 +35,6 @@ const DownloadTimeout = time.Second * 50
 
 // HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
-	var uploader string
-	if !a.IsAdmin() {
-		username, password, ok := r.BasicAuth()
-		if !ok || !a.AuthenticateUploader(username, password) {
-			http.Error(w, "Authentication error", http.StatusUnauthorized)
-			return
-		}
-		uploader = username
-	}
-
 	// Most form methods (e.g. FormValue) will call ParseMultipartForm and
 	// ParseForm if necessary; forms with either enctype can be parsed.
 	// FormValue gets either query params or form body entries, favoring
@@ -52,10 +42,17 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	// The default maximum form size is 32MB, which is also the max request
 	// size on AppEngine.
 
-	if uploader == "" {
+	var uploader string
+	if a.IsAdmin() {
 		uploader = r.FormValue("user")
 		if uploader == "" {
-			http.Error(w, "Cannot identify uploader", http.StatusBadRequest)
+			http.Error(w, "Please specify uploader", http.StatusBadRequest)
+			return
+		}
+	} else {
+		uploader = AuthenticateUploader(a, r)
+		if uploader == "" {
+			http.Error(w, "Authentication error", http.StatusUnauthorized)
 			return
 		}
 	}
