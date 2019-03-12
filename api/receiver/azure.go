@@ -22,7 +22,7 @@ var (
 	azureArtifactRegex = regexp.MustCompile(`/_apis/build/builds/[0-9]+/artifacts\?artifactName=([^&]+)`)
 	// These are our own naming conventions (defined by the jobs).
 	reportPathRegex     = regexp.MustCompile(`/wpt_report.*\.json$`)
-	screenshotPathRegex = regexp.MustCompile(`/wpt_screenshot.*\.db$`)
+	screenshotPathRegex = regexp.MustCompile(`/wpt_screenshot.*\.txt$`)
 )
 
 func getAzureArtifactName(url string) string {

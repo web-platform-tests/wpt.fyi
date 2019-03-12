@@ -302,10 +302,10 @@ func extractArtifactURLs(log shared.Logger, group *taskGroupInfo, taskID string)
 			fmt.Sprintf(
 				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", id,
 			))
-		// wpt_screenshot.db.gz might not exist, which is NOT a fatal error in the receiver.
+		// wpt_screenshot.txt.gz might not exist, which is NOT a fatal error in the receiver.
 		urls.Screenshots = append(urls.Screenshots,
 			fmt.Sprintf(
-				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_screenshot.db.gz", id,
+				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_screenshot.txt.gz", id,
 			))
 		// urls is a *copy* of the value so we must store it back to the map.
 		urlsByProduct[product] = urls
