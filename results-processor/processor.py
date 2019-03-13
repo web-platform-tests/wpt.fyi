@@ -19,20 +19,22 @@ from wptscreenshot import WPTScreenshot
 
 _log = logging.getLogger(__name__)
 _datastore = datastore.Client()
+_auth = None
 
 
-def _get_uploader_password(username):
-    """Gets the password for an uploader.
+def _get_auth():
+    """Gets the username & password for processor.
 
     Datastore exceptions may be raised.
 
-    Args:
-        username: A username (string).
-
     Returns:
-        A string, the password for this user.
+        A tuple (username, password).
     """
-    return _datastore.get(_datastore.key('Uploader', username))['Password']
+    global _auth
+    if _auth is None:
+        user = _datastore.get(_datastore.key('Uploader', '_processor'))
+        _auth = (user['Username'], user['Password'])
+    return _auth
 
 
 def _find_run_by_raw_results(raw_results_url):
@@ -74,7 +76,8 @@ def _upload_screenshots(report, _, screenshots_gcs):
         with tempfile.NamedTemporaryFile(suffix='.db') as temp:
             blob.download_to_file(temp)
             temp.flush()
-            with WPTScreenshot(temp.name, report.run_info) as s:
+            with WPTScreenshot(
+                    temp.name, report.run_info, auth=_get_auth()) as s:
                 s.process()
 
 # ==== End of tasks ====
@@ -196,14 +199,12 @@ def process_report(params):
             raw_results_url)
         return ''
 
-    # Authenticate as "_processor" for create-test-run API.
-    secret = _get_uploader_password('_processor')
     test_run_id = wptreport.create_test_run(
         report,
         run_id,
         labels,
         uploader,
-        secret,
+        _get_auth(),
         gsutil.gs_to_public_url(results_gs_url),
         raw_results_url,
         callback_url)
