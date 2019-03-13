@@ -35,6 +35,8 @@ import { WPTFlags } from './wpt-flags.js';
 import './wpt-permalinks.js';
 import './wpt-prs.js';
 
+const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
+
 class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase)))) {
   static get template() {
     return html`
@@ -503,10 +505,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     if (!this.computePathIsATestFile(path) || !manifest) {
       return path;
     }
-    // Filter in case any types are fully missing.
     const metadata = manifest.get(path);
     if (metadata) {
-      return metadata.file.startsWith('/') ? metadata.file : `/${metadata.file}`;
+      return metadata.file;
     }
   }
 
@@ -521,13 +522,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     return new URL(`${this.scheme}://${this.liveTestDomain}${path}`);
   }
 
-  computeLiveTestDomain() {
-    if (this.webPlatformTestsLive) {
-      return 'web-platform-tests.live';
-    }
-    return 'w3c-test.org';
-  }
-
   computeTestRefURL(testType, path, manifest) {
     if (!this.showTestRefURL || testType !== 'reftest') {
       return;
@@ -536,6 +530,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     if (metadata && metadata.refPath) {
       return this.computeTestURL(testType, metadata.refPath);
     }
+  }
+
+  computeLiveTestDomain() {
+    if (this.webPlatformTestsLive) {
+      return 'web-platform-tests.live';
+    }
+    return 'w3c-test.org';
   }
 
   https(url) {
@@ -788,7 +789,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
                 if (type === 'reftest') {
                   metadata.refPath = test[1][0][0];
                 }
-                let path = `${test[0]}`;
+                // Ensure leading slashes.
+                if (!metadata.file.startsWith('/')) {
+                  metadata.file = `/${file}`;
+                }
+                let path = test[0]};
                 if (!path.startsWith('/')) {
                   path = `/${path}`;
                 }
@@ -855,7 +860,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     const knownNodes = {};
     if (this.manifest && !this.search) {
       for (const [path, {type}] of Object.entries(this.manifest)) {
-        if (['manual', 'reftest', 'testharness', 'wdspec'].includes(type)) {
+        if (TEST_TYPES.includes(type)) {
           if (path.startsWith(prefix)) {
             collapsePathOnto(path, knownNodes);
           }
