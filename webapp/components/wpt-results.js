@@ -793,7 +793,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
                 if (!metadata.file.startsWith('/')) {
                   metadata.file = `/${file}`;
                 }
-                let path = test[0]};
+                let path = test[0];
                 if (!path.startsWith('/')) {
                   path = `/${path}`;
                 }
