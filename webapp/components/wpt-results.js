@@ -777,7 +777,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           }
           let manifestJSON = await r.json();
           const manifest = new Map();
-          manifest.sha = sha || r.headers && r.headers['wpt-sha'];
+          manifest.sha = sha || r.headers && r.headers['X-WPT-SHA'];
           for (const [type, items] of Object.entries(manifestJSON.items)) {
             for (const [file, tests] of Object.entries(items)) {
               for (const test of tests) {
