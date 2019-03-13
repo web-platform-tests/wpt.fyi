@@ -504,7 +504,7 @@ def normalize_product(report):
         return set()
 
 
-def create_test_run(report, run_id, labels_str, uploader, secret,
+def create_test_run(report, run_id, labels_str, uploader, auth,
                     results_url, raw_results_url, callback_url=None):
     """Creates a TestRun on the dashboard.
 
@@ -515,7 +515,7 @@ def create_test_run(report, run_id, labels_str, uploader, secret,
         run_id: The pre-allocated Datastore ID for this run.
         labels_str: A comma-separated string of labels from the uploader.
         uploader: The name of the uploader.
-        secret: A secret token.
+        auth: A (username, password) tuple for HTTP basic auth.
         results_url: URL of the gzipped summary file. (e.g.
             'https://.../wptd/0123456789/chrome-62.0-linux-summary.json.gz')
         raw_results_url: URL of the raw full report. (e.g.
@@ -541,7 +541,7 @@ def create_test_run(report, run_id, labels_str, uploader, secret,
 
     response = requests.post(
         callback_url,
-        auth=('_processor', secret),
+        auth=auth,
         data=json.dumps(payload)
     )
     response.raise_for_status()
