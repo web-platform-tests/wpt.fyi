@@ -35,7 +35,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	w.Header().Add("wpt-sha", sha)
+	w.Header().Add("X-WPT-SHA", sha)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(manifest)
 }
