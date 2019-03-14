@@ -42,7 +42,7 @@ type apiImpl struct {
 
 // NewAPI creates a real API from a given context.
 func NewAPI(ctx context.Context) API {
-	return apiImpl{
+	return &apiImpl{
 		AppEngineAPI: shared.NewAppEngineAPI(ctx),
 		store:        shared.NewAppEngineDatastore(ctx, false),
 		queue:        ResultsQueue,
@@ -64,15 +64,14 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 }
 
 func (a apiImpl) AuthenticateUploader(username, password string) bool {
-	key := a.store.NewNameKey("Uploader", username)
-	var uploader shared.Uploader
-	if err := a.store.Get(key, &uploader); err != nil || uploader.Password != password {
+	uploader, err := a.GetUploader(username)
+	if err != nil || uploader.Password != password {
 		return false
 	}
 	return true
 }
 
-func (a apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
+func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	// Expecting gcsPath to be /bucket/path/to/file
 	split := strings.SplitN(gcsPath, "/", 3)
 	if len(split) != 3 || split[0] != "" {

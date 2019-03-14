@@ -5,7 +5,6 @@
 package taskcluster
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,6 +22,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+const uploaderName = "taskcluster"
 const flagTaskclusterAllBranches = "taskclusterAllBranches"
 const flagPendingChecks = "pendingChecks"
 
@@ -174,8 +174,9 @@ func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID stri
 		return false, err
 	}
 
-	username, password, err := getAuth(ctx)
+	uploader, err := aeAPI.GetUploader(uploaderName)
 	if err != nil {
+		log.Errorf("Failed to get uploader creds from Datastore")
 		return false, err
 	}
 
@@ -183,8 +184,8 @@ func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID stri
 		log,
 		shared.NewAppEngineAPI(ctx),
 		sha,
-		username,
-		password,
+		uploader.Username,
+		uploader.Password,
 		urlsByProduct,
 		labels)
 	if err != nil {
@@ -306,11 +307,6 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo, taskID string) (
 		return nil, fmt.Errorf("no result URLs found in task group")
 	}
 	return resultURLs, nil
-}
-
-func getAuth(ctx context.Context) (username string, password string, err error) {
-	uploader, err := shared.NewAppEngineAPI(ctx).GetUploader("taskcluster")
-	return uploader.Username, uploader.Password, err
 }
 
 func createAllRuns(
