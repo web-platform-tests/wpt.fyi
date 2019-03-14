@@ -780,6 +780,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           const manifest = new Map();
           manifest.sha = sha || r.headers && r.headers['X-WPT-SHA'];
           for (const [type, items] of Object.entries(manifestJSON.items)) {
+            if (!TEST_TYPES.includes(type)) {
+              continue;
+            }
             for (const [file, tests] of Object.entries(items)) {
               for (const test of tests) {
                 const metadata = {
@@ -789,7 +792,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
                 if (type === 'reftest') {
                   metadata.refPath = test[1][0][0];
                 }
-                // Ensure leading slashes.
+                // Ensure leading slashes (e.g. manual/visual tests don't).
                 if (!metadata.file.startsWith('/')) {
                   metadata.file = `/${file}`;
                 }
