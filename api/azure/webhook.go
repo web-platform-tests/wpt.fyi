@@ -7,47 +7,26 @@ package azure
 import (
 	"encoding/json"
 	"io/ioutil"
-	"net/url"
 	"regexp"
-	"strconv"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
 
-	"github.com/google/go-github/github"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
+
+const uploaderName = "azure"
 
 // Labels for runs from Azure Pipelines are determined from the artifact names.
 // For master runs, artifact name may be either just "results" or something
 // like "safari-results".
 var (
-	MasterRegex        = regexp.MustCompile(`\bresults$`)
-	PRHeadRegex        = regexp.MustCompile(`\baffected-tests$`)
-	PRBaseRegex        = regexp.MustCompile(`\baffected-tests-without-changes$`)
-	EpochBranchesRegex = regexp.MustCompile("^refs/heads/epochs/.*")
+	masterRegex        = regexp.MustCompile(`\bresults$`)
+	prHeadRegex        = regexp.MustCompile(`\baffected-tests$`)
+	prBaseRegex        = regexp.MustCompile(`\baffected-tests-without-changes$`)
+	epochBranchesRegex = regexp.MustCompile("^refs/heads/epochs/.*")
 )
-
-// HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.
-func HandleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
-	log := shared.GetLogger(aeAPI.Context())
-	status := event.GetCheckRun().GetStatus()
-	if status != "completed" {
-		log.Infof("Ignoring non-completed status %s", status)
-		return false, nil
-	}
-	owner := event.GetRepo().GetOwner().GetLogin()
-	repo := event.GetRepo().GetName()
-	sender := event.GetSender().GetLogin()
-	detailsURL := event.GetCheckRun().GetDetailsURL()
-	buildID := extractBuildID(detailsURL)
-	if buildID == 0 {
-		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
-		return false, nil
-	}
-	return processBuild(aeAPI, azureAPI, owner, repo, sender, "", buildID)
-}
 
 func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
 	build := azureAPI.GetBuild(owner, repo, buildID)
@@ -93,19 +72,19 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 			labels.Add(shared.GetUserLabel(sender))
 		}
 
-		if MasterRegex.MatchString(artifact.Name) {
-			if build.IsMasterBranch() || EpochBranchesRegex.MatchString(build.SourceBranch) {
+		if masterRegex.MatchString(artifact.Name) {
+			if build.IsMasterBranch() || epochBranchesRegex.MatchString(build.SourceBranch) {
 				labels.Add(shared.MasterLabel)
 			}
-		} else if PRHeadRegex.MatchString(artifact.Name) {
+		} else if prHeadRegex.MatchString(artifact.Name) {
 			labels.Add(shared.PRHeadLabel)
-		} else if PRBaseRegex.MatchString(artifact.Name) {
+		} else if prBaseRegex.MatchString(artifact.Name) {
 			labels.Add(shared.PRBaseLabel)
 		}
 
-		uploader, err := aeAPI.GetUploader("azure")
+		uploader, err := aeAPI.GetUploader(uploaderName)
 		if err != nil {
-			log.Errorf("Failed to load azure uploader")
+			log.Errorf("Failed to get uploader creds from Datastore")
 			return false, err
 		}
 
@@ -128,14 +107,4 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 		return uploadedAny, err
 	}
 	return uploadedAny, nil
-}
-
-func extractBuildID(detailsURL string) int64 {
-	parsedURL, err := url.Parse(detailsURL)
-	if err != nil {
-		return 0
-	}
-	id := parsedURL.Query().Get("buildId")
-	parsedID, _ := strconv.ParseInt(id, 0, 0)
-	return parsedID
 }

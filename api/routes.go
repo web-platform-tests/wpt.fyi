@@ -60,12 +60,4 @@ func RegisterRoutes() {
 
 	// API endpoint for redirecting to a run's summary JSON blob.
 	shared.AddRoute("/api/results", "api-results", shared.WrapPermissiveCORS(apiResultsRedirectHandler))
-
-	// PROTECTED API endpoint for receiving test results (wptreport) from runners.
-	// This API is authenticated. Runners have credentials.
-	shared.AddRoute("/api/results/upload", "api-results-upload", apiResultsUploadHandler)
-
-	// PRIVATE API endpoint for creating a test run in Datastore.
-	// This API is authenticated. Only this AppEngine project has the credential.
-	shared.AddRoute("/api/results/create", "api-results-create", apiResultsCreateHandler)
 }

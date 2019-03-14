@@ -1,14 +1,13 @@
-// Copyright 2018 The WPT Dashboard Project. All rights reserved.
+// Copyright 2019 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package receiver
 
 import (
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
-	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -19,8 +18,8 @@ func apiResultsUploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAPI(ctx)
-	receiver.HandleResultsUpload(a, w, r)
+	a := NewAPI(ctx)
+	HandleResultsUpload(a, w, r)
 }
 
 func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +29,7 @@ func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAPI(ctx)
+	a := NewAPI(ctx)
 	s := checks.NewAPI(ctx)
-	receiver.HandleResultsCreate(a, s, w, r)
+	HandleResultsCreate(a, s, w, r)
 }
