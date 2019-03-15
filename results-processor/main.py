@@ -113,9 +113,9 @@ def readiness_check():
 def task_handler():
     _atomic_write(TIMESTAMP_FILE, str(time.time()))
 
-    app.logger.info('Processing task %s',
-                    flask.request.headers.get('X-AppEngine-TaskName'))
-    resp = processor.process_report(flask.request.form)
+    task_id = flask.request.headers.get('X-AppEngine-TaskName')
+    app.logger.info('Processing task %s', task_id)
+    resp = processor.process_report(task_id, flask.request.form)
     status = HTTPStatus.CREATED if resp else HTTPStatus.NO_CONTENT
     app.logger.info(resp)
 

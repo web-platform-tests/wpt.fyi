@@ -150,6 +150,19 @@ class WPTReport(object):
         update_property('time_start', chunk, self._report, min)
         update_property('time_end', chunk, self._report, max)
 
+    def load_file(self, filename):
+        """Loads wptreport from a local path.
+
+        Args:
+            filename: Filename of the screenshots database (the file can be
+                gzipped if the extension is ".gz").
+        """
+        with open(filename, mode='rb') as f:
+            if filename.endswith('.gz'):
+                self.load_gzip_json(f)
+            else:
+                self.load_json(f)
+
     def load_json(self, fileobj):
         """Loads wptreport from a JSON file.
 
