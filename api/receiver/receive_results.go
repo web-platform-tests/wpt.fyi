@@ -29,8 +29,9 @@ const ResultsTarget = "/api/results/process"
 // NumRetries is the number of retries the receiver will do to download results from a URL.
 const NumRetries = 3
 
-// DownloadTimeout is the timeout for downloading results.
-const DownloadTimeout = time.Second * 10
+// DownloadTimeout is the timeout for downloading results (must be smaller than
+// request timeout, 60s).
+const DownloadTimeout = time.Second * 50
 
 // HandleResultsUpload handles the POST requests for uploading results.
 func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
