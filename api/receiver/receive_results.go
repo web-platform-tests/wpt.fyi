@@ -62,7 +62,6 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 
 	log := shared.GetLogger(a.Context())
 	var results, screenshots []string
-	var azureURL string
 	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
 		// result_file[] payload
 		files := r.MultipartForm.File["result_file"]
@@ -76,8 +75,9 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		}
 	} else if artifactName := getAzureArtifactName(r.PostForm.Get("result_url")); artifactName != "" {
 		// Special Azure case for result_url payload
-		azureURL = r.PostForm.Get("result_url")
+		azureURL := r.PostForm.Get("result_url")
 		log.Debugf("Found Azure URL: %s", azureURL)
+		extraParams["azure_url"] = azureURL
 	} else {
 		// General result_url[] payload
 		results = r.PostForm["result_url"]

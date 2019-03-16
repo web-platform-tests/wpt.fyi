@@ -131,6 +131,40 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 	assert.Equal(t, resp.Code, http.StatusOK)
 }
 
+func TestHandleResultsUpload_azure(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	azureURL := "https://dev.azure.com/web-platform-tests/b14026b4-9423-4454-858f-bf76cf6d1faa/_apis/build/builds/4230/artifacts?artifactName=results&api-version=5.0&%24format=zip"
+	payload := url.Values{"result_url": []string{azureURL}}
+	extraParams := map[string]string{
+		"azure_url":       azureURL,
+		"browser_name":    "",
+		"labels":          "",
+		"revision":        "",
+		"browser_version": "",
+		"os_name":         "",
+		"os_version":      "",
+		"callback_url":    "",
+	}
+	req := httptest.NewRequest("POST", "/api/results/upload", strings.NewReader(payload.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth("blade-runner", "123")
+	resp := httptest.NewRecorder()
+
+	task := &taskqueue.Task{Name: "task"}
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
+		mockAE.EXPECT().ScheduleResultsTask("blade-runner", nil, nil, extraParams).Return(task, nil),
+	)
+
+	HandleResultsUpload(mockAE, resp, req)
+	assert.Equal(t, resp.Code, http.StatusOK)
+}
+
 func TestHandleResultsUpload_url(t *testing.T) {
 	var urls []string
 	screenshot := []string{"http://wpt.fyi/wpt_screenshot.txt.gz"}
