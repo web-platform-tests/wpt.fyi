@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -109,7 +108,6 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 	req.SetBasicAuth("blade-runner", "123")
 	resp := httptest.NewRecorder()
 
-	f := &os.File{}
 	extraParams := map[string]string{
 		"browser_name":    "firefox",
 		"labels":          "stable",
@@ -125,9 +123,8 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-		mockAE.EXPECT().FetchGzip("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
-		mockAE.EXPECT().UploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
-		mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), extraParams).Return(task, nil),
+		mockAE.EXPECT().ScheduleResultsTask(
+			"blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil, extraParams).Return(task, nil),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
@@ -136,33 +133,30 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 
 func TestHandleResultsUpload_url(t *testing.T) {
 	var urls []string
+	screenshot := []string{"http://wpt.fyi/wpt_screenshot.txt.gz"}
 	for i := 1; i <= 2; i++ {
 		urls = append(urls, fmt.Sprintf("http://wpt.fyi/wpt_report_%d.json.gz", i))
 		t.Run(fmt.Sprintf("%d url(s)", len(urls)), func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			payload := url.Values{"result_url": urls}
+			payload := url.Values{
+				"result_url":     urls,
+				"screenshot_url": screenshot,
+			}
 			req := httptest.NewRequest("POST", "/api/results/upload", strings.NewReader(payload.Encode()))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			req.SetBasicAuth("blade-runner", "123")
 			resp := httptest.NewRecorder()
 
-			files := make([]os.File, len(urls))
 			task := &taskqueue.Task{Name: "task"}
 			mockAE := mock_receiver.NewMockAPI(mockCtrl)
 			mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 			gomock.InOrder(
 				mockAE.EXPECT().IsAdmin().Return(false),
 				mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-				mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), emptyParams).Return(task, nil),
+				mockAE.EXPECT().ScheduleResultsTask("blade-runner", urls, screenshot, emptyParams).Return(task, nil),
 			)
-			for i, url := range urls {
-				gomock.InOrder(
-					mockAE.EXPECT().FetchGzip(url, DownloadTimeout).Return(&files[i], nil),
-					mockAE.EXPECT().UploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), &files[i], true).Return(nil),
-				)
-			}
 
 			HandleResultsUpload(mockAE, resp, req)
 			assert.Equal(t, resp.Code, http.StatusOK)
@@ -198,7 +192,7 @@ func TestHandleResultsUpload_file(t *testing.T) {
 				mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), emptyParams).Return(task, nil),
 			)
 			for range filenames {
-				mockAE.EXPECT().UploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), gomock.Any(), true).Return(nil)
+				mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer/blade-runner/.*\.json$`), gomock.Any(), true).Return(nil)
 			}
 
 			HandleResultsUpload(mockAE, resp, req)
@@ -207,85 +201,26 @@ func TestHandleResultsUpload_file(t *testing.T) {
 	}
 }
 
-func TestHandleResultsUpload_retry_fetching(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	payload := url.Values{
-		"result_url": {"http://wpt.fyi/test.json.gz"},
-	}
-	req := httptest.NewRequest("POST", "/api/results/upload", strings.NewReader(payload.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth("blade-runner", "123")
-	resp := httptest.NewRecorder()
-
-	f := &os.File{}
-	errTimeout := fmt.Errorf("server timed out")
-	task := &taskqueue.Task{Name: "task"}
-	mockAE := mock_receiver.NewMockAPI(mockCtrl)
-	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
-	gomock.InOrder(
-		mockAE.EXPECT().IsAdmin().Return(false),
-		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-		mockAE.EXPECT().FetchGzip("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
-		mockAE.EXPECT().FetchGzip("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
-		mockAE.EXPECT().FetchGzip("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
-		mockAE.EXPECT().UploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(nil),
-		mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), emptyParams).Return(task, nil),
-	)
-
-	HandleResultsUpload(mockAE, resp, req)
-	assert.Equal(t, resp.Code, http.StatusOK)
-}
-
-func TestHandleResultsUpload_fail_fetching(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	payload := url.Values{
-		"result_url": {"http://wpt.fyi/test.json.gz"},
-	}
-	req := httptest.NewRequest("POST", "/api/results/upload", strings.NewReader(payload.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth("blade-runner", "123")
-	resp := httptest.NewRecorder()
-
-	errTimeout := fmt.Errorf("server timed out")
-	mockAE := mock_receiver.NewMockAPI(mockCtrl)
-	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
-	gomock.InOrder(
-		mockAE.EXPECT().IsAdmin().Return(false),
-		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-		mockAE.EXPECT().FetchGzip("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
-		mockAE.EXPECT().FetchGzip("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
-		mockAE.EXPECT().FetchGzip("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(nil, errTimeout),
-	)
-
-	HandleResultsUpload(mockAE, resp, req)
-	assert.Equal(t, resp.Code, http.StatusInternalServerError)
-}
-
 func TestHandleResultsUpload_fail_uploading(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	payload := url.Values{
-		"result_url": {"http://wpt.fyi/test.json.gz"},
-	}
-	req := httptest.NewRequest("POST", "/api/results/upload", strings.NewReader(payload.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	buffer := new(bytes.Buffer)
+	writer := multipart.NewWriter(buffer)
+	writer.CreateFormFile("result_file", "test.json.gz")
+	writer.Close()
+	req := httptest.NewRequest("POST", "/api/results/upload", buffer)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.SetBasicAuth("blade-runner", "123")
 	resp := httptest.NewRecorder()
 
-	f := &os.File{}
 	errGCS := fmt.Errorf("failed to upload to GCS")
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-		mockAE.EXPECT().FetchGzip("http://wpt.fyi/test.json.gz", DownloadTimeout).Return(f, nil),
-		mockAE.EXPECT().UploadToGCS(matchRegex(`^/wptd-results-buffer/blade-runner/.*\.json$`), f, true).Return(errGCS),
+		mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer/blade-runner/.*\.json$`), gomock.Any(), true).Return(errGCS),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
