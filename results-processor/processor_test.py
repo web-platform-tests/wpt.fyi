@@ -78,13 +78,28 @@ class ProcessorServerTest(unittest.TestCase):
         self.server.terminate()
         self.server.wait()
 
-    def test_download(self):
+    def test_download_single(self):
         with Processor() as p:
             # The endpoint returns "Hello, world!".
             path = p._download_single(self.url + '/download/test.txt')
             self.assertTrue(path.endswith('.txt'))
             with open(path, 'rb') as f:
                 self.assertEqual(f.read(), b'Hello, world!')
+
+    def test_download(self):
+        with Processor() as p:
+            url_404 = self.url + '/404'
+            with self.assertLogs() as lm:
+                p.download(
+                    [self.url + '/download/test.txt'],
+                    [url_404],
+                    None)
+            self.assertEqual(len(p.results), 1)
+            self.assertTrue(p.results[0].endswith('.txt'))
+            self.assertEqual(len(p.screenshots), 0)
+            self.assertListEqual(
+                lm.output,
+                ['ERROR:processor:Failed to fetch (404): ' + url_404])
 
     def test_download_content_disposition(self):
         with Processor() as p:
