@@ -44,11 +44,6 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         #source.after #before {
           display: none;
         }
-        #diff-layer filter,
-        #diff-layer rect {
-          height: 100%;
-          width: 100%;
-        }
         #options {
           display: flex;
           justify-content: space-between;
@@ -225,7 +220,10 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
       display.setAttribute('width', out.width);
       display.setAttribute('height', out.height);
       display.setAttributeNS(nsXLINK, 'xlink:href', this.diff);
-      const rect = this.shadowRoot.querySelector('#diff-layer');
+      const svg = this.shadowRoot.querySelector('#diff-layer');
+      svg.setAttribute('width', out.width);
+      svg.setAttribute('height', out.height);
+      const rect = this.shadowRoot.querySelector('#diff-layer rect');
       rect.setAttribute('width', out.width);
       rect.setAttribute('height', out.height);
       resolve();
