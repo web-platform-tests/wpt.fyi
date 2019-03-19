@@ -198,7 +198,7 @@ class Processor(object):
             gsutil.copy(
                 results_dir,
                 self.results_gs_url[:self.results_gs_url.rfind('/')],
-                gzipped=True, quiet=True)
+                gzipped=True)
 
     def create_run(self, run_id, labels, uploader, callback_url=None):
         """Creates a TestRun record.
@@ -227,7 +227,7 @@ class Processor(object):
             tasks: A list of functions that take a single Processor argument.
         """
         for task in tasks:
-            _log.debug('Running post-new-run task: %s', task.__name__)
+            _log.info('Running post-new-run task: %s', task.__name__)
             try:
                 task(self)
             except Exception:
