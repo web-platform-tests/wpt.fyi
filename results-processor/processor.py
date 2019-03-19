@@ -215,7 +215,7 @@ class Processor(object):
             labels,
             uploader,
             self.auth,
-            self.results_gs_url,
+            self.results_url,
             self.raw_results_url,
             callback_url)
         assert self.test_run_id
