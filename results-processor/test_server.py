@@ -24,6 +24,18 @@ def screenshots_upload():
     return ('Success', 201)
 
 
+@app.route('/download/attachment', methods=['GET'])
+def download_attachment():
+    return flask.send_file('artifact_test.zip',
+                           as_attachment=True,
+                           attachment_filename='artifact_test.zip')
+
+
+@app.route('/download/test.txt', methods=['GET'])
+def download_json():
+    return 'Hello, world!'
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', required=True, type=int)
