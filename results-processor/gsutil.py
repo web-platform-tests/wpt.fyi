@@ -28,13 +28,14 @@ def gs_to_public_url(gs_url):
     return gs_url.replace('gs://', 'https://storage.googleapis.com/', 1)
 
 
-def copy(path1, path2, gzipped=False, quiet=False):
+def copy(path1, path2, gzipped=False, quiet=True):
     """Copies path1 to path2 with gsutil cp.
 
     Args:
         path1, path2: The source and destination paths.
         gzipped: Whether path1 is gzipped (if True, 'Content-Encoding:gzip'
             will be added to the headers).
+        quiet: Whether to suppress command output (default True).
     """
     command = [
         'gsutil', '-m',
