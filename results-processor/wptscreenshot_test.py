@@ -4,35 +4,18 @@
 
 import contextlib
 import gzip
-import random
-import subprocess
 import tempfile
-import time
 import unittest
 import warnings
 
-import requests
-
+import test_util
 from wptscreenshot import WPTScreenshot
 
 
 class WPTScreenshotTest(unittest.TestCase):
     def setUp(self):
-        # TODO(Hexcles): Find a free port properly.
-        port = random.randint(10000, 20000)
-        self.server = subprocess.Popen(
-            ['python', 'test_server.py', '-p', str(port)],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.api = 'http://127.0.0.1:{}/api/screenshots/upload'.format(port)
-        # Wait until the server is responsive.
-        for _ in range(100):
-            time.sleep(0.1)
-            try:
-                requests.post(self.api).raise_for_status()
-            except requests.exceptions.HTTPError:
-                break
-            except Exception:
-                pass
+        self.server, base_url = test_util.start_server(True)
+        self.api = base_url + '/api/screenshots/upload'
 
         # We would like to make ResourceWarning (unclosed files) fatal, but
         # -Werror::ResourceWarning does not work since the error is often

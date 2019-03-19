@@ -4,6 +4,7 @@
 
 import unittest
 
+import test_util
 from processor import Processor
 
 
@@ -67,3 +68,27 @@ class ProcessorTest(unittest.TestCase):
                 '/artifact_test/wpt_screenshot_1.txt'))
             self.assertTrue(p.screenshots[1].endswith(
                 '/artifact_test/wpt_screenshot_2.txt'))
+
+
+class ProcessorServerTest(unittest.TestCase):
+    def setUp(self):
+        self.server, self.url = test_util.start_server(False)
+
+    def tearDown(self):
+        self.server.terminate()
+        self.server.wait()
+
+    def test_download(self):
+        with Processor() as p:
+            # The endpoint returns "Hello, world!".
+            path = p._download_single(self.url + '/download/test.txt')
+            self.assertTrue(path.endswith('.txt'))
+            with open(path, 'rb') as f:
+                self.assertEqual(f.read(), b'Hello, world!')
+
+    def test_download_content_disposition(self):
+        with Processor() as p:
+            # The response of this endpoint sets Content-Disposition with
+            # artifact_test.zip as the filename.
+            path = p._download_single(self.url + '/download/attachment')
+            self.assertTrue(path.endswith('.zip'))
