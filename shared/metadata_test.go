@@ -9,20 +9,31 @@ package shared
 import (
 	"testing"
 
-	"github.com/go-yaml/yaml"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParse(t *testing.T) {
-	var metadata Metadata
-	err := yaml.Unmarshal([]byte(`
+func TestParseMetadata(t *testing.T) {
+	var path string = "foo/bar"
+	var metadataByteMap = make(map[string][]byte)
+	metadataByteMap[path] = []byte(`
 links:
   - product: chrome-64
     test: a.html
-    url: https://external.com/item`), &metadata)
-	assert.Nil(t, err)
-	assert.Equal(t, "chrome", metadata.Links[0].Product.BrowserName)
-	assert.Equal(t, "64", metadata.Links[0].Product.BrowserVersion)
-	assert.Equal(t, "a.html", metadata.Links[0].TestPath)
-	assert.Equal(t, "https://external.com/item", metadata.Links[0].URL)
+    url: https://external.com/item
+  - product: firefox-2
+    test: b.html
+    url: https://bug.com/item`)
+
+	metadatamap := parseMetadata(metadataByteMap)
+
+	assert.Equal(t, 1, len(metadatamap))
+	assert.Equal(t, 2, len(metadatamap[path].Links))
+	assert.Equal(t, "chrome", metadatamap[path].Links[0].Product.BrowserName)
+	assert.Equal(t, "64", metadatamap[path].Links[0].Product.BrowserVersion)
+	assert.Equal(t, "a.html", metadatamap[path].Links[0].TestPath)
+	assert.Equal(t, "https://external.com/item", metadatamap[path].Links[0].URL)
+	assert.Equal(t, "firefox", metadatamap[path].Links[1].Product.BrowserName)
+	assert.Equal(t, "2", metadatamap[path].Links[1].Product.BrowserVersion)
+	assert.Equal(t, "b.html", metadatamap[path].Links[1].TestPath)
+	assert.Equal(t, "https://bug.com/item", metadatamap[path].Links[1].URL)
 }
