@@ -122,6 +122,9 @@ class Processor(object):
         assert url.startswith('http://') or url.startswith('https://')
         _log.debug("Downloading %s", url)
         r = requests.get(url, stream=True)
+        if r.status_code >= 300:
+            _log.error("Failed to fetch (%d): %s", r.status_code, url)
+            return None
         ext = (self.known_extension(r.headers.get('Content-Disposition', ''))
                or self.known_extension(url))
         fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
@@ -162,8 +165,12 @@ class Processor(object):
             assert not screenshots
             self._download_azure(azure_url)
             return
-        self.results = [self._download_single(i) for i in results]
-        self.screenshots = [self._download_single(i) for i in screenshots]
+        self.results = [
+            p for p in (self._download_single(i) for i in results)
+            if p is not None]
+        self.screenshots = [
+            p for p in (self._download_single(i) for i in screenshots)
+            if p is not None]
 
     def load_report(self):
         """Loads and merges all downloaded results."""
