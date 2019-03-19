@@ -116,6 +116,7 @@ func TestAddTestRun(t *testing.T) {
 	a := NewAPI(ctx)
 
 	testRun := shared.TestRun{
+		ID: 123456,
 		ProductAtRevision: shared.ProductAtRevision{
 			Revision: "0123456789",
 		},
@@ -124,9 +125,11 @@ func TestAddTestRun(t *testing.T) {
 	key, err := a.AddTestRun(&testRun)
 	assert.Nil(t, err)
 	assert.Equal(t, "TestRun", key.Kind())
+	assert.Equal(t, int64(123456), key.IntID())
 
 	var testRun2 shared.TestRun
 	datastore.Get(ctx, datastore.NewKey(ctx, key.Kind(), "", key.IntID(), nil), &testRun2)
+	testRun2.ID = key.IntID()
 	assert.Equal(t, testRun, testRun2)
 }
 
