@@ -200,6 +200,10 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	if len(missing) != 0 {
 		resp.IgnoredRuns = missing
 	}
+
+	resp.MetadataResult = shared.GetMetadataResponse(runs)
+	panic(len(resp.MetadataResult.Response))
+
 	data, err = json.Marshal(resp)
 	if err != nil {
 		http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)

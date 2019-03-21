@@ -70,6 +70,8 @@ type SearchResponse struct {
 	IgnoredRuns []shared.TestRun `json:"ignored_runs,omitempty"`
 	// Results is the collection of test results, grouped by test file name.
 	Results []SearchResult `json:"results"`
+	// MetadataResponse is a response to a wpt-metadata query.
+	MetadataResult shared.MetadataResponse `json:"metadata"`
 }
 
 type byName []SearchResult
@@ -222,11 +224,13 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	resp := prepareSearchResponse(filters, testRuns, summaries)
+	resp.MetadataResult = shared.GetMetadataResponse(testRuns)
 
 	data, err := json.Marshal(resp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	panic(len(resp.MetadataResult.Response))
 	w.Write(data)
 }
 
