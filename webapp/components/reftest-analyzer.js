@@ -29,6 +29,9 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           height: 250px;
           width: 250px;
         }
+        #zoom #info {
+          width: 280px;
+        }
         #display {
           position: relative;
           height: 800px;
@@ -52,12 +55,18 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         }
       </style>
 
-      <div id='zoom'>
+      <div id="zoom">
         <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="optimizeSpeed">
           <g id="zoomed">
             <rect width="250" height="250" fill="white"/>
           </g>
         </svg>
+
+        <div id="info">
+          <strong>Pixel at:</strong> [[curX]], [[curY]] <br>
+          <strong>Image before:</strong> [[getRGB(canvasBefore, curX, curY)]] <br>
+          <strong>Image after:</strong> [[getRGB(canvasAfter, curX, curY)]] <br>
+        </div>
       </div>
 
       <div id="source" class$="[[selectedImage]]">
@@ -87,11 +96,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
                   <feFlood result="red" flood-color="#f00" />
                   <feComposite result="highlight" in="red" in2="border" operator="in" />
 
-                  <feFlood id="shadow" result="shadow" flood-color="#000" flood-opacity="0.2" />
-                  <feMerge>
-                    <feMergeNode in="highlight" />
-                    <feMergeNode in="shadow" />
-                  </feMerge>
+                  <feFlood id="shadow" result="shadow" flood-color="#fff" flood-opacity="0.8" />
+                  <feBlend in="shadow" in2="highlight" mode="multiply" />
                 </filter>
               </defs>
               <rect onmousemove="[[zoom]]" filter="url(#diff-filter)" />
@@ -108,6 +114,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
   static get properties() {
     return {
+      curX: Number,
+      curY: Number,
       before: String,
       after: String,
       selectedImage: {
@@ -185,6 +193,15 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     this.pathsAfter = pathsAfter;
   }
 
+  getRGB(canvas, x, y) {
+    if (!canvas || x === undefined || y === undefined) {
+      return;
+    }
+    const ctx = canvas.getContext('2d');
+    const p = ctx.getImageData(x, y, 1, 1).data;
+    return `RGB(${p[0]}, ${p[1]}, ${p[2]})`;
+  }
+
   computeDiff(canvasBefore, canvasAfter) {
     if (!canvasBefore || !canvasAfter) {
       return;
@@ -234,23 +251,27 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     if (!this.canvasAfter || !this.canvasBefore) {
       return;
     }
+    const c = e.target.getBoundingClientRect();
+    // (x, y) is the current position on the image.
+    this.curX = e.clientX - c.left;
+    this.curY = e.clientY - c.top;
 
     for (const before of [true, false]) {
       const canvas = before ? this.canvasBefore : this.canvasAfter;
       const paths = before ? this.pathsBefore : this.pathsAfter;
       const ctx = canvas.getContext('2d');
-      const c = e.target.getBoundingClientRect();
-      const x = e.clientX - c.left - 2;
-      const y = e.clientY - c.top - 2;
+      // We extract a 5x5 square around (x, y): (x-2, y-2) .. (x+2, y+2).
+      const dx = this.curX - 2;
+      const dy = this.curY - 2;
       for (let i = 0; i < 5; i++) {
         for (let j = 0; j < 5; j++) {
-          if (x + i < 0 || x + i >= canvas.width || y + j < 0 || y + j >= canvas.height) {
+          if (dx + i < 0 || dx + i >= canvas.width || dy + j < 0 || dy + j >= canvas.height) {
             paths[i][j].fill = blankFill;
           } else {
-            const p = ctx.getImageData(x+i, y+j, 1, 1).data;
+            const p = ctx.getImageData(dx+i, dy+j, 1, 1).data;
             const [r,g,b] = p;
             const a = p[3]/255;
-            paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a}`);
+            paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a})`);
           }
         }
       }
