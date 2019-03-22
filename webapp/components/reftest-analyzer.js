@@ -29,6 +29,9 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           height: 250px;
           width: 250px;
         }
+        #zoom #info {
+          width: 280px;
+        }
         #display {
           position: relative;
           height: 800px;
@@ -60,9 +63,9 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         </svg>
 
         <div id="info">
-          <p><strong>Pixel at:</strong> [[curX]], [[curY]]</p>
-          <p><strong>Image before:</strong> [[getRGB(canvasBefore, curX, curY)]]</p>
-          <p><strong>Image after:</strong> [[getRGB(canvasAfter, curX, curY)]]</p>
+          <strong>Pixel at:</strong> [[curX]], [[curY]] <br>
+          <strong>Image before:</strong> [[getRGB(canvasBefore, curX, curY)]] <br>
+          <strong>Image after:</strong> [[getRGB(canvasAfter, curX, curY)]] <br>
         </div>
       </div>
 
