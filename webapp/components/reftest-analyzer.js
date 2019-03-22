@@ -194,7 +194,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   }
 
   getRGB(canvas, x, y) {
-    if (!canvas) {
+    if (!canvas || x === undefined || y === undefined) {
       return;
     }
     const ctx = canvas.getContext('2d');
