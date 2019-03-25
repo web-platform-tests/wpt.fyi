@@ -86,6 +86,7 @@ type searchHandler struct {
 
 type unstructuredSearchHandler struct {
 	queryHandler
+	client *http.Client
 }
 
 type structuredSearchHandler struct {
@@ -114,7 +115,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var delegate http.Handler
 	if r.Method == "GET" {
-		delegate = unstructuredSearchHandler{queryHandler: qh}
+		delegate = unstructuredSearchHandler{queryHandler: qh, client: sh.api.GetHTTPClient()}
 	} else {
 		delegate = structuredSearchHandler{queryHandler: qh, api: sh.api}
 	}
@@ -224,7 +225,7 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	resp := prepareSearchResponse(filters, testRuns, summaries)
-	resp.MetadataResult = shared.GetMetadataResponse(testRuns)
+	resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.client)
 
 	data, err := json.Marshal(resp)
 	if err != nil {
