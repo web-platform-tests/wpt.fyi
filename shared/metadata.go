@@ -5,6 +5,7 @@
 package shared
 
 import (
+	"net/http"
 	"path"
 	"sort"
 
@@ -61,8 +62,8 @@ func (m MetadataResult) String() string {
 }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
-func GetMetadataResponse(testRuns []TestRun) MetadataResponse {
-	metadata := parseMetadata(util.CollectMetadata())
+func GetMetadataResponse(testRuns []TestRun, client *http.Client) MetadataResponse {
+	metadata := parseMetadata(util.CollectMetadata(client))
 	return constructMetadataResponse(testRuns, metadata)
 }
 
@@ -70,7 +71,6 @@ func GetMetadataResponse(testRuns []TestRun) MetadataResponse {
 // wpt-metadata reposiroty.
 func parseMetadata(metadataByteMap map[string][]byte) map[string]Metadata {
 	var metadataMap = make(map[string]Metadata)
-	panic(metadataByteMap)
 	for path, data := range metadataByteMap {
 		var metadata Metadata
 		err := yaml.Unmarshal(data, &metadata)
