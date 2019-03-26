@@ -88,10 +88,12 @@ class ProcessorServerTest(unittest.TestCase):
 
     def test_download(self):
         with Processor() as p:
+            p.TIMEOUT_WAIT = 0.1  # to speed up tests
             url_404 = self.url + '/404'
+            url_timeout = self.url + '/slow'
             with self.assertLogs() as lm:
                 p.download(
-                    [self.url + '/download/test.txt'],
+                    [self.url + '/download/test.txt', url_timeout],
                     [url_404],
                     None)
             self.assertEqual(len(p.results), 1)
@@ -99,7 +101,8 @@ class ProcessorServerTest(unittest.TestCase):
             self.assertEqual(len(p.screenshots), 0)
             self.assertListEqual(
                 lm.output,
-                ['ERROR:processor:Failed to fetch (404): ' + url_404])
+                ['ERROR:processor:Timed out fetching: ' + url_timeout,
+                 'ERROR:processor:Failed to fetch (404): ' + url_404])
 
     def test_download_content_disposition(self):
         with Processor() as p:
