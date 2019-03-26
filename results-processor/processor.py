@@ -8,6 +8,7 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 import traceback
 import zipfile
 
@@ -19,12 +20,13 @@ import gsutil
 import wptreport
 from wptscreenshot import WPTScreenshot
 
-
 _log = logging.getLogger(__name__)
 
 
 class Processor(object):
     USERNAME = '_processor'
+    # Timeout waiting for remote HTTP servers to respond
+    TIMEOUT_WAIT = 10
 
     def __init__(self):
         # Delay creating Datastore.client so that tests don't need creds.
@@ -121,10 +123,21 @@ class Processor(object):
     def _download_http(self, url):
         assert url.startswith('http://') or url.startswith('https://')
         _log.debug("Downloading %s", url)
-        r = requests.get(url, stream=True)
-        if r.status_code >= 300:
-            _log.error("Failed to fetch (%d): %s", r.status_code, url)
-            return None
+        try:
+            r = requests.get(url, stream=True, timeout=self.TIMEOUT_WAIT)
+            r.raise_for_status()
+        except requests.RequestException:
+            # Sleep 1 second and retry.
+            time.sleep(1)
+            try:
+                r = requests.get(url, stream=True, timeout=self.TIMEOUT_WAIT)
+                r.raise_for_status()
+            except requests.Timeout:
+                _log.error("Timed out fetching: %s", url)
+                return None
+            except requests.HTTPError:
+                _log.error("Failed to fetch (%d): %s", r.status_code, url)
+                return None
         ext = (self.known_extension(r.headers.get('Content-Disposition', ''))
                or self.known_extension(url))
         fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
@@ -270,6 +283,9 @@ def process_report(task_id, params):
     with Processor() as p:
         _log.info("Downloading results & screenshots")
         p.download(results, screenshots, azure_url)
+        if len(p.results) == 0:
+            _log.error("No results successfully downloaded")
+            return ''
         try:
             p.load_report()
             # To be deprecated once all reports have all the required metadata.
