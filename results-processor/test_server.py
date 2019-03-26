@@ -7,6 +7,7 @@
 import argparse
 import logging
 import sys
+import time
 
 import flask
 
@@ -22,6 +23,12 @@ def screenshots_upload():
     sys.stderr.write('{}\n'.format(num))
     sys.stderr.flush()
     return ('Success', 201)
+
+
+@app.route('/slow', methods=['GET'])
+def slow():
+    time.sleep(30)
+    return 'Done'
 
 
 @app.route('/download/attachment', methods=['GET'])
