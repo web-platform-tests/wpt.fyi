@@ -63,7 +63,11 @@ func (m MetadataResult) String() string {
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
 func GetMetadataResponse(testRuns []TestRun, client *http.Client) MetadataResponse {
-	metadata := parseMetadata(util.CollectMetadata(client))
+	metadataByteMap, err := util.CollectMetadata(client)
+	if err != nil {
+		return MetadataResponse{}
+	}
+	metadata := parseMetadata(metadataByteMap)
 	return constructMetadataResponse(testRuns, metadata)
 }
 
