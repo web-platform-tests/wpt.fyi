@@ -161,9 +161,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		hostname := sh.api.GetServiceHostname("searchcache")
 		// TODO: This will not work when hostname is localhost (http scheme needed).
 		fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
-
 		fwdURL.RawQuery = r.URL.RawQuery
-		panic("********************")
 		logger := shared.GetLogger(ctx)
 		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
@@ -226,7 +224,8 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	resp := prepareSearchResponse(filters, testRuns, summaries)
-	resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.client)
+
+	resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.queryHandler.client)
 
 	data, err := json.Marshal(resp)
 	if err != nil {
