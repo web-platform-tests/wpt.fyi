@@ -43,6 +43,10 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           left: 0;
           top: 0;
         }
+        #error-message {
+          position: absolute;
+          display: none;
+        }
         #source.before #after,
         #source.after #before {
           display: none;
@@ -80,9 +84,12 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         </div>
 
 
+        <p id="error-message">Failed to load images. Some historical runs and some runners did not
+        upload screenshots despite having screenshot checksums in the reports.</p>
+
         <div id="display">
-          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" />
-          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" />
+          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" onerror="showError" />
+          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" onerror="showError" />
 
           <template is="dom-if" if="[[showDiff]]">
             <svg id="diff-layer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -276,6 +283,11 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         }
       }
     }
+  }
+
+  showError() {
+    this.shadowRoot.querySelector("#display").style.display = "none";
+    this.shadowRoot.querySelector("#error-message").style.display = "";
   }
 }
 window.customElements.define(ReftestAnalyzer.is, ReftestAnalyzer);
