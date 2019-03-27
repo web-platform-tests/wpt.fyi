@@ -162,6 +162,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		// TODO: This will not work when hostname is localhost (http scheme needed).
 		fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
 		fwdURL.RawQuery = r.URL.RawQuery
+
 		logger := shared.GetLogger(ctx)
 		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
