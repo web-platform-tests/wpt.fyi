@@ -201,8 +201,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		resp.IgnoredRuns = missing
 	}
 
-	resp.MetadataResult = shared.GetMetadataResponse(runs, getHttpClient())
-	panic(len(resp.MetadataResult.Response))
+	resp.MetadataResult = shared.GetMetadataResponse(runs, &http.Client{})
 
 	data, err = json.Marshal(resp)
 	if err != nil {
@@ -230,10 +229,6 @@ func getDatastore() (shared.Datastore, error) {
 	}
 	d := shared.NewCloudDatastore(ctx, client)
 	return d, nil
-}
-
-func getHttpClient() *http.Client {
-	return context.Background.getHttpClient()
 }
 
 func init() {

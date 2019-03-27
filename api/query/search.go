@@ -86,7 +86,6 @@ type searchHandler struct {
 
 type unstructuredSearchHandler struct {
 	queryHandler
-	client *http.Client
 }
 
 type structuredSearchHandler struct {
@@ -112,10 +111,11 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		store:      shared.NewAppEngineDatastore(ctx, true),
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
+		client:     sh.api.GetHTTPClient(),
 	}
 	var delegate http.Handler
 	if r.Method == "GET" {
-		delegate = unstructuredSearchHandler{queryHandler: qh, client: sh.api.GetHTTPClient()}
+		delegate = unstructuredSearchHandler{queryHandler: qh}
 	} else {
 		delegate = structuredSearchHandler{queryHandler: qh, api: sh.api}
 	}
@@ -161,8 +161,9 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		hostname := sh.api.GetServiceHostname("searchcache")
 		// TODO: This will not work when hostname is localhost (http scheme needed).
 		fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
-		fwdURL.RawQuery = r.URL.RawQuery
 
+		fwdURL.RawQuery = r.URL.RawQuery
+		panic("********************")
 		logger := shared.GetLogger(ctx)
 		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
@@ -231,7 +232,7 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	panic(len(resp.MetadataResult.Response))
+
 	w.Write(data)
 }
 
