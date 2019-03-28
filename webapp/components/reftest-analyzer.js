@@ -46,6 +46,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         #error-message {
           position: absolute;
           display: none;
+          width: 800px;
         }
         #source.before #after,
         #source.after #before {
@@ -287,7 +288,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
   showError() {
     this.shadowRoot.querySelector('#display').style.display = 'none';
-    this.shadowRoot.querySelector('#error-message').style.display = '';
+    this.shadowRoot.querySelector('#error-message').style.display = 'unset';
   }
 }
 window.customElements.define(ReftestAnalyzer.is, ReftestAnalyzer);
