@@ -681,6 +681,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
     let url = new URL('/api/search', window.location);
     let fetchOpts;
+
+    if (this.showMetadataInfo) {
+      url.searchParams.set('metadataInfo', true)
+    }
+
     if (this.structuredQueries) {
       const body = {
         run_ids: this.testRuns.map(r => r.id),

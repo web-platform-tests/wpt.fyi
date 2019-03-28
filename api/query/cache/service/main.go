@@ -201,11 +201,13 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		resp.IgnoredRuns = missing
 	}
 
-	// Five seconds default timeout.
-	var netClient = &http.Client{
-		Timeout: time.Second * 5,
+	if _, showMetadata := urlQuery["metadataInfo"]; showMetadata {
+		// Five seconds default timeout.
+		var netClient = &http.Client{
+			Timeout: time.Second * 5,
+		}
+		resp.MetadataResult = shared.GetMetadataResponse(runs, netClient)
 	}
-	resp.MetadataResult = shared.GetMetadataResponse(runs, netClient)
 
 	data, err = json.Marshal(resp)
 	if err != nil {
