@@ -683,7 +683,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     let fetchOpts;
 
     if (this.showMetadataInfo) {
-      url.searchParams.set('metadataInfo', true)
+      url.searchParams.set('metadataInfo', true);
     }
 
     if (this.structuredQueries) {
