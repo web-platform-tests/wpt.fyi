@@ -286,8 +286,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   }
 
   showError() {
-    this.shadowRoot.querySelector("#display").style.display = "none";
-    this.shadowRoot.querySelector("#error-message").style.display = "";
+    this.shadowRoot.querySelector('#display').style.display = 'none';
+    this.shadowRoot.querySelector('#error-message').style.display = '';
   }
 }
 window.customElements.define(ReftestAnalyzer.is, ReftestAnalyzer);
