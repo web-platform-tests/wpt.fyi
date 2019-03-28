@@ -88,8 +88,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         upload screenshots despite having screenshot checksums in the reports.</p>
 
         <div id="display">
-          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" onerror="showError" />
-          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" onerror="showError" />
+          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" on-error="showError" />
+          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" on-error="showError" />
 
           <template is="dom-if" if="[[showDiff]]">
             <svg id="diff-layer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
