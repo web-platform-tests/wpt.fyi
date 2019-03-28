@@ -10,6 +10,7 @@ import (
 	"sort"
 
 	"github.com/go-yaml/yaml"
+	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt-metadata/util"
 )
 
@@ -79,7 +80,8 @@ func parseMetadata(metadataByteMap map[string][]byte) map[string]Metadata {
 		var metadata Metadata
 		err := yaml.Unmarshal(data, &metadata)
 		if err != nil {
-			panic(err)
+			log.Warningf("Failed to unmarshal %s.yml.", path)
+			continue
 		}
 		metadataMap[path] = metadata
 	}
