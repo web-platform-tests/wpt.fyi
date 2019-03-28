@@ -54,7 +54,7 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 			Links: []MetadataLink{
 				MetadataLink{
 					Product:  ParseProductSpecUnsafe("ChrOme-54"),
-					TestPath: "a.html",
+					TestPath: "foo/bar/a.html",
 					URL:      "https://external.com/item",
 				},
 				MetadataLink{
@@ -123,7 +123,7 @@ func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
 			Links: []MetadataLink{
 				MetadataLink{
 					Product:  ParseProductSpecUnsafe("ChrOme-54"),
-					TestPath: "b.html",
+					TestPath: "foo/bar/b.html",
 					URL:      "https://external.com/item",
 				},
 				MetadataLink{

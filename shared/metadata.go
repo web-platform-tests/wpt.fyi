@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path"
 	"sort"
+	"strings"
 
 	"github.com/go-yaml/yaml"
 	log "github.com/sirupsen/logrus"
@@ -98,7 +99,13 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 
 		for _, link := range data.Links {
 			var urls []string
-			fullTestName := path.Join(folderPath, link.TestPath)
+
+			var fullTestName = ""
+			if strings.HasPrefix(link.TestPath, folderPath) {
+				fullTestName = link.TestPath
+			} else {
+				fullTestName = path.Join(folderPath, link.TestPath)
+			}
 
 			if _, ok := testMap[fullTestName]; !ok {
 				testMap[fullTestName] = make([]string, len(testRuns))
