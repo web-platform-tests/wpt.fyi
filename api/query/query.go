@@ -144,7 +144,7 @@ func getMemcacheKey(testRun shared.TestRun) string {
 
 func isRequestCacheable(r *http.Request) bool {
 	q := r.URL.Query()
-	if _, showMetadata := q["metadataInfo"]; showMetadata {
+	if _, showMetadata := q[shared.MetadataFlag]; showMetadata {
 		return false
 	}
 
