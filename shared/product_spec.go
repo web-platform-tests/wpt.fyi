@@ -19,9 +19,14 @@ type ProductSpec struct {
 	Labels mapset.Set
 }
 
+// BrowserMatches returns whether the browser matches the given run.
+func (p ProductSpec) BrowserMatches(run TestRun) bool {
+	return run.BrowserName == p.BrowserName
+}
+
 // Matches returns whether the spec matches the given run.
 func (p ProductSpec) Matches(run TestRun) bool {
-	if run.BrowserName != p.BrowserName {
+	if !p.BrowserMatches(run) {
 		return false
 	}
 	if !IsLatest(p.Revision) && p.Revision != run.Revision {

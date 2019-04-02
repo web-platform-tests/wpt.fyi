@@ -235,3 +235,11 @@ func TestIsRequestCacheable_postNotCacheable(t *testing.T) {
 func TestIsRequestCacheable_postCacheable(t *testing.T) {
 	assert.True(t, isRequestCacheable(httptest.NewRequest("POST", "https://wpt.fyi/api/search", bytes.NewBuffer([]byte(`{"run_ids":[1,2,-3]}`)))))
 }
+
+func TestIsRequestCacheable_postWithMedataFlag(t *testing.T) {
+	assert.False(t, isRequestCacheable(httptest.NewRequest("POST", "https://wpt.fyi/api/search?metadataInfo=true", bytes.NewBuffer([]byte("{}")))))
+}
+
+func TestIsRequestCacheable_getWithMedataFlag(t *testing.T) {
+	assert.False(t, isRequestCacheable(httptest.NewRequest("GET", "https://wpt.fyi/api/search?metadataInfo=true", bytes.NewBuffer([]byte("{}")))))
+}

@@ -39,6 +39,7 @@ type queryHandler struct {
 	store      shared.Datastore
 	sharedImpl sharedInterface
 	dataSource shared.CachedStore
+	client     *http.Client
 }
 
 func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, shared.TestRuns, []summary, error) {
@@ -142,6 +143,11 @@ func getMemcacheKey(testRun shared.TestRun) string {
 }
 
 func isRequestCacheable(r *http.Request) bool {
+	q := r.URL.Query()
+	if _, showMetadata := q["metadataInfo"]; showMetadata {
+		return false
+	}
+
 	if r.Method == "GET" {
 		ids, err := shared.ParseRunIDsParam(r.URL.Query())
 		return err == nil && len(ids) > 0

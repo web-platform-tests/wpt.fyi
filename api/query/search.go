@@ -70,6 +70,8 @@ type SearchResponse struct {
 	IgnoredRuns []shared.TestRun `json:"ignored_runs,omitempty"`
 	// Results is the collection of test results, grouped by test file name.
 	Results []SearchResult `json:"results"`
+	// MetadataResponse is a response to a wpt-metadata query.
+	MetadataResult shared.MetadataResponse `json:"metadata,omitempty"`
 }
 
 type byName []SearchResult
@@ -109,6 +111,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		store:      shared.NewAppEngineDatastore(ctx, true),
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
+		client:     sh.api.GetHTTPClient(),
 	}
 	var delegate http.Handler
 	if r.Method == "GET" {
@@ -201,6 +204,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// Structured query is equivalent to unstructured query.
 	// Create an unstructured query request and delegate to unstructured query
 	// handler.
+	oldQ := r.URL.Query()
 	r2 := *r
 	r2url := *r.URL
 	r2.URL = &r2url
@@ -211,6 +215,11 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 	runIDsStr := strings.Join(runIDStrs, ",")
 	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
+
+	if _, showMetadata := oldQ["metadataInfo"]; showMetadata {
+		r2.URL.RawQuery = fmt.Sprintf("%s&metadataInfo=%s", r2.URL.RawQuery, oldQ["metadataInfo"])
+	}
+
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
 }
 
@@ -223,10 +232,16 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	resp := prepareSearchResponse(filters, testRuns, summaries)
 
+	q := r.URL.Query()
+	if _, showMetadata := q["metadataInfo"]; showMetadata {
+		resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.queryHandler.client)
+	}
+
 	data, err := json.Marshal(resp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
 	w.Write(data)
 }
 
