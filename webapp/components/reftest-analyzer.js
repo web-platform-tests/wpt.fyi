@@ -43,6 +43,11 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           left: 0;
           top: 0;
         }
+        #error-message {
+          position: absolute;
+          display: none;
+          width: 800px;
+        }
         #source.before #after,
         #source.after #before {
           display: none;
@@ -66,6 +71,10 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           <strong>Pixel at:</strong> [[curX]], [[curY]] <br>
           <strong>Image before:</strong> [[getRGB(canvasBefore, curX, curY)]] <br>
           <strong>Image after:</strong> [[getRGB(canvasAfter, curX, curY)]] <br>
+          <p>
+            Any suggestions?
+            <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?template=screenshots.md&projects=web-platform-tests/wpt.fyi/9" target="_blank">File an issue!</a>
+          </p>
         </div>
       </div>
 
@@ -80,9 +89,13 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         </div>
 
 
+        <p id="error-message">Failed to load images. Some historical runs (before 2019-04-01) and
+        some runners did not have complete screenshots. Please file an issue using the link on the
+        left if you think something is wrong.</p>
+
         <div id="display">
-          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" />
-          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" />
+          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" on-error="showError" />
+          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" on-error="showError" />
 
           <template is="dom-if" if="[[showDiff]]">
             <svg id="diff-layer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -276,6 +289,11 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         }
       }
     }
+  }
+
+  showError() {
+    this.shadowRoot.querySelector('#display').style.display = 'none';
+    this.shadowRoot.querySelector('#error-message').style.display = 'unset';
   }
 }
 window.customElements.define(ReftestAnalyzer.is, ReftestAnalyzer);
