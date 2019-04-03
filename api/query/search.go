@@ -204,7 +204,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// Structured query is equivalent to unstructured query.
 	// Create an unstructured query request and delegate to unstructured query
 	// handler.
-	oldQ := r.URL.Query()
+	q := r.URL.Query()
 	r2 := *r
 	r2url := *r.URL
 	r2.URL = &r2url
@@ -216,8 +216,8 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	runIDsStr := strings.Join(runIDStrs, ",")
 	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
 
-	if _, showMetadata := oldQ["metadataInfo"]; showMetadata {
-		r2.URL.RawQuery = fmt.Sprintf("%s&metadataInfo=%s", r2.URL.RawQuery, oldQ["metadataInfo"])
+	if _, showMetadata := q[shared.MetadataFlag]; showMetadata {
+		r2.URL.RawQuery = fmt.Sprintf("%s&%s=%s", r2.URL.RawQuery, shared.MetadataFlag, q[shared.MetadataFlag])
 	}
 
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
@@ -233,7 +233,7 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	resp := prepareSearchResponse(filters, testRuns, summaries)
 
 	q := r.URL.Query()
-	if _, showMetadata := q["metadataInfo"]; showMetadata {
+	if _, showMetadata := q[shared.MetadataFlag]; showMetadata {
 		resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.queryHandler.client)
 	}
 

@@ -8,12 +8,16 @@ import (
 	"net/http"
 	"path"
 	"sort"
-	"strings"
 
 	"github.com/go-yaml/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt-metadata/util"
 )
+
+// MetadataFlag determines whether Metadata Information returns along
+// with a test result query request.
+// TODO(kyleju): Remove this flag once feauture is launched.
+const MetadataFlag = "metadataInfo"
 
 // MetadataResponse is a response to a wpt-metadata query.
 type MetadataResponse struct {
@@ -53,15 +57,7 @@ type MetadataLink struct {
 
 func (m MetadataResults) Len() int           { return len(m) }
 func (m MetadataResults) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
-func (m MetadataResults) Less(i, j int) bool { return m[i].String() < m[j].String() }
-
-func (m MetadataResult) String() string {
-	var urlString string
-	for _, url := range m.URLs {
-		urlString += url
-	}
-	return m.Test + urlString
-}
+func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
 func GetMetadataResponse(testRuns []TestRun, client *http.Client) MetadataResponse {
@@ -100,12 +96,7 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 		for _, link := range data.Links {
 			var urls []string
 
-			var fullTestName = ""
-			if strings.HasPrefix(link.TestPath, folderPath) {
-				fullTestName = link.TestPath
-			} else {
-				fullTestName = path.Join(folderPath, link.TestPath)
-			}
+			var fullTestName = path.Join(folderPath, link.TestPath)
 
 			if _, ok := testMap[fullTestName]; !ok {
 				testMap[fullTestName] = make([]string, len(testRuns))

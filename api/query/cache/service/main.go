@@ -201,8 +201,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		resp.IgnoredRuns = missing
 	}
 
-	if _, showMetadata := urlQuery["metadataInfo"]; showMetadata {
-		// Five seconds default timeout.
+	if _, showMetadata := urlQuery[shared.MetadataFlag]; showMetadata {
 		var netClient = &http.Client{
 			Timeout: time.Second * 5,
 		}
