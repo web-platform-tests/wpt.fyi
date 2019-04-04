@@ -565,7 +565,7 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
 def main():
     parser = argparse.ArgumentParser(
         description='Parse and transform JSON wptreport.')
-    parser.add_argument('report', metavar='REPORT', type=str,
+    parser.add_argument('report', metavar='REPORT', type=str, nargs='+',
                         help='path to a JSON wptreport (gzipped files are '
                         'supported as long as the extension is .gz)')
     parser.add_argument('--summary', type=str,
@@ -582,11 +582,12 @@ def main():
     args = parser.parse_args()
 
     report = WPTReport()
-    with open(args.report, 'rb') as f:
-        if args.report.endswith('.gz'):
-            report.load_gzip_json(f)
-        else:
-            report.load_json(f)
+    for r in args.report:
+        with open(r, 'rb') as f:
+            if r.endswith('.gz'):
+                report.load_gzip_json(f)
+            else:
+                report.load_json(f)
 
     if args.summary:
         report.write_summary(args.summary)
