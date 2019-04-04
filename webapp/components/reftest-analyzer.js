@@ -69,8 +69,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
         <div id="info">
           <strong>Pixel at:</strong> [[curX]], [[curY]] <br>
-          <strong>Image before:</strong> [[getRGB(canvasBefore, curX, curY)]] <br>
-          <strong>Image after:</strong> [[getRGB(canvasAfter, curX, curY)]] <br>
+          <strong>Actual:</strong> [[getRGB(canvasBefore, curX, curY)]] <br>
+          <strong>Expected:</strong> [[getRGB(canvasAfter, curX, curY)]] <br>
           <p>
             Any suggestions?
             <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?template=screenshots.md&projects=web-platform-tests/wpt.fyi/9" target="_blank">File an issue!</a>
