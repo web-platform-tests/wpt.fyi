@@ -11,6 +11,7 @@ import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
 import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import { LoadingState } from './loading-state.js';
 
 const nsSVG = 'http://www.w3.org/2000/svg';
@@ -28,6 +29,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         #zoom svg {
           height: 250px;
           width: 250px;
+          margin: 10px 0;
+          border: 1px solid;
         }
         #zoom #info {
           width: 280px;
@@ -72,6 +75,11 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           <strong>Actual:</strong> [[getRGB(canvasBefore, curX, curY)]] <br>
           <strong>Expected:</strong> [[getRGB(canvasAfter, curX, curY)]] <br>
           <p>
+            The grid above is a zoomed-in view of the 5&times;5 pixels around your cursor.
+            When actual and expected pixels are different, the upper-left half shows the
+            actual and the lower-right half shows the expected.
+          </p>
+          <p>
             Any suggestions?
             <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?template=screenshots.md&projects=web-platform-tests/wpt.fyi/9" target="_blank">File an issue!</a>
           </p>
@@ -81,10 +89,14 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
       <div id="source" class$="[[selectedImage]]">
         <div id="options">
           <paper-radio-group selected="{{selectedImage}}">
-            <paper-radio-button name="before">Image before</paper-radio-button>
-            <paper-radio-button name="after">Image after</paper-radio-button>
+            <paper-radio-button name="before">Actual screenshot</paper-radio-button>
+            <paper-radio-button name="after">Expected screenshot</paper-radio-button>
           </paper-radio-group>
-          <paper-checkbox name="diff" checked="{{showDiff}}">Differences</paper-checkbox>
+          <paper-checkbox id="diff-button" checked="{{showDiff}}">Highlight diff</paper-checkbox>
+          <paper-tooltip for="diff-button">
+            Apply a semi-transparent mask over the selected image, and highlight
+            the areas where two images differ with a solid 1px red border.
+          </paper-tooltip>
           <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
         </div>
 
