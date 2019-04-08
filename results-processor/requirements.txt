@@ -17,7 +17,7 @@ grpcio==1.19.0
 gunicorn==19.9.0
 idna==2.8
 itsdangerous==1.1.0
-Jinja2==2.10
+Jinja2==2.10.1
 MarkupSafe==1.1.1
 mccabe==0.6.1
 protobuf==3.7.1
