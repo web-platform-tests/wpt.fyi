@@ -112,6 +112,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 		client:     sh.api.GetHTTPClient(),
+		logger:     shared.GetLogger(ctx),
 	}
 	var delegate http.Handler
 	if r.Method == "GET" {
@@ -234,7 +235,7 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	q := r.URL.Query()
 	if _, showMetadata := q[shared.MetadataFlag]; showMetadata {
-		resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.queryHandler.client)
+		resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.queryHandler.client, sh.queryHandler.logger)
 	}
 
 	data, err := json.Marshal(resp)

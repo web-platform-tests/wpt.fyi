@@ -10,7 +10,6 @@ import (
 	"sort"
 
 	"github.com/go-yaml/yaml"
-	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt-metadata/util"
 )
 
@@ -21,7 +20,7 @@ const MetadataFlag = "metadataInfo"
 
 // MetadataResponse is a response to a wpt-metadata query.
 type MetadataResponse struct {
-	Response MetadataResults
+	MetadataResults
 }
 
 // MetadataResults is a helper type for a MetadataResult slice.
@@ -60,18 +59,18 @@ func (m MetadataResults) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
-func GetMetadataResponse(testRuns []TestRun, client *http.Client) MetadataResponse {
+func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger) MetadataResponse {
 	metadataByteMap, err := util.CollectMetadata(client)
 	if err != nil {
 		return MetadataResponse{}
 	}
-	metadata := parseMetadata(metadataByteMap)
+	metadata := parseMetadata(metadataByteMap, log)
 	return constructMetadataResponse(testRuns, metadata)
 }
 
 // parseMetadata collects and parses all META.yml files from
 // wpt-metadata reposiroty.
-func parseMetadata(metadataByteMap map[string][]byte) map[string]Metadata {
+func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Metadata {
 	var metadataMap = make(map[string]Metadata)
 	for path, data := range metadataByteMap {
 		var metadata Metadata
@@ -104,8 +103,11 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 			urls = testMap[fullTestName]
 
 			for i, run := range testRuns {
-				// Only matches browser type.
-				if link.Product.BrowserMatches(run) {
+				// Matches browser type if a version is not specified.
+				if link.Product.Matches(run) {
+					urls[i] = link.URL
+				} else if link.Product.BrowserName == "" && urls[i] == "" {
+					// Matches to all browsers if product is not specified.
 					urls[i] = link.URL
 				}
 			}
@@ -129,6 +131,6 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 		}
 	}
 	sort.Sort(res)
-	return MetadataResponse{Response: res}
+	return MetadataResponse{res}
 
 }

@@ -24,7 +24,7 @@ links:
     test: b.html
     url: https://bug.com/item`)
 
-	metadatamap := parseMetadata(metadataByteMap)
+	metadatamap := parseMetadata(metadataByteMap, NewNilLogger())
 
 	assert.Equal(t, 1, len(metadatamap))
 	assert.Equal(t, 2, len(metadatamap[path].Links))
@@ -53,12 +53,12 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("ChrOme-54"),
+					Product:  ParseProductSpecUnsafe("ChrOme"),
 					TestPath: "a.html",
 					URL:      "https://external.com/item",
 				},
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("Firefox-38"),
+					Product:  ParseProductSpecUnsafe("Firefox"),
 					TestPath: "a.html",
 					URL:      "https://bug.com/item",
 				},
@@ -68,10 +68,10 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 
 	response := constructMetadataResponse(runs, metadataMap)
 
-	assert.Equal(t, 1, len(response.Response))
-	assert.Equal(t, response.Response[0].Test, "foo/bar/a.html")
-	assert.Equal(t, response.Response[0].URLs[0], "https://bug.com/item")
-	assert.Equal(t, response.Response[0].URLs[1], "https://external.com/item")
+	assert.Equal(t, 1, len(response.MetadataResults))
+	assert.Equal(t, response.MetadataResults[0].Test, "foo/bar/a.html")
+	assert.Equal(t, response.MetadataResults[0].URLs[0], "https://bug.com/item")
+	assert.Equal(t, response.MetadataResults[0].URLs[1], "https://external.com/item")
 }
 
 func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
@@ -89,12 +89,12 @@ func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("ChrOme-54"),
+					Product:  ParseProductSpecUnsafe("ChrOme"),
 					TestPath: "a.html",
 					URL:      "https://external.com/item",
 				},
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("safari-38"),
+					Product:  ParseProductSpecUnsafe("safari"),
 					TestPath: "a.html",
 					URL:      "https://bug.com/item",
 				},
@@ -104,7 +104,7 @@ func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
 
 	response := constructMetadataResponse(runs, metadataMap)
 
-	assert.Equal(t, 0, len(response.Response))
+	assert.Equal(t, 0, len(response.MetadataResults))
 }
 
 func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
@@ -122,12 +122,12 @@ func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("ChrOme-54"),
+					Product:  ParseProductSpecUnsafe("ChrOme"),
 					TestPath: "b.html",
 					URL:      "https://external.com/item",
 				},
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("Firefox-38"),
+					Product:  ParseProductSpecUnsafe("Firefox"),
 					TestPath: "a.html",
 					URL:      "https://bug.com/item",
 				},
@@ -137,11 +137,92 @@ func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
 
 	response := constructMetadataResponse(runs, metadataMap)
 
-	assert.Equal(t, 2, len(response.Response))
-	assert.Equal(t, response.Response[0].Test, "foo/bar/a.html")
-	assert.Equal(t, response.Response[0].URLs[0], "https://bug.com/item")
-	assert.Equal(t, response.Response[0].URLs[1], "")
-	assert.Equal(t, response.Response[1].Test, "foo/bar/b.html")
-	assert.Equal(t, response.Response[1].URLs[0], "")
-	assert.Equal(t, response.Response[1].URLs[1], "https://external.com/item")
+	assert.Equal(t, 2, len(response.MetadataResults))
+	assert.Equal(t, response.MetadataResults[0].Test, "foo/bar/a.html")
+	assert.Equal(t, response.MetadataResults[0].URLs[0], "https://bug.com/item")
+	assert.Equal(t, response.MetadataResults[0].URLs[1], "")
+	assert.Equal(t, response.MetadataResults[1].Test, "foo/bar/b.html")
+	assert.Equal(t, response.MetadataResults[1].URLs[0], "")
+	assert.Equal(t, response.MetadataResults[1].URLs[1], "https://external.com/item")
+}
+
+func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
+	runs := []TestRun{
+		TestRun{
+			ID:                1,
+			ProductAtRevision: ParseProductSpecUnsafe("Firefox-54").ProductAtRevision,
+		},
+		TestRun{
+			ID:                2,
+			ProductAtRevision: ParseProductSpecUnsafe("Chrome-1").ProductAtRevision,
+		},
+	}
+	metadataMap := map[string]Metadata{
+		"foo/bar": Metadata{
+			Links: []MetadataLink{
+				MetadataLink{
+					Product:  ParseProductSpecUnsafe("ChrOme-2"),
+					TestPath: "b.html",
+					URL:      "https://external.com/item",
+				},
+				MetadataLink{
+					Product:  ParseProductSpecUnsafe("Firefox-54"),
+					TestPath: "a.html",
+					URL:      "https://bug.com/item",
+				},
+			},
+		},
+	}
+
+	response := constructMetadataResponse(runs, metadataMap)
+
+	assert.Equal(t, 1, len(response.MetadataResults))
+	assert.Equal(t, response.MetadataResults[0].Test, "foo/bar/a.html")
+	assert.Equal(t, response.MetadataResults[0].URLs[0], "https://bug.com/item")
+	assert.Equal(t, response.MetadataResults[0].URLs[1], "")
+}
+
+func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
+	runs := []TestRun{
+		TestRun{
+			ID:                1,
+			ProductAtRevision: ParseProductSpecUnsafe("Firefox-54").ProductAtRevision,
+		},
+		TestRun{
+			ID:                2,
+			ProductAtRevision: ParseProductSpecUnsafe("Chrome").ProductAtRevision,
+		},
+		TestRun{
+			ID:                3,
+			ProductAtRevision: ParseProductSpecUnsafe("Safari").ProductAtRevision,
+		},
+	}
+	metadataMap := map[string]Metadata{
+		"foo/bar": Metadata{
+			Links: []MetadataLink{
+				MetadataLink{
+					Product:  ParseProductSpecUnsafe("ChrOme"),
+					TestPath: "b.html",
+					URL:      "https://external.com/item",
+				},
+				MetadataLink{
+					Product:  ProductSpec{},
+					TestPath: "a.html",
+					URL:      "https://bug.com/item",
+				},
+			},
+		},
+	}
+
+	response := constructMetadataResponse(runs, metadataMap)
+
+	assert.Equal(t, 2, len(response.MetadataResults))
+	assert.Equal(t, response.MetadataResults[0].Test, "foo/bar/a.html")
+	assert.Equal(t, response.MetadataResults[0].URLs[0], "https://bug.com/item")
+	assert.Equal(t, response.MetadataResults[0].URLs[1], "https://bug.com/item")
+	assert.Equal(t, response.MetadataResults[0].URLs[1], "https://bug.com/item")
+	assert.Equal(t, response.MetadataResults[1].Test, "foo/bar/b.html")
+	assert.Equal(t, response.MetadataResults[1].URLs[0], "")
+	assert.Equal(t, response.MetadataResults[1].URLs[1], "https://external.com/item")
+	assert.Equal(t, response.MetadataResults[1].URLs[2], "")
 }

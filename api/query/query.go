@@ -40,6 +40,7 @@ type queryHandler struct {
 	sharedImpl sharedInterface
 	dataSource shared.CachedStore
 	client     *http.Client
+	logger     shared.Logger
 }
 
 func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, shared.TestRuns, []summary, error) {
