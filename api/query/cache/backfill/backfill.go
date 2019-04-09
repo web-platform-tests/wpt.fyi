@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination mock_backfill/backfill_mock.go github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill RunFetcher
-
 package backfill
 
 import (
@@ -11,27 +9,15 @@ import (
 	"errors"
 	"time"
 
+	"cloud.google.com/go/datastore"
+	"github.com/Hexcles/logrus"
 	"google.golang.org/api/option"
 
-	"cloud.google.com/go/datastore"
-	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
-
-// RunFetcher provides an interface for loading a limited number of runs
-// suitable for backfilling an index.
-type RunFetcher interface {
-	FetchRuns(limit int) (shared.TestRunsByProduct, error)
-}
-
-type datastoreRunFetcher struct {
-	projectID          string
-	gcpCredentialsFile *string
-	logger             shared.Logger
-}
 
 type backfillIndex struct {
 	index.ProxyIndex
@@ -52,31 +38,21 @@ const bytesPerRun = uint64(6.5e+7)
 
 var errNilIndex = errors.New("Index to backfill is nil")
 
-// NewDatastoreRunFetcher constructs a RunFetcher that loads runs from Datastore
+// GetDatastore constructs a RunFetcher that loads runs from Datastore
 // in reverse cronological order, by shared.TestRun.TimeStart.
-func NewDatastoreRunFetcher(projectID string, gcpCredentialsFile *string, logger shared.Logger) RunFetcher {
-	return datastoreRunFetcher{projectID, gcpCredentialsFile, logger}
-}
-
-func (f datastoreRunFetcher) FetchRuns(limit int) (shared.TestRunsByProduct, error) {
-	ctx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), log.WithFields(log.Fields{
-		"fetch_runs_limit": limit,
-	}))
+func GetDatastore(projectID string, gcpCredentialsFile *string, logger shared.Logger) (shared.Datastore, error) {
+	ctx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), logrus.StandardLogger())
 	var client *datastore.Client
 	var err error
-	if f.gcpCredentialsFile != nil && *f.gcpCredentialsFile != "" {
-		client, err = datastore.NewClient(ctx, f.projectID, option.WithCredentialsFile(*f.gcpCredentialsFile))
+	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
+		client, err = datastore.NewClient(ctx, projectID, option.WithCredentialsFile(*gcpCredentialsFile))
 	} else {
-		client, err = datastore.NewClient(ctx, f.projectID)
+		client, err = datastore.NewClient(ctx, projectID)
 	}
 	if err != nil {
 		return nil, err
 	}
-	store := shared.NewCloudDatastore(ctx, client)
-
-	// Query Datastore for latest maxBytes/bytesPerRun test runs.
-	runs, err := store.TestRunQuery().LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil)
-	return runs, nil
+	return shared.NewCloudDatastore(ctx, client), nil
 }
 
 func (i *backfillIndex) EvictRuns(percent float64) (int, error) {
@@ -98,7 +74,7 @@ func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, e
 // will halt either:
 // The first time a run is evicted from the index.Index via EvictAnyRun(), OR
 // the first time the returned monitor.Monitor is stopped via Stop().
-func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxIngestedRuns uint, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
+func FillIndex(store shared.Datastore, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxIngestedRuns uint, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
 	if idx == nil {
 		return nil, errNilIndex
 	}
@@ -116,7 +92,7 @@ func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, int
 		idx:          bfIdx,
 	}
 
-	err = startBackfillMonitor(fetcher, logger, maxBytes, bfMon)
+	err = startBackfillMonitor(store, logger, maxBytes, bfMon)
 	if err != nil {
 		return nil, err
 	}
@@ -124,9 +100,10 @@ func FillIndex(fetcher RunFetcher, logger shared.Logger, rt monitor.Runtime, int
 	return bfMon, nil
 }
 
-func startBackfillMonitor(fetcher RunFetcher, logger shared.Logger, maxBytes uint64, m *backfillMonitor) error {
+func startBackfillMonitor(store shared.Datastore, logger shared.Logger, maxBytes uint64, m *backfillMonitor) error {
 	// FetchRuns will return at most N runs for each product, so divide the upper bound by the number of products.
-	runsByProduct, err := fetcher.FetchRuns(int(maxBytes/bytesPerRun) / len(shared.GetDefaultProducts()))
+	limit := int(maxBytes/bytesPerRun) / len(shared.GetDefaultProducts())
+	runsByProduct, err := store.TestRunQuery().LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil)
 	if err != nil {
 		return err
 	}

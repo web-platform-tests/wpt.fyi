@@ -66,7 +66,6 @@ func apiAutocompleteHandler(w http.ResponseWriter, r *http.Request) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := autocompleteHandler{queryHandler{
 		store:      shared.NewAppEngineDatastore(ctx, true),
-		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 	}}
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, shared.CacheStatusOK)
@@ -101,7 +100,7 @@ func (ah autocompleteHandler) processInput(w http.ResponseWriter, r *http.Reques
 }
 
 func (ah autocompleteHandler) parseLimit(r *http.Request) (int, error) {
-	limit, err := ah.sharedImpl.ParseQueryParamInt(r, "limit")
+	limit, err := shared.ParseQueryParamInt(r.URL.Query(), "limit")
 	if limit == nil || err != nil {
 		return autocompleteDefaultLimit, err
 	}

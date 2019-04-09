@@ -307,15 +307,18 @@ func main() {
 		logrus.Fatalf("Failed to instantiate index: %v", err)
 	}
 
-	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
-	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
+	store, err := backfill.GetDatastore(*projectID, gcpCredentialsFile, logger)
+	if err != nil {
+		log.Fatalf("Failed to get datastore: %s", err)
+	}
+	mon, err = backfill.FillIndex(store, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
 		logrus.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
 
 	// Index, backfiller, monitor now in place. Start polling to load runs added
 	// after backfilling was started.
-	go poll.KeepRunsUpdated(fetcher, logger, *updateInterval, *updateMaxRuns, idx)
+	go poll.KeepRunsUpdated(store, logger, *updateInterval, *updateMaxRuns, idx)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
