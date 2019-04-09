@@ -6,6 +6,9 @@
 
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import { Debouncer } from '../node_modules/@polymer/polymer/lib/utils/debounce.js';
+import { microTask } from '../node_modules/@polymer/polymer/lib/utils/async.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
@@ -154,7 +157,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
       showDiff: {
         type: Boolean,
         value: true,
-      }
+      },
+      _mouseMoveDebounce: Debouncer,
     };
   }
 
@@ -273,34 +277,40 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   }
 
   handleZoom(e) {
-    if (!this.canvasAfter || !this.canvasBefore) {
-      return;
-    }
-    const c = e.target.getBoundingClientRect();
-    // (x, y) is the current position on the image.
-    this.curX = e.clientX - c.left;
-    this.curY = e.clientY - c.top;
+    this._mouseMoveDebounce = Debouncer.debounce(
+      this._mouseMoveDebounce,
+      microTask,
+      () => {
+        if (!this.canvasAfter || !this.canvasBefore) {
+          return;
+        }
+        const c = e.target.getBoundingClientRect();
+        // (x, y) is the current position on the image.
+        this.curX = e.clientX - c.left;
+        this.curY = e.clientY - c.top;
 
-    for (const before of [true, false]) {
-      const canvas = before ? this.canvasBefore : this.canvasAfter;
-      const paths = before ? this.pathsBefore : this.pathsAfter;
-      const ctx = canvas.getContext('2d');
-      // We extract a 5x5 square around (x, y): (x-2, y-2) .. (x+2, y+2).
-      const dx = this.curX - 2;
-      const dy = this.curY - 2;
-      for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 5; j++) {
-          if (dx + i < 0 || dx + i >= canvas.width || dy + j < 0 || dy + j >= canvas.height) {
-            paths[i][j].fill = blankFill;
-          } else {
-            const p = ctx.getImageData(dx+i, dy+j, 1, 1).data;
-            const [r,g,b] = p;
-            const a = p[3]/255;
-            paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a})`);
+        for (const before of [true, false]) {
+          const canvas = before ? this.canvasBefore : this.canvasAfter;
+          const paths = before ? this.pathsBefore : this.pathsAfter;
+          const ctx = canvas.getContext('2d');
+          // We extract a 5x5 square around (x, y): (x-2, y-2) .. (x+2, y+2).
+          const dx = this.curX - 2;
+          const dy = this.curY - 2;
+          for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 5; j++) {
+              if (dx + i < 0 || dx + i >= canvas.width || dy + j < 0 || dy + j >= canvas.height) {
+                paths[i][j].fill = blankFill;
+              } else {
+                const p = ctx.getImageData(dx+i, dy+j, 1, 1).data;
+                const [r,g,b] = p;
+                const a = p[3]/255;
+                paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a})`);
+              }
+            }
           }
         }
       }
-    }
+    );
   }
 
   showError() {
