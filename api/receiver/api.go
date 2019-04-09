@@ -12,23 +12,39 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
-	"time"
+	"regexp"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/taskqueue"
 )
+
+// gcsPattern is the pattern for gs:// URI.
+var gcsPattern = regexp.MustCompile(`^gs://([^/]+)/(.+)$`)
+
+// AuthenticateUploader checks the HTTP basic auth against Datastore, and returns the username if
+// it's valid or "" otherwise.
+//
+// This function is not defined on API interface for easier reuse in other packages.
+func AuthenticateUploader(aeAPI shared.AppEngineAPI, r *http.Request) string {
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		return ""
+	}
+	user, err := aeAPI.GetUploader(username)
+	if err != nil || user.Password != password {
+		return ""
+	}
+	return user.Username
+}
 
 // API abstracts all AppEngine/GCP APIs used by the results receiver.
 type API interface {
 	shared.AppEngineAPI
 
 	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
-	AuthenticateUploader(username, password string) bool
-	FetchGzip(url string, timeout time.Duration) (io.ReadCloser, error)
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 	ScheduleResultsTask(
-		uploader string, resultGCS, screenshotGCS []string, extraParams map[string]string) (
+		uploader string, results, screenshots []string, extraParams map[string]string) (
 		*taskqueue.Task, error)
 }
 
@@ -42,7 +58,7 @@ type apiImpl struct {
 
 // NewAPI creates a real API from a given context.
 func NewAPI(ctx context.Context) API {
-	return apiImpl{
+	return &apiImpl{
 		AppEngineAPI: shared.NewAppEngineAPI(ctx),
 		store:        shared.NewAppEngineDatastore(ctx, false),
 		queue:        ResultsQueue,
@@ -63,23 +79,13 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 	return key, nil
 }
 
-func (a apiImpl) AuthenticateUploader(username, password string) bool {
-	key := a.store.NewNameKey("Uploader", username)
-	var uploader shared.Uploader
-	if err := a.store.Get(key, &uploader); err != nil || uploader.Password != password {
-		return false
-	}
-	return true
-}
-
-func (a apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
-	// Expecting gcsPath to be /bucket/path/to/file
-	split := strings.SplitN(gcsPath, "/", 3)
-	if len(split) != 3 || split[0] != "" {
+func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
+	matches := gcsPattern.FindStringSubmatch(gcsPath)
+	if len(matches) != 3 {
 		return fmt.Errorf("invalid GCS path: %s", gcsPath)
 	}
-	bucketName := split[1]
-	fileName := split[2]
+	bucketName := matches[1]
+	fileName := matches[2]
 
 	if a.gcs == nil {
 		a.gcs = &gcsImpl{ctx: a.Context()}
@@ -91,7 +97,7 @@ func (a apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	}
 	// We don't defer wc.Close() here so that the file is only closed (and
 	// hence saved) if nothing fails.
-	w, err := a.gcs.NewWriter(bucketName, fileName, "application/json", encoding)
+	w, err := a.gcs.NewWriter(bucketName, fileName, "", encoding)
 	if err != nil {
 		return err
 	}
@@ -106,7 +112,7 @@ func (a apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 }
 
 func (a apiImpl) ScheduleResultsTask(
-	uploader string, resultGCS, screenshotGCS []string, extraParams map[string]string) (*taskqueue.Task, error) {
+	uploader string, results, screenshots []string, extraParams map[string]string) (*taskqueue.Task, error) {
 	key, err := a.store.ReserveID("TestRun")
 	if err != nil {
 		return nil, err
@@ -114,8 +120,8 @@ func (a apiImpl) ScheduleResultsTask(
 	// TODO(lukebjerring): Create a PendingTestRun entity.
 
 	payload := url.Values{
-		"gcs":         resultGCS,
-		"screenshots": screenshotGCS,
+		"results":     results,
+		"screenshots": screenshots,
 	}
 	payload.Set("id", fmt.Sprintf("%v", key.IntID()))
 	payload.Set("uploader", uploader)
@@ -129,23 +135,4 @@ func (a apiImpl) ScheduleResultsTask(
 	t.Name = fmt.Sprintf("%v", key.IntID())
 	t, err = taskqueue.Add(a.Context(), t, a.queue)
 	return t, err
-}
-
-func (a apiImpl) FetchGzip(url string, timeout time.Duration) (io.ReadCloser, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept-Encoding", "gzip")
-	client, cancel := a.GetSlowHTTPClient(timeout)
-	defer cancel()
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		resp.Body.Close()
-		return nil, fmt.Errorf("server returned %s", resp.Status)
-	}
-	return resp.Body, nil
 }

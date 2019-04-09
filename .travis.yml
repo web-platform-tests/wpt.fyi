@@ -14,6 +14,9 @@ branches:
 services:
   - docker
 
+language: python
+python: "3.6"
+
 # ${GITHUB_TOKEN}
 env:
   global:
@@ -76,25 +79,33 @@ before_install: |
   travis_retry docker build -t "${DOCKER_IMAGE}" .
   travis_retry bash ./util/docker-dev/run.sh -d -q
 
-install:
+install: |
   # Retry `go get` to avoid intermittent network issues.
-  # FIXME: not all make targets require building go packages.
-  - travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_build
+  if [[ "${MAKE_TEST_TARGET}" == "python_test" || "DEPLOY_PR_STAGING_TARGET" == "results-processor" ]]; then
+    travis_retry pip install tox;
+  else
+    travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_build;
+  fi
 
 script:
   - |
     # Deploy PR to staging environment (only when Travis secrets are available).
     # Note: Done here (in 'script', not 'deploy') because we need deploy to happen before staging webdriver test.
     set -e
-    if [ -n "${DEPLOY_STAGING_TARGET}" ]; then
+    if [[ -n "${DEPLOY_STAGING_TARGET}" ]]; then
       bash util/travis-deploy-staging.sh -f "${DEPLOY_STAGING_TARGET}";
-    elif [ -n "${DEPLOY_PR_STAGING_TARGET}" ]; then
+    elif [[ -n "${DEPLOY_PR_STAGING_TARGET}" ]]; then
       bash util/travis-deploy-staging.sh "${DEPLOY_PR_STAGING_TARGET}";
     else
       echo "Not on master or a PR. Skipping deployment.";
     fi
   - |
     # Run tests
-    if [ "${MAKE_TEST_TARGET}" != "" ]; then
+    if [[ -n "${MAKE_TEST_TARGET}" && "${MAKE_TEST_TARGET}" != "python_test" ]]; then
       docker exec -t "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS};
+    fi
+  - |
+    # Run Python tests
+    if [[ "${MAKE_TEST_TARGET}" == "python_test" ]]; then
+      cd results-processor; tox;
     fi

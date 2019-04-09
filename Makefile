@@ -175,7 +175,7 @@ sys_deps: curl gpg node gcloud git
 
 curl: apt-get-curl
 git: apt-get-git
-python3: apt-get-python3
+python3: apt-get-python3.6
 python: apt-get-python
 tox: apt-get-tox
 wget: apt-get-wget

@@ -41,6 +41,13 @@ type ConcreteQuery interface {
 	Size() int
 }
 
+// Count constrains search results to include only test results where the number
+// of runs that match the given criteria is exactly the expected count.
+type Count struct {
+	Count int
+	Args  []ConcreteQuery
+}
+
 // RunTestStatusEq constrains search results to include only test results from a
 // particular run that have a particular test status value. Run IDs are those
 // values automatically assigned to shared.TestRun instances by Datastore.
@@ -89,6 +96,9 @@ func (RunTestStatusEq) Size() int { return 1 }
 // Size of RunTestStatusNeq is 1: servicing such a query requires a single
 // lookup in a test run result mapping per test.
 func (RunTestStatusNeq) Size() int { return 1 }
+
+// Size of Count is the sum of the sizes of its constituent ConcretQuery instances.
+func (c Count) Size() int { return size(c.Args) }
 
 // Size of Or is the sum of the sizes of its constituent ConcretQuery instances.
 func (o Or) Size() int { return size(o.Args) }

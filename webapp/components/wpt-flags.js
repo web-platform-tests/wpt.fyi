@@ -56,6 +56,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'ignoreHarnessInTotal',
       'paginationTokens',
       'pendingChecks',
+      'processTaskclusterCheckRunEvents',
       'runsByPRNumber',
       'serviceWorker',
       'taskclusterAllBranches',
@@ -196,13 +197,13 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       </paper-checkbox>
     </paper-item>
     <paper-item sub-item>
-      <paper-checkbox checked="{{reftestAnalyzer}}">
-        Show the reftest analyzer for reftests
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item>
       <paper-checkbox checked="{{reftestAnalyzerMockScreenshots}}">
         Use mock screenshots for all the reftests
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{reftestAnalyzer}}">
+        Show the reftest analyzer for reftests
       </paper-checkbox>
     </paper-item>
     <paper-item>
@@ -271,6 +272,21 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
         Allow /api/runs?pr=[GitHub PR number]
       </paper-checkbox>
     </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{insightsTab}}">
+        Show the "Insights" tab in the main navigation, (and enable <a href="/insights">/insights</a>).
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{serviceWorker}}">
+        Install a service worker to cache all the web components.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{ignoreHarnessInTotal}}">
+        Ignore "OK" harness status in test summary numbers.
+      </paper-checkbox>
+    </paper-item>
     <h5>GitHub Status Checks</h5>
     <paper-item sub-item="">
       <paper-checkbox checked="{{failChecksOnRegression}}">
@@ -287,19 +303,9 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
         Create pending GitHub status check when results first arrive, and are being processed.
       </paper-checkbox>
     </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{insightsTab}}">
-        Show the "Insights" tab in the main navigation, (and enable <a href="/insights">/insights</a>).
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{serviceWorker}}">
-        Install a service worker to cache all the web components.
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{ignoreHarnessInTotal}}">
-        Ignore "OK" harness status in test summary numbers.
+    <paper-item sub-item="">
+      <paper-checkbox checked="{{processTaskclusterCheckRunEvents}}">
+        Process check run events from Taskcluster (needs to be enabled if Taskcluster is using Checks API).
       </paper-checkbox>
     </paper-item>
 `;

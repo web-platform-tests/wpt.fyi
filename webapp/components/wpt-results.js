@@ -485,6 +485,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         value: false,
       },
       onlyShowDifferences: Boolean,
+      // path => {type, file[, refPath]} simplification.
       manifest: Object,
       screenshots: Array,
     };
@@ -502,16 +503,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     if (!this.computePathIsATestFile(path) || !manifest) {
       return path;
     }
-    // Filter in case any types are fully missing.
-    const itemSets = TEST_TYPES.map(t => manifest.items[t]).filter(i => i);
-    for (const items of itemSets) {
-      const key = Object.keys(items).find(k => items[k].find(i => i[0] === path));
-      if (key) {
-        // Ensure leading slash.
-        return key.startsWith('/') ? key : `/${key}`;
-      }
+    const metadata = manifest.get(path);
+    if (metadata) {
+      return metadata.file;
     }
-    return null;
   }
 
   computeIsRefTest(testType) {
@@ -522,22 +517,17 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     if (testType === 'wdspec') {
       return;
     }
-    if (this.webPlatformTestsLive) {
-      return new URL(`${this.scheme}://web-platform-tests.live${path}`);
-    }
-    return new URL(`${this.scheme}://w3c-test.org${path}`);
+    return new URL(`${this.scheme}://${this.liveTestDomain}${path}`);
   }
 
   computeTestRefURL(testType, path, manifest) {
     if (!this.showTestRefURL || testType !== 'reftest') {
       return;
     }
-    const item = Object.values(manifest.items['reftest']).find(v => v.find(i => i[0] === path));
-    // In item[0], the 2nd item is the refs array, and we take the first ref (0).
-    // Then, the ref's 1st item is the url (0). (2nd is the condition, e.g. "==".)
-    // See https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py#L141
-    const refPath = item && item[0][1][0][0];
-    return this.computeTestURL(testType, refPath);
+    const metadata = manifest.get(path);
+    if (metadata && metadata.refPath) {
+      return this.computeTestURL(testType, metadata.refPath);
+    }
   }
 
   computeLiveTestDomain() {
@@ -555,15 +545,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     if (!this.computePathIsATestFile(path) || !manifest) {
       return;
     }
-    for (const type of TEST_TYPES) {
-      const items = manifest.items[type];
-      if (items) {
-        const test = Object.values(items).find(v => v.find(i => i[0] === path));
-        if (test) {
-          return type;
-        }
-      }
-    }
+    const metadata = manifest.get(path);
+    return metadata && metadata.type;
   }
 
   computeTestTypeIcon(testType) {
@@ -791,9 +774,37 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
               && isSpecificSHA
               && this.fetchManifestForSHA('latest');
           }
-          let manifest = await r.json();
-          manifest.sha = sha || r.headers && r.headers['x-wpt-sha'];
+          let manifestJSON = await r.json();
+          const manifest = new Map();
+          manifest.sha = sha || r.headers && r.headers['X-WPT-SHA'];
+          for (const [type, items] of Object.entries(manifestJSON.items)) {
+            if (!TEST_TYPES.includes(type)) {
+              continue;
+            }
+            for (const [file, tests] of Object.entries(items)) {
+              for (const test of tests) {
+                const metadata = {
+                  file,
+                  type,
+                };
+                if (type === 'reftest') {
+                  metadata.refPath = test[1][0][0];
+                }
+                // Ensure leading slashes (e.g. manual/visual tests don't).
+                if (!metadata.file.startsWith('/')) {
+                  metadata.file = `/${file}`;
+                }
+                let path = test[0];
+                if (!path.startsWith('/')) {
+                  path = `/${path}`;
+                }
+                manifest.set(path, metadata);
+              }
+            }
+          }
           this.manifest = manifest;
+          // eslint-disable-next-line no-console
+          console.info(`Loaded manifest ${manifest.sha}`);
           this.refreshDisplayedNodes();
         }
       )
@@ -849,14 +860,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     // Add an empty row for all the tests known from the manifest.
     const knownNodes = {};
     if (this.manifest && !this.search) {
-      for (const type of Object.keys(this.manifest.items)) {
-        if (['manual', 'reftest', 'testharness', 'wdspec'].includes(type)) {
-          for (const file of Object.keys(this.manifest.items[type])) {
-            for (const test of this.manifest.items[type][file]) {
-              if (test[0].startsWith(prefix)) {
-                collapsePathOnto(test[0], knownNodes);
-              }
-            }
+      for (const [path, {type}] of Object.entries(this.manifest)) {
+        if (TEST_TYPES.includes(type)) {
+          if (path.startsWith(prefix)) {
+            collapsePathOnto(path, knownNodes);
           }
         }
       }
