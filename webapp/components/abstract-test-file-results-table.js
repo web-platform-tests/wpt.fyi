@@ -6,6 +6,7 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@polymer/polymer/iron-list/iron-list.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
@@ -67,7 +68,7 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
     </tr>
   </thead>
   <tbody>
-    <template is="dom-repeat" items="[[resultsTable]]" as="row">
+    <iron-list items="[[resultsTable]]" as="row">
       <tr>
         <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
