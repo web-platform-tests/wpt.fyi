@@ -6,8 +6,11 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
+import '../node_modules/@polymer/iron-list/iron-list.js';
+import '../node_modules/@polymer/iron-scroll-threshold/iron-scroll-threshold.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import '../node_modules/@polymer/paper-progress/paper-progress.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
@@ -42,6 +45,10 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         padding: 0 0.5em;
         margin: 2px;
       }
+      td[no-padding] {
+        padding: 0;
+        margin: 0;
+      }
       td[day-boundary] {
         border-top: 1px solid var(--paper-blue-100);
       }
@@ -60,14 +67,10 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       .runs.present {
         background-color: var(--paper-blue-100);
       }
-      .load-more {
+      .loading {
         display: flex;
         flex-direction: column;
         align-items: center;
-      }
-      paper-spinner-lite {
-        display: block;
-        margin: auto;
       }
       test-runs-query-builder {
         display: block;
@@ -106,6 +109,11 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         display: inline-block;
         flex-grow: 0;
         flex-shrink: 0;
+      }
+      paper-progress {
+        --paper-progress-active-color: var(--paper-light-blue-500);
+        --paper-progress-secondary-color: var(--paper-light-blue-100);
+        width: 100%;
       }
 
       @media (max-width: 1200px) {
@@ -174,7 +182,6 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
           </tr>
         </thead>
         <tbody>
-
         <template is="dom-repeat" items="{{ testRunsBySHA }}" as="results">
           <tr>
             <td>
@@ -205,19 +212,20 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
             </td>
           </tr>
         </template>
-
+          <tr>
+            <td colspan="999" no-padding>
+              <paper-progress indeterminate hidden="[[!isLoading]]"></paper-progress>
+            </td>
+          </tr>
         </tbody>
       </table>
 
+      <iron-scroll-threshold lower-threshold="0" on-lower-threshold="loadNextPage" id="threshold" scroll-target="document">
+      </iron-scroll-threshold>
     </template>
 
-    <div class="load-more">
-      <template is="dom-if" if="[[nextPageToken]]">
-        <paper-button id="load-more" onclick="[[loadNextPage]]">
-          Load more
-        </paper-button>
-      </template>
-      <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
+    <div class="loading">
+      <paper-spinner-lite active="[[isLoadingFirstRuns]]" class="blue"></paper-spinner-lite>
     </div>
 `;
   }
@@ -257,6 +265,10 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       twoRunsSelected: {
         type: Boolean,
         computed: 'computeTwoRunsSelected(selectedRuns)',
+      },
+      isLoadingFirstRuns: {
+        type: Boolean,
+        computed: 'computeIsLoadingFirstRuns(isLoading)',
       }
     };
   }
@@ -279,8 +291,17 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
 
   async ready() {
     super.ready();
-    this.load(this.loadRuns());
+    this.load(this.loadRuns().then(_ => this.resetScrollThreshold()));
     this._createMethodObserver('testRunsLoaded(testRuns, testRuns.*)');
+  }
+
+  resetScrollThreshold() {
+    const threshold = this.shadowRoot.querySelector('iron-scroll-threshold');
+    threshold && threshold.clearTriggers();
+  }
+
+  computeIsLoadingFirstRuns(isLoading) {
+    return isLoading && !(this.testRuns && this.testRuns.length);
   }
 
   computeDateDisplay(results) {
@@ -421,7 +442,9 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
   }
 
   handleLoadNextPage() {
-    this.load(this.loadMoreRuns());
+    this.load(this.loadMoreRuns().then(runs => {
+      runs && runs.length && this.resetScrollThreshold();
+    }));
   }
 
   githubRevision(sha) {
