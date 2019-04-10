@@ -6,7 +6,6 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
-import '../node_modules/@polymer/iron-list/iron-list.js';
 import '../node_modules/@polymer/iron-scroll-threshold/iron-scroll-threshold.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
