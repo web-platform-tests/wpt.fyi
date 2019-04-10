@@ -69,22 +69,24 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
   </thead>
   <tbody>
     <iron-list items="[[resultsTable]]" as="row">
-      <tr>
-        <td class="sub-test-name"><code>[[ row.name ]]</code></td>
+      <template>
+        <tr>
+          <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
-        <template is="dom-repeat" items="{{row.results}}" as="result">
-          <td class$="[[ colorClass(result.status) ]]">
-            <code>[[ subtestMessage(result) ]]</code>
-            <template is="dom-if" if="[[result.screenshots]]">
-              <paper-button onclick="[[compareReferences(result)]]">
-                <iron-icon icon="image:compare"></iron-icon>
-                Compare
-              </paper-button>
-            </template>
-          </td>
-        </template>
-      </tr>
-    </template>
+          <template is="dom-repeat" items="{{row.results}}" as="result">
+            <td class$="[[ colorClass(result.status) ]]">
+              <code>[[ subtestMessage(result) ]]</code>
+              <template is="dom-if" if="[[result.screenshots]]">
+                <paper-button onclick="[[compareReferences(result)]]">
+                  <iron-icon icon="image:compare"></iron-icon>
+                  Compare
+                </paper-button>
+              </template>
+            </td>
+          </template>
+        </tr>
+      </template>
+    </iron-list>
   </tbody>
 </table>
 `;
