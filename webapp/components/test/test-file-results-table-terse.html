@@ -5,32 +5,33 @@
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <script type="module" src="../test-file-results-table-terse.js"></script>
+  <script type="module" src="../test-file-results-table.js"></script>
 </head>
 <body>
-  <test-fixture id="test-file-results-table-terse-fixture">
+  <test-fixture id="test-file-results-table-fixture">
     <template>
-      <test-file-results-table-terse
+      <test-file-results-table
+        verbose="false"
         path="/2dcontext/the-canvas-state/2d.state.saverestore.bitmap.html">
       </test-file-results>
     </template>
   </test-fixture>
   <script type="module">
-import { TestFileResultsTableTerse } from '../test-file-results-table-terse.js';
+import { TestFileResultsTable } from '../test-file-results-table.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
-suite('TestFileResultsTableTerse', () => {
+suite('TestFileResultsTable (terse)', () => {
   let trf;
 
   setup(() => {
-    const id = 'test-file-results-table-terse-fixture';
+    const id = 'test-file-results-table-fixture';
     document.getElementById(id)
       .setAttribute('test-runs', JSON.stringify(TEST_RUNS_DATA));
     trf = fixture(id);
   });
 
   test('instanceof', () => {
-    assert.isTrue(trf instanceof TestFileResultsTableTerse);
+    assert.isTrue(trf instanceof TestFileResultsTable);
   });
 
   suite('messages', () => {

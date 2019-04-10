@@ -16,8 +16,6 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 import { LoadingState } from './loading-state.js';
 import './path-part.js';
 import { SelfNavigation } from './self-navigator.js';
-import './test-file-results-table-terse.js';
-import './test-file-results-table-verbose.js';
 import './test-file-results.js';
 import './test-run.js';
 import './test-runs-query-builder.js';
