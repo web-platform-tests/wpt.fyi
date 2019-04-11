@@ -15,9 +15,9 @@ import (
 	"strings"
 	"testing"
 
+	logrustest "github.com/Hexcles/logrus/hooks/test"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
-	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
