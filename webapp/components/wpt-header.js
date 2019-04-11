@@ -18,6 +18,10 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         margin: 0;
         padding: 0;
       }
+      img {
+        display: inline-block;
+        margin-right: 16px;
+      }
       a {
         text-decoration: none;
         color: #0d5de6;
@@ -27,7 +31,10 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       }
       header h1 {
         font-size: 1.5em;
+        line-height: 1.5em;
         margin-bottom: 0.2em;
+        display: flex;
+        align-items: center;
       }
       header nav a {
         margin-right: 1em;
@@ -37,7 +44,10 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       }
     </style>
     <header>
-      <h1><a href="/">web-platform-tests dashboard</a></h1>
+      <h1>
+        <img src="/static/favicon.ico">
+        <a href="/">web-platform-tests dashboard</a>
+      </h1>
       <nav>
         <!-- TODO: handle onclick with wpt-results.navigate if available -->
         <a href="/">Latest Run</a>
