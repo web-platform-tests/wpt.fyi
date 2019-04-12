@@ -20,7 +20,9 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       }
       img {
         display: inline-block;
+        height: 32px;
         margin-right: 16px;
+        width: 32px;
       }
       a {
         text-decoration: none;
@@ -45,7 +47,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
     </style>
     <header>
       <h1>
-        <img src="/static/favicon.ico">
+        <img src="/static/logo.svg">
         <a href="/">web-platform-tests dashboard</a>
       </h1>
       <nav>
