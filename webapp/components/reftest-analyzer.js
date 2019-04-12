@@ -37,8 +37,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         }
         #display {
           position: relative;
-          height: 800px;
-          width: 1000px;
+          height: 600px;
+          width: 800px;
         }
         #display svg,
         #display img {
@@ -106,8 +106,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         left if you think something is wrong.</p>
 
         <div id="display">
-          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" on-error="showError" />
-          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" on-error="showError" />
+          <img id="before" onmousemove="[[zoom]]" crossorigin="anonymous" on-error="showError" />
+          <img id="after" onmousemove="[[zoom]]" crossorigin="anonymous" on-error="showError" />
 
           <template is="dom-if" if="[[showDiff]]">
             <svg id="diff-layer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -166,8 +166,23 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   ready() {
     super.ready();
     this._createMethodObserver('computeDiff(canvasBefore, canvasAfter)');
-    this.setupZoomSVG();
-    this.setupCanvases();
+
+    // Set the img srcs manually so that we can promisify them being loaded.
+    const beforeImg = this.shadowRoot.querySelector('#before');
+    const afterImg = this.shadowRoot.querySelector('#after');
+    const beforeLoaded = new Promise((resolve) => beforeImg.onload = resolve);
+    const afterloaded = new Promise((resolve) => afterImg.onload = resolve);
+    beforeImg.src = this.before;
+    afterImg.src = this.after;
+    this.load(
+      Promise.all([
+        beforeLoaded,
+        afterloaded,
+      ]).then(async() => {
+        await this.setupZoomSVG();
+        await this.setupCanvases();
+      })
+    );
   }
 
   async setupCanvases() {
@@ -178,7 +193,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   async makeCanvas(image) {
     const img = this.shadowRoot.querySelector(`#${image}`);
     if (!img.width) {
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         img.onload = resolve;
       });
     }
