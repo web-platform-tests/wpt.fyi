@@ -13,8 +13,8 @@ import (
 	"regexp"
 	"strings"
 
+	log "github.com/Hexcles/logrus"
 	mapset "github.com/deckarep/golang-set"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/appengine"
 	gaelog "google.golang.org/appengine/log"
 )
