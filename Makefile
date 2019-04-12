@@ -37,7 +37,7 @@ test: go_test python_test
 lint: go_lint eslint
 
 prepush: VERBOSE := $() # Empty out the verbose flag.
-prepush: go_build test lint
+prepush: go_build go_test lint
 
 python_test: python3 tox
 	cd $(WPTD_PATH)results-processor; tox
