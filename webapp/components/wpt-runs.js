@@ -290,7 +290,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
 
   async ready() {
     super.ready();
-    this.load(this.loadRuns().then(_ => this.resetScrollThreshold()));
+    this.load(this.loadRuns().then(() => this.resetScrollThreshold()));
     this._createMethodObserver('testRunsLoaded(testRuns, testRuns.*)');
   }
 
