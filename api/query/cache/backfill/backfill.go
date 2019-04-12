@@ -14,7 +14,7 @@ import (
 	"google.golang.org/api/option"
 
 	"cloud.google.com/go/datastore"
-	log "github.com/sirupsen/logrus"
+	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
