@@ -173,17 +173,17 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     this._createMethodObserver('computeDiff(canvasBefore, canvasAfter)');
 
     // Set the img srcs manually so that we can promisify them being loaded.
-    const beforeImg = this.shadowRoot.querySelector('#before');
-    const afterImg = this.shadowRoot.querySelector('#after');
-    const beforeLoaded = new Promise((resolve) => beforeImg.onload = resolve);
-    const afterloaded = new Promise((resolve) => afterImg.onload = resolve);
-    beforeImg.src = this.before;
-    afterImg.src = this.after;
+    const imagePromises = ['before', 'after'].map(prop => {
+      const img = this.shadowRoot.querySelector(`#${prop}`);
+      const loaded = new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      img.src = this[prop];
+      return loaded;
+    });
     this.load(
-      Promise.all([
-        beforeLoaded,
-        afterloaded,
-      ]).then(async() => {
+      Promise.all(imagePromises).then(async() => {
         await this.setupZoomSVG();
         await this.setupCanvases();
       })
@@ -198,9 +198,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   async makeCanvas(image) {
     const img = this.shadowRoot.querySelector(`#${image}`);
     if (!img.width) {
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
+      await new Promise(resolve => img.onload = img.onerror = resolve);
     }
     var canvas = document.createElement('canvas');
     canvas.width = img.width;
