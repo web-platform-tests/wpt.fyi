@@ -172,12 +172,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     </results-tabs>
 
     <section class="search">
+      <!-- NOTE: Tag wrapping below is deliberate to avoid whitespace throughout the path. -->
       <div class="path">
-        <a href="/results/[[ query ]]" on-click="navigate">wpt</a>
-        <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
-          <span class="path-separator">/</span>
-          <a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
-        </template>
+        <a href="/results/[[ query ]]" on-click="navigate">wpt</a
+        ><template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
+          ><span class="path-separator">/</span
+        ><a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a
+        ></template>
 
         <template is="dom-if" if="[[showTestType]]">
           <template is="dom-if" if="[[testType]]">
@@ -203,11 +204,11 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         <div class="links">
           <ul>
             <li><a href\$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
-            <template is="dom-if" if="{{ testW3CURL }}">
-              <li><a href="[[testW3CURL]]" target="_blank">Run in your browser on w3c-test.org</a></li>
+            <template is="dom-if" if="[[ showTestURL ]]">
+              <li><a href="[[showTestURL]]" target="_blank">Run in your browser on [[ liveTestDomain ]]</a></li>
             </template>
-            <template is="dom-if" if="[[ testW3CRefURL ]]">
-              <li><a href="[[testW3CRefURL]]" target="_blank">View ref in your browser on w3c-test.org</a></li>
+            <template is="dom-if" if="[[ showTestRefURL ]]">
+              <li><a href="[[showTestRefURL]]" target="_blank">View ref in your browser on [[ liveTestDomain ]]</a></li>
             </template>
           </ul>
         </div>
@@ -277,7 +278,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
-                           products="[[products]]">
+                           products="[[products]]"
+                           on-reftest-compare="[[showAnalyzer]]">
         </test-file-results>
       </template>
 
@@ -288,7 +290,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
               <th colspan="2">Path</th>
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                 <!-- Repeats for as many different browser test runs are available -->
-                <th><test-run test-run="[[testRun]]"></test-run></th>
+                <th><test-run test-run="[[testRun]]" show-source></test-run></th>
               </template>
               <template is="dom-if" if="[[diffShown]]">
                 <th>
@@ -388,19 +390,19 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
           <div class="compare">
             <div class="column">
               <h5>Result</h5>
-              <template is="dom-if" if="[[testW3CURL]]">
-                <iframe src="[[https(testW3CURL)]]"></iframe>
+              <template is="dom-if" if="[[showTestURL]]">
+                <iframe src="[[https(showTestURL)]]"></iframe>
               </template>
             </div>
             <div class="column">
               <h5>Reference</h5>
-              <template is="dom-if" if="[[testW3CRefURL]]">
-                <iframe src="[[https(testW3CRefURL)]]"></iframe>
+              <template is="dom-if" if="[[showTestRefURL]]">
+                <iframe src="[[https(showTestRefURL)]]"></iframe>
               </template>
             </div>
           </div>
-        </template>
-      </section>
+        </section>
+      </template>
     </template>
 `;
   }
@@ -424,13 +426,17 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         type: Boolean,
         computed: 'computeIsRefTest(testType)'
       },
-      testW3CURL: {
+      showTestURL: {
         type: Boolean,
-        computed: 'computeTestW3CURL(testType, path)',
+        computed: 'computeTestURL(testType, path)',
       },
-      testW3CRefURL: {
+      showTestRefURL: {
         type: String,
         computed: 'computeTestRefURL(testType, path, manifest)',
+      },
+      liveTestDomain: {
+        type: String,
+        computed: 'computeLiveTestDomain()',
       },
       structuredSearch: Object,
       searchResults: {
@@ -481,7 +487,9 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         value: false,
       },
       onlyShowDifferences: Boolean,
+      // path => {type, file[, refPath]} simplification.
       manifest: Object,
+      screenshots: Array,
     };
   }
 
@@ -497,39 +505,38 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     if (!this.computePathIsATestFile(path) || !manifest) {
       return path;
     }
-    // Filter in case any types are fully missing.
-    const itemSets = TEST_TYPES.map(t => manifest.items[t]).filter(i => i);
-    for (const items of itemSets) {
-      const key = Object.keys(items).find(k => items[k].find(i => i[0] === path));
-      if (key) {
-        // Ensure leading slash.
-        return key.startsWith('/') ? key : `/${key}`;
-      }
+    const metadata = manifest.get(path);
+    if (metadata) {
+      return metadata.file;
     }
-    return null;
   }
 
   computeIsRefTest(testType) {
     return testType === 'reftest';
   }
 
-  computeTestW3CURL(testType, path) {
+  computeTestURL(testType, path) {
     if (testType === 'wdspec') {
       return;
     }
-    return new URL(`${this.scheme}://w3c-test.org${path}`);
+    return new URL(`${this.scheme}://${this.liveTestDomain}${path}`);
   }
 
   computeTestRefURL(testType, path, manifest) {
     if (!this.showTestRefURL || testType !== 'reftest') {
       return;
     }
-    const item = Object.values(manifest.items['reftest']).find(v => v.find(i => i[0] === path));
-    // In item[0], the 2nd item is the refs array, and we take the first ref (0).
-    // Then, the ref's 1st item is the url (0). (2nd is the condition, e.g. "==".)
-    // See https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py#L141
-    const refPath = item && item[0][1][0][0];
-    return this.computeTestW3CURL(testType, refPath);
+    const metadata = manifest.get(path);
+    if (metadata && metadata.refPath) {
+      return this.computeTestURL(testType, metadata.refPath);
+    }
+  }
+
+  computeLiveTestDomain() {
+    if (this.webPlatformTestsLive) {
+      return 'web-platform-tests.live';
+    }
+    return 'w3c-test.org';
   }
 
   https(url) {
@@ -540,15 +547,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     if (!this.computePathIsATestFile(path) || !manifest) {
       return;
     }
-    for (const type of TEST_TYPES) {
-      const items = manifest.items[type];
-      if (items) {
-        const test = Object.values(items).find(v => v.find(i => i[0] === path));
-        if (test) {
-          return type;
-        }
-      }
-    }
+    const metadata = manifest.get(path);
+    return metadata && metadata.type;
   }
 
   computeTestTypeIcon(testType) {
@@ -600,6 +600,7 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.dismissToast = e => e.target.closest('paper-toast').close();
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
+    this.showAnalyzer = this.handleShowAnalyzer.bind(this);
   }
 
   connectedCallback() {
@@ -775,9 +776,37 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
               && isSpecificSHA
               && this.fetchManifestForSHA('latest');
           }
-          let manifest = await r.json();
-          manifest.sha = sha || r.headers && r.headers['x-wpt-sha'];
+          let manifestJSON = await r.json();
+          const manifest = new Map();
+          manifest.sha = sha || r.headers && r.headers['X-WPT-SHA'];
+          for (const [type, items] of Object.entries(manifestJSON.items)) {
+            if (!TEST_TYPES.includes(type)) {
+              continue;
+            }
+            for (const [file, tests] of Object.entries(items)) {
+              for (const test of tests) {
+                const metadata = {
+                  file,
+                  type,
+                };
+                if (type === 'reftest') {
+                  metadata.refPath = test[1][0][0];
+                }
+                // Ensure leading slashes (e.g. manual/visual tests don't).
+                if (!metadata.file.startsWith('/')) {
+                  metadata.file = `/${file}`;
+                }
+                let path = test[0];
+                if (!path.startsWith('/')) {
+                  path = `/${path}`;
+                }
+                manifest.set(path, metadata);
+              }
+            }
+          }
           this.manifest = manifest;
+          // eslint-disable-next-line no-console
+          console.info(`Loaded manifest ${manifest.sha}`);
           this.refreshDisplayedNodes();
         }
       )
@@ -833,14 +862,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     // Add an empty row for all the tests known from the manifest.
     const knownNodes = {};
     if (this.manifest && !this.search) {
-      for (const type of Object.keys(this.manifest.items)) {
-        if (['manual', 'reftest', 'testharness', 'wdspec'].includes(type)) {
-          for (const file of Object.keys(this.manifest.items[type])) {
-            for (const test of this.manifest.items[type][file]) {
-              if (test[0].startsWith(prefix)) {
-                collapsePathOnto(test[0], knownNodes);
-              }
-            }
+      for (const [path, {type}] of Object.entries(this.manifest)) {
+        if (TEST_TYPES.includes(type)) {
+          if (path.startsWith(prefix)) {
+            collapsePathOnto(path, knownNodes);
           }
         }
       }
@@ -1118,6 +1143,22 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         `Showing ${tests} tests (${subtests} subtests) from `);
     }
     return msg;
+  }
+
+  handleShowAnalyzer(result) {
+    if (!result.screenshots) {
+      this.screenshots = null;
+      return;
+    }
+    const url = new URL('/analyzer', window.location);
+    if (this.path in result.screenshots) {
+      url.searchParams.append('screenshot', result.screenshots[this.path]);
+      delete result.screenshots[this.path];
+    }
+    for (const s of Object.values(result.screenshots)) {
+      url.searchParams.append('screenshot', s);
+    }
+    window.location = url;
   }
 }
 

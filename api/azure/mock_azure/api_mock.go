@@ -7,6 +7,7 @@ package mock_azure
 import (
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/github"
+	azure "github.com/web-platform-tests/wpt.fyi/api/azure"
 	reflect "reflect"
 )
 
@@ -45,6 +46,34 @@ func (m *MockAPI) GetAzureArtifactsURL(arg0, arg1 string, arg2 int64) string {
 func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureArtifactsURL", reflect.TypeOf((*MockAPI)(nil).GetAzureArtifactsURL), arg0, arg1, arg2)
+}
+
+// GetBuild mocks base method
+func (m *MockAPI) GetBuild(arg0, arg1 string, arg2 int64) *azure.Build {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBuild", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*azure.Build)
+	return ret0
+}
+
+// GetBuild indicates an expected call of GetBuild
+func (mr *MockAPIMockRecorder) GetBuild(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuild", reflect.TypeOf((*MockAPI)(nil).GetBuild), arg0, arg1, arg2)
+}
+
+// GetBuildURL mocks base method
+func (m *MockAPI) GetBuildURL(arg0, arg1 string, arg2 int64) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBuildURL", arg0, arg1, arg2)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetBuildURL indicates an expected call of GetBuildURL
+func (mr *MockAPIMockRecorder) GetBuildURL(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuildURL", reflect.TypeOf((*MockAPI)(nil).GetBuildURL), arg0, arg1, arg2)
 }
 
 // HandleCheckRunEvent mocks base method

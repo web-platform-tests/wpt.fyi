@@ -3,11 +3,16 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/iron-icon/iron-icon.js';
+import '../node_modules/@polymer/iron-icons/image-icons.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
+import './test-file-results.js';
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
-import './test-file-results.js';
-import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
-
 
 class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
   static get is() {
@@ -31,8 +36,9 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
     padding: 0;
     height: 1.5em;
   }
-  td code {
-    padding: 0.25em;
+  td code, td paper-button {
+    line-height: 1.6em;
+    padding: 0 0.25em;
   }
   td.sub-test-name {
     font-family: monospace;
@@ -42,6 +48,10 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
   }
   tbody tr:first-child {
     border-bottom: 8px solid white;
+    padding: 8px;
+  }
+  paper-button {
+    float: right;
   }
 </style>
 
@@ -64,6 +74,12 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
         <template is="dom-repeat" items="{{row.results}}" as="result">
           <td class$="[[ colorClass(result.status) ]]">
             <code>[[ subtestMessage(result) ]]</code>
+            <template is="dom-if" if="[[result.screenshots]]">
+              <paper-button onclick="[[compareReferences(result)]]">
+                <iron-icon icon="image:compare"></iron-icon>
+                Compare
+              </paper-button>
+            </template>
           </td>
         </template>
       </tr>
@@ -83,6 +99,15 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
         type: Array,
         value: [],
       },
+    };
+  }
+
+  constructor() {
+    super();
+    this.compareReferences = (result) => {
+      return () => this.onReftestCompare && this.onReftestCompare(
+        // Clone the result first.
+        JSON.parse(JSON.stringify(result)));
     };
   }
 

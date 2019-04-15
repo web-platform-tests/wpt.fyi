@@ -25,13 +25,11 @@ const InternalUsername = "_processor"
 const ResultsNotifyQueue = "notify"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
-func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r *http.Request) {
-	username, password, ok := r.BasicAuth()
-	if !ok || username != InternalUsername || !a.authenticateUploader(username, password) {
-		http.Error(w, "Authentication error", http.StatusUnauthorized)
+func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Request) {
+	if AuthenticateUploader(a, r) != InternalUsername {
+		http.Error(w, "This is a private API.", http.StatusUnauthorized)
 		return
 	}
-
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,7 +61,7 @@ func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r 
 	}
 	testRun.Revision = testRun.FullRevisionHash[:10]
 
-	key, err := a.addTestRun(&testRun)
+	key, err := a.AddTestRun(&testRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -79,7 +77,7 @@ func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r 
 
 	// Copy int64 representation of key into TestRun.ID so that clients can
 	// inspect/use key value.
-	testRun.ID = key.ID
+	testRun.ID = key.IntID()
 
 	jsonOutput, err := json.Marshal(testRun)
 	if err != nil {
@@ -88,17 +86,7 @@ func HandleResultsCreate(a AppEngineAPI, s checks.API, w http.ResponseWriter, r 
 	}
 	log := shared.GetLogger(a.Context())
 	log.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())
-	a.scheduleResultsNotifications(&testRun)
+	a.ScheduleResultsNotifications(&testRun)
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonOutput)
-}
-
-// SendResultsAvailableNotifications sends webpush notifications for newly arrived runs.
-func SendResultsAvailableNotifications(n shared.NotificationsAPI, run *shared.TestRun) error {
-	spec := run.ProductSpec()
-	title := fmt.Sprintf("New %s results available", spec.DisplayName())
-	msg := fmt.Sprintf("Results are now available for %s", run.String())
-	path := fmt.Sprintf("/results/?run_id=%v", run.ID)
-	icon := spec.IconPath()
-	return n.SendPushNotification(title, msg, path, &icon)
 }

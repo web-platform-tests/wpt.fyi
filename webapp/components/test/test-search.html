@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
   <script type="module" src="../test-search.js"></script>
@@ -253,6 +253,27 @@ suite('<test-search>', () => {
           ]},
         ],
       });
+    });
+
+    test('count', () => {
+      assertQueryParse('count:5(status:PASS or status:OK)', {
+        exists: [{
+          count: 5,
+          where: {
+            or: [{status: 'PASS'}, {status: 'OK'}],
+          },
+        }]
+      });
+      for (const [atom, count] of [['three', 3], ['two', 2], ['one', 1]]) {
+        assertQueryParse(`${atom}(status:!PASS and status:!OK)`, {
+          exists: [{
+            count,
+            where: {
+              and: [{status: {not: 'PASS'}}, {status: {not: 'OK'}}],
+            },
+          }]
+        });
+      }
     });
   });
 });

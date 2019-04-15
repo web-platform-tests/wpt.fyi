@@ -19,7 +19,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/api/checks/mock_checks"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
@@ -90,11 +89,19 @@ func TestIsOnMaster(t *testing.T) {
 }
 
 func TestExtractTaskGroupID(t *testing.T) {
-	assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg",
-		extractTaskGroupID("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg"))
+	t.Run("Status", func(t *testing.T) {
+		group, task := extractTaskGroupID("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg", group)
+		assert.Equal(t, "", task)
+	})
+	t.Run("CheckRun", func(t *testing.T) {
+		group, task := extractTaskGroupID("https://tools.taskcluster.net/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
+		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
+		assert.Equal(t, "NOToWHr0T-u62B9yGQnD5w", task)
+	})
 }
 
-func TestExtractResultURLs_all_success_master(t *testing.T) {
+func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 	group := &taskGroupInfo{Tasks: make([]taskInfo, 4)}
 	group.Tasks[0].Task.Metadata.Name = "wpt-firefox-nightly-testharness-1"
 	group.Tasks[1].Task.Metadata.Name = "wpt-firefox-nightly-testharness-2"
@@ -105,21 +112,50 @@ func TestExtractResultURLs_all_success_master(t *testing.T) {
 		group.Tasks[i].Status.TaskID = fmt.Sprint(i)
 	}
 
-	urls, err := extractResultURLs(shared.NewNilLogger(), group)
-	assert.Nil(t, err)
-	assert.Equal(t, map[string][]string{
-		"firefox-nightly": {
-			"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
-			"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_report.json.gz",
-		},
-		"chrome-dev": {
-			"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
-			"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_report.json.gz",
-		},
-	}, urls)
+	t.Run("All", func(t *testing.T) {
+		urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "")
+		assert.Nil(t, err)
+		assert.Equal(t, map[string]artifactURLs{
+			"firefox-nightly": {
+				Results: []string{
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+					"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_report.json.gz",
+				},
+				Screenshots: []string{
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_screenshot.txt.gz",
+				},
+			},
+			"chrome-dev": {
+				Results: []string{
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+					"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_report.json.gz",
+				},
+				Screenshots: []string{
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_screenshot.txt.gz",
+				},
+			},
+		}, urls)
+	})
+
+	t.Run("Filtered", func(t *testing.T) {
+		urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "0")
+		assert.Nil(t, err)
+		assert.Equal(t, map[string]artifactURLs{
+			"firefox-nightly": {
+				Results: []string{
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+				},
+				Screenshots: []string{
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
+				},
+			},
+		}, urls)
+	})
 }
 
-func TestExtractResultURLs_all_success_pr(t *testing.T) {
+func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
 	group.Tasks[0].Task.Metadata.Name = "wpt-chrome-dev-results"
 	group.Tasks[1].Task.Metadata.Name = "wpt-chrome-dev-stability"
@@ -129,19 +165,46 @@ func TestExtractResultURLs_all_success_pr(t *testing.T) {
 		group.Tasks[i].Status.TaskID = fmt.Sprint(i)
 	}
 
-	urls, err := extractResultURLs(shared.NewNilLogger(), group)
-	assert.Nil(t, err)
-	assert.Equal(t, map[string][]string{
-		"chrome-dev-pr_head": {
-			"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
-		},
-		"chrome-dev-pr_base": {
-			"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
-		},
-	}, urls)
+	t.Run("All", func(t *testing.T) {
+		urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "")
+		assert.Nil(t, err)
+		assert.Equal(t, map[string]artifactURLs{
+			"chrome-dev-pr_head": {
+				Results: []string{
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+				},
+				Screenshots: []string{
+					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
+				},
+			},
+			"chrome-dev-pr_base": {
+				Results: []string{
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+				},
+				Screenshots: []string{
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
+				},
+			},
+		}, urls)
+	})
+
+	t.Run("Filtered", func(t *testing.T) {
+		urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "2")
+		assert.Nil(t, err)
+		assert.Equal(t, map[string]artifactURLs{
+			"chrome-dev-pr_base": {
+				Results: []string{
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+				},
+				Screenshots: []string{
+					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
+				},
+			},
+		}, urls)
+	})
 }
 
-func TestExtractResultURLs_with_failures(t *testing.T) {
+func TestExtractArtifactURLs_with_failures(t *testing.T) {
 	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
 	group.Tasks[0].Status.State = "failed"
 	group.Tasks[0].Status.TaskID = "foo"
@@ -153,16 +216,13 @@ func TestExtractResultURLs_with_failures(t *testing.T) {
 	group.Tasks[2].Status.TaskID = "baz"
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
 
-	urls, err := extractResultURLs(shared.NewNilLogger(), group)
+	urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "")
 	assert.Nil(t, err)
-	assert.Equal(t, map[string][]string{
-		"chrome-dev": {
-			"https://queue.taskcluster.net/v1/task/baz/artifacts/public/results/wpt_report.json.gz",
-		},
-	}, urls)
+	assert.Equal(t, 1, len(urls))
+	assert.Contains(t, urls, "chrome-dev")
 }
 
-func TestCreateAllRuns_success_master(t *testing.T) {
+func TestCreateAllRuns_success(t *testing.T) {
 	var requested uint32
 	requested = 0
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -171,91 +231,53 @@ func TestCreateAllRuns_success_master(t *testing.T) {
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
-	mockC := gomock.NewController(t)
-	defer mockC.Finish()
-
+	serverURL, _ := url.Parse(server.URL)
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	checksAPI := mock_checks.NewMockAPI(mockC)
-	suite := shared.CheckSuite{SHA: sha}
-	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("safari[experimental]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
-	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
-	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).Times(3).Return(&http.Client{}, func() {})
-	serverURL, _ := url.Parse(server.URL)
+	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return("localhost:8080")
+	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).AnyTimes().Return(&http.Client{}, func() {})
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
-	err := createAllRuns(
-		shared.NewNilLogger(),
-		aeAPI,
-		checksAPI,
-		sha,
-		"username",
-		"password",
-		map[string][]string{
-			"safari-preview": []string{"1"},
-			"chrome-dev":     []string{"1"},
-			"firefox-stable": []string{"1", "2"},
-		},
-		[]string{shared.MasterLabel, "user:person"},
-	)
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(3), requested)
-}
+	t.Run("master", func(t *testing.T) {
+		err := createAllRuns(
+			shared.NewNilLogger(),
+			aeAPI,
+			sha,
+			"username",
+			"password",
+			map[string]artifactURLs{
+				"safari-preview": {Results: []string{"1"}},
+				"chrome-dev":     {Results: []string{"1"}},
+				"firefox-stable": {Results: []string{"1", "2"}},
+			},
+			[]string{shared.MasterLabel, "user:person"},
+		)
+		assert.Nil(t, err)
+		assert.Equal(t, uint32(3), requested)
+	})
 
-func TestCreateAllRuns_success_pr(t *testing.T) {
-	var requested uint32
 	requested = 0
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		atomic.AddUint32(&requested, 1)
-		w.Write([]byte("OK"))
-	}
-	server := httptest.NewServer(http.HandlerFunc(handler))
-	defer server.Close()
-	mockC := gomock.NewController(t)
-	defer mockC.Finish()
-
-	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
-
-	checksAPI := mock_checks.NewMockAPI(mockC)
-	suite := shared.CheckSuite{SHA: sha}
-	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("chrome[experimental]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
-	checksAPI.EXPECT().PendingCheckRun(suite, sharedtest.SameProductSpec("firefox[stable]"))
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
-	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
-	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).Times(4).Return(&http.Client{}, func() {})
-	serverURL, _ := url.Parse(server.URL)
-	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
-
-	err := createAllRuns(
-		shared.NewNilLogger(),
-		aeAPI,
-		checksAPI,
-		sha,
-		"username",
-		"password",
-		map[string][]string{
-			"chrome-dev-pr_head":     []string{"1"},
-			"chrome-dev-pr_base":     []string{"1"},
-			"firefox-stable-pr_head": []string{"1"},
-			"firefox-stable-pr_base": []string{"1"},
-			"safari-pr_base":         []string{"1"},
-			// Missing "safari-pr_head": []string{"1"},
-			// Missing "edge-pr_base": []string{"1"},
-			"edge-pr_head": []string{"1"},
-		},
-		nil,
-	)
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(4), requested)
+	t.Run("PR", func(t *testing.T) {
+		err := createAllRuns(
+			shared.NewNilLogger(),
+			aeAPI,
+			sha,
+			"username",
+			"password",
+			map[string]artifactURLs{
+				"chrome-dev-pr_head":     {Results: []string{"1"}},
+				"chrome-dev-pr_base":     {Results: []string{"1"}},
+				"firefox-stable-pr_head": {Results: []string{"1"}},
+				"firefox-stable-pr_base": {Results: []string{"1"}},
+			},
+			nil,
+		)
+		assert.Nil(t, err)
+		assert.Equal(t, uint32(4), requested)
+	})
 }
 
 func TestCreateAllRuns_one_error(t *testing.T) {
@@ -277,13 +299,8 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	checksAPI := mock_checks.NewMockAPI(mockC)
-	suite := shared.CheckSuite{SHA: sha}
-	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
-	checksAPI.EXPECT().PendingCheckRun(suite, gomock.Any())
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
-	aeAPI.EXPECT().IsFeatureEnabled(flagPendingChecks).MinTimes(1).Return(true)
 	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).Times(2).Return(&http.Client{}, func() {})
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
@@ -291,13 +308,12 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	err := createAllRuns(
 		shared.NewNilLogger(),
 		aeAPI,
-		checksAPI,
 		sha,
 		"username",
 		"password",
-		map[string][]string{
-			"chrome":  []string{"1"},
-			"firefox": []string{"1", "2"},
+		map[string]artifactURLs{
+			"chrome":  {Results: []string{"1"}},
+			"firefox": {Results: []string{"1", "2"}},
 		},
 		[]string{shared.MasterLabel},
 	)
@@ -318,9 +334,6 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
-	checksAPI := mock_checks.NewMockAPI(mockC)
-	suite := shared.CheckSuite{SHA: sha}
-	checksAPI.EXPECT().GetSuitesForSHA(sha).Return([]shared.CheckSuite{suite}, nil)
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	// Give a very short timeout (instead of the asked 1min) to make tests faster.
@@ -331,13 +344,12 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	err := createAllRuns(
 		shared.NewNilLogger(),
 		aeAPI,
-		checksAPI,
 		sha,
 		"username",
 		"password",
-		map[string][]string{
-			"chrome":  []string{"1"},
-			"firefox": []string{"1", "2"},
+		map[string]artifactURLs{
+			"chrome":  {Results: []string{"1"}},
+			"firefox": {Results: []string{"1", "2"}},
 		},
 		[]string{shared.MasterLabel},
 	)

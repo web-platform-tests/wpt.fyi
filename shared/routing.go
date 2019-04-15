@@ -31,7 +31,7 @@ func AddRoute(route, name string, h http.HandlerFunc) *mux.Route {
 
 // WrapHSTS wraps the given handler func in one that sets the
 // Strict-Transport-Security header on the response.
-func WrapHSTS(h http.Handler) http.HandlerFunc {
+func WrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		value := "max-age=31536000; preload"
 		w.Header().Add("Strict-Transport-Security", value)

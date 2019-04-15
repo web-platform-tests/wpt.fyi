@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/azure/mock_azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/mock_checks"
+	"github.com/web-platform-tests/wpt.fyi/api/taskcluster/mock_taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
@@ -38,8 +39,9 @@ func TestHandleCheckRunEvent_InvalidApp(t *testing.T) {
 	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	checksAPI := mock_checks.NewMockAPI(mockCtrl)
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
+	taskclusterAPI := mock_taskcluster.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -57,8 +59,9 @@ func TestHandleCheckRunEvent_Created_Completed(t *testing.T) {
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := mock_checks.NewMockAPI(mockCtrl)
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
+	taskclusterAPI := mock_taskcluster.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -76,8 +79,9 @@ func TestHandleCheckRunEvent_Created_Pending_UserNotWhitelisted(t *testing.T) {
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := mock_checks.NewMockAPI(mockCtrl)
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
+	taskclusterAPI := mock_taskcluster.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -96,8 +100,9 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 	checksAPI := mock_checks.NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome"))
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
+	taskclusterAPI := mock_taskcluster.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
@@ -139,8 +144,9 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 	checksAPI := mock_checks.NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().IgnoreFailure(username, owner, repo, event.GetCheckRun(), event.GetInstallation())
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
+	taskclusterAPI := mock_taskcluster.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
@@ -163,8 +169,9 @@ func TestHandleCheckRunEvent_ActionRequested_Cancel(t *testing.T) {
 	checksAPI := mock_checks.NewMockAPI(mockCtrl)
 	checksAPI.EXPECT().CancelRun(username, wptRepoOwner, wptRepoName, event.GetCheckRun(), event.GetInstallation())
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
+	taskclusterAPI := mock_taskcluster.NewMockAPI(mockCtrl)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, payload)
+	processed, err := handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }

@@ -5,7 +5,6 @@
 package taskcluster
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,15 +14,13 @@ import (
 	"strings"
 	"sync"
 
-	"google.golang.org/appengine/urlfetch"
-
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/github"
-	"github.com/web-platform-tests/wpt.fyi/api/checks"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+const uploaderName = "taskcluster"
 const flagTaskclusterAllBranches = "taskclusterAllBranches"
 const flagPendingChecks = "pendingChecks"
 
@@ -31,9 +28,16 @@ var (
 	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
 	// with a notable exception that "*-stability" runs are not included at the moment.
 	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
+	// This is the pattern for task detail URLs coming from Checks API.
+	inspectorURLRegex = regexp.MustCompile("/task-group-inspector/#/([^/]*)")
+	// This is the pattern for task detail URLs coming from Status API.
+	taskURLRegex = regexp.MustCompile("/groups/([^/]*)/tasks/([^/]*)")
 )
 
-func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
+// tcStatusWebhookHandler reacts to GitHub status webhook events. This is juxtaposed with
+// handleCheckRunEvent below, which is how we react to the (new) CheckRun implementation
+// of Taskcluster.
+func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" ||
 		r.Header.Get("X-GitHub-Event") != "status" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -57,7 +61,45 @@ func tcWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
-	processed, err := handleStatusEvent(ctx, payload)
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	var status statusEventPayload
+	if err := json.Unmarshal(payload, &status); err != nil {
+		log.Errorf("%v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	processAllBranches := aeAPI.IsFeatureEnabled(flagTaskclusterAllBranches)
+	var processed bool
+	if !shouldProcessStatus(log, processAllBranches, &status) {
+		processed = false
+	} else {
+		processed, err = func() (bool, error) {
+			sha := *status.SHA
+
+			if status.TargetURL == nil {
+				return false, errors.New("No target_url on taskcluster status event")
+			}
+			taskGroupID, taskID := extractTaskGroupID(*status.TargetURL)
+			if taskGroupID == "" {
+				return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
+			}
+
+			log.Debugf("Taskcluster task group %s", taskGroupID)
+
+			labels := mapset.NewSet()
+			if status.IsOnMaster() {
+				labels.Add(shared.MasterLabel)
+			}
+			sender := status.GetCommit().GetAuthor().GetLogin()
+			if sender != "" {
+				labels.Add(shared.GetUserLabel(sender))
+			}
+
+			return processTaskclusterBuild(aeAPI, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
+		}()
+	}
+
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -115,64 +157,39 @@ func (b branchInfos) GetNames() []string {
 	return names
 }
 
-func handleStatusEvent(ctx context.Context, payload []byte) (bool, error) {
+func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
+	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	var status statusEventPayload
-	if err := json.Unmarshal(payload, &status); err != nil {
-		return false, err
-	}
-
-	processAllBranches := aeAPI.IsFeatureEnabled(flagTaskclusterAllBranches)
-	if !shouldProcessStatus(log, processAllBranches, &status) {
-		return false, nil
-	}
-
-	if status.TargetURL == nil {
-		return false, errors.New("No target_url on taskcluster status event")
-	}
-	taskGroupID := extractTaskGroupID(*status.TargetURL)
-	if taskGroupID == "" {
-		return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
-	}
-
 	log.Debugf("Taskcluster task group %s", taskGroupID)
+	if taskID != "" {
+		log.Debugf("Taskcluster task %s", taskID)
+	}
 
-	client := urlfetch.Client(ctx)
+	client := aeAPI.GetHTTPClient()
 	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
 	if err != nil {
 		return false, err
 	}
 
-	urlsByProduct, err := extractResultURLs(log, taskGroup)
+	urlsByProduct, err := extractArtifactURLs(log, taskGroup, taskID)
 	if err != nil {
 		return false, err
 	}
 
-	username, password, err := getAuth(ctx)
+	uploader, err := aeAPI.GetUploader(uploaderName)
 	if err != nil {
+		log.Errorf("Failed to get uploader creds from Datastore")
 		return false, err
 	}
 
-	labels := mapset.NewSet()
-	if status.IsOnMaster() {
-		labels.Add(shared.MasterLabel)
-	} else {
-		sender := status.GetCommit().GetAuthor().GetLogin()
-		if sender != "" {
-			labels.Add(shared.GetUserLabel(sender))
-		}
-	}
-	checksAPI := checks.NewAPI(ctx)
 	err = createAllRuns(
 		log,
-		aeAPI,
-		checksAPI,
-		*status.SHA,
-		username,
-		password,
+		shared.NewAppEngineAPI(ctx),
+		sha,
+		uploader.Username,
+		uploader.Password,
 		urlsByProduct,
-		shared.ToStringSlice(labels))
+		labels)
 	if err != nil {
 		return false, err
 	}
@@ -194,12 +211,14 @@ func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *sta
 	return true
 }
 
-func extractTaskGroupID(targetURL string) string {
-	lastSlash := strings.LastIndex(targetURL, "/")
-	if lastSlash == -1 {
-		return ""
+func extractTaskGroupID(targetURL string) (string, string) {
+	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); len(matches) > 1 {
+		return matches[1], ""
 	}
-	return targetURL[lastSlash+1:]
+	if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
+		return matches[1], matches[2]
+	}
+	return "", ""
 }
 
 // https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#response-2
@@ -239,13 +258,22 @@ func getTaskGroupInfo(client *http.Client, groupID string) (*taskGroupInfo, erro
 	return &group, nil
 }
 
-func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]string, error) {
+type artifactURLs struct {
+	Results     []string
+	Screenshots []string
+}
+
+func extractArtifactURLs(log shared.Logger, group *taskGroupInfo, taskID string) (
+	urlsByProduct map[string]artifactURLs, err error) {
+	urlsByProduct = make(map[string]artifactURLs)
 	failures := mapset.NewSet()
-	resultURLs := make(map[string][]string)
 	for _, task := range group.Tasks {
-		taskID := task.Status.TaskID
-		if taskID == "" {
+		id := task.Status.TaskID
+		if id == "" {
 			return nil, fmt.Errorf("task group %s has a task without taskId", group.TaskGroupID)
+		} else if taskID != "" && taskID != id {
+			log.Debugf("Skipping task %s", id)
+			continue
 		}
 
 		matches := taskNameRegex.FindStringSubmatch(task.Task.Metadata.Name)
@@ -263,99 +291,69 @@ func extractResultURLs(log shared.Logger, group *taskGroupInfo) (map[string][]st
 
 		if task.Status.State != "completed" {
 			log.Errorf("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
-				group.TaskGroupID, taskID, product)
+				group.TaskGroupID, id, product)
 			failures.Add(product)
 			continue
 		}
 
-		resultURLs[product] = append(resultURLs[product],
-			// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
+		urls := urlsByProduct[product]
+		// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
+		urls.Results = append(urls.Results,
 			fmt.Sprintf(
-				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", taskID,
+				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", id,
 			))
+		// wpt_screenshot.txt.gz might not exist, which is NOT a fatal error in the receiver.
+		urls.Screenshots = append(urls.Screenshots,
+			fmt.Sprintf(
+				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_screenshot.txt.gz", id,
+			))
+		// urls is a *copy* of the value so we must store it back to the map.
+		urlsByProduct[product] = urls
 	}
 
 	for failure := range failures.Iter() {
-		delete(resultURLs, failure.(string))
+		delete(urlsByProduct, failure.(string))
 	}
 
-	if len(resultURLs) == 0 {
+	if len(urlsByProduct) == 0 {
 		return nil, fmt.Errorf("no result URLs found in task group")
 	}
-	return resultURLs, nil
-}
-
-func getAuth(ctx context.Context) (username string, password string, err error) {
-	uploader, err := shared.NewAppEngineAPI(ctx).GetUploader("taskcluster")
-	return uploader.Username, uploader.Password, err
+	return urlsByProduct, nil
 }
 
 func createAllRuns(
 	log shared.Logger,
 	aeAPI shared.AppEngineAPI,
-	checksAPI checks.API,
 	sha,
 	username,
 	password string,
-	urlsByProduct map[string][]string,
+	urlsByProduct map[string]artifactURLs,
 	labels []string) error {
 	errors := make(chan error, len(urlsByProduct))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByProduct))
-	suites, _ := checksAPI.GetSuitesForSHA(sha)
 	for product, urls := range urlsByProduct {
-		go func(product string, urls []string) {
+		go func(product string, urls artifactURLs) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", product, urls)
 
 			// chrome-dev-pr_head => [chrome, dev, pr_head]
 			bits := strings.Split(product, "-")
 			labelsForRun := labels
-			// Don't bother with pr_base/pr_head if the other one didn't make it.
 			switch lastBit := bits[len(bits)-1]; lastBit {
 			case shared.PRBaseLabel, shared.PRHeadLabel:
-				otherLabel := shared.PRBaseLabel
-				if lastBit == shared.PRBaseLabel {
-					otherLabel = shared.PRHeadLabel
-				}
-				otherProduct := strings.Join(append(bits[:len(bits)-1], otherLabel), "-")
-				if _, ok := urlsByProduct[otherProduct]; !ok {
-					log.Warningf("Skipping %s since %s not present", product, otherProduct)
-					return
-				}
 				labelsForRun = append(labelsForRun, lastBit)
 			}
 
 			uploadClient := uc.NewClient(aeAPI)
-			err := uploadClient.CreateRun(sha, username, password, urls, labelsForRun)
+			err := uploadClient.CreateRun(sha, username, password, urls.Results, urls.Screenshots, labelsForRun)
 			if err != nil {
 				errors <- err
 				return
-			}
-
-			if aeAPI.IsFeatureEnabled(flagPendingChecks) {
-				spec := shared.ProductSpec{}
-				spec.BrowserName = bits[0]
-				if len(bits) > 1 {
-					if label := shared.ProductChannelToLabel(bits[1]); label != "" {
-						spec.Labels = mapset.NewSet(label)
-					}
-				}
-				for _, suite := range suites {
-					checksAPI.PendingCheckRun(suite, spec)
-				}
 			}
 		}(product, urls)
 	}
 	wg.Wait()
 	close(errors)
-
-	var errStr string
-	for err := range errors {
-		errStr += err.Error() + "\n"
-	}
-	if errStr != "" {
-		return fmt.Errorf("error(s) occured when uploading:\n%s", errStr)
-	}
-	return nil
+	return shared.NewMultiErrorFromChan(errors, "sending Taskcluster runs to results receiver")
 }

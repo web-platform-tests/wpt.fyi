@@ -25,7 +25,7 @@ type Iterator interface {
 // Query abstracts a datastore.Query
 type Query interface {
 	Filter(filterStr string, value interface{}) Query
-	Project(project string) Query
+	Project(fields ...string) Query
 	Limit(limit int) Query
 	Offset(offset int) Query
 	Order(order string) Query
@@ -42,11 +42,13 @@ type Datastore interface {
 	NewQuery(typeName string) Query
 	NewIDKey(typeName string, id int64) Key
 	NewNameKey(typeName string, name string) Key
+	ReserveID(typeName string) (Key, error)
 	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
 	Delete(key Key) error
 	Put(key Key, src interface{}) (Key, error)
+	Insert(key Key, src interface{}) error
 
 	TestRunQuery() TestRunQuery
 }
@@ -88,4 +90,12 @@ func GetSecret(ds Datastore, tokenName string) (string, error) {
 		return "", err
 	}
 	return token.Secret, nil
+}
+
+// GetUploader gets the Uploader by the given name.
+func GetUploader(ds Datastore, uploader string) (Uploader, error) {
+	var result Uploader
+	key := ds.NewNameKey("Uploader", uploader)
+	err := ds.Get(key, &result)
+	return result, err
 }

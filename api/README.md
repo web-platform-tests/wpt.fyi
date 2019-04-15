@@ -300,9 +300,9 @@ __Parameters__
 __`sha`__ : SHA of the [WPT](https://github.com/web-platform-tests/wpt) repo PR for which to fetch,
     the manifest, or the keyword `latest`. (Defaults to `latest`.)
 
-NOTE: The full SHA of the fetched manifest is returned in the HTTP response header `x-wpt-sha`, e.g.
+NOTE: The full SHA of the fetched manifest is returned in the HTTP response header `X-WPT-SHA`, e.g.
 
-    x-wpt-sha: abcdef0123456789abcdef0123456789abcdef01
+    X-WPT-SHA: abcdef0123456789abcdef0123456789abcdef01
 
 __Response format__
 
@@ -355,8 +355,11 @@ __`callback_url`__: (Optional) A URL that the processor should `POST` when succe
 create the TestRun. Defaults to /api/results/create in the current project's environment (e.g. wpt.fyi for
 wptdashboard, staging.wpt.fyi for wptdashboard-staging).
 
-__`result_file`__: A **gzipped** JSON file produced by `wpt run --log-wptreport`. This field can be
-repeated to include multiple files (for chunked reports).
+__`result_file`__: A **gzipped** JSON file produced by `wpt run --log-wptreport`.
+This field can be repeated to include multiple files (for chunked reports).
+
+__`screenshot_file`__: A **gzipped** screenshot database produced by `wpt run --log-screenshot`.
+This field can be repeated to include multiple links (for chunked reports).
 
 The JSON file roughly looks like this:
 
@@ -402,6 +405,9 @@ __Parameters__
 
 __`result_url`__: A URL to a **gzipped** JSON file produced by `wpt run --log-wptreport` (see above
 for its format). This field can be repeated to include multiple links (for chunked reports).
+
+__`screenshot_url`__: A URL to a **gzipped** screenshot database produced by `wpt run --log-screenshot`.
+This field can be repeated to include multiple links (for chunked reports).
 
 __`callback_url`__: (Optional) A URL that the processor should `POST` when successful, which will
 create the TestRun. Defaults to /api/results/create in the current project's environment (e.g. wpt.fyi for

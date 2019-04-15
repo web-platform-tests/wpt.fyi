@@ -26,7 +26,8 @@ type Client interface {
 		sha,
 		username string,
 		password string,
-		reportURLs []string,
+		resultURLs []string,
+		screenshotURLs []string,
 		labels []string) error
 }
 
@@ -41,13 +42,13 @@ type client struct {
 	aeAPI shared.AppEngineAPI
 }
 
-// CreateRun takes the given requirements and issues a POST request to collect the
-// given reportURLs
+// CreateRun issues a POST request to the results receiver with the given payload.
 func (c client) CreateRun(
 	sha,
 	username,
 	password string,
-	reportURLs []string,
+	resultURLs []string,
+	screenshotURLs []string,
 	labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
 	payload := make(url.Values)
@@ -56,8 +57,11 @@ func (c client) CreateRun(
 	if sha != "" {
 		payload.Add("revision", sha)
 	}
-	for _, url := range reportURLs {
+	for _, url := range resultURLs {
 		payload.Add("result_url", url)
+	}
+	for _, url := range screenshotURLs {
+		payload.Add("screenshot_url", url)
 	}
 	if labels != nil {
 		payload.Add("labels", strings.Join(labels, ","))

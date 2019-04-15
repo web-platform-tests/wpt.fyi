@@ -22,7 +22,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/lru"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 
-	log "github.com/sirupsen/logrus"
+	log "github.com/Hexcles/logrus"
 )
 
 var (

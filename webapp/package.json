@@ -1,14 +1,19 @@
 {
   "name": "wptdashboard",
+  "description": "Node packages leveraged by build rules for the wpt.fyi project.",
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/web-platform-tests/wpt.fyi.git"
+  },
   "devDependencies": {
     "@polymer/test-fixture": "^4.0.2",
     "babel-eslint": "^10.0.1",
     "eslint": "^4.14.0",
-    "eslint-plugin-html": "^5.0.0",
+    "eslint-plugin-html": "^5.0.3",
     "wct-browser-legacy": "^1.0.2",
     "web-component-tester": "^6.9.2"
   },
-  "description": "Node packages leveraged by build rules for the wpt.fyi project.",
   "scripts": {
     "test": "npm run wct",
     "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
@@ -17,7 +22,7 @@
     "wct": "wct --npm"
   },
   "dependencies": {
-    "@google-web-components/google-chart": "^3.0.0",
+    "@google-web-components/google-chart": "^3.0.4",
     "@polymer/iron-collapse": "^3.0.0",
     "@polymer/iron-form": "^3.0.0",
     "@polymer/iron-icons": "^3.0.0",
@@ -29,15 +34,17 @@
     "@polymer/paper-input": "^3.0.0",
     "@polymer/paper-item": "^3.0.0",
     "@polymer/paper-listbox": "^3.0.0",
-    "@polymer/paper-spinner": "^3.0.0",
+    "@polymer/paper-radio-button": "^3.0.1",
+    "@polymer/paper-radio-group": "^3.0.1",
+    "@polymer/paper-spinner": "^3.0.2",
     "@polymer/paper-styles": "^3.0.0",
     "@polymer/paper-tabs": "^3.0.0",
     "@polymer/paper-toast": "^3.0.0",
     "@polymer/paper-toggle-button": "^3.0.0",
     "@polymer/paper-tooltip": "^3.0.0",
-    "@polymer/polymer": "^3.0.0",
-    "@vaadin/vaadin-date-picker": "^3.3.2",
-    "@webcomponents/webcomponentsjs": "^2.2.4",
+    "@polymer/polymer": "^3.2.0",
+    "@vaadin/vaadin-date-picker": "^3.3.4",
+    "@webcomponents/webcomponentsjs": "^2.2.7",
     "pluralize": "^7.0.0"
   }
 }

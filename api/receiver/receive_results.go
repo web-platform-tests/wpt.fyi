@@ -6,13 +6,9 @@ package receiver
 
 import (
 	"fmt"
-	"io"
+	"mime/multipart"
 	"net/http"
-	"strings"
 	"sync"
-	"time"
-
-	"google.golang.org/appengine/taskqueue"
 
 	"github.com/google/uuid"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -27,24 +23,8 @@ const ResultsQueue = "results-arrival"
 // ResultsTarget is the target URL for results proccessing tasks.
 const ResultsTarget = "/api/results/process"
 
-// NumRetries is the number of retries the receiver will do to download results from a URL.
-const NumRetries = 3
-
-// DownloadTimeout is the timeout for downloading results.
-const DownloadTimeout = time.Second * 10
-
 // HandleResultsUpload handles the POST requests for uploading results.
-func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	var uploader string
-	if !a.IsAdmin() {
-		username, password, ok := r.BasicAuth()
-		if !ok || !a.authenticateUploader(username, password) {
-			http.Error(w, "Authentication error", http.StatusUnauthorized)
-			return
-		}
-		uploader = username
-	}
-
+func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	// Most form methods (e.g. FormValue) will call ParseMultipartForm and
 	// ParseForm if necessary; forms with either enctype can be parsed.
 	// FormValue gets either query params or form body entries, favoring
@@ -52,10 +32,17 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	// The default maximum form size is 32MB, which is also the max request
 	// size on AppEngine.
 
-	if uploader == "" {
+	var uploader string
+	if a.IsAdmin() {
 		uploader = r.FormValue("user")
 		if uploader == "" {
-			http.Error(w, "Cannot identify uploader", http.StatusBadRequest)
+			http.Error(w, "Please specify uploader", http.StatusBadRequest)
+			return
+		}
+	} else {
+		uploader = AuthenticateUploader(a, r)
+		if uploader == "" {
+			http.Error(w, "Authentication error", http.StatusUnauthorized)
 			return
 		}
 	}
@@ -74,114 +61,92 @@ func HandleResultsUpload(a AppEngineAPI, w http.ResponseWriter, r *http.Request)
 	}
 
 	log := shared.GetLogger(a.Context())
-	var results int
-	var getFile func(i int) (io.ReadCloser, error)
+	var results, screenshots []string
 	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
 		// result_file[] payload
 		files := r.MultipartForm.File["result_file"]
-		log.Debugf("Found %v multipart form files", len(files))
-		results = len(files)
-		getFile = func(i int) (io.ReadCloser, error) {
-			return files[i].Open()
+		sFiles := r.MultipartForm.File["screenshot_file"]
+		log.Debugf("Found %d result files, %d screenshot files", results, screenshots)
+		var err error
+		results, screenshots, err = saveToGCS(a, uploader, files, sFiles)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+	} else if artifactName := getAzureArtifactName(r.PostForm.Get("result_url")); artifactName != "" {
+		// Special Azure case for result_url payload
+		azureURL := r.PostForm.Get("result_url")
+		log.Debugf("Found Azure URL: %s", azureURL)
+		extraParams["azure_url"] = azureURL
 	} else {
-		// result_url payload
-		urls := r.PostForm["result_url"]
-		results = len(urls)
-		log.Debugf("Found %v urls", results)
-		getFile = func(i int) (io.ReadCloser, error) {
-			return fetchFile(a, urls[i])
-		}
-		// Check for azure artifact URL, for unzipping.
-		if results == 1 {
-			artifactName := getAzureArtifactName(urls[0])
-			if artifactName != "" {
-				var err error
-				results, getFile, err = handleAzureArtifact(a, artifactName, urls[0])
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-			}
-		}
+		// General result_url[] payload
+		results = r.PostForm["result_url"]
+		screenshots = r.PostForm["screenshot_url"]
+		log.Debugf("Found %d result URLs, %d screenshot URLs", results, screenshots)
 	}
 
-	t, err := sendResultsToProcessor(a, uploader, results, getFile, extraParams)
+	t, err := a.ScheduleResultsTask(uploader, results, screenshots, extraParams)
 	if err != nil {
 		log.Errorf("%s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Debugf("Task %s added to queue", t.Name)
+	log.Infof("Task %s added to queue", t.Name)
 	fmt.Fprintf(w, "Task %s added to queue\n", t.Name)
 }
 
-func sendResultsToProcessor(
-	a AppEngineAPI, uploader string, results int, getFile func(int) (io.ReadCloser, error),
-	extraParams map[string]string) (*taskqueue.Task, error) {
-	if results == 0 {
-		return nil, fmt.Errorf("nothing uploaded")
-	}
-
+func saveToGCS(a API, uploader string, resultFiles, screenshotFiles []*multipart.FileHeader) (
+	resultGCS, screenshotGCS []string, err error) {
 	id := uuid.New()
-	var payloadType string
-	gcs := make([]string, 0, results)
-	if results > 1 {
-		payloadType = "multiple"
-		for i := 0; i < results; i++ {
-			gcsPath := fmt.Sprintf("/%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
-			gcs = append(gcs, gcsPath)
-		}
-	} else {
-		payloadType = "single"
-		gcsPath := fmt.Sprintf("/%s/%s/%s.json", BufferBucket, uploader, id)
-		gcs = append(gcs, gcsPath)
+	resultGCS = make([]string, len(resultFiles))
+	screenshotGCS = make([]string, len(screenshotFiles))
+	for i := range resultFiles {
+		resultGCS[i] = fmt.Sprintf("gs://%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
+	}
+	for i := range screenshotFiles {
+		screenshotGCS[i] = fmt.Sprintf("gs://%s/%s/%s/%d.db", BufferBucket, uploader, id, i)
 	}
 
-	errors := make(chan error, results)
 	var wg sync.WaitGroup
-	wg.Add(results)
-	for i, gcsPath := range gcs {
-		go func(i int, gcsPath string) {
-			defer wg.Done()
-			f, err := getFile(i)
-			if err != nil {
-				errors <- err
-				return
-			}
-			defer f.Close()
-			// TODO: Detect whether the fetched blob is gzipped.
-			if err := a.uploadToGCS(gcsPath, f, true); err != nil {
-				errors <- err
-			}
-		}(i, gcsPath)
+	moveFile := func(errors chan error, file *multipart.FileHeader, gcsPath string) {
+		defer wg.Done()
+		f, err := file.Open()
+		if err != nil {
+			errors <- err
+			return
+		}
+		defer f.Close()
+		// TODO(Hexcles): Detect whether the file is gzipped.
+		// TODO(Hexcles): Retry after failures.
+		if err := a.UploadToGCS(gcsPath, f, true); err != nil {
+			errors <- err
+		}
+	}
+
+	errors1 := make(chan error, len(resultFiles))
+	errors2 := make(chan error, len(screenshotFiles))
+	wg.Add(len(resultFiles) + len(screenshotFiles))
+	for i, gcsPath := range resultGCS {
+		moveFile(errors1, resultFiles[i], gcsPath)
+	}
+	for i, gcsPath := range screenshotGCS {
+		moveFile(errors2, screenshotFiles[i], gcsPath)
 	}
 	wg.Wait()
-	close(errors)
+	close(errors1)
+	close(errors2)
 
-	var errStr string
-	for err := range errors {
-		errStr += strings.TrimSpace(err.Error()) + "\n"
+	mErr := shared.NewMultiErrorFromChan(errors1, fmt.Sprintf("storing results from %s to GCS", uploader))
+	if mErr != nil {
+		// Result errors are fatal.
+		shared.GetLogger(a.Context()).Errorf(mErr.Error())
+		return nil, nil, mErr
 	}
-	if errStr != "" {
-		return nil, fmt.Errorf("error(s) occured when transferring results from %s to GCS:\n%s", uploader, errStr)
+	mErr = shared.NewMultiErrorFromChan(errors2, fmt.Sprintf("storing screenshots from %s to GCS", uploader))
+	if mErr != nil {
+		// Screenshot errors are not fatal.
+		shared.GetLogger(a.Context()).Warningf(mErr.Error())
+		screenshotGCS = nil
 	}
-
-	return a.scheduleResultsTask(uploader, gcs, payloadType, extraParams)
-}
-
-func fetchFile(a AppEngineAPI, url string) (io.ReadCloser, error) {
-	log := shared.GetLogger(a.Context())
-	sleep := time.Second
-	for retry := 0; retry < NumRetries; retry++ {
-		body, err := a.fetchWithTimeout(url, DownloadTimeout)
-		if err == nil {
-			return body, nil
-		}
-		log.Errorf("[%d/%d] error requesting %s: %s", retry+1, NumRetries, url, err.Error())
-
-		time.Sleep(sleep)
-		sleep *= 2
-	}
-	return nil, fmt.Errorf("failed to fetch %s", url)
+	return resultGCS, screenshotGCS, nil
 }

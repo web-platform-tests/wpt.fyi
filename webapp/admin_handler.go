@@ -9,26 +9,27 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+
+	"google.golang.org/appengine/memcache"
 
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-
-	"google.golang.org/appengine/memcache"
 )
 
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 	showAdminUploadForm(a, w, r)
 }
 
-func showAdminUploadForm(a receiver.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	assertLoginAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", nil)
+func showAdminUploadForm(a shared.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
+	assertAdminAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", nil)
 }
 
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	data := struct {
@@ -37,7 +38,7 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 		Host: a.GetHostname(),
 	}
 	if r.Method == "GET" {
-		assertLoginAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)
+		assertAdminAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)
 	} else if r.Method == "POST" {
 		if !a.IsAdmin() {
 			http.Error(w, "Admin only", http.StatusUnauthorized)
@@ -57,22 +58,13 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func assertLoginAndRenderTemplate(
-	a receiver.AppEngineAPI,
+func assertAdminAndRenderTemplate(
+	a shared.AppEngineAPI,
 	w http.ResponseWriter,
 	r *http.Request,
 	redirectPath,
 	template string,
 	data interface{}) {
-	if !a.IsLoggedIn() {
-		loginURL, err := a.LoginURL(redirectPath)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
-		return
-	}
 	if !a.IsAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)
 		return
@@ -86,9 +78,9 @@ func assertLoginAndRenderTemplate(
 
 func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	a := receiver.NewAppEngineAPI(ctx)
+	a := shared.NewAppEngineAPI(ctx)
 
-	if !a.IsLoggedIn() || !a.IsAdmin() {
+	if !a.IsAdmin() {
 		http.Error(w, "Admin only", http.StatusUnauthorized)
 		return
 	}
@@ -97,4 +89,42 @@ func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write([]byte("Successfully flushed cache"))
 	}
+}
+
+func adminResultsNotifyHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
+	a := receiver.NewAPI(ctx)
+
+	runIDStr := r.PostFormValue("run_id")
+	runID, err := strconv.ParseInt(runIDStr, 0, 0)
+	if err != nil {
+		log.Errorf("Invalid run_id %s", runIDStr)
+		http.Error(w, fmt.Sprintf("Invalid run_id %s", runIDStr), http.StatusBadRequest)
+		return
+	}
+
+	store := shared.NewAppEngineDatastore(ctx, true)
+	run := new(shared.TestRun)
+	if err = store.Get(store.NewIDKey("TestRun", runID), run); err != nil {
+		log.Errorf("run_id %s not found", runIDStr)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	n := shared.NewNotificationsAPI(a)
+
+	spec := run.ProductSpec()
+	title := fmt.Sprintf("New %s results available", spec.DisplayName())
+	msg := fmt.Sprintf("Results are now available for %s", run.String())
+	path := fmt.Sprintf("/results/?run_id=%v", run.ID)
+	icon := spec.IconPath()
+	if err = n.SendPushNotification(title, msg, path, &icon); err != nil {
+		log.Errorf("Error sending notifications: %s", err.Error())
+	}
+	w.WriteHeader(http.StatusOK)
 }

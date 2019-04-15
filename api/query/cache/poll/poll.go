@@ -46,14 +46,14 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval
 				errs[i] = err
 				if err != nil {
 					if err == index.ErrRunExists() {
-						logger.Infof("Not updating run (already exists): %v", run)
+						logger.Debugf("Not updating run (already exists): %v", run)
 					} else if err == index.ErrRunLoading() {
-						logger.Infof("Not updating run (already loading): %v", run)
+						logger.Debugf("Not updating run (already loading): %v", run)
 					} else {
 						logger.Errorf("Error ingesting run: %v: %v", run, err)
 					}
 				} else {
-					logger.Infof("Updated run index; new run: %v", run)
+					logger.Debugf("Updated run index; new run: %v", run)
 					found = true
 					lastLoadTime = time.Now()
 				}
