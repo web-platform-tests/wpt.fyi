@@ -65,7 +65,7 @@ func TestHandleResultsCreate(t *testing.T) {
 
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	mockAE.EXPECT().scheduleResultsNotifications(gomock.Any()).AnyTimes()
+	mockAE.EXPECT().ScheduleResultsNotifications(gomock.Any()).AnyTimes()
 	mockS := mock_checks.NewMockAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().GetUploader("_processor").Return(shared.Uploader{"_processor", "secret-token"}, nil),
@@ -109,7 +109,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	mockAE.EXPECT().scheduleResultsNotifications(gomock.Any()).AnyTimes()
+	mockAE.EXPECT().ScheduleResultsNotifications(gomock.Any()).AnyTimes()
 	mockS := mock_checks.NewMockAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().GetUploader("_processor").Return(shared.Uploader{"_processor", "secret-token"}, nil),
