@@ -83,6 +83,8 @@ func (n notificationsAPIImpl) SendPushNotification(
 		for i, sub := range subs {
 			opts := webpush.Options{
 				HTTPClient:      urlfetch.Client(ctx),
+				Subscriber:      "mailto:ecosystem-infra-internal@google.com",
+				VAPIDPublicKey:  subscriptionsPublicKey,
 				VAPIDPrivateKey: subscriptionsPrivateKey,
 			}
 			resp, err := webpush.SendNotification(
