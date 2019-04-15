@@ -51,6 +51,9 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           display: none;
           width: 800px;
         }
+        #source {
+          min-width: 800px;
+        }
         #source.before #after,
         #source.after #before {
           display: none;
@@ -101,9 +104,11 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         </div>
 
 
-        <p id="error-message">Failed to load images. Some historical runs (before 2019-04-01) and
-        some runners did not have complete screenshots. Please file an issue using the link on the
-        left if you think something is wrong.</p>
+        <p id="error-message">
+          Failed to load images. Some historical runs (before 2019-04-01) and
+          some runners did not have complete screenshots. Please file an issue using the link on the
+          left if you think something is wrong.
+        </p>
 
         <div id="display">
           <img id="before" onmousemove="[[zoom]]" crossorigin="anonymous" on-error="showError" />
@@ -320,7 +325,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
   showError() {
     this.shadowRoot.querySelector('#display').style.display = 'none';
-    this.shadowRoot.querySelector('#error-message').style.display = 'unset';
+    this.shadowRoot.querySelector('#error-message').style.display = 'block';
   }
 }
 window.customElements.define(ReftestAnalyzer.is, ReftestAnalyzer);
