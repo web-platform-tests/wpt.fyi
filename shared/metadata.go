@@ -16,7 +16,7 @@ import (
 // MetadataFlag determines whether Metadata Information returns along
 // with a test result query request.
 // TODO(kyleju): Remove this flag once feauture is launched.
-const MetadataFlag = "metadataInfo"
+const MetadataKey = "metadataInfo"
 
 // MetadataResponse is a response to a wpt-metadata query.
 type MetadataResponse struct {

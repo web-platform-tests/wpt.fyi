@@ -144,11 +144,6 @@ func getMemcacheKey(testRun shared.TestRun) string {
 }
 
 func isRequestCacheable(r *http.Request) bool {
-	q := r.URL.Query()
-	if _, showMetadata := q[shared.MetadataFlag]; showMetadata {
-		return false
-	}
-
 	if r.Method == "GET" {
 		ids, err := shared.ParseRunIDsParam(r.URL.Query())
 		return err == nil && len(ids) > 0
