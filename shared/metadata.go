@@ -13,7 +13,7 @@ import (
 	"github.com/web-platform-tests/wpt-metadata/util"
 )
 
-// MetadataFlag determines whether Metadata Information returns along
+// MetadataKey determines whether Metadata Information returns along
 // with a test result query request.
 // TODO(kyleju): Remove this flag once feauture is launched.
 const MetadataKey = "metadataInfo"
