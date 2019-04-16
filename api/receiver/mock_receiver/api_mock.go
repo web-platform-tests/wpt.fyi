@@ -55,20 +55,6 @@ func (mr *MockAPIMockRecorder) AddTestRun(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTestRun", reflect.TypeOf((*MockAPI)(nil).AddTestRun), arg0)
 }
 
-// AuthenticateUploader mocks base method
-func (m *MockAPI) AuthenticateUploader(arg0, arg1 string) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AuthenticateUploader", arg0, arg1)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// AuthenticateUploader indicates an expected call of AuthenticateUploader
-func (mr *MockAPIMockRecorder) AuthenticateUploader(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticateUploader", reflect.TypeOf((*MockAPI)(nil).AuthenticateUploader), arg0, arg1)
-}
-
 // Context mocks base method
 func (m *MockAPI) Context() context.Context {
 	m.ctrl.T.Helper()
@@ -81,21 +67,6 @@ func (m *MockAPI) Context() context.Context {
 func (mr *MockAPIMockRecorder) Context() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockAPI)(nil).Context))
-}
-
-// FetchGzip mocks base method
-func (m *MockAPI) FetchGzip(arg0 string, arg1 time.Duration) (io.ReadCloser, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchGzip", arg0, arg1)
-	ret0, _ := ret[0].(io.ReadCloser)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchGzip indicates an expected call of FetchGzip
-func (mr *MockAPIMockRecorder) FetchGzip(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchGzip", reflect.TypeOf((*MockAPI)(nil).FetchGzip), arg0, arg1)
 }
 
 // GetGitHubClient mocks base method

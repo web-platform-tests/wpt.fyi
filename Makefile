@@ -37,7 +37,7 @@ test: go_test python_test
 lint: go_lint eslint
 
 prepush: VERBOSE := $() # Empty out the verbose flag.
-prepush: go_build test lint
+prepush: go_build go_test lint
 
 python_test: python3 tox
 	cd $(WPTD_PATH)results-processor; tox
@@ -175,7 +175,7 @@ sys_deps: curl gpg node gcloud git
 
 curl: apt-get-curl
 git: apt-get-git
-python3: apt-get-python3
+python3: apt-get-python3.6
 python: apt-get-python
 tox: apt-get-tox
 wget: apt-get-wget

@@ -25,13 +25,16 @@ _log = logging.getLogger(__name__)
 
 # Global variables to be initialized in workers:
 _api = 'API URL to be initialized'
+_auth = ('username', 'password')
 _run_info = {}
 
 
-def _initialize(api, run_info):
+def _initialize(api, auth, run_info):
     global _api
+    global _auth
     global _run_info
     _api = api
+    _auth = auth
     _run_info = run_info
 
 
@@ -45,10 +48,10 @@ def _upload(images):
             'browser_version': _run_info.get('browser_version'),
             'os': _run_info.get('os'),
             'os_version': _run_info.get('os_version')}
-    r = requests.post(_api, data=data, files=files)
+    r = requests.post(_api, auth=_auth, data=data, files=files)
     if r.status_code != 201:
         time.sleep(1)
-        requests.post(_api, data=data, files=files)
+        requests.post(_api, auth=_auth, data=data, files=files)
 
 # End of worker functions
 ############################
@@ -61,7 +64,8 @@ class WPTScreenshot(object):
     """
     MAXIMUM_BATCH_SIZE = 100
 
-    def __init__(self, filename, run_info=None, api=None, processes=None):
+    def __init__(self, filename,
+                 run_info=None, api=None, auth=None, processes=None):
         """Creates a WPTScreenshot context manager.
 
         Usage:
@@ -74,11 +78,13 @@ class WPTScreenshot(object):
             run_info: A finalized WPTReport.run_info dict (important fields:
                 product, browser_version, os, os_version) (optional).
             api: The URL of the API (optional).
+            auth: A (username, password) tuple for HTTP basic auth (optional).
             processes: The number of worker processes (defaults to cpu*2).
         """
         self._filename = filename
         self._run_info = run_info or {}
         self._api = api or config.project_baseurl() + '/api/screenshots/upload'
+        self._auth = auth
         self._processes = processes or os.cpu_count() * 2
 
         self._f = None
@@ -89,7 +95,8 @@ class WPTScreenshot(object):
         assert self._pool is None
         assert self._f is None
         self._pool = multiprocessing.Pool(
-            self._processes, _initialize, [self._api, self._run_info])
+            self._processes, _initialize,
+            (self._api, self._auth, self._run_info))
         if self._filename.endswith('.gz'):
             self._f = gzip.open(self._filename, 'rt', encoding='ascii')
         else:

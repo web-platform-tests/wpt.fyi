@@ -7,6 +7,7 @@
 import argparse
 import logging
 import sys
+import time
 
 import flask
 
@@ -22,6 +23,24 @@ def screenshots_upload():
     sys.stderr.write('{}\n'.format(num))
     sys.stderr.flush()
     return ('Success', 201)
+
+
+@app.route('/slow', methods=['GET'])
+def slow():
+    time.sleep(30)
+    return 'Done'
+
+
+@app.route('/download/attachment', methods=['GET'])
+def download_attachment():
+    return flask.send_file('artifact_test.zip',
+                           as_attachment=True,
+                           attachment_filename='artifact_test.zip')
+
+
+@app.route('/download/test.txt', methods=['GET'])
+def download_json():
+    return 'Hello, world!'
 
 
 if __name__ == '__main__':

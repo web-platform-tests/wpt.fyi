@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
+	"strconv"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -120,4 +122,34 @@ func (a apiImpl) GetBuild(owner, repo string, buildID int64) *Build {
 	log.Debugf("Source branch: %s", build.SourceBranch)
 	log.Debugf("Trigger PR branch: %s", build.TriggerInfo.SourceBranch)
 	return &build
+}
+
+// HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.
+func HandleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
+	log := shared.GetLogger(aeAPI.Context())
+	status := event.GetCheckRun().GetStatus()
+	if status != "completed" {
+		log.Infof("Ignoring non-completed status %s", status)
+		return false, nil
+	}
+	owner := event.GetRepo().GetOwner().GetLogin()
+	repo := event.GetRepo().GetName()
+	sender := event.GetSender().GetLogin()
+	detailsURL := event.GetCheckRun().GetDetailsURL()
+	buildID := extractBuildID(detailsURL)
+	if buildID == 0 {
+		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
+		return false, nil
+	}
+	return processBuild(aeAPI, azureAPI, owner, repo, sender, "", buildID)
+}
+
+func extractBuildID(detailsURL string) int64 {
+	parsedURL, err := url.Parse(detailsURL)
+	if err != nil {
+		return 0
+	}
+	id := parsedURL.Query().Get("buildId")
+	parsedID, _ := strconv.ParseInt(id, 0, 0)
+	return parsedID
 }

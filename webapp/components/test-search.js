@@ -39,8 +39,19 @@ const QUERY_GRAMMAR = ohm.grammar(`
     Q = ListOf<RootExp, space*>
 
     RootExp
-      = "seq(" ListOf<Exp, space*> ")" -- sequential
+      = Sequential
+      | Count
       | Exp
+
+    Sequential = "seq(" ListOf<Exp, space*> ")"
+
+    Count = CountSpecifier "(" Exp ")"
+
+    CountSpecifier
+      = "count:" number -- countN
+      | "three"         -- count3
+      | "two"           -- count2
+      | "one"           -- count1
 
     Exp = NonemptyListOf<OrPart, or>
 
@@ -144,10 +155,20 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     // Nested ands, on the other hand, require all conditions to be met by the same run.
     return ps.length === 0 ? emptyQuery : {exists: ps };
   },
-  RootExp_sequential: (_, l, __) => {
+  Sequential: (_, l, __) => {
     const ps = l.eval();
     return ps.length === 0 ? emptyQuery : {sequential: ps };
   },
+  Count: (cs, _, exp, __) => {
+    return {
+      count: cs.eval(),
+      where: exp.eval(),
+    }
+  },
+  CountSpecifier_countN: (_, n) => n.eval(),
+  CountSpecifier_count3: (_) => 3,
+  CountSpecifier_count2: (_) => 2,
+  CountSpecifier_count1: (_) => 1,
   Exp: l => {
     const ps = l.eval();
     return ps.length === 1 ? ps[0] : {or: ps};
@@ -197,6 +218,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   },
   backslash: (v) => '\\',
   quotemark: (v) => '"',
+  number: (v) => parseInt(v.sourceString),
 });
 /* eslint-enable */
 

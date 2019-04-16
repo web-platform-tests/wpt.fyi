@@ -23,6 +23,9 @@ function cleanup() {
   local FILTER_ARG="traffic_split=0.0 last_deployed_time.datetime<$CUTOFF"
   local versions_to_delete=()
 
+  # Ensure remote branches are fetched.
+  git fetch origin
+
   for version in $( gcloud app versions list $PROJECT_ARG $SERVICE_ARG --filter="$FILTER_ARG" --format="value(id)" ); do
     if ! git show-ref --quiet --verify refs/remotes/origin/$version; then
       debug "'$version' is not a branch in upstream and will be deleted."
