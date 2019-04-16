@@ -15,7 +15,6 @@ import (
 
 // MetadataKey determines whether Metadata Information returns along
 // with a test result query request.
-// TODO(kyleju): Remove this flag once feauture is launched.
 const MetadataKey = "metadataInfo"
 
 // MetadataResponse is a response to a wpt-metadata query.
