@@ -6,9 +6,9 @@
 import '/components/reftest-analyzer.js';
 
 document.body.addEventListener('keydown', e => {
-  if (e.which == 49) {
+  if (e.which == 49) { // The '1' key
     document.querySelector('reftest-analyzer').selectedImage = 'before';
-  } else if (e.which === 50) {
+  } else if (e.which === 50) { // The '2' key
     document.querySelector('reftest-analyzer').selectedImage = 'after';
   }
 });
