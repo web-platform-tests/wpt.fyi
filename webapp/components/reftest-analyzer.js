@@ -40,8 +40,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         }
         #display {
           position: relative;
-          height: 800px;
-          width: 1000px;
+          height: 600px;
+          width: 800px;
         }
         #display svg,
         #display img {
@@ -53,6 +53,9 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           position: absolute;
           display: none;
           width: 800px;
+        }
+        #source {
+          min-width: 800px;
         }
         #source.before #after,
         #source.after #before {
@@ -104,13 +107,15 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         </div>
 
 
-        <p id="error-message">Failed to load images. Some historical runs (before 2019-04-01) and
-        some runners did not have complete screenshots. Please file an issue using the link on the
-        left if you think something is wrong.</p>
+        <p id="error-message">
+          Failed to load images. Some historical runs (before 2019-04-01) and
+          some runners did not have complete screenshots. Please file an issue using the link on the
+          left if you think something is wrong.
+        </p>
 
         <div id="display">
-          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" on-error="showError" />
-          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" on-error="showError" />
+          <img id="before" onmousemove="[[zoom]]" crossorigin="anonymous" on-error="showError" />
+          <img id="after" onmousemove="[[zoom]]" crossorigin="anonymous" on-error="showError" />
 
           <template is="dom-if" if="[[showDiff]]">
             <svg id="diff-layer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -170,8 +175,23 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   ready() {
     super.ready();
     this._createMethodObserver('computeDiff(canvasBefore, canvasAfter)');
-    this.setupZoomSVG();
-    this.setupCanvases();
+
+    // Set the img srcs manually so that we can promisify them being loaded.
+    const imagePromises = ['before', 'after'].map(prop => {
+      const img = this.shadowRoot.querySelector(`#${prop}`);
+      const loaded = new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      img.src = this[prop];
+      return loaded;
+    });
+    this.load(
+      Promise.all(imagePromises).then(async() => {
+        await this.setupZoomSVG();
+        await this.setupCanvases();
+      })
+    );
   }
 
   async setupCanvases() {
@@ -182,9 +202,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   async makeCanvas(image) {
     const img = this.shadowRoot.querySelector(`#${image}`);
     if (!img.width) {
-      await new Promise(resolve => {
-        img.onload = resolve;
-      });
+      await new Promise(resolve => img.onload = img.onerror = resolve);
     }
     var canvas = document.createElement('canvas');
     canvas.width = img.width;
@@ -315,7 +333,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
   showError() {
     this.shadowRoot.querySelector('#display').style.display = 'none';
-    this.shadowRoot.querySelector('#error-message').style.display = 'unset';
+    this.shadowRoot.querySelector('#error-message').style.display = 'block';
   }
 }
 window.customElements.define(ReftestAnalyzer.is, ReftestAnalyzer);
