@@ -2,11 +2,23 @@
 <html>
 <head>
 {{ template "_head_common.html" }}
-<script type="module" src="/components/reftest-analyzer.js"></script>
+<script type="module">
+import '/components/reftest-analyzer.js';
+
+document.body.addEventListener('keydown', e => {
+  if (e.which == 49) { // The '1' key
+    document.querySelector('reftest-analyzer').selectedImage = 'before';
+  } else if (e.which === 50) { // The '2' key
+    document.querySelector('reftest-analyzer').selectedImage = 'after';
+  }
+});
+</script>
 </head>
 <body>
 <div id="content">
-  <reftest-analyzer before="{{.Before}}" after="{{.After}}"></reftest-analyzer>
+  <reftest-analyzer before="{{.Before}}"
+                    after="{{.After}}">
+  </reftest-analyzer>
 </div>
 {{ template "_ga.html" }}
 </body>
