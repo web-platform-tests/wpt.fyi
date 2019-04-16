@@ -46,7 +46,7 @@ go_build: git mockgen
 	cd $(WPTD_GO_PATH); go get ./...
 	cd $(WPTD_GO_PATH); go generate ./...
 
-go_build_test: go_build
+go_build_test: go_build apt-get-gcc
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
 go_lint: golint_deps go_test_tag_lint
@@ -64,7 +64,7 @@ go_test_tag_lint:
 	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
-go_test: apt-get-gcc go_small_test go_medium_test
+go_test: go_small_test go_medium_test
 
 go_small_test: go_build_test
 	cd $(WPTD_GO_PATH); go test -tags=small $(VERBOSE) ./...
