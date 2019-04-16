@@ -51,6 +51,9 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           display: none;
           width: 800px;
         }
+        #source {
+          min-width: 800px;
+        }
         #source.before #after,
         #source.after #before {
           display: none;
@@ -101,9 +104,11 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         </div>
 
 
-        <p id="error-message">Failed to load images. Some historical runs (before 2019-04-01) and
-        some runners did not have complete screenshots. Please file an issue using the link on the
-        left if you think something is wrong.</p>
+        <p id="error-message">
+          Failed to load images. Some historical runs (before 2019-04-01) and
+          some runners did not have complete screenshots. Please file an issue using the link on the
+          left if you think something is wrong.
+        </p>
 
         <div id="display">
           <img id="before" onmousemove="[[zoom]]" crossorigin="anonymous" on-error="showError" />
@@ -168,17 +173,17 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     this._createMethodObserver('computeDiff(canvasBefore, canvasAfter)');
 
     // Set the img srcs manually so that we can promisify them being loaded.
-    const beforeImg = this.shadowRoot.querySelector('#before');
-    const afterImg = this.shadowRoot.querySelector('#after');
-    const beforeLoaded = new Promise((resolve) => beforeImg.onload = resolve);
-    const afterloaded = new Promise((resolve) => afterImg.onload = resolve);
-    beforeImg.src = this.before;
-    afterImg.src = this.after;
+    const imagePromises = ['before', 'after'].map(prop => {
+      const img = this.shadowRoot.querySelector(`#${prop}`);
+      const loaded = new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      img.src = this[prop];
+      return loaded;
+    });
     this.load(
-      Promise.all([
-        beforeLoaded,
-        afterloaded,
-      ]).then(async() => {
+      Promise.all(imagePromises).then(async() => {
         await this.setupZoomSVG();
         await this.setupCanvases();
       })
@@ -193,9 +198,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   async makeCanvas(image) {
     const img = this.shadowRoot.querySelector(`#${image}`);
     if (!img.width) {
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
+      await new Promise(resolve => img.onload = img.onerror = resolve);
     }
     var canvas = document.createElement('canvas');
     canvas.width = img.width;
@@ -320,7 +323,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
   showError() {
     this.shadowRoot.querySelector('#display').style.display = 'none';
-    this.shadowRoot.querySelector('#error-message').style.display = 'unset';
+    this.shadowRoot.querySelector('#error-message').style.display = 'block';
   }
 }
 window.customElements.define(ReftestAnalyzer.is, ReftestAnalyzer);
