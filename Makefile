@@ -64,7 +64,7 @@ go_test_tag_lint:
 	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
-go_test: go_small_test go_medium_test
+go_test: apt-get-gcc go_small_test go_medium_test
 
 go_small_test: go_build_test
 	cd $(WPTD_GO_PATH); go test -tags=small $(VERBOSE) ./...
