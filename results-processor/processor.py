@@ -4,213 +4,334 @@
 
 import logging
 import os
+import re
 import shutil
 import sys
 import tempfile
+import time
 import traceback
+import zipfile
 
-from google.cloud import datastore, storage
+import requests
+from google.cloud import datastore
 
 import config
 import gsutil
 import wptreport
 from wptscreenshot import WPTScreenshot
 
-
 _log = logging.getLogger(__name__)
-_datastore = datastore.Client()
 
 
-def _get_uploader_password(username):
-    """Gets the password for an uploader.
+class Processor(object):
+    USERNAME = '_processor'
+    # Timeout waiting for remote HTTP servers to respond
+    TIMEOUT_WAIT = 10
 
-    Datastore exceptions may be raised.
+    def __init__(self):
+        # Delay creating Datastore.client so that tests don't need creds.
+        self._datastore = None
+        self._auth = None
+        # Temporary directories to be created in __enter__:
+        self._temp_dir = '/tempdir/for/raw/results/screenshots'
+        self._upload_dir = '/tempdir/for/split/results'
 
-    Args:
-        username: A username (string).
+        # Local paths to downloaded results and screenshots:
+        self.results = []
+        self.screenshots = []
+        # To be loaded/initialized later:
+        self.report = wptreport.WPTReport()
+        self.test_run_id = 0
 
-    Returns:
-        A string, the password for this user.
-    """
-    return _datastore.get(_datastore.key('Uploader', username))['Password']
+    def __enter__(self):
+        self._temp_dir = tempfile.mkdtemp()
+        self._upload_dir = tempfile.mkdtemp()
+        return self
 
+    def __exit__(self, *args):
+        shutil.rmtree(self._temp_dir)
+        shutil.rmtree(self._upload_dir)
 
-def _find_run_by_raw_results(raw_results_url):
-    """Returns true if an existing run already has the same raw_results_url."""
-    q = _datastore.query(kind='TestRun')
-    q.add_filter('RawResultsURL', '=', raw_results_url)
-    q.keys_only()
-    run = list(q.fetch(limit=1))
-    return len(run) > 0
+    @property
+    def datastore(self):
+        """An authenticated Datastore client."""
+        if self._datastore is None:
+            self._datastore = datastore.Client()
+        return self._datastore
 
+    @property
+    def auth(self):
+        """A (username, password) tuple."""
+        if self._auth is None:
+            user = self.datastore.get(
+                self.datastore.key('Uploader', self.USERNAME))
+            self._auth = (user['Username'], user['Password'])
+        return self._auth
 
-def _process_chunk(report, gcs_path):
-    """Loads a chunk of wptreport into the merged report.
+    @property
+    def raw_results_gs_url(self):
+        return 'gs://{}/{}/report.json'.format(
+            config.raw_results_bucket(), self.report.sha_product_path)
 
-    Args:
-        report: A WPTReport into which the chunk is merged.
-        gcs_path: A gs:// URI to a chunk of report.
-    """
-    bucket_name, blob_path = gsutil.split_gcs_path(gcs_path)
-    gcs = storage.Client()
-    bucket = gcs.get_bucket(bucket_name)
-    blob = bucket.blob(blob_path)
-    with tempfile.NamedTemporaryFile(suffix='.json') as temp:
-        blob.download_to_file(temp)
-        temp.seek(0)
-        report.load_json(temp)
+    @property
+    def raw_results_url(self):
+        return gsutil.gs_to_public_url(self.raw_results_gs_url)
 
+    @property
+    def results_gs_url(self):
+        return 'gs://{}/{}'.format(
+            config.results_bucket(), self.report.sha_summary_path)
 
-# ==== Beginning of tasks ====
-# Tasks are supposed to be independent; exceptions are ignored (but logged).
-# Each task is a function that takes (report, test_run_id, screenshots_gcs).
+    @property
+    def results_url(self):
+        return gsutil.gs_to_public_url(self.results_gs_url)
 
-def _upload_screenshots(report, _, screenshots_gcs):
-    gcs = storage.Client()
-    for screenshot in screenshots_gcs:
-        bucket_name, blob_path = gsutil.split_gcs_path(screenshot)
-        bucket = gcs.get_bucket(bucket_name)
-        blob = bucket.blob(blob_path)
-        with tempfile.NamedTemporaryFile(suffix='.db') as temp:
-            blob.download_to_file(temp)
-            temp.flush()
-            with WPTScreenshot(temp.name, report.run_info) as s:
-                s.process()
+    def check_existing_run(self):
+        """Returns true if an existing run already has raw_results_url.
 
-# ==== End of tasks ====
+        This is used to abort early if the result already exists in Datastore.
+        It is safe because raw_results_url contains both the full revision &
+        checksum of the report content, unique enough to use as a UID.
 
+        Datastore does not support a query-and-put transaction, so this is
+        only a best effort to avoid duplicate runs.
+        """
+        q = self.datastore.query(kind='TestRun')
+        q.add_filter('RawResultsURL', '=', self.raw_results_url)
+        q.keys_only()
+        run = list(q.fetch(limit=1))
+        return len(run) > 0
 
-def _after_new_run(report, test_run_id, screenshots_gcs):
-    """Runs post-new-run tasks.
+    @staticmethod
+    def known_extension(path):
+        """Returns the extension of the path if known, otherwise None."""
+        EXT = ('.json.gz', '.txt.gz', '.gz', '.zip', '.json', '.txt')
+        for e in EXT:
+            if path.endswith(e):
+                return e
+        return None
 
-    Args:
-        report: A WPTReport.
-        test_run_id: The ID of the newly created test run.
+    def _download_gcs(self, gcs):
+        assert gcs.startswith('gs://')
+        ext = self.known_extension(gcs)
+        fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
+        os.close(fd)
+        # gsutil will log itself.
+        gsutil.copy(gcs, path)
+        return path
 
-    Returns:
-        A list of strings, names of the tasks that run successfully.
-    """
-    tasks = [_upload_screenshots]
-    success = []
-    for task in tasks:
-        _log.info('Running post-new-run task: %s', task.__name__)
+    def _download_http(self, url):
+        assert url.startswith('http://') or url.startswith('https://')
+        _log.debug("Downloading %s", url)
         try:
-            task(report, test_run_id, screenshots_gcs)
-        except Exception:
-            traceback.print_exc()
-        else:
-            success.append(task.__name__)
-    return success
+            r = requests.get(url, stream=True, timeout=self.TIMEOUT_WAIT)
+            r.raise_for_status()
+        except requests.RequestException:
+            # Sleep 1 second and retry.
+            time.sleep(1)
+            try:
+                r = requests.get(url, stream=True, timeout=self.TIMEOUT_WAIT)
+                r.raise_for_status()
+            except requests.Timeout:
+                _log.error("Timed out fetching: %s", url)
+                return None
+            except requests.HTTPError:
+                _log.error("Failed to fetch (%d): %s", r.status_code, url)
+                return None
+        ext = (self.known_extension(r.headers.get('Content-Disposition', ''))
+               or self.known_extension(url))
+        fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
+        with os.fdopen(fd, mode='wb') as f:
+            for chunk in r.iter_content(chunk_size=512*1024):
+                f.write(chunk)
+        # Closing f will automatically close the underlying fd.
+        return path
 
+    def _download_single(self, uri):
+        if uri.startswith('gs://'):
+            return self._download_gcs(uri)
+        return self._download_http(uri)
 
-def process_report(params):
-    # Mandatory fields:
-    uploader = params['uploader']
-    results_gcs = params.getlist('gcs')
-    screenshots_gcs = params.getlist('screenshots')
-    # Optional fields:
-    run_id = params.get('run_id', '0')
-    callback_url = params.get('callback_url')
-    labels = params.get('labels', '')
+    def _download_azure(self, azure_url):
+        artifact = self._download_http(azure_url)
+        with zipfile.ZipFile(artifact, mode='r') as z:
+            for f in z.infolist():
+                # ZipInfo.is_dir isn't available in Python 3.5.
+                if f.filename.endswith('/'):
+                    continue
+                path = z.extract(f, path=self._temp_dir)
+                if re.match(r'^.*/wpt_report.*\.json$', f.filename):
+                    self.results.append(path)
+                if re.match(r'^.*/wpt_screenshot.*\.txt$', f.filename):
+                    self.screenshots.append(path)
 
-    report = wptreport.WPTReport()
-    try:
-        for gcs_path in results_gcs:
-            _process_chunk(report, gcs_path)
-        # To be deprecated once all reports have all the required metadata.
-        report.update_metadata(
-            revision=params.get('revision'),
-            browser_name=params.get('browser_name'),
-            browser_version=params.get('browser_version'),
-            os_name=params.get('os_name'),
-            os_version=params.get('os_version'),
-        )
-        report.finalize()
-    except wptreport.WPTReportError:
-        etype, e, tb = sys.exc_info()
-        e.path = str(results_gcs)
-        # This will register an error in Stackdriver.
-        traceback.print_exception(etype, e, tb)
-        # The input is invalid and there is no point to retry, so we return an
-        # empty (but successful) response to tell TaskQueue to drop the task.
-        return ''
+    def download(self, results, screenshots, azure_url):
+        """Downloads all necessary inputs.
 
-    resp = "{} results loaded from: {}\n".format(
-        len(report.results), ' '.join(results_gcs))
+        Args:
+            results: A list of results URIs (gs:// or https?://).
+            screenshots: A list of screenshots URIs (gs:// or https?://).
+            azure_url: A HTTP URL to an Azure build artifact.
+        """
+        if azure_url:
+            assert not results
+            assert not screenshots
+            self._download_azure(azure_url)
+            return
+        self.results = [
+            p for p in (self._download_single(i) for i in results)
+            if p is not None]
+        self.screenshots = [
+            p for p in (self._download_single(i) for i in screenshots)
+            if p is not None]
 
-    raw_results_gs_url = 'gs://{}/{}/report.json'.format(
-        config.raw_results_bucket(), report.sha_product_path)
-    raw_results_url = gsutil.gs_to_public_url(raw_results_gs_url)
+    def load_report(self):
+        """Loads and merges all downloaded results."""
+        for r in self.results:
+            self.report.load_file(r)
 
-    # Abort early if the result already exists in Datastore. This is safe to do
-    # because raw_results_url contains both the full revision & checksum of the
-    # report content, unique enough to use as a UID.
-    if _find_run_by_raw_results(raw_results_url):
-        _log.warning(
-            'Skipping the task because RawResultsURL already exists: %s',
-            raw_results_url)
-        return ''
+    def upload_raw(self):
+        """Uploads the merged raw JSON report to GCS."""
+        with tempfile.NamedTemporaryFile(
+                suffix='.json.gz', dir=self._temp_dir) as temp:
+            self.report.serialize_gzip(temp.name)
+            gsutil.copy(temp.name, self.raw_results_gs_url, gzipped=True)
 
-    if len(results_gcs) == 1:
-        # If the original report isn't chunked, we store it directly without
-        # the roundtrip to serialize it back.
-        gsutil.copy('gs:/' + results_gcs[0], raw_results_gs_url)
-    else:
-        with tempfile.NamedTemporaryFile(suffix='.json.gz') as temp:
-            report.serialize_gzip(temp.name)
-            gsutil.copy(temp.name, raw_results_gs_url, gzipped=True)
+    def upload_split(self):
+        """Uploads the individual results recursively to GCS."""
+        self.report.populate_upload_directory(output_dir=self._upload_dir)
 
-    tempdir = tempfile.mkdtemp()
-    try:
-        report.populate_upload_directory(output_dir=tempdir)
         # 1. Copy [ID]-summary.json.gz to gs://wptd/[SHA]/[ID]-summary.json.gz.
-        results_gs_url = 'gs://{}/{}'.format(
-            config.results_bucket(), report.sha_summary_path)
         gsutil.copy(
-            os.path.join(tempdir, report.sha_summary_path),
-            results_gs_url,
+            os.path.join(self._upload_dir, self.report.sha_summary_path),
+            self.results_gs_url,
             gzipped=True)
 
         # 2. Copy the individual results recursively if there is any (i.e. if
         # the report is not empty).
-        results_dir = os.path.join(tempdir, report.sha_product_path)
+        results_dir = os.path.join(
+            self._upload_dir, self.report.sha_product_path)
         if os.path.exists(results_dir):
             # gs://wptd/[SHA] is guaranteed to exist after 1, so copying foo to
             # gs://wptd/[SHA] will create gs://wptd/[SHA]/foo according to
             # `gsutil cp --help`.
             gsutil.copy(
                 results_dir,
-                'gs://{}/{}'.format(config.results_bucket(),
-                                    report.run_info['revision']),
-                gzipped=True, quiet=True)
-        resp += "Uploaded to {}\n".format(results_gs_url)
-    finally:
-        shutil.rmtree(tempdir)
+                self.results_gs_url[:self.results_gs_url.rfind('/')],
+                gzipped=True)
 
-    # Check again because the upload takes a long time.
-    # Datastore does not support a query-and-put transaction, so this is only a
-    # best effort to avoid duplicate runs.
-    if _find_run_by_raw_results(raw_results_url):
-        _log.warning(
-            'Skipping the task because RawResultsURL already exists: %s',
-            raw_results_url)
-        return ''
+    def create_run(self, run_id, labels, uploader, callback_url=None):
+        """Creates a TestRun record.
 
-    # Authenticate as "_processor" for create-test-run API.
-    secret = _get_uploader_password('_processor')
-    test_run_id = wptreport.create_test_run(
-        report,
-        run_id,
-        labels,
-        uploader,
-        secret,
-        gsutil.gs_to_public_url(results_gs_url),
-        raw_results_url,
-        callback_url)
-    assert test_run_id
+        Args:
+            run_id: A string of pre-allocated run ID ('0' if unallocated).
+            labels: A comma-separated string of extra labels.
+            uploader: The name of the uploader.
+            callback_url: URL of the test run creation API (optional).
+        """
+        self.test_run_id = wptreport.create_test_run(
+            self.report,
+            run_id,
+            labels,
+            uploader,
+            self.auth,
+            self.results_url,
+            self.raw_results_url,
+            callback_url)
+        assert self.test_run_id
 
-    success = _after_new_run(report, test_run_id, screenshots_gcs)
-    if success:
-        resp += "Successfully ran hooks: {}\n".format(', '.join(success))
+    def run_hooks(self, tasks):
+        """Runs post-new-run tasks.
 
-    return resp
+        Args:
+            tasks: A list of functions that take a single Processor argument.
+        """
+        for task in tasks:
+            _log.info('Running post-new-run task: %s', task.__name__)
+            try:
+                task(self)
+            except Exception:
+                traceback.print_exc()
+
+
+# ==== Beginning of tasks ====
+# Tasks are supposed to be independent; exceptions are ignored (but logged).
+# Each task is a function that takes a Processor.
+
+def _upload_screenshots(processor):
+    for screenshot in processor.screenshots:
+        with WPTScreenshot(screenshot, processor.report.run_info,
+                           auth=processor.auth) as s:
+            s.process()
+
+# ==== End of tasks ====
+
+
+def process_report(task_id, params):
+    # Mandatory fields (will throw if key does not exist):
+    uploader = params['uploader']
+    # Optional fields:
+    azure_url = params.get('azure_url')
+    run_id = params.get('run_id', '0')
+    callback_url = params.get('callback_url')
+    labels = params.get('labels', '')
+    # Repeatable fields
+    results = params.getlist('results')
+    screenshots = params.getlist('screenshots')
+
+    response = []
+    with Processor() as p:
+        _log.info("Downloading results & screenshots")
+        p.download(results, screenshots, azure_url)
+        if len(p.results) == 0:
+            _log.error("No results successfully downloaded")
+            return ''
+        try:
+            p.load_report()
+            # To be deprecated once all reports have all the required metadata.
+            p.report.update_metadata(
+                revision=params.get('revision'),
+                browser_name=params.get('browser_name'),
+                browser_version=params.get('browser_version'),
+                os_name=params.get('os_name'),
+                os_version=params.get('os_version'),
+            )
+            p.report.finalize()
+        except wptreport.WPTReportError:
+            etype, e, tb = sys.exc_info()
+            e.path = str(results)
+            # This will register an error in Stackdriver.
+            traceback.print_exception(etype, e, tb)
+            # The input is invalid and there is no point to retry, so we return
+            # an empty (but successful) response to drop the task.
+            return ''
+
+        if p.check_existing_run():
+            _log.warning(
+                'Skipping the task because RawResultsURL already exists: %s',
+                p.raw_results_url)
+            return ''
+        response.append("{} results loaded from task {}".format(
+            len(p.report.results), task_id))
+
+        _log.info("Uploading merged raw report")
+        p.upload_raw()
+        response.append("raw_results_url: " + p.raw_results_url)
+
+        _log.info("Uploading split results")
+        p.upload_split()
+        response.append("results_url: " + p.results_url)
+
+        # Check again because the upload takes a long time.
+        if p.check_existing_run():
+            _log.warning(
+                'Skipping the task because RawResultsURL already exists: %s',
+                p.raw_results_url)
+            return ''
+
+        p.create_run(run_id, labels, uploader, callback_url)
+        response.append("run ID: {}".format(p.test_run_id))
+
+        p.run_hooks([_upload_screenshots])
+
+    return '\n'.join(response)

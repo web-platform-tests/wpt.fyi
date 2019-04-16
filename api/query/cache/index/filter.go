@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
+	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -50,6 +50,13 @@ type runTestStatusEq struct {
 type runTestStatusNeq struct {
 	index
 	q query.RunTestStatusNeq
+}
+
+// Count is a query.Count bound to an in-memory index.
+type Count struct {
+	index
+	count int
+	args  []filter
 }
 
 // And is a query.And bound to an in-memory index.
@@ -125,6 +132,18 @@ func (rtsn runTestStatusNeq) Filter(t TestID) bool {
 	return rtsn.runResults[RunID(rtsn.q.Run)].GetResult(t) != ResultID(rtsn.q.Status)
 }
 
+// Filter interprets a Count as a filter function over TestIDs.
+func (c Count) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches == c.count
+}
+
 // Filter interprets an And as a filter function over TestIDs.
 func (a And) Filter(t TestID) bool {
 	args := a.args
@@ -169,6 +188,12 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return runTestStatusEq{idx, v}, nil
 	case query.RunTestStatusNeq:
 		return runTestStatusNeq{idx, v}, nil
+	case query.Count:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return Count{idx, v.Count, fs}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {

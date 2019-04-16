@@ -11,13 +11,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -57,7 +54,7 @@ func TestUploadToGCS(t *testing.T) {
 	mGcs := mockGcs{}
 	a.gcs = &mGcs
 
-	err := a.UploadToGCS("/test_bucket/path/to/test.json", strings.NewReader("test content"), false)
+	err := a.UploadToGCS("gs://test_bucket/path/to/test.json", strings.NewReader("test content"), false)
 	assert.Nil(t, err)
 	assert.Equal(t, "test_bucket", mGcs.mockWriter.bucketName)
 	assert.Equal(t, "path/to/test.json", mGcs.mockWriter.fileName)
@@ -70,17 +67,17 @@ func TestUploadToGCS_handlesErrors(t *testing.T) {
 
 	errNew := fmt.Errorf("error creating writer")
 	a.gcs = &mockGcs{errOnNew: errNew}
-	err := a.UploadToGCS("/bucket/test.json", strings.NewReader(""), false)
+	err := a.UploadToGCS("gs://bucket/test.json", strings.NewReader(""), false)
 	assert.Equal(t, errNew, err)
 
 	errClose := fmt.Errorf("error closing writer")
 	a.gcs = &mockGcs{mockWriter: mockGcsWriter{errOnClose: errClose}}
-	err = a.UploadToGCS("/bucket/test.json", strings.NewReader(""), false)
+	err = a.UploadToGCS("gs://bucket/test.json", strings.NewReader(""), false)
 	assert.Equal(t, errClose, err)
 
 	a.gcs = &mockGcs{}
-	err = a.UploadToGCS("test.json", strings.NewReader(""), false)
-	assert.EqualError(t, err, "invalid GCS path: test.json")
+	err = a.UploadToGCS("/bucket/test.json", strings.NewReader(""), false)
+	assert.EqualError(t, err, "invalid GCS path: /bucket/test.json")
 }
 
 func TestScheduleResultsTask(t *testing.T) {
@@ -95,8 +92,8 @@ func TestScheduleResultsTask(t *testing.T) {
 	a := NewAPI(ctx).(*apiImpl)
 	// dev_appserver does not support non-default queues, so we override the name of the queue here.
 	a.queue = ""
-	results := []string{"/blade-runner/test.json"}
-	screenshots := []string{"/blade-runner/test.db"}
+	results := []string{"gs://blade-runner/test.json", "http://wpt.fyi/test.json.gz"}
+	screenshots := []string{"gs://blade-runner/test.db"}
 	task, err := a.ScheduleResultsTask("blade-runner", results, screenshots, nil)
 	assert.Nil(t, err)
 
@@ -104,7 +101,7 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, task.Name, payload.Get("id"))
 	assert.Equal(t, "blade-runner", payload.Get("uploader"))
-	assert.Equal(t, results, payload["gcs"])
+	assert.Equal(t, results, payload["results"])
 	assert.Equal(t, screenshots, payload["screenshots"])
 
 	stats, err = taskqueue.QueueStats(ctx, []string{""})
@@ -139,44 +136,16 @@ func TestAuthenticateUploader(t *testing.T) {
 	defer done()
 	a := NewAPI(ctx)
 
-	assert.False(t, a.AuthenticateUploader("user", "123"))
+	req := httptest.NewRequest("", "/api/foo", &bytes.Buffer{})
+	assert.Equal(t, "", AuthenticateUploader(a, req))
 
-	key := datastore.NewKey(ctx, "Uploader", "user", 0, nil)
-	datastore.Put(ctx, key, &shared.Uploader{Username: "user", Password: "123"})
-	assert.True(t, a.AuthenticateUploader("user", "123"))
-}
+	req.SetBasicAuth(InternalUsername, "123")
+	assert.Equal(t, "", AuthenticateUploader(a, req))
 
-func TestFetchWithTimeout_success(t *testing.T) {
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
-	a := NewAPI(ctx)
+	key := datastore.NewKey(ctx, "Uploader", InternalUsername, 0, nil)
+	datastore.Put(ctx, key, &shared.Uploader{Username: InternalUsername, Password: "123"})
+	assert.Equal(t, InternalUsername, AuthenticateUploader(a, req))
 
-	hello := []byte("Hello, world!")
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write(hello)
-	})
-	server := httptest.NewServer(handler)
-	defer server.Close()
-
-	body, err := a.FetchGzip(server.URL, time.Second)
-	assert.Nil(t, err)
-	defer body.Close()
-	content, err := ioutil.ReadAll(body)
-	assert.Nil(t, err)
-	assert.Equal(t, hello, content)
-}
-
-func TestFetchWithTimeout_404(t *testing.T) {
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
-	a := NewAPI(ctx)
-
-	server := httptest.NewServer(http.NotFoundHandler())
-	defer server.Close()
-
-	body, err := a.FetchGzip(server.URL, time.Second)
-	assert.Nil(t, body)
-	assert.EqualError(t, err, "server returned 404 Not Found")
+	req.SetBasicAuth(InternalUsername, "456")
+	assert.Equal(t, "", AuthenticateUploader(a, req))
 }

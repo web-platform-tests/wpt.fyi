@@ -81,6 +81,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
 
     .th-label {
       padding: 0.2em 0.5em;
+      cursor: pointer;
     }
 
     tr.spec {
@@ -221,8 +222,12 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
         <tr>
           <th>&nbsp;</th>
           <!-- Repeats for as many different browser test runs are available, plus one -->
-          <template is="dom-repeat" items="{{ thLabels }}" as="label">
-            <th class="th-label">{{ label }}</th>
+          <template is="dom-repeat" items="{{ thLabels }}" as="label" index-as="i">
+            <th class="th-label" onclick="[[sortBy(i)]]">
+              {{ label }}
+              <template is="dom-if" if="[[sortedBy(sortColumn, i)]]">▼</template>
+              <template is="dom-if" if="[[sortedByAsc(sortColumn, i)]]">▲</template>
+            </th>
           </template>
           <template is="dom-if" if="[[ interopScoreColumn ]]">
             <th>Interop score</th>
@@ -276,7 +281,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       displayedNodes: {
         type: Array,
         value: [],
-        computed: 'computeDisplayedNodes(path, displayedTests)',
+        computed: 'computeDisplayedNodes(path, displayedTests, sortColumn)',
       },
       thLabels: {
         type: Array,
@@ -299,6 +304,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
         type: Boolean,
         value: false,
       },
+      sortColumn: String, // Maybe-negative index into interop array.
     };
   }
 
@@ -319,6 +325,11 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
     };
+    this.sortBy = (i) => () => {
+      this.sortColumn = `${this.sortedBy(this.sortColumn, i) ? '-' : ''}${i}`;
+    };
+    this.sortedBy = (sortColumn, i) => sortColumn === `${i}`;
+    this.sortedByAsc = (sortColumn, i) => sortColumn === `-${i}`;
   }
 
   connectedCallback() {
@@ -504,7 +515,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     this.navigateToPath(path);
   }
 
-  computeDisplayedNodes(path, displayedTests) {
+  computeDisplayedNodes(path, displayedTests, sortColumn) {
     if (!displayedTests) {
       return [];
     }
@@ -555,17 +566,30 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
           return acc;
         };
       })(), [])
-      .sort(this.nodeSort);
+      .sort(this.nodeSort(sortColumn));
   }
 
-  nodeSort(a, b) {
-    if (a.path < b.path) {
-      return -1;
-    }
-    if (a.path > b.path) {
-      return 1;
-    }
-    return 0;
+  nodeSort(sortColumn) {
+    return (a, b) => {
+      const v = [a, b].map(node => {
+        if (sortColumn) {
+          return node.interop[Math.abs(parseInt(sortColumn))] / node.total;
+        }
+        return node.path;
+      });
+      let val = -1;
+      if (sortColumn) {
+        if (sortColumn.substr(0, 1) !== '-') {
+          val = 1;
+        }
+      }
+      if (v[0] < v[1]) {
+        return val;
+      } else if (v[0] > v[1]) {
+        return -val;
+      }
+      return 0;
+    };
   }
 
   handleSubmitQuery() {

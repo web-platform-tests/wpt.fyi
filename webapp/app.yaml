@@ -56,4 +56,3 @@ skip_files:
 - package-lock.json
 - package.json
 - wct.conf.json
-- .*/artifact_test.zip

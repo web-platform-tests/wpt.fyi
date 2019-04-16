@@ -23,7 +23,7 @@ type MultiError struct {
 //
 // Note that it uses `range` over the channel, so users need to close the
 // channel before calling this function or running it in a goroutine.
-func NewMultiErrorFromChan(errors chan error, when string) *MultiError {
+func NewMultiErrorFromChan(errors chan error, when string) error {
 	var multiError MultiError
 	for err := range errors {
 		multiError.errors = append(multiError.errors, err)
@@ -36,14 +36,14 @@ func NewMultiErrorFromChan(errors chan error, when string) *MultiError {
 	return nil
 }
 
-func (e MultiError) Error() string {
+func (e *MultiError) Error() string {
 	if len(e.errors) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%d error(s) occured when %s:\n%s", len(e.errors), e.when, e.errStr)
+	return fmt.Sprintf("%d error(s) occurred when %s:\n%s", len(e.errors), e.when, e.errStr)
 }
 
 // Count returns the number of errors in this MultiError.
-func (e MultiError) Count() int {
+func (e *MultiError) Count() int {
 	return len(e.errors)
 }

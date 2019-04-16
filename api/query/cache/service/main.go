@@ -26,7 +26,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
-	log "github.com/sirupsen/logrus"
+	log "github.com/Hexcles/logrus"
 )
 
 var (

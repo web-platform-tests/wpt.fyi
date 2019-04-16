@@ -1,0 +1,10 @@
+schedule: "every week"
+
+requirements:
+  - results-processor/requirements-top_level.txt:
+      # This file is manually maintained, with only the top-level dependencies.
+      update: False
+      pin: False
+  - results-processor/requirements.txt:
+      update: all
+      pin: True

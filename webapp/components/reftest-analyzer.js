@@ -11,6 +11,7 @@ import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
 import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import { LoadingState } from './loading-state.js';
 
 const nsSVG = 'http://www.w3.org/2000/svg';
@@ -28,11 +29,16 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         #zoom svg {
           height: 250px;
           width: 250px;
+          margin: 10px 0;
+          border: 1px solid;
+        }
+        #zoom #info {
+          width: 280px;
         }
         #display {
           position: relative;
-          height: 800px;
-          width: 1000px;
+          height: 600px;
+          width: 800px;
         }
         #display svg,
         #display img {
@@ -40,14 +46,17 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
           left: 0;
           top: 0;
         }
+        #error-message {
+          position: absolute;
+          display: none;
+          width: 800px;
+        }
+        #source {
+          min-width: 800px;
+        }
         #source.before #after,
         #source.after #before {
           display: none;
-        }
-        #diff-layer filter,
-        #diff-layer rect {
-          height: 100%;
-          width: 100%;
         }
         #options {
           display: flex;
@@ -57,28 +66,53 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
         }
       </style>
 
-      <div id='zoom'>
+      <div id="zoom">
         <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="optimizeSpeed">
           <g id="zoomed">
             <rect width="250" height="250" fill="white"/>
           </g>
         </svg>
+
+        <div id="info">
+          <strong>Pixel at:</strong> [[curX]], [[curY]] <br>
+          <strong>Actual:</strong> [[getRGB(canvasBefore, curX, curY)]] <br>
+          <strong>Expected:</strong> [[getRGB(canvasAfter, curX, curY)]] <br>
+          <p>
+            The grid above is a zoomed-in view of the 5&times;5 pixels around your cursor.
+            When actual and expected pixels are different, the upper-left half shows the
+            actual and the lower-right half shows the expected.
+          </p>
+          <p>
+            Any suggestions?
+            <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?template=screenshots.md&projects=web-platform-tests/wpt.fyi/9" target="_blank">File an issue!</a>
+          </p>
+        </div>
       </div>
 
       <div id="source" class$="[[selectedImage]]">
         <div id="options">
           <paper-radio-group selected="{{selectedImage}}">
-            <paper-radio-button name="before">Image before</paper-radio-button>
-            <paper-radio-button name="after">Image after</paper-radio-button>
+            <paper-radio-button name="before">Actual screenshot</paper-radio-button>
+            <paper-radio-button name="after">Expected screenshot</paper-radio-button>
           </paper-radio-group>
-          <paper-checkbox name="diff" checked="{{showDiff}}">Differences</paper-checkbox>
+          <paper-checkbox id="diff-button" checked="{{showDiff}}">Highlight diff</paper-checkbox>
+          <paper-tooltip for="diff-button">
+            Apply a semi-transparent mask over the selected image, and highlight
+            the areas where two images differ with a solid 1px red border.
+          </paper-tooltip>
           <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
         </div>
 
 
+        <p id="error-message">
+          Failed to load images. Some historical runs (before 2019-04-01) and
+          some runners did not have complete screenshots. Please file an issue using the link on the
+          left if you think something is wrong.
+        </p>
+
         <div id="display">
-          <img id="before" onmousemove="[[zoom]]" src="[[before]]" crossorigin="anonymous" />
-          <img id="after" onmousemove="[[zoom]]" src="[[after]]" crossorigin="anonymous" />
+          <img id="before" onmousemove="[[zoom]]" crossorigin="anonymous" on-error="showError" />
+          <img id="after" onmousemove="[[zoom]]" crossorigin="anonymous" on-error="showError" />
 
           <template is="dom-if" if="[[showDiff]]">
             <svg id="diff-layer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -92,11 +126,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
                   <feFlood result="red" flood-color="#f00" />
                   <feComposite result="highlight" in="red" in2="border" operator="in" />
 
-                  <feFlood id="shadow" result="shadow" flood-color="#000" flood-opacity="0.2" />
-                  <feMerge>
-                    <feMergeNode in="highlight" />
-                    <feMergeNode in="shadow" />
-                  </feMerge>
+                  <feFlood id="shadow" result="shadow" flood-color="#fff" flood-opacity="0.8" />
+                  <feBlend in="shadow" in2="highlight" mode="multiply" />
                 </filter>
               </defs>
               <rect onmousemove="[[zoom]]" filter="url(#diff-filter)" />
@@ -113,6 +144,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
   static get properties() {
     return {
+      curX: Number,
+      curY: Number,
       before: String,
       after: String,
       selectedImage: {
@@ -138,8 +171,23 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   ready() {
     super.ready();
     this._createMethodObserver('computeDiff(canvasBefore, canvasAfter)');
-    this.setupZoomSVG();
-    this.setupCanvases();
+
+    // Set the img srcs manually so that we can promisify them being loaded.
+    const imagePromises = ['before', 'after'].map(prop => {
+      const img = this.shadowRoot.querySelector(`#${prop}`);
+      const loaded = new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      img.src = this[prop];
+      return loaded;
+    });
+    this.load(
+      Promise.all(imagePromises).then(async() => {
+        await this.setupZoomSVG();
+        await this.setupCanvases();
+      })
+    );
   }
 
   async setupCanvases() {
@@ -150,9 +198,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
   async makeCanvas(image) {
     const img = this.shadowRoot.querySelector(`#${image}`);
     if (!img.width) {
-      await new Promise(resolve => {
-        img.onload = resolve;
-      });
+      await new Promise(resolve => img.onload = img.onerror = resolve);
     }
     var canvas = document.createElement('canvas');
     canvas.width = img.width;
@@ -190,6 +236,15 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     this.pathsAfter = pathsAfter;
   }
 
+  getRGB(canvas, x, y) {
+    if (!canvas || x === undefined || y === undefined) {
+      return;
+    }
+    const ctx = canvas.getContext('2d');
+    const p = ctx.getImageData(x, y, 1, 1).data;
+    return `RGB(${p[0]}, ${p[1]}, ${p[2]})`;
+  }
+
   computeDiff(canvasBefore, canvasAfter) {
     if (!canvasBefore || !canvasAfter) {
       return;
@@ -225,7 +280,10 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
       display.setAttribute('width', out.width);
       display.setAttribute('height', out.height);
       display.setAttributeNS(nsXLINK, 'xlink:href', this.diff);
-      const rect = this.shadowRoot.querySelector('#diff-layer');
+      const svg = this.shadowRoot.querySelector('#diff-layer');
+      svg.setAttribute('width', out.width);
+      svg.setAttribute('height', out.height);
+      const rect = this.shadowRoot.querySelector('#diff-layer rect');
       rect.setAttribute('width', out.width);
       rect.setAttribute('height', out.height);
       resolve();
@@ -236,27 +294,36 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     if (!this.canvasAfter || !this.canvasBefore) {
       return;
     }
+    const c = e.target.getBoundingClientRect();
+    // (x, y) is the current position on the image.
+    this.curX = e.clientX - c.left;
+    this.curY = e.clientY - c.top;
 
     for (const before of [true, false]) {
       const canvas = before ? this.canvasBefore : this.canvasAfter;
       const paths = before ? this.pathsBefore : this.pathsAfter;
       const ctx = canvas.getContext('2d');
-      const c = e.target.getBoundingClientRect();
-      const x = e.clientX - c.left - 2;
-      const y = e.clientY - c.top - 2;
+      // We extract a 5x5 square around (x, y): (x-2, y-2) .. (x+2, y+2).
+      const dx = this.curX - 2;
+      const dy = this.curY - 2;
       for (let i = 0; i < 5; i++) {
         for (let j = 0; j < 5; j++) {
-          if (x + i < 0 || x + i >= canvas.width || y + j < 0 || y + j >= canvas.height) {
+          if (dx + i < 0 || dx + i >= canvas.width || dy + j < 0 || dy + j >= canvas.height) {
             paths[i][j].fill = blankFill;
           } else {
-            const p = ctx.getImageData(x+i, y+j, 1, 1).data;
+            const p = ctx.getImageData(dx+i, dy+j, 1, 1).data;
             const [r,g,b] = p;
             const a = p[3]/255;
-            paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a}`);
+            paths[i][j].setAttribute('fill', `rgba(${r},${g},${b},${a})`);
           }
         }
       }
     }
+  }
+
+  showError() {
+    this.shadowRoot.querySelector('#display').style.display = 'none';
+    this.shadowRoot.querySelector('#error-message').style.display = 'block';
   }
 }
 window.customElements.define(ReftestAnalyzer.is, ReftestAnalyzer);
