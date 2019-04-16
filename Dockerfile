@@ -8,11 +8,11 @@ FROM gcr.io/gcp-runtimes/go1-builder:1.11
 # See Dockerfiles in sub-directories for individual service deployments.
 #
 # Caveats:
-# - AppEngine Standard uses golang 1.8, whereas AppEngine Flex defaults to
-#   golang 1.10. This development environment uses the base image recommended
-#   for AppEngine Flex custom golang runtime, hence golang 1.10 is the default
+# - AppEngine Standard uses golang 1.9, whereas AppEngine Flex defaults to
+#   golang 1.11. This development environment uses the base image recommended
+#   for AppEngine Flex custom golang runtime, hence golang 1.11 is the default
 #   golang toolchain. However, when using the gcloud dev_appserver toolchain,
-#   it will internally use a custom golang 1.8 environment.
+#   it will internally use a custom golang 1.9 environment.
 #
 
 USER root
