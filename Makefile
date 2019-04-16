@@ -103,7 +103,8 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-teste
 		-browser=$(BROWSER) \
 		$(FLAGS)
 
-web_components_test: xvfb firefox chrome webapp_node_modules_all
+# NOTE: psmisc includes killall, needed by wct.sh
+web_components_test: xvfb firefox chrome webapp_node_modules_all apt-get-psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
 
 sys_update: apt_update | sys_deps
