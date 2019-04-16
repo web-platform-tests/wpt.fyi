@@ -1,4 +1,4 @@
-FROM gcr.io/gcp-runtimes/go1-builder:1.10
+FROM gcr.io/gcp-runtimes/go1-builder:1.11
 
 #
 # Dockerfile suitable for development and continuous integration of all wpt.fyi
@@ -8,8 +8,8 @@ FROM gcr.io/gcp-runtimes/go1-builder:1.10
 # See Dockerfiles in sub-directories for individual service deployments.
 #
 # Caveats:
-# - AppEngine Standard uses golang 1.8, whereas AppEngine Flex defaults to 
-#   golang 1.10. This development environment uses the base image recommended 
+# - AppEngine Standard uses golang 1.8, whereas AppEngine Flex defaults to
+#   golang 1.10. This development environment uses the base image recommended
 #   for AppEngine Flex custom golang runtime, hence golang 1.10 is the default
 #   golang toolchain. However, when using the gcloud dev_appserver toolchain,
 #   it will internally use a custom golang 1.8 environment.
