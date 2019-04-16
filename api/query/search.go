@@ -217,7 +217,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	runIDsStr := strings.Join(runIDStrs, ",")
 	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
 
-	if _, showMetadata := q[shared.MetadataKey]; showMetadata {
+	if showMetadata, _ := shared.ParseBooleanParam(q, shared.MetadataKey); showMetadata != nil && *showMetadata {
 		r2.URL.RawQuery = fmt.Sprintf("%s&%s=%s", r2.URL.RawQuery, shared.MetadataKey, q[shared.MetadataKey])
 	}
 
@@ -234,7 +234,7 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	resp := prepareSearchResponse(filters, testRuns, summaries)
 
 	q := r.URL.Query()
-	if _, showMetadata := q[shared.MetadataKey]; showMetadata {
+	if showMetadata, _ := shared.ParseBooleanParam(q, shared.MetadataKey); showMetadata != nil && *showMetadata {
 		resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.queryHandler.client, sh.queryHandler.logger)
 	}
 

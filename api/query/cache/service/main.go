@@ -201,7 +201,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		resp.IgnoredRuns = missing
 	}
 
-	if _, showMetadata := urlQuery[shared.MetadataKey]; showMetadata {
+	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.MetadataKey); showMetadata != nil && *showMetadata {
 		var netClient = &http.Client{
 			Timeout: time.Second * 5,
 		}
