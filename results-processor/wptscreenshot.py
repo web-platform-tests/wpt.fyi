@@ -13,6 +13,7 @@ import time
 import requests
 
 import config
+import wptreport
 
 DATA_URI_PNG_PREFIX = 'data:image/png;base64,'
 
@@ -26,7 +27,7 @@ _log = logging.getLogger(__name__)
 # Global variables to be initialized in workers:
 _api = 'API URL to be initialized'
 _auth = ('username', 'password')
-_run_info = {}
+_run_info: wptreport.RunInfo = {}
 
 
 def _initialize(api, auth, run_info):
