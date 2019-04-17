@@ -9,6 +9,7 @@ import logging
 import multiprocessing
 import os
 import time
+from typing import List, IO, Optional, Tuple, TypeVar
 
 import requests
 
@@ -30,7 +31,7 @@ _auth = ('username', 'password')
 _run_info: wptreport.RunInfo = {}
 
 
-def _initialize(api, auth, run_info):
+def _initialize(api: str, auth: Tuple[str, str], run_info: wptreport.RunInfo):
     global _api
     global _auth
     global _run_info
@@ -39,7 +40,7 @@ def _initialize(api, auth, run_info):
     _run_info = run_info
 
 
-def _upload(images):
+def _upload(images: List[str]):
     files = []
     for i in range(len(images)):
         files.append((
@@ -58,6 +59,9 @@ def _upload(images):
 ############################
 
 
+T = TypeVar('T', bound='WPTScreenshot')
+
+
 class WPTScreenshot(object):
     """A class to parse screenshots.db and upload screenshots.
 
@@ -65,8 +69,11 @@ class WPTScreenshot(object):
     """
     MAXIMUM_BATCH_SIZE = 100
 
-    def __init__(self, filename,
-                 run_info=None, api=None, auth=None, processes=None):
+    def __init__(self, filename: str,
+                 run_info: Optional[wptreport.RunInfo] = None,
+                 api: Optional[str] = None,
+                 auth: Optional[Tuple[str, str]] = None,
+                 processes: Optional[int] = None):
         """Creates a WPTScreenshot context manager.
 
         Usage:
@@ -82,16 +89,19 @@ class WPTScreenshot(object):
             auth: A (username, password) tuple for HTTP basic auth (optional).
             processes: The number of worker processes (defaults to cpu*2).
         """
-        self._filename = filename
-        self._run_info = run_info or {}
-        self._api = api or config.project_baseurl() + '/api/screenshots/upload'
+        self._filename: str = filename
+        self._run_info: wptreport.RunInfo = run_info or {}
+        self._api: str = (api or
+                          config.project_baseurl() + '/api/screenshots/upload')
         self._auth = auth
-        self._processes = processes or os.cpu_count() * 2
+        if processes is None:
+            processes = (os.cpu_count() or 2) * 2
+        self._processes: int = processes
 
-        self._f = None
-        self._pool = None
+        self._f: Optional[IO[str]] = None
+        self._pool: Optional[multiprocessing.pool.Pool] = None
 
-    def __enter__(self):
+    def __enter__(self: T) -> T:
         """Starts and initializes all workers."""
         assert self._pool is None
         assert self._f is None
