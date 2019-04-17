@@ -1,7 +1,7 @@
 # Production deployment spec for query cache service.
 
-# Base golang 1.10 image.
-FROM gcr.io/gcp-runtimes/go1-builder:1.10 as builder
+# Base golang 1.11 image.
+FROM gcr.io/gcp-runtimes/go1-builder:1.11 as builder
 
 RUN apt-get update
 RUN apt-get install -qy --no-install-suggests git
