@@ -7,9 +7,7 @@ package metrics
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -357,7 +355,8 @@ func GetDatastoreKindName(data interface{}) string {
 		dataType = reflect.Indirect(reflect.ValueOf(
 			data)).Type()
 	}
-	return fmt.Sprintf("%s.%s",
-		strings.Replace(dataType.PkgPath(), "/", ".", -1),
-		dataType.Name())
+	// This package was originally in another repo. We need to hard
+	// code the original repo name here to avoid changing the Kind.
+	return "github.com.web-platform-tests.results-analysis.metrics." +
+		dataType.Name()
 }

@@ -124,3 +124,8 @@ func TestTestRunsLegacy_Convert(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, meta.TestRuns, converted)
 }
+
+func TestGetDatastoreKindName(t *testing.T) {
+	var m PassRateMetadata
+	assert.Equal(t, "github.com.web-platform-tests.results-analysis.metrics.PassRateMetadata", GetDatastoreKindName(m))
+}
