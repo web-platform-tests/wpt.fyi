@@ -218,7 +218,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
 
 	if showMetadata, _ := shared.ParseBooleanParam(q, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		r2.URL.RawQuery = fmt.Sprintf("%s&%s=%s", r2.URL.RawQuery, shared.ShowMetadataParam, q[shared.ShowMetadataParam])
+		r2.URL.RawQuery = fmt.Sprintf("%s&%s=%s", r2.URL.RawQuery, shared.ShowMetadataParam, q.Get(shared.ShowMetadataParam)
 	}
 
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
