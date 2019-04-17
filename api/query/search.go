@@ -71,7 +71,7 @@ type SearchResponse struct {
 	// Results is the collection of test results, grouped by test file name.
 	Results []SearchResult `json:"results"`
 	// MetadataResponse is a response to a wpt-metadata query.
-	MetadataResult shared.MetadataResults `json:"metadata,omitempty"`
+	MetadataResponse shared.MetadataResults `json:"metadata,omitempty"`
 }
 
 type byName []SearchResult
@@ -235,7 +235,7 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	q := r.URL.Query()
 	if showMetadata, _ := shared.ParseBooleanParam(q, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		resp.MetadataResult = shared.GetMetadataResponse(testRuns, sh.queryHandler.client, sh.queryHandler.logger)
+		resp.MetadataResponse = shared.GetMetadataResponse(testRuns, sh.queryHandler.client, sh.queryHandler.logger)
 	}
 
 	data, err := json.Marshal(resp)
