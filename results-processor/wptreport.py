@@ -14,30 +14,13 @@ import os
 import re
 import tempfile
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterator, IO, List, Optional, Union
+from typing import Any, Callable, Dict, Iterator, IO, List, Optional, Union, Set
 
 import requests
+from mypy_extensions import TypedDict
 
 import config
 import gsutil
-
-from mypy_extensions import TypedDict
-
-
-class RunInfo(TypedDict, total=False):
-    product: str
-    browser_version: str
-    browser_channel: str
-    revision: str
-    os: str
-    os_version: str
-
-class WptReport(TypedDict):
-    results: List[Dict]
-    run_info: RunInfo
-    time_start: Optional[float]
-    time_end: Optional[float]
-
 
 DEFAULT_PROJECT = 'wptdashboard'
 CHANNEL_TO_LABEL = {
@@ -54,6 +37,22 @@ CHANNEL_TO_LABEL = {
 IGNORED_CONFLICTS = {'browser_build_id', 'browser_changeset'}
 
 _log = logging.getLogger(__name__)
+
+
+class RunInfo(TypedDict, total=False):
+    product: str
+    browser_version: str
+    browser_channel: str
+    revision: str
+    os: str
+    os_version: str
+
+
+class RawWPTReport(TypedDict, total=False):
+    results: List[Dict]
+    run_info: RunInfo
+    time_start: float
+    time_end: float
 
 
 class WPTReportError(Exception):
@@ -130,13 +129,13 @@ class WPTReport(object):
 
     def __init__(self) -> None:
         self._hash = BufferedHashsum()
-        self._report: WptReport = {
+        self._report: RawWPTReport = {
             'results': [],
             'run_info': {},
         }
         self._summary: Dict[str, List[int]] = {}
 
-    def _add_chunk(self, chunk: WptReport) -> None:
+    def _add_chunk(self, chunk: RawWPTReport) -> None:
         self._report['results'].extend(chunk['results'])
 
         def update_property(key, source, target, conflict_func=None):
@@ -477,7 +476,7 @@ class WPTReport(object):
         self.write_gzip_json(filepath, self._report)
 
 
-def prepare_labels(report: WPTReport, labels_str: str, uploader: str) -> List[str]:
+def prepare_labels(report: WPTReport, labels_str: str, uploader: str) -> Set[str]:
     """Prepares the list of labels for a test run.
 
     The following labels will be automatically added:
