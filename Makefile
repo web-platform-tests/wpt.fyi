@@ -269,18 +269,6 @@ wpt_fyi_symlink:
 		ln -s $(WPTD_PATH) $(WPTD_GO_PATH); \
 	fi
 
-# symlinks the Go folder for the results-analysis project to (this) wpt.fyi folder's
-# sibling results-analysis folder.
-results_analysis_symlink: RESULTS_ANALYSIS_PATH := $(WPT_PATH)/results-analysis
-results_analysis_symlink: RESULTS_ANALYSIS_GO_PATH := $(WPT_GO_PATH)/results-analysis
-results_analysis_symlink:
-	@if [[ -L $(RESULTS_ANALYSIS_GO_PATH) && -d $(RESULTS_ANALYSIS_GO_PATH) ]]; \
-	then echo "Already a symlink"; \
-	else \
-		if [ -e $(RESULTS_ANALYSIS_GO_PATH) ]; then rm -r $(RESULTS_ANALYSIS_GO_PATH); fi; \
-		ln -s $(RESULTS_ANALYSIS_PATH) $(RESULTS_ANALYSIS_GO_PATH); \
-	fi
-
 gcloud-%: gcloud
 	gcloud components list --only-local-state --format="value(id)" 2>/dev/null | grep -q "$*" \
 		|| gcloud components install --quiet $*
