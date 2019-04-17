@@ -218,7 +218,8 @@ func (filter TestRunFilter) NextPage(loadedRuns TestRunsByProduct) *TestRunFilte
 			filter.Offset = &offset
 			return &filter
 		}
-	} else if filter.From != nil {
+	}
+	if filter.From != nil {
 		from := *filter.From
 		var to time.Time
 		if filter.To != nil {
