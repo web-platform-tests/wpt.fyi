@@ -201,12 +201,11 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		resp.IgnoredRuns = missing
 	}
 
-	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.MetadataKey); showMetadata != nil && *showMetadata {
+	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
 		var netClient = &http.Client{
 			Timeout: time.Second * 5,
 		}
-		ctx := context.Background()
-		resp.MetadataResult = shared.GetMetadataResponse(runs, netClient, shared.GetLogger(ctx))
+		resp.MetadataResult = shared.GetMetadataResponse(runs, netClient, log.StandardLogger())
 	}
 
 	data, err = json.Marshal(resp)

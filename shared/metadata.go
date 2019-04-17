@@ -13,14 +13,9 @@ import (
 	"github.com/web-platform-tests/wpt-metadata/util"
 )
 
-// MetadataKey determines whether Metadata Information returns along
+// ShowMetadataParam determines whether Metadata Information returns along
 // with a test result query request.
-const MetadataKey = "metadataInfo"
-
-// MetadataResponse is a response to a wpt-metadata query.
-type MetadataResponse struct {
-	MetadataResults
-}
+const ShowMetadataParam = "metadataInfo"
 
 // MetadataResults is a helper type for a MetadataResult slice.
 type MetadataResults []MetadataResult
@@ -58,10 +53,10 @@ func (m MetadataResults) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
-func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger) MetadataResponse {
+func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger) MetadataResults {
 	metadataByteMap, err := util.CollectMetadata(client)
 	if err != nil {
-		return MetadataResponse{}
+		return MetadataResults{}
 	}
 	metadata := parseMetadata(metadataByteMap, log)
 	return constructMetadataResponse(testRuns, metadata)
@@ -86,7 +81,7 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 // ConstructMetadataResponse constructs the response to a WPT Metadata query.
 // When parsing 'link' nodes, assume there is no mising information nor duplicates;
 // assume each test for each browser type is only associated with one bug.
-func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata) MetadataResponse {
+func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata) MetadataResults {
 	res := MetadataResults{}
 	for folderPath, data := range metadata {
 		testMap := make(map[string][]string)
@@ -130,6 +125,6 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 		}
 	}
 	sort.Sort(res)
-	return MetadataResponse{res}
+	return res
 
 }
