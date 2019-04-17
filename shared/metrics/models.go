@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
 )
 
 // SubTest models a single test within a WPT test file.
@@ -120,25 +119,17 @@ type TestRunsMetadataLegacy struct {
 
 // LoadTestRuns fetches the TestRun entities for the PassRateMetadata's TestRunIDs.
 func (metadata *TestRunsMetadata) LoadTestRuns(ctx context.Context) (err error) {
-	// TODO(lukebjerring): Shift to shared.TestRunIDs.LoadRuns(shared.Datastore) after wpt.fyi #978
-	keys := make([]*datastore.Key, len(metadata.TestRunIDs))
-	for i, id := range metadata.TestRunIDs {
-		keys[i] = datastore.NewKey(ctx, "TestRun", "", id, nil)
-	}
-	metadata.TestRuns = make(shared.TestRuns, len(keys))
-	return datastore.GetMulti(ctx, keys, metadata.TestRuns)
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	metadata.TestRuns, err = metadata.TestRunIDs.LoadTestRuns(ds)
+	return err
 }
 
 // LoadTestRuns fetches the TestRun entities for the PassRateMetadata's TestRunIDs.
 func (metadata *TestRunsMetadataLegacy) LoadTestRuns(ctx context.Context) (err error) {
 	if len(metadata.TestRuns) == 0 {
-		// TODO(lukebjerring): Shift to shared.TestRunIDs.LoadRuns(shared.Datastore) after wpt.fyi #978
-		keys := make([]*datastore.Key, len(metadata.TestRunIDs))
-		for i, id := range metadata.TestRunIDs {
-			keys[i] = datastore.NewKey(ctx, "TestRun", "", id, nil)
-		}
-		newRuns := make(shared.TestRuns, len(keys))
-		if err := datastore.GetMulti(ctx, keys, newRuns); err != nil {
+		ds := shared.NewAppEngineDatastore(ctx, false)
+		newRuns, err := metadata.TestRunIDs.LoadTestRuns(ds)
+		if err != nil {
 			return err
 		}
 		metadata.TestRuns, err = ConvertRuns(newRuns)
