@@ -96,7 +96,9 @@ class ConflictingDataError(WPTReportError):
 class BufferedHashsum(object):
     """A simple buffered hash calculator."""
 
-    def __init__(self, hash_ctor: Callable = hashlib.sha1, block_size: int = 1024*1024) -> None:
+    def __init__(self,
+                 hash_ctor: Callable = hashlib.sha1,
+                 block_size: int = 1024*1024) -> None:
         assert block_size > 0
         self._hash = hash_ctor()
         self._block_size = block_size
@@ -218,7 +220,8 @@ class WPTReport(object):
         with gzip.GzipFile(fileobj=fileobj, mode='rb') as gzip_file:
             self.load_json(cast(IO[bytes], gzip_file))
 
-    def update_metadata(self, revision: str = '', browser_name: str = '', browser_version: str = '',
+    def update_metadata(self, revision: str = '',
+                        browser_name: str = '', browser_version: str = '',
                         os_name: str = '', os_version: str = '') -> None:
         """Overwrites metadata of the report."""
         # Unfortunately, the names of the keys don't exactly match.
@@ -366,7 +369,8 @@ class WPTReport(object):
 
         return name
 
-    def populate_upload_directory(self, output_dir: Optional[str] = None) -> str:
+    def populate_upload_directory(self,
+                                  output_dir: Optional[str] = None) -> str:
         """Populates a directory suitable for uploading to GCS.
 
         The directory structure is as follows:
@@ -476,7 +480,9 @@ class WPTReport(object):
         self.write_gzip_json(filepath, self._report)
 
 
-def prepare_labels(report: WPTReport, labels_str: str, uploader: str) -> Set[str]:
+def prepare_labels(report: WPTReport,
+                   labels_str: str,
+                   uploader: str) -> Set[str]:
     """Prepares the list of labels for a test run.
 
     The following labels will be automatically added:
