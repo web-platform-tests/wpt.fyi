@@ -14,7 +14,7 @@ import os
 import re
 import tempfile
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterator, IO, List, Optional, Union, Set
+from typing import Any, Callable, Dict, Iterator, IO, List, Optional, Set, cast
 
 import requests
 from mypy_extensions import TypedDict
@@ -101,7 +101,7 @@ class BufferedHashsum(object):
         self._hash = hash_ctor()
         self._block_size = block_size
 
-    def hash_file(self, fileobj: Union[IO[bytes], gzip.GzipFile]) -> None:
+    def hash_file(self, fileobj: IO[bytes]) -> None:
         """Updates the hashsum from a given file.
 
         Calling this method on multiple files is equivalent to computing the
@@ -167,7 +167,7 @@ class WPTReport(object):
         update_property('time_start', chunk, self._report, min)
         update_property('time_end', chunk, self._report, max)
 
-    def load_file(self, filename):
+    def load_file(self, filename: str) -> None:
         """Loads wptreport from a local path.
 
         Args:
@@ -180,7 +180,7 @@ class WPTReport(object):
             else:
                 self.load_json(f)
 
-    def load_json(self, fileobj: Union[gzip.GzipFile, IO[bytes]]) -> None:
+    def load_json(self, fileobj: IO[bytes]) -> None:
         """Loads wptreport from a JSON file.
 
         This method can be called multiple times to load and merge new chunks.
@@ -198,7 +198,7 @@ class WPTReport(object):
         fileobj.seek(0)
 
         # JSON files are always encoded in UTF-8 (RFC 8529).
-        with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:  # type: ignore
+        with io.TextIOWrapper(fileobj, encoding='utf-8') as text_file:
             try:
                 report = json.load(text_file, strict=False)
             except json.JSONDecodeError as e:
@@ -216,7 +216,7 @@ class WPTReport(object):
         """
         # Gzip is always opened in binary mode (in fact, r == rb for gzip).
         with gzip.GzipFile(fileobj=fileobj, mode='rb') as gzip_file:
-            self.load_json(gzip_file)
+            self.load_json(cast(IO[bytes], gzip_file))
 
     def update_metadata(self, revision: str = '', browser_name: str = '', browser_version: str = '',
                         os_name: str = '', os_version: str = '') -> None:
@@ -234,7 +234,7 @@ class WPTReport(object):
             self._report['run_info']['os_version'] = os_version
 
     @staticmethod
-    def write_json(fileobj: Union[IO[bytes], gzip.GzipFile], payload: Any) -> None:
+    def write_json(fileobj: IO[bytes], payload: Any) -> None:
         """Encode an object to JSON and writes it to disk.
 
         Args:
@@ -245,7 +245,7 @@ class WPTReport(object):
         if isinstance(fileobj, io.TextIOBase):
             json.dump(payload, fileobj)
         else:
-            with io.TextIOWrapper(fileobj, encoding='ascii') as text_file:  # type: ignore
+            with io.TextIOWrapper(fileobj, encoding='ascii') as text_file:
                 json.dump(payload, text_file)
 
     @staticmethod
@@ -261,7 +261,7 @@ class WPTReport(object):
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, 'wb') as f:
             with gzip.GzipFile(fileobj=f, mode='wb') as gz:
-                WPTReport.write_json(gz, payload)
+                WPTReport.write_json(cast(IO[bytes], gz), payload)
 
     @property
     def results(self) -> List[Dict]:
