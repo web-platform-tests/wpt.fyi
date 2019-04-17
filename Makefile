@@ -150,7 +150,7 @@ firefox_install: firefox_deps bzip2 wget java
 	sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH)
 
 firefox_deps:
-	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox-esr | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \
