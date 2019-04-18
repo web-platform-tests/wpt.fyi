@@ -54,6 +54,7 @@ func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
 func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger) MetadataResults {
+	log.Warningf("herererere**************8888")
 	metadataByteMap, err := util.CollectMetadata(client)
 	if err != nil {
 		return MetadataResults{}
