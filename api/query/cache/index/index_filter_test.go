@@ -13,7 +13,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	metrics "github.com/web-platform-tests/results-analysis/metrics"
+	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )

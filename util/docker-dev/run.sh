@@ -18,7 +18,6 @@ WPTD_HOST_API_WEB_PORT=${WPTD_HOST_API_WEB_PORT:-"9999"}
 
 function usage() {
   USAGE="USAGE: $(basename ${0}) [-q] [-a] [-d]
-    -a  all: Also mount + symlink the sibling results-analysis directory
     -d  daemon mode: Run in the background rather than blocking then cleaning up
     -q  quiet mode: Assume default for all prompts"
   >&2 echo "${USAGE}"
@@ -42,8 +41,6 @@ while getopts ':dhaq' FLAG; do
     q)
       QUIET="true"
       PR="r" ;;
-    a)
-      RESULTS_ANALYSIS="true" ;;
     h|*) usage && exit 0 ;;
   esac
 done
@@ -97,9 +94,6 @@ set -e
 # wptd-dev                               Identify image to use
 
 VOLUMES="-v ${WPTD_PATH}:/home/user/wpt.fyi"
-if [[ "${RESULTS_ANALYSIS}" == "true" ]]; then
-  VOLUMES="${VOLUMES} -v ${WPT_PATH}/results-analysis:/home/user/results-analysis"
-fi
 
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
@@ -116,12 +110,6 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
 
   info "Ensuring the home directory is owned by the user..."
   wptd_chown "/home/user"
-
-  if [[ "${RESULTS_ANALYSIS}" == "true" ]]
-  then
-    info "Symlinking results-analysis..."
-    wptd_exec make results_analysis_symlink
-  fi
 
   info "Instance ${DOCKER_INSTANCE} started."
 elif [[ "${RUNNING_STATUS}" != "0" ]]; then

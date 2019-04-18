@@ -100,8 +100,7 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-teste
 		-chromedriver_path=$(CHROMEDRIVER_PATH) \
 		-frame_buffer=$(USE_FRAME_BUFFER) \
 		-staging=$(STAGING) \
-		-browser=$(BROWSER) \
-		$(FLAGS)
+		-browser=$(BROWSER) $(FLAGS)
 
 # NOTE: psmisc includes killall, needed by wct.sh
 web_components_test: xvfb firefox chrome webapp_node_modules_all apt-get-psmisc
@@ -150,7 +149,7 @@ firefox_install: firefox_deps bzip2 wget java
 	sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH)
 
 firefox_deps:
-	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox-esr | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \
@@ -267,18 +266,6 @@ wpt_fyi_symlink:
 	else \
 		if [ -e $(WPTD_GO_PATH) ]; then rm -r $(WPTD_GO_PATH); fi; \
 		ln -s $(WPTD_PATH) $(WPTD_GO_PATH); \
-	fi
-
-# symlinks the Go folder for the results-analysis project to (this) wpt.fyi folder's
-# sibling results-analysis folder.
-results_analysis_symlink: RESULTS_ANALYSIS_PATH := $(WPT_PATH)/results-analysis
-results_analysis_symlink: RESULTS_ANALYSIS_GO_PATH := $(WPT_GO_PATH)/results-analysis
-results_analysis_symlink:
-	@if [[ -L $(RESULTS_ANALYSIS_GO_PATH) && -d $(RESULTS_ANALYSIS_GO_PATH) ]]; \
-	then echo "Already a symlink"; \
-	else \
-		if [ -e $(RESULTS_ANALYSIS_GO_PATH) ]; then rm -r $(RESULTS_ANALYSIS_GO_PATH); fi; \
-		ln -s $(RESULTS_ANALYSIS_PATH) $(RESULTS_ANALYSIS_GO_PATH); \
 	fi
 
 gcloud-%: gcloud
