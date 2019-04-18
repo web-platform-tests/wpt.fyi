@@ -1,3 +1,4 @@
 env/
 .tox/
 __pycache__/
+.mypy_cache/
