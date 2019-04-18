@@ -3,6 +3,7 @@ package webdriver
 import (
 	"flag"
 	"fmt"
+	"log"
 	"path/filepath"
 
 	"github.com/tebeka/selenium"
@@ -28,6 +29,7 @@ func FirefoxWebDriver(port int, options []selenium.ServiceOption) (*selenium.Ser
 
 	service, err := selenium.NewGeckoDriverService(*geckoDriverPath, port, options...)
 	if err != nil {
+		log.Println("Failed to start GeckoDriver service: " + err.Error())
 		panic(err)
 	}
 
@@ -48,5 +50,10 @@ func FirefoxWebDriver(port int, options []selenium.ServiceOption) (*selenium.Ser
 	wd, err := selenium.NewRemote(
 		seleniumCapabilities,
 		fmt.Sprintf("http://127.0.0.1:%d", port))
+	if err != nil {
+		log.Println("Failed to start selenium remote with capabilites:")
+		log.Printf("%v\n", seleniumCapabilities)
+		log.Println(err.Error())
+	}
 	return service, wd, err
 }
