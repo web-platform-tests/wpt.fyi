@@ -300,7 +300,7 @@ class WPTReport(object):
             return self._summary
 
         for result in self.results:
-            test_file = result['test']
+            test_file = result['test'].strip()
 
             if test_file in self._summary:
                 raise ConflictingDataError(test_file)
@@ -342,7 +342,7 @@ class WPTReport(object):
         if directory.endswith('/'):
             directory = directory[:-1]
         for result in self.each_result():
-            test_file = result['test']
+            test_file = result['test'].strip()
             assert test_file.startswith('/')
             filepath = directory + test_file
             self.write_gzip_json(filepath, result)
