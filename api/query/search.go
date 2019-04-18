@@ -242,7 +242,6 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
 	w.Write(data)
 }
 
