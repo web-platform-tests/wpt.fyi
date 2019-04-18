@@ -31,7 +31,9 @@ _auth = ('username', 'password')
 _run_info: wptreport.RunInfo = {}
 
 
-def _initialize(api: str, auth: Tuple[str, str], run_info: wptreport.RunInfo):
+def _initialize(api: str,
+                auth: Tuple[str, str],
+                run_info: wptreport.RunInfo) -> None:
     global _api
     global _auth
     global _run_info
@@ -40,7 +42,7 @@ def _initialize(api: str, auth: Tuple[str, str], run_info: wptreport.RunInfo):
     _run_info = run_info
 
 
-def _upload(images: List[str]):
+def _upload(images: List[str]) -> None:
     files = []
     for i in range(len(images)):
         files.append((
@@ -55,9 +57,9 @@ def _upload(images: List[str]):
         time.sleep(1)
         requests.post(_api, auth=_auth, data=data, files=files)
 
+
 # End of worker functions
 ############################
-
 
 T = TypeVar('T', bound='WPTScreenshot')
 

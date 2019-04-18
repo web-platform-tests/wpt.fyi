@@ -20,7 +20,6 @@ import requests
 from mypy_extensions import TypedDict
 
 import config
-import gsutil
 
 DEFAULT_PROJECT = 'wptdashboard'
 CHANNEL_TO_LABEL = {
@@ -97,7 +96,7 @@ class BufferedHashsum(object):
     """A simple buffered hash calculator."""
 
     def __init__(self,
-                 hash_ctor: Callable = hashlib.sha1,
+                 hash_ctor: Callable[[], hashlib._Hash] = hashlib.sha1,
                  block_size: int = 1024*1024) -> None:
         assert block_size > 0
         self._hash = hash_ctor()
@@ -140,7 +139,8 @@ class WPTReport(object):
     def _add_chunk(self, chunk: RawWPTReport) -> None:
         self._report['results'].extend(chunk['results'])
 
-        def update_property(key, source, target, conflict_func=None):
+        def update_property(key: str, source: Dict, target: Dict,
+                            conflict_func: Optional[Callable] = None) -> None:
             """Updates target[key] if source[key] is set.
 
             If target[key] is already set, use conflict_func to resolve the
@@ -162,12 +162,16 @@ class WPTReport(object):
 
             for key in chunk['run_info']:
                 update_property(
-                    key, chunk['run_info'], self._report['run_info'],
+                    key,
+                    cast(Dict, chunk['run_info']),
+                    cast(Dict, self._report['run_info']),
                     ignore_conflict if key in IGNORED_CONFLICTS else None,
                 )
 
-        update_property('time_start', chunk, self._report, min)
-        update_property('time_end', chunk, self._report, max)
+        update_property(
+            'time_start', cast(Dict, chunk), cast(Dict, self._report), min)
+        update_property(
+            'time_end', cast(Dict, chunk), cast(Dict, self._report), max)
 
     def load_file(self, filename: str) -> None:
         """Loads wptreport from a local path.
@@ -435,7 +439,7 @@ class WPTReport(object):
         if self.run_info.get('os_version'):
             payload['os_version'] = self.run_info['os_version']
 
-        def microseconds_to_iso(ms_since_epoch):
+        def microseconds_to_iso(ms_since_epoch: float) -> str:
             dt = datetime.fromtimestamp(ms_since_epoch / 1000, timezone.utc)
             return dt.isoformat()
 
@@ -585,7 +589,7 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
     return response_data['id']
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description='Parse and transform JSON wptreport.')
     parser.add_argument('report', metavar='REPORT', type=str, nargs='+',
@@ -599,9 +603,6 @@ def main():
                         'per-test results (all gzipped) to OUTPUT_DIR/SHA/ ,'
                         'suitable for uploading to GCS (please use an '
                         'empty directory)')
-    parser.add_argument('--upload', type=str,
-                        help='upload the results to this GCS path '
-                        '(e.g. gs://wptd)')
     args = parser.parse_args()
 
     report = WPTReport()
@@ -614,13 +615,10 @@ def main():
 
     if args.summary:
         report.write_summary(args.summary)
-    if args.output_dir or args.upload:
+    if args.output_dir:
         upload_dir = report.populate_upload_directory(
             output_dir=args.output_dir)
-    if args.upload:
-        assert args.upload.startswith('gs://')
-        gsutil.rsync(upload_dir, args.upload)
-        _log.info('Uploaded to: %s/%s', args.upload, report.sha_summary_path)
+        _log.info('Populated: %s', upload_dir)
 
 
 if __name__ == '__main__':
