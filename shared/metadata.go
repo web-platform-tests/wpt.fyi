@@ -127,5 +127,4 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 	}
 	sort.Sort(res)
 	return res
-
 }
