@@ -49,26 +49,32 @@ type FileContentsQuery struct {
 func (fcq *FileContentsQuery) loadSearchResults() {
 	fcq.searchResults = mapset.NewSet()
 
+	var tokenSource oauth2.TokenSource
 	ctx := context.Background()
+
 	b, err := ioutil.ReadFile(shared.GCPCredentialsFileOrDefault())
-	if err != nil {
+	if err == nil {
+		creds, err := google.CredentialsFromJSON(ctx, b,
+			"https://www.googleapis.com/auth/appengine.apis",
+			"https://www.googleapis.com/auth/cloud-platform",
+			"https://www.googleapis.com/auth/cloud_search",
+			"https://www.googleapis.com/auth/userinfo.email",
+		)
+		if err == nil {
+			tokenSource = creds.TokenSource
+		} else {
+			log.Errorf("Failed to get creds from JSON: %s", err.Error())
+			return
+		}
+	} else {
 		log.Errorf("Failed to read GCP creds file: %s", err.Error())
 		return
 	}
-	creds, err := google.CredentialsFromJSON(ctx, b,
-		"https://www.googleapis.com/auth/appengine.apis",
-		"https://www.googleapis.com/auth/cloud-platform",
-		"https://www.googleapis.com/auth/cloud_search",
-		"https://www.googleapis.com/auth/userinfo.email",
-	)
-	if err != nil {
-		log.Errorf("Failed to get creds from JSON: %s", err.Error())
-		return
-	}
 
-	hc, err := oauth2.NewClient(ctx, creds.TokenSource), nil
+	hc, err := oauth2.NewClient(ctx, tokenSource), nil
 	if err != nil {
 		log.Errorf("Failed to create http client: %s", err.Error())
+		return
 	}
 
 	host := fmt.Sprintf("%s.appspot.com", *shared.ProjectID)
@@ -183,7 +189,9 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 
 // Filter interprets a FileContentsQuery as a filter function over TestIDs.
 func (fcq FileContentsQuery) Filter(t TestID) bool {
-	fcq.loadSearchResults()
+	if fcq.searchResults == nil {
+		fcq.loadSearchResults()
+	}
 	name, _, err := fcq.tests.GetName(t)
 	if err != nil {
 		return false

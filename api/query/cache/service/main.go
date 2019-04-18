@@ -38,6 +38,7 @@ var (
 	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
 	maxRunsPerRequest      = flag.Int("max_runs_per_request", 16, "Maximum number of runs that may be queried per request")
+	gcpCredentialsFile     = shared.GCPCredentialsFile
 
 	// User-facing message for when runs in a request exceeds maxRunsPerRequest.
 	// Set in init() after parsing flags.
@@ -213,8 +214,8 @@ func getDatastore() (shared.Datastore, error) {
 	ctx := context.Background()
 	var client *datastore.Client
 	var err error
-	if shared.GCPCredentialsFile != nil && *shared.GCPCredentialsFile != "" {
-		client, err = datastore.NewClient(ctx, *shared.ProjectID, option.WithCredentialsFile(*shared.GCPCredentialsFile))
+	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
+		client, err = datastore.NewClient(ctx, *shared.ProjectID, option.WithCredentialsFile(*gcpCredentialsFile))
 	} else {
 		client, err = datastore.NewClient(ctx, *shared.ProjectID)
 	}
@@ -245,7 +246,7 @@ func main() {
 		log.Fatalf("Failed to instantiate index: %v", err)
 	}
 
-	fetcher := backfill.NewDatastoreRunFetcher(*shared.ProjectID, shared.GCPCredentialsFile, logger)
+	fetcher := backfill.NewDatastoreRunFetcher(*shared.ProjectID, gcpCredentialsFile, logger)
 	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
 		log.Fatalf("Failed to initiate index backkfill: %v", err)
