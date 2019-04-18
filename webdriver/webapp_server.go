@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/web-platform-tests/results-analysis/metrics"
+	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"

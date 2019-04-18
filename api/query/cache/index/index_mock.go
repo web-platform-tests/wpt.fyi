@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	metrics "github.com/web-platform-tests/results-analysis/metrics"
+	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	query "github.com/web-platform-tests/wpt.fyi/api/query"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 )
