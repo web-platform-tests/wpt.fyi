@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"runtime"
@@ -53,12 +54,14 @@ type webdriverTest func(t *testing.T, app AppServer, wd selenium.WebDriver)
 func runWebdriverTest(t *testing.T, test webdriverTest) {
 	app, err := NewWebserver()
 	if err != nil {
+		log.Println("Failed to create webserver: " + err.Error())
 		panic(err)
 	}
 	defer app.Close()
 
 	service, wd, err := GetWebDriver()
 	if err != nil {
+		log.Println("Failed to create webdriver: " + err.Error())
 		panic(err)
 	}
 	defer service.Stop()

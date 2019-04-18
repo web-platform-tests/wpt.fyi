@@ -57,6 +57,47 @@ func TestTestRunFilter_NextPage_From(t *testing.T) {
 	}, nextPage)
 }
 
+func TestTestRunFilter_NextPage_FromAndMax(t *testing.T) {
+	// Use UTC to avoid DST craziness.
+	now := time.Now().UTC()
+	aWeekAgo := now.AddDate(0, 0, -7)
+	oneHundred := 100
+	// Edge-case: We ask for N runs after a timestamp, but < N runs occurred in
+	// that time range. This should return the earlier time range.
+	filter := TestRunFilter{
+		From:     &aWeekAgo,
+		To:       &now,
+		MaxCount: &oneHundred,
+	}
+	chrome, _ := ParseProductSpec("chrome")
+	loadedRuns := TestRunsByProduct{
+		ProductTestRuns{
+			Product:  chrome,
+			TestRuns: make(TestRuns, 1),
+		},
+	}
+	twoWeeksAgo := aWeekAgo.AddDate(0, 0, -7)
+	aWeekAgoMinusAMilli := aWeekAgo.Add(-time.Millisecond)
+	nextPage := filter.NextPage(loadedRuns)
+	assert.Equal(t, &TestRunFilter{
+		From:     &twoWeeksAgo,
+		To:       &aWeekAgoMinusAMilli,
+		MaxCount: &oneHundred,
+	}, nextPage)
+
+	// Common case: We ask for N runs after a timestamp, and N runs are returned.
+	// This should return the next N in the same time range.
+	one := 1
+	filter.MaxCount = &one
+	nextPage = filter.NextPage(loadedRuns)
+	assert.Equal(t, &TestRunFilter{
+		From:     &aWeekAgo,
+		To:       &now,
+		MaxCount: &one,
+		Offset:   &one,
+	}, nextPage)
+}
+
 func TestTestRunFilter_JSONRoundTrip(t *testing.T) {
 	one := 1
 	chrome, _ := ParseProductSpec("chrome[experimental]")
