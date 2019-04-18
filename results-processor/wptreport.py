@@ -96,7 +96,7 @@ class BufferedHashsum(object):
     """A simple buffered hash calculator."""
 
     def __init__(self,
-                 hash_ctor: Callable[[], hashlib._Hash] = hashlib.sha1,
+                 hash_ctor: Callable = hashlib.sha1,
                  block_size: int = 1024*1024) -> None:
         assert block_size > 0
         self._hash = hash_ctor()
@@ -122,7 +122,7 @@ class BufferedHashsum(object):
 
     def hashsum(self) -> str:
         """Returns the hexadecimal digest of the current hash."""
-        return self._hash.hexdigest()
+        return cast(str, self._hash.hexdigest())
 
 
 class WPTReport(object):
