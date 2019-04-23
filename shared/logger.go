@@ -2,6 +2,7 @@ package shared
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -117,6 +118,11 @@ func DefaultLoggerCtxKey() LoggerCtxKey {
 	return lck
 }
 
+// WithLogger is a strongly-typed setter for the logger value on the context.
+func WithLogger(ctx context.Context, logger Logger) context.Context {
+	return context.WithValue(ctx, DefaultLoggerCtxKey(), logger)
+}
+
 // GetLogger retrieves a non-nil Logger that is appropriate for use in ctx. If
 // ctx does not provide a logger, then a nil-logger is returned.
 func GetLogger(ctx context.Context) Logger {
@@ -130,9 +136,11 @@ func GetLogger(ctx context.Context) Logger {
 }
 
 type cloudLoggerClientKey struct{}
+type traceIDKey struct{}
 
 var (
-	clck = cloudLoggerClientKey{}
+	clck  = cloudLoggerClientKey{}
+	trace = traceIDKey{}
 )
 
 // HandleWithGoogleCloudLogging handles the request with the given handler, setting the logger
@@ -141,7 +149,8 @@ func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string) http.Handl
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, err := NewAppEngineFlexContext(r, project)
 		if err != nil {
-			h(w, r)
+			http.Error(w, "Failed to create flex context: "+err.Error(), http.StatusInternalServerError)
+			// h(w, r)
 			return
 		}
 		withLogger := r.WithContext(ctx)
@@ -149,20 +158,20 @@ func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string) http.Handl
 
 		h(w, withLogger)
 
+		if logger, ok := ctx.Value(DefaultLoggerCtxKey()).(*gcLogger); ok {
+			logger.childLogger.Flush()
+		}
 		// "Parent" log event that spans the child logger's timestamps.
 		if client, ok := ctx.Value(clck).(*gclog.Client); ok {
-			parentLogger := client.Logger("request")
+			parentLogger := client.Logger("request_log")
 			entry := gclog.Entry{
 				HTTPRequest: &gclog.HTTPRequest{
 					Request: withLogger,
 					Latency: time.Now().Sub(began),
 				},
-				Timestamp: began,
+				Trace: ctx.Value(trace).(string),
 			}
-			gcLogger, _ := ctx.Value(DefaultLoggerCtxKey()).(*gcLogger)
-			entry.Severity = gcLogger.maxSeverity
 			parentLogger.Log(entry)
-			gcLogger.childLogger.Flush()
 			parentLogger.Flush()
 		}
 	}
@@ -178,9 +187,13 @@ func NewAppEngineFlexContext(r *http.Request, project string) (ctx context.Conte
 	}
 	ctx = context.WithValue(ctx, clck, client)
 
-	childLogger := client.Logger("request-events")
-	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), &gcLogger{
+	traceID := r.Header.Get("X-Cloud-Trace-Context")
+	ctx = context.WithValue(ctx, trace, traceID)
+
+	childLogger := client.Logger("request_log_entries")
+	ctx = WithLogger(ctx, &gcLogger{
 		childLogger: childLogger,
+		traceID:     traceID,
 	})
 	return ctx, nil
 }
@@ -188,13 +201,18 @@ func NewAppEngineFlexContext(r *http.Request, project string) (ctx context.Conte
 type gcLogger struct {
 	childLogger *gclog.Logger
 	maxSeverity gclog.Severity
+	traceID     string
 }
 
 func (gcl *gcLogger) log(severity gclog.Severity, format string, params ...interface{}) {
 	if severity > gcl.maxSeverity {
 		gcl.maxSeverity = severity
 	}
-	gcl.childLogger.StandardLogger(severity).Printf(format, params...)
+	gcl.childLogger.Log(gclog.Entry{
+		Severity: severity,
+		Payload:  fmt.Sprintf(format, params...),
+		Trace:    gcl.traceID,
+	})
 }
 
 func (gcl *gcLogger) Debugf(format string, params ...interface{}) {

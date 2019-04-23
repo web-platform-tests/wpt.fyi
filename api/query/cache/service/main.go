@@ -26,7 +26,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
-	log "github.com/Hexcles/logrus"
+	"github.com/Hexcles/logrus"
 )
 
 var (
@@ -77,6 +77,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("Failed to read request body: %s", err.Error())
 		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
 	}
+	log.Infof(string(data))
 	err = r.Body.Close()
 	if err != nil {
 		log.Errorf("Failed to close request body: %s", err.Error())
@@ -248,31 +249,31 @@ func init() {
 func main() {
 	autoProjectID, err := metadata.ProjectID()
 	if err != nil {
-		log.Warningf("Failed to get project ID from metadata service")
+		logrus.Warningf("Failed to get project ID from metadata service")
 	} else {
 		if *projectID == "" {
-			log.Infof(`Using project ID from metadata service: "%s"`, *projectID)
+			logrus.Infof(`Using project ID from metadata service: "%s"`, *projectID)
 			*projectID = autoProjectID
 		} else if *projectID != autoProjectID {
-			log.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
+			logrus.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
 		} else {
-			log.Infof(`Using project ID: "%s"`, *projectID)
+			logrus.Infof(`Using project ID: "%s"`, *projectID)
 		}
 	}
 
-	log.Infof("Serving index with %d shards", *numShards)
+	logrus.Infof("Serving index with %d shards", *numShards)
 	// TODO: Use different field configurations for index, backfiller, monitor?
-	logger := log.StandardLogger()
+	logger := logrus.StandardLogger()
 
 	idx, err = index.NewShardedWPTIndex(index.HTTPReportLoader{}, *numShards)
 	if err != nil {
-		log.Fatalf("Failed to instantiate index: %v", err)
+		logrus.Fatalf("Failed to instantiate index: %v", err)
 	}
 
 	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
 	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
-		log.Fatalf("Failed to initiate index backkfill: %v", err)
+		logrus.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
 
 	// Index, backfiller, monitor now in place. Start polling to load runs added
@@ -282,6 +283,6 @@ func main() {
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
 	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID))
-	log.Infof("Listening on port %d", *port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
+	logrus.Infof("Listening on port %d", *port)
+	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
