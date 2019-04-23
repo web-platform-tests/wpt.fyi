@@ -152,12 +152,16 @@ func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string) http.Handl
 		// "Parent" log event that spans the child logger's timestamps.
 		if client, ok := ctx.Value(clck).(*gclog.Client); ok {
 			parentLogger := client.Logger("request")
-			parentLogger.Log(gclog.Entry{
+			entry := gclog.Entry{
 				HTTPRequest: &gclog.HTTPRequest{
 					Request: r,
 					Latency: time.Now().Sub(began),
 				},
-			})
+			}
+			if childLogger, ok := ctx.Value(DefaultLoggerCtxKey()).(*gcLogger); ok {
+				entry.Severity = childLogger.maxSeverity
+			}
+			parentLogger.Log(entry)
 		}
 	}
 }
@@ -181,20 +185,28 @@ func NewAppEngineFlexContext(r *http.Request, project string) (ctx context.Conte
 
 type gcLogger struct {
 	childLogger *gclog.Logger
+	maxSeverity gclog.Severity
+}
+
+func (gcl *gcLogger) log(severity gclog.Severity, format string, params ...interface{}) {
+	if severity > gcl.maxSeverity {
+		gcl.maxSeverity = severity
+	}
+	gcl.childLogger.StandardLogger(severity).Printf(format, params...)
 }
 
 func (gcl *gcLogger) Debugf(format string, params ...interface{}) {
-	gcl.childLogger.StandardLogger(gclog.Debug).Printf(format, params...)
+	gcl.log(gclog.Debug, format, params...)
 }
 
 func (gcl *gcLogger) Infof(format string, params ...interface{}) {
-	gcl.childLogger.StandardLogger(gclog.Info).Printf(format, params...)
+	gcl.log(gclog.Info, format, params...)
 }
 
 func (gcl *gcLogger) Warningf(format string, params ...interface{}) {
-	gcl.childLogger.StandardLogger(gclog.Warning).Printf(format, params...)
+	gcl.log(gclog.Warning, format, params...)
 }
 
 func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
-	gcl.childLogger.StandardLogger(gclog.Error).Printf(format, params...)
+	gcl.log(gclog.Error, format, params...)
 }
