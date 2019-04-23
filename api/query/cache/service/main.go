@@ -64,13 +64,14 @@ func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := shared.GetLogger(ctx)
 	if r.Method != "POST" {
+		log.Errorf("Invalid HTTP method %s", r.Method)
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
 		return
 	}
 
-	ctx := r.Context()
-	log := shared.GetLogger(ctx)
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Errorf("Failed to read request body: %s", err.Error())
@@ -108,6 +109,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// are currently resident in `idx`.
 	store, err := getDatastore(ctx)
 	if err != nil {
+		log.Errorf("Failed to open datastore: %s", err.Error())
 		http.Error(w, fmt.Sprintf("Failed to open datastore: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -123,6 +125,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			runPtr := new(shared.TestRun)
 			err := store.Get(store.NewIDKey("TestRun", int64(id)), runPtr)
 			if err != nil {
+				log.Errorf("Unknown test run ID: %s", id)
 				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
 				return
 			}
@@ -143,6 +146,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			IgnoredRuns: missing,
 		})
 		if err != nil {
+			log.Errorf("Failed to marshal results: %s", err.Error())
 			http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
 		}
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -162,6 +166,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	_, diff := urlQuery["diff"]
 	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
 	if err != nil {
+		log.Errorf("%s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -181,6 +186,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	results := plan.Execute(runs, opts)
 	res, ok := results.([]query.SearchResult)
 	if !ok {
+		log.Errorf("Search index returned bad results: %s", err.Error())
 		http.Error(w, "Search index returned bad results", http.StatusInternalServerError)
 		return
 	}
@@ -215,6 +221,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err = json.Marshal(resp)
 	if err != nil {
+		log.Errorf("Failed to marshal results: %s", err.Error())
 		http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
 		return
 	}
