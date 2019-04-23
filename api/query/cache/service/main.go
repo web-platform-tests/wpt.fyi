@@ -69,18 +69,23 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+	log := shared.GetLogger(ctx)
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Errorf("Failed to read request body: %s", err.Error())
 		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
 	}
 	err = r.Body.Close()
 	if err != nil {
+		log.Errorf("Failed to close request body: %s", err.Error())
 		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
 	}
 
 	var rq query.RunQuery
 	err = json.Unmarshal(data, &rq)
 	if err != nil {
+		log.Errorf("Failed to unmarshal RunQuery: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -101,7 +106,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	//
 	// `ids` and `runs` tracks run IDs and run metadata for requested runs that
 	// are currently resident in `idx`.
-	store, err := getDatastore()
+	store, err := getDatastore(ctx)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to open datastore: %s", err.Error()), http.StatusInternalServerError)
 		return
@@ -212,8 +217,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func getDatastore() (shared.Datastore, error) {
-	ctx := context.Background()
+func getDatastore(ctx context.Context) (shared.Datastore, error) {
 	var client *datastore.Client
 	var err error
 	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
@@ -270,7 +274,7 @@ func main() {
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
-	http.HandleFunc("/api/search/cache", searchHandler)
+	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID))
 	log.Infof("Listening on port %d", *port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
