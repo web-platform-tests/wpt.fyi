@@ -154,14 +154,16 @@ func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string) http.Handl
 			parentLogger := client.Logger("request")
 			entry := gclog.Entry{
 				HTTPRequest: &gclog.HTTPRequest{
-					Request: r,
+					Request: withLogger,
 					Latency: time.Now().Sub(began),
 				},
+				Timestamp: began,
 			}
-			if childLogger, ok := ctx.Value(DefaultLoggerCtxKey()).(*gcLogger); ok {
-				entry.Severity = childLogger.maxSeverity
-			}
+			gcLogger, _ := ctx.Value(DefaultLoggerCtxKey()).(*gcLogger)
+			entry.Severity = gcLogger.maxSeverity
 			parentLogger.Log(entry)
+			gcLogger.childLogger.Flush()
+			parentLogger.Flush()
 		}
 	}
 }
