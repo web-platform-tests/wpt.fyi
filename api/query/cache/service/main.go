@@ -22,10 +22,10 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
 	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/api/option"
+	"google.golang.org/appengine/taskqueue"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
@@ -52,6 +52,8 @@ var (
 
 var monitoredResource mrpb.MonitoredResource
 
+const cacheWarmingQueueName = "searchcache-warmer"
+
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Alive"))
 }
@@ -63,6 +65,41 @@ func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte("Ready"))
+}
+
+func updateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := shared.GetLogger(ctx)
+	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
+	runs, err := fetcher.FetchRuns(*updateMaxRuns)
+	if err != nil {
+		logger.Errorf("Error fetching runs for update: %v", err)
+		return
+	} else if len(runs) == 0 {
+		logger.Errorf("Fetcher produced no runs for update")
+		return
+	}
+
+	for _, run := range runs.AllRuns() {
+		err := idx.IngestRun(run)
+		if err != nil {
+			if err == index.ErrRunExists() {
+				logger.Debugf("Not updating run (already exists): %v", run)
+			} else if err == index.ErrRunLoading() {
+				logger.Debugf("Not updating run (already loading): %v", run)
+			} else {
+				logger.Errorf("Error ingesting run: %v: %v", run, err)
+			}
+		} else {
+			logger.Debugf("Updated run index; new run: %v", run)
+		}
+	}
+	// Queue another update.
+	if t, err := taskqueue.Add(ctx, &taskqueue.Task{}, cacheWarmingQueueName); err != nil {
+		logger.Errorf("Failed to queue next update: %s")
+	} else if t != nil {
+		logger.Errorf("Scheduled next update task %s", t.Name)
+	}
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
@@ -289,12 +326,16 @@ func main() {
 		logrus.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
 
-	// Index, backfiller, monitor now in place. Start polling to load runs added
-	// after backfilling was started.
-	go poll.KeepRunsUpdated(fetcher, logger, *updateInterval, *updateMaxRuns, idx)
+	// Queue another update.
+	if t, err := taskqueue.Add(context.Background(), &taskqueue.Task{}, cacheWarmingQueueName); err != nil {
+		logrus.Errorf("Failed to queue an index update: %s", err.Error())
+	} else if t != nil {
+		logrus.Errorf("Scheduled update task %s", t.Name)
+	}
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
+	http.HandleFunc("/_ah/queue/update", shared.HandleWithGoogleCloudLogging(updateHandler, *projectID, &monitoredResource))
 	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID, &monitoredResource))
 	logrus.Infof("Listening on port %d", *port)
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
