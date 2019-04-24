@@ -202,7 +202,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		log.Warningf("*********************GOing into metadata part***********")
 		var netClient = &http.Client{
 			Timeout: time.Second * 5,
 		}
