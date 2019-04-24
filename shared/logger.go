@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
+	"strings"
 
 	gclog "cloud.google.com/go/logging"
 	log "github.com/Hexcles/logrus"
 	gaelog "google.golang.org/appengine/log"
+	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
 // Logger is an abstract logging interface that contains an intersection of
@@ -135,62 +136,45 @@ func GetLogger(ctx context.Context) Logger {
 	return logger
 }
 
-type cloudLoggerClientKey struct{}
-type traceIDKey struct{}
-
 var (
-	clck  = cloudLoggerClientKey{}
-	trace = traceIDKey{}
+	cloudLoggingClientKey = "holds a gclog.Client"
+	traceKey              = "holds the trace ID for the request"
 )
 
 // HandleWithGoogleCloudLogging handles the request with the given handler, setting the logger
 // on the request's context to be a Google Cloud logging client for the given project.
-func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string) http.HandlerFunc {
+//
+// commonResource is an optional override to the monitored resource details appended to each log.
+// e.g. in the Flex environment, it pays to override this value to type gae_app, to ensure finding
+// logs is consistent between services.
+func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, commonResource *mrpb.MonitoredResource) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, err := NewAppEngineFlexContext(r, project)
+		ctx, err := NewAppEngineFlexContext(r, project, commonResource)
 		if err != nil {
-			http.Error(w, "Failed to create flex context: "+err.Error(), http.StatusInternalServerError)
-			// h(w, r)
+			h(w, r)
 			return
 		}
-		withLogger := r.WithContext(ctx)
-		began := time.Now()
-
-		h(w, withLogger)
-
-		if logger, ok := ctx.Value(DefaultLoggerCtxKey()).(*gcLogger); ok {
-			logger.childLogger.Flush()
-		}
-		// "Parent" log event that spans the child logger's timestamps.
-		if client, ok := ctx.Value(clck).(*gclog.Client); ok {
-			parentLogger := client.Logger("request_log")
-			entry := gclog.Entry{
-				HTTPRequest: &gclog.HTTPRequest{
-					Request: withLogger,
-					Latency: time.Now().Sub(began),
-				},
-				Trace: ctx.Value(trace).(string),
-			}
-			parentLogger.Log(entry)
-			parentLogger.Flush()
-		}
+		h(w, r.WithContext(ctx))
 	}
 }
 
 // NewAppEngineFlexContext creates a new Google App Engine Flex-based
 // context, with a Google Cloud logger client bound to an http.Request.
-func NewAppEngineFlexContext(r *http.Request, project string) (ctx context.Context, err error) {
+func NewAppEngineFlexContext(r *http.Request, project string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
 	ctx = r.Context()
 	client, err := gclog.NewClient(ctx, project)
 	if err != nil {
 		return nil, err
 	}
-	ctx = context.WithValue(ctx, clck, client)
+	ctx = context.WithValue(ctx, cloudLoggingClientKey, client)
 
-	traceID := r.Header.Get("X-Cloud-Trace-Context")
-	ctx = context.WithValue(ctx, trace, traceID)
+	traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
+	if traceID != "" {
+		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
+	}
+	ctx = context.WithValue(ctx, traceKey, traceID)
 
-	childLogger := client.Logger("request_log_entries")
+	childLogger := client.Logger("request_log_entries", gclog.CommonResource(commonResource))
 	ctx = WithLogger(ctx, &gcLogger{
 		childLogger: childLogger,
 		traceID:     traceID,

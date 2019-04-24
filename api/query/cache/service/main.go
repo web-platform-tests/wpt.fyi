@@ -11,22 +11,22 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
-
-	"github.com/web-platform-tests/wpt.fyi/api/query"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
-	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/api/option"
-
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
-	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
 	"github.com/Hexcles/logrus"
+	"github.com/web-platform-tests/wpt.fyi/api/query"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
+	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/api/option"
+	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
 var (
@@ -49,6 +49,8 @@ var (
 	idx index.Index
 	mon monitor.Monitor
 )
+
+var monitoredResource mrpb.MonitoredResource
 
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Alive"))
@@ -244,9 +246,7 @@ func init() {
 	flag.Parse()
 
 	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
-}
 
-func main() {
 	autoProjectID, err := metadata.ProjectID()
 	if err != nil {
 		logrus.Warningf("Failed to get project ID from metadata service")
@@ -261,10 +261,23 @@ func main() {
 		}
 	}
 
+	monitoredResource = mrpb.MonitoredResource{
+		Type: "gae_app",
+		Labels: map[string]string{
+			"project_id": *projectID,
+			// https://cloud.google.com/appengine/docs/flexible/go/migrating#modules
+			"module_id":  os.Getenv("GAE_SERVICE"),
+			"version_id": os.Getenv("GAE_VERSION"),
+		},
+	}
+}
+
+func main() {
 	logrus.Infof("Serving index with %d shards", *numShards)
 	// TODO: Use different field configurations for index, backfiller, monitor?
 	logger := logrus.StandardLogger()
 
+	var err error
 	idx, err = index.NewShardedWPTIndex(index.HTTPReportLoader{}, *numShards)
 	if err != nil {
 		logrus.Fatalf("Failed to instantiate index: %v", err)
@@ -282,7 +295,7 @@ func main() {
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
-	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID))
+	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID, &monitoredResource))
 	logrus.Infof("Listening on port %d", *port)
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
