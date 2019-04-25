@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	reflect "reflect"
 	"strings"
 	"sync"
@@ -17,7 +16,6 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/remote_api"
 	"google.golang.org/appengine/search"
@@ -47,31 +45,18 @@ type FileContentsQuery struct {
 }
 
 func (fcq *FileContentsQuery) loadSearchResults() {
-	fcq.searchResults = mapset.NewSet()
-
-	var tokenSource oauth2.TokenSource
-	ctx := context.Background()
-
-	b, err := ioutil.ReadFile(shared.GCPCredentialsFileOrDefault())
-	if err == nil {
-		creds, err := google.CredentialsFromJSON(ctx, b,
-			"https://www.googleapis.com/auth/appengine.apis",
-			"https://www.googleapis.com/auth/cloud-platform",
-			"https://www.googleapis.com/auth/cloud_search",
-			"https://www.googleapis.com/auth/userinfo.email",
-		)
-		if err == nil {
-			tokenSource = creds.TokenSource
-		} else {
-			log.Errorf("Failed to get creds from JSON: %s", err.Error())
-			return
-		}
-	} else {
-		log.Errorf("Failed to read GCP creds file: %s", err.Error())
+	if fcq.searchResults != nil {
 		return
 	}
+	fcq.searchResults = mapset.NewSet()
 
-	hc, err := oauth2.NewClient(ctx, tokenSource), nil
+	ctx := context.Background()
+	hc, err := google.DefaultClient(ctx,
+		"https://www.googleapis.com/auth/appengine.apis",
+		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/cloud_search",
+		"https://www.googleapis.com/auth/userinfo.email",
+	)
 	if err != nil {
 		log.Errorf("Failed to create http client: %s", err.Error())
 		return
