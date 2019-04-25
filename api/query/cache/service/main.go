@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"time"
 
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
 	"github.com/Hexcles/logrus"
@@ -27,6 +28,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/appengine/taskqueue"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
+	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
 
 var (
@@ -65,6 +67,36 @@ func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte("Ready"))
+}
+
+func queueCacheWarmingTask(ctx context.Context) (*taskspb.Task, error) {
+	client, err := cloudtasks.NewClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+	// Build the Task queue path.
+	locationID, _ := metadata.Zone()
+	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", *projectID, locationID, cacheWarmingQueueName)
+
+	// Build the Task payload.
+	req := &taskspb.CreateTaskRequest{
+		Parent: queuePath,
+		Task: &taskspb.Task{
+			// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#AppEngineHttpRequest
+			MessageType: &taskspb.Task_AppEngineHttpRequest{
+				AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
+					AppEngineRouting: &taskspb.AppEngineRouting{
+						Service: os.Getenv("GAE_SERVICE"),
+						Version: os.Getenv("GAE_VERSION"),
+					},
+					HttpMethod:  taskspb.HttpMethod_POST,
+					RelativeUri: "/_ah/queue" + cacheWarmingQueueName,
+				},
+			},
+		},
+	}
+	return client.CreateTask(ctx, req)
 }
 
 func updateHandler(w http.ResponseWriter, r *http.Request) {
@@ -326,16 +358,16 @@ func main() {
 		logrus.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
 
-	// Queue another update.
-	if t, err := taskqueue.Add(context.Background(), &taskqueue.Task{}, cacheWarmingQueueName); err != nil {
-		logrus.Errorf("Failed to queue an index update: %s", err.Error())
-	} else if t != nil {
-		logrus.Errorf("Scheduled update task %s", t.Name)
-	}
+	// Queue ongoing updates.
+	// if t, err := queueCacheWarmingTask(context.Background()); err != nil {
+	// 	logrus.Errorf("Failed to queue cache warming task: %s", err.Error())
+	// } else {
+	// 	logrus.Infof("Queued cache warming task: %s", t.Name)
+	// }
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
-	http.HandleFunc("/_ah/queue/update", shared.HandleWithGoogleCloudLogging(updateHandler, *projectID, &monitoredResource))
+	http.HandleFunc("/_ah/queue/"+cacheWarmingQueueName, shared.HandleWithGoogleCloudLogging(updateHandler, *projectID, &monitoredResource))
 	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID, &monitoredResource))
 	logrus.Infof("Listening on port %d", *port)
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))

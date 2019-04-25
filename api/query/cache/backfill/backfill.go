@@ -163,8 +163,8 @@ func startBackfillMonitor(fetcher RunFetcher, logger shared.Logger, maxBytes uin
 					logger.Infof("Backfilled index with run %v", run)
 				}
 			}
-			logger.Infof("Backfilling complete")
 		}
+		logger.Infof("Backfilling complete")
 	}()
 
 	return nil
