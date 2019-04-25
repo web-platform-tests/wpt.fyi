@@ -75,8 +75,7 @@ func queueCacheWarmingTask(ctx context.Context) (*taskspb.Task, error) {
 	}
 	defer client.Close()
 	// Build the Task queue path.
-	locationID, _ := metadata.Zone()
-	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", *projectID, locationID, cacheWarmingQueueName)
+	queuePath := fmt.Sprintf("projects/%s/locations/us-east4/queues/%s", *projectID, cacheWarmingQueueName)
 
 	// Build the Task payload.
 	req := &taskspb.CreateTaskRequest{
@@ -91,7 +90,7 @@ func queueCacheWarmingTask(ctx context.Context) (*taskspb.Task, error) {
 						Instance: os.Getenv("GAE_INSTANCE"),
 					},
 					HttpMethod:  taskspb.HttpMethod_POST,
-					RelativeUri: "/_ah/queue" + cacheWarmingQueueName,
+					RelativeUri: fmt.Sprintf("/_ah/queue/%s", cacheWarmingQueueName),
 				},
 			},
 		},
@@ -132,7 +131,7 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 			logger.Debugf("Updated run index; new run: %v", run)
 		}
 	}
-	if t, err := queueCacheWarmingTask(context.Background()); err != nil {
+	if t, err := queueCacheWarmingTask(ctx); err != nil {
 		logger.Errorf("Failed to queue cache warming task: %s", err.Error())
 	} else {
 		logger.Infof("Queued cache warming task: %s", t.Name)

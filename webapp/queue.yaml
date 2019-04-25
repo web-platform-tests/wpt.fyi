@@ -10,6 +10,5 @@ queue:
     min_backoff_seconds: 15
     max_doublings: 2 # longest timeout will be 1m
 - name: searchcache-warmer
-  target: searchcache
   max_concurrent_requests: 1
   rate: 6/m
