@@ -1,5 +1,0 @@
-cron:
-- description: "Keep the searchcache warm"
-  url: /api/search/cache/update
-  schedule: every 10 seconds
-  target: searchcache
