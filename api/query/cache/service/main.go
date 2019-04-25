@@ -219,7 +219,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		var netClient = &http.Client{
 			Timeout: time.Second * 5,
 		}
-		resp.MetadataResponse = shared.GetMetadataResponse(runs, netClient, log.StandardLogger())
+		resp.MetadataResponse = shared.GetMetadataResponse(runs, netClient, logrus.StandardLogger())
 	}
 
 	data, err = json.Marshal(resp)
