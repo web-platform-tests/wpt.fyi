@@ -5,17 +5,13 @@
 package shared
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
 
-	log "github.com/Hexcles/logrus"
 	mapset "github.com/deckarep/golang-set"
-	"google.golang.org/appengine"
 )
 
 // ExperimentalLabel is the implicit label present for runs marked 'experimental'.
@@ -93,23 +89,6 @@ func ToStringSlice(set mapset.Set) []string {
 // of which are treated as looking up the latest run for each browser.
 func IsLatest(sha string) bool {
 	return sha == "" || sha == "latest"
-}
-
-// NewAppEngineContext creates a new Google App Engine Standard-based
-// context bound to an http.Request.
-func NewAppEngineContext(r *http.Request) context.Context {
-	ctx := appengine.NewContext(r)
-	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), NewGAELogger(ctx))
-	return ctx
-}
-
-// NewRequestContext creates a new  context bound to an *http.Request.
-func NewRequestContext(r *http.Request) context.Context {
-	ctx := appengine.NewContext(r)
-	ctx = context.WithValue(ctx, DefaultLoggerCtxKey(), log.WithFields(log.Fields{
-		"request": r,
-	}))
-	return ctx
 }
 
 // NewSetFromStringSlice is a helper for the inability to cast []string to []interface{}
