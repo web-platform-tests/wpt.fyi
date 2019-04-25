@@ -1,0 +1,23 @@
+runtime: custom
+env: flex
+service: searchcache
+
+# AppEngine Flex supports custom machine types with up to 32 vCPUs.
+# Custom machine type specifications:
+# https://cloud.google.com/compute/docs/instances/creating-instance-with-custom-machine-type#specifications
+# Relevant AppEngine Flex documentation:
+# https://cloud.google.com/appengine/docs/flexible/nodejs/reference/app-yaml#resource-settings
+resources:
+  # TODO: Would prefer up to 96 CPUs for performance and memory capacity if/when
+  # available on AppEngine Flex.
+  cpu: 2
+  memory_gb: 8
+
+manual_scaling:
+  instances: 1
+
+liveness_check:
+  path: "/_ah/liveness_check"
+
+readiness_check:
+  path: "/_ah/readiness_check"
