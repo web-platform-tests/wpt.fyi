@@ -272,6 +272,27 @@ class WPTReportTest(unittest.TestCase):
         with self.assertRaises(ConflictingDataError):
             r.summarize()
 
+    def test_summarize_whitespaces(self):
+        r = WPTReport()
+        r._report = {'results': [
+            {
+                'test': ' /ref/reftest.html',
+                'status': 'PASS',
+                'message': None,
+                'subtests': []
+            },
+            {
+                'test': '/ref/reftest-fail.html\n',
+                'status': 'FAIL',
+                'message': None,
+                'subtests': []
+            }
+        ]}
+        self.assertEqual(r.summarize(), {
+            '/ref/reftest.html': [1, 1],
+            '/ref/reftest-fail.html': [0, 1]
+        })
+
     def test_each_result(self):
         expected_results = [
             {
@@ -328,12 +349,21 @@ class WPTReportTest(unittest.TestCase):
         revision = '0bdaaf9c1622ca49eb140381af1ece6d8001c934'
         r = WPTReport()
         r._report = {
-            'results': [{
-                'test': '/foo/bar.html',
-                'status': 'PASS',
-                'message': None,
-                'subtests': []
-            }],
+            'results': [
+                {
+                    'test': '/foo/bar.html',
+                    'status': 'PASS',
+                    'message': None,
+                    'subtests': []
+                },
+                # Whitespaces need to be trimmed from the test name.
+                {
+                    'test': ' /foo/fail.html\n',
+                    'status': 'FAIL',
+                    'message': None,
+                    'subtests': []
+                }
+            ],
             'run_info': {
                 'revision': revision,
                 'product': 'firefox',
@@ -351,6 +381,10 @@ class WPTReportTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(
             self.tmp_dir, revision,
             'firefox-59.0-linux-0123456789', 'foo', 'bar.html'
+        )))
+        self.assertTrue(os.path.isfile(os.path.join(
+            self.tmp_dir, revision,
+            'firefox-59.0-linux-0123456789', 'foo', 'fail.html'
         )))
 
     def test_update_metadata(self):

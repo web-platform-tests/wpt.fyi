@@ -201,7 +201,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			runPtr := new(shared.TestRun)
 			err := store.Get(store.NewIDKey("TestRun", int64(id)), runPtr)
 			if err != nil {
-				log.Errorf("Unknown test run ID: %s", id)
+				log.Errorf("Unknown test run ID: %v", id)
 				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
 				return
 			}
@@ -287,6 +287,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	if len(missing) != 0 {
 		resp.IgnoredRuns = missing
 	}
+
+	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
+		var netClient = &http.Client{
+			Timeout: time.Second * 5,
+		}
+		resp.MetadataResponse = shared.GetMetadataResponse(runs, netClient, log)
+	}
+
 	data, err = json.Marshal(resp)
 	if err != nil {
 		log.Errorf("Failed to marshal results: %s", err.Error())

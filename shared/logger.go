@@ -8,6 +8,7 @@ import (
 
 	gclog "cloud.google.com/go/logging"
 	log "github.com/Hexcles/logrus"
+	"google.golang.org/appengine"
 	gaelog "google.golang.org/appengine/log"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
@@ -21,16 +22,18 @@ type Logger interface {
 	Warningf(format string, args ...interface{})
 }
 
+// NewRequestContext creates a new  context bound to an *http.Request.
+func NewRequestContext(r *http.Request) context.Context {
+	ctx := appengine.NewContext(r)
+	return WithLogger(ctx, log.WithFields(log.Fields{
+		"request": r,
+	}))
+}
+
 // SplitLogger is a logger that sends logging operations to both A and B.
 type loggerMux struct {
 	delegates []Logger
 }
-
-type gaeLogger struct {
-	ctx context.Context
-}
-
-type nilLogger struct{}
 
 // Debugf implements formatted debug logging to both A and B.
 func (lm loggerMux) Debugf(format string, args ...interface{}) {
@@ -60,6 +63,17 @@ func (lm loggerMux) Warningf(format string, args ...interface{}) {
 	}
 }
 
+// NewAppEngineContext creates a new Google App Engine Standard-based
+// context bound to an http.Request.
+func NewAppEngineContext(r *http.Request) context.Context {
+	ctx := appengine.NewContext(r)
+	return WithLogger(ctx, NewGAELogger(ctx))
+}
+
+type gaeLogger struct {
+	ctx context.Context
+}
+
 func (l gaeLogger) Debugf(format string, args ...interface{}) {
 	gaelog.Debugf(l.ctx, format, args...)
 }
@@ -75,6 +89,8 @@ func (l gaeLogger) Infof(format string, args ...interface{}) {
 func (l gaeLogger) Warningf(format string, args ...interface{}) {
 	gaelog.Warningf(l.ctx, format, args...)
 }
+
+type nilLogger struct{}
 
 func (l nilLogger) Debugf(format string, args ...interface{}) {}
 
@@ -136,14 +152,6 @@ func GetLogger(ctx context.Context) Logger {
 	return logger
 }
 
-type cloudLoggingClientKeyType struct{}
-
-var cloudLoggingClientKey = cloudLoggingClientKeyType{}
-
-type traceKeyType struct{}
-
-var traceKey = traceKeyType{}
-
 // HandleWithGoogleCloudLogging handles the request with the given handler, setting the logger
 // on the request's context to be a Google Cloud logging client for the given project.
 //
@@ -169,14 +177,11 @@ func NewAppEngineFlexContext(r *http.Request, project string, commonResource *mr
 	if err != nil {
 		return nil, err
 	}
-	ctx = context.WithValue(ctx, cloudLoggingClientKey, client)
-
+	// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
 	traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
 	if traceID != "" {
 		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
 	}
-	ctx = context.WithValue(ctx, traceKey, traceID)
-
 	childLogger := client.Logger("request_log_entries", gclog.CommonResource(commonResource))
 	ctx = WithLogger(ctx, &gcLogger{
 		childLogger: childLogger,
@@ -187,14 +192,10 @@ func NewAppEngineFlexContext(r *http.Request, project string, commonResource *mr
 
 type gcLogger struct {
 	childLogger *gclog.Logger
-	maxSeverity gclog.Severity
 	traceID     string
 }
 
 func (gcl *gcLogger) log(severity gclog.Severity, format string, params ...interface{}) {
-	if severity > gcl.maxSeverity {
-		gcl.maxSeverity = severity
-	}
 	gcl.childLogger.Log(gclog.Entry{
 		Severity: severity,
 		Payload:  fmt.Sprintf(format, params...),

@@ -39,6 +39,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'reftestAnalyzerMockScreenshots',
       'reftestIframes',
       'searchCacheInterop',
+      'showMetadataInfo',
       'showTestType',
       'showTestRefURL',
       'structuredQueries',
@@ -224,6 +225,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{webPlatformTestsLive}}">
         Use web-platform-tests.live.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{showMetadataInfo}}">
+        Show metadata Information on wpt.fyi result page.
       </paper-checkbox>
     </paper-item>
 `;
