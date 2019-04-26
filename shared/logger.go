@@ -152,14 +152,6 @@ func GetLogger(ctx context.Context) Logger {
 	return logger
 }
 
-type cloudLoggingClientKeyType struct{}
-
-var cloudLoggingClientKey = cloudLoggingClientKeyType{}
-
-type traceKeyType struct{}
-
-var traceKey = traceKeyType{}
-
 // HandleWithGoogleCloudLogging handles the request with the given handler, setting the logger
 // on the request's context to be a Google Cloud logging client for the given project.
 //
