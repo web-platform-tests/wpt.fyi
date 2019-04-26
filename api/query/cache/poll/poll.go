@@ -66,7 +66,7 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval
 			next := errs[1:]
 			for i := range next {
 				if errs[i] != nil && next[i] == nil {
-					logger.Errorf("Ingested run after skipping %d runs; ingest run attempt errors: %v", errs)
+					logger.Errorf("Ingested run after skipping %d runs; ingest run attempt errors: %v", i, errs)
 					break
 				}
 			}

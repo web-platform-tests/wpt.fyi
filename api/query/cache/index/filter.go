@@ -41,7 +41,7 @@ type TestNamePattern struct {
 // FileContentsQuery is a query.FileContentsQuery bound to an in-memory index.
 type FileContentsQuery struct {
 	index
-	q             *query.FileContentsQuery
+	q             query.FileContentsQuery
 	searchResults mapset.Set
 }
 
@@ -155,17 +155,17 @@ type index struct {
 func (i index) idx() index { return i }
 
 // Filter always returns true for true.
-func (True) Filter(t TestID) bool {
+func (*True) Filter(t TestID) bool {
 	return true
 }
 
 // Filter always returns false for false.
-func (False) Filter(t TestID) bool {
+func (*False) Filter(t TestID) bool {
 	return false
 }
 
 // Filter interprets a TestNamePattern as a filter function over TestIDs.
-func (tnp TestNamePattern) Filter(t TestID) bool {
+func (tnp *TestNamePattern) Filter(t TestID) bool {
 	name, _, err := tnp.tests.GetName(t)
 	if err != nil {
 		return false
@@ -186,7 +186,7 @@ func (fcq *FileContentsQuery) Filter(t TestID) bool {
 }
 
 // Filter interprets a TestPath as a filter function over TestIDs.
-func (tp TestPath) Filter(t TestID) bool {
+func (tp *TestPath) Filter(t TestID) bool {
 	name, _, err := tp.tests.GetName(t)
 	if err != nil {
 		return false
@@ -195,17 +195,17 @@ func (tp TestPath) Filter(t TestID) bool {
 }
 
 // Filter interprets a runTestStatusEq as a filter function over TestIDs.
-func (rtse runTestStatusEq) Filter(t TestID) bool {
+func (rtse *runTestStatusEq) Filter(t TestID) bool {
 	return rtse.runResults[RunID(rtse.q.Run)].GetResult(t) == ResultID(rtse.q.Status)
 }
 
 // Filter interprets a runTestStatusNeq as a filter function over TestIDs.
-func (rtsn runTestStatusNeq) Filter(t TestID) bool {
+func (rtsn *runTestStatusNeq) Filter(t TestID) bool {
 	return rtsn.runResults[RunID(rtsn.q.Run)].GetResult(t) != ResultID(rtsn.q.Status)
 }
 
 // Filter interprets a Count as a filter function over TestIDs.
-func (c Count) Filter(t TestID) bool {
+func (c *Count) Filter(t TestID) bool {
 	args := c.args
 	matches := 0
 	for _, arg := range args {
@@ -217,7 +217,7 @@ func (c Count) Filter(t TestID) bool {
 }
 
 // Filter interprets an And as a filter function over TestIDs.
-func (a And) Filter(t TestID) bool {
+func (a *And) Filter(t TestID) bool {
 	args := a.args
 	for _, arg := range args {
 		if !arg.Filter(t) {
@@ -228,7 +228,7 @@ func (a And) Filter(t TestID) bool {
 }
 
 // Filter interprets an Or as a filter function over TestIDs.
-func (o Or) Filter(t TestID) bool {
+func (o *Or) Filter(t TestID) bool {
 	args := o.args
 	for _, arg := range args {
 		if arg.Filter(t) {
@@ -239,7 +239,7 @@ func (o Or) Filter(t TestID) bool {
 }
 
 // Filter interprets a Not as a filter function over TestID.
-func (n Not) Filter(t TestID) bool {
+func (n *Not) Filter(t TestID) bool {
 	return !n.arg.Filter(t)
 }
 
@@ -249,46 +249,46 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 	}
 	switch v := q.(type) {
 	case query.True:
-		return True{idx}, nil
+		return &True{idx}, nil
 	case query.False:
-		return False{idx}, nil
+		return &False{idx}, nil
 	case query.TestNamePattern:
-		return TestNamePattern{idx, v}, nil
+		return &TestNamePattern{idx, v}, nil
 	case query.FileContentsQuery:
 		return &FileContentsQuery{
 			index: idx,
-			q:     &v,
+			q:     v,
 		}, nil
 	case query.TestPath:
-		return TestPath{idx, v}, nil
+		return &TestPath{idx, v}, nil
 	case query.RunTestStatusEq:
-		return runTestStatusEq{idx, v}, nil
+		return &runTestStatusEq{idx, v}, nil
 	case query.RunTestStatusNeq:
-		return runTestStatusNeq{idx, v}, nil
+		return &runTestStatusNeq{idx, v}, nil
 	case query.Count:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
-		return Count{idx, v.Count, fs}, nil
+		return &Count{idx, v.Count, fs}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
-		return And{idx, fs}, nil
+		return &And{idx, fs}, nil
 	case query.Or:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
-		return Or{idx, fs}, nil
+		return &Or{idx, fs}, nil
 	case query.Not:
 		f, err := newFilter(idx, v.Arg)
 		if err != nil {
 			return nil, err
 		}
-		return Not{idx, f}, nil
+		return &Not{idx, f}, nil
 	default:
 		return nil, fmt.Errorf("Unknown ConcreteQuery type %s", reflect.TypeOf(q))
 	}
