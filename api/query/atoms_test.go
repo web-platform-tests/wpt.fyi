@@ -119,7 +119,7 @@ func TestStructuredQuery_emptyPattern(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{""}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: &TestNamePattern{""}}, rq)
 }
 
 func TestStructuredQuery_pattern(t *testing.T) {
@@ -131,7 +131,7 @@ func TestStructuredQuery_pattern(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{"/2dcontext/"}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: &TestNamePattern{"/2dcontext/"}}, rq)
 }
 
 func TestStructuredQuery_contains(t *testing.T) {
@@ -143,7 +143,7 @@ func TestStructuredQuery_contains(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: FileContentsQuery{"shadowRoot"}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: &FileContentsQuery{"shadowRoot"}}, rq)
 }
 
 func TestStructuredQuery_path(t *testing.T) {
@@ -155,7 +155,7 @@ func TestStructuredQuery_path(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestPath{"/2dcontext/"}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: &TestPath{"/2dcontext/"}}, rq)
 }
 
 func TestStructuredQuery_legacyBrowserName(t *testing.T) {
@@ -229,7 +229,7 @@ func TestStructuredQuery_not(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractNot{TestNamePattern{"cssom"}}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractNot{&TestNamePattern{"cssom"}}}, rq)
 }
 
 func TestStructuredQuery_or(t *testing.T) {
@@ -244,7 +244,7 @@ func TestStructuredQuery_or(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractOr{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractOr{[]AbstractQuery{&TestNamePattern{"cssom"}, &TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_and(t *testing.T) {
@@ -259,7 +259,7 @@ func TestStructuredQuery_and(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{&TestNamePattern{"cssom"}, &TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_exists(t *testing.T) {
@@ -274,7 +274,7 @@ func TestStructuredQuery_exists(t *testing.T) {
 		}
 	}`), &rq)
 	assert.Nil(t, err)
-	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractExists{[]AbstractQuery{&TestNamePattern{"cssom"}, &TestNamePattern{"html"}}}}, rq)
 }
 
 func TestStructuredQuery_sequential(t *testing.T) {
@@ -364,8 +364,8 @@ func TestStructuredQuery_nested(t *testing.T) {
 			Args: []AbstractQuery{
 				AbstractAnd{
 					Args: []AbstractQuery{
-						AbstractNot{TestNamePattern{"cssom"}},
-						TestNamePattern{"html"},
+						AbstractNot{&TestNamePattern{"cssom"}},
+						&TestNamePattern{"html"},
 					},
 				},
 				TestStatusEq{&p, shared.TestStatusValueFromString("TIMEOUT")},
@@ -375,7 +375,7 @@ func TestStructuredQuery_nested(t *testing.T) {
 }
 
 func TestStructuredQuery_bindPattern(t *testing.T) {
-	tnp := TestNamePattern{
+	tnp := &TestNamePattern{
 		Pattern: "/",
 	}
 	q := tnp.BindToRuns()
@@ -511,7 +511,7 @@ func TestStructuredQuery_bindExists(t *testing.T) {
 		Args: []AbstractQuery{
 			AbstractAnd{
 				Args: []AbstractQuery{
-					TestNamePattern{
+					&TestNamePattern{
 						Pattern: "/",
 					},
 					TestStatusEq{
@@ -542,7 +542,7 @@ func TestStructuredQuery_bindExists(t *testing.T) {
 			or1.Args = append(or1.Args,
 				And{
 					Args: []ConcreteQuery{
-						TestNamePattern{
+						&TestNamePattern{
 							Pattern: "/",
 						},
 						RunTestStatusEq{
@@ -632,7 +632,7 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 	p := shared.ParseProductSpecUnsafe("edge")
 	q := AbstractAnd{
 		Args: []AbstractQuery{
-			TestNamePattern{
+			&TestNamePattern{
 				Pattern: "/",
 			},
 			TestStatusEq{
@@ -650,7 +650,7 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 	// Only run is Edge, ID=1.
 	expected := And{
 		Args: []ConcreteQuery{
-			TestNamePattern{
+			&TestNamePattern{
 				Pattern: "/",
 			},
 			RunTestStatusEq{
@@ -666,7 +666,7 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 	p := shared.ParseProductSpecUnsafe("edge")
 	q := AbstractOr{
 		Args: []AbstractQuery{
-			TestNamePattern{
+			&TestNamePattern{
 				Pattern: "/",
 			},
 			TestStatusEq{
@@ -684,7 +684,7 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 	// Only run is Edge, ID=1.
 	expected := Or{
 		Args: []ConcreteQuery{
-			TestNamePattern{
+			&TestNamePattern{
 				Pattern: "/",
 			},
 			RunTestStatusEq{
@@ -724,7 +724,7 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 	p := shared.ParseProductSpecUnsafe("safari")
 	q := AbstractAnd{
 		Args: []AbstractQuery{
-			TestNamePattern{
+			&TestNamePattern{
 				Pattern: "/",
 			},
 			TestStatusEq{
@@ -773,7 +773,7 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 	p := shared.ParseProductSpecUnsafe("safari")
 	q := AbstractOr{
 		Args: []AbstractQuery{
-			TestNamePattern{
+			&TestNamePattern{
 				Pattern: "/",
 			},
 			TestStatusEq{
@@ -790,7 +790,7 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 	}
 	// No runs match Safari constraint; it becomes False,
 	// Pattern="/" || False => Pattern.
-	expected := TestNamePattern{"/"}
+	expected := &TestNamePattern{"/"}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
@@ -799,13 +799,13 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 	c := shared.ParseProductSpecUnsafe("chrome")
 	q := AbstractOr{
 		Args: []AbstractQuery{
-			TestNamePattern{
+			&TestNamePattern{
 				Pattern: "cssom",
 			},
 			AbstractAnd{
 				Args: []AbstractQuery{
 					AbstractNot{
-						Arg: TestNamePattern{
+						Arg: &TestNamePattern{
 							Pattern: "css",
 						},
 					},
@@ -838,7 +838,7 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 	// No runs match Safari constraint, so False; two Chrome runs expand to disjunction over
 	// their values, but are combined with false in an AND, so False; leaving only
 	// Pattern="cssom"
-	expected := TestNamePattern{
+	expected := &TestNamePattern{
 		Pattern: "cssom",
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs...))

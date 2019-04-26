@@ -138,13 +138,13 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check if the query is a simple (empty/just True, or test name only) query
-	var simpleQ TestNamePattern
+	var simpleQ *TestNamePattern
 	var isSimpleQ bool
 	{
 		if _, isTrueQ := rq.AbstractQuery.(True); isTrueQ {
 			isSimpleQ = true
 		} else if exists, isExists := rq.AbstractQuery.(AbstractExists); isExists && len(exists.Args) == 1 {
-			simpleQ, isSimpleQ = exists.Args[0].(TestNamePattern)
+			simpleQ, isSimpleQ = exists.Args[0].(*TestNamePattern)
 		}
 		q := r.URL.Query()
 		_, interop := q["interop"]

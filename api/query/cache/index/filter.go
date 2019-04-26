@@ -8,18 +8,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	reflect "reflect"
 	"strings"
 	"sync"
 
+	"cloud.google.com/go/datastore"
 	log "github.com/Hexcles/logrus"
 	mapset "github.com/deckarep/golang-set"
+	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/appengine/remote_api"
-	"google.golang.org/appengine/search"
+	"golang.org/x/oauth2"
 )
 
 // True is a query.True equivalent, bound to an in-memory index.
@@ -41,7 +40,7 @@ type TestNamePattern struct {
 // FileContentsQuery is a query.FileContentsQuery bound to an in-memory index.
 type FileContentsQuery struct {
 	index
-	q             query.FileContentsQuery
+	q             *query.FileContentsQuery
 	searchResults mapset.Set
 }
 
@@ -52,44 +51,26 @@ func (fcq *FileContentsQuery) loadSearchResults() {
 	fcq.searchResults = mapset.NewSet()
 
 	ctx := context.Background()
-	hc, err := google.DefaultClient(ctx,
-		"https://www.googleapis.com/auth/appengine.apis",
-		"https://www.googleapis.com/auth/cloud-platform",
-		"https://www.googleapis.com/auth/cloud_search",
-		"https://www.googleapis.com/auth/userinfo.email",
-	)
+	client, err := datastore.NewClient(ctx, *shared.ProjectID)
 	if err != nil {
-		log.Errorf("Failed to create http client: %s", err.Error())
+		log.Errorf("Failed to create datastore client: %s", err.Error())
 		return
 	}
-
-	host := fmt.Sprintf("%s-dot-%s.appspot.com", os.Getenv("GAE_VERSION"), *shared.ProjectID)
-	remoteCtx, err := remote_api.NewRemoteContext(host, hc)
+	d := shared.NewCloudDatastore(ctx, client)
+	secret, _ := shared.GetSecret(d, "github-api-token")
+	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: secret,
+	}))
+	ghClient := github.NewClient(oauthClient)
+	resp, _, err := ghClient.Search.Code(ctx, fcq.q.Query+" in:file repo:web-platform-tests/wpt", nil)
 	if err != nil {
-		log.Errorf("Failed to open remote context: %s", err.Error())
+		log.Errorf("Failed to run GitHub search: %s", err.Error())
 		return
 	}
-	index, err := search.Open("test-content")
-	if err != nil {
-		log.Errorf("Failed to open search index: %s", err.Error())
-		return
+	for _, f := range resp.CodeResults {
+		fcq.searchResults.Add(f.GetPath())
 	}
-	iter := index.Search(remoteCtx, fcq.q.Query, &search.SearchOptions{
-		IDsOnly: true,
-	})
-	count := 0
-	for {
-		id, err := iter.Next(nil)
-		if err == search.Done {
-			break
-		} else if err != nil {
-			log.Errorf("Failed to fetch next result: %s", err.Error())
-			break
-		}
-		fcq.searchResults.Add(id)
-		count++
-	}
-	log.Debugf("Loaded %v results", count)
+	fcq.searchResults.Remove("") // In case something was empty
 }
 
 // TestPath is a query.TestPath bound to an in-memory index.
@@ -174,7 +155,7 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 }
 
 // Filter interprets a FileContentsQuery as a filter function over TestIDs.
-func (fcq FileContentsQuery) Filter(t TestID) bool {
+func (fcq *FileContentsQuery) Filter(t TestID) bool {
 	if fcq.searchResults == nil {
 		fcq.loadSearchResults()
 	}
@@ -255,9 +236,9 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 	case query.TestNamePattern:
 		return TestNamePattern{idx, v}, nil
 	case query.FileContentsQuery:
-		return FileContentsQuery{
+		return &FileContentsQuery{
 			index: idx,
-			q:     v,
+			q:     &v,
 		}, nil
 	case query.TestPath:
 		return TestPath{idx, v}, nil

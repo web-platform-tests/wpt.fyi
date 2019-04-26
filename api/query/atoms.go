@@ -51,7 +51,7 @@ type TestNamePattern struct {
 }
 
 // BindToRuns for TestNamePattern is a no-op; it is independent of test runs.
-func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+func (tnp *TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
@@ -61,7 +61,7 @@ type FileContentsQuery struct {
 }
 
 // BindToRuns for FileContentsQuery is a no-op; it is independent of test runs.
-func (fcq FileContentsQuery) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+func (fcq *FileContentsQuery) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return fcq
 }
 
@@ -72,7 +72,7 @@ type TestPath struct {
 }
 
 // BindToRuns for TestNamePattern is a no-op; it is independent of test runs.
-func (tp TestPath) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+func (tp *TestPath) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tp
 }
 
@@ -615,17 +615,17 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
 	if err == nil {
-		return tnp, nil
+		return &tnp, nil
 	}
 	var fcq FileContentsQuery
 	err = json.Unmarshal(b, &fcq)
 	if err == nil {
-		return fcq, nil
+		return &fcq, nil
 	}
 	var tp TestPath
 	err = json.Unmarshal(b, &tp)
 	if err == nil {
-		return tp, nil
+		return &tp, nil
 	}
 	var tse TestStatusEq
 	err = json.Unmarshal(b, &tse)
