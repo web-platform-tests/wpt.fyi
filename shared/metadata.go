@@ -54,12 +54,29 @@ func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
 func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger) MetadataResults {
+	var productAtRevisions = make([]ProductAtRevision, len(testRuns))
+	for i, run := range testRuns {
+		productAtRevisions[i] = run.ProductAtRevision
+	}
+	return getMetadataResponseOnProductRevisions(productAtRevisions, client, log)
+}
+
+// GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
+func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Client, log Logger) MetadataResults {
+	var productAtRevisions = make([]ProductAtRevision, len(productSpecs))
+	for i, productSpec := range productSpecs {
+		productAtRevisions[i] = productSpec.ProductAtRevision
+	}
+	return getMetadataResponseOnProductRevisions(productAtRevisions, client, log)
+}
+
+func getMetadataResponseOnProductRevisions(productAtRevisions []ProductAtRevision, client *http.Client, log Logger) MetadataResults {
 	metadataByteMap, err := util.CollectMetadata(client)
 	if err != nil {
 		return MetadataResults{}
 	}
 	metadata := parseMetadata(metadataByteMap, log)
-	return constructMetadataResponse(testRuns, metadata)
+	return constructMetadataResponse(productAtRevisions, metadata)
 }
 
 // parseMetadata collects and parses all META.yml files from
@@ -78,10 +95,8 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 	return metadataMap
 }
 
-// ConstructMetadataResponse constructs the response to a WPT Metadata query.
-// When parsing 'link' nodes, assume there is no mising information nor duplicates;
-// assume each test for each browser type is only associated with one bug.
-func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata) MetadataResults {
+// constructMetadataResponse constructs the response to a WPT Metadata query, given ProductSpecs.
+func constructMetadataResponse(productAtRevisions []ProductAtRevision, metadata map[string]Metadata) MetadataResults {
 	res := MetadataResults{}
 	for folderPath, data := range metadata {
 		testMap := make(map[string][]string)
@@ -92,13 +107,13 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 			var fullTestName = path.Join(folderPath, link.TestPath)
 
 			if _, ok := testMap[fullTestName]; !ok {
-				testMap[fullTestName] = make([]string, len(testRuns))
+				testMap[fullTestName] = make([]string, len(productAtRevisions))
 			}
 			urls = testMap[fullTestName]
 
-			for i, run := range testRuns {
+			for i, productAtRevision := range productAtRevisions {
 				// Matches browser type if a version is not specified.
-				if link.Product.Matches(run) {
+				if link.Product.MatchesProductAtRevision(productAtRevision) {
 					urls[i] = link.URL
 				} else if link.Product.BrowserName == "" && urls[i] == "" {
 					// Matches to all browsers if product is not specified.

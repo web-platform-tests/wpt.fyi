@@ -60,4 +60,7 @@ func RegisterRoutes() {
 
 	// API endpoint for redirecting to a run's summary JSON blob.
 	shared.AddRoute("/api/results", "api-results", shared.WrapPermissiveCORS(apiResultsRedirectHandler))
+
+	// API endpoint for searching Metadata for the products.
+	shared.AddRoute("/api/metadata", "api-medata", shared.WrapPermissiveCORS(apiMetadataHandler))
 }

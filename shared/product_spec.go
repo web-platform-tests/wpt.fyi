@@ -21,21 +21,26 @@ type ProductSpec struct {
 
 // Matches returns whether the spec matches the given run.
 func (p ProductSpec) Matches(run TestRun) bool {
-	if run.BrowserName != p.BrowserName {
-		return false
-	}
-	if !IsLatest(p.Revision) && p.Revision != run.Revision {
-		return false
-	}
 	if p.Labels != nil && p.Labels.Cardinality() > 0 {
 		runLabels := run.LabelsSet()
 		if !p.Labels.IsSubset(runLabels) {
 			return false
 		}
 	}
+	return p.MatchesProductAtRevision(run.ProductAtRevision)
+}
+
+// MatchesProductAtRevision returns whether the spec matches the given ProductAtRevision.
+func (p ProductSpec) MatchesProductAtRevision(productAtRevision ProductAtRevision) bool {
+	if productAtRevision.BrowserName != p.BrowserName {
+		return false
+	}
+	if !IsLatest(p.Revision) && p.Revision != productAtRevision.Revision {
+		return false
+	}
 	if p.BrowserVersion != "" {
 		// Make "6" not match "60.123" by adding trailing dots to both.
-		if !strings.HasPrefix(run.BrowserVersion+".", p.BrowserVersion+".") {
+		if !strings.HasPrefix(productAtRevision.BrowserVersion+".", p.BrowserVersion+".") {
 			return false
 		}
 	}
