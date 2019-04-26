@@ -6,9 +6,6 @@ runtime: go
 api_version: go1
 instance_class: F4_1G
 
-builtins:
-- remote_api: on
-
 inbound_services:
 - warmup
 
@@ -40,6 +37,9 @@ handlers:
   script: _go_app
   secure: always
   login: admin
+  # Remote API
+- url: /_ah/remote_api
+  script: _go_app
   # Everything else (templates & APIs):
 - url: /.*
   script: _go_app

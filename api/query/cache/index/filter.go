@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	reflect "reflect"
 	"strings"
 	"sync"
@@ -62,7 +63,7 @@ func (fcq *FileContentsQuery) loadSearchResults() {
 		return
 	}
 
-	host := fmt.Sprintf("%s.appspot.com", *shared.ProjectID)
+	host := fmt.Sprintf("%s-dot-%s.appspot.com", os.Getenv("GAE_VERSION"), *shared.ProjectID)
 	remoteCtx, err := remote_api.NewRemoteContext(host, hc)
 	if err != nil {
 		log.Errorf("Failed to open remote context: %s", err.Error())
