@@ -24,12 +24,15 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 
+	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
 	log "github.com/Hexcles/logrus"
 )
 
 var (
 	port                   = flag.Int("port", 8080, "Port to listen on")
+	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
+	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
 	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", uint(10), "Maximum number of runs that can be ingested before memory monitor must run")
@@ -38,7 +41,6 @@ var (
 	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
 	maxRunsPerRequest      = flag.Int("max_runs_per_request", 16, "Maximum number of runs that may be queried per request")
-	gcpCredentialsFile     = shared.GCPCredentialsFile
 
 	// User-facing message for when runs in a request exceeds maxRunsPerRequest.
 	// Set in init() after parsing flags.
@@ -198,6 +200,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	if len(missing) != 0 {
 		resp.IgnoredRuns = missing
 	}
+
+	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
+		var netClient = &http.Client{
+			Timeout: time.Second * 5,
+		}
+		resp.MetadataResponse = shared.GetMetadataResponse(runs, netClient, log.StandardLogger())
+	}
+
 	data, err = json.Marshal(resp)
 	if err != nil {
 		http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
@@ -215,9 +225,9 @@ func getDatastore() (shared.Datastore, error) {
 	var client *datastore.Client
 	var err error
 	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
-		client, err = datastore.NewClient(ctx, *shared.ProjectID, option.WithCredentialsFile(*gcpCredentialsFile))
+		client, err = datastore.NewClient(ctx, *projectID, option.WithCredentialsFile(*gcpCredentialsFile))
 	} else {
-		client, err = datastore.NewClient(ctx, *shared.ProjectID)
+		client, err = datastore.NewClient(ctx, *projectID)
 	}
 	if err != nil {
 		return nil, err
@@ -233,20 +243,30 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
-	shared.InitProjectID()
+	autoProjectID, err := metadata.ProjectID()
+	if err != nil {
+		log.Warningf("Failed to get project ID from metadata service")
+	} else {
+		if *projectID == "" {
+			log.Infof(`Using project ID from metadata service: "%s"`, *projectID)
+			*projectID = autoProjectID
+		} else if *projectID != autoProjectID {
+			log.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
+		} else {
+			log.Infof(`Using project ID: "%s"`, *projectID)
+		}
+	}
 
 	log.Infof("Serving index with %d shards", *numShards)
 	// TODO: Use different field configurations for index, backfiller, monitor?
 	logger := log.StandardLogger()
 
-	var err error
 	idx, err = index.NewShardedWPTIndex(index.HTTPReportLoader{}, *numShards)
 	if err != nil {
 		log.Fatalf("Failed to instantiate index: %v", err)
 	}
 
-	fetcher := backfill.NewDatastoreRunFetcher(*shared.ProjectID, gcpCredentialsFile, logger)
+	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
 	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
 		log.Fatalf("Failed to initiate index backkfill: %v", err)

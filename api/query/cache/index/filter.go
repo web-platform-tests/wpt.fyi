@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"cloud.google.com/go/compute/metadata"
 	log "github.com/Hexcles/logrus"
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
@@ -63,7 +64,11 @@ func (fcq *FileContentsQuery) loadSearchResults() {
 		return
 	}
 
-	host := fmt.Sprintf("%s-dot-%s.appspot.com", os.Getenv("GAE_VERSION"), *shared.ProjectID)
+	projectId, err := metadata.ProjectID()
+	if err != nil {
+		log.Errorf("Failed to get project id: %s", err.Error())
+	}
+	host := fmt.Sprintf("%s-dot-%s.appspot.com", os.Getenv("GAE_VERSION"), projectId)
 	remoteCtx, err := remote_api.NewRemoteContext(host, hc)
 	if err != nil {
 		log.Errorf("Failed to open remote context: %s", err.Error())

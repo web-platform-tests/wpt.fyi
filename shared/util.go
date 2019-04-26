@@ -7,57 +7,17 @@ package shared
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 
-	"cloud.google.com/go/compute/metadata"
 	log "github.com/Hexcles/logrus"
 	mapset "github.com/deckarep/golang-set"
 	"google.golang.org/appengine"
 	gaelog "google.golang.org/appengine/log"
 )
-
-// ProjectID is a flag for the Google Cloud Platform project ID, if different from ID detected from metadata service.
-var ProjectID = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
-
-// InitProjectID changes the ProjectID flag to fall back to the ID fetched from metadata.
-func InitProjectID() {
-	autoProjectID, err := metadata.ProjectID()
-	if err != nil {
-		log.Warningf("Failed to get project ID from metadata service")
-	} else {
-		if *ProjectID == "" {
-			log.Infof(`Using project ID from metadata service: "%s"`, *ProjectID)
-			*ProjectID = autoProjectID
-		} else if *ProjectID != autoProjectID {
-			log.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *ProjectID, autoProjectID)
-		} else {
-			log.Infof(`Using project ID: "%s"`, *ProjectID)
-		}
-	}
-}
-
-// GCPCredentialsFile is a flag for a creds file for GCP.
-var GCPCredentialsFile = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
-
-// GCPCredentialsFileOrDefault returns the GCPCredentialsFile flag, or the default path for creds.
-func GCPCredentialsFileOrDefault() string {
-	if GCPCredentialsFile != nil && *GCPCredentialsFile != "" {
-		return *GCPCredentialsFile
-	}
-	// First, try the environment variable.
-	const envVar = "GOOGLE_APPLICATION_CREDENTIALS"
-	if filename := os.Getenv(envVar); filename != "" {
-		return filename
-	}
-	return filepath.Join(os.Getenv("HOME"), ".config", "gcloud", "application_default_credentials.json")
-}
 
 // ExperimentalLabel is the implicit label present for runs marked 'experimental'.
 const ExperimentalLabel = "experimental"
