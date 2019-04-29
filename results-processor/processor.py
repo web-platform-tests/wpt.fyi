@@ -154,6 +154,8 @@ class Processor(object):
 
     def _download_azure(self, azure_url):
         artifact = self._download_http(azure_url)
+        if artifact is None:
+            return
         with zipfile.ZipFile(artifact, mode='r') as z:
             for f in z.infolist():
                 # ZipInfo.is_dir isn't available in Python 3.5.
