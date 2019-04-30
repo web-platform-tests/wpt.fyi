@@ -51,12 +51,6 @@ class ProcessorTest(unittest.TestCase):
             p._download_http = self.fake_download(
                 'https://wpt.fyi/artifact.zip', 'artifact_test.zip')
 
-            # Test error handling.
-            with self.assertRaises(AssertionError):
-                p.download(['https://wpt.fyi/test.json.gz'],
-                           [],
-                           'https://wpt.fyi/artifact.zip')
-
             p.download([], [], 'https://wpt.fyi/artifact.zip')
             self.assertEqual(len(p.results), 2)
             self.assertTrue(p.results[0].endswith(
@@ -68,6 +62,22 @@ class ProcessorTest(unittest.TestCase):
                 '/artifact_test/wpt_screenshot_1.txt'))
             self.assertTrue(p.screenshots[1].endswith(
                 '/artifact_test/wpt_screenshot_2.txt'))
+
+    def test_download_azure_errors(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download(None, None)
+            p._download_http = self.fake_download(
+                'https://wpt.fyi/artifact.zip', None)
+
+            # Incorrect param combinations (both results & azure_url):
+            with self.assertRaises(AssertionError):
+                p.download(['https://wpt.fyi/test.json.gz'],
+                           [],
+                           'https://wpt.fyi/artifact.zip')
+
+            # Download failure: no exceptions should be raised.
+            p.download([], [], 'https://wpt.fyi/artifact.zip')
+            self.assertEqual(len(p.results), 0)
 
 
 class ProcessorServerTest(unittest.TestCase):
