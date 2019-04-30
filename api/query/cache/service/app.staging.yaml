@@ -2,13 +2,10 @@ runtime: custom
 env: flex
 service: searchcache
 
-# AppEngine Flex supports custom machine types with up to 32 vCPUs.
-# Custom machine type specifications:
-# https://cloud.google.com/compute/docs/instances/creating-instance-with-custom-machine-type#specifications
-# Relevant AppEngine Flex documentation:
-# https://cloud.google.com/appengine/docs/flexible/nodejs/reference/app-yaml#resource-settings
+# Staging versions use much fewer resources and only 1 instance,
+# but should otherwise be the same as prod.
+
 resources:
-  # Staging instance use much fewer resources than prod.
   cpu: 2
   memory_gb: 8
 
