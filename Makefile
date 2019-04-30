@@ -164,7 +164,7 @@ mockgen: git
 package_service: var-APP_PATH
 	# Trim the potential "app.staging.yaml" suffix.
 	if [[ "$(APP_PATH)" == "api/query/cache/service"* ]]; then \
-		APP_PATH = "api/query/cache/service";
+		APP_PATH="api/query/cache/service"; \
 	fi ;\
 	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/query/cache/service" ]]; then \
 		export TMP_DIR=$$(mktemp -d); \
