@@ -25,7 +25,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
 		return
 	}
-	// Serve cached with 5 minute expiry. Delegate to PRsHandler on cache miss.
+	// Serve cached with 5 minute expiry. Delegate to MetadataHandler on cache miss.
 	ctx := shared.NewAppEngineContext(r)
 	shared.NewCachingHandler(
 		ctx,
