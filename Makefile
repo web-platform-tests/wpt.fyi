@@ -162,7 +162,7 @@ mockgen: git
 	fi
 
 package_service: var-APP_PATH
-	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/query/cache/service" ]]; then \
+	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/query/cache/service"* ]]; then \
 		export TMP_DIR=$$(mktemp -d); \
 		rm -rf $(WPTD_PATH)$(APP_PATH)/wpt.fyi; \
 		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
