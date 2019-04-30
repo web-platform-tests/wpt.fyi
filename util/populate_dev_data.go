@@ -16,8 +16,8 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
 
-	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 var (
@@ -147,6 +147,7 @@ func main() {
 	addFlag(ctx, "structuredQueries", enabledFlag)
 	addFlag(ctx, "diffRenames", enabledFlag)
 	addFlag(ctx, "paginationTokens", enabledFlag)
+	addFlag(ctx, "appRoute", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")
 	addData(ctx, "Uploader", []interface{}{

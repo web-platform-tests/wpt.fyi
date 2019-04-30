@@ -3,9 +3,11 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+import '../node_modules/@polymer/iron-location/iron-query-params.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { pluralize } from './pluralize.js';
 import { Channels, DefaultProducts, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
-import { pluralize } from './pluralize.js';
 
 const testRunsQueryComputer =
   'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset)';
@@ -64,6 +66,15 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     }
     // Force-trigger a channel label expansion.
     this.updateQueryParams(this.queryParams);
+  }
+
+  queryChanged(query) {
+    if (this._dontReact) {
+      return;
+    }
+    this._dontReact = true;
+    this.updateQueryParams(this.parseQuery(query));
+    this._dontReact = false;
   }
 
   // sha is a convenience method for getting (the) single sha.
@@ -247,6 +258,24 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 };
 
+/**
+ * TestRunsQueryElement is the custom <test-runs-query-params> element that
+ * wraps an <iron-query-params> element to propagate query param values to/from
+ * the window.location URI.
+ */
+class TestRunsQueryElement extends TestRunsQuery(PolymerElement) {
+  static get is() {
+    return 'test-runs-query-params';
+  }
+
+  static get template() {
+    return html`
+      <iron-query-params query-string="{{query}}"></iron-query-params>
+`;
+  }
+}
+window.customElements.define(TestRunsQueryElement.is, TestRunsQueryElement);
+
 const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
   superClass,
   opt_queryCompute || testRunsUIQueryComputer) {
@@ -297,6 +326,7 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
   }
 
   updateQueryParams(params) {
+    params = params || {};
     super.updateQueryParams(params);
     let batchUpdate = {};
     batchUpdate.pr = params.pr;
@@ -318,4 +348,23 @@ const testRunsUIQueryComputer =
 TestRunsQuery.Computer = testRunsQueryComputer;
 TestRunsUIQuery.Computer = testRunsUIQueryComputer;
 
+/**
+ * TestRunsUIQueryElement is the custom <test-runs-ui-query-params> element that
+ * wraps an <iron-query-params> element to propagate query param values to/from
+ * the window.location URI.
+ */
+class TestRunsUIQueryElement extends TestRunsUIQuery(PolymerElement) {
+  static get is() {
+    return 'test-runs-ui-query-params';
+  }
+
+  static get template() {
+    return html`
+      <iron-query-params query-string="{{query}}"></iron-query-params>
+`;
+  }
+}
+window.customElements.define(TestRunsUIQueryElement.is, TestRunsUIQueryElement);
+
 export { TestRunsQuery, TestRunsUIQuery };
+

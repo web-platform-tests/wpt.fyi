@@ -7,13 +7,7 @@
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-const $_documentContainer = document.createElement('template');
 
-$_documentContainer.innerHTML = `<dom-module id="results-navigation">
-
-</dom-module>`;
-
-document.head.appendChild($_documentContainer.content);
 /**
  * QueryBuilder contains a helper method for building a query string from
  * an object of params.
@@ -24,19 +18,35 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
     const props = {
       query: {
         type: String,
-        computed: 'computeQuery(queryParams)',
         value: '',
         notify: true,
+        observer: 'queryChanged',
       },
       queryParams: {
         type: Object,
         notify: true,
+        observer: 'queryParamsChanged'
+      },
+      _computedQueryParams: {
+        type: String,
+        computed: 'computeQueryParams(queryParams)',
+        observer: 'computedQueryChanged',
       },
     };
     if (opts_queryParamsComputer) {
-      props.queryParams.computed = opts_queryParamsComputer;
+      props._computedQueryParams.computed = opts_queryParamsComputer;
     }
     return props;
+  }
+
+  computedQueryChanged(computedQueryParams) {
+    this.queryParams = computedQueryParams;
+  }
+
+  queryParamsChanged(queryParams) {
+    this._dontReact = true;
+    this.query = this.computeQuery(queryParams);
+    this._dontReact = false;
   }
 
   computeQuery(params) {
@@ -56,7 +66,29 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
       .replace(/=true/g, '')
       .replace(/:00.000Z/g, '');
   }
+
+  queryChanged(query) {
+    if (this._dontReact) {
+      return;
+    }
+    this._dontReact = true;
+    this.queryParams = this.parseQuery(query);
+    this._dontReact = false;
+  }
+
+  parseQuery(query) {
+    const params = new URLSearchParams(query);
+    const result = {};
+    for (const param of params.keys()) {
+      const values = params.getAll(param);
+      if (!values.length) {
+        continue;
+      }
+      result[param] = values.length > 1 ? values : values[0];
+    }
+  }
 };
+
 class ResultsTabs extends PolymerElement {
   static get template() {
     return html`

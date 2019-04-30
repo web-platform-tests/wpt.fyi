@@ -51,6 +51,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
 Object.defineProperty(wpt, 'ServerSideFeatures', {
   get: function() {
     return [
+      'appRoute',
       'checksAllUsers',
       'diffRenames',
       'failChecksOnRegression',
@@ -248,6 +249,11 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     ${WPTFlagsEditor.template}
 
     <h3>Server-side only features</h3>
+    <paper-item>
+      <paper-checkbox checked="{{appRoute}}">
+        Use the wpt-app shell for loading views/pages
+      </paper-checkbox>
+    </paper-item>
     <paper-item>
       <paper-checkbox checked="{{diffRenames}}">
         Compute renames in diffs with the GitHub API
