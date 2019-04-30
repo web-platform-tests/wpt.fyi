@@ -54,10 +54,10 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | "two"           -- count2
       | "one"           -- count1
 
-    Exp = NonemptyListOf<OrPart, or>
-
     Link
-      = "link:" patternExp
+      = caseInsensitive<"link"> ":" nameFragment
+
+    Exp = NonemptyListOf<OrPart, or>
 
     NestedExp
       = "(" Exp ")"   -- paren
@@ -134,18 +134,18 @@ const QUERY_GRAMMAR = ohm.grammar(`
 `);
 /* eslint-disable */
 const evalNot = (n, p) => {
-  return { not: p.eval() };
+  return {not: p.eval()};
 };
 const evalSelf = p => p.eval();
-const emptyQuery = Object.freeze({ exists: [{ pattern: '' }] });
+const emptyQuery = Object.freeze({exists: [{pattern: ''}]});
 const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
-  _terminal: function () {
+  _terminal: function() {
     return this.sourceString;
   },
-  EmptyListOf: function () {
+  EmptyListOf: function() {
     return [];
   },
-  NonemptyListOf: function (fst, seps, rest) {
+  NonemptyListOf: function(fst, seps, rest) {
     return [fst.eval()].concat(rest.eval());
   },
   Q: l => {
@@ -153,11 +153,11 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     // Separate atoms are each treated as "there exists a run where ...",
     // and the root is grouped by AND of the separated atoms.
     // Nested ands, on the other hand, require all conditions to be met by the same run.
-    return ps.length === 0 ? emptyQuery : { exists: ps };
+    return ps.length === 0 ? emptyQuery : {exists: ps };
   },
   Sequential: (_, l, __) => {
     const ps = l.eval();
-    return ps.length === 0 ? emptyQuery : { sequential: ps };
+    return ps.length === 0 ? emptyQuery : {sequential: ps };
   },
   Count: (cs, _, exp, __) => {
     return {
@@ -169,20 +169,20 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   CountSpecifier_count3: (_) => 3,
   CountSpecifier_count2: (_) => 2,
   CountSpecifier_count1: (_) => 1,
-  Link: (_, exp) => {
-    const ps = exp.eval();
-    ps.length === 0 ? emptyQuery : { link: ps };
+  Link: (l, colonBang, r) => {
+    const ps = r.eval();
+    return ps.length === 0 ? emptyQuery : {link: ps };
   },
   Exp: l => {
     const ps = l.eval();
-    return ps.length === 1 ? ps[0] : { or: ps };
+    return ps.length === 1 ? ps[0] : {or: ps};
   },
   NestedExp: evalSelf,
   NestedExp_paren: (_, p, __) => p.eval(),
   NestedExp_not: evalNot,
   OrPart: l => {
     const ps = l.eval();
-    return ps.length === 1 ? ps[0] : { and: ps };
+    return ps.length === 1 ? ps[0] : {and: ps};
   },
   AndPart_fragment: evalSelf,
   Fragment: evalSelf,
@@ -197,12 +197,12 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     };
   },
   statusExp_neq: (l, colonBang, r) => {
-    return { status: { not: r.sourceString.toUpperCase() } };
+    return { status: {not: r.sourceString.toUpperCase() } };
   },
   statusExp_product_neq: (l, colonBang, r) => {
     return {
       product: l.sourceString.toLowerCase(),
-      status: { not: r.sourceString.toUpperCase() },
+      status: {not: r.sourceString.toUpperCase()},
     };
   },
   pathExp: (l, colon, r) => {
@@ -377,7 +377,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
 
   queryInputChanged(_, oldQuery) {
     // Debounce first initialization.
-    if (typeof (oldQuery) === 'undefined') {
+    if (typeof(oldQuery) === 'undefined') {
       return;
     }
     if (this[QUERY_DEBOUNCE_ID]) {
@@ -429,7 +429,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
       }
       if (autocompleteSelection.value === path) {
         this.dispatchEvent(new CustomEvent('autocomplete', {
-          detail: { path: path },
+          detail: {path: path},
         }));
         this.shadowRoot.querySelector('.query').blur();
       }
