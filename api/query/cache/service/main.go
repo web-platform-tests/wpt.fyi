@@ -276,12 +276,12 @@ func init() {
 		logrus.Warningf("Failed to get project ID from metadata service")
 	} else {
 		if *projectID == "" {
-			logrus.Infof(`Using project ID from metadata service: "%s"`, *projectID)
+			logrus.Infof(`Using project ID from metadata service: %s`, autoProjectID)
 			*projectID = autoProjectID
 		} else if *projectID != autoProjectID {
 			logrus.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
 		} else {
-			logrus.Infof(`Using project ID: "%s"`, *projectID)
+			logrus.Infof(`Using project ID: %s`, *projectID)
 		}
 	}
 
