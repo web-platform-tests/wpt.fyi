@@ -165,13 +165,15 @@ package_service: var-APP_PATH
 	# Trim the potential "app.staging.yaml" suffix.
 	if [[ "$(APP_PATH)" == "api/query/cache/service"* ]]; then \
 		APP_PATH="api/query/cache/service"; \
-	fi ;\
-	if [[ "$(APP_PATH)" == "revisions/service" || "$(APP_PATH)" == "api/query/cache/service" ]]; then \
-		export TMP_DIR=$$(mktemp -d); \
-		rm -rf $(WPTD_PATH)$(APP_PATH)/wpt.fyi; \
+	else \
+		APP_PATH="$(APP_PATH)"; \
+	fi ; \
+	if [[ "$${APP_PATH}" == "revisions/service" || "$${APP_PATH}" == "api/query/cache/service" ]]; then \
+		TMP_DIR=$$(mktemp -d); \
+		rm -rf $(WPTD_PATH)$${APP_PATH}/wpt.fyi; \
 		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
-		mkdir $(WPTD_PATH)$(APP_PATH)/wpt.fyi; \
-		cp -r $${TMP_DIR}/* $(WPTD_PATH)$(APP_PATH)/wpt.fyi/; \
+		mkdir $(WPTD_PATH)$${APP_PATH}/wpt.fyi; \
+		cp -r $${TMP_DIR}/* $(WPTD_PATH)$${APP_PATH}/wpt.fyi/; \
 		rm -rf $${TMP_DIR}; \
 	fi
 
