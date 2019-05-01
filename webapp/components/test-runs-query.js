@@ -304,6 +304,11 @@ class TestRunsQueryElement extends TestRunsQuery(PolymerElement) {
 }
 window.customElements.define(TestRunsQueryElement.is, TestRunsQueryElement);
 
+
+// TODO(lukebjerring): Support to & from in the builder.
+const testRunsUIQueryComputer =
+  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds)';
+
 const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
   superClass,
   opt_queryCompute || testRunsUIQueryComputer) {
@@ -369,9 +374,6 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     this.setProperties(batchUpdate);
   }
 };
-// TODO(lukebjerring): Support to & from in the builder.
-const testRunsUIQueryComputer =
-  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds)';
 
 TestRunsQuery.Computer = testRunsQueryComputer;
 TestRunsUIQuery.Computer = testRunsUIQueryComputer;

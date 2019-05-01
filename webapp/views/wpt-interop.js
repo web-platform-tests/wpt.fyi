@@ -126,72 +126,10 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
     }
   </style>
 
-  <test-runs-ui-query-params query-params="{{queryParams}}"></test-runs-ui-query-params>
-
-  <section class="search">
-    <div class="path">
-      <a href="/interop/?[[ query ]]" on-click="navigate">wpt</a>
-      <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
-        <span class="path-separator">/</span>
-        <a href="/interop[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
-      </template>
-    </div>
-
-    <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
-
-    <test-search query="{{search}}"
-                 structured-query="{{structuredSearch}}"
-                 test-runs="[[testRuns]]"
-                 test-paths="[[testPaths]]">
-    </test-search>
-
-    <template is="dom-if" if="{{ pathIsATestFile }}">
-      <div class="links">
-        <ul>
-          <li>
-            <a href\$="https://github.com/web-platform-tests/wpt/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
-
-            <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
-              <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
-               browser on w3c-test.org</a></li>
-            </template>
-
-            <template is="dom-if" if="[[ webPlatformTestsLive ]]">
-              <li><a href\$="[[scheme]]://web-platform-tests.live[[path]]" target="_blank">Run in your
-                browser on web-platform-tests.live</a></li>
-            </template>
-        </ul>
-      </div>
-    </template>
-
-    <template is="dom-if" if="[[resultsRangeMessage]]">
-      <info-banner>
-        [[resultsRangeMessage]]
-        <template is="dom-if" if="[[permalinks]]">
-          <wpt-permalinks path="[[path]]"
-                          path-prefix="/interop/"
-                          query-params="[[queryParams]]"
-                          test-runs="[[testRuns]]">
-          </wpt-permalinks>
-          <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-        </template>
-        <template is="dom-if" if="[[queryBuilder]]">
-          <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
-        </template>
-      </info-banner>
-    </template>
-  </section>
-
   <template is="dom-if" if="[[interopLoadFailed]]">
     <info-banner type="error">
       Failed to fetch interop data.
     </info-banner>
-  </template>
-
-  <template is="dom-if" if="[[queryBuilder]]">
-    <iron-collapse opened="[[editingQuery]]">
-      <test-runs-query-builder query="[[query]]" on-submit="[[submitQuery]]"></test-runs-query-builder>
-    </iron-collapse>
   </template>
 
   <template is="dom-if" if="[[!pathIsATestFile]]">
@@ -305,11 +243,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
     this.onSearchAutocomplete = (e) => {
       this.handleSearchAutocomplete(e.detail.path);
     };
-    this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
-    this.toggleQueryEdit = () => {
-      this.editingQuery = !this.editingQuery;
-    };
-    this.submitQuery = this.handleSubmitQuery.bind(this);
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
@@ -319,17 +252,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
     };
     this.sortedBy = (sortColumn, i) => sortColumn === `${i}`;
     this.sortedByAsc = (sortColumn, i) => sortColumn === `-${i}`;
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this.testSearch.addEventListener('commit', this.onSearchCommit);
-    this.testSearch.addEventListener('autocomplete', this.onSearchAutocomplete);
-  }
-
-  disconnectedCallback() {
-    this.testSearch.removeEventListener('commit', this.onSearchCommit);
-    super.disconnectedCallback();
   }
 
   async ready() {
@@ -353,10 +275,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
     this.testRuns = null;
     this.searchResults = null;
     this.loadData();
-  }
-
-  get testSearch() {
-    return this.shadowRoot.querySelector('test-search');
   }
 
   fetchPrecomputedInterop() {
@@ -503,9 +421,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
     } else {
       this.precomputedInteropLoaded(this.precomputedInterop);
     }
-
-    // Trigger a virtual navigation.
-    this.navigateToLocation(window.location);
   }
 
   handleSearchAutocomplete(path) {
@@ -590,15 +505,9 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
     };
   }
 
-  handleSubmitQuery() {
-    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-    this.editingQuery = false;
-    this.updateQueryParams(builder.queryParams);
-  }
-
   queryChanged(query, queryBefore) {
     super.queryChanged(query, queryBefore);
-    if (query === queryBefore) {
+    if (queryBefore === query) {
       return;
     }
     this.reloadData();

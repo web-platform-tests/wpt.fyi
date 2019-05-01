@@ -28,7 +28,7 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
       },
       _computedQueryParams: {
         type: Object,
-        computed: opts_queryParamsComputer || 'computeQueryParams(queryParams)',
+        computed: opts_queryParamsComputer || 'parseQuery(query)',
         observer: 'computedQueryChanged',
       },
     };
