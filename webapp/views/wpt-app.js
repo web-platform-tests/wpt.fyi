@@ -1,4 +1,3 @@
-import { TestRunsQuery } from '../components/test-runs-query.js';
 import '../components/wpt-header.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
@@ -7,7 +6,7 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 import '../views/wpt-404.js';
 import '../views/wpt-results.js';
 
-class WPTApp extends TestRunsQuery(PolymerElement) {
+class WPTApp extends PolymerElement {
   static get is() { return 'wpt-app'; }
 
   static get template() {
@@ -16,6 +15,10 @@ class WPTApp extends TestRunsQuery(PolymerElement) {
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
       <wpt-header></wpt-header>
+
+      <test-runs-ui-query-params query="{{query}}"></test-runs-ui-query-params>
+      <results-tabs tab="[[page]]" path="[[encodedPath]]" query="[[query]]"></results-tabs>
+
       <iron-pages role="main" selected="[[page]]" attr-for-selected="name" selected-attribute="visible" fallback-selection="404">
         <wpt-results name="results" path="[[subroute.path]]"></wpt-results>
         <wpt-interop name="interop" path="[[subroute.path]]"></wpt-interop>
@@ -30,6 +33,11 @@ class WPTApp extends TestRunsQuery(PolymerElement) {
         type: String,
         reflectToAttribute: true,
         observer: '_pageChanged'
+      },
+      path: String,
+      encodedPath: {
+        type: String,
+        computed: 'encodeTestPath(path)'
       },
     };
   }
@@ -55,6 +63,14 @@ class WPTApp extends TestRunsQuery(PolymerElement) {
           break;
       }
     }
+  }
+
+  encodeTestPath(path) {
+    path = path || '/';
+    console.assert(path.startsWith('/'));
+    let parts = path.split('/').slice(1);
+    parts.push(encodeURIComponent(parts.pop()));
+    return '/' + parts.join('/');
   }
 }
 customElements.define(WPTApp.is, WPTApp);

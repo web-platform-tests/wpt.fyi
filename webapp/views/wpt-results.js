@@ -170,8 +170,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
 
     <test-runs-ui-query-params query-params="{{queryParams}}"></test-runs-ui-query-params>
 
-    <results-tabs tab="results" path="[[encodedPath]]" query="[[query]]"></results-tabs>
-
     <section class="search">
       <!-- NOTE: Tag wrapping below is deliberate to avoid whitespace throughout the path. -->
       <div class="path">

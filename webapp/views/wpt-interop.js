@@ -128,8 +128,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
 
   <test-runs-ui-query-params query-params="{{queryParams}}"></test-runs-ui-query-params>
 
-  <results-tabs tab="interop" path="[[encodedPath]]" query="[[query]]"></results-tabs>
-
   <section class="search">
     <div class="path">
       <a href="/interop/?[[ query ]]" on-click="navigate">wpt</a>
@@ -192,7 +190,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
 
   <template is="dom-if" if="[[queryBuilder]]">
     <iron-collapse opened="[[editingQuery]]">
-      <test-runs-query-builder query="[[query]]"></test-runs-query-builder>
+      <test-runs-query-builder query="[[query]]" on-submit="[[submitQuery]]"></test-runs-query-builder>
     </iron-collapse>
   </template>
 

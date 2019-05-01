@@ -61,8 +61,8 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       && !(this.products && this.products.length)) {
       this.products = this.productSpecs.map(p => this.parseProductSpec(p));
     }
-    this._createMethodObserver('productsUpdated(products, products.*)');
-    this._createMethodObserver('productSpecsUpdated(productSpecs, productSpecs.*)');
+    this._createMethodObserver('productsChanged(products, products.*)');
+    this._createMethodObserver('productSpecsChanged(productSpecs, productSpecs.*)');
     // Force-trigger a channel label expansion.
     this.updateQueryParams(this.queryParams);
   }
@@ -82,7 +82,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     return this.shas && this.shas.length && this.shas[0] || 'latest';
   }
 
-  productsUpdated(products) {
+  productsChanged(products) {
     if (this._productsChanging) {
       return;
     }
@@ -91,7 +91,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     this._productsChanging = false;
   }
 
-  productSpecsUpdated(productSpecs) {
+  productSpecsChanged(productSpecs) {
     if (this._productsChanging) {
       return;
     }
@@ -189,7 +189,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
   get emptyQuery() {
     return {
-      products: DefaultProducts.map(p => Object.assign({}, p)),
+      productSpecs: Array.from(DefaultProductSpecs),
       labels: [],
       maxCount: undefined,
       shas: [],
