@@ -83,6 +83,8 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 			query = arg.BindToRuns(runs...)
 		} else if _, isCount := arg.(AbstractCount); isCount {
 			query = arg.BindToRuns(runs...)
+		} else if _, isLink := arg.(AbstractLink); isLink {
+			query = arg.BindToRuns(runs...)
 		} else {
 			// Everything else is split, one run must satisfy the whole tree.
 			byRun := make([]ConcreteQuery, 0, len(runs))
@@ -144,6 +146,17 @@ func (c AbstractCount) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 		Count: c.Count,
 		Args:  byRun,
 	}
+}
+
+// AbstractLink is represents the root of a link query, whic matches Metadata URLs
+// to a pattern string; it is independent of test runs.
+type AbstractLink struct {
+	Pattern string
+}
+
+// BindToRuns for AbstractLink is a no-op; it is independent of test runs
+func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return l
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result
@@ -580,6 +593,27 @@ func (c *AbstractCount) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractLink attempts to interpret a query atom as
+// {"link":<metadata url pattern string>}.
+func (l *AbstractLink) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	patternMsg, ok := data["link"]
+	if !ok {
+		return errors.New(`Missing Link pattern property: "link"`)
+	}
+	var pattern string
+	if err := json.Unmarshal(*patternMsg, &pattern); err != nil {
+		return errors.New(`Missing test name pattern property "pattern" is not a string`)
+	}
+
+	l.Pattern = pattern
+	return nil
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -630,6 +664,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err = json.Unmarshal(b, &c)
 	if err == nil {
 		return c, nil
+	}
+	var l AbstractLink
+	err = json.Unmarshal(b, &l)
+	if err == nil {
+		return l, nil
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
 }

@@ -97,6 +97,10 @@ func (RunTestStatusEq) Size() int { return 1 }
 // lookup in a test run result mapping per test.
 func (RunTestStatusNeq) Size() int { return 1 }
 
+// Size of AbstractLink has a size of 1: servicing such a query requires a
+// substring match per Metadata Link Node.
+func (AbstractLink) Size() int { return 1 }
+
 // Size of Count is the sum of the sizes of its constituent ConcretQuery instances.
 func (c Count) Size() int { return size(c.Args) }
 

@@ -325,6 +325,25 @@ func TestStructuredQuery_count(t *testing.T) {
 			}}, rq)
 }
 
+func TestStructuredQuery_link(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"link": "chromium.bug.com/abc"
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery:AbstractExists{[]AbstractQuery{
+			AbstractLink{
+				Pattern:"chromium.bug.com/abc",
+			}},
+		}}, rq)
+}
+
 func TestStructuredQuery_nested(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -614,6 +633,27 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindLink(t *testing.T) {
+	e := shared.ParseProductSpecUnsafe("edge")
+	f := shared.ParseProductSpecUnsafe("firefox")
+	q := AbstractLink{
+		Pattern: "chromium.bug.com/abc",
+	}
+
+	runs := shared.TestRuns{}
+	runs = shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: e.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: f.ProductAtRevision,
+		},
+	}
+	assert.Equal(t, q, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {
