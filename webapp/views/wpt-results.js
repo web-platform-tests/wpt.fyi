@@ -45,22 +45,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
         display: block;
         font-size: 15px;
       }
-      section.search {
-        position: relative;
-      }
-      section.search .path {
-        margin-top: 1em;
-      }
-      section.search paper-spinner-lite {
-        position: absolute;
-        top: 0;
-        right: 0;
-      }
-      .separator {
-        border-bottom: solid 1px var(--paper-grey-300);
-        padding-bottom: 1em;
-        margin-bottom: 1em;
-      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -91,14 +75,10 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
         padding: 0 0.1em;
         margin: 0 0.2em;
       }
-      .links {
-        margin-bottom: 1em;
-      }
       .top,
       .delta {
         background-color: var(--paper-grey-200);
       }
-
       span.delta.regressions {
         color: var(--paper-red-700);
       }
@@ -126,10 +106,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
         background: var(--paper-blue-500);
         color: white;
       }
-      test-runs-query-builder {
-        display: block;
-        margin-bottom: 32px;
-      }
       .test-type {
         margin-left: 8px;
         padding: 4px;
@@ -142,9 +118,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
       .test-type-icon iron-icon {
         height: 16px;
         width: 16px;
-      }
-      .query-actions paper-button {
-        display: inline-block;
       }
 
       @media (max-width: 1200px) {
@@ -167,71 +140,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
         height: 600px;
       }
     </style>
-
-    <test-runs-ui-query-params query-params="{{queryParams}}"></test-runs-ui-query-params>
-
-    <section class="search">
-      <!-- NOTE: Tag wrapping below is deliberate to avoid whitespace throughout the path. -->
-      <div class="path">
-        <a href="/results/?[[ query ]]">wpt</a
-        ><template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
-          ><span class="path-separator">/</span
-        ><a href="/results[[ part.path ]]?[[ query ]]">[[ part.name ]]</a
-        ></template>
-
-        <template is="dom-if" if="[[showTestType]]">
-          <template is="dom-if" if="[[testType]]">
-            <span class$="test-type [[testType]]">[[testType]]</span>
-          </template>
-        </template>
-      </div>
-
-      <template is="dom-if" if="[[searchPRsForDirectories]]">
-        <template is="dom-if" if="[[pathIsASubfolder]]">
-          <wpt-prs path="[[path]]"></wpt-prs>
-        </template>
-      </template>
-
-      <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
-
-      <test-search query="{{search}}"
-                   structured-query="{{structuredSearch}}"
-                   test-runs="[[testRuns]]"
-                   test-paths="[[testPaths]]"></test-search>
-
-      <template is="dom-if" if="{{ pathIsATestFile }}">
-        <div class="links">
-          <ul>
-            <li><a href\$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
-            <template is="dom-if" if="[[ showTestURL ]]">
-              <li><a href="[[showTestURL]]" target="_blank">Run in your browser on [[ liveTestDomain ]]</a></li>
-            </template>
-            <template is="dom-if" if="[[ showTestRefURL ]]">
-              <li><a href="[[showTestRefURL]]" target="_blank">View ref in your browser on [[ liveTestDomain ]]</a></li>
-            </template>
-          </ul>
-        </div>
-      </template>
-
-      <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
-        <info-banner>
-          [[resultsTotalsRangeMessage]]
-          <template is="dom-if" if="[[permalinks]]">
-            <wpt-permalinks path="[[path]]"
-                            path-prefix="/results/"
-                            query-params="[[queryParams]]"
-                            test-runs="[[testRuns]]">
-            </wpt-permalinks>
-            <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-          </template>
-          <template is="dom-if" if="[[queryBuilder]]">
-            <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
-          </template>
-        </info-banner>
-      </template>
-    </section>
-
-    <div class="separator"></div>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
       <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
@@ -587,28 +495,13 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
     this.toggleQueryEdit = () => {
       this.editingQuery = !this.editingQuery;
     };
-    this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;
       this.refreshDisplayedNodes();
     };
-    this.submitQuery = this.handleSubmitQuery.bind(this);
     this.dismissToast = e => e.target.closest('paper-toast').close();
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
     this.showAnalyzer = this.handleShowAnalyzer.bind(this);
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    const search = this.shadowRoot.querySelector('test-search');
-    search.addEventListener('commit', this.onSearchCommit);
-    search.addEventListener('autocomplete', this.onSearchAutocomplete);
-  }
-
-  disconnectedCallback() {
-    this.shadowRoot.querySelector('test-search')
-      .removeEventListener('commit', this.onSearchCommit);
-    super.disconnectedCallback();
   }
 
   async ready() {
@@ -626,9 +519,8 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
     this.load(
       this.loadRuns().then(async runs => {
         // Pass current (un)structured query is passed to fetchResults().
-        const search = this.shadowRoot.querySelector('test-search');
         this.fetchResults(
-          this.structuredQueries && search.structuredQuery || this.search);
+          this.structuredQueries && this.structuredSearch || this.search);
 
         // Load a diff data into this.diffRun, if needed.
         if (this.diff && runs && runs.length === 2) {
@@ -1089,12 +981,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
       : detail.query);
     // Trigger a virtual navigation.
     this.navigateToLocation(window.location);
-  }
-
-  handleSubmitQuery() {
-    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-    this.editingQuery = false;
-    this.updateQueryParams(builder.queryParams);
   }
 
   queryChanged(query, queryBefore) {
