@@ -14,12 +14,11 @@ class WPTApp extends TestRunsQuery(PolymerElement) {
     return html`
       <app-location route="{{route}}"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
-      <app-route route="{{subroute}}" pattern="/:path" data="{{subrouteData}}"></app-route>
 
       <wpt-header></wpt-header>
       <iron-pages role="main" selected="[[page]]" attr-for-selected="name" selected-attribute="visible" fallback-selection="404">
-        <wpt-results name="results" path="[[path]]"></wpt-results>
-        <wpt-interop name="interop" path="[[path]]"></wpt-interop>
+        <wpt-results name="results" path="[[subroute.path]]"></wpt-results>
+        <wpt-interop name="interop" path="[[subroute.path]]"></wpt-interop>
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
     `;
@@ -52,7 +51,7 @@ class WPTApp extends TestRunsQuery(PolymerElement) {
     if (page != null) {
       switch (page) {
         case 'interop':
-          import('../components/wpt-interop.js');
+          import('../views/wpt-interop.js');
           break;
       }
     }

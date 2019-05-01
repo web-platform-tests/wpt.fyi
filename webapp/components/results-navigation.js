@@ -18,7 +18,6 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
     const props = {
       query: {
         type: String,
-        value: '',
         notify: true,
         observer: 'queryChanged',
       },
@@ -28,22 +27,25 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
         observer: 'queryParamsChanged'
       },
       _computedQueryParams: {
-        type: String,
-        computed: 'computeQueryParams(queryParams)',
+        type: Object,
+        computed: opts_queryParamsComputer || 'computeQueryParams(queryParams)',
         observer: 'computedQueryChanged',
       },
     };
-    if (opts_queryParamsComputer) {
-      props._computedQueryParams.computed = opts_queryParamsComputer;
-    }
     return props;
   }
 
   computedQueryChanged(computedQueryParams) {
+    if (!Object.keys(computedQueryParams).length) {
+      return;
+    }
     this.queryParams = computedQueryParams;
   }
 
   queryParamsChanged(queryParams) {
+    if (this._dontReact) {
+      return;
+    }
     this._dontReact = true;
     this.query = this.computeQuery(queryParams);
     this._dontReact = false;
@@ -62,13 +64,15 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
         url.searchParams.set(k, params[k]);
       }
     }
-    return url.search
+    const afterQ = url.search
       .replace(/=true/g, '')
-      .replace(/:00.000Z/g, '');
+      .replace(/:00.000Z/g, '')
+      .split('?',);
+    return afterQ.length && afterQ[1];
   }
 
   queryChanged(query) {
-    if (this._dontReact) {
+    if (!query || this._dontReact) {
       return;
     }
     this._dontReact = true;
@@ -86,6 +90,7 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
       }
       result[param] = values.length > 1 ? values : values[0];
     }
+    return result;
   }
 };
 
@@ -97,10 +102,14 @@ class ResultsTabs extends PolymerElement {
         --paper-tabs-selection-bar-color: var(--paper-blue-500);
       }
       paper-tab {
+        display: block;
         --paper-tab-ink: var(--paper-blue-300);
       }
       paper-tab a {
-        display: inherit;
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-align: center;
         text-decoration: none;
         color: var(--paper-blue-500);
         font-weight: normal;
@@ -115,12 +124,12 @@ class ResultsTabs extends PolymerElement {
     </style>
     <paper-tabs selected="[[selected]]">
       <paper-tab>
-        <a href="/results[[path]][[query]]">
+        <a href="/results[[path]]?[[query]]">
           <h2>Test Results</h2>
         </a>
       </paper-tab>
       <paper-tab>
-        <a href="/interop[[path]][[query]]">
+        <a href="/interop[[path]]?[[query]]">
           <h2>Interoperability</h2>
         </a>
       </paper-tab>
@@ -149,20 +158,6 @@ class ResultsTabs extends PolymerElement {
         value: '',
       }
     };
-  }
-
-  ready() {
-    super.ready();
-    for (const t of this.shadowRoot.querySelectorAll('paper-tab')) {
-      t.onclick = e => {
-        // Let the tab-switch animation run a little :)
-        e.preventDefault();
-        const a = t.querySelector('a');
-        window.setTimeout(() => {
-          window.location = a.href;
-        }, 300);
-      };
-    }
   }
 
   computeSelectedTab(tab) {

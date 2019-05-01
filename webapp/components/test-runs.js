@@ -59,6 +59,7 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
     }
 
     encodeTestPath(path) {
+      path = path || '/';
       console.assert(path.startsWith('/'));
       let parts = path.split('/').slice(1);
       parts.push(encodeURIComponent(parts.pop()));
@@ -75,7 +76,7 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
       if ((this.productSpecs && this.productSpecs.length)
         || (this.runIds && this.runIds.length)) {
         runs.push(
-          fetch(`/api/runs${this.query}`)
+          fetch(`/api/runs?${this.query}`)
             .then(r => r.ok && r.json().then(runs => {
               this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
               return runs;

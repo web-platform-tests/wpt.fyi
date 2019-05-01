@@ -75,7 +75,7 @@ class PathPart extends PolymerElement {
   computeHref(prefix, path, query) {
     let parts = path.split('/');
     parts.push(encodeURIComponent(parts.pop()));
-    return `${prefix || ''}${parts.join('/')}${query || ''}`;
+    return `${prefix || ''}${parts.join('/')}?${query || ''}`;
   }
 
   computedDisplayableRelativePath(path) {

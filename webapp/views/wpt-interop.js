@@ -13,24 +13,25 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { LoadingState } from './loading-state.js';
-import './path-part.js';
-import { SelfNavigation } from './self-navigator.js';
-import './test-file-results-table-terse.js';
-import './test-file-results-table-verbose.js';
-import './test-file-results.js';
-import './test-run.js';
-import './test-runs-query-builder.js';
-import { TestRunsQueryLoader } from './test-runs.js';
-import './test-search.js';
-import { WPTColors } from './wpt-colors.js';
-import { WPTFlags } from './wpt-flags.js';
-import './wpt-permalinks.js';
+import { LoadingState } from '../components/loading-state.js';
+import '../components/path-part.js';
+import '../components/test-file-results-table-terse.js';
+import '../components/test-file-results-table-verbose.js';
+import '../components/test-file-results.js';
+import '../components/test-run.js';
+import '../components/test-runs-query-builder.js';
+import { TestRunsQueryLoader } from '../components/test-runs.js';
+import '../components/test-search.js';
+import { WPTColors } from '../components/wpt-colors.js';
+import { WPTFlags } from '../components/wpt-flags.js';
+import '../components/wpt-permalinks.js';
+import '../components/results-navigation.js';
+import '../components/test-runs-query.js';
 
-class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
+class WPTInterop extends WPTColors(WPTFlags(LoadingState(
   TestRunsQueryLoader(
     PolymerElement,
-    'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)'))))) {
+    'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)')))) {
   static get template() {
     return html`
   <style>
@@ -125,12 +126,13 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     }
   </style>
 
-  <results-tabs tab="interop" path="[[encodedPath]]" query="[[query]]">
-  </results-tabs>
+  <test-runs-ui-query-params query-params="{{queryParams}}"></test-runs-ui-query-params>
+
+  <results-tabs tab="interop" path="[[encodedPath]]" query="[[query]]"></results-tabs>
 
   <section class="search">
     <div class="path">
-      <a href="/interop/[[ query ]]" on-click="navigate">wpt</a>
+      <a href="/interop/?[[ query ]]" on-click="navigate">wpt</a>
       <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
         <span class="path-separator">/</span>
         <a href="/interop[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
@@ -190,8 +192,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
 
   <template is="dom-if" if="[[queryBuilder]]">
     <iron-collapse opened="[[editingQuery]]">
-      <test-runs-query-builder product-specs="[[productSpecs]]" labels="[[labels]]" master="[[master]]" shas="[[shas]]" aligned="[[aligned]]" on-submit="[[submitQuery]]" from="[[from]]" to="[[to]]" diff="[[diff]]">
-      </test-runs-query-builder>
+      <test-runs-query-builder query="[[query]]"></test-runs-query-builder>
     </iron-collapse>
   </template>
 
@@ -345,6 +346,15 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     } else {
       this.fetchPrecomputedInterop();
     }
+  }
+
+  reloadData() {
+    if (!this.diff) {
+      this.diffRun = null;
+    }
+    this.testRuns = null;
+    this.searchResults = null;
+    this.loadData();
   }
 
   get testSearch() {
@@ -583,22 +593,17 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   }
 
   handleSubmitQuery() {
-    const queryBefore = this.query;
     const builder = this.shadowRoot.querySelector('test-runs-query-builder');
     this.editingQuery = false;
     this.updateQueryParams(builder.queryParams);
-    if (queryBefore === this.query) {
+  }
+
+  queryChanged(query, queryBefore) {
+    super.queryChanged(query, queryBefore);
+    if (query === queryBefore) {
       return;
     }
-    // Trigger a virtual navigation.
-    this.navigateToLocation(window.location);
-    // Reload the data.
-    if (!this.diff) {
-      this.diffRun = null;
-    }
-    this.testRuns = null;
-    this.searchResults = null;
-    this.loadData();
+    this.reloadData();
   }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);

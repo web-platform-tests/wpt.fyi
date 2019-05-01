@@ -168,28 +168,17 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
       }
     </style>
 
-    <test-run-ui-query-params query-params="{{queryParams}}"></test-run-ui-query-params>
+    <test-runs-ui-query-params query-params="{{queryParams}}"></test-runs-ui-query-params>
 
-    <paper-tabs selected="[[selected]]">
-      <paper-tab>
-        <a href="/results[[path]][[query]]">
-          <h2>Test Results</h2>
-        </a>
-      </paper-tab>
-      <paper-tab>
-        <a href="/interop[[path]][[query]]">
-          <h2>Interoperability</h2>
-        </a>
-      </paper-tab>
-    </paper-tabs>
+    <results-tabs tab="results" path="[[encodedPath]]" query="[[query]]"></results-tabs>
 
     <section class="search">
       <!-- NOTE: Tag wrapping below is deliberate to avoid whitespace throughout the path. -->
       <div class="path">
-        <a href="/results/[[ query ]]" on-click="navigate">wpt</a
+        <a href="/results/?[[ query ]]">wpt</a
         ><template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
           ><span class="path-separator">/</span
-        ><a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a
+        ><a href="/results[[ part.path ]]?[[ query ]]">[[ part.name ]]</a
         ></template>
 
         <template is="dom-if" if="[[showTestType]]">
@@ -270,7 +259,7 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
 
     <template is="dom-if" if="[[queryBuilder]]">
       <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder query-params="{{queryParams}}"
+        <test-runs-query-builder query="[[query]]"
                                  on-submit="[[submitQuery]]">
         </test-runs-query-builder>
       </iron-collapse>
@@ -417,6 +406,10 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
 
   static get properties() {
     return {
+      path: {
+        type: String,
+        observer: 'pathUpdated',
+      },
       sourcePath: {
         type: String,
         computed: 'computeSourcePath(path, manifest)',
@@ -622,21 +615,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
 
   async ready() {
     await super.ready();
-
-    // NOTE(lukebjerring): Overriding the pathUpdated method doesn't get
-    // called, so we wrap any given onLocationUpdated method here.
-    const onLocationUpdated = this.onLocationUpdated;
-    this.onLocationUpdated = (path, state) => {
-      onLocationUpdated && onLocationUpdated(path, state);
-      this.showHistory = false;
-      if (state) {
-        const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-        if (builder) {
-          builder.updateQueryParams(state);
-          this.handleSubmitQuery();
-        }
-      }
-    };
     // Show warning about ?label=experimental missing the master label.
     const labels = this.queryParams && this.queryParams.label;
     if (labels && labels.includes('experimental') && !labels.includes('master')) {
@@ -676,6 +654,16 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
         this.resultsLoadFailed = true;
       }
     );
+  }
+
+  reloadData() {
+    if (!this.diff) {
+      this.diffRun = null;
+    }
+    this.testRuns = [];
+    this.searchResults = [];
+    this.refreshDisplayedNodes();
+    this.loadData();
   }
 
   fetchResults(q) {
@@ -823,7 +811,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
   }
 
   pathUpdated(path) {
-    super.pathUpdated(path);
     this.refreshDisplayedNodes();
   }
 
@@ -1107,23 +1094,17 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
   }
 
   handleSubmitQuery() {
-    const queryBefore = this.query;
     const builder = this.shadowRoot.querySelector('test-runs-query-builder');
     this.editingQuery = false;
     this.updateQueryParams(builder.queryParams);
-    if (queryBefore === this.query) {
+  }
+
+  queryChanged(query, queryBefore) {
+    super.queryChanged(query, queryBefore);
+    if (queryBefore === query) {
       return;
     }
-    // Trigger a virtual navigation.
-    this.navigateToLocation(window.location);
-    // Reload the data.
-    if (!this.diff) {
-      this.diffRun = null;
-    }
-    this.testRuns = [];
-    this.searchResults = [];
-    this.refreshDisplayedNodes();
-    this.loadData();
+    this.reloadData();
   }
 
   handleAddMasterLabel(e) {

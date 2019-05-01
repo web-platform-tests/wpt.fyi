@@ -224,7 +224,8 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
 
   // Respond to query changes by computing a new shas URL.
   computeSHAsURL(query) {
-    const url = new URL(`/api/shas${query || ''}`, window.location);
+    const url = new URL('/api/shas', window.location);
+    url.search = query || '';
     url.searchParams.delete('sha');
     return url;
   }
