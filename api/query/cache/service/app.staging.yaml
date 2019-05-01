@@ -1,0 +1,19 @@
+runtime: custom
+env: flex
+service: searchcache
+
+# Staging versions use much fewer resources and only 1 instance,
+# but should otherwise be the same as prod.
+
+resources:
+  cpu: 2
+  memory_gb: 8
+
+manual_scaling:
+  instances: 1
+
+liveness_check:
+  path: "/_ah/liveness_check"
+
+readiness_check:
+  path: "/_ah/readiness_check"

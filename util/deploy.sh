@@ -31,10 +31,17 @@ while getopts ':b:prhq' flag; do
 done
 
 if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
-if [[ "${APP_PATH}" != "webapp" && "${APP_PATH}" != "results-processor" && "${APP_PATH}" != "revisions/service" && "${APP_PATH}" != "api/query/cache/service" ]];
-then
+case "${APP_PATH}" in
+  "webapp" | \
+  "results-processor" | \
+  "revisions/service" | \
+  "api/query/cache/service" | \
+  "api/query/cache/service/app.staging.yaml")
+  ;;
+*)
   fatal "Unrecognized app path \"${APP_PATH}\"."
-fi
+  ;;
+esac
 
 # Ensure dependencies are installed.
 if [[ -z "${QUIET}" ]]; then info "Installing dependencies..."; fi
