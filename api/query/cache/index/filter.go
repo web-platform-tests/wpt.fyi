@@ -64,11 +64,11 @@ func (fcq *FileContentsQuery) loadSearchResults() {
 		return
 	}
 
-	projectId, err := metadata.ProjectID()
+	projectID, err := metadata.ProjectID()
 	if err != nil {
 		log.Errorf("Failed to get project id: %s", err.Error())
 	}
-	host := fmt.Sprintf("%s-dot-%s.appspot.com", os.Getenv("GAE_VERSION"), projectId)
+	host := fmt.Sprintf("%s-dot-%s.appspot.com", os.Getenv("GAE_VERSION"), projectID)
 	remoteCtx, err := remote_api.NewRemoteContext(host, hc)
 	if err != nil {
 		log.Errorf("Failed to open remote context: %s", err.Error())
