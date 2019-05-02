@@ -274,7 +274,7 @@ def process_report(task_id, params):
     uploader = params['uploader']
     # Optional fields:
     azure_url = params.get('azure_url')
-    run_id = params.get('run_id', '0')
+    run_id = params.get('id', '0')
     callback_url = params.get('callback_url')
     labels = params.get('labels', '')
     # Repeatable fields
