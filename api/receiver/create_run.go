@@ -58,10 +58,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 	}
 	testRun.Revision = testRun.FullRevisionHash[:10]
 
-	log := shared.GetLogger(a.Context())
-	log.Debugf("Creating run %d", testRun.ID)
 	key, err := a.AddTestRun(&testRun)
-	log.Debugf("Run created %d", key.IntID())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -84,6 +81,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log := shared.GetLogger(a.Context())
 	log.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonOutput)

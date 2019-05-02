@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"google.golang.org/appengine/datastore"
-	gaelog "google.golang.org/appengine/log"
 )
 
 // NewAppEngineDatastore creates a Datastore implementation, or a Datastore
@@ -92,7 +91,6 @@ func (d aeDatastore) Put(key Key, src interface{}) (Key, error) {
 
 func (d aeDatastore) Insert(key Key, src interface{}) error {
 	return datastore.RunInTransaction(d.ctx, func(ctx context.Context) error {
-		gaelog.Debugf(d.ctx, "Inserting %s %d", key.Kind(), key.IntID())
 		var empty map[string]interface{}
 		err := datastore.Get(ctx, key.(*datastore.Key), &empty)
 		if err == nil {
