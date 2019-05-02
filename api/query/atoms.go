@@ -8,8 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
+	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -156,7 +159,12 @@ type AbstractLink struct {
 
 // BindToRuns for AbstractLink is a no-op; it is independent of test runs
 func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
-	return Link{l.Pattern}
+	var netClient = &http.Client{
+		Timeout: time.Second * 5,
+	}
+	metadata := shared.GetMetadataResponse(runs, netClient, log.StandardLogger())
+
+	return Link{l.Pattern, metadata}
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result

@@ -7,11 +7,9 @@ package index
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	reflect "reflect"
 	"strings"
 	"sync"
-	"time"
 
 	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
@@ -153,6 +151,7 @@ func (c Count) Filter(t TestID) bool {
 	return matches == c.count
 }
 
+// Filter interprets a Link as a filter function over TestIDs.
 func (l Link) Filter(t TestID) bool {
 	name, _, err := l.tests.GetName(t)
 	if err != nil {
@@ -223,8 +222,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		}
 		return Count{idx, v.Count, fs}, nil
 	case query.Link:
-		metadata := prepareLinkFilter()
-		return Link{idx, v.Pattern, meatadata}
+		metadataMap := prepareLinkFilter(v.Metadata)
+		return Link{idx, v.Pattern, metadataMap}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
@@ -315,12 +314,8 @@ func filters(idx index, qs []query.ConcreteQuery) ([]filter, error) {
 	return fs, nil
 }
 
-func prepareLinkFilter() map[string][]string {
+func prepareLinkFilter(metadata shared.MetadataResults) map[string][]string {
 	var metadataMap map[string][]string
-	var netClient = &http.Client{
-		Timeout: time.Second * 5,
-	}
-	Metadata := shared.GetMetadataResponse(runs, netClient, log.StandardLogger())
 	for _, data := range metadata {
 		metadataMap[data.Test] = data.URLs
 	}
