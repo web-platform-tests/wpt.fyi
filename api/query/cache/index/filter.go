@@ -7,9 +7,11 @@ package index
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	reflect "reflect"
 	"strings"
 	"sync"
+	"time"
 
 	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
@@ -57,6 +59,13 @@ type Count struct {
 	index
 	count int
 	args  []filter
+}
+
+// Link is a query.Count bound to an in-memory index and MetadataResults.
+type Link struct {
+	index
+	pattern  string
+	metadata map[string][]string
 }
 
 // And is a query.And bound to an in-memory index.
@@ -144,6 +153,25 @@ func (c Count) Filter(t TestID) bool {
 	return matches == c.count
 }
 
+func (l Link) Filter(t TestID) bool {
+	name, _, err := l.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+
+	urls, isExist := l.metadata[name]
+	if !isExist {
+		return false
+	}
+
+	for _, url := range urls {
+		if strings.Contains(url, l.pattern) {
+			return true
+		}
+	}
+	return false
+}
+
 // Filter interprets an And as a filter function over TestIDs.
 func (a And) Filter(t TestID) bool {
 	args := a.args
@@ -194,6 +222,9 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 			return nil, err
 		}
 		return Count{idx, v.Count, fs}, nil
+	case query.Link:
+		metadata := prepareLinkFilter()
+		return Link{idx, v.Pattern, meatadata}
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
@@ -282,4 +313,16 @@ func filters(idx index, qs []query.ConcreteQuery) ([]filter, error) {
 		}
 	}
 	return fs, nil
+}
+
+func prepareLinkFilter() map[string][]string {
+	var metadataMap map[string][]string
+	var netClient = &http.Client{
+		Timeout: time.Second * 5,
+	}
+	Metadata := shared.GetMetadataResponse(runs, netClient, log.StandardLogger())
+	for _, data := range metadata {
+		metadataMap[data.Test] = data.URLs
+	}
+	return metadataMap
 }

@@ -156,7 +156,7 @@ type AbstractLink struct {
 
 // BindToRuns for AbstractLink is a no-op; it is independent of test runs
 func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
-	return l
+	return Link{l.Pattern}
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result
