@@ -950,10 +950,12 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
   }
 
   queryChanged(query, queryBefore) {
-    if (!super.queryChanged(query, queryBefore)) {
+    console.log('queryChanged', this, query, queryBefore);
+    super.queryChanged(query, queryBefore);
+    if (this._fetchedQuery === query) {
       return;
-    };
-    console.log(query, queryBefore)
+    }
+    this._fetchedQuery = query; // Debounce.
     this.reloadData();
   }
 

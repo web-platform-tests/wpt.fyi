@@ -59,7 +59,6 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
 
       <wpt-header></wpt-header>
 
-      <test-runs-ui-query-params query="{{query}}"></test-runs-ui-query-params>
       <results-tabs tab="[[page]]" path="[[encodedPath]]" query="[[query]]"></results-tabs>
 
       <section class="search">
@@ -105,7 +104,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         <info-banner>
           [[resultsRangeMessage]]
           <wpt-permalinks path="[[path]]"
-                          path-prefix="/interop/"
+                          path-prefix="/[[page]]/"
                           query-params="[[queryParams]]"
                           test-runs="[[testRuns]]">
           </wpt-permalinks>
@@ -214,6 +213,11 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     if (labels && labels.includes('experimental') && !labels.includes('master')) {
       this.shadowRoot.querySelector('#masterLabelMissing').show();
     }
+  }
+
+  queryChanged(query) {
+    // app-location don't support repeated params.
+    this.shadowRoot.querySelector('app-location').__query = query;
   }
 
   _routeChanged(routeData) {

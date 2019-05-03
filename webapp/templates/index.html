@@ -7,10 +7,7 @@
   </head>
   <body>
     <div id="content">
-      <test-runs-ui-query-params {{- template "_test_run_query_params.html" . }}>
-      </test-runs-ui-query-params>
-
-      <wpt-app></wpt-app>
+      <wpt-app {{- template "_test_run_ui_query_params.html" . }}></wpt-app>
     </div>
     {{ template "_ga.html" }}
   </body>

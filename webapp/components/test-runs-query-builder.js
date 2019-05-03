@@ -23,7 +23,7 @@ import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
 import './browser-picker.js';
 import './display-logo.js';
 import './info-banner.js';
-import { Channels, DefaultBrowserNames, DefaultProducts, ProductInfo, SemanticLabels, Sources } from './product-info.js';
+import { Channels, DefaultBrowserNames, ProductInfo, SemanticLabels, Sources } from './product-info.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { WPTFlags } from './wpt-flags.js';
 
@@ -65,7 +65,13 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     </template>
     <div>
       <template is="dom-repeat" items="[[products]]" as="p" index-as="i">
-        <product-builder browser-name="{{p.browser_name}}" browser-version="{{p.browser_version}}" labels="{{p.labels}}" debug="[[debug]]" on-product-changed="[[productChanged(i)]]" on-delete="[[productDeleted(i)]]"></product-builder>
+        <product-builder browser-name="{{p.browser_name}}"
+                         browser-version="{{p.browser_version}}"
+                         labels="{{p.labels}}"
+                         debug="[[debug]]"
+                         on-product-changed="[[productChanged(i)]]"
+                         on-delete="[[productDeleted(i)]]">
+        </product-builder>
       </template>
       <template is="dom-if" if="[[!products.length]]">
         <info-banner>
@@ -93,12 +99,12 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       <paper-checkbox id="master-checkbox" checked="{{master}}">Only master branch</paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-input label="Labels" always-float-label="" placeholder="e.g. stable,buildbot" value="{{ labelsString::input }}">
+      <paper-input label="Labels" always-float-label placeholder="e.g. stable,buildbot" value="{{ labelsString::input }}">
       </paper-input>
     </paper-item>
     <template is="dom-if" if="[[queryBuilderSHA]]">
       <paper-item>
-        <paper-input-container always-float-label="">
+        <paper-input-container always-float-label>
           <label slot="label">SHA</label>
           <input name="os_version" placeholder="(Latest)" list="shas-datalist" value="{{ _sha::input }}" slot="input">
           <datalist id="shas-datalist"></datalist>
@@ -106,13 +112,13 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       </paper-item>
     </template>
     <br>
-    <paper-button raised="" id="add-button" onclick="[[addProduct]]">
+    <paper-button raised id="add-button" onclick="[[addProduct]]">
       <iron-icon icon="add"></iron-icon> Add product
     </paper-button>
-    <paper-button raised="" id="clear-button" onclick="[[clearAll]]">
+    <paper-button raised id="clear-button" onclick="[[clearAll]]">
       <iron-icon icon="delete"></iron-icon> Clear all
     </paper-button>
-    <paper-button raised="" id="submit-button" onclick="[[submit]]">
+    <paper-button raised id="submit-button" onclick="[[submit]]">
       <iron-icon icon="done"></iron-icon> Submit
     </paper-button>
 `;
@@ -199,11 +205,11 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   }
 
   handleDeleteProduct(i) {
-    this.splice('products', i, 1);
+    this.splice('productSpecs', i, 1);
   }
 
   handleProductChanged(i, product) {
-    this.set(`products.${i}`, product);
+    this.set(`productSpecs.${i}`, this.getSpec(product));
   }
 
   handleSubmit() {
@@ -351,12 +357,12 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         <browser-picker browser="{{browserName}}"></browser-picker>
 
         <br>
-        <paper-dropdown-menu label="Channel" no-animations="">
+        <paper-dropdown-menu label="Channel" no-animations>
           <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
             <paper-item value="any">Any</paper-item>
             <template is="dom-repeat" items="[[channels]]" as="channel">
               <paper-icon-item value="[[channel]]">
-                <display-logo slot="item-icon" product="[[productWithChannel(_product, channel)]]" small=""></display-logo>
+                <display-logo slot="item-icon" product="[[productWithChannel(_product, channel)]]" small></display-logo>
                 [[displayName(channel)]]
               </paper-icon-item>
             </template>
@@ -364,7 +370,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         </paper-dropdown-menu>
 
         <br>
-        <paper-dropdown-menu label="Source" no-animations="">
+        <paper-dropdown-menu label="Source" no-animations>
           <paper-listbox slot="dropdown-content" selected="{{ _source }}" attr-for-selected="value">
             <paper-item value="any">Any</paper-item>
             <template is="dom-repeat" items="[[sources]]" as="source">
@@ -377,7 +383,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         </paper-dropdown-menu>
 
         <br>
-        <paper-input-container always-float-label="">
+        <paper-input-container always-float-label>
           <label slot="label">Version</label>
           <input slot="input" placeholder="(Any version)" list="versions-datalist" value="{{ browserVersion::input }}">
           <datalist id="versions-datalist"></datalist>
@@ -437,10 +443,6 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
       },
       onDelete: Function,
       onProductChanged: Function,
-      defaultProducts: {
-        type: Array,
-        value: DefaultProducts,
-      },
       channels: {
         type: Array,
         value: Array.from(Channels),
@@ -532,7 +534,10 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
   }
 
   // Respond to version URL changing by fetching the versions
-  versionsURLUpdated(url) {
+  versionsURLUpdated(url, urlBefore) {
+    if (!url || urlBefore === url) {
+      return;
+    }
     fetch(url).then(r => r.json()).then(v => {
       this.versions = v;
     });

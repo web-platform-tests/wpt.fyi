@@ -36,7 +36,8 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
   }
 
   computedQueryChanged(computedQueryParams) {
-    if (this._dontReact || !computedQueryParams || !Object.keys(computedQueryParams).length) {
+    console.log('computedQueryChanged', computedQueryParams)
+    if (!computedQueryParams || !Object.keys(computedQueryParams).length) {
       return;
     }
     this.queryParams = computedQueryParams;
@@ -46,14 +47,14 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
     if (this._dontReact) {
       return;
     }
+    console.log('queryParamsChanged', this, queryParams, queryParamsBefore)
     const query = this.computeQuery(queryParams);
     const queryBefore = this.computeQuery(queryParamsBefore);
+    console.log(query, queryBefore);
     if (query === queryBefore) {
       return;
     }
-    this._dontReact = true;
     this.query = query;
-    this._dontReact = false;
   }
 
   computeQuery(params) {
@@ -84,6 +85,9 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
   }
 
   queryChanged(query) {
+    if (this._dontReact) {
+      return;
+    }
     this._dontReact = true;
     this.queryParams = this.parseQuery(query);
     this._dontReact = false;

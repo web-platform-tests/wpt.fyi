@@ -3,10 +3,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-import '../node_modules/@polymer/iron-location/iron-location.js';
-import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { pluralize } from './pluralize.js';
-import { Channels, DefaultProducts, DefaultProductSpecs, ProductInfo } from './product-info.js';
+import { Channels, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
 
 const testRunsQueryComputer =
@@ -68,13 +66,13 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   queryChanged(query, queryBefore) {
+    console.log('queryChanged', this, query);
     if (!query || query === queryBefore || this._dontReact) {
-      return false;
+      return;
     }
     this._dontReact = true;
     this.updateQueryParams(this.parseQuery(query));
     this._dontReact = false;
-    return true;
   }
 
   // sha is a convenience method for getting (the) single sha.
@@ -84,7 +82,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   productsChanged(products) {
-    if (this._productsChanging) {
+    if (this._productsChanging || this._dontReact) {
       return;
     }
     this._productsChanging = true;
@@ -93,7 +91,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   productSpecsChanged(productSpecs) {
-    if (this._productsChanging) {
+    if (this._productsChanging || this._dontReact) {
       return;
     }
     this._productsChanging = true;
@@ -132,17 +130,17 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     }
 
     // Collapse a globally shared channel into a single label.
-    if (this.products && this.products.length) {
+    if (productSpecs && productSpecs.length) {
+      const products = productSpecs.map(p => this.parseProductSpec(p));
       let allChannelsSame = true;
-      const channel = (this.products[0].labels || []).find(l => Channels.has(l));
-      for (const p of this.products) {
+      const channel = (products[0].labels || []).find(l => Channels.has(l));
+      for (const p of products) {
         if (!(p.labels || []).find(l => l === channel)) {
           allChannelsSame = false;
         }
       }
-      let productSpecs;
       if (allChannelsSame) {
-        productSpecs = this.products.map(p => {
+        productSpecs = products.map(p => {
           const nonChannel = (p.labels || []).filter(l => !Channels.has(l));
           return this.getSpec(Object.assign({}, p, {labels: nonChannel}));
         });
@@ -150,7 +148,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
           params.label = labels.concat(channel);
         }
       } else {
-        productSpecs = this.products.map(p => this.getSpec(p));
+        productSpecs = products.map(p => this.getSpec(p));
       }
       if (!this.computeIsDefaultProducts(productSpecs)) {
         params.product = productSpecs;
@@ -203,13 +201,20 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   /**
-  * Update this component's UI properties to match the given query params.
-  */
+   * Update this component's UI properties to match the given query params.
+   */
   updateQueryParams(params) {
+    console.log('super.updateQueryParams', this, params)
     if (!params) {
       this.clearQuery();
       return;
     }
+    const batchUpdate = this._getBatchUpdate(params);
+    this.setProperties(batchUpdate);
+    this.notifyPath('query');
+  }
+
+  _getBatchUpdate(params) {
     const batchUpdate = this.emptyQuery;
     if (!this.computeIsLatest(params.sha)) {
       batchUpdate.shas = params.sha;
@@ -224,13 +229,15 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       batchUpdate.labels = params.label.filter(l => !Channels.has(l));
     }
     if (sharedChannel) {
-      for (const i in batchUpdate.products) {
-        const labels = batchUpdate.products[i].labels.filter(l => !Channels.has(l) || l === sharedChannel);
-        if (!batchUpdate.products[i].labels.includes(sharedChannel)) {
+      batchUpdate.productSpecs = batchUpdate.productSpecs.map(spec => {
+        const product = this.parseProductSpec(batchUpdate.productSpecs[i]);
+        const labels = product.labels.filter(l => !Channels.has(l) || l === sharedChannel);
+        if (!product.labels.includes(sharedChannel)) {
           labels.push(sharedChannel);
         }
-        batchUpdate.products[i].labels = labels;
-      }
+        product.labels = labels;
+        return this.getSpec(product);
+      });
     }
     if ('max-count' in params) {
       batchUpdate.maxCount = params['max-count'];
@@ -251,7 +258,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     if (batchUpdate.master) {
       batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
     }
-    this.setProperties(batchUpdate);
+    return batchUpdate;
   }
 
   computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master) {
@@ -287,25 +294,6 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 };
 
-/**
- * TestRunsQueryElement is the custom <test-runs-query-params> element that
- * wraps an <iron-location> element to propagate query param values to/from
- * the window.location URI.
- */
-class TestRunsQueryElement extends TestRunsQuery(PolymerElement) {
-  static get is() {
-    return 'test-runs-query-params';
-  }
-
-  static get template() {
-    return html`
-    <iron-location query="{{query}}"></iron-location>
-`;
-  }
-}
-window.customElements.define(TestRunsQueryElement.is, TestRunsQueryElement);
-
-
 // TODO(lukebjerring): Support to & from in the builder.
 const testRunsUIQueryComputer =
   'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds)';
@@ -340,6 +328,7 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
   }
 
   computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds) {
+    console.log('computeTestRunUIQueryParams', this, productSpecs)
     const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
     if (diff || this.diff) {
       params.diff = true;
@@ -359,10 +348,9 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     return params;
   }
 
-  updateQueryParams(params) {
+  _getBatchUpdate(params) {
     params = params || {};
-    super.updateQueryParams(params);
-    let batchUpdate = {};
+    const batchUpdate = super._getBatchUpdate(params);
     batchUpdate.pr = params.pr;
     batchUpdate.search = params.q;
     batchUpdate.diff = params.diff;
@@ -372,30 +360,12 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     if ('run_id' in params) {
       batchUpdate.runIds = Array.from(params['run_id']);
     }
-    this.setProperties(batchUpdate);
+    return batchUpdate;
   }
 };
 
 TestRunsQuery.Computer = testRunsQueryComputer;
 TestRunsUIQuery.Computer = testRunsUIQueryComputer;
-
-/**
- * TestRunsUIQueryElement is the custom <test-runs-ui-query-params> element that
- * wraps an <iron-location> element to propagate query param values to/from
- * the window.location URI.
- */
-class TestRunsUIQueryElement extends TestRunsUIQuery(PolymerElement) {
-  static get is() {
-    return 'test-runs-ui-query-params';
-  }
-
-  static get template() {
-    return html`
-    <iron-location query="{{query}}"></iron-location>
-`;
-  }
-}
-window.customElements.define(TestRunsUIQueryElement.is, TestRunsUIQueryElement);
 
 export { TestRunsQuery, TestRunsUIQuery };
 
