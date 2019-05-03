@@ -6,7 +6,6 @@ package shared
 
 import (
 	"net/http"
-	"path"
 	"sort"
 
 	"github.com/go-yaml/yaml"
@@ -104,7 +103,8 @@ func constructMetadataResponse(productAtRevisions []ProductAtRevision, metadata 
 		for _, link := range data.Links {
 			var urls []string
 
-			var fullTestName = path.Join(folderPath, link.TestPath)
+			//TODO: Concatenate test path on WPT Metadata repository instead of here.
+			var fullTestName = "/" + folderPath + "/" + link.TestPath
 
 			if _, ok := testMap[fullTestName]; !ok {
 				testMap[fullTestName] = make([]string, len(productAtRevisions))

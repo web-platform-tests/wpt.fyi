@@ -41,7 +41,6 @@ const QUERY_GRAMMAR = ohm.grammar(`
     RootExp
       = Sequential
       | Count
-      | Link
       | Exp
 
     Sequential = "seq(" ListOf<Exp, space*> ")"

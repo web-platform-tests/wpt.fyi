@@ -86,8 +86,6 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 			query = arg.BindToRuns(runs...)
 		} else if _, isCount := arg.(AbstractCount); isCount {
 			query = arg.BindToRuns(runs...)
-		} else if _, isLink := arg.(AbstractLink); isLink {
-			query = arg.BindToRuns(runs...)
 		} else {
 			// Everything else is split, one run must satisfy the whole tree.
 			byRun := make([]ConcreteQuery, 0, len(runs))

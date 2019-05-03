@@ -99,8 +99,12 @@ func (h MetadataSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	var abstractLink query.AbstractLink
-	var isLinkQuery bool
-	if abstractLink, isLinkQuery = rq.AbstractQuery.(query.AbstractLink); !isLinkQuery {
+	var isLinkQuery = false
+	if exists, isExists := rq.AbstractQuery.(query.AbstractExists); isExists && len(exists.Args) == 1 {
+		abstractLink, isLinkQuery = exists.Args[0].(query.AbstractLink)
+	}
+
+	if !isLinkQuery {
 		h.logger.Errorf("Error from request: non Link search query %s for api/metadata", rq.AbstractQuery)
 		http.Error(w, "Error from request: non Link search query for api/metadata", http.StatusInternalServerError)
 		return

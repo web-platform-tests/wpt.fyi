@@ -344,6 +344,43 @@ func TestStructuredQuery_link(t *testing.T) {
 		}}, rq)
 }
 
+
+func TestStructuredQuery_combinedlink(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{"pattern": "cssom"},
+				{"link": "chromium"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery:AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, AbstractLink{Pattern:"chromium",}}}}, rq)
+}
+
+func TestStructuredQuery_combinednotlink(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{"and": [
+					{"pattern": "cssom"},
+					{"not": {"link": "chromium.bug"}
+					}
+				  ]
+				}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery:AbstractExists{Args:[]AbstractQuery{AbstractAnd{Args:[]AbstractQuery{TestNamePattern{Pattern:"cssom"}, AbstractNot{Arg:AbstractLink{Pattern:"chromium.bug"}}}}}}}, rq)
+}
+
 func TestStructuredQuery_nested(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
