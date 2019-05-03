@@ -67,13 +67,14 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     this.updateQueryParams(this.queryParams);
   }
 
-  queryChanged(query) {
-    if (!query || this._dontReact) {
-      return;
+  queryChanged(query, queryBefore) {
+    if (!query || query === queryBefore || this._dontReact) {
+      return false;
     }
     this._dontReact = true;
     this.updateQueryParams(this.parseQuery(query));
     this._dontReact = false;
+    return true;
   }
 
   // sha is a convenience method for getting (the) single sha.

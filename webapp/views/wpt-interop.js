@@ -218,10 +218,10 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
         type: String,
         value: '',
         notify: true,
+        observer: 'handleSearchCommit',
       },
       structuredSearch: Object,
       onSearchCommit: Function,
-      onSearchAutocomplete: Function,
       interopLoadFailed: Boolean,
       testPaths: {
         type: Set,
@@ -237,12 +237,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
 
   constructor() {
     super();
-    this.onSearchCommit = (e) => {
-      this.handleSearchCommit(e.detail.query);
-    };
-    this.onSearchAutocomplete = (e) => {
-      this.handleSearchAutocomplete(e.detail.path);
-    };
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
@@ -349,10 +343,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
     );
   }
 
-  navigationPathPrefix() {
-    return '/interop';
-  }
-
   interopQueryParams(shas, aligned, master, labels, productSpecs, maxCount, offset, to, from, search) {
     const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
     if (search) {
@@ -421,11 +411,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(
     } else {
       this.precomputedInteropLoaded(this.precomputedInterop);
     }
-  }
-
-  handleSearchAutocomplete(path) {
-    this.shadowRoot.querySelector('test-search').clear();
-    this.navigateToPath(path);
   }
 
   computeDisplayedNodes(path, displayedTests, sortColumn) {

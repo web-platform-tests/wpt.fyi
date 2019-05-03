@@ -148,14 +148,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
     </template>
 
     <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
-    <paper-toast id="masterLabelMissing" duration="15000">
-      <div style="display: flex;">
-        wpt.fyi now includes affected tests results from PRs. <br>
-        Did you intend to view results for complete (master) runs only?
-        <paper-button onclick="[[addMasterLabel]]">View master runs</paper-button>
-        <paper-button onclick="[[dismissToast]]">Dismiss</paper-button>
-      </div>
-    </paper-toast>
 
     <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
@@ -383,8 +375,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
       },
       resultsLoadFailed: Boolean,
       noResults: Boolean,
-      onSearchCommit: Function,
-      onSearchAutocomplete: Function,
       editingQuery: {
         type: Boolean,
         value: false,
@@ -486,8 +476,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
 
   constructor() {
     super();
-    this.onSearchCommit = this.handleSearchCommit.bind(this);
-    this.onSearchAutocomplete = this.handleSearchAutocomplete.bind(this);
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
@@ -500,18 +488,7 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
       this.refreshDisplayedNodes();
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
-    this.addMasterLabel = this.handleAddMasterLabel.bind(this);
     this.showAnalyzer = this.handleShowAnalyzer.bind(this);
-  }
-
-  async ready() {
-    await super.ready();
-    // Show warning about ?label=experimental missing the master label.
-    const labels = this.queryParams && this.queryParams.label;
-    if (labels && labels.includes('experimental') && !labels.includes('master')) {
-      this.shadowRoot.querySelector('#masterLabelMissing').show();
-    }
-    this.loadData();
   }
 
   loadData() {
@@ -972,30 +949,12 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
     this.navigateToPath(e.detail.path);
   }
 
-  handleSearchCommit(e) {
-    const detail = e.detail;
-    // Fetch search results when test-search signals that user has committed
-    // to search string (by pressing <Enter>).
-    this.fetchResults(this.structuredQueries
-      ? detail.structuredQuery
-      : detail.query);
-    // Trigger a virtual navigation.
-    this.navigateToLocation(window.location);
-  }
-
   queryChanged(query, queryBefore) {
-    super.queryChanged(query, queryBefore);
-    if (queryBefore === query) {
+    if (!super.queryChanged(query, queryBefore)) {
       return;
-    }
+    };
+    console.log(query, queryBefore)
     this.reloadData();
-  }
-
-  handleAddMasterLabel(e) {
-    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-    builder.master = true;
-    this.handleSubmitQuery();
-    this.dismissToast(e);
   }
 
   computeResultsTotalsRangeMessage(searchResults, shas, productSpecs, from, to, maxCount, labels, master) {

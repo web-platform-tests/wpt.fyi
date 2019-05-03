@@ -64,16 +64,16 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
 
       <section class="search">
         <div class="path">
-          <a href="/interop/?[[ query ]]" on-click="navigate">wpt</a>
+          <a href="/[[page]]/?[[ query ]]" on-click="navigate">wpt</a>
           <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
             <span class="path-separator">/</span>
-            <a href="/interop[[ part.path ]]?[[ query ]]" on-click="navigate">[[ part.name ]]</a>
+            <a href="/[[page]][[ part.path ]]?[[ query ]]" on-click="navigate">[[ part.name ]]</a>
           </template>
         </div>
 
         <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
-        <test-search query="{{search}}"
+        <test-search query="[[search]]"
                      structured-query="{{structuredSearch}}"
                      test-runs="[[testRuns]]"
                      test-paths="[[testPaths]]">
@@ -132,6 +132,15 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
 
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
+
+      <paper-toast id="masterLabelMissing" duration="15000">
+        <div style="display: flex;">
+          wpt.fyi now includes affected tests results from PRs. <br>
+          Did you intend to view results for complete (master) runs only?
+          <paper-button onclick="[[addMasterLabel]]">View master runs</paper-button>
+          <paper-button onclick="[[dismissToast]]">Dismiss</paper-button>
+        </div>
+      </paper-toast>
     `;
   }
 
@@ -142,7 +151,10 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         reflectToAttribute: true,
         observer: '_pageChanged'
       },
-      path: String,
+      path: {
+        type: String,
+        computed: '_computePath(subroute.path)',
+      },
       encodedPath: {
         type: String,
         computed: 'encodeTestPath(path)'
@@ -177,20 +189,31 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       this.editingQuery = !this.editingQuery;
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
+    this.addMasterLabel = this.handleAddMasterLabel.bind(this);
+    this.dismissToast = e => e.target.closest('paper-toast').close();
   }
 
   connectedCallback() {
     super.connectedCallback();
     const testSearch = this.shadowRoot.querySelector('test-search');
-    testSearch.addEventListener('commit', this.handleSearchCommit);
-    testSearch.addEventListener('autocomplete', this.handleSearchAutocomplete);
+    testSearch.addEventListener('commit', this.handleSearchCommit.bind(this));
+    testSearch.addEventListener('autocomplete', this.handleSearchAutocomplete.bind(this));
   }
 
   disconnectedCallback() {
     const testSearch = this.shadowRoot.querySelector('test-search');
-    testSearch.removeEventListener('commit', this.handleSearchCommit);
-    testSearch.removeEventListener('autocomplete', this.handleSearchAutocomplete);
+    testSearch.removeEventListener('commit', this.handleSearchCommit.bind(this));
+    testSearch.removeEventListener('autocomplete', this.handleSearchAutocomplete.bind(this));
     super.disconnectedCallback();
+  }
+
+  ready() {
+    super.ready();
+    // Show warning about ?label=experimental missing the master label.
+    const labels = this.queryParams && this.queryParams.label;
+    if (labels && labels.includes('experimental') && !labels.includes('master')) {
+      this.shadowRoot.querySelector('#masterLabelMissing').show();
+    }
   }
 
   _routeChanged(routeData) {
@@ -219,6 +242,10 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     return interopLoading || resultsLoading;
   }
 
+  _computePath(subroutePath) {
+    return subroutePath || '/';
+  }
+
   encodeTestPath(path) {
     path = path || '/';
     console.assert(path.startsWith('/'));
@@ -236,6 +263,21 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       && path && path.split('/').filter(p => p).length > 0;
   }
 
+  splitPathIntoLinkedParts(inputPath) {
+    const parts = (inputPath || '').split('/').slice(1);
+    const lastPart = parts.pop();
+    let path = '';
+    const linkedParts = parts.map(name => {
+      path += `/${name}`;
+      return {
+        name, path
+      };
+    });
+    path += `/${encodeURIComponent(lastPart)}`;
+    linkedParts.push({name: lastPart, path: path});
+    return linkedParts;
+  }
+
   handleSubmitQuery() {
     const builder = this.shadowRoot.querySelector('test-runs-query-builder');
     this.editingQuery = false;
@@ -243,11 +285,23 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   }
 
   handleSearchCommit(e) {
-    this.activeView.onSearchCommit(e);
+    const batchUpdate = {
+      search: e.detail.query,
+      structuredSearch: e.detail.structuredQuery,
+    };
+    this.setProperties(batchUpdate);
   }
 
   handleSearchAutocomplete(e) {
-    this.activeView.onSearchAutocomplete(e);
+    this.shadowRoot.querySelector('test-search').clear();
+    this.subroute.path = e.detail.path;
+  }
+
+  handleAddMasterLabel(e) {
+    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
+    builder.master = true;
+    this.handleSubmitQuery();
+    this.dismissToast(e);
   }
 }
 customElements.define(WPTApp.is, WPTApp);

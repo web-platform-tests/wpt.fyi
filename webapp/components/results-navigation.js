@@ -19,7 +19,7 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
       query: {
         type: String,
         notify: true,
-        observer: 'queryChanged',
+        observer: '_queryChanged',
       },
       queryParams: {
         type: Object,
@@ -36,23 +36,28 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
   }
 
   computedQueryChanged(computedQueryParams) {
-    if (!Object.keys(computedQueryParams).length) {
+    if (this._dontReact || !computedQueryParams || !Object.keys(computedQueryParams).length) {
       return;
     }
     this.queryParams = computedQueryParams;
   }
 
-  queryParamsChanged(queryParams) {
+  queryParamsChanged(queryParams, queryParamsBefore) {
     if (this._dontReact) {
       return;
     }
+    const query = this.computeQuery(queryParams);
+    const queryBefore = this.computeQuery(queryParamsBefore);
+    if (query === queryBefore) {
+      return;
+    }
     this._dontReact = true;
-    this.query = this.computeQuery(queryParams);
+    this.query = query;
     this._dontReact = false;
   }
 
   computeQuery(params) {
-    if (Object.keys(params).length < 1) {
+    if (!params || Object.keys(params).length < 1) {
       return '';
     }
     const url = new URL(window.location.origin);
@@ -71,10 +76,14 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
     return afterQ.length && afterQ[1];
   }
 
-  queryChanged(query) {
+  _queryChanged(query, queryBefore) {
     if (!query || this._dontReact) {
       return;
     }
+    this.queryChanged(query, queryBefore);
+  }
+
+  queryChanged(query) {
     this._dontReact = true;
     this.queryParams = this.parseQuery(query);
     this._dontReact = false;
