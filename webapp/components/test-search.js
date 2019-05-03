@@ -83,6 +83,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Fragment
       = not Fragment -- not
+      | Link
       | statusExp
       | pathExp
       | patternExp
