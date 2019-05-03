@@ -11,22 +11,23 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"runtime"
+	"syscall"
 	"time"
-
-	"github.com/web-platform-tests/wpt.fyi/api/query"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
-	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/api/option"
-
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
-	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
-	log "github.com/Hexcles/logrus"
+	"github.com/Hexcles/logrus"
+	"github.com/web-platform-tests/wpt.fyi/api/query"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
+	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
+	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/api/option"
+	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
 var (
@@ -35,8 +36,8 @@ var (
 	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
-	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", uint(10), "Maximum number of runs that can be ingested before memory monitor must run")
-	maxHeapBytes           = flag.Uint64("max_heap_bytes", uint64(2e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
+	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", 10, "Maximum number of runs that can be ingested before memory monitor must run")
+	maxHeapBytes           = flag.Uint64("max_heap_bytes", 0, "Soft limit on heap-allocated bytes before evicting test runs from memory")
 	evictRunsPercent       = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
 	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
@@ -49,6 +50,8 @@ var (
 	idx index.Index
 	mon monitor.Monitor
 )
+
+var monitoredResource mrpb.MonitoredResource
 
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Alive"))
@@ -64,23 +67,30 @@ func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := shared.GetLogger(ctx)
 	if r.Method != "POST" {
+		log.Errorf("Invalid HTTP method %s", r.Method)
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
 		return
 	}
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Errorf("Failed to read request body: %s", err.Error())
 		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
 	}
+	log.Infof(string(data))
 	err = r.Body.Close()
 	if err != nil {
+		log.Errorf("Failed to close request body: %s", err.Error())
 		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
 	}
 
 	var rq query.RunQuery
 	err = json.Unmarshal(data, &rq)
 	if err != nil {
+		log.Errorf("Failed to unmarshal RunQuery: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -101,8 +111,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	//
 	// `ids` and `runs` tracks run IDs and run metadata for requested runs that
 	// are currently resident in `idx`.
-	store, err := getDatastore()
+	store, err := getDatastore(ctx)
 	if err != nil {
+		log.Errorf("Failed to open datastore: %s", err.Error())
 		http.Error(w, fmt.Sprintf("Failed to open datastore: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -118,6 +129,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			runPtr := new(shared.TestRun)
 			err := store.Get(store.NewIDKey("TestRun", int64(id)), runPtr)
 			if err != nil {
+				log.Errorf("Unknown test run ID: %s", id)
 				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
 				return
 			}
@@ -138,6 +150,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			IgnoredRuns: missing,
 		})
 		if err != nil {
+			log.Errorf("Failed to marshal results: %s", err.Error())
 			http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
 		}
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -157,6 +170,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	_, diff := urlQuery["diff"]
 	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
 	if err != nil {
+		log.Errorf("%s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -176,6 +190,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	results := plan.Execute(runs, opts)
 	res, ok := results.([]query.SearchResult)
 	if !ok {
+		log.Errorf("Search index returned bad results: %s", err.Error())
 		http.Error(w, "Search index returned bad results", http.StatusInternalServerError)
 		return
 	}
@@ -200,8 +215,17 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	if len(missing) != 0 {
 		resp.IgnoredRuns = missing
 	}
+
+	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
+		var netClient = &http.Client{
+			Timeout: time.Second * 5,
+		}
+		resp.MetadataResponse = shared.GetMetadataResponse(runs, netClient, log)
+	}
+
 	data, err = json.Marshal(resp)
 	if err != nil {
+		log.Errorf("Failed to marshal results: %s", err.Error())
 		http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
 		return
 	}
@@ -212,8 +236,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func getDatastore() (shared.Datastore, error) {
-	ctx := context.Background()
+func getDatastore(ctx context.Context) (shared.Datastore, error) {
 	var client *datastore.Client
 	var err error
 	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
@@ -231,37 +254,63 @@ func getDatastore() (shared.Datastore, error) {
 func init() {
 	flag.Parse()
 
-	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
-}
+	if *maxHeapBytes == 0 {
+		var sysinfo syscall.Sysinfo_t
+		if err := syscall.Sysinfo(&sysinfo); err != nil {
+			logrus.Fatalf("Unable to get total system memory: %s", err.Error())
+		}
+		sysmem := float64(sysinfo.Totalram) * float64(sysinfo.Unit)
+		// Reserve 2GB or 50% of the total memory for system (whichever is smaller).
+		if sysmem-2e9 > sysmem*0.5 {
+			*maxHeapBytes = uint64(sysmem - 2e9)
+		} else {
+			*maxHeapBytes = uint64(sysmem * 0.5)
+		}
+		logrus.Infof("Detected total system memory: %d; setting max heap size to %d", uint64(sysmem), *maxHeapBytes)
+	}
 
-func main() {
+	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
+
 	autoProjectID, err := metadata.ProjectID()
 	if err != nil {
-		log.Warningf("Failed to get project ID from metadata service")
+		logrus.Warningf("Failed to get project ID from metadata service")
 	} else {
 		if *projectID == "" {
-			log.Infof(`Using project ID from metadata service: "%s"`, *projectID)
+			logrus.Infof(`Using project ID from metadata service: %s`, autoProjectID)
 			*projectID = autoProjectID
 		} else if *projectID != autoProjectID {
-			log.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
+			logrus.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
 		} else {
-			log.Infof(`Using project ID: "%s"`, *projectID)
+			logrus.Infof(`Using project ID: %s`, *projectID)
 		}
 	}
 
-	log.Infof("Serving index with %d shards", *numShards)
-	// TODO: Use different field configurations for index, backfiller, monitor?
-	logger := log.StandardLogger()
+	monitoredResource = mrpb.MonitoredResource{
+		Type: "gae_app",
+		Labels: map[string]string{
+			"project_id": *projectID,
+			// https://cloud.google.com/appengine/docs/flexible/go/migrating#modules
+			"module_id":  os.Getenv("GAE_SERVICE"),
+			"version_id": os.Getenv("GAE_VERSION"),
+		},
+	}
+}
 
+func main() {
+	logrus.Infof("Serving index with %d shards", *numShards)
+	// TODO: Use different field configurations for index, backfiller, monitor?
+	logger := logrus.StandardLogger()
+
+	var err error
 	idx, err = index.NewShardedWPTIndex(index.HTTPReportLoader{}, *numShards)
 	if err != nil {
-		log.Fatalf("Failed to instantiate index: %v", err)
+		logrus.Fatalf("Failed to instantiate index: %v", err)
 	}
 
 	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
 	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
-		log.Fatalf("Failed to initiate index backkfill: %v", err)
+		logrus.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
 
 	// Index, backfiller, monitor now in place. Start polling to load runs added
@@ -270,7 +319,7 @@ func main() {
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
-	http.HandleFunc("/api/search/cache", searchHandler)
-	log.Infof("Listening on port %d", *port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
+	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID, &monitoredResource))
+	logrus.Infof("Listening on port %d", *port)
+	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
