@@ -13,9 +13,9 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 const testNumShards = 16
@@ -331,4 +331,49 @@ func TestBindExecute_TestStatus(t *testing.T) {
 			},
 		},
 	}), resultSet(t, srs))
+}
+
+func TestBindExecute_Link(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	matchingTestName := "/a/b/c"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   matchingTestName,
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	})
+
+	q := query.Link{
+		Pattern: "/a",
+	}
+	srs := planAndExecute(t, runs, idx, q)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := query.SearchResult{
+		Test: matchingTestName,
+		LegacyStatus: []query.LegacySearchRunResult{
+			query.LegacySearchRunResult{
+				// Only matching test passes.
+				Passes: 1,
+				Total:  1,
+			},
+		},
+	}
+	assert.Equal(t, expectedResult, srs[0])
 }
