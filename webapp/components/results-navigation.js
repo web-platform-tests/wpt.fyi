@@ -36,7 +36,7 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
   }
 
   computedQueryChanged(computedQueryParams) {
-    console.log('computedQueryChanged', computedQueryParams)
+    console.log('computedQueryChanged', this, computedQueryParams)
     if (!computedQueryParams || !Object.keys(computedQueryParams).length) {
       return;
     }

@@ -205,11 +205,11 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   }
 
   handleDeleteProduct(i) {
-    this.splice('productSpecs', i, 1);
+    this.splice('products', i, 1);
   }
 
   handleProductChanged(i, product) {
-    this.set(`productSpecs.${i}`, this.getSpec(product));
+    this.set(`products.${i}`, product);
   }
 
   handleSubmit() {

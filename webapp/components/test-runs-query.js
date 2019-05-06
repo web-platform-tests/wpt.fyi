@@ -210,7 +210,9 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       return;
     }
     const batchUpdate = this._getBatchUpdate(params);
+    this._productsChanging = true;
     this.setProperties(batchUpdate);
+    this._productsChanging = false;
     this.notifyPath('query');
   }
 
@@ -230,7 +232,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     }
     if (sharedChannel) {
       batchUpdate.productSpecs = batchUpdate.productSpecs.map(spec => {
-        const product = this.parseProductSpec(batchUpdate.productSpecs[i]);
+        const product = this.parseProductSpec(spec);
         const labels = product.labels.filter(l => !Channels.has(l) || l === sharedChannel);
         if (!product.labels.includes(sharedChannel)) {
           labels.push(sharedChannel);
@@ -238,6 +240,9 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
         product.labels = labels;
         return this.getSpec(product);
       });
+    }
+    if ('productSpecs' in batchUpdate) {
+      batchUpdate.products = batchUpdate.productSpecs.map(p => this.parseProductSpec(p));
     }
     if ('max-count' in params) {
       batchUpdate.maxCount = params['max-count'];

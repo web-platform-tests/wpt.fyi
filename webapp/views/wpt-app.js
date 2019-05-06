@@ -113,7 +113,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         </info-banner>
       </template>
       <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder query="[[query]]" on-submit="[[submitQuery]]"></test-runs-query-builder>
+        <test-runs-query-builder query-params="[[queryParams]]" on-submit="[[submitQuery]]"></test-runs-query-builder>
       </iron-collapse>
 
       <iron-pages role="main" selected="[[page]]" attr-for-selected="name" selected-attribute="visible" fallback-selection="404">
@@ -213,6 +213,8 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     if (labels && labels.includes('experimental') && !labels.includes('master')) {
       this.shadowRoot.querySelector('#masterLabelMissing').show();
     }
+    this.shadowRoot.querySelector('app-location')
+        ._createPropertyObserver('__query', query => this.query = query);
   }
 
   queryChanged(query) {
