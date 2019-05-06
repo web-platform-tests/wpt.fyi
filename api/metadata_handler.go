@@ -121,9 +121,9 @@ func (h MetadataSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	Metadata := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger)
-	MetadataResponse := filterMetadata(abstractLink, Metadata)
-	marshalled, err := json.Marshal(MetadataResponse)
+	metadata := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger)
+	metadataResponse := filterMetadata(abstractLink, metadata)
+	marshalled, err := json.Marshal(metadataResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

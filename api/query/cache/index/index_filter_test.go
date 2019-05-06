@@ -391,6 +391,52 @@ func TestBindExecute_Link(t *testing.T) {
 	assert.Equal(t, expectedResult, srs[0])
 }
 
+func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	matchingTestName := "/a/b/c"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   matchingTestName,
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	})
+	metadata := shared.MetadataResults(shared.MetadataResults{shared.MetadataResult{Test: "/foo/bar/b.html", URLs: []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}}, shared.MetadataResult{Test: matchingTestName, URLs: []string{"", "https://external.com/item", ""}}})
+
+	q := query.AbstractLink{
+		Pattern: "NoMatchingPattern",
+	}
+
+	cq := q.BindToRuns(runs...)
+	link, isLink := cq.(query.Link)
+	assert.True(t, isLink)
+	link.Metadata = metadata
+
+	plan, err := idx.Bind(runs, link)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]query.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 0, len(srs))
+}
+
 func TestBindExecute_NotLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
