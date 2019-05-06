@@ -315,7 +315,7 @@ func filters(idx index, qs []query.ConcreteQuery) ([]filter, error) {
 }
 
 func prepareLinkFilter(metadata shared.MetadataResults) map[string][]string {
-	var metadataMap map[string][]string
+	metadataMap := make(map[string][]string)
 	for _, data := range metadata {
 		metadataMap[data.Test] = data.URLs
 	}

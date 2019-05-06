@@ -358,11 +358,23 @@ func TestBindExecute_Link(t *testing.T) {
 			},
 		},
 	})
+	metadata := shared.MetadataResults(shared.MetadataResults{shared.MetadataResult{Test: "/foo/bar/b.html", URLs: []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}}, shared.MetadataResult{Test: matchingTestName, URLs: []string{"", "https://external.com/item", ""}}})
 
-	q := query.Link{
-		Pattern: "/a",
+	q := query.AbstractLink{
+		Pattern: "external",
 	}
-	srs := planAndExecute(t, runs, idx, q)
+
+	cq := q.BindToRuns(runs...)
+	link, isLink := cq.(query.Link)
+	assert.True(t, isLink)
+	link.Metadata = metadata
+
+	plan, err := idx.Bind(runs, link)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]query.SearchResult)
+	assert.True(t, ok)
 
 	assert.Equal(t, 1, len(srs))
 	expectedResult := query.SearchResult{
@@ -375,5 +387,6 @@ func TestBindExecute_Link(t *testing.T) {
 			},
 		},
 	}
+
 	assert.Equal(t, expectedResult, srs[0])
 }
