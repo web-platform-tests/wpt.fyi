@@ -66,7 +66,6 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   queryChanged(query, queryBefore) {
-    console.log('queryChanged', this, query);
     if (!query || query === queryBefore || this._dontReact) {
       return;
     }
@@ -204,7 +203,6 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
    * Update this component's UI properties to match the given query params.
    */
   updateQueryParams(params) {
-    console.log('super.updateQueryParams', this, params)
     if (!params) {
       this.clearQuery();
       return;
@@ -333,7 +331,6 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
   }
 
   computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds) {
-    console.log('computeTestRunUIQueryParams', this, productSpecs)
     const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
     if (diff || this.diff) {
       params.diff = true;
