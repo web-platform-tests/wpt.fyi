@@ -142,7 +142,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		_, isLinkQuery := exists.Args[0].(AbstractLink)
 		if isLinkQuery {
 			ctx := sh.api.Context()
-			hostname := r.URL.Hostname
+			hostname := r.URL.Hostname()
 			fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/metadata", hostname))
 			fwdURL.RawQuery = r.URL.RawQuery
 

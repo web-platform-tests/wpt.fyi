@@ -337,13 +337,12 @@ func TestStructuredQuery_link(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
-		AbstractQuery:AbstractExists{[]AbstractQuery{
+		AbstractQuery: AbstractExists{[]AbstractQuery{
 			AbstractLink{
-				Pattern:"chromium.bug.com/abc",
+				Pattern: "chromium.bug.com/abc",
 			}},
 		}}, rq)
 }
-
 
 func TestStructuredQuery_combinedlink(t *testing.T) {
 	var rq RunQuery
@@ -358,7 +357,7 @@ func TestStructuredQuery_combinedlink(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
-		AbstractQuery:AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, AbstractLink{Pattern:"chromium",}}}}, rq)
+		AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, AbstractLink{Pattern: "chromium"}}}}, rq)
 }
 
 func TestStructuredQuery_combinednotlink(t *testing.T) {
@@ -378,7 +377,7 @@ func TestStructuredQuery_combinednotlink(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
-		AbstractQuery:AbstractExists{Args:[]AbstractQuery{AbstractAnd{Args:[]AbstractQuery{TestNamePattern{Pattern:"cssom"}, AbstractNot{Arg:AbstractLink{Pattern:"chromium.bug"}}}}}}}, rq)
+		AbstractQuery: AbstractExists{Args: []AbstractQuery{AbstractAnd{Args: []AbstractQuery{TestNamePattern{Pattern: "cssom"}, AbstractNot{Arg: AbstractLink{Pattern: "chromium.bug"}}}}}}}, rq)
 }
 
 func TestStructuredQuery_nested(t *testing.T) {
@@ -673,6 +672,7 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 }
 
 func TestStructuredQuery_bindLink(t *testing.T) {
+	// TODO: Mock metadata.go.
 	e := shared.ParseProductSpecUnsafe("edge")
 	f := shared.ParseProductSpecUnsafe("firefox")
 	q := AbstractLink{
@@ -690,7 +690,12 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 			ProductAtRevision: f.ProductAtRevision,
 		},
 	}
-	assert.Equal(t, q, q.BindToRuns(runs...))
+
+	expect := Link{
+		Pattern:  "chromium.bug.com/abc",
+		Metadata: shared.MetadataResults{},
+	}
+	assert.Equal(t, expect, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {
