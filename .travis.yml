@@ -49,7 +49,7 @@ matrix:
       - DEPLOY_PR_STAGING_TARGET=revisions/service
     - if: type = pull_request
       env:
-      - DEPLOY_PR_STAGING_TARGET=api/query/cache/service
+      - DEPLOY_PR_STAGING_TARGET=api/query/cache/service/app.staging.yaml
 
     # master branch deployments
     - if: (type = push) AND (branch = master)
