@@ -303,10 +303,12 @@ suite('<test-search>', () => {
     test('test status and not link', () => {
       assertQueryParse('firefox:timeout & not link:chromium.bug', {
         exists: [
-          {and: [
-              {product: 'firefox', status: 'TIMEOUT'},
-              {not:
-                {link: 'chromium.bug'},
+          {
+            and: [
+              { product: 'firefox', status: 'TIMEOUT' },
+              {
+                not:
+                  { link: 'chromium.bug' },
               },
             ],
           }],
