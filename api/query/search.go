@@ -137,54 +137,6 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Check if the query is a simple link query.
-	if exists, isExists := rq.AbstractQuery.(AbstractExists); isExists && len(exists.Args) == 1 {
-		_, isLinkQuery := exists.Args[0].(AbstractLink)
-		if isLinkQuery {
-			ctx := sh.api.Context()
-			hostname := r.URL.Hostname()
-			fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/metadata", hostname))
-			fwdURL.RawQuery = r.URL.RawQuery
-
-			logger := shared.GetLogger(ctx)
-			logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
-
-			client := sh.api.GetHTTPClient()
-			req, err := http.NewRequest("POST", fwdURL.String(), bytes.NewBuffer(data))
-			if err != nil {
-				logger.Errorf("Failed to create request to POST %s: %v", fwdURL.String(), err)
-				http.Error(w, "Error connecting to api/metadata", http.StatusInternalServerError)
-				return
-			}
-			req.Header.Add("Content-Type", "application/json")
-
-			resp, err := client.Do(req)
-			if err != nil {
-				logger.Errorf("Error connecting to api/metadata: %v", err)
-				http.Error(w, "Error connecting to api/metadata", http.StatusInternalServerError)
-				return
-			}
-
-			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-				msg := fmt.Sprintf("Error from request: POST %s: STATUS %d", fwdURL.String(), resp.StatusCode)
-				errBody, err2 := ioutil.ReadAll(resp.Body)
-				if err2 == nil {
-					msg = fmt.Sprintf("%s: %s", msg, string(errBody))
-					resp.Body = ioutil.NopCloser(bytes.NewBuffer(errBody))
-				}
-				logger.Errorf(msg)
-			}
-
-			defer resp.Body.Close()
-			w.WriteHeader(resp.StatusCode)
-			_, err = io.Copy(w, resp.Body)
-			if err != nil {
-				logger.Errorf("Error forwarding response payload from api/metadata: %v", err)
-			}
-			return
-
-		}
-	}
 	// Check if the query is a simple (empty/just True, or test name only) query
 	var simpleQ TestNamePattern
 	var isSimpleQ bool
