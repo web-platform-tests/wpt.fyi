@@ -501,14 +501,10 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
 
   semanticLabelChanged(newValue, oldValue) {
     // Configure the labels from the semantic label's value.
-    const labels = Array.from(this.labels || []);
     const isAny = !newValue || newValue === 'any';
+    let labels = Array.from(this.labels || []);
     if (oldValue) {
-      // Remove the old newValue.
-      let indexOf = labels.findIndex(l => l === oldValue);
-      for (; indexOf > -1; indexOf = labels.findIndex(l => l === oldValue)) {
-        labels.splice(indexOf, 1);
-      }
+      labels = labels.filter(l => l !== oldValue);
     }
     if (!isAny && !labels.includes(newValue)) {
       labels.push(newValue);

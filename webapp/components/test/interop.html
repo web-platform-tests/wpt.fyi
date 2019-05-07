@@ -27,10 +27,12 @@ suite('WPTInterop', () => {
 
     const interop = await fetch('fixtures/interop.json').then(r => r.json());
     fetches['/api/interop'] = interop;
+    fetches['/api/search'] = interop;
     fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
 
     sandbox.stub(window, 'fetch', (url) => {
-      return Promise.resolve(new Response(JSON.stringify(fetches[url])));
+      const path = new URL(url, window.location).pathname; // Ignore params.
+      return Promise.resolve(new Response(JSON.stringify(fetches[path])));
     });
   });
 
@@ -65,7 +67,10 @@ suite('WPTInterop', () => {
       });
 
       test('fetches interop', () => {
-        return waitingOn(() => window.fetch.calledWith('/api/interop'));
+        return waitingOn(() => {
+          return window.fetch.getCalls()
+            .find(c => c.args.length && c.args[0].pathname === '/api/interop');
+        });
       });
     });
   });

@@ -162,7 +162,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
   parseQuery(query) {
     const parsed = super.parseQuery(query);
-    for (const repeatable of ['label', 'product']) {
+    for (const repeatable of ['label', 'product', 'sha']) {
       if (repeatable in parsed
           && !(parsed[repeatable] instanceof Array)) {
         parsed[repeatable] = [parsed[repeatable]];
@@ -350,12 +350,28 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     return params;
   }
 
+  parseQuery(query) {
+    const parsed = super.parseQuery(query);
+    for (const repeatable of ['run_id']) {
+      if (repeatable in parsed
+          && !(parsed[repeatable] instanceof Array)) {
+        parsed[repeatable] = [parsed[repeatable]];
+      }
+    }
+    for (const b of ['diff']) {
+      if (b in parsed) {
+        parsed[b] = true;
+      }
+    }
+    return parsed;
+  }
+
   _getBatchUpdate(params) {
     params = params || {};
     const batchUpdate = super._getBatchUpdate(params);
     batchUpdate.pr = params.pr;
     batchUpdate.search = params.q;
-    batchUpdate.diff = params.diff;
+    batchUpdate.diff = params.diff || false;
     if (batchUpdate.diff) {
       batchUpdate.diffFilter = params.filter;
     }

@@ -36,7 +36,7 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
   }
 
   computedQueryChanged(computedQueryParams) {
-    if (!computedQueryParams || !Object.keys(computedQueryParams).length) {
+    if (!computedQueryParams) {
       return;
     }
     this.queryParams = computedQueryParams;
@@ -47,9 +47,11 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
       return;
     }
     const query = this.computeQuery(queryParams);
-    const queryBefore = this.computeQuery(queryParamsBefore);
-    if (query === queryBefore) {
-      return;
+    if (queryParamsBefore) {
+      const queryBefore = this.computeQuery(queryParamsBefore);
+      if (query === queryBefore) {
+        return;
+      }
     }
     this.query = query;
   }

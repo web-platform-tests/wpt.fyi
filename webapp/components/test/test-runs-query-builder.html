@@ -38,8 +38,7 @@ suite('TestRunsQueryBuilder', () => {
     });
 
     queryBuilder = fixture('query-builder-fixture');
-    queryBuilder.products = ['chrome', 'edge']
-      .map(s => queryBuilder.parseProductSpec(s));
+    queryBuilder.productSpecs = ['chrome', 'edge'];
   });
 
   teardown(() => {
@@ -109,14 +108,12 @@ suite('TestRunsQueryBuilder', () => {
   suite('shared channels', () => {
     setup(() => {
       queryBuilder.clearAll();
-      queryBuilder.updateQueryParams({
-        label: ['stable'],
-        product: ['chrome', 'safari'],
-      });
+      queryBuilder.productSpecs = ['chrome', 'safari'];
+      queryBuilder.labels = ['stable'];
     });
 
     for (const channel of Channels) {
-      test(channel, done => {
+      test(`_channel=${channel}`, done => {
         flush(() => {
           for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
             productBuilder._channel = channel;
@@ -128,10 +125,10 @@ suite('TestRunsQueryBuilder', () => {
     }
 
     for (const channel of Channels) {
-      test(channel, done => {
+      test(`labels=[${channel}]`, done => {
+        queryBuilder.labels = [channel];
+        queryBuilder.submit();
         flush(() => {
-          queryBuilder.set('labels', [channel]);
-          queryBuilder.submit();
           for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
             expect(productBuilder._channel).to.equal(channel);
           }

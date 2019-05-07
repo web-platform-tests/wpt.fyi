@@ -352,8 +352,12 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
   }
 
   fetchPrecomputedInterop() {
+    const url = new URL('/api/interop', window.location);
+    if (this.query) {
+      url.search = this.query;
+    }
     this.load(
-      fetch(`/api/interop?${this.query}`)
+      fetch(url)
         .then(async r => {
           if (!r.ok || r.status !== 200) {
             Promise.reject('Failed to fetch interop data');
