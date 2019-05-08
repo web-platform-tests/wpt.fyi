@@ -5,6 +5,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -52,7 +53,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		delegate,
 		shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)),
 		shared.AlwaysCachable,
-		shared.URLAsCacheKey,
+		cacheKey,
 		shared.CacheStatusOK).ServeHTTP(w, r)
 }
 
@@ -147,4 +148,24 @@ func filterMetadata(linkQuery query.AbstractLink, metadata shared.MetadataResult
 		}
 	}
 	return res
+}
+
+var cacheKey = func(r *http.Request) interface{} {
+	if r.Method == "GET" {
+		return shared.URLAsCacheKey(r)
+	}
+
+	body := r.Body
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to read non-GET request body for generating cache key: %v", err)
+		shared.GetLogger(shared.NewAppEngineContext(r)).Errorf(msg)
+		panic(msg)
+	}
+	defer body.Close()
+
+	// Ensure that r.Body can be read again by other request handling routines.
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+
+	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
 }
