@@ -18,8 +18,8 @@ language: python
 python: "3.6"
 cache:
   directories:
-    - node_modules
-    - .tox
+    - webapp/node_modules
+    - results-processor/.tox
 
 # ${GITHUB_TOKEN}
 env:
