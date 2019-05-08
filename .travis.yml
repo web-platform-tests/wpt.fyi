@@ -16,6 +16,10 @@ services:
 
 language: python
 python: "3.6"
+cache:
+  directories:
+    - node_modules
+    - .tox
 
 # ${GITHUB_TOKEN}
 env:
