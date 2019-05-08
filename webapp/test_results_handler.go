@@ -69,17 +69,8 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
-	if shared.IsFeatureEnabled(shared.NewAppEngineDatastore(ctx, false), "appRoute") {
-		if err := templates.ExecuteTemplate(w, "index.html", filter); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	if err := templates.ExecuteTemplate(w, "results.html", filter); err != nil {
+	if err := templates.ExecuteTemplate(w, "index.html", filter); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 }
 

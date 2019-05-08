@@ -6,8 +6,6 @@ package webapp
 
 import (
 	"net/http"
-
-	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // interopHandler handles the view of test results broken down by the
@@ -19,25 +17,7 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := struct {
-		Metadata string
-		Filter   testResultsUIFilter
-		Query    string
-	}{
-		Filter: filter,
-		Query:  filter.Search,
-	}
-
-	ctx := shared.NewAppEngineContext(r)
-	if shared.IsFeatureEnabled(shared.NewAppEngineDatastore(ctx, false), "appRoute") {
-		if err := templates.ExecuteTemplate(w, "index.html", filter); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	if err := templates.ExecuteTemplate(w, "interoperability.html", data); err != nil {
+	if err := templates.ExecuteTemplate(w, "index.html", filter); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 }

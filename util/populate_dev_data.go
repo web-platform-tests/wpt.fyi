@@ -147,7 +147,6 @@ func main() {
 	addFlag(ctx, "structuredQueries", enabledFlag)
 	addFlag(ctx, "diffRenames", enabledFlag)
 	addFlag(ctx, "paginationTokens", enabledFlag)
-	addFlag(ctx, "appRoute", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")
 	addData(ctx, "Uploader", []interface{}{
