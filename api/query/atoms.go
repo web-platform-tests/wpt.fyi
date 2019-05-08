@@ -613,7 +613,7 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 	}
 	var pattern string
 	if err := json.Unmarshal(*patternMsg, &pattern); err != nil {
-		return errors.New(`Missing test name pattern property "pattern" is not a string`)
+		return errors.New(`Missing link pattern property "pattern" is not a string`)
 	}
 
 	l.Pattern = pattern
