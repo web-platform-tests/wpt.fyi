@@ -78,7 +78,7 @@ func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName strin
 		}
 		return len(pathParts) == len(paths), nil
 	}
-	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*10)
+	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*120)
 	if err != nil {
 		assert.Fail(t, fmt.Sprintf("Expected exactly %v results", len(paths)))
 		return

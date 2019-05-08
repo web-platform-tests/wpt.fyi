@@ -13,8 +13,8 @@ import { TestRunsQueryLoader } from './test-runs.js';
 import './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
 
-class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
-  TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)))) {
+class TestFileResults extends WPTFlags(LoadingState(TestRunsQueryLoader(
+  TestRunsUIQuery(PolymerElement)))) {
   static get template() {
     return html`
     <style include="wpt-colors">

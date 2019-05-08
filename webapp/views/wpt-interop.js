@@ -27,11 +27,13 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/results-navigation.js';
 import '../components/test-runs-query.js';
+import { TestRunsUIQuery } from '../components/test-runs-query.js';
 
-class WPTInterop extends WPTColors(WPTFlags(LoadingState(
-  TestRunsQueryLoader(
-    PolymerElement,
-    'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)')))) {
+const interopQueryCompute =
+  'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)';
+
+class WPTInterop extends WPTColors(WPTFlags(LoadingState(TestRunsQueryLoader(
+    TestRunsUIQuery(PolymerElement, interopQueryCompute))))) {
   static get template() {
     return html`
   <style>

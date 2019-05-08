@@ -11,8 +11,8 @@ import { TestRunsQuery, TestRunsUIQuery } from './test-runs-query.js';
  * Base class for re-use of results-fetching behaviour, between
  * multi-item (wpt-results) and single-test (test-file-results) views.
  */
-const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
-  class extends TestRunsQuery(superClass, opt_queryCompute) {
+const TestRunsQueryLoader = (superClass) =>
+  class extends superClass {
     static get properties() {
       return {
         path: String,
@@ -130,15 +130,14 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
     }
   };
 
-class TestRunsBase extends TestRunsQueryLoader(PolymerElement) {
+class TestRunsBase extends TestRunsQueryLoader(TestRunsQuery(PolymerElement, TestRunsQuery.Computer)) {
   static get is() {
     return 'wpt-results-base';
   }
 }
 window.customElements.define(TestRunsBase.is, TestRunsBase);
 
-class TestRunsUIBase extends TestRunsUIQuery(
-  TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)) {
+class TestRunsUIBase extends TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, TestRunsUIQuery.Computer)) {
   static get is() {
     return 'wpt-results-ui-base';
   }
