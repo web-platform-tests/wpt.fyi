@@ -46,7 +46,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		delegate = MetadataSearchHandler{logger, client}
 	}
 
-	// Serve cached with 5 minute expiry. Delegate to MetadataHandler on cache miss.
+	// Serve cached with 5 minute expiry. Delegate to Metadata Handler on cache miss.
 	shared.NewCachingHandler(
 		ctx,
 		delegate,
@@ -68,8 +68,8 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	MetadataResponse := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger)
-	marshalled, err := json.Marshal(MetadataResponse)
+	metadataResponse := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger)
+	marshalled, err := json.Marshal(metadataResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

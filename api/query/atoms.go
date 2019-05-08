@@ -162,7 +162,10 @@ func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 	metadata := shared.GetMetadataResponse(runs, netClient, log.StandardLogger())
 
-	return Link{l.Pattern, metadata}
+	return Link{
+		Pattern:  l.Pattern,
+		Metadata: metadata,
+	}
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result

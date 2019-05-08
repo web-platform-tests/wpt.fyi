@@ -53,9 +53,6 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | "two"           -- count2
       | "one"           -- count1
 
-    Link
-      = caseInsensitive<"link"> ":" nameFragment
-
     Exp = NonemptyListOf<OrPart, or>
 
     NestedExp
@@ -82,7 +79,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Fragment
       = not Fragment -- not
-      | Link
+      | LinkExp
       | statusExp
       | pathExp
       | patternExp
@@ -95,6 +92,9 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     pathExp
       = caseInsensitive<"path"> ":" nameFragment
+
+    LinkExp
+    = caseInsensitive<"link"> ":" nameFragment
 
     patternExp = nameFragment
 
@@ -169,7 +169,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   CountSpecifier_count3: (_) => 3,
   CountSpecifier_count2: (_) => 2,
   CountSpecifier_count1: (_) => 1,
-  Link: (l, colonBang, r) => {
+  LinkExp: (l, colonBang, r) => {
     const ps = r.eval();
     return ps.length === 0 ? emptyQuery : {link: ps };
   },
