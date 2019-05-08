@@ -20,6 +20,7 @@ the endpoints can be found in `routes.go`.
  - [/api/revisions/latest](#apirevisionslatest)
  - [/api/revisions/list](#apirevisionslist)
  - [/api/search](#apisearch)
+ - [/api/metadata](#apimetadata)
 
 Also see [results creation](#results-creation) for endpoints to add new data.
 
@@ -752,4 +753,75 @@ empty string, which will yield all test results for the selected runs.
 }
 ```
 
+</details>
+
+## Metadata results
+
+### /api/metadata
+
+This endpoint accepts POST and GET requests.
+
+- GET request returns Metadata Link Information by product, and requires product parameters;
+
+- POST request searches Metadata Link by link url, and requires product parameters and payload.
+
+__Parameters__
+
+__`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
+
+#### Link Query
+  link: [pattern]
+
+  Where `[pattern]` is a susbtring of the url field of a Metadata Link Node.
+
+#### Get Examples
+
+- /api/metadata?product=chrome&product=safari
+
+<details><summary><b>Example JSON</b></summary>
+
+```json
+[
+   {
+      "test":"/IndexedDB/bindings-inject-key.html",
+      "urls":[
+         "bugs.chromium.org/p/chromium/issues/detail?id=934844",
+         ""
+      ]
+   },
+   {
+      "test":"/html/browsers/history/the-history-interface/007.html",
+      "urls":[
+         "bugs.chromium.org/p/chromium/issues/detail?id=592874",
+         ""
+      ]
+   }
+]
+```
+</details>
+
+#### Post Examples
+- POST /api/metadata?product=chrome\&product=firefox \
+    run_ids:="[1, 2, 3]" query:='{"exists":[{"link":"bugs.chromium.org"}]}'
+
+<details><summary><b>Example JSON</b></summary>
+
+```json
+[
+    {
+        "test": "/IndexedDB/bindings-inject-key.html",
+        "urls": [
+            "bugs.chromium.org/p/chromium/issues/detail?id=934844",
+            ""
+        ]
+    },
+    {
+        "test": "/html/browsers/history/the-history-interface/007.html",
+        "urls": [
+            "bugs.chromium.org/p/chromium/issues/detail?id=592874",
+            ""
+        ]
+    }
+]
+```
 </details>

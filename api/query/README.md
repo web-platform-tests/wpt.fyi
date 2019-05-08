@@ -139,3 +139,20 @@ Same as satuts, but with a specific product-spec.
       "product": "chrome-69",
       "status": "ok",
     }
+
+#### link
+
+`link` query objecsts performs a search on a test that has a Metadata Link
+Node in the wpt-metadata repository, and its Metadata Link's url has a `pattern`.
+
+    {"link": pattern}
+ 
+ E.g.
+
+Search untriaged issues - 
+
+    chrome:fail and !link:bugs.chromium.org
+
+Search triaged issues - 
+
+    chrome:pass and link:bugs.chromium.org
