@@ -94,7 +94,7 @@ func testProducts(
 	}
 
 	// Check tab URLs propagate label
-	tabs, err := getTabElements(wd, "wpt-results")
+	tabs, err := getTabElements(wd)
 	assert.Len(t, tabs, 2)
 	for _, tab := range tabs {
 		a, err := tab.FindElement(selenium.ByTagName, "a")

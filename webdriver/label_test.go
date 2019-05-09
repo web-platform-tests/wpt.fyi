@@ -77,7 +77,7 @@ func testLabel(
 	}
 
 	// Check tab URLs propagate label
-	tabs, err := getTabElements(wd, elementName)
+	tabs, err := getTabElements(wd)
 	assert.Len(t, tabs, 2)
 	for _, tab := range tabs {
 		a, err := tab.FindElement(selenium.ByTagName, "a")
@@ -90,15 +90,15 @@ func testLabel(
 }
 
 func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByCSSSelector, element)
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
 	if err != nil {
 		return nil, err
 	}
-	return FindShadowElements(wd, e, "test-run")
+	return FindShadowElements(wd, e, element, "test-run")
 }
 
-func getTabElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByCSSSelector, element)
+func getTabElements(wd selenium.WebDriver) ([]selenium.WebElement, error) {
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
 	if err != nil {
 		return nil, err
 	}
