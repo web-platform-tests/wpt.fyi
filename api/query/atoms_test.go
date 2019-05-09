@@ -8,9 +8,9 @@ package query
 
 import (
 	"encoding/json"
-	"testing"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -701,10 +701,10 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 	shared.MetadataTestingURL = server.URL
 
 	expect := Link{
-		Pattern:  "chromium.bug.com/abc",
+		Pattern: "chromium.bug.com/abc",
 		Metadata: map[string][]string{
-			"/IndexedDB/bindings-inject-key.html":{"bugs.chromium.org/p/chromium/issues/detail?id=934844", ""},
-			"/html/browsers/history/the-history-interface/007.html":{"bugs.chromium.org/p/chromium/issues/detail?id=592874", ""},
+			"/IndexedDB/bindings-inject-key.html":                   {"bugs.chromium.org/p/chromium/issues/detail?id=934844", ""},
+			"/html/browsers/history/the-history-interface/007.html": {"bugs.chromium.org/p/chromium/issues/detail?id=592874", ""},
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))

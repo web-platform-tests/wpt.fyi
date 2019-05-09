@@ -416,7 +416,7 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 			},
 		},
 	})
-	metadata := map[string][]string {"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
+	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
 
 	q := query.AbstractLink{
 		Pattern: "NoMatchingPattern",

@@ -7,16 +7,15 @@
 package api
 
 import (
-	"testing"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
-
 
 func TestFilterMetadataHanlder_Success(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +41,7 @@ func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := &http.Client{}
 
-	metadataHandler := MetadataHandler{nil, client,""}
+	metadataHandler := MetadataHandler{nil, client, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -56,7 +55,7 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 	defer server.Close()
 
 	body :=
-	`{
+		`{
 		"run_ids": [0, 1, 2],
 		"query": {
 			"exists": [{
@@ -79,7 +78,7 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 
 func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 	body :=
-	`{
+		`{
 		"run_ids": [0, 1, 2],
 		"query": {
 			"exists": [{
@@ -92,7 +91,7 @@ func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := &http.Client{}
 
-	metadataHandler := MetadataSearchHandler{nil, client,""}
+	metadataHandler := MetadataSearchHandler{nil, client, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -100,7 +99,7 @@ func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 
 func TestFilterMetadataSearchHandler_NotLink(t *testing.T) {
 	body :=
-	`{
+		`{
 		"run_ids": [0, 1, 2],
 		"query": {
 			"exists": [{
