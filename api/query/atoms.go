@@ -160,7 +160,7 @@ func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	var netClient = &http.Client{
 		Timeout: time.Second * 5,
 	}
-	metadata := shared.GetMetadataResponse(runs, netClient, log.StandardLogger())
+	metadata, _ := shared.GetMetadataResponse(runs, netClient, log.StandardLogger(), shared.MetadataArchiveURL)
 
 	return Link{
 		Pattern:  l.Pattern,

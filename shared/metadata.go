@@ -12,6 +12,9 @@ import (
 	"github.com/web-platform-tests/wpt-metadata/util"
 )
 
+// MetadataArchiveURL is the URL that retrieves an archive of wpt-metadata repository.
+const MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
+
 // ShowMetadataParam determines whether Metadata Information returns along
 // with a test result query request.
 const ShowMetadataParam = "metadataInfo"
@@ -52,30 +55,30 @@ func (m MetadataResults) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
-func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger) MetadataResults {
+func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, url string) (MetadataResults, error) {
 	var productAtRevisions = make([]ProductAtRevision, len(testRuns))
 	for i, run := range testRuns {
 		productAtRevisions[i] = run.ProductAtRevision
 	}
-	return getMetadataResponseOnProductRevisions(productAtRevisions, client, log)
+	return getMetadataResponseOnProductRevisions(productAtRevisions, client, log, url)
 }
 
 // GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
-func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Client, log Logger) MetadataResults {
+func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
 	var productAtRevisions = make([]ProductAtRevision, len(productSpecs))
 	for i, productSpec := range productSpecs {
 		productAtRevisions[i] = productSpec.ProductAtRevision
 	}
-	return getMetadataResponseOnProductRevisions(productAtRevisions, client, log)
+	return getMetadataResponseOnProductRevisions(productAtRevisions, client, log, url)
 }
 
-func getMetadataResponseOnProductRevisions(productAtRevisions []ProductAtRevision, client *http.Client, log Logger) MetadataResults {
-	metadataByteMap, err := util.CollectMetadata(client)
+func getMetadataResponseOnProductRevisions(productAtRevisions []ProductAtRevision, client *http.Client, log Logger, url string) (MetadataResults, error) {
+	metadataByteMap, err := util.CollectMetadata(client, url)
 	if err != nil {
-		return MetadataResults{}
+		return nil, err
 	}
 	metadata := parseMetadata(metadataByteMap, log)
-	return constructMetadataResponse(productAtRevisions, metadata)
+	return constructMetadataResponse(productAtRevisions, metadata), nil
 }
 
 // parseMetadata collects and parses all META.yml files from

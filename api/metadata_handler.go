@@ -19,14 +19,16 @@ import (
 
 // MetadataHandler is an http.Handler for GET method of the /api/metadata endpoint.
 type MetadataHandler struct {
-	logger     shared.Logger
-	httpClient *http.Client
+	logger      shared.Logger
+	httpClient  *http.Client
+	metadataURL string
 }
 
 // MetadataSearchHandler is an http.Handler for POST method of the /api/metadata endpoint.
 type MetadataSearchHandler struct {
-	logger     shared.Logger
-	httpClient *http.Client
+	logger      shared.Logger
+	httpClient  *http.Client
+	metadataURL string
 }
 
 // apiMetadataHandler searches Metadata for given products.
@@ -42,9 +44,9 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 	var delegate http.Handler
 	if r.Method == "GET" {
-		delegate = MetadataHandler{logger, client}
+		delegate = MetadataHandler{logger, client, shared.MetadataArchiveURL}
 	} else {
-		delegate = MetadataSearchHandler{logger, client}
+		delegate = MetadataSearchHandler{logger, client, shared.MetadataArchiveURL}
 	}
 
 	// Serve cached with 5 minute expiry. Delegate to Metadata Handler on cache miss.
@@ -69,7 +71,12 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metadataResponse := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger)
+	metadataResponse, err := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger, h.metadataURL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	marshalled, err := json.Marshal(metadataResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -122,7 +129,12 @@ func (h MetadataSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	metadata := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger)
+	metadata, err := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger, h.metadataURL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	metadataResponse := filterMetadata(abstractLink, metadata)
 	marshalled, err := json.Marshal(metadataResponse)
 	if err != nil {
