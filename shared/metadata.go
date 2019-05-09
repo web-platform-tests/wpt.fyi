@@ -15,9 +15,6 @@ import (
 // MetadataArchiveURL is the URL that retrieves an archive of wpt-metadata repository.
 const MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
 
-// MetadataTestingURL is the URL for testing.
-var MetadataTestingURL = ""
-
 // ShowMetadataParam determines whether Metadata Information returns along
 // with a test result query request.
 const ShowMetadataParam = "metadataInfo"
@@ -57,15 +54,6 @@ func (m MetadataResults) Len() int           { return len(m) }
 func (m MetadataResults) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
-// GetMetadatURL returns the URL that fetches Metadata information.
-// For testing, it returns a MetadataTestingURL set by users.
-func GetMetadatURL(isTesting bool) string {
-	if isTesting {
-		return MetadataTestingURL
-	}
-	return MetadataArchiveURL
-}
-
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
 func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, url string) (MetadataResults, error) {
 	var productAtRevisions = make([]ProductAtRevision, len(testRuns))
@@ -85,7 +73,7 @@ func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Clien
 }
 
 func getMetadataResponseOnProductRevisions(productAtRevisions []ProductAtRevision, client *http.Client, log Logger, url string) (MetadataResults, error) {
-	metadataByteMap, err := util.CollectMetadata(client, url)
+	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
 	if err != nil {
 		return nil, err
 	}
