@@ -146,7 +146,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
 	// are missing.
 	if len(runs) == 0 && len(missing) > 0 {
-		data, err = json.Marshal(query.SearchResponse{
+		data, err = json.Marshal(shared.SearchResponse{
 			IgnoredRuns: missing,
 		})
 		if err != nil {
@@ -188,7 +188,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := plan.Execute(runs, opts)
-	res, ok := results.([]query.SearchResult)
+	res, ok := results.([]shared.SearchResult)
 	if !ok {
 		log.Errorf("Search index returned bad results: %s", err.Error())
 		http.Error(w, "Search index returned bad results", http.StatusInternalServerError)
@@ -208,7 +208,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// - Add missing runs to IgnoredRuns;
 	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
 	//   client.
-	resp := query.SearchResponse{
+	resp := shared.SearchResponse{
 		Runs:    runs,
 		Results: res,
 	}

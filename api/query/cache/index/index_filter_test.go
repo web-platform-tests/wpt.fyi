@@ -35,18 +35,18 @@ func mockTestRuns(loader *MockReportLoader, idx Index, data []testRunData) []sha
 	return runs
 }
 
-func planAndExecute(t *testing.T, runs []shared.TestRun, idx Index, q query.AbstractQuery) []query.SearchResult {
+func planAndExecute(t *testing.T, runs []shared.TestRun, idx Index, q query.AbstractQuery) []shared.SearchResult {
 	plan, err := idx.Bind(runs, q.BindToRuns(runs...))
 	assert.Nil(t, err)
 
 	res := plan.Execute(runs, query.AggregationOpts{})
-	srs, ok := res.([]query.SearchResult)
+	srs, ok := res.([]shared.SearchResult)
 	assert.True(t, ok)
 
 	return srs
 }
 
-func resultSet(t *testing.T, srs []query.SearchResult) mapset.Set {
+func resultSet(t *testing.T, srs []shared.SearchResult) mapset.Set {
 	s := mapset.NewSet()
 	for _, sr := range srs {
 		// TODO: The json package should be unnecessary, but for some reason a
@@ -127,10 +127,10 @@ func TestBindExecute_TestNamePattern(t *testing.T) {
 	srs := planAndExecute(t, runs, idx, q)
 
 	assert.Equal(t, 1, len(srs))
-	expectedResult := query.SearchResult{
+	expectedResult := shared.SearchResult{
 		Test: matchingTestName,
-		LegacyStatus: []query.LegacySearchRunResult{
-			query.LegacySearchRunResult{
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{
 				// Only matching test passes.
 				Passes: 1,
 				Total:  1,
@@ -173,10 +173,10 @@ func TestBindExecute_TestPath(t *testing.T) {
 	srs := planAndExecute(t, runs, idx, q)
 
 	assert.Equal(t, 1, len(srs))
-	expectedResult := query.SearchResult{
+	expectedResult := shared.SearchResult{
 		Test: matchingPath,
-		LegacyStatus: []query.LegacySearchRunResult{
-			query.LegacySearchRunResult{
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{
 				// Only matching test passes.
 				Passes: 1,
 				Total:  1,
@@ -296,35 +296,35 @@ func TestBindExecute_TestStatus(t *testing.T) {
 	srs := planAndExecute(t, runs, idx, q)
 
 	assert.Equal(t, 2, len(srs))
-	assert.Equal(t, resultSet(t, []query.SearchResult{
-		query.SearchResult{
+	assert.Equal(t, resultSet(t, []shared.SearchResult{
+		shared.SearchResult{
 			Test: match1Name,
-			LegacyStatus: []query.LegacySearchRunResult{
+			LegacyStatus: []shared.LegacySearchRunResult{
 				// Run [0]: Chrome: match1Name status is FAIL: 0 / 1.
-				query.LegacySearchRunResult{
+				shared.LegacySearchRunResult{
 					Passes: 0,
 					Total:  1,
 				},
 				// Run [1]: Safari: match1Name status is PASS: 1 / 1.
-				query.LegacySearchRunResult{
+				shared.LegacySearchRunResult{
 					Passes: 1,
 					Total:  1,
 				},
 			},
 		},
-		query.SearchResult{
+		shared.SearchResult{
 			Test: match2Name,
 			// Run [0]: Chrome: match1Name.match2Sub status is FAIL,
 			//                  and no other subtests match: 0 / 1.
-			LegacyStatus: []query.LegacySearchRunResult{
-				query.LegacySearchRunResult{
+			LegacyStatus: []shared.LegacySearchRunResult{
+				shared.LegacySearchRunResult{
 					Passes: 0,
 					Total:  1,
 				},
 				// Run [1]: Safari: match1Name.match2Sub is missing;
 				//                  by logic used in legacy test summaries, result
 				//                  should be: 0 / 0.
-				query.LegacySearchRunResult{
+				shared.LegacySearchRunResult{
 					Passes: 0,
 					Total:  0,
 				},
