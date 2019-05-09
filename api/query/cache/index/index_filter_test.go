@@ -358,7 +358,7 @@ func TestBindExecute_Link(t *testing.T) {
 			},
 		},
 	})
-	metadata := shared.MetadataResults(shared.MetadataResults{shared.MetadataResult{Test: "/foo/bar/b.html", URLs: []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}}, shared.MetadataResult{Test: matchingTestName, URLs: []string{"", "https://external.com/item", ""}}})
+	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
 
 	q := query.AbstractLink{
 		Pattern: "external",
@@ -416,7 +416,7 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 			},
 		},
 	})
-	metadata := shared.MetadataResults(shared.MetadataResults{shared.MetadataResult{Test: "/foo/bar/b.html", URLs: []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}}, shared.MetadataResult{Test: matchingTestName, URLs: []string{"", "https://external.com/item", ""}}})
+	metadata := map[string][]string {"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
 
 	q := query.AbstractLink{
 		Pattern: "NoMatchingPattern",
@@ -462,7 +462,7 @@ func TestBindExecute_NotLink(t *testing.T) {
 			},
 		},
 	})
-	metadata := shared.MetadataResults(shared.MetadataResults{shared.MetadataResult{Test: "/foo/bar/b.html", URLs: []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}}, shared.MetadataResult{Test: matchingTestName, URLs: []string{"", "https://external.com/item", ""}}})
+	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
 
 	q := query.AbstractNot{Arg: query.AbstractLink{Pattern: "external"}}
 

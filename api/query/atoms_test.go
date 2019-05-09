@@ -9,6 +9,8 @@ package query
 import (
 	"encoding/json"
 	"testing"
+	"net/http"
+	"net/http/httptest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -672,9 +674,8 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 }
 
 func TestStructuredQuery_bindLink(t *testing.T) {
-	// TODO: Mock metadata.go.
-	e := shared.ParseProductSpecUnsafe("edge")
-	f := shared.ParseProductSpecUnsafe("firefox")
+	e := shared.ParseProductSpecUnsafe("chrome")
+	f := shared.ParseProductSpecUnsafe("safari")
 	q := AbstractLink{
 		Pattern: "chromium.bug.com/abc",
 	}
@@ -691,9 +692,20 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		},
 	}
 
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "../../shared/metadata_testdata/gzip_testfile.tar.gz")
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	shared.MetadataTestingURL = server.URL
+
 	expect := Link{
 		Pattern:  "chromium.bug.com/abc",
-		Metadata: shared.MetadataResults{},
+		Metadata: map[string][]string{
+			"/IndexedDB/bindings-inject-key.html":{"bugs.chromium.org/p/chromium/issues/detail?id=934844", ""},
+			"/html/browsers/history/the-history-interface/007.html":{"bugs.chromium.org/p/chromium/issues/detail?id=592874", ""},
+		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))
 }

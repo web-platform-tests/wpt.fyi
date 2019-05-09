@@ -222,8 +222,7 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		}
 		return Count{idx, v.Count, fs}, nil
 	case query.Link:
-		metadataMap := prepareLinkFilter(v.Metadata)
-		return Link{idx, v.Pattern, metadataMap}, nil
+		return Link{idx, v.Pattern, v.Metadata}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
@@ -312,12 +311,4 @@ func filters(idx index, qs []query.ConcreteQuery) ([]filter, error) {
 		}
 	}
 	return fs, nil
-}
-
-func prepareLinkFilter(metadata shared.MetadataResults) map[string][]string {
-	metadataMap := make(map[string][]string)
-	for _, data := range metadata {
-		metadataMap[data.Test] = data.URLs
-	}
-	return metadataMap
 }

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
@@ -17,9 +18,9 @@ import (
 )
 
 
-func TestFilterMetadataHanlder(t *testing.T) {
+func TestFilterMetadataHanlder_Success(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "metadata_testdata/gzip_testfile.tar.gz")
+		http.ServeFile(w, r, "../shared/metadata_testdata/gzip_testfile.tar.gz")
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
@@ -34,6 +35,88 @@ func TestFilterMetadataHanlder(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
 	assert.Equal(t, "[{\"test\":\"/IndexedDB/bindings-inject-key.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=934844\",\"\"]},{\"test\":\"/html/browsers/history/the-history-interface/007.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=592874\",\"\"]}]", res)
+}
+
+func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
+	r := httptest.NewRequest("GET", "/abd/api/metadata?", nil)
+	w := httptest.NewRecorder()
+	client := &http.Client{}
+
+	metadataHandler := MetadataHandler{nil, client,""}
+	metadataHandler.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestFilterMetadataSearchHandler_Success(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "../shared/metadata_testdata/gzip_testfile.tar.gz")
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	body :=
+	`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"link": "bugs.chromium.org"
+			}]
+		}
+	}`
+	bodyReader := strings.NewReader(body)
+	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
+	w := httptest.NewRecorder()
+	client := &http.Client{}
+
+	metadataHandler := MetadataSearchHandler{nil, client, server.URL}
+	metadataHandler.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	res := w.Body.String()
+	assert.Equal(t, "[{\"test\":\"/IndexedDB/bindings-inject-key.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=934844\",\"\"]},{\"test\":\"/html/browsers/history/the-history-interface/007.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=592874\",\"\"]}]", res)
+}
+
+func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
+	body :=
+	`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"link": "bugs.chromium.org"
+			}]
+		}
+	}`
+	bodyReader := strings.NewReader(body)
+	r := httptest.NewRequest("GET", "/abd/api/metadata?", bodyReader)
+	w := httptest.NewRecorder()
+	client := &http.Client{}
+
+	metadataHandler := MetadataSearchHandler{nil, client,""}
+	metadataHandler.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestFilterMetadataSearchHandler_NotLink(t *testing.T) {
+	body :=
+	`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"pattern": "bugs.chromium.org"
+			}]
+		}
+	}`
+	bodyReader := strings.NewReader(string(body))
+	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
+	w := httptest.NewRecorder()
+	client := &http.Client{}
+
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, ""}
+	metadataHandler.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
 func TestFilterMetadata(t *testing.T) {

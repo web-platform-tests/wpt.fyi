@@ -41,12 +41,13 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
 	logger := shared.GetLogger(ctx)
+	metadataURL := shared.MetadataArchiveURL
 
 	var delegate http.Handler
 	if r.Method == "GET" {
-		delegate = MetadataHandler{logger, client, shared.MetadataArchiveURL}
+		delegate = MetadataHandler{logger, client, metadataURL}
 	} else {
-		delegate = MetadataSearchHandler{logger, client, shared.MetadataArchiveURL}
+		delegate = MetadataSearchHandler{logger, client, metadataURL}
 	}
 
 	// Serve cached with 5 minute expiry. Delegate to Metadata Handler on cache miss.

@@ -51,7 +51,7 @@ type Count struct {
 // Link is a ConcreteQuery of AbstractLink.
 type Link struct {
 	Pattern  string
-	Metadata shared.MetadataResults
+	Metadata map[string][]string
 }
 
 // RunTestStatusEq constrains search results to include only test results from a
