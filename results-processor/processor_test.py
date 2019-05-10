@@ -3,9 +3,12 @@
 # found in the LICENSE file.
 
 import unittest
+from unittest.mock import patch
+
+from werkzeug.datastructures import MultiDict
 
 import test_util
-from processor import Processor
+from processor import Processor, process_report
 
 
 class ProcessorTest(unittest.TestCase):
@@ -78,6 +81,32 @@ class ProcessorTest(unittest.TestCase):
             # Download failure: no exceptions should be raised.
             p.download([], [], 'https://wpt.fyi/artifact.zip')
             self.assertEqual(len(p.results), 0)
+
+
+class MockProcessorTest(unittest.TestCase):
+    @patch('processor.Processor')
+    def test_params_plumbing(self, MockProcessor):
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.check_existing_run.return_value = False
+        mock.results = ['/tmp/wpt_report.json.gz']
+        mock.raw_results_url = 'https://wpt.fyi/test/report.json'
+        mock.results_url = 'https://wpt.fyi/test'
+        mock.test_run_id = 654321
+
+        # NOTE: if you need to change the following params, you probably also
+        # want to change api/receiver/api.go.
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'callback_url': 'https://test.wpt.fyi/api',
+            'labels': 'foo,bar',
+            'results': 'https://wpt.fyi/wpt_report.json.gz',
+        })
+        process_report('12345', params)
+        mock.download.assert_called_once()
+        mock.create_run.assert_called_once_with(
+            '654321', 'foo,bar', 'blade-runner', 'https://test.wpt.fyi/api')
 
 
 class ProcessorServerTest(unittest.TestCase):

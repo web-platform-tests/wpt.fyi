@@ -34,6 +34,9 @@ var (
 	taskURLRegex = regexp.MustCompile("/groups/([^/]*)/tasks/([^/]*)")
 )
 
+// Non-fatal error when there is no result (e.g. nothing finishes yet).
+var errNoResults = errors.New("no result URLs found in task group")
+
 // tcStatusWebhookHandler reacts to GitHub status webhook events. This is juxtaposed with
 // handleCheckRunEvent below, which is how we react to the (new) CheckRun implementation
 // of Taskcluster.
@@ -100,6 +103,11 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
+	if err == errNoResults {
+		log.Infof("%v", err)
+		http.Error(w, err.Error(), http.StatusNoContent)
+		return
+	}
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -290,7 +298,7 @@ func extractArtifactURLs(log shared.Logger, group *taskGroupInfo, taskID string)
 		}
 
 		if task.Status.State != "completed" {
-			log.Errorf("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
+			log.Infof("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
 				group.TaskGroupID, id, product)
 			failures.Add(product)
 			continue
@@ -316,7 +324,7 @@ func extractArtifactURLs(log shared.Logger, group *taskGroupInfo, taskID string)
 	}
 
 	if len(urlsByProduct) == 0 {
-		return nil, fmt.Errorf("no result URLs found in task group")
+		return nil, errNoResults
 	}
 	return urlsByProduct, nil
 }

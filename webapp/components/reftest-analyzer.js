@@ -261,17 +261,15 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
       out.height = Math.max(before.height, after.height);
       const outCtx = out.getContext('2d');
 
-      for (let y = 0; y < Math.min(before.height, after.height); y++) {
-        const beforePixels = beforeCtx.getImageData(0, y, before.width, 1).data;
-        const afterPixels = afterCtx.getImageData(0, y, after.width, 1).data;
-        for (let x = 0; x < Math.min(before.width, after.width); x++) {
-          for (let i = 0; i < 4; i++) {
-            const pxlBefore = beforePixels[(x * 4) + i];
-            const pxlAfter = afterPixels[(x * 4) + i];
-            if (pxlBefore !== pxlAfter) {
-              outCtx.fillRect(x, y, 1, 1);
-              break;
-            }
+      const beforePixels = beforeCtx.getImageData(0, 0, out.width, out.height);
+      const afterPixels = afterCtx.getImageData(0, 0, out.width, out.height);
+      for (let i = 0; i < out.width * out.height; i++) {
+        for (let j = i * 4; j < i * 4 + 4; j++) {
+          if (beforePixels.data[j] !== afterPixels.data[j]) {
+            const x = i % out.width;
+            const y = Math.floor(i / out.width);
+            outCtx.fillRect(x, y, 1, 1);
+            break;
           }
         }
       }

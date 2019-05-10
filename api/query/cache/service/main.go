@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"syscall"
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
@@ -35,8 +36,8 @@ var (
 	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
-	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", uint(10), "Maximum number of runs that can be ingested before memory monitor must run")
-	maxHeapBytes           = flag.Uint64("max_heap_bytes", uint64(2e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
+	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", 10, "Maximum number of runs that can be ingested before memory monitor must run")
+	maxHeapBytes           = flag.Uint64("max_heap_bytes", 0, "Soft limit on heap-allocated bytes before evicting test runs from memory")
 	evictRunsPercent       = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
 	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
@@ -253,6 +254,21 @@ func getDatastore(ctx context.Context) (shared.Datastore, error) {
 func init() {
 	flag.Parse()
 
+	if *maxHeapBytes == 0 {
+		var sysinfo syscall.Sysinfo_t
+		if err := syscall.Sysinfo(&sysinfo); err != nil {
+			logrus.Fatalf("Unable to get total system memory: %s", err.Error())
+		}
+		sysmem := float64(sysinfo.Totalram) * float64(sysinfo.Unit)
+		// Reserve 2GB or 50% of the total memory for system (whichever is smaller).
+		if sysmem-2e9 > sysmem*0.5 {
+			*maxHeapBytes = uint64(sysmem - 2e9)
+		} else {
+			*maxHeapBytes = uint64(sysmem * 0.5)
+		}
+		logrus.Infof("Detected total system memory: %d; setting max heap size to %d", uint64(sysmem), *maxHeapBytes)
+	}
+
 	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
 
 	autoProjectID, err := metadata.ProjectID()
@@ -260,12 +276,12 @@ func init() {
 		logrus.Warningf("Failed to get project ID from metadata service")
 	} else {
 		if *projectID == "" {
-			logrus.Infof(`Using project ID from metadata service: "%s"`, *projectID)
+			logrus.Infof(`Using project ID from metadata service: %s`, autoProjectID)
 			*projectID = autoProjectID
 		} else if *projectID != autoProjectID {
 			logrus.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
 		} else {
-			logrus.Infof(`Using project ID: "%s"`, *projectID)
+			logrus.Infof(`Using project ID: %s`, *projectID)
 		}
 	}
 
