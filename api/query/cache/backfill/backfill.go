@@ -38,7 +38,7 @@ const bytesPerRun = uint64(6.5e+7)
 
 var errNilIndex = errors.New("Index to backfill is nil")
 
-// GetDatastore constructs a RunFetcher that loads runs from Datastore
+// GetDatastore constructs a shared.Datastore interface that loads runs from Datastore
 // in reverse cronological order, by shared.TestRun.TimeStart.
 func GetDatastore(projectID string, gcpCredentialsFile *string, logger shared.Logger) (shared.Datastore, error) {
 	ctx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), logrus.StandardLogger())
