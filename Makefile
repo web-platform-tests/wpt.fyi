@@ -79,7 +79,7 @@ go_large_test:
 	make go_chrome_test
 
 go_firefox_test: BROWSER := firefox
-go_firefox_test: firefox | _go_webdriver_test
+go_firefox_test: firefox geckodriver | _go_webdriver_test
 
 go_chrome_test: BROWSER := chrome
 go_chrome_test: chrome chromedriver | _go_webdriver_test
@@ -150,6 +150,9 @@ firefox_install: firefox_deps bzip2 wget java
 
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+
+geckodriver: node-selenium-standalone
+	./webapp/node_modules/.bin/selenium-standalone install --singleDriverInstall=firefox
 
 golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \

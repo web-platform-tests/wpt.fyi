@@ -12,6 +12,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
 import '../views/wpt-results.js';
+import '../views/wpt-interop.js';
 
 class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   static get is() { return 'wpt-app'; }
@@ -228,16 +229,6 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
 
   _subrouteChanged(subrouteData) {
     this.path = subrouteData.path || '/';
-  }
-
-  _pageChanged(page) {
-    if (page != null) {
-      switch (page) {
-        case 'interop':
-          import('../views/wpt-interop.js');
-          break;
-      }
-    }
   }
 
   get activeView() {
