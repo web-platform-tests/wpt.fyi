@@ -56,12 +56,9 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 
 	body :=
 		`{
-		"run_ids": [0, 1, 2],
-		"query": {
-			"exists": [{
-				"link": "bugs.bar"
-			}]
-		}
+		"exists": [{
+			"link": "bugs.bar"
+		}]
 	}`
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
@@ -80,12 +77,9 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 	body :=
 		`{
-		"run_ids": [0, 1, 2],
-		"query": {
-			"exists": [{
-				"link": "bugs.chromium.org"
-			}]
-		}
+		"exists": [{
+			"link": "bugs.chromium.org"
+		}]
 	}`
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", bodyReader)
@@ -100,12 +94,29 @@ func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 func TestFilterMetadataSearchHandler_NotLink(t *testing.T) {
 	body :=
 		`{
-		"run_ids": [0, 1, 2],
-		"query": {
-			"exists": [{
-				"pattern": "bugs.chromium.org"
-			}]
-		}
+		"exists": [{
+			"pattern": "bugs.chromium.org"
+		}]
+	}`
+	bodyReader := strings.NewReader(string(body))
+	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
+	w := httptest.NewRecorder()
+
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestFilterMetadataSearchHandler_NotJustLink(t *testing.T) {
+	body :=
+		`{
+		"exists": [{
+			"and": [
+				{"pattern": "bugs.chromium.org"},
+				{"link": "abc"}
+			]
+		}]
 	}`
 	bodyReader := strings.NewReader(string(body))
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)

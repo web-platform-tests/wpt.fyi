@@ -100,8 +100,8 @@ func (h MetadataSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
 	}
 
-	var rq query.RunQuery
-	err = json.Unmarshal(data, &rq)
+	var ae query.AbstractExists
+	err = json.Unmarshal(data, &ae)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -109,12 +109,12 @@ func (h MetadataSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	var abstractLink query.AbstractLink
 	var isLinkQuery = false
-	if exists, isExists := rq.AbstractQuery.(query.AbstractExists); isExists && len(exists.Args) == 1 {
-		abstractLink, isLinkQuery = exists.Args[0].(query.AbstractLink)
+	if len(ae.Args) == 1 {
+		abstractLink, isLinkQuery = ae.Args[0].(query.AbstractLink)
 	}
 
 	if !isLinkQuery {
-		h.logger.Errorf("Error from request: non Link search query %s for api/metadata", rq.AbstractQuery)
+		h.logger.Errorf("Error from request: non Link search query %s for api/metadata", ae)
 		http.Error(w, "Error from request: non Link search query for api/metadata", http.StatusBadRequest)
 		return
 	}
