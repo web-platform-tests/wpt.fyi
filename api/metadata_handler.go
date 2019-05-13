@@ -115,7 +115,7 @@ func (h MetadataSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if !isLinkQuery {
 		h.logger.Errorf("Error from request: non Link search query %s for api/metadata", rq.AbstractQuery)
-		http.Error(w, "Error from request: non Link search query for api/metadata", http.StatusInternalServerError)
+		http.Error(w, "Error from request: non Link search query for api/metadata", http.StatusBadRequest)
 		return
 	}
 

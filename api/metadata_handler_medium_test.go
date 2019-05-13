@@ -26,7 +26,7 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 
 	r := httptest.NewRequest("GET", "/abd/api/metadata?product=chrome&product=safari", nil)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
+	client := server.Client()
 
 	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, server.URL}
 	metadataHandler.ServeHTTP(w, r)
@@ -40,9 +40,8 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", nil)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -67,7 +66,7 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
+	client := server.Client()
 
 	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, server.URL}
 	metadataHandler.ServeHTTP(w, r)
@@ -91,9 +90,8 @@ func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", bodyReader)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
 
-	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, ""}
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -112,16 +110,21 @@ func TestFilterMetadataSearchHandler_NotLink(t *testing.T) {
 	bodyReader := strings.NewReader(string(body))
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
 
-	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, ""}
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestFilterMetadata(t *testing.T) {
-	metadata := shared.MetadataResults(shared.MetadataResults{shared.MetadataResult{Test: "/foo/bar/b.html", URLs: []string{"", "https://aa.com/item", "https://bug.com/item"}}, shared.MetadataResult{Test: "bar", URLs: []string{"", "https://external.com/item", ""}}})
+	metadata := shared.MetadataResults(shared.MetadataResults{
+		shared.MetadataResult{
+			Test: "/foo/bar/b.html",
+			URLs: []string{"", "https://aa.com/item", "https://bug.com/item"}},
+		shared.MetadataResult{
+			Test: "bar",
+			URLs: []string{"", "https://external.com/item", ""}}})
 	abstractLink := query.AbstractLink{Pattern: "bug.com"}
 
 	res := filterMetadata(abstractLink, metadata)
