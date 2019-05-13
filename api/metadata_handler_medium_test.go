@@ -28,12 +28,13 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := &http.Client{}
 
-	metadataHandler := MetadataHandler{nil, client, server.URL}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, server.URL}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
-	assert.Equal(t, "[{\"test\":\"/IndexedDB/bindings-inject-key.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=934844\",\"\"]},{\"test\":\"/html/browsers/history/the-history-interface/007.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=592874\",\"\"]}]", res)
+
+	assert.Equal(t, `[{"test":"/IndexedDB/foo.html","urls":["bugs.bar?id=123",""]},{"test":"/html/browsers/history/the-history-interface/foo1.html","urls":["bugs.bar?id=456",""]}]`, res)
 }
 
 func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
@@ -41,7 +42,7 @@ func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := &http.Client{}
 
-	metadataHandler := MetadataHandler{nil, client, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -59,7 +60,7 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 		"run_ids": [0, 1, 2],
 		"query": {
 			"exists": [{
-				"link": "bugs.chromium.org"
+				"link": "bugs.bar"
 			}]
 		}
 	}`
@@ -68,12 +69,13 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := &http.Client{}
 
-	metadataHandler := MetadataSearchHandler{nil, client, server.URL}
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, server.URL}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
-	assert.Equal(t, "[{\"test\":\"/IndexedDB/bindings-inject-key.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=934844\",\"\"]},{\"test\":\"/html/browsers/history/the-history-interface/007.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=592874\",\"\"]}]", res)
+
+	assert.Equal(t, `[{"test":"/IndexedDB/foo.html","urls":["bugs.bar?id=123",""]},{"test":"/html/browsers/history/the-history-interface/foo1.html","urls":["bugs.bar?id=456",""]}]`, res)
 }
 
 func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
@@ -91,7 +93,7 @@ func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := &http.Client{}
 
-	metadataHandler := MetadataSearchHandler{nil, client, ""}
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
