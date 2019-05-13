@@ -360,15 +360,7 @@ func TestBindExecute_Link(t *testing.T) {
 	})
 	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
 
-	q := query.AbstractLink{
-		Pattern: "external",
-	}
-
-	cq := q.BindToRuns(runs...)
-	link, isLink := cq.(query.Link)
-	assert.True(t, isLink)
-	link.Metadata = metadata
-
+	link := query.Link{Pattern: "external", Metadata: metadata}
 	plan, err := idx.Bind(runs, link)
 	assert.Nil(t, err)
 
@@ -418,15 +410,7 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 	})
 	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
 
-	q := query.AbstractLink{
-		Pattern: "NoMatchingPattern",
-	}
-
-	cq := q.BindToRuns(runs...)
-	link, isLink := cq.(query.Link)
-	assert.True(t, isLink)
-	link.Metadata = metadata
-
+	link := query.Link{Pattern: "NoMatchingPattern", Metadata: metadata}
 	plan, err := idx.Bind(runs, link)
 	assert.Nil(t, err)
 
@@ -464,18 +448,8 @@ func TestBindExecute_NotLink(t *testing.T) {
 	})
 	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
 
-	q := query.AbstractNot{Arg: query.AbstractLink{Pattern: "external"}}
-
-	cq := q.BindToRuns(runs...)
-	not, isNot := cq.(query.Not)
-	assert.True(t, isNot)
-
-	link, isLink := not.Arg.(query.Link)
-	assert.True(t, isLink)
-	link.Metadata = metadata
-	not.Arg = link
-
-	plan, err := idx.Bind(runs, not)
+	notQuery := query.Not{Arg: query.Link{Pattern: "external", Metadata: metadata}}
+	plan, err := idx.Bind(runs, notQuery)
 	assert.Nil(t, err)
 
 	res := plan.Execute(runs, query.AggregationOpts{})
