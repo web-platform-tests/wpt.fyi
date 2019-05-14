@@ -84,11 +84,11 @@ go_firefox_test: firefox | _go_webdriver_test
 go_chrome_test: BROWSER := chrome
 go_chrome_test: chrome chromedriver | _go_webdriver_test
 
-puppeteer_chrome_test: puppeteer webserver_deps
+puppeteer_chrome_test: chrome webserver_deps webdriver_node_deps
 	cd webdriver; npm test
 
-# Though chrome is handled by puppeteer, chrome dep is needed for cascading deps.
-puppeteer: node-puppeteer chrome
+webdriver_node_deps:
+	cd webdriver; npm install
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
