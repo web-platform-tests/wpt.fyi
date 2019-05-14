@@ -1,38 +1,43 @@
+/**
+ * Copyright 2019 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 const dev_appserver = require('./dev_appserver');
-const puppeteer = require('puppeteer');
 const log = require('debug')('wpt.fyi');
+const puppeteer = require('puppeteer');
 
 /**
  * @fileoverview The full puppeteer webdriver test suite.
  */
-suite('Webdriver', async () => {
-  /**
-   * @type {dev_appserver.DevAppserver} server
-   */
-  let server;
+suite('Webdriver', function () {
 
-  /**
-   * @type {puppeteer.Browser} browser
-   */
-  let browser;
-
-  suiteSetup(function () {
+  suiteSetup(async function() {
     this.timeout(90000);
 
     log('Launching dev_appserver...');
-    server = dev_appserver.launch();
-    return server.ready;
-  })
+    this.server = dev_appserver.launch();
+    await this.server.ready;
 
-  test('/results/', async () => {
-    browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(`${server.url}/results/`);
-    await browser.close();
-  }).timeout(10000);
+    log('Adding static data...');
+    await require('./dev-data').populate(this.server);
+  });
 
-  suiteTeardown(async () => {
+  setup(async function() {
+    this.browser = await puppeteer.launch({
+      headless: process.env.HEADLESS !== 'false',
+    });
+  });
+
+  require('./path-test').tests(this.ctx);
+
+  teardown(async function () {
+    await this.browser.close();
+  });
+
+  suiteTeardown(async function() {
     log('closing dev_appserver...');
-    server.close();
+    this.server.close();
   });
 });

@@ -29,7 +29,7 @@ var (
 )
 
 // StaticTestDataRevision is the SHA for the local (static) test run summaries.
-const StaticTestDataRevision = "b952881825e7d3974f5c513e13e544d525c0a631"
+const StaticTestDataRevision = "24278ab61781de72ed363b866ae6b50b86822b27"
 
 // AppServer is an abstraction for navigating an instance of the webapp.
 type AppServer interface {
