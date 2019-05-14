@@ -55,7 +55,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         }
       </style>
 
-      <app-location route="{{route}}"></app-location>
+      <app-location route="{{route}}" url-space-regex="^/(results|interop)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
       <wpt-header></wpt-header>

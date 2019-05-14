@@ -349,7 +349,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(TestRunsQueryLoader(
     );
   }
 
-  interopQueryParams(shas, aligned, master, labels, productSpecs, maxCount, offset, to, from, search) {
+  interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search) {
     const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
     if (search) {
       params.q = search;
