@@ -802,7 +802,7 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 
 #### Post Examples
 - POST /api/metadata?product=chrome\&product=firefox \
-    run_ids:="[1, 2, 3]" query:='{"exists":[{"link":"bugs.chromium.org"}]}'
+    exists:='[{"link":"bugs.chromium.org"}]'
 
 <details><summary><b>Example JSON</b></summary>
 
