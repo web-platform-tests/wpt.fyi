@@ -33,6 +33,6 @@ suite('Webdriver', async () => {
 
   suiteTeardown(async () => {
     log('closing dev_appserver...');
-    server.process.kill();
+    server.close();
   });
 });
