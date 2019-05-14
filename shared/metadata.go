@@ -13,7 +13,7 @@ import (
 )
 
 // MetadataArchiveURL is the URL that retrieves an archive of wpt-metadata repository.
-const MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
+var MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
 
 // ShowMetadataParam determines whether Metadata Information returns along
 // with a test result query request.
@@ -89,7 +89,7 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 		var metadata Metadata
 		err := yaml.Unmarshal(data, &metadata)
 		if err != nil {
-			log.Warningf("Failed to unmarshal %s.yml.", path)
+			log.Warningf("Failed to unmarshal %s.", path)
 			continue
 		}
 		metadataMap[path] = metadata

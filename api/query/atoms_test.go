@@ -8,6 +8,7 @@ package query
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -673,11 +674,21 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
+func tearDownLinkSubTest() func(t *testing.T, url string) {
+	return func(t *testing.T, url string) {
+		shared.MetadataArchiveURL = url
+		t.Log(fmt.Sprintf("Assign origin URL %s", shared.MetadataArchiveURL))
+	}
+}
+
 func TestStructuredQuery_bindLink(t *testing.T) {
+	teardownSubTest := tearDownLinkSubTest()
+	defer teardownSubTest(t, shared.MetadataArchiveURL)
+
 	e := shared.ParseProductSpecUnsafe("chrome")
 	f := shared.ParseProductSpecUnsafe("safari")
 	q := AbstractLink{
-		Pattern: "chromium.bug.com/abc",
+		Pattern: "bugs.bar",
 	}
 
 	runs := shared.TestRuns{}
@@ -698,13 +709,13 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	shared.MetadataTestingURL = server.URL
+	shared.MetadataArchiveURL = server.URL
 
 	expect := Link{
-		Pattern: "chromium.bug.com/abc",
+		Pattern: "bugs.bar",
 		Metadata: map[string][]string{
-			"/IndexedDB/bindings-inject-key.html":                   {"bugs.chromium.org/p/chromium/issues/detail?id=934844", ""},
-			"/html/browsers/history/the-history-interface/007.html": {"bugs.chromium.org/p/chromium/issues/detail?id=592874", ""},
+			"/IndexedDB/foo.html": {"bugs.bar?id=123", ""},
+			"/html/browsers/history/the-history-interface/foo1.html": {"bugs.bar?id=456", ""},
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))

@@ -26,22 +26,22 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 
 	r := httptest.NewRequest("GET", "/abd/api/metadata?product=chrome&product=safari", nil)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
+	client := server.Client()
 
-	metadataHandler := MetadataHandler{nil, client, server.URL}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, server.URL}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
-	assert.Equal(t, "[{\"test\":\"/IndexedDB/bindings-inject-key.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=934844\",\"\"]},{\"test\":\"/html/browsers/history/the-history-interface/007.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=592874\",\"\"]}]", res)
+
+	assert.Equal(t, `[{"test":"/IndexedDB/foo.html","urls":["bugs.bar?id=123",""]},{"test":"/html/browsers/history/the-history-interface/foo1.html","urls":["bugs.bar?id=456",""]}]`, res)
 }
 
 func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", nil)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
 
-	metadataHandler := MetadataHandler{nil, client, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -56,42 +56,36 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 
 	body :=
 		`{
-		"run_ids": [0, 1, 2],
-		"query": {
-			"exists": [{
-				"link": "bugs.chromium.org"
-			}]
-		}
+		"exists": [{
+			"link": "bugs.bar"
+		}]
 	}`
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
+	client := server.Client()
 
-	metadataHandler := MetadataSearchHandler{nil, client, server.URL}
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, server.URL}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
-	assert.Equal(t, "[{\"test\":\"/IndexedDB/bindings-inject-key.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=934844\",\"\"]},{\"test\":\"/html/browsers/history/the-history-interface/007.html\",\"urls\":[\"bugs.chromium.org/p/chromium/issues/detail?id=592874\",\"\"]}]", res)
+
+	assert.Equal(t, `[{"test":"/IndexedDB/foo.html","urls":["bugs.bar?id=123",""]},{"test":"/html/browsers/history/the-history-interface/foo1.html","urls":["bugs.bar?id=456",""]}]`, res)
 }
 
 func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 	body :=
 		`{
-		"run_ids": [0, 1, 2],
-		"query": {
-			"exists": [{
-				"link": "bugs.chromium.org"
-			}]
-		}
+		"exists": [{
+			"link": "bugs.chromium.org"
+		}]
 	}`
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", bodyReader)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
 
-	metadataHandler := MetadataSearchHandler{nil, client, ""}
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -100,26 +94,48 @@ func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 func TestFilterMetadataSearchHandler_NotLink(t *testing.T) {
 	body :=
 		`{
-		"run_ids": [0, 1, 2],
-		"query": {
-			"exists": [{
-				"pattern": "bugs.chromium.org"
-			}]
-		}
+		"exists": [{
+			"pattern": "bugs.chromium.org"
+		}]
 	}`
 	bodyReader := strings.NewReader(string(body))
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
-	client := &http.Client{}
 
-	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, ""}
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestFilterMetadataSearchHandler_NotJustLink(t *testing.T) {
+	body :=
+		`{
+		"exists": [{
+			"and": [
+				{"pattern": "bugs.chromium.org"},
+				{"link": "abc"}
+			]
+		}]
+	}`
+	bodyReader := strings.NewReader(string(body))
+	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
+	w := httptest.NewRecorder()
+
+	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestFilterMetadata(t *testing.T) {
-	metadata := shared.MetadataResults(shared.MetadataResults{shared.MetadataResult{Test: "/foo/bar/b.html", URLs: []string{"", "https://aa.com/item", "https://bug.com/item"}}, shared.MetadataResult{Test: "bar", URLs: []string{"", "https://external.com/item", ""}}})
+	metadata := shared.MetadataResults(shared.MetadataResults{
+		shared.MetadataResult{
+			Test: "/foo/bar/b.html",
+			URLs: []string{"", "https://aa.com/item", "https://bug.com/item"}},
+		shared.MetadataResult{
+			Test: "bar",
+			URLs: []string{"", "https://external.com/item", ""}}})
 	abstractLink := query.AbstractLink{Pattern: "bug.com"}
 
 	res := filterMetadata(abstractLink, metadata)

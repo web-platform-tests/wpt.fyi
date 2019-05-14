@@ -765,12 +765,12 @@ This endpoint accepts POST and GET requests.
 
 - POST request searches Metadata Link by link url, and requires product parameters and payload.
 
-__Parameters__
+__URL Parameters__
 
 __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 
-#### Link Query
-  link: [pattern]
+#### JSON Payload
+__`link`__: `[pattern]`
 
   Where `[pattern]` is a susbtring of the url field of a Metadata Link Node.
 
