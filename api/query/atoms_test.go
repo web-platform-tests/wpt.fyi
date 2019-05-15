@@ -714,8 +714,9 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 	expect := Link{
 		Pattern: "bugs.bar",
 		Metadata: map[string][]string{
-			"/IndexedDB/foo.html": {"bugs.bar?id=123", ""},
-			"/html/browsers/history/the-history-interface/foo1.html": {"bugs.bar?id=456", ""},
+			"/randomfolder3/innerfolder1/random3foo.html":                     {"bugs.bar", ""},
+			"/randomfolder2/foo.html":                                         {"", "safari.foo.com"},
+			"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": {"bugs.bar?id=456", ""},
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))

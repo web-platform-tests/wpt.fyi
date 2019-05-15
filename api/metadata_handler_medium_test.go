@@ -34,7 +34,7 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
 
-	assert.Equal(t, `[{"test":"/IndexedDB/foo.html","urls":["bugs.bar?id=123",""]},{"test":"/html/browsers/history/the-history-interface/foo1.html","urls":["bugs.bar?id=456",""]}]`, res)
+	assert.Equal(t, `[{"test":"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html","urls":["bugs.bar?id=456",""]},{"test":"/randomfolder2/foo.html","urls":["","safari.foo.com"]},{"test":"/randomfolder3/innerfolder1/random3foo.html","urls":["bugs.bar",""]}]`, res)
 }
 
 func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
@@ -71,7 +71,7 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
 
-	assert.Equal(t, `[{"test":"/IndexedDB/foo.html","urls":["bugs.bar?id=123",""]},{"test":"/html/browsers/history/the-history-interface/foo1.html","urls":["bugs.bar?id=456",""]}]`, res)
+	assert.Equal(t, `[{"test":"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html","urls":["bugs.bar?id=456",""]},{"test":"/randomfolder3/innerfolder1/random3foo.html","urls":["bugs.bar",""]}]`, res)
 }
 
 func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
