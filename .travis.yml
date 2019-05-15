@@ -19,7 +19,6 @@ python: "3.6"
 cache:
   directories:
     - webapp/node_modules
-    - results-processor/.tox
 
 # ${GITHUB_TOKEN}
 env:
