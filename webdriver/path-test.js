@@ -15,14 +15,17 @@ exports.tests = function(ctx) {
       const page = await ctx.browser.newPage();
       const url = `${ctx.server.url}/${view}/2dcontext/building-paths`;
       await page.goto(url);
-      await page.waitForSelector(`wpt-${view}`);
+      await page.waitForFunction((view) => {
+        const results = document.querySelector(`wpt-${view}`);
+        return !!results && !results.isLoading;
+      }, {}, view);
       const linkNames = await page.$eval(
         `wpt-${view}`,
         results => {
           return Array.from(results.shadowRoot.querySelectorAll('path-part'))
               .map(p => p.shadowRoot.querySelector('a').innerText.trim());
         })
-      expect(linkNames).to.equal([
+      expect(linkNames).to.deep.equal([
         "canvas_complexshapes_arcto_001.htm",
         "canvas_complexshapes_beziercurveto_001.htm",
       ]);
