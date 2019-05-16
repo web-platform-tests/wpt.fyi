@@ -152,7 +152,7 @@ firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 geckodriver: node-selenium-standalone
-	./webapp/node_modules/.bin/selenium-standalone install --singleDriverInstall=firefox
+	cd webapp; `npm bin`/selenium-standalone install --singleDriverInstall=firefox
 
 golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \
