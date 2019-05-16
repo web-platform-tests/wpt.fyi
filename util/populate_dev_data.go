@@ -164,7 +164,13 @@ func main() {
 		}
 		for i := range staticPassRateMetadata {
 			md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
-			md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+			stableRuns := shared.TestRuns{}
+			for _, run := range staticTestRuns {
+				if run.LabelsSet().Contains(shared.StableLabel) {
+					stableRuns = append(stableRuns, run)
+				}
+			}
+			md.TestRunIDs = stableRuns.GetTestRunIDs()
 		}
 		addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
 	}
