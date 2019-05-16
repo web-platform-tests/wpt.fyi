@@ -51,7 +51,7 @@ handlers:
 # Don't upload test data, package config, etc. to AppEngine.
 skip_files:
 - components/test/
-- static/b952881825/
+- static/24278ab617/
 - static/wptd-metrics/
 - test/
 - .eslintrc.json

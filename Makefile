@@ -84,6 +84,12 @@ go_firefox_test: firefox geckodriver | _go_webdriver_test
 go_chrome_test: BROWSER := chrome
 go_chrome_test: chrome chromedriver | _go_webdriver_test
 
+puppeteer_chrome_test: chrome webserver_deps webdriver_node_deps
+	cd webdriver; npm test
+
+webdriver_node_deps:
+	cd webdriver; npm install
+
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
 _go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-tester webserver_deps
@@ -221,7 +227,7 @@ gcloud: python curl gpg
 eslint: node-babel-eslint node-eslint node-eslint-plugin-html
 	cd $(WPTD_PATH)webapp; npm run lint
 
-dev_data: FLAGS := -host=staging.wpt.fyi
+dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)

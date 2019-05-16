@@ -60,7 +60,7 @@ def main(args):  # type: (argparse.Namespace) -> None
     logging.info('Added Token \'upload-token\' with empty secret.')
 
     # Add some runs.
-    path = 'http://localhost:8080/static/b952881825/%s'
+    path = 'http://localhost:8080/static/24278ab617/%s'
     test_runs = [
         TestRun(
             id='dev-testrun-chrome-63',
@@ -68,8 +68,8 @@ def main(args):  # type: (argparse.Namespace) -> None
             BrowserVersion='63.0',
             OSName='linux',
             OSVersion='3.16',
-            Revision='b952881825',
-            FullRevisionHash='b952881825e7d3974f5c513e13e544d525c0a631',
+            Revision='24278ab617',
+            FullRevisionHash='24278ab61781de72ed363b866ae6b50b86822b27',
             ResultsURL=path % 'chrome-63.0-linux-summary.json.gz'),
         TestRun(
             id='dev-testrun-edge-15',
@@ -77,8 +77,8 @@ def main(args):  # type: (argparse.Namespace) -> None
             BrowserVersion='15',
             OSName='windows',
             OSVersion='10',
-            Revision='b952881825',
-            FullRevisionHash='b952881825e7d3974f5c513e13e544d525c0a631',
+            Revision='24278ab617',
+            FullRevisionHash='24278ab61781de72ed363b866ae6b50b86822b27',
             ResultsURL=path % 'edge-15-windows-10-sauce-summary.json.gz'),
         TestRun(
             id='dev-testrun-firefox-57',
@@ -86,8 +86,8 @@ def main(args):  # type: (argparse.Namespace) -> None
             BrowserVersion='57.0',
             OSName='linux',
             OSVersion='*',
-            Revision='b952881825',
-            FullRevisionHash='b952881825e7d3974f5c513e13e544d525c0a631',
+            Revision='24278ab617',
+            FullRevisionHash='24278ab61781de72ed363b866ae6b50b86822b27',
             ResultsURL=path % 'firefox-57.0-linux-summary.json.gz'),
         TestRun(
             id='dev-testrun-safari-10',
@@ -95,8 +95,8 @@ def main(args):  # type: (argparse.Namespace) -> None
             BrowserVersion='10',
             OSName='macos',
             OSVersion='10.12',
-            Revision='b952881825',
-            FullRevisionHash='b952881825e7d3974f5c513e13e544d525c0a631',
+            Revision='24278ab617',
+            FullRevisionHash='24278ab61781de72ed363b866ae6b50b86822b27',
             ResultsURL=path % 'safari-10-macos-10.12-sauce-summary.json.gz'),
     ]  # type: List[TestRun]
 
