@@ -386,4 +386,3 @@ TestRunsQuery.Computer = testRunsQueryComputer;
 TestRunsUIQuery.Computer = testRunsUIQueryComputer;
 
 export { TestRunsQuery, TestRunsUIQuery };
-
