@@ -18,7 +18,6 @@ class DevAppserver {
    * @property {Number} port
    * @property {Number} apiPort
    * @property {Number} adminPort
-   * @property {Number} datastoreEmulatorPort
    * @property {Number} startupTimeout
    */
   /**
@@ -30,7 +29,6 @@ class DevAppserver {
         port: 0,
         apiPort: 0,
         adminPort: 0,
-        datastoreEmulatorPort: 8081,
         startupTimeout: 60000,
       }, config)
     );
@@ -59,7 +57,6 @@ class DevAppserver {
   get ready() {
     return this[ready];
   }
-
 
   _awaitReady(process) {
     return new Promise(resolve => {
@@ -111,7 +108,6 @@ function startDevAppserver(config) {
       `--port=${config.port}`,
       `--api_port=${config.apiPort}`,
       `--admin_port=${config.adminPort}`,
-      // `--datastore_emulator_port=${config.datastoreEmulatorPort}`,
       '--automatic_restart=false',
       '--skip_sdk_update_check=true',
       '--clear_datastore=true',
