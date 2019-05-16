@@ -25,7 +25,7 @@ exports.tests = function(ctx) {
           return Array.from(results.shadowRoot.querySelectorAll('path-part'))
               .map(p => p.shadowRoot.querySelector('a').innerText.trim());
         })
-      expect(linkNames).to.eql([
+      expect(linkNames).to.deep.equal([
         "canvas_complexshapes_arcto_001.htm",
         "canvas_complexshapes_beziercurveto_001.htm",
       ]);
