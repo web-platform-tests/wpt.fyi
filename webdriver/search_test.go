@@ -13,15 +13,17 @@ import (
 )
 
 func TestSearch(t *testing.T) {
-	t.Run("wpt-results", func(t *testing.T) {
-		testSearch(t, "/", "wpt-results")
-	})
-	t.Run("wpt-interop", func(t *testing.T) {
-		testSearch(t, "/interop/", "wpt-interop")
+	runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
+		t.Run("wpt-results", func(t *testing.T) {
+			testSearch(t, wd, app, "/", "wpt-results")
+		})
+		t.Run("wpt-interop", func(t *testing.T) {
+			testSearch(t, wd, app, "/interop/", "wpt-interop")
+		})
 	})
 }
 
-func testSearch(t *testing.T, path, elementName string) {
+func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path, elementName string) {
 	folder := "2dcontext"
 	resultsLoadedCondition := func(wd selenium.WebDriver) (bool, error) {
 		pathParts, err := getPathPartElements(wd, elementName)
@@ -35,36 +37,32 @@ func testSearch(t *testing.T, path, elementName string) {
 	// https://bugzilla.mozilla.org/show_bug.cgi?id=1503860
 	if *browser != "firefox" {
 		t.Run("search-input", func(t *testing.T) {
-			runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
-				if err := wd.Get(app.GetWebappURL(path)); err != nil {
-					assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
-				}
-				err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
-				assert.Nil(t, err)
+			if err := wd.Get(app.GetWebappURL(path)); err != nil {
+				assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
+			}
+			err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+			assert.Nil(t, err)
 
-				// Type the search.
-				searchBox, err := getSearchElement(wd)
-				if err != nil {
-					assert.FailNow(t, fmt.Sprintf("Error getting search element: %s", err.Error()))
-				}
-				if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
-					assert.FailNow(t, fmt.Sprintf("Error sending keys: %s", err.Error()))
-				}
-				assertListIsFiltered(t, wd, elementName, folder+"/")
-			})
+			// Type the search.
+			searchBox, err := getSearchElement(wd)
+			if err != nil {
+				assert.FailNow(t, fmt.Sprintf("Error getting search element: %s", err.Error()))
+			}
+			if err := searchBox.SendKeys(folder + selenium.EnterKey); err != nil {
+				assert.FailNow(t, fmt.Sprintf("Error sending keys: %s", err.Error()))
+			}
+			assertListIsFiltered(t, wd, elementName, folder+"/")
 		})
 	}
 
 	t.Run("search-param", func(t *testing.T) {
-		runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
-			if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
-				assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
-			}
+		if err := wd.Get(app.GetWebappURL(path) + "?q=" + folder); err != nil {
+			assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
+		}
 
-			err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
-			assert.Nil(t, err)
-			assertListIsFiltered(t, wd, elementName, folder+"/")
-		})
+		err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+		assert.Nil(t, err)
+		assertListIsFiltered(t, wd, elementName, folder+"/")
 	})
 }
 

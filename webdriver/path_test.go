@@ -24,7 +24,7 @@ func TestPath(t *testing.T) {
 
 func testPath(t *testing.T, app AppServer, wd selenium.WebDriver, path, elementName string) {
 	// Navigate to the wpt.fyi homepage.
-	if err := wd.Get(app.GetWebappURL(path + "2dcontext/building-paths?label=stable")); err != nil {
+	if err := wd.Get(app.GetWebappURL(path + "2dcontext/building-paths")); err != nil {
 		assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
 	}
 
