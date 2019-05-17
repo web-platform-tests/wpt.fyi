@@ -63,7 +63,7 @@ type DevAppServerInstance interface {
 
 type devAppServerInstance struct {
 	cmd            *exec.Cmd
-	stderr         io.Reader
+	stderr         io.ReadCloser
 	startupTimeout time.Duration
 
 	host    string
@@ -132,7 +132,7 @@ func NewWebserver() (s AppServer, err error) {
 // newDevAppServer creates a dev appserve instance.
 func newDevAppServer() (s *devAppServerInstance, err error) {
 	s = &devAppServerInstance{
-		startupTimeout: 90 * time.Second,
+		startupTimeout: 60 * time.Second,
 
 		host:    "localhost",
 		port:    pickUnusedPort(),
@@ -164,13 +164,7 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 	)
 
 	s.cmd.Stdout = os.Stdout
-
-	var stderr io.Reader
-	stderr, err = s.cmd.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-	s.stderr = io.TeeReader(stderr, os.Stderr)
+	s.stderr, err = s.cmd.StderrPipe()
 	return s, err
 }
 
@@ -185,13 +179,19 @@ func (i *devAppServerInstance) AwaitReady() error {
 
 	// Read stderr until we have read the URLs of the API server and admin interface.
 	errc := make(chan error, 1)
+	started := false
 	go func() {
 		s := bufio.NewScanner(i.stderr)
+		defer i.stderr.Close()
 		for s.Scan() {
-			if match := readyRE.FindStringSubmatch(s.Text()); match != nil {
-				break
+			str := s.Text()
+			fmt.Println(str)
+			if match := readyRE.FindStringSubmatch(str); match != nil {
+				started = true
+				errc <- nil
+				return
 			}
-			if match := hostRE.FindStringSubmatch(s.Text()); match != nil {
+			if match := hostRE.FindStringSubmatch(str); match != nil {
 				u, err := url.Parse(match[1])
 				if err != nil {
 					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
@@ -199,7 +199,7 @@ func (i *devAppServerInstance) AwaitReady() error {
 				}
 				i.baseURL = u
 			}
-			if match := adminURLRE.FindStringSubmatch(s.Text()); match != nil {
+			if match := adminURLRE.FindStringSubmatch(str); match != nil {
 				u, err := url.Parse(match[1])
 				if err != nil {
 					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
@@ -209,6 +209,11 @@ func (i *devAppServerInstance) AwaitReady() error {
 			}
 		}
 		errc <- s.Err()
+	}()
+
+	exited := make(chan error)
+	go func() {
+		exited <- i.cmd.Wait()
 	}()
 
 	select {
@@ -221,6 +226,13 @@ func (i *devAppServerInstance) AwaitReady() error {
 		if err != nil {
 			return fmt.Errorf("error reading web_server.sh process stderr: %v", err)
 		}
+	case err := <-exited:
+		if err != nil {
+			return err
+		}
+	}
+	if !started {
+		return errors.New("dev_appserver.py didn't start")
 	}
 	if i.baseURL == nil {
 		return errors.New("unable to find webserver URL")
@@ -245,7 +257,6 @@ func addStaticData(i *devAppServerInstance) (err error) {
 		"--remote_runs=false",
 		"--static_runs=true",
 	)
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err = cmd.Start(); err != nil {
 		return err
