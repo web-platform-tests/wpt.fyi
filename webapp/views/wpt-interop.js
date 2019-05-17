@@ -218,12 +218,10 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(TestRunsQueryLoader(
       },
       search: {
         type: String,
-        value: '',
         notify: true,
         observer: 'handleSearchCommit',
       },
       structuredSearch: Object,
-      onSearchCommit: Function,
       interopLoadFailed: Boolean,
       testPaths: {
         type: Set,
@@ -253,7 +251,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(TestRunsQueryLoader(
   async ready() {
     await super.ready();
     this._createMethodObserver('precomputedInteropLoaded(precomputedInterop)');
-    this.loadData();
   }
 
   loadData() {
@@ -299,7 +296,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(TestRunsQueryLoader(
     this.load(
       Promise.resolve(this.testRuns || this.loadRuns())
         .then(runs => {
-          if (!runs) {
+          if (!runs || !runs.length) {
             return;
           }
           const body = {
@@ -413,10 +410,9 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(TestRunsQueryLoader(
 
   handleSearchCommit() {
     if (this.structuredQueries && this.searchCacheInterop) {
-      this.fetchSearchCacheInterop();
-    } else {
-      this.precomputedInteropLoaded(this.precomputedInterop);
+      return;
     }
+    this.precomputedInteropLoaded(this.precomputedInterop);
   }
 
   computeDisplayedNodes(path, displayedTests, sortColumn) {

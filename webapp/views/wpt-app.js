@@ -120,13 +120,11 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       <iron-pages role="main" selected="[[page]]" attr-for-selected="name" selected-attribute="visible" fallback-selection="404">
         <wpt-results name="results"
                      is-loading="{{resultsLoading}}"
-                     query="[[query]]"
                      structured-search="[[structuredSearch]]"
                      path="[[subroute.path]]"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
-                     query="[[query]]"
                      structured-search="[[structuredSearch]]"
                      path="[[subroute.path]]"></wpt-interop>
 
@@ -149,7 +147,6 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       page: {
         type: String,
         reflectToAttribute: true,
-        observer: '_pageChanged'
       },
       path: {
         type: String,
@@ -221,10 +218,12 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   queryChanged(query) {
     // app-location don't support repeated params.
     this.shadowRoot.querySelector('app-location').__query = query;
+    this.activeView.query = query;
   }
 
   _routeChanged(routeData) {
     this.page = routeData.page || 'results';
+    this.activeView.query = this.query;
   }
 
   _subrouteChanged(subrouteData) {
