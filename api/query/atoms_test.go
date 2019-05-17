@@ -677,7 +677,6 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 func tearDownLinkSubTest() func(t *testing.T, url string) {
 	return func(t *testing.T, url string) {
 		shared.MetadataArchiveURL = url
-		t.Log(fmt.Sprintf("Assign origin URL %s", shared.MetadataArchiveURL))
 	}
 }
 
