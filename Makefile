@@ -106,7 +106,6 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-teste
 		-chromedriver_path=$(CHROMEDRIVER_PATH) \
 		-frame_buffer=$(USE_FRAME_BUFFER) \
 		-staging=$(STAGING) \
-		-test.timeout=30m \
 		-browser=$(BROWSER) $(FLAGS)
 
 # NOTE: psmisc includes killall, needed by wct.sh

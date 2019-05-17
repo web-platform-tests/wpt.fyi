@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -117,14 +118,15 @@ func NewWebserver() (s AppServer, err error) {
 
 	app, err := newDevAppServer()
 	if err != nil {
-		return app, err
+		return nil, err
 	}
 	if err = app.AwaitReady(); err != nil {
-		panic(err)
+		return nil, err
 	}
-
 	if err = addStaticData(app); err != nil {
-		panic(err)
+		// dev_appserver has started.
+		app.Close()
+		return nil, err
 	}
 	return app, err
 }
@@ -141,7 +143,7 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 
 	absAppYAMLPath, err := filepath.Abs("../webapp")
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 	s.cmd = exec.Command(
 		"dev_appserver.py",
@@ -163,7 +165,8 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 		absAppYAMLPath,
 	)
 
-	s.cmd.Stdout = os.Stdout
+	// dev_appserver.py usually does not print to stdout.
+	s.cmd.Stdout = os.Stderr
 	s.stderr, err = s.cmd.StderrPipe()
 	return s, err
 }
@@ -177,17 +180,17 @@ func (i *devAppServerInstance) AwaitReady() error {
 		return err
 	}
 
-	// Read stderr until we have read the URLs of the API server and admin interface.
-	errc := make(chan error, 1)
-	started := false
+	// Read stderr until server is warmed up.
+	errc := make(chan error)
+	ready := false
 	go func() {
 		s := bufio.NewScanner(i.stderr)
 		defer i.stderr.Close()
 		for s.Scan() {
 			str := s.Text()
-			fmt.Println(str)
+			log.Println(str)
 			if match := readyRE.FindStringSubmatch(str); match != nil {
-				started = true
+				ready = true
 				errc <- nil
 				return
 			}
@@ -221,21 +224,31 @@ func (i *devAppServerInstance) AwaitReady() error {
 		if p := i.cmd.Process; p != nil {
 			p.Kill()
 		}
-		return errors.New("timeout starting child process")
+		return errors.New("timeout starting dev_appserver.py")
 	case err := <-errc:
 		if err != nil {
-			return fmt.Errorf("error reading web_server.sh process stderr: %v", err)
+			if p := i.cmd.Process; p != nil {
+				p.Kill()
+			}
+			return fmt.Errorf("error waiting for dev_appserver.py: %v", err)
 		}
 	case err := <-exited:
 		if err != nil {
 			return err
 		}
 	}
-	if !started {
-		return errors.New("dev_appserver.py didn't start")
+
+	if !ready {
+		if p := i.cmd.Process; p != nil {
+			p.Kill()
+		}
+		return errors.New("dev_appserver.py unable to warm up")
 	}
 	if i.baseURL == nil {
 		return errors.New("unable to find webserver URL")
+	}
+	if i.adminURL == nil {
+		return errors.New("unable to find admin URL")
 	}
 	return nil
 }
