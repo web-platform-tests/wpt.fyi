@@ -56,7 +56,6 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	qh := queryHandler{
 		store:      shared.NewAppEngineDatastore(ctx, true),
-		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 		client:     sh.api.GetHTTPClient(),
 		logger:     shared.GetLogger(ctx),
