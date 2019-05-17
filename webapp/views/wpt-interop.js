@@ -251,6 +251,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(TestRunsQueryLoader(
   async ready() {
     await super.ready();
     this._createMethodObserver('precomputedInteropLoaded(precomputedInterop)');
+    this.loadData();
   }
 
   loadData() {
