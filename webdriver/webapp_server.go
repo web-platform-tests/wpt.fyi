@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -63,7 +64,7 @@ type DevAppServerInstance interface {
 
 type devAppServerInstance struct {
 	cmd            *exec.Cmd
-	stderr         io.Reader
+	stderr         io.ReadCloser
 	startupTimeout time.Duration
 
 	host    string
@@ -117,14 +118,15 @@ func NewWebserver() (s AppServer, err error) {
 
 	app, err := newDevAppServer()
 	if err != nil {
-		return app, err
+		return nil, err
 	}
 	if err = app.AwaitReady(); err != nil {
-		panic(err)
+		return nil, err
 	}
-
 	if err = addStaticData(app); err != nil {
-		panic(err)
+		// dev_appserver has started.
+		app.Close()
+		return nil, err
 	}
 	return app, err
 }
@@ -132,7 +134,7 @@ func NewWebserver() (s AppServer, err error) {
 // newDevAppServer creates a dev appserve instance.
 func newDevAppServer() (s *devAppServerInstance, err error) {
 	s = &devAppServerInstance{
-		startupTimeout: 90 * time.Second,
+		startupTimeout: 60 * time.Second,
 
 		host:    "localhost",
 		port:    pickUnusedPort(),
@@ -141,7 +143,7 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 
 	absAppYAMLPath, err := filepath.Abs("../webapp")
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 	s.cmd = exec.Command(
 		"dev_appserver.py",
@@ -163,14 +165,9 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 		absAppYAMLPath,
 	)
 
-	s.cmd.Stdout = os.Stdout
-
-	var stderr io.Reader
-	stderr, err = s.cmd.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-	s.stderr = io.TeeReader(stderr, os.Stderr)
+	// dev_appserver.py usually does not print to stdout.
+	s.cmd.Stdout = os.Stderr
+	s.stderr, err = s.cmd.StderrPipe()
 	return s, err
 }
 
@@ -183,15 +180,21 @@ func (i *devAppServerInstance) AwaitReady() error {
 		return err
 	}
 
-	// Read stderr until we have read the URLs of the API server and admin interface.
-	errc := make(chan error, 1)
+	// Read stderr until server is warmed up.
+	errc := make(chan error)
+	ready := false
 	go func() {
 		s := bufio.NewScanner(i.stderr)
+		defer i.stderr.Close()
 		for s.Scan() {
-			if match := readyRE.FindStringSubmatch(s.Text()); match != nil {
-				break
+			str := s.Text()
+			log.Println(str)
+			if match := readyRE.FindStringSubmatch(str); match != nil {
+				ready = true
+				errc <- nil
+				return
 			}
-			if match := hostRE.FindStringSubmatch(s.Text()); match != nil {
+			if match := hostRE.FindStringSubmatch(str); match != nil {
 				u, err := url.Parse(match[1])
 				if err != nil {
 					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
@@ -199,7 +202,7 @@ func (i *devAppServerInstance) AwaitReady() error {
 				}
 				i.baseURL = u
 			}
-			if match := adminURLRE.FindStringSubmatch(s.Text()); match != nil {
+			if match := adminURLRE.FindStringSubmatch(str); match != nil {
 				u, err := url.Parse(match[1])
 				if err != nil {
 					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
@@ -211,19 +214,41 @@ func (i *devAppServerInstance) AwaitReady() error {
 		errc <- s.Err()
 	}()
 
+	exited := make(chan error)
+	go func() {
+		exited <- i.cmd.Wait()
+	}()
+
 	select {
 	case <-time.After(i.startupTimeout):
 		if p := i.cmd.Process; p != nil {
 			p.Kill()
 		}
-		return errors.New("timeout starting child process")
+		return errors.New("timeout starting dev_appserver.py")
 	case err := <-errc:
 		if err != nil {
-			return fmt.Errorf("error reading web_server.sh process stderr: %v", err)
+			if p := i.cmd.Process; p != nil {
+				p.Kill()
+			}
+			return fmt.Errorf("error waiting for dev_appserver.py: %v", err)
 		}
+	case err := <-exited:
+		if err != nil {
+			return err
+		}
+	}
+
+	if !ready {
+		if p := i.cmd.Process; p != nil {
+			p.Kill()
+		}
+		return errors.New("dev_appserver.py unable to warm up")
 	}
 	if i.baseURL == nil {
 		return errors.New("unable to find webserver URL")
+	}
+	if i.adminURL == nil {
+		return errors.New("unable to find admin URL")
 	}
 	return nil
 }
@@ -245,7 +270,6 @@ func addStaticData(i *devAppServerInstance) (err error) {
 		"--remote_runs=false",
 		"--static_runs=true",
 	)
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err = cmd.Start(); err != nil {
 		return err
