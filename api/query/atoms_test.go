@@ -8,7 +8,6 @@ package query
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -674,15 +673,10 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 	assert.Equal(t, expected, q.BindToRuns(runs...))
 }
 
-func tearDownLinkSubTest() func(t *testing.T, url string) {
-	return func(t *testing.T, url string) {
-		shared.MetadataArchiveURL = url
-	}
-}
-
 func TestStructuredQuery_bindLink(t *testing.T) {
-	teardownSubTest := tearDownLinkSubTest()
-	defer teardownSubTest(t, shared.MetadataArchiveURL)
+	defer func(url string) {
+		shared.MetadataArchiveURL = url
+	}(shared.MetadataArchiveURL)
 
 	e := shared.ParseProductSpecUnsafe("chrome")
 	f := shared.ParseProductSpecUnsafe("safari")
