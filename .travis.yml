@@ -16,6 +16,10 @@ services:
 
 language: python
 python: "3.6"
+cache:
+  directories:
+    - webapp/node_modules
+    - results-processor/.tox
 
 # ${GITHUB_TOKEN}
 env:
@@ -32,6 +36,8 @@ matrix:
         - MAKE_TEST_TARGET=go_firefox_test
     - env:
         - MAKE_TEST_TARGET=go_chrome_test
+    - env:
+        - MAKE_TEST_TARGET=puppeteer_chrome_test
     - env:
         - MAKE_TEST_TARGET=lint
     - env:

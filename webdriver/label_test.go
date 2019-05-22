@@ -21,7 +21,7 @@ func TestLabelParam_Results(t *testing.T) {
 		if *staging {
 			testLabel(t, wd, app, "/", "experimental", "wpt-results", 4, false)
 		} else {
-			testLabel(t, wd, app, "/", "experimental", "wpt-results", 2, false)
+			testLabel(t, wd, app, "/", "experimental", "wpt-results", 3, false)
 		}
 	})
 

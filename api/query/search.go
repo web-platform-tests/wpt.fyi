@@ -107,7 +107,6 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	qh := queryHandler{
 		store:      shared.NewAppEngineDatastore(ctx, true),
-		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 	}
 	var delegate http.Handler
@@ -163,7 +162,8 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		logger := shared.GetLogger(ctx)
 		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
-		client := sh.api.GetHTTPClient()
+		client, cancel := sh.api.GetSlowHTTPClient(time.Second * 15)
+		defer cancel()
 		req, err := http.NewRequest("POST", fwdURL.String(), bytes.NewBuffer(data))
 		if err != nil {
 			logger.Errorf("Failed to create request to POST %s: %v", fwdURL.String(), err)
