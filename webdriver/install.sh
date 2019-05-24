@@ -49,16 +49,16 @@ FIREFOX="firefox"
 case "${UNAME_OUT}" in
     Darwin*)
         FIREFOX_OS="mac"
-        FIREFOX_DMG="Firefox 66.0.dmg"
+        FIREFOX_DMG="Firefox 67.0.dmg"
         FIREFOX_SRC="${FIREFOX_DMG}"
         ;;
     Linux*|*)
         FIREFOX_OS="linux-x86_64"
-        FIREFOX_TBZ="${FIREFOX}-66.0.tar.bz2"
+        FIREFOX_TBZ="${FIREFOX}-67.0.tar.bz2"
         FIREFOX_SRC="${FIREFOX_TBZ}"
         ;;
 esac
-FIREFOX_URL="https://releases.mozilla.org/pub/firefox/releases/66.0/${FIREFOX_OS}/en-US/${FIREFOX_SRC}"
+FIREFOX_URL="https://releases.mozilla.org/pub/firefox/releases/67.0/${FIREFOX_OS}/en-US/${FIREFOX_SRC}"
 
 info "Getting ${FIREFOX} binary..."
 if [[ ! -e ${FIREFOX} || "${REINSTALL}" == "true" ]]
