@@ -69,9 +69,8 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "results.html", filter); err != nil {
+	if err := templates.ExecuteTemplate(w, "index.html", filter); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 }
 

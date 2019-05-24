@@ -5,8 +5,6 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../wpt-results.js"></script>
 </head>
 
 <body>
@@ -17,7 +15,7 @@
   </test-fixture>
 
   <script type="module">
-import { WPTResults } from '../wpt-results.js';
+import { WPTResults } from '../../views/wpt-results.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
 suite('<wpt-results>', () => {
@@ -33,6 +31,7 @@ suite('<wpt-results>', () => {
   });
 
   test('show banner on noResults', (done) => {
+    trf.loadData();
     trf.noResults = true;
     flush(() => {
       const banner = trf.root.querySelector('info-banner[type="info"]');

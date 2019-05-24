@@ -11,8 +11,8 @@ import { TestRunsQuery, TestRunsUIQuery } from './test-runs-query.js';
  * Base class for re-use of results-fetching behaviour, between
  * multi-item (wpt-results) and single-test (test-file-results) views.
  */
-const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
-  class extends TestRunsQuery(superClass, opt_queryCompute) {
+const TestRunsQueryLoader = (superClass) =>
+  class extends superClass {
     static get properties() {
       return {
         path: String,
@@ -59,6 +59,7 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
     }
 
     encodeTestPath(path) {
+      path = path || '/';
       console.assert(path.startsWith('/'));
       let parts = path.split('/').slice(1);
       parts.push(encodeURIComponent(parts.pop()));
@@ -75,7 +76,7 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
       if ((this.productSpecs && this.productSpecs.length)
         || (this.runIds && this.runIds.length)) {
         runs.push(
-          fetch(`/api/runs${this.query}`)
+          fetch(`/api/runs?${this.query}`)
             .then(r => r.ok && r.json().then(runs => {
               this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
               return runs;
@@ -129,15 +130,14 @@ const TestRunsQueryLoader = (superClass, opt_queryCompute) =>
     }
   };
 
-class TestRunsBase extends TestRunsQueryLoader(PolymerElement) {
+class TestRunsBase extends TestRunsQueryLoader(TestRunsQuery(PolymerElement, TestRunsQuery.Computer)) {
   static get is() {
     return 'wpt-results-base';
   }
 }
 window.customElements.define(TestRunsBase.is, TestRunsBase);
 
-class TestRunsUIBase extends TestRunsUIQuery(
-  TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)) {
+class TestRunsUIBase extends TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, TestRunsUIQuery.Computer)) {
   static get is() {
     return 'wpt-results-ui-base';
   }

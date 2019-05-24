@@ -44,7 +44,7 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path, elemen
 			assert.Nil(t, err)
 
 			// Type the search.
-			searchBox, err := getSearchElement(wd, elementName)
+			searchBox, err := getSearchElement(wd)
 			if err != nil {
 				assert.FailNow(t, fmt.Sprintf("Error getting search element: %s", err.Error()))
 			}
@@ -90,8 +90,8 @@ func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName strin
 	}
 }
 
-func getSearchElement(wd selenium.WebDriver, element string) (selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByCSSSelector, element)
+func getSearchElement(wd selenium.WebDriver) (selenium.WebElement, error) {
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
 	if err != nil {
 		return nil, err
 	}
@@ -105,9 +105,9 @@ func getSearchElement(wd selenium.WebDriver, element string) (selenium.WebElemen
 }
 
 func getPathPartElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByTagName, element)
+	e, err := wd.FindElement(selenium.ByTagName, "wpt-app")
 	if err != nil {
 		return nil, err
 	}
-	return FindShadowElements(wd, e, "path-part")
+	return FindShadowElements(wd, e, element, "path-part")
 }

@@ -79,7 +79,7 @@ go_large_test:
 	make go_chrome_test
 
 go_firefox_test: BROWSER := firefox
-go_firefox_test: firefox | _go_webdriver_test
+go_firefox_test: firefox geckodriver | _go_webdriver_test
 
 go_chrome_test: BROWSER := chrome
 go_chrome_test: chrome chromedriver | _go_webdriver_test
@@ -106,6 +106,7 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-teste
 		-chromedriver_path=$(CHROMEDRIVER_PATH) \
 		-frame_buffer=$(USE_FRAME_BUFFER) \
 		-staging=$(STAGING) \
+		-test.timeout=30m \
 		-browser=$(BROWSER) $(FLAGS)
 
 # NOTE: psmisc includes killall, needed by wct.sh
@@ -156,6 +157,9 @@ firefox_install: firefox_deps bzip2 wget java
 
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+
+geckodriver: node-selenium-standalone
+	cd webapp; `npm bin`/selenium-standalone install --singleDriverInstall=firefox
 
 golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \
