@@ -49,7 +49,7 @@ func main() {
 
 	emptySecretToken := &shared.Token{}
 	enabledFlag := &shared.Flag{Enabled: true}
-	staticDataTime, _ := time.Parse(time.RFC3339, "2019-05-13T00:00:00Z")
+	staticDataTime := time.Now()
 
 	// Follow pattern established in run/*.py data collection code.
 	const staticRunSHA = "24278ab61781de72ed363b866ae6b50b86822b27"
