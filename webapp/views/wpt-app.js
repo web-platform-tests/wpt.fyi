@@ -5,6 +5,7 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-flags.js';
+import '../components/wpt-metadata.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
@@ -75,6 +76,10 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
           <template is="dom-if" if="[[pathIsASubfolder]]">
             <wpt-prs path="[[path]]"></wpt-prs>
           </template>
+        </template>
+
+        <template is="dom-if" if="[[pathIsASubfolder]]">
+          <wpt-metadata wpt-metadata="[[displayedMetadata]]" path="[[path]]"></wpt-metadata>
         </template>
 
         <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
@@ -170,6 +175,23 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         type: Boolean,
         computed: 'computePathIsASubfolder(path)'
       },
+      metadata: {
+        type: Array,
+        value: [
+          {
+            test: '/IndexedDB/bindings-inject-key.html',
+            urls: ['bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844']
+          },
+          {
+            test: '/html/browsers/history/the-history-interface/007.html',
+            urls: ['bugs.chromium.org/p/chromium/issues/detail?id=592874', '']
+          }
+        ]
+      },
+      displayedMetadata: {
+        type: Array,
+        computed: '_computeDisplayedMetadata(path, metadata)'
+      },
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
@@ -180,10 +202,12 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     };
   }
 
-  static get observers() { return [
-    '_routeChanged(routeData, routeData.*)',
-    '_subrouteChanged(subrouteData, subrouteData.*)',
-  ]}
+  static get observers() {
+    return [
+      '_routeChanged(routeData, routeData.*)',
+      '_subrouteChanged(subrouteData, subrouteData.*)',
+    ]
+  }
 
   constructor() {
     super();
@@ -218,7 +242,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       this.shadowRoot.querySelector('#masterLabelMissing').show();
     }
     this.shadowRoot.querySelector('app-location')
-        ._createPropertyObserver('__query', query => this.query = query);
+      ._createPropertyObserver('__query', query => this.query = query);
   }
 
   queryChanged(query) {
@@ -260,6 +284,22 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
   }
 
+  _computeDisplayedMetadata(path, metadata) {
+    let wptMetadata = [];
+    for (let i = 0; i < metadata.length; i++) {
+      const node = metadata[i];
+      if (node.test.includes(path)) {
+        const urls = metadata[i]['urls'];
+        for (let j = 0; j < urls.length; j++) {
+          if (urls[j] === '') continue;
+          const wptMetadataNode = { test: node.test, url: urls[j] };
+          wptMetadata.push(wptMetadataNode);
+        }
+      }
+    }
+    return wptMetadata;
+  }
+
   computePathIsASubfolder(path) {
     return !this.computePathIsATestFile(path)
       && path && path.split('/').filter(p => p).length > 0;
@@ -276,7 +316,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       };
     });
     path += `/${encodeURIComponent(lastPart)}`;
-    linkedParts.push({name: lastPart, path: path});
+    linkedParts.push({ name: lastPart, path: path });
     return linkedParts;
   }
 
