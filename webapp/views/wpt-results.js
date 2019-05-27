@@ -13,53 +13,37 @@ import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
-import './info-banner.js';
-import { LoadingState } from './loading-state.js';
-import './path-part.js';
-import { SelfNavigation } from './self-navigator.js';
-import './test-file-results-table-terse.js';
-import './test-file-results-table-verbose.js';
-import './test-file-results.js';
-import './test-results-chart.js';
-import './test-results-history-grid.js';
-import './test-run.js';
-import './test-runs-query-builder.js';
-import { TestRunsUIBase } from './test-runs.js';
-import './test-search.js';
-import { WPTColors } from './wpt-colors.js';
-import { WPTFlags } from './wpt-flags.js';
-import './wpt-permalinks.js';
-import './wpt-prs.js';
+import '../components/info-banner.js';
+import { LoadingState } from '../components/loading-state.js';
+import '../components/path-part.js';
+import '../components/test-file-results-table-terse.js';
+import '../components/test-file-results-table-verbose.js';
+import '../components/test-file-results.js';
+import '../components/test-results-chart.js';
+import '../components/test-results-history-grid.js';
+import '../components/test-run.js';
+import '../components/test-runs-query-builder.js';
+import { TestRunsUIBase } from '../components/test-runs.js';
+import '../components/test-search.js';
+import { WPTColors } from '../components/wpt-colors.js';
+import { WPTFlags } from '../components/wpt-flags.js';
+import '../components/wpt-permalinks.js';
+import '../components/wpt-prs.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase)))) {
+class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
   static get template() {
     return html`
     <style include="wpt-colors">
       :host {
         display: block;
         font-size: 15px;
-      }
-      section.search {
-        position: relative;
-      }
-      section.search .path {
-        margin-top: 1em;
-      }
-      section.search paper-spinner-lite {
-        position: absolute;
-        top: 0;
-        right: 0;
-      }
-      .separator {
-        border-bottom: solid 1px var(--paper-grey-300);
-        padding-bottom: 1em;
-        margin-bottom: 1em;
       }
       table {
         width: 100%;
@@ -91,14 +75,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         padding: 0 0.1em;
         margin: 0 0.2em;
       }
-      .links {
-        margin-bottom: 1em;
-      }
       .top,
       .delta {
         background-color: var(--paper-grey-200);
       }
-
       span.delta.regressions {
         color: var(--paper-red-700);
       }
@@ -126,10 +106,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         background: var(--paper-blue-500);
         color: white;
       }
-      test-runs-query-builder {
-        display: block;
-        margin-bottom: 32px;
-      }
       .test-type {
         margin-left: 8px;
         padding: 4px;
@@ -142,9 +118,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       .test-type-icon iron-icon {
         height: 16px;
         width: 16px;
-      }
-      .query-actions paper-button {
-        display: inline-block;
       }
 
       @media (max-width: 1200px) {
@@ -168,72 +141,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       }
     </style>
 
-    <results-tabs tab="results" path="[[encodedPath]]" query="[[query]]">
-    </results-tabs>
-
-    <section class="search">
-      <!-- NOTE: Tag wrapping below is deliberate to avoid whitespace throughout the path. -->
-      <div class="path">
-        <a href="/results/[[ query ]]" on-click="navigate">wpt</a
-        ><template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
-          ><span class="path-separator">/</span
-        ><a href="/results[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a
-        ></template>
-
-        <template is="dom-if" if="[[showTestType]]">
-          <template is="dom-if" if="[[testType]]">
-            <span class$="test-type [[testType]]">[[testType]]</span>
-          </template>
-        </template>
-      </div>
-
-      <template is="dom-if" if="[[searchPRsForDirectories]]">
-        <template is="dom-if" if="[[pathIsASubfolder]]">
-          <wpt-prs path="[[path]]"></wpt-prs>
-        </template>
-      </template>
-
-      <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
-
-      <test-search query="{{search}}"
-                   structured-query="{{structuredSearch}}"
-                   test-runs="[[testRuns]]"
-                   test-paths="[[testPaths]]"></test-search>
-
-      <template is="dom-if" if="{{ pathIsATestFile }}">
-        <div class="links">
-          <ul>
-            <li><a href\$="https://github.com/web-platform-tests/wpt/blob/master[[sourcePath]]" target="_blank">View source on GitHub</a></li>
-            <template is="dom-if" if="[[ showTestURL ]]">
-              <li><a href="[[showTestURL]]" target="_blank">Run in your browser on [[ liveTestDomain ]]</a></li>
-            </template>
-            <template is="dom-if" if="[[ showTestRefURL ]]">
-              <li><a href="[[showTestRefURL]]" target="_blank">View ref in your browser on [[ liveTestDomain ]]</a></li>
-            </template>
-          </ul>
-        </div>
-      </template>
-
-      <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
-        <info-banner>
-          [[resultsTotalsRangeMessage]]
-          <template is="dom-if" if="[[permalinks]]">
-            <wpt-permalinks path="[[path]]"
-                            path-prefix="/results/"
-                            query-params="[[queryParams]]"
-                            test-runs="[[testRuns]]">
-            </wpt-permalinks>
-            <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-          </template>
-          <template is="dom-if" if="[[queryBuilder]]">
-            <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
-          </template>
-        </info-banner>
-      </template>
-    </section>
-
-    <div class="separator"></div>
-
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
       <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
         <paper-button onclick="[[dismissToast]]" class="yellow-button">Close</paper-button>
@@ -241,14 +148,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     </template>
 
     <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
-    <paper-toast id="masterLabelMissing" duration="15000">
-      <div style="display: flex;">
-        wpt.fyi now includes affected tests results from PRs. <br>
-        Did you intend to view results for complete (master) runs only?
-        <paper-button onclick="[[addMasterLabel]]">View master runs</paper-button>
-        <paper-button onclick="[[dismissToast]]">Dismiss</paper-button>
-      </div>
-    </paper-toast>
 
     <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
@@ -258,16 +157,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
     <template is="dom-if" if="[[queryBuilder]]">
       <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder product-specs="[[productSpecs]]"
-                                 search="[[search]]"
-                                 labels="[[labels]]"
-                                 master="[[master]]"
-                                 shas="[[shas]]"
-                                 aligned="[[aligned]]"
-                                 on-submit="[[submitQuery]]"
-                                 from="[[from]]"
-                                 to="[[to]]"
-                                 diff="[[diff]]">
+        <test-runs-query-builder query="[[query]]"
+                                 on-submit="[[submitQuery]]">
         </test-runs-query-builder>
       </iron-collapse>
     </template>
@@ -413,6 +304,10 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
   static get properties() {
     return {
+      path: {
+        type: String,
+        observer: 'pathUpdated',
+      },
       sourcePath: {
         type: String,
         computed: 'computeSourcePath(path, manifest)',
@@ -480,8 +375,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
       },
       resultsLoadFailed: Boolean,
       noResults: Boolean,
-      onSearchCommit: Function,
-      onSearchAutocomplete: Function,
       editingQuery: {
         type: Boolean,
         value: false,
@@ -583,8 +476,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
 
   constructor() {
     super();
-    this.onSearchCommit = this.handleSearchCommit.bind(this);
-    this.onSearchAutocomplete = this.handleSearchAutocomplete.bind(this);
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
@@ -592,53 +483,12 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.toggleQueryEdit = () => {
       this.editingQuery = !this.editingQuery;
     };
-    this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;
       this.refreshDisplayedNodes();
     };
-    this.submitQuery = this.handleSubmitQuery.bind(this);
     this.dismissToast = e => e.target.closest('paper-toast').close();
-    this.addMasterLabel = this.handleAddMasterLabel.bind(this);
     this.showAnalyzer = this.handleShowAnalyzer.bind(this);
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    const search = this.shadowRoot.querySelector('test-search');
-    search.addEventListener('commit', this.onSearchCommit);
-    search.addEventListener('autocomplete', this.onSearchAutocomplete);
-  }
-
-  disconnectedCallback() {
-    this.shadowRoot.querySelector('test-search')
-      .removeEventListener('commit', this.onSearchCommit);
-    super.disconnectedCallback();
-  }
-
-  async ready() {
-    await super.ready();
-
-    // NOTE(lukebjerring): Overriding the pathUpdated method doesn't get
-    // called, so we wrap any given onLocationUpdated method here.
-    const onLocationUpdated = this.onLocationUpdated;
-    this.onLocationUpdated = (path, state) => {
-      onLocationUpdated && onLocationUpdated(path, state);
-      this.showHistory = false;
-      if (state) {
-        const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-        if (builder) {
-          builder.updateQueryParams(state);
-          this.handleSubmitQuery();
-        }
-      }
-    };
-    // Show warning about ?label=experimental missing the master label.
-    const labels = this.queryParams && this.queryParams.label;
-    if (labels && labels.includes('experimental') && !labels.includes('master')) {
-      this.shadowRoot.querySelector('#masterLabelMissing').show();
-    }
-    this.loadData();
   }
 
   loadData() {
@@ -646,9 +496,8 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.load(
       this.loadRuns().then(async runs => {
         // Pass current (un)structured query is passed to fetchResults().
-        const search = this.shadowRoot.querySelector('test-search');
         this.fetchResults(
-          this.structuredQueries && search.structuredQuery || this.search);
+          this.structuredQueries && this.structuredSearch || this.search);
 
         // Load a diff data into this.diffRun, if needed.
         if (this.diff && runs && runs.length === 2) {
@@ -672,6 +521,16 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
         this.resultsLoadFailed = true;
       }
     );
+  }
+
+  reloadData() {
+    if (!this.diff) {
+      this.diffRun = null;
+    }
+    this.testRuns = [];
+    this.searchResults = [];
+    this.refreshDisplayedNodes();
+    this.loadData();
   }
 
   fetchResults(q) {
@@ -815,7 +674,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
   }
 
   pathUpdated(path) {
-    super.pathUpdated(path);
     this.refreshDisplayedNodes();
   }
 
@@ -971,10 +829,6 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     return `${browser_name}-${browser_version}-${os_name}-${os_version}`;
   }
 
-  navigationPathPrefix() {
-    return '/results';
-  }
-
   testResultClass(node, index, testRun, prop) {
     // Guard against incomplete data.
     if (!node || !testRun) {
@@ -1091,42 +945,13 @@ class WPTResults extends WPTColors(WPTFlags(SelfNavigation(LoadingState(TestRuns
     this.navigateToPath(e.detail.path);
   }
 
-  handleSearchCommit(e) {
-    const detail = e.detail;
-    // Fetch search results when test-search signals that user has committed
-    // to search string (by pressing <Enter>).
-    this.fetchResults(this.structuredQueries
-      ? detail.structuredQuery
-      : detail.query);
-    // Trigger a virtual navigation.
-    this.navigateToLocation(window.location);
-  }
-
-  handleSubmitQuery() {
-    const queryBefore = this.query;
-    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-    this.editingQuery = false;
-    this.updateQueryParams(builder.queryParams);
-    if (queryBefore === this.query) {
+  queryChanged(query, queryBefore) {
+    super.queryChanged(query, queryBefore);
+    if (this._fetchedQuery === query) {
       return;
     }
-    // Trigger a virtual navigation.
-    this.navigateToLocation(window.location);
-    // Reload the data.
-    if (!this.diff) {
-      this.diffRun = null;
-    }
-    this.testRuns = [];
-    this.searchResults = [];
-    this.refreshDisplayedNodes();
-    this.loadData();
-  }
-
-  handleAddMasterLabel(e) {
-    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-    builder.master = true;
-    this.handleSubmitQuery();
-    this.dismissToast(e);
+    this._fetchedQuery = query; // Debounce.
+    this.reloadData();
   }
 
   computeResultsTotalsRangeMessage(searchResults, shas, productSpecs, from, to, maxCount, labels, master) {

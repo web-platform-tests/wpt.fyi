@@ -49,7 +49,7 @@ func main() {
 
 	emptySecretToken := &shared.Token{}
 	enabledFlag := &shared.Flag{Enabled: true}
-	staticDataTime, _ := time.Parse(time.RFC3339, "2019-05-13T00:00:00Z")
+	staticDataTime := time.Now()
 
 	// Follow pattern established in run/*.py data collection code.
 	const staticRunSHA = "24278ab61781de72ed363b866ae6b50b86822b27"
@@ -124,13 +124,11 @@ func main() {
 	for i := range staticTestRuns {
 		staticTestRunMetadata[i] = &staticTestRuns[i]
 	}
-	staticPassRateMetadata := []interface{}{
-		&metrics.PassRateMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
-			},
+	passRateMetadata := metrics.PassRateMetadata{
+		TestRunsMetadata: metrics.TestRunsMetadata{
+			StartTime: timeZero,
+			EndTime:   timeZero,
+			DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
 		},
 	}
 
@@ -162,17 +160,24 @@ func main() {
 		for i, key := range addData(ctx, testRunKindName, staticTestRunMetadata) {
 			staticTestRuns[i].ID = key.IntID()
 		}
-		for i := range staticPassRateMetadata {
-			md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
-			stableRuns := shared.TestRuns{}
-			for _, run := range staticTestRuns {
-				if run.LabelsSet().Contains(shared.StableLabel) {
-					stableRuns = append(stableRuns, run)
-				}
+		stableRuns := shared.TestRuns{}
+		defaultRuns := shared.TestRuns{}
+		for _, run := range staticTestRuns {
+			labels := run.LabelsSet()
+			if labels.Contains(shared.StableLabel) {
+				stableRuns = append(stableRuns, run)
+			} else if labels.Contains("edge") || labels.Contains(shared.ExperimentalLabel) {
+				defaultRuns = append(defaultRuns, run)
 			}
-			md.TestRunIDs = stableRuns.GetTestRunIDs()
 		}
-		addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
+		stableInterop := passRateMetadata
+		stableInterop.TestRunIDs = stableRuns.GetTestRunIDs()
+		defaultInterop := passRateMetadata
+		defaultInterop.TestRunIDs = defaultRuns.GetTestRunIDs()
+		addData(ctx, passRateMetadataKindName, []interface{}{
+			&stableInterop,
+			&defaultInterop,
+		})
 	}
 
 	if *remoteRuns {

@@ -13,22 +13,29 @@ exports.tests = function(ctx) {
     test(view, async () => {
       /** @type {Page} */
       const page = await ctx.browser.newPage();
-      const url = `${ctx.server.url}/${view}/2dcontext/building-paths`;
+      const url = `${ctx.server.url}/${view}/2dcontext/building-paths?label=stable`;
       await page.goto(url);
-      await page.waitForFunction((view) => {
-        const results = document.querySelector(`wpt-${view}`);
-        return !!results && !results.isLoading;
-      }, {}, view);
-      const linkNames = await page.$eval(
-        `wpt-${view}`,
-        results => {
-          return Array.from(results.shadowRoot.querySelectorAll('path-part'))
-              .map(p => p.shadowRoot.querySelector('a').innerText.trim());
-        })
-      expect(linkNames).to.deep.equal([
-        "canvas_complexshapes_arcto_001.htm",
-        "canvas_complexshapes_beziercurveto_001.htm",
-      ]);
+
+      const parts = await page.waitForFunction(
+        view => {
+          const app = document.querySelector('wpt-app');
+          const results = app && app.shadowRoot && app.shadowRoot.querySelector(`wpt-${view}`);
+          if (!results || results.isLoading) return;
+          const parts = Array.from(
+            results.shadowRoot.querySelectorAll('path-part')
+          );
+          if (parts.length) return parts;
+        }, {}, view);
+
+      await page.evaluate(
+        parts => parts.map(p => p.shadowRoot.querySelector('a').innerText.trim()),
+        parts
+      ).then(linkNames => {
+        expect(linkNames).to.deep.equal([
+          "canvas_complexshapes_arcto_001.htm",
+          "canvas_complexshapes_beziercurveto_001.htm",
+        ]);
+      });
     }).timeout(10000);
   }
 };

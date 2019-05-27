@@ -4,8 +4,6 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../interop.js"></script>
 </head>
 <body>
   <test-fixture id="wpt-interop-fixture">
@@ -15,7 +13,7 @@
   </test-fixture>
   <script type="module">
 import { waitingOn } from './util/helpers.js';
-import { WPTInterop } from '../interop.js';
+import { WPTInterop } from '../../views/wpt-interop.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 
 suite('WPTInterop', () => {
@@ -27,10 +25,12 @@ suite('WPTInterop', () => {
 
     const interop = await fetch('fixtures/interop.json').then(r => r.json());
     fetches['/api/interop'] = interop;
+    fetches['/api/search'] = interop;
     fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
 
     sandbox.stub(window, 'fetch', (url) => {
-      return Promise.resolve(new Response(JSON.stringify(fetches[url])));
+      const path = new URL(url, window.location).pathname; // Ignore params.
+      return Promise.resolve(new Response(JSON.stringify(fetches[path])));
     });
   });
 
@@ -65,7 +65,10 @@ suite('WPTInterop', () => {
       });
 
       test('fetches interop', () => {
-        return waitingOn(() => window.fetch.calledWith('/api/interop'));
+        return waitingOn(() => {
+          return window.fetch.getCalls()
+            .find(c => c.args.length && c.args[0].pathname === '/api/interop');
+        });
       });
     });
   });
