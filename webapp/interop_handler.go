@@ -11,13 +11,13 @@ import (
 // interopHandler handles the view of test results broken down by the
 // number of browsers for which the test passes.
 func interopHandler(w http.ResponseWriter, r *http.Request) {
-	filter, err := parseTestResultsUIFilter(r)
+	data, err := populateTemplateData(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "index.html", filter); err != nil {
+	if err := templates.ExecuteTemplate(w, "index.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
