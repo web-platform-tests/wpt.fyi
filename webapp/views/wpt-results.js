@@ -281,14 +281,14 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
           <div class="compare">
             <div class="column">
               <h5>Result</h5>
-              <template is="dom-if" if="[[showTestURL]]">
-                <iframe src="[[https(showTestURL)]]"></iframe>
+              <template is="dom-if" if="[[testURL]]">
+                <iframe src="[[https(testURL)]]"></iframe>
               </template>
             </div>
             <div class="column">
               <h5>Reference</h5>
-              <template is="dom-if" if="[[showTestRefURL]]">
-                <iframe src="[[https(showTestRefURL)]]"></iframe>
+              <template is="dom-if" if="[[testRefURL]]">
+                <iframe src="[[https(testRefURL)]]"></iframe>
               </template>
             </div>
           </div>
@@ -321,11 +321,11 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
         type: Boolean,
         computed: 'computeIsRefTest(testType)'
       },
-      showTestURL: {
-        type: Boolean,
+      testURL: {
+        type: String,
         computed: 'computeTestURL(testType, path)',
       },
-      showTestRefURL: {
+      testRefURL: {
         type: String,
         computed: 'computeTestRefURL(testType, path, manifest)',
       },
