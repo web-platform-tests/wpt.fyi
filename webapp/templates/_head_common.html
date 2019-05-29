@@ -2,4 +2,8 @@
 <link rel="stylesheet" href="/static/common.css">
 <script src="/node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
 <script type="module" src="/components/wpt-header.js"></script>
-{{if .EnableServiceWorker}}<script src="/service-worker-installer.js"></script>{{end}}
+{{if .EnableServiceWorker}}
+<script src="/service-worker-installer.js"></script>
+{{else}}
+<script src="/service-worker-uninstaller.js"></script>
+{{end}}

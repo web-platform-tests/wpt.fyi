@@ -32,6 +32,10 @@ handlers:
   static_files: service-worker-installer.js
   upload: service-worker-installer.js
   secure: always
+- url: /service-worker-uninstaller.js
+  static_files: service-worker-uninstaller.js
+  upload: service-worker-uninstaller.js
+  secure: always
 - url: /favicon.ico
   static_files: static/favicon.ico
   upload: static/favicon.ico
