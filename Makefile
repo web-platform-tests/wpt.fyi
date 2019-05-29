@@ -261,10 +261,10 @@ deploy_production: deployment_state
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 webapp_node_modules: node
-	cd $(WPTD_PATH)webapp; npm install --production
+	cd $(WPTD_PATH)webapp; npm install --production --unsafe-perm=true
 
 webapp_node_modules_all: node
-	cd $(WPTD_PATH)webapp; npm install
+	cd $(WPTD_PATH)webapp; npm install --unsafe-perm=true
 
 webapp_node_modules_prune: webapp_node_modules
 	cd $(WPTD_PATH)webapp; npm prune --production
@@ -290,7 +290,7 @@ gcloud-%: gcloud
 node-%: node
 	@ echo "# Installing $*..."
 	# Hack to (more quickly) detect whether a package is already installed (available in node).
-	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
+	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save --unsafe-perm=true $*
 
 apt-get-%:
 	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi
