@@ -92,11 +92,10 @@ webdriver_node_deps:
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-_go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-tester webserver_deps
+_go_webdriver_test: var-BROWSER java go_build_test xvfb geckodriver webserver_deps
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
-	# paths before installing node-web-component-tester as the paths
-	# include version strings.
+	# path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	cd $(WPTD_PATH)webdriver; \
 	go test $(VERBOSE) -timeout=15m -tags=large -args \
@@ -225,7 +224,7 @@ gcloud: python curl gpg
 		gcloud config set disable_usage_reporting false; \
 	fi
 
-eslint: node-babel-eslint node-eslint node-eslint-plugin-html
+eslint: webapp_node_modules_all
 	cd $(WPTD_PATH)webapp; npm run lint
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
