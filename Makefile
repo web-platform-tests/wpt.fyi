@@ -264,7 +264,7 @@ webapp_node_modules: node
 	cd $(WPTD_PATH)webapp; npm install --production --unsafe-perm=true
 
 webapp_node_modules_all: node
-	cd $(WPTD_PATH)webapp; npm install --unsafe-perm=true
+	cd $(WPTD_PATH)webapp; npm install --unsafe-perm=true --verbose
 
 webapp_node_modules_prune: webapp_node_modules
 	cd $(WPTD_PATH)webapp; npm prune --production
