@@ -12,6 +12,9 @@ import (
 )
 
 func TestPath(t *testing.T) {
+	if *staging {
+		t.Skip("skipping path tests on staging (#1327)")
+	}
 	runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
 		t.Run("results", func(t *testing.T) {
 			testPath(t, app, wd, "/results/", "wpt-results")

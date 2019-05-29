@@ -36,6 +36,9 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
     padding: 0;
     height: 1.5em;
   }
+  td code {
+    white-space: pre-wrap;
+  }
   td code, td paper-button {
     line-height: 1.6em;
     padding: 0 0.25em;

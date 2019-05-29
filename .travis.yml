@@ -37,8 +37,6 @@ matrix:
     - env:
         - MAKE_TEST_TARGET=go_chrome_test
     - env:
-        - MAKE_TEST_TARGET=puppeteer_chrome_test
-    - env:
         - MAKE_TEST_TARGET=lint
     - env:
         - MAKE_TEST_TARGET=go_test

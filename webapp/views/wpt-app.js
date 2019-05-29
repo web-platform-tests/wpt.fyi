@@ -71,6 +71,12 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
           </template>
         </div>
 
+        <template is="dom-if" if="[[searchPRsForDirectories]]">
+          <template is="dom-if" if="[[pathIsASubfolder]]">
+            <wpt-prs path="[[path]]"></wpt-prs>
+          </template>
+        </template>
+
         <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
         <test-search query="[[search]]"
