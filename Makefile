@@ -179,7 +179,7 @@ package_service: var-APP_PATH
 		rm -rf $${TMP_DIR}; \
 	fi
 
-sys_deps: apt-update
+sys_deps: apt_update
 	make gcloud
 	make git
 	make node
