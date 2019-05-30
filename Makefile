@@ -114,7 +114,6 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all apt-get-psmisc
 
 sys_update: apt_update | sys_deps
 	gcloud components update
-	sudo npm install -g npm
 
 apt_update:
 	sudo apt-get --quiet update
