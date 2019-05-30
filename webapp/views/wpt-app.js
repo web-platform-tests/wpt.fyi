@@ -5,6 +5,7 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-flags.js';
+import '../components/wpt-metadata.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
@@ -75,6 +76,10 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
           <template is="dom-if" if="[[pathIsASubfolder]]">
             <wpt-prs path="[[path]]"></wpt-prs>
           </template>
+        </template>
+
+        <template is="dom-if" if="[[pathIsASubfolder]]">
+          <wpt-prs wptMetadata="[[wptMetadata]]"></wpt-prs>
         </template>
 
         <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
@@ -169,6 +174,10 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       pathIsASubfolder: {
         type: Boolean,
         computed: 'computePathIsASubfolder(path)'
+      },
+      wptMetadata: {
+        type: Array,
+        computed: 'computeWptMetadata(path, metadata)'
       },
       structuredSearch: Object,
       interopLoading: Boolean,
