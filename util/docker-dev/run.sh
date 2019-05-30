@@ -124,8 +124,7 @@ else
 fi
 
 info "Updating system/packages..."
-wptd_exec make sys_update
-wptd_exec ls -l /home/user/.npm
+wptd_exec make sys_deps
 
 if [[ "${DAEMON}" == "true" ]]; then
   exit 0

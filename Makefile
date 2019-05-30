@@ -78,11 +78,11 @@ go_large_test:
 	make go_firefox_test
 	make go_chrome_test
 
-go_firefox_test: BROWSER := firefox
-go_firefox_test: firefox geckodriver | _go_webdriver_test
+go_firefox_test: firefox geckodriver
+	make _go_webdriver_test BROWSER=firefox
 
-go_chrome_test: BROWSER := chrome
-go_chrome_test: chrome chromedriver | _go_webdriver_test
+go_chrome_test: chrome chromedriver
+	make _go_webdriver_test BROWSER=chrome
 
 puppeteer_chrome_test: chrome webserver_deps webdriver_node_deps
 	cd webdriver; npm test
@@ -112,12 +112,6 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb geckodriver webserver_de
 web_components_test: xvfb firefox chrome webapp_node_modules_all apt-get-psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
 
-sys_update: apt_update | sys_deps
-	gcloud components update
-
-apt_update:
-	sudo apt-get --quiet update
-
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
 
@@ -129,9 +123,9 @@ chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
 		ARCHIVE=google-chrome-stable_current_amd64.deb; \
 		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
-		sudo dpkg --install $${ARCHIVE} || true; \
+		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
 		sudo apt-get install --fix-broken -qqy; \
-		sudo dpkg --install $${ARCHIVE}; \
+		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
 	fi
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
@@ -185,7 +179,13 @@ package_service: var-APP_PATH
 		rm -rf $${TMP_DIR}; \
 	fi
 
-sys_deps: curl gpg node gcloud git
+sys_deps: apt-update
+	make gcloud
+	make git
+	make node
+
+apt_update:
+	sudo apt-get -qq update
 
 curl: apt-get-curl
 git: apt-get-git
