@@ -46,7 +46,7 @@ go_build: git mockgen
 	cd $(WPTD_GO_PATH); go get ./...
 	cd $(WPTD_GO_PATH); go generate ./...
 
-go_build_test: go_build apt-get-gcc
+go_build_test: go_build gcc
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
 go_lint: golint_deps go_test_tag_lint
@@ -109,7 +109,7 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb geckodriver webserver_de
 		-browser=$(BROWSER) $(FLAGS)
 
 # NOTE: psmisc includes killall, needed by wct.sh
-web_components_test: xvfb firefox chrome webapp_node_modules_all apt-get-psmisc
+web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
 
 # Dependencies for running dev_appserver.py.
@@ -187,14 +187,16 @@ sys_deps: apt_update
 apt_update:
 	sudo apt-get -qq update
 
+bzip2: apt-get-bzip2
 curl: apt-get-curl
+gcc: apt-get-gcc
 git: apt-get-git
+psmisc: apt-get-psmisc
 python3: apt-get-python3.6
 python: apt-get-python
 tox: apt-get-tox
-wget: apt-get-wget
-bzip2: apt-get-bzip2
 unzip: apt-get-unzip
+wget: apt-get-wget
 
 java:
 	@ # java has a different apt-get package name.
@@ -231,12 +233,12 @@ dev_data: git
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
 
-gcloud-login: gcloud
+gcloud_login: gcloud
 	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
 		gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json; \
 	fi
 
-deployment_state: gcloud-login webapp_deps package_service var-APP_PATH
+deployment_state: gcloud_login webapp_deps package_service var-APP_PATH
 
 deploy_staging: git
 deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
@@ -250,7 +252,7 @@ deploy_staging: deployment_state var-BRANCH_NAME
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
-cleanup_staging_versions: gcloud-login
+cleanup_staging_versions: gcloud_login
 	$(WPTD_GO_PATH)/util/cleanup-versions.sh
 
 deploy_production: deployment_state
@@ -260,10 +262,10 @@ deploy_production: deployment_state
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 webapp_node_modules: node
-	cd $(WPTD_PATH)webapp; npm install --production --unsafe-perm=true
+	cd $(WPTD_PATH)webapp; npm install --production
 
 webapp_node_modules_all: node
-	cd $(WPTD_PATH)webapp; npm install --unsafe-perm=true --verbose --allow-root
+	cd $(WPTD_PATH)webapp; npm install
 
 webapp_node_modules_prune: webapp_node_modules
 	cd $(WPTD_PATH)webapp; npm prune --production
@@ -289,7 +291,7 @@ gcloud-%: gcloud
 node-%: node
 	@ echo "# Installing $*..."
 	# Hack to (more quickly) detect whether a package is already installed (available in node).
-	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save --unsafe-perm=true $*
+	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
 
 apt-get-%:
 	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi

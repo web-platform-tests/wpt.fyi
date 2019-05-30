@@ -106,9 +106,7 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
       -p "${WPTD_HOST_API_WEB_PORT}:9999" \
       --name "${DOCKER_INSTANCE}" wptd-dev
   info "Setting up local user"
-  echo "On host: `id`"
   wptd_useradd
-  wptd_exec id
 
   info "Ensuring the home directory is owned by the user..."
   wptd_chown "/home/user"
