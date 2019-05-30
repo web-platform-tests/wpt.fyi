@@ -112,7 +112,6 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
 
   info "Ensuring the home directory is owned by the user..."
   wptd_chown "/home/user"
-  wptd_exec ls -l /home/user/.npm
 
   info "Instance ${DOCKER_INSTANCE} started."
 elif [[ "${RUNNING_STATUS}" != "0" ]]; then
@@ -126,6 +125,7 @@ fi
 
 info "Updating system/packages..."
 wptd_exec make sys_update
+wptd_exec ls -l /home/user/.npm
 
 if [[ "${DAEMON}" == "true" ]]; then
   exit 0
