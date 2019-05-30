@@ -79,7 +79,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         </template>
 
         <template is="dom-if" if="[[pathIsASubfolder]]">
-          <wpt-metadata wptMetadata="[[wptMetadata]]"></wpt-metadata>
+          <wpt-metadata wpt-metadata="[[displayedMetadata]]" path="[[path]]"></wpt-metadata>
         </template>
 
         <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
@@ -188,9 +188,9 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
           }
         ]
       },
-      wptMetadata: {
+      displayedMetadata: {
         type: Array,
-        computed: '_computeWPTMetadata(path, metadata)'
+        computed: '_computeDisplayedMetadata(path, metadata)'
       },
       structuredSearch: Object,
       interopLoading: Boolean,
@@ -282,20 +282,20 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
   }
 
-  _computeWPTMetadata(path, metadata) {
+  _computeDisplayedMetadata(path, metadata) {
     let wptMetadata = [];
     for (let i = 0; i < metadata.length; i++) {
       const node = metadata[i];
       if (node.test.includes(path)) {
-        const urls = meatadata[i][urls];
+        const urls = metadata[i]['urls'];
         for (let j = 0; j < urls.length; j++) {
-          if (urls[j] == '') continue;
+          if (urls[j] === '') continue;
           const wptMetadataNode = { test: node.test, url: urls[j] };
           wptMetadata.push(wptMetadataNode);
         }
       }
     }
-    return wptMetadata
+    return wptMetadata;
   }
 
   computePathIsASubfolder(path) {

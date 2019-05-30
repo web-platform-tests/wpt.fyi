@@ -12,7 +12,6 @@ import {
   html,
   PolymerElement
 } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { LoadingState } from './loading-state.js';
 
 class WPTMetadataNode extends PolymerElement {
   static get template() {
@@ -32,7 +31,7 @@ class WPTMetadataNode extends PolymerElement {
       <div class="metadataNode">
         <img src="/static/github.svg" />
         <div>
-          [[metadataNode.testName]] :
+          [[metadataNode.test]] :
           <a href="[[metadataNode.url]]">#[[metadataNode.url]]</a>
           <br />
         </div>
@@ -52,7 +51,7 @@ class WPTMetadataNode extends PolymerElement {
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
 
-class WPTMetadata extends LoadingState(PolymerElement) {
+class WPTMetadata extends PolymerElement {
   static get template() {
     return html`
       <style>
@@ -64,13 +63,13 @@ class WPTMetadata extends LoadingState(PolymerElement) {
         <h4>Triaged Metadata in <i>[[path]]</i></h4>
       </template>
       <template is="dom-repeat" items="[[firstThree]]" as="metadataNode">
-        <wpt-metadata-node metadataNode="[[metadataNode]]"></wpt-metadata-node>
+        <wpt-metadata-node metadata-node="[[metadataNode]]"></wpt-metadata-node>
       </template>
       <template is="dom-if" if="[[others]]">
         <iron-collapse id="collapsible">
           <template is="dom-repeat" items="[[others]]" as="metadataNode">
             <wpt-metadata-node
-              metadataNode="[[metadataNode]]"
+              metadata-node="[[metadataNode]]"
             ></wpt-metadata-node>
           </template>
         </iron-collapse>
@@ -88,7 +87,10 @@ class WPTMetadata extends LoadingState(PolymerElement) {
 
   static get properties() {
     return {
-      path: String,
+      path: {
+        type: String,
+        observer: 'loadMetadata'
+      },
       wptMetadata: Array,
       firstThree: {
         type: Array,
@@ -104,6 +106,13 @@ class WPTMetadata extends LoadingState(PolymerElement) {
   constructor() {
     super();
     this.openCollapsible = this.handleOpenCollapsible.bind(this);
+  }
+
+  loadMetadata(path) {
+    if (this.others) {
+      this.shadowRoot.querySelector('#toggle').hidden = false;
+      this.shadowRoot.querySelector('#collapsible').opened = false;
+    }
   }
 
   computeFirstThree(wptMetadata) {
