@@ -1,7 +1,7 @@
 # Production deployment spec for revisions announcer service.
 
-# Base golang 1.11 image.
-FROM gcr.io/gcp-runtimes/go1-builder:1.11 as builder
+# Base golang 1.12 image.
+FROM gcr.io/gcp-runtimes/go1-builder:1.12 as builder
 
 RUN apt-get update
 RUN apt-get install -qy --no-install-suggests git
