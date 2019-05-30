@@ -8,32 +8,36 @@ import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import {
+  html,
+  PolymerElement
+} from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 
 class WPTMetadataNode extends PolymerElement {
   static get template() {
     return html`
-    <style>
-      .metadataNode {
-        display: flex;
-        align-items: center;
-        margin-bottom: 4px;
-      }
-      .metadataNode img {
-        margin-right: 16px;
-        height: 24px;
-        width: 24px;
-      }
-    </style>
-    <div class="metadataNode">
-      <img src="/static/github.svg">
-      <div>
-        [[metadataNode.testName]] : <a href="[[metadataNode.url]]">#[[metadataNode.url]]</a>
-        <br>
+      <style>
+        .metadataNode {
+          display: flex;
+          align-items: center;
+          margin-bottom: 4px;
+        }
+        .metadataNode img {
+          margin-right: 16px;
+          height: 24px;
+          width: 24px;
+        }
+      </style>
+      <div class="metadataNode">
+        <img src="/static/github.svg" />
+        <div>
+          [[metadataNode.testName]] :
+          <a href="[[metadataNode.url]]">#[[metadataNode.url]]</a>
+          <br />
+        </div>
       </div>
-    </div>
-`;
+    `;
   }
 
   static get is() {
@@ -42,7 +46,7 @@ class WPTMetadataNode extends PolymerElement {
 
   static get properties() {
     return {
-      metadataNode: Object,
+      metadataNode: Object
     };
   }
 }
@@ -51,27 +55,31 @@ window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
 class WPTMetadata extends LoadingState(PolymerElement) {
   static get template() {
     return html`
-    <style>
-      h4 {
-        margin-bottom: 0.5em;
-      }
-    </style>
-    <template is="dom-if" if="[[firstThree]]">
-      <h4>Triaged Metadata in <i>[[path]]</i></h4>
-    </template>
-    <template is="dom-repeat" items="[[firstThree]]" as="metadataNode">
-      <wpt-metadata-node metadataNode="[[metadataNode]]"></wpt-metadata-node>
-    </template>
-    <template is="dom-if" if="[[others]]">
-      <iron-collapse id="collapsible">
-        <template is="dom-repeat" items="[[others]]" as="metadataNode">
-          <wpt-metadata-node metadataNode="[[metadataNode]]"></wpt-metadata-node>
-        </template>
-      </iron-collapse>
-      <paper-button id="toggle" onclick="[[openCollapsible]]">Show more</paper-button>
-    </template>
-    <br />
-`;
+      <style>
+        h4 {
+          margin-bottom: 0.5em;
+        }
+      </style>
+      <template is="dom-if" if="[[firstThree]]">
+        <h4>Triaged Metadata in <i>[[path]]</i></h4>
+      </template>
+      <template is="dom-repeat" items="[[firstThree]]" as="metadataNode">
+        <wpt-metadata-node metadataNode="[[metadataNode]]"></wpt-metadata-node>
+      </template>
+      <template is="dom-if" if="[[others]]">
+        <iron-collapse id="collapsible">
+          <template is="dom-repeat" items="[[others]]" as="metadataNode">
+            <wpt-metadata-node
+              metadataNode="[[metadataNode]]"
+            ></wpt-metadata-node>
+          </template>
+        </iron-collapse>
+        <paper-button id="toggle" onclick="[[openCollapsible]]"
+          >Show more</paper-button
+        >
+      </template>
+      <br />
+    `;
   }
 
   static get is() {
@@ -84,11 +92,11 @@ class WPTMetadata extends LoadingState(PolymerElement) {
       wptMetadata: Array,
       firstThree: {
         type: Array,
-        computed: 'computeFirstThree(wptMetadata)',
+        computed: 'computeFirstThree(wptMetadata)'
       },
       others: {
         type: Array,
-        computed: 'computeOthers(wptMetadata)',
+        computed: 'computeOthers(wptMetadata)'
       }
     };
   }

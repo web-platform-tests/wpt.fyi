@@ -79,7 +79,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         </template>
 
         <template is="dom-if" if="[[pathIsASubfolder]]">
-          <wpt-prs wptMetadata="[[wptMetadata]]"></wpt-prs>
+          <wpt-metadata wptMetadata="[[wptMetadata]]"></wpt-metadata>
         </template>
 
         <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
@@ -175,9 +175,22 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         type: Boolean,
         computed: 'computePathIsASubfolder(path)'
       },
+      metadata: {
+        type: Array,
+        value: [
+          {
+            test: '/IndexedDB/bindings-inject-key.html',
+            urls: ['bugs.chromium.org/p/chromium/issues/detail?id=934844', '']
+          },
+          {
+            test: '/html/browsers/history/the-history-interface/007.html',
+            urls: ['bugs.chromium.org/p/chromium/issues/detail?id=592874', '']
+          }
+        ]
+      },
       wptMetadata: {
         type: Array,
-        computed: 'computeWptMetadata(path, metadata)'
+        computed: '_computeWPTMetadata(path, metadata)'
       },
       structuredSearch: Object,
       interopLoading: Boolean,
@@ -267,6 +280,22 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
 
   computePathIsATestFile(path) {
     return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
+  }
+
+  _computeWPTMetadata(path, metadata) {
+    let wptMetadata = [];
+    for (let i = 0; i < metadata.length; i++) {
+      const node = metadata[i];
+      if (node.test.includes(path)) {
+        const urls = meatadata[i][urls];
+        for (let j = 0; j < urls.length; j++) {
+          if (urls[j] == '') continue;
+          const wptMetadataNode = { test: node.test, url: urls[j] };
+          wptMetadata.push(wptMetadataNode);
+        }
+      }
+    }
+    return wptMetadata
   }
 
   computePathIsASubfolder(path) {
