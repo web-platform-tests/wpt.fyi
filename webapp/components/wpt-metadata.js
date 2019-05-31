@@ -66,14 +66,14 @@ class WPTMetadata extends PolymerElement {
         <wpt-metadata-node metadata-node="[[metadataNode]]"></wpt-metadata-node>
       </template>
       <template is="dom-if" if="[[others]]">
-        <iron-collapse id="collapsible">
+        <iron-collapse id="metadata-collapsible">
           <template is="dom-repeat" items="[[others]]" as="metadataNode">
             <wpt-metadata-node
               metadata-node="[[metadataNode]]"
             ></wpt-metadata-node>
           </template>
         </iron-collapse>
-        <paper-button id="toggle" onclick="[[openCollapsible]]"
+        <paper-button id="metadata-toggle" onclick="[[openCollapsible]]"
           >Show more</paper-button
         >
       </template>
@@ -110,8 +110,8 @@ class WPTMetadata extends PolymerElement {
 
   loadMetadata() {
     if (this.others) {
-      this.shadowRoot.querySelector('#toggle').hidden = false;
-      this.shadowRoot.querySelector('#collapsible').opened = false;
+      this.shadowRoot.querySelector('#metadata-toggle').hidden = false;
+      this.shadowRoot.querySelector('#metadata-collapsible').opened = false;
     }
   }
 
@@ -127,8 +127,8 @@ class WPTMetadata extends PolymerElement {
   }
 
   handleOpenCollapsible() {
-    this.shadowRoot.querySelector('#toggle').hidden = true;
-    this.shadowRoot.querySelector('#collapsible').opened = true;
+    this.shadowRoot.querySelector('#metadata-toggle').hidden = true;
+    this.shadowRoot.querySelector('#metadata-collapsible').opened = true;
   }
 }
 window.customElements.define(WPTMetadata.is, WPTMetadata);
