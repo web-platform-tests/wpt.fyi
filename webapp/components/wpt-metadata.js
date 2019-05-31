@@ -109,9 +109,12 @@ class WPTMetadata extends PolymerElement {
   }
 
   loadMetadata() {
-    if (this.others) {
-      this.shadowRoot.querySelector('#metadata-toggle').hidden = false;
-      this.shadowRoot.querySelector('#metadata-collapsible').opened = false;
+    const button = this.shadowRoot.querySelector('#metadata-toggle');
+    const collapse = this.shadowRoot.querySelector('#metadata-collapsible');
+    this.shadowRoot.querySelector('#metadata-collapsible').opened = false;
+    if (this.others && buttion && collapse) {
+      button.hidden = false;
+      collapse.opened = false;
     }
   }
 
