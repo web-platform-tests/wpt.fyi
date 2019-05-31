@@ -29,10 +29,10 @@ class WPTMetadataNode extends PolymerElement {
         }
       </style>
       <div class="metadataNode">
-        <img src="/static/github.svg" />
+        <img src="/static/bug.svg" />
         <div>
           [[metadataNode.test]] :
-          <a href="[[metadataNode.url]]">#[[metadataNode.url]]</a>
+          <a href="[[metadataNode.url]]">[[metadataNode.url]]</a>
           <br />
         </div>
       </div>

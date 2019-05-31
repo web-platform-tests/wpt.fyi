@@ -180,7 +180,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         value: [
           {
             test: '/IndexedDB/bindings-inject-key.html',
-            urls: ['bugs.chromium.org/p/chromium/issues/detail?id=934844', '']
+            urls: ['bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844']
           },
           {
             test: '/html/browsers/history/the-history-interface/007.html',
@@ -202,10 +202,12 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     };
   }
 
-  static get observers() { return [
-    '_routeChanged(routeData, routeData.*)',
-    '_subrouteChanged(subrouteData, subrouteData.*)',
-  ]}
+  static get observers() {
+    return [
+      '_routeChanged(routeData, routeData.*)',
+      '_subrouteChanged(subrouteData, subrouteData.*)',
+    ]
+  }
 
   constructor() {
     super();
@@ -240,7 +242,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       this.shadowRoot.querySelector('#masterLabelMissing').show();
     }
     this.shadowRoot.querySelector('app-location')
-        ._createPropertyObserver('__query', query => this.query = query);
+      ._createPropertyObserver('__query', query => this.query = query);
   }
 
   queryChanged(query) {
@@ -314,7 +316,7 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       };
     });
     path += `/${encodeURIComponent(lastPart)}`;
-    linkedParts.push({name: lastPart, path: path});
+    linkedParts.push({ name: lastPart, path: path });
     return linkedParts;
   }
 
