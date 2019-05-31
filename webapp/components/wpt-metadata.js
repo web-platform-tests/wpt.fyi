@@ -108,7 +108,7 @@ class WPTMetadata extends PolymerElement {
     this.openCollapsible = this.handleOpenCollapsible.bind(this);
   }
 
-  loadMetadata(path) {
+  loadMetadata() {
     if (this.others) {
       this.shadowRoot.querySelector('#toggle').hidden = false;
       this.shadowRoot.querySelector('#collapsible').opened = false;
