@@ -13,6 +13,9 @@ import (
 )
 
 func TestSearch(t *testing.T) {
+	if *staging {
+		t.Skip("skipping search tests on staging (#1327)")
+	}
 	runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
 		t.Run("wpt-results", func(t *testing.T) {
 			testSearch(t, wd, app, "/", "wpt-results")
