@@ -1,0 +1,5 @@
+          {{ template "_test_run_query_params.html" .}}
+          {{- if .Diff}} diff{{end}}
+          {{- if .DiffFilter}} diff-filter="{{.DiffFilter}}"{{end}}
+          {{- if .PR }} pr="{{.PR}}"{{end}}
+          {{- if .Search }} search="{{.Search}}"{{end}}

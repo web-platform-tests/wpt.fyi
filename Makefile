@@ -46,7 +46,7 @@ go_build: git mockgen
 	cd $(WPTD_GO_PATH); go get ./...
 	cd $(WPTD_GO_PATH); go generate ./...
 
-go_build_test: go_build apt-get-gcc
+go_build_test: go_build gcc
 	cd $(WPTD_GO_PATH); go get -t -tags="small medium large" ./...
 
 go_lint: golint_deps go_test_tag_lint
@@ -78,11 +78,11 @@ go_large_test:
 	make go_firefox_test
 	make go_chrome_test
 
-go_firefox_test: BROWSER := firefox
-go_firefox_test: firefox | _go_webdriver_test
+go_firefox_test: firefox geckodriver
+	make _go_webdriver_test BROWSER=firefox
 
-go_chrome_test: BROWSER := chrome
-go_chrome_test: chrome chromedriver | _go_webdriver_test
+go_chrome_test: chrome chromedriver
+	make _go_webdriver_test BROWSER=chrome
 
 puppeteer_chrome_test: chrome webserver_deps webdriver_node_deps
 	cd webdriver; npm test
@@ -92,11 +92,10 @@ webdriver_node_deps:
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-_go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-tester webserver_deps
+_go_webdriver_test: var-BROWSER java go_build_test xvfb geckodriver webserver_deps
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
-	# paths before installing node-web-component-tester as the paths
-	# include version strings.
+	# path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	cd $(WPTD_PATH)webdriver; \
 	go test $(VERBOSE) -timeout=15m -tags=large -args \
@@ -106,18 +105,12 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb node-web-component-teste
 		-chromedriver_path=$(CHROMEDRIVER_PATH) \
 		-frame_buffer=$(USE_FRAME_BUFFER) \
 		-staging=$(STAGING) \
+		-test.timeout=30m \
 		-browser=$(BROWSER) $(FLAGS)
 
 # NOTE: psmisc includes killall, needed by wct.sh
-web_components_test: xvfb firefox chrome webapp_node_modules_all apt-get-psmisc
+web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
-
-sys_update: apt_update | sys_deps
-	gcloud components update
-	sudo npm install -g npm
-
-apt_update:
-	sudo apt-get --quiet update
 
 # Dependencies for running dev_appserver.py.
 webserver_deps: webapp_deps dev_appserver_deps
@@ -130,9 +123,9 @@ chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
 		ARCHIVE=google-chrome-stable_current_amd64.deb; \
 		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
-		sudo dpkg --install $${ARCHIVE} || true; \
+		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
 		sudo apt-get install --fix-broken -qqy; \
-		sudo dpkg --install $${ARCHIVE}; \
+		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
 	fi
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
@@ -156,6 +149,9 @@ firefox_install: firefox_deps bzip2 wget java
 
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+
+geckodriver: node-selenium-standalone
+	cd webapp; `npm bin`/selenium-standalone install --singleDriverInstall=firefox
 
 golint_deps: git
 	if [ "$$(which golint)" == "" ]; then \
@@ -183,16 +179,24 @@ package_service: var-APP_PATH
 		rm -rf $${TMP_DIR}; \
 	fi
 
-sys_deps: curl gpg node gcloud git
+sys_deps: apt_update
+	make gcloud
+	make git
+	make node
 
+apt_update:
+	sudo apt-get -qq update
+
+bzip2: apt-get-bzip2
 curl: apt-get-curl
+gcc: apt-get-gcc
 git: apt-get-git
+psmisc: apt-get-psmisc
 python3: apt-get-python3.6
 python: apt-get-python
 tox: apt-get-tox
-wget: apt-get-wget
-bzip2: apt-get-bzip2
 unzip: apt-get-unzip
+wget: apt-get-wget
 
 java:
 	@ # java has a different apt-get package name.
@@ -221,7 +225,7 @@ gcloud: python curl gpg
 		gcloud config set disable_usage_reporting false; \
 	fi
 
-eslint: node-babel-eslint node-eslint node-eslint-plugin-html
+eslint: webapp_node_modules_all
 	cd $(WPTD_PATH)webapp; npm run lint
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
@@ -229,12 +233,12 @@ dev_data: git
 	cd $(WPTD_GO_PATH)/util; go get -t ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
 
-gcloud-login: gcloud
+gcloud_login: gcloud
 	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
 		gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json; \
 	fi
 
-deployment_state: gcloud-login webapp_deps package_service var-APP_PATH
+deployment_state: gcloud_login webapp_deps package_service var-APP_PATH
 
 deploy_staging: git
 deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
@@ -248,7 +252,7 @@ deploy_staging: deployment_state var-BRANCH_NAME
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
-cleanup_staging_versions: gcloud-login
+cleanup_staging_versions: gcloud_login
 	$(WPTD_GO_PATH)/util/cleanup-versions.sh
 
 deploy_production: deployment_state

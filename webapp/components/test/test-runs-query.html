@@ -60,7 +60,7 @@ suite('TestRunsQuery', () => {
       test(channel, () => {
         testRunsQuery.products = DefaultProducts
           .map(p => Object.assign({}, p, { labels: [channel] }));
-        expect(testRunsQuery.query).to.equal(`?label=${channel}`);
+        expect(testRunsQuery.query).to.equal(`label=${channel}`);
       });
     }
   });

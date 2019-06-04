@@ -113,7 +113,8 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		logger := shared.GetLogger(ctx)
 		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
-		client := sh.api.GetHTTPClient()
+		client, cancel := sh.api.GetSlowHTTPClient(time.Second * 15)
+		defer cancel()
 		req, err := http.NewRequest("POST", fwdURL.String(), bytes.NewBuffer(data))
 		if err != nil {
 			logger.Errorf("Failed to create request to POST %s: %v", fwdURL.String(), err)
