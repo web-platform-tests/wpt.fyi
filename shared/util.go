@@ -93,10 +93,10 @@ func IsLatest(sha string) bool {
 
 // NewSetFromStringSlice is a helper for the inability to cast []string to []interface{}
 func NewSetFromStringSlice(items []string) mapset.Set {
-	if items == nil {
-		return nil
-	}
 	set := mapset.NewSet()
+	if items == nil {
+		return set
+	}
 	for _, i := range items {
 		set.Add(i)
 	}
