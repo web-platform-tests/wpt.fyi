@@ -142,7 +142,7 @@ Same as satuts, but with a specific product-spec.
 
 #### link
 
-`link` query objecsts performs a search on a test that has a Metadata Link
+`link` query atoms perform a search for tests that have some matching link metadata
 Node in the wpt-metadata repository, and its Metadata Link's url has a `pattern`.
 
     {"link": pattern}
