@@ -142,8 +142,7 @@ Same as satuts, but with a specific product-spec.
 
 #### link
 
-`link` query atoms perform a search for tests that have some matching link metadata
-Node in the wpt-metadata repository, and its Metadata Link's url has a `pattern`.
+`link` query atoms perform a search for tests that have some matching link metadata.
 
     {"link": pattern}
  
