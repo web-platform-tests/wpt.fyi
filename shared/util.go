@@ -42,6 +42,12 @@ const PRHeadLabel = "pr_head"
 // prefixed because usernames are essentially user input.
 const UserLabelPrefix = "user:"
 
+// WPTRepoOwner is the owner (username) for the GitHub wpt repo.
+const WPTRepoOwner = "web-platform-tests"
+
+// WPTRepoName is the repo name for the GitHub wpt repo.
+const WPTRepoName = "wpt"
+
 // GetUserLabel prefixes the given username with the prefix for using as a label.
 func GetUserLabel(username string) string {
 	return UserLabelPrefix + username

@@ -141,7 +141,7 @@ func getPRCommits(aeAPI shared.AppEngineAPI, pr int) shared.SHAs {
 		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
 	}
-	commits, _, err := githubClient.PullRequests.ListCommits(aeAPI.Context(), "web-platform-tests", "wpt", pr, nil)
+	commits, _, err := githubClient.PullRequests.ListCommits(aeAPI.Context(), shared.WPTRepoOwner, shared.WPTRepoName, pr, nil)
 	if err != nil || commits == nil {
 		log.Errorf("Failed to fetch PR #%v: %s", pr, err.Error())
 		return nil

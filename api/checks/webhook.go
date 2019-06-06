@@ -65,11 +65,11 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	var processed bool
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	checksAPI := NewAPI(ctx)
+	taskclusterAPI := taskcluster.NewAPI(ctx)
 	if event == "check_suite" {
-		processed, err = handleCheckSuiteEvent(aeAPI, checksAPI, payload)
+		processed, err = handleCheckSuiteEvent(aeAPI, checksAPI, taskclusterAPI, payload)
 	} else if event == "check_run" {
 		azureAPI := azure.NewAPI(ctx)
-		taskclusterAPI := taskcluster.NewAPI(ctx)
 		processed, err = handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	} else if event == "pull_request" {
 		processed, err = handlePullRequestEvent(aeAPI, checksAPI, payload)
@@ -91,7 +91,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 // handleCheckSuiteEvent handles a check_suite (re)requested event by ensuring
 // that a check_run exists for each product that contains results for the head SHA.
-func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
+func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, taskclusterAPI taskcluster.API, payload []byte) (bool, error) {
 	log := shared.GetLogger(aeAPI.Context())
 	var checkSuite github.CheckSuiteEvent
 	if err := json.Unmarshal(payload, &checkSuite); err != nil {
@@ -99,7 +99,8 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	}
 
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
-	if !isWPTFYIApp(appID) {
+	if !isWPTFYIApp(appID) &&
+		appID != taskcluster.AppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -107,6 +108,14 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	login := checkSuite.GetSender().GetLogin()
 	if !isUserWhitelisted(aeAPI, login) {
 		log.Infof("Sender %s not whitelisted for wpt.fyi checks", login)
+		return false, nil
+	}
+
+	if appID == taskcluster.AppID {
+		if aeAPI.IsFeatureEnabled("processTaskclusterCheckRunEvents") {
+			return taskclusterAPI.HandleCheckSuiteEvent(&checkSuite)
+		}
+		log.Infof("Ignoring Taskcluster CheckSuite event")
 		return false, nil
 	}
 
