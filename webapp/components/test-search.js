@@ -169,7 +169,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   CountSpecifier_count3: (_) => 3,
   CountSpecifier_count2: (_) => 2,
   CountSpecifier_count1: (_) => 1,
-  linkExp: (l, colonBang, r) => {
+  linkExp: (l, colon, r) => {
     const ps = r.eval();
     return ps.length === 0 ? emptyQuery : {link: ps };
   },
