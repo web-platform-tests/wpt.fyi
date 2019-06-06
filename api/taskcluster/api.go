@@ -76,6 +76,10 @@ func (a apiImpl) HandleCheckSuiteEvent(event *github.CheckSuiteEvent) (bool, err
 		byGroup.Add(taskGroupID)
 	}
 
+	if byGroup.Cardinality() > 1 {
+		log.Errorf("Encountered multiple (%v) TaskGroup IDs", byGroup.Cardinality())
+	}
+
 	processedSomething := false
 	for _, groupID := range shared.ToStringSlice(byGroup) {
 		processed, err := processTaskclusterBuild(a.aeAPI, groupID, "", sha, shared.ToStringSlice(labels)...)
