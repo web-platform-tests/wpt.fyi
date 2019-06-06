@@ -13,7 +13,7 @@ import (
 )
 
 func TestParseMetadata(t *testing.T) {
-	var path string = "foo/bar"
+	var path = "foo/bar"
 	var metadataByteMap = make(map[string][]byte)
 	metadataByteMap[path] = []byte(`
 links:
@@ -39,9 +39,9 @@ links:
 }
 
 func TestConstructMetadataResponse_OneLink(t *testing.T) {
-	productAtRevisions := []ProductAtRevision{
-		ParseProductSpecUnsafe("Firefox-54").ProductAtRevision,
-		ParseProductSpecUnsafe("Chrome").ProductAtRevision,
+	productSpecs := []ProductSpec{
+		ParseProductSpecUnsafe("Firefox-54"),
+		ParseProductSpecUnsafe("Chrome"),
 	}
 	metadataMap := map[string]Metadata{
 		"foo/bar": Metadata{
@@ -60,7 +60,7 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productAtRevisions, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 1, len(MetadataResults))
 	assert.Equal(t, MetadataResults[0].Test, "/foo/bar/a.html")
@@ -69,9 +69,9 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 }
 
 func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
-	productAtRevisions := []ProductAtRevision{
-		ParseProductSpecUnsafe("Firefox-54").ProductAtRevision,
-		ParseProductSpecUnsafe("Firefox").ProductAtRevision,
+	productSpecs := []ProductSpec{
+		ParseProductSpecUnsafe("Firefox-54"),
+		ParseProductSpecUnsafe("Firefox"),
 	}
 	metadataMap := map[string]Metadata{
 		"foo/bar": Metadata{
@@ -90,15 +90,15 @@ func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productAtRevisions, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 0, len(MetadataResults))
 }
 
 func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
-	productAtRevisions := []ProductAtRevision{
-		ParseProductSpecUnsafe("Firefox-54").ProductAtRevision,
-		ParseProductSpecUnsafe("Chrome").ProductAtRevision,
+	productSpecs := []ProductSpec{
+		ParseProductSpecUnsafe("Firefox-54"),
+		ParseProductSpecUnsafe("Chrome"),
 	}
 	metadataMap := map[string]Metadata{
 		"foo/bar": Metadata{
@@ -117,7 +117,7 @@ func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productAtRevisions, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 2, len(MetadataResults))
 	assert.Equal(t, MetadataResults[0].Test, "/foo/bar/a.html")
@@ -129,9 +129,9 @@ func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
 }
 
 func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
-	productAtRevisions := []ProductAtRevision{
-		ParseProductSpecUnsafe("Firefox-54").ProductAtRevision,
-		ParseProductSpecUnsafe("Chrome-1").ProductAtRevision,
+	productSpecs := []ProductSpec{
+		ParseProductSpecUnsafe("Firefox-54"),
+		ParseProductSpecUnsafe("Chrome-1"),
 	}
 	metadataMap := map[string]Metadata{
 		"foo/bar": Metadata{
@@ -150,7 +150,7 @@ func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productAtRevisions, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 1, len(MetadataResults))
 	assert.Equal(t, MetadataResults[0].Test, "/foo/bar/a.html")
@@ -159,10 +159,10 @@ func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
 }
 
 func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
-	productAtRevisions := []ProductAtRevision{
-		ParseProductSpecUnsafe("Firefox-54").ProductAtRevision,
-		ParseProductSpecUnsafe("Chrome").ProductAtRevision,
-		ParseProductSpecUnsafe("Safari").ProductAtRevision,
+	productSpecs := []ProductSpec{
+		ParseProductSpecUnsafe("Firefox-54"),
+		ParseProductSpecUnsafe("Chrome"),
+		ParseProductSpecUnsafe("Safari"),
 	}
 	metadataMap := map[string]Metadata{
 		"foo/bar": Metadata{
@@ -181,7 +181,7 @@ func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productAtRevisions, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 2, len(MetadataResults))
 	assert.Equal(t, MetadataResults[0].Test, "/foo/bar/a.html")

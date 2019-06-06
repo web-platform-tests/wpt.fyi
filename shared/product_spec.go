@@ -19,15 +19,27 @@ type ProductSpec struct {
 	Labels mapset.Set
 }
 
-// Matches returns whether the spec matches the given run.
+// Matches returns whether the ProductSpec matches the given run.
 func (p ProductSpec) Matches(run TestRun) bool {
+	runLabels := run.LabelsSet()
+	return p.MatchesLabels(runLabels) && p.MatchesProductAtRevision(run.ProductAtRevision)
+}
+
+// MatchesProductSpec returns whether the ProductSpec matches the given ProductSpec.
+func (p ProductSpec) MatchesProductSpec(productSpec ProductSpec) bool {
+	labels := productSpec.Labels
+	productAtRevision := productSpec.ProductAtRevision
+	return p.MatchesLabels(labels) && p.MatchesProductAtRevision(productAtRevision)
+}
+
+// MatchesLabels returns whether the ProductSpec's labels matches the given labels.
+func (p ProductSpec) MatchesLabels(labels mapset.Set) bool {
 	if p.Labels != nil && p.Labels.Cardinality() > 0 {
-		runLabels := run.LabelsSet()
-		if !p.Labels.IsSubset(runLabels) {
+		if labels == nil || !p.Labels.IsSubset(labels) {
 			return false
 		}
 	}
-	return p.MatchesProductAtRevision(run.ProductAtRevision)
+	return true
 }
 
 // MatchesProductAtRevision returns whether the spec matches the given ProductAtRevision.

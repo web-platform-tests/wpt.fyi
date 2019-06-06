@@ -163,6 +163,7 @@ func filterMetadata(linkQuery query.AbstractLink, metadata shared.MetadataResult
 	return res
 }
 
+// TODO(kyleju): Refactor this part to shared package.
 var cacheKey = func(r *http.Request) interface{} {
 	if r.Method == "GET" {
 		return shared.URLAsCacheKey(r)

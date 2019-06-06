@@ -390,14 +390,14 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 	idx, err := NewShardedWPTIndex(loader, testNumShards)
 	assert.Nil(t, err)
 
-	matchingTestName := "/a/b/c"
+	noMatchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
 		testRunData{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
 					&metrics.TestResults{
-						Test:   matchingTestName,
+						Test:   noMatchingTestName,
 						Status: "PASS",
 					},
 					&metrics.TestResults{
@@ -408,7 +408,7 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 			},
 		},
 	})
-	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
+	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, noMatchingTestName: []string{"", "https://external.com/item", ""}}
 
 	link := query.Link{Pattern: "NoMatchingPattern", Metadata: metadata}
 	plan, err := idx.Bind(runs, link)

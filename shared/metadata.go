@@ -56,29 +56,25 @@ func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
 func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, url string) (MetadataResults, error) {
-	var productAtRevisions = make([]ProductAtRevision, len(testRuns))
+	var productSpecs = make([]ProductSpec, len(testRuns))
 	for i, run := range testRuns {
-		productAtRevisions[i] = run.ProductAtRevision
+		productSpecs[i] = ProductSpec{ProductAtRevision: run.ProductAtRevision, Labels: run.LabelsSet()}
 	}
-	return getMetadataResponseOnProductRevisions(productAtRevisions, client, log, url)
+	return getMetadataResponseOnProductSpecs(productSpecs, client, log, url)
 }
 
 // GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
 func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
-	var productAtRevisions = make([]ProductAtRevision, len(productSpecs))
-	for i, productSpec := range productSpecs {
-		productAtRevisions[i] = productSpec.ProductAtRevision
-	}
-	return getMetadataResponseOnProductRevisions(productAtRevisions, client, log, url)
+	return getMetadataResponseOnProductSpecs(productSpecs, client, log, url)
 }
 
-func getMetadataResponseOnProductRevisions(productAtRevisions []ProductAtRevision, client *http.Client, log Logger, url string) (MetadataResults, error) {
+func getMetadataResponseOnProductSpecs(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
 	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
 	if err != nil {
 		return nil, err
 	}
 	metadata := parseMetadata(metadataByteMap, log)
-	return constructMetadataResponse(productAtRevisions, metadata), nil
+	return constructMetadataResponse(productSpecs, metadata), nil
 }
 
 // parseMetadata collects and parses all META.yml files from
@@ -98,7 +94,7 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 }
 
 // constructMetadataResponse constructs the response to a WPT Metadata query, given ProductSpecs.
-func constructMetadataResponse(productAtRevisions []ProductAtRevision, metadata map[string]Metadata) MetadataResults {
+func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Metadata) MetadataResults {
 	res := MetadataResults{}
 	for folderPath, data := range metadata {
 		testMap := make(map[string][]string)
@@ -106,17 +102,17 @@ func constructMetadataResponse(productAtRevisions []ProductAtRevision, metadata 
 		for _, link := range data.Links {
 			var urls []string
 
-			//TODO: Concatenate test path on WPT Metadata repository instead of here.
+			//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
 			var fullTestName = "/" + folderPath + "/" + link.TestPath
 
 			if _, ok := testMap[fullTestName]; !ok {
-				testMap[fullTestName] = make([]string, len(productAtRevisions))
+				testMap[fullTestName] = make([]string, len(productSpecs))
 			}
 			urls = testMap[fullTestName]
 
-			for i, productAtRevision := range productAtRevisions {
+			for i, productSpec := range productSpecs {
 				// Matches browser type if a version is not specified.
-				if link.Product.MatchesProductAtRevision(productAtRevision) {
+				if link.Product.MatchesProductSpec(productSpec) {
 					urls[i] = link.URL
 				} else if link.Product.BrowserName == "" && urls[i] == "" {
 					// Matches to all browsers if product is not specified.

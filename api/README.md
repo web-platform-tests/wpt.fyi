@@ -769,8 +769,14 @@ __URL Parameters__
 
 __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 
-#### JSON Payload
-__`link`__: `[pattern]`
+#### JSON Request Payload
+```json
+[
+  {
+    "link": [pattern]
+  }
+]
+```
 
   Where `[pattern]` is a susbtring of the url field of a Metadata Link Node.
 
