@@ -33,21 +33,6 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
-// HandleCheckRunEvent mocks base method
-func (m *MockAPI) HandleCheckRunEvent(arg0 *github.CheckRunEvent) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HandleCheckRunEvent", arg0)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// HandleCheckRunEvent indicates an expected call of HandleCheckRunEvent
-func (mr *MockAPIMockRecorder) HandleCheckRunEvent(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleCheckRunEvent", reflect.TypeOf((*MockAPI)(nil).HandleCheckRunEvent), arg0)
-}
-
 // HandleCheckSuiteEvent mocks base method
 func (m *MockAPI) HandleCheckSuiteEvent(arg0 *github.CheckSuiteEvent) (bool, error) {
 	m.ctrl.T.Helper()

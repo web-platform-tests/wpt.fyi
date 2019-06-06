@@ -22,7 +22,6 @@ const AppID = int64(1317)
 
 // API is for Azure Taskcluster related requests.
 type API interface {
-	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
 	HandleCheckSuiteEvent(*github.CheckSuiteEvent) (bool, error)
 }
 
@@ -37,31 +36,6 @@ func NewAPI(ctx context.Context) API {
 		ctx:   ctx,
 		aeAPI: shared.NewAppEngineAPI(ctx),
 	}
-}
-
-// HandleCheckRunEvent processes a Taskcluster check run "completed" event.
-func (a apiImpl) HandleCheckRunEvent(event *github.CheckRunEvent) (bool, error) {
-	log := shared.GetLogger(a.ctx)
-	status := event.GetCheckRun().GetStatus()
-	if status != "completed" {
-		log.Infof("Ignoring non-completed status %s", status)
-		return false, nil
-	}
-	detailsURL := event.GetCheckRun().GetDetailsURL()
-	sha := event.GetCheckRun().GetHeadSHA()
-
-	labels := mapset.NewSet()
-	sender := event.GetSender().GetLogin()
-	if sender != "" {
-		labels.Add(shared.GetUserLabel(sender))
-	}
-
-	taskGroupID, taskID := extractTaskGroupID(detailsURL)
-	if taskGroupID == "" {
-		return false, fmt.Errorf("unrecognized target_url: %s", detailsURL)
-	}
-
-	return processTaskclusterBuild(shared.NewAppEngineAPI(a.ctx), taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
 }
 
 // HandleCheckSuiteEvent processes a Taskcluster check suite "completed" event.

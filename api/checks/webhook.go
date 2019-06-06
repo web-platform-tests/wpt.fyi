@@ -180,8 +180,7 @@ func handleCheckRunEvent(
 
 	appID := checkRun.GetCheckRun().GetApp().GetID()
 	if !isWPTFYIApp(appID) &&
-		appID != azure.PipelinesAppID &&
-		appID != taskcluster.AppID {
+		appID != azure.PipelinesAppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -199,12 +198,6 @@ func handleCheckRunEvent(
 			return azureAPI.HandleCheckRunEvent(checkRun)
 		}
 		log.Infof("Ignoring Azure pipelines event")
-		return false, nil
-	} else if appID == taskcluster.AppID {
-		if aeAPI.IsFeatureEnabled("processTaskclusterCheckRunEvents") {
-			return taskclusterAPI.HandleCheckRunEvent(checkRun)
-		}
-		log.Infof("Ignoring Taskcluster CheckRun event")
 		return false, nil
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
