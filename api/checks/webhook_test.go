@@ -16,6 +16,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/azure/mock_azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/mock_checks"
 	"github.com/web-platform-tests/wpt.fyi/api/taskcluster/mock_taskcluster"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
@@ -117,8 +118,8 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 	requestedAction := "requested_action"
 	pending := "pending"
 	username := "lukebjerring"
-	owner := wptRepoOwner
-	repo := wptRepoName
+	owner := shared.WPTRepoOwner
+	repo := shared.WPTRepoName
 	appID := int64(wptfyiStagingCheckAppID)
 	event := github.CheckRunEvent{
 		Action: &requestedAction,
@@ -167,7 +168,7 @@ func TestHandleCheckRunEvent_ActionRequested_Cancel(t *testing.T) {
 	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	checksAPI := mock_checks.NewMockAPI(mockCtrl)
-	checksAPI.EXPECT().CancelRun(username, wptRepoOwner, wptRepoName, event.GetCheckRun(), event.GetInstallation())
+	checksAPI.EXPECT().CancelRun(username, shared.WPTRepoOwner, shared.WPTRepoName, event.GetCheckRun(), event.GetInstallation())
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
 	taskclusterAPI := mock_taskcluster.NewMockAPI(mockCtrl)
 
@@ -180,8 +181,8 @@ func getCheckRunCreatedEvent(status, sender, sha string) github.CheckRunEvent {
 	id := int64(wptfyiStagingCheckAppID)
 	chrome := "chrome"
 	created := "created"
-	repoName := wptRepoName
-	repoOwner := wptRepoOwner
+	repoName := shared.WPTRepoName
+	repoOwner := shared.WPTRepoOwner
 	return github.CheckRunEvent{
 		Action: &created,
 		CheckRun: &github.CheckRun{
