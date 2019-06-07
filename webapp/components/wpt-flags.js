@@ -74,7 +74,8 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
     }
     // Fall back to env default.
     if (value === null && typeof(WPTEnvironmentFlags) !== 'undefined') {
-      value = WPTEnvironmentFlags[feature];
+      // 'false' is needed for [[!foo]] Polymer bindings
+      value = WPTEnvironmentFlags[feature] || false;
     }
     target[feature] = {
       type: Boolean,

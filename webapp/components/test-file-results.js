@@ -12,9 +12,10 @@ import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
 import './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
+import { PathInfo } from './path.js';
 
-class TestFileResults extends WPTFlags(LoadingState(TestRunsQueryLoader(
-  TestRunsUIQuery(PolymerElement)))) {
+class TestFileResults extends WPTFlags(LoadingState(PathInfo(
+  TestRunsQueryLoader(TestRunsUIQuery(PolymerElement))))) {
   static get template() {
     return html`
     <style include="wpt-colors">
