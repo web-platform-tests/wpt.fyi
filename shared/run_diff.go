@@ -423,7 +423,7 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
 	}
-	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
+	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, WPTRepoOwner, WPTRepoName, shaBefore, shaAfter)
 	if err != nil || comparison == nil {
 		log.Errorf("Failed to fetch diff for %s...%s: %s", CropString(shaBefore, 7), CropString(shaAfter, 7), err.Error())
 		return nil
