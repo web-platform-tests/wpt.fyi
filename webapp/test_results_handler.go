@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -106,18 +107,31 @@ func populateTemplateData(r *http.Request) (data templateData, err error) {
 		data.TestRunIDs = string(marshalled)
 	} else {
 		if pr == nil && testRunFilter.IsDefaultQuery() {
-			experimentalByDefault := aeAPI.IsFeatureEnabled("experimentalByDefault")
-			experimentalAlignedExceptEdge := aeAPI.IsFeatureEnabled("experimentalAlignedExceptEdge")
-			if experimentalByDefault {
-				if experimentalAlignedExceptEdge {
+			if aeAPI.IsFeatureEnabled("experimentalByDefault") {
+				if aeAPI.IsFeatureEnabled("experimentalAlignedExceptEdge") {
 					testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
 				} else {
 					testRunFilter = testRunFilter.OrExperimentalRuns()
+					if aeAPI.IsFeatureEnabled("experimentalAligned") {
+						aligned := true
+						testRunFilter.Aligned = &aligned
+					}
 				}
 			} else {
 				testRunFilter = testRunFilter.OrAlignedStableRuns()
 			}
 			testRunFilter = testRunFilter.MasterOnly()
+		}
+
+		if aeAPI.IsFeatureEnabled("edgeChromiumByDefault") {
+			for i, product := range testRunFilter.Products {
+				if product.BrowserName == "edge" {
+					if testRunFilter.Products[i].Labels == nil {
+						testRunFilter.Products[i].Labels = mapset.NewSet()
+					}
+					testRunFilter.Products[i].Labels.Add("edgechromium")
+				}
+			}
 		}
 
 		data.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
