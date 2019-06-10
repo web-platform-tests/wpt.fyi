@@ -47,7 +47,7 @@ func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestFilterMetadataSearchHandler_Success(t *testing.T) {
+func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../shared/metadata_testdata/gzip_testfile.tar.gz")
 	}
@@ -65,7 +65,7 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
-	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), client, server.URL}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, server.URL}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -74,7 +74,7 @@ func TestFilterMetadataSearchHandler_Success(t *testing.T) {
 	assert.Equal(t, `[{"test":"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html","urls":["bugs.bar?id=456",""]},{"test":"/randomfolder3/innerfolder1/random3foo.html","urls":["bugs.bar",""]}]`, res)
 }
 
-func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
+func TestFilterMetadataHandlerPost_MissingProducts(t *testing.T) {
 	body :=
 		`{
 		"exists": [{
@@ -85,13 +85,13 @@ func TestFilterMetadataSearchHandler_MissingProducts(t *testing.T) {
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestFilterMetadataSearchHandler_NotLink(t *testing.T) {
+func TestFilterMetadataHandlerPost_NotLink(t *testing.T) {
 	body :=
 		`{
 		"exists": [{
@@ -102,13 +102,13 @@ func TestFilterMetadataSearchHandler_NotLink(t *testing.T) {
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestFilterMetadataSearchHandler_NotJustLink(t *testing.T) {
+func TestFilterMetadataHandlerPost_NotJustLink(t *testing.T) {
 	body :=
 		`{
 		"exists": [{
@@ -122,7 +122,7 @@ func TestFilterMetadataSearchHandler_NotJustLink(t *testing.T) {
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataSearchHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)

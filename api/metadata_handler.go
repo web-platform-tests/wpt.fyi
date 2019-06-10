@@ -17,15 +17,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// MetadataHandler is an http.Handler for GET method of the /api/metadata endpoint.
+// MetadataHandler is an http.Handler for /api/metadata endpoint.
 type MetadataHandler struct {
-	logger      shared.Logger
-	httpClient  *http.Client
-	metadataURL string
-}
-
-// MetadataSearchHandler is an http.Handler for POST method of the /api/metadata endpoint.
-type MetadataSearchHandler struct {
 	logger      shared.Logger
 	httpClient  *http.Client
 	metadataURL string
@@ -42,13 +35,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
 	logger := shared.GetLogger(ctx)
 	metadataURL := shared.MetadataArchiveURL
-
-	var delegate http.Handler
-	if r.Method == "GET" {
-		delegate = MetadataHandler{logger, client, metadataURL}
-	} else {
-		delegate = MetadataSearchHandler{logger, client, metadataURL}
-	}
+	delegate := MetadataHandler{logger, client, metadataURL}
 
 	// Serve cached with 5 minute expiry. Delegate to Metadata Handler on cache miss.
 	shared.NewCachingHandler(
@@ -61,6 +48,36 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var abstractLink query.AbstractLink
+	if r.Method == "POST" {
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+		}
+		err = r.Body.Close()
+		if err != nil {
+			http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
+		}
+
+		var ae query.AbstractExists
+		err = json.Unmarshal(data, &ae)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var isLinkQuery = false
+		if len(ae.Args) == 1 {
+			abstractLink, isLinkQuery = ae.Args[0].(query.AbstractLink)
+		}
+
+		if !isLinkQuery {
+			h.logger.Errorf("Error from request: non Link search query %s for api/metadata", ae)
+			http.Error(w, "Error from request: non Link search query for api/metadata", http.StatusBadRequest)
+			return
+		}
+	}
+
 	q := r.URL.Query()
 	productSpecs, err := shared.ParseProductOrBrowserParams(q)
 	if err != nil {
@@ -76,66 +93,9 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	marshalled, err := json.Marshal(metadataResponse)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if r.Method == "POST" {
+		metadataResponse = filterMetadata(abstractLink, metadataResponse)
 	}
-	_, err = w.Write(marshalled)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h MetadataSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
-	}
-	err = r.Body.Close()
-	if err != nil {
-		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
-	}
-
-	var ae query.AbstractExists
-	err = json.Unmarshal(data, &ae)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var abstractLink query.AbstractLink
-	var isLinkQuery = false
-	if len(ae.Args) == 1 {
-		abstractLink, isLinkQuery = ae.Args[0].(query.AbstractLink)
-	}
-
-	if !isLinkQuery {
-		h.logger.Errorf("Error from request: non Link search query %s for api/metadata", ae)
-		http.Error(w, "Error from request: non Link search query for api/metadata", http.StatusBadRequest)
-		return
-	}
-
-	q := r.URL.Query()
-	var productSpecs shared.ProductSpecs
-	productSpecs, err = shared.ParseProductOrBrowserParams(q)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} else if len(productSpecs) == 0 {
-		http.Error(w, fmt.Sprintf("Missing required 'product' param"), http.StatusBadRequest)
-		return
-	}
-
-	metadata, err := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger, h.metadataURL)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	metadataResponse := filterMetadata(abstractLink, metadata)
 	marshalled, err := json.Marshal(metadataResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
