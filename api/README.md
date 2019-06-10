@@ -792,7 +792,7 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
       "test":"/IndexedDB/bindings-inject-key.html",
       "urls":[
          "bugs.chromium.org/p/chromium/issues/detail?id=934844",
-         ""
+         "bugs.webkit.org/show_bug.cgi?id=167052"
       ]
    },
    {
