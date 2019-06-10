@@ -778,7 +778,7 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 ]
 ```
 
-  Where `[pattern]` is a susbtring of the url field of a Metadata Link Node.
+  Where `[pattern]` is any substring of the url field of a wpt-metadata `link` node.
 
 #### Get Examples
 
