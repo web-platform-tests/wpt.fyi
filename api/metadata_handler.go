@@ -62,7 +62,6 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	var productSpecs shared.ProductSpecs
 	productSpecs, err := shared.ParseProductOrBrowserParams(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
