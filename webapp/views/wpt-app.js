@@ -66,10 +66,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIQuery(PolymerElement))) {
       <section class="search">
         <div class="path">
           <a href="/[[page]]/?[[ query ]]" on-click="navigate">wpt</a>
-          <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
-            <span class="path-separator">/</span>
-            <a href="/[[page]][[ part.path ]]?[[ query ]]" on-click="navigate">[[ part.name ]]</a>
-          </template>
+          <!-- The next line is intentionally formatted so to avoid whitespaces between elements. -->
+          <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
+            ><span class="path-separator">/</span><a href="/[[page]][[ part.path ]]?[[ query ]]" on-click="navigate">[[ part.name ]]</a></template>
         </div>
 
         <template is="dom-if" if="[[searchPRsForDirectories]]">
