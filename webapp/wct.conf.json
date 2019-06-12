@@ -2,8 +2,9 @@
   "suites": [
     "components/test/*.html"
   ],
-  "verbose": false,
+  "verbose": true,
   "expanded": true,
+  "testTimeout": 180000,
   "plugins": {
     "local": {
       "browsers": ["chrome", "firefox"]
