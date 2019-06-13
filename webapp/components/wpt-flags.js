@@ -61,6 +61,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'runsByPRNumber',
       'serviceWorker',
       'taskclusterAllBranches',
+      'searchcacheDiffs',
     ];
   }
 });
