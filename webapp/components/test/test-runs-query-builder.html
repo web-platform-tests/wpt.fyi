@@ -22,27 +22,31 @@
 import '../test-runs-query-builder.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import { Channels } from '../product-info.js';
+
 suite('TestRunsQueryBuilder', () => {
   let queryBuilder, sandbox;
 
-  setup(() => {
+  suiteSetup(() => {
     sandbox = sinon.sandbox.create();
     // Spoof an empty result for /api/shas to speed up tests.
-    const realFetch = window.fetch;
+    // This is done in suiteSetup/suiteTeardown to avoid async fetches slipping
+    // through between tests.
+    const ignore = new RegExp('/api/(shas|versions)');
     sandbox.stub(window, 'fetch', url => {
-      const ignore = new RegExp('/api/(shas|versions)');
       if (ignore.test(url.pathname)) {
         return Promise.resolve(new Response('[]'));
       }
-      return realFetch(url);
+      throw url;
     });
-
-    queryBuilder = fixture('query-builder-fixture');
-    queryBuilder.productSpecs = ['chrome', 'edge'];
   });
 
-  teardown(() => {
+  suiteTeardown(() => {
     sandbox.restore();
+  });
+
+  setup(() => {
+    queryBuilder = fixture('query-builder-fixture');
+    queryBuilder.productSpecs = ['chrome', 'edge'];
   });
 
   test('instanceof Polymer.Element', () => {
