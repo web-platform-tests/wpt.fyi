@@ -15,7 +15,7 @@
     "web-component-tester": "^6.9.2"
   },
   "scripts": {
-    "test": "npm run wct",
+    "test": "wct --npm -b chrome && wct --npm -b firefox",
     "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
     "lint-fix": "eslint --fix 'components/**/*.js' && eslint --fix --plugin html 'components/test/*.html' ",
     "wctp": "wct --npm -p",
