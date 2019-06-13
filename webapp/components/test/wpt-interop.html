@@ -20,7 +20,7 @@ suite('WPTInterop', () => {
   const fetches = {};
   let sandbox;
 
-  suiteSetup(async () => {
+  suiteSetup(async() => {
     const interop = await fetch('fixtures/interop.json').then(r => r.json());
     fetches['/api/interop'] = interop;
     fetches['/api/search'] = interop;
