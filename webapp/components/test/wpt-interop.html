@@ -20,23 +20,23 @@ suite('WPTInterop', () => {
   const fetches = {};
   let sandbox;
 
-  setup(async() => {
-    sandbox = sinon.sandbox.create();
-
+  suiteSetup(async () => {
     const interop = await fetch('fixtures/interop.json').then(r => r.json());
     fetches['/api/interop'] = interop;
     fetches['/api/search'] = interop;
     fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
+  })
 
+  setup(() => {
+    sandbox = sinon.sandbox.create();
     sandbox.stub(window, 'fetch', (url) => {
       const path = new URL(url, window.location).pathname; // Ignore params.
       return Promise.resolve(new Response(JSON.stringify(fetches[path])));
     });
   });
 
-  teardown(done => {
+  teardown(() => {
     sandbox.restore();
-    done();
   });
 
   test('instanceof Polymer.Element', () => {
@@ -51,24 +51,26 @@ suite('WPTInterop', () => {
   });
 
   suite('WPTInterop.prototype.*', () => {
-    setup((done) => {
+    let sandbox;
+
+    setup(() => {
+      sandbox = sinon.sandbox.create();
       sandbox.spy(PolymerElement.prototype, 'ready');
-
       fixture('wpt-interop-fixture');
-
-      done();
     });
 
-    suite('async ready()', () => {
-      test('super.ready()', () => {
-        return waitingOn(() => PolymerElement.prototype.ready.called);
-      });
+    teardown(() => {
+      sandbox.restore();
+    });
 
-      test('fetches interop', () => {
-        return waitingOn(() => {
-          return window.fetch.getCalls()
-            .find(c => c.args.length && c.args[0].pathname === '/api/interop');
-        });
+    test('super.ready()', () => {
+      return waitingOn(() => PolymerElement.prototype.ready.called);
+    });
+
+    test('fetches interop', () => {
+      return waitingOn(() => {
+        return window.fetch.getCalls()
+          .find(c => c.args.length && c.args[0].pathname === '/api/interop');
       });
     });
   });
