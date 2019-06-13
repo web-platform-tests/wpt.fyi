@@ -25,7 +25,7 @@ suite('WPTInterop', () => {
     fetches['/api/interop'] = interop;
     fetches['/api/search'] = interop;
     fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
-  })
+  });
 
   setup(() => {
     sandbox = sinon.sandbox.create();
