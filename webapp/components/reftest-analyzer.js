@@ -146,8 +146,14 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     return {
       curX: Number,
       curY: Number,
-      before: String,
-      after: String,
+      before: {
+        type: String,
+        value: '',
+      },
+      after: {
+        type: String,
+        value: '',
+      },
       selectedImage: {
         type: String,
         value: 'before',
@@ -174,6 +180,9 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
     // Set the img srcs manually so that we can promisify them being loaded.
     const imagePromises = ['before', 'after'].map(prop => {
+      if (!this[prop]) {
+        return Promise.reject(`${prop} is empty`);
+      }
       const img = this.shadowRoot.querySelector(`#${prop}`);
       const loaded = new Promise((resolve, reject) => {
         img.onload = resolve;

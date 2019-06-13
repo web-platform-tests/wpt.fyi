@@ -225,13 +225,13 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 	for i := range runs {
 		rus[i] = RunID(runs[i].ID)
 	}
-	res := make(chan []query.SearchResult, len(fs))
+	res := make(chan []shared.SearchResult, len(fs))
 	errs := make(chan error)
 	for _, f := range fs {
 		go syncRunFilter(rus, f, opts, res, errs)
 	}
 
-	ret := make([]query.SearchResult, 0)
+	ret := make([]shared.SearchResult, 0)
 	for i := 0; i < len(fs); i++ {
 		ts := <-res
 		ret = append(ret, ts...)
@@ -254,7 +254,7 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 	return ret
 }
 
-func syncRunFilter(rus []RunID, f filter, opts query.AggregationOpts, res chan []query.SearchResult, errs chan error) {
+func syncRunFilter(rus []RunID, f filter, opts query.AggregationOpts, res chan []shared.SearchResult, errs chan error) {
 	idx := f.idx()
 	idx.m.RLock()
 	defer idx.m.RUnlock()

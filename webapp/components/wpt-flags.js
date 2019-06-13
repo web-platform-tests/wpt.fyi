@@ -61,6 +61,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'runsByPRNumber',
       'serviceWorker',
       'taskclusterAllBranches',
+      'searchcacheDiffs',
     ];
   }
 });
@@ -313,6 +314,11 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item sub-item="">
       <paper-checkbox checked="{{processTaskclusterCheckRunEvents}}">
         Process check run events from Taskcluster (needs to be enabled if Taskcluster is using Checks API).
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item="">
+      <paper-checkbox checked="{{searchcacheDiffs}}">
+        Use searchcache to compute diffs when processing check run events.
       </paper-checkbox>
     </paper-item>
 `;

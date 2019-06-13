@@ -83,7 +83,10 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	updatedAny := false
 	for _, suite := range suites {
 		summaryData, err := getDiffSummary(aeAPI, diffAPI, suite, *baseRun, *headRun)
-		if err != nil {
+		if err == shared.ErrRunNotInSearchCache {
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			return
+		} else if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
