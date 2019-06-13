@@ -7,18 +7,24 @@
 package shared
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"google.golang.org/appengine/urlfetch"
 )
+
+// ErrRunNotInSearchCache is an error for 422 responses from the searchcache.
+var ErrRunNotInSearchCache = errors.New("Run is still being loaded into the searchcache")
 
 // DiffAPI is an abstraction for computing run differences.
 type DiffAPI interface {
@@ -329,6 +335,10 @@ func FetchRunResultsJSON(ctx context.Context, run TestRun) (results ResultsSumma
 
 // GetRunsDiff returns a RunDiff for the given runs.
 func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
+	store := NewAppEngineDatastore(d.ctx, false)
+	if IsFeatureEnabled(store, "searchcacheDiffs") {
+		return d.getRunsDiffFromSearchCache(before, after, filter, paths)
+	}
 	beforeJSON, err := FetchRunResultsJSON(d.ctx, before)
 	if err != nil {
 		return diff, fmt.Errorf("Failed to fetch 'before' results: %s", err.Error())
@@ -354,6 +364,49 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 		AfterSummary:  afterJSON,
 		Differences:   GetResultsDiff(beforeJSON, afterJSON, filter, paths, renames),
 		Renames:       renames,
+	}, nil
+}
+
+func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
+	diffURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search", d.aeAPI.GetVersionedHostname()))
+	query := diffURL.Query()
+	query.Set("diff", "")
+	query.Set("filter", filter.String())
+	diffURL.RawQuery = query.Encode()
+
+	type diffBody = struct {
+		RunIDs []int64 `json:"run_ids"`
+	}
+	body, _ := json.Marshal(diffBody{RunIDs: []int64{before.ID, after.ID}})
+
+	client, _ := d.aeAPI.GetSlowHTTPClient(time.Second * 10)
+	resp, err := client.Post(diffURL.String(), "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return diff, err
+	} else if resp.StatusCode == http.StatusUnprocessableEntity {
+		return diff, ErrRunNotInSearchCache
+	}
+
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return diff, err
+	}
+	var scDiff SearchResponse
+	err = json.Unmarshal(body, &scDiff)
+	if err != nil {
+		return diff, err
+	}
+
+	differences := make(map[string]TestDiff)
+	for _, t := range scDiff.Results {
+		differences[t.Test] = t.Diff
+	}
+
+	return RunDiff{
+		Before:      before,
+		After:       after,
+		Differences: differences,
 	}, nil
 }
 
