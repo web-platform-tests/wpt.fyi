@@ -71,21 +71,6 @@ const TestRunsQueryLoader = (superClass) =>
       this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
       return runs;
     }
-
-    splitPathIntoLinkedParts(inputPath) {
-      const parts = (inputPath || '').split('/').slice(1);
-      const lastPart = parts.pop();
-      let path = '';
-      const linkedParts = parts.map(name => {
-        path += `/${name}`;
-        return {
-          name, path
-        };
-      });
-      path += `/${encodeURIComponent(lastPart)}`;
-      linkedParts.push({name: lastPart, path: path});
-      return linkedParts;
-    }
   };
 
 class TestRunsBase extends TestRunsQueryLoader(TestRunsQuery(PolymerElement, TestRunsQuery.Computer)) {
