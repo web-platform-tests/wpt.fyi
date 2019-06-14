@@ -48,15 +48,13 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
     <template is="dom-if" if="{{!isVerbose}}">
       <test-file-results-table-terse test-runs="[[testRuns]]"
-                                     results-table="[[resultsTable]]"
-                                     on-reftest-compare="[[onReftestCompare]]">
+                                     results-table="[[resultsTable]]">
       </test-file-results-table-terse>
     </template>
 
     <template is="dom-if" if="{{isVerbose}}">
       <test-file-results-table-verbose test-runs="[[testRuns]]"
-                                       results-table="[[resultsTable]]"
-                                       on-reftest-compare="[[onReftestCompare]]">
+                                       results-table="[[resultsTable]]">
       </test-file-results-table-verbose>
     </template>
 `;
@@ -77,7 +75,6 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         type: Boolean,
         value: false,
       },
-      onReftestCompare: Function,
     };
   }
 
@@ -164,8 +161,17 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
           status: data && data.status,
           message: data && data.message,
         };
-        if (this.reftestAnalyzer) {
-          result.screenshots = data && data.screenshots;
+        if (this.reftestAnalyzer && data && data.screenshots) {
+          // Clone the data because we might modify it.
+          const screenshots = JSON.parse(JSON.stringify(data.screenshots));
+          // Make sure the test itself appears first in the Map to follow the
+          // convention of reftest-analyzer (actual, expected).
+          const firstScreenshot = [];
+          if (this.path in screenshots) {
+            firstScreenshot.push([this.path, screenshots[this.path]]);
+            delete screenshots[this.path];
+          }
+          result.screenshots = new Map([...firstScreenshot, ...Object.entries(screenshots)]);
         }
         return result;
       }),

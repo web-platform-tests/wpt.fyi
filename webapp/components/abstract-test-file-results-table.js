@@ -6,7 +6,6 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -39,11 +38,11 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
   td code {
     white-space: pre-wrap;
   }
-  td code, td paper-button {
+  td code, .ref-button {
     line-height: 1.6em;
     padding: 0 0.25em;
   }
-  td.sub-test-name {
+  td.sub-test-name, .ref-button {
     font-family: monospace;
   }
   td.result {
@@ -53,7 +52,10 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
     border-bottom: 8px solid white;
     padding: 8px;
   }
-  paper-button {
+  .ref-button {
+    color: #333;
+    text-decoration: none;
+    display: block;
     float: right;
   }
 </style>
@@ -78,10 +80,10 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
           <td class$="[[ colorClass(result.status) ]]">
             <code>[[ subtestMessage(result) ]]</code>
             <template is="dom-if" if="[[result.screenshots]]">
-              <paper-button onclick="[[compareReferences(result)]]">
+              <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
                 <iron-icon icon="image:compare"></iron-icon>
-                Compare
-              </paper-button>
+                <span>COMPARE</span>
+              </a>
             </template>
           </td>
         </template>
@@ -102,15 +104,6 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
         type: Array,
         value: [],
       },
-    };
-  }
-
-  constructor() {
-    super();
-    this.compareReferences = (result) => {
-      return () => this.onReftestCompare && this.onReftestCompare(
-        // Clone the result first.
-        JSON.parse(JSON.stringify(result)));
     };
   }
 
@@ -141,6 +134,17 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
       return this.passRateClass(0, 1);
     }
     return 'result';
+  }
+
+  computeAnalyzerURL(screenshots) {
+    if (!screenshots) {
+      throw "empty screenshots";
+    }
+    const url = new URL('/analyzer', window.location);
+    for (const [_, sha] of screenshots) {
+      url.searchParams.append('screenshot', sha);
+    }
+    return url.href;
   }
 }
 
