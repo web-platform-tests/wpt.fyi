@@ -180,16 +180,15 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
     // Set the img srcs manually so that we can promisify them being loaded.
     const imagePromises = ['before', 'after'].map(prop => {
-      if (!this[prop]) {
-        return Promise.reject(`${prop} is empty`);
-      }
-      const img = this.shadowRoot.querySelector(`#${prop}`);
-      const loaded = new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
+        if (!this[prop]) {
+          return reject(`${prop} is empty`);
+        }
+        const img = this.shadowRoot.querySelector(`#${prop}`);
         img.onload = resolve;
         img.onerror = reject;
+        img.src = this[prop];
       });
-      img.src = this[prop];
-      return loaded;
     });
     this.load(
       Promise.all(imagePromises).then(async() => {
