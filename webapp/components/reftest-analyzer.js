@@ -182,7 +182,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     const imagePromises = ['before', 'after'].map(prop => {
       return new Promise((resolve, reject) => {
         if (!this[prop]) {
-          return reject(`${prop} is empty`);
+          throw new Error(`${prop} is empty`);
         }
         const img = this.shadowRoot.querySelector(`#${prop}`);
         img.onload = resolve;
