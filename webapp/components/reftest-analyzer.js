@@ -187,7 +187,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
       img.onload = resolve;
       img.onerror = reject;
       img.src = this[prop];
-    });
+    }));
     this.load(
       Promise.all(imagePromises).then(async() => {
         await this.setupZoomSVG();
