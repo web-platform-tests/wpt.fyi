@@ -86,6 +86,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
             Any suggestions?
             <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?template=screenshots.md&projects=web-platform-tests/wpt.fyi/9" target="_blank">File an issue!</a>
           </p>
+          <button onclick="window.history.back()">Go back</button>
         </div>
       </div>
 
