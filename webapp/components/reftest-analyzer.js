@@ -179,16 +179,14 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     this._createMethodObserver('computeDiff(canvasBefore, canvasAfter)');
 
     // Set the img srcs manually so that we can promisify them being loaded.
-    const imagePromises = ['before', 'after'].map(prop => {
-      return new Promise((resolve, reject) => {
-        if (!this[prop]) {
-          throw new Error(`${prop} is empty`);
-        }
-        const img = this.shadowRoot.querySelector(`#${prop}`);
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = this[prop];
-      });
+    const imagePromises = ['before', 'after'].map(prop => new Promise((resolve, reject) => {
+      if (!this[prop]) {
+        throw new Error(`${prop} is empty`);
+      }
+      const img = this.shadowRoot.querySelector(`#${prop}`);
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = this[prop];
     });
     this.load(
       Promise.all(imagePromises).then(async() => {
