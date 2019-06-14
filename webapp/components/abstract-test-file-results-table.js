@@ -138,10 +138,10 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
 
   computeAnalyzerURL(screenshots) {
     if (!screenshots) {
-      throw "empty screenshots";
+      throw 'empty screenshots';
     }
     const url = new URL('/analyzer', window.location);
-    for (const [_, sha] of screenshots) {
+    for (const sha of screenshots.values()) {
       url.searchParams.append('screenshot', sha);
     }
     return url.href;
