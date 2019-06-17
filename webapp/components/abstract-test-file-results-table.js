@@ -31,7 +31,7 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
     top: 0;
     z-index: 1;
   }
-  td {
+  td, .ref-button {
     padding: 0;
     height: 1.5em;
   }
@@ -82,7 +82,7 @@ class AbstractTestFileResultsTable extends WPTColors(TestRunsBase) {
             <template is="dom-if" if="[[result.screenshots]]">
               <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
                 <iron-icon icon="image:compare"></iron-icon>
-                <span>COMPARE</span>
+                COMPARE
               </a>
             </template>
           </td>
