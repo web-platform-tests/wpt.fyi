@@ -163,7 +163,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         };
         if (this.reftestAnalyzer && data && data.screenshots) {
           // Clone the data because we might modify it.
-          const screenshots = JSON.parse(JSON.stringify(data.screenshots));
+          const screenshots = Object.assign({}, data.screenshots);
           // Make sure the test itself appears first in the Map to follow the
           // convention of reftest-analyzer (actual, expected).
           const firstScreenshot = [];
