@@ -19,7 +19,7 @@ class TestFileResultsTableTerse extends AbstractTestFileResultsTable {
         font-family: monospace;
         background-color: white;
       }
-      td code {
+      td.sub-test-name code {
         box-sizing: border-box;
         height: 100%;
         left: 0;
@@ -30,7 +30,7 @@ class TestFileResultsTableTerse extends AbstractTestFileResultsTable {
         white-space: nowrap;
         width: 100%;
       }
-      td code:hover {
+      td.sub-test-name code:hover {
         z-index: 1;
         text-overflow: initial;
         background-color: inherit;

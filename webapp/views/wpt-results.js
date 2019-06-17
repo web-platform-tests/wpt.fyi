@@ -170,8 +170,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
-                           products="[[products]]"
-                           on-reftest-compare="[[showAnalyzer]]">
+                           products="[[products]]">
         </test-file-results>
       </template>
 
@@ -489,7 +488,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       this.refreshDisplayedNodes();
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
-    this.showAnalyzer = this.handleShowAnalyzer.bind(this);
   }
 
   loadData() {
@@ -974,22 +972,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         `Showing ${tests} tests (${subtests} subtests) from `);
     }
     return msg;
-  }
-
-  handleShowAnalyzer(result) {
-    if (!result.screenshots) {
-      this.screenshots = null;
-      return;
-    }
-    const url = new URL('/analyzer', window.location);
-    if (this.path in result.screenshots) {
-      url.searchParams.append('screenshot', result.screenshots[this.path]);
-      delete result.screenshots[this.path];
-    }
-    for (const s of Object.values(result.screenshots)) {
-      url.searchParams.append('screenshot', s);
-    }
-    window.location = url;
   }
 }
 
