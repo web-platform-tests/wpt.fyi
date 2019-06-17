@@ -162,16 +162,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
           message: data && data.message,
         };
         if (this.reftestAnalyzer && data && data.screenshots) {
-          // Clone the data because we might modify it.
-          const screenshots = Object.assign({}, data.screenshots);
-          // Make sure the test itself appears first in the Map to follow the
-          // convention of reftest-analyzer (actual, expected).
-          const firstScreenshot = [];
-          if (this.path in screenshots) {
-            firstScreenshot.push([this.path, screenshots[this.path]]);
-            delete screenshots[this.path];
-          }
-          result.screenshots = new Map([...firstScreenshot, ...Object.entries(screenshots)]);
+          result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
         }
         return result;
       }),
@@ -258,6 +249,19 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
   statusName(numSubtests) {
     return numSubtests > 0 ? 'Harness status' : 'Test status';
+  }
+
+  shuffleScreenshots(path, rawScreenshots) {
+    // Clone the data because we might modify it.
+    const screenshots = Object.assign({}, rawScreenshots);
+    // Make sure the test itself appears first in the Map to follow the
+    // convention of reftest-analyzer (actual, expected).
+    const firstScreenshot = [];
+    if (path in screenshots) {
+      firstScreenshot.push([path, screenshots[path]]);
+      delete screenshots[path];
+    }
+    return new Map([...firstScreenshot, ...Object.entries(screenshots)]);
   }
 }
 
