@@ -138,16 +138,25 @@ const (
 
 // NewlyPassing is the delta/increase in the number of passing tests when comparing before/after.
 func (d TestDiff) NewlyPassing() int {
+	if d == nil {
+		return 0
+	}
 	return d[newlyPassingIndex]
 }
 
 // Regressions is the delta/increase in the number of failing tests when comparing before/after.
 func (d TestDiff) Regressions() int {
+	if d == nil {
+		return 0
+	}
 	return d[newlyFailingIndex]
 }
 
 // TotalDelta is the delta in the number of total subtests when comparing before/after.
 func (d TestDiff) TotalDelta() int {
+	if d == nil {
+		return 0
+	}
 	return d[totalDeltaIndex]
 }
 
@@ -255,9 +264,11 @@ func (r ResultsDiff) Add(k string, diff TestDiff) {
 // since that can often indicate a failure in a test's setup.
 func (r ResultsDiff) Regressions() mapset.Set {
 	regressions := mapset.NewSet()
-	for test, diff := range r {
-		if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
-			regressions.Add(test)
+	if r != nil {
+		for test, diff := range r {
+			if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
+				regressions.Add(test)
+			}
 		}
 	}
 	return regressions
@@ -392,12 +403,16 @@ func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter Di
 	if err != nil {
 		return diff, err
 	}
+
 	var scDiff SearchResponse
 	err = json.Unmarshal(body, &scDiff)
 	if err != nil {
 		return diff, err
 	}
+	return runDiffFromSearchResponse(before, after, scDiff)
+}
 
+func runDiffFromSearchResponse(before, after TestRun, scDiff SearchResponse) (RunDiff, error) {
 	differences := make(map[string]TestDiff)
 	for _, t := range scDiff.Results {
 		differences[t.Test] = t.Diff
