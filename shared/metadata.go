@@ -43,9 +43,17 @@ type MetadataLinks []MetadataLink
 // META.yml file, which lists an external reference, optionally
 // filtered by product and a specific test.
 type MetadataLink struct {
-	Product  ProductSpec
-	TestPath string `yaml:"test"`
-	URL      string
+	Product ProductSpec          `yaml:"product"`
+	URL     string               `yaml:"url"`
+	Results []MetadataTestResult `yaml:"results"`
+}
+
+// MetadataTestResult is a filter for test results to which the metadata link
+// should apply.
+type MetadataTestResult struct {
+	TestPath    string     `yaml:"test"`
+	SubtestName string     `yaml:"subtest"`
+	Status      TestStatus `yaml:"status"`
 }
 
 func (m MetadataResults) Len() int           { return len(m) }
@@ -89,20 +97,22 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 		for _, link := range data.Links {
 			var urls []string
 
-			var fullTestName = path.Join(folderPath, link.TestPath)
+			for _, result := range link.Results {
+				var fullTestName = path.Join(folderPath, result.TestPath)
 
-			if _, ok := testMap[fullTestName]; !ok {
-				testMap[fullTestName] = make([]string, len(testRuns))
-			}
-			urls = testMap[fullTestName]
+				if _, ok := testMap[fullTestName]; !ok {
+					testMap[fullTestName] = make([]string, len(testRuns))
+				}
+				urls = testMap[fullTestName]
 
-			for i, run := range testRuns {
-				// Matches browser type if a version is not specified.
-				if link.Product.Matches(run) {
-					urls[i] = link.URL
-				} else if link.Product.BrowserName == "" && urls[i] == "" {
-					// Matches to all browsers if product is not specified.
-					urls[i] = link.URL
+				for i, run := range testRuns {
+					// Matches browser type if a version is not specified.
+					if link.Product.Matches(run) {
+						urls[i] = link.URL
+					} else if link.Product.BrowserName == "" && urls[i] == "" {
+						// Matches to all browsers if product is not specified.
+						urls[i] = link.URL
+					}
 				}
 			}
 		}

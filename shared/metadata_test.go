@@ -18,11 +18,16 @@ func TestParseMetadata(t *testing.T) {
 	metadataByteMap[path] = []byte(`
 links:
   - product: chrome-64
-    test: a.html
     url: https://external.com/item
+    results:
+    - test: a.html
   - product: firefox-2
-    test: b.html
-    url: https://bug.com/item`)
+    url: https://bug.com/item
+    results:
+    - test: b.html
+      subtest: Something should happen
+      status: FAIL
+`)
 
 	metadatamap := parseMetadata(metadataByteMap, NewNilLogger())
 
@@ -30,11 +35,13 @@ links:
 	assert.Equal(t, 2, len(metadatamap[path].Links))
 	assert.Equal(t, "chrome", metadatamap[path].Links[0].Product.BrowserName)
 	assert.Equal(t, "64", metadatamap[path].Links[0].Product.BrowserVersion)
-	assert.Equal(t, "a.html", metadatamap[path].Links[0].TestPath)
+	assert.Equal(t, "a.html", metadatamap[path].Links[0].Results[0].TestPath)
 	assert.Equal(t, "https://external.com/item", metadatamap[path].Links[0].URL)
 	assert.Equal(t, "firefox", metadatamap[path].Links[1].Product.BrowserName)
 	assert.Equal(t, "2", metadatamap[path].Links[1].Product.BrowserVersion)
-	assert.Equal(t, "b.html", metadatamap[path].Links[1].TestPath)
+	assert.Equal(t, "b.html", metadatamap[path].Links[1].Results[0].TestPath)
+	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
+	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
 	assert.Equal(t, "https://bug.com/item", metadatamap[path].Links[1].URL)
 }
 
@@ -53,14 +60,20 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("ChrOme"),
-					TestPath: "a.html",
-					URL:      "https://external.com/item",
+					Product: ParseProductSpecUnsafe("ChrOme"),
+					URL:     "https://external.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "a.html",
+					}},
 				},
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("Firefox"),
-					TestPath: "a.html",
-					URL:      "https://bug.com/item",
+					Product: ParseProductSpecUnsafe("Firefox"),
+					URL:     "https://bug.com/item",
+					Results: []MetadataTestResult{{
+						TestPath:    "a.html",
+						SubtestName: "Something should happen",
+						Status:      TestStatusFail,
+					}},
 				},
 			},
 		},
@@ -89,14 +102,18 @@ func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("ChrOme"),
-					TestPath: "a.html",
-					URL:      "https://external.com/item",
+					Product: ParseProductSpecUnsafe("ChrOme"),
+					URL:     "https://external.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "a.html",
+					}},
 				},
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("safari"),
-					TestPath: "a.html",
-					URL:      "https://bug.com/item",
+					Product: ParseProductSpecUnsafe("safari"),
+					URL:     "https://bug.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "a.html",
+					}},
 				},
 			},
 		},
@@ -122,14 +139,18 @@ func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("ChrOme"),
-					TestPath: "b.html",
-					URL:      "https://external.com/item",
+					Product: ParseProductSpecUnsafe("ChrOme"),
+					URL:     "https://external.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "b.html",
+					}},
 				},
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("Firefox"),
-					TestPath: "a.html",
-					URL:      "https://bug.com/item",
+					Product: ParseProductSpecUnsafe("Firefox"),
+					URL:     "https://bug.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "a.html",
+					}},
 				},
 			},
 		},
@@ -161,14 +182,18 @@ func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("ChrOme-2"),
-					TestPath: "b.html",
-					URL:      "https://external.com/item",
+					Product: ParseProductSpecUnsafe("ChrOme-2"),
+					URL:     "https://external.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "b.html",
+					}},
 				},
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("Firefox-54"),
-					TestPath: "a.html",
-					URL:      "https://bug.com/item",
+					Product: ParseProductSpecUnsafe("Firefox-54"),
+					URL:     "https://bug.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "a.html",
+					}},
 				},
 			},
 		},
@@ -201,14 +226,18 @@ func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
-					Product:  ParseProductSpecUnsafe("ChrOme"),
-					TestPath: "b.html",
-					URL:      "https://external.com/item",
+					Product: ParseProductSpecUnsafe("ChrOme"),
+					URL:     "https://external.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "b.html",
+					}},
 				},
 				MetadataLink{
-					Product:  ProductSpec{},
-					TestPath: "a.html",
-					URL:      "https://bug.com/item",
+					Product: ProductSpec{},
+					URL:     "https://bug.com/item",
+					Results: []MetadataTestResult{{
+						TestPath: "a.html",
+					}},
 				},
 			},
 		},
