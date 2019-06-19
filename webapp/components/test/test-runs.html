@@ -5,7 +5,10 @@
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <script type="module" src="../test-runs.js"></script>
+  <script type="module">
+    import { TestRunsBase } from '../test-runs.js';
+    window.customElements.define(TestRunsBase.is, TestRunsBase);
+  </script>
 </head>
 <body>
   <test-fixture id="wpt-results-base-fixture">
