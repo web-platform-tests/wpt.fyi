@@ -79,6 +79,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Fragment
       = not Fragment -- not
+      | linkExp
       | statusExp
       | pathExp
       | patternExp
@@ -91,6 +92,9 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     pathExp
       = caseInsensitive<"path"> ":" nameFragment
+
+    linkExp
+    = caseInsensitive<"link"> ":" nameFragment
 
     patternExp = nameFragment
 
@@ -165,6 +169,10 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   CountSpecifier_count3: (_) => 3,
   CountSpecifier_count2: (_) => 2,
   CountSpecifier_count1: (_) => 1,
+  linkExp: (l, colon, r) => {
+    const ps = r.eval();
+    return ps.length === 0 ? emptyQuery : {link: ps };
+  },
   Exp: l => {
     const ps = l.eval();
     return ps.length === 1 ? ps[0] : {or: ps};

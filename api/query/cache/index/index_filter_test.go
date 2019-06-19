@@ -13,9 +13,9 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 const testNumShards = 16
@@ -331,4 +331,150 @@ func TestBindExecute_TestStatus(t *testing.T) {
 			},
 		},
 	}), resultSet(t, srs))
+}
+
+func TestBindExecute_Link(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	matchingTestName := "/a/b/c"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   matchingTestName,
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	})
+	metadata := map[string][]string{"/foo/bar/b.html": []string{
+		"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		matchingTestName: []string{"", "https://external.com/item", ""},
+	}
+
+	link := query.Link{Pattern: "external", Metadata: metadata}
+	plan, err := idx.Bind(runs, link)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: matchingTestName,
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{
+				// Only matching test passes.
+				Passes: 1,
+				Total:  1,
+			},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
+}
+
+func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	noMatchingTestName := "/a/b/c"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   noMatchingTestName,
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	})
+	metadata := map[string][]string{
+		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		noMatchingTestName: []string{"", "https://external.com/item", ""},
+	}
+
+	link := query.Link{Pattern: "NoMatchingPattern", Metadata: metadata}
+	plan, err := idx.Bind(runs, link)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 0, len(srs))
+}
+
+func TestBindExecute_NotLink(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	matchingTestName := "/a/b/c"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   matchingTestName,
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	})
+	metadata := map[string][]string{
+		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		matchingTestName: []string{"", "https://external.com/item", ""},
+	}
+
+	notQuery := query.Not{Arg: query.Link{Pattern: "external", Metadata: metadata}}
+	plan, err := idx.Bind(runs, notQuery)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: "/d/e/f",
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{
+				Passes: 0,
+				Total:  1,
+			},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
 }

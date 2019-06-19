@@ -57,8 +57,6 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	qh := queryHandler{
 		store:      shared.NewAppEngineDatastore(ctx, true),
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
-		client:     sh.api.GetHTTPClient(),
-		logger:     shared.GetLogger(ctx),
 	}
 	var delegate http.Handler
 	if r.Method == "GET" {
@@ -152,7 +150,6 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// Structured query is equivalent to unstructured query.
 	// Create an unstructured query request and delegate to unstructured query
 	// handler.
-	q := r.URL.Query()
 	r2 := *r
 	r2url := *r.URL
 	r2.URL = &r2url
@@ -163,10 +160,6 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 	runIDsStr := strings.Join(runIDStrs, ",")
 	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
-
-	if showMetadata, _ := shared.ParseBooleanParam(q, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		r2.URL.RawQuery = fmt.Sprintf("%s&%s=%s", r2.URL.RawQuery, shared.ShowMetadataParam, q.Get(shared.ShowMetadataParam))
-	}
 
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
 }
@@ -179,11 +172,6 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	resp := prepareSearchResponse(filters, testRuns, summaries)
-
-	q := r.URL.Query()
-	if showMetadata, _ := shared.ParseBooleanParam(q, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		resp.MetadataResponse = shared.GetMetadataResponse(testRuns, sh.queryHandler.client, sh.queryHandler.logger)
-	}
 
 	data, err := json.Marshal(resp)
 	if err != nil {
