@@ -74,17 +74,12 @@ const TestRunsQueryLoader = (superClass) =>
   };
 
 class TestRunsBase extends TestRunsQueryLoader(TestRunsQuery(PolymerElement, TestRunsQuery.Computer)) {
+  // This is only used in tests, so we don't call window.customElements.define here.
   static get is() {
     return 'wpt-results-base';
   }
 }
-window.customElements.define(TestRunsBase.is, TestRunsBase);
 
-class TestRunsUIBase extends TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, TestRunsUIQuery.Computer)) {
-  static get is() {
-    return 'wpt-results-ui-base';
-  }
-}
-window.customElements.define(TestRunsUIBase.is, TestRunsUIBase);
+class TestRunsUIBase extends TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, TestRunsUIQuery.Computer)) {}
 
 export { TestRunsQueryLoader, TestRunsBase, TestRunsUIBase };

@@ -59,6 +59,13 @@ type Count struct {
 	args  []filter
 }
 
+// Link is a query.Count bound to an in-memory index and MetadataResults.
+type Link struct {
+	index
+	pattern  string
+	metadata map[string][]string
+}
+
 // And is a query.And bound to an in-memory index.
 type And struct {
 	index
@@ -144,6 +151,26 @@ func (c Count) Filter(t TestID) bool {
 	return matches == c.count
 }
 
+// Filter interprets a Link as a filter function over TestIDs.
+func (l Link) Filter(t TestID) bool {
+	name, _, err := l.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+
+	urls, ok := l.metadata[name]
+	if !ok {
+		return false
+	}
+
+	for _, url := range urls {
+		if strings.Contains(url, l.pattern) {
+			return true
+		}
+	}
+	return false
+}
+
 // Filter interprets an And as a filter function over TestIDs.
 func (a And) Filter(t TestID) bool {
 	args := a.args
@@ -194,6 +221,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 			return nil, err
 		}
 		return Count{idx, v.Count, fs}, nil
+	case query.Link:
+		return Link{idx, v.Pattern, v.Metadata}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {

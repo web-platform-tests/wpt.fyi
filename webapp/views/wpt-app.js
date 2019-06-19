@@ -1,6 +1,6 @@
 import { PathInfo } from '../components/path.js';
 import '../components/test-runs-query-builder.js';
-import { TestRunsUIQuery } from '../components/test-runs-query.js';
+import { TestRunsUIBase } from '../components/test-runs.js';
 import '../components/test-search.js';
 import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
@@ -10,12 +10,12 @@ import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
 import '../views/wpt-interop.js';
 import '../views/wpt-results.js';
 
-class WPTApp extends PathInfo(WPTFlags(TestRunsUIQuery(PolymerElement))) {
+class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   static get is() { return 'wpt-app'; }
 
   static get template() {
@@ -85,7 +85,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIQuery(PolymerElement))) {
                      test-paths="[[testPaths]]">
         </test-search>
 
-        <template is="dom-if" if="{{ pathIsATestFile }}">
+        <template is="dom-if" if="[[ pathIsATestFile ]]">
           <div class="links">
             <ul>
               <li>
@@ -127,7 +127,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIQuery(PolymerElement))) {
         <wpt-results name="results"
                      is-loading="{{resultsLoading}}"
                      structured-search="[[structuredSearch]]"
-                     path="[[subroute.path]]"></wpt-results>
+                     path="[[subroute.path]]"
+                     test-runs="{{testRuns}}"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
