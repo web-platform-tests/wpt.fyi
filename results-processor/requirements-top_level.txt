@@ -4,5 +4,5 @@ flake8
 google-cloud-datastore
 google-cloud-storage
 gunicorn
-mypy
+mypy==0.701
 requests
