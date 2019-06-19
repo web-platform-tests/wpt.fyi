@@ -368,14 +368,14 @@ func TestBindExecute_Link(t *testing.T) {
 	assert.Nil(t, err)
 
 	res := plan.Execute(runs, query.AggregationOpts{})
-	srs, ok := res.([]query.SearchResult)
+	srs, ok := res.([]shared.SearchResult)
 	assert.True(t, ok)
 
 	assert.Equal(t, 1, len(srs))
-	expectedResult := query.SearchResult{
+	expectedResult := shared.SearchResult{
 		Test: matchingTestName,
-		LegacyStatus: []query.LegacySearchRunResult{
-			query.LegacySearchRunResult{
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{
 				// Only matching test passes.
 				Passes: 1,
 				Total:  1,
@@ -421,7 +421,7 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 	assert.Nil(t, err)
 
 	res := plan.Execute(runs, query.AggregationOpts{})
-	srs, ok := res.([]query.SearchResult)
+	srs, ok := res.([]shared.SearchResult)
 	assert.True(t, ok)
 
 	assert.Equal(t, 0, len(srs))
@@ -462,14 +462,14 @@ func TestBindExecute_NotLink(t *testing.T) {
 	assert.Nil(t, err)
 
 	res := plan.Execute(runs, query.AggregationOpts{})
-	srs, ok := res.([]query.SearchResult)
+	srs, ok := res.([]shared.SearchResult)
 	assert.True(t, ok)
 
 	assert.Equal(t, 1, len(srs))
-	expectedResult := query.SearchResult{
+	expectedResult := shared.SearchResult{
 		Test: "/d/e/f",
-		LegacyStatus: []query.LegacySearchRunResult{
-			query.LegacySearchRunResult{
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{
 				Passes: 0,
 				Total:  1,
 			},
