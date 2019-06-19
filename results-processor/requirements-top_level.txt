@@ -1,7 +1,7 @@
 Flask
 filelock
 flake8
-google-cloud-datastore
+google-cloud-datastore==1.8.0
 google-cloud-storage
 gunicorn
 mypy
