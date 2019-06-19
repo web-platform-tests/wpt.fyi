@@ -10,6 +10,55 @@
 import '../node_modules/@polymer/paper-styles/color.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
+const PathInfo = (superClass) => class extends superClass {
+  static get properties() {
+    return {
+      path: String,
+      encodedPath: {
+        type: String,
+        computed: 'encodeTestPath(path)'
+      },
+      scheme: {
+        type: String,
+        computed: 'computeTestScheme(path)'
+      },
+      pathIsATestFile: {
+        type: Boolean,
+        computed: 'computePathIsATestFile(path)'
+      },
+      pathIsASubfolder: {
+        type: Boolean,
+        computed: 'computePathIsASubfolder(path)'
+      },
+    };
+  }
+
+  encodeTestPath(path) {
+    path = path || '/';
+    console.assert(path.startsWith('/'));
+    let parts = path.split('/').slice(1);
+    parts.push(encodeURIComponent(parts.pop()));
+    return '/' + parts.join('/');
+  }
+
+  computeTestScheme(path) {
+    // This should (close enough) match up with the logic in:
+    // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
+    // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
+    path = path || '';
+    return ['.https.', '.serviceworker.'].some(x => path.includes(x)) ? 'https' : 'http';
+  }
+
+  computePathIsASubfolder(path) {
+    return !this.computePathIsATestFile(path)
+      && path && path.split('/').filter(p => p).length > 0;
+  }
+
+  computePathIsATestFile(path) {
+    return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
+  }
+};
+
 class PathPart extends PolymerElement {
   static get template() {
     return html`
@@ -99,4 +148,4 @@ class PathPart extends PolymerElement {
 
 window.customElements.define(PathPart.is, PathPart);
 
-export { PathPart };
+export { PathPart, PathInfo };

@@ -86,6 +86,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
             Any suggestions?
             <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?template=screenshots.md&projects=web-platform-tests/wpt.fyi/9" target="_blank">File an issue!</a>
           </p>
+          <button onclick="window.history.back()">Go back</button>
         </div>
       </div>
 
@@ -146,8 +147,14 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     return {
       curX: Number,
       curY: Number,
-      before: String,
-      after: String,
+      before: {
+        type: String,
+        value: '',
+      },
+      after: {
+        type: String,
+        value: '',
+      },
       selectedImage: {
         type: String,
         value: 'before',
@@ -173,15 +180,15 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     this._createMethodObserver('computeDiff(canvasBefore, canvasAfter)');
 
     // Set the img srcs manually so that we can promisify them being loaded.
-    const imagePromises = ['before', 'after'].map(prop => {
+    const imagePromises = ['before', 'after'].map(prop => new Promise((resolve, reject) => {
+      if (!this[prop]) {
+        throw new Error(`${prop} is empty`);
+      }
       const img = this.shadowRoot.querySelector(`#${prop}`);
-      const loaded = new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
+      img.onload = resolve;
+      img.onerror = reject;
       img.src = this[prop];
-      return loaded;
-    });
+    }));
     this.load(
       Promise.all(imagePromises).then(async() => {
         await this.setupZoomSVG();

@@ -60,6 +60,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'runsByPRNumber',
       'serviceWorker',
       'taskclusterAllBranches',
+      'searchcacheDiffs',
     ];
   }
 });
@@ -73,7 +74,8 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
     }
     // Fall back to env default.
     if (value === null && typeof(WPTEnvironmentFlags) !== 'undefined') {
-      value = WPTEnvironmentFlags[feature];
+      // 'false' is needed for [[!foo]] Polymer bindings
+      value = WPTEnvironmentFlags[feature] || false;
     }
     target[feature] = {
       type: Boolean,
@@ -306,6 +308,11 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item sub-item="">
       <paper-checkbox checked="{{processTaskclusterCheckRunEvents}}">
         Process check run events from Taskcluster (needs to be enabled if Taskcluster is using Checks API).
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item="">
+      <paper-checkbox checked="{{searchcacheDiffs}}">
+        Use searchcache to compute diffs when processing check run events.
       </paper-checkbox>
     </paper-item>
 `;

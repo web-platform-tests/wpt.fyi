@@ -15,55 +15,13 @@ const TestRunsQueryLoader = (superClass) =>
   class extends superClass {
     static get properties() {
       return {
-        path: String,
-        encodedPath: {
-          type: String,
-          computed: 'encodeTestPath(path)'
-        },
         // Fetched + parsed JSON blobs for the runs
         testRuns: {
           type: Array,
           notify: true,
         },
-        scheme: {
-          type: String,
-          computed: 'computeTestScheme(path)'
-        },
-        pathIsATestFile: {
-          type: Boolean,
-          computed: 'computePathIsATestFile(path)'
-        },
-        pathIsASubfolder: {
-          type: Boolean,
-          computed: 'computePathIsASubfolder(path)'
-        },
         nextPageToken: String,
       };
-    }
-
-    computeTestScheme(path) {
-      // This should (close enough) match up with the logic in:
-      // https://github.com/web-platform-tests/wpt/blob/master/tools/manifest/item.py
-      // https://github.com/web-platform-tests/wpt/blob/master/tools/wptrunner/wptrunner/wpttest.py
-      path = path || '';
-      return ['.https.', '.serviceworker.'].some(x => path.includes(x)) ? 'https' : 'http';
-    }
-
-    computePathIsATestFile(path) {
-      return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
-    }
-
-    computePathIsASubfolder(path) {
-      return !this.computePathIsATestFile(path)
-        && path && path.split('/').filter(p => p).length > 0;
-    }
-
-    encodeTestPath(path) {
-      path = path || '/';
-      console.assert(path.startsWith('/'));
-      let parts = path.split('/').slice(1);
-      parts.push(encodeURIComponent(parts.pop()));
-      return '/' + parts.join('/');
     }
 
     async loadRuns() {
@@ -112,21 +70,6 @@ const TestRunsQueryLoader = (superClass) =>
       this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
       this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
       return runs;
-    }
-
-    splitPathIntoLinkedParts(inputPath) {
-      const parts = (inputPath || '').split('/').slice(1);
-      const lastPart = parts.pop();
-      let path = '';
-      const linkedParts = parts.map(name => {
-        path += `/${name}`;
-        return {
-          name, path
-        };
-      });
-      path += `/${encodeURIComponent(lastPart)}`;
-      linkedParts.push({name: lastPart, path: path});
-      return linkedParts;
     }
   };
 

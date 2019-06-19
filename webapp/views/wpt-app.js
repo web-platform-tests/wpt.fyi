@@ -1,20 +1,21 @@
+import { PathInfo } from '../components/path.js';
 import '../components/test-runs-query-builder.js';
 import { TestRunsUIQuery } from '../components/test-runs-query.js';
 import '../components/test-search.js';
+import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
-import '../components/wpt-flags.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
-import '../views/wpt-results.js';
 import '../views/wpt-interop.js';
+import '../views/wpt-results.js';
 
-class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
+class WPTApp extends PathInfo(WPTFlags(TestRunsUIQuery(PolymerElement))) {
   static get is() { return 'wpt-app'; }
 
   static get template() {
@@ -65,10 +66,9 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       <section class="search">
         <div class="path">
           <a href="/[[page]]/?[[ query ]]" on-click="navigate">wpt</a>
-          <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
-            <span class="path-separator">/</span>
-            <a href="/[[page]][[ part.path ]]?[[ query ]]" on-click="navigate">[[ part.name ]]</a>
-          </template>
+          <!-- The next line is intentionally formatted so to avoid whitespaces between elements. -->
+          <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
+            ><span class="path-separator">/</span><a href="/[[page]][[ part.path ]]?[[ query ]]" on-click="navigate">[[ part.name ]]</a></template>
         </div>
 
         <template is="dom-if" if="[[searchPRsForDirectories]]">
@@ -158,18 +158,6 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         type: String,
         computed: '_computePath(subroute.path)',
       },
-      encodedPath: {
-        type: String,
-        computed: 'encodeTestPath(path)'
-      },
-      pathIsATestFile: {
-        type: Boolean,
-        computed: 'computePathIsATestFile(path)'
-      },
-      pathIsASubfolder: {
-        type: Boolean,
-        computed: 'computePathIsASubfolder(path)'
-      },
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
@@ -246,23 +234,6 @@ class WPTApp extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
 
   _computePath(subroutePath) {
     return subroutePath || '/';
-  }
-
-  encodeTestPath(path) {
-    path = path || '/';
-    console.assert(path.startsWith('/'));
-    let parts = path.split('/').slice(1);
-    parts.push(encodeURIComponent(parts.pop()));
-    return '/' + parts.join('/');
-  }
-
-  computePathIsATestFile(path) {
-    return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
-  }
-
-  computePathIsASubfolder(path) {
-    return !this.computePathIsATestFile(path)
-      && path && path.split('/').filter(p => p).length > 0;
   }
 
   splitPathIntoLinkedParts(inputPath) {
