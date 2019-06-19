@@ -158,8 +158,8 @@ func (l Link) Filter(t TestID) bool {
 		return false
 	}
 
-	urls, isExist := l.metadata[name]
-	if !isExist {
+	urls, ok := l.metadata[name]
+	if !ok {
 		return false
 	}
 

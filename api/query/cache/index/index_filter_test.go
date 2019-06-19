@@ -358,7 +358,10 @@ func TestBindExecute_Link(t *testing.T) {
 			},
 		},
 	})
-	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
+	metadata := map[string][]string{"/foo/bar/b.html": []string{
+		"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		matchingTestName: []string{"", "https://external.com/item", ""},
+	}
 
 	link := query.Link{Pattern: "external", Metadata: metadata}
 	plan, err := idx.Bind(runs, link)
@@ -408,7 +411,10 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 			},
 		},
 	})
-	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, noMatchingTestName: []string{"", "https://external.com/item", ""}}
+	metadata := map[string][]string{
+		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		noMatchingTestName: []string{"", "https://external.com/item", ""},
+	}
 
 	link := query.Link{Pattern: "NoMatchingPattern", Metadata: metadata}
 	plan, err := idx.Bind(runs, link)
@@ -446,7 +452,10 @@ func TestBindExecute_NotLink(t *testing.T) {
 			},
 		},
 	})
-	metadata := map[string][]string{"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"}, matchingTestName: []string{"", "https://external.com/item", ""}}
+	metadata := map[string][]string{
+		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		matchingTestName: []string{"", "https://external.com/item", ""},
+	}
 
 	notQuery := query.Not{Arg: query.Link{Pattern: "external", Metadata: metadata}}
 	plan, err := idx.Bind(runs, notQuery)
