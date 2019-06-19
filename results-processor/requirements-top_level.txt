@@ -1,5 +1,5 @@
 Flask
-filelock
+filelock==3.0.12
 flake8
 google-cloud-datastore
 google-cloud-storage
