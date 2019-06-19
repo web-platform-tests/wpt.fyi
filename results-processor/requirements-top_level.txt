@@ -1,4 +1,4 @@
-Flask
+Flask==1.0.3
 filelock
 flake8
 google-cloud-datastore
