@@ -54,6 +54,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'diffRenames',
       'failChecksOnRegression',
       'ignoreHarnessInTotal',
+      'onlyChangesAsRegressions',
       'paginationTokens',
       'pendingChecks',
       'processTaskclusterCheckRunEvents',
@@ -152,7 +153,7 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Query Builder component
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item sub-item>
       <paper-checkbox checked="{{queryBuilderSHA}}">
         SHA input
       </paper-checkbox>
@@ -254,7 +255,7 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
         Fetch experimental runs as the default (homepage) query
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item sub-item>
       <paper-checkbox checked="{{experimentalAlignedExceptEdge}}">
         All experimental, except edge, and aligned
       </paper-checkbox>
@@ -289,30 +290,36 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
         Ignore "OK" harness status in test summary numbers.
       </paper-checkbox>
     </paper-item>
-    <h5>GitHub Status Checks</h5>
-    <paper-item sub-item="">
+    <h4>GitHub Status Checks</h4>
+    <paper-item>
+      <paper-checkbox checked="{{searchcacheDiffs}}">
+        Use searchcache (not summaries) to compute diffs when processing check run events.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{onlyChangesAsRegressions}}">
+        Only treat C (changed) differences as possible regressions.
+        (<a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#apidiff">See docs for definition</a>)
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
       <paper-checkbox checked="{{failChecksOnRegression}}">
         Set the wpt.fyi GitHub status check to action_required if regressions are found.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{checksAllUsers}}">
         Run the wpt.fyi GitHub status check for all users, not just whitelisted ones.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{pendingChecks}}">
         Create pending GitHub status check when results first arrive, and are being processed.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{processTaskclusterCheckRunEvents}}">
         Process check run events from Taskcluster (needs to be enabled if Taskcluster is using Checks API).
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item="">
-      <paper-checkbox checked="{{searchcacheDiffs}}">
-        Use searchcache to compute diffs when processing check run events.
       </paper-checkbox>
     </paper-item>
 `;

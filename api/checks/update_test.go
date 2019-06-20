@@ -17,32 +17,42 @@ import (
 )
 
 func TestGetDiffSummary_Regressed(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+	testSummary := func(enabled bool) {
+		t.Run(fmt.Sprintf("%s=%v", onlyChangesAsRegressionsFeature, enabled), func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
 
-	before, after := getBeforeAndAfterRuns()
-	runDiff := shared.RunDiff{
-		Differences: shared.ResultsDiff{"/foo.html": shared.TestDiff{0, 1, 0}},
+			before, after := getBeforeAndAfterRuns()
+			runDiff := shared.RunDiff{
+				Differences: shared.ResultsDiff{"/foo.html": shared.TestDiff{0, 1, 0}},
+			}
+
+			aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
+			aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+			aeAPI.EXPECT().IsFeatureEnabled(onlyChangesAsRegressionsFeature).Return(enabled)
+			aeAPI.EXPECT().IsFeatureEnabled(failChecksOnRegressionFeature).Return(false)
+			aeAPI.EXPECT().GetHostname()
+			diffAPI := sharedtest.NewMockDiffAPI(mockCtrl)
+			diffAPI.EXPECT().GetRunsDiff(before, after, sharedtest.SameDiffFilter("ADC"), gomock.Any()).Return(runDiff, nil)
+			if enabled {
+				diffAPI.EXPECT().GetRunsDiff(before, after, sharedtest.SameDiffFilter("C"), gomock.Any()).Return(runDiff, nil)
+			}
+			diffURL, _ := url.Parse("https://wpt.fyi/results?diff")
+			diffAPI.EXPECT().GetDiffURL(before, after, gomock.Any()).Return(diffURL)
+			diffAPI.EXPECT().GetMasterDiffURL(after, sharedtest.SameDiffFilter("ACU")).Return(diffURL)
+			suite := shared.CheckSuite{
+				PRNumbers: []int{123},
+			}
+
+			summary, err := getDiffSummary(aeAPI, diffAPI, suite, before, after)
+			assert.Nil(t, err)
+			_, ok := summary.(summaries.Regressed)
+			assert.True(t, ok)
+			assert.Equal(t, suite.PRNumbers, summary.GetCheckState().PRNumbers)
+		})
 	}
-
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
-	aeAPI.EXPECT().IsFeatureEnabled(failChecksOnRegressionFeature).Return(false)
-	aeAPI.EXPECT().GetHostname()
-	diffAPI := sharedtest.NewMockDiffAPI(mockCtrl)
-	diffAPI.EXPECT().GetRunsDiff(before, after, gomock.Any(), gomock.Any()).Return(runDiff, nil)
-	diffURL, _ := url.Parse("https://wpt.fyi/results?diff")
-	diffAPI.EXPECT().GetDiffURL(before, after, gomock.Any()).Return(diffURL)
-	diffAPI.EXPECT().GetMasterDiffURL(after, sharedtest.SameDiffFilter("ACU")).Return(diffURL)
-	suite := shared.CheckSuite{
-		PRNumbers: []int{123},
-	}
-
-	summary, err := getDiffSummary(aeAPI, diffAPI, suite, before, after)
-	assert.Nil(t, err)
-	_, ok := summary.(summaries.Regressed)
-	assert.True(t, ok)
-	assert.Equal(t, suite.PRNumbers, summary.GetCheckState().PRNumbers)
+	testSummary(false)
+	testSummary(true)
 }
 
 func TestGetDiffSummary_Completed(t *testing.T) {
@@ -56,6 +66,7 @@ func TestGetDiffSummary_Completed(t *testing.T) {
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().IsFeatureEnabled(onlyChangesAsRegressionsFeature).Return(false)
 	aeAPI.EXPECT().IsFeatureEnabled(failChecksOnRegressionFeature).Return(false)
 	aeAPI.EXPECT().GetHostname()
 	diffAPI := sharedtest.NewMockDiffAPI(mockCtrl)
