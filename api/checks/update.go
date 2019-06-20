@@ -24,6 +24,7 @@ import (
 const CheckProcessingQueue = "check-processing"
 
 const failChecksOnRegressionFeature = "failChecksOnRegression"
+const onlyChangesAsRegressionsFeature = "onlyChangesAsRegressions"
 
 // updateCheckHandler handles /api/checks/[commit] POST requests.
 func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
