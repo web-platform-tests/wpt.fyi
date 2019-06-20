@@ -30,7 +30,9 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
       .icon {
         /*Avoid (unwanted) space between images.*/
         font-size: 0;
-        padding: 2px 2px 6px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
       img.browser {
         height: 32px;
