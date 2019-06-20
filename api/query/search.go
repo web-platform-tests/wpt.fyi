@@ -95,10 +95,10 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			simpleQ, isSimpleQ = exists.Args[0].(TestNamePattern)
 		}
 		q := r.URL.Query()
-		interop := shared.ParseBooleanParam(q, "interop")
-		subtests := shared.ParseBooleanParam(q, "subtests")
-		diff := shared.ParseBooleanParam(q, "diff")
-		isSimpleQ = isSimpleQ && !interop && !subtests && !diff
+		for _, param := range []string{"interop", "subtests", "diff"} {
+			val, _ := shared.ParseBooleanParam(q, param)
+			isSimpleQ = isSimpleQ && (val == nil || !*val)
+		}
 	}
 
 	if !isSimpleQ {
