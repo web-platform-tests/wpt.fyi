@@ -166,9 +166,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Configure format, from request params.
 	urlQuery := r.URL.Query()
-	_, subtests := urlQuery["subtests"]
-	_, interop := urlQuery["interop"]
-	_, diff := urlQuery["diff"]
+	subtests := shared.ParseBooleanParam(urlQuery, "subtests")
+	interop := shared.ParseBooleanParam(urlQuery, "interop")
+	diff := shared.ParseBooleanParam(urlQuery, "diff")
 	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
 	if err != nil {
 		log.Errorf("%s", err.Error())
