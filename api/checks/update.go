@@ -201,7 +201,14 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 		PRNumbers:  suite.PRNumbers,
 	}
 
-	regressions := diff.Differences.Regressions()
+	var regressions mapset.NewSet()
+	if aeAPI.IsFeatureEnabled("onlyChangesAsRegressions") {
+		regressionFilter := shared.DiffFilterParam{Changed: true} // Only changed items
+		regressionDiffs = diffAPI.GetRunsDiff(baseRun, headRun, regressionFilter, nil)
+		regressions = regressionDiffs.Differences.Regressions()
+	} else {
+		regressions = diff.Differences.Regressions()
+	}
 	hasRegressions := regressions.Cardinality() > 0
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
