@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -122,18 +121,6 @@ func populateTemplateData(r *http.Request) (data templateData, err error) {
 			}
 			testRunFilter = testRunFilter.MasterOnly()
 		}
-
-		if aeAPI.IsFeatureEnabled("edgeChromiumByDefault") {
-			for i, product := range testRunFilter.Products {
-				if product.BrowserName == "edge" {
-					if testRunFilter.Products[i].Labels == nil {
-						testRunFilter.Products[i].Labels = mapset.NewSet()
-					}
-					testRunFilter.Products[i].Labels.Add("edgechromium")
-				}
-			}
-		}
-
 		data.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
 		data.PR = pr
 	}

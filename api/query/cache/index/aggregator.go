@@ -11,14 +11,14 @@ import (
 
 type aggregator interface {
 	Add(t TestID) error
-	Done() []query.SearchResult
+	Done() []shared.SearchResult
 }
 
 type indexAggregator struct {
 	index
 
 	runIDs []RunID
-	agg    map[uint64]query.SearchResult
+	agg    map[uint64]shared.SearchResult
 	opts   query.AggregationOpts
 }
 
@@ -32,7 +32,7 @@ func (a *indexAggregator) Add(t TestID) error {
 			return err
 		}
 
-		r = query.SearchResult{
+		r = shared.SearchResult{
 			Test:         name,
 			LegacyStatus: nil,
 			Interop:      nil,
@@ -65,7 +65,7 @@ func (a *indexAggregator) Add(t TestID) error {
 
 	results := r.LegacyStatus
 	if results == nil {
-		results = make([]query.LegacySearchRunResult, len(a.runIDs))
+		results = make([]shared.LegacySearchRunResult, len(a.runIDs))
 	}
 
 	for i, id := range a.runIDs {
@@ -101,8 +101,8 @@ func (a *indexAggregator) Add(t TestID) error {
 	return nil
 }
 
-func (a *indexAggregator) Done() []query.SearchResult {
-	res := make([]query.SearchResult, 0, len(a.agg))
+func (a *indexAggregator) Done() []shared.SearchResult {
+	res := make([]shared.SearchResult, 0, len(a.agg))
 	for _, r := range a.agg {
 		res = append(res, r)
 	}
@@ -113,7 +113,7 @@ func newIndexAggregator(idx index, runIDs []RunID, opts query.AggregationOpts) a
 	return &indexAggregator{
 		index:  idx,
 		runIDs: runIDs,
-		agg:    make(map[uint64]query.SearchResult),
+		agg:    make(map[uint64]shared.SearchResult),
 		opts:   opts,
 	}
 }

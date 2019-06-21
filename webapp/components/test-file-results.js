@@ -12,9 +12,10 @@ import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
 import './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
+import { PathInfo } from './path.js';
 
-class TestFileResults extends WPTFlags(LoadingState(TestRunsQueryLoader(
-  TestRunsUIQuery(PolymerElement)))) {
+class TestFileResults extends WPTFlags(LoadingState(PathInfo(
+  TestRunsQueryLoader(TestRunsUIQuery(PolymerElement))))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -47,15 +48,13 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsQueryLoader(
 
     <template is="dom-if" if="{{!isVerbose}}">
       <test-file-results-table-terse test-runs="[[testRuns]]"
-                                     results-table="[[resultsTable]]"
-                                     on-reftest-compare="[[onReftestCompare]]">
+                                     results-table="[[resultsTable]]">
       </test-file-results-table-terse>
     </template>
 
     <template is="dom-if" if="{{isVerbose}}">
       <test-file-results-table-verbose test-runs="[[testRuns]]"
-                                       results-table="[[resultsTable]]"
-                                       on-reftest-compare="[[onReftestCompare]]">
+                                       results-table="[[resultsTable]]">
       </test-file-results-table-verbose>
     </template>
 `;
@@ -76,7 +75,6 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsQueryLoader(
         type: Boolean,
         value: false,
       },
-      onReftestCompare: Function,
     };
   }
 
@@ -163,8 +161,8 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsQueryLoader(
           status: data && data.status,
           message: data && data.message,
         };
-        if (this.reftestAnalyzer) {
-          result.screenshots = data && data.screenshots;
+        if (this.reftestAnalyzer && data && data.screenshots) {
+          result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
         }
         return result;
       }),
@@ -251,6 +249,19 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsQueryLoader(
 
   statusName(numSubtests) {
     return numSubtests > 0 ? 'Harness status' : 'Test status';
+  }
+
+  shuffleScreenshots(path, rawScreenshots) {
+    // Clone the data because we might modify it.
+    const screenshots = Object.assign({}, rawScreenshots);
+    // Make sure the test itself appears first in the Map to follow the
+    // convention of reftest-analyzer (actual, expected).
+    const firstScreenshot = [];
+    if (path in screenshots) {
+      firstScreenshot.push([path, screenshots[path]]);
+      delete screenshots[path];
+    }
+    return new Map([...firstScreenshot, ...Object.entries(screenshots)]);
   }
 }
 

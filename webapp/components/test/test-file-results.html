@@ -80,6 +80,45 @@ suite('TestFileResults', () => {
         expect(result).to.deep.equal(['a', 'x', 'b', 'y', 'z']);
       });
     });
+
+    suite('statusName', () => {
+      test('path in screenshots - first', () => {
+        const rawScreenshots = {
+          '/foo/bar/baz.html': 'sha1:060311f9cd4c5b09202a034c4961ca42a3f83ce2',
+          '/foo/bar/baz-ref.html': 'sha1:cf459fa6f04d2c0a18bc30762941289d700224bd',
+        };
+        const screenshots = tfr.shuffleScreenshots('/foo/bar/baz.html', rawScreenshots);
+        assert.lengthOf(Object.keys(rawScreenshots), 2);
+        assert.deepEqual(Array.from(screenshots.entries()), [
+          ['/foo/bar/baz.html', 'sha1:060311f9cd4c5b09202a034c4961ca42a3f83ce2'],
+          ['/foo/bar/baz-ref.html', 'sha1:cf459fa6f04d2c0a18bc30762941289d700224bd'],
+        ]);
+      });
+
+      test('path in screenshots - not first', () => {
+        const rawScreenshots = {
+          '/foo/bar/baz-ref.html': 'sha1:cf459fa6f04d2c0a18bc30762941289d700224bd',
+          '/foo/bar/baz.html': 'sha1:060311f9cd4c5b09202a034c4961ca42a3f83ce2',
+        };
+        const screenshots = tfr.shuffleScreenshots('/foo/bar/baz.html', rawScreenshots);
+        assert.lengthOf(Object.keys(rawScreenshots), 2);
+        assert.deepEqual(Array.from(screenshots.entries()), [
+          ['/foo/bar/baz.html', 'sha1:060311f9cd4c5b09202a034c4961ca42a3f83ce2'],
+          ['/foo/bar/baz-ref.html', 'sha1:cf459fa6f04d2c0a18bc30762941289d700224bd'],
+        ]);
+      });
+
+      test('path not in screenshots', () => {
+        const rawScreenshots = {
+          '/foo/bar/baz.html': 'sha1:060311f9cd4c5b09202a034c4961ca42a3f83ce2',
+          '/foo/bar/baz-ref.html': 'sha1:cf459fa6f04d2c0a18bc30762941289d700224bd',
+          '/foo/bar/baz-ref2.html': 'sha1:cf459fa6f04d2c0a18bc30762941289d700224bd',
+        };
+        const screenshots = tfr.shuffleScreenshots('/not-foo/bar.html', rawScreenshots);
+        assert.lengthOf(Object.keys(rawScreenshots), 3);
+        assert.lengthOf(Array.from(screenshots.entries()), 3);
+      });
+    });
   });
 });
 </script>

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	mapset "github.com/deckarep/golang-set"
 )
 
 func TestParseSHAParam(t *testing.T) {
@@ -676,6 +677,19 @@ func TestProductSpecMatches_Revision(t *testing.T) {
 	assert.False(t, chrome.Matches(chromeRun)) // Still wrong version
 	chromeRun.BrowserVersion = version
 	assert.True(t, chrome.Matches(chromeRun))
+}
+
+func TestMatchesProductSpec_Labels(t *testing.T) {
+	chrome, err := ParseProductSpec("chrome[foo]")
+	assert.Nil(t, err)
+
+	productSpec := ProductSpec{}
+	productSpec.BrowserName = "chrome"
+	assert.False(t, chrome.MatchesProductSpec(productSpec))
+	productSpec.Labels = mapset.NewSet()
+	productSpec.Labels.Add("bar")
+	productSpec.Labels.Add("foo")
+	assert.True(t, chrome.MatchesProductSpec(productSpec))
 }
 
 func TestParsePageToken(t *testing.T) {

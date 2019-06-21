@@ -139,3 +139,19 @@ Same as satuts, but with a specific product-spec.
       "product": "chrome-69",
       "status": "ok",
     }
+
+#### link
+
+`link` query atoms perform a search for tests that have some matching link metadata.
+
+    {"link": pattern}
+ 
+ E.g.
+
+Search untriaged issues - 
+
+    chrome:fail and !link:bugs.chromium.org
+
+Search triaged issues - 
+
+    chrome:pass and link:bugs.chromium.org

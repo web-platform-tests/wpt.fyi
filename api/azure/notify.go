@@ -31,8 +31,8 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	processed, err := processBuild(
 		aeAPI,
 		azureAPI,
-		"web-platform-tests",
-		"wpt",
+		shared.WPTRepoOwner,
+		shared.WPTRepoName,
 		"", // No sender info.
 		r.FormValue("artifact"), // artifact=foo will only process foo.
 		buildID)
