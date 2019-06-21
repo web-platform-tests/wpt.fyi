@@ -106,20 +106,21 @@ func populateTemplateData(r *http.Request) (data templateData, err error) {
 		data.TestRunIDs = string(marshalled)
 	} else {
 		if pr == nil && testRunFilter.IsDefaultQuery() {
-			experimentalByDefault := aeAPI.IsFeatureEnabled("experimentalByDefault")
-			experimentalAlignedExceptEdge := aeAPI.IsFeatureEnabled("experimentalAlignedExceptEdge")
-			if experimentalByDefault {
-				if experimentalAlignedExceptEdge {
+			if aeAPI.IsFeatureEnabled("experimentalByDefault") {
+				if aeAPI.IsFeatureEnabled("experimentalAlignedExceptEdge") {
 					testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
 				} else {
 					testRunFilter = testRunFilter.OrExperimentalRuns()
+					if aeAPI.IsFeatureEnabled("experimentalAligned") {
+						aligned := true
+						testRunFilter.Aligned = &aligned
+					}
 				}
 			} else {
 				testRunFilter = testRunFilter.OrAlignedStableRuns()
 			}
 			testRunFilter = testRunFilter.MasterOnly()
 		}
-
 		data.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
 		data.PR = pr
 	}
