@@ -29,10 +29,10 @@ class WPTMetadataNode extends PolymerElement {
         }
       </style>
       <div class="metadataNode">
-        <img src="/static/bug.svg" />
+        <iron-icon icon="bug-report"></iron-icon>
         <div>
           [[metadataNode.test]] :
-          <a href="[[metadataNode.url]]">[[metadataNode.url]]</a>
+          <a href="[[href]]">[[metadataNode.url]]</a>
           <br />
         </div>
       </div>
@@ -45,8 +45,20 @@ class WPTMetadataNode extends PolymerElement {
 
   static get properties() {
     return {
-      metadataNode: Object
+      metadataNode: Object,
+      href: {
+        type: String,
+        computed: 'computeHref(metadataNode)'
+      }
     };
+  }
+
+  computeHref(metadataNode) {
+    const prefix = 'https://';
+    if (metadataNode.url.substr(0, prefix.length) !== prefix) {
+      return prefix + metadataNode.url;
+    }
+    return metadataNode.url;
   }
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
