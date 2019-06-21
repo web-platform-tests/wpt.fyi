@@ -17,7 +17,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-var runNameRegex = regexp.MustCompile("^(?:(?:staging\\.)?wpt\\.fyi - )(.*)$")
+var runNameRegex = regexp.MustCompile(`^(?:(?:staging\.)?wpt\.fyi - )(.*)$`)
 
 func isWPTFYIApp(appID int64) bool {
 	switch appID {
