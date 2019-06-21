@@ -9,7 +9,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './browser-picker.js';
 import './info-banner.js';
-import { DefaultBrowserNames, ProductInfo } from './product-info.js';
+import { DefaultProductSpecs, DefaultProducts, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
 import { WPTFlags } from './wpt-flags.js';
 
@@ -120,12 +120,16 @@ class Anomalies extends ProductInfo(PolymerElement) {
     <paper-card>
       <div class="card-content">
         <h3>Anomalies</h3>
-        <browser-picker browser="{{browser}}"></browser-picker>
+        <div>
+          <browser-picker browser="{{browser}}"></browser-picker>
+          vs
+          <browser-multi-picker products="[[defaultProductsExcept(browser)]]" selected="{{others}}"></browser-multi-picker>
+        </div>
         <info-banner>
           <a class="query" href="[[url]]">[[query]]</a>
         </info-banner>
         <p>
-          Tests that are failing in [[browserDisplayName]], but passing in the other browsers ([[others]])
+          Tests that are failing in [[browserDisplayName]], but passing in the other browsers ([[othersDisplayNames]])
         </p>
       </div>
     </paper-card>
@@ -140,38 +144,49 @@ class Anomalies extends ProductInfo(PolymerElement) {
         computed: 'displayName(browser)',
       },
       others: {
+        type: Array,
+        value: DefaultBrowserNames.filter(b => b !== 'chrome'),
+      },
+      othersDisplayNames: {
         type: String,
-        computed: 'computeOthers(browser)',
+        computed: 'computeOthersDisplayNames(others)',
       },
       query: {
         type: String,
-        computed: 'computeQuery(browser)',
+        computed: 'computeQuery(browser, others)',
       },
       url: {
         type: URL,
-        computed: 'computeURL(query)',
+        computed: 'computeURL(query, browser, others)',
       }
     };
   }
 
-  computeOthers(browser) {
-    return DefaultBrowserNames
-      .filter(b => b !== browser)
-      .map(b => this.displayName(b))
+  defaultProductsExcept(browser) {
+    return DefaultProducts
+      .filter(b => b.browser_name !== browser);
+  }
+
+  computeOthersDisplayNames(others) {
+    return others
+      .map(p => this.displayName(p))
       .join(', ');
   }
 
-  computeQuery(browser) {
-    const othersPassing = DefaultBrowserNames
-      .filter(b => b !== browser)
+  computeQuery(browser, others) {
+    const othersPassing = others
       .map(o => `(${o}:pass|${o}:ok)`)
       .join(' ');
     return `(${browser}:!pass&${browser}:!ok) ${othersPassing}`;
   }
 
-  computeURL(query) {
+  computeURL(query, browser, others) {
     const url = new URL('/results/', window.location);
     url.searchParams.set('q', query);
+    const products = [browser, ...others];
+    if (DefaultProductSpecs.join(',') !== products.join(',')) {
+      url.searchParams.set('products', products.join(','));
+    }
     return url;
   }
 }
