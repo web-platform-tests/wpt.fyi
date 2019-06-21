@@ -9,12 +9,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
+
+var runNameRegex = regexp.MustCompile("^(?:(?:staging\\.)?wpt\\.fyi - )(.*)$")
 
 func isWPTFYIApp(appID int64) bool {
 	switch appID {
@@ -230,9 +233,13 @@ func handleCheckRunEvent(
 	if shouldSchedule {
 		name := checkRun.GetCheckRun().GetName()
 		log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
-		spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
+		// Strip any "wpt.fyi - " prefix.
+		if runNameRegex.MatchString(name) {
+			name = runNameRegex.FindStringSubmatch(name)[1]
+		}
+		spec, err := shared.ParseProductSpec(name)
 		if err != nil {
-			log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
+			log.Errorf("Failed to parse \"%s\" as product spec", name)
 			return false, err
 		}
 		checksAPI.ScheduleResultsProcessing(sha, spec)
