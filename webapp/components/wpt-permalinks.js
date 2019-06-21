@@ -77,7 +77,7 @@ class Permalinks extends QueryBuilder(PolymerElement) {
       },
       url: {
         type: String,
-        computed: 'computeURL(selectedTab, queryParams, path, includePath, includeSearch, testRuns)',
+        computed: 'computeURL(selectedTab, queryParams, pathPrefix, path, includePath, includeSearch, testRuns)',
       }
     };
   }
@@ -99,7 +99,7 @@ class Permalinks extends QueryBuilder(PolymerElement) {
     this.dialog.open();
   }
 
-  computeURL(selectedTab, queryParams, path, includePath, includeSearch, testRuns) {
+  computeURL(selectedTab, queryParams, pathPrefix, path, includePath, includeSearch, testRuns) {
     let params;
     if (selectedTab === 0) {
       params = {};
@@ -123,8 +123,8 @@ class Permalinks extends QueryBuilder(PolymerElement) {
     }
 
     const url = new URL('/', window.location);
-    if (this.pathPrefix) {
-      url.pathname = this.pathPrefix;
+    if (pathPrefix) {
+      url.pathname = pathPrefix;
     }
     if (includePath && this.path) {
       url.pathname += this.path.slice(1);

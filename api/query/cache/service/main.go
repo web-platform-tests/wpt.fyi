@@ -147,7 +147,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
 	// are missing.
 	if len(runs) == 0 && len(missing) > 0 {
-		data, err = json.Marshal(query.SearchResponse{
+		data, err = json.Marshal(shared.SearchResponse{
 			IgnoredRuns: missing,
 		})
 		if err != nil {
@@ -166,9 +166,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Configure format, from request params.
 	urlQuery := r.URL.Query()
-	_, subtests := urlQuery["subtests"]
-	_, interop := urlQuery["interop"]
-	_, diff := urlQuery["diff"]
+	subtests, _ := shared.ParseBooleanParam(urlQuery, "subtests")
+	interop, _ := shared.ParseBooleanParam(urlQuery, "interop")
+	diff, _ := shared.ParseBooleanParam(urlQuery, "diff")
 	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
 	if err != nil {
 		log.Errorf("%s", err.Error())
@@ -176,9 +176,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	opts := query.AggregationOpts{
-		IncludeSubtests:         subtests,
-		InteropFormat:           interop,
-		IncludeDiff:             diff,
+		IncludeSubtests:         subtests != nil && *subtests,
+		InteropFormat:           interop != nil && *interop,
+		IncludeDiff:             diff != nil && *diff,
 		DiffFilter:              diffFilter,
 		IgnoreTestHarnessResult: shared.IsFeatureEnabled(store, "ignoreHarnessInTotal"),
 	}
@@ -189,7 +189,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := plan.Execute(runs, opts)
-	res, ok := results.([]query.SearchResult)
+	res, ok := results.([]shared.SearchResult)
 	if !ok {
 		log.Errorf("Search index returned bad results: %s", err.Error())
 		http.Error(w, "Search index returned bad results", http.StatusInternalServerError)
@@ -209,19 +209,12 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// - Add missing runs to IgnoredRuns;
 	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
 	//   client.
-	resp := query.SearchResponse{
+	resp := shared.SearchResponse{
 		Runs:    runs,
 		Results: res,
 	}
 	if len(missing) != 0 {
 		resp.IgnoredRuns = missing
-	}
-
-	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		var netClient = &http.Client{
-			Timeout: time.Second * 5,
-		}
-		resp.MetadataResponse = shared.GetMetadataResponse(runs, netClient, log)
 	}
 
 	data, err = json.Marshal(resp)

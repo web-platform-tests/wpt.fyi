@@ -4,6 +4,21 @@
  * found in the LICENSE file.
  */
 
+import { LoadingState } from '../components/loading-state.js';
+import { PathInfo } from '../components/path.js';
+import '../components/results-navigation.js';
+import '../components/test-file-results-table-terse.js';
+import '../components/test-file-results-table-verbose.js';
+import '../components/test-file-results.js';
+import '../components/test-run.js';
+import '../components/test-runs-query-builder.js';
+import '../components/test-runs-query.js';
+import { TestRunsUIQuery } from '../components/test-runs-query.js';
+import { TestRunsQueryLoader } from '../components/test-runs.js';
+import '../components/test-search.js';
+import { WPTColors } from '../components/wpt-colors.js';
+import { WPTFlags } from '../components/wpt-flags.js';
+import '../components/wpt-permalinks.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
@@ -13,27 +28,12 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { LoadingState } from '../components/loading-state.js';
-import '../components/path-part.js';
-import '../components/test-file-results-table-terse.js';
-import '../components/test-file-results-table-verbose.js';
-import '../components/test-file-results.js';
-import '../components/test-run.js';
-import '../components/test-runs-query-builder.js';
-import { TestRunsQueryLoader } from '../components/test-runs.js';
-import '../components/test-search.js';
-import { WPTColors } from '../components/wpt-colors.js';
-import { WPTFlags } from '../components/wpt-flags.js';
-import '../components/wpt-permalinks.js';
-import '../components/results-navigation.js';
-import '../components/test-runs-query.js';
-import { TestRunsUIQuery } from '../components/test-runs-query.js';
 
 const interopQueryCompute =
   'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)';
 
-class WPTInterop extends WPTColors(WPTFlags(LoadingState(TestRunsQueryLoader(
-    TestRunsUIQuery(PolymerElement, interopQueryCompute))))) {
+class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
+    TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
   static get template() {
     return html`
   <style>

@@ -4,23 +4,9 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
-import '../node_modules/@polymer/iron-icon/iron-icon.js';
-import '../node_modules/@polymer/iron-icons/editor-icons.js';
-import '../node_modules/@polymer/iron-icons/image-icons.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
-import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
-import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
-import '../node_modules/@polymer/paper-styles/color.js';
-import '../node_modules/@polymer/paper-toast/paper-toast.js';
-import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
-import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/@polymer/polymer/polymer-element.js';
-import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../components/info-banner.js';
 import { LoadingState } from '../components/loading-state.js';
-import '../components/path-part.js';
+import '../components/path.js';
 import '../components/test-file-results-table-terse.js';
 import '../components/test-file-results-table-verbose.js';
 import '../components/test-file-results.js';
@@ -34,10 +20,25 @@ import { WPTColors } from '../components/wpt-colors.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-prs.js';
+import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
+import '../node_modules/@polymer/iron-icon/iron-icon.js';
+import '../node_modules/@polymer/iron-icons/editor-icons.js';
+import '../node_modules/@polymer/iron-icons/image-icons.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
+import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import '../node_modules/@polymer/paper-styles/color.js';
+import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
+import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@polymer/polymer/polymer-element.js';
+import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { PathInfo } from '../components/path.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
+class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -169,8 +170,7 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
-                           products="[[products]]"
-                           on-reftest-compare="[[showAnalyzer]]">
+                           products="[[products]]">
         </test-file-results>
       </template>
 
@@ -488,7 +488,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
       this.refreshDisplayedNodes();
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
-    this.showAnalyzer = this.handleShowAnalyzer.bind(this);
   }
 
   loadData() {
@@ -540,10 +539,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
 
     let url = new URL('/api/search', window.location);
     let fetchOpts;
-
-    if (this.showMetadataInfo) {
-      url.searchParams.set('metadataInfo', true);
-    }
 
     if (this.structuredQueries) {
       const body = {
@@ -973,22 +968,6 @@ class WPTResults extends WPTColors(WPTFlags(LoadingState(TestRunsUIBase))) {
         `Showing ${tests} tests (${subtests} subtests) from `);
     }
     return msg;
-  }
-
-  handleShowAnalyzer(result) {
-    if (!result.screenshots) {
-      this.screenshots = null;
-      return;
-    }
-    const url = new URL('/analyzer', window.location);
-    if (this.path in result.screenshots) {
-      url.searchParams.append('screenshot', result.screenshots[this.path]);
-      delete result.screenshots[this.path];
-    }
-    for (const s of Object.values(result.screenshots)) {
-      url.searchParams.append('screenshot', s);
-    }
-    window.location = url;
   }
 }
 

@@ -7,18 +7,24 @@
 package shared
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"google.golang.org/appengine/urlfetch"
 )
+
+// ErrRunNotInSearchCache is an error for 422 responses from the searchcache.
+var ErrRunNotInSearchCache = errors.New("Run is still being loaded into the searchcache")
 
 // DiffAPI is an abstraction for computing run differences.
 type DiffAPI interface {
@@ -132,16 +138,25 @@ const (
 
 // NewlyPassing is the delta/increase in the number of passing tests when comparing before/after.
 func (d TestDiff) NewlyPassing() int {
+	if d == nil {
+		return 0
+	}
 	return d[newlyPassingIndex]
 }
 
 // Regressions is the delta/increase in the number of failing tests when comparing before/after.
 func (d TestDiff) Regressions() int {
+	if d == nil {
+		return 0
+	}
 	return d[newlyFailingIndex]
 }
 
 // TotalDelta is the delta in the number of total subtests when comparing before/after.
 func (d TestDiff) TotalDelta() int {
+	if d == nil {
+		return 0
+	}
 	return d[totalDeltaIndex]
 }
 
@@ -249,9 +264,11 @@ func (r ResultsDiff) Add(k string, diff TestDiff) {
 // since that can often indicate a failure in a test's setup.
 func (r ResultsDiff) Regressions() mapset.Set {
 	regressions := mapset.NewSet()
-	for test, diff := range r {
-		if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
-			regressions.Add(test)
+	if r != nil {
+		for test, diff := range r {
+			if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
+				regressions.Add(test)
+			}
 		}
 	}
 	return regressions
@@ -329,6 +346,10 @@ func FetchRunResultsJSON(ctx context.Context, run TestRun) (results ResultsSumma
 
 // GetRunsDiff returns a RunDiff for the given runs.
 func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
+	store := NewAppEngineDatastore(d.ctx, false)
+	if IsFeatureEnabled(store, "searchcacheDiffs") {
+		return d.getRunsDiffFromSearchCache(before, after, filter, paths)
+	}
 	beforeJSON, err := FetchRunResultsJSON(d.ctx, before)
 	if err != nil {
 		return diff, fmt.Errorf("Failed to fetch 'before' results: %s", err.Error())
@@ -354,6 +375,53 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 		AfterSummary:  afterJSON,
 		Differences:   GetResultsDiff(beforeJSON, afterJSON, filter, paths, renames),
 		Renames:       renames,
+	}, nil
+}
+
+func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
+	diffURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search", d.aeAPI.GetVersionedHostname()))
+	query := diffURL.Query()
+	query.Set("diff", "")
+	query.Set("filter", filter.String())
+	diffURL.RawQuery = query.Encode()
+
+	type diffBody = struct {
+		RunIDs []int64 `json:"run_ids"`
+	}
+	body, _ := json.Marshal(diffBody{RunIDs: []int64{before.ID, after.ID}})
+
+	client, _ := d.aeAPI.GetSlowHTTPClient(time.Second * 10)
+	resp, err := client.Post(diffURL.String(), "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return diff, err
+	} else if resp.StatusCode == http.StatusUnprocessableEntity {
+		return diff, ErrRunNotInSearchCache
+	}
+
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return diff, err
+	}
+
+	var scDiff SearchResponse
+	err = json.Unmarshal(body, &scDiff)
+	if err != nil {
+		return diff, err
+	}
+	return runDiffFromSearchResponse(before, after, scDiff)
+}
+
+func runDiffFromSearchResponse(before, after TestRun, scDiff SearchResponse) (RunDiff, error) {
+	differences := make(map[string]TestDiff)
+	for _, t := range scDiff.Results {
+		differences[t.Test] = t.Diff
+	}
+
+	return RunDiff{
+		Before:      before,
+		After:       after,
+		Differences: differences,
 	}, nil
 }
 
@@ -423,7 +491,7 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
 	}
-	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
+	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, WPTRepoOwner, WPTRepoName, shaBefore, shaAfter)
 	if err != nil || comparison == nil {
 		log.Errorf("Failed to fetch diff for %s...%s: %s", CropString(shaBefore, 7), CropString(shaAfter, 7), err.Error())
 		return nil

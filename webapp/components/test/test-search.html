@@ -275,6 +275,45 @@ suite('<test-search>', () => {
         });
       }
     });
+
+    test('simple link search', () => {
+      assertQueryParse('link:2dcontext', {exists: [{link: '2dcontext'}]});
+      assertQueryParse(
+        'link:bugs.chromium.org/p/chromium/issues/detail',
+        {exists: [{link: 'bugs.chromium.org/p/chromium/issues/detail'}]}
+      );
+    });
+
+    test('test status | link', () => {
+      assertQueryParse('firefox:timeout link:chromium.bug', {
+        exists: [
+          {product: 'firefox', status: 'TIMEOUT'},
+          {link: 'chromium.bug'},
+        ],
+      });
+
+      assertQueryParse('link:chromium.bug firefox:timeout', {
+        exists: [
+          {link: 'chromium.bug'},
+          {product: 'firefox', status: 'TIMEOUT'},
+        ],
+      });
+    });
+
+    test('test status and not link', () => {
+      assertQueryParse('firefox:timeout & not link:chromium.bug', {
+        exists: [
+          {
+            and: [
+              { product: 'firefox', status: 'TIMEOUT' },
+              {
+                not:
+                  { link: 'chromium.bug' },
+              },
+            ],
+          }],
+      });
+    });
   });
 });
 </script>
