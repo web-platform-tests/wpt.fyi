@@ -19,6 +19,7 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
 	"github.com/Hexcles/logrus"
+	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
@@ -146,7 +147,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
 	// are missing.
 	if len(runs) == 0 && len(missing) > 0 {
-		data, err = json.Marshal(query.SearchResponse{
+		data, err = json.Marshal(shared.SearchResponse{
 			IgnoredRuns: missing,
 		})
 		if err != nil {
@@ -188,7 +189,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := plan.Execute(runs, opts)
-	res, ok := results.([]query.SearchResult)
+	res, ok := results.([]shared.SearchResult)
 	if !ok {
 		log.Errorf("Search index returned bad results: %s", err.Error())
 		http.Error(w, "Search index returned bad results", http.StatusInternalServerError)
@@ -208,19 +209,12 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// - Add missing runs to IgnoredRuns;
 	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
 	//   client.
-	resp := query.SearchResponse{
+	resp := shared.SearchResponse{
 		Runs:    runs,
 		Results: res,
 	}
 	if len(missing) != 0 {
 		resp.IgnoredRuns = missing
-	}
-
-	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		var netClient = &http.Client{
-			Timeout: time.Second * 5,
-		}
-		resp.MetadataResponse = shared.GetMetadataResponse(runs, netClient, log)
 	}
 
 	data, err = json.Marshal(resp)
@@ -307,15 +301,18 @@ func main() {
 		logrus.Fatalf("Failed to instantiate index: %v", err)
 	}
 
-	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
-	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
+	store, err := backfill.GetDatastore(*projectID, gcpCredentialsFile, logger)
+	if err != nil {
+		log.Fatalf("Failed to get datastore: %s", err)
+	}
+	mon, err = backfill.FillIndex(store, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
 		logrus.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
 
 	// Index, backfiller, monitor now in place. Start polling to load runs added
 	// after backfilling was started.
-	go poll.KeepRunsUpdated(fetcher, logger, *updateInterval, *updateMaxRuns, idx)
+	go poll.KeepRunsUpdated(store, logger, *updateInterval, *updateMaxRuns, idx)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)

@@ -42,6 +42,12 @@ const PRHeadLabel = "pr_head"
 // prefixed because usernames are essentially user input.
 const UserLabelPrefix = "user:"
 
+// WPTRepoOwner is the owner (username) for the GitHub wpt repo.
+const WPTRepoOwner = "web-platform-tests"
+
+// WPTRepoName is the repo name for the GitHub wpt repo.
+const WPTRepoName = "wpt"
+
 // GetUserLabel prefixes the given username with the prefix for using as a label.
 func GetUserLabel(username string) string {
 	return UserLabelPrefix + username
@@ -93,10 +99,10 @@ func IsLatest(sha string) bool {
 
 // NewSetFromStringSlice is a helper for the inability to cast []string to []interface{}
 func NewSetFromStringSlice(items []string) mapset.Set {
-	if items == nil {
-		return nil
-	}
 	set := mapset.NewSet()
+	if items == nil {
+		return set
+	}
 	for _, i := range items {
 		set.Add(i)
 	}

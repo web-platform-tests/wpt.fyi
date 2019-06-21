@@ -10,21 +10,25 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
 
-	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 var (
-	host           = flag.String("host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
-	numRemoteRuns  = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
-	staticRuns     = flag.Bool("static_runs", false, "Include runs in the /static dir")
-	seenTestRunIDs = mapset.NewSet()
+	localHost          = flag.String("local_host", "localhost:8080", "local dev_appserver.py webapp host")
+	localRemoteAPIHost = flag.String("local_remote_api_host", "localhost:9999", "local dev_appserver.py host for the remote API")
+	remoteHost         = flag.String("remote_host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
+	numRemoteRuns      = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
+	staticRuns         = flag.Bool("static_runs", false, "Include runs in the /static dir")
+	remoteRuns         = flag.Bool("remote_runs", true, "Include copies of remote runs")
+	seenTestRunIDs     = mapset.NewSet()
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -41,76 +45,76 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Printf("Adding dev data to host %s...", *localRemoteAPIHost)
+
 	emptySecretToken := &shared.Token{}
 	enabledFlag := &shared.Flag{Enabled: true}
-	staticDataTime, _ := time.Parse(time.RFC3339, "2017-10-18T00:00:00Z")
+	staticDataTime := time.Now()
 
 	// Follow pattern established in run/*.py data collection code.
-	const staticRunSHA = "b952881825e7d3974f5c513e13e544d525c0a631"
-	summaryURLFmtString := "http://localhost:8080/static/" + staticRunSHA[:10] + "/%s"
-	staticTestRuns := shared.TestRuns{
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "chrome",
-					BrowserVersion: "63.0",
-					OSName:         "linux",
-					OSVersion:      "3.16",
-				},
-				FullRevisionHash: staticRunSHA,
-				Revision:         staticRunSHA[:10],
+	const staticRunSHA = "24278ab61781de72ed363b866ae6b50b86822b27"
+	summaryURLFmtString := "http://%s/static/%s/%s"
+	chrome := shared.TestRun{
+		ProductAtRevision: shared.ProductAtRevision{
+			Product: shared.Product{
+				BrowserName:    "chrome",
+				BrowserVersion: "74.0",
+				OSName:         "linux",
+				OSVersion:      "3.16",
 			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
-			Labels:     []string{"chrome"},
+			FullRevisionHash: staticRunSHA,
+			Revision:         staticRunSHA[:10],
 		},
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "edge",
-					BrowserVersion: "15",
-					OSName:         "windows",
-					OSVersion:      "10",
-				},
-				FullRevisionHash: staticRunSHA,
-				Revision:         staticRunSHA[:10],
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
-			CreatedAt:  staticDataTime,
-			Labels:     []string{"edge"},
-		},
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "firefox",
-					BrowserVersion: "57.0",
-					OSName:         "linux",
-					OSVersion:      "*",
-				},
-				FullRevisionHash: staticRunSHA,
-				Revision:         staticRunSHA[:10],
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
-			CreatedAt:  staticDataTime,
-			Labels:     []string{"firefox"},
-		},
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "safari",
-					BrowserVersion: "10",
-					OSName:         "macos",
-					OSVersion:      "10.12",
-				},
-				FullRevisionHash: staticRunSHA,
-				Revision:         staticRunSHA[:10],
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
-			CreatedAt:  staticDataTime,
-			Labels:     []string{"safari"},
-		},
+		ResultsURL: fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "chrome[stable].json"),
+		CreatedAt:  staticDataTime,
+		TimeStart:  staticDataTime,
+		Labels:     []string{"chrome", shared.StableLabel},
 	}
-	labelRuns(staticTestRuns, "test", "static")
+	chromeExp := chrome
+	chromeExp.BrowserVersion = "76.0"
+	chromeExp.Labels = []string{"chrome", shared.ExperimentalLabel}
+	chromeExp.ResultsURL = strings.Replace(chrome.ResultsURL, "[stable]", "[experimental]", -1)
+
+	edge := chrome
+	edge.BrowserName = "edge"
+	edge.BrowserVersion = "18"
+	edge.OSName = "windows"
+	edge.OSVersion = "10"
+	edge.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "edge[stable].json")
+	edge.Labels = []string{"edge", shared.StableLabel}
+
+	firefox := chrome
+	firefox.BrowserName = "firefox"
+	firefox.BrowserVersion = "66"
+	firefox.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "firefox[stable].json")
+	firefox.Labels = []string{"firefox", shared.StableLabel}
+	firefoxExp := firefox
+	firefoxExp.BrowserVersion = "68.0"
+	firefoxExp.Labels = []string{"firefox", shared.ExperimentalLabel}
+	firefoxExp.ResultsURL = strings.Replace(firefox.ResultsURL, "[stable]", "[experimental]", -1)
+
+	safari := chrome
+	safari.BrowserName = "safari"
+	safari.BrowserVersion = "12.1"
+	safari.OSName = "mac"
+	safari.OSName = "10.13"
+	safari.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "safari[stable].json")
+	safari.Labels = []string{"safari", shared.StableLabel}
+	safariExp := safari
+	safariExp.BrowserVersion = "81 preview"
+	safariExp.Labels = []string{"safari", shared.ExperimentalLabel}
+	safariExp.ResultsURL = strings.Replace(safari.ResultsURL, "[stable]", "[experimental]", -1)
+
+	staticTestRuns := shared.TestRuns{
+		chrome,
+		chromeExp,
+		edge,
+		firefox,
+		firefoxExp,
+		safari,
+		safariExp,
+	}
+	labelRuns(staticTestRuns, "test", "static", shared.MasterLabel)
 
 	timeZero := time.Unix(0, 0)
 	// Follow pattern established in metrics/run/*.go data collection code.
@@ -120,13 +124,11 @@ func main() {
 	for i := range staticTestRuns {
 		staticTestRunMetadata[i] = &staticTestRuns[i]
 	}
-	staticPassRateMetadata := []interface{}{
-		&metrics.PassRateMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime: timeZero,
-				EndTime:   timeZero,
-				DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
-			},
+	passRateMetadata := metrics.PassRateMetadata{
+		TestRunsMetadata: metrics.TestRunsMetadata{
+			StartTime: timeZero,
+			EndTime:   timeZero,
+			DataURL:   fmt.Sprintf(metricsURLFmtString, "pass-rates"),
 		},
 	}
 
@@ -158,38 +160,53 @@ func main() {
 		for i, key := range addData(ctx, testRunKindName, staticTestRunMetadata) {
 			staticTestRuns[i].ID = key.IntID()
 		}
-		for i := range staticPassRateMetadata {
-			md := staticPassRateMetadata[i].(*metrics.PassRateMetadata)
-			md.TestRunIDs = staticTestRuns.GetTestRunIDs()
+		stableRuns := shared.TestRuns{}
+		defaultRuns := shared.TestRuns{}
+		for _, run := range staticTestRuns {
+			labels := run.LabelsSet()
+			if labels.Contains(shared.StableLabel) {
+				stableRuns = append(stableRuns, run)
+			} else if labels.Contains("edge") || labels.Contains(shared.ExperimentalLabel) {
+				defaultRuns = append(defaultRuns, run)
+			}
 		}
-		addData(ctx, passRateMetadataKindName, staticPassRateMetadata)
+		stableInterop := passRateMetadata
+		stableInterop.TestRunIDs = stableRuns.GetTestRunIDs()
+		defaultInterop := passRateMetadata
+		defaultInterop.TestRunIDs = defaultRuns.GetTestRunIDs()
+		addData(ctx, passRateMetadataKindName, []interface{}{
+			&stableInterop,
+			&defaultInterop,
+		})
 	}
 
-	log.Print("Adding latest production TestRun data...")
-	filters := shared.TestRunFilter{
-		Labels:   mapset.NewSetWith(shared.StableLabel),
-		MaxCount: numRemoteRuns,
+	if *remoteRuns {
+		log.Print("Adding latest production TestRun data...")
+		filters := shared.TestRunFilter{
+			Labels:   mapset.NewSetWith(shared.StableLabel),
+			MaxCount: numRemoteRuns,
+		}
+		copyProdRuns(ctx, filters)
+
+		log.Print("Adding latest master TestRun data...")
+		filters.Labels = mapset.NewSetWith(shared.MasterLabel)
+		copyProdRuns(ctx, filters)
+
+		log.Print("Adding latest experimental TestRun data...")
+		filters.Labels = mapset.NewSetWith(shared.ExperimentalLabel)
+		copyProdRuns(ctx, filters)
+
+		log.Print("Adding latest beta TestRun data...")
+		filters.Labels = mapset.NewSetWith(shared.BetaLabel)
+		copyProdRuns(ctx, filters)
+
+		log.Print("Adding latest aligned Edge stable and Chrome/Firefox/Safari experimental data...")
+		filters.Labels = mapset.NewSet(shared.MasterLabel)
+		filters.Products, _ = shared.ParseProductSpecs("chrome[experimental]", "edge[stable]", "firefox[experimental]", "safari[experimental]")
+		copyProdRuns(ctx, filters)
+
+		log.Printf("Successfully copied a total of %v distinct TestRuns", seenTestRunIDs.Cardinality())
 	}
-	copyProdRuns(ctx, filters)
-
-	log.Print("Adding latest master TestRun data...")
-	filters.Labels = mapset.NewSetWith(shared.MasterLabel)
-	copyProdRuns(ctx, filters)
-
-	log.Print("Adding latest experimental TestRun data...")
-	filters.Labels = mapset.NewSetWith(shared.ExperimentalLabel)
-	copyProdRuns(ctx, filters)
-
-	log.Print("Adding latest beta TestRun data...")
-	filters.Labels = mapset.NewSetWith(shared.BetaLabel)
-	copyProdRuns(ctx, filters)
-
-	log.Print("Adding latest aligned Edge stable and Chrome/Firefox/Safari experimental data...")
-	filters.Labels = mapset.NewSet(shared.MasterLabel)
-	filters.Products, _ = shared.ParseProductSpecs("chrome[experimental]", "edge[stable]", "firefox[experimental]", "safari[experimental]")
-	copyProdRuns(ctx, filters)
-
-	log.Printf("Successfully copied a total of %v distinct TestRuns", seenTestRunIDs.Cardinality())
 }
 
 func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
@@ -199,7 +216,7 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		if aligned {
 			filters.Aligned = &aligned
 		}
-		prodTestRuns, err := shared.FetchRuns(*host, filters)
+		prodTestRuns, err := shared.FetchRuns(*remoteHost, filters)
 		if err != nil {
 			log.Print(err)
 			continue
@@ -217,7 +234,7 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 
 		passRateMetadataKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 		filters.MaxCount = nil
-		prodPassRateMetadata, err := FetchInterop(*host, filters)
+		prodPassRateMetadata, err := FetchInterop(*remoteHost, filters)
 		if err != nil {
 			log.Printf("Failed to fetch interop (?aligned=%v).", aligned)
 			continue
@@ -295,8 +312,7 @@ func addData(ctx context.Context, kindName string, data []interface{}) (keys []*
 }
 
 func getRemoteAPIContext() (context.Context, error) {
-	const localhost = "localhost:9999"
-	remoteContext, err := remote_api.NewRemoteContext(localhost, http.DefaultClient)
+	remoteContext, err := remote_api.NewRemoteContext(*localRemoteAPIHost, http.DefaultClient)
 	return remoteContext, err
 }
 

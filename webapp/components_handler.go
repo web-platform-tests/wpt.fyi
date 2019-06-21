@@ -33,6 +33,8 @@ func componentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	bytes = packageRegex.ReplaceAll(bytes, []byte(packageRegexReplacement))
-	w.Header().Add("Content-Type", mime.TypeByExtension(filepath.Ext(filePath)))
+	// Cache up to a day (same as the default expiration in app.yaml).
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(filePath)))
 	w.Write(bytes)
 }

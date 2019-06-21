@@ -56,7 +56,7 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
 
     <div class\$="icon [[containerClass(small)]]">
       <img class="browser" src="[[displayLogo(product.browser_name, product.labels)]]">
-      <template is="dom-if" if="[[source]]">
+      <template is="dom-if" if="[[source]]" restamp>
         <img class="source" src="/static/[[source]].svg">
       </template>
     </div>

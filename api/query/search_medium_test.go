@@ -110,7 +110,6 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	sh := unstructuredSearchHandler{queryHandler{
 		store:      shared.NewAppEngineDatastore(ctx, false),
-		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, cache),
 	}}
 	sc := NewShouldCache(t, true, shouldCacheSearchResponse)
@@ -120,42 +119,42 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	bytes, err := ioutil.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
-	var data SearchResponse
+	var data shared.SearchResponse
 	err = json.Unmarshal(bytes, &data)
 	assert.Nil(t, err)
 
 	// Same result as TestGetRunsAndFilters_specificRunIDs.
-	assert.Equal(t, SearchResponse{
+	assert.Equal(t, shared.SearchResponse{
 		Runs: testRuns,
-		Results: []SearchResult{
-			SearchResult{
+		Results: []shared.SearchResult{
+			shared.SearchResult{
 				Test: "/a/b/c",
-				LegacyStatus: []LegacySearchRunResult{
-					LegacySearchRunResult{
+				LegacyStatus: []shared.LegacySearchRunResult{
+					shared.LegacySearchRunResult{
 						Passes: 1,
 						Total:  2,
 					},
-					LegacySearchRunResult{},
+					shared.LegacySearchRunResult{},
 				},
 			},
-			SearchResult{
+			shared.SearchResult{
 				Test: "/b/c",
-				LegacyStatus: []LegacySearchRunResult{
-					LegacySearchRunResult{
+				LegacyStatus: []shared.LegacySearchRunResult{
+					shared.LegacySearchRunResult{
 						Passes: 9,
 						Total:  9,
 					},
-					LegacySearchRunResult{
+					shared.LegacySearchRunResult{
 						Passes: 5,
 						Total:  9,
 					},
 				},
 			},
-			SearchResult{
+			shared.SearchResult{
 				Test: "/z/b/c",
-				LegacyStatus: []LegacySearchRunResult{
-					LegacySearchRunResult{},
-					LegacySearchRunResult{
+				LegacyStatus: []shared.LegacySearchRunResult{
+					shared.LegacySearchRunResult{},
+					shared.LegacySearchRunResult{
 						Passes: 0,
 						Total:  8,
 					},
@@ -240,7 +239,6 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	sh := structuredSearchHandler{
 		queryHandler{
 			store:      shared.NewAppEngineDatastore(ctx, false),
-			sharedImpl: defaultShared{ctx},
 			dataSource: shared.NewByteCachedStore(ctx, mc, store),
 		},
 		api,
@@ -252,42 +250,42 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	bytes, err := ioutil.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
-	var data SearchResponse
+	var data shared.SearchResponse
 	err = json.Unmarshal(bytes, &data)
 	assert.Nil(t, err, "Error unmarshalling \"%s\"", string(bytes))
 
 	// Same result as TestGetRunsAndFilters_specificRunIDs.
-	assert.Equal(t, SearchResponse{
+	assert.Equal(t, shared.SearchResponse{
 		Runs: testRuns,
-		Results: []SearchResult{
-			SearchResult{
+		Results: []shared.SearchResult{
+			shared.SearchResult{
 				Test: "/a/b/c",
-				LegacyStatus: []LegacySearchRunResult{
-					LegacySearchRunResult{
+				LegacyStatus: []shared.LegacySearchRunResult{
+					shared.LegacySearchRunResult{
 						Passes: 1,
 						Total:  2,
 					},
-					LegacySearchRunResult{},
+					shared.LegacySearchRunResult{},
 				},
 			},
-			SearchResult{
+			shared.SearchResult{
 				Test: "/b/c",
-				LegacyStatus: []LegacySearchRunResult{
-					LegacySearchRunResult{
+				LegacyStatus: []shared.LegacySearchRunResult{
+					shared.LegacySearchRunResult{
 						Passes: 9,
 						Total:  9,
 					},
-					LegacySearchRunResult{
+					shared.LegacySearchRunResult{
 						Passes: 5,
 						Total:  9,
 					},
 				},
 			},
-			SearchResult{
+			shared.SearchResult{
 				Test: "/z/b/c",
-				LegacyStatus: []LegacySearchRunResult{
-					LegacySearchRunResult{},
-					LegacySearchRunResult{
+				LegacyStatus: []shared.LegacySearchRunResult{
+					shared.LegacySearchRunResult{},
+					shared.LegacySearchRunResult{
 						Passes: 0,
 						Total:  8,
 					},
@@ -370,7 +368,6 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	sh := unstructuredSearchHandler{
 		queryHandler{
 			store:      shared.NewAppEngineDatastore(ctx, false),
-			sharedImpl: defaultShared{ctx},
 			dataSource: shared.NewByteCachedStore(ctx, mc, store),
 		},
 	}
@@ -381,14 +378,14 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	bytes, err := ioutil.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
-	var data SearchResponse
+	var data shared.SearchResponse
 	err = json.Unmarshal(bytes, &data)
 	assert.Nil(t, err)
 
 	// Same result as TestGetRunsAndFilters_specificRunIDs.
-	assert.Equal(t, SearchResponse{
+	assert.Equal(t, shared.SearchResponse{
 		Runs:    testRuns,
-		Results: []SearchResult{},
+		Results: []shared.SearchResult{},
 	}, data)
 
 	assert.True(t, rs[0].IsClosed())
@@ -467,7 +464,6 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	sh := structuredSearchHandler{
 		queryHandler{
 			store:      shared.NewAppEngineDatastore(ctx, false),
-			sharedImpl: defaultShared{ctx},
 			dataSource: shared.NewByteCachedStore(ctx, mc, store),
 		},
 		api,
@@ -479,14 +475,14 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	bytes, err := ioutil.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
-	var data SearchResponse
+	var data shared.SearchResponse
 	err = json.Unmarshal(bytes, &data)
 	assert.Nil(t, err)
 
 	// Same result as TestGetRunsAndFilters_specificRunIDs.
-	assert.Equal(t, SearchResponse{
+	assert.Equal(t, shared.SearchResponse{
 		Runs:    testRuns,
-		Results: []SearchResult{},
+		Results: []shared.SearchResult{},
 	}, data)
 
 	assert.True(t, rs[0].IsClosed())

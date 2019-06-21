@@ -524,10 +524,11 @@ def prepare_labels(report: WPTReport,
     return labels
 
 
-def normalize_product(report):
-    """Normalizes the product identifier.
+def normalize_product(report: WPTReport) -> Set[str]:
+    """Normalizes the product identifier in the report.
 
-    Computes what labels need to be added while normalizing the product.
+    In addition to modifying the 'product' of the report, this function also
+    returns a set of labels that need to be added.
 
     Args:
         report: A WPTReport
@@ -536,10 +537,12 @@ def normalize_product(report):
        A set of strings.
     """
     product = report.run_info['product']
-    if "_" in product:
-        tokens = product.split("_")
-        report.run_info['product'] = tokens[0]
-        return set(tokens)
+    if product == 'edge_webdriver':
+        report.run_info['product'] = 'edge'
+        return {'edge', 'webdriver', 'edge_webdriver'}
+    elif product == 'edgechromium':
+        report.run_info['product'] = 'edge'
+        return {'edge', 'edgechromium'}
     else:
         return set()
 

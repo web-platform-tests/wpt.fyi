@@ -13,28 +13,30 @@
   </test-fixture>
   <script type="module">
 import { waitingOn } from './util/helpers.js';
-import { WPTInterop } from '../interop.js';
+import { WPTInterop } from '../../views/wpt-interop.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 
 suite('WPTInterop', () => {
   const fetches = {};
   let sandbox;
 
-  setup(async() => {
-    sandbox = sinon.sandbox.create();
-
+  suiteSetup(async() => {
     const interopScores = await fetch('fixtures/interop.json').then(r => r.json());
     fetches['/api/interop'] = interopScores;
+    fetches['/api/search'] = interopScores;
     fetches[interopScores.url] = await fetch('fixtures/passrates.json').then(r => r.json());
+  });
 
+  setup(() => {
+    sandbox = sinon.sandbox.create();
     sandbox.stub(window, 'fetch', (url) => {
-      return Promise.resolve(new Response(JSON.stringify(fetches[url])));
+      const path = new URL(url, window.location).pathname; // Ignore params.
+      return Promise.resolve(new Response(JSON.stringify(fetches[path])));
     });
   });
 
-  teardown(done => {
+  teardown(() => {
     sandbox.restore();
-    done();
   });
 
   test('instanceof Polymer.Element', () => {
@@ -55,13 +57,14 @@ suite('WPTInterop', () => {
       interop = fixture('wpt-interop-fixture');
     });
 
-    suite('async ready()', () => {
-      test('super.ready()', () => {
-        return waitingOn(() => PolymerElement.prototype.ready.called);
-      });
+    test('super.ready()', () => {
+      return waitingOn(() => PolymerElement.prototype.ready.called);
+    });
 
-      test('fetches interop', () => {
-        return waitingOn(() => window.fetch.calledWith('/api/interop'));
+    test('fetches interop', () => {
+      return waitingOn(() => {
+        return window.fetch.getCalls()
+          .find(c => c.args.length && c.args[0].pathname === '/api/interop');
       });
     });
 

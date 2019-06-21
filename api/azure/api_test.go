@@ -37,8 +37,8 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	chrome := "chrome"
 	completed := "completed"
 	created := "created"
-	repoName := "wpt"
-	repoOwner := "web-platform-tests"
+	repoName := shared.WPTRepoName
+	repoOwner := shared.WPTRepoOwner
 	sender := "lukebjerring"
 	event := &github.CheckRunEvent{
 		Action: &created,

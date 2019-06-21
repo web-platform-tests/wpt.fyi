@@ -3,10 +3,5 @@
     "components/test/*.html"
   ],
   "verbose": false,
-  "expanded": true,
-  "plugins": {
-    "local": {
-      "browsers": ["chrome", "firefox"]
-    }
-  }
+  "expanded": true
 }

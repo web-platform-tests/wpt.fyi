@@ -4,6 +4,21 @@
  * found in the LICENSE file.
  */
 
+import { LoadingState } from '../components/loading-state.js';
+import { PathInfo } from '../components/path.js';
+import '../components/results-navigation.js';
+import '../components/test-file-results-table-terse.js';
+import '../components/test-file-results-table-verbose.js';
+import '../components/test-file-results.js';
+import '../components/test-run.js';
+import '../components/test-runs-query-builder.js';
+import '../components/test-runs-query.js';
+import { TestRunsUIQuery } from '../components/test-runs-query.js';
+import { TestRunsQueryLoader } from '../components/test-runs.js';
+import '../components/test-search.js';
+import { WPTColors } from '../components/wpt-colors.js';
+import { WPTFlags } from '../components/wpt-flags.js';
+import '../components/wpt-permalinks.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-progress/paper-progress.js';
@@ -14,24 +29,12 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { LoadingState } from './loading-state.js';
-import './path-part.js';
-import { SelfNavigation } from './self-navigator.js';
-import './test-file-results-table-terse.js';
-import './test-file-results-table-verbose.js';
-import './test-file-results.js';
-import './test-run.js';
-import './test-runs-query-builder.js';
-import { TestRunsQueryLoader } from './test-runs.js';
-import './test-search.js';
-import { WPTColors } from './wpt-colors.js';
-import { WPTFlags } from './wpt-flags.js';
-import './wpt-permalinks.js';
 
-class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
-  TestRunsQueryLoader(
-    PolymerElement,
-    'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)'))))) {
+const interopQueryCompute =
+  'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)';
+
+class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
+    TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
   static get template() {
     return html`
   <style>
@@ -126,74 +129,10 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     }
   </style>
 
-  <results-tabs tab="interop" path="[[encodedPath]]" query="[[query]]">
-  </results-tabs>
-
-  <section class="search">
-    <div class="path">
-      <a href="/interop/[[ query ]]" on-click="navigate">wpt</a>
-      <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part">
-        <span class="path-separator">/</span>
-        <a href="/interop[[ part.path ]][[ query ]]" on-click="navigate">[[ part.name ]]</a>
-      </template>
-    </div>
-
-    <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
-
-    <test-search query="{{search}}"
-                 structured-query="{{structuredSearch}}"
-                 test-runs="[[testRuns]]"
-                 test-paths="[[testPaths]]">
-    </test-search>
-
-    <template is="dom-if" if="{{ pathIsATestFile }}">
-      <div class="links">
-        <ul>
-          <li>
-            <a href\$="https://github.com/web-platform-tests/wpt/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
-
-            <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
-              <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
-               browser on w3c-test.org</a></li>
-            </template>
-
-            <template is="dom-if" if="[[ webPlatformTestsLive ]]">
-              <li><a href\$="[[scheme]]://web-platform-tests.live[[path]]" target="_blank">Run in your
-                browser on web-platform-tests.live</a></li>
-            </template>
-        </ul>
-      </div>
-    </template>
-
-    <template is="dom-if" if="[[resultsRangeMessage]]">
-      <info-banner>
-        [[resultsRangeMessage]]
-        <template is="dom-if" if="[[permalinks]]">
-          <wpt-permalinks path="[[path]]"
-                          path-prefix="/interop/"
-                          query-params="[[queryParams]]"
-                          test-runs="[[testRuns]]">
-          </wpt-permalinks>
-          <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-        </template>
-        <template is="dom-if" if="[[queryBuilder]]">
-          <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
-        </template>
-      </info-banner>
-    </template>
-  </section>
-
   <template is="dom-if" if="[[interopLoadFailed]]">
     <info-banner type="error">
       Failed to fetch interop data.
     </info-banner>
-  </template>
-
-  <template is="dom-if" if="[[queryBuilder]]">
-    <iron-collapse opened="[[editingQuery]]">
-      <test-runs-query-builder product-specs="[[productSpecs]]" labels="[[labels]]" master="[[master]]" shas="[[shas]]" aligned="[[aligned]]" on-submit="[[submitQuery]]" from="[[from]]" to="[[to]]" diff="[[diff]]">
-      </test-runs-query-builder>
-    </iron-collapse>
   </template>
 
   <template is="dom-if" if="[[!pathIsATestFile]]">
@@ -289,12 +228,10 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
       },
       search: {
         type: String,
-        value: '',
         notify: true,
+        observer: 'handleSearchCommit',
       },
       structuredSearch: Object,
-      onSearchCommit: Function,
-      onSearchAutocomplete: Function,
       interopLoadFailed: Boolean,
       testPaths: {
         type: Set,
@@ -310,17 +247,6 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
 
   constructor() {
     super();
-    this.onSearchCommit = (e) => {
-      this.handleSearchCommit(e.detail.query);
-    };
-    this.onSearchAutocomplete = (e) => {
-      this.handleSearchAutocomplete(e.detail.path);
-    };
-    this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
-    this.toggleQueryEdit = () => {
-      this.editingQuery = !this.editingQuery;
-    };
-    this.submitQuery = this.handleSubmitQuery.bind(this);
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
@@ -330,17 +256,6 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     };
     this.sortedBy = (sortColumn, i) => sortColumn === `${i}`;
     this.sortedByAsc = (sortColumn, i) => sortColumn === `-${i}`;
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this.testSearch.addEventListener('commit', this.onSearchCommit);
-    this.testSearch.addEventListener('autocomplete', this.onSearchAutocomplete);
-  }
-
-  disconnectedCallback() {
-    this.testSearch.removeEventListener('commit', this.onSearchCommit);
-    super.disconnectedCallback();
   }
 
   async ready() {
@@ -357,13 +272,22 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     }
   }
 
-  get testSearch() {
-    return this.shadowRoot.querySelector('test-search');
+  reloadData() {
+    if (!this.diff) {
+      this.diffRun = null;
+    }
+    this.testRuns = null;
+    this.searchResults = null;
+    this.loadData();
   }
 
   fetchPrecomputedInterop() {
+    const url = new URL('/api/interop', window.location);
+    if (this.query) {
+      url.search = this.query;
+    }
     this.load(
-      fetch(`/api/interop${this.query}`)
+      fetch(url)
         .then(async r => {
           if (!r.ok || r.status !== 200) {
             Promise.reject('Failed to fetch interop data');
@@ -383,7 +307,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     this.load(
       Promise.resolve(this.testRuns || this.loadRuns())
         .then(runs => {
-          if (!runs) {
+          if (!runs || !runs.length) {
             return;
           }
           const body = {
@@ -433,11 +357,7 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     );
   }
 
-  navigationPathPrefix() {
-    return '/interop';
-  }
-
-  interopQueryParams(shas, aligned, master, labels, productSpecs, maxCount, offset, to, from, search) {
+  interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search) {
     const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
     if (search) {
       params.q = search;
@@ -501,18 +421,9 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
 
   handleSearchCommit() {
     if (this.structuredQueries && this.searchCacheInterop) {
-      this.fetchSearchCacheInterop();
-    } else {
-      this.precomputedInteropLoaded(this.precomputedInterop);
+      return;
     }
-
-    // Trigger a virtual navigation.
-    this.navigateToLocation(window.location);
-  }
-
-  handleSearchAutocomplete(path) {
-    this.shadowRoot.querySelector('test-search').clear();
-    this.navigateToPath(path);
+    this.precomputedInteropLoaded(this.precomputedInterop);
   }
 
   computeDisplayedNodes(path, displayedTests, sortColumn) {
@@ -592,23 +503,12 @@ class WPTInterop extends WPTColors(WPTFlags(SelfNavigation(LoadingState(
     };
   }
 
-  handleSubmitQuery() {
-    const queryBefore = this.query;
-    const builder = this.shadowRoot.querySelector('test-runs-query-builder');
-    this.editingQuery = false;
-    this.updateQueryParams(builder.queryParams);
-    if (queryBefore === this.query) {
+  queryChanged(query, queryBefore) {
+    super.queryChanged(query, queryBefore);
+    if (queryBefore === query) {
       return;
     }
-    // Trigger a virtual navigation.
-    this.navigateToLocation(window.location);
-    // Reload the data.
-    if (!this.diff) {
-      this.diffRun = null;
-    }
-    this.testRuns = null;
-    this.searchResults = null;
-    this.loadData();
+    this.reloadData();
   }
 
   // interopScore is a percentage.

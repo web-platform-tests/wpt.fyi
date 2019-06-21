@@ -6,12 +6,14 @@ package shared
 
 import (
 	"net/http"
-	"path"
 	"sort"
 
 	"github.com/go-yaml/yaml"
 	"github.com/web-platform-tests/wpt-metadata/util"
 )
+
+// MetadataArchiveURL is the URL that retrieves an archive of wpt-metadata repository.
+var MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
 
 // ShowMetadataParam determines whether Metadata Information returns along
 // with a test result query request.
@@ -53,13 +55,26 @@ func (m MetadataResults) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
-func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger) MetadataResults {
-	metadataByteMap, err := util.CollectMetadata(client)
+func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, url string) (MetadataResults, error) {
+	var productSpecs = make([]ProductSpec, len(testRuns))
+	for i, run := range testRuns {
+		productSpecs[i] = ProductSpec{ProductAtRevision: run.ProductAtRevision, Labels: run.LabelsSet()}
+	}
+	return getMetadataResponseOnProductSpecs(productSpecs, client, log, url)
+}
+
+// GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
+func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
+	return getMetadataResponseOnProductSpecs(productSpecs, client, log, url)
+}
+
+func getMetadataResponseOnProductSpecs(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
+	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
 	if err != nil {
-		return MetadataResults{}
+		return nil, err
 	}
 	metadata := parseMetadata(metadataByteMap, log)
-	return constructMetadataResponse(testRuns, metadata)
+	return constructMetadataResponse(productSpecs, metadata), nil
 }
 
 // parseMetadata collects and parses all META.yml files from
@@ -70,7 +85,7 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 		var metadata Metadata
 		err := yaml.Unmarshal(data, &metadata)
 		if err != nil {
-			log.Warningf("Failed to unmarshal %s.yml.", path)
+			log.Warningf("Failed to unmarshal %s.", path)
 			continue
 		}
 		metadataMap[path] = metadata
@@ -78,10 +93,8 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 	return metadataMap
 }
 
-// ConstructMetadataResponse constructs the response to a WPT Metadata query.
-// When parsing 'link' nodes, assume there is no mising information nor duplicates;
-// assume each test for each browser type is only associated with one bug.
-func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata) MetadataResults {
+// constructMetadataResponse constructs the response to a WPT Metadata query, given ProductSpecs.
+func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Metadata) MetadataResults {
 	res := MetadataResults{}
 	for folderPath, data := range metadata {
 		testMap := make(map[string][]string)
@@ -89,16 +102,17 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 		for _, link := range data.Links {
 			var urls []string
 
-			var fullTestName = path.Join(folderPath, link.TestPath)
+			//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
+			var fullTestName = "/" + folderPath + "/" + link.TestPath
 
 			if _, ok := testMap[fullTestName]; !ok {
-				testMap[fullTestName] = make([]string, len(testRuns))
+				testMap[fullTestName] = make([]string, len(productSpecs))
 			}
 			urls = testMap[fullTestName]
 
-			for i, run := range testRuns {
+			for i, productSpec := range productSpecs {
 				// Matches browser type if a version is not specified.
-				if link.Product.Matches(run) {
+				if link.Product.MatchesProductSpec(productSpec) {
 					urls[i] = link.URL
 				} else if link.Product.BrowserName == "" && urls[i] == "" {
 					// Matches to all browsers if product is not specified.
@@ -126,4 +140,13 @@ func constructMetadataResponse(testRuns []TestRun, metadata map[string]Metadata)
 	}
 	sort.Sort(res)
 	return res
+}
+
+// PrepareLinkFilter maps a MetadataResult test name to its URLs.
+func PrepareLinkFilter(metadata MetadataResults) map[string][]string {
+	metadataMap := make(map[string][]string)
+	for _, data := range metadata {
+		metadataMap[data.Test] = data.URLs
+	}
+	return metadataMap
 }
