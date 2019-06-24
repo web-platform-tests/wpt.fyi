@@ -252,6 +252,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   }
 
   _computeDisplayedMetadata(path, metadata) {
+    if (!metadata) {
+      return;
+    }
+
     let wptMetadata = [];
     for (let i = 0; i < metadata.length; i++) {
       const node = metadata[i];
