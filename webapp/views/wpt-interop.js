@@ -13,6 +13,7 @@ import '../components/test-file-results.js';
 import '../components/test-run.js';
 import '../components/test-runs-query-builder.js';
 import '../components/test-runs-query.js';
+import '../components/wpt-amend-metadata.js';
 import { TestRunsUIQuery } from '../components/test-runs-query.js';
 import { TestRunsQueryLoader } from '../components/test-runs.js';
 import '../components/test-search.js';
@@ -21,6 +22,7 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-progress/paper-progress.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
@@ -33,7 +35,7 @@ const interopQueryCompute =
   'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)';
 
 class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
-    TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
+  TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
   static get template() {
     return html`
   <style>
@@ -154,7 +156,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
         <tr>
           <th>Path</th>
           <template is="dom-if" if="{{ testRuns }}">
-            <th colspan="100">Tests Passing in <var>X</var> / [[testRuns.length]] Browsers</th>
+            <th colspan$="[[thLabels.length]]">Tests Passing in <var>X</var> / [[testRuns.length]] Browsers</th>
           </template>
         </tr>
         <tr>
@@ -167,6 +169,9 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
               <template is="dom-if" if="[[sortedByAsc(sortColumn, i)]]">▲</template>
             </th>
           </template>
+          <template is="dom-if" if="[[ interopScoreColumn ]]">
+            <th>Interop score</th>
+          </template>
         </tr>
       </thead>
       <tbody>
@@ -177,7 +182,19 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
             </td>
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
-              <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+              <template is="dom-if" if="[[ hasAmendableMetadata(node.path, node.total, passRate) ]]">
+                <td class="score" onclick="[[openAmendMetadata(i, node)]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+              </template>
+
+              <template is="dom-if" if="[[ !hasAmendableMetadata(node.path, node.total, passRate) ]]">
+                <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+              </template>
+            </template>
+
+            <template is="dom-if" if="[[ interopScoreColumn ]]">
+              <td>
+                <paper-progress value="[[ interopScore(node) ]]"></paper-progress>
+              </td>
             </template>
           </tr>
         </template>
@@ -188,7 +205,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
   <template is="dom-if" if="[[ pathIsATestFile ]]">
     <test-file-results test-runs="[[testRuns]]" path="[[path]]"></test-file-results>
   </template>
-
+  <wpt-amend-metadata path="[[ path ]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]"></wpt-amend-metadata>
   <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
 `;
   }
@@ -237,6 +254,14 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
 
   constructor() {
     super();
+    this.openAmendMetadata = (i, node) => {
+      return () => {
+        const amend = this.shadowRoot.querySelector('wpt-amend-metadata');
+        amend.test = node.path;
+        amend.productIndex = i;
+        amend.open();
+      };
+    };
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
@@ -409,6 +434,10 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     return `background-color: ${this.passRateColorRGBA(browserCount, this.testRuns.length, alpha)}`;
   }
 
+  hasAmendableMetadata(nodePath, nodeTotal, passRate) {
+    return this.computePathIsATestFile(nodePath) && (nodeTotal - passRate) > 0;
+  }
+
   handleSearchCommit() {
     if (this.structuredQueries && this.searchCacheInterop) {
       return;
@@ -499,6 +528,18 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
       return;
     }
     this.reloadData();
+  }
+
+  // interopScore is a percentage.
+  interopScore(node) {
+    let score = 0;
+    const products = node.interop.length - 1;
+    for (let i = 0; i < node.interop.length; i++) {
+      // 0.5 (half) of the products implementing a feature is worst-case, so we
+      // score by the distance from that.
+      score += 2 * Math.abs(0.5 - (i / products)) * node.interop[i] / node.total;
+    }
+    return Math.round(score * 100);
   }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);

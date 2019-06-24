@@ -108,6 +108,8 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
         name += '-dev';
       } else if (labels.has('beta')) {
         name += '-beta';
+      } else if (labels.has('canary')) {
+        name += '-canary';
       }
     }
     return `/static/${name}_64x64.png`;
