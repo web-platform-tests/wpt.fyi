@@ -165,19 +165,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         computed: '_computePath(subroute.path)',
       },
-      metadata: {
-        type: Array,
-        value: [
-          {
-            test: '/IndexedDB/bindings-inject-key.html',
-            urls: ['bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844', 'bugs.chromium.org/p/chromium/issues/detail?id=934844']
-          },
-          {
-            test: '/html/browsers/history/the-history-interface/007.html',
-            urls: ['bugs.chromium.org/p/chromium/issues/detail?id=592874', '']
-          }
-        ]
-      },
+      metadata: Array,
       displayedMetadata: {
         type: Array,
         computed: '_computeDisplayedMetadata(path, metadata)'
@@ -233,6 +221,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     }
     this.shadowRoot.querySelector('app-location')
       ._createPropertyObserver('__query', query => this.query = query);
+    this._loadAllMetadata()
   }
 
   queryChanged(query) {
@@ -276,6 +265,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       }
     }
     return wptMetadata;
+  }
+
+  _loadAllMetadata() {
+    const url = new URL('/api/metadata', window.location);
+    url.searchParams.set('products', 'safari,chrome,edge,firefox')
+    this.load(
+      window.fetch(url).then(r => r.json()).then(metadata => {
+        this.metadata = metadata;
+      })
+    );
   }
 
   splitPathIntoLinkedParts(inputPath) {
