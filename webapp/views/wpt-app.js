@@ -18,7 +18,9 @@ import '../views/wpt-interop.js';
 import '../views/wpt-results.js';
 
 class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
-  static get is() { return 'wpt-app'; }
+  static get is() {
+    return 'wpt-app';
+  }
 
   static get template() {
     return html`
@@ -165,14 +167,15 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         computed: '_computePath(subroute.path)',
       },
+      structuredSearch: Object,
+      interopLoading: Boolean,
+      resultsLoading: Boolean,
+      products: Array,
       metadata: Array,
       displayedMetadata: {
         type: Array,
         computed: '_computeDisplayedMetadata(path, metadata)'
       },
-      structuredSearch: Object,
-      interopLoading: Boolean,
-      resultsLoading: Boolean,
       isLoading: {
         type: Boolean,
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
@@ -184,7 +187,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return [
       '_routeChanged(routeData, routeData.*)',
       '_subrouteChanged(subrouteData, subrouteData.*)',
-    ]
+    ];
   }
 
   constructor() {
@@ -221,7 +224,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     }
     this.shadowRoot.querySelector('app-location')
       ._createPropertyObserver('__query', query => this.query = query);
-    this._loadAllMetadata()
+    this._loadAllMetadata();
   }
 
   queryChanged(query) {
@@ -261,8 +264,13 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       const node = metadata[i];
       if (node.test.includes(path)) {
         const urls = metadata[i]['urls'];
+        let urlSet = new Set();
+        urlSet.add('');
         for (let j = 0; j < urls.length; j++) {
-          if (urls[j] === '') continue;
+          if (urlSet.has(urls[j])) {
+            continue;
+          }
+          urlSet.add(urls[j]);
           const wptMetadataNode = { test: node.test, url: urls[j] };
           wptMetadata.push(wptMetadataNode);
         }
@@ -272,8 +280,13 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   }
 
   _loadAllMetadata() {
+    let productVal = [];
+    for (let i = 0; i < this.products.length; i++) {
+      productVal.push(this.products[i].browser_name);
+    }
+
     const url = new URL('/api/metadata', window.location);
-    url.searchParams.set('products', 'safari,chrome,edge,firefox')
+    url.searchParams.set('products', productVal.join(','));
     window.fetch(url).then(r => r.json()).then(metadata => {
       this.metadata = metadata;
     });
