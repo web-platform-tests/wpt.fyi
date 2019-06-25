@@ -6,7 +6,6 @@ import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
-import '../components/wpt-flags.js';
 import '../components/wpt-metadata.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
