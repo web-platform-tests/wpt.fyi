@@ -274,11 +274,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   _loadAllMetadata() {
     const url = new URL('/api/metadata', window.location);
     url.searchParams.set('products', 'safari,chrome,edge,firefox')
-    this.load(
-      window.fetch(url).then(r => r.json()).then(metadata => {
-        this.metadata = metadata;
-      })
-    );
+    window.fetch(url).then(r => r.json()).then(metadata => {
+      this.metadata = metadata;
+    });
   }
 
   splitPathIntoLinkedParts(inputPath) {

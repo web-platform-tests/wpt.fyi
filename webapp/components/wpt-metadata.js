@@ -85,11 +85,11 @@ class WPTMetadata extends PolymerElement {
             ></wpt-metadata-node>
           </template>
         </iron-collapse>
-        <paper-button id="metadata-toggle" onclick="[[openCollapsible]]"
-          >Show more</paper-button
-        >
+        <paper-button id="metadata-toggle" onclick="[[openCollapsible]]">
+          Show more
+        </paper-button>
       </template>
-      <br />
+      <br>
     `;
   }
 
