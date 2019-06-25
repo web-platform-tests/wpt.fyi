@@ -99,18 +99,19 @@ class WPTMetadata extends PolymerElement {
 
   static get properties() {
     return {
-      path: {
-        type: String,
-        observer: 'loadMetadata'
+      path: String,
+      metadata: Array,
+      displayedMetadata: {
+        type: Array,
+        computed: 'computeDisplayedMetadata(path, metadata)'
       },
-      wptMetadata: Array,
       firstThree: {
         type: Array,
-        computed: 'computeFirstThree(wptMetadata)'
+        computed: 'computeFirstThree(displayedMetadata)'
       },
       others: {
         type: Array,
-        computed: 'computeOthers(wptMetadata)'
+        computed: 'computeOthers(displayedMetadata)'
       }
     };
   }
@@ -120,11 +121,7 @@ class WPTMetadata extends PolymerElement {
     this.openCollapsible = this.handleOpenCollapsible.bind(this);
   }
 
-  loadMetadata(path) {
-    if (!path) {
-      return;
-    }
-
+  _resetSelectors() {
     const button = this.shadowRoot.querySelector('#metadata-toggle');
     const collapse = this.shadowRoot.querySelector('#metadata-collapsible');
     if (this.others && button && collapse) {
@@ -133,15 +130,42 @@ class WPTMetadata extends PolymerElement {
     }
   }
 
-  computeFirstThree(wptMetadata) {
-    return wptMetadata && wptMetadata.length && wptMetadata.slice(0, 3);
+  computeDisplayedMetadata(path, metadata) {
+    if (!metadata || !path) {
+      return;
+    }
+
+    let displayedMetadata = [];
+    for (let i = 0; i < metadata.length; i++) {
+      const node = metadata[i];
+      if (node.test.includes(path)) {
+        const urls = metadata[i]['urls'];
+        let urlSet = new Set();
+        urlSet.add('');
+        for (let j = 0; j < urls.length; j++) {
+          if (urlSet.has(urls[j])) {
+            continue;
+          }
+          urlSet.add(urls[j]);
+          const wptMetadataNode = { test: node.test, url: urls[j] };
+          displayedMetadata.push(wptMetadataNode);
+        }
+      }
+    }
+
+    this._resetSelectors();
+    return displayedMetadata;
   }
 
-  computeOthers(wptMetadata) {
-    if (!wptMetadata || wptMetadata.length < 4) {
+  computeFirstThree(displayedMetadata) {
+    return displayedMetadata && displayedMetadata.length && displayedMetadata.slice(0, 3);
+  }
+
+  computeOthers(displayedMetadata) {
+    if (!displayedMetadata || displayedMetadata.length < 4) {
       return null;
     }
-    return wptMetadata.slice(3);
+    return displayedMetadata.slice(3);
   }
 
   handleOpenCollapsible() {

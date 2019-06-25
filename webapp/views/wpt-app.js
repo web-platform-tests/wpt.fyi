@@ -81,10 +81,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           </template>
         </template>
 
-        <template is="dom-if" if="[[pathIsASubfolder]]">
-          <wpt-metadata wpt-metadata="[[displayedMetadata]]" path="[[path]]"></wpt-metadata>
-        </template>
-
         <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
 
         <test-search query="[[search]]"
@@ -146,6 +142,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
 
+      <template is="dom-if" if="[[pathIsASubfolder]]">
+        <wpt-metadata metadata="[[metadata]]" path="[[path]]"></wpt-metadata>
+      </template>
+
       <paper-toast id="masterLabelMissing" duration="15000">
         <div style="display: flex;">
           wpt.fyi now includes affected tests results from PRs. <br>
@@ -170,12 +170,11 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
-      products: Array,
-      metadata: Array,
-      displayedMetadata: {
+      products: {
         type: Array,
-        computed: '_computeDisplayedMetadata(path, metadata)'
+        observer: 'loadAllMetadata'
       },
+      metadata: Array,
       isLoading: {
         type: Boolean,
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
@@ -224,7 +223,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     }
     this.shadowRoot.querySelector('app-location')
       ._createPropertyObserver('__query', query => this.query = query);
-    this._loadAllMetadata();
   }
 
   queryChanged(query) {
@@ -254,35 +252,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return subroutePath || '/';
   }
 
-  _computeDisplayedMetadata(path, metadata) {
-    if (!metadata) {
-      return;
-    }
-
-    let wptMetadata = [];
-    for (let i = 0; i < metadata.length; i++) {
-      const node = metadata[i];
-      if (node.test.includes(path)) {
-        const urls = metadata[i]['urls'];
-        let urlSet = new Set();
-        urlSet.add('');
-        for (let j = 0; j < urls.length; j++) {
-          if (urlSet.has(urls[j])) {
-            continue;
-          }
-          urlSet.add(urls[j]);
-          const wptMetadataNode = { test: node.test, url: urls[j] };
-          wptMetadata.push(wptMetadataNode);
-        }
-      }
-    }
-    return wptMetadata;
-  }
-
-  _loadAllMetadata() {
+  loadAllMetadata(products) {
     let productVal = [];
-    for (let i = 0; i < this.products.length; i++) {
-      productVal.push(this.products[i].browser_name);
+    for (let i = 0; i < products.length; i++) {
+      productVal.push(products[i].browser_name);
     }
 
     const url = new URL('/api/metadata', window.location);
