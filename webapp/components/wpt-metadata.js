@@ -12,6 +12,7 @@ import {
   html,
   PolymerElement
 } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { LoadingState } from './loading-state.js';
 
 class WPTMetadataNode extends PolymerElement {
   static get template() {
@@ -63,7 +64,7 @@ class WPTMetadataNode extends PolymerElement {
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
 
-class WPTMetadata extends PolymerElement {
+class WPTMetadata extends LoadingState(PolymerElement) {
   static get template() {
     return html`
       <style>
@@ -99,6 +100,10 @@ class WPTMetadata extends PolymerElement {
 
   static get properties() {
     return {
+      products: {
+        type: Array,
+        observer: 'loadAllMetadata'
+      },
       path: String,
       metadata: Array,
       displayedMetadata: {
@@ -128,6 +133,21 @@ class WPTMetadata extends PolymerElement {
       button.hidden = false;
       collapse.opened = false;
     }
+  }
+
+  loadAllMetadata(products) {
+    let productVal = [];
+    for (let i = 0; i < products.length; i++) {
+      productVal.push(products[i].browser_name);
+    }
+
+    const url = new URL('/api/metadata', window.location);
+    url.searchParams.set('products', productVal.join(','));
+    this.load(
+      window.fetch(url).then(r => r.json()).then(metadata => {
+        this.metadata = metadata;
+      })
+    );
   }
 
   computeDisplayedMetadata(path, metadata) {

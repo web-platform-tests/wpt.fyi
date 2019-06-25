@@ -143,7 +143,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       </iron-pages>
 
       <template is="dom-if" if="[[pathIsASubfolder]]">
-        <wpt-metadata metadata="[[metadata]]" path="[[path]]"></wpt-metadata>
+        <wpt-metadata products="[[products]]" path="[[path]]"></wpt-metadata>
       </template>
 
       <paper-toast id="masterLabelMissing" duration="15000">
@@ -170,11 +170,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
-      products: {
-        type: Array,
-        observer: 'loadAllMetadata'
-      },
-      metadata: Array,
       isLoading: {
         type: Boolean,
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
@@ -250,19 +245,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   _computePath(subroutePath) {
     return subroutePath || '/';
-  }
-
-  loadAllMetadata(products) {
-    let productVal = [];
-    for (let i = 0; i < products.length; i++) {
-      productVal.push(products[i].browser_name);
-    }
-
-    const url = new URL('/api/metadata', window.location);
-    url.searchParams.set('products', productVal.join(','));
-    window.fetch(url).then(r => r.json()).then(metadata => {
-      this.metadata = metadata;
-    });
   }
 
   splitPathIntoLinkedParts(inputPath) {
