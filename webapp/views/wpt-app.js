@@ -219,12 +219,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   queryChanged(query) {
     // app-location don't support repeated params.
     this.shadowRoot.querySelector('app-location').__query = query;
-    this.activeView.query = query;
+    if (this.activeView) {
+      this.activeView.query = query;
+    }
   }
 
   _routeChanged(routeData) {
     this.page = routeData.page || 'results';
-    this.activeView.query = this.query;
+    if (this.activeView) {
+      this.activeView.query = this.query;
+    }
   }
 
   _subrouteChanged(subrouteData) {
@@ -302,3 +306,5 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   }
 }
 customElements.define(WPTApp.is, WPTApp);
+
+export { WPTApp };
