@@ -107,9 +107,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <div class="separator"></div>
 
-      <template is="dom-if" if="[[resultsRangeMessage]]">
+      <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>
-          [[resultsRangeMessage]]
+          [[resultsTotalsRangeMessage]]
           <wpt-permalinks path="[[path]]"
                           path-prefix="/[[page]]/"
                           query-params="[[queryParams]]"
@@ -128,7 +128,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      is-loading="{{resultsLoading}}"
                      structured-search="[[structuredSearch]]"
                      path="[[subroute.path]]"
-                     test-runs="{{testRuns}}"></wpt-results>
+                     test-runs="{{testRuns}}"
+                     search-results="{{searchResults}}"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
@@ -165,7 +166,12 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       isLoading: {
         type: Boolean,
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
-      }
+      },
+      searchResults: Array,
+      resultsTotalsRangeMessage: {
+        type: String,
+        computed: 'computeResultsTotalsRangeMessage(page, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
+      },
     };
   }
 
@@ -276,6 +282,23 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     builder.master = true;
     this.handleSubmitQuery();
     this.dismissToast(e);
+  }
+
+  computeResultsTotalsRangeMessage(page, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
+    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
+    if (page === 'results' && searchResults) {
+      let subtests = 0, tests = 0;
+      for (const r of searchResults) {
+        if (r.test.startsWith(this.path)) {
+          tests++;
+          subtests += Math.max(...r.legacy_status.map(s => s.total));
+        }
+      }
+      return msg.replace(
+        'Showing ',
+        `Showing ${tests} tests (${subtests} subtests) from `);
+    }
+    return msg;
   }
 }
 customElements.define(WPTApp.is, WPTApp);
