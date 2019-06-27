@@ -337,10 +337,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       searchResults: {
         type: Array,
         value: [],
-      },
-      resultsTotalsRangeMessage: {
-        type: String,
-        computed: 'computeResultsTotalsRangeMessage(searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
+        notify: true,
       },
       testPaths: {
         type: Set,
@@ -951,23 +948,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     }
     this._fetchedQuery = query; // Debounce.
     this.reloadData();
-  }
-
-  computeResultsTotalsRangeMessage(searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
-    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
-    if (searchResults) {
-      let subtests = 0, tests = 0;
-      for (const r of searchResults) {
-        if (r.test.startsWith(this.path)) {
-          tests++;
-          subtests += Math.max(...r.legacy_status.map(s => s.total));
-        }
-      }
-      return msg.replace(
-        'Showing ',
-        `Showing ${tests} tests (${subtests} subtests) from `);
-    }
-    return msg;
   }
 }
 
