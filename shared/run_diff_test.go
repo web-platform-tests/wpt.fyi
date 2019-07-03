@@ -233,4 +233,8 @@ func TestRunDiffFromSearchResponse(t *testing.T) {
 	diff, err := runDiffFromSearchResponse(TestRun{}, TestRun{}, scDiff)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, diff.Differences.Regressions().Cardinality())
+	assert.Equal(t, 4, diff.BeforeSummary["/pointerevents/idlharness.window.html"][0])
+	assert.Equal(t, 5, diff.BeforeSummary["/pointerevents/idlharness.window.html"][1])
+	assert.Equal(t, 76, diff.AfterSummary["/pointerevents/idlharness.window.html"][0])
+	assert.Equal(t, 84, diff.AfterSummary["/pointerevents/idlharness.window.html"][1])
 }

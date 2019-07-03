@@ -414,14 +414,22 @@ func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter Di
 
 func runDiffFromSearchResponse(before, after TestRun, scDiff SearchResponse) (RunDiff, error) {
 	differences := make(map[string]TestDiff)
+	beforeSummary := make(ResultsSummary)
+	afterSummary := make(ResultsSummary)
 	for _, t := range scDiff.Results {
 		differences[t.Test] = t.Diff
+		if len(t.LegacyStatus) > 1 {
+			beforeSummary[t.Test] = TestSummary{t.LegacyStatus[0].Passes, t.LegacyStatus[0].Total}
+			afterSummary[t.Test] = TestSummary{t.LegacyStatus[1].Passes, t.LegacyStatus[1].Total}
+		}
 	}
 
 	return RunDiff{
-		Before:      before,
-		After:       after,
-		Differences: differences,
+		Before:        before,
+		BeforeSummary: beforeSummary,
+		After:         after,
+		AfterSummary:  afterSummary,
+		Differences:   differences,
 	}, nil
 }
 

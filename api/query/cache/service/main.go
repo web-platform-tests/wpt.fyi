@@ -166,9 +166,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Configure format, from request params.
 	urlQuery := r.URL.Query()
-	_, subtests := urlQuery["subtests"]
-	_, interop := urlQuery["interop"]
-	_, diff := urlQuery["diff"]
+	subtests, _ := shared.ParseBooleanParam(urlQuery, "subtests")
+	interop, _ := shared.ParseBooleanParam(urlQuery, "interop")
+	diff, _ := shared.ParseBooleanParam(urlQuery, "diff")
 	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
 	if err != nil {
 		log.Errorf("%s", err.Error())
@@ -176,9 +176,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	opts := query.AggregationOpts{
-		IncludeSubtests:         subtests,
-		InteropFormat:           interop,
-		IncludeDiff:             diff,
+		IncludeSubtests:         subtests != nil && *subtests,
+		InteropFormat:           interop != nil && *interop,
+		IncludeDiff:             diff != nil && *diff,
 		DiffFilter:              diffFilter,
 		IgnoreTestHarnessResult: shared.IsFeatureEnabled(store, "ignoreHarnessInTotal"),
 	}

@@ -40,5 +40,7 @@ func (c Completed) GetSummary() (string, error) {
 
 // GetActions returns the actions that can be taken by the user.
 func (c Completed) GetActions() []*github.CheckRunAction {
-	return nil
+	return []*github.CheckRunAction{
+		RecomputeAction(),
+	}
 }
