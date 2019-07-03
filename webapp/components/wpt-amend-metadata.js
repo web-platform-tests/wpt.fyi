@@ -4,12 +4,9 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
-import '../node_modules/@polymer/paper-tabs/paper-tab.js';
-import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
@@ -21,28 +18,15 @@ class AmendMetadata extends PolymerElement {
   static get template() {
     return html`
       <style>
-        paper-tabs {
-          --paper-tabs-selection-bar-color: var(--paper-blue-500);
-        }
-        paper-tab {
-          --paper-tab-ink: var(--paper-blue-300);
-        }
       </style>
       <paper-dialog>
-        <paper-tabs selected="{{selectedTab}}">
-          <paper-tab title="Link to these specific runs, via their IDs">These runs</paper-tab>
-          <paper-tab title="Link to this query, showing the latest matching runs">This query</paper-tab>
-        </paper-tabs>
-        <paper-checkbox checked="{{includePath}}">
-          Include the current path (directory)
-        </paper-checkbox>
-        <br>
-        <paper-checkbox checked="{{includeSearch}}">
-          Include the search query
-        </paper-checkbox>
-        <paper-input value="[[url]]"></paper-input>
+          <paper-item>1. Go to wpt-metadata <a href="[[repo]]">here</a></paper-item>
+          <paper-item>2. Copy and append the following content to bottom of yml file</paper-item>
+          <paper-button onclick="[[copyToClipboard]]" title="Copy URL to the clipboard" autofocus>Copy link</paper-button>
+          <paper-input>Insert URL</paper-input>
+          <paper-item>Create a branch and start a PR</paper-item>
+          <paper-item>Click on Propose File Change</paper-item>
         <div class="buttons">
-        <paper-button onclick="[[copyToClipboard]]" title="Copy URL to the clipboard" autofocus>Copy link</paper-button>
         <paper-button dialog-dismiss>Dismiss</paper-button>
         </div>
       </paper-dialog>
@@ -53,27 +37,14 @@ class AmendMetadata extends PolymerElement {
   static get properties() {
     return {
       path: String,
-      queryParams: {
-        type: Object,
-        value: {}
-      },
+      product: String,
+      test: String,
+      status: String,
       // Path lead-up, instead of '/', e.g. '/results/'.
       pathPrefix: String,
-      testRuns: Array,
-      includePath: {
-        type: Boolean,
-        value: true,
-      },
-      includeSearch: {
-        type: Boolean,
-        value: true,
-      },
-      selectedTab: {
-        type: Number,
-        value: 0,
-      },
-      url: {
+      repo: {
         type: String,
+        computed: '_computeRepoUrl(pathPrefix, test)',
       }
     };
   }
