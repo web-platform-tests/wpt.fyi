@@ -21,10 +21,10 @@ suite('WPTInterop', () => {
   let sandbox;
 
   suiteSetup(async() => {
-    const interop = await fetch('fixtures/interop.json').then(r => r.json());
-    fetches['/api/interop'] = interop;
-    fetches['/api/search'] = interop;
-    fetches[interop.url] = await fetch('fixtures/passrates.json').then(r => r.json());
+    const interopScores = await fetch('fixtures/interop.json').then(r => r.json());
+    fetches['/api/interop'] = interopScores;
+    fetches['/api/search'] = interopScores;
+    fetches[interopScores.url] = await fetch('fixtures/passrates.json').then(r => r.json());
   });
 
   setup(() => {
@@ -51,16 +51,10 @@ suite('WPTInterop', () => {
   });
 
   suite('WPTInterop.prototype.*', () => {
-    let sandbox;
-
+    let interop;
     setup(() => {
-      sandbox = sinon.sandbox.create();
       sandbox.spy(PolymerElement.prototype, 'ready');
-      fixture('wpt-interop-fixture');
-    });
-
-    teardown(() => {
-      sandbox.restore();
+      interop = fixture('wpt-interop-fixture');
     });
 
     test('super.ready()', () => {
@@ -71,6 +65,35 @@ suite('WPTInterop', () => {
       return waitingOn(() => {
         return window.fetch.getCalls()
           .find(c => c.args.length && c.args[0].pathname === '/api/interop');
+      });
+    });
+
+    suite('interopScore()', () => {
+      const allFail = [10];
+      const allPass = [10];
+      for (let n = 2; n < 10; n++) {
+        allFail.push(0);
+        allPass.unshift(0);
+        test(`all ${n} products failing`, () => {
+          expect(interop.interopScore({
+            interop: allFail,
+            total: 10,
+          })).to.equal(100);
+        });
+        test(`all ${n} products passing`, () => {
+          expect(interop.interopScore({
+            interop: allPass,
+            total: 10,
+          })).to.equal(100);
+        });
+      }
+
+      test('1,1,1,1,1', () => {
+        // (1 + 0.5 + 0 + 0.5 + 1) / 5 = 0.6
+        expect(interop.interopScore({
+          interop: [1,1,1,1,1],
+          total: 5,
+        })).to.equal(60);
       });
     });
   });
