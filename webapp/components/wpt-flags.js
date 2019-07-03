@@ -111,6 +111,12 @@ const FlagsEditorClass = (environmentFlags) =>
       for (const feature of features) {
         this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
       }
+
+      for (const nestedA of this.shadowRoot.querySelectorAll('paper-checkbox a')) {
+        nestedA.onclick = e => {
+          e.stopPropagation();
+        };
+      }
     }
 
     static get properties() {

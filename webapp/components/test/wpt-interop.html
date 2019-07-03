@@ -71,9 +71,9 @@ suite('WPTInterop', () => {
     suite('interopScore()', () => {
       const allFail = [10];
       const allPass = [10];
-      for (let n = 1; n < 10; n++) {
+      for (let n = 2; n < 10; n++) {
         allFail.push(0);
-        allPass.splice(0, 0, 0);
+        allPass.unshift(0);
         test(`all ${n} products failing`, () => {
           expect(interop.interopScore({
             interop: allFail,
@@ -89,7 +89,7 @@ suite('WPTInterop', () => {
       }
 
       test('1,1,1,1,1', () => {
-        // 1 + 0.5 + 0 + 0.5 + 1 / 5 = 0.6
+        // (1 + 0.5 + 0 + 0.5 + 1) / 5 = 0.6
         expect(interop.interopScore({
           interop: [1,1,1,1,1],
           total: 5,
