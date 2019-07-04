@@ -56,7 +56,7 @@ class WPTMetadataNode extends PolymerElement {
 
   computeHref(metadataNode) {
     const prefix = 'https://';
-    if (metadataNode.url.substr(0, prefix.length) !== prefix) {
+    if (!metadataNode.url.startsWith(prefix)) {
       return prefix + metadataNode.url;
     }
     return metadataNode.url;
@@ -158,7 +158,7 @@ class WPTMetadata extends LoadingState(PolymerElement) {
     let displayedMetadata = [];
     for (let i = 0; i < metadata.length; i++) {
       const node = metadata[i];
-      if (node.test.includes(path)) {
+      if (node.test.startsWith(path)) {
         const urls = metadata[i]['urls'];
         let urlSet = new Set();
         urlSet.add('');
