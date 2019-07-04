@@ -156,10 +156,12 @@ const SelfNavigation = (superClass) => class SelfNavigation extends superClass {
   getLocation(params, location) {
     const url = new URL(location);
     url.search = '';
-    for (const [k, v] of Object.entries(params)) {
-      const list = (v instanceof Array) ? v : [v];
-      for (const item of list) {
-        url.searchParams.append(k, item);
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        const list = (v instanceof Array) ? v : [v];
+        for (const item of list) {
+          url.searchParams.append(k, item);
+        }
       }
     }
     url.search = url.search

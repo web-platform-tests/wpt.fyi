@@ -30,7 +30,9 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
       .icon {
         /*Avoid (unwanted) space between images.*/
         font-size: 0;
-        padding: 2px 2px 6px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
       img.browser {
         height: 32px;
@@ -56,7 +58,7 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
 
     <div class\$="icon [[containerClass(small)]]">
       <img class="browser" src="[[displayLogo(product.browser_name, product.labels)]]">
-      <template is="dom-if" if="[[source]]">
+      <template is="dom-if" if="[[source]]" restamp>
         <img class="source" src="/static/[[source]].svg">
       </template>
     </div>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+</head>
+<body>
+  <test-fixture id="wpt-interop-fixture">
+    <template>
+      <wpt-interop></wpt-interop>
+    </template>
+  </test-fixture>
+  <script type="module">
+import { waitingOn } from './util/helpers.js';
+import { WPTInterop } from '../../views/wpt-interop.js';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+
+suite('WPTInterop', () => {
+  const fetches = {};
+  let sandbox;
+
+  suiteSetup(async() => {
+    const interopScores = await fetch('fixtures/interop.json').then(r => r.json());
+    fetches['/api/interop'] = interopScores;
+    fetches['/api/search'] = interopScores;
+    fetches[interopScores.url] = await fetch('fixtures/passrates.json').then(r => r.json());
+  });
+
+  setup(() => {
+    sandbox = sinon.sandbox.create();
+    sandbox.stub(window, 'fetch', (url) => {
+      const path = new URL(url, window.location).pathname; // Ignore params.
+      return Promise.resolve(new Response(JSON.stringify(fetches[path])));
+    });
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+
+  test('instanceof Polymer.Element', () => {
+    assert.isTrue(new WPTInterop() instanceof PolymerElement);
+    assert.isTrue(document.createElement('wpt-interop') instanceof PolymerElement);
+  });
+
+  suite('static get is()', () => {
+    test('wpt-interop', () => {
+      assert.equal(WPTInterop.is, 'wpt-interop');
+    });
+  });
+
+  suite('WPTInterop.prototype.*', () => {
+    let interop;
+    setup(() => {
+      sandbox.spy(PolymerElement.prototype, 'ready');
+      interop = fixture('wpt-interop-fixture');
+    });
+
+    test('super.ready()', () => {
+      return waitingOn(() => PolymerElement.prototype.ready.called);
+    });
+
+    test('fetches interop', () => {
+      return waitingOn(() => {
+        return window.fetch.getCalls()
+          .find(c => c.args.length && c.args[0].pathname === '/api/interop');
+      });
+    });
+
+    suite('interopScore()', () => {
+      const allFail = [10];
+      const allPass = [10];
+      for (let n = 2; n < 10; n++) {
+        allFail.push(0);
+        allPass.unshift(0);
+        test(`all ${n} products failing`, () => {
+          expect(interop.interopScore({
+            interop: allFail,
+            total: 10,
+          })).to.equal(100);
+        });
+        test(`all ${n} products passing`, () => {
+          expect(interop.interopScore({
+            interop: allPass,
+            total: 10,
+          })).to.equal(100);
+        });
+      }
+
+      test('1,1,1,1,1', () => {
+        // (1 + 0.5 + 0 + 0.5 + 1) / 5 = 0.6
+        expect(interop.interopScore({
+          interop: [1,1,1,1,1],
+          total: 5,
+        })).to.equal(60);
+      });
+    });
+  });
+
+});
+</script>
+</body>
+</html>

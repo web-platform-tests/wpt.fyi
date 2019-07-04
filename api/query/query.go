@@ -5,7 +5,6 @@
 package query
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -18,31 +17,15 @@ import (
 // summary is the golang type for the JSON format in pass/total summary files.
 type summary map[string][]int
 
-type sharedInterface interface {
-	ParseQueryParamInt(r *http.Request, key string) (*int, error)
-	ParseQueryFilterParams(*http.Request) (shared.QueryFilter, error)
-}
-
-type defaultShared struct {
-	ctx context.Context
-}
-
-func (defaultShared) ParseQueryParamInt(r *http.Request, key string) (*int, error) {
-	return shared.ParseQueryParamInt(r.URL.Query(), key)
-}
-
-func (defaultShared) ParseQueryFilterParams(r *http.Request) (shared.QueryFilter, error) {
-	return shared.ParseQueryFilterParams(r.URL.Query())
-}
-
 type queryHandler struct {
 	store      shared.Datastore
-	sharedImpl sharedInterface
 	dataSource shared.CachedStore
+	client     *http.Client
+	logger     shared.Logger
 }
 
 func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, shared.TestRuns, []summary, error) {
-	filters, err := qh.sharedImpl.ParseQueryFilterParams(r)
+	filters, err := shared.ParseQueryFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return nil, nil, nil, err

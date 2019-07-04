@@ -5,8 +5,6 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../wpt-results.js"></script>
 </head>
 
 <body>
@@ -17,7 +15,7 @@
   </test-fixture>
 
   <script type="module">
-import { WPTResults } from '../wpt-results.js';
+import { WPTResults } from '../../views/wpt-results.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
 suite('<wpt-results>', () => {
@@ -33,6 +31,7 @@ suite('<wpt-results>', () => {
   });
 
   test('show banner on noResults', (done) => {
+    trf.loadData();
     trf.noResults = true;
     flush(() => {
       const banner = trf.root.querySelector('info-banner[type="info"]');
@@ -164,23 +163,6 @@ suite('<wpt-results>', () => {
         const sha2 = 'abcdef1234abcdef1234abcdef1234abcdef1234';
         trf.shas = [sha, sha2];
         expect(trf.resultsRangeMessage).to.contain(`revisions ${sha.substr(0, 7)}, ${sha2.substr(0, 7)}`);
-      });
-    });
-
-    suite('computeResultsTotalsRangeMessage', () => {
-      test('absent/zero', () => {
-        trf.searchResults = null;
-        expect(trf.resultsTotalsRangeMessage).to.not.contain('0 tests');
-        trf.searchResults = [];
-        expect(trf.resultsTotalsRangeMessage).to.contain('0 tests');
-      });
-      test('some sum', () => {
-        trf.searchResults = [
-          {test: '/abc.html', legacy_status: [{total: 1}, {total: 5}]},
-          {test: '/def.html', legacy_status: [{total: 2}, {total: 1}]},
-        ];
-        expect(trf.resultsTotalsRangeMessage).to.contain('2 tests');
-        expect(trf.resultsTotalsRangeMessage).to.contain('7 subtests');
       });
     });
   });

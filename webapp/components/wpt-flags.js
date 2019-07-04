@@ -28,10 +28,12 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'colorHomepage',
       'diffFromAPI',
       'experimentalByDefault',
+      'experimentalAligned',
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
       'insightsTab',
+      'interopScoreColumn',
       'permalinks',
       'queryBuilder',
       'queryBuilderSHA',
@@ -54,12 +56,14 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'diffRenames',
       'failChecksOnRegression',
       'ignoreHarnessInTotal',
+      'onlyChangesAsRegressions',
       'paginationTokens',
       'pendingChecks',
       'processTaskclusterCheckRunEvents',
       'runsByPRNumber',
       'serviceWorker',
       'taskclusterAllBranches',
+      'searchcacheDiffs',
     ];
   }
 });
@@ -73,7 +77,8 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
     }
     // Fall back to env default.
     if (value === null && typeof(WPTEnvironmentFlags) !== 'undefined') {
-      value = WPTEnvironmentFlags[feature];
+      // 'false' is needed for [[!foo]] Polymer bindings
+      value = WPTEnvironmentFlags[feature] || false;
     }
     target[feature] = {
       type: Boolean,
@@ -105,6 +110,12 @@ const FlagsEditorClass = (environmentFlags) =>
       const features = wpt.ClientSideFeatures;
       for (const feature of features) {
         this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
+      }
+
+      for (const nestedA of this.shadowRoot.querySelectorAll('paper-checkbox a')) {
+        nestedA.onclick = e => {
+          e.stopPropagation();
+        };
       }
     }
 
@@ -150,7 +161,7 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Query Builder component
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item sub-item>
       <paper-checkbox checked="{{queryBuilderSHA}}">
         SHA input
       </paper-checkbox>
@@ -222,6 +233,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       </paper-checkbox>
     </paper-item>
     <paper-item>
+      <paper-checkbox checked="{{interopScoreColumn}}">
+        Show score column in the <a href="/interop">interop</a> view.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
       <paper-checkbox checked="{{webPlatformTestsLive}}">
         Use web-platform-tests.live.
       </paper-checkbox>
@@ -252,9 +268,14 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
         Fetch experimental runs as the default (homepage) query
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item sub-item>
+      <paper-checkbox checked="{{experimentalAligned}}">
+        Align the default experimental runs
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
       <paper-checkbox checked="{{experimentalAlignedExceptEdge}}">
-        All experimental, except edge, and aligned
+        All experimental, except edge[stable], and aligned
       </paper-checkbox>
     </paper-item>
     <paper-item>
@@ -287,23 +308,34 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
         Ignore "OK" harness status in test summary numbers.
       </paper-checkbox>
     </paper-item>
-    <h5>GitHub Status Checks</h5>
-    <paper-item sub-item="">
+    <h4>GitHub Status Checks</h4>
+    <paper-item>
+      <paper-checkbox checked="{{searchcacheDiffs}}">
+        Use searchcache (not summaries) to compute diffs when processing check run events.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{onlyChangesAsRegressions}}">
+        Only treat C (changed) differences as possible regressions.
+        (<a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#apidiff">See docs for definition</a>)
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
       <paper-checkbox checked="{{failChecksOnRegression}}">
         Set the wpt.fyi GitHub status check to action_required if regressions are found.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{checksAllUsers}}">
         Run the wpt.fyi GitHub status check for all users, not just whitelisted ones.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{pendingChecks}}">
         Create pending GitHub status check when results first arrive, and are being processed.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{processTaskclusterCheckRunEvents}}">
         Process check run events from Taskcluster (needs to be enabled if Taskcluster is using Checks API).
       </paper-checkbox>

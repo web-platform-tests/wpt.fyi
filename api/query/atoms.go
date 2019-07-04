@@ -8,8 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
+	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -143,6 +146,27 @@ func (c AbstractCount) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return Count{
 		Count: c.Count,
 		Args:  byRun,
+	}
+}
+
+// AbstractLink is represents the root of a link query, whic matches Metadata URLs
+// to a pattern string; it is independent of test runs.
+type AbstractLink struct {
+	Pattern string
+}
+
+// BindToRuns for AbstractLink is a no-op; it is independent of test runs
+func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	var netClient = &http.Client{
+		Timeout: time.Second * 5,
+	}
+
+	metadata, _ := shared.GetMetadataResponse(runs, netClient, log.StandardLogger(), shared.MetadataArchiveURL)
+	metadataMap := shared.PrepareLinkFilter(metadata)
+
+	return Link{
+		Pattern:  l.Pattern,
+		Metadata: metadataMap,
 	}
 }
 
@@ -580,6 +604,27 @@ func (c *AbstractCount) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractLink attempts to interpret a query atom as
+// {"link":<metadata url pattern string>}.
+func (l *AbstractLink) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	patternMsg, ok := data["link"]
+	if !ok {
+		return errors.New(`Missing Link pattern property: "link"`)
+	}
+	var pattern string
+	if err := json.Unmarshal(*patternMsg, &pattern); err != nil {
+		return errors.New(`Missing link pattern property "pattern" is not a string`)
+	}
+
+	l.Pattern = pattern
+	return nil
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -630,6 +675,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err = json.Unmarshal(b, &c)
 	if err == nil {
 		return c, nil
+	}
+	var l AbstractLink
+	err = json.Unmarshal(b, &l)
+	if err == nil {
+		return l, nil
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
 }

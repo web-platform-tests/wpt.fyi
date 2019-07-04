@@ -5,7 +5,7 @@
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
 
-  <script type="module" src="../path-part.js"></script>
+  <script type="module" src="../path.js"></script>
 </head>
 <body>
   <test-fixture id="path-part-dir-prefixed-fixture">
@@ -32,7 +32,7 @@
     </template>
   </test-fixture>
   <script type="module">
-import { PathPart } from '../path-part.js';
+import { PathPart } from '../path.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 
 suite('PathPart', () => {
@@ -62,71 +62,32 @@ suite('PathPart', () => {
     });
   });
 
-  suite('static get properties()', () => {
-    test('path', () => {
-      assert.property(PathPart.properties, 'path');
-      assert.property(PathPart.properties.path, 'type');
-      assert.equal(PathPart.properties.path.type, String);
-    });
-    test('prefix', () => {
-      assert.property(PathPart.properties, 'prefix');
-      assert.property(PathPart.properties.prefix, 'type');
-      assert.equal(PathPart.properties.prefix.type, String);
-      assert.equal(PathPart.properties.prefix.default, '/');
-    });
-    test('isDir', () => {
-      assert.property(PathPart.properties, 'isDir');
-      assert.property(PathPart.properties.isDir, 'type');
-      assert.equal(PathPart.properties.isDir.type, Boolean);
-    });
-    test('navigate', () => {
-      assert.property(PathPart.properties, 'navigate');
-      assert.property(PathPart.properties.navigate, 'type');
-      assert.equal(PathPart.properties.navigate.type, Function);
-    });
-    test('relativePath', () => {
-      assert.property(PathPart.properties, 'relativePath');
-      assert.property(PathPart.properties.relativePath, 'type');
-      assert.equal(PathPart.properties.relativePath.type, String);
-    });
-    test('href', () => {
-      assert.property(PathPart.properties, 'href');
-      assert.property(PathPart.properties.href, 'type');
-      assert.equal(PathPart.properties.href.type, String);
-    });
-    test('styleClass', () => {
-      assert.property(PathPart.properties, 'styleClass');
-      assert.property(PathPart.properties.styleClass, 'type');
-      assert.equal(PathPart.properties.styleClass.type, String);
-    });
-  });
-
   suite('PathPart.prototype.*', () => {
     suite('href: computeHref(prefix, path)', () => {
       test('computeHref()', () => {
         assert.equal(typeof PathPart.prototype.computeHref, 'function');
-        assert.equal(ppdir.computeHref('x/', 'y'), 'x/y');
-        assert.equal(ppdir.computeHref('', 'y'), 'y');
-        assert.equal(ppdir.computeHref('x', ''), 'x');
-        assert.equal(ppdir.computeHref(undefined, ''), '');
+        assert.equal(ppdir.computeHref('x/', 'y').pathname, '/x/y');
+        assert.equal(ppdir.computeHref('', 'y').pathname, '/y');
+        assert.equal(ppdir.computeHref('x', '').pathname, '/x');
+        assert.equal(ppdir.computeHref(undefined, '').pathname, '/');
       });
       test('computeHref([default], path)', () => {
-        assert.equal(ppdir.href, '/a/b');
-        assert.equal(ppfile.href, '/a/b/c.html');
+        assert.equal(ppdir.href.pathname, '/a/b');
+        assert.equal(ppfile.href.pathname, '/a/b/c.html');
       });
       test('computeHref([foo], path)', () => {
-        assert.equal(ppdirprefixed.href, '/foo/a/b');
-        assert.equal(ppfileprefixed.href, '/foo/a/b/c.html');
+        assert.equal(ppdirprefixed.href.pathname, '/foo/a/b');
+        assert.equal(ppfileprefixed.href.pathname, '/foo/a/b/c.html');
       });
       test('computeHref(...) recomputes when prefix changed', () => {
-        assert.equal(ppdir.href, '/a/b');
-        assert.equal(ppfile.href, '/a/b/c.html');
+        assert.equal(ppdir.href.pathname, '/a/b');
+        assert.equal(ppfile.href.pathname, '/a/b/c.html');
 
         ppdir.prefix = '/bar';
         ppfile.prefix = '/bar';
 
-        assert.equal(ppdir.href, '/bar/a/b');
-        assert.equal(ppfile.href, '/bar/a/b/c.html');
+        assert.equal(ppdir.href.pathname, '/bar/a/b');
+        assert.equal(ppfile.href.pathname, '/bar/a/b/c.html');
       });
     });
     suite('relativePath: computedDisplayableRelativePath(path)', () => {

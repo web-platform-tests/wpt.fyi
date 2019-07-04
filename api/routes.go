@@ -63,4 +63,7 @@ func RegisterRoutes() {
 
 	// API endpoint for redirecting to a screenshot png blob.
 	shared.AddRoute("/api/screenshot/{screenshot:.*}", "api-screenshot", shared.WrapPermissiveCORS(apiScreenshotRedirectHandler))
+
+	// API endpoint for searching Metadata for the products.
+	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapPermissiveCORS(apiMetadataHandler))
 }

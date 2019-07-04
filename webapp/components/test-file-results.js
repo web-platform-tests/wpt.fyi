@@ -13,9 +13,10 @@ import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
 import './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
+import { PathInfo } from './path.js';
 
-class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
-  TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)))) {
+class TestFileResults extends WPTFlags(LoadingState(PathInfo(
+  TestRunsQueryLoader(TestRunsUIQuery(PolymerElement))))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -48,7 +49,6 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
 
     <test-file-results-table test-runs="[[testRuns]]"
                              results-table="[[resultsTable]]"
-                             on-reftest-compare="[[onReftestCompare]]"
                              verbose="[[isVerbose]]">
     </test-file-results-table>
 `;
@@ -69,7 +69,6 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
         type: Boolean,
         value: false,
       },
-      onReftestCompare: Function,
     };
   }
 
@@ -156,8 +155,8 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
           status: data && data.status,
           message: data && data.message,
         };
-        if (this.reftestAnalyzer) {
-          result.screenshots = data && data.screenshots;
+        if (this.reftestAnalyzer && data && data.screenshots) {
+          result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
         }
         return result;
       }),
@@ -244,6 +243,19 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
 
   statusName(numSubtests) {
     return numSubtests > 0 ? 'Harness status' : 'Test status';
+  }
+
+  shuffleScreenshots(path, rawScreenshots) {
+    // Clone the data because we might modify it.
+    const screenshots = Object.assign({}, rawScreenshots);
+    // Make sure the test itself appears first in the Map to follow the
+    // convention of reftest-analyzer (actual, expected).
+    const firstScreenshot = [];
+    if (path in screenshots) {
+      firstScreenshot.push([path, screenshots[path]]);
+      delete screenshots[path];
+    }
+    return new Map([...firstScreenshot, ...Object.entries(screenshots)]);
   }
 }
 

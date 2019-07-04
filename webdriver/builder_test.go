@@ -32,7 +32,7 @@ func TestQueryBuilder_MasterCheckedForMasterLabelQuery(t *testing.T) {
 		// Wait for the results view to load.
 		var e selenium.WebElement
 		loaded := func(wd selenium.WebDriver) (bool, error) {
-			e, err = wd.FindElement(selenium.ByTagName, "wpt-results")
+			e, err = wd.FindElement(selenium.ByTagName, "wpt-app")
 			if err != nil {
 				return false, err
 			}

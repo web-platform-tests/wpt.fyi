@@ -7,6 +7,7 @@
 package shared
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -181,4 +182,59 @@ func TestRegressions(t *testing.T) {
 	regressions = diff.Regressions()
 	assert.Equal(t, 1, regressions.Cardinality())
 	assert.True(t, regressions.Contains("/baz.html"))
+}
+
+func TestRunDiffFromSearchResponse(t *testing.T) {
+	body := []byte(`{
+  "runs": [{
+    "id": 203760020,
+    "browser_name": "safari",
+    "browser_version": "82 preview",
+    "os_name": "mac",
+    "os_version": "10.13",
+    "revision": "b5d4599280",
+    "full_revision_hash": "b5d4599280363dc4e4e6a87f3706f0edce5bbdb6",
+    "results_url": "https://storage.googleapis.com/wptd-staging/b5d4599280363dc4e4e6a87f3706f0edce5bbdb6/safari-82_preview-mac-10.13-be2f6871ef-summary.json.gz",
+    "created_at": "2019-06-18T17:30:23.755776Z",
+    "time_start": "2019-06-18T17:27:54.716Z",
+    "time_end": "2019-06-18T17:29:39.042Z",
+    "raw_results_url": "https://storage.googleapis.com/wptd-results-staging/b5d4599280363dc4e4e6a87f3706f0edce5bbdb6/safari-82_preview-mac-10.13-be2f6871ef/report.json",
+    "labels": ["azure", "experimental", "pr_base", "preview", "safari"]
+  }, {
+    "id": 207750011,
+    "browser_name": "safari",
+    "browser_version": "82 preview",
+    "os_name": "mac",
+    "os_version": "10.13",
+    "revision": "b5d4599280",
+    "full_revision_hash": "b5d4599280363dc4e4e6a87f3706f0edce5bbdb6",
+    "results_url": "https://storage.googleapis.com/wptd-staging/b5d4599280363dc4e4e6a87f3706f0edce5bbdb6/safari-82_preview-mac-10.13-b58260d2de-summary.json.gz",
+    "created_at": "2019-06-18T17:33:37.68543Z",
+    "time_start": "2019-06-18T17:30:57.578Z",
+    "time_end": "2019-06-18T17:32:50.741Z",
+    "raw_results_url": "https://storage.googleapis.com/wptd-results-staging/b5d4599280363dc4e4e6a87f3706f0edce5bbdb6/safari-82_preview-mac-10.13-b58260d2de/report.json",
+    "labels": ["azure", "experimental", "pr_head", "preview", "safari"]
+  }],
+	"results": [
+		{
+			"test":"/media-source/idlharness.any.worker.html",
+			"legacy_status":[{"passes":1,"total":2},{"passes":1,"total":2}]
+		},
+		{
+			"test": "/pointerevents/idlharness.window.html",
+			"legacy_status": [{ "passes": 4, "total": 5 }, { "passes": 76, "total": 84 }],
+			"diff": [72, 8, 0]
+		}
+	]
+}`)
+	var scDiff SearchResponse
+	json.Unmarshal(body, &scDiff)
+
+	diff, err := runDiffFromSearchResponse(TestRun{}, TestRun{}, scDiff)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, diff.Differences.Regressions().Cardinality())
+	assert.Equal(t, 4, diff.BeforeSummary["/pointerevents/idlharness.window.html"][0])
+	assert.Equal(t, 5, diff.BeforeSummary["/pointerevents/idlharness.window.html"][1])
+	assert.Equal(t, 76, diff.AfterSummary["/pointerevents/idlharness.window.html"][0])
+	assert.Equal(t, 84, diff.AfterSummary["/pointerevents/idlharness.window.html"][1])
 }

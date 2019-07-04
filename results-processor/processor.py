@@ -154,6 +154,8 @@ class Processor(object):
 
     def _download_azure(self, azure_url):
         artifact = self._download_http(azure_url)
+        if artifact is None:
+            return
         with zipfile.ZipFile(artifact, mode='r') as z:
             for f in z.infolist():
                 # ZipInfo.is_dir isn't available in Python 3.5.
@@ -272,7 +274,7 @@ def process_report(task_id, params):
     uploader = params['uploader']
     # Optional fields:
     azure_url = params.get('azure_url')
-    run_id = params.get('run_id', '0')
+    run_id = params.get('id', '0')
     callback_url = params.get('callback_url')
     labels = params.get('labels', '')
     # Repeatable fields
