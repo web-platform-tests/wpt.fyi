@@ -6,14 +6,14 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
+import { PathInfo } from './path.js';
 
-class TestFileResultsTable extends WPTColors(TestRunsBase) {
+class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
   static get is() {
     return 'test-file-results-table';
   }
@@ -31,26 +31,32 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
     top: 0;
     z-index: 1;
   }
-  td {
+  td, .ref-button {
     padding: 0;
     height: 1.5em;
   }
-  td code, td paper-button {
+  td code, .ref-button {
     line-height: 1.6em;
     padding: 0 0.25em;
   }
-  td.sub-test-name {
+  td.sub-test-name, .ref-button {
     font-family: monospace;
   }
   td.result {
     background-color: #eee;
   }
+  .ref-button {
+    color: #333;
+    text-decoration: none;
+    display: block;
+    float: right;
+  }
+  table[verbose] .ref-button {
+    display: none;
+  }
   tbody tr:first-child {
     border-bottom: 8px solid white;
     padding: 8px;
-  }
-  paper-button {
-    float: right;
   }
   table td img {
     width: 100%;
@@ -62,7 +68,7 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
     font-family: monospace;
     background-color: white;
   }
-  table[terse] td code {
+  table[terse] td.sub-test-name code {
     box-sizing: border-box;
     height: 100%;
     left: 0;
@@ -73,7 +79,7 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
     white-space: nowrap;
     width: 100%;
   }
-  table[terse] td code:hover {
+  table[terse] td.sub-test-name code:hover {
     z-index: 1;
     text-overflow: initial;
     background-color: inherit;
@@ -82,7 +88,7 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
   }
 </style>
 
-<table terse$="[[!verbose]]">
+<table terse$="[[!verbose]]" verbose$="[[verbose]]">
   <thead>
     <tr>
       <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
@@ -102,10 +108,10 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
           <td class$="[[ colorClass(result.status) ]]">
             <code>[[ subtestMessage(result, verbose) ]]</code>
             <template is="dom-if" if="[[result.screenshots]]">
-              <paper-button onclick="[[compareReferences(result)]]">
+              <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
                 <iron-icon icon="image:compare"></iron-icon>
-                Compare
-              </paper-button>
+                COMPARE
+              </a>
             </template>
           </td>
         </template>
@@ -115,9 +121,13 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
         <template is="dom-if" if="[[anyScreenshots(row)]]">
           <tr>
             <td>Screenshot</td>
-            <template is="dom-repeat" items="{{row.results}}" as="result">
+            <template is="dom-repeat" items="[[row.results]]" as="result">
               <td>
-                <img src="[[testScreenshot(result.screenshots)]]" />
+                <template is="dom-if" if="[[ testScreenshot(result.screenshots) ]]">
+                  <a href="[[ computeAnalyzerURL(result.screenshots) ]]">
+                    <img src="[[ testScreenshot(result.screenshots) ]]" />
+                  </a>
+                </template>
               </td>
             </template>
           </tr>
@@ -191,15 +201,6 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
     };
   }
 
-  constructor() {
-    super();
-    this.compareReferences = (result) => {
-      return () => this.onReftestCompare && this.onReftestCompare(
-        // Clone the result first.
-        JSON.parse(JSON.stringify(result)));
-    };
-  }
-
   subtestMessage(result, verbose) {
     // Return status string for messageless status or "status-as-message".
     if ((result.status && !result.message) ||
@@ -216,6 +217,17 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
       return 'ERROR';
     }
     return this.parseFailureMessage(result.message);
+  }
+
+  computeAnalyzerURL(screenshots) {
+    if (!screenshots) {
+      throw 'empty screenshots';
+    }
+    const url = new URL('/analyzer', window.location);
+    for (const sha of screenshots.values()) {
+      url.searchParams.append('screenshot', sha);
+    }
+    return url.href;
   }
 
   computeSubtestThWidth(testRuns) {
@@ -252,11 +264,14 @@ class TestFileResultsTable extends WPTColors(TestRunsBase) {
   }
 
   testScreenshot(screenshots) {
+    if (!screenshots) {
+      return;
+    }
     let shot;
-    if (this.path in screenshots) {
-      shot = screenshots[this.path];
+    if (screenshots.has(this.path)) {
+      shot = screenshots.get(this.path);
     } else {
-      shot = Array.from(Object.values(screenshots))[0];
+      shot = screenshots.values()[0];
     }
     return `/api/screenshot/${shot}`;
   }

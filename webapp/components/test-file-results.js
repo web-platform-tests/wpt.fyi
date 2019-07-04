@@ -48,6 +48,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     </div>
 
     <test-file-results-table test-runs="[[testRuns]]"
+                             path="[[path]]"
                              results-table="[[resultsTable]]"
                              verbose="[[isVerbose]]">
     </test-file-results-table>
