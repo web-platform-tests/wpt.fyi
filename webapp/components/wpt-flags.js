@@ -33,6 +33,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'fetchManifestForTestList',
       'githubCommitLinks',
       'insightsTab',
+      'interopScoreColumn',
       'permalinks',
       'queryBuilder',
       'queryBuilderSHA',
@@ -109,6 +110,12 @@ const FlagsEditorClass = (environmentFlags) =>
       const features = wpt.ClientSideFeatures;
       for (const feature of features) {
         this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
+      }
+
+      for (const nestedA of this.shadowRoot.querySelectorAll('paper-checkbox a')) {
+        nestedA.onclick = e => {
+          e.stopPropagation();
+        };
       }
     }
 
@@ -223,6 +230,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{permalinks}}">
         Show dialog for copying a permalink (on /results page).
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{interopScoreColumn}}">
+        Show score column in the <a href="/interop">interop</a> view.
       </paper-checkbox>
     </paper-item>
     <paper-item>
