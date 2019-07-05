@@ -132,7 +132,7 @@ class WPTMetadata extends LoadingState(PolymerElement) {
       metadata: Array,
       displayedMetadata: {
         type: Array,
-        computed: 'computeDisplayedMetadata(path, metadata)'
+        computed: 'computeDisplayedMetadata(path, metadata, products)'
       },
       firstThree: {
         type: Array,
@@ -174,8 +174,8 @@ class WPTMetadata extends LoadingState(PolymerElement) {
     );
   }
 
-  computeDisplayedMetadata(path, metadata) {
-    if (!metadata || !path) {
+  computeDisplayedMetadata(path, metadata, products) {
+    if (!metadata || !path || !products) {
       return;
     }
 
@@ -191,7 +191,7 @@ class WPTMetadata extends LoadingState(PolymerElement) {
             continue;
           }
           urlSet.add(urls[j]);
-          const wptMetadataNode = { test: node.test, url: urls[j], product: 'chrome' };
+          const wptMetadataNode = { test: node.test, url: urls[j], product: products[j].browser_name };
           displayedMetadata.push(wptMetadataNode);
         }
       }
