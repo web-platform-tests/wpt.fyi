@@ -29,6 +29,7 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata, undefined);
     });
     test('simple case', () => {
+      appFixture.products = [{ browser_name: 'chrome' }]
       appFixture.metadata = [
         {
           test: '/foo',
@@ -39,8 +40,10 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata.length, 1);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
     test('exclude path', () => {
+      appFixture.products = [{ browser_name: 'chrome' }]
       appFixture.metadata = [
         {
           test: '/foo',
@@ -55,8 +58,10 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata.length, 1);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
     test('complex case', () => {
+      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }]
       appFixture.metadata = [
         {
           test: '/foo',
@@ -79,14 +84,19 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata.length, 4);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
       assert.equal(appFixture.displayedMetadata[1].test, '/foo/bar');
       assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
+      assert.equal(appFixture.displayedMetadata[1].product, 'chrome');
       assert.equal(appFixture.displayedMetadata[2].test, '/foo/bar');
       assert.equal(appFixture.displayedMetadata[2].url, 'safari1');
+      assert.equal(appFixture.displayedMetadata[2].product, 'safari');
       assert.equal(appFixture.displayedMetadata[3].test, '/foo/bar/foo1');
       assert.equal(appFixture.displayedMetadata[3].url, 'bug3');
+      assert.equal(appFixture.displayedMetadata[3].product, 'chrome');
     });
     test('check duplicates & empty', () => {
+      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }, { browser_name: 'edge' }]
       appFixture.metadata = [
         {
           test: '/foo',
@@ -101,8 +111,10 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata.length, 2);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
       assert.equal(appFixture.displayedMetadata[1].test, '/bar');
       assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
+      assert.equal(appFixture.displayedMetadata[1].product, 'safari');
     });
   });
 });
