@@ -18,22 +18,30 @@ class WPTMetadataNode extends PolymerElement {
   static get template() {
     return html`
       <style>
+        img.browser {
+          height: 16px;
+          width: 16px;
+          position: relative;
+          top: 2px;
+        }
+        img.bug {
+          margin-right: 16px;
+          height: 24px;
+          width: 24px;
+        }
         .metadataNode {
           display: flex;
           align-items: center;
           margin-bottom: 4px;
         }
-        .metadataNode img {
-          margin-right: 16px;
-          height: 24px;
-          width: 24px;
-        }
+
       </style>
       <div class="metadataNode">
-        <iron-icon icon="bug-report"></iron-icon>
+        <iron-icon class="bug" icon="bug-report"></iron-icon>
         <div>
-          [[metadataNode.test]] :
-          <a href="[[href]]">[[metadataNode.url]]</a>
+          <a href="[[testHref]]">[[metadataNode.test]]</a> >
+          <img class="browser" src="[[displayLogo(metadataNode.product)]]"> :
+          <a href="[[urlHref]]">[[metadataNode.url]]</a>
           <br />
         </div>
       </div>
@@ -47,19 +55,35 @@ class WPTMetadataNode extends PolymerElement {
   static get properties() {
     return {
       metadataNode: Object,
-      href: {
+      urlHref: {
         type: String,
-        computed: 'computeHref(metadataNode)'
+        computed: 'computeUrlHref(metadataNode)'
+      },
+      testHref: {
+        type: String,
+        computed: 'computeTestHref(metadataNode)'
       }
     };
   }
 
-  computeHref(metadataNode) {
+  computeUrlHref(metadataNode) {
     const prefix = 'https://';
     if (!metadataNode.url.startsWith(prefix)) {
       return prefix + metadataNode.url;
     }
     return metadataNode.url;
+  }
+
+  computeTestHref(metadataNode) {
+    const testUrlPrefix = 'https://github.com/web-platform-tests/wpt/blob/master';
+    return testUrlPrefix + metadataNode.test;
+  }
+
+  displayLogo(product) {
+    if (!product) {
+      return;
+    }
+    return `/static/${product}_64x64.png`;
   }
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
@@ -167,7 +191,7 @@ class WPTMetadata extends LoadingState(PolymerElement) {
             continue;
           }
           urlSet.add(urls[j]);
-          const wptMetadataNode = { test: node.test, url: urls[j] };
+          const wptMetadataNode = { test: node.test, url: urls[j], product: 'chrome' };
           displayedMetadata.push(wptMetadataNode);
         }
       }
