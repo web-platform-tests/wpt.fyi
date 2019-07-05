@@ -54,6 +54,7 @@ class WPTMetadataNode extends PolymerElement {
 
   static get properties() {
     return {
+      path: String,
       metadataNode: Object,
       urlHref: {
         type: String,
@@ -61,7 +62,7 @@ class WPTMetadataNode extends PolymerElement {
       },
       testHref: {
         type: String,
-        computed: 'computeTestHref(metadataNode)'
+        computed: 'computeTestHref(path, metadataNode)'
       }
     };
   }
@@ -74,9 +75,9 @@ class WPTMetadataNode extends PolymerElement {
     return metadataNode.url;
   }
 
-  computeTestHref(metadataNode) {
-    const testUrlPrefix = 'https://github.com/web-platform-tests/wpt/blob/master';
-    return testUrlPrefix + metadataNode.test;
+  computeTestHref(path, metadataNode) {
+    const currentUrl = window.location.href;
+    return currentUrl.replace(path, metadataNode.test);
   }
 
   displayLogo(product) {
@@ -100,13 +101,14 @@ class WPTMetadata extends LoadingState(PolymerElement) {
         <h4>Triaged Metadata in <i>[[path]]</i></h4>
       </template>
       <template is="dom-repeat" items="[[firstThree]]" as="metadataNode">
-        <wpt-metadata-node metadata-node="[[metadataNode]]"></wpt-metadata-node>
+        <wpt-metadata-node metadata-node="[[metadataNode]]" path="[[path]]"></wpt-metadata-node>
       </template>
       <template is="dom-if" if="[[others]]">
         <iron-collapse id="metadata-collapsible">
           <template is="dom-repeat" items="[[others]]" as="metadataNode">
             <wpt-metadata-node
               metadata-node="[[metadataNode]]"
+              path="[[path]]"
             ></wpt-metadata-node>
           </template>
         </iron-collapse>
