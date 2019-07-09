@@ -20,6 +20,7 @@ import { WPTColors } from '../components/wpt-colors.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-prs.js';
+import '../components/wpt-amend-metadata.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
@@ -208,11 +209,22 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                  <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
-                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                    /
-                    <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-                  </td>
+                  <template is="dom-if" if="[[ checkMetadataAmendment(node.path, getNodeResultDataByPropertyName(node, index, testRun, 'total'), getNodeResultDataByPropertyName(node, index, testRun, 'passes')) ]]">
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[toggleAmendMetadata]]>
+                     <wpt-amend-metadata path="[[path]]" products="[[products]] test="[[node.path]]" product-index="[[i]]" ></wpt-amend-metadata>
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                    </td>
+                  </template>
+
+                  <template is="dom-if" if="[[ !checkMetadataAmendment(node.path, getNodeResultDataByPropertyName(node, index, testRun, 'total'), getNodeResultDataByPropertyName(node, index, testRun, 'passes')) ]]">
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                    </td>
+                  </template>
                 </template>
                 <template is="dom-if" if="[[diffShown]]">
                   <td class\$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
@@ -473,6 +485,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   constructor() {
     super();
+    this.toggleAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').open();
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
@@ -823,6 +836,10 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   platformID({browser_name, browser_version, os_name, os_version}) {
     return `${browser_name}-${browser_version}-${os_name}-${os_version}`;
+  }
+
+  checkMetadataAmendment(nodePath, nodeTotal, passRate) {
+    return this.computePathIsATestFile(nodePath) && (nodeTotal - passRate) > 0;
   }
 
   testResultClass(node, index, testRun, prop) {
