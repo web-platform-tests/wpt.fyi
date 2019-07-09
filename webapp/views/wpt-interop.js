@@ -13,6 +13,7 @@ import '../components/test-file-results.js';
 import '../components/test-run.js';
 import '../components/test-runs-query-builder.js';
 import '../components/test-runs-query.js';
+import '../components/wpt-amend-metadata';
 import { TestRunsUIQuery } from '../components/test-runs-query.js';
 import { TestRunsQueryLoader } from '../components/test-runs.js';
 import '../components/test-search.js';
@@ -33,7 +34,7 @@ const interopQueryCompute =
   'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)';
 
 class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
-    TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
+  TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
   static get template() {
     return html`
   <style>
@@ -177,7 +178,14 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
             </td>
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
-              <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+              <template is="dom-if" if="[[ checkMetadataAmendment(node.path, node.total, passRate) ]]">
+                <wpt-amend-metadata path="[[path]]" products="[[products]] test="[[node.path]]" product-index="[[i]]" ></wpt-amend-metadata>
+                <td class="score" onmouseover="[[toggleAmendMetadata]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+              </template>
+
+              <template is="dom-if" if="[[ !checkMetadataAmendment(node.path, node.total, passRate) ]]">
+                <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+              </template>
             </template>
           </tr>
         </template>
@@ -237,6 +245,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
 
   constructor() {
     super();
+    this.toggleAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').open();
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
@@ -407,6 +416,10 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     const fraction = passRate / total;
     const alpha = Math.round(fraction * 1000) / 1000;
     return `background-color: ${this.passRateColorRGBA(browserCount, this.testRuns.length, alpha)}`;
+  }
+
+  checkMetadataAmendment(nodePath, nodeTotal, passRate) {
+    return this.computePathIsATestFile(nodePath) && (nodeTotal - passRate) > 0;
   }
 
   handleSearchCommit() {

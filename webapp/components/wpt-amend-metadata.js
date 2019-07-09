@@ -37,14 +37,16 @@ class AmendMetadata extends PolymerElement {
   static get properties() {
     return {
       path: String,
-      product: String,
+      products: String,
       test: String,
-      status: String,
-      // Path lead-up, instead of '/', e.g. '/results/'.
-      pathPrefix: String,
+      productIndex: Number,
+      product : {
+        type:String,
+        computed: 'computeProduct(productIndex, products)'
+      },
       repo: {
         type: String,
-        computed: '_computeRepoUrl(pathPrefix, test)',
+        computed: 'computeRepoUrl(path)',
       }
     };
   }
@@ -64,6 +66,24 @@ class AmendMetadata extends PolymerElement {
 
   open() {
     this.dialog.open();
+  }
+
+  computeProduct(productIndex, products) {
+    if (!productIndex || !products) {
+      return;
+    }
+
+    let productVal = [];
+    for (let i = 0; i < products.length; i++) {
+      productVal.push(products[i].browser_name);
+    }
+
+    return productVal[productIndex];
+  }
+
+  computeRepoUrl(path) {
+    const prefix = 'https://github.com/web-platform-tests/wpt-metadata/blob/master';
+    return prefix + path + '/META.yml';
   }
 
   async handleCopyToClipboard() {
