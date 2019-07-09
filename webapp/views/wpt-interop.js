@@ -13,7 +13,7 @@ import '../components/test-file-results.js';
 import '../components/test-run.js';
 import '../components/test-runs-query-builder.js';
 import '../components/test-runs-query.js';
-import '../components/wpt-amend-metadata';
+import '../components/wpt-amend-metadata.js';
 import { TestRunsUIQuery } from '../components/test-runs-query.js';
 import { TestRunsQueryLoader } from '../components/test-runs.js';
 import '../components/test-search.js';
