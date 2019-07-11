@@ -18,14 +18,19 @@ class AmendMetadata extends PolymerElement {
   static get template() {
     return html`
       <style>
+      .metadata-yml {
+      }
       </style>
       <paper-dialog>
-          <paper-item>1. Go to wpt-metadata <a href="[[repo]]">here</a></paper-item>
-          <paper-item>2. Copy and append the following content to bottom of yml file</paper-item>
-          <paper-button onclick="[[copyToClipboard]]" title="Copy URL to the clipboard" autofocus>Copy link</paper-button>
-          <paper-input>Insert URL</paper-input>
-          <paper-item>Create a branch and start a PR</paper-item>
-          <paper-item>Click on Propose File Change</paper-item>
+          <paper-item>1. Go to wpt-metadata&nbsp<a href="[[repo]]">here</a></paper-item>
+          <paper-item>2. Copy and append the following to the above file</paper-item>
+          <paper-button onclick="[[copyToClipboard]]" title="Copy metadata to the clipboard" autofocus>
+            <div class='metadata-yml'>- product: chrome</div><br>
+            <div class='metadata-yml'>test: 007.html</div><br>
+            <div class='metadata-yml'> status: FAIL</div><br>
+            <div class='metadata-yml'>url: insert url</div>
+          </paper-button>
+          <paper-item>3. Create a branch and start a PR</paper-item>
         <div class="buttons">
         <paper-button dialog-dismiss>Dismiss</paper-button>
         </div>
@@ -44,9 +49,13 @@ class AmendMetadata extends PolymerElement {
         type:String,
         computed: 'computeProduct(productIndex, products)'
       },
+      hasYml: {
+        type:Boolean,
+        value:false,
+      },
       repo: {
         type: String,
-        computed: 'computeRepoUrl(path)',
+        computed: 'computeRepoUrl(path, hasYml)',
       }
     };
   }
@@ -81,12 +90,21 @@ class AmendMetadata extends PolymerElement {
     return productVal[productIndex];
   }
 
-  computeRepoUrl(path) {
+  computeRepoUrl(path, hasYml) {
     if(!path) {
       return;
     }
-    const prefix = 'https://github.com/web-platform-tests/wpt-metadata/blob/master';
-    return prefix + path + '/META.yml';
+
+    let url = '';
+    if (hasYml) {
+      const prefix = 'https://github.com/web-platform-tests/wpt-metadata/edit/master';
+      url = prefix + path + '/META.yml';
+    } else {
+      const prefix = 'https://github.com/web-platform-tests/wpt-metadata/new/master?filename=';
+      url = prefix + path.substring(1) + '/META.yml';
+    }
+
+    return url;
   }
 
   async handleCopyToClipboard() {
