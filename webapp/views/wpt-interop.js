@@ -184,7 +184,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
               <template is="dom-if" if="[[ hasAmendableMetadata(node.path, node.total, passRate) ]]">
                 <wpt-amend-metadata path="[[path]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]" ></wpt-amend-metadata>
-                <td class="score" onmouseover="[[toggleAmendMetadata]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+                <td class="score" onmouseover="[[openAmendMetadata]]" onmouseout="[[closeAmendMetadata]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
               </template>
 
               <template is="dom-if" if="[[ !hasAmendableMetadata(node.path, node.total, passRate) ]]">
@@ -255,7 +255,11 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
 
   constructor() {
     super();
-    this.toggleAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').open();
+    this.openAmendMetadata = () =>  {
+      this.shadowRoot.querySelector('wpt-amend-metadata').open();
+      this.shadowRoot.querySelector('wpt-amend-metadata').hidden = false;
+    };
+    this.closeAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').hidden = tru;
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);

@@ -210,7 +210,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun" index-as="i">
                   <template is="dom-if" if="[[ hasAmendableMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[toggleAmendMetadata]]">
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[openAmendMetadata]]" onmouseout="[[closeAmendMetadata]]">
                      <wpt-amend-metadata path="[[ path ]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]"></wpt-amend-metadata>
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
@@ -486,7 +486,11 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   constructor() {
     super();
-    this.toggleAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').open();
+    this.openAmendMetadata = () =>  {
+      this.shadowRoot.querySelector('wpt-amend-metadata').open();
+      this.shadowRoot.querySelector('wpt-amend-metadata').hidden = false;
+    };
+    this.closeAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').hidden = true;
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
