@@ -283,7 +283,11 @@ def process_report(task_id, params):
 
     response = []
     with Processor() as p:
-        _log.info("Downloading results & screenshots")
+        if azure_url:
+            _log.info("Downloading Azure results: %s", azure_url)
+        else:
+            _log.info("Downloading %d results & %d screenshots",
+                      len(results), len(screenshots))
         p.download(results, screenshots, azure_url)
         if len(p.results) == 0:
             _log.error("No results successfully downloaded")
@@ -301,7 +305,7 @@ def process_report(task_id, params):
             p.report.finalize()
         except wptreport.WPTReportError:
             etype, e, tb = sys.exc_info()
-            e.path = str(results)
+            e.path = results
             # This will register an error in Stackdriver.
             traceback.print_exception(etype, e, tb)
             # The input is invalid and there is no point to retry, so we return

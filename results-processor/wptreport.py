@@ -14,7 +14,18 @@ import os
 import re
 import tempfile
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterator, IO, List, Optional, Set, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    IO,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Union,
+    cast,
+)
 
 import requests
 from mypy_extensions import TypedDict
@@ -56,7 +67,8 @@ class RawWPTReport(TypedDict, total=False):
 
 class WPTReportError(Exception):
     """Base class for all input-related exceptions."""
-    def __init__(self, message: str, path: Optional[str] = None) -> None:
+    def __init__(self, message: str,
+                 path: Optional[Union[str, List[str]]] = None) -> None:
         self.message = message
         self.path = path
 
