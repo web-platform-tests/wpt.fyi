@@ -82,6 +82,9 @@ class AmendMetadata extends PolymerElement {
   }
 
   computeRepoUrl(path) {
+    if(!path) {
+      return;
+    }
     const prefix = 'https://github.com/web-platform-tests/wpt-metadata/blob/master';
     return prefix + path + '/META.yml';
   }

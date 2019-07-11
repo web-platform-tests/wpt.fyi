@@ -182,12 +182,12 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
             </td>
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
-              <template is="dom-if" if="[[ checkMetadataAmendment(node.path, node.total, passRate) ]]">
-                <wpt-amend-metadata path="[[path]]" products="[[products]] test="[[node.path]]" product-index="[[i]]" ></wpt-amend-metadata>
+              <template is="dom-if" if="[[ hasAmendableMetadata(node.path, node.total, passRate) ]]">
+                <wpt-amend-metadata path="[[path]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]" ></wpt-amend-metadata>
                 <td class="score" onmouseover="[[toggleAmendMetadata]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
               </template>
 
-              <template is="dom-if" if="[[ !checkMetadataAmendment(node.path, node.total, passRate) ]]">
+              <template is="dom-if" if="[[ !hasAmendableMetadata(node.path, node.total, passRate) ]]">
                 <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
               </template>
             </template>
@@ -428,7 +428,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     return `background-color: ${this.passRateColorRGBA(browserCount, this.testRuns.length, alpha)}`;
   }
 
-  checkMetadataAmendment(nodePath, nodeTotal, passRate) {
+  hasAmendableMetadata(nodePath, nodeTotal, passRate) {
     return this.computePathIsATestFile(nodePath) && (nodeTotal - passRate) > 0;
   }
 
