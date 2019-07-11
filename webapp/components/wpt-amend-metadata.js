@@ -19,16 +19,28 @@ class AmendMetadata extends PolymerElement {
     return html`
       <style>
       .metadata-yml {
+        margin-left: 6px;
+      }
+      paper-button {
+        text-transform: none;
+      }
+      paper-item {
+
       }
       </style>
       <paper-dialog>
           <paper-item>1. Go to wpt-metadata&nbsp<a href="[[repo]]">here</a></paper-item>
           <paper-item>2. Copy and append the following to the above file</paper-item>
           <paper-button onclick="[[copyToClipboard]]" title="Copy metadata to the clipboard" autofocus>
-            <div class='metadata-yml'>- product: chrome</div><br>
-            <div class='metadata-yml'>test: 007.html</div><br>
-            <div class='metadata-yml'> status: FAIL</div><br>
-            <div class='metadata-yml'>url: insert url</div>
+          <div>
+             <template is="dom-if" if="[[hasYml]]">
+              <div>links:</div>
+             </template>
+            <div>{{ computeLinkProduct(product) }}</div>
+            <div class='metadata-yml'>{{ computeLinkTest(test, path) }}</div>
+            <div class='metadata-yml'>{{ computeLinkStatus('FAIL') }}</div>
+            <div class='metadata-yml'>{{ computeLinkUrl() }}</div>
+          </div>
           </paper-button>
           <paper-item>3. Create a branch and start a PR</paper-item>
         <div class="buttons">
@@ -78,7 +90,7 @@ class AmendMetadata extends PolymerElement {
   }
 
   computeProduct(productIndex, products) {
-    if (!productIndex || !products) {
+    if (!products) {
       return;
     }
 
@@ -107,12 +119,27 @@ class AmendMetadata extends PolymerElement {
     return url;
   }
 
+  computeLinkProduct(product) {
+    return '- product: ' + product;
+  }
+
+  computeLinkTest(test, path) {
+    if (!path) {
+      return;
+    }
+    return 'test: ' + test.substring(path.length + 1);
+  }
+
+  computeLinkStatus(status) {
+    return 'status: ' + status;
+  }
+
+  computeLinkUrl() {
+    return 'url: <insert url>';
+  }
+
   async handleCopyToClipboard() {
     try {
-      const input = this
-        .shadowRoot.querySelector('paper-input')
-        .shadowRoot.querySelector('input');
-      input.select();
       document.execCommand('copy');
       this.toast.show({
         text: 'URL copied to clipboard!',
