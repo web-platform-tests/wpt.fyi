@@ -31,13 +31,14 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     top: 0;
     z-index: 1;
   }
-  td, .ref-button {
-    padding: 0;
+  td {
+    padding: 0.25em;
     height: 1.5em;
   }
-  td code, .ref-button {
+  td code {
     line-height: 1.6em;
-    padding: 0 0.25em;
+    white-space: pre-wrap;
+    word-break: break-all;
   }
   td.sub-test-name, .ref-button {
     font-family: monospace;
@@ -120,7 +121,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
       <template is="dom-if" if="[[verbose]]">
         <template is="dom-if" if="[[anyScreenshots(row)]]">
           <tr>
-            <td>Screenshot</td>
+            <td class="sub-test-name"><code>Screenshot</code></td>
             <template is="dom-repeat" items="[[row.results]]" as="result">
               <td>
                 <template is="dom-if" if="[[ testScreenshot(result.screenshots) ]]">
