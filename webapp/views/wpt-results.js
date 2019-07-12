@@ -210,8 +210,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun" index-as="i">
                   <template is="dom-if" if="[[ hasAmendableMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[openAmendMetadata]]" onmouseout="[[closeAmendMetadata]]">
-                     <wpt-amend-metadata path="[[ path ]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]"></wpt-amend-metadata>
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[openAmendMetadata(i, node)]]" onmouseout="[[closeAmendMetadata]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
@@ -308,6 +307,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         </section>
       </template>
     </template>
+    <wpt-amend-metadata path="[[ path ]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]"></wpt-amend-metadata>
 `;
   }
 
@@ -486,11 +486,15 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   constructor() {
     super();
-    this.openAmendMetadata = () =>  {
-      this.shadowRoot.querySelector('wpt-amend-metadata').open();
-      this.shadowRoot.querySelector('wpt-amend-metadata').hidden = false;
+    this.openAmendMetadata = (i, node) =>  {
+      return (e) => {
+        const amend = this.shadowRoot.querySelector('wpt-amend-metadata');
+        amend.test = node.path;
+        amend.productIndex = i;
+        amend.open();
+      };
     };
-    this.closeAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').hidden = true;
+    this.closeAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').close();
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);

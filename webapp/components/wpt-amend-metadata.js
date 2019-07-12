@@ -89,6 +89,10 @@ class AmendMetadata extends PolymerElement {
     this.dialog.open();
   }
 
+  close() {
+    this.dialog.close();
+  }
+
   computeProduct(productIndex, products) {
     if (!products) {
       return;
@@ -120,11 +124,14 @@ class AmendMetadata extends PolymerElement {
   }
 
   computeLinkProduct(product) {
+    if (!product) {
+      return;
+    }
     return '- product: ' + product;
   }
 
   computeLinkTest(test, path) {
-    if (!path) {
+    if (!path || !test) {
       return;
     }
     return 'test: ' + test.substring(path.length + 1);
