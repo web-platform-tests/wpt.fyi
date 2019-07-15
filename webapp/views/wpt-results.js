@@ -208,17 +208,23 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                   <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
                 </td>
 
-                <template is="dom-repeat" items="{{testRuns}}" as="testRun" index-as="i">
+                <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <template is="dom-if" if="[[ hasAmendableMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[openAmendMetadata(i, node)]]" onmouseout="[[closeAmendMetadata]]">
-                  </template>
-                  <template is="dom-if" if="[[ !hasAmendableMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
-                  </template>
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[openAmendMetadata(index, node)]]" onmouseout="[[closeAmendMetadata]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
                     </td>
+                  </template>
+
+                  <template is="dom-if" if="[[ !hasAmendableMetadata(node, index, testRun) ]]">
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                    </td>
+                  </template>
+
                 </template>
                 <template is="dom-if" if="[[diffShown]]">
                   <td class\$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
