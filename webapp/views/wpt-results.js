@@ -492,9 +492,10 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         amend.test = node.path;
         amend.productIndex = i;
         amend.open();
+        amend.hidden = false
       };
     };
-    this.closeAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').close();
+    this.closeAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').hidden = true;
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
