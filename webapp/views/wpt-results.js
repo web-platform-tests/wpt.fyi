@@ -211,20 +211,14 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun" index-as="i">
                   <template is="dom-if" if="[[ hasAmendableMetadata(node, index, testRun) ]]">
                     <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[openAmendMetadata(i, node)]]" onmouseout="[[closeAmendMetadata]]">
-                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                      /
-                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-                    </td>
                   </template>
-
                   <template is="dom-if" if="[[ !hasAmendableMetadata(node, index, testRun) ]]">
                     <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
+                  </template>
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
                     </td>
-                  </template>
-
                 </template>
                 <template is="dom-if" if="[[diffShown]]">
                   <td class\$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
@@ -456,8 +450,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   computeTestTypeIcon(testType) {
     switch (testType) {
-    case 'manual': return 'touch-app';
-    case 'reftest': return 'image:compare';
+      case 'manual': return 'touch-app';
+      case 'reftest': return 'image:compare';
     }
   }
 
@@ -468,7 +462,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   computeDisplayedTests(path, searchResults) {
     return searchResults
-      && searchResults.map(r => r.test) .filter(name => name.startsWith(path))
+      && searchResults.map(r => r.test).filter(name => name.startsWith(path))
       || [];
   }
 
@@ -486,7 +480,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   constructor() {
     super();
-    this.openAmendMetadata = (i, node) =>  {
+    this.openAmendMetadata = (i, node) => {
       return (e) => {
         const amend = this.shadowRoot.querySelector('wpt-amend-metadata');
         amend.test = node.path;
@@ -589,7 +583,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     const toast = this.shadowRoot.querySelector('#runsNotInCache');
     this.load(
       this.retry(
-        async() => {
+        async () => {
           const r = await window.fetch(url, fetchOpts);
           if (!r.ok) {
             if (fetchOpts.method === 'POST' && r.status === 422) {
@@ -716,7 +710,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       const suffix = testPath.substring(prefix.length);
       const slashIdx = suffix.indexOf('/');
       const isDir = slashIdx !== -1;
-      const name = isDir ? suffix.substring(0, slashIdx): suffix;
+      const name = isDir ? suffix.substring(0, slashIdx) : suffix;
       // Either add new node to acc, or add passes, total to an
       // existing node.
       if (!nodes.hasOwnProperty(name)) {
@@ -739,7 +733,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     // Add an empty row for all the tests known from the manifest.
     const knownNodes = {};
     if (this.manifest && !this.search) {
-      for (const [path, {type}] of Object.entries(this.manifest)) {
+      for (const [path, { type }] of Object.entries(this.manifest)) {
         if (TEST_TYPES.includes(type)) {
           if (path.startsWith(prefix)) {
             collapsePathOnto(path, knownNodes);
@@ -843,7 +837,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     }
   }
 
-  platformID({browser_name, browser_version, os_name, os_version}) {
+  platformID({ browser_name, browser_version, os_name, os_version }) {
     return `${browser_name}-${browser_version}-${os_name}-${os_version}`;
   }
 
@@ -932,7 +926,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
     this.testRuns.forEach(testRun => {
       const testRunID = this.platformID(testRun);
-      totals[testRunID] = {passes: 0, total: 0};
+      totals[testRunID] = { passes: 0, total: 0 };
 
       Object.keys(this.specDirs).forEach(specKey => {
         let { passes, total } = this.specDirs[specKey].results[testRun.results_url];
