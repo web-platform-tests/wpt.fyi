@@ -239,7 +239,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       </template>
     </template>
 
-    <template is="dom-if" if="[[pathIsASubfolder]]">
+    <template is="dom-if" if="[[pathIsASubfolderOrFile]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
           <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
@@ -307,6 +307,10 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       path: {
         type: String,
         observer: 'pathUpdated',
+      },
+      pathIsASubfolderOrFile: {
+        type: Boolean,
+        computed: 'computePathIsASubfolderOrFile(pathIsASubfolder, pathIsATestFile)'
       },
       sourcePath: {
         type: String,
@@ -389,6 +393,10 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   isInvalidDiffUse(diff, testRuns) {
     return diff && testRuns && testRuns.length !== 2;
+  }
+
+  computePathIsASubfolderOrFile(isSubfolder, isFile) {
+    return isSubfolder || isFile;
   }
 
   computeSourcePath(path, manifest) {
