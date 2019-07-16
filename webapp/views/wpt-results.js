@@ -239,7 +239,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       </template>
     </template>
 
-    <template is="dom-if" if="[[isSubfolder]]">
+    <template is="dom-if" if="[[pathIsASubfolder]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
           <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>

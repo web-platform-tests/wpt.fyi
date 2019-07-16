@@ -5,6 +5,7 @@
  */
 
 import '../node_modules/@polymer/polymer/polymer-element.js';
+import { PathInfo } from './path.js';
 
 const $_documentContainer = document.createElement('template');
 $_documentContainer.innerHTML = `<dom-module id="self-navigator">
@@ -13,21 +14,13 @@ $_documentContainer.innerHTML = `<dom-module id="self-navigator">
 
 document.head.appendChild($_documentContainer.content);
 // eslint-disable-next-line no-unused-vars
-const SelfNavigation = (superClass) => class SelfNavigation extends superClass {
+const SelfNavigation = (superClass) => class SelfNavigation extends PathInfo(superClass) {
   static get properties() {
     return {
       path: {
         type: String,
         value: '/',
         observer: 'pathUpdated',
-      },
-      encodedPath: {
-        type: String,
-        computed: 'encodeTestPath(path)'
-      },
-      isSubfolder: {
-        type: Boolean,
-        computed: 'computeIsSubfolder(path)',
       },
       onLocationUpdated: Function,
     };
@@ -88,10 +81,6 @@ const SelfNavigation = (superClass) => class SelfNavigation extends superClass {
       this.onLocationUpdated(
         path, history.state || this.navigationQueryParams());
     }
-  }
-
-  computeIsSubfolder(path) {
-    return path && path !== '/';
   }
 
   /**
