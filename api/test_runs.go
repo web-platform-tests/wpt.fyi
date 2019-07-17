@@ -7,6 +7,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
@@ -21,6 +22,7 @@ const paginationTokenFeatureFlagName = "paginationTokens"
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
 	store := shared.NewAppEngineDatastore(ctx, true)
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	q := r.URL.Query()
@@ -52,6 +54,11 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if pr != nil && aeAPI.IsFeatureEnabled("runsByPRNumber") {
 			filters.SHAs = getPRCommits(aeAPI, *pr)
+			if len(filters.SHAs) < 1 {
+				log.Warningf("PR %s returned no commits from GitHub", *pr)
+			} else {
+				log.Infof("PR %s returned %v commits: %s", *pr, len(filters.SHAs), strings.Join(filters.SHAs.SevenCharSHAs(), ","))
+			}
 		}
 		var runsByProduct shared.TestRunsByProduct
 		runsByProduct, err = LoadTestRunsForFilters(store, filters)
