@@ -9,6 +9,7 @@ package shared
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -127,22 +128,23 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 			baseQuery = baseQuery.Filter("Labels =", i.(string))
 		}
 	}
-	var globalKeyFilter mapset.Set
+	var globalIDFilter mapset.Set
 	if len(revisions) > 1 || len(revisions) == 1 && !IsLatest(revisions[0]) {
-		globalKeyFilter = mapset.NewSet()
+		globalIDFilter = mapset.NewSet()
 		for _, sha := range revisions {
 			var ids TestRunIDs
 			if ids, err = loadKeysForRevision(t.store, baseQuery, sha); err != nil {
 				return nil, err
 			}
 			for _, id := range ids {
-				globalKeyFilter.Add(id)
+				globalIDFilter.Add(id)
 			}
 		}
-		log.Debugf("Found %v keys across %v resivions", globalKeyFilter.Cardinality(), len(revisions))
+		log.Debugf("Found %v keys across %v resivions", globalIDFilter.Cardinality(), len(revisions))
 	}
+
 	for i, product := range products {
-		var productKeyFilter = merge(globalKeyFilter, nil)
+		var productIDFilter = merge(globalIDFilter, nil)
 		query := baseQuery.Filter("BrowserName =", product.BrowserName)
 		if product.Labels != nil {
 			for i := range product.Labels.Iter() {
@@ -154,48 +156,79 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 			if ids, err = loadKeysForRevision(t.store, query, product.Revision); err != nil {
 				return nil, err
 			}
-			revKeyFilter := mapset.NewSet()
+			revIDFilter := mapset.NewSet()
 			for _, id := range ids {
-				revKeyFilter.Add(id)
+				revIDFilter.Add(id)
 			}
-			log.Debugf("Found %v keys for %s@%s", revKeyFilter.Cardinality(), product.BrowserName, product.Revision)
-			productKeyFilter = merge(productKeyFilter, revKeyFilter)
+			log.Debugf("Found %v keys for %s@%s", revIDFilter.Cardinality(), product.BrowserName, product.Revision)
+			productIDFilter = merge(productIDFilter, revIDFilter)
 		}
 		if product.BrowserVersion != "" {
-			var versionKeys mapset.Set
-			if versionKeys, err = loadKeysForBrowserVersion(t.store, query, product.BrowserVersion); err != nil {
+			var versionIDs mapset.Set
+			if versionIDs, err = loadKeysForBrowserVersion(t.store, query, product.BrowserVersion); err != nil {
 				return nil, err
 			}
-			log.Debugf("Found %v keys for %s", versionKeys.Cardinality(), product.BrowserVersion)
-			productKeyFilter = merge(productKeyFilter, versionKeys)
-		}
-		// TODO(lukebjerring): Indexes + filtering for OS + version.
-		query = query.Order("-TimeStart")
-
-		if from != nil {
-			query = query.Filter("TimeStart >=", *from)
-		}
-		if to != nil {
-			query = query.Filter("TimeStart <", *to)
+			log.Debugf("Found %v keys for %s", versionIDs.Cardinality(), product.BrowserVersion)
+			productIDFilter = merge(productIDFilter, versionIDs)
 		}
 
-		var results []Key
-		keys, err := t.store.GetAll(query.KeysOnly(), nil)
-		if err != nil {
-			return nil, err
-		}
-		for _, key := range keys {
-			if (limit != nil && len(results) >= *limit) || len(results) >= MaxCountMaxValue {
-				break
-			} else if productKeyFilter != nil && !productKeyFilter.Contains(key.IntID()) {
-				continue
+		// If we have a specific set of possibilities, it's much cheaper to
+		// turn the query on its head (filter the entities).
+		var keys []Key
+		if productIDFilter != nil {
+			log.Debugf("Loading %v viable runs to filter them.", productIDFilter.Cardinality())
+			keys = make([]Key, 0, productIDFilter.Cardinality())
+			for key := range productIDFilter.Iter() {
+				keys = append(keys, t.store.NewIDKey("TestRun", key.(int64)))
 			}
-			results = append(results, key)
+			runs := make(TestRuns, len(keys))
+			err = t.store.GetMulti(keys, runs)
+			if err != nil {
+				return nil, err
+			}
+			runs.SetTestRunIDs(GetTestRunIDs(keys))
+			// TestRuns sorted by TimeStart asc by default
+			sort.Sort(sort.Reverse(runs))
+			keys = make([]Key, 0)
+			for _, run := range runs {
+				if !product.Matches(run) ||
+					from != nil && !from.Before(run.TimeStart) ||
+					to != nil && !run.TimeStart.Before(*to) {
+					continue
+				}
+				keys = append(keys, t.store.NewIDKey("TestRun", run.ID))
+			}
+			if limit != nil && len(keys) >= *limit {
+				keys = keys[:*limit]
+			} else if len(keys) >= MaxCountMaxValue {
+				keys = keys[:MaxCountMaxValue]
+			}
+		} else {
+			// Otherwise, just run a "GetAll" filter. Expensive.
+			log.Debugf("Falling back to GetAll datastore query.")
+			// TODO(lukebjerring): Indexes + filtering for OS + version.
+			query = query.Order("-TimeStart")
+			if from != nil {
+				query = query.Filter("TimeStart >=", *from)
+			}
+			if to != nil {
+				query = query.Filter("TimeStart <", *to)
+			}
+			max := MaxCountMaxValue
+			if limit != nil && *limit < MaxCountMaxValue {
+				max = *limit
+			}
+			keys, err = t.store.GetAll(query.KeysOnly().Limit(max), nil)
+			if err != nil {
+				return nil, err
+			}
+			log.Debugf("Loaded %v results for %s", len(keys), product.String())
 		}
-		log.Debugf("Found %v results for %s", len(results), product.String())
+
+		log.Debugf("Found %v results for %s", len(keys), product.String())
 		result[i] = ProductTestRunKeys{
 			Product: product,
-			Keys:    results,
+			Keys:    keys,
 		}
 	}
 	return result, nil
