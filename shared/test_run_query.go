@@ -115,6 +115,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 	to *time.Time,
 	limit *int,
 	offset *int) (result KeysByProduct, err error) {
+	log := GetLogger(t.store.Context())
 	result = make(KeysByProduct, len(products))
 	baseQuery := t.store.NewQuery("TestRun")
 	if offset != nil {
@@ -138,6 +139,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 				globalKeyFilter.Add(id)
 			}
 		}
+		log.Debugf("Found %v keys across %v resivions", globalKeyFilter.Cardinality(), len(revisions))
 	}
 	for i, product := range products {
 		var productKeyFilter = merge(globalKeyFilter, nil)
@@ -175,24 +177,22 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 			query = query.Filter("TimeStart <", *to)
 		}
 
-		var keys []Key
-		iter := query.KeysOnly().Run(t.store)
-		for {
-			key, err := iter.Next(nil)
-			if err == t.store.Done() {
-				break
-			} else if err != nil {
-				return result, err
-			} else if (limit != nil && len(keys) >= *limit) || len(keys) >= MaxCountMaxValue {
+		var results []Key
+		keys, err := t.store.GetAll(query.KeysOnly(), nil)
+		if err != nil {
+			return nil, err
+		}
+		for _, key := range keys {
+			if (limit != nil && len(results) >= *limit) || len(results) >= MaxCountMaxValue {
 				break
 			} else if productKeyFilter != nil && !productKeyFilter.Contains(key.IntID()) {
 				continue
 			}
-			keys = append(keys, key)
+			results = append(results, key)
 		}
 		result[i] = ProductTestRunKeys{
 			Product: product,
-			Keys:    keys,
+			Keys:    results,
 		}
 	}
 	return result, nil
@@ -296,14 +296,17 @@ func contains(s []string, x string) bool {
 
 // Loads any keys for a revision prefix or full string match
 func loadKeysForRevision(store Datastore, query Query, sha string) (result TestRunIDs, err error) {
+	log := GetLogger(store.Context())
 	var revQuery Query
 	if len(sha) < 40 {
+		log.Debugf("Finding revisions %s <= SHA < %s", sha, sha+"g")
 		revQuery = query.
 			Order("FullRevisionHash").
 			Limit(MaxCountMaxValue).
 			Filter("FullRevisionHash >=", sha).
 			Filter("FullRevisionHash <", sha+"g") // g > f
 	} else {
+		log.Debugf("Finding exact revision %s", sha)
 		revQuery = query.Filter("FullRevisionHash =", sha[:40])
 	}
 
