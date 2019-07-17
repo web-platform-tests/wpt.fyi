@@ -8,8 +8,10 @@ const log = require('debug')('wpt.fyi');
 const puppeteer = require('puppeteer');
 
 const flags = require('flags');
-const browserFlag = flags.defineString('browser', 'chrome', 'Browser which is the only one with failures');
+const browserFlag = flags.defineString('products', 'chrome,firefox,safari', 'Browsers to compare');
 flags.parse();
+
+const browsers = browserFlag.get().split(',').map(b => b.trim());
 
 async function main() {
   log('Launching puppeteer');
@@ -17,17 +19,17 @@ async function main() {
     headless: process.env.HEADLESS !== 'false',
   });
 
+
   try {
-    const scrape = async function(date) {
+    const scrape = async function(product, date) {
       const dateParam = new Date(date).toISOString().split('T')[0];
       /** @type {Page} */
       const page = await browser.newPage();
       const url = new URL(`https://wpt.fyi/`);
       url.searchParams.set('labels', 'master,stable');
-      url.searchParams.set('products', 'chrome,firefox,safari');
-      const mainProduct = browserFlag.get();
-      let q = `(${mainProduct}:!pass&${mainProduct}:!ok)`;
-      for (const other of ['chrome','firefox','safari'].filter(b => b != mainProduct)) {
+      url.searchParams.set('products', browsers.join(','));
+      let q = `(${product}:!pass&${product}:!ok)`;
+      for (const other of browsers.filter(b => b != product)) {
         q += ` (${other}:pass|${other}:ok)`;
       }
       url.searchParams.set('q', q);
@@ -62,21 +64,24 @@ async function main() {
     };
 
     const dates = [new Date('2019-07-01')];
-    for (var i = 0; i < 11; i++) {
+    for (var i = 1; i < 52; i++) {
       const next = new Date(dates[dates.length-1]);
-      next.setMonth(next.getMonth() - 1);
+      next.setDate(next.getDate() - 7);
       dates.push(next);
     }
 
-    console.log(['date', 'sha', 'tests', 'subtests'].map(s => s.padEnd(10)).join('\t'));
+    console.log(['date', 'product', 'sha', 'tests', 'subtests'].map(s => s.padEnd(10)).join('\t'));
     for (const date of dates) {
-      const {sha, tests, subtests} = await scrape(date);
-      console.log([
-        date.toISOString().split('T')[0],
-        sha,
-        tests,
-        subtests
-      ].map(s => `${s}`.padEnd(10)).join('\t'));
+      for (const browser of browsers) {
+        const {sha, tests, subtests} = await scrape(browser, date);
+        console.log([
+          date.toISOString().split('T')[0],
+          browser,
+          sha,
+          tests,
+          subtests
+        ].map(s => `${s}`.padEnd(10)).join('\t'));
+      }
     }
   } finally {
     browser.close();
