@@ -55,9 +55,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		if pr != nil && aeAPI.IsFeatureEnabled("runsByPRNumber") {
 			filters.SHAs = getPRCommits(aeAPI, *pr)
 			if len(filters.SHAs) < 1 {
-				log.Warningf("PR %s returned no commits from GitHub", *pr)
+				log.Warningf("PR %v returned no commits from GitHub", *pr)
 			} else {
-				log.Infof("PR %s returned %v commits: %s", *pr, len(filters.SHAs), strings.Join(filters.SHAs.SevenCharSHAs(), ","))
+				log.Infof("PR %v returned %v commits: %s", *pr, len(filters.SHAs), strings.Join(filters.SHAs.SevenCharSHAs(), ","))
 			}
 		}
 		var runsByProduct shared.TestRunsByProduct
