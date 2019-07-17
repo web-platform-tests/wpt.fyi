@@ -158,6 +158,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 			for _, id := range ids {
 				revKeyFilter.Add(id)
 			}
+			log.Debugf("Found %v keys for %s@%s", revKeyFilter.Cardinality(), product.BrowserName, product.Revision)
 			productKeyFilter = merge(productKeyFilter, revKeyFilter)
 		}
 		if product.BrowserVersion != "" {
@@ -165,6 +166,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 			if versionKeys, err = loadKeysForBrowserVersion(t.store, query, product.BrowserVersion); err != nil {
 				return nil, err
 			}
+			log.Debugf("Found %v keys for %s", versionKeys.Cardinality(), product.BrowserVersion)
 			productKeyFilter = merge(productKeyFilter, versionKeys)
 		}
 		// TODO(lukebjerring): Indexes + filtering for OS + version.
@@ -190,6 +192,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 			}
 			results = append(results, key)
 		}
+		log.Debugf("Found %v results for %s", len(results), product.String())
 		result[i] = ProductTestRunKeys{
 			Product: product,
 			Keys:    results,
