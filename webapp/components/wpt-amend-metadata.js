@@ -18,30 +18,13 @@ class AmendMetadata extends PolymerElement {
   static get template() {
     return html`
       <style>
-      .metadata-yml {
-        margin-left: 6px;
-      }
-      paper-button {
-        text-transform: none;
-      }
-      paper-item {
-
-      }
       </style>
       <paper-dialog>
           <paper-item>1. Go to wpt-metadata&nbsp<a href="[[repo]]">here</a></paper-item>
           <paper-item>2. Copy and append the following to the above file</paper-item>
-          <paper-button onclick="[[copyToClipboard]]" title="Copy metadata to the clipboard" autofocus>
-          <div>
-             <template is="dom-if" if="[[hasYml]]">
-              <div>links:</div>
-             </template>
-            <div>{{ computeLinkProduct(product) }}</div>
-            <div class='metadata-yml'>{{ computeLinkTest(test, path) }}</div>
-            <div class='metadata-yml'>{{ computeLinkStatus('FAIL') }}</div>
-            <div class='metadata-yml'>{{ computeLinkUrl() }}</div>
-          </div>
-          </paper-button>
+          <paper-item>
+          <pre>{{ computeLinkNode(hasYml, product, test, path) }}</pre>
+          </paper-item>
           <paper-item>3. Create a branch and start a PR</paper-item>
         <div class="buttons">
         <paper-button dialog-dismiss>Dismiss</paper-button>
@@ -58,12 +41,12 @@ class AmendMetadata extends PolymerElement {
       test: String,
       productIndex: Number,
       product : {
-        type:String,
+        type: String,
         computed: 'computeProduct(productIndex, products)'
       },
       hasYml: {
-        type:Boolean,
-        value:false,
+        type: Boolean,
+        value: false,
       },
       repo: {
         type: String,
@@ -74,7 +57,6 @@ class AmendMetadata extends PolymerElement {
 
   constructor() {
     super();
-    this.copyToClipboard = this.handleCopyToClipboard.bind(this);
   }
 
   get dialog() {
@@ -89,10 +71,6 @@ class AmendMetadata extends PolymerElement {
     this.dialog.open();
   }
 
-  close() {
-    this.dialog.close();
-  }
-
   computeProduct(productIndex, products) {
     if (!products) {
       return;
@@ -104,6 +82,20 @@ class AmendMetadata extends PolymerElement {
     }
 
     return productVal[productIndex];
+  }
+
+  computeLinkNode(hasYml, product, test, path) {
+    let linkNode = '';
+    if (!hasYml) {
+      linkNode += 'links:\n';
+    }
+
+    linkNode += this.computeLinkProduct(product);
+    linkNode += this.computeLinkUrl();
+    linkNode += this.computeLinkTest(test, path);
+    linkNode += this.computeLinkStatus('FAIL');
+
+    return linkNode;
   }
 
   computeRepoUrl(path, hasYml) {
@@ -127,38 +119,22 @@ class AmendMetadata extends PolymerElement {
     if (!product) {
       return;
     }
-    return '- product: ' + product;
+    return '  - product: ' + product + '\n';
   }
 
   computeLinkTest(test, path) {
     if (!path || !test) {
       return;
     }
-    return 'test: ' + test.substring(path.length + 1);
+    return '    - test: ' + test.substring(path.length + 1) + '\n';
   }
 
   computeLinkStatus(status) {
-    return 'status: ' + status;
+    return '      status: ' + status + '\n';
   }
 
   computeLinkUrl() {
-    return 'url: <insert url>';
-  }
-
-  async handleCopyToClipboard() {
-    try {
-      document.execCommand('copy');
-      this.toast.show({
-        text: 'URL copied to clipboard!',
-        duration: 2000,
-      });
-    } catch (e) {
-      this.toast.show({
-        text: 'Failed to copy URL to clipboard. Copy it manually.',
-        duration: 5000,
-      });
-    }
-
+    return '    url: <insert url>\n';
   }
 }
 

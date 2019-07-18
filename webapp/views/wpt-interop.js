@@ -183,8 +183,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
               <template is="dom-if" if="[[ hasAmendableMetadata(node.path, node.total, passRate) ]]">
-                <wpt-amend-metadata path="[[path]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]" ></wpt-amend-metadata>
-                <td class="score" onmouseover="[[openAmendMetadata]]" onmouseout="[[closeAmendMetadata]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+                <td class="score" onclick="[[openAmendMetadata(i, node)]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
               </template>
 
               <template is="dom-if" if="[[ !hasAmendableMetadata(node.path, node.total, passRate) ]]">
@@ -206,7 +205,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
   <template is="dom-if" if="[[ pathIsATestFile ]]">
     <test-file-results test-runs="[[testRuns]]" path="[[path]]"></test-file-results>
   </template>
-
+  <wpt-amend-metadata path="[[ path ]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]"></wpt-amend-metadata>
   <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
 `;
   }
@@ -255,11 +254,14 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
 
   constructor() {
     super();
-    this.openAmendMetadata = () =>  {
-      this.shadowRoot.querySelector('wpt-amend-metadata').open();
-      this.shadowRoot.querySelector('wpt-amend-metadata').hidden = false;
+    this.openAmendMetadata = (i, node) => {
+      return () => {
+        const amend = this.shadowRoot.querySelector('wpt-amend-metadata');
+        amend.test = node.path;
+        amend.productIndex = i;
+        amend.open();
+      };
     };
-    this.closeAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').hidden = tru;
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);

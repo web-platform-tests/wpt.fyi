@@ -210,7 +210,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <template is="dom-if" if="[[ hasAmendableMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onmouseover="[[openAmendMetadata(index, node)]]" onmouseout="[[closeAmendMetadata]]">
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[openAmendMetadata(index, node)]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
@@ -456,8 +456,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   computeTestTypeIcon(testType) {
     switch (testType) {
-      case 'manual': return 'touch-app';
-      case 'reftest': return 'image:compare';
+    case 'manual': return 'touch-app';
+    case 'reftest': return 'image:compare';
     }
   }
 
@@ -487,15 +487,13 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
   constructor() {
     super();
     this.openAmendMetadata = (i, node) => {
-      return (e) => {
+      return () => {
         const amend = this.shadowRoot.querySelector('wpt-amend-metadata');
         amend.test = node.path;
         amend.productIndex = i;
         amend.open();
-        amend.hidden = false
       };
     };
-    this.closeAmendMetadata = () => this.shadowRoot.querySelector('wpt-amend-metadata').hidden = true;
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
@@ -590,7 +588,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     const toast = this.shadowRoot.querySelector('#runsNotInCache');
     this.load(
       this.retry(
-        async () => {
+        async() => {
           const r = await window.fetch(url, fetchOpts);
           if (!r.ok) {
             if (fetchOpts.method === 'POST' && r.status === 422) {
