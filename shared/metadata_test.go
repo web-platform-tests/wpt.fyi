@@ -27,12 +27,13 @@ links:
     - test: b.html
       subtest: Something should happen
       status: FAIL
+    - test: c.html
 `)
 
 	metadatamap := parseMetadata(metadataByteMap, NewNilLogger())
 
-	assert.Equal(t, 1, len(metadatamap))
-	assert.Equal(t, 2, len(metadatamap[path].Links))
+	assert.Len(t, metadatamap, 1)
+	assert.Len(t, metadatamap[path].Links, 2)
 	assert.Equal(t, "chrome", metadatamap[path].Links[0].Product.BrowserName)
 	assert.Equal(t, "64", metadatamap[path].Links[0].Product.BrowserVersion)
 	assert.Equal(t, "a.html", metadatamap[path].Links[0].Results[0].TestPath)
@@ -43,6 +44,10 @@ links:
 	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
 	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
 	assert.Equal(t, "https://bug.com/item", metadatamap[path].Links[1].URL)
+	assert.Len(t, metadatamap[path].Links[1].Results, 2)
+	assert.Equal(t, "b.html", metadatamap[path].Links[1].Results[0].TestPath)
+	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
+	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
 }
 
 func TestConstructMetadataResponse_OneLink(t *testing.T) {
