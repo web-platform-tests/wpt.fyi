@@ -85,10 +85,11 @@ class AmendMetadata extends PolymerElement {
       linkNode += 'links:\n';
     }
 
-    linkNode += this.computeLinkProduct(product);
-    linkNode += this.computeLinkUrl();
-    linkNode += this.computeLinkTest(test, path);
-    linkNode += this.computeLinkStatus('FAIL');
+    linkNode += (this.addLeadingSpace(2) + this.computeLinkProduct(product));
+    linkNode += (this.addLeadingSpace(4) + this.computeLinkUrl());
+    linkNode += (this.addLeadingSpace(4) + 'results:\n');
+    linkNode += (this.addLeadingSpace(4) + this.computeLinkTest(test, path));
+    linkNode += (this.addLeadingSpace(6) + this.computeLinkStatus('FAIL'));
 
     return linkNode;
   }
@@ -110,26 +111,34 @@ class AmendMetadata extends PolymerElement {
     return url;
   }
 
+  addLeadingSpace(num) {
+    let space = '';
+    for (let i = 0; i < num; i++) {
+      space += ' ';
+    }
+    return space;
+  }
+
   computeLinkProduct(product) {
     if (!product) {
       return;
     }
-    return '  - product: ' + product + '\n';
+    return '- product: ' + product + '\n';
   }
 
   computeLinkTest(test, path) {
     if (!path || !test) {
       return;
     }
-    return '    - test: ' + test.substring(path.length + 1) + '\n';
+    return '- test: ' + test.substring(path.length + 1) + '\n';
   }
 
   computeLinkStatus(status) {
-    return '      status: ' + status + '\n';
+    return 'status: ' + status + '\n';
   }
 
   computeLinkUrl() {
-    return '    url: <insert url>\n';
+    return 'url: <insert url>\n';
   }
 }
 
