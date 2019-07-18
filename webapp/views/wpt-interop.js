@@ -196,6 +196,12 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
                 <paper-progress value="[[ interopScore(node) ]]"></paper-progress>
               </td>
             </template>
+
+            <template is="dom-if" if="[[ interopScoreColumn ]]">
+              <td>
+                <paper-progress value="[[ interopScore(node) ]]"></paper-progress>
+              </td>
+            </template>
           </tr>
         </template>
       </tbody>
