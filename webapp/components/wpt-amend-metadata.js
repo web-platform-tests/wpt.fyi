@@ -30,7 +30,6 @@ class AmendMetadata extends PolymerElement {
         <paper-button dialog-dismiss>Dismiss</paper-button>
         </div>
       </paper-dialog>
-      <paper-toast id="toast"></paper-toast>
 `;
   }
 
@@ -61,10 +60,6 @@ class AmendMetadata extends PolymerElement {
 
   get dialog() {
     return this.shadowRoot.querySelector('paper-dialog');
-  }
-
-  get toast() {
-    return this.shadowRoot.querySelector('#toast');
   }
 
   open() {
