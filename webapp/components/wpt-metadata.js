@@ -98,7 +98,7 @@ class WPTMetadata extends LoadingState(PolymerElement) {
         }
       </style>
       <template is="dom-if" if="[[firstThree]]">
-        <h4>Triaged Metadata in <i>[[path]]</i></h4>
+        <h4>Relevant links for <i>[[path]]</i> results</h4>
       </template>
       <template is="dom-repeat" items="[[firstThree]]" as="metadataNode">
         <wpt-metadata-node metadata-node="[[metadataNode]]" path="[[path]]"></wpt-metadata-node>

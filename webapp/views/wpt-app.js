@@ -142,7 +142,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
 
-      <template is="dom-if" if="[[pathIsASubfolder]]">
+      <template is="dom-if" if="[[!pathIsRootDir]]">
         <wpt-metadata products="[[products]]" path="[[path]]"></wpt-metadata>
       </template>
 
