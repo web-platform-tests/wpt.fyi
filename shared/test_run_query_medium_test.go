@@ -267,6 +267,13 @@ func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
 	allRuns = loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
 	assert.Equal(t, "1111111111", allRuns[0].Revision)
+
+	// Partial SHA, Exact version
+	products[0].BrowserVersion = "63.1.1.1"
+	loaded, err = store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil)
+	allRuns = loaded.AllRuns()
+	assert.Equal(t, 1, len(allRuns))
+	assert.Equal(t, "1111111111", allRuns[0].Revision)
 }
 
 func TestLoadTestRuns_Ordering(t *testing.T) {
