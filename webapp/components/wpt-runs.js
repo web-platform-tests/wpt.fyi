@@ -87,7 +87,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       }
       test-run {
         display: inline-block;
-        pointer: cursor;
+        cursor: pointer;
       }
       test-run[selected] {
         padding: 4px;
@@ -201,6 +201,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
                             data-run-id$="[[run.id]]"
                             test-run="[[run]]"
                             small
+                            overlap
                             show-platform
                             show-source></test-run>
                 </template>

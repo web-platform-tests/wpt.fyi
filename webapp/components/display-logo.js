@@ -21,55 +21,55 @@ See models.go for more details.
 import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { ProductInfo, Sources } from './product-info.js';
+import { ProductInfo, Platforms, Sources } from './product-info.js';
 
 class DisplayLogo extends ProductInfo(PolymerElement) {
   static get template() {
     return html`
     <style>
+      :host {
+        --browser-size: 32px;
+        --source-size: 16px;
+      }
       .icon {
         /*Avoid (unwanted) space between images.*/
         font-size: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
       }
       img.browser {
-        height: 32px;
-        width: 32px;
+        height: var(--browser-size);
+        width: var(--browser-size);
       }
-      img.source {
-        height: 16px;
-        width: 16px;
-        margin-left: -12px;
-        margin-bottom: -4px;
+      img.source,
+      img.platform {
+        height: var(--source-size);
+        width: var(--source-size);
+        margin-top: var(--browser-size);
       }
-      .small img.browser {
-        width: 24px;
-        height: 24px;
+      :host([overlap]) img.browser {
+        margin-top: calc(0.5 * var(--source-size));
+        margin-bottom: calc(0.5 * var(--source-size));
       }
-      .small img.source,
-      .small img.platform {
-        width: 12px;
-        height: 12px;
+      :host([overlap]) img.source {
+        margin-left: calc(-0.5 * var(--source-size));
       }
-      .small img.source {
-        margin-left: -8px;
-        margin-bottom: -4px;
+      :host([overlap]) img.platform {
+        margin-right: calc(-0.5 * var(--source-size));
+        margin-bottom: var(--browser-size);
+        margin-top: 0;
       }
-      .small img.platform {
-        margin-right: -8px;
-        margin-bottom: -4px;
+      .small {
+        --browser-size: 24px;
+        --source-size: 12px;
       }
     </style>
 
     <div class\$="icon [[containerClass(small)]]">
       <template is="dom-if" if="[[platform]]" restamp>
-        <img class="platform" src="/static/[[platform]].svg">
+        <img class="platform" src="/static/[[platform]].svg" />
       </template>
       <img class="browser" src="[[displayLogo(product.browser_name, product.labels)]]">
       <template is="dom-if" if="[[source]]" restamp>
-        <img class="source" src="/static/[[source]].svg">
+        <img class="source" src="/static/[[source]].svg" />
       </template>
     </div>
 `;
@@ -107,6 +107,10 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
       platform: {
         computed: 'computePlatform(product, showPlatform)',
       },
+      overlap: {
+        type: Boolean,
+        reflectToAttribute: true,
+      }
     };
   }
 
