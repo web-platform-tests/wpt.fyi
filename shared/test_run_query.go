@@ -140,7 +140,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 				globalIDFilter.Add(id)
 			}
 		}
-		log.Debugf("Found %v keys across %v resivions", globalIDFilter.Cardinality(), len(revisions))
+		log.Debugf("Found %d keys across %d revisions", globalIDFilter.Cardinality(), len(revisions))
 	}
 
 	for i, product := range products {
