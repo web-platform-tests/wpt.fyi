@@ -55,7 +55,11 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
     </style>
 
     <div>
-      <display-logo show-source="[[showSource]]" small="[[small]]" product="[[testRun]]"></display-logo>
+      <display-logo product="[[testRun]]"
+                    show-source="[[showSource]]"
+                    show-platform="[[showPlatform]]"
+                    small="[[small]]">
+      </display-logo>
 
       <template is="dom-if" if="[[!small]]">
         <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>

@@ -48,15 +48,25 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
         width: 24px;
         height: 24px;
       }
-      .small img.source {
+      .small img.source,
+      .small img.platform {
         width: 12px;
         height: 12px;
+      }
+      .small img.source {
         margin-left: -8px;
+        margin-bottom: -4px;
+      }
+      .small img.platform {
+        margin-right: -8px;
         margin-bottom: -4px;
       }
     </style>
 
     <div class\$="icon [[containerClass(small)]]">
+      <template is="dom-if" if="[[platform]]" restamp>
+        <img class="platform" src="/static/[[platform]].svg">
+      </template>
       <img class="browser" src="[[displayLogo(product.browser_name, product.labels)]]">
       <template is="dom-if" if="[[source]]" restamp>
         <img class="source" src="/static/[[source]].svg">
@@ -78,6 +88,7 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
       product: {
         type: Object, /* {
           browser_name: String,
+          os_name: String,
           labels: Array|Set,
         }*/
         value: {}
@@ -88,6 +99,13 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
       },
       source: {
         computed: 'computeSource(product, showSource)',
+      },
+      showPlatform: {
+        type: Boolean,
+        value: false
+      },
+      platform: {
+        computed: 'computePlatform(product, showPlatform)',
       },
     };
   }
@@ -120,6 +138,13 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
       return '';
     }
     return product.labels.find(s => Sources.has(s));
+  }
+
+  computePlatform(product, showPlatform) {
+    if (!showPlatform || !Platforms.has(product.os_name)) {
+      return '';
+    }
+    return product.os_name;
   }
 }
 

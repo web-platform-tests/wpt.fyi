@@ -197,7 +197,12 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
             <template is="dom-repeat" items="{{ browsers }}" as="browser">
               <td class\$="runs [[ runClass(results.runs, browser) ]]">
                 <template is="dom-repeat" items="[[runList(results.runs, browser)]]" as="run">
-                  <test-run onclick="[[selectRun]]" data-run-id$="[[run.id]]" small show-source test-run="[[run]]"></test-run>
+                  <test-run onclick="[[selectRun]]"
+                            data-run-id$="[[run.id]]"
+                            test-run="[[run]]"
+                            small
+                            show-platform
+                            show-source></test-run>
                 </template>
               </td>
             </template>
