@@ -32,7 +32,7 @@ func (s SHAs) FirstOrLatest() string {
 	return s[0]
 }
 
-// Returns an array of the given SHAs' first 7-chars.
+// ShortSHAs returns an array of the given SHAs' first 7-chars.
 func (s SHAs) ShortSHAs() []string {
 	short := make([]string, len(s))
 	for i, long := range s {

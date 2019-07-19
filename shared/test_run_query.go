@@ -132,13 +132,11 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 	if len(revisions) > 1 || len(revisions) == 1 && !IsLatest(revisions[0]) {
 		globalIDFilter = mapset.NewSet()
 		for _, sha := range revisions {
-			var ids TestRunIDs
+			var ids mapset.Set
 			if ids, err = loadIDsForRevision(t.store, baseQuery, sha); err != nil {
 				return nil, err
 			}
-			for _, id := range ids {
-				globalIDFilter.Add(id)
-			}
+			globalIDFilter = globalIDFilter.Union(ids)
 		}
 		log.Debugf("Found %d keys across %d revisions", globalIDFilter.Cardinality(), len(revisions))
 	}
@@ -152,13 +150,9 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 			}
 		}
 		if !IsLatest(product.Revision) {
-			var ids TestRunIDs
-			if ids, err = loadIDsForRevision(t.store, query, product.Revision); err != nil {
+			var revIDFilter mapset.Set
+			if revIDFilter, err = loadIDsForRevision(t.store, query, product.Revision); err != nil {
 				return nil, err
-			}
-			revIDFilter := mapset.NewSet()
-			for _, id := range ids {
-				revIDFilter.Add(id)
 			}
 			log.Debugf("Found %v keys for %s@%s", revIDFilter.Cardinality(), product.BrowserName, product.Revision)
 			productIDFilter = merge(productIDFilter, revIDFilter)
@@ -322,6 +316,9 @@ func (t testRunQueryImpl) GetAlignedRunSHAs(
 	return shas, keys, err
 }
 
+// merge gives the set of elements present in both of the given sets (Intersect).
+// If one of the sets is nil, returns a set with the contents of the non-nil set.
+// If both sets are nil, returns nil.
 func merge(s1, s2 mapset.Set) mapset.Set {
 	if s1 == nil && s2 == nil {
 		return nil
@@ -362,25 +359,34 @@ func loadIDsForRevision(store Datastore, query Query, sha string) (result mapset
 	if keys, err = store.GetAll(revQuery.KeysOnly(), nil); err != nil {
 		return nil, err
 	}
-	return mapset.NewSetFromSlice(GetTestRunIDs(keys)), nil
+	result = mapset.NewSet()
+	for _, id := range GetTestRunIDs(keys) {
+		result.Add(id)
+	}
+	return result, nil
 }
 
 // Loads any keys for a full string match or a version prefix (Between [version].* and [version].9*).
 // Entries in the set are the int64 value of the keys.
 func loadIDsForBrowserVersion(store Datastore, query Query, version string) (result mapset.Set, err error) {
-	versionQuery := VersionPrefix(query, "BrowserVersion", version, true)
+	result = mapset.NewSet()
+	// By prefix
 	var keys []Key
-	keyset := mapset.NewSet()
+	versionQuery := VersionPrefix(query, "BrowserVersion", version, true)
 	if keys, err = store.GetAll(versionQuery.KeysOnly(), nil); err != nil {
 		return nil, err
 	}
-	for _, key := range keys {
-		keyset.Add(key.IntID())
+	for _, id := range GetTestRunIDs(keys) {
+		result.Add(id)
 	}
+	// By exact match
 	if keys, err = store.GetAll(query.Filter("BrowserVersion =", version).KeysOnly(), nil); err != nil {
 		return nil, err
 	}
-	return mapset.NewSetFromSlice(GetTestRunIDs(keys)), nil
+	for _, id := range GetTestRunIDs(keys) {
+		result.Add(id)
+	}
+	return result, nil
 }
 
 // VersionPrefix returns the given query with a prefix filter on the given
