@@ -133,7 +133,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 		globalIDFilter = mapset.NewSet()
 		for _, sha := range revisions {
 			var ids TestRunIDs
-			if ids, err = loadKeysForRevision(t.store, baseQuery, sha); err != nil {
+			if ids, err = loadIDsForRevision(t.store, baseQuery, sha); err != nil {
 				return nil, err
 			}
 			for _, id := range ids {
@@ -153,7 +153,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 		}
 		if !IsLatest(product.Revision) {
 			var ids TestRunIDs
-			if ids, err = loadKeysForRevision(t.store, query, product.Revision); err != nil {
+			if ids, err = loadIDsForRevision(t.store, query, product.Revision); err != nil {
 				return nil, err
 			}
 			revIDFilter := mapset.NewSet()
@@ -165,7 +165,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 		}
 		if product.BrowserVersion != "" {
 			var versionIDs mapset.Set
-			if versionIDs, err = loadKeysForBrowserVersion(t.store, query, product.BrowserVersion); err != nil {
+			if versionIDs, err = loadIDsForBrowserVersion(t.store, query, product.BrowserVersion); err != nil {
 				return nil, err
 			}
 			log.Debugf("Found %v keys for %s", versionIDs.Cardinality(), product.BrowserVersion)
@@ -176,33 +176,7 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 		// turn the query on its head (filter the entities).
 		var keys []Key
 		if productIDFilter != nil {
-			log.Debugf("Loading %v viable runs to filter them.", productIDFilter.Cardinality())
-			keys = make([]Key, 0, productIDFilter.Cardinality())
-			for key := range productIDFilter.Iter() {
-				keys = append(keys, t.store.NewIDKey("TestRun", key.(int64)))
-			}
-			runs := make(TestRuns, len(keys))
-			err = t.store.GetMulti(keys, runs)
-			if err != nil {
-				return nil, err
-			}
-			runs.SetTestRunIDs(GetTestRunIDs(keys))
-			// TestRuns sorted by TimeStart asc by default
-			sort.Sort(sort.Reverse(runs))
-			keys = make([]Key, 0)
-			for _, run := range runs {
-				if !product.Matches(run) ||
-					from != nil && !from.Before(run.TimeStart) ||
-					to != nil && !run.TimeStart.Before(*to) {
-					continue
-				}
-				keys = append(keys, t.store.NewIDKey("TestRun", run.ID))
-			}
-			if limit != nil && len(keys) >= *limit {
-				keys = keys[:*limit]
-			} else if len(keys) >= MaxCountMaxValue {
-				keys = keys[:MaxCountMaxValue]
-			}
+			keys, err = clientSideFilter(t.store, product, productIDFilter, from, to, limit)
 		} else {
 			// Otherwise, just run a "GetAll" filter. Expensive.
 			log.Debugf("Falling back to GetAll datastore query.")
@@ -232,6 +206,44 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 		}
 	}
 	return result, nil
+}
+
+func clientSideFilter(
+	store Datastore,
+	product ProductSpec,
+	productIDFilter mapset.Set,
+	from,
+	to *time.Time,
+	limit *int) (keys []Key, err error) {
+	log := GetLogger(store.Context())
+	log.Debugf("Loading %v viable runs to filter them.", productIDFilter.Cardinality())
+	keys = make([]Key, 0, productIDFilter.Cardinality())
+	for key := range productIDFilter.Iter() {
+		keys = append(keys, store.NewIDKey("TestRun", key.(int64)))
+	}
+	runs := make(TestRuns, len(keys))
+	err = store.GetMulti(keys, runs)
+	if err != nil {
+		return nil, err
+	}
+	runs.SetTestRunIDs(GetTestRunIDs(keys))
+	// TestRuns sorted by TimeStart asc by default
+	sort.Sort(sort.Reverse(runs))
+	keys = make([]Key, 0)
+	for _, run := range runs {
+		if !product.Matches(run) ||
+			from != nil && !from.Before(run.TimeStart) ||
+			to != nil && !run.TimeStart.Before(*to) {
+			continue
+		}
+		keys = append(keys, store.NewIDKey("TestRun", run.ID))
+	}
+	if limit != nil && len(keys) >= *limit {
+		keys = keys[:*limit]
+	} else if len(keys) >= MaxCountMaxValue {
+		keys = keys[:MaxCountMaxValue]
+	}
+	return keys, nil
 }
 
 func (t testRunQueryImpl) GetAlignedRunSHAs(
@@ -331,7 +343,7 @@ func contains(s []string, x string) bool {
 }
 
 // Loads any keys for a revision prefix or full string match
-func loadKeysForRevision(store Datastore, query Query, sha string) (result TestRunIDs, err error) {
+func loadIDsForRevision(store Datastore, query Query, sha string) (result mapset.Set, err error) {
 	log := GetLogger(store.Context())
 	var revQuery Query
 	if len(sha) < 40 {
@@ -350,12 +362,12 @@ func loadKeysForRevision(store Datastore, query Query, sha string) (result TestR
 	if keys, err = store.GetAll(revQuery.KeysOnly(), nil); err != nil {
 		return nil, err
 	}
-	return GetTestRunIDs(keys), nil
+	return mapset.NewSetFromSlice(GetTestRunIDs(keys)), nil
 }
 
 // Loads any keys for a full string match or a version prefix (Between [version].* and [version].9*).
 // Entries in the set are the int64 value of the keys.
-func loadKeysForBrowserVersion(store Datastore, query Query, version string) (result mapset.Set, err error) {
+func loadIDsForBrowserVersion(store Datastore, query Query, version string) (result mapset.Set, err error) {
 	versionQuery := VersionPrefix(query, "BrowserVersion", version, true)
 	var keys []Key
 	keyset := mapset.NewSet()
@@ -368,10 +380,7 @@ func loadKeysForBrowserVersion(store Datastore, query Query, version string) (re
 	if keys, err = store.GetAll(query.Filter("BrowserVersion =", version).KeysOnly(), nil); err != nil {
 		return nil, err
 	}
-	for _, key := range keys {
-		keyset.Add(key.IntID())
-	}
-	return keyset, nil
+	return mapset.NewSetFromSlice(GetTestRunIDs(keys)), nil
 }
 
 // VersionPrefix returns the given query with a prefix filter on the given

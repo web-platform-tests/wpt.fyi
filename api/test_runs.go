@@ -57,7 +57,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 			if len(filters.SHAs) < 1 {
 				log.Warningf("PR %v returned no commits from GitHub", *pr)
 			} else {
-				log.Infof("PR %v returned %v commits: %s", *pr, len(filters.SHAs), strings.Join(filters.SHAs.SevenCharSHAs(), ","))
+				log.Infof("PR %v returned %v commits: %s", *pr, len(filters.SHAs), strings.Join(filters.SHAs.ShortSHAs(), ","))
 			}
 		}
 		var runsByProduct shared.TestRunsByProduct
