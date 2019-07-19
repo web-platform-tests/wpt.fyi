@@ -45,17 +45,11 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
         width: var(--source-size);
         margin-top: var(--browser-size);
       }
-      :host([overlap]) img.browser {
-        margin-top: calc(0.5 * var(--source-size));
-        margin-bottom: calc(0.5 * var(--source-size));
-      }
       :host([overlap]) img.source {
         margin-left: calc(-0.5 * var(--source-size));
       }
       :host([overlap]) img.platform {
         margin-right: calc(-0.5 * var(--source-size));
-        margin-bottom: var(--browser-size);
-        margin-top: 0;
       }
       .small {
         --browser-size: 24px;
