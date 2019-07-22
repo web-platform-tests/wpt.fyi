@@ -5,7 +5,7 @@ Click==7.0
 entrypoints==0.3
 filelock==3.0.12
 flake8==3.7.8
-Flask==1.0.3
+Flask==1.1.1
 google-api-core==1.13.0
 google-auth==1.6.3
 google-cloud-core==1.0.2
