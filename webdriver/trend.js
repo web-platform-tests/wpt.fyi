@@ -19,22 +19,10 @@ async function main() {
     headless: process.env.HEADLESS !== 'false',
   });
 
-
   try {
-    const scrape = async function(product, date) {
-      const dateParam = new Date(date).toISOString().split('T')[0];
+    const scrape = async function(url) {
       /** @type {Page} */
       const page = await browser.newPage();
-      const url = new URL(`https://wpt.fyi/`);
-      url.searchParams.set('labels', 'master,stable');
-      url.searchParams.set('products', browsers.join(','));
-      let q = `(${product}:!pass&${product}:!ok)`;
-      for (const other of browsers.filter(b => b != product)) {
-        q += ` (${other}:pass|${other}:ok)`;
-      }
-      url.searchParams.set('q', q);
-      url.searchParams.set('aligned', true);
-      url.searchParams.set('to', dateParam);
       await page.goto(url);
 
       log('Loading homepage...');
@@ -70,16 +58,35 @@ async function main() {
       dates.push(next);
     }
 
-    console.log(['date', 'product', 'sha', 'tests', 'subtests'].map(s => s.padEnd(10)).join('\t'));
+    console.log(['date', 'product', 'sha', 'tests', 'subtests', 'total', '(subtests)' ].map(s => s.padEnd(10)).join('\t'));
     for (const date of dates) {
+      const dateParam = new Date(date).toISOString().split('T')[0];
+      const url = new URL(`https://wpt.fyi/`);
+      url.searchParams.set('labels', 'master,stable');
+      url.searchParams.set('products', browsers.join(','));
+      url.searchParams.set('aligned', true);
+      url.searchParams.set('to', dateParam);
+      const allResults = await scrape(url);
+      const totalTests = allResults.tests;
+      const totalSubtests = allResults.subtests;
+
       for (const browser of browsers) {
-        const {sha, tests, subtests} = await scrape(browser, date);
+        const anomaliesURL = new URL(url);
+        let q = `(${browser}:!pass&${browser}:!ok)`;
+        for (const other of browsers.filter(b => b != browser)) {
+          q += ` (${other}:pass|${other}:ok)`;
+        }
+        anomaliesURL.searchParams.set('q', q);
+        const {sha, tests, subtests} = await scrape(anomaliesURL);
+
         console.log([
           date.toISOString().split('T')[0],
           browser,
           sha,
           tests,
-          subtests
+          subtests,
+          totalTests,
+          totalSubtests,
         ].map(s => `${s}`.padEnd(10)).join('\t'));
       }
     }
