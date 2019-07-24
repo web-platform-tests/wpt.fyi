@@ -7,8 +7,6 @@
 import { LoadingState } from '../components/loading-state.js';
 import { PathInfo } from '../components/path.js';
 import '../components/results-navigation.js';
-import '../components/test-file-results-table-terse.js';
-import '../components/test-file-results-table-verbose.js';
 import '../components/test-file-results.js';
 import '../components/test-run.js';
 import '../components/test-runs-query-builder.js';
@@ -177,7 +175,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
         <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
           <tr>
             <td>
-              <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}" navigate="{{ bindNavigate() }}"></path-part>
+              <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}"></path-part>
             </td>
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">

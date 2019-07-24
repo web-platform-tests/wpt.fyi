@@ -7,8 +7,6 @@
 import '../components/info-banner.js';
 import { LoadingState } from '../components/loading-state.js';
 import '../components/path.js';
-import '../components/test-file-results-table-terse.js';
-import '../components/test-file-results-table-verbose.js';
 import '../components/test-file-results.js';
 import '../components/test-results-chart.js';
 import '../components/test-results-history-grid.js';
@@ -204,7 +202,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                   </template>
                 </td>
                 <td>
-                  <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
+                  <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}"></path-part>
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
