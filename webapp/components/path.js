@@ -30,6 +30,10 @@ const PathInfo = (superClass) => class extends superClass {
         type: Boolean,
         computed: 'computePathIsASubfolder(path)'
       },
+      pathIsRootDir: {
+        type: Boolean,
+        computed: 'computePathIsRootDir(path)'
+      }
     };
   }
 
@@ -56,6 +60,10 @@ const PathInfo = (superClass) => class extends superClass {
 
   computePathIsATestFile(path) {
     return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
+  }
+
+  computePathIsRootDir(path) {
+    return path && path === '/';
   }
 };
 

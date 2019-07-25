@@ -27,6 +27,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
     return [
       'colorHomepage',
       'diffFromAPI',
+      'displayMetadata',
       'experimentalByDefault',
       'experimentalAligned',
       'experimentalAlignedExceptEdge',
@@ -240,6 +241,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{webPlatformTestsLive}}">
         Use web-platform-tests.live.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{displayMetadata}}">
+        Show metadata Information on wpt.fyi result page.
       </paper-checkbox>
     </paper-item>
 `;
