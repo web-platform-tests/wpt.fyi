@@ -48,8 +48,10 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     </div>
 
     <test-file-results-table test-runs="[[testRuns]]"
+                             diff-run="[[diffRun]]"
+                             only-show-differences="{{onlyShowDifferences}}"
                              path="[[path]]"
-                             results-table="[[resultsTable]]"
+                             rows="[[rows]]"
                              verbose="[[isVerbose]]">
     </test-file-results-table>
 `;
@@ -61,6 +63,11 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
   static get properties() {
     return {
+      diffRun: Object,
+      onlyShowDifferences: {
+        type: Boolean,
+        value: false,
+      },
       structuredSearch: Object,
       resultsTable: {
         type: Array,
@@ -70,6 +77,10 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         type: Boolean,
         value: false,
       },
+      rows: {
+        type: Array,
+        computed: 'computeRows(resultsTable, onlyShowDifferences)'
+      }
     };
   }
 
@@ -80,7 +91,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   }
 
   static get observers() {
-    return ['loadData(path, testRuns, structuredSearch)'];
+    return ['loadData(path, testRuns, structuredSearch, onlyShowDifferences)'];
   }
 
   async loadData(path, testRuns, structuredSearch) {
@@ -117,6 +128,9 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
     const url = new URL('/api/search', window.location);
     url.searchParams.set('subtests', '');
+    if (this.diffRun) {
+      url.searchParams.set('diff', true);
+    }
     const fetchOpts = {
       method: 'POST',
       body: JSON.stringify({
@@ -257,6 +271,16 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       delete screenshots[path];
     }
     return new Map([...firstScreenshot, ...Object.entries(screenshots)]);
+  }
+
+  computeRows(resultsTable, onlyShowDifferences) {
+    if (!resultsTable || !resultsTable.length || !onlyShowDifferences) {
+      return resultsTable;
+    }
+    const [first, ...others] = resultsTable;
+    return [first, ...others.filter(r => {
+      return r.results[0].status !== r.results[1].status;
+    })];
   }
 }
 

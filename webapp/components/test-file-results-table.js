@@ -35,6 +35,9 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     padding: 0.25em;
     height: 1.5em;
   }
+  td.diff {
+    border-left: 8px solid white;
+  }
   td code {
     line-height: 1.6em;
     white-space: pre-wrap;
@@ -92,28 +95,41 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
 <table terse$="[[!verbose]]" verbose$="[[verbose]]">
   <thead>
     <tr>
-      <th width="[[computeSubtestThWidth(testRuns)]]">Subtest</th>
+      <th width="[[computeSubtestThWidth(testRuns, diffRun)]]">Subtest</th>
       <template is="dom-repeat" items="[[testRuns]]" as="testRun">
-        <th width="[[computeRunThWidth(testRuns)]]">
+        <th width="[[computeRunThWidth(testRuns, diffRun)]]">
           <test-run test-run="[[testRun]]"></test-run>
+        </th>
+      </template>
+      <template is="dom-if" if="[[diffRun]]">
+        <th>
+          <test-run test-run="[[diffRun]]"></test-run>
+          <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
         </th>
       </template>
     </tr>
   </thead>
   <tbody>
-    <template is="dom-repeat" items="[[resultsTable]]" as="row">
+    <template is="dom-repeat" items="[[rows]]" as="row">
       <tr>
         <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
-        <template is="dom-repeat" items="{{row.results}}" as="result">
+        <template is="dom-repeat" items="[[row.results]]" as="result">
           <td class$="[[ colorClass(result.status) ]]">
             <code>[[ subtestMessage(result, verbose) ]]</code>
+
             <template is="dom-if" if="[[result.screenshots]]">
               <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
                 <iron-icon icon="image:compare"></iron-icon>
                 COMPARE
               </a>
             </template>
+          </td>
+        </template>
+
+        <template is="dom-if" if="[[diffRun]]">
+          <td class$="diff [[ diffClass(row.results) ]]">
+            [[ diffDisplay(row.results) ]]
           </td>
         </template>
       </tr>
@@ -142,11 +158,20 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
 
   static get properties() {
     return {
+      diffRun: {
+        type: Object,
+        value: null,
+      },
+      onlyShowDifferences: {
+        type: Boolean,
+        value: false,
+        notify: true,
+      },
       statusesAsMessage: {
         type: Array,
         value: ['OK', 'PASS', 'TIMEOUT'],
       },
-      resultsTable: {
+      rows: {
         type: Array,
         value: [],
       },
@@ -202,6 +227,13 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     };
   }
 
+  constructor() {
+    super();
+    this.toggleDiffFilter = () => {
+      this.onlyShowDifferences = !this.onlyShowDifferences;
+    };
+  }
+
   subtestMessage(result, verbose) {
     // Return status string for messageless status or "status-as-message".
     if ((result.status && !result.message) ||
@@ -231,12 +263,16 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     return url.href;
   }
 
-  computeSubtestThWidth(testRuns) {
-    return `${200 / (testRuns.length + 2)}%`;
+  computeSubtestThWidth(testRuns, diffRun) {
+    const runs = testRuns && testRuns.length || 0;
+    const plusOne = diffRun && 1 || 0;
+    return `${200 / (runs + 2 + plusOne)}%`;
   }
 
-  computeRunThWidth(testRuns) {
-    return `${100 / (testRuns.length + 2)}%`;
+  computeRunThWidth(testRuns, diffRun) {
+    const runs = testRuns && testRuns.length || 0;
+    const plusOne = diffRun && 1 || 0;
+    return `${100 / (runs + 2 + plusOne)}%`;
   }
 
   colorClass(status) {
@@ -275,6 +311,27 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
       shot = screenshots.values()[0];
     }
     return `/api/screenshot/${shot}`;
+  }
+
+  diffDisplay(results) {
+    if (results[0].status !== results[1].status) {
+      const passed = results.map(r => ['OK', 'PASS'].includes(r.status));
+      if (passed[0] && !passed[1]) {
+        return '-1';
+      } else if (passed[1] && !passed[0]) {
+        return '+1';
+      }
+      return '0';
+    }
+  }
+
+  diffClass(results) {
+    const passed = results.map(r => ['OK', 'PASS'].includes(r.status));
+    if (passed[0] && !passed[1]) {
+      return this.passRateClass(0, 1);
+    } else if (passed[1] && !passed[0]) {
+      return this.passRateClass(1, 1);
+    }
   }
 }
 window.customElements.define(TestFileResultsTable.is, TestFileResultsTable);
