@@ -18,15 +18,23 @@ class AmendMetadata extends PolymerElement {
   static get template() {
     return html`
       <style>
+        paper-item {
+          margin-top: 5px;
+        }
+        paper-button {
+          text-transform: none;
+          margin-top: 5px;
+        }
       </style>
       <paper-dialog>
-          <paper-item>1. Go to wpt-metadata&nbsp<a href="[[repo]]">here</a></paper-item>
-          <paper-item>2. Copy and append the following to the above file</paper-item>
+          <h3>Triage Metadata:</h3>
+          <paper-item>1. Go to wpt-metadata&nbsp<a href="[[repo]]" target="_blank">repo.</a></paper-item>
+          <paper-item>2. Copy and append the following to the above file.</paper-item>
           <paper-button onclick="[[copyToClipboard]]" title="Copy link to the clipboard" autofocus>
             <pre>{{ computeLinkNode(hasYml, product, test, path) }}</pre>
           </paper-button>
           </paper-item>
-          <paper-item>3. Create a branch and start a PR</paper-item>
+          <paper-item>3. Create a branch and start a PR.</paper-item>
         <div class="buttons">
         <paper-button dialog-dismiss>Dismiss</paper-button>
         </div>
