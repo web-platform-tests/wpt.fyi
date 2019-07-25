@@ -51,6 +51,14 @@ suite('<wpt-app>', () => {
         expect(appFixture.resultsTotalsRangeMessage).to.contain('7 subtests');
       });
     });
+    suite('computePathIsRootDir ', () => {
+      test('root dir', () => {
+        assert.isTrue(appFixture.computePathIsRootDir(appFixture.path));
+      });
+      test('not root dir', () => {
+        assert.isFalse(appFixture.computePathIsRootDir('/a/b'));
+      });
+    });
   });
 });
 </script>

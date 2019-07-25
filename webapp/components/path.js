@@ -63,7 +63,7 @@ const PathInfo = (superClass) => class extends superClass {
   }
 
   computePathIsRootDir(path) {
-    return path && !this.computePathIsASubfolder(path) && !this.computePathIsATestFile(path);
+    return path && path === '/';
   }
 };
 
