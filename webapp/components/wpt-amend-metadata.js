@@ -8,9 +8,11 @@ import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import { DefaultBrowserNames } from './product-info.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { LoadingState } from './loading-state.js';
 
-class AmendMetadata extends PolymerElement {
+class AmendMetadata extends LoadingState(PolymerElement) {
   static get is() {
     return 'wpt-amend-metadata';
   }
@@ -49,13 +51,14 @@ class AmendMetadata extends PolymerElement {
       products: String,
       test: String,
       productIndex: Number,
+      metadataDirSet: Set,
       product : {
         type: String,
         computed: 'computeProduct(productIndex, products)'
       },
       hasYml: {
         type: Boolean,
-        value: false,
+        computed: 'computeHasYml(path, metadataDirSet)'
       },
       repo: {
         type: String,
@@ -67,6 +70,7 @@ class AmendMetadata extends PolymerElement {
   constructor() {
     super();
     this.copyToClipboard = this.handleCopyToClipboard.bind(this);
+    this.loadMetadataDir();
   }
 
   get dialog() {
@@ -154,6 +158,29 @@ class AmendMetadata extends PolymerElement {
 
   computeLinkUrl() {
     return 'url: <insert url>\n';
+  }
+
+  computeHasYml(path, metadataDirSet) {
+    if (!path || !metadataDirSet) {
+      return;
+    }
+
+    return metadataDirSet.has(path);
+  }
+
+  loadMetadataDir() {
+    const url = new URL('/api/metadata', window.location);
+    url.searchParams.set('products', DefaultBrowserNames.join(','));
+    this.load(
+      window.fetch(url).then(r => r.json()).then(metadata => {
+        let metadataDirSet = new Set();
+        for (const eachNode of metadata ) {
+          let fileIndex = eachNode.test.lastIndexOf('/');
+          metadataDirSet.add(eachNode.test.substring(0, fileIndex));
+        }
+        this.metadataDirSet = metadataDirSet;
+      })
+    );
   }
 
   async handleCopyToClipboard() {
