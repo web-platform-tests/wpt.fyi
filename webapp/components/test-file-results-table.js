@@ -315,9 +315,9 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     if (results[0].status !== results[1].status) {
       const passed = results.map(r => ['OK', 'PASS'].includes(r.status));
       if (passed[0] && !passed[1]) {
-        return '↓ 1';
+        return '-1';
       } else if (passed[1] && !passed[0]) {
-        return '↑ 1';
+        return '+1';
       }
       return '0';
     }
