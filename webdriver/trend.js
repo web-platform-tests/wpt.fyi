@@ -9,6 +9,7 @@ const puppeteer = require('puppeteer');
 
 const flags = require('flags');
 const browserFlag = flags.defineString('products', 'chrome,firefox,safari', 'Browsers to compare');
+const passes = flags.defineBoolean('passes', false, 'Count browser-specific passes, not failures');
 flags.parse();
 
 const browsers = browserFlag.get().split(',').map(b => b.trim());
@@ -72,9 +73,17 @@ async function main() {
 
       for (const browser of browsers) {
         const anomaliesURL = new URL(url);
-        let q = `(${browser}:!pass&${browser}:!ok)`;
-        for (const other of browsers.filter(b => b != browser)) {
-          q += ` (${other}:pass|${other}:ok)`;
+        let q;
+        if (passes.get()) {
+          q = `(${browser}:pass|${browser}:ok)`;
+          for (const other of browsers.filter(b => b != browser)) {
+            q += ` (${other}:!pass&${other}:!ok)`;
+          }
+        } else {
+          q = `(${browser}:!pass&${browser}:!ok)`;
+          for (const other of browsers.filter(b => b != browser)) {
+            q += ` (${other}:pass|${other}:ok)`;
+          }
         }
         anomaliesURL.searchParams.set('q', q);
         const {sha, tests, subtests} = await scrape(anomaliesURL);
