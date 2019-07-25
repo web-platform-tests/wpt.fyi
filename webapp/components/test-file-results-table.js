@@ -264,13 +264,15 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
   }
 
   computeSubtestThWidth(testRuns, diffRun) {
+    const runs = testRuns && testRuns.length || 0;
     const plusOne = diffRun && 1 || 0;
-    return `${200 / (testRuns.length + 2 + plusOne)}%`;
+    return `${200 / (runs + 2 + plusOne)}%`;
   }
 
   computeRunThWidth(testRuns, diffRun) {
+    const runs = testRuns && testRuns.length || 0;
     const plusOne = diffRun && 1 || 0;
-    return `${100 / (testRuns.length + 2 + plusOne)}%`;
+    return `${100 / (runs + 2 + plusOne)}%`;
   }
 
   colorClass(status) {
