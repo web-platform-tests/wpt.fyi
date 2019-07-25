@@ -36,8 +36,13 @@ func TestGetSummary_Completed(t *testing.T) {
 	foo.HostName = "foo.com"
 	foo.HostURL = "https://foo.com/"
 	testName := "/foo.html?exclude=(Document|window|HTML.*)"
-	foo.Results = map[string][]int{
-		testName: []int{2, 3},
+	foo.Results = BeforeAndAfter{
+		testName: TestBeforeAndAfter{
+			PassingBefore: 2,
+			TotalBefore:   3,
+			PassingAfter:  2,
+			TotalAfter:    2,
+		},
 	}
 	foo.More = 1
 
@@ -105,8 +110,8 @@ func TestGetSummary_Regressed(t *testing.T) {
 	foo.HostURL = "https://foo.com/"
 	foo.DiffURL = "https://foo.com/?products=chrome@0000000000,chrome@0123456789&diff"
 	testName := "/foo.html?exclude=(Document|window|HTML.*)"
-	foo.Regressions = map[string]BeforeAndAfter{
-		testName: BeforeAndAfter{
+	foo.Regressions = BeforeAndAfter{
+		testName: TestBeforeAndAfter{
 			PassingBefore: 1,
 			TotalBefore:   1,
 			PassingAfter:  0,

@@ -24,6 +24,6 @@ Other links that might be useful:
 {{- if .MasterDiffURL }}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})
 {{- end }}
-- [Latest results for `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`]({{.HostURL}}results/?sha={{.HeadRun.Revision}})
+- [Latest results for `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`]({{.HostURL}}results/?sha={{.HeadRun.Revision}}&label=pr_head)
 
 {{ template "_file_an_issue.md" . }}
