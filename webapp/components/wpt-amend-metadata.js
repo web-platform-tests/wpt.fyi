@@ -22,14 +22,16 @@ class AmendMetadata extends PolymerElement {
       <paper-dialog>
           <paper-item>1. Go to wpt-metadata&nbsp<a href="[[repo]]">here</a></paper-item>
           <paper-item>2. Copy and append the following to the above file</paper-item>
-          <paper-item>
-          <pre>{{ computeLinkNode(hasYml, product, test, path) }}</pre>
+          <paper-button onclick="[[copyToClipboard]]" title="Copy link to the clipboard" autofocus>
+            <pre>{{ computeLinkNode(hasYml, product, test, path) }}</pre>
+          </paper-button>
           </paper-item>
           <paper-item>3. Create a branch and start a PR</paper-item>
         <div class="buttons">
         <paper-button dialog-dismiss>Dismiss</paper-button>
         </div>
       </paper-dialog>
+      <paper-toast id="toast"></paper-toast>
 `;
   }
 
@@ -56,6 +58,7 @@ class AmendMetadata extends PolymerElement {
 
   constructor() {
     super();
+    this.copyToClipboard = this.handleCopyToClipboard.bind(this);
   }
 
   get dialog() {
@@ -64,6 +67,10 @@ class AmendMetadata extends PolymerElement {
 
   open() {
     this.dialog.open();
+  }
+
+  get toast() {
+    return this.shadowRoot.querySelector('#toast');
   }
 
   computeProduct(productIndex, products) {
@@ -139,6 +146,22 @@ class AmendMetadata extends PolymerElement {
 
   computeLinkUrl() {
     return 'url: <insert url>\n';
+  }
+
+  async handleCopyToClipboard() {
+    const linkContent = this.computeLinkNode(this.hasYml, this.product, this.test, this.path);
+    navigator.clipboard.writeText(linkContent).then(() => {
+      this.toast.show({
+        text: 'URL copied to clipboard!',
+        duration: 2000,
+      });
+    }, function() {
+      this.toast.show({
+        text: 'Failed to copy URL to clipboard. Copy it manually.',
+        duration: 5000,
+      });
+    });
+
   }
 }
 
