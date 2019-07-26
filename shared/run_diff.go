@@ -516,6 +516,8 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	}
 	if len(renames) < 1 {
 		log.Debugf("No renames for %s...%s", CropString(shaBefore, 7), CropString(shaAfter, 7))
+	} else {
+		log.Debugf("Found %v renames for %s...%s", len(renames) CropString(shaBefore, 7), CropString(shaAfter, 7))
 	}
 	return renames
 }
