@@ -4,21 +4,25 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package shared
+package shared_test
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"testing"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 const mockTestPath = "/mock/path.html"
 
-func allDifferences() DiffFilterParam {
-	return DiffFilterParam{
+func allDifferences() shared.DiffFilterParam {
+	return shared.DiffFilterParam{
 		Added:     true,
 		Deleted:   true,
 		Changed:   true,
@@ -60,12 +64,12 @@ func TestDiffResults_Added(t *testing.T) {
 
 	// Added, but it was a rename.
 	renames := map[string]string{"/foo.html": "/bar.html"}
-	rBefore := ResultsSummary{"/foo.html": []int{1, 1}}
-	rAfter := ResultsSummary{"/bar.html": []int{1, 1}}
+	rBefore := shared.ResultsSummary{"/foo.html": []int{1, 1}}
+	rAfter := shared.ResultsSummary{"/bar.html": []int{1, 1}}
 	assert.Equal(
 		t,
-		map[string]TestDiff{"/bar.html": {0, 0, 0}},
-		GetResultsDiff(rBefore, rAfter, allDifferences(), nil, renames))
+		map[string]shared.TestDiff{"/bar.html": {0, 0, 0}},
+		shared.GetResultsDiff(rBefore, rAfter, allDifferences(), nil, renames))
 }
 
 func TestDiffResults_Removed(t *testing.T) {
@@ -83,102 +87,102 @@ func TestDiffResults_Removed(t *testing.T) {
 }
 
 func TestDiffResults_Filtered(t *testing.T) {
-	changedFilter := DiffFilterParam{Changed: true}
-	addedFilter := DiffFilterParam{Added: true}
-	deletedFilter := DiffFilterParam{Deleted: true}
+	changedFilter := shared.DiffFilterParam{Changed: true}
+	addedFilter := shared.DiffFilterParam{Added: true}
+	deletedFilter := shared.DiffFilterParam{Deleted: true}
 	const removedPath = "/mock/removed.html"
 	const changedPath = "/mock/changed.html"
 	const addedPath = "/mock/added.html"
 
-	before := ResultsSummary{
+	before := shared.ResultsSummary{
 		removedPath: {1, 2},
 		changedPath: {2, 5},
 	}
-	after := ResultsSummary{
+	after := shared.ResultsSummary{
 		changedPath: {3, 5},
 		addedPath:   {1, 3},
 	}
-	assert.Equal(t, map[string]TestDiff{changedPath: {1, 0, 0}}, GetResultsDiff(before, after, changedFilter, nil, nil))
-	assert.Equal(t, map[string]TestDiff{addedPath: {1, 2, 3}}, GetResultsDiff(before, after, addedFilter, nil, nil))
-	assert.Equal(t, map[string]TestDiff{removedPath: {0, 0, -2}}, GetResultsDiff(before, after, deletedFilter, nil, nil))
+	assert.Equal(t, map[string]shared.TestDiff{changedPath: {1, 0, 0}}, shared.GetResultsDiff(before, after, changedFilter, nil, nil))
+	assert.Equal(t, map[string]shared.TestDiff{addedPath: {1, 2, 3}}, shared.GetResultsDiff(before, after, addedFilter, nil, nil))
+	assert.Equal(t, map[string]shared.TestDiff{removedPath: {0, 0, -2}}, shared.GetResultsDiff(before, after, deletedFilter, nil, nil))
 
 	// Test filtering by each /, /mock/, and /mock/path.html
 	pieces := strings.SplitAfter(mockTestPath, "/")
 	for i := 1; i < len(pieces); i++ {
 		paths := mapset.NewSet(strings.Join(pieces[:i], ""))
-		filter := DiffFilterParam{Changed: true}
+		filter := shared.DiffFilterParam{Changed: true}
 		assertDeltaWithFilter(t, []int{1, 3}, []int{2, 4}, []int{1, 0, 1}, filter, paths)
 	}
 
 	// Filter where none match
 	rBefore, rAfter := getDeltaResultsMaps([]int{0, 5}, []int{5, 5})
-	filter := DiffFilterParam{Changed: true}
+	filter := shared.DiffFilterParam{Changed: true}
 	paths := mapset.NewSet("/different/path/")
-	assert.Empty(t, GetResultsDiff(rBefore, rAfter, filter, paths, nil))
+	assert.Empty(t, shared.GetResultsDiff(rBefore, rAfter, filter, paths, nil))
 
 	// Filter where one matches
 	mockPath1, mockPath2 := "/mock/path-1.html", "/mock/path-2.html"
-	rBefore = ResultsSummary{
+	rBefore = shared.ResultsSummary{
 		mockPath1: {0, 1},
 		mockPath2: {0, 1},
 	}
-	rAfter = ResultsSummary{
+	rAfter = shared.ResultsSummary{
 		mockPath1: {2, 2},
 		mockPath2: {2, 2},
 	}
-	delta := GetResultsDiff(rBefore, rAfter, filter, mapset.NewSet(mockPath1), nil)
+	delta := shared.GetResultsDiff(rBefore, rAfter, filter, mapset.NewSet(mockPath1), nil)
 	assert.NotContains(t, delta, mockPath2)
 	assert.Contains(t, delta, mockPath1)
-	assert.Equal(t, TestDiff{2, 0, 1}, delta[mockPath1])
+	assert.Equal(t, shared.TestDiff{2, 0, 1}, delta[mockPath1])
 }
 
 func assertNoDeltaDifferences(t *testing.T, before []int, after []int) {
-	assertNoDeltaDifferencesWithFilter(t, before, after, DiffFilterParam{Added: true, Deleted: true, Changed: true})
+	assertNoDeltaDifferencesWithFilter(t, before, after, shared.DiffFilterParam{Added: true, Deleted: true, Changed: true})
 }
 
-func assertNoDeltaDifferencesWithFilter(t *testing.T, before []int, after []int, filter DiffFilterParam) {
+func assertNoDeltaDifferencesWithFilter(t *testing.T, before []int, after []int, filter shared.DiffFilterParam) {
 	rBefore, rAfter := getDeltaResultsMaps(before, after)
-	assert.Equal(t, map[string]TestDiff{}, GetResultsDiff(rBefore, rAfter, filter, nil, nil))
+	assert.Equal(t, map[string]shared.TestDiff{}, shared.GetResultsDiff(rBefore, rAfter, filter, nil, nil))
 }
 
 func assertDelta(t *testing.T, before []int, after []int, delta []int) {
-	assertDeltaWithFilter(t, before, after, delta, DiffFilterParam{Added: true, Deleted: true, Changed: true}, nil)
+	assertDeltaWithFilter(t, before, after, delta, shared.DiffFilterParam{Added: true, Deleted: true, Changed: true}, nil)
 }
 
-func assertDeltaWithFilter(t *testing.T, before []int, after []int, delta []int, filter DiffFilterParam, paths mapset.Set) {
+func assertDeltaWithFilter(t *testing.T, before []int, after []int, delta []int, filter shared.DiffFilterParam, paths mapset.Set) {
 	rBefore, rAfter := getDeltaResultsMaps(before, after)
 	assert.Equal(
 		t,
-		map[string]TestDiff{mockTestPath: delta},
-		GetResultsDiff(rBefore, rAfter, filter, paths, nil))
+		map[string]shared.TestDiff{mockTestPath: delta},
+		shared.GetResultsDiff(rBefore, rAfter, filter, paths, nil))
 }
 
-func getDeltaResultsMaps(before []int, after []int) (ResultsSummary, ResultsSummary) {
-	return ResultsSummary{mockTestPath: before},
-		ResultsSummary{mockTestPath: after}
+func getDeltaResultsMaps(before []int, after []int) (shared.ResultsSummary, shared.ResultsSummary) {
+	return shared.ResultsSummary{mockTestPath: before},
+		shared.ResultsSummary{mockTestPath: after}
 }
 
 func TestRegressions(t *testing.T) {
-	// Note: TestDiff items are {passing, regressed, total-delta}.
-	regressed := TestDiff{0, 1, 0}
+	// Note: shared.TestDiff items are {passing, regressed, total-delta}.
+	regressed := shared.TestDiff{0, 1, 0}
 	assert.Equal(t, 1, regressed.Regressions())
-	diff := ResultsDiff{"/foo.html": regressed}
+	diff := shared.ResultsDiff{"/foo.html": regressed}
 	regressions := diff.Regressions()
 	assert.Equal(t, 1, regressions.Cardinality())
 	assert.True(t, regressions.Contains("/foo.html"))
 
-	newlyPassed := TestDiff{1, 0, 1}
+	newlyPassed := shared.TestDiff{1, 0, 1}
 	assert.Equal(t, 0, newlyPassed.Regressions())
-	diff = ResultsDiff{"/bar.html": newlyPassed}
+	diff = shared.ResultsDiff{"/bar.html": newlyPassed}
 	regressions = diff.Regressions()
 	assert.Equal(t, 0, regressions.Cardinality())
 	assert.False(t, regressions.Contains("/bar.html"))
 
 	// A reduction in test-count is treated as though that test regressed,
 	// in spite of there being zero newly-failing tests.
-	droppedTests := TestDiff{0, 0, -2}
+	droppedTests := shared.TestDiff{0, 0, -2}
 	assert.Equal(t, 0, droppedTests.Regressions())
-	diff = ResultsDiff{"/baz.html": droppedTests}
+	diff = shared.ResultsDiff{"/baz.html": droppedTests}
 	regressions = diff.Regressions()
 	assert.Equal(t, 1, regressions.Cardinality())
 	assert.True(t, regressions.Contains("/baz.html"))
@@ -227,10 +231,16 @@ func TestRunDiffFromSearchResponse(t *testing.T) {
 		}
 	]
 }`)
-	var scDiff SearchResponse
+	var scDiff shared.SearchResponse
 	json.Unmarshal(body, &scDiff)
 
-	diff, err := runDiffFromSearchResponse(TestRun{}, TestRun{}, scDiff)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
+	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
+	aeAPI.EXPECT().IsFeatureEnabled("diffRenames").Return(false)
+
+	diff, err := shared.RunDiffFromSearchResponse(aeAPI, shared.TestRun{}, shared.TestRun{}, scDiff)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, diff.Differences.Regressions().Cardinality())
 	assert.Equal(t, 4, diff.BeforeSummary["/pointerevents/idlharness.window.html"][0])
