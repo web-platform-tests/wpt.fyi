@@ -424,12 +424,23 @@ func runDiffFromSearchResponse(before, after TestRun, scDiff SearchResponse) (Ru
 		}
 	}
 
+	var renames map[string]string
+	if d.aeAPI.IsFeatureEnabled("diffRenames") {
+		beforeSHA := before.FullRevisionHash
+		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
+		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
+			beforeSHA = "HEAD"
+		}
+		renames = getDiffRenames(d.ctx, beforeSHA, after.FullRevisionHash)
+	}
+
 	return RunDiff{
 		Before:        before,
 		BeforeSummary: beforeSummary,
 		After:         after,
 		AfterSummary:  afterSummary,
 		Differences:   differences,
+		Renames:       renames,
 	}, nil
 }
 
@@ -516,6 +527,8 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	}
 	if len(renames) < 1 {
 		log.Debugf("No renames for %s...%s", CropString(shaBefore, 7), CropString(shaAfter, 7))
+	} else {
+		log.Debugf("Found %v renames for %s...%s", len(renames), CropString(shaBefore, 7), CropString(shaAfter, 7))
 	}
 	return renames
 }
