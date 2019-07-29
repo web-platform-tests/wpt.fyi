@@ -412,6 +412,7 @@ func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter Di
 	return RunDiffFromSearchResponse(d.aeAPI, before, after, scDiff)
 }
 
+// RunDiffFromSearchResponse builds a RunDiff from a searchcache response.
 func RunDiffFromSearchResponse(aeAPI AppEngineAPI, before, after TestRun, scDiff SearchResponse) (RunDiff, error) {
 	differences := make(map[string]TestDiff)
 	beforeSummary := make(ResultsSummary)
