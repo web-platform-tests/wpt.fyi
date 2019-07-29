@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+</head>
+
+<body>
+  <test-fixture id="wpt-metadata-fixture">
+    <template>
+      <wpt-metadata></wpt-metadata>
+    </template>
+  </test-fixture>
+
+  <script type="module">
+
+import '../wpt-metadata.js';
+suite('<wpt-metadata>', () => {
+  let appFixture = null;
+  setup(() => {
+    appFixture = fixture('wpt-metadata-fixture');
+  });
+  suite('compute display metadata', () => {
+    test('null case', () => {
+      appFixture.path = null;
+      appFixture.metadata = {};
+      assert.equal(appFixture.displayedMetadata, undefined);
+    });
+    test('simple case', () => {
+      appFixture.products = [{ browser_name: 'chrome' }];
+      appFixture.metadata = [
+        {
+          test: '/foo',
+          urls: ['bug1']
+        }
+      ];
+      appFixture.path = '/';
+      assert.equal(appFixture.displayedMetadata.length, 1);
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo');
+      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+    });
+    test('exclude path', () => {
+      appFixture.products = [{ browser_name: 'chrome' }];
+      appFixture.metadata = [
+        {
+          test: '/foo',
+          urls: ['bug1']
+        },
+        {
+          test: '/bar/f',
+          urls: ['bug2']
+        }
+      ];
+      appFixture.path = '/foo';
+      assert.equal(appFixture.displayedMetadata.length, 1);
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo');
+      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+    });
+    test('complex case', () => {
+      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }];
+      appFixture.metadata = [
+        {
+          test: '/foo',
+          urls: ['bug1', '']
+        },
+        {
+          test: '/foo/bar',
+          urls: ['bug2', 'safari1']
+        },
+        {
+          test: '/foo/bar/foo1',
+          urls: ['bug3', '']
+        },
+        {
+          test: '/bar/foo',
+          urls: ['bug4', '']
+        }
+      ];
+      appFixture.path = '/foo';
+      assert.equal(appFixture.displayedMetadata.length, 4);
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo');
+      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+      assert.equal(appFixture.displayedMetadata[1].test, '/foo/bar');
+      assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
+      assert.equal(appFixture.displayedMetadata[1].product, 'chrome');
+      assert.equal(appFixture.displayedMetadata[2].test, '/foo/bar');
+      assert.equal(appFixture.displayedMetadata[2].url, 'safari1');
+      assert.equal(appFixture.displayedMetadata[2].product, 'safari');
+      assert.equal(appFixture.displayedMetadata[3].test, '/foo/bar/foo1');
+      assert.equal(appFixture.displayedMetadata[3].url, 'bug3');
+      assert.equal(appFixture.displayedMetadata[3].product, 'chrome');
+    });
+    test('check duplicates & empty', () => {
+      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }, { browser_name: 'edge' }];
+      appFixture.metadata = [
+        {
+          test: '/foo',
+          urls: ['bug1', 'bug1', 'bug1']
+        },
+        {
+          test: '/bar',
+          urls: ['', 'bug2', '']
+        }
+      ];
+      appFixture.path = '/';
+      assert.equal(appFixture.displayedMetadata.length, 2);
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo');
+      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+      assert.equal(appFixture.displayedMetadata[1].test, '/bar');
+      assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
+      assert.equal(appFixture.displayedMetadata[1].product, 'safari');
+    });
+  });
+});
+</script>
+</body>
+
+</html>

@@ -7,8 +7,6 @@
 import '../components/info-banner.js';
 import { LoadingState } from '../components/loading-state.js';
 import '../components/path.js';
-import '../components/test-file-results-table-terse.js';
-import '../components/test-file-results-table-verbose.js';
 import '../components/test-file-results.js';
 import '../components/test-results-chart.js';
 import '../components/test-results-history-grid.js';
@@ -170,7 +168,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
-                           products="[[products]]">
+                           products="[[products]]"
+                           diff-run="[[diffRun]]">
         </test-file-results>
       </template>
 
@@ -181,9 +180,9 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
               <th colspan="2">Path</th>
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                 <!-- Repeats for as many different browser test runs are available -->
-                <th><test-run test-run="[[testRun]]" show-source></test-run></th>
+                <th><test-run test-run="[[testRun]]" show-source show-platform></test-run></th>
               </template>
-              <template is="dom-if" if="[[diffShown]]">
+              <template is="dom-if" if="[[diffRun]]">
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
                   <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
@@ -204,7 +203,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                   </template>
                 </td>
                 <td>
-                  <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
+                  <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}"></path-part>
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
@@ -214,7 +213,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                     <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
                   </td>
                 </template>
-                <template is="dom-if" if="[[diffShown]]">
+
+                <template is="dom-if" if="[[diffRun]]">
                   <td class\$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
                     <template is="dom-if" if="[[node.diff]]">
                       <span class="delta passes">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
@@ -361,11 +361,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         type: Object,
         value: null,
       },
-      // A diff column is shown if requested by users and there are 2 testRuns.
-      diffShown: {
-        type: Boolean,
-        computed: 'isDiffShown(diff, diffRun)',
-      },
       diffURL: {
         type: String,
         computed: 'computeDiffURL(testRuns)',
@@ -385,10 +380,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       manifest: Object,
       screenshots: Array,
     };
-  }
-
-  isDiffShown(diff, diffRun) {
-    return diff && diffRun !== null;
   }
 
   isInvalidDiffUse(diff, testRuns) {

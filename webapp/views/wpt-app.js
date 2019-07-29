@@ -6,6 +6,7 @@ import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
+import '../components/wpt-metadata.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
@@ -16,7 +17,9 @@ import '../views/wpt-interop.js';
 import '../views/wpt-results.js';
 
 class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
-  static get is() { return 'wpt-app'; }
+  static get is() {
+    return 'wpt-app';
+  }
 
   static get template() {
     return html`
@@ -139,6 +142,12 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
 
+      <template is="dom-if" if="[[!pathIsRootDir]]">
+        <template is="dom-if" if="[[displayMetadata]]">
+          <wpt-metadata products="[[products]]" path="[[path]]"></wpt-metadata>
+        </template>
+      </template>
+
       <paper-toast id="masterLabelMissing" duration="15000">
         <div style="display: flex;">
           wpt.fyi now includes affected tests results from PRs. <br>
@@ -175,10 +184,12 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     };
   }
 
-  static get observers() { return [
-    '_routeChanged(routeData, routeData.*)',
-    '_subrouteChanged(subrouteData, subrouteData.*)',
-  ]}
+  static get observers() {
+    return [
+      '_routeChanged(routeData, routeData.*)',
+      '_subrouteChanged(subrouteData, subrouteData.*)',
+    ];
+  }
 
   constructor() {
     super();
@@ -213,7 +224,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       this.shadowRoot.querySelector('#masterLabelMissing').show();
     }
     this.shadowRoot.querySelector('app-location')
-        ._createPropertyObserver('__query', query => this.query = query);
+      ._createPropertyObserver('__query', query => this.query = query);
   }
 
   queryChanged(query) {
@@ -258,7 +269,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       };
     });
     path += `/${encodeURIComponent(lastPart)}`;
-    linkedParts.push({name: lastPart, path: path});
+    linkedParts.push({ name: lastPart, path: path });
     return linkedParts;
   }
 

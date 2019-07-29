@@ -24,7 +24,7 @@ type Completed struct {
 	CheckState
 	ResultsComparison
 
-	Results map[string][]int
+	Results BeforeAndAfter
 	More    int
 }
 

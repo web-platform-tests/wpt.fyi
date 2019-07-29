@@ -79,6 +79,12 @@ func TestApiResultsBoundCORS(t *testing.T) {
 	assertCORS(t, "/api/results")
 }
 
+func TestApiScreenshotBoundCORS(t *testing.T) {
+	assertHandlerIs(t, "/api/screenshot/sha1:abc", "api-screenshot")
+	assertHSTS(t, "/api/screenshot/sha1:abc")
+	assertCORS(t, "/api/screenshot/sha1:abc")
+}
+
 func TestApiResultsUploadBoundHSTS(t *testing.T) {
 	assertHandlerIs(t, "/api/results/upload", "api-results-upload")
 	assertHSTS(t, "/api/results/upload")
