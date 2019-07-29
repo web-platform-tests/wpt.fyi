@@ -500,9 +500,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
             revision: 'diff',
             browser_name: 'diff',
           };
-          if (!this.structuredQueries) {
-            this.fetchDiff();
-          }
+          this.fetchDiff();
         }
 
         // Load a manifest.
