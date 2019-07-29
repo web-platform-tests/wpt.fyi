@@ -190,7 +190,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
         text: 'URL copied to clipboard!',
         duration: 2000,
       });
-    }, function () {
+    }, function() {
       this.toast.show({
         text: 'Failed to copy URL to clipboard. Copy it manually.',
         duration: 5000,
