@@ -245,11 +245,11 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	}
 
 	if !hasRegressions {
-		collapsed := collapseSummary(diff.AfterSummary, 10)
+		collapsed := collapseSummary(diff, 10)
 		data := summaries.Completed{
 			CheckState:        checkState,
 			ResultsComparison: resultsComparison,
-			Results:           make(map[string][]int),
+			Results:           make(summaries.BeforeAndAfter),
 		}
 		tests, _ := shared.MapStringKeys(collapsed)
 		sort.Strings(tests)
@@ -267,22 +267,13 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 		data := summaries.Regressed{
 			CheckState:        checkState,
 			ResultsComparison: resultsComparison,
-			Regressions:       make(map[string]summaries.BeforeAndAfter),
+			Regressions:       make(summaries.BeforeAndAfter),
 		}
 		tests := shared.ToStringSlice(regressions)
 		sort.Strings(tests)
 		for _, path := range tests {
 			if len(data.Regressions) <= 10 {
-				ba := summaries.BeforeAndAfter{}
-				if b, ok := diff.BeforeSummary[path]; ok {
-					ba.PassingBefore = b[0]
-					ba.TotalBefore = b[1]
-				}
-				if a, ok := diff.AfterSummary[path]; ok {
-					ba.PassingAfter = a[0]
-					ba.TotalAfter = a[1]
-				}
-				data.Regressions[path] = ba
+				data.Regressions.Add(path, diff.BeforeSummary[path], diff.AfterSummary[path])
 			} else {
 				data.More++
 			}
@@ -321,14 +312,18 @@ func collapseDiff(diff shared.ResultsDiff, limit int) shared.ResultsDiff {
 }
 
 // collapseSummary collapses a tree of file paths into a smaller tree of folders.
-func collapseSummary(summary shared.ResultsSummary, limit int) shared.ResultsSummary {
-	keys, _ := shared.MapStringKeys(summary)
+func collapseSummary(diff shared.RunDiff, limit int) summaries.BeforeAndAfter {
+	beforeKeys, _ := shared.MapStringKeys(diff.BeforeSummary)
+	afterKeys, _ := shared.MapStringKeys(diff.AfterSummary)
+	keys := shared.ToStringSlice(
+		shared.NewSetFromStringSlice(beforeKeys).Union(shared.NewSetFromStringSlice(afterKeys)),
+	)
 	paths := shared.ToStringSlice(collapsePaths(keys, limit))
-	result := make(shared.ResultsSummary)
-	for k, v := range summary {
+	result := make(summaries.BeforeAndAfter)
+	for _, k := range keys {
 		for _, p := range paths {
 			if strings.HasPrefix(k, p) {
-				result.Add(p, v)
+				result.Add(p, diff.BeforeSummary[k], diff.AfterSummary[k])
 				break
 			}
 		}
