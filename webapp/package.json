@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@polymer/test-fixture": "^4.0.2",
-    "babel-eslint": "^10.0.1",
+    "babel-eslint": "^10.0.2",
     "eslint": "^4.14.0",
     "eslint-plugin-html": "^5.0.5",
     "wct-browser-legacy": "^1.0.2",
@@ -22,7 +22,7 @@
     "wct": "wct --npm"
   },
   "dependencies": {
-    "@google-web-components/google-chart": "^3.0.4",
+    "@google-web-components/google-chart": "^3.0.6",
     "@polymer/app-route": "^3.0.2",
     "@polymer/iron-collapse": "^3.0.0",
     "@polymer/iron-form": "^3.0.0",
@@ -47,7 +47,7 @@
     "@polymer/paper-toast": "^3.0.0",
     "@polymer/paper-toggle-button": "^3.0.0",
     "@polymer/paper-tooltip": "^3.0.0",
-    "@polymer/polymer": "^3.2.0",
+    "@polymer/polymer": "^3.3.0",
     "@vaadin/vaadin-date-picker": "^3.3.4",
     "@webcomponents/webcomponentsjs": "^2.2.7",
     "pluralize": "^7.0.0"
