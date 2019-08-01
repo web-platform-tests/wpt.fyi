@@ -796,8 +796,8 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
          "bugs.webkit.org/show_bug.cgi?id=167052"
       ],
       "status":[
-         "FAIL",
-         "FAIL"
+         6,
+         6
       ]
    },
    {
@@ -808,8 +808,8 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
          ""
       ],
       "status":[
-         "TIMEOUT",
-         ""
+         4,
+         0
       ]
    }
 ]
@@ -832,8 +832,8 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
             ""
         ],
         "status": [
-            "FAIL",
-            "FAIL"
+            6,
+            6
         ]
     },
     {
@@ -844,8 +844,8 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
             ""
         ],
         "status": [
-            "TIMEOUT",
-            ""
+            4,
+            0
       ]
     }
 ]
