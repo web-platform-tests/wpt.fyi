@@ -790,15 +790,25 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 [
    {
       "test":"/IndexedDB/bindings-inject-key.html",
+      "subtest":"subtestFoo",
       "urls":[
          "bugs.chromium.org/p/chromium/issues/detail?id=934844",
          "bugs.webkit.org/show_bug.cgi?id=167052"
+      ],
+      "status":[
+         "FAIL",
+         "FAIL"
       ]
    },
    {
       "test":"/html/browsers/history/the-history-interface/007.html",
+      "subtest":"subtestBar",
       "urls":[
          "bugs.chromium.org/p/chromium/issues/detail?id=592874",
+         ""
+      ],
+      "status":[
+         "TIMEOUT",
          ""
       ]
    }
@@ -816,17 +826,27 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 [
     {
         "test": "/IndexedDB/bindings-inject-key.html",
+        "subtest":"subtestFoo",
         "urls": [
             "bugs.chromium.org/p/chromium/issues/detail?id=934844",
             ""
+        ],
+        "status": [
+            "FAIL",
+            "FAIL"
         ]
     },
     {
         "test": "/html/browsers/history/the-history-interface/007.html",
+        "subtest":"subtestBar",
         "urls": [
             "bugs.chromium.org/p/chromium/issues/detail?id=592874",
             ""
-        ]
+        ],
+        "status": [
+            "TIMEOUT",
+            ""
+      ]
     }
 ]
 ```

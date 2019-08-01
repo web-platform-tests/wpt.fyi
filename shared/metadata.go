@@ -35,7 +35,7 @@ type MetadataResult struct {
 	URLs []string `json:"urls,omitempty"`
 	// URLs represents a list of test status that are associated with
 	// this test.
-	Status []TestStatus `json:"urls,omitempty"`
+	Status []TestStatus `json:"status,omitempty"`
 }
 
 // Metadata represents a wpt-metadata META.yml file.
