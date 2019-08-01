@@ -28,9 +28,14 @@ type MetadataResult struct {
 	// Test is the name of a test; this often corresponds to a test file path in
 	// the WPT source reposiory.
 	Test string `json:"test"`
+	// Subtest is the name of a subtest that is associated with this test.
+	Subtest string `json:"subtest"`
 	// URLs represents a list of bug urls that are associated with
 	// this test.
 	URLs []string `json:"urls,omitempty"`
+	// URLs represents a list of test status that are associated with
+	// this test.
+	Status []TestStatus `json:"urls,omitempty"`
 }
 
 // Metadata represents a wpt-metadata META.yml file.
@@ -104,36 +109,45 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 // constructMetadataResponse constructs the response to a WPT Metadata query, given ProductSpecs.
 func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Metadata) MetadataResults {
 	res := MetadataResults{}
+
 	for folderPath, data := range metadata {
-		testMap := make(map[string][]string)
+		testMap := make(map[[2]string][]string)
+		statusMap := make(map[[2]string][]TestStatus)
 
 		for _, link := range data.Links {
 			var urls []string
+			var status []TestStatus
 
 			for _, result := range link.Results {
 				//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
 				var fullTestName = "/" + folderPath + "/" + result.TestPath
 
-				if _, ok := testMap[fullTestName]; !ok {
-					testMap[fullTestName] = make([]string, len(productSpecs))
+				testMapKey := [2]string{fullTestName, result.SubtestName}
+				if _, ok := testMap[testMapKey]; !ok {
+					testMap[testMapKey] = make([]string, len(productSpecs))
+					statusMap[testMapKey] = make([]TestStatus, len(productSpecs))
 				}
-				urls = testMap[fullTestName]
+				urls = testMap[testMapKey]
+				status = statusMap[testMapKey]
 
 				for i, productSpec := range productSpecs {
 					// Matches browser type if a version is not specified.
 					if link.Product.MatchesProductSpec(productSpec) {
 						urls[i] = link.URL
+						status[i] = result.Status
+
 					} else if link.Product.BrowserName == "" && urls[i] == "" {
 						// Matches to all browsers if product is not specified.
 						urls[i] = link.URL
+						status[i] = result.Status
 					}
 				}
 			}
 		}
-		for nameKey, urlsVal := range testMap {
+		for nameKey, urlVal := range testMap {
 			isMatches := false
 
-			for _, url := range urlsVal {
+			for _, url := range urlVal {
 				if url != "" {
 					isMatches = true
 				}
@@ -144,7 +158,7 @@ func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Me
 				continue
 			}
 
-			linkResult := MetadataResult{Test: nameKey, URLs: urlsVal}
+			linkResult := MetadataResult{Test: nameKey[0], Subtest:nameKey[1], URLs: urlVal, Status: statusMap[nameKey]}
 			res = append(res, linkResult)
 		}
 	}
