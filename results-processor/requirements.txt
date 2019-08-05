@@ -8,7 +8,7 @@ flake8==3.7.8
 Flask==1.1.1
 google-api-core==1.14.2
 google-auth==1.6.3
-google-cloud-core==1.0.2
+google-cloud-core==1.0.3
 google-cloud-datastore==1.8.0
 google-cloud-storage==1.17.0
 google-resumable-media==0.3.2
