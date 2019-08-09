@@ -29,7 +29,7 @@ type MetadataResult struct {
 	// the WPT source reposiory.
 	Test string `json:"test"`
 	// Subtest is the name of a subtest that is associated with this test.
-	Subtest string `json:"subtest"`
+	Subtest string `json:"subtest,omitempty"`
 	// URLs represents a list of bug urls that are associated with
 	// this test.
 	URLs []string `json:"urls,omitempty"`
@@ -158,7 +158,7 @@ func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Me
 				continue
 			}
 
-			linkResult := MetadataResult{Test: nameKey[0], Subtest:nameKey[1], URLs: urlVal, Status: statusMap[nameKey]}
+			linkResult := MetadataResult{Test: nameKey[0], Subtest: nameKey[1], URLs: urlVal, Status: statusMap[nameKey]}
 			res = append(res, linkResult)
 		}
 	}
