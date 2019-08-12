@@ -42,12 +42,12 @@ links:
 	assert.Equal(t, "2", metadatamap[path].Links[1].Product.BrowserVersion)
 	assert.Equal(t, "b.html", metadatamap[path].Links[1].Results[0].TestPath)
 	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
-	assert.Equal(t, TestStatusFail.String(), metadatamap[path].Links[1].Results[0].Status)
+	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
 	assert.Equal(t, "https://bug.com/item", metadatamap[path].Links[1].URL)
 	assert.Len(t, metadatamap[path].Links[1].Results, 2)
 	assert.Equal(t, "b.html", metadatamap[path].Links[1].Results[0].TestPath)
 	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
-	assert.Equal(t, TestStatusFail.String(), metadatamap[path].Links[1].Results[0].Status)
+	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
 }
 
 func TestConstructMetadataResponse_OneLink(t *testing.T) {
