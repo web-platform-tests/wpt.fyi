@@ -42,12 +42,12 @@ links:
 	assert.Equal(t, "2", metadatamap[path].Links[1].Product.BrowserVersion)
 	assert.Equal(t, "b.html", metadatamap[path].Links[1].Results[0].TestPath)
 	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
-	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
+	assert.Equal(t, TestStatusFail.String(), metadatamap[path].Links[1].Results[0].Status)
 	assert.Equal(t, "https://bug.com/item", metadatamap[path].Links[1].URL)
 	assert.Len(t, metadatamap[path].Links[1].Results, 2)
 	assert.Equal(t, "b.html", metadatamap[path].Links[1].Results[0].TestPath)
 	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
-	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
+	assert.Equal(t, TestStatusFail.String(), metadatamap[path].Links[1].Results[0].Status)
 }
 
 func TestConstructMetadataResponse_OneLink(t *testing.T) {
@@ -63,6 +63,7 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 					URL:     "https://external.com/item",
 					Results: []MetadataTestResult{{
 						TestPath: "a.html",
+						Status: TestStatusFail,
 					}},
 				},
 				MetadataLink{
@@ -85,14 +86,14 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 	assert.Equal(t, MetadataResults[0].Subtest, "")
 	assert.Equal(t, MetadataResults[0].URLs[0], "")
 	assert.Equal(t, MetadataResults[0].URLs[1], "https://external.com/item")
-	assert.Equal(t, MetadataResults[0].Status[0], TestStatus(0))
-	assert.Equal(t, MetadataResults[0].Status[1], TestStatus(0))
+	assert.Equal(t, MetadataResults[0].Status[0], "")
+	assert.Equal(t, MetadataResults[0].Status[1], TestStatusFail.String())
 	assert.Equal(t, MetadataResults[1].Test, "/foo/bar/a.html")
 	assert.Equal(t, MetadataResults[1].Subtest, "subtest-a")
 	assert.Equal(t, MetadataResults[1].URLs[0], "https://bug.com/item")
 	assert.Equal(t, MetadataResults[1].URLs[1], "")
-	assert.Equal(t, MetadataResults[1].Status[0], TestStatusFail)
-	assert.Equal(t, MetadataResults[1].Status[1], TestStatus(0))
+	assert.Equal(t, MetadataResults[1].Status[0], TestStatusFail.String())
+	assert.Equal(t, MetadataResults[1].Status[1], "")
 }
 
 func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
@@ -248,7 +249,7 @@ func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
 	assert.Equal(t, MetadataResults[1].URLs[0], "")
 	assert.Equal(t, MetadataResults[1].URLs[1], "https://external.com/item")
 	assert.Equal(t, MetadataResults[1].URLs[2], "https:/apple/item")
-	assert.Equal(t, MetadataResults[1].Status[0], TestStatus(0))
-	assert.Equal(t, MetadataResults[1].Status[1], TestStatusFail)
-	assert.Equal(t, MetadataResults[1].Status[2], TestStatusCrash)
+	assert.Equal(t, MetadataResults[1].Status[0], "")
+	assert.Equal(t, MetadataResults[1].Status[1], TestStatusFail.String())
+	assert.Equal(t, MetadataResults[1].Status[2], TestStatusCrash.String())
 }

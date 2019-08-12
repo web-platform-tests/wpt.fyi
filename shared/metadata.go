@@ -35,7 +35,7 @@ type MetadataResult struct {
 	URLs []string `json:"urls,omitempty"`
 	// URLs represents a list of test status that are associated with
 	// this test.
-	Status []TestStatus `json:"status,omitempty"`
+	Status []string `json:"status,omitempty"`
 }
 
 // Metadata represents a wpt-metadata META.yml file.
@@ -112,11 +112,11 @@ func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Me
 
 	for folderPath, data := range metadata {
 		testMap := make(map[[2]string][]string)
-		statusMap := make(map[[2]string][]TestStatus)
+		statusMap := make(map[[2]string][]string)
 
 		for _, link := range data.Links {
 			var urls []string
-			var status []TestStatus
+			var status []string
 
 			for _, result := range link.Results {
 				//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
@@ -125,7 +125,7 @@ func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Me
 				testMapKey := [2]string{fullTestName, result.SubtestName}
 				if _, ok := testMap[testMapKey]; !ok {
 					testMap[testMapKey] = make([]string, len(productSpecs))
-					statusMap[testMapKey] = make([]TestStatus, len(productSpecs))
+					statusMap[testMapKey] = make([]string, len(productSpecs))
 				}
 				urls = testMap[testMapKey]
 				status = statusMap[testMapKey]
@@ -134,12 +134,12 @@ func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Me
 					// Matches browser type if a version is not specified.
 					if link.Product.MatchesProductSpec(productSpec) {
 						urls[i] = link.URL
-						status[i] = result.Status
+						status[i] = result.Status.String()
 
 					} else if link.Product.BrowserName == "" && urls[i] == "" {
 						// Matches to all browsers if product is not specified.
 						urls[i] = link.URL
-						status[i] = result.Status
+						status[i] = result.Status.String()
 					}
 				}
 			}
