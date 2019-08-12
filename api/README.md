@@ -846,7 +846,7 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
         "status": [
             4,
             0
-      ]
+        ]
     }
 ]
 ```
