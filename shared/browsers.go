@@ -14,7 +14,7 @@ var defaultBrowsers = []string{
 
 // An extra list of known browsers.
 var extraBrowsers = []string{
-	"uc",
+	"epiphany", "uc",
 }
 
 var allBrowsers mapset.Set
