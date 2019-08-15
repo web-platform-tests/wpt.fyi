@@ -591,7 +591,7 @@ __Parameters__
 __`epochs`__ : A potentially repeated parameter. Each parameter value contains
 the `id` of some epoch known by the announcer. Defaults to all known epochs.
 
-__`num_revision`__: The number of epochal revisions _for each epoch in `epochs`
+__`num_revisions`__: The number of epochal revisions _for each epoch in `epochs`
 values_ to include in the response. Defaults to 100. Response will include an
 `error` field when fewer than the requested number could be found for some
 epoch(s).
