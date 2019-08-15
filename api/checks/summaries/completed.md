@@ -7,7 +7,7 @@ There were no regressions detected in the results.
 ### Results
 
 Test | `master` | `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`
---- | ---
+--- | --- | ---
 {{ range $test, $results := .Results -}}
 {{ escapeMD $test }} | {{ $results.PassingBefore }} / {{ $results.TotalBefore }} | {{ $results.PassingAfter }} / {{ $results.TotalAfter }}
 {{end}}
