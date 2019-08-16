@@ -139,25 +139,56 @@ func (r TestRun) Channel() string {
 	return ""
 }
 
-// TestRunStatus is an enum for PendingTestRun statuses.
-type TestRunStatus int64
+// PendingTestRunStage represents the stage of a test run in its life cycle.
+type PendingTestRunStage string
 
-// TestRunStatusCreated represents a PendingTestRun that was created, but hasn't started.
-const TestRunStatusCreated = TestRunStatus(0)
+// PendingTestRunLifeCycle is an ordered array of all valid stages in a life cycle.
+var PendingTestRunLifeCycle = [...]PendingTestRunStage{
+	"GITHUB_QUEUED",
+	"GITHUB_IN_PROGRESS",
+	"CI_RUNNING",
+	"CI_FINISHED",
+	"GITHUB_SUCCESS",
+	"GITHUB_FAILURE",
+	"WPTFYI_RECEIVED",
+	"WPTFYI_PROCESSING",
+	"VALID",
+	"INVALID",
+}
 
-// TestRunStatusRunning represents a PendingTestRun that has been announced as in-flight.
-const TestRunStatusRunning = TestRunStatus(1)
-
-// TestRunStatusProcessing represents a PendingTestRun that has completed the run,
-// and the results are being processed.
-const TestRunStatusProcessing = TestRunStatus(2)
+func (s PendingTestRunStage) toInt() int {
+	for i, stage := range PendingTestRunLifeCycle {
+		if stage == s {
+			return i
+		}
+	}
+	return -1
+}
 
 // PendingTestRun represents a TestRun that has started, but is not yet
 // completed.
 type PendingTestRun struct {
-	TestRun
+	ID               int64               `json:"id" datastore:"-"`
+	CheckRunID       int64               `json:"check_run_id"`
+	FullRevisionHash string              `json:"full_revision_hash"`
+	Uploader         string              `json:"uploader"`
+	Error            string              `json:"error"`
+	Stage            PendingTestRunStage `json:"stage"`
 
-	Status TestRunStatus `json:"status"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
+}
+
+// Transition sets Stage to next if the transition is allowed; otherwise an
+// error is returned.
+func (s *PendingTestRun) Transition(next PendingTestRunStage) error {
+	i := s.Stage.toInt()
+	j := next.toInt()
+	if j < 0 || j <= i {
+		return fmt.Errorf("cannot transition from %s to %s", s.Stage, next)
+	}
+	s.Stage = next
+	return nil
 }
 
 // CheckSuite entities represent a GitHub check request that has been noted by

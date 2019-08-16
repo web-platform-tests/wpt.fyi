@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -107,6 +108,13 @@ func TestScheduleResultsTask(t *testing.T) {
 	stats, err = taskqueue.QueueStats(ctx, []string{""})
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 1)
+
+	var pendingRun shared.PendingTestRun
+	id, err := strconv.Atoi(task.Name)
+	assert.Nil(t, err)
+	datastore.Get(ctx, datastore.NewKey(ctx, "PendingTestRun", "", int64(id), nil), &pendingRun)
+	assert.Equal(t, "blade-runner", pendingRun.Uploader)
+	assert.Equal(t, "WPTFYI_RECEIVED", string(pendingRun.Stage))
 }
 
 func TestAddTestRun(t *testing.T) {

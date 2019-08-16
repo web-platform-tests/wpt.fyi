@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/taskqueue"
@@ -117,7 +118,27 @@ func (a apiImpl) ScheduleResultsTask(
 	if err != nil {
 		return nil, err
 	}
-	// TODO(lukebjerring): Create a PendingTestRun entity.
+
+	var pendingRun shared.PendingTestRun
+	pendingRunKey := a.store.NewIDKey("PendingTestRun", key.IntID())
+	err = a.store.Update(pendingRunKey, &pendingRun, func(run interface{}) error {
+		pr := run.(*shared.PendingTestRun)
+		if err := pr.Transition("WPTFYI_RECEIVED"); err != nil {
+			return err
+		}
+		pr.Uploader = uploader
+		if revision, ok := extraParams["revision"]; ok {
+			pr.FullRevisionHash = revision
+		}
+		if pr.Created.IsZero() {
+			pr.Created = time.Now()
+		}
+		pr.Updated = time.Now()
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	payload := url.Values{
 		"results":     results,
