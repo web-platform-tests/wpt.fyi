@@ -10,6 +10,9 @@ const puppeteer = require('puppeteer');
 const flags = require('flags');
 const browserFlag = flags.defineString('products', 'chrome,firefox,safari', 'Browsers to compare');
 const passes = flags.defineBoolean('passes', false, 'Count browser-specific passes, not failures');
+const date = flags.defineString('date', '2019-08-01', 'First date to scrape');
+const weeks = flags.defineInteger('weeks', 52, 'Number of weeks to scrape');
+const backward = flags.defineBoolean('backward', true, 'Whether to move backward in time for each week');
 flags.parse();
 
 const browsers = browserFlag.get().split(',').map(b => b.trim());
@@ -52,10 +55,11 @@ async function main() {
       };
     };
 
-    const dates = [new Date('2019-07-01')];
-    for (var i = 1; i < 52; i++) {
+    const dates = [new Date(date.get())];
+    for (var i = 1; i < weeks.get(); i++) {
       const next = new Date(dates[dates.length-1]);
-      next.setDate(next.getDate() - 7);
+      const multiplier = backward.get() ? -1 : 1;
+      next.setDate(next.getDate() + 7 * multiplier);
       dates.push(next);
     }
 
