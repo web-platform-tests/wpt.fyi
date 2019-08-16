@@ -520,6 +520,19 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     }
     return Math.round(score * 100);
   }
+
+  moveToNext() {
+    if (!this.searchResults || !this.searchResults.length) {
+      return;
+    }
+    let next = this.searchResults.findIndex(r => r.test === this.path);
+    if (next < 0) {
+      next = 0;
+    } else {
+      next = next + 1 % this.searchResults.length;
+    }
+    this.path = this.searchResults[next].test;
+  }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);
 

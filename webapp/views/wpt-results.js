@@ -307,6 +307,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       path: {
         type: String,
         observer: 'pathUpdated',
+        notify: true,
       },
       pathIsASubfolderOrFile: {
         type: Boolean,
@@ -933,11 +934,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     };
   }
 
-  handleSearchAutocomplete(e) {
-    this.shadowRoot.querySelector('test-search').clear();
-    this.navigateToPath(e.detail.path);
-  }
-
   queryChanged(query, queryBefore) {
     super.queryChanged(query, queryBefore);
     if (this._fetchedQuery === query) {
@@ -945,6 +941,19 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     }
     this._fetchedQuery = query; // Debounce.
     this.reloadData();
+  }
+
+  moveToNext() {
+    if (!this.searchResults || !this.searchResults.length) {
+      return;
+    }
+    let next = this.searchResults.findIndex(r => r.test === this.path);
+    if (next < 0) {
+      next = 0;
+    } else {
+      next = next + 1 % this.searchResults.length;
+    }
+    this.path = this.searchResults[next].test;
   }
 }
 

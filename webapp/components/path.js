@@ -98,7 +98,8 @@ class PathPart extends PolymerElement {
   static get properties() {
     return {
       path: {
-        type: String
+        type: String,
+        notify: true,
       },
       query: {
         type: String
