@@ -8,7 +8,11 @@ package shared
 
 import (
 	"context"
+	"errors"
 )
+
+// ErrEntityAlreadyExists is returned by Datastore.Insert when the entity already exists.
+var ErrEntityAlreadyExists = errors.New("datastore: entity already exists")
 
 // Key abstracts an int64 based datastore.Key
 type Key interface {
@@ -47,7 +51,15 @@ type Datastore interface {
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
 	Put(key Key, src interface{}) (Key, error)
+
+	// Atomically insert a new entity.
 	Insert(key Key, src interface{}) error
+	// Atomically update or create an entity: the entity is first fetched
+	// by key into dst, which must be a struct pointer; if the key cannot
+	// be found, no error is returned and dst is not modified. Then
+	// mutator(dst) is called; the transaction will be aborted if non-nil
+	// error is returned. Finally, write dst back by key.
+	Update(key Key, dst interface{}, mutator func(obj interface{}) error) error
 
 	TestRunQuery() TestRunQuery
 }
