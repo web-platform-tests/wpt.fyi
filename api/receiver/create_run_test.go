@@ -62,6 +62,11 @@ func TestHandleResultsCreate(t *testing.T) {
 		},
 	}
 	testKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 12345}
+	pendingRun := shared.PendingTestRun{
+		ID:               12345,
+		Stage:            "VALID",
+		FullRevisionHash: sha,
+	}
 
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
@@ -70,6 +75,7 @@ func TestHandleResultsCreate(t *testing.T) {
 		mockAE.EXPECT().GetUploader("_processor").Return(shared.Uploader{"_processor", "secret-token"}, nil),
 		mockAE.EXPECT().AddTestRun(sharedtest.SameProductSpec(testRunIn.String())).Return(testKey, nil),
 		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
+		mockAE.EXPECT().UpdatePendingTestRun(pendingRun).Return(nil),
 	)
 
 	w := httptest.NewRecorder()
@@ -105,6 +111,11 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
 	req.SetBasicAuth("_processor", "secret-token")
 	testKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 1}
+	pendingRun := shared.PendingTestRun{
+		ID:               1,
+		Stage:            "VALID",
+		FullRevisionHash: sha,
+	}
 
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
@@ -113,6 +124,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 		mockAE.EXPECT().GetUploader("_processor").Return(shared.Uploader{"_processor", "secret-token"}, nil),
 		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(testKey, nil),
 		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
+		mockAE.EXPECT().UpdatePendingTestRun(pendingRun).Return(nil),
 	)
 
 	w := httptest.NewRecorder()
