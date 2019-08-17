@@ -43,6 +43,7 @@ type API interface {
 	shared.AppEngineAPI
 
 	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
+	UpdatePendingTestRun(pendingRun shared.PendingTestRun) error
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 	ScheduleResultsTask(
 		uploader string, results, screenshots []string, extraParams map[string]string) (
@@ -78,6 +79,37 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 		return nil, err
 	}
 	return key, nil
+}
+
+func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {
+	var buffer shared.PendingTestRun
+	key := a.store.NewIDKey("PendingTestRun", newRun.ID)
+	return a.store.Update(key, &buffer, func(obj interface{}) error {
+		run := obj.(*shared.PendingTestRun)
+		if newRun.Stage != "" {
+			if err := run.Transition(newRun.Stage); err != nil {
+				return err
+			}
+		}
+		if newRun.Error != "" {
+			run.Error = newRun.Error
+		}
+		if newRun.CheckRunID != 0 {
+			run.CheckRunID = newRun.CheckRunID
+		}
+		if newRun.FullRevisionHash != "" {
+			run.FullRevisionHash = newRun.FullRevisionHash
+		}
+		if newRun.Uploader != "" {
+			run.Uploader = newRun.Uploader
+		}
+
+		if run.Created.IsZero() {
+			run.Created = time.Now()
+		}
+		run.Updated = time.Now()
+		return nil
+	})
 }
 
 func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
@@ -119,24 +151,13 @@ func (a apiImpl) ScheduleResultsTask(
 		return nil, err
 	}
 
-	var pendingRun shared.PendingTestRun
-	pendingRunKey := a.store.NewIDKey("PendingTestRun", key.IntID())
-	err = a.store.Update(pendingRunKey, &pendingRun, func(run interface{}) error {
-		pr := run.(*shared.PendingTestRun)
-		if err := pr.Transition("WPTFYI_RECEIVED"); err != nil {
-			return err
-		}
-		pr.Uploader = uploader
-		if revision, ok := extraParams["revision"]; ok {
-			pr.FullRevisionHash = revision
-		}
-		if pr.Created.IsZero() {
-			pr.Created = time.Now()
-		}
-		pr.Updated = time.Now()
-		return nil
-	})
-	if err != nil {
+	pendingRun := shared.PendingTestRun{
+		ID:               key.IntID(),
+		Stage:            "WPTFYI_RECEIVED",
+		Uploader:         uploader,
+		FullRevisionHash: extraParams["revision"],
+	}
+	if err := a.UpdatePendingTestRun(pendingRun); err != nil {
 		return nil, err
 	}
 
