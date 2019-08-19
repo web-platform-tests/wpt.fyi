@@ -68,10 +68,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <section class="search">
         <div class="path">
-          <a href="/[[page]]/?[[ query ]]" on-click="navigate">wpt</a>
+          <a href="/[[page]]/?[[ query ]]">wpt</a>
           <!-- The next line is intentionally formatted so to avoid whitespaces between elements. -->
           <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
-            ><span class="path-separator">/</span><a href="/[[page]][[ part.path ]]?[[ query ]]" on-click="navigate">[[ part.name ]]</a></template>
+            ><span class="path-separator">/</span><a href="/[[page]][[ part.path ]]?[[ query ]]">[[ part.name ]]</a></template>
         </div>
 
         <template is="dom-if" if="[[searchPRsForDirectories]]">
@@ -233,6 +233,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     if (this.activeView) {
       this.activeView.query = query;
     }
+    super.queryChanged(query);
   }
 
   _routeChanged(routeData) {
