@@ -944,16 +944,26 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
   }
 
   moveToNext() {
+    this._move(true);
+  }
+
+  moveToPrev() {
+    this._move(false);
+  }
+
+  _move(forward) {
     if (!this.searchResults || !this.searchResults.length) {
       return;
     }
-    let next = this.searchResults.findIndex(r => r.test === this.path);
+    const n = this.searchResults.length;
+    let next = this.searchResults.findIndex(r => r.test.startsWith(this.path));
     if (next < 0) {
-      next = 0;
+      next = (forward ? 0 : -1);
     } else {
-      next = next + 1 % this.searchResults.length;
+      next = next + (forward ? 1 : -1);
     }
-    this.path = this.searchResults[next].test;
+    // % in js is not modulo, it's remainder. Ensure it's positive.
+    this.path = this.searchResults[(n + next) % n].test;
   }
 }
 

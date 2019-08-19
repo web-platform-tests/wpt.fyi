@@ -281,6 +281,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     }
     if (e.key === 'n') {
       this.activeView.moveToNext();
+    } else if (e.key === 'p') {
+      this.activeView.moveToPrev();
     }
   }
 
