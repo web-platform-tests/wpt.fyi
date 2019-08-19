@@ -182,6 +182,7 @@ class Anomalies extends ProductInfo(PolymerElement) {
 
   computeURL(query, browser, others) {
     const url = new URL('/results/', window.location);
+    url.searchParams.set('labels', 'master');
     url.searchParams.set('q', query);
     const products = [browser, ...others];
     if (DefaultProductSpecs.join(',') !== products.join(',')) {
