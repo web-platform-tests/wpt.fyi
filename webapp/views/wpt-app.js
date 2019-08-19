@@ -233,6 +233,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     if (this.activeView) {
       this.activeView.query = query;
     }
+    super.queryChanged(query);
   }
 
   _routeChanged(routeData) {
