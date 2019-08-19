@@ -533,13 +533,15 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     if (!this.searchResults || !this.searchResults.length) {
       return;
     }
+    const n = this.searchResults.length;
     let next = this.searchResults.findIndex(r => r.test.startsWith(this.path));
     if (next < 0) {
       next = (forward ? 0 : -1);
-    } else {
+    } else if (this.searchResults[next].test === this.path) { // Only advance 1 for exact match.
       next = next + (forward ? 1 : -1);
     }
-    this.path = this.searchResults[next % this.searchResults.length].test;
+    // % in js is not modulo, it's remainder. Ensure it's positive.
+    this.path = this.searchResults[(n + next) % n].test;
   }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);
