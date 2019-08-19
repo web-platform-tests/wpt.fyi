@@ -11,9 +11,8 @@ import './browser-picker.js';
 import './info-banner.js';
 import { DefaultProductSpecs, DefaultProducts, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
-import { WPTFlags } from './wpt-flags.js';
 
-class Insights extends ProductInfo(WPTFlags(PolymerElement)) {
+class Insights extends ProductInfo(PolymerElement) {
   static get template() {
     return html`
     <style>
