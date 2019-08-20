@@ -6,20 +6,11 @@ package webapp
 
 import (
 	"net/http"
-
-	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // insightsHandler handles the view listing a range of useful queries for the
 // wpt results.
 func insightsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	if !aeAPI.IsFeatureEnabled("insightsTab") {
-		http.NotFound(w, r)
-		return
-	}
-
 	data := struct{}{}
 	if err := templates.ExecuteTemplate(w, "insights.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

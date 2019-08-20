@@ -29,7 +29,7 @@ var (
 	staticRuns         = flag.Bool("static_runs", false, "Include runs in the /static dir")
 	remoteRuns         = flag.Bool("remote_runs", true, "Include copies of remote runs")
 	seenTestRunIDs     = mapset.NewSet()
-	labels         = flag.String("labels", "", "Labels for which to fetch runs")
+	labels             = flag.String("labels", "", "Labels for which to fetch runs")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some

@@ -33,7 +33,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
-      'insightsTab',
       'interopScoreColumn',
       'permalinks',
       'queryBuilder',
@@ -297,11 +296,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{runsByPRNumber}}">
         Allow /api/runs?pr=[GitHub PR number]
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{insightsTab}}">
-        Show the "Insights" tab in the main navigation, (and enable <a href="/insights">/insights</a>).
       </paper-checkbox>
     </paper-item>
     <paper-item>
