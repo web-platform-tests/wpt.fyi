@@ -45,6 +45,14 @@ suite('<test-search>', () => {
       });
     });
 
+    test('subtest', () => {
+      assertQueryParse('subtest:idl_test', {exists: [{subtest: 'idl_test'}]});
+    });
+
+    test('subtest_quoted', () => {
+      assertQueryParse('subtest:"idl_test setup"', {exists: [{subtest: 'idl_test setup'}]});
+    });
+
     test('path', () => {
       assertQueryParse('path:/dom/', {exists: [{path: '/dom/'}]});
     });
