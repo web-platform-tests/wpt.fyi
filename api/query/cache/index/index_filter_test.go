@@ -140,6 +140,84 @@ func TestBindExecute_TestNamePattern(t *testing.T) {
 	assert.Equal(t, expectedResult, srs[0])
 }
 
+func TestBindExecute_SubtestNamePattern(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "OK",
+						Subtests: []metrics.SubTest{
+							metrics.SubTest{
+								Name:   "a1",
+								Status: "PASS",
+							},
+							metrics.SubTest{
+								Name:   "a2",
+								Status: "FAIL",
+							},
+						},
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "TIMEOUT",
+						Subtests: []metrics.SubTest{
+							metrics.SubTest{
+								Name:   "d1",
+								Status: "PASS",
+							},
+							metrics.SubTest{
+								Name:   "d2",
+								Status: "FAIL",
+							},
+							metrics.SubTest{
+								Name:   "d3",
+								Status: "TIMEOUT",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	for _, testCase := range []struct {
+		Subtest string
+		Passes  int
+		Total   int
+	}{
+		{"a1", 1, 1},
+		{"a", 1, 2},
+	} {
+		t.Run("subtest: "+testCase.Subtest, func(t *testing.T) {
+			q := query.SubtestNamePattern{
+				Subtest: testCase.Subtest,
+			}
+			srs := planAndExecute(t, runs, idx, q)
+
+			assert.Equal(t, 1, len(srs))
+			expectedResult := shared.SearchResult{
+				Test: "/a/b/c",
+				LegacyStatus: []shared.LegacySearchRunResult{
+					shared.LegacySearchRunResult{
+						Passes: testCase.Passes, // Only matches the subtest.
+						Total:  testCase.Total,
+					},
+				},
+			}
+			assert.Equal(t, expectedResult, srs[0])
+		})
+	}
+}
+
 func TestBindExecute_TestPath(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -412,7 +490,7 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 		},
 	})
 	metadata := map[string][]string{
-		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		"/foo/bar/b.html":  []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
 		noMatchingTestName: []string{"", "https://external.com/item", ""},
 	}
 
@@ -454,7 +532,7 @@ func TestBindExecute_NotLink(t *testing.T) {
 	})
 	metadata := map[string][]string{
 		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
-		matchingTestName: []string{"", "https://external.com/item", ""},
+		matchingTestName:  []string{"", "https://external.com/item", ""},
 	}
 
 	notQuery := query.Not{Arg: query.Link{Pattern: "external", Metadata: metadata}}

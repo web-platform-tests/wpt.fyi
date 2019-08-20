@@ -8,6 +8,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// Average as of Aug 20, 2019
+const averageNumberOfSubtests = int(1655263 / 34236)
+
 // AggregationOpts are options for the aggregation format used when collecting
 // the results.
 type AggregationOpts struct {
@@ -90,6 +93,10 @@ type Not struct {
 // Size of TestNamePattern has a size of 1: servicing such a query requires a
 // substring match per test.
 func (TestNamePattern) Size() int { return 1 }
+
+// Size of TestNamePattern has a size of 1: servicing such a query requires a
+// substring match per subtest.
+func (SubtestNamePattern) Size() int { return averageNumberOfSubtests }
 
 // Size of TestPath has a size of 1: servicing such a query requires a
 // substring match per test.

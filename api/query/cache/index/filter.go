@@ -32,6 +32,12 @@ type TestNamePattern struct {
 	q query.TestNamePattern
 }
 
+// SubtestNamePattern is a query.SubtestNamePattern bound to an in-memory index.
+type SubtestNamePattern struct {
+	index
+	q query.SubtestNamePattern
+}
+
 // TestPath is a query.TestPath bound to an in-memory index.
 type TestPath struct {
 	index
@@ -118,6 +124,15 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 		return false
 	}
 	return strings.Contains(name, tnp.q.Pattern)
+}
+
+// Filter interprets a SubtestNamePattern as a filter function over TestIDs.
+func (tnp SubtestNamePattern) Filter(t TestID) bool {
+	_, subtest, err := tnp.tests.GetName(t)
+	if err != nil || subtest == nil {
+		return false
+	}
+	return strings.Contains(*subtest, tnp.q.Subtest)
 }
 
 // Filter interprets a TestPath as a filter function over TestIDs.
@@ -209,6 +224,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return False{idx}, nil
 	case query.TestNamePattern:
 		return TestNamePattern{idx, v}, nil
+	case query.SubtestNamePattern:
+		return SubtestNamePattern{idx, v}, nil
 	case query.TestPath:
 		return TestPath{idx, v}, nil
 	case query.RunTestStatusEq:
