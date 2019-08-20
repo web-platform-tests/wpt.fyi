@@ -130,14 +130,14 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <wpt-results name="results"
                      is-loading="{{resultsLoading}}"
                      structured-search="[[structuredSearch]]"
-                     path="[[subroute.path]]"
+                     path="{{subroute.path}}"
                      test-runs="{{testRuns}}"
                      search-results="{{searchResults}}"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
                      structured-search="[[structuredSearch]]"
-                     path="[[subroute.path]]"></wpt-interop>
+                     path="{{subroute.path}}"></wpt-interop>
 
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
@@ -207,6 +207,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     const testSearch = this.shadowRoot.querySelector('test-search');
     testSearch.addEventListener('commit', this.handleSearchCommit.bind(this));
     testSearch.addEventListener('autocomplete', this.handleSearchAutocomplete.bind(this));
+    document.addEventListener('keydown', this.handleKeyDown.bind(this));
   }
 
   disconnectedCallback() {
@@ -272,6 +273,18 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     path += `/${encodeURIComponent(lastPart)}`;
     linkedParts.push({ name: lastPart, path: path });
     return linkedParts;
+  }
+
+  handleKeyDown(e) {
+    // Ignore when something other than body has focus.
+    if (!e.path.length || e.path[0] !== document.body) {
+      return;
+    }
+    if (e.key === 'n') {
+      this.activeView.moveToNext();
+    } else if (e.key === 'p') {
+      this.activeView.moveToPrev();
+    }
   }
 
   handleSubmitQuery() {

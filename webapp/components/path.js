@@ -13,7 +13,10 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 const PathInfo = (superClass) => class extends superClass {
   static get properties() {
     return {
-      path: String,
+      path: {
+        type: String,
+        notify: true,
+      },
       encodedPath: {
         type: String,
         computed: 'encodeTestPath(path)'
@@ -98,7 +101,8 @@ class PathPart extends PolymerElement {
   static get properties() {
     return {
       path: {
-        type: String
+        type: String,
+        notify: true,
       },
       query: {
         type: String

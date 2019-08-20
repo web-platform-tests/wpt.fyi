@@ -307,6 +307,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       path: {
         type: String,
         observer: 'pathUpdated',
+        notify: true,
       },
       pathIsASubfolderOrFile: {
         type: Boolean,
@@ -933,11 +934,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     };
   }
 
-  handleSearchAutocomplete(e) {
-    this.shadowRoot.querySelector('test-search').clear();
-    this.navigateToPath(e.detail.path);
-  }
-
   queryChanged(query, queryBefore) {
     super.queryChanged(query, queryBefore);
     if (this._fetchedQuery === query) {
@@ -945,6 +941,29 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     }
     this._fetchedQuery = query; // Debounce.
     this.reloadData();
+  }
+
+  moveToNext() {
+    this._move(true);
+  }
+
+  moveToPrev() {
+    this._move(false);
+  }
+
+  _move(forward) {
+    if (!this.searchResults || !this.searchResults.length) {
+      return;
+    }
+    const n = this.searchResults.length;
+    let next = this.searchResults.findIndex(r => r.test.startsWith(this.path));
+    if (next < 0) {
+      next = (forward ? 0 : -1);
+    } else if (this.searchResults[next].test === this.path) { // Only advance 1 for exact match.
+      next = next + (forward ? 1 : -1);
+    }
+    // % in js is not modulo, it's remainder. Ensure it's positive.
+    this.path = this.searchResults[(n + next) % n].test;
   }
 }
 

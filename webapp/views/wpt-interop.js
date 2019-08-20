@@ -520,6 +520,32 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     }
     return Math.round(score * 100);
   }
+
+  moveToNext() {
+    this._move(true);
+  }
+
+  moveToPrev() {
+    this._move(false);
+  }
+
+  _move(forward) {
+    if (!this.searchResults
+        || !this.searchResults.results
+        || !this.searchResults.results.length) {
+      return;
+    }
+    const results = this.searchResults.results.sort((a, b) => a.test.localeCompare(b.test));
+    const n = results.length;
+    let next = results.findIndex(r => r.test.startsWith(this.path));
+    if (next < 0) {
+      next = (forward ? 0 : -1);
+    } else if (results[next].test === this.path) { // Only advance 1 for exact match.
+      next = next + (forward ? 1 : -1);
+    }
+    // % in js is not modulo, it's remainder. Ensure it's positive.
+    this.path = results[(n + next) % n].test;
+  }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);
 
