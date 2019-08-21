@@ -445,9 +445,9 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
         return (acc, t) => {
           // Compute dir/file name that is direct descendant of this.path.
           const suffix = t.test.substring(pLen);
-          const slashIdx = suffix.indexOf('/');
+          const slashIdx = suffix.split('?')[0].indexOf('/');
           const isDir = slashIdx !== -1;
-          const name = isDir ? suffix.substring(0, slashIdx): suffix;
+          const name = isDir ? suffix.substring(0, slashIdx) : suffix;
 
           // Either add new node to acc, or add data to an existing node.
           if (!nodes.hasOwnProperty(name)) {

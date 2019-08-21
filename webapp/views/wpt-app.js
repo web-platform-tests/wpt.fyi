@@ -260,21 +260,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return subroutePath || '/';
   }
 
-  splitPathIntoLinkedParts(inputPath) {
-    const parts = (inputPath || '').split('/').slice(1);
-    const lastPart = parts.pop();
-    let path = '';
-    const linkedParts = parts.map(name => {
-      path += `/${name}`;
-      return {
-        name, path
-      };
-    });
-    path += `/${encodeURIComponent(lastPart)}`;
-    linkedParts.push({ name: lastPart, path: path });
-    return linkedParts;
-  }
-
   handleKeyDown(e) {
     // Ignore when something other than body has focus.
     if (!e.path.length || e.path[0] !== document.body) {

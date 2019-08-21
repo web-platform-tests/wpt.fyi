@@ -690,7 +690,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     const prefix = this.path === '/' ? '/' : `${this.path}/`;
     const collapsePathOnto = (testPath, nodes) => {
       const suffix = testPath.substring(prefix.length);
-      const slashIdx = suffix.indexOf('/');
+      const slashIdx = suffix.split('?')[0].indexOf('/');
       const isDir = slashIdx !== -1;
       const name = isDir ? suffix.substring(0, slashIdx): suffix;
       // Either add new node to acc, or add passes, total to an
