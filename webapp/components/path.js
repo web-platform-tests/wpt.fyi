@@ -43,12 +43,10 @@ const PathInfo = (superClass) => class extends superClass {
   encodeTestPath(path) {
     path = path || '/';
     console.assert(path.startsWith('/'));
-    const pathAndQuery = path.split('?');
-    let parts = pathAndQuery[0].split('/');
-    let lastPart = parts.pop();
-    if (pathAndQuery.length > 1) {
-      lastPart += '?' + pathAndQuery[1];
-    }
+    const url = new URL(path || '/', window.location);
+    let parts = url.pathname.split('/');
+    parts.pop();
+    let lastPart = path.substr(parts.join('/').length + 1);
     parts.push(encodeURIComponent(lastPart));
     return parts.join('/');
   }
@@ -65,11 +63,15 @@ const PathInfo = (superClass) => class extends superClass {
     if (!path || this.computePathIsATestFile(path)) {
       return false;
     }
-    return new URL(path, window.location).pathname.split('/').filter(p => p).length > 0;
+    // Strip out query params/anchors.
+    path = new URL(path, window.location).pathname;
+    return path.split('/').filter(p => p).length > 0;
   }
 
   computePathIsATestFile(path) {
-    return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(new URL(path, window.location).pathname);
+    // Strip out query params/anchors.
+    path = new URL(path || '', window.location).pathname;
+    return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
   }
 
   computePathIsRootDir(path) {
