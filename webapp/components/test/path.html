@@ -62,6 +62,8 @@ suite('PathInfo', () => {
     expect(pathInfo.pathIsATestFile).to.be.true;
     pathInfo.path = '/a/b.html?x=1';
     expect(pathInfo.pathIsATestFile).to.be.true;
+    pathInfo.path = '/a/b.html?x=:a/b/:';
+    expect(pathInfo.pathIsATestFile).to.be.true;
     pathInfo.path = '/a/b/';
     expect(pathInfo.pathIsATestFile).to.be.false;
   });
