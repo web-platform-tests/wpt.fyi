@@ -73,6 +73,10 @@ func TestApiRunBound(t *testing.T) {
 	assertHandlerIs(t, "/api/runs/123", "api-test-run")
 }
 
+func TestApiStautsBound(t *testing.T) {
+	assertHandlerIs(t, "/api/status", "api-pending-test-runs")
+}
+
 func TestApiResultsBoundCORS(t *testing.T) {
 	assertHandlerIs(t, "/api/results", "api-results")
 	assertHSTS(t, "/api/results/upload")
