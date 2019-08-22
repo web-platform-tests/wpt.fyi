@@ -17,7 +17,7 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	store := shared.NewAppEngineDatastore(ctx, false)
 
-	q := store.NewQuery("PendingTestRun")
+	q := store.NewQuery("PendingTestRun").Order("-Updated")
 	var runs []shared.PendingTestRun
 	if _, err := store.GetAll(q, &runs); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
