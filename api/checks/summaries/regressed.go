@@ -5,8 +5,12 @@
 package summaries
 
 import (
+	"strings"
+
 	"github.com/google/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/api/checks/notifications"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine/mail"
 )
 
 // BeforeAndAfter summarizes counts for pass/total before and after, across a
@@ -63,4 +67,35 @@ func (r Regressed) GetActions() []*github.CheckRunAction {
 		RecomputeAction(),
 		IgnoreAction(),
 	}
+}
+
+// GetNotifications loads the subscribers.yml file, and notifies
+// subscribers of the regressions.
+func (r Regressed) GetNotifications(subscriptions []notifications.Subscription) ([]*mail.Message, error) {
+	notifications := []*mail.Message{}
+	for _, s := range subscriptions {
+		filtered := make(BeforeAndAfter)
+		for _, path := range s.Paths {
+			for k, v := range r.Regressions {
+				if strings.HasPrefix(k, path) {
+					filtered[k] = v
+				}
+			}
+		}
+		if len(filtered) < 1 {
+			continue
+		}
+		body, err := compile(&r, "regressions.txt")
+		if err != nil {
+			return nil, err
+		}
+		msg := &mail.Message{
+			Sender:  "wpt.fyi <notify@wpt.fyi>",
+			To:      []string{s.Email},
+			Subject: "Regressions in wpt@" + r.HeadRun.FullRevisionHash[:7],
+			Body:    body,
+		}
+		notifications = append(notifications, msg)
+	}
+	return notifications, nil
 }

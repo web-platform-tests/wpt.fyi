@@ -4,7 +4,11 @@
 
 package summaries
 
-import "github.com/google/go-github/github"
+import (
+	"github.com/google/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/api/checks/notifications"
+	"google.golang.org/appengine/mail"
+)
 
 // Pending is the struct for pending.md.
 type Pending struct {
@@ -28,4 +32,9 @@ func (p Pending) GetActions() []*github.CheckRunAction {
 	return []*github.CheckRunAction{
 		CancelAction(),
 	}
+}
+
+// GetNotifications returns nil; we don't notify of progress.
+func (p Pending) GetNotifications(s []notifications.Subscription) ([]*mail.Message, error) {
+	return nil, nil
 }

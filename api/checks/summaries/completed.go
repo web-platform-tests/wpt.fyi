@@ -6,7 +6,9 @@ package summaries
 
 import (
 	"github.com/google/go-github/github"
+	"github.com/web-platform-tests/wpt.fyi/api/checks/notifications"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine/mail"
 )
 
 // ResultsComparison is all the fields shared across summaries that
@@ -43,4 +45,10 @@ func (c Completed) GetActions() []*github.CheckRunAction {
 	return []*github.CheckRunAction{
 		RecomputeAction(),
 	}
+}
+
+// GetNotifications returns nil; we don't notify of success.
+// TODO: Should we?
+func (c Completed) GetNotifications(s []notifications.Subscription) ([]*mail.Message, eror) {
+	return nil, nil
 }

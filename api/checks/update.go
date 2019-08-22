@@ -13,8 +13,10 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
+	"google.golang.org/appengine/mail"
 
 	"github.com/gorilla/mux"
+	"github.com/web-platform-tests/wpt.fyi/api/checks/notifications"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -82,6 +84,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updatedAny := false
+	subscriptions := getSubscriptions()
 	for _, suite := range suites {
 		summaryData, err := getDiffSummary(aeAPI, diffAPI, suite, *baseRun, *headRun)
 		if err == shared.ErrRunNotInSearchCache {
@@ -90,6 +93,15 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		} else if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+		notifications, err := summaryData.GetNotifications()
+
+		for _, m := range notifications {
+			if err := mail.Send(ctx, m); err != nil {
+				log.Errorf("Failed to send notification to %s: %s", strings.Join(m.To, ","), err.Error())
+			} else {
+				log.Errorf("Sent notification to %s", strings.Join(m.To, ","))
+			}
 		}
 		updated, updateErr := updateCheckRunSummary(ctx, summaryData, suite)
 		if updateErr != nil {
@@ -363,4 +375,8 @@ func collapsePaths(keys []string, limit int) mapset.Set {
 		result = collapsed
 	}
 	return result
+}
+
+func getSubscriptions() []notifications.Subscription {
+	return nil
 }

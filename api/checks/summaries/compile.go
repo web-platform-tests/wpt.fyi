@@ -17,6 +17,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"google.golang.org/appengine/mail"
 )
 
 var templates *template.Template
@@ -49,6 +50,8 @@ type Summary interface {
 
 	// GetSummary compiles the summary markdown template.
 	GetSummary() (string, error)
+
+	GetNotifications() ([]*mail.Message, error)
 }
 
 // CheckState represents all the status fields for updating a check.
