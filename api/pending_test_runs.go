@@ -15,7 +15,7 @@ import (
 // all the pending test runs.
 func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	store := shared.NewAppEngineDatastore(ctx, true)
+	store := shared.NewAppEngineDatastore(ctx, false)
 
 	q := store.NewQuery("PendingTestRun")
 	var runs []shared.PendingTestRun
