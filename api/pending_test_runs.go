@@ -19,13 +19,13 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	q := store.NewQuery("PendingTestRun").Order("-Updated")
 	var runs []shared.PendingTestRun
-	if keys, err := store.GetAll(q, &runs); err != nil {
+	keys, err := store.GetAll(q, &runs)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	} else {
-		for i, key := range keys {
-			runs[i].ID = key.IntID()
-		}
+	}
+	for i, key := range keys {
+		runs[i].ID = key.IntID()
 	}
 
 	testRunsBytes, err := json.Marshal(runs)
