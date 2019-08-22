@@ -43,9 +43,12 @@ const PathInfo = (superClass) => class extends superClass {
   encodeTestPath(path) {
     path = path || '/';
     console.assert(path.startsWith('/'));
-    let parts = path.split('/').slice(1);
-    parts.push(encodeURIComponent(parts.pop()));
-    return '/' + parts.join('/');
+    const url = new URL(path || '/', window.location);
+    let parts = url.pathname.split('/');
+    parts.pop();
+    let lastPart = path.substr(parts.join('/').length + 1);
+    parts.push(encodeURIComponent(lastPart));
+    return parts.join('/');
   }
 
   computeTestScheme(path) {
@@ -57,20 +60,44 @@ const PathInfo = (superClass) => class extends superClass {
   }
 
   computePathIsASubfolder(path) {
-    return !this.computePathIsATestFile(path)
-      && path && path.split('/').filter(p => p).length > 0;
+    if (!path || this.computePathIsATestFile(path)) {
+      return false;
+    }
+    // Strip out query params/anchors.
+    path = new URL(path, window.location).pathname;
+    return path.split('/').filter(p => p).length > 0;
   }
 
   computePathIsATestFile(path) {
+    // Strip out query params/anchors.
+    path = new URL(path || '', window.location).pathname;
     return /(\.(html|htm|py|svg|xhtml|xht|xml)(\?.*)?$)/.test(path);
   }
 
   computePathIsRootDir(path) {
     return path && path === '/';
   }
+
+  splitPathIntoLinkedParts(inputPath) {
+    const encoded = this.encodeTestPath(inputPath);
+    const parts = encoded.split('/').slice(1);
+    let path = '';
+    const linkedParts = parts.map(part => {
+      path += `/${part}`;
+      return {
+        name: part,
+        path: path,
+      };
+    });
+    // Decode the last part's name (in case it was escaped).
+    let last = linkedParts.pop();
+    last.name = decodeURIComponent(last.name);
+    linkedParts.push(last);
+    return linkedParts;
+  }
 };
 
-class PathPart extends PolymerElement {
+class PathPart extends PathInfo(PolymerElement) {
   static get template() {
     return html`
     <style>
@@ -100,10 +127,6 @@ class PathPart extends PolymerElement {
 
   static get properties() {
     return {
-      path: {
-        type: String,
-        notify: true,
-      },
       query: {
         type: String
       },
@@ -120,7 +143,7 @@ class PathPart extends PolymerElement {
       },
       relativePath: {
         type: String,
-        computed: 'computedDisplayableRelativePath(path)'
+        computed: 'computeDisplayableRelativePath(path)'
       },
       href: {
         type: Location,
@@ -134,19 +157,19 @@ class PathPart extends PolymerElement {
   }
 
   computeHref(prefix, path, query) {
-    let parts = path.split('/');
-    parts.push(encodeURIComponent(parts.pop()));
+    const encodedPath = this.encodeTestPath(path);
     const href = new URL(window.location);
-    href.pathname = `${prefix || ''}${parts.join('/')}`;
+    href.pathname = `${prefix || ''}${encodedPath}`;
     if (query) {
       href.search = query;
     }
     return href;
   }
 
-  computedDisplayableRelativePath(path) {
+  computeDisplayableRelativePath(path) {
     if (!this.isDir) {
-      return path.substr(path.lastIndexOf('/') + 1);
+      path = this.encodeTestPath(path || '');
+      return decodeURIComponent(path.substr(path.lastIndexOf('/') + 1));
     }
     const windowPath = window.location.pathname.replace(`${this.prefix || ''}`, '');
     const pathPrefix = new RegExp(`^${windowPath}${windowPath.endsWith('/') ? '' : '/'}`);
