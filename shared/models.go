@@ -140,29 +140,51 @@ func (r TestRun) Channel() string {
 }
 
 // PendingTestRunStage represents the stage of a test run in its life cycle.
-type PendingTestRunStage string
+type PendingTestRunStage int
 
-// PendingTestRunLifeCycle is an ordered array of all valid stages in a life cycle.
-var PendingTestRunLifeCycle = [...]PendingTestRunStage{
-	"GITHUB_QUEUED",
-	"GITHUB_IN_PROGRESS",
-	"CI_RUNNING",
-	"CI_FINISHED",
-	"GITHUB_SUCCESS",
-	"GITHUB_FAILURE",
-	"WPTFYI_RECEIVED",
-	"WPTFYI_PROCESSING",
-	"VALID",
-	"INVALID",
+// Constant enums for PendingTestRunStage
+const (
+	StageGitHubQueued     PendingTestRunStage = 100
+	StageGitHubInProgress PendingTestRunStage = 200
+	StageCIRunning        PendingTestRunStage = 300
+	StageCIFinished       PendingTestRunStage = 400
+	StageGitHubSuccess    PendingTestRunStage = 500
+	StageGitHubFailure    PendingTestRunStage = 550
+	StageWptFyiReceived   PendingTestRunStage = 600
+	StageWptFyiProcessing PendingTestRunStage = 700
+	StageValid            PendingTestRunStage = 800
+	StageInvalid          PendingTestRunStage = 850
+)
+
+func (s PendingTestRunStage) String() string {
+	switch s {
+	case StageGitHubQueued:
+		return "GITHUB_QUEUED"
+	case StageGitHubInProgress:
+		return "GITHUB_IN_PROGRESS"
+	case StageCIRunning:
+		return "CI_RUNNING"
+	case StageCIFinished:
+		return "CI_FINISHED"
+	case StageGitHubSuccess:
+		return "GITHUB_SUCCESS"
+	case StageGitHubFailure:
+		return "GITHUB_FAILURE"
+	case StageWptFyiReceived:
+		return "WPTFYI_RECEIVED"
+	case StageWptFyiProcessing:
+		return "WPTFYI_PROCESSING"
+	case StageValid:
+		return "VALID"
+	case StageInvalid:
+		return "INVALID"
+	}
+	return ""
 }
 
-func (s PendingTestRunStage) toInt() int {
-	for i, stage := range PendingTestRunLifeCycle {
-		if stage == s {
-			return i
-		}
-	}
-	return -1
+// MarshalJSON is the custom marshaler for PendingTestRunStage.
+func (s PendingTestRunStage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
 }
 
 // PendingTestRun represents a TestRun that has started, but is not yet
@@ -182,10 +204,8 @@ type PendingTestRun struct {
 // Transition sets Stage to next if the transition is allowed; otherwise an
 // error is returned.
 func (s *PendingTestRun) Transition(next PendingTestRunStage) error {
-	i := s.Stage.toInt()
-	j := next.toInt()
-	if j < 0 || j <= i {
-		return fmt.Errorf("cannot transition from %s to %s", s.Stage, next)
+	if next == 0 || s.Stage > next {
+		return fmt.Errorf("cannot transition from %s to %s", s.Stage.String(), next.String())
 	}
 	s.Stage = next
 	return nil

@@ -64,7 +64,7 @@ func TestHandleResultsCreate(t *testing.T) {
 	testKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 12345}
 	pendingRun := shared.PendingTestRun{
 		ID:               12345,
-		Stage:            "VALID",
+		Stage:            shared.StageValid,
 		FullRevisionHash: sha,
 	}
 
@@ -113,7 +113,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	testKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 1}
 	pendingRun := shared.PendingTestRun{
 		ID:               1,
-		Stage:            "VALID",
+		Stage:            shared.StageValid,
 		FullRevisionHash: sha,
 	}
 

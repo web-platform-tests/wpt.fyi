@@ -86,7 +86,7 @@ func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {
 	key := a.store.NewIDKey("PendingTestRun", newRun.ID)
 	return a.store.Update(key, &buffer, func(obj interface{}) error {
 		run := obj.(*shared.PendingTestRun)
-		if newRun.Stage != "" {
+		if newRun.Stage != 0 {
 			if err := run.Transition(newRun.Stage); err != nil {
 				return err
 			}
@@ -153,7 +153,7 @@ func (a apiImpl) ScheduleResultsTask(
 
 	pendingRun := shared.PendingTestRun{
 		ID:               key.IntID(),
-		Stage:            "WPTFYI_RECEIVED",
+		Stage:            shared.StageWptFyiReceived,
 		Uploader:         uploader,
 		FullRevisionHash: extraParams["revision"],
 	}

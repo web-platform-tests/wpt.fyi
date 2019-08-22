@@ -114,7 +114,7 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 	datastore.Get(ctx, datastore.NewKey(ctx, "PendingTestRun", "", int64(id), nil), &pendingRun)
 	assert.Equal(t, "blade-runner", pendingRun.Uploader)
-	assert.Equal(t, "WPTFYI_RECEIVED", string(pendingRun.Stage))
+	assert.Equal(t, shared.StageWptFyiReceived, pendingRun.Stage)
 }
 
 func TestAddTestRun(t *testing.T) {
@@ -151,7 +151,7 @@ func TestUpdatePendingTestRun(t *testing.T) {
 	run := shared.PendingTestRun{
 		ID:         1,
 		CheckRunID: 100,
-		Stage:      "WPTFYI_RECEIVED",
+		Stage:      shared.StageWptFyiReceived,
 	}
 	assert.Nil(t, a.UpdatePendingTestRun(run))
 	var run2 shared.PendingTestRun
@@ -159,16 +159,16 @@ func TestUpdatePendingTestRun(t *testing.T) {
 
 	// CheckRunID should not be updated; Stage should be transitioned.
 	run.CheckRunID = 0
-	run.Stage = "VALID"
+	run.Stage = shared.StageValid
 	assert.Nil(t, a.UpdatePendingTestRun(run))
 	var run3 shared.PendingTestRun
 	datastore.Get(ctx, key, &run3)
 
 	assert.Equal(t, int64(100), run3.CheckRunID)
-	assert.Equal(t, "VALID", string(run3.Stage))
+	assert.Equal(t, shared.StageValid, run3.Stage)
 	assert.Equal(t, run2.Created, run3.Created)
 
-	run.Stage = "WPTFYI_PROCESSING"
+	run.Stage = shared.StageWptFyiProcessing
 	assert.EqualError(t, a.UpdatePendingTestRun(run),
 		"cannot transition from VALID to WPTFYI_PROCESSING")
 }
