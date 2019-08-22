@@ -15,4 +15,7 @@ func RegisterRoutes() {
 	// PRIVATE API endpoint for creating a test run in Datastore.
 	// This API is authenticated. Only this AppEngine project has the credential.
 	shared.AddRoute("/api/results/create", "api-results-create", apiResultsCreateHandler)
+
+	// PRIVATE API endpoitn for updating the status of a pending test run
+	shared.AddRoute("/api/status/update", "api-pending-test-run-update", apiPendingTestRunUpdateHandler)
 }
