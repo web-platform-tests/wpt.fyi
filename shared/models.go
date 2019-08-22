@@ -325,6 +325,13 @@ type Manifest struct {
 	Version *int          `json:"version,omitempty"`
 }
 
+// EmailSubscription represents a subscription to receive emails for changes
+// in the TestRun results, such as regressions.
+type EmailSubscription struct {
+	Email string
+	Paths []string
+}
+
 // FilterByPath filters all the manifest items by path.
 func (m Manifest) FilterByPath(paths ...string) (result Manifest, err error) {
 	result = m

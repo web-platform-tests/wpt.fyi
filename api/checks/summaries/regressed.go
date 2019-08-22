@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
-	"github.com/web-platform-tests/wpt.fyi/api/checks/notifications"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/mail"
 )
@@ -71,7 +70,7 @@ func (r Regressed) GetActions() []*github.CheckRunAction {
 
 // GetNotifications loads the subscribers.yml file, and notifies
 // subscribers of the regressions.
-func (r Regressed) GetNotifications(subscriptions []notifications.Subscription) ([]*mail.Message, error) {
+func (r Regressed) GetNotifications(subscriptions []shared.EmailSubscription) ([]*mail.Message, error) {
 	notifications := []*mail.Message{}
 	for _, s := range subscriptions {
 		filtered := make(BeforeAndAfter)

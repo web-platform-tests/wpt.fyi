@@ -6,7 +6,7 @@ package summaries
 
 import (
 	"github.com/google/go-github/github"
-	"github.com/web-platform-tests/wpt.fyi/api/checks/notifications"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/mail"
 )
 
@@ -35,6 +35,6 @@ func (p Pending) GetActions() []*github.CheckRunAction {
 }
 
 // GetNotifications returns nil; we don't notify of progress.
-func (p Pending) GetNotifications(s []notifications.Subscription) ([]*mail.Message, error) {
+func (p Pending) GetNotifications(s []shared.EmailSubscription) ([]*mail.Message, error) {
 	return nil, nil
 }

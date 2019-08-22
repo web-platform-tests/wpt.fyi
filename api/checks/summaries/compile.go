@@ -51,7 +51,7 @@ type Summary interface {
 	// GetSummary compiles the summary markdown template.
 	GetSummary() (string, error)
 
-	GetNotifications() ([]*mail.Message, error)
+	GetNotifications([]shared.EmailSubscription) ([]*mail.Message, error)
 }
 
 // CheckState represents all the status fields for updating a check.
