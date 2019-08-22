@@ -94,7 +94,7 @@ func TestGetSummary_Pending(t *testing.T) {
 	assert.Contains(t, s, foo.FileIssueURL().String())
 }
 
-func TestGetSummary_Regressed(t *testing.T) {
+func TestRegressed(t *testing.T) {
 	master := shared.TestRun{}
 	master.BrowserName = "chrome"
 	master.Revision = "abcdef0123"
@@ -153,6 +153,17 @@ func TestGetSummary_Regressed(t *testing.T) {
 	}
 	assert.Contains(t, s, "https://foo.com/runs/?pr=123")
 	assert.Contains(t, s, "https://foo.com/results/?pr=123")
+
+	subs := []shared.EmailSubscription{
+		{
+			Email: "test@test.com",
+			Paths: []string{"/"},
+		},
+	}
+	notifications, err := foo.GetNotifications(subs)
+	assert.Nil(t, err)
+	assert.Contains(t, notifications[0].Body, "abcdef0 to 0123456")
+	assert.Contains(t, notifications[0].Body, "+ 1 more.")
 }
 
 func printOutput(s string) {

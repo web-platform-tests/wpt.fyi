@@ -5,6 +5,7 @@
 package summaries
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -84,15 +85,15 @@ func (r Regressed) GetNotifications(subscriptions []shared.EmailSubscription) ([
 		if len(filtered) < 1 {
 			continue
 		}
-		body, err := compile(&r, "regressions.txt")
-		if err != nil {
+		var body bytes.Buffer
+		if err := emailTemplates.ExecuteTemplate(&body, "regressed.txt", &r); err != nil {
 			return nil, err
 		}
 		msg := &mail.Message{
 			Sender:  "wpt.fyi <notify@wpt.fyi>",
 			To:      []string{s.Email},
 			Subject: "Regressions in wpt@" + r.HeadRun.FullRevisionHash[:7],
-			Body:    body,
+			Body:    body.String(),
 		}
 		notifications = append(notifications, msg)
 	}

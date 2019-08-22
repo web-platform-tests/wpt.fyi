@@ -20,18 +20,24 @@ import (
 	"google.golang.org/appengine/mail"
 )
 
-var templates *template.Template
+var mdTemplates *template.Template
+var emailTemplates *template.Template
 
 func init() {
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filename)
-	templates = template.Must(
+	mdTemplates = template.Must(
 		template.
 			New("all.md").
 			Funcs(template.FuncMap{
 				"escapeMD": escapeMD,
 			}).
 			ParseGlob(dir + "/*.md"),
+	)
+	emailTemplates = template.Must(
+		template.
+			New("all.txt").
+			ParseGlob(dir + "/*.txt"),
 	)
 }
 
@@ -106,7 +112,7 @@ func (c CheckState) FileIssueURL() *url.URL {
 
 func compile(i interface{}, t string) (string, error) {
 	var dest bytes.Buffer
-	if err := templates.ExecuteTemplate(&dest, t, i); err != nil {
+	if err := mdTemplates.ExecuteTemplate(&dest, t, i); err != nil {
 		return "", err
 	}
 	return dest.String(), nil
