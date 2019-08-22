@@ -1,0 +1,11 @@
+Looks like there are some newly-failing results when we compared the previous master run,
+{{ printf "%.7s" .BaseRun.FullRevisionHash }} to {{ printf "%.7s" .HeadRun.FullRevisionHash }}.
+
+{{ range $test, $results := .Regressions -}}
+{{ $test }}
+{{end}}
+{{ if gt .More 0 -}}
++ {{ .More }} others.
+{{ end }}
+
+See {{ .DiffURL }} for more info.
