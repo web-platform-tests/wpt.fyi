@@ -139,25 +139,76 @@ func (r TestRun) Channel() string {
 	return ""
 }
 
-// TestRunStatus is an enum for PendingTestRun statuses.
-type TestRunStatus int64
+// PendingTestRunStage represents the stage of a test run in its life cycle.
+type PendingTestRunStage int
 
-// TestRunStatusCreated represents a PendingTestRun that was created, but hasn't started.
-const TestRunStatusCreated = TestRunStatus(0)
+// Constant enums for PendingTestRunStage
+const (
+	StageGitHubQueued     PendingTestRunStage = 100
+	StageGitHubInProgress PendingTestRunStage = 200
+	StageCIRunning        PendingTestRunStage = 300
+	StageCIFinished       PendingTestRunStage = 400
+	StageGitHubSuccess    PendingTestRunStage = 500
+	StageGitHubFailure    PendingTestRunStage = 550
+	StageWptFyiReceived   PendingTestRunStage = 600
+	StageWptFyiProcessing PendingTestRunStage = 700
+	StageValid            PendingTestRunStage = 800
+	StageInvalid          PendingTestRunStage = 850
+)
 
-// TestRunStatusRunning represents a PendingTestRun that has been announced as in-flight.
-const TestRunStatusRunning = TestRunStatus(1)
+func (s PendingTestRunStage) String() string {
+	switch s {
+	case StageGitHubQueued:
+		return "GITHUB_QUEUED"
+	case StageGitHubInProgress:
+		return "GITHUB_IN_PROGRESS"
+	case StageCIRunning:
+		return "CI_RUNNING"
+	case StageCIFinished:
+		return "CI_FINISHED"
+	case StageGitHubSuccess:
+		return "GITHUB_SUCCESS"
+	case StageGitHubFailure:
+		return "GITHUB_FAILURE"
+	case StageWptFyiReceived:
+		return "WPTFYI_RECEIVED"
+	case StageWptFyiProcessing:
+		return "WPTFYI_PROCESSING"
+	case StageValid:
+		return "VALID"
+	case StageInvalid:
+		return "INVALID"
+	}
+	return ""
+}
 
-// TestRunStatusProcessing represents a PendingTestRun that has completed the run,
-// and the results are being processed.
-const TestRunStatusProcessing = TestRunStatus(2)
+// MarshalJSON is the custom marshaler for PendingTestRunStage.
+func (s PendingTestRunStage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
 
 // PendingTestRun represents a TestRun that has started, but is not yet
 // completed.
 type PendingTestRun struct {
-	TestRun
+	ID               int64               `json:"id" datastore:"-"`
+	CheckRunID       int64               `json:"check_run_id"`
+	FullRevisionHash string              `json:"full_revision_hash"`
+	Uploader         string              `json:"uploader"`
+	Error            string              `json:"error"`
+	Stage            PendingTestRunStage `json:"stage"`
 
-	Status TestRunStatus `json:"status"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
+}
+
+// Transition sets Stage to next if the transition is allowed; otherwise an
+// error is returned.
+func (s *PendingTestRun) Transition(next PendingTestRunStage) error {
+	if next == 0 || s.Stage > next {
+		return fmt.Errorf("cannot transition from %s to %s", s.Stage.String(), next.String())
+	}
+	s.Stage = next
+	return nil
 }
 
 // CheckSuite entities represent a GitHub check request that has been noted by
