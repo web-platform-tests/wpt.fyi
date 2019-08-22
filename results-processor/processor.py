@@ -11,6 +11,7 @@ import tempfile
 import time
 import traceback
 import zipfile
+from urllib.parse import urlparse
 
 import requests
 from google.cloud import datastore
@@ -242,6 +243,26 @@ class Processor(object):
             callback_url)
         assert self.test_run_id
 
+    def update_status(self, run_id, stage, error=None, callback_url=None):
+        assert stage, "stage cannot be empty"
+        if int(run_id) == 0:
+            _log.error('Cannot update run status: missing run_id')
+            return
+        if callback_url is None:
+            callback_url = config.project_baseurl()
+        parsed_url = urlparse(callback_url)
+        api = '%s://%s/api/status/update' % (parsed_url.scheme,
+                                             parsed_url.netloc)
+        payload = {'id': int(run_id), 'stage': stage}
+        if error:
+            payload['error'] = error
+        try:
+            response = requests.post(api, auth=self.auth, json=payload)
+            response.raise_for_status()
+            _log.debug('Updated run %s to %s', run_id, stage)
+        except requests.RequestException as e:
+            _log.error('Cannot update status for run %s: %s', run_id, str(e))
+
     def run_hooks(self, tasks):
         """Runs post-new-run tasks.
 
@@ -283,6 +304,7 @@ def process_report(task_id, params):
 
     response = []
     with Processor() as p:
+        p.update_status(run_id, 'WPTFYI_PROCESSING', callback_url)
         if azure_url:
             _log.info("Downloading Azure results: %s", azure_url)
         else:
@@ -308,6 +330,7 @@ def process_report(task_id, params):
             e.path = results
             # This will register an error in Stackdriver.
             traceback.print_exception(etype, e, tb)
+            p.update_status(run_id, 'INVALID', str(e), callback_url)
             # The input is invalid and there is no point to retry, so we return
             # an empty (but successful) response to drop the task.
             return ''
