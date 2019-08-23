@@ -373,7 +373,7 @@ func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
 	}
 	var subtest string
 	if err := json.Unmarshal(*subtestMsg, &subtest); err != nil {
-		return errors.New(`Subtest name subtest property "subtest" is not a string`)
+		return errors.New(`Subtest name property "subtest" is not a string`)
 	}
 
 	tnp.Subtest = subtest
