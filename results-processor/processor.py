@@ -251,13 +251,14 @@ class Processor(object):
         if callback_url is None:
             callback_url = config.project_baseurl()
         parsed_url = urlparse(callback_url)
-        api = '%s://%s/api/status/update' % (parsed_url.scheme,
-                                             parsed_url.netloc)
+        api = '%s://%s/api/status/%s' % (parsed_url.scheme,
+                                         parsed_url.netloc,
+                                         run_id)
         payload = {'id': int(run_id), 'stage': stage}
         if error:
             payload['error'] = error
         try:
-            response = requests.post(api, auth=self.auth, json=payload)
+            response = requests.patch(api, auth=self.auth, json=payload)
             response.raise_for_status()
             _log.debug('Updated run %s to %s', run_id, stage)
         except requests.RequestException as e:

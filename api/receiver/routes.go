@@ -17,5 +17,5 @@ func RegisterRoutes() {
 	shared.AddRoute("/api/results/create", "api-results-create", apiResultsCreateHandler)
 
 	// PRIVATE API endpoint for updating the status of a pending test run
-	shared.AddRoute("/api/status/update", "api-pending-test-run-update", apiPendingTestRunUpdateHandler)
+	shared.AddRoute("/api/status/{id}", "api-pending-test-run-update", apiPendingTestRunUpdateHandler)
 }
