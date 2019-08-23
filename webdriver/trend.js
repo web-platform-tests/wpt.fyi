@@ -12,6 +12,7 @@ const browserFlag = flags.defineString('products', 'chrome,firefox,safari', 'Bro
 const mode = flags.defineString('mode', 'failures', 'Analysis type. "failures", "passes", or "flakes"');
 const date = flags.defineString('date', '2019-08-01', 'First date to scrape');
 const weeks = flags.defineInteger('weeks', 52, 'Number of weeks to scrape');
+const step = flags.defineInteger('step', 1, 'Number of weeks to step');
 const backward = flags.defineBoolean('backward', true, 'Whether to move backward in time for each week');
 flags.parse();
 
@@ -34,12 +35,16 @@ async function main() {
       const app = await page.$('wpt-app');
       const results = await page.waitFor(
         app => app && app.shadowRoot && app.shadowRoot.querySelector(`wpt-results`),
-        { timeout: mode.get() === 'flakes' ? 50000 : 30000 },
+        {},
         app
       );
 
-      log('Waiting for searchcache...');
-      await page.waitFor(results => !results.isLoading, {}, results);
+      log('Waiting for searchcache results...');
+      await page.waitFor(
+        results => !results.isLoading,
+        { timeout: mode.get() === 'flakes' ? 50000 : 30000 },
+        results);
+
       log('Extracting summary...');
       const runs = await page.evaluate(results => results.testRuns, results);
       const msg = await page.evaluate(app => app.resultsTotalsRangeMessage, app);
@@ -59,7 +64,7 @@ async function main() {
     for (var i = 1; i < weeks.get(); i++) {
       const next = new Date(dates[dates.length-1]);
       const multiplier = backward.get() ? -1 : 1;
-      next.setDate(next.getDate() + 7 * multiplier);
+      next.setDate(next.getDate() + (7 * multiplier * step.get()));
       dates.push(next);
     }
 
