@@ -126,3 +126,10 @@ indexes:
   - name: Labels
   - name: LastUsed
     direction: desc
+
+- kind: PendingTestRun
+  properties:
+  - name: Stage
+    direction: desc
+  - name: Updated
+    direction: desc
