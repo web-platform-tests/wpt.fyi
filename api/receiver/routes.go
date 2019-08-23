@@ -16,6 +16,6 @@ func RegisterRoutes() {
 	// This API is authenticated. Only this AppEngine project has the credential.
 	shared.AddRoute("/api/results/create", "api-results-create", apiResultsCreateHandler)
 
-	// PRIVATE API endpoitn for updating the status of a pending test run
+	// PRIVATE API endpoint for updating the status of a pending test run
 	shared.AddRoute("/api/status/update", "api-pending-test-run-update", apiPendingTestRunUpdateHandler)
 }
