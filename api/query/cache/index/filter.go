@@ -132,7 +132,10 @@ func (tnp SubtestNamePattern) Filter(t TestID) bool {
 	if err != nil || subtest == nil {
 		return false
 	}
-	return strings.Contains(*subtest, tnp.q.Subtest)
+	return strings.Contains(
+		strings.ToLower(*subtest),
+		strings.ToLower(tnp.q.Subtest),
+	)
 }
 
 // Filter interprets a TestPath as a filter function over TestIDs.
