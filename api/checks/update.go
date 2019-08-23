@@ -379,6 +379,6 @@ func collapsePaths(keys []string, limit int) mapset.Set {
 
 func getSubscriptions(store shared.Datastore) []shared.EmailSubscription {
 	var subs []shared.EmailSubscription
-	store.GetAll(store.NewQuery("Subscription"), &subs)
+	store.GetAll(store.NewQuery("EmailSubscription"), &subs)
 	return subs
 }
