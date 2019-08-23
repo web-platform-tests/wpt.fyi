@@ -94,7 +94,7 @@ type Not struct {
 // substring match per test.
 func (TestNamePattern) Size() int { return 1 }
 
-// Size of TestNamePattern has a size of 1: servicing such a query requires a
+// Size of SubtestNamePattern has a size of 1: servicing such a query requires a
 // substring match per subtest.
 func (SubtestNamePattern) Size() int { return averageNumberOfSubtests }
 
