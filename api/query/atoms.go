@@ -360,7 +360,7 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON for SubtestNamePattern attempts to interpret a query atom as
-// {"pattern":<test name pattern string>}.
+// {"subtest":<subtest name pattern string>}.
 func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
 	err := json.Unmarshal(b, &data)
