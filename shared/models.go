@@ -211,6 +211,13 @@ func (s *PendingTestRun) Transition(next PendingTestRunStage) error {
 	return nil
 }
 
+// PendingTestRunByUpdated sorts the pending test runs by updated (asc)
+type PendingTestRunByUpdated []PendingTestRun
+
+func (a PendingTestRunByUpdated) Len() int           { return len(a) }
+func (a PendingTestRunByUpdated) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a PendingTestRunByUpdated) Less(i, j int) bool { return a[i].Updated.Before(a[j].Updated) }
+
 // CheckSuite entities represent a GitHub check request that has been noted by
 // wpt.fyi, and will cause creation of a completed check_run when results arrive
 // for the PR.

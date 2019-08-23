@@ -59,9 +59,10 @@ func RegisterRoutes() {
 			shared.WrapPermissiveCORS(apiTestRunHandler)))
 
 	// API endpoint for listing pending test runs
-	shared.AddRoute("/api/status", "api-pending-test-runs",
-		shared.WrapApplicationJSON(
-			shared.WrapPermissiveCORS(apiPendingTestRunsHandler)))
+	pendingTestRuns := shared.WrapApplicationJSON(
+		shared.WrapPermissiveCORS(apiPendingTestRunsHandler))
+	shared.AddRoute("/api/status", "api-pending-test-runs", pendingTestRuns)
+	shared.AddRoute("/api/status/{filter:pending}", "api-pending-test-runs", pendingTestRuns)
 
 	// API endpoint for redirecting to a run's summary JSON blob.
 	shared.AddRoute("/api/results", "api-results", shared.WrapPermissiveCORS(apiResultsRedirectHandler))
