@@ -8,8 +8,8 @@ const log = require('debug')('wpt.fyi');
 const puppeteer = require('puppeteer');
 
 const flags = require('flags');
-const browserFlag = flags.defineString('products', 'chrome,firefox,safari', 'Browsers to compare');
-const passes = flags.defineBoolean('passes', false, 'Count browser-specific passes, not failures');
+const browserFlag = flags.defineString('products', 'chrome,firefox,safari', 'Browsers to compare/analyze');
+const mode = flags.defineString('mode', 'failures', 'Analysis type. "failures", "passes", or "flakes"');
 const date = flags.defineString('date', '2019-08-01', 'First date to scrape');
 const weeks = flags.defineInteger('weeks', 52, 'Number of weeks to scrape');
 const backward = flags.defineBoolean('backward', true, 'Whether to move backward in time for each week');
@@ -34,7 +34,7 @@ async function main() {
       const app = await page.$('wpt-app');
       const results = await page.waitFor(
         app => app && app.shadowRoot && app.shadowRoot.querySelector(`wpt-results`),
-        {},
+        { timeout: mode.get() === 'flakes' ? 50000 : 30000 },
         app
       );
 
@@ -68,29 +68,44 @@ async function main() {
       const dateParam = new Date(date).toISOString().split('T')[0];
       const url = new URL(`https://wpt.fyi/`);
       url.searchParams.set('labels', 'master,stable');
-      url.searchParams.set('products', browsers.join(','));
-      url.searchParams.set('aligned', true);
       url.searchParams.set('to', dateParam);
-      const allResults = await scrape(url);
+
+      const allUrl = new URL(url);
+      allUrl.searchParams.set('products', browsers.join(','));
+      allUrl.searchParams.set('aligned', true);
+      const allResults = await scrape(allUrl);
       const totalTests = allResults.tests;
       const totalSubtests = allResults.subtests;
 
       for (const browser of browsers) {
-        const anomaliesURL = new URL(url);
-        let q;
-        if (passes.get()) {
-          q = `(${browser}:pass|${browser}:ok)`;
-          for (const other of browsers.filter(b => b != browser)) {
-            q += ` (${other}:!pass&${other}:!ok)`;
+        const nextUrl = new URL(url);
+
+        if (['failures', 'passes'].includes(mode.get())) {
+          url.searchParams.set('products', browsers.join(','));
+          url.searchParams.set('aligned', true);
+
+          let q;
+          if (mode.get() === 'passes') {
+            q = `(${browser}:pass|${browser}:ok)`;
+            for (const other of browsers.filter(b => b != browser)) {
+              q += ` (${other}:!pass&${other}:!ok)`;
+            }
+          } else {
+            q = `(${browser}:!pass&${browser}:!ok)`;
+            for (const other of browsers.filter(b => b != browser)) {
+              q += ` (${other}:pass|${other}:ok)`;
+            }
           }
+          nextUrl.searchParams.set('q', q);
         } else {
-          q = `(${browser}:!pass&${browser}:!ok)`;
-          for (const other of browsers.filter(b => b != browser)) {
-            q += ` (${other}:pass|${other}:ok)`;
-          }
+          nextUrl.searchParams.set('products', browser);
+          nextUrl.searchParams.set('max-count', 10);
+          nextUrl.searchParams.set(
+            'q',
+            'seq((status:PASS|status:OK) (status:!PASS&status:!OK&status:!unknown)) seq((status:!PASS&status:!OK&status:!unknown) (status:PASS|status:OK))');
         }
-        anomaliesURL.searchParams.set('q', q);
-        const {sha, tests, subtests} = await scrape(anomaliesURL);
+
+        const {sha, tests, subtests} = await scrape(nextUrl);
 
         console.log([
           date.toISOString().split('T')[0],
