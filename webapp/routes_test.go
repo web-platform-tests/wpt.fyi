@@ -73,8 +73,10 @@ func TestApiRunBound(t *testing.T) {
 	assertHandlerIs(t, "/api/runs/123", "api-test-run")
 }
 
-func TestApiStautsBound(t *testing.T) {
+func TestApiStatusBound(t *testing.T) {
 	assertHandlerIs(t, "/api/status", "api-pending-test-runs")
+	assertHandlerIs(t, "/api/status/pending", "api-pending-test-runs")
+	assertHandlerIsDefault(t, "/api/status/notavalidfilter")
 }
 
 func TestApiResultsBoundCORS(t *testing.T) {
@@ -172,4 +174,8 @@ func assertNoCORS(t *testing.T, path string) {
 	handler.ServeHTTP(rr, req)
 	res := rr.Result()
 	assert.Equal(t, "", res.Header.Get("Access-Control-Allow-Origin"))
+}
+
+func assertHandlerIsDefault(t *testing.T, path string) {
+	assertHandlerIs(t, path, "results-legacy")
 }
