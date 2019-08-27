@@ -114,7 +114,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = ${statuses.map(s => 'caseInsensitive<"' + s + '">').join('\n      |')}
 
     nameFragment
-      = basicNameFragment                          -- basic
+      = basicNameFragment                       -- basic
       | quotemark complexNameFragment quotemark -- quoted
 
     basicNameFragment = basicNameFragmentChar+
@@ -196,18 +196,21 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   AndPart_fragment: evalSelf,
   Fragment: evalSelf,
   Fragment_not: evalNot,
+  browserName: (browser) => {
+    return browser.sourceString.toUpperCase();
+  },
   statusLiteral: (status) => {
-    return status.toLowerCase() === 'missing'
-        ? 'unknown'
-        : status;
+    return status.sourceString.toUpperCase() === 'MISSING'
+        ? 'UNKNOWN'
+        : status.sourceString.toUpperCase();
   },
   statusExp_eq: (l, colon, r) => {
-    return { status: r.sourceString.toUpperCase() };
+    return { status: r.eval() };
   },
   statusExp_product_eq: (l, colon, r) => {
     return {
       product: l.sourceString.toLowerCase(),
-      status: r.sourceString.toUpperCase(),
+      status: r.eval(),
     };
   },
   statusExp_neq: (l, colonBang, r) => {
