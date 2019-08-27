@@ -136,6 +136,18 @@ func TestStructuredQuery_pattern(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{"/2dcontext/"}}, rq)
 }
 
+func TestStructuredQuery_subtest(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"subtest": "Subtest name"
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: SubtestNamePattern{"Subtest name"}}, rq)
+}
+
 func TestStructuredQuery_path(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
