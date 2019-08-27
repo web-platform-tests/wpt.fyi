@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
@@ -24,9 +23,9 @@ func TestAPIPendingTestHandler(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/status", nil)
 	assert.Nil(t, err)
 
-	created := time.Now()
-	testRun := shared.PendingTestRun{}
-	testRun.Created = created
+	testRun := shared.PendingTestRun{
+		Stage: shared.StageWptFyiProcessing,
+	}
 
 	ctx := shared.NewAppEngineContext(r)
 	key := datastore.NewIncompleteKey(ctx, "PendingTestRun", nil)
@@ -42,8 +41,5 @@ func TestAPIPendingTestHandler(t *testing.T) {
 	json.Unmarshal(body, &results)
 	assert.Len(t, results, 1)
 	assert.Equal(t, results[0].ID, key.IntID())
-	assert.Equal(
-		t,
-		created.Truncate(time.Second).In(time.UTC),
-		results[0].Created.Truncate(time.Second).In(time.UTC))
+	assert.Equal(t, results[0].Stage, shared.StageWptFyiProcessing)
 }
