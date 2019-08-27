@@ -23,6 +23,7 @@ const statuses = [
   'skip',
   'assert',
   'unknown',
+  'missing', // UI calls unknown missing.
 ];
 
 const atoms = {
@@ -195,6 +196,11 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   AndPart_fragment: evalSelf,
   Fragment: evalSelf,
   Fragment_not: evalNot,
+  statusLiteral: (status) => {
+    return status.toLowerCase() === 'missing'
+        ? 'unknown'
+        : status;
+  },
   statusExp_eq: (l, colon, r) => {
     return { status: r.sourceString.toUpperCase() };
   },
