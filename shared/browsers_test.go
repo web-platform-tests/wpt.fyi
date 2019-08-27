@@ -18,6 +18,7 @@ func TestGetDefaultBrowserNames(t *testing.T) {
 	assert.True(t, sort.StringsAreSorted(names))
 	// Non default browser names:
 	for _, n := range names {
+		assert.NotEqual(t, "android_webview", n)
 		assert.NotEqual(t, "epiphany", n)
 		assert.NotEqual(t, "uc", n)
 	}
@@ -28,6 +29,7 @@ func TestIsBrowserName(t *testing.T) {
 	assert.True(t, IsBrowserName("edge"))
 	assert.True(t, IsBrowserName("firefox"))
 	assert.True(t, IsBrowserName("safari"))
+	assert.True(t, IsBrowserName("android_webview"))
 	assert.True(t, IsBrowserName("epiphany"))
 	assert.True(t, IsBrowserName("uc"))
 	assert.False(t, IsBrowserName("not-a-browser"))
