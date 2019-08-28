@@ -227,10 +227,10 @@ func (s *PendingTestRunStage) UnmarshalJSON(b []byte) error {
 // completed.
 type PendingTestRun struct {
 	ID               int64               `json:"id" datastore:"-"`
-	CheckRunID       int64               `json:"check_run_id"`
+	CheckRunID       int64               `json:"check_run_id" datastore:",omitempty"`
 	FullRevisionHash string              `json:"full_revision_hash"`
 	Uploader         string              `json:"uploader"`
-	Error            string              `json:"error"`
+	Error            string              `json:"error" datastore:",omitempty"`
 	Stage            PendingTestRunStage `json:"stage"`
 
 	Created time.Time `json:"created"`
