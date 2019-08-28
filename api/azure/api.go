@@ -58,7 +58,7 @@ type BuildTriggerInfo struct {
 
 // IsMasterBranch returns whether the source branch for the build is the master branch.
 func (a *Build) IsMasterBranch() bool {
-	return a != nil && a.TriggerInfo.SourceBranch == "master"
+	return a != nil && a.SourceBranch == "refs/heads/master"
 }
 
 // API is for Azure Pipelines related requests.
