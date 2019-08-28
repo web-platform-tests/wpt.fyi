@@ -182,9 +182,45 @@ func (s PendingTestRunStage) String() string {
 	return ""
 }
 
-// MarshalJSON is the custom marshaler for PendingTestRunStage.
+// MarshalJSON is the custom JSON marshaler for PendingTestRunStage.
 func (s PendingTestRunStage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
+}
+
+// UnmarshalJSON is the custom JSON unmarshaler for PendingTestRunStage.
+func (s *PendingTestRunStage) UnmarshalJSON(b []byte) error {
+	var str string
+	if err := json.Unmarshal(b, &str); err != nil {
+		return err
+	}
+	switch str {
+	case "GITHUB_QUEUED":
+		*s = StageGitHubQueued
+	case "GITHUB_IN_PROGRESS":
+		*s = StageGitHubInProgress
+	case "CI_RUNNING":
+		*s = StageCIRunning
+	case "CI_FINISHED":
+		*s = StageCIFinished
+	case "GITHUB_SUCCESS":
+		*s = StageGitHubSuccess
+	case "GITHUB_FAILURE":
+		*s = StageGitHubFailure
+	case "WPTFYI_RECEIVED":
+		*s = StageWptFyiReceived
+	case "WPTFYI_PROCESSING":
+		*s = StageWptFyiProcessing
+	case "VALID":
+		*s = StageValid
+	case "INVALID":
+		*s = StageInvalid
+	default:
+		return fmt.Errorf("unknown stage: %s", str)
+	}
+	if s.String() != str {
+		return fmt.Errorf("enum conversion error: %s != %s", s.String(), str)
+	}
+	return nil
 }
 
 // PendingTestRun represents a TestRun that has started, but is not yet

@@ -58,7 +58,13 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		json.Unmarshal(body, &results)
 		assert.Len(t, results, 2)
 		assert.Equal(t, results[0].ID, invalid.ID)
+<<<<<<< HEAD
 		assert.Equal(t, results[1].ID, running.ID)
+=======
+		assert.Equal(t, results[0].Stage, shared.StageInvalid)
+		assert.Equal(t, results[1].ID, running.ID)
+		assert.Equal(t, results[1].Stage, shared.StageWptFyiProcessing)
+>>>>>>> 41f21ae3ce8efd121459eab10fca2fd778035788
 	})
 
 	t.Run("/api/status/pending", func(t *testing.T) {
@@ -71,6 +77,10 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		var results []shared.PendingTestRun
 		json.Unmarshal(body, &results)
 		assert.Len(t, results, 1)
+<<<<<<< HEAD
 		//	assert.Equal(t, results[0].ID, running.ID)
+=======
+		assert.Equal(t, results[0].ID, running.ID)
+>>>>>>> 41f21ae3ce8efd121459eab10fca2fd778035788
 	})
 }

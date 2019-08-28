@@ -594,11 +594,7 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
     payload['raw_results_url'] = raw_results_url
     payload['labels'] = sorted(labels)
 
-    response = requests.post(
-        callback_url,
-        auth=auth,
-        data=json.dumps(payload)
-    )
+    response = requests.post(callback_url, auth=auth, json=payload)
     response.raise_for_status()
     response_data = response.json()
     return response_data['id']

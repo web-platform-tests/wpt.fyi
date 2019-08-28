@@ -58,6 +58,16 @@ func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
+// SubtestNamePattern is a query atom that matches subtest names to a pattern string.
+type SubtestNamePattern struct {
+	Subtest string
+}
+
+// BindToRuns for SubtestNamePattern is a no-op; it is independent of test runs.
+func (tnp SubtestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return tnp
+}
+
 // TestPath is a query atom that matches exact test path prefixes.
 // It is an inflexible equivalent of TestNamePattern.
 type TestPath struct {
@@ -342,10 +352,31 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	}
 	var pattern string
 	if err := json.Unmarshal(*patternMsg, &pattern); err != nil {
-		return errors.New(`Missing test name pattern property "pattern" is not a string`)
+		return errors.New(`test name pattern property "pattern" is not a string`)
 	}
 
 	tnp.Pattern = pattern
+	return nil
+}
+
+// UnmarshalJSON for SubtestNamePattern attempts to interpret a query atom as
+// {"subtest":<subtest name pattern string>}.
+func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	subtestMsg, ok := data["subtest"]
+	if !ok {
+		return errors.New(`Missing subtest name pattern property: "subtest"`)
+	}
+	var subtest string
+	if err := json.Unmarshal(*subtestMsg, &subtest); err != nil {
+		return errors.New(`Subtest name property "subtest" is not a string`)
+	}
+
+	tnp.Subtest = subtest
 	return nil
 }
 
@@ -630,6 +661,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err := json.Unmarshal(b, &tnp)
 	if err == nil {
 		return tnp, nil
+	}
+	var stnp SubtestNamePattern
+	err = json.Unmarshal(b, &stnp)
+	if err == nil {
+		return stnp, nil
 	}
 	var tp TestPath
 	err = json.Unmarshal(b, &tp)
