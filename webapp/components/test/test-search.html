@@ -65,6 +65,12 @@ suite('<test-search>', () => {
       assertQueryParse('chrome-64:fail', {exists: [{product: 'chrome-64', status: 'FAIL'}]});
     });
 
+    test('test status', () => {
+      assertQueryParse('status:missing', {exists: [{status: 'UNKNOWN'}]});
+      assertQueryParse('status:!missing', {exists: [{status: {not: 'UNKNOWN'}}]});
+      assertQueryParse('sTaTuS:UnKnOwN', {exists: [{status: 'UNKNOWN'}]});
+    });
+
     test('test status eq', () => {
       assertQueryParse('sTaTuS:oK', {exists: [{status: 'OK'}]});
     });
