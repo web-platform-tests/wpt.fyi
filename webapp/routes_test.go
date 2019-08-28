@@ -76,7 +76,6 @@ func TestApiRunBound(t *testing.T) {
 func TestApiStatusBound(t *testing.T) {
 	assertHandlerIs(t, "/api/status", "api-pending-test-runs")
 	assertHandlerIs(t, "/api/status/pending", "api-pending-test-runs")
-	assertHandlerIsDefault(t, "/api/status/notavalidfilter")
 }
 
 func TestApiResultsBoundCORS(t *testing.T) {
