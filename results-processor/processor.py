@@ -305,7 +305,7 @@ def process_report(task_id, params):
 
     response = []
     with Processor() as p:
-        p.update_status(run_id, 'WPTFYI_PROCESSING', callback_url)
+        p.update_status(run_id, 'WPTFYI_PROCESSING', None, callback_url)
         if azure_url:
             _log.info("Downloading Azure results: %s", azure_url)
         else:
@@ -314,6 +314,7 @@ def process_report(task_id, params):
         p.download(results, screenshots, azure_url)
         if len(p.results) == 0:
             _log.error("No results successfully downloaded")
+            p.update_status(run_id, 'EMPTY', None, callback_url)
             return ''
         try:
             p.load_report()
@@ -340,6 +341,7 @@ def process_report(task_id, params):
             _log.warning(
                 'Skipping the task because RawResultsURL already exists: %s',
                 p.raw_results_url)
+            p.update_status(run_id, 'DUPLICATE', None, callback_url)
             return ''
         response.append("{} results loaded from task {}".format(
             len(p.report.results), task_id))
@@ -357,6 +359,7 @@ def process_report(task_id, params):
             _log.warning(
                 'Skipping the task because RawResultsURL already exists: %s',
                 p.raw_results_url)
+            p.update_status(run_id, 'DUPLICATE', None, callback_url)
             return ''
 
         p.create_run(run_id, labels, uploader, callback_url)
