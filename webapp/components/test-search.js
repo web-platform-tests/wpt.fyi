@@ -214,12 +214,12 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     };
   },
   statusExp_neq: (l, colonBang, r) => {
-    return { status: {not: r.sourceString.toUpperCase() } };
+    return { status: {not: r.eval() } };
   },
   statusExp_product_neq: (l, colonBang, r) => {
     return {
       product: l.sourceString.toLowerCase(),
-      status: {not: r.sourceString.toUpperCase()},
+      status: {not: r.eval()},
     };
   },
   subtestExp: (l, colon, r) => {

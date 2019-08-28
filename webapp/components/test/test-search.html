@@ -67,6 +67,7 @@ suite('<test-search>', () => {
 
     test('test status', () => {
       assertQueryParse('status:missing', {exists: [{status: 'UNKNOWN'}]});
+      assertQueryParse('status:!missing', {exists: [{status: {not: 'UNKNOWN'}}]});
       assertQueryParse('sTaTuS:UnKnOwN', {exists: [{status: 'UNKNOWN'}]});
     });
 
