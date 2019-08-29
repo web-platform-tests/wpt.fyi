@@ -132,6 +132,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      structured-search="[[structuredSearch]]"
                      path="{{subroute.path}}"
                      test-runs="{{testRuns}}"
+                     test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"></wpt-results>
 
         <wpt-interop name="interop"
@@ -169,6 +170,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         computed: '_computePath(subroute.path)',
       },
+      testPaths: Set,
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
