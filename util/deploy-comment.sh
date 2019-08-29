@@ -20,35 +20,28 @@ if [[ -z "${TRAVIS_REPO_SLUG}" ]];
 then fatal "Travis Repo slug (user/repo) is required";
 else debug "Travis Repo slug: ${TRAVIS_REPO_SLUG}";
 fi
-if [[ -z "${TRAVIS_PULL_REQUEST}" ]];
-then fatal "Travis pull request is required";
-else debug "Travis pull request: ${TRAVIS_PULL_REQUEST}";
+if [[ -z "${TRAVIS_BRANCH}" ]];
+then fatal "Travis branch is required";
+else debug "Travis branch: ${TRAVIS_BRANCH}";
 fi
 
 set -e
 set -o pipefail
 
-info "Checking whether ${TRAVIS_REPO_SLUG} #${TRAVIS_PULL_REQUEST} mentions the deployed URL on GitHub..."
-# Only make a comment mentioning the deploy if no other comment has posted the URL yet.
-
-TEMP_CURL_FILE=$(mktemp)
-curl -s \
-     -H "Authorization: token ${GITHUB_TOKEN}" \
-     -X GET \
-     https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments \
-     | tee ${TEMP_CURL_FILE}
-if [ "${CURL_EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then fatal "Failed to fetch comments" ${CURL_EXIT_CODE}; fi
-
-if [[ -z "$(grep ${STAGING_URL} ${TEMP_CURL_FILE})" ]];
-then
-    info "Commenting URL to GitHub..."
-    POST_BODY='{"body": "Staging instance deployed by Travis CI!\nRunning at '"${STAGING_URL}"'"}'
-    debug "POST body: ${POST_BODY}"
-    curl -H "Authorization: token ${GITHUB_TOKEN}" \
-          -X "POST" \
-          -d "${POST_BODY}" \
-          -s \
-          "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments"
-else
-    info "Found existing comment mentioning link:\n${STAGING_URL}"
-fi
+info "Posting deployed enviroment to GitHub..."
+POST_URL="https://api.github.com/repos/${TRAVIS_REPO_SLUG}/deployments"
+debug "${POST_URL}"
+POST_BODY="{
+                \"ref\": \"${TRAVIS_BRANCH}\",
+                \"task\": \"deploy:${APP_PATH}\",
+                \"auto_merge\": false,
+                \"environment\": \"staging\",
+                \"transient_environment\": true
+            }"
+debug "POST body: ${POST_BODY}"
+curl -H "Authorization: token ${GITHUB_TOKEN}" \
+        -H "Accept: application/vnd.github.ant-man-preview+json" \
+        -X "POST" \
+        -d "${POST_BODY}" \
+        -s \
+        "${POST_URL}"
