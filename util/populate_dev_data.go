@@ -215,6 +215,9 @@ func main() {
 		copyProdRuns(ctx, filters)
 
 		log.Printf("Successfully copied a total of %v distinct TestRuns", seenTestRunIDs.Cardinality())
+
+		log.Print("Adding latest production PendingTestRun...")
+		copyProdPendingRuns(ctx, *numRemoteRuns)
 	}
 }
 
@@ -283,6 +286,18 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 	}
 }
 
+func copyProdPendingRuns(ctx context.Context, numRuns int) {
+	pendingRuns, err := FetchPendingRuns(*remoteHost)
+	if err != nil {
+		log.Fatalf("Failed to fetch pending runs: %s", err.Error())
+	}
+	var castRuns []interface{}
+	for i := range pendingRuns {
+		castRuns = append(castRuns, &pendingRuns[i])
+	}
+	addData(ctx, "PendingTestRun", castRuns)
+}
+
 func labelRuns(runs []shared.TestRun, labels ...string) {
 	for i := range runs {
 		for _, label := range labels {
@@ -335,4 +350,12 @@ func FetchInterop(wptdHost string, filter shared.TestRunFilter) (metrics.PassRat
 	var interop metrics.PassRateMetadata
 	err := shared.FetchJSON(url, &interop)
 	return interop, err
+}
+
+// FetchPendingRuns fetches recent PendingTestRuns.
+func FetchPendingRuns(wptdHost string) ([]shared.PendingTestRun, error) {
+	url := "https://" + wptdHost + "/api/status"
+	var pendingRuns []shared.PendingTestRun
+	err := shared.FetchJSON(url, &pendingRuns)
+	return pendingRuns, err
 }
