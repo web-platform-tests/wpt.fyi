@@ -347,6 +347,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       testPaths: {
         type: Set,
         computed: 'computeTestPaths(searchResults)',
+        notify: true,
       },
       displayedNodes: {
         type: Array,
