@@ -59,7 +59,7 @@ fi
 debug "Setting status to deployed"
 POST_BODY="{
                 \"state\": \"success\",
-                \"target_url\": \"${STAGING_URL}\",
+                \"environment_url\": \"${STAGING_URL}\",
                 \"auto_inactive\": true
             }"
 curl -H "Authorization: token ${GITHUB_TOKEN}" \
