@@ -33,15 +33,38 @@ POST_URL="https://api.github.com/repos/${TRAVIS_REPO_SLUG}/deployments"
 debug "${POST_URL}"
 POST_BODY="{
                 \"ref\": \"${TRAVIS_BRANCH}\",
-                \"task\": \"deploy:${APP_PATH}\",
+                \"task\": \"deploy\",
                 \"auto_merge\": false,
-                \"environment\": \"staging\",
+                \"environment\": \"${APP_PATH}\",
                 \"transient_environment\": true
             }"
 debug "POST body: ${POST_BODY}"
+
+debug "Copying output to ${TEMP_FILE:=$(mktemp)}"
 curl -H "Authorization: token ${GITHUB_TOKEN}" \
-        -H "Accept: application/vnd.github.ant-man-preview+json" \
-        -X "POST" \
-        -d "${POST_BODY}" \
-        -s \
-        "${POST_URL}"
+     -H "Accept: application/vnd.github.ant-man-preview+json" \
+     -X "POST" \
+     -d "${POST_BODY}" \
+     -s \
+     "${POST_URL}" \
+     | tee "${TEMP_FILE}"
+if [[ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]]; then exit ${EXIT_CODE}; fi
+
+DEPLOYMENT_ID=$(jq .id ${TEMP_FILE})
+if [[ "${EXIT_CODE}" == "0" ]]
+then
+    debug "Created deployment ${DEPLOYMENT_ID}"
+fi
+
+debug "Setting status to deployed"
+POST_BODY="{
+                \"state\": \"success\",
+                \"target_url\": \"${STAGING_URL}\",
+                \"auto_inactive\": true
+            }"
+curl -H "Authorization: token ${GITHUB_TOKEN}" \
+     -H "Accept: application/vnd.github.ant-man-preview+json" \
+     -X "POST" \
+     -d "${POST_BODY}" \
+     -s \
+     "${POST_URL}/${DEPLOYMENT_ID}/statuses"

@@ -240,7 +240,7 @@ gcloud_login: gcloud
 
 deployment_state: gcloud_login webapp_deps package_service var-APP_PATH
 
-deploy_staging: git
+deploy_staging: git apt-get-jq
 deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
 deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
