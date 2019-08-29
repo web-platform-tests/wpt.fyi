@@ -45,13 +45,13 @@ class WPTProcessor extends LoadingState(PolymerElement) {
         <tbody>
         <template is="dom-repeat" items="{{ testRuns }}" as="run">
           <tr>
-            <td>[[ run.ID ]]</td>
+            <td>[[ run.id ]]</td>
             <td>[[ shortSHA(run.full_revision_hash) ]]</td>
             <td class="timestamp">[[ timestamp(run.updated) ]]</td>
             <td class="time-ago">[[ timeAgo(run.updated) ]]</td>
             <td class="timestamp">[[ timestamp(run.created) ]]</td>
             <td class="time-ago">[[ timeAgo(run.created) ]]</td>
-            <td>[[ run.stage ]]</td>
+            <td title="[[run.error]]">[[ run.stage ]]</td>
             <td>[[ run.uploader ]]</td>
           </tr>
         </template>
