@@ -112,7 +112,7 @@ class MockProcessorTest(unittest.TestCase):
         })
         process_report('12345', params)
         mock.assert_has_calls([
-            call.update_status('654321', 'WPTFYI_PROCESSING',
+            call.update_status('654321', 'WPTFYI_PROCESSING', None,
                                'https://test.wpt.fyi/api'),
             call.download(['https://wpt.fyi/wpt_report.json.gz'], [], None),
         ])
@@ -140,12 +140,54 @@ class MockProcessorTest(unittest.TestCase):
         with patch('traceback.print_exception'):
             process_report('12345', params)
         mock.assert_has_calls([
-            call.update_status('654321', 'WPTFYI_PROCESSING', None),
+            call.update_status('654321', 'WPTFYI_PROCESSING', None, None),
             call.download(['https://wpt.fyi/wpt_report.json.gz'], [], None),
             call.load_report(),
             call.update_status(
                 '654321', 'INVALID',
                 "Invalid JSON (['https://wpt.fyi/wpt_report.json.gz'])", None),
+        ])
+        mock.create_run.assert_not_called()
+
+    @patch('processor.Processor')
+    def test_params_plumbing_empty(self, MockProcessor):
+        # Set up mock context manager to return self.
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.results = []
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+        })
+        with self.assertLogs():
+            process_report('12345', params)
+        mock.assert_has_calls([
+            call.update_status('654321', 'WPTFYI_PROCESSING', None, None),
+            call.download([], [], None),
+            call.update_status('654321', 'EMPTY', None, None),
+        ])
+        mock.create_run.assert_not_called()
+
+    @patch('processor.Processor')
+    def test_params_plumbing_duplicate(self, MockProcessor):
+        # Set up mock context manager to return self.
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.check_existing_run.return_value = True
+        mock.results = ['/tmp/wpt_report.json.gz']
+        mock.raw_results_url = 'https://wpt.fyi/test/report.json'
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'results': 'https://wpt.fyi/wpt_report.json.gz',
+        })
+        with self.assertLogs():
+            process_report('12345', params)
+        mock.update_status.assert_has_calls([
+            call('654321', 'WPTFYI_PROCESSING', None, None),
+            call('654321', 'DUPLICATE', None, None),
         ])
         mock.create_run.assert_not_called()
 
