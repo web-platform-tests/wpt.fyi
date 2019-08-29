@@ -291,6 +291,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   handleSearchAutocomplete(e) {
     this.shadowRoot.querySelector('test-search').clear();
     this.subroute.path = e.detail.path;
+    this.notifyPath('subroute.path');
   }
 
   handleAddMasterLabel(e) {
