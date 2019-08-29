@@ -166,10 +166,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         reflectToAttribute: true,
       },
-      path: {
-        type: String,
-        computed: '_computePath(subroute.path)',
-      },
+      path: String,
       testPaths: Set,
       structuredSearch: Object,
       interopLoading: Boolean,
@@ -189,7 +186,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   static get observers() {
     return [
       '_routeChanged(routeData, routeData.*)',
-      '_subrouteChanged(subrouteData, subrouteData.*)',
+      '_subrouteChanged(subroute, subroute.*)',
     ];
   }
 
@@ -246,8 +243,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     }
   }
 
-  _subrouteChanged(subrouteData) {
-    this.path = subrouteData.path || '/';
+  _subrouteChanged(subroute) {
+    this.path = subroute.path || '/';
   }
 
   get activeView() {
@@ -256,10 +253,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   _computeIsLoading(interopLoading, resultsLoading) {
     return interopLoading || resultsLoading;
-  }
-
-  _computePath(subroutePath) {
-    return subroutePath || '/';
   }
 
   handleKeyDown(e) {
@@ -290,8 +283,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleSearchAutocomplete(e) {
     this.shadowRoot.querySelector('test-search').clear();
-    this.subroute.path = e.detail.path;
-    this.notifyPath('subroute.path');
+    this.set('subroute.path', e.detail.path);
   }
 
   handleAddMasterLabel(e) {
