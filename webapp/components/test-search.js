@@ -311,7 +311,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
         type: Array,
         notify: true,
       },
-      testPaths: Array,
+      testPaths: Set,
       onKeyUp: Function,
       onChange: Function,
       onFocus: Function,
