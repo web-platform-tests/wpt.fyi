@@ -47,12 +47,16 @@ set -o pipefail
 info "Posting deployed environment to GitHub..."
 POST_URL="https://api.github.com/repos/${TRAVIS_REPO_SLUG}/deployments"
 debug "${POST_URL}"
+
+# By default, all commit statuses need to be "success" to deploy.
+# But travis itself will execute this script, so we don't block on anything.
 POST_BODY="{
                 \"ref\": \"${TRAVIS_BRANCH}\",
                 \"task\": \"deploy\",
                 \"auto_merge\": false,
                 \"environment\": \"${ENVIRONMENT}\",
-                \"transient_environment\": true
+                \"transient_environment\": true,
+                \"required_contexts\": []
             }"
 debug "POST body: ${POST_BODY}"
 
