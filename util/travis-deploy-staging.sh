@@ -61,5 +61,5 @@ DEPLOYED_URL=$(tr -d "\r" < ${TEMP_FILE} | sed -ne 's/^Deployed service.*to \[\(
 # Add a GitHub comment to the PR (if there is a PR).
 if [[ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]];
 then
-  ${UTIL_DIR}/deploy-comment.sh "${DEPLOYED_URL}";
+  ${UTIL_DIR}/deploy-comment.sh -e "${APP_PATH}" "${DEPLOYED_URL}";
 fi

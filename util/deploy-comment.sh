@@ -3,7 +3,23 @@
 # Helper script for posting a GitHub comment pointing to the deployed environment,
 # from Travis CI. Also see deploy.sh
 
-STAGING_URL="$1"
+usage() {
+  USAGE='Usage: deploy-comment.sh [-e environment-name] [deployed url]
+    -e : Environment name (e.g. webapp)
+    -h : Show (this) help information
+    deployed url: The URL of the deployed environment, e.g. "https://branch-name-dot-wptdashboard-staging.appspot.com"'
+  echo "${USAGE}"
+}
+
+STAGING_URL=${@: -1}
+ENVIRONMENT="staging"
+while getopts ':e:' flag; do
+  case "${flag}" in
+    e) ENVIRONMENT="${OPTARG}" ;;
+    :) echo "Option -$OPTARG requires an argument." && exit 1;;
+    h|*) usage && exit 1;;
+  esac
+done
 
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
@@ -28,14 +44,14 @@ fi
 set -e
 set -o pipefail
 
-info "Posting deployed enviroment to GitHub..."
+info "Posting deployed environment to GitHub..."
 POST_URL="https://api.github.com/repos/${TRAVIS_REPO_SLUG}/deployments"
 debug "${POST_URL}"
 POST_BODY="{
                 \"ref\": \"${TRAVIS_BRANCH}\",
                 \"task\": \"deploy\",
                 \"auto_merge\": false,
-                \"environment\": \"${APP_PATH}\",
+                \"environment\": \"${ENVIRONMENT}\",
                 \"transient_environment\": true
             }"
 debug "POST body: ${POST_BODY}"
