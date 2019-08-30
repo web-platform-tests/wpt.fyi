@@ -67,10 +67,12 @@ curl -H "Authorization: token ${GITHUB_TOKEN}" \
 if [[ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]]; then exit ${EXIT_CODE}; fi
 
 DEPLOYMENT_ID=$(jq .id ${TEMP_FILE})
-if [[ "${EXIT_CODE}" == "0" ]]
+if [[ "${DEPLOYMENT_ID}" == "null" ]]
 then
-    debug "Created deployment ${DEPLOYMENT_ID}"
+    fatal "Something went wrong creating the deployment"
 fi
+
+debug "Created deployment ${DEPLOYMENT_ID}"
 
 debug "Setting status to deployed"
 POST_BODY="{
