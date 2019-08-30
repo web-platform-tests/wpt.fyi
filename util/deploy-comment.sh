@@ -36,9 +36,9 @@ if [[ -z "${TRAVIS_REPO_SLUG}" ]];
 then fatal "Travis Repo slug (user/repo) is required";
 else debug "Travis Repo slug: ${TRAVIS_REPO_SLUG}";
 fi
-if [[ -z "${TRAVIS_BRANCH}" ]];
-then fatal "Travis branch is required";
-else debug "Travis branch: ${TRAVIS_BRANCH}";
+if [[ -z "${TRAVIS_PULL_REQUEST_BRANCH}" ]];
+then fatal "Travis pull request branch is required";
+else debug "Travis pull request branch: ${TRAVIS_PULL_REQUEST_BRANCH}";
 fi
 
 set -e
@@ -51,7 +51,7 @@ debug "${POST_URL}"
 # By default, all commit statuses need to be "success" to deploy.
 # But travis itself will execute this script, so we don't block on anything.
 POST_BODY="{
-                \"ref\": \"${TRAVIS_BRANCH}\",
+                \"ref\": \"${TRAVIS_PULL_REQUEST_BRANCH}\",
                 \"task\": \"deploy\",
                 \"auto_merge\": false,
                 \"environment\": \"${ENVIRONMENT}\",
