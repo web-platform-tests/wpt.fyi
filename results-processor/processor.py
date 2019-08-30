@@ -11,6 +11,7 @@ import tempfile
 import time
 import traceback
 import zipfile
+from urllib.parse import urlparse
 
 import requests
 from google.cloud import datastore
@@ -242,6 +243,27 @@ class Processor(object):
             callback_url)
         assert self.test_run_id
 
+    def update_status(self, run_id, stage, error=None, callback_url=None):
+        assert stage, "stage cannot be empty"
+        if int(run_id) == 0:
+            _log.error('Cannot update run status: missing run_id')
+            return
+        if callback_url is None:
+            callback_url = config.project_baseurl()
+        parsed_url = urlparse(callback_url)
+        api = '%s://%s/api/status/%s' % (parsed_url.scheme,
+                                         parsed_url.netloc,
+                                         run_id)
+        payload = {'id': int(run_id), 'stage': stage}
+        if error:
+            payload['error'] = error
+        try:
+            response = requests.patch(api, auth=self.auth, json=payload)
+            response.raise_for_status()
+            _log.debug('Updated run %s to %s', run_id, stage)
+        except requests.RequestException as e:
+            _log.error('Cannot update status for run %s: %s', run_id, str(e))
+
     def run_hooks(self, tasks):
         """Runs post-new-run tasks.
 
@@ -274,7 +296,7 @@ def process_report(task_id, params):
     uploader = params['uploader']
     # Optional fields:
     azure_url = params.get('azure_url')
-    run_id = params.get('run_id', '0')
+    run_id = params.get('id', '0')
     callback_url = params.get('callback_url')
     labels = params.get('labels', '')
     # Repeatable fields
@@ -283,10 +305,16 @@ def process_report(task_id, params):
 
     response = []
     with Processor() as p:
-        _log.info("Downloading results & screenshots")
+        p.update_status(run_id, 'WPTFYI_PROCESSING', None, callback_url)
+        if azure_url:
+            _log.info("Downloading Azure results: %s", azure_url)
+        else:
+            _log.info("Downloading %d results & %d screenshots",
+                      len(results), len(screenshots))
         p.download(results, screenshots, azure_url)
         if len(p.results) == 0:
             _log.error("No results successfully downloaded")
+            p.update_status(run_id, 'EMPTY', None, callback_url)
             return ''
         try:
             p.load_report()
@@ -301,9 +329,10 @@ def process_report(task_id, params):
             p.report.finalize()
         except wptreport.WPTReportError:
             etype, e, tb = sys.exc_info()
-            e.path = str(results)
+            e.path = results
             # This will register an error in Stackdriver.
             traceback.print_exception(etype, e, tb)
+            p.update_status(run_id, 'INVALID', str(e), callback_url)
             # The input is invalid and there is no point to retry, so we return
             # an empty (but successful) response to drop the task.
             return ''
@@ -312,6 +341,7 @@ def process_report(task_id, params):
             _log.warning(
                 'Skipping the task because RawResultsURL already exists: %s',
                 p.raw_results_url)
+            p.update_status(run_id, 'DUPLICATE', None, callback_url)
             return ''
         response.append("{} results loaded from task {}".format(
             len(p.report.results), task_id))
@@ -329,6 +359,7 @@ def process_report(task_id, params):
             _log.warning(
                 'Skipping the task because RawResultsURL already exists: %s',
                 p.raw_results_url)
+            p.update_status(run_id, 'DUPLICATE', None, callback_url)
             return ''
 
         p.create_run(run_id, labels, uploader, callback_url)

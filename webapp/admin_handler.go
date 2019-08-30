@@ -22,7 +22,12 @@ func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func showAdminUploadForm(a shared.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
-	assertAdminAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", nil)
+	data := struct {
+		CallbackURL string
+	}{
+		CallbackURL: fmt.Sprintf("https://%s/api/results/create", a.GetVersionedHostname()),
+	}
+	assertAdminAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", data)
 }
 
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {

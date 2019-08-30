@@ -92,7 +92,6 @@ func TestAutocompleteHandler(t *testing.T) {
 
 	sh := autocompleteHandler{queryHandler{
 		store:      mockStore,
-		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, shared.NewMemcacheReadWritable(ctx, 48*time.Hour), cache),
 	}}
 

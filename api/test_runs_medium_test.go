@@ -37,13 +37,13 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 			},
 			Revision: "abcdef0123",
 		},
-		CreatedAt: now.AddDate(0, 0, -1),
+		TimeStart: now.AddDate(0, 0, -1),
 	}
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
 
 	// 'Today', v66...181 (revision increased)
 	chrome.BrowserVersion = "66.0.3359.181 beta"
-	chrome.CreatedAt = now
+	chrome.TimeStart = now
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
 
 	// Also 'today', a v68 run.
@@ -104,7 +104,7 @@ func TestGetTestRuns_RunIDs(t *testing.T) {
 	run.BrowserVersion = "66.0.3359.139"
 	run.FullRevisionHash = strings.Repeat("abcdef0123", 4)
 	run.Revision = run.FullRevisionHash[:10]
-	run.CreatedAt = now.AddDate(0, 0, -1)
+	run.TimeStart = now.AddDate(0, 0, -1)
 	keys := make([]*datastore.Key, 2)
 
 	run.BrowserName = "chrome"
@@ -152,7 +152,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	run.BrowserVersion = "66.0.3359.139"
 	run.FullRevisionHash = strings.Repeat("abcdef0123", 4)
 	run.Revision = run.FullRevisionHash[:10]
-	run.CreatedAt = now.AddDate(0, 0, -1)
+	run.TimeStart = now.AddDate(0, 0, -1)
 
 	run.BrowserName = "chrome"
 	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
@@ -225,7 +225,7 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 	run := shared.TestRun{}
 	run.BrowserName = "chrome"
 	for _, d := range []int{-3, -2, -1} {
-		run.CreatedAt = now.AddDate(0, 0, d)
+		run.TimeStart = now.AddDate(0, 0, d)
 		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
 	}
 

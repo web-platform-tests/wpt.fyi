@@ -23,6 +23,7 @@ const statuses = [
   'skip',
   'assert',
   'unknown',
+  'missing', // UI calls unknown missing.
 ];
 
 const atoms = {
@@ -80,7 +81,9 @@ const QUERY_GRAMMAR = ohm.grammar(`
     Fragment
       = not Fragment -- not
       | containsExp
+      | linkExp
       | statusExp
+      | subtestExp
       | pathExp
       | patternExp
 
@@ -93,8 +96,14 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | productSpec ":" statusLiteral                -- product_eq
       | productSpec ":!" statusLiteral               -- product_neq
 
+    subtestExp
+      = caseInsensitive<"subtest"> ":" nameFragment
+
     pathExp
       = caseInsensitive<"path"> ":" nameFragment
+
+    linkExp
+      = caseInsensitive<"link"> ":" nameFragment
 
     patternExp = nameFragment
 
@@ -109,8 +118,12 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = ${statuses.map(s => 'caseInsensitive<"' + s + '">').join('\n      |')}
 
     nameFragment
-      = basicNameFragmentChar+                -- basic
-      | quotemark nameFragmentChar+ quotemark -- quoted
+      = basicNameFragment                       -- basic
+      | quotemark complexNameFragment quotemark -- quoted
+
+    basicNameFragment = basicNameFragmentChar+
+
+    complexNameFragment = nameFragmentChar+ (space+ nameFragmentChar+)*
 
     basicNameFragmentChar
       = letter
@@ -169,6 +182,10 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   CountSpecifier_count3: (_) => 3,
   CountSpecifier_count2: (_) => 2,
   CountSpecifier_count1: (_) => 1,
+  linkExp: (l, colon, r) => {
+    const ps = r.eval();
+    return ps.length === 0 ? emptyQuery : {link: ps };
+  },
   Exp: l => {
     const ps = l.eval();
     return ps.length === 1 ? ps[0] : {or: ps};
@@ -183,26 +200,37 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   AndPart_fragment: evalSelf,
   Fragment: evalSelf,
   Fragment_not: evalNot,
+  browserName: (browser) => {
+    return browser.sourceString.toUpperCase();
+  },
+  statusLiteral: (status) => {
+    return status.sourceString.toUpperCase() === 'MISSING'
+        ? 'UNKNOWN'
+        : status.sourceString.toUpperCase();
+  },
   statusExp_eq: (l, colon, r) => {
-    return { status: r.sourceString.toUpperCase() };
+    return { status: r.eval() };
   },
   statusExp_product_eq: (l, colon, r) => {
     return {
       product: l.sourceString.toLowerCase(),
-      status: r.sourceString.toUpperCase(),
+      status: r.eval(),
     };
   },
   statusExp_neq: (l, colonBang, r) => {
-    return { status: {not: r.sourceString.toUpperCase() } };
+    return { status: {not: r.eval() } };
   },
   statusExp_product_neq: (l, colonBang, r) => {
     return {
       product: l.sourceString.toLowerCase(),
-      status: {not: r.sourceString.toUpperCase()},
+      status: {not: r.eval()},
     };
   },
   containsExp: (l, colon, r) => {
     return { contains: r.eval() };
+  },
+  subtestExp: (l, colon, r) => {
+    return { subtest: r.eval() };
   },
   pathExp: (l, colon, r) => {
     return { path: r.eval() };
@@ -213,7 +241,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   nameFragment_basic: (p) => {
     return p.sourceString;
   },
-  nameFragment_quoted: (_, chars, __) => {
+  nameFragment_quoted: (_, chars,  __) => {
     return chars.sourceString;
   },
   backslash: (v) => '\\',
@@ -290,7 +318,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
         type: Array,
         notify: true,
       },
-      testPaths: Array,
+      testPaths: Set,
       onKeyUp: Function,
       onChange: Function,
       onFocus: Function,

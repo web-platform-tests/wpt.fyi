@@ -8,13 +8,15 @@ import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
+import './test-file-results-table.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
 import './wpt-colors.js';
 import { WPTFlags } from './wpt-flags.js';
+import { PathInfo } from './path.js';
 
-class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
-  TestRunsQueryLoader(PolymerElement, TestRunsUIQuery.Computer)))) {
+class TestFileResults extends WPTFlags(LoadingState(PathInfo(
+  TestRunsQueryLoader(TestRunsUIQuery(PolymerElement))))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -45,19 +47,13 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
       </paper-toggle-button>
     </div>
 
-    <template is="dom-if" if="{{!isVerbose}}">
-      <test-file-results-table-terse test-runs="[[testRuns]]"
-                                     results-table="[[resultsTable]]"
-                                     on-reftest-compare="[[onReftestCompare]]">
-      </test-file-results-table-terse>
-    </template>
-
-    <template is="dom-if" if="{{isVerbose}}">
-      <test-file-results-table-verbose test-runs="[[testRuns]]"
-                                       results-table="[[resultsTable]]"
-                                       on-reftest-compare="[[onReftestCompare]]">
-      </test-file-results-table-verbose>
-    </template>
+    <test-file-results-table test-runs="[[testRuns]]"
+                             diff-run="[[diffRun]]"
+                             only-show-differences="{{onlyShowDifferences}}"
+                             path="[[path]]"
+                             rows="[[rows]]"
+                             verbose="[[isVerbose]]">
+    </test-file-results-table>
 `;
   }
 
@@ -67,6 +63,11 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
 
   static get properties() {
     return {
+      diffRun: Object,
+      onlyShowDifferences: {
+        type: Boolean,
+        value: false,
+      },
       structuredSearch: Object,
       resultsTable: {
         type: Array,
@@ -76,7 +77,10 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
         type: Boolean,
         value: false,
       },
-      onReftestCompare: Function,
+      rows: {
+        type: Array,
+        computed: 'computeRows(resultsTable, onlyShowDifferences)'
+      }
     };
   }
 
@@ -87,7 +91,7 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
   }
 
   static get observers() {
-    return ['loadData(path, testRuns, structuredSearch)'];
+    return ['loadData(path, testRuns, structuredSearch, onlyShowDifferences)'];
   }
 
   async loadData(path, testRuns, structuredSearch) {
@@ -124,6 +128,9 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
 
     const url = new URL('/api/search', window.location);
     url.searchParams.set('subtests', '');
+    if (this.diffRun) {
+      url.searchParams.set('diff', true);
+    }
     const fetchOpts = {
       method: 'POST',
       body: JSON.stringify({
@@ -163,8 +170,8 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
           status: data && data.status,
           message: data && data.message,
         };
-        if (this.reftestAnalyzer) {
-          result.screenshots = data && data.screenshots;
+        if (this.reftestAnalyzer && data && data.screenshots) {
+          result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
         }
         return result;
       }),
@@ -251,6 +258,29 @@ class TestFileResults extends WPTFlags(LoadingState(TestRunsUIQuery(
 
   statusName(numSubtests) {
     return numSubtests > 0 ? 'Harness status' : 'Test status';
+  }
+
+  shuffleScreenshots(path, rawScreenshots) {
+    // Clone the data because we might modify it.
+    const screenshots = Object.assign({}, rawScreenshots);
+    // Make sure the test itself appears first in the Map to follow the
+    // convention of reftest-analyzer (actual, expected).
+    const firstScreenshot = [];
+    if (path in screenshots) {
+      firstScreenshot.push([path, screenshots[path]]);
+      delete screenshots[path];
+    }
+    return new Map([...firstScreenshot, ...Object.entries(screenshots)]);
+  }
+
+  computeRows(resultsTable, onlyShowDifferences) {
+    if (!resultsTable || !resultsTable.length || !onlyShowDifferences) {
+      return resultsTable;
+    }
+    const [first, ...others] = resultsTable;
+    return [first, ...others.filter(r => {
+      return r.results[0].status !== r.results[1].status;
+    })];
   }
 }
 

@@ -8,6 +8,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// Average as of Aug 20, 2019
+const averageNumberOfSubtests = int(1655263 / 34236)
+
 // AggregationOpts are options for the aggregation format used when collecting
 // the results.
 type AggregationOpts struct {
@@ -46,6 +49,12 @@ type ConcreteQuery interface {
 type Count struct {
 	Count int
 	Args  []ConcreteQuery
+}
+
+// Link is a ConcreteQuery of AbstractLink.
+type Link struct {
+	Pattern  string
+	Metadata map[string][]string
 }
 
 // RunTestStatusEq constrains search results to include only test results from a
@@ -89,6 +98,10 @@ func (TestNamePattern) Size() int { return 1 }
 // set lookup per test.
 func (FileContentsQuery) Size() int { return 1 }
 
+// Size of SubtestNamePattern has a size of 1: servicing such a query requires a
+// substring match per subtest.
+func (SubtestNamePattern) Size() int { return averageNumberOfSubtests }
+
 // Size of TestPath has a size of 1: servicing such a query requires a
 // substring match per test.
 func (TestPath) Size() int { return 1 }
@@ -100,6 +113,10 @@ func (RunTestStatusEq) Size() int { return 1 }
 // Size of RunTestStatusNeq is 1: servicing such a query requires a single
 // lookup in a test run result mapping per test.
 func (RunTestStatusNeq) Size() int { return 1 }
+
+// Size of Link has a size of 1: servicing such a query requires a
+// substring match per Metadata Link Node.
+func (Link) Size() int { return 1 }
 
 // Size of Count is the sum of the sizes of its constituent ConcretQuery instances.
 func (c Count) Size() int { return size(c.Args) }

@@ -73,6 +73,24 @@ useful when there are multiple runs with the same product, e.g. to find a regres
 
     seq(status:pass status:fail)
 
+### Count
+
+> BETA: This feature is under development and may change without warning.
+
+    count:[number]([query1] [query2])
+
+Requires that the number of results matching the given query/queries is precisely
+the given count. For example, this search atom can be used to find cases where
+exactly one result is a failure:
+
+    count:1(status:fail)
+
+Note that there are some special keywords for count:1, count:2, and count:3
+(`one`, `two` and `three` respectively). For example, to find results where
+Safari is the only one missing a result:
+
+    three(status:!missing) safari:missing
+
 ## /api/search
 
 The `/api/search` endpoint takes an HTTP `POST` method, where the body is of the format
@@ -139,3 +157,19 @@ Same as satuts, but with a specific product-spec.
       "product": "chrome-69",
       "status": "ok",
     }
+
+#### link
+
+`link` query atoms perform a search for tests that have some matching link metadata.
+
+    {"link": pattern}
+
+ E.g.
+
+Search untriaged issues -
+
+    chrome:fail and !link:bugs.chromium.org
+
+Search triaged issues -
+
+    chrome:pass and link:bugs.chromium.org

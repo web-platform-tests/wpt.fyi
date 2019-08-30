@@ -9,12 +9,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/google/go-github/github"
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
+
+var runNameRegex = regexp.MustCompile(`^(?:(?:staging\.)?wpt\.fyi - )(.*)$`)
 
 func isWPTFYIApp(appID int64) bool {
 	switch appID {
@@ -65,11 +68,11 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	var processed bool
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	checksAPI := NewAPI(ctx)
+	taskclusterAPI := taskcluster.NewAPI(ctx)
 	if event == "check_suite" {
-		processed, err = handleCheckSuiteEvent(aeAPI, checksAPI, payload)
+		processed, err = handleCheckSuiteEvent(aeAPI, checksAPI, taskclusterAPI, payload)
 	} else if event == "check_run" {
 		azureAPI := azure.NewAPI(ctx)
-		taskclusterAPI := taskcluster.NewAPI(ctx)
 		processed, err = handleCheckRunEvent(aeAPI, checksAPI, azureAPI, taskclusterAPI, payload)
 	} else if event == "pull_request" {
 		processed, err = handlePullRequestEvent(aeAPI, checksAPI, payload)
@@ -91,7 +94,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 // handleCheckSuiteEvent handles a check_suite (re)requested event by ensuring
 // that a check_run exists for each product that contains results for the head SHA.
-func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
+func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, taskclusterAPI taskcluster.API, payload []byte) (bool, error) {
 	log := shared.GetLogger(aeAPI.Context())
 	var checkSuite github.CheckSuiteEvent
 	if err := json.Unmarshal(payload, &checkSuite); err != nil {
@@ -99,7 +102,8 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	}
 
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
-	if !isWPTFYIApp(appID) {
+	if !isWPTFYIApp(appID) &&
+		appID != taskcluster.AppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -107,6 +111,14 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	login := checkSuite.GetSender().GetLogin()
 	if !isUserWhitelisted(aeAPI, login) {
 		log.Infof("Sender %s not whitelisted for wpt.fyi checks", login)
+		return false, nil
+	}
+
+	if appID == taskcluster.AppID {
+		if aeAPI.IsFeatureEnabled("processTaskclusterCheckRunEvents") {
+			return taskclusterAPI.HandleCheckSuiteEvent(&checkSuite)
+		}
+		log.Infof("Ignoring Taskcluster CheckSuite event")
 		return false, nil
 	}
 
@@ -171,8 +183,7 @@ func handleCheckRunEvent(
 
 	appID := checkRun.GetCheckRun().GetApp().GetID()
 	if !isWPTFYIApp(appID) &&
-		appID != azure.PipelinesAppID &&
-		appID != taskcluster.AppID {
+		appID != azure.PipelinesAppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
 		return false, nil
 	}
@@ -190,12 +201,6 @@ func handleCheckRunEvent(
 			return azureAPI.HandleCheckRunEvent(checkRun)
 		}
 		log.Infof("Ignoring Azure pipelines event")
-		return false, nil
-	} else if appID == taskcluster.AppID {
-		if aeAPI.IsFeatureEnabled("processTaskclusterCheckRunEvents") {
-			return taskclusterAPI.HandleCheckRunEvent(checkRun)
-		}
-		log.Infof("Ignoring Taskcluster CheckRun event")
 		return false, nil
 	} else if (action == "created" && status != "completed") || action == "rerequested" {
 		shouldSchedule = true
@@ -228,9 +233,13 @@ func handleCheckRunEvent(
 	if shouldSchedule {
 		name := checkRun.GetCheckRun().GetName()
 		log.Debugf("GitHub check run %v (%s @ %s) was %s", checkRun.GetCheckRun().GetID(), name, sha, action)
-		spec, err := shared.ParseProductSpec(checkRun.GetCheckRun().GetName())
+		// Strip any "wpt.fyi - " prefix.
+		if runNameRegex.MatchString(name) {
+			name = runNameRegex.FindStringSubmatch(name)[1]
+		}
+		spec, err := shared.ParseProductSpec(name)
 		if err != nil {
-			log.Errorf("Failed to parse \"%s\" as product spec", checkRun.GetCheckRun().GetName())
+			log.Errorf("Failed to parse \"%s\" as product spec", name)
 			return false, err
 		}
 		checksAPI.ScheduleResultsProcessing(sha, spec)

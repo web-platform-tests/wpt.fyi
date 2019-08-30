@@ -8,24 +8,27 @@
   },
   "devDependencies": {
     "@polymer/test-fixture": "^4.0.2",
-    "babel-eslint": "^10.0.1",
+    "babel-eslint": "^10.0.2",
     "eslint": "^4.14.0",
-    "eslint-plugin-html": "^5.0.3",
+    "eslint-plugin-html": "^5.0.5",
     "wct-browser-legacy": "^1.0.2",
     "web-component-tester": "^6.9.2"
   },
   "scripts": {
-    "test": "npm run wct",
+    "test": "wct --npm -b chrome && wct --npm -b firefox",
     "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
     "lint-fix": "eslint --fix 'components/**/*.js' && eslint --fix --plugin html 'components/test/*.html' ",
     "wctp": "wct --npm -p",
     "wct": "wct --npm"
   },
   "dependencies": {
-    "@google-web-components/google-chart": "^3.0.4",
+    "@google-web-components/google-chart": "^3.0.6",
+    "@polymer/app-route": "^3.0.2",
     "@polymer/iron-collapse": "^3.0.0",
     "@polymer/iron-form": "^3.0.0",
     "@polymer/iron-icons": "^3.0.0",
+    "@polymer/iron-location": "^3.0.2",
+    "@polymer/iron-pages": "^3.0.1",
     "@polymer/iron-scroll-threshold": "^3.0.1",
     "@polymer/paper-button": "^3.0.0",
     "@polymer/paper-card": "^3.0.0",
@@ -44,7 +47,7 @@
     "@polymer/paper-toast": "^3.0.0",
     "@polymer/paper-toggle-button": "^3.0.0",
     "@polymer/paper-tooltip": "^3.0.0",
-    "@polymer/polymer": "^3.2.0",
+    "@polymer/polymer": "^3.3.0",
     "@vaadin/vaadin-date-picker": "^3.3.4",
     "@webcomponents/webcomponentsjs": "^2.2.7",
     "pluralize": "^7.0.0"

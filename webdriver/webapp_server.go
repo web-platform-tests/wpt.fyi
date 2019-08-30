@@ -14,12 +14,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
-	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
-	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
 )
 
@@ -29,7 +25,7 @@ var (
 )
 
 // StaticTestDataRevision is the SHA for the local (static) test run summaries.
-const StaticTestDataRevision = "b952881825e7d3974f5c513e13e544d525c0a631"
+const StaticTestDataRevision = "24278ab61781de72ed363b866ae6b50b86822b27"
 
 // AppServer is an abstraction for navigating an instance of the webapp.
 type AppServer interface {
@@ -68,7 +64,7 @@ type DevAppServerInstance interface {
 
 type devAppServerInstance struct {
 	cmd            *exec.Cmd
-	stderr         io.Reader
+	stderr         io.ReadCloser
 	startupTimeout time.Duration
 
 	host    string
@@ -120,24 +116,25 @@ func NewWebserver() (s AppServer, err error) {
 		}, nil
 	}
 
-	app, err := NewDevAppServer()
+	app, err := newDevAppServer()
 	if err != nil {
-		return app, err
+		return nil, err
 	}
 	if err = app.AwaitReady(); err != nil {
-		panic(err)
+		return nil, err
 	}
-
 	if err = addStaticData(app); err != nil {
-		panic(err)
+		// dev_appserver has started.
+		app.Close()
+		return nil, err
 	}
 	return app, err
 }
 
-// NewDevAppServer creates a dev appserve instance.
-func NewDevAppServer() (s DevAppServerInstance, err error) {
-	i := &devAppServerInstance{
-		startupTimeout: 15 * time.Second,
+// newDevAppServer creates a dev appserve instance.
+func newDevAppServer() (s *devAppServerInstance, err error) {
+	s = &devAppServerInstance{
+		startupTimeout: 60 * time.Second,
 
 		host:    "localhost",
 		port:    pickUnusedPort(),
@@ -146,12 +143,12 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 
 	absAppYAMLPath, err := filepath.Abs("../webapp")
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
-	i.cmd = exec.Command(
+	s.cmd = exec.Command(
 		"dev_appserver.py",
-		fmt.Sprintf("--port=%d", i.port),
-		fmt.Sprintf("--api_port=%d", i.apiPort),
+		fmt.Sprintf("--port=%d", s.port),
+		fmt.Sprintf("--api_port=%d", s.apiPort),
 		// Let dev_appserver find a free port itself. We don't use the
 		// admin port directly so we don't need to use pickUnusedPort.
 		fmt.Sprintf("--admin_port=%d", 0),
@@ -168,32 +165,36 @@ func NewDevAppServer() (s DevAppServerInstance, err error) {
 		absAppYAMLPath,
 	)
 
-	s = DevAppServerInstance(i)
-	i.cmd.Stdout = os.Stdout
-
-	var stderr io.Reader
-	stderr, err = i.cmd.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-	i.stderr = io.TeeReader(stderr, os.Stderr)
+	// dev_appserver.py usually does not print to stdout.
+	s.cmd.Stdout = os.Stderr
+	s.stderr, err = s.cmd.StderrPipe()
 	return s, err
 }
 
-var readyRE = regexp.MustCompile(`Starting module "default" running at: (\S+)`)
+var hostRE = regexp.MustCompile(`Starting module "default" running at: (\S+)`)
 var adminURLRE = regexp.MustCompile(`Starting admin server at: (\S+)`)
+var readyRE = regexp.MustCompile(`GET /_ah/warmup`)
 
 func (i *devAppServerInstance) AwaitReady() error {
 	if err := i.cmd.Start(); err != nil {
 		return err
 	}
 
-	// Read stderr until we have read the URLs of the API server and admin interface.
-	errc := make(chan error, 1)
+	// Read stderr until server is warmed up.
+	errc := make(chan error)
+	ready := false
 	go func() {
 		s := bufio.NewScanner(i.stderr)
+		defer i.stderr.Close()
 		for s.Scan() {
-			if match := readyRE.FindStringSubmatch(s.Text()); match != nil {
+			str := s.Text()
+			log.Println(str)
+			if match := readyRE.FindStringSubmatch(str); match != nil {
+				ready = true
+				errc <- nil
+				return
+			}
+			if match := hostRE.FindStringSubmatch(str); match != nil {
 				u, err := url.Parse(match[1])
 				if err != nil {
 					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
@@ -201,7 +202,7 @@ func (i *devAppServerInstance) AwaitReady() error {
 				}
 				i.baseURL = u
 			}
-			if match := adminURLRE.FindStringSubmatch(s.Text()); match != nil {
+			if match := adminURLRE.FindStringSubmatch(str); match != nil {
 				u, err := url.Parse(match[1])
 				if err != nil {
 					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
@@ -209,11 +210,13 @@ func (i *devAppServerInstance) AwaitReady() error {
 				}
 				i.adminURL = u
 			}
-			if i.baseURL != nil && i.adminURL != nil {
-				break
-			}
 		}
 		errc <- s.Err()
+	}()
+
+	exited := make(chan error)
+	go func() {
+		exited <- i.cmd.Wait()
 	}()
 
 	select {
@@ -221,14 +224,31 @@ func (i *devAppServerInstance) AwaitReady() error {
 		if p := i.cmd.Process; p != nil {
 			p.Kill()
 		}
-		return errors.New("timeout starting child process")
+		return errors.New("timeout starting dev_appserver.py")
 	case err := <-errc:
 		if err != nil {
-			return fmt.Errorf("error reading web_server.sh process stderr: %v", err)
+			if p := i.cmd.Process; p != nil {
+				p.Kill()
+			}
+			return fmt.Errorf("error waiting for dev_appserver.py: %v", err)
 		}
+	case err := <-exited:
+		if err != nil {
+			return err
+		}
+	}
+
+	if !ready {
+		if p := i.cmd.Process; p != nil {
+			p.Kill()
+		}
+		return errors.New("dev_appserver.py unable to warm up")
 	}
 	if i.baseURL == nil {
 		return errors.New("unable to find webserver URL")
+	}
+	if i.adminURL == nil {
+		return errors.New("unable to find admin URL")
 	}
 	return nil
 }
@@ -240,150 +260,19 @@ func (i *devAppServerInstance) NewContext() (ctx context.Context, err error) {
 	return remoteContext, err
 }
 
-func addStaticData(i DevAppServerInstance) (err error) {
-	var ctx context.Context
-	if ctx, err = i.NewContext(); err != nil {
+func addStaticData(i *devAppServerInstance) (err error) {
+	cmd := exec.Command(
+		"go",
+		"run",
+		"../util/populate_dev_data.go",
+		fmt.Sprintf("--local_host=localhost:%v", i.port),
+		fmt.Sprintf("--local_remote_api_host=localhost:%v", i.apiPort),
+		"--remote_runs=false",
+		"--static_runs=true",
+	)
+	cmd.Stderr = os.Stderr
+	if err = cmd.Start(); err != nil {
 		return err
 	}
-
-	staticDataTime := time.Now()
-	// Follow pattern established in run/*.py data collection code.
-	const sha = StaticTestDataRevision
-	var summaryURLFmtString = i.GetWebappURL("/static/" + sha[:10] + "/%s")
-	stableTestRuns := shared.TestRuns{
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "chrome",
-					BrowserVersion: "63.0",
-					OSName:         "linux",
-					OSVersion:      "3.16",
-				},
-				FullRevisionHash: sha,
-				Revision:         sha[:10],
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
-			TimeStart:  staticDataTime,
-			Labels:     []string{"chrome", "linux", shared.StableLabel, shared.MasterLabel},
-		},
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "edge",
-					BrowserVersion: "15",
-					OSName:         "windows",
-					OSVersion:      "10",
-				},
-				FullRevisionHash: sha,
-				Revision:         sha[:10],
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "edge-15-windows-10-sauce-summary.json.gz"),
-			TimeStart:  staticDataTime,
-			Labels:     []string{"edge", "windows", shared.StableLabel, shared.MasterLabel},
-		},
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "firefox",
-					BrowserVersion: "57.0",
-					OSName:         "linux",
-					OSVersion:      "*",
-				},
-				FullRevisionHash: sha,
-				Revision:         sha[:10],
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
-			TimeStart:  staticDataTime,
-			Labels:     []string{"firefox", "linux", shared.StableLabel, shared.MasterLabel},
-		},
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "safari",
-					BrowserVersion: "10",
-					OSName:         "macos",
-					OSVersion:      "10.12",
-				},
-				FullRevisionHash: sha,
-				Revision:         sha[:10],
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "safari-10-macos-10.12-sauce-summary.json.gz"),
-			TimeStart:  staticDataTime,
-			Labels:     []string{"safari", "macos", shared.StableLabel, shared.MasterLabel},
-		},
-	}
-	experimentalTestRuns := shared.TestRuns{
-		// TODO: Use a separate run summary data for the experimental runs? (re-using stable for now).
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "chrome",
-					BrowserVersion: "69.0",
-					OSName:         "linux",
-					OSVersion:      "*",
-				},
-				FullRevisionHash: strings.Repeat("0123456789", 4),
-				Revision:         "0123456789",
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "chrome-63.0-linux-summary.json.gz"),
-			TimeStart:  staticDataTime,
-			Labels:     []string{"chrome", "linux", shared.ExperimentalLabel, shared.MasterLabel},
-		},
-		{
-			ProductAtRevision: shared.ProductAtRevision{
-				Product: shared.Product{
-					BrowserName:    "firefox",
-					BrowserVersion: "60.0",
-					OSName:         "linux",
-					OSVersion:      "*",
-				},
-				FullRevisionHash: strings.Repeat("0123456789", 4),
-				Revision:         "0123456789",
-			},
-			ResultsURL: fmt.Sprintf(summaryURLFmtString, "firefox-57.0-linux-summary.json.gz"),
-			TimeStart:  staticDataTime,
-			Labels:     []string{"firefox", "linux", shared.ExperimentalLabel, shared.MasterLabel},
-		},
-	}
-
-	log.Println("Adding static TestRun data...")
-	for _, runs := range []*shared.TestRuns{&experimentalTestRuns, &stableTestRuns} {
-		for i, run := range *runs {
-			key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-			if key, err = datastore.Put(ctx, key, &run); err != nil {
-				return err
-			}
-			(*runs)[i].ID = key.IntID()
-		}
-	}
-
-	log.Println("Adding static interop data...")
-	timeZero := time.Unix(0, 0)
-	// Follow pattern established in metrics/run/*.go data collection code.
-	// Use unzipped JSON for local dev.
-	var metricsURLFmtString = i.GetWebappURL("/static/wptd-metrics/0-0/%s.json")
-	staticPassRateMetadata := []interface{}{
-		&metrics.PassRateMetadata{
-			TestRunsMetadata: metrics.TestRunsMetadata{
-				StartTime:  timeZero,
-				EndTime:    timeZero,
-				DataURL:    fmt.Sprintf(metricsURLFmtString, "pass-rates"),
-				TestRunIDs: stableTestRuns.GetTestRunIDs(),
-			},
-		},
-	}
-	for _, interop := range staticPassRateMetadata {
-		key := datastore.NewIncompleteKey(ctx, metrics.GetDatastoreKindName(metrics.PassRateMetadata{}), nil)
-		if _, err := datastore.Put(ctx, key, interop); err != nil {
-			return err
-		}
-	}
-
-	// Enable tested features
-	_, err = datastore.Put(ctx, datastore.NewKey(ctx, "Flag", "queryBuilder", 0, nil), &shared.Flag{Enabled: true})
-	if err != nil {
-		panic(err)
-	}
-
-	return nil
+	return cmd.Wait()
 }

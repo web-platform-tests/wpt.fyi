@@ -3,9 +3,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-import { Channels, DefaultProducts, DefaultProductSpecs, ProductInfo } from './product-info.js';
-import { QueryBuilder } from './results-navigation.js';
 import { pluralize } from './pluralize.js';
+import { Channels, DefaultProductSpecs, ProductInfo } from './product-info.js';
+import { QueryBuilder } from './results-navigation.js';
 
 const testRunsQueryComputer =
   'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset)';
@@ -20,12 +20,10 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       products: {
         type: Array,
         notify: true,
-        value: [],
       },
       productSpecs: {
         type: Array,
         notify: true,
-        value: [],
       },
       isDefaultProducts: {
         type: Boolean,
@@ -56,14 +54,24 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
   ready() {
     super.ready();
-    this._createMethodObserver('productsUpdated(products, products.*)');
     // Convert any initial product specs to products, if provided.
     if (this.productSpecs && this.productSpecs.length
       && !(this.products && this.products.length)) {
       this.products = this.productSpecs.map(p => this.parseProductSpec(p));
     }
+    this._createMethodObserver('productsChanged(products, products.*)');
+    this._createMethodObserver('productSpecsChanged(productSpecs, productSpecs.*)');
     // Force-trigger a channel label expansion.
     this.updateQueryParams(this.queryParams);
+  }
+
+  queryChanged(query, queryBefore) {
+    if (!query || query === queryBefore || this._dontReact) {
+      return;
+    }
+    this._dontReact = true;
+    this.updateQueryParams(this.parseQuery(query));
+    this._dontReact = false;
   }
 
   // sha is a convenience method for getting (the) single sha.
@@ -72,9 +80,22 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     return this.shas && this.shas.length && this.shas[0] || 'latest';
   }
 
-  // eslint-disable-next-line no-unused-vars
-  productsUpdated(products, itemChange) {
+  productsChanged(products) {
+    if (this._productsChanging || this._dontReact) {
+      return;
+    }
+    this._productsChanging = true;
     this.productSpecs = (products || []).map(p => this.getSpec(p));
+    this._productsChanging = false;
+  }
+
+  productSpecsChanged(productSpecs) {
+    if (this._productsChanging || this._dontReact) {
+      return;
+    }
+    this._productsChanging = true;
+    this.products = (productSpecs || []).map(p => this.parseProductSpec(p));
+    this._productsChanging = false;
   }
 
   /**
@@ -108,17 +129,17 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     }
 
     // Collapse a globally shared channel into a single label.
-    if (this.products.length) {
+    if (productSpecs && productSpecs.length) {
+      const products = productSpecs.map(p => this.parseProductSpec(p));
       let allChannelsSame = true;
-      const channel = (this.products[0].labels || []).find(l => Channels.has(l));
-      for (const p of this.products) {
+      const channel = (products[0].labels || []).find(l => Channels.has(l));
+      for (const p of products) {
         if (!(p.labels || []).find(l => l === channel)) {
           allChannelsSame = false;
         }
       }
-      let productSpecs;
       if (allChannelsSame) {
-        productSpecs = this.products.map(p => {
+        productSpecs = products.map(p => {
           const nonChannel = (p.labels || []).filter(l => !Channels.has(l));
           return this.getSpec(Object.assign({}, p, {labels: nonChannel}));
         });
@@ -126,7 +147,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
           params.label = labels.concat(channel);
         }
       } else {
-        productSpecs = this.products.map(p => this.getSpec(p));
+        productSpecs = products.map(p => this.getSpec(p));
       }
       if (!this.computeIsDefaultProducts(productSpecs)) {
         params.product = productSpecs;
@@ -137,6 +158,22 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       params.aligned = true;
     }
     return params;
+  }
+
+  parseQuery(query) {
+    const parsed = super.parseQuery(query);
+    for (const repeatable of ['label', 'product', 'sha']) {
+      if (repeatable in parsed
+          && !(parsed[repeatable] instanceof Array)) {
+        parsed[repeatable] = [parsed[repeatable]];
+      }
+    }
+    for (const b of ['aligned', 'master']) {
+      if (b in parsed) {
+        parsed[b] = true;
+      }
+    }
+    return parsed;
   }
 
   computeProducts(productSpecs) {
@@ -150,7 +187,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
   get emptyQuery() {
     return {
-      products: DefaultProducts.map(p => Object.assign({}, p)),
+      productSpecs: Array.from(DefaultProductSpecs),
       labels: [],
       maxCount: undefined,
       shas: [],
@@ -163,19 +200,27 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   /**
-  * Update this component's UI properties to match the given query params.
-  */
+   * Update this component's UI properties to match the given query params.
+   */
   updateQueryParams(params) {
     if (!params) {
       this.clearQuery();
       return;
     }
+    const batchUpdate = this._getBatchUpdate(params);
+    this._productsChanging = true;
+    this.setProperties(batchUpdate);
+    this._productsChanging = false;
+    this.notifyPath('query');
+  }
+
+  _getBatchUpdate(params) {
     const batchUpdate = this.emptyQuery;
     if (!this.computeIsLatest(params.sha)) {
       batchUpdate.shas = params.sha;
     }
     if ('product' in params) {
-      batchUpdate.products = params.product.map(p => this.parseProductSpec(p));
+      batchUpdate.productSpecs = params.product;
     }
     // Expand any global channel labels into the separate products
     let sharedChannel;
@@ -184,13 +229,18 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       batchUpdate.labels = params.label.filter(l => !Channels.has(l));
     }
     if (sharedChannel) {
-      for (const i in batchUpdate.products) {
-        const labels = batchUpdate.products[i].labels.filter(l => !Channels.has(l) || l === sharedChannel);
-        if (!batchUpdate.products[i].labels.includes(sharedChannel)) {
+      batchUpdate.productSpecs = batchUpdate.productSpecs.map(spec => {
+        const product = this.parseProductSpec(spec);
+        const labels = product.labels.filter(l => !Channels.has(l) || l === sharedChannel);
+        if (!product.labels.includes(sharedChannel)) {
           labels.push(sharedChannel);
         }
-        batchUpdate.products[i].labels = labels;
-      }
+        product.labels = labels;
+        return this.getSpec(product);
+      });
+    }
+    if ('productSpecs' in batchUpdate) {
+      batchUpdate.products = batchUpdate.productSpecs.map(p => this.parseProductSpec(p));
     }
     if ('max-count' in params) {
       batchUpdate.maxCount = params['max-count'];
@@ -211,7 +261,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     if (batchUpdate.master) {
       batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
     }
-    this.setProperties(batchUpdate);
+    return batchUpdate;
   }
 
   computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master) {
@@ -246,6 +296,10 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     return msg;
   }
 };
+
+// TODO(lukebjerring): Support to & from in the builder.
+const testRunsUIQueryComputer =
+  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds)';
 
 const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
   superClass,
@@ -296,24 +350,37 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     return params;
   }
 
-  updateQueryParams(params) {
-    super.updateQueryParams(params);
-    let batchUpdate = {};
+  parseQuery(query) {
+    const parsed = super.parseQuery(query);
+    for (const repeatable of ['run_id']) {
+      if (repeatable in parsed
+          && !(parsed[repeatable] instanceof Array)) {
+        parsed[repeatable] = [parsed[repeatable]];
+      }
+    }
+    for (const b of ['diff']) {
+      if (b in parsed) {
+        parsed[b] = true;
+      }
+    }
+    return parsed;
+  }
+
+  _getBatchUpdate(params) {
+    params = params || {};
+    const batchUpdate = super._getBatchUpdate(params);
     batchUpdate.pr = params.pr;
     batchUpdate.search = params.q;
-    batchUpdate.diff = params.diff;
+    batchUpdate.diff = params.diff || false;
     if (batchUpdate.diff) {
       batchUpdate.diffFilter = params.filter;
     }
     if ('run_id' in params) {
       batchUpdate.runIds = Array.from(params['run_id']);
     }
-    this.setProperties(batchUpdate);
+    return batchUpdate;
   }
 };
-// TODO(lukebjerring): Support to & from in the builder.
-const testRunsUIQueryComputer =
-  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds)';
 
 TestRunsQuery.Computer = testRunsQueryComputer;
 TestRunsUIQuery.Computer = testRunsUIQueryComputer;

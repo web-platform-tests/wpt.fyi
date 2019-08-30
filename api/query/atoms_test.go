@@ -8,6 +8,8 @@ package query
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -144,6 +146,18 @@ func TestStructuredQuery_contains(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: FileContentsQuery{"shadowRoot"}}, rq)
+}
+
+func TestStructuredQuery_subtest(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"subtest": "Subtest name"
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: SubtestNamePattern{"Subtest name"}}, rq)
 }
 
 func TestStructuredQuery_path(t *testing.T) {
@@ -335,6 +349,61 @@ func TestStructuredQuery_count(t *testing.T) {
 					}},
 				}},
 			}}, rq)
+}
+
+func TestStructuredQuery_link(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"link": "chromium.bug.com/abc"
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			AbstractLink{
+				Pattern: "chromium.bug.com/abc",
+			}},
+		}}, rq)
+}
+
+func TestStructuredQuery_combinedlink(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{"pattern": "cssom"},
+				{"link": "chromium"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, AbstractLink{Pattern: "chromium"}}}}, rq)
+}
+
+func TestStructuredQuery_combinednotlink(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{"and": [
+					{"pattern": "cssom"},
+					{"not": {"link": "chromium.bug"}
+					}
+				  ]
+				}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{Args: []AbstractQuery{AbstractAnd{Args: []AbstractQuery{TestNamePattern{Pattern: "cssom"}, AbstractNot{Arg: AbstractLink{Pattern: "chromium.bug"}}}}}}}, rq)
 }
 
 func TestStructuredQuery_nested(t *testing.T) {
@@ -626,6 +695,48 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindLink(t *testing.T) {
+	defer func(url string) {
+		shared.MetadataArchiveURL = url
+	}(shared.MetadataArchiveURL)
+
+	e := shared.ParseProductSpecUnsafe("chrome")
+	f := shared.ParseProductSpecUnsafe("safari")
+	q := AbstractLink{
+		Pattern: "bugs.bar",
+	}
+
+	runs := shared.TestRuns{}
+	runs = shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: e.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: f.ProductAtRevision,
+		},
+	}
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "../../shared/metadata_testdata/gzip_testfile.tar.gz")
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	shared.MetadataArchiveURL = server.URL
+
+	expect := Link{
+		Pattern: "bugs.bar",
+		Metadata: map[string][]string{
+			"/randomfolder3/innerfolder1/random3foo.html":                     {"bugs.bar", ""},
+			"/randomfolder2/foo.html":                                         {"", "safari.foo.com"},
+			"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": {"bugs.bar?id=456", ""},
+		},
+	}
+	assert.Equal(t, expect, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {

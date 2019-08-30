@@ -6,10 +6,10 @@ There were no regressions detected in the results.
 
 ### Results
 
-Test | `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`
---- | ---
+Test | `master` | `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`
+--- | --- | ---
 {{ range $test, $results := .Results -}}
-{{ escapeMD $test }} | {{ index $results 0 }} / {{ index $results 1 }}
+{{ escapeMD $test }} | {{ $results.PassingBefore }} / {{ $results.TotalBefore }} | {{ $results.PassingAfter }} / {{ $results.TotalAfter }}
 {{end}}
 {{ if gt .More 0 -}}
 And {{ .More }} others...
@@ -23,6 +23,6 @@ Other links that might be useful:
 {{- if .MasterDiffURL }}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})
 {{- end }}
-- [Latest results for `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`]({{.HostURL}}?sha={{.HeadRun.Revision}})
+- [Latest results for `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`]({{.HostURL}}?sha={{.HeadRun.Revision}}&label=pr_head)
 
 {{ template "_file_an_issue.md" . }}

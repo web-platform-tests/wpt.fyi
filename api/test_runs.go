@@ -7,6 +7,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/datastore"
@@ -21,6 +22,7 @@ const paginationTokenFeatureFlagName = "paginationTokens"
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
 	store := shared.NewAppEngineDatastore(ctx, true)
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	q := r.URL.Query()
@@ -52,6 +54,11 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if pr != nil && aeAPI.IsFeatureEnabled("runsByPRNumber") {
 			filters.SHAs = getPRCommits(aeAPI, *pr)
+			if len(filters.SHAs) < 1 {
+				log.Warningf("PR %v returned no commits from GitHub", *pr)
+			} else {
+				log.Infof("PR %v returned %v commits: %s", *pr, len(filters.SHAs), strings.Join(filters.SHAs.ShortSHAs(), ","))
+			}
 		}
 		var runsByProduct shared.TestRunsByProduct
 		runsByProduct, err = LoadTestRunsForFilters(store, filters)
@@ -141,7 +148,7 @@ func getPRCommits(aeAPI shared.AppEngineAPI, pr int) shared.SHAs {
 		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
 	}
-	commits, _, err := githubClient.PullRequests.ListCommits(aeAPI.Context(), "web-platform-tests", "wpt", pr, nil)
+	commits, _, err := githubClient.PullRequests.ListCommits(aeAPI.Context(), shared.WPTRepoOwner, shared.WPTRepoName, pr, nil)
 	if err != nil || commits == nil {
 		log.Errorf("Failed to fetch PR #%v: %s", pr, err.Error())
 		return nil

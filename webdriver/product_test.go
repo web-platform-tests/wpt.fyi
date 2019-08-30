@@ -16,44 +16,39 @@ import (
 )
 
 func TestProductParam_Order(t *testing.T) {
-	testProductParamSets(
-		t,
-		[]string{"chrome", "firefox"},
-		[]string{"firefox", "chrome"})
+	runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
+		t.Run("Order", func(t *testing.T) {
+			testProductParamSets(
+				t, wd, app,
+				[]string{"chrome", "firefox"},
+				[]string{"firefox", "chrome"})
+		})
+
+		t.Run("Labels", func(t *testing.T) {
+			testProductParamSets(
+				t, wd, app,
+				[]string{"chrome[stable]"},
+				[]string{"firefox[experimental]", "chrome"})
+		})
+
+		t.Run("SHA", func(t *testing.T) {
+			t.Run("Latest", func(t *testing.T) {
+				testProductParamSets(t, wd, app, []string{"chrome@latest"})
+			})
+		})
+
+		t.Run("Specific", func(t *testing.T) {
+			testProductParamSets(t, wd, app,
+				[]string{fmt.Sprintf("chrome@%s", StaticTestDataRevision[:7])},
+				[]string{fmt.Sprintf("firefox@%s", StaticTestDataRevision)},
+			)
+		})
+	})
 }
 
-func TestProductParam_Labels(t *testing.T) {
-	testProductParamSets(
-		t,
-		[]string{"chrome[stable]"},
-		[]string{"firefox[experimental]", "chrome"})
-}
-
-func TestProductParam_SHA_Latest(t *testing.T) {
-	testProductParamSets(t, []string{"chrome@latest"})
-}
-func TestProductParam_SHA_Specific(t *testing.T) {
-	testProductParamSets(t,
-		[]string{fmt.Sprintf("chrome@%s", StaticTestDataRevision[:7])},
-		[]string{fmt.Sprintf("firefox@%s", StaticTestDataRevision)},
-	)
-}
-
-func testProductParamSets(t *testing.T, productSpecs ...[]string) {
+func testProductParamSets(t *testing.T, wd selenium.WebDriver, app AppServer, productSpecs ...[]string) {
 	for _, specs := range productSpecs {
 		t.Run(strings.Join(specs, ","), func(t *testing.T) {
-			app, err := NewWebserver()
-			if err != nil {
-				panic(err)
-			}
-			defer app.Close()
-
-			service, wd, err := GetWebDriver()
-			if err != nil {
-				panic(err)
-			}
-			defer service.Stop()
-			defer wd.Quit()
 			testProducts(t, wd, app, specs...)
 		})
 	}
@@ -94,7 +89,7 @@ func testProducts(
 	}
 
 	// Check tab URLs propagate label
-	tabs, err := getTabElements(wd, "wpt-results")
+	tabs, err := getTabElements(wd)
 	assert.Len(t, tabs, 2)
 	for _, tab := range tabs {
 		a, err := tab.FindElement(selenium.ByTagName, "a")

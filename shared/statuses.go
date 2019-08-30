@@ -151,3 +151,18 @@ func (s TestStatus) String() string {
 	}
 	return str
 }
+
+// UnmarshalYAML unmarshals a TestStatus as either a name string or a number.
+func (s *TestStatus) UnmarshalYAML(unmarshal func(interface{}) error) (err error) {
+	var str string
+	if err = unmarshal(&str); err == nil {
+		*s = TestStatusValueFromString(str)
+		return nil
+	}
+	var i int64
+	if err = unmarshal(&i); err == nil {
+		*s = TestStatus(i)
+		return nil
+	}
+	return err
+}

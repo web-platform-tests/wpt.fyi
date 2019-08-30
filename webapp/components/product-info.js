@@ -10,10 +10,11 @@ const DisplayNames = (() => {
   ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
   m.set('uc', 'UC Browser');
+  // Platforms
   m.set('android', 'Android');
   m.set('linux', 'Linux');
-  m.set('macos', 'macOS');
-  m.set('windows', 'Windows');
+  m.set('mac', 'macOS');
+  m.set('win', 'Windows');
   // Channels
   m.set('stable', 'Stable');
   m.set('beta', 'Beta');
@@ -38,6 +39,7 @@ const DefaultProducts = DefaultProductSpecs.map(p => Object.freeze(parseProductS
 const CommitTypes = new Set(['pr_head', 'master']);
 const Channels = new Set(['stable', 'beta', 'experimental']);
 const Sources = new Set(['buildbot', 'taskcluster', 'msedge', 'azure']);
+const Platforms = new Set(['linux', 'win', 'mac', 'ios', 'android']);
 const SemanticLabels = [
   { property: '_channel', values: Channels },
   { property: '_source', values: Sources },
@@ -108,6 +110,13 @@ const ProductInfo = (superClass) => class extends superClass {
     return '';
   }
 
+  sourceName(product) {
+    if (product.labels) {
+      return this.displayName(product.labels.find(s => Sources.has(s)));
+    }
+    return '';
+  }
+
   minorIsSignificant(browserName) {
     return browserName === 'safari';
   }
@@ -166,6 +175,7 @@ export {
   DefaultProducts,
   CommitTypes,
   Channels,
+  Platforms,
   Sources,
   SemanticLabels,
   ProductInfo,

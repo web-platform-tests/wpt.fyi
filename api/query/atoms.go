@@ -8,8 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
+	log "github.com/Hexcles/logrus"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -63,6 +66,16 @@ type FileContentsQuery struct {
 // BindToRuns for FileContentsQuery is a no-op; it is independent of test runs.
 func (fcq FileContentsQuery) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return fcq
+}
+
+// SubtestNamePattern is a query atom that matches subtest names to a pattern string.
+type SubtestNamePattern struct {
+	Subtest string
+}
+
+// BindToRuns for SubtestNamePattern is a no-op; it is independent of test runs.
+func (tnp SubtestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return tnp
 }
 
 // TestPath is a query atom that matches exact test path prefixes.
@@ -153,6 +166,27 @@ func (c AbstractCount) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return Count{
 		Count: c.Count,
 		Args:  byRun,
+	}
+}
+
+// AbstractLink is represents the root of a link query, whic matches Metadata URLs
+// to a pattern string; it is independent of test runs.
+type AbstractLink struct {
+	Pattern string
+}
+
+// BindToRuns for AbstractLink is a no-op; it is independent of test runs
+func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	var netClient = &http.Client{
+		Timeout: time.Second * 5,
+	}
+
+	metadata, _ := shared.GetMetadataResponse(runs, netClient, log.StandardLogger(), shared.MetadataArchiveURL)
+	metadataMap := shared.PrepareLinkFilter(metadata)
+
+	return Link{
+		Pattern:  l.Pattern,
+		Metadata: metadataMap,
 	}
 }
 
@@ -328,7 +362,7 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	}
 	var pattern string
 	if err := json.Unmarshal(*patternMsg, &pattern); err != nil {
-		return errors.New(`Missing test name pattern property "pattern" is not a string`)
+		return errors.New(`test name pattern property "pattern" is not a string`)
 	}
 
 	tnp.Pattern = pattern
@@ -353,6 +387,27 @@ func (fcq *FileContentsQuery) UnmarshalJSON(b []byte) error {
 	}
 
 	fcq.Query = contains
+	return nil
+}
+
+// UnmarshalJSON for SubtestNamePattern attempts to interpret a query atom as
+// {"subtest":<subtest name pattern string>}.
+func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	subtestMsg, ok := data["subtest"]
+	if !ok {
+		return errors.New(`Missing subtest name pattern property: "subtest"`)
+	}
+	var subtest string
+	if err := json.Unmarshal(*subtestMsg, &subtest); err != nil {
+		return errors.New(`Subtest name property "subtest" is not a string`)
+	}
+
+	tnp.Subtest = subtest
 	return nil
 }
 
@@ -611,6 +666,27 @@ func (c *AbstractCount) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractLink attempts to interpret a query atom as
+// {"link":<metadata url pattern string>}.
+func (l *AbstractLink) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	patternMsg, ok := data["link"]
+	if !ok {
+		return errors.New(`Missing Link pattern property: "link"`)
+	}
+	var pattern string
+	if err := json.Unmarshal(*patternMsg, &pattern); err != nil {
+		return errors.New(`Missing link pattern property "pattern" is not a string`)
+	}
+
+	l.Pattern = pattern
+	return nil
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -621,6 +697,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err = json.Unmarshal(b, &fcq)
 	if err == nil {
 		return fcq, nil
+	}
+	var stnp SubtestNamePattern
+	err = json.Unmarshal(b, &stnp)
+	if err == nil {
+		return stnp, nil
 	}
 	var tp TestPath
 	err = json.Unmarshal(b, &tp)
@@ -666,6 +747,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err = json.Unmarshal(b, &c)
 	if err == nil {
 		return c, nil
+	}
+	var l AbstractLink
+	err = json.Unmarshal(b, &l)
+	if err == nil {
+		return l, nil
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
 }

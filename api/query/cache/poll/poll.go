@@ -7,14 +7,13 @@ package poll
 import (
 	"time"
 
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // KeepRunsUpdated implements updates to an index.Index via simple polling every
 // interval duration for at most limit runs loaded from fetcher.
-func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval time.Duration, limit int, idx index.Index) {
+func KeepRunsUpdated(store shared.Datastore, logger shared.Logger, interval time.Duration, limit int, idx index.Index) {
 	// Start by waiting polling interval. This reduces the chance of false alarms
 	// from log monitoring when KeepRunsUpdated is invoked around the same time as
 	// index backfilling.
@@ -26,7 +25,7 @@ func KeepRunsUpdated(fetcher backfill.RunFetcher, logger shared.Logger, interval
 	for {
 		start := time.Now()
 
-		runs, err := fetcher.FetchRuns(limit)
+		runs, err := store.TestRunQuery().LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil)
 		if err != nil {
 			logger.Errorf("Error fetching runs for update: %v", err)
 			wait(start, interval)

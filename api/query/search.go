@@ -21,60 +21,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// LegacySearchRunResult is the results data from legacy test summarys.  These
-// summaries contain a "pass count" and a "total count", where the test itself
-// counts as 1, and each subtest counts as 1. The "pass count" contains any
-// status values that are "PASS" or "OK".
-type LegacySearchRunResult struct {
-	// Passes is the number of test results in a PASS/OK state.
-	Passes int `json:"passes"`
-	// Total is the total number of test results for this run/file pair.
-	Total int `json:"total"`
-}
-
-// SearchResult contains data regarding a particular test file over a collection
-// of runs. The runs are identified externally in a parallel slice (see
-// SearchResponse).
-type SearchResult struct {
-	// Test is the name of a test; this often corresponds to a test file path in
-	// the WPT source reposiory.
-	Test string `json:"test"`
-	// LegacyStatus is the results data from legacy test summaries. These
-	// summaries contain a "pass count" and a "total count", where the test itself
-	// counts as 1, and each subtest counts as 1. The "pass count" contains any
-	// status values that are "PASS" or "OK".
-	LegacyStatus []LegacySearchRunResult `json:"legacy_status,omitempty"`
-
-	// Interoperability scores. For N browsers, we have an array of
-	// N+1 items, where the index X is the number of items passing in exactly
-	// X of the N browsers. e.g. for 4 browsers, [0/4, 1/4, 2/4, 3/4, 4/4].
-	Interop []int `json:"interop,omitempty"`
-
-	// Subtests (names) which are included in the LegacyStatus summary.
-	Subtests []string `json:"subtests,omitempty"`
-
-	// Diff count of subtests which are included in the LegacyStatus summary.
-	Diff shared.TestDiff `json:"diff,omitempty"`
-}
-
-// SearchResponse contains a response to search API calls, including specific
-// runs whose results were searched and the search results themselves.
-type SearchResponse struct {
-	// Runs is the specific runs for which results were retrieved. Each run, in
-	// order, corresponds to a Status entry in each SearchResult in Results.
-	Runs []shared.TestRun `json:"runs"`
-	// IgnoredRuns is any runs that the client requested to be included in the
-	// query, but were not included. This optional field may be non-nil if, for
-	// example, results are being served from an incompelte cache of runs and some
-	// runs described in the query request are not resident in the cache.
-	IgnoredRuns []shared.TestRun `json:"ignored_runs,omitempty"`
-	// Results is the collection of test results, grouped by test file name.
-	Results []SearchResult `json:"results"`
-	// MetadataResponse is a response to a wpt-metadata query.
-	MetadataResponse shared.MetadataResults `json:"metadata,omitempty"`
-}
-
-type byName []SearchResult
+type byName []shared.SearchResult
 
 func (r byName) Len() int           { return len(r) }
 func (r byName) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
@@ -109,10 +56,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
 	qh := queryHandler{
 		store:      shared.NewAppEngineDatastore(ctx, true),
-		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
-		client:     sh.api.GetHTTPClient(),
-		logger:     shared.GetLogger(ctx),
 	}
 	var delegate http.Handler
 	if r.Method == "GET" {
@@ -151,10 +95,10 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			simpleQ, isSimpleQ = exists.Args[0].(TestNamePattern)
 		}
 		q := r.URL.Query()
-		_, interop := q["interop"]
-		_, subtests := q["subtests"]
-		_, diff := q["diff"]
-		isSimpleQ = isSimpleQ && !interop && !subtests && !diff
+		for _, param := range []string{"interop", "subtests", "diff"} {
+			val, _ := shared.ParseBooleanParam(q, param)
+			isSimpleQ = isSimpleQ && (val == nil || !*val)
+		}
 	}
 
 	if !isSimpleQ {
@@ -167,7 +111,8 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		logger := shared.GetLogger(ctx)
 		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
-		client := sh.api.GetHTTPClient()
+		client, cancel := sh.api.GetSlowHTTPClient(time.Second * 15)
+		defer cancel()
 		req, err := http.NewRequest("POST", fwdURL.String(), bytes.NewBuffer(data))
 		if err != nil {
 			logger.Errorf("Failed to create request to POST %s: %v", fwdURL.String(), err)
@@ -205,7 +150,6 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// Structured query is equivalent to unstructured query.
 	// Create an unstructured query request and delegate to unstructured query
 	// handler.
-	q := r.URL.Query()
 	r2 := *r
 	r2url := *r.URL
 	r2.URL = &r2url
@@ -216,10 +160,6 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 	runIDsStr := strings.Join(runIDStrs, ",")
 	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
-
-	if showMetadata, _ := shared.ParseBooleanParam(q, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		r2.URL.RawQuery = fmt.Sprintf("%s&%s=%s", r2.URL.RawQuery, shared.ShowMetadataParam, q.Get(shared.ShowMetadataParam))
-	}
 
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
 }
@@ -233,11 +173,6 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	resp := prepareSearchResponse(filters, testRuns, summaries)
 
-	q := r.URL.Query()
-	if showMetadata, _ := shared.ParseBooleanParam(q, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		resp.MetadataResponse = shared.GetMetadataResponse(testRuns, sh.queryHandler.client, sh.queryHandler.logger)
-	}
-
 	data, err := json.Marshal(resp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -245,13 +180,13 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	w.Write(data)
 }
 
-func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRun, summaries []summary) SearchResponse {
-	resp := SearchResponse{
+func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRun, summaries []summary) shared.SearchResponse {
+	resp := shared.SearchResponse{
 		Runs: testRuns,
 	}
 	q := canonicalizeStr(filters.Q)
 	// Dedup visited file names via a map of results.
-	resMap := make(map[string]SearchResult)
+	resMap := make(map[string]shared.SearchResult)
 	for i, s := range summaries {
 		for filename, passAndTotal := range s {
 			// Exclude filenames that do not match query.
@@ -260,19 +195,19 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 			}
 
 			if _, ok := resMap[filename]; !ok {
-				resMap[filename] = SearchResult{
+				resMap[filename] = shared.SearchResult{
 					Test:         filename,
-					LegacyStatus: make([]LegacySearchRunResult, len(testRuns)),
+					LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
 				}
 			}
-			resMap[filename].LegacyStatus[i] = LegacySearchRunResult{
+			resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
 				Passes: passAndTotal[0],
 				Total:  passAndTotal[1],
 			}
 		}
 	}
 	// Load map into slice and sort it.
-	resp.Results = make([]SearchResult, 0, len(resMap))
+	resp.Results = make([]shared.SearchResult, 0, len(resMap))
 	for _, r := range resMap {
 		resp.Results = append(resp.Results, r)
 	}
@@ -311,7 +246,7 @@ var shouldCacheSearchResponse = func(ctx context.Context, statusCode int, payloa
 		return false
 	}
 
-	var resp SearchResponse
+	var resp shared.SearchResponse
 	err := json.Unmarshal(payload, &resp)
 	if err != nil {
 		shared.GetLogger(ctx).Errorf("Malformed search response")
