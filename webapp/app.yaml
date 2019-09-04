@@ -61,6 +61,9 @@ handlers:
   script: _go_app
   secure: always
 
+env_variables:
+  TASKCLUSTER_ROOT_URL: https://taskcluster.net
+
 # Don't upload test data, package config, etc. to AppEngine.
 skip_files:
 - components/test/
