@@ -71,6 +71,6 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		var results []shared.PendingTestRun
 		json.Unmarshal(body, &results)
 		assert.Len(t, results, 1)
-		//	assert.Equal(t, results[0].ID, running.ID)
+		assert.Equal(t, results[0].ID, running.ID)
 	})
 }

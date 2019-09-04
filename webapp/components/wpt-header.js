@@ -55,6 +55,9 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         <a href="/">Latest Run</a>
         <a href="/runs">Recent Runs</a>
         <a href="/insights">Insights</a>
+        <template is="dom-if" if="[[processorTab]]">
+          <a href="/status">Processor</a>
+        </template>
         <a href="/about">About</a>
         <a href="https://github.com/web-platform-tests/wpt.fyi">GitHub Source</a>
       </nav>
