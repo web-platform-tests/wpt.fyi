@@ -358,6 +358,25 @@ func TestStructuredQuery_link(t *testing.T) {
 		}}, rq)
 }
 
+func TestStructuredQuery_is(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"is": "different"
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			MetadataQualityDifferent,
+		}},
+	}, rq)
+}
+
 func TestStructuredQuery_combinedlink(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
