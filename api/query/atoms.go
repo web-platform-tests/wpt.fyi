@@ -180,6 +180,23 @@ func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 }
 
+// MetadataQuality represents the root of an "is" query, which asserts known
+// metadata qualities to the results
+type MetadataQuality int
+
+const (
+	// MetadataQualityUnknown is a placeholder for unrecognized values.
+	MetadataQualityUnknown MetadataQuality = 0
+	// MetadataQualityDifferent represents an is:different atom.
+	// "different" ensures that one or more results differs from the other results.
+	MetadataQualityDifferent MetadataQuality = 1
+)
+
+// BindToRuns for MetadataQuality is a no-op; it is independent of test runs.
+func (q MetadataQuality) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return q
+}
+
 // TestStatusEq is a query atom that matches tests where the test status/result
 // from at least one test run matches the given status value, optionally filtered
 // to a specific browser name.
@@ -656,6 +673,36 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for MetadataQuality attempts to interpret a query atom as
+// {"is":<metadata quality>}.
+func (q *MetadataQuality) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	is, ok := data["is"]
+	if !ok {
+		return errors.New(`Missing "is" pattern property: "is"`)
+	}
+	var quality string
+	if err := json.Unmarshal(*is, &quality); err != nil {
+		return errors.New(`"is" property is not a string`)
+	}
+
+	*q, err = MetadataQualityFromString(quality)
+	return err
+}
+
+// MetadataQualityFromString returns the enum value for the given string.
+func MetadataQualityFromString(quality string) (MetadataQuality, error) {
+	switch quality {
+	case "different":
+		return MetadataQualityDifferent, nil
+	}
+	return MetadataQualityUnknown, fmt.Errorf(`Unknown "is" quality "%s"`, quality)
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	var tnp TestNamePattern
 	err := json.Unmarshal(b, &tnp)
@@ -716,6 +763,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	err = json.Unmarshal(b, &l)
 	if err == nil {
 		return l, nil
+	}
+	var i MetadataQuality
+	err = json.Unmarshal(b, &i)
+	if err == nil {
+		return i, nil
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
 }

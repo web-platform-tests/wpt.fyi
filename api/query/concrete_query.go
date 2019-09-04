@@ -117,6 +117,15 @@ func (Link) Size() int { return 1 }
 // Size of Count is the sum of the sizes of its constituent ConcretQuery instances.
 func (c Count) Size() int { return size(c.Args) }
 
+// Size of Is depends on the quality.
+func (q MetadataQuality) Size() int {
+	switch q {
+	case MetadataQualityDifferent:
+		return 1
+	}
+	return 1
+}
+
 // Size of Or is the sum of the sizes of its constituent ConcretQuery instances.
 func (o Or) Size() int { return size(o.Args) }
 

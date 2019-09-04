@@ -269,6 +269,12 @@ suite('<test-search>', () => {
       });
     });
 
+    test('is', () => {
+      assertQueryParse('is:different', {
+        exists: [{ is: 'different' }]
+      });
+    });
+
     test('count', () => {
       assertQueryParse('count:5(status:PASS or status:OK)', {
         exists: [{

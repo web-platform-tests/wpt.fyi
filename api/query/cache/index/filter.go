@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	log "github.com/Hexcles/logrus"
+	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -70,6 +71,12 @@ type Link struct {
 	index
 	pattern  string
 	metadata map[string][]string
+}
+
+// MetadataQuality is a query.MetadataQuality bound to an in-memory index.
+type MetadataQuality struct {
+	index
+	quality query.MetadataQuality
 }
 
 // And is a query.And bound to an in-memory index.
@@ -189,6 +196,15 @@ func (l Link) Filter(t TestID) bool {
 	return false
 }
 
+// Filter interprets a MetadataQuality as a filter function over TestIDs.
+func (q MetadataQuality) Filter(t TestID) bool {
+	set := mapset.NewSet()
+	for _, result := range q.runResults {
+		set.Add(result.GetResult(t))
+	}
+	return set.Cardinality() != 1
+}
+
 // Filter interprets an And as a filter function over TestIDs.
 func (a And) Filter(t TestID) bool {
 	args := a.args
@@ -243,6 +259,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return Count{idx, v.Count, fs}, nil
 	case query.Link:
 		return Link{idx, v.Pattern, v.Metadata}, nil
+	case query.MetadataQuality:
+		return MetadataQuality{idx, v}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {

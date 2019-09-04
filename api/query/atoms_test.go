@@ -664,8 +664,7 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 		Where: TestStatusEq{Status: 1},
 	}
 
-	runs := shared.TestRuns{}
-	runs = shared.TestRuns{
+	runs := shared.TestRuns{
 		{
 			ID:                int64(0),
 			ProductAtRevision: e.ProductAtRevision,
@@ -696,8 +695,7 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		Pattern: "bugs.bar",
 	}
 
-	runs := shared.TestRuns{}
-	runs = shared.TestRuns{
+	runs := shared.TestRuns{
 		{
 			ID:                int64(0),
 			ProductAtRevision: e.ProductAtRevision,
@@ -725,6 +723,28 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindIs(t *testing.T) {
+	defer func(url string) {
+		shared.MetadataArchiveURL = url
+	}(shared.MetadataArchiveURL)
+
+	e := shared.ParseProductSpecUnsafe("chrome")
+	f := shared.ParseProductSpecUnsafe("safari")
+	q := MetadataQualityDifferent
+
+	runs := shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: e.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: f.ProductAtRevision,
+		},
+	}
+	assert.Equal(t, q, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {
