@@ -202,7 +202,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 	for _, result := range q.runResults {
 		set.Add(result.GetResult(t))
 	}
-	return set.Cardinality() != 1
+	return set.Cardinality() > 1
 }
 
 // Filter interprets an And as a filter function over TestIDs.

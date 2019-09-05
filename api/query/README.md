@@ -55,7 +55,7 @@ Filters the results to values which possess/exhibit a given quality.
 
 #### `is:different`
 
-Filters to rows where more there is more than one resulting status for a test
+Filters to rows where there is more than one resulting status for a test
 across the runs.
 
 ### And-conjuction
