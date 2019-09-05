@@ -53,7 +53,7 @@ func RegisterRoutes() {
 	shared.AddRoute("/insights", "insights", insightsHandler)
 
 	// List of all pending/in-flight runs
-	shared.AddRoute("/processor", "processor", processorStatusHandler)
+	shared.AddRoute("/status", "processor-status", processorStatusHandler)
 
 	// List of all test runs, by SHA[0:10]
 	shared.AddRoute("/runs", "test-runs", testRunsHandler)
