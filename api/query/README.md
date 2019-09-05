@@ -45,6 +45,19 @@ or, negation,
 
 Where `[product]` is a product specification (e.g. `safari`, `chrome-69`).
 
+### Meta qualities
+
+> BETA: This feature is under development and may change without warning.
+
+Filters the results to values which possess/exhibit a given quality.
+
+    is:[quality]
+
+#### `is:different`
+
+Filters to rows where there is more than one resulting status for a test
+across the runs.
+
 ### And-conjuction
 
     [query1] and [query2] [and ...]
@@ -173,3 +186,14 @@ Search untriaged issues -
 Search triaged issues -
 
     chrome:pass and link:bugs.chromium.org
+
+#### is
+
+`is` query atoms perform a search for tests that possess some meta quality.
+
+    {"is": "different"}
+
+
+
+See [#meta-qualities](Meta qualities) above for more information on other
+meta qualities than `"different"`.

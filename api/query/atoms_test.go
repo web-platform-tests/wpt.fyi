@@ -358,6 +358,25 @@ func TestStructuredQuery_link(t *testing.T) {
 		}}, rq)
 }
 
+func TestStructuredQuery_is(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"is": "different"
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			MetadataQualityDifferent,
+		}},
+	}, rq)
+}
+
 func TestStructuredQuery_combinedlink(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -664,8 +683,7 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 		Where: TestStatusEq{Status: 1},
 	}
 
-	runs := shared.TestRuns{}
-	runs = shared.TestRuns{
+	runs := shared.TestRuns{
 		{
 			ID:                int64(0),
 			ProductAtRevision: e.ProductAtRevision,
@@ -696,8 +714,7 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		Pattern: "bugs.bar",
 	}
 
-	runs := shared.TestRuns{}
-	runs = shared.TestRuns{
+	runs := shared.TestRuns{
 		{
 			ID:                int64(0),
 			ProductAtRevision: e.ProductAtRevision,
@@ -725,6 +742,28 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindIs(t *testing.T) {
+	defer func(url string) {
+		shared.MetadataArchiveURL = url
+	}(shared.MetadataArchiveURL)
+
+	e := shared.ParseProductSpecUnsafe("chrome")
+	f := shared.ParseProductSpecUnsafe("safari")
+	q := MetadataQualityDifferent
+
+	runs := shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: e.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: f.ProductAtRevision,
+		},
+	}
+	assert.Equal(t, q, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {
