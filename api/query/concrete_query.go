@@ -119,10 +119,7 @@ func (c Count) Size() int { return size(c.Args) }
 
 // Size of Is depends on the quality.
 func (q MetadataQuality) Size() int {
-	switch q {
-	case MetadataQualityDifferent:
-		return 1
-	}
+	// Currently only 'Different' supported, which is one set comparison per row.
 	return 1
 }
 
