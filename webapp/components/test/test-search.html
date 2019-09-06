@@ -230,6 +230,26 @@ suite('<test-search>', () => {
       });
     });
 
+    test('all', () => {
+      assertQueryParse('all(status:!PASS status:!OK)', {
+        all: [
+          {status: {not: 'PASS'} },
+          {status: {not: 'OK'} },
+        ],
+      });
+    });
+
+    test('none', () => {
+      assertQueryParse('none(status:PASS or status:OK)', {
+        none: [{
+          or: [
+            {status: 'PASS'},
+            {status: 'OK'},
+          ]
+        }],
+      });
+    });
+
     test('sequential', () => {
       // Canon: flip-flopping, which is usually flakiness:
       // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.

@@ -77,6 +77,18 @@ Combines filters, such that any must apply, e.g.
 > NOTE: Or-conjuction takes less precedence than `and`. Precedence can be modified
 > using parens, e.g. `chrome:pass and (firefox:!pass or safari:!pass)`
 
+### All and None
+
+> BETA: This feature is under development and may change without warning.
+
+    all([query1] [query2])
+
+Combines filters such that they must all apply to all runs.
+
+    none([query1] [query2])
+
+Combines filters such that they must not _all_ apply to _any_ single run.
+
 ### Sequential
 
     seq([query1] [query2] [...])
@@ -133,6 +145,21 @@ that each of its queries is satisfied _by the same run_. This matters for the ca
 that there are multiple runs with the same product.
 
     {"exists": [query1, query2, ...]}
+
+#### all
+
+`all` query objects perform a conjunction of all of the runs, in order to ensure
+that each of its queries is satisfied by all of the runs.
+
+    {"all": [query1, query2, ...]}
+
+#### none
+
+`none` query objects perform a disjunction of all of the runs, in order to ensure
+that no single run satisfies all of its queries. `none` queries are a simplification for
+`{"not": {"exists": [...] }}` queries.
+
+    {"none": [query1, query2, ...]}
 
 #### sequential
 
