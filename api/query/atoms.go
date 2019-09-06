@@ -115,6 +115,49 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 }
 
+// AbstractAll represents an array of abstract queries, each of which must be
+// satifisfied by all runs. It represents the root of a structured query.
+type AbstractAll struct {
+	Args []AbstractQuery
+}
+
+// BindToRuns binds each abstract query to an and-combo of that query against
+// each specific/individual run.
+func (e AbstractAll) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	queries := make([]ConcreteQuery, len(e.Args))
+	for i, arg := range e.Args {
+		var query ConcreteQuery
+		byRun := make([]ConcreteQuery, 0, len(runs))
+		for _, run := range runs {
+			bound := arg.BindToRuns(run)
+			if _, ok := bound.(True); !ok { // And with True is pointless.
+				byRun = append(byRun, bound)
+			}
+		}
+		query = And{Args: byRun}
+		queries[i] = query
+	}
+	// And the overall node is true if all its exists queries are true.
+	return And{
+		Args: queries,
+	}
+}
+
+// AbstractNone represents an array of abstract queries, each of which must not be
+// satifisfied by any run. It represents the root of a structured query.
+type AbstractNone struct {
+	Args []AbstractQuery
+}
+
+// BindToRuns binds to a not-exists for the same query(s).
+func (e AbstractNone) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return Not{
+		AbstractExists{
+			Args: e.Args,
+		}.BindToRuns(runs...),
+	}
+}
+
 // AbstractSequential represents the root of a sequential queries, where the first
 // query must be satisfied by some run such that the next run, sequentially, also
 // satisfies the next query, and so on.
@@ -597,6 +640,58 @@ func (e *AbstractExists) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractAll attempts to interpret a query atom as
+// {"all": [<abstract query>]}.
+func (e *AbstractAll) UnmarshalJSON(b []byte) error {
+	var data struct {
+		All []json.RawMessage `json:"all"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.All) == 0 {
+		return errors.New(`Missing conjunction property: "all"`)
+	}
+
+	qs := make([]AbstractQuery, 0, len(data.All))
+	for _, msg := range data.All {
+		q, err := unmarshalQ(msg)
+		if err != nil {
+			return err
+		}
+		qs = append(qs, q)
+	}
+	e.Args = qs
+	return nil
+}
+
+// UnmarshalJSON for AbstractNone attempts to interpret a query atom as
+// {"none": [<abstract query>]}.
+func (e *AbstractNone) UnmarshalJSON(b []byte) error {
+	var data struct {
+		None []json.RawMessage `json:"none"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.None) == 0 {
+		return errors.New(`Missing conjunction property: "none"`)
+	}
+
+	qs := make([]AbstractQuery, 0, len(data.None))
+	for _, msg := range data.None {
+		q, err := unmarshalQ(msg)
+		if err != nil {
+			return err
+		}
+		qs = append(qs, q)
+	}
+	e.Args = qs
+	return nil
+}
+
 // UnmarshalJSON for AbstractSequential attempts to interpret a query atom as
 // {"exists": [<abstract queries>]}.
 func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
@@ -704,70 +799,110 @@ func MetadataQualityFromString(quality string) (MetadataQuality, error) {
 }
 
 func unmarshalQ(b []byte) (AbstractQuery, error) {
-	var tnp TestNamePattern
-	err := json.Unmarshal(b, &tnp)
-	if err == nil {
-		return tnp, nil
+	{
+		var tnp TestNamePattern
+		err := json.Unmarshal(b, &tnp)
+		if err == nil {
+			return tnp, nil
+		}
 	}
-	var stnp SubtestNamePattern
-	err = json.Unmarshal(b, &stnp)
-	if err == nil {
-		return stnp, nil
+	{
+		var stnp SubtestNamePattern
+		err := json.Unmarshal(b, &stnp)
+		if err == nil {
+			return stnp, nil
+		}
 	}
-	var tp TestPath
-	err = json.Unmarshal(b, &tp)
-	if err == nil {
-		return tp, nil
+	{
+		var tp TestPath
+		err := json.Unmarshal(b, &tp)
+		if err == nil {
+			return tp, nil
+		}
 	}
-	var tse TestStatusEq
-	err = json.Unmarshal(b, &tse)
-	if err == nil {
-		return tse, nil
+	{
+		var tse TestStatusEq
+		err := json.Unmarshal(b, &tse)
+		if err == nil {
+			return tse, nil
+		}
 	}
-	var tsn TestStatusNeq
-	err = json.Unmarshal(b, &tsn)
-	if err == nil {
-		return tsn, nil
+	{
+		var tsn TestStatusNeq
+		err := json.Unmarshal(b, &tsn)
+		if err == nil {
+			return tsn, nil
+		}
 	}
-	var n AbstractNot
-	err = json.Unmarshal(b, &n)
-	if err == nil {
-		return n, nil
+	{
+		var n AbstractNot
+		err := json.Unmarshal(b, &n)
+		if err == nil {
+			return n, nil
+		}
 	}
-	var o AbstractOr
-	err = json.Unmarshal(b, &o)
-	if err == nil {
-		return o, nil
+	{
+		var o AbstractOr
+		err := json.Unmarshal(b, &o)
+		if err == nil {
+			return o, nil
+		}
 	}
-	var a AbstractAnd
-	err = json.Unmarshal(b, &a)
-	if err == nil {
-		return a, nil
+	{
+		var a AbstractAnd
+		err := json.Unmarshal(b, &a)
+		if err == nil {
+			return a, nil
+		}
 	}
-	var e AbstractExists
-	err = json.Unmarshal(b, &e)
-	if err == nil {
-		return e, nil
+	{
+		var e AbstractExists
+		err := json.Unmarshal(b, &e)
+		if err == nil {
+			return e, nil
+		}
 	}
-	var s AbstractSequential
-	err = json.Unmarshal(b, &s)
-	if err == nil {
-		return s, nil
+	{
+		var a AbstractAll
+		err := json.Unmarshal(b, &a)
+		if err == nil {
+			return a, nil
+		}
 	}
-	var c AbstractCount
-	err = json.Unmarshal(b, &c)
-	if err == nil {
-		return c, nil
+	{
+		var n AbstractNone
+		err := json.Unmarshal(b, &n)
+		if err == nil {
+			return n, nil
+		}
 	}
-	var l AbstractLink
-	err = json.Unmarshal(b, &l)
-	if err == nil {
-		return l, nil
+	{
+		var s AbstractSequential
+		err := json.Unmarshal(b, &s)
+		if err == nil {
+			return s, nil
+		}
 	}
-	var i MetadataQuality
-	err = json.Unmarshal(b, &i)
-	if err == nil {
-		return i, nil
+	{
+		var c AbstractCount
+		err := json.Unmarshal(b, &c)
+		if err == nil {
+			return c, nil
+		}
+	}
+	{
+		var l AbstractLink
+		err := json.Unmarshal(b, &l)
+		if err == nil {
+			return l, nil
+		}
+	}
+	{
+		var i MetadataQuality
+		err := json.Unmarshal(b, &i)
+		if err == nil {
+			return i, nil
+		}
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
 }

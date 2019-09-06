@@ -279,6 +279,40 @@ func TestStructuredQuery_exists(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
+func TestStructuredQuery_all(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"all": [
+				{"pattern": "cssom"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractAll{[]AbstractQuery{TestNamePattern{"cssom"}}},
+		}, rq)
+}
+
+func TestStructuredQuery_none(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"none": [
+				{"pattern": "cssom"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractNone{[]AbstractQuery{TestNamePattern{"cssom"}}},
+		}, rq)
+}
+
 func TestStructuredQuery_sequential(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
