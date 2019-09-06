@@ -14,7 +14,7 @@ Filters to results with a specific status (or, _not_ a specific status).
 
 Valid statuses are:
 
- - `unknown`
+ - `unknown` (a.k.a. `missing`)
  - `pass`
  - `ok`
  - `error`
