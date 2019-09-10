@@ -73,8 +73,12 @@ class WPTProcessor extends LoadingState(PolymerElement) {
       </table>
     </template>
 
-    <template is="dom-if" if="[[resultsLoadFailed]]">
+    <template is="dom-if" if="[[!testRuns.length]]">
       <div>No runs found.</div>
+    </template>
+
+    <template is="dom-if" if="[[resultsLoadFailed]]">
+      <div>Failed to load runs.</div>
     </template>
 
     <div class="loading">
@@ -118,7 +122,7 @@ class WPTProcessor extends LoadingState(PolymerElement) {
   async loadPendingRuns(path) {
     this.resultsLoadFailed = false;
     const r = await fetch(path);
-    if (!r.ok || r.status !== 200) {
+    if (!r.ok) {
       throw 'Failed to fetch pending runs.';
     }
     this.testRuns = await r.json();

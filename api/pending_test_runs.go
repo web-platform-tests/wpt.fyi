@@ -26,7 +26,7 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	case "pending":
 		q = q.Order("-Stage").Filter("Stage < ", shared.StageValid)
 	case "invalid":
-		q = q.Order("Stage").Filter("Stage > ", shared.StageValid)
+		q = q.Order("-Stage").Filter("Stage > ", shared.StageValid)
 	case "":
 		// No-op
 	default:
