@@ -112,11 +112,11 @@ class WPTProcessor extends LoadingState(PolymerElement) {
   _selectedTabChanged(tab) {
     const path = tab === 0 ? '/api/status/pending' : '/api/status/invalid';
     this.load(
-        this.loadPendingRuns(path),
-        () => {
-          this.resultsLoadFailed = true;
-          this.testRuns = [];
-        });
+      this.loadPendingRuns(path),
+      () => {
+        this.resultsLoadFailed = true;
+        this.testRuns = [];
+      });
   }
 
   async loadPendingRuns(path) {
