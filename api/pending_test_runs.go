@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -19,10 +20,18 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	store := shared.NewAppEngineDatastore(ctx, false)
 
-	filter := mux.Vars(r)["filter"]
+	filter := strings.ToLower(mux.Vars(r)["filter"])
 	q := store.NewQuery("PendingTestRun")
-	if filter == "pending" {
+	switch filter {
+	case "pending":
 		q = q.Order("-Stage").Filter("Stage < ", shared.StageValid)
+	case "invalid":
+		q = q.Order("-Stage").Filter("Stage > ", shared.StageValid)
+	case "":
+		// No-op
+	default:
+		http.Error(w, "Invalid filter: "+filter, http.StatusBadRequest)
+		return
 	}
 	q = q.Order("-Updated")
 

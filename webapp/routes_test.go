@@ -76,6 +76,7 @@ func TestApiRunBound(t *testing.T) {
 func TestApiStatusBound(t *testing.T) {
 	assertHandlerIs(t, "/api/status", "api-pending-test-runs")
 	assertHandlerIs(t, "/api/status/pending", "api-pending-test-runs")
+	assertHandlerIs(t, "/api/status/invalid", "api-pending-test-runs")
 	assertHandlerIs(t, "/api/status/123", "api-pending-test-run-update")
 	assertHandlerIsDefault(t, "/api/status/notavalidfilter")
 }
