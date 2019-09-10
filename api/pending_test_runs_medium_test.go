@@ -73,4 +73,17 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		assert.Len(t, results, 1)
 		assert.Equal(t, results[0].ID, running.ID)
 	})
+
+	t.Run("/api/status/invalid", func(t *testing.T) {
+		r, _ = i.NewRequest("GET", "/api/status/invalid", nil)
+		r = mux.SetURLVars(r, map[string]string{"filter": "invalid"})
+		resp := httptest.NewRecorder()
+		apiPendingTestRunsHandler(resp, r)
+		body, _ := ioutil.ReadAll(resp.Result().Body)
+		assert.Equal(t, http.StatusOK, resp.Code, string(body))
+		var results []shared.PendingTestRun
+		json.Unmarshal(body, &results)
+		assert.Len(t, results, 1)
+		assert.Equal(t, results[0].ID, invalid.ID)
+	})
 }
