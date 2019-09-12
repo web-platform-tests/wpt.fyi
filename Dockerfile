@@ -1,9 +1,5 @@
 # vim: set expandtab sw=4
-# WORKDIR is assumed to be a checkout of the repo (usually a volume).
 FROM golang:1.12-buster
-
-RUN mkdir -p ${GOPATH}/src/github.com/web-platform-tests && \
-    ln -s $(pwd) ${GOPATH}/src/github.com/web-platform-tests/wpt.fyi
 
 # Sort the package names!
 # python-crcmod: native module to speed up CRC checksum in gsutil
@@ -34,8 +30,3 @@ RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
     gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
     gcloud --version
-
-# Go tools (sort the lines!)
-RUN go get -u \
-    github.com/golang/mock/mockgen \
-    golang.org/x/lint/golint
