@@ -17,7 +17,7 @@ RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         sudo \
         tox \
         wget \
-        xvfb &&
+        xvfb && \
     rm /usr/bin/firefox
 
 # Provide a fake openjdk-8-jdk for google-cloud-sdk-datastore-eumlator
