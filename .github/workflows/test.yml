@@ -14,18 +14,18 @@ jobs:
       - uses: actions/checkout@v1
       - uses: ./.github/actions/make-in-docker
         with:
-          args: python_test
+          target: python_test
   go_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: ./.github/actions/make-in-docker
         with:
-          args: go_test
+          target: go_test
   web_components_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: ./.github/actions/make-in-docker
         with:
-          args: web_components_test
+          target: web_components_test
