@@ -7,6 +7,6 @@ inputs:
 runs:
   using: 'docker'
   image: '../../../Dockerfile'
-  entrypoint: '/usr/bin/make'
   args:
+    - /usr/bin/make
     - ${{ inputs.target }}
