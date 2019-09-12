@@ -1,21 +1,30 @@
 on: push
 name: Test
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: ./
-        name: Docker
+        name: Run make in Docker
         with:
-          entrypoint: /bin/bash
-          args: -c "pwd; ls -a"
-  tox:
+          entrypoint: /usr/bin/make
+          args: lint
+  python_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: ./
-        name: Docker
+        name: Run make in Docker
         with:
           entrypoint: /usr/bin/make
           args: python_test
+  go_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./
+        name: Run make in Docker
+        with:
+          entrypoint: /usr/bin/make
+          args: go_test
