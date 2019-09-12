@@ -121,7 +121,7 @@ webserver_deps: webapp_deps dev_appserver_deps
 
 webapp_deps: go_build webapp_node_modules
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
+dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go #gcloud-cloud-datastore-emulator
 
 chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
