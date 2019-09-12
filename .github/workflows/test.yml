@@ -5,26 +5,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: ./
-        name: Run make in Docker
+      - uses: ./github/actions/make-in-docker
         with:
-          entrypoint: /usr/bin/make
-          args: lint
+          target: lint
   python_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: ./
-        name: Run make in Docker
+      - uses: ./github/actions/make-in-docker
         with:
-          entrypoint: /usr/bin/make
           args: python_test
   go_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: ./
-        name: Run make in Docker
+      - uses: ./github/actions/make-in-docker
         with:
-          entrypoint: /usr/bin/make
           args: go_test
+  web_components_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./github/actions/make-in-docker
+        with:
+          args: web_components_test

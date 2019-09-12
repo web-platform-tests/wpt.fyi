@@ -1,0 +1,12 @@
+name: 'Run make in Docker'
+description: 'Run a make target inside a container created from Dockerfile'
+inputs:
+  target:
+    description: 'Target to make'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  entrypoint: '/usr/bin/make'
+  args:
+    - ${{ inputs.target }}
