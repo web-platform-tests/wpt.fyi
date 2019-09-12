@@ -19,9 +19,11 @@ import (
 // logs are suppressed. It takes a boolean argument for whether the Datastore
 // emulation should be strongly consistent.
 func NewAEInstance(stronglyConsistentDatastore bool) (aetest.Instance, error) {
+	f := false
 	return aetest.NewInstance(&aetest.Options{
 		StronglyConsistentDatastore: stronglyConsistentDatastore,
 		SuppressDevAppServerLog:     true,
+		SupportDatastoreEmulator:    &f,
 	})
 }
 
