@@ -2,6 +2,6 @@
   "suites": [
     "components/test/*.html"
   ],
-  "verbose": false,
+  "verbose": true,
   "expanded": true
 }
