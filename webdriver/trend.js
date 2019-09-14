@@ -9,8 +9,8 @@ const puppeteer = require('puppeteer');
 
 const flags = require('flags');
 const browserFlag = flags.defineString('products', 'chrome,firefox,safari', 'Browsers to compare/analyze');
-const mode = flags.defineString('mode', 'failures', 'Analysis type. "failures", "passes", or "flakes"');
-const date = flags.defineString('date', '2019-08-01', 'First date to scrape');
+const mode = flags.defineString('mode', 'failures', 'Analysis type. "stats", "failures", "passes", or "flakes"');
+const date = flags.defineString('date', (new Date()).toISOString().split('T')[0], 'First date to scrape');
 const weeks = flags.defineInteger('weeks', 52, 'Number of weeks to scrape');
 const step = flags.defineInteger('step', 1, 'Number of weeks to step');
 const backward = flags.defineBoolean('backward', true, 'Whether to move backward in time for each week');
@@ -102,12 +102,17 @@ async function main() {
             }
           }
           nextUrl.searchParams.set('q', q);
-        } else {
+        } else if (mode.get() === 'flakes') {
           nextUrl.searchParams.set('products', browser);
           nextUrl.searchParams.set('max-count', 10);
           nextUrl.searchParams.set(
             'q',
             'seq((status:PASS|status:OK) (status:!PASS&status:!OK&status:!unknown)) seq((status:!PASS&status:!OK&status:!unknown) (status:PASS|status:OK))');
+        } else {
+          nextUrl.searchParams.set(
+            'q',
+            `${browser}:ok or ${browser}:pass`
+          );
         }
 
         const {sha, tests, subtests} = await scrape(nextUrl);
