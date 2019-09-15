@@ -1,0 +1,32 @@
+name: Update Docker image
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/actions/make-in-docker/Dockerfile'
+  schedule:
+    # Rebuild the image weekly.
+    - cron: '0 0 * * 0'
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/docker/login@master
+        # This action takes caution not to expose secrets in logs.
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: actions/docker/cli@master
+        name: docker build
+        with:
+          args: build -t hexcles/wpt.fyi-make-in-docker:latest -t hexcles/wpt.fyi-make-in-docker:${{ github.sha }} ./.github/actions/make-in-docker
+      - uses: actions/docker/cli@master
+        name: docker push SHA
+        with:
+          args: push hexcles/wpt.fyi-make-in-docker:${{ github.sha }}
+      - uses: actions/docker/cli@master
+        name: docker push latest
+        with:
+          args: push hexcles/wpt.fyi-make-in-docker:latest
