@@ -9,6 +9,12 @@ const puppeteer = require('puppeteer');
 
 const flags = require('flags');
 const browserFlag = flags.defineString('products', 'chrome,firefox,safari', 'Browsers to compare/analyze');
+/**
+ * stats: Basic total pass/ok counts per product
+ * failures: Counts of tests by product that are only failing for that one product.
+ * passes: Counts of tests by product that are only passing for that one product.
+ * flakes: Counts of tests by product that are flaky in the most recent 10 runs for each date.
+ */
 const mode = flags.defineString('mode', 'failures', 'Analysis type. "stats", "failures", "passes", or "flakes"');
 const date = flags.defineString('date', (new Date()).toISOString().split('T')[0], 'First date to scrape');
 const weeks = flags.defineInteger('weeks', 52, 'Number of weeks to scrape');
