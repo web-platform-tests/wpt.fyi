@@ -249,7 +249,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     if (result.status === 'ERROR') {
       return 'ERROR';
     }
-    return this.parseFailureMessage(result.message);
+    return this.parseFailureMessage(result);
   }
 
   computeAnalyzerURL(screenshots) {
@@ -284,7 +284,8 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     return 'result';
   }
 
-  parseFailureMessage(msg) {
+  parseFailureMessage(result) {
+    const msg = result.message;
     let matchedMsg = '';
     for (const matcher of this.matchers) {
       const match = msg.match(matcher.re);
@@ -293,7 +294,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
         break;
       }
     }
-    return matchedMsg ? matchedMsg : 'FAIL';
+    return matchedMsg ? matchedMsg : result.status;
   }
 
   anyScreenshots(row) {
