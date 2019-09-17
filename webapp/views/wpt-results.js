@@ -582,7 +582,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         5000
       ).then(
         json => {
-          this.searchResults = json.results;
+          this.searchResults = json.results.sort((a, b) => a.test.localeCompare(b.test));
           this.refreshDisplayedNodes();
         },
         (e) => {
