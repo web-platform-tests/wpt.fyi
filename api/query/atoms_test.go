@@ -291,9 +291,9 @@ func TestStructuredQuery_all(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{
-		RunIDs: []int64{0, 1, 2},
+		RunIDs:        []int64{0, 1, 2},
 		AbstractQuery: AbstractAll{[]AbstractQuery{TestNamePattern{"cssom"}}},
-		}, rq)
+	}, rq)
 }
 
 func TestStructuredQuery_none(t *testing.T) {
@@ -308,9 +308,9 @@ func TestStructuredQuery_none(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{
-		RunIDs: []int64{0, 1, 2},
+		RunIDs:        []int64{0, 1, 2},
 		AbstractQuery: AbstractNone{[]AbstractQuery{TestNamePattern{"cssom"}}},
-		}, rq)
+	}, rq)
 }
 
 func TestStructuredQuery_sequential(t *testing.T) {
@@ -369,6 +369,56 @@ func TestStructuredQuery_count(t *testing.T) {
 						TestStatusEq{Status: shared.TestStatusValueFromString("PASS")},
 						TestStatusEq{Status: shared.TestStatusValueFromString("OK")},
 					}},
+				}},
+			}}, rq)
+}
+
+func TestStructuredQuery_moreThan(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"moreThan": 3,
+				"where": {"status":"PASS"}
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(
+		t,
+		RunQuery{RunIDs: []int64{0, 1, 2},
+			AbstractQuery: AbstractExists{[]AbstractQuery{
+				AbstractMoreThan{
+					AbstractCount{
+						Count: 3,
+						Where: TestStatusEq{Status: shared.TestStatusValueFromString("PASS")},
+					},
+				}},
+			}}, rq)
+}
+
+func TestStructuredQuery_lessThan(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"lessThan": 2,
+				"where": {"status":"PASS"}
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(
+		t,
+		RunQuery{RunIDs: []int64{0, 1, 2},
+			AbstractQuery: AbstractExists{[]AbstractQuery{
+				AbstractLessThan{
+					AbstractCount{
+						Count: 2,
+						Where: TestStatusEq{Status: shared.TestStatusValueFromString("PASS")},
+					},
 				}},
 			}}, rq)
 }

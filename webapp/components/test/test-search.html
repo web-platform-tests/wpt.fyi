@@ -314,6 +314,21 @@ suite('<test-search>', () => {
           }]
         });
       }
+      assertQueryParse('count=5(status:PASS)', {
+        exists: [{ count: 5, where: {status: 'PASS'} }]
+      });
+      assertQueryParse('count>1(status:PASS)', {
+        exists: [{ moreThan: 1, where: {status: 'PASS'} }]
+      });
+      assertQueryParse('count>=2(status:PASS)', {
+        exists: [{ moreThan: 1, where: {status: 'PASS'} }]
+      });
+      assertQueryParse('count<3(status:PASS)', {
+        exists: [{ lessThan: 3, where: {status: 'PASS'} }]
+      });
+      assertQueryParse('count<=2(status:PASS)', {
+        exists: [{ lessThan: 3, where: {status: 'PASS'} }]
+      });
     });
 
     test('simple link search', () => {
