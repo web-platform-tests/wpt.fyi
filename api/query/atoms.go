@@ -91,22 +91,15 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
 	for i, arg := range e.Args {
 		var query ConcreteQuery
-		// For sequential + count, we pass all runs.
-		if _, isSeq := arg.(AbstractSequential); isSeq {
-			query = arg.BindToRuns(runs...)
-		} else if _, isCount := arg.(AbstractCount); isCount {
-			query = arg.BindToRuns(runs...)
-		} else {
-			// Everything else is split, one run must satisfy the whole tree.
-			byRun := make([]ConcreteQuery, 0, len(runs))
-			for _, run := range runs {
-				bound := arg.BindToRuns(run)
-				if _, ok := bound.(False); !ok {
-					byRun = append(byRun, bound)
-				}
+		// Exists queries are split; one run must satisfy the whole tree.
+		byRun := make([]ConcreteQuery, 0, len(runs))
+		for _, run := range runs {
+			bound := arg.BindToRuns(run)
+			if _, ok := bound.(False); !ok {
+				byRun = append(byRun, bound)
 			}
-			query = Or{Args: byRun}
 		}
+		query = Or{Args: byRun}
 		queries[i] = query
 	}
 	// And the overall node is true if all its exists queries are true.
