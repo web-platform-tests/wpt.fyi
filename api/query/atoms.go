@@ -91,8 +91,12 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
 	for i, arg := range e.Args {
 		var query ConcreteQuery
-		// For sequential + count, we pass all runs.
+		// For seq/count/lessThan/moreThan we pass all runs.
 		if _, isSeq := arg.(AbstractSequential); isSeq {
+			query = arg.BindToRuns(runs...)
+		} else if _, isMoreThan := arg.(AbstractMoreThan); isMoreThan {
+			query = arg.BindToRuns(runs...)
+		} else if _, isLessThan := arg.(AbstractLessThan); isLessThan {
 			query = arg.BindToRuns(runs...)
 		} else if _, isCount := arg.(AbstractCount); isCount {
 			query = arg.BindToRuns(runs...)
