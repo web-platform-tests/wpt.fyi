@@ -116,6 +116,20 @@ Safari is the only one missing a result:
 
     three(status:!missing) safari:missing
 
+#### Count inequality
+
+> BETA: This feature is under development and may change without warning.
+
+    count[inequality][number]([query1])
+
+Requires that the number of results matching the given query satisfies the given
+inequality comparator.
+
+    count>1(status:PASS)
+    count<3(status:!FAIL)
+    count<=1(status:FAIL)
+    count>=1(status:MISSING)
+
 ## /api/search
 
 The `/api/search` endpoint takes an HTTP `POST` method, where the body is of the format
