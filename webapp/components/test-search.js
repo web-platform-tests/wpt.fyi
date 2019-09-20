@@ -206,11 +206,6 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     const ps = l.eval();
     return ps.length === 0 ? emptyQuery : { sequential: ps };
   },
-  Count: (cs, _, exp, __) => {
-    let count = cs.eval();
-    count.where = exp.eval();
-    return count;
-  },
   CountSpecifier_countInequality: (_, c, n) => {
     let inequality = c.eval();
     switch (inequality) {
@@ -228,8 +223,6 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     }
     throw new Error('Unexpected inequality ' + inequality);
   },
-  CountSpecifier_countEq: (_, n) => { return { count: n.eval() }; },
-  CountSpecifier_countN: (_, n) => { return { count: n.eval() }; },
   CountSpecifier_count3: (_) => {return {count: 3}; },
   CountSpecifier_count2: (_) => {return {count: 2}; },
   CountSpecifier_count1: (_) => {return {count: 1}; },
