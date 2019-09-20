@@ -291,7 +291,7 @@ func TestStructuredQuery_all(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{
-		RunIDs:        []int64{0, 1, 2},
+		RunIDs: []int64{0, 1, 2},
 		AbstractQuery: AbstractAll{[]AbstractQuery{TestNamePattern{"cssom"}}},
 	}, rq)
 }
