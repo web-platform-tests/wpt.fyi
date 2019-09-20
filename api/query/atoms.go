@@ -195,7 +195,33 @@ func (c AbstractCount) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 }
 
-// AbstractLink is represents the root of a link query, whic matches Metadata URLs
+// AbstractMoreThan is the root of a moreThan query, where the number of runs
+// that satisfy the query must be more than the given count.
+type AbstractMoreThan struct {
+	AbstractCount
+}
+
+// BindToRuns binds each count query to all of the runs, so that it can count the
+// number of runs that match the criteria.
+func (m AbstractMoreThan) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	c := m.AbstractCount.BindToRuns(runs...).(Count)
+	return MoreThan{c}
+}
+
+// AbstractLessThan is the root of a lessThan query, where the number of runs
+// that satisfy the query must be less than the given count.
+type AbstractLessThan struct {
+	AbstractCount
+}
+
+// BindToRuns binds each count query to all of the runs, so that it can count the
+// number of runs that match the criteria.
+func (l AbstractLessThan) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	c := l.AbstractCount.BindToRuns(runs...).(Count)
+	return LessThan{c}
+}
+
+// AbstractLink is represents the root of a link query, which matches Metadata URLs
 // to a pattern string; it is independent of test runs.
 type AbstractLink struct {
 	Pattern string
@@ -740,6 +766,64 @@ func (c *AbstractCount) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractLessThan attempts to interpret a query atom as
+// {"count": int, "where": query}.
+func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Count json.RawMessage `json:"lessThan"`
+		Where json.RawMessage `json:"where"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Count) == 0 {
+		return errors.New(`Missing lessThan property: "lessThan"`)
+	}
+	if len(data.Where) == 0 {
+		return errors.New(`Missing count property: "where"`)
+	}
+
+	err = json.Unmarshal(data.Count, &l.Count)
+	if err != nil {
+		return err
+	}
+	l.Where, err = unmarshalQ(data.Where)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// UnmarshalJSON for AbstractMoreThan attempts to interpret a query atom as
+// {"count": int, "where": query}.
+func (m *AbstractMoreThan) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Count json.RawMessage `json:"moreThan"`
+		Where json.RawMessage `json:"where"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Count) == 0 {
+		return errors.New(`Missing moreThan property: "moreThan"`)
+	}
+	if len(data.Where) == 0 {
+		return errors.New(`Missing count property: "where"`)
+	}
+
+	err = json.Unmarshal(data.Count, &m.Count)
+	if err != nil {
+		return err
+	}
+	m.Where, err = unmarshalQ(data.Where)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // UnmarshalJSON for AbstractLink attempts to interpret a query atom as
 // {"link":<metadata url pattern string>}.
 func (l *AbstractLink) UnmarshalJSON(b []byte) error {
@@ -878,6 +962,20 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	}
 	{
 		var c AbstractCount
+		err := json.Unmarshal(b, &c)
+		if err == nil {
+			return c, nil
+		}
+	}
+	{
+		var c AbstractLessThan
+		err := json.Unmarshal(b, &c)
+		if err == nil {
+			return c, nil
+		}
+	}
+	{
+		var c AbstractMoreThan
 		err := json.Unmarshal(b, &c)
 		if err == nil {
 			return c, nil
