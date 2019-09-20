@@ -55,10 +55,12 @@ const QUERY_GRAMMAR = ohm.grammar(`
     Count = CountSpecifier "(" Exp ")"
 
     CountSpecifier
-      = "count:" number -- countN
-      | "three"         -- count3
-      | "two"           -- count2
-      | "one"           -- count1
+      = "count" inequality number -- countInequality
+      | "count:" number           -- countEq
+      | "count=" number           -- countN
+      | "three"                   -- count3
+      | "two"                     -- count2
+      | "one"                     -- count1
 
     Exists = ListOf<RootExp, space*>
 
@@ -85,6 +87,12 @@ const QUERY_GRAMMAR = ohm.grammar(`
     not
       = "!"
       | "not"
+
+    inequality
+      = ">="
+      | "<="
+      | ">"
+      | "<"
 
     Fragment
       = not Fragment -- not
@@ -192,15 +200,29 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     return ps.length === 0 ? emptyQuery : {sequential: ps };
   },
   Count: (cs, _, exp, __) => {
-    return {
-      count: cs.eval(),
-      where: exp.eval(),
-    }
+    let count = cs.eval();
+    count.where = exp.eval();
+    return count;
   },
-  CountSpecifier_countN: (_, n) => n.eval(),
-  CountSpecifier_count3: (_) => 3,
-  CountSpecifier_count2: (_) => 2,
-  CountSpecifier_count1: (_) => 1,
+  CountSpecifier_countInequality: (_, c, n) => {
+    let inequality = c.eval();
+    switch (inequality) {
+      case ">=":
+        return { moreThan: parseInt(n.eval()) - 1 };
+      case ">":
+        return { moreThan: n.eval() };
+      case "<=":
+        return { lessThan: parseInt(n.eval()) + 1 };
+      case "<":
+        return { lessThan: n.eval() };
+    }
+    throw new Error('Unexpected inequality ' + inequality);
+  },
+  CountSpecifier_countEq: (_, n) => { return { count: n.eval() }; },
+  CountSpecifier_countN: (_, n) => { return { count: n.eval() }; },
+  CountSpecifier_count3: (_) => {return {count: 3}; },
+  CountSpecifier_count2: (_) => {return {count: 2}; },
+  CountSpecifier_count1: (_) => {return {count: 1}; },
   linkExp: (l, colon, r) => {
     const ps = r.eval();
     return ps.length === 0 ? emptyQuery : {link: ps };

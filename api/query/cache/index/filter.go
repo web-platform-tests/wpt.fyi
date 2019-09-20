@@ -66,6 +66,12 @@ type Count struct {
 	args  []filter
 }
 
+// LessThan is a query.LessThan bound to an in-memory index.
+type LessThan Count
+
+// MoreThan is a query.MoreThan bound to an in-memory index.
+type MoreThan Count
+
 // Link is a query.Count bound to an in-memory index and MetadataResults.
 type Link struct {
 	index
@@ -176,6 +182,30 @@ func (c Count) Filter(t TestID) bool {
 	return matches == c.count
 }
 
+// Filter interprets a LessThan as a filter function over TestIDs.
+func (c LessThan) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches < c.count
+}
+
+// Filter interprets a MoreThan as a filter function over TestIDs.
+func (c MoreThan) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches > c.count
+}
+
 // Filter interprets a Link as a filter function over TestIDs.
 func (l Link) Filter(t TestID) bool {
 	name, _, err := l.tests.GetName(t)
@@ -257,6 +287,18 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 			return nil, err
 		}
 		return Count{idx, v.Count, fs}, nil
+	case query.LessThan:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return LessThan{idx, v.Count.Count, fs}, nil
+	case query.MoreThan:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return MoreThan{idx, v.Count.Count, fs}, nil
 	case query.Link:
 		return Link{idx, v.Pattern, v.Metadata}, nil
 	case query.MetadataQuality:
