@@ -32,5 +32,5 @@ requests==2.22.0
 rsa==4.0
 six==1.12.0
 typed-ast==1.4.0
-urllib3==1.25.3
+urllib3==1.25.5
 Werkzeug==0.15.6
