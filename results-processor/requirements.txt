@@ -10,7 +10,7 @@ google-api-core==1.14.2
 google-auth==1.6.3
 google-cloud-core==1.0.3
 google-cloud-datastore==1.9.0
-google-cloud-storage==1.19.0
+google-cloud-storage==1.19.1
 google-resumable-media==0.4.0
 googleapis-common-protos==1.6.0
 grpcio==1.23.0
