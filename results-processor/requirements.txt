@@ -10,8 +10,8 @@ google-api-core==1.14.2
 google-auth==1.6.3
 google-cloud-core==1.0.3
 google-cloud-datastore==1.9.0
-google-cloud-storage==1.19.0
-google-resumable-media==0.4.0
+google-cloud-storage==1.19.1
+google-resumable-media==0.4.1
 googleapis-common-protos==1.6.0
 grpcio==1.23.0
 gunicorn==19.9.0
@@ -22,7 +22,7 @@ MarkupSafe==1.1.1
 mccabe==0.6.1
 mypy==0.720
 mypy-extensions==0.4.1
-protobuf==3.9.1
+protobuf==3.9.2
 pyasn1==0.4.7
 pyasn1-modules==0.2.6
 pycodestyle==2.5.0
@@ -32,5 +32,5 @@ requests==2.22.0
 rsa==4.0
 six==1.12.0
 typed-ast==1.4.0
-urllib3==1.25.3
-Werkzeug==0.15.6
+urllib3==1.25.5
+Werkzeug==0.16.0
