@@ -27,6 +27,10 @@ suite('<test-search>', () => {
       assert.deepEqual(structuredQuery, S(p).eval());
     };
 
+    test('empty pattern', () => {
+      assertQueryParse('', {exists: [{pattern: ''}]});
+    });
+
     test('simple pattern', () => {
       assertQueryParse('2dcontext', {exists: [{pattern: '2dcontext'}]});
       assertQueryParse(
@@ -230,6 +234,12 @@ suite('<test-search>', () => {
       });
     });
 
+    test('exists', () => {
+      assertQueryParse('exists(status:PASS)', {
+        exists: [{status: 'PASS'}],
+      });
+    });
+
     test('all', () => {
       assertQueryParse('all(status:!PASS status:!OK)', {
         all: [
@@ -254,19 +264,15 @@ suite('<test-search>', () => {
       // Canon: flip-flopping, which is usually flakiness:
       // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
       assertQueryParse('seq(status:PASS status:!PASS)', {
-        exists: [
-          {
-            sequential: [
-              {status: 'PASS'},
-              {status: {not: 'PASS'} },
-            ]
-          },
-        ],
+        sequential: [
+          {status: 'PASS'},
+          {status: {not: 'PASS'} },
+        ]
       });
       // Canon: flip-flopping, which is usually flakiness:
       // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
       assertQueryParse('seq((status:!PASS and status:!OK) (status:PASS or status:OK)) seq((status:PASS or status:OK) (status:!PASS and status:!OK))', {
-        exists: [
+        and: [
           { sequential: [
             {
               and: [
@@ -297,38 +303,24 @@ suite('<test-search>', () => {
 
     test('count', () => {
       assertQueryParse('count:5(status:PASS or status:OK)', {
-        exists: [{
-          count: 5,
-          where: {
-            or: [{status: 'PASS'}, {status: 'OK'}],
-          },
-        }]
+        count: 5,
+        where: {
+          or: [{status: 'PASS'}, {status: 'OK'}],
+        },
       });
       for (const [atom, count] of [['three', 3], ['two', 2], ['one', 1]]) {
         assertQueryParse(`${atom}(status:!PASS and status:!OK)`, {
-          exists: [{
-            count,
-            where: {
-              and: [{status: {not: 'PASS'}}, {status: {not: 'OK'}}],
-            },
-          }]
+          count,
+          where: {
+            and: [{status: {not: 'PASS'}}, {status: {not: 'OK'}}],
+          },
         });
       }
-      assertQueryParse('count=5(status:PASS)', {
-        exists: [{ count: 5, where: {status: 'PASS'} }]
-      });
-      assertQueryParse('count>1(status:PASS)', {
-        exists: [{ moreThan: 1, where: {status: 'PASS'} }]
-      });
-      assertQueryParse('count>=2(status:PASS)', {
-        exists: [{ moreThan: 1, where: {status: 'PASS'} }]
-      });
-      assertQueryParse('count<3(status:PASS)', {
-        exists: [{ lessThan: 3, where: {status: 'PASS'} }]
-      });
-      assertQueryParse('count<=2(status:PASS)', {
-        exists: [{ lessThan: 3, where: {status: 'PASS'} }]
-      });
+      assertQueryParse('count=5(status:PASS)', { count: 5, where: {status: 'PASS' }});
+      assertQueryParse('count>1(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+      assertQueryParse('count>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+      assertQueryParse('count<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+      assertQueryParse('count<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
     });
 
     test('simple link search', () => {

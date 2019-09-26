@@ -37,14 +37,13 @@ for (const b of DefaultBrowserNames) {
 /* global ohm */
 const QUERY_GRAMMAR = ohm.grammar(`
   Query {
+    Root = ListOf<Q, space*>
+
     Q = All
       | None
-      | Exists
-
-    RootExp
-      = Sequential
       | Count
-      | Exp
+      | Sequential
+      | Exists
 
     All = "all(" ListOf<Exp, space*> ")"
 
@@ -56,25 +55,27 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     CountSpecifier
       = "count" inequality number -- countInequality
-      | "count:" number           -- countEq
-      | "count=" number           -- countN
+      | "count:" number           -- countN
       | "three"                   -- count3
       | "two"                     -- count2
       | "one"                     -- count1
 
-    Exists = ListOf<RootExp, space*>
+    Exists
+      = "exists(" ListOf<Exp, space*> ")" -- explicit
+      | NonemptyListOf<Exp, space*>       -- implicit
+
 
     Exp = NonemptyListOf<OrPart, or>
-
-    NestedExp
-      = "(" Exp ")"   -- paren
-      | not NestedExp -- not
 
     OrPart = NonemptyListOf<AndPart, and>
 
     AndPart
       = NestedExp
       | Fragment    -- fragment
+
+    NestedExp
+      = "(" Exp ")"   -- paren
+      | not NestedExp -- not
 
     or
       = "|"
@@ -93,6 +94,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | "<="
       | ">"
       | "<"
+      | "="
 
     Fragment
       = not Fragment -- not
@@ -174,30 +176,37 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   _terminal: function() {
     return this.sourceString;
   },
+  Root: (r) => {
+    const ps = r.eval();
+    return ps.length === 0
+      ? emptyQuery
+      : ps.length === 1
+        ? ps[0]
+        : { and: ps };
+  },
   EmptyListOf: function() {
     return [];
   },
   NonemptyListOf: function(fst, seps, rest) {
     return [fst.eval()].concat(rest.eval());
   },
-  Exists: l => {
-    const ps = l.eval();
-    // Separate atoms are each treated as "there exists a run where ...",
-    // and the root is grouped by AND of the separated atoms.
-    // Nested ands, on the other hand, require all conditions to be met by the same run.
-    return ps.length === 0 ? emptyQuery : {exists: ps };
+  Exists_explicit: (l, e, r) => {
+    return { exists: e.eval() };
+  },
+  Exists_implicit: e => {
+    return { exists: e.eval() };
   },
   All: (_, l, __) => {
     const ps = l.eval();
-    return ps.length === 0 ? emptyQuery : {all: ps };
+    return ps.length === 0 ? emptyQuery : { all: ps };
   },
   None: (_, l, __) => {
     const ps = l.eval();
-    return ps.length === 0 ? emptyQuery : {none: ps };
+    return ps.length === 0 ? emptyQuery : { none: ps };
   },
   Sequential: (_, l, __) => {
     const ps = l.eval();
-    return ps.length === 0 ? emptyQuery : {sequential: ps };
+    return ps.length === 0 ? emptyQuery : { sequential: ps };
   },
   Count: (cs, _, exp, __) => {
     let count = cs.eval();
@@ -215,10 +224,12 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
         return { lessThan: parseInt(n.eval()) + 1 };
       case "<":
         return { lessThan: n.eval() };
+      case ":":
+      case "=":
+        return { count: n.eval() };
     }
     throw new Error('Unexpected inequality ' + inequality);
   },
-  CountSpecifier_countEq: (_, n) => { return { count: n.eval() }; },
   CountSpecifier_countN: (_, n) => { return { count: n.eval() }; },
   CountSpecifier_count3: (_) => {return {count: 3}; },
   CountSpecifier_count2: (_) => {return {count: 2}; },
