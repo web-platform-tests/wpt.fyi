@@ -5,6 +5,7 @@ package webdriver
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -69,27 +70,24 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path, elemen
 	})
 }
 
-func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName string, paths ...string) {
+func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName string, path string) {
 	var pathParts []selenium.WebElement
 	var err error
 	filteredPathPartsCondition := func(wd selenium.WebDriver) (bool, error) {
 		pathParts, err = getPathPartElements(wd, elementName)
-		if err != nil {
-			return false, err
-		}
-		return len(pathParts) == len(paths), nil
+		return err == nil, err
 	}
 	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*120)
 	if err != nil {
-		assert.Fail(t, fmt.Sprintf("Expected exactly %v results", len(paths)))
+		assert.Fail(t, "Expected path-part elements")
 		return
 	}
-	for i := range paths {
+	for i := range pathParts {
 		text, err := FindShadowText(wd, pathParts[i], "a")
 		if err != nil {
 			assert.Fail(t, err.Error())
 		}
-		assert.Equal(t, paths[i], text)
+		assert.True(t, strings.HasPrefix(text, path), fmt.Sprintf("%s should start with %s", text, path))
 	}
 }
 

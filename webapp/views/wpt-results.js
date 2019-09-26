@@ -687,18 +687,23 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       this.displayedNodes = [];
       return;
     }
+    this.collapseResults();
+  }
+
+  collapseResults(explodePrefix) {
     // Prefix: includes trailing slash.
-    const prefix = this.path === '/' ? '/' : `${this.path}/`;
+    const prefix = `${this.path === '/' ? '' : this.path}/${explodePrefix || ''}`;
     const collapsePathOnto = (testPath, nodes) => {
       const suffix = testPath.substring(prefix.length);
       const slashIdx = suffix.split('?')[0].indexOf('/');
       const isDir = slashIdx !== -1;
-      const name = isDir ? suffix.substring(0, slashIdx): suffix;
+      const relativePath = isDir ? suffix.substring(0, slashIdx): suffix;
+      const name = `${explodePrefix || ''}${relativePath}`;
       // Either add new node to acc, or add passes, total to an
       // existing node.
       if (!nodes.hasOwnProperty(name)) {
         nodes[name] = {
-          path: `${prefix}${name}`,
+          path: `${prefix}${relativePath}`,
           isDir,
           results: this.testRuns.map(() => ({
             passes: 0,
@@ -786,7 +791,16 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         }
         return nodes;
       }, knownNodes);
-    this.displayedNodes = Object.values(resultsByPath)
+
+    const displayed = Array.from(Object.entries(resultsByPath));
+    if (displayed.length === 1 && displayed[0][1].isDir) {
+      const nestedPath = `${displayed[0][0]}/`;
+      this.collapseResults(nestedPath);
+      return;
+    }
+
+    this.displayedNodes = displayed
+      .map(([_, row]) => row)
       .filter(row => {
         if (!this.onlyShowDifferences) {
           return true;
