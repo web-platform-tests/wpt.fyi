@@ -19,7 +19,7 @@ separately be true. e.g.
 
     count>1(status:!pass) none(status:missing)
 
-Requires that more than one non-pass result is present, and none of the results is missing.
+Requires that more than one non-pass result is present, and none of the results are missing.
 
 #### Exists
 
