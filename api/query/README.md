@@ -21,6 +21,10 @@ separately be true. e.g.
 
 Requires that more than one non-pass result is present, and none of the results are missing.
 
+Alternatively, root queries can be combined using `OR` by specifying it, e.g.
+
+    none(status:pass) or all(status:pass)
+
 #### Exists
 
 As stated above, exists is the implicit default.
@@ -216,7 +220,9 @@ a count of exactly the given number.
 
     {
         "count": 2,
-        "where": [query object]
+        "where": {
+            // query object
+        }
     }
 
 #### moreThan and lessThan
@@ -226,7 +232,9 @@ equality (exact count).
 
     {
         "moreThan": 2,
-        "where": [query object]
+        "where": {
+            // query object
+        }
     }
 
 #### and

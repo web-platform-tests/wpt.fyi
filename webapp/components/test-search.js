@@ -37,7 +37,11 @@ for (const b of DefaultBrowserNames) {
 /* global ohm */
 const QUERY_GRAMMAR = ohm.grammar(`
   Query {
-    Root = ListOf<Q, space*>
+    Root = ListOf<OrQ, space*>
+
+    OrQ = NonemptyListOf<AndQ, or>
+
+    AndQ = NonemptyListOf<Q, and>
 
     Q = All
       | None
@@ -172,6 +176,14 @@ const evalNot = (n, p) => {
 };
 const evalSelf = p => p.eval();
 const emptyQuery = Object.freeze({exists: [{pattern: ''}]});
+const andConjunction = l => {
+  const ps = l.eval();
+  return ps.length === 1 ? ps[0] : {and: ps};
+};
+const orConjunction = l => {
+  const ps = l.eval();
+  return ps.length === 1 ? ps[0] : {or: ps};
+};
 const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   _terminal: function() {
     return this.sourceString;
@@ -184,6 +196,8 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
         ? ps[0]
         : { and: ps };
   },
+  OrQ: orConjunction,
+  AndQ: andConjunction,
   EmptyListOf: function() {
     return [];
   },
@@ -238,17 +252,11 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     const ps = r.eval();
     return ps.length === 0 ? emptyQuery : {link: ps };
   },
-  Exp: l => {
-    const ps = l.eval();
-    return ps.length === 1 ? ps[0] : {or: ps};
-  },
+  Exp: orConjunction,
   NestedExp: evalSelf,
   NestedExp_paren: (_, p, __) => p.eval(),
   NestedExp_not: evalNot,
-  OrPart: l => {
-    const ps = l.eval();
-    return ps.length === 1 ? ps[0] : {and: ps};
-  },
+  OrPart: andConjunction,
   AndPart_fragment: evalSelf,
   Fragment: evalSelf,
   Fragment_not: evalNot,

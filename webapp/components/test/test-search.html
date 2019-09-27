@@ -361,6 +361,21 @@ suite('<test-search>', () => {
           }],
       });
     });
+
+    test('multi-root', () => {
+      assertQueryParse('none(status:missing) count>0(status:!pass)', {
+        and: [
+          { none: [{ status: 'UNKNOWN' }] },
+          { moreThan: 0, where: { status: { not: 'PASS' } } },
+        ]
+      });
+      assertQueryParse('all(status:pass) or none(status:pass)', {
+        or: [
+          { all: [{ status: 'PASS' }] },
+          { none: [{ status: 'PASS' }] },
+        ]
+      });
+    });
   });
 });
 </script>
