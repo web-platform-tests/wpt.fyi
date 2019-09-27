@@ -321,6 +321,12 @@ suite('<test-search>', () => {
       assertQueryParse('count>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
       assertQueryParse('count<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
       assertQueryParse('count<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+
+      assertQueryParse('count:=5(status:PASS)', { count: 5, where: {status: 'PASS' }});
+      assertQueryParse('count:>1(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+      assertQueryParse('count:>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+      assertQueryParse('count:<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+      assertQueryParse('count:<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
     });
 
     test('simple link search', () => {
