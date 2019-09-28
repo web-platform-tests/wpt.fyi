@@ -66,7 +66,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Exists
       = "exists(" ListOf<Exp, space*> ")" -- explicit
-      | NonemptyListOf<Exp, space*>       -- implicit
+      | AndPart                           -- implicit
 
 
     Exp = NonemptyListOf<OrPart, or>
@@ -190,11 +190,24 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   },
   Root: (r) => {
     const ps = r.eval();
-    return ps.length === 0
-      ? emptyQuery
-      : ps.length === 1
-        ? ps[0]
-        : { and: ps };
+    if (ps.length === 0) {
+      return emptyQuery;
+    }
+    // If there's only separate implicit exists at the root, collapse them.
+    const isImplicitExists = p => 'exists' in p && p.exists.length === 1
+        || 'and' in p && p.and.every(isImplicitExists)
+        || 'or' in p && p.or.every(isImplicitExists);
+    if (ps.every(isImplicitExists)) {
+      const unwrap = p => 'exists' in p && p.exists[0]
+        || 'or' in p && { or: p.or.map(unwrap) }
+        || 'and' in p && { and: p.and.map(unwrap) }
+        || p;
+      return { exists: ps.map(unwrap) };
+    }
+    if (ps.length === 1) {
+      return ps[0];
+    }
+    return { and: ps };
   },
   OrQ: orConjunction,
   AndQ: andConjunction,
@@ -208,7 +221,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     return { exists: e.eval() };
   },
   Exists_implicit: e => {
-    return { exists: e.eval() };
+    return { exists: [e.eval()] };
   },
   All: (_, l, __) => {
     const ps = l.eval();
