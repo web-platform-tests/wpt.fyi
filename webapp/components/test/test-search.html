@@ -367,6 +367,33 @@ suite('<test-search>', () => {
           }],
       });
     });
+
+    test('multi-root', () => {
+      assertQueryParse('none(status:missing) count>0(status:!pass)', {
+        and: [
+          { none: [{ status: 'UNKNOWN' }] },
+          { moreThan: 0, where: { status: { not: 'PASS' } } },
+        ]
+      });
+      assertQueryParse('all(status:pass) or none(status:pass)', {
+        or: [
+          { all: [{ status: 'PASS' }] },
+          { none: [{ status: 'PASS' }] },
+        ]
+      });
+      assertQueryParse('idlharness all(status:fail)', {
+        and: [
+          { exists: [{ pattern: 'idlharness' }] },
+          { all: [{ status: 'FAIL' }] },
+        ]
+      });
+      assertQueryParse('2dcontext and all(status:fail)', {
+        and: [
+          { exists: [{ pattern: '2dcontext' }] },
+          { all: [{ status: 'FAIL' }] },
+        ]
+      });
+    });
   });
 });
 </script>

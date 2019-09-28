@@ -37,7 +37,11 @@ for (const b of DefaultBrowserNames) {
 /* global ohm */
 const QUERY_GRAMMAR = ohm.grammar(`
   Query {
-    Root = ListOf<Q, space*>
+    Root = ListOf<OrQ, space*>
+
+    OrQ = NonemptyListOf<AndQ, or>
+
+    AndQ = NonemptyListOf<Q, and>
 
     Q = All
       | None
@@ -62,7 +66,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Exists
       = "exists(" ListOf<Exp, space*> ")" -- explicit
-      | NonemptyListOf<Exp, space*>       -- implicit
+      | AndPart                           -- implicit
 
 
     Exp = NonemptyListOf<OrPart, or>
@@ -172,18 +176,41 @@ const evalNot = (n, p) => {
 };
 const evalSelf = p => p.eval();
 const emptyQuery = Object.freeze({exists: [{pattern: ''}]});
+const andConjunction = l => {
+  const ps = l.eval();
+  return ps.length === 1 ? ps[0] : {and: ps};
+};
+const orConjunction = l => {
+  const ps = l.eval();
+  return ps.length === 1 ? ps[0] : {or: ps};
+};
 const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   _terminal: function() {
     return this.sourceString;
   },
   Root: (r) => {
     const ps = r.eval();
-    return ps.length === 0
-      ? emptyQuery
-      : ps.length === 1
-        ? ps[0]
-        : { and: ps };
+    if (ps.length === 0) {
+      return emptyQuery;
+    }
+    // If there's only separate implicit exists at the root, collapse them.
+    const isImplicitExists = p => 'exists' in p && p.exists.length === 1
+        || 'and' in p && p.and.every(isImplicitExists)
+        || 'or' in p && p.or.every(isImplicitExists);
+    if (ps.every(isImplicitExists)) {
+      const unwrap = p => 'exists' in p && p.exists[0]
+        || 'or' in p && { or: p.or.map(unwrap) }
+        || 'and' in p && { and: p.and.map(unwrap) }
+        || p;
+      return { exists: ps.map(unwrap) };
+    }
+    if (ps.length === 1) {
+      return ps[0];
+    }
+    return { and: ps };
   },
+  OrQ: orConjunction,
+  AndQ: andConjunction,
   EmptyListOf: function() {
     return [];
   },
@@ -194,7 +221,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     return { exists: e.eval() };
   },
   Exists_implicit: e => {
-    return { exists: e.eval() };
+    return { exists: [e.eval()] };
   },
   All: (_, l, __) => {
     const ps = l.eval();
@@ -238,17 +265,11 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     const ps = r.eval();
     return ps.length === 0 ? emptyQuery : {link: ps };
   },
-  Exp: l => {
-    const ps = l.eval();
-    return ps.length === 1 ? ps[0] : {or: ps};
-  },
+  Exp: orConjunction,
   NestedExp: evalSelf,
   NestedExp_paren: (_, p, __) => p.eval(),
   NestedExp_not: evalNot,
-  OrPart: l => {
-    const ps = l.eval();
-    return ps.length === 1 ? ps[0] : {and: ps};
-  },
+  OrPart: andConjunction,
   AndPart_fragment: evalSelf,
   Fragment: evalSelf,
   Fragment_not: evalNot,
