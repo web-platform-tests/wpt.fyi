@@ -54,11 +54,11 @@ const QUERY_GRAMMAR = ohm.grammar(`
     Count = CountSpecifier "(" Exp ")"
 
     CountSpecifier
-      = "count" inequality number -- countInequality
-      | "count:" number           -- countN
-      | "three"                   -- count3
-      | "two"                     -- count2
-      | "one"                     -- count1
+      = "count" ":"? inequality number -- countInequality
+      | "count:" number                -- countN
+      | "three"                        -- count3
+      | "two"                          -- count2
+      | "one"                          -- count1
 
     Exists
       = "exists(" ListOf<Exp, space*> ")" -- explicit
@@ -213,7 +213,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     count.where = exp.eval();
     return count;
   },
-  CountSpecifier_countInequality: (_, c, n) => {
+  CountSpecifier_countInequality: (_, __, c, n) => {
     let inequality = c.eval();
     switch (inequality) {
       case ">=":

@@ -77,10 +77,14 @@ Safari is the only one missing a result:
 Requires that the number of results matching the given query satisfies the given
 inequality comparator.
 
+    count=1(status:PASS)
     count>1(status:PASS)
     count<3(status:!FAIL)
     count<=1(status:FAIL)
     count>=1(status:MISSING)
+
+> NOTE: The colon after the `count` is optional for inequalities. Queries like
+> `count:>1(status:missing)`, with a syntax similar to GitHub's search, will work.
 
 ### Query atoms
 
