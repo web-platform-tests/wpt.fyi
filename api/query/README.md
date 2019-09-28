@@ -14,16 +14,21 @@ By default, a search query will be implicitly treated as an `exists` query (a di
 across each of the runs separately). However, there are several other root query types that
 can be invoked by wrapping the query(s), including explicitly wrapping with `exists`.
 
-If multiple root queries are used, they are combined with `AND`, i.e. each query must
-separately be true. e.g.
+If multiple root queries are used, they are implicitly combined with `AND`, i.e. each query
+must separately be true. e.g.
 
     count>1(status:!pass) none(status:missing)
 
 Requires that more than one non-pass result is present, and none of the results are missing.
+You can also explicitly combine the root queries with `and`, e.g.
 
-Alternatively, root queries can be combined using `OR` by specifying it, e.g.
+    count<3(status:pass) and none(status:missing)
+
+Alternatively, root queries can be combined using `or`, e.g.
 
     none(status:pass) or all(status:pass)
+
+Note that the `and` conjunction takes precedence over the `or` conjunction.
 
 #### Exists
 
