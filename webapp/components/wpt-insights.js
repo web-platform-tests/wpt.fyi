@@ -7,6 +7,8 @@
 import '../node_modules/@polymer/paper-card/paper-card.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
+import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import './browser-picker.js';
 import './info-banner.js';
 import { DefaultProductSpecs, DefaultProducts, DefaultBrowserNames, ProductInfo } from './product-info.js';
@@ -124,6 +126,11 @@ class Anomalies extends ProductInfo(PolymerElement) {
           vs
           <browser-multi-picker products="[[defaultProductsExcept(browser)]]" selected="{{others}}"></browser-multi-picker>
         </div>
+        where [[browserDisplayName]] is the only one
+        <paper-radio-group selected="{{anomalyType}}">
+          <paper-radio-button name="failing">Failing</paper-radio-button>
+          <paper-radio-button name="passing">Passing</paper-radio-button>
+        </paper-radio-group>
         <info-banner>
           <a class="query" href="[[url]]">[[query]]</a>
         </info-banner>
@@ -150,9 +157,13 @@ class Anomalies extends ProductInfo(PolymerElement) {
         type: String,
         computed: 'computeOthersDisplayNames(others)',
       },
+      anomalyType: {
+        type: String,
+        value: 'failing',
+      },
       query: {
         type: String,
-        computed: 'computeQuery(browser, others)',
+        computed: 'computeQuery(anomalyType, browser, others)',
       },
       url: {
         type: URL,
@@ -172,11 +183,13 @@ class Anomalies extends ProductInfo(PolymerElement) {
       .join(', ');
   }
 
-  computeQuery(browser, others) {
-    const othersPassing = others
-      .map(o => `(${o}:pass|${o}:ok)`)
+  computeQuery(anomalyType, browser, others) {
+    const not = anomalyType === 'passing' ? '!' : '';
+    const notnot = anomalyType === 'passing' ? '' : '!';
+    const otherFilters = others
+      .map(o => `(${o}:${not}pass|${o}:${not}ok)`)
       .join(' ');
-    return `(${browser}:!pass&${browser}:!ok) ${othersPassing}`;
+    return `(${browser}:${notnot}pass&${browser}:${notnot}ok) ${otherFilters}`;
   }
 
   computeURL(query, browser, others) {
