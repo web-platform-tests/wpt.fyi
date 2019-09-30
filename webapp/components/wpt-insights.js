@@ -290,7 +290,7 @@ class ReleaseRegressions extends ProductInfo(PolymerElement) {
     return {
       browser_name: browser,
       labels: [channel],
-    }
+    };
   }
 }
 window.customElements.define(ReleaseRegressions.is, ReleaseRegressions);
