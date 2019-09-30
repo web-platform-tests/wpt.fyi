@@ -8,6 +8,7 @@ import '../node_modules/@polymer/paper-card/paper-card.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './browser-picker.js';
+import './channel-picker.js';
 import './info-banner.js';
 import { DefaultProductSpecs, DefaultProducts, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
@@ -26,7 +27,7 @@ class Insights extends ProductInfo(PolymerElement) {
 
     <wpt-anomalies></wpt-anomalies>
     <wpt-flakes></wpt-flakes>
-    <wpt-beta-regressions></wpt-beta-regressions>
+    <wpt-release-regressions></wpt-release-regressions>
 `;
   }
 
@@ -195,9 +196,9 @@ class Anomalies extends ProductInfo(PolymerElement) {
 }
 window.customElements.define(Anomalies.is, Anomalies);
 
-class BetaRegressions extends ProductInfo(PolymerElement) {
+class ReleaseRegressions extends ProductInfo(PolymerElement) {
   static get is() {
-    return 'wpt-beta-regressions';
+    return 'wpt-release-regressions';
   }
 
   static get template() {
@@ -218,19 +219,20 @@ class BetaRegressions extends ProductInfo(PolymerElement) {
     </style>
     <paper-card>
       <div class="card-content">
-        <h3>Beta Regressions</h3>
+        <h3>Release Regressions</h3>
         <div class="wrapper">
           <browser-picker browser="{{browser}}"></browser-picker>
-          <display-logo product="[[stableBrowser]]"></display-logo>
+          <channel-picker browser="[[browser]]" channel="{{channel}}" channels="[&quot;beta&quot;, &quot;experimental&quot;]"></channel-picker>
+          <display-logo product="[[channelBrowser]]"></display-logo>
           vs
-          <display-logo product="[[betaBrowser]]"></display-logo>
+          <display-logo product="[[stableBrowser]]"></display-logo>
         </div>
         <info-banner>
           <a class="query" href="[[url]]">[[query]]</a>
         </info-banner>
         <p>
-          Tests that are passing in the latest stable [[browserDisplayName]] release
-          and not passing in the latest beta [[browserDisplayName]] release.
+          Tests that are passing in the latest stable [[browserDisplayName]] release,
+          but not passing in the latest [[channel]] run.
         </p>
       </div>
     </paper-card>
@@ -244,9 +246,13 @@ class BetaRegressions extends ProductInfo(PolymerElement) {
         type: String,
         computed: 'displayName(browser)',
       },
-      betaBrowser: {
+      channel: {
+        type: String,
+        value: 'beta',
+      },
+      channelBrowser: {
         type: Object,
-        computed: 'computeBrowser(browser, "beta")'
+        computed: 'computeBrowser(browser, channel)'
       },
       stableBrowser: {
         type: Object,
@@ -258,7 +264,7 @@ class BetaRegressions extends ProductInfo(PolymerElement) {
       },
       url: {
         type: URL,
-        computed: 'computeURL(browser, query)',
+        computed: 'computeURL(browser, channel, query)',
       }
     };
   }
@@ -271,10 +277,10 @@ class BetaRegressions extends ProductInfo(PolymerElement) {
     return `seq((${passing}) (${notPassing}))`;
   }
 
-  computeURL(browser, query) {
+  computeURL(browser, channel, query) {
     const url = new URL('/results/', window.location);
     url.searchParams.set('q', query);
-    url.searchParams.set('products', `${browser}[stable],${browser}[beta]`);
+    url.searchParams.set('products', `${browser}[stable],${browser}[${channel}]`);
     url.searchParams.set('labels', 'master');
     url.searchParams.set('diff', 'true');
     return url;
@@ -287,7 +293,7 @@ class BetaRegressions extends ProductInfo(PolymerElement) {
     }
   }
 }
-window.customElements.define(BetaRegressions.is, BetaRegressions);
+window.customElements.define(ReleaseRegressions.is, ReleaseRegressions);
 
-export { Insights, Anomalies, Flakes, BetaRegressions };
+export { Insights, Anomalies, Flakes, ReleaseRegressions };
 
