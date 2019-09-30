@@ -26,6 +26,7 @@ class Insights extends ProductInfo(PolymerElement) {
 
     <wpt-anomalies></wpt-anomalies>
     <wpt-flakes></wpt-flakes>
+    <wpt-beta-regressions></wpt-beta-regressions>
 `;
   }
 
@@ -36,16 +37,14 @@ class Insights extends ProductInfo(PolymerElement) {
 window.customElements.define(Insights.is, Insights);
 
 const cardStyle = html`
-  <style>
-    paper-card {
-      display: block;
-      margin-top: 1em;
-      width: 100%;
-    }
-    .query {
-      word-break: break-all;
-    }
-  </style>
+  paper-card {
+    display: block;
+    margin-top: 1em;
+    width: 100%;
+  }
+  .query {
+    word-break: break-all;
+  }
 `;
 
 class Flakes extends ProductInfo(PolymerElement) {
@@ -55,7 +54,9 @@ class Flakes extends ProductInfo(PolymerElement) {
 
   static get template() {
     return html`
-    ${cardStyle}
+    <style>
+      ${cardStyle}
+    </style>
     <paper-card>
       <div class="card-content">
         <h3>Flakes</h3>
@@ -115,7 +116,9 @@ class Anomalies extends ProductInfo(PolymerElement) {
 
   static get template() {
     return html`
-    ${cardStyle}
+    <style>
+      ${cardStyle}
+    </style>
     <paper-card>
       <div class="card-content">
         <h3>Anomalies</h3>
@@ -192,5 +195,99 @@ class Anomalies extends ProductInfo(PolymerElement) {
 }
 window.customElements.define(Anomalies.is, Anomalies);
 
-export { Insights, Anomalies, Flakes };
+class BetaRegressions extends ProductInfo(PolymerElement) {
+  static get is() {
+    return 'wpt-beta-regressions';
+  }
+
+  static get template() {
+    return html`
+    <style>
+      ${cardStyle}
+      .wrapper {
+        display: flex;
+        align-items: center;
+      }
+      display-logo {
+        margin-left: 16px;
+        margin-right: 16px;
+      }
+      display-logo:first-child {
+        margin-left: 32px;
+      }
+    </style>
+    <paper-card>
+      <div class="card-content">
+        <h3>Beta Regressions</h3>
+        <div class="wrapper">
+          <browser-picker browser="{{browser}}"></browser-picker>
+          <display-logo product="[[stableBrowser]]"></display-logo>
+          vs
+          <display-logo product="[[betaBrowser]]"></display-logo>
+        </div>
+        <info-banner>
+          <a class="query" href="[[url]]">[[query]]</a>
+        </info-banner>
+        <p>
+          Tests that are passing in the latest stable [[browserDisplayName]] release
+          and not passing in the latest beta [[browserDisplayName]] release.
+        </p>
+      </div>
+    </paper-card>
+`;
+  }
+
+  static get properties() {
+    return {
+      browser: String,
+      browserDisplayName: {
+        type: String,
+        computed: 'displayName(browser)',
+      },
+      betaBrowser: {
+        type: Object,
+        computed: 'computeBrowser(browser, "beta")'
+      },
+      stableBrowser: {
+        type: Object,
+        computed: 'computeBrowser(browser, "stable")'
+      },
+      query: {
+        type: String,
+        computed: 'computeQuery()',
+      },
+      url: {
+        type: URL,
+        computed: 'computeURL(browser, query)',
+      }
+    };
+  }
+
+  computeQuery() {
+    const passStatuses = Object.values(TestStatuses).filter(s => s.isPass);
+    const passing = passStatuses.map(s => `status:${s}`).join('|');
+    // Ignore UNKNOWN - that's just a missing test.
+    const notPassing = passStatuses.concat(['unknown']).map(s => `status:!${s}`).join('&');
+    return `seq((${passing}) (${notPassing}))`;
+  }
+
+  computeURL(browser, query) {
+    const url = new URL('/results/', window.location);
+    url.searchParams.set('q', query);
+    url.searchParams.set('products', `${browser}[stable],${browser}[beta]`);
+    url.searchParams.set('labels', 'master');
+    url.searchParams.set('diff', 'true');
+    return url;
+  }
+
+  computeBrowser(browser, channel) {
+    return {
+      browser_name: browser,
+      labels: [channel],
+    }
+  }
+}
+window.customElements.define(BetaRegressions.is, BetaRegressions);
+
+export { Insights, Anomalies, Flakes, BetaRegressions };
 
