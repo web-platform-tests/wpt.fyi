@@ -8,6 +8,7 @@ import '../node_modules/@polymer/paper-card/paper-card.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './browser-picker.js';
+import './channel-picker.js';
 import './info-banner.js';
 import { DefaultProductSpecs, DefaultProducts, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
@@ -26,6 +27,7 @@ class Insights extends ProductInfo(PolymerElement) {
 
     <wpt-anomalies></wpt-anomalies>
     <wpt-flakes></wpt-flakes>
+    <wpt-release-regressions></wpt-release-regressions>
 `;
   }
 
@@ -36,16 +38,14 @@ class Insights extends ProductInfo(PolymerElement) {
 window.customElements.define(Insights.is, Insights);
 
 const cardStyle = html`
-  <style>
-    paper-card {
-      display: block;
-      margin-top: 1em;
-      width: 100%;
-    }
-    .query {
-      word-break: break-all;
-    }
-  </style>
+  paper-card {
+    display: block;
+    margin-top: 1em;
+    width: 100%;
+  }
+  .query {
+    word-break: break-all;
+  }
 `;
 
 class Flakes extends ProductInfo(PolymerElement) {
@@ -55,7 +55,9 @@ class Flakes extends ProductInfo(PolymerElement) {
 
   static get template() {
     return html`
-    ${cardStyle}
+    <style>
+      ${cardStyle}
+    </style>
     <paper-card>
       <div class="card-content">
         <h3>Flakes</h3>
@@ -115,7 +117,9 @@ class Anomalies extends ProductInfo(PolymerElement) {
 
   static get template() {
     return html`
-    ${cardStyle}
+    <style>
+      ${cardStyle}
+    </style>
     <paper-card>
       <div class="card-content">
         <h3>Anomalies</h3>
@@ -192,5 +196,104 @@ class Anomalies extends ProductInfo(PolymerElement) {
 }
 window.customElements.define(Anomalies.is, Anomalies);
 
-export { Insights, Anomalies, Flakes };
+class ReleaseRegressions extends ProductInfo(PolymerElement) {
+  static get is() {
+    return 'wpt-release-regressions';
+  }
+
+  static get template() {
+    return html`
+    <style>
+      ${cardStyle}
+      .wrapper {
+        display: flex;
+        align-items: center;
+      }
+      display-logo {
+        margin-left: 16px;
+        margin-right: 16px;
+      }
+      display-logo:first-child {
+        margin-left: 32px;
+      }
+    </style>
+    <paper-card>
+      <div class="card-content">
+        <h3>Release Regressions</h3>
+        <div class="wrapper">
+          <browser-picker browser="{{browser}}"></browser-picker>
+          <channel-picker browser="[[browser]]" channel="{{channel}}" channels="[&quot;beta&quot;, &quot;experimental&quot;]"></channel-picker>
+          <display-logo product="[[channelBrowser]]"></display-logo>
+          vs
+          <display-logo product="[[stableBrowser]]"></display-logo>
+        </div>
+        <info-banner>
+          <a class="query" href="[[url]]">[[query]]</a>
+        </info-banner>
+        <p>
+          Tests that are passing in the latest stable [[browserDisplayName]] release,
+          but not passing in the latest [[channel]] run.
+        </p>
+      </div>
+    </paper-card>
+`;
+  }
+
+  static get properties() {
+    return {
+      browser: String,
+      browserDisplayName: {
+        type: String,
+        computed: 'displayName(browser)',
+      },
+      channel: {
+        type: String,
+        value: 'beta',
+      },
+      channelBrowser: {
+        type: Object,
+        computed: 'computeBrowser(browser, channel)'
+      },
+      stableBrowser: {
+        type: Object,
+        computed: 'computeBrowser(browser, "stable")'
+      },
+      query: {
+        type: String,
+        computed: 'computeQuery()',
+      },
+      url: {
+        type: URL,
+        computed: 'computeURL(browser, channel, query)',
+      }
+    };
+  }
+
+  computeQuery() {
+    const passStatuses = Object.values(TestStatuses).filter(s => s.isPass);
+    const passing = passStatuses.map(s => `status:${s}`).join('|');
+    // Ignore UNKNOWN - that's just a missing test.
+    const notPassing = passStatuses.concat(['unknown']).map(s => `status:!${s}`).join('&');
+    return `seq((${passing}) (${notPassing}))`;
+  }
+
+  computeURL(browser, channel, query) {
+    const url = new URL('/results/', window.location);
+    url.searchParams.set('q', query);
+    url.searchParams.set('products', `${browser}[stable],${browser}[${channel}]`);
+    url.searchParams.set('labels', 'master');
+    url.searchParams.set('diff', 'true');
+    return url;
+  }
+
+  computeBrowser(browser, channel) {
+    return {
+      browser_name: browser,
+      labels: [channel],
+    };
+  }
+}
+window.customElements.define(ReleaseRegressions.is, ReleaseRegressions);
+
+export { Insights, Anomalies, Flakes, ReleaseRegressions };
 
