@@ -6,10 +6,11 @@ import (
 	"encoding/gob"
 	"net/http"
 
+	"github.com/google/go-github/github"
 	"github.com/gorilla/securecookie"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
+	ghOAuth "golang.org/x/oauth2/github"
 	"google.golang.org/appengine"
 )
 
@@ -76,6 +77,19 @@ func oauthHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
+	client := github.NewClient(oauthClient)
+	if err != nil {
+		log.Errorf("Failed to get GitHub client")
+		http.Error(w, "Error fetching user", http.StatusInternalServerError)
+		return
+	}
+	ghUser, _, err := client.Users.Get(ctx, "") // Empty string => Authenticated user.
+	if err != nil || ghUser == nil {
+		log.Errorf("Failed to get authenticated user")
+		http.Error(w, "Failed to get authenticated user", http.StatusBadRequest)
+		return
+	}
 	access := token.AccessToken
 	user := &User{
 		GitHubHandle: access,
@@ -160,6 +174,6 @@ func getGithubOAuthConfig(ctx context.Context) *oauth2.Config {
 		ClientSecret: secret,
 		// (no scope) - see https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/#available-scopes
 		Scopes:   []string{},
-		Endpoint: github.Endpoint,
+		Endpoint: ghOAuth.Endpoint,
 	}
 }
