@@ -1,0 +1,20 @@
+# Don't upload test data, package config, etc. to AppEngine.
+.eslintrc.json
+.github/
+.vscode/
+**/*_test.go
+build/
+components/test/
+docs/
+git/
+ISSUE_TEMPLATE/
+package-lock.json
+package.json
+README.md
+results-processor/
+revisions/
+static/24278ab617/
+static/wptd-metrics/
+test/
+wct.conf.json
+webdriver/

@@ -42,12 +42,14 @@ prepush: go_build go_test lint
 python_test: python3 tox
 	cd $(WPTD_PATH)results-processor; tox
 
-go_build: git mockgen
+go_build: git mockgen packr
 	cd $(WPTD_PATH); go get -v ./...
+	cd $(WPTD_PATH); packr2
 	cd $(WPTD_PATH); go generate ./...
+	cd $(WPTD_PATH); go build ./...
 
 go_build_test: go_build gcc
-	cd $(WPTD_PATH); go get -v -t -tags="small medium large" ./...
+	cd $(WPTD_PATH); go get -v -tags="small medium large" ./...
 
 go_lint: golint_deps go_test_tag_lint $(WPTD_GO_PATH)
 	@echo "# Linting the go packages..."
@@ -71,10 +73,10 @@ go_test_tag_lint:
 go_test: apt-get-gcc go_small_test go_medium_test
 
 go_small_test: go_build_test
-	cd $(WPTD_GO_PATH); go test -tags=small $(VERBOSE) ./...
+	cd $(WPTD_PATH); go test -tags=small $(VERBOSE) ./...
 
-go_medium_test: go_build_test dev_appserver_deps
-	cd $(WPTD_GO_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
+go_medium_test: go_build_test grpcio dev_appserver_deps
+	cd $(WPTD_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
 # of _go_webdriver_test. Variables will be passed into sub-make implicitly.
@@ -167,6 +169,11 @@ mockgen: git
 		go get -u github.com/golang/mock/mockgen; \
 	fi
 
+packr: git
+	if [ "$$(which packr2)" == "" ]; then \
+		go get -u github.com/gobuffalo/packr/v2/packr2; \
+	fi
+
 package_service: var-APP_PATH
 	# Trim the potential "app.staging.yaml" suffix.
 	if [[ "$(APP_PATH)" == "api/query/cache/service"* ]]; then \
@@ -234,7 +241,7 @@ eslint: webapp_node_modules_all
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
-	cd $(WPTD_GO_PATH)/util; go get -t ./...
+	cd $(WPTD_GO_PATH)/util; go get ./...
 	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
 
 gcloud_login: gcloud

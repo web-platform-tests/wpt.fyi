@@ -165,6 +165,11 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 		absAppYAMLPath,
 	)
 
+	log.Println("Starting dev_appserver")
+	for _, arg := range s.cmd.Args {
+		log.Println("  " + arg)
+	}
+
 	// dev_appserver.py usually does not print to stdout.
 	s.cmd.Stdout = os.Stderr
 	s.stderr, err = s.cmd.StderrPipe()

@@ -1,22 +1,31 @@
+// Copyright 2019 The WPT Dashboard Project. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+//go:generate packr2
+
 package webapp
 
 import (
 	"net/http"
-	"path"
-	"path/filepath"
-	"runtime"
 	"text/template"
 
+	"github.com/gobuffalo/packr/v2"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 var componentTemplates *template.Template
 
 func init() {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
-	glob := path.Join(dir, "dynamic-components/*.js")
-	componentTemplates = template.Must(template.ParseGlob(glob))
+	box := packr.New("./dynamic-components/")
+	componentTemplates = template.New("all.js")
+	var err error
+	for _, t := range box.List() {
+		template := templates.New(t)
+		if _, err = template.Parse(box.String(t)); err != nil {
+			panic(err)
+		}
+	}
 }
 
 func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {

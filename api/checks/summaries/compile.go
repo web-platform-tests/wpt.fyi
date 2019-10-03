@@ -2,36 +2,39 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate packr2
+
 package summaries
 
 import (
 	"bytes"
 	"fmt"
 	"net/url"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"text/template"
 
 	mapset "github.com/deckarep/golang-set"
+	"github.com/gobuffalo/packr/v2"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 var templates *template.Template
 
 func init() {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
-	templates = template.Must(
-		template.
-			New("all.md").
-			Funcs(template.FuncMap{
-				"escapeMD": escapeMD,
-			}).
-			ParseGlob(dir + "/*.md"),
-	)
+	box := packr.New("./templates/")
+	templates = template.New("all.md").
+		Funcs(template.FuncMap{
+			"escapeMD": escapeMD,
+		})
+	var err error
+	for _, t := range box.List() {
+		template := templates.New(t)
+		if _, err = template.Parse(box.String(t)); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // escapeMD returns the escaped MD equivalent of the plain text data s.
