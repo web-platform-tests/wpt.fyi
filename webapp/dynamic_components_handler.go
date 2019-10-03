@@ -2,12 +2,22 @@ package webapp
 
 import (
 	"net/http"
+	"path"
+	"path/filepath"
+	"runtime"
 	"text/template"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-var componentTemplates = template.Must(template.ParseGlob("dynamic-components/*.js"))
+var componentTemplates *template.Template
+
+func init() {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	glob := path.Join(dir, "dynamic-components/*.js")
+	componentTemplates = template.Must(template.ParseGlob(glob))
+}
 
 func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "text/javascript")

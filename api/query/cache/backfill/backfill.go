@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	"github.com/Hexcles/logrus"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"

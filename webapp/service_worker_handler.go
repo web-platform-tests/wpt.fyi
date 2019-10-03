@@ -7,7 +7,10 @@ package webapp
 import (
 	"fmt"
 	"net/http"
+	"path"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -15,12 +18,18 @@ import (
 	"google.golang.org/appengine"
 )
 
-var (
-	swTemplate = template.Must(template.ParseFiles("templates/service-worker.js"))
-	// NOTE(lukebjerring): If tweaking service worker locally, change to
-	// sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}|None$")
-	sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}$")
-)
+var swTemplate *template.Template
+
+func init() {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	file := path.Join(dir, "templates/service-worker.js")
+	swTemplate = template.Must(template.ParseFiles(file))
+}
+
+// NOTE(lukebjerring): If tweaking service worker locally, change to
+// sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}|None$")
+var sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}$")
 
 func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)

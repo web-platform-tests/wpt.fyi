@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	logrustest "github.com/Hexcles/logrus/hooks/test"
+	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/github"
 	"github.com/stretchr/testify/assert"

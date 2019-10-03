@@ -6,29 +6,20 @@ package webapp
 
 import (
 	"html/template"
+	"path"
+	"path/filepath"
+	"runtime"
 
-	"github.com/web-platform-tests/wpt.fyi/api"
-	"github.com/web-platform-tests/wpt.fyi/api/azure"
-	"github.com/web-platform-tests/wpt.fyi/api/checks"
-	"github.com/web-platform-tests/wpt.fyi/api/query"
-	"github.com/web-platform-tests/wpt.fyi/api/receiver"
-	"github.com/web-platform-tests/wpt.fyi/api/screenshot"
-	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-var templates = template.Must(template.ParseGlob("templates/*.html"))
+var templates *template.Template
 
 func init() {
-	// webapp.RegisterRoutes has a catch-all, so needs to go last.
-	api.RegisterRoutes()
-	azure.RegisterRoutes()
-	checks.RegisterRoutes()
-	query.RegisterRoutes()
-	receiver.RegisterRoutes()
-	screenshot.RegisterRoutes()
-	taskcluster.RegisterRoutes()
-	RegisterRoutes()
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	glob := path.Join(dir, "templates/*.html")
+	templates = template.Must(template.ParseGlob(glob))
 }
 
 // RegisterRoutes adds the route handlers for the webapp.

@@ -42,12 +42,12 @@ prepush: go_build go_test lint
 python_test: python3 tox
 	cd $(WPTD_PATH)results-processor; tox
 
-go_build: git mockgen $(WPTD_GO_PATH)
-	cd $(WPTD_GO_PATH); go get -v ./...
-	cd $(WPTD_GO_PATH); go generate ./...
+go_build: git mockgen
+	cd $(WPTD_PATH); go get -v ./...
+	cd $(WPTD_PATH); go generate ./...
 
 go_build_test: go_build gcc
-	cd $(WPTD_GO_PATH); go get -v -t -tags="small medium large" ./...
+	cd $(WPTD_PATH); go get -v -t -tags="small medium large" ./...
 
 go_lint: golint_deps go_test_tag_lint $(WPTD_GO_PATH)
 	@echo "# Linting the go packages..."
@@ -68,7 +68,7 @@ go_test_tag_lint:
 	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
-go_test: go_small_test go_medium_test
+go_test: apt-get-gcc go_small_test go_medium_test
 
 go_small_test: go_build_test
 	cd $(WPTD_GO_PATH); go test -tags=small $(VERBOSE) ./...

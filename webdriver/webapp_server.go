@@ -141,7 +141,7 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 		apiPort: pickUnusedPort(),
 	}
 
-	absAppYAMLPath, err := filepath.Abs("../webapp")
+	absAppYAMLPath, err := filepath.Abs("../webapp/web/app.yaml")
 	if err != nil {
 		return nil, err
 	}

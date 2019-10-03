@@ -114,7 +114,7 @@ function startDevAppserver(config) {
       '--datastore_consistency_policy=consistent',
       '--clear_search_indexes=true',
       '-A=wptdashboard',
-      '../webapp/app.yaml',
+      '../webapp/web/app.yaml',
     ]);
   process.on('exit', () => {
     log('killing devAppserver subprocess...');
