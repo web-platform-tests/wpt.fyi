@@ -37,6 +37,7 @@ type templateData struct {
 	Diff                bool
 	DiffFilter          string
 	EnableServiceWorker bool
+	User                string
 }
 
 // This handler is responsible for all pages that display test results.

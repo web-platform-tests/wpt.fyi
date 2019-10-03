@@ -6,7 +6,9 @@ package webapp
 
 import (
 	"html/template"
+	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
@@ -33,6 +35,14 @@ func init() {
 
 // RegisterRoutes adds the route handlers for the webapp.
 func RegisterRoutes() {
+	// Ensure login in (with GitHub)
+	shared.AddRoute("/login", "login", handlers.CORS(
+		handlers.AllowedOrigins([]string{"https://github.com"}),
+		handlers.AllowedHeaders([]string{"Content-Type"}),
+	)(http.HandlerFunc(loginHandler)).ServeHTTP)
+	shared.AddRoute("/logout", "logout", logoutHandler)
+	shared.AddRoute("/oauth", "oauth", oauthHandler)
+
 	// About wpt.fyi
 	shared.AddRoute("/about", "about", aboutHandler)
 
