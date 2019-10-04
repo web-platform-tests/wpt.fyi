@@ -23,3 +23,9 @@ static/wptd-metrics/
 test/
 wct.conf.json
 webdriver/
+
+# Ignore files bundled with packr
+api/checks/summaries/templates/
+webapp/dynamic-components/
+webapp/node_modules/
+webapp/templates/
