@@ -1,15 +1,20 @@
 # Don't upload test data, package config, etc. to AppEngine.
+**/*_test.go
 .eslintrc.json
+.git/
 .github/
 .vscode/
-**/*_test.go
 build/
+CODE_OF_CONDUCT.md
 components/test/
 docs/
 git/
 ISSUE_TEMPLATE/
+ISSUE_TEMPLATE.md
+LICENSE
 package-lock.json
 package.json
+PULL_REQUEST_TEMPLATE.md
 README.md
 results-processor/
 revisions/
