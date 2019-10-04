@@ -10,6 +10,9 @@ inbound_services:
 
 default_expiration: "1d"
 
+env_variables:
+  TASKCLUSTER_ROOT_URL: https://taskcluster.net
+
 # Also refer to dispatch.yaml for higher-priority routing rules.
 handlers:
 # Remote API

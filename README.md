@@ -63,7 +63,7 @@ exhaustive search is the only way to do that (see issue [#73](https://github.com
 
 #### Location of the WPT in each browser’s source tree
 
-- Chromium: [`src/third_party/WebKit/LayoutTests/external/wpt`](https://cs.chromium.org/chromium/src/third_party/WebKit/LayoutTests/external/wpt/)
+- Chromium: [`src/third_party/blink/web_tests/external/wpt`](https://cs.chromium.org/chromium/src/third_party/blink/web_tests/external/wpt/)
 - Firefox: [`testing/web-platform/tests`](https://dxr.mozilla.org/mozilla-central/source/testing/web-platform/tests)
 - WebKit: [`LayoutTests/imported/w3c/web-platform-tests`](https://trac.webkit.org/browser/trunk/LayoutTests/imported/web-platform-tests/wpt)
 
