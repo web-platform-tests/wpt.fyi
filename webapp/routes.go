@@ -18,10 +18,12 @@ var templates *template.Template
 func init() {
 	box := packr.New("html templates", "./templates/")
 	templates = template.New("all.html")
-	var err error
 	for _, t := range box.List() {
-		template := templates.New(t)
-		if _, err = template.Parse(box.FindString(t)); err != nil {
+		tmpl := templates.New(t)
+		body, err := box.FindString(t)
+		if err != nil {
+			panic(err)
+		} else if _, err = tmpl.Parse(body); err != nil {
 			panic(err)
 		}
 	}

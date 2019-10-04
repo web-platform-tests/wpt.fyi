@@ -28,10 +28,12 @@ func init() {
 		Funcs(template.FuncMap{
 			"escapeMD": escapeMD,
 		})
-	var err error
 	for _, t := range box.List() {
-		template := templates.New(t)
-		if _, err = template.Parse(box.FindString(t)); err != nil {
+		tmpl := templates.New(t)
+		body, err := box.FindString(t)
+		if err != nil {
+			panic(err)
+		} else if _, err = tmpl.Parse(body); err != nil {
 			panic(err)
 		}
 	}

@@ -19,10 +19,12 @@ var componentTemplates *template.Template
 func init() {
 	box := packr.New("dynamic components", "./dynamic-components/")
 	componentTemplates = template.New("all.js")
-	var err error
 	for _, t := range box.List() {
 		tmpl := componentTemplates.New(t)
-		if _, err = tmpl.Parse(box.FindString(t)); err != nil {
+		body, err := box.FindString(t)
+		if err != nil {
+			panic(err)
+		} else if _, err = tmpl.Parse(body); err != nil {
 			panic(err)
 		}
 	}
