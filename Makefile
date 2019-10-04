@@ -95,15 +95,15 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_dep
 	# path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	cd webdriver; \
-	go test $(VERBOSE) -timeout=15m -tags=large -args \
+	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
 		-chromedriver_path=$(CHROMEDRIVER_PATH) \
 		-frame_buffer=$(USE_FRAME_BUFFER) \
 		-staging=$(STAGING) \
-		-test.timeout=30m \
-		-browser=$(BROWSER) $(FLAGS)
+		-browser=$(BROWSER) $(FLAGS)"; \
+	if [ "$$UID" == "0" ]; then sudo -u browser $$COMMAND; else $$COMMAND; fi
 
 # NOTE: psmisc includes killall, needed by wct.sh
 web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc

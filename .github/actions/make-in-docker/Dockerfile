@@ -1,13 +1,16 @@
 # vim: set expandtab sw=4
 FROM golang:1.12-buster
 
+RUN chmod a+rx $HOME && useradd --uid 9999 --user-group --create-home browser
+
 # Sort the package names!
+# firefox-esr: provides deps for Firefox (we don't use ESR directly)
 # openjdk-11-jdk: provides JDK/JRE to Selenium & gcloud SDK
 # python-crcmod: native module to speed up CRC checksum in gsutil
-# sudo: used in Makefile (no-op inside Docker)
 RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         curl \
         equivs \
+        firefox-esr \
         lsb-release \
         openjdk-11-jdk \
         python-crcmod \
@@ -15,7 +18,11 @@ RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         sudo \
         tox \
         wget \
-        xvfb
+        xvfb && \
+    rm /usr/bin/firefox
+
+# Overwrite sudoers to discard the secure_path setting to make go available.
+RUN echo "root ALL=(ALL:ALL) ALL" > /etc/sudoers
 
 # Provide a fake openjdk-8-jdk for google-cloud-sdk-datastore-eumlator
 # google-cloud-sdk-datastore-emulator incorrectly depends on openjdk-8-jdk which does not exist in buster.
