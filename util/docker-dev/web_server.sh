@@ -49,5 +49,5 @@ wptd_exec_it dev_appserver.py \
    --api_host=$WPTD_CONTAINER_HOST \
    --api_port=9999 \
    -A=wptdashboard \
-   /home/user/wpt.fyi/webapp/web/app.yaml
+   /home/user/wpt.fyi/webapp/web/app.dev.yaml
 

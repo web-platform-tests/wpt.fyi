@@ -241,8 +241,8 @@ eslint: webapp_node_modules_all
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
-	cd $(WPTD_GO_PATH)/util; go get ./...
-	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
+	cd $(WPTD_PATH)/util; go get ./...
+	go run $(WPTD_PATH)/util/populate_dev_data.go $(FLAGS)
 
 gcloud_login: gcloud
 	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
@@ -264,7 +264,7 @@ deploy_staging: deployment_state var-BRANCH_NAME
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 cleanup_staging_versions: gcloud_login
-	$(WPTD_GO_PATH)/util/cleanup-versions.sh
+	$(WPTD_PATH)/util/cleanup-versions.sh
 
 deploy_production: deployment_state
 	gcloud config set project wptdashboard
