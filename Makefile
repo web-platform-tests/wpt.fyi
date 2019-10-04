@@ -75,7 +75,7 @@ go_test: apt-get-gcc go_small_test go_medium_test
 go_small_test: go_build_test
 	cd $(WPTD_PATH); go test -tags=small $(VERBOSE) ./...
 
-go_medium_test: go_build_test grpcio dev_appserver_deps
+go_medium_test: go_build_test dev_appserver_deps
 	cd $(WPTD_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
