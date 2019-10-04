@@ -23,7 +23,7 @@ require (
 	github.com/stoewer/go-strcase v1.0.2
 	github.com/stretchr/testify v1.4.0
 	github.com/taskcluster/taskcluster-lib-urls v12.0.0+incompatible
-	github.com/taskcluster/taskcluster/clients/client-go v18.0.3
+	github.com/taskcluster/taskcluster/clients/client-go/v18 v18.0.3
 	github.com/tebeka/selenium v0.9.9
 	github.com/web-platform-tests/wpt-metadata v0.0.0-20190606141341-99d1b32cc534
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
