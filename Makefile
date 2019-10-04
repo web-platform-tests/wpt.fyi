@@ -48,7 +48,7 @@ go_build: git mockgen packr
 	cd $(WPTD_PATH); go build ./...
 
 go_build_test: go_build gcc
-	cd $(WPTD_PATH); go get -v -tags="small medium large" ./...
+	cd $(WPTD_PATH); go get -v -t -tags="small medium large" ./...
 
 go_lint: golint_deps go_test_tag_lint $(WPTD_GO_PATH)
 	@echo "# Linting the go packages..."
@@ -240,7 +240,7 @@ eslint: webapp_node_modules_all
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
-	cd $(WPTD_PATH)/util; go get ./...
+	cd $(WPTD_PATH)/util; go get -t ./...
 	go run $(WPTD_PATH)/util/populate_dev_data.go $(FLAGS)
 
 gcloud_login: gcloud
