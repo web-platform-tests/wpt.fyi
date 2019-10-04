@@ -31,7 +31,7 @@ func init() {
 	var err error
 	for _, t := range box.List() {
 		template := templates.New(t)
-		if _, err = template.Parse(box.String(t)); err != nil {
+		if _, err = template.Parse(box.FindString(t)); err != nil {
 			panic(err)
 		}
 	}

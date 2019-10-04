@@ -22,7 +22,7 @@ func init() {
 	var err error
 	for _, t := range box.List() {
 		tmpl := componentTemplates.New(t)
-		if _, err = tmpl.Parse(box.String(t)); err != nil {
+		if _, err = tmpl.Parse(box.FindString(t)); err != nil {
 			panic(err)
 		}
 	}
