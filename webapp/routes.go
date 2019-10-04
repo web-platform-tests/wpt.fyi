@@ -16,7 +16,7 @@ import (
 var templates *template.Template
 
 func init() {
-	box := packr.New("./templates/", "html templates")
+	box := packr.New("html templates", "./templates/")
 	templates = template.New("all.html")
 	var err error
 	for _, t := range box.List() {

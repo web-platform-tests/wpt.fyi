@@ -23,7 +23,7 @@ import (
 var templates *template.Template
 
 func init() {
-	box := packr.New("./templates/", "markdown templates")
+	box := packr.New("markdown templates", "./templates/")
 	templates = template.New("all.md").
 		Funcs(template.FuncMap{
 			"escapeMD": escapeMD,
