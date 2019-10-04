@@ -21,8 +21,8 @@ func init() {
 	componentTemplates = template.New("all.js")
 	var err error
 	for _, t := range box.List() {
-		template := templates.New(t)
-		if _, err = template.Parse(box.String(t)); err != nil {
+		tmpl := componentTemplates.New(t)
+		if _, err = tmpl.Parse(box.String(t)); err != nil {
 			panic(err)
 		}
 	}
