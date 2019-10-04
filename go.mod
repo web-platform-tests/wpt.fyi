@@ -33,6 +33,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.11.3 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
+	github.com/jstemmer/go-junit-report v0.0.0-20191003225341-1b8b67371c0c // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
@@ -65,9 +66,9 @@ require (
 	golang.org/x/mobile v0.0.0-20191002175909-6d0d39b2ca82 // indirect
 	golang.org/x/net v0.0.0-20191003171128-d98b1b443823 // indirect
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sys v0.0.0-20191002091554-b397fe3ad8ed // indirect
+	golang.org/x/sys v0.0.0-20191003212358-c178f38b412c // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0
-	golang.org/x/tools v0.0.0-20191003162220-c56b4b191e2d // indirect
+	golang.org/x/tools v0.0.0-20191003225459-fb78014554ee // indirect
 	google.golang.org/api v0.10.0
 	google.golang.org/appengine v1.6.4
 	google.golang.org/genproto v0.0.0-20191002211648-c459b9ce5143
