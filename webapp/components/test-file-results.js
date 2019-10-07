@@ -73,13 +73,17 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         type: Array,
         value: [],
       },
+      metadata: {
+        type: Array,
+        value: [],
+      },
       isVerbose: {
         type: Boolean,
         value: false,
       },
       rows: {
         type: Array,
-        computed: 'computeRows(resultsTable, onlyShowDifferences)'
+        computed: 'computeRows(resultsTable, metadata, onlyShowDifferences)'
       }
     };
   }
@@ -273,7 +277,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     return new Map([...firstScreenshot, ...Object.entries(screenshots)]);
   }
 
-  computeRows(resultsTable, onlyShowDifferences) {
+  computeRows(resultsTable, metadata, onlyShowDifferences) {
+    console.log(resultsTable, metadata);
     if (!resultsTable || !resultsTable.length || !onlyShowDifferences) {
       return resultsTable;
     }
