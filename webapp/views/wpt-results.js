@@ -358,7 +358,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         type: Array,
         computed: 'computeDisplayedTests(path, searchResults)',
       },
-      metadata: Array,
+      metadata: Object,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {

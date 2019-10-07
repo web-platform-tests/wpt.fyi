@@ -74,8 +74,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         value: [],
       },
       metadata: {
-        type: Array,
-        value: [],
+        type: Object,
+        value: {},
       },
       isVerbose: {
         type: Boolean,
@@ -278,7 +278,6 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   }
 
   computeRows(resultsTable, metadata, onlyShowDifferences) {
-    console.log(resultsTable, metadata);
     if (!resultsTable || !resultsTable.length || !onlyShowDifferences) {
       return resultsTable;
     }
