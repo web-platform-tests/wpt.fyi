@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	log "github.com/Hexcles/logrus"
 	mapset "github.com/deckarep/golang-set"
+	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -355,7 +355,7 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 		go func() {
 			for err := range errs {
 				// TODO: Should this use a context-based logger?
-				log.Errorf("Error executing filter query: %v: %v", fs, err)
+				logrus.Errorf("Error executing filter query: %v: %v", fs, err)
 			}
 		}()
 	}

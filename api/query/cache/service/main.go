@@ -18,8 +18,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
-	"github.com/Hexcles/logrus"
-	log "github.com/Hexcles/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
@@ -303,7 +302,7 @@ func main() {
 
 	store, err := backfill.GetDatastore(*projectID, gcpCredentialsFile, logger)
 	if err != nil {
-		log.Fatalf("Failed to get datastore: %s", err)
+		logrus.Fatalf("Failed to get datastore: %s", err)
 	}
 	mon, err = backfill.FillIndex(store, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
