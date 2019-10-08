@@ -41,10 +41,10 @@ func getSecureCookie(ctx context.Context) *securecookie.SecureCookie {
 	return secureCookie
 }
 
-func loginHandler(w http.ResponseWriter, req *http.Request) {
-	user := getUserFromCookie(req)
-	redirect := req.FormValue("return")
-	ctx := appengine.NewContext(req)
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	user := getUserFromCookie(r)
+	redirect := r.FormValue("return")
+	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 	if user == nil {
 		conf := getGithubOAuthConfig(ctx)
@@ -57,17 +57,17 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		log.Infof("User %s is logged in", user.GitHubHandle)
 	}
-	http.Redirect(w, req, redirect, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, redirect, http.StatusTemporaryRedirect)
 }
 
-func oauthHandler(w http.ResponseWriter, req *http.Request) {
-	oauthToken := req.FormValue("code")
+func oauthHandler(w http.ResponseWriter, r *http.Request) {
+	oauthToken := r.FormValue("code")
 	if oauthToken == "" {
 		http.Error(w, "No token or username provided", http.StatusBadRequest)
 		return
 	}
 
-	ctx := appengine.NewContext(req)
+	ctx := shared.NewAppEngineContext(r)
 	conf := getGithubOAuthConfig(ctx)
 	token, err := conf.Exchange(ctx, oauthToken)
 	log := shared.GetLogger(ctx)
@@ -96,24 +96,24 @@ func oauthHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	setSession(ctx, user, w)
 	log.Infof("User %s logged in", user.GitHubHandle)
-	state := req.FormValue("state")
+	state := r.FormValue("state")
 	ret, err := base64.URLEncoding.DecodeString(state)
 	if err != nil {
 		log.Errorf("Failed to decode return url")
 		ret = []byte("/")
 	}
-	http.Redirect(w, req, string(ret), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, string(ret), http.StatusTemporaryRedirect)
 }
 
-func logoutHandler(response http.ResponseWriter, request *http.Request) {
+func logoutHandler(response http.ResponseWriter, ruest *http.Request) {
 	clearSession(response)
-	http.Redirect(response, request, "/", http.StatusFound)
+	http.Redirect(response, ruest, "/", http.StatusFound)
 }
 
-func getUserFromCookie(req *http.Request) (user *User) {
-	ctx := appengine.NewContext(req)
+func getUserFromCookie(r *http.Request) (user *User) {
+	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
-	if cookie, err := req.Cookie("session"); err == nil && cookie != nil {
+	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
 		cookieValue := make(map[string]interface{})
 		if err = getSecureCookie(ctx).Decode("session", cookie.Value, &cookieValue); err == nil {
 			if decoded, ok := cookieValue["user"].(User); ok {
