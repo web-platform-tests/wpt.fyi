@@ -38,7 +38,7 @@ require (
 	golang.org/x/sys v0.0.0-20191008105621-543471e840be // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0
 	golang.org/x/tools v0.0.0-20191007185444-6536af71d98a // indirect
-	google.golang.org/api v0.10.0
+	google.golang.org/api v0.11.0
 	google.golang.org/appengine v1.6.5
 	google.golang.org/genproto v0.0.0-20191007204434-a023cd5227bd
 	google.golang.org/grpc v1.24.0 // indirect
@@ -52,4 +52,4 @@ require (
 // Work around https://github.com/taskcluster/taskcluster/issues/1492
 replace golang.org/x/tools v0.0.0-20190722020823-e377ae9d6386 => golang.org/x/tools v0.0.0-20191007185444-6536af71d98a
 
-replace launchpad.net/gocheck v0.0.0-20140225173054-000000000087 => gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
+replace launchpad.net/gocheck v0.0.0-20140225173054-000000000087 => github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15
