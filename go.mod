@@ -51,3 +51,5 @@ require (
 
 // Work around https://github.com/taskcluster/taskcluster/issues/1492
 replace golang.org/x/tools v0.0.0-20190722020823-e377ae9d6386 => golang.org/x/tools v0.0.0-20191007185444-6536af71d98a
+
+replace launchpad.net/gocheck v0.0.0-20140225173054-000000000087 => gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
