@@ -43,14 +43,15 @@ func getSecureCookie(ctx context.Context) *securecookie.SecureCookie {
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromCookie(r)
-	redirect := r.FormValue("return")
+	returnURL := r.FormValue("return")
+	redirect := returnURL
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 	if user == nil {
 		conf := getGithubOAuthConfig(ctx)
 		state := base64.URLEncoding.EncodeToString([]byte(redirect))
-		redirect := conf.AuthCodeURL(state, oauth2.AccessTypeOnline)
-		log.Infof("OAuthing with github and returning to %s", redirect)
+		redirect = conf.AuthCodeURL(state, oauth2.AccessTypeOnline)
+		log.Infof("OAuthing with github and returning to %s", returnURL)
 	} else {
 		if redirect == "" {
 			redirect = "/"
