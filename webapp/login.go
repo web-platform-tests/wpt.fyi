@@ -127,10 +127,9 @@ func setSession(ctx context.Context, user *User, response http.ResponseWriter) {
 	}
 	if encoded, err := getSecureCookie(ctx).Encode("session", value); err == nil {
 		cookie := &http.Cookie{
-			Name:   "session",
-			Value:  encoded,
-			Path:   "/",
-			MaxAge: -1,
+			Name:  "session",
+			Value: encoded,
+			Path:  "/",
 		}
 		http.SetCookie(response, cookie)
 	} else {
