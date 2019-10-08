@@ -91,9 +91,8 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get authenticated user", http.StatusBadRequest)
 		return
 	}
-	access := token.AccessToken
 	user := &User{
-		GitHubHandle: access,
+		GitHubHandle: ghUser.GetLogin(),
 	}
 	setSession(ctx, user, w)
 	log.Infof("User %s logged in", user.GitHubHandle)
