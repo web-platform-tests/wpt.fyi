@@ -424,8 +424,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
   }
 
   computeLiveTestDomain() {
-    if (this.webPlatformTestsLive) {
-      return 'web-platform-tests.live';
+    if (this.wptLive) {
+      return 'wpt.live';
     }
     return 'w3c-test.org';
   }
