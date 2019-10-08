@@ -14,7 +14,11 @@ import (
 
 func TestMaps(t *testing.T) {
 	for name, value := range testStatusValues {
-		assert.Equal(t, name, testStatusNames[value])
+		if name == "MISSING" {
+			assert.Equal(t, "UNKNOWN", testStatusNames[value])
+		} else {
+			assert.Equal(t, name, testStatusNames[value])
+		}
 	}
 	for value, name := range testStatusNames {
 		assert.Equal(t, value, testStatusValues[name])
