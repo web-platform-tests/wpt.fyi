@@ -7,7 +7,7 @@ package mock_receiver
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/github"
+	github "github.com/google/go-github/v28/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	taskqueue "google.golang.org/appengine/taskqueue"
 	io "io"

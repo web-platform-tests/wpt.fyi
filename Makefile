@@ -42,12 +42,13 @@ prepush: go_build go_test lint
 python_test: python3 tox
 	cd $(WPTD_PATH)results-processor; tox
 
-go_build: git mockgen $(WPTD_GO_PATH)
-	cd $(WPTD_GO_PATH); go get -v ./...
-	cd $(WPTD_GO_PATH); go generate ./...
+go_build: git mockgen packr
+	cd $(WPTD_PATH); go get -v ./...
+	cd $(WPTD_PATH); go generate ./...
+	cd $(WPTD_PATH); go build ./...
 
 go_build_test: go_build gcc
-	cd $(WPTD_GO_PATH); go get -v -t -tags="small medium large" ./...
+	cd $(WPTD_PATH); go get -v -t -tags="small medium large" ./...
 
 go_lint: golint_deps go_test_tag_lint $(WPTD_GO_PATH)
 	@echo "# Linting the go packages..."
@@ -68,13 +69,13 @@ go_test_tag_lint:
 	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
-go_test: go_small_test go_medium_test
+go_test: apt-get-gcc go_small_test go_medium_test
 
 go_small_test: go_build_test
-	cd $(WPTD_GO_PATH); go test -tags=small $(VERBOSE) ./...
+	cd $(WPTD_PATH); go test -tags=small $(VERBOSE) ./...
 
 go_medium_test: go_build_test dev_appserver_deps
-	cd $(WPTD_GO_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
+	cd $(WPTD_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
 # of _go_webdriver_test. Variables will be passed into sub-make implicitly.
@@ -167,6 +168,11 @@ mockgen: git
 		go get -u github.com/golang/mock/mockgen; \
 	fi
 
+packr: git
+	if [ "$$(which packr2)" == "" ]; then \
+		go get -u github.com/gobuffalo/packr/v2/packr2; \
+	fi
+
 package_service: var-APP_PATH
 	# Trim the potential "app.staging.yaml" suffix.
 	if [[ "$(APP_PATH)" == "api/query/cache/service"* ]]; then \
@@ -234,8 +240,8 @@ eslint: webapp_node_modules_all
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
-	cd $(WPTD_GO_PATH)/util; go get -t ./...
-	go run $(WPTD_GO_PATH)/util/populate_dev_data.go $(FLAGS)
+	cd $(WPTD_PATH)/util; go get -t ./...
+	go run $(WPTD_PATH)/util/populate_dev_data.go $(FLAGS)
 
 gcloud_login: gcloud
 	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
@@ -257,7 +263,7 @@ deploy_staging: deployment_state var-BRANCH_NAME
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 cleanup_staging_versions: gcloud_login
-	$(WPTD_GO_PATH)/util/cleanup-versions.sh
+	$(WPTD_PATH)/util/cleanup-versions.sh
 
 deploy_production: deployment_state
 	gcloud config set project wptdashboard

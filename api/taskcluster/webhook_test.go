@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/stretchr/testify/assert"
-	"github.com/taskcluster/taskcluster/clients/client-go/tcqueue"
+	"github.com/taskcluster/taskcluster/clients/client-go/v18/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"

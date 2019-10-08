@@ -141,7 +141,7 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 		apiPort: pickUnusedPort(),
 	}
 
-	absAppYAMLPath, err := filepath.Abs("../webapp")
+	absAppYAMLPath, err := filepath.Abs("../webapp/web/app.dev.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -164,6 +164,11 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 		"-A=wptdashboard",
 		absAppYAMLPath,
 	)
+
+	log.Println("Starting dev_appserver")
+	for _, arg := range s.cmd.Args {
+		log.Println("  " + arg)
+	}
 
 	// dev_appserver.py usually does not print to stdout.
 	s.cmd.Stdout = os.Stderr
