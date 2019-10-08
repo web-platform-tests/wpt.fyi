@@ -29,18 +29,6 @@ type User struct {
 	GitHubHandle string
 }
 
-var secureCookie *securecookie.SecureCookie
-
-func getSecureCookie(ctx context.Context) *securecookie.SecureCookie {
-	store := shared.NewAppEngineDatastore(ctx, false)
-	if secureCookie == nil {
-		hashKey, _ := shared.GetSecret(store, "secure-cookie-hashkey")
-		blockKey, _ := shared.GetSecret(store, "secure-cookie-blockkey")
-		secureCookie = securecookie.New([]byte(hashKey), []byte(blockKey))
-	}
-	return secureCookie
-}
-
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
@@ -149,6 +137,18 @@ func setSession(ctx context.Context, user *User, response http.ResponseWriter) {
 		log := shared.GetLogger(ctx)
 		log.Errorf("Failed to set session cookie: %s", err.Error())
 	}
+}
+
+var secureCookie *securecookie.SecureCookie
+
+func getSecureCookie(ctx context.Context) *securecookie.SecureCookie {
+	if secureCookie == nil {
+		store := shared.NewAppEngineDatastore(ctx, false)
+		hashKey, _ := shared.GetSecret(store, "secure-cookie-hashkey")
+		blockKey, _ := shared.GetSecret(store, "secure-cookie-blockkey")
+		secureCookie = securecookie.New([]byte(hashKey), []byte(blockKey))
+	}
+	return secureCookie
 }
 
 func clearSession(response http.ResponseWriter) {
