@@ -1,4 +1,4 @@
-// +build medium
+// +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -7,6 +7,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -34,7 +35,33 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
 
-	assert.Equal(t, `[{"test":"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html","urls":["bugs.bar?id=456",""]},{"test":"/randomfolder2/foo.html","urls":["","safari.foo.com"]},{"test":"/randomfolder3/innerfolder1/random3foo.html","urls":["bugs.bar",""]}]`, res)
+	var expected, actual shared.MetadataResults
+	json.Unmarshal([]byte(`{
+		"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": [
+			{
+				"product":"chrome",
+				"url":"bugs.bar?id=456",
+				"results":[
+					{ "status":6 }
+				]
+			}
+		],
+		"/randomfolder2/foo.html": [
+			{
+				"product": "safari",
+				"url":"safari.foo.com",
+				"results":[{"status":0}]
+			}
+		],
+		"/randomfolder3/innerfolder1/random3foo.html": [
+			{
+				"product":"chrome",
+				"url":"bugs.bar",
+				"results":[{"status":6}]
+			}
+		]}`), &expected)
+	json.Unmarshal([]byte(res), &actual)
+	assert.Equal(t, expected, actual)
 }
 
 func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
@@ -71,7 +98,28 @@ func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	res := w.Body.String()
 
-	assert.Equal(t, `[{"test":"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html","urls":["bugs.bar?id=456",""]},{"test":"/randomfolder3/innerfolder1/random3foo.html","urls":["bugs.bar",""]}]`, res)
+	var expected, actual shared.MetadataResults
+	json.Unmarshal([]byte(`{
+		"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": [
+			{
+				"url": "bugs.bar?id=456",
+				"product": "chrome",
+				"results": [
+					{"status": 6 }
+				]
+			}
+		],
+		"/randomfolder3/innerfolder1/random3foo.html": [
+			{
+				"product": "chrome",
+				"url": "bugs.bar",
+				"results": [
+					{"status": 6 }
+				]}
+		]
+	}`), &expected)
+	json.Unmarshal([]byte(res), &actual)
+	assert.EqualValues(t, expected, actual)
 }
 
 func TestFilterMetadataHandlerPost_MissingProducts(t *testing.T) {
@@ -130,19 +178,24 @@ func TestFilterMetadataHandlerPost_NotJustLink(t *testing.T) {
 
 func TestFilterMetadata(t *testing.T) {
 	metadata := shared.MetadataResults(shared.MetadataResults{
-		shared.MetadataResult{
-			Test: "/foo/bar/b.html",
-			URLs: []string{"", "https://aa.com/item", "https://bug.com/item"}},
-		shared.MetadataResult{
-			Test: "bar",
-			URLs: []string{"", "https://external.com/item", ""}}})
+		"/foo/bar/b.html": shared.MetadataLinks{
+			shared.MetadataLink{
+				URL: "https://aa.com/item",
+			},
+			shared.MetadataLink{
+				URL: "https://bug.com/item",
+			},
+		},
+		"bar": shared.MetadataLinks{
+			shared.MetadataLink{
+				URL: "https://external.com/item",
+			},
+		},
+	})
 	abstractLink := query.AbstractLink{Pattern: "bug.com"}
 
 	res := filterMetadata(abstractLink, metadata)
 
 	assert.Equal(t, 1, len(res))
-	assert.Equal(t, "/foo/bar/b.html", res[0].Test)
-	assert.Equal(t, "", res[0].URLs[0])
-	assert.Equal(t, "https://aa.com/item", res[0].URLs[1])
-	assert.Equal(t, "https://bug.com/item", res[0].URLs[2])
+	assert.Equal(t, "https://aa.com/item", res["/foo/bar/b.html"][0].URL)
 }
