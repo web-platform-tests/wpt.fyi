@@ -145,7 +145,7 @@ func setSession(ctx context.Context, user *User, response http.ResponseWriter) {
 			MaxAge: -1,
 		}
 		http.SetCookie(response, cookie)
-	} else if appengine.IsDevAppServer() {
+	} else {
 		log := shared.GetLogger(ctx)
 		log.Errorf("Failed to set session cookie: %s", err.Error())
 	}
