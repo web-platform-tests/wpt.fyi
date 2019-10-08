@@ -22,7 +22,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 
-	log "github.com/Hexcles/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -218,7 +218,7 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 		subs := make(map[string]metrics.SubTest)
 		for _, sub := range res.Subtests {
 			if _, ok := subs[sub.Name]; ok {
-				log.Warningf("Duplicate subtests with the same name: %s %s", res.Test, sub.Name)
+				logrus.Warningf("Duplicate subtests with the same name: %s %s", res.Test, sub.Name)
 				continue
 			}
 			subs[sub.Name] = sub

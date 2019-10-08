@@ -1,2 +1,5 @@
 **/node_modules
 debug.test
+go.sum
+**/packrd/
+**/*-packr.go
