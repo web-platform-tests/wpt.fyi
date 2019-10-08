@@ -42,7 +42,10 @@ prepush: go_build go_test lint
 python_test: python3 tox
 	cd $(WPTD_PATH)results-processor; tox
 
+# NOTE: We prune before generate, because node_modules are packr'd into the
+# binary (and part of the build).
 go_build: git mockgen packr
+	make webapp_node_modules_prune
 	cd $(WPTD_PATH); go get -v ./...
 	cd $(WPTD_PATH); go generate ./...
 	cd $(WPTD_PATH); go build ./...
@@ -89,7 +92,7 @@ go_firefox_test: firefox geckodriver
 go_chrome_test: chrome chromedriver
 	make _go_webdriver_test BROWSER=chrome
 
-puppeteer_chrome_test: chrome webserver_deps webdriver_node_deps
+puppeteer_chrome_test: chrome dev_appserver_deps webdriver_node_deps
 	cd webdriver; npm test
 
 webdriver_node_deps:
@@ -97,7 +100,7 @@ webdriver_node_deps:
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-_go_webdriver_test: var-BROWSER java go_build_test xvfb geckodriver webserver_deps
+_go_webdriver_test: var-BROWSER java go_build_test xvfb geckodriver dev_appserver_deps
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
 	# path before installing geckodriver as it includes version strings.
@@ -116,11 +119,6 @@ _go_webdriver_test: var-BROWSER java go_build_test xvfb geckodriver webserver_de
 # NOTE: psmisc includes killall, needed by wct.sh
 web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
-
-# Dependencies for running dev_appserver.py.
-webserver_deps: webapp_deps dev_appserver_deps
-
-webapp_deps: go_build webapp_node_modules
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
@@ -248,7 +246,7 @@ gcloud_login: gcloud
 		gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json; \
 	fi
 
-deployment_state: gcloud_login webapp_deps package_service var-APP_PATH
+deployment_state: go_build gcloud_login package_service var-APP_PATH
 
 deploy_staging: git apt-get-jq
 deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
