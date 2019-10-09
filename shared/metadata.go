@@ -6,6 +6,7 @@ package shared
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/web-platform-tests/wpt-metadata/util"
 	"gopkg.in/yaml.v2"
@@ -18,6 +19,9 @@ var MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-me
 // with a test result query request.
 const ShowMetadataParam = "metadataInfo"
 
+// MetadataFileName is the name of Metadata files in the wpt-metadata repo.
+const MetadataFileName = "META.yml"
+
 // MetadataResults is a map from test paths to all of the links under that test path.
 // It represents a flattened copy of the wpt-metadata repository, which has metadata
 // sharded across as large number of files in a directory structure.
@@ -25,7 +29,7 @@ type MetadataResults map[string]MetadataLinks
 
 // Metadata represents a wpt-metadata META.yml file.
 type Metadata struct {
-	Links MetadataLinks
+	Links MetadataLinks `yaml:"links"`
 }
 
 // MetadataLinks is a helper type for a MetadataLink slice.
@@ -40,12 +44,12 @@ type MetadataLink struct {
 	Results []MetadataTestResult `yaml:"results" json:"results,omitempty"`
 }
 
-// MetadataTestResult is a filter for test results to which the metadata link
+// MetadataTestResult is a filter for test results to which the Metadata link
 // should apply.
 type MetadataTestResult struct {
 	TestPath    string      `yaml:"test"    json:"test,omitempty"`
-	SubtestName *string     `yaml:"subtest" json:"subtest,omitempty"`
-	Status      *TestStatus `yaml:"status"  json:"status,omitempty"`
+	SubtestName *string     `yaml:"subtest,omitempty" json:"subtest,omitempty"`
+	Status      *TestStatus `yaml:"status,omitempty"  json:"status,omitempty"`
 }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
@@ -54,25 +58,38 @@ func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, ur
 	for i, run := range testRuns {
 		productSpecs[i] = ProductSpec{ProductAtRevision: run.ProductAtRevision, Labels: run.LabelsSet()}
 	}
-	return getMetadataResponseOnProductSpecs(productSpecs, client, log, url)
+
+	metadata, err := GetMetadataByteMap(client, log, url)
+	if err != nil {
+		return nil, err
+	}
+
+	return constructMetadataResponse(productSpecs, metadata), nil
 }
 
 // GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
 func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
-	return getMetadataResponseOnProductSpecs(productSpecs, client, log, url)
-}
-
-func getMetadataResponseOnProductSpecs(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
-	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
+	metadata, err := GetMetadataByteMap(client, log, url)
 	if err != nil {
 		return nil, err
 	}
-	metadata := parseMetadata(metadataByteMap, log)
+
 	return constructMetadataResponse(productSpecs, metadata), nil
 }
 
-// parseMetadata collects and parses all META.yml files from
+// GetMetadataByteMap collects and parses all META.yml files from
 // wpt-metadata reposiroty.
+func GetMetadataByteMap(client *http.Client, log Logger, url string) (map[string]Metadata, error) {
+	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
+	if err != nil {
+		log.Errorf("Error from CollectMetadataWithURL: %s", err.Error())
+		return nil, err
+	}
+
+	metadata := parseMetadata(metadataByteMap, log)
+	return metadata, nil
+}
+
 func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Metadata {
 	var metadataMap = make(map[string]Metadata)
 	for path, data := range metadataByteMap {
@@ -95,7 +112,7 @@ func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Me
 			link := data.Links[i]
 			for _, result := range link.Results {
 				//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
-				var fullTestName = "/" + folderPath + "/" + result.TestPath
+				var fullTestName = GetWPTTestPath(folderPath, result.TestPath)
 				for _, productSpec := range productSpecs {
 					// Matches browser type if a version is not specified.
 					if link.Product.MatchesProductSpec(productSpec) ||
@@ -141,4 +158,37 @@ func PrepareLinkFilter(metadata MetadataResults) map[string][]string {
 		}
 	}
 	return metadataMap
+}
+
+// GetWPTTestPath concatenates a folder path and a test name into a WPT test path.
+func GetWPTTestPath(folderPath string, testname string) string {
+	if folderPath == "" {
+		return "/" + testname
+	}
+	return "/" + folderPath + "/" + testname
+}
+
+// SplitWPTTestPath splits a WPT test path into a folder path and a test name.
+func SplitWPTTestPath(githubPath string) (string, string) {
+	if !strings.HasPrefix(githubPath, "/") {
+		return "", ""
+	}
+
+	pathArray := strings.Split(githubPath, "/")[1:]
+	if len(pathArray) == 0 {
+		return "", ""
+	}
+
+	if len(pathArray) == 1 {
+		return "", pathArray[0]
+	}
+
+	folderPath := strings.Join(pathArray[:len(pathArray)-1], "/")
+	testName := pathArray[len(pathArray)-1]
+	return folderPath, testName
+}
+
+// GetMetadataFilePath appends MetadataFileName to a Metadata folder path.
+func GetMetadataFilePath(folderName string) string {
+	return folderName + "/" + MetadataFileName
 }
