@@ -338,9 +338,7 @@ func isUserWhitelisted(aeAPI shared.AppEngineAPI, login string) bool {
 		return true
 	}
 	whitelist := []string{
-		"autofoolip",
 		"chromium-wpt-export-bot",
-		"foolip",
 		"gsnedders",
 		"jgraham",
 		"jugglinmike",
