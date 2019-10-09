@@ -108,13 +108,14 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// filterMetadata filters the given metadata down to entries where the value (links) contain
+// at least one link where the URL contains the substring provided in the "link" search atom.
 func filterMetadata(linkQuery query.AbstractLink, metadata shared.MetadataResults) shared.MetadataResults {
-	res := shared.MetadataResults{}
-
-	for _, data := range metadata {
-		for _, url := range data.URLs {
-			if strings.Contains(url, linkQuery.Pattern) {
-				res = append(res, data)
+	res := make(shared.MetadataResults)
+	for test, links := range metadata {
+		for _, link := range links {
+			if strings.Contains(link.URL, linkQuery.Pattern) {
+				res[test] = links
 				break
 			}
 		}
