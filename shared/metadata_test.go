@@ -10,7 +10,33 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
+
+func TestMarshalMetadata(t *testing.T) {
+	var metadata Metadata
+	var metadataInBytes = []byte(`
+links:
+  - product: chrome-64
+    url: https://external.com/item
+    results:
+    - test: a.html
+  - product: firefox-2
+    url: https://bug.com/item
+    results:
+    - test: b.html
+      subtest: Something should happen
+      status: FAIL
+    - test: c.html
+`)
+	yaml.Unmarshal(metadataInBytes, &metadata)
+	acutalInBytes, _ := yaml.Marshal(metadata)
+
+	var actual Metadata
+	yaml.Unmarshal(acutalInBytes, &actual)
+
+	assert.Equal(t, metadata, actual)
+}
 
 func TestParseMetadata(t *testing.T) {
 	var path = "foo/bar"
@@ -220,4 +246,50 @@ func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
 	assert.Equal(t, MetadataResults["/foo/bar/a.html"][0].URL, "https://bug.com/item")
 	assert.Equal(t, 1, len(MetadataResults["/foo/bar/b.html"]))
 	assert.Equal(t, MetadataResults["/foo/bar/b.html"][0].URL, "https://external.com/item")
+}
+
+func TestGetWPTTestPath(t *testing.T) {
+	actual := GetWPTTestPath("foo", "bar")
+	assert.Equal(t, "/foo/bar", actual)
+}
+
+func TestGetWPTTestPath_EmptyFolder(t *testing.T) {
+	actual := GetWPTTestPath("", "bar")
+	assert.Equal(t, "/bar", actual)
+}
+
+func TestSplitWPTTestPath_InvalidPath(t *testing.T) {
+	folderPath, testPath := SplitWPTTestPath("foo/bar")
+	assert.Equal(t, "", folderPath)
+	assert.Equal(t, "", testPath)
+}
+
+func TestSplitWPTTestPath_EmptyPath(t *testing.T) {
+	folderPath, testPath := SplitWPTTestPath("/")
+	assert.Equal(t, "", folderPath)
+	assert.Equal(t, "", testPath)
+}
+
+func TestSplitWPTTestPath_NoFolderPath(t *testing.T) {
+	folderPath, testPath := SplitWPTTestPath("/foo")
+	assert.Equal(t, "", folderPath)
+	assert.Equal(t, "foo", testPath)
+}
+
+func TestSplitWPTTestPath_Success(t *testing.T) {
+	folderPath, testPath := SplitWPTTestPath("/foo/bar/foo1")
+	assert.Equal(t, "foo/bar", folderPath)
+	assert.Equal(t, "foo1", testPath)
+
+	folderPath, testPath = SplitWPTTestPath("/foo/bar")
+	assert.Equal(t, "foo", folderPath)
+	assert.Equal(t, "bar", testPath)
+}
+
+func TestGetMetadataFilePath(t *testing.T) {
+	actual := GetMetadataFilePath("")
+	assert.Equal(t, "META.yml", actual)
+
+	actual = GetMetadataFilePath("foo")
+	assert.Equal(t, "foo/META.yml", actual)
 }

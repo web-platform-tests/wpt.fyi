@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination sharedtest/github_oauth_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared GitHubOAuth
+//go:generate mockgen -destination sharedtest/github_oauth_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared GitHubOAuth,GitHubAccessControl
 
 package shared
 
@@ -27,6 +27,19 @@ func init() {
 type User struct {
 	GitHubHandle string
 	GithuhEmail  string
+}
+
+// GitHubAccessControl encapsulates implementation details of access control for wpt-metadata repository.
+type GitHubAccessControl interface {
+	IsValidAccessToken() (int, error)
+	IsValidWPTMember() (int, error)
+}
+
+type githubAccessControlImp struct {
+	ctx    context.Context
+	ds     Datastore
+	client *github.Client
+	token  string
 }
 
 // GitHubOAuth encapsulates implementation details of GitHub OAuth flow.
@@ -114,6 +127,42 @@ func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 	}
 
 	return &githubOAuthImp{ctx: ctx, conf: oauth, ds: store}, nil
+}
+
+func (gaci githubAccessControlImp) IsValidAccessToken() (int, error) {
+	clientID, err := GetSecret(gaci.ds, "github-oauth-client-id")
+	if err != nil {
+		return -1, err
+	}
+
+	_, res, err := gaci.client.Authorizations.Check(gaci.ctx, clientID, gaci.token)
+	if err != nil {
+		return -1, err
+	}
+
+	return res.StatusCode, nil
+}
+
+func (gaci githubAccessControlImp) IsValidWPTMember() (int, error) {
+	_, res, err := gaci.client.Organizations.GetOrgMembership(gaci.ctx, "", "web-platform-tests")
+	if err != nil {
+		return -1, err
+	}
+
+	return res.StatusCode, nil
+}
+
+// NewGitAccessControl returns the implementation of GitHubAccessControl for apiMetadataTriageHandler.
+func NewGitAccessControl(ctx context.Context, ds Datastore, token string) GitHubAccessControl {
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	tc := oauth2.NewClient(ctx, ts)
+	githubClient := github.NewClient(tc)
+
+	return githubAccessControlImp{
+		ctx:    ctx,
+		ds:     ds,
+		client: githubClient,
+		token:  token}
 }
 
 // GetSecureCookie returns the securecookie instance for wpt.fyi. This instance can
