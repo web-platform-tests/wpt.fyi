@@ -10,7 +10,7 @@
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { WPTEnvironmentFlags } from './wpt-env-flags.js';
+import { WPTEnvironmentFlags } from '../dynamic-components/wpt-env-flags.js';
 
 const $_documentContainer = document.createElement('template');
 
@@ -46,7 +46,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
-      'webPlatformTestsLive',
+      'wptLive',
     ];
   }
 });
@@ -240,8 +240,8 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{webPlatformTestsLive}}">
-        Use web-platform-tests.live.
+      <paper-checkbox checked="{{wptLive}}">
+        Use wpt.live.
       </paper-checkbox>
     </paper-item>
     <paper-item>

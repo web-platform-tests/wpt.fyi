@@ -44,7 +44,7 @@ func RegisterRoutes() {
 
 	// Feature flags for wpt.fyi
 	shared.AddRoute("/flags", "flags", flagsHandler)
-	shared.AddRoute("/components/wpt-env-flags.js", "flags-component", flagsComponentHandler)
+	shared.AddRoute("/dynamic-components/wpt-env-flags.js", "flags-component", flagsComponentHandler)
 
 	shared.AddRoute("/node_modules/{path:.*}", "components", componentsHandler)
 
