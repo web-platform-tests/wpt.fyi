@@ -26,8 +26,13 @@ type MetadataHandler struct {
 
 // apiMetadataHandler searches Metadata for given products.
 func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" && r.Method != "POST" {
+	if r.Method != "GET" && r.Method != "POST" && r.Method != "PATCH" {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
+		return
+	}
+
+	if r.Method == "PATCH" {
+		apiMetadataTriageHandler(w, r)
 		return
 	}
 
@@ -45,6 +50,34 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		shared.AlwaysCachable,
 		cacheKey,
 		shared.CacheStatusOK).ServeHTTP(w, r)
+}
+
+func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
+	logger := shared.GetLogger(ctx)
+
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read PATCH request body", http.StatusInternalServerError)
+	}
+	err = r.Body.Close()
+	if err != nil {
+		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
+	}
+
+	var metadata shared.MetadataResults
+	err = json.Unmarshal(data, &metadata)
+	if err != nil {
+		http.Error(w, "Failed to parse JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Process it to a digestable method and send it to Github
+	// Verify cookies
+	// Verify users access
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
