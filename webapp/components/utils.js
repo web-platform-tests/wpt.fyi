@@ -1,6 +1,5 @@
-function timeAgo(time) {
-  const date = new Date(time);
-  const s = Math.floor((new Date() - date) / 1000);
+function timeTaken(millis) {
+  const s = millis / 1000;
   const units = [
     [60 * 60 * 24 * 365, 'years'],
     [60 * 60 * 24 * 28, 'months'],
@@ -12,13 +11,19 @@ function timeAgo(time) {
   for (const unit of units) {
     const scalar = Math.floor(s / unit[0]);
     if (scalar > 1) {
-      return `${scalar} ${unit[1]} ago`;
+      return `${scalar} ${unit[1]}`;
     }
   }
-  return `${s} seconds ago`;
+  return `${s} seconds`;
+}
+
+function timeAgo(time) {
+  const date = new Date(time);
+  const taken = timeTaken(Math.floor(new Date() - date));
+  return `${taken} ago`;
 }
 
 function ensureTrailingSlash(path) {
   return path.endsWith('/') ? path : (path + '/');
 }
-export { ensureTrailingSlash, timeAgo };
+export { ensureTrailingSlash, timeAgo, timeTaken };
