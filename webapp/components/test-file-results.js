@@ -12,6 +12,7 @@ import './test-file-results-table.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
 import './wpt-colors.js';
+import { timeTaken } from './utils.js';
 import { WPTFlags } from './wpt-flags.js';
 import { PathInfo } from './path.js';
 
@@ -168,18 +169,26 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       testRuns.map(tr => this.loadResultFile(tr)));
 
     // resultsTable[0].name set after discovering subtests.
-    let resultsTable = [{
-      results: resultsPerTestRun.map(data => {
-        const result = {
-          status: data && data.status,
-          message: data && data.message,
-        };
-        if (this.reftestAnalyzer && data && data.screenshots) {
-          result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
-        }
-        return result;
-      }),
-    }];
+    let resultsTable = [
+      {
+        results: resultsPerTestRun.map(data => {
+          const result = {
+            status: data && data.status,
+            message: data && data.message,
+          };
+          if (this.reftestAnalyzer && data && data.screenshots) {
+            result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
+          }
+          return result;
+        })
+      },
+      {
+        name: 'Duration',
+        results: resultsPerTestRun.map(data => {
+          return { status: timeTaken(data.duration) };
+        }),
+      }
+    ];
 
     // Setup test name order according to when they appear in run results.
     let allNames = [];

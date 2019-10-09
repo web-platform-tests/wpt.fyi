@@ -58,7 +58,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
   table[verbose] .ref-button {
     display: none;
   }
-  tbody tr:first-child {
+  tbody tr:nth-child(2){
     border-bottom: 8px solid white;
     padding: 8px;
   }
@@ -133,22 +133,22 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
           </td>
         </template>
       </tr>
+    </template>
 
-      <template is="dom-if" if="[[verbose]]">
-        <template is="dom-if" if="[[anyScreenshots(row)]]">
-          <tr>
-            <td class="sub-test-name"><code>Screenshot</code></td>
-            <template is="dom-repeat" items="[[row.results]]" as="result">
-              <td>
-                <template is="dom-if" if="[[ testScreenshot(result.screenshots) ]]">
-                  <a href="[[ computeAnalyzerURL(result.screenshots) ]]">
-                    <img src="[[ testScreenshot(result.screenshots) ]]" />
-                  </a>
-                </template>
-              </td>
-            </template>
-          </tr>
-        </template>
+    <template is="dom-if" if="[[verbose]]">
+      <template is="dom-if" if="[[anyScreenshots(firstRow)]]">
+        <tr>
+          <td class="sub-test-name"><code>Screenshot</code></td>
+          <template is="dom-repeat" items="[[firstRow.results]]" as="result">
+            <td>
+              <template is="dom-if" if="[[ testScreenshot(result.screenshots) ]]">
+                <a href="[[ computeAnalyzerURL(result.screenshots) ]]">
+                  <img src="[[ testScreenshot(result.screenshots) ]]" />
+                </a>
+              </template>
+            </td>
+          </template>
+        </tr>
       </template>
     </template>
   </tbody>
@@ -174,6 +174,10 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
       rows: {
         type: Array,
         value: [],
+      },
+      firstRow: {
+        type: Object,
+        computed: 'computeFirstRow(rows)',
       },
       verbose: {
         type: Boolean,
@@ -275,6 +279,10 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     return `${100 / (runs + 2 + plusOne)}%`;
   }
 
+  computeFirstRow(rows) {
+    return rows && rows.length && rows[0];
+  }
+
   colorClass(status) {
     if (['OK', 'PASS'].includes(status)) {
       return this.passRateClass(1, 1);
@@ -298,7 +306,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
   }
 
   anyScreenshots(row) {
-    return row.results.find(r => r.screenshots);
+    return row && row.results && row.results.find(r => r.screenshots);
   }
 
   testScreenshot(screenshots) {
