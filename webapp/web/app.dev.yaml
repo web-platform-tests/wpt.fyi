@@ -22,7 +22,7 @@ handlers:
 - url: /_ah/remote_api
   script: auto
 # Special dynamic components:
-- url: /components/wpt-env-flags.js
+- url: /dynamic-components/wpt-env-flags.js
   script: auto
   secure: always
 - url: /node_modules/.*
@@ -45,7 +45,7 @@ handlers:
   upload: static/favicon.ico
   secure: always
 # Static files that change often (i.e. our own code).
-- url: /components/(?!wpt-env-flags.js)
+- url: /components
   static_dir: ../components
   expiration: 10m
   secure: always
