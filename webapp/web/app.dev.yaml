@@ -45,7 +45,7 @@ handlers:
   upload: static/favicon.ico
   secure: always
 # Static files that change often (i.e. our own code).
-- url: /components
+- url: /components/(?!wpt-env-flags.js)
   static_dir: ../components
   expiration: 10m
   secure: always
