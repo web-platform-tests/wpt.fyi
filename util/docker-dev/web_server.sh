@@ -31,7 +31,7 @@ info "Pruning node_modules so dev_appserver can handle watching file updates..."
 wptd_exec make webapp_node_modules_prune
 
 info "Installing other web server code dependencies"
-wptd_exec make webserver_deps
+wptd_exec make dev_appserver_deps
 
 DOCKER_STATUS="${?}"
 if [ "${DOCKER_STATUS}" != "0" ]; then
