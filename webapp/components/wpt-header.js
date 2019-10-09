@@ -57,7 +57,9 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           <img src="/static/logo.svg">
           <a href="/">web-platform-tests dashboard</a>
         </h1>
-        <gh-login user="[[user]]"></gh-login>
+        <template is="dom-if" if="[[githubLogin]]">
+          <gh-login user="[[user]]"></gh-login>
+        </template>
       </div>
 
       <nav>

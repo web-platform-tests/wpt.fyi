@@ -42,10 +42,15 @@ func getSecureCookie(ctx context.Context) *securecookie.SecureCookie {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	if !aeAPI.IsFeatureEnabled("githubLogin") {
+		http.Error(w, "Feature not implemented", http.StatusNotImplemented)
+	}
+
 	user := getUserFromCookie(r)
 	returnURL := r.FormValue("return")
 	redirect := returnURL
-	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 	if user == nil {
 		conf := getGithubOAuthConfig(ctx)
