@@ -8,6 +8,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 
@@ -23,15 +24,23 @@ class GHLogin extends PolymerElement {
         fill: white;
       }
     </style>
-    <paper-button raised onclick="[[logIn]]">
+    <template is="dom-if" if="[[!user]]">
+      <paper-button raised onclick="[[logIn]]">
       <iron-icon src="/static/github.svg"></iron-icon>
-      <template is="dom-if" if="[[user]]">
-        [[user]]
-      </template>
-      <template is="dom-if" if="[[!user]]">
-        Log in with GitHub
-      </template>
-    </paper-button>
+      Sign in with GitHub
+      [[user]]
+    </template>
+    <template is="dom-if" if="[[user]]">
+      <paper-menu-button>
+        <paper-button slot="dropdown-trigger" raised>
+          <iron-icon src="/static/github.svg"></iron-icon>
+          [[user]]
+        </paper-button>
+        <paper-listbox slot="dropdown-content">
+          <paper-item onclick="[[logOut]]">Sign out</paper-item>
+        </paper-listbox>
+    </template>
+    </paper-menu-button>
 `;
   }
 
@@ -51,10 +60,17 @@ class GHLogin extends PolymerElement {
   constructor() {
     super();
     this.logIn = this.handleLogIn.bind(this);
+    this.logOut = this.handleLogOut.bind(this);
   }
 
   handleLogIn() {
     const url = new URL('/login', window.location);
+    url.searchParams.set('return', window.location);
+    window.location = url;
+  }
+
+  handleLogOut() {
+    const url = new URL('/logout', window.location);
     url.searchParams.set('return', window.location);
     window.location = url;
   }
