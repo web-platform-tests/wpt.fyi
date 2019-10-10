@@ -620,6 +620,21 @@ class HelpersTest(unittest.TestCase):
             'edge'
         )
 
+    def test_normalize_product_webkitgtk_minibrowser(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'webkitgtk_minibrowser',
+            }
+        }
+        self.assertSetEqual(
+            normalize_product(r),
+            {'webkitgtk', 'minibrowser'}
+        )
+        self.assertEqual(
+            r.run_info['product'],
+            'webkitgtk'
+        )
     def test_normalize_product_noop(self):
         r = WPTReport()
         r._report = {

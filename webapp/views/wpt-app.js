@@ -178,7 +178,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       searchResults: Array,
       resultsTotalsRangeMessage: {
         type: String,
-        computed: 'computeResultsTotalsRangeMessage(page, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
+        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
       },
     };
   }
@@ -283,7 +283,11 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleSearchAutocomplete(e) {
     this.shadowRoot.querySelector('test-search').clear();
-    this.set('subroute.path', e.detail.path);
+    let path = e.detail.path;
+    if (path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
+    }
+    this.set('subroute.path', path);
   }
 
   handleAddMasterLabel(e) {
@@ -293,7 +297,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.dismissToast(e);
   }
 
-  computeResultsTotalsRangeMessage(page, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
+  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
     const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
     if (page === 'results' && searchResults) {
       let subtests = 0, tests = 0;
@@ -303,9 +307,27 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           subtests += Math.max(...r.legacy_status.map(s => s.total));
         }
       }
+      if (this.computePathIsATestFile(path)) {
+        if (subtests <= 1) {
+          return msg;
+        }
+        return msg.replace('Showing ', `Showing ${subtests} subtests from `);
+      }
+      let folder = '';
+      if (path && path.length > 1) {
+        folder = ` in ${path.substring(1)}`;
+      }
+      let testsAndSubtests = '';
+      if (tests > 1) {
+        testsAndSubtests += `${tests} tests`;
+        if (subtests > 1) {
+          testsAndSubtests += ` (${subtests} subtests)`;
+        }
+        testsAndSubtests += folder;
+      }
       return msg.replace(
         'Showing ',
-        `Showing ${tests} tests (${subtests} subtests) from `);
+        `Showing ${testsAndSubtests} from `);
     }
     return msg;
   }

@@ -464,6 +464,136 @@ func TestBindExecute_Link(t *testing.T) {
 	assert.Equal(t, expectedResult, srs[0])
 }
 
+func TestBindExecute_MoreThan(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+		testRunData{
+			shared.TestRun{ID: 2},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "PASS",
+					},
+				},
+			},
+		},
+	})
+
+	moreThan := query.AbstractMoreThan{
+		query.AbstractCount{
+			Count: 1,
+			Where: query.TestStatusEq{Status: shared.TestStatusPass},
+		},
+	}.BindToRuns(runs...)
+	plan, err := idx.Bind(runs, moreThan)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: "/a/b/c", // /a/b/c has 2 passes.
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{Passes: 1, Total: 1},
+			shared.LegacySearchRunResult{Passes: 1, Total: 1},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
+}
+
+func TestBindExecute_LessThan(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+		testRunData{
+			shared.TestRun{ID: 2},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "PASS",
+					},
+				},
+			},
+		},
+	})
+
+	moreThan := query.AbstractLessThan{
+		query.AbstractCount{
+			Count: 2,
+			Where: query.TestStatusEq{Status: shared.TestStatusPass},
+		},
+	}.BindToRuns(runs...)
+	plan, err := idx.Bind(runs, moreThan)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: "/d/e/f", // /a/b/c has 1 passes.
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{Passes: 0, Total: 1},
+			shared.LegacySearchRunResult{Passes: 1, Total: 1},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
+}
+
 func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

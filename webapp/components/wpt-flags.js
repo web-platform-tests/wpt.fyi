@@ -35,6 +35,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'githubCommitLinks',
       'interopScoreColumn',
       'permalinks',
+      'processorTab',
       'queryBuilder',
       'queryBuilderSHA',
       'reftestAnalyzer',
@@ -245,6 +246,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{displayMetadata}}">
         Show metadata Information on wpt.fyi result page.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{processorTab}}">
+        Show the "Processor" (status) tab.
       </paper-checkbox>
     </paper-item>
 `;

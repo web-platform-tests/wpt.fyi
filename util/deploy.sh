@@ -32,7 +32,7 @@ done
 
 if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
 case "${APP_PATH}" in
-  "webapp" | \
+  "webapp/web" | \
   "results-processor" | \
   "revisions/service" | \
   "api/query/cache/service" | \
@@ -47,8 +47,7 @@ esac
 if [[ -z "${QUIET}" ]]; then info "Installing dependencies..."; fi
 cd ${WPTD_PATH}
 if [[ "${APP_PATH}" == "webapp" ]]; then
-  make webapp_deps || fatal "Error installing deps"
-  make webapp_node_modules_prune || fatal "Error pruning node_modules"
+  make deployment_state || fatal "Error installing deps"
 fi
 
 # Create a name for this version

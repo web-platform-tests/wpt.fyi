@@ -7,6 +7,7 @@ package query
 import (
 	"encoding/json"
 	"net/http"
+	"path"
 	"sort"
 	"strings"
 	"time"
@@ -118,6 +119,14 @@ func prepareAutocompleteResponse(limit int, filters *shared.QueryFilter, testRun
 	for _, smry := range summaries {
 		for file := range smry {
 			fileSet.Add(file)
+			// Add all the dirs as options too.
+			prefix := "/"
+			dir, _ := path.Split(file)
+			bits := strings.Split(dir, "/")
+			for _, part := range bits {
+				prefix := prefix + part + "/"
+				fileSet.Add(prefix)
+			}
 		}
 	}
 

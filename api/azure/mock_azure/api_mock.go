@@ -6,7 +6,7 @@ package mock_azure
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/github"
+	github "github.com/google/go-github/v28/github"
 	azure "github.com/web-platform-tests/wpt.fyi/api/azure"
 	reflect "reflect"
 )

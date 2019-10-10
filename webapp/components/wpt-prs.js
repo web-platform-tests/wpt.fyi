@@ -10,7 +10,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
-import { ensureTrailingSlash } from './utils.js';
+import { ensureTrailingSlash, timeAgo } from './utils.js';
 
 class WPTPR extends PolymerElement {
   static get template() {
@@ -55,24 +55,8 @@ class WPTPR extends PolymerElement {
     };
   }
 
-  timeAgo(time) {
-    const date = new Date(time);
-    const s = Math.floor((new Date() - date) / 1000);
-    const units = [
-      [60 * 60 * 24 * 365, 'years'],
-      [60 * 60 * 24 * 28, 'months'],
-      [60 * 60 * 24 * 7, 'weeks'],
-      [60 * 60 * 24, 'days'],
-      [60 * 60, 'hours'],
-      [60, 'minutes'],
-    ];
-    for (const unit of units) {
-      const scalar = Math.floor(s / unit[0]);
-      if (scalar > 1) {
-        return `${scalar} ${unit[1]} ago`;
-      }
-    }
-    return `${s} seconds ago`;
+  timeAgo(date) {
+    return timeAgo(date);
   }
 }
 window.customElements.define(WPTPR.is, WPTPR);

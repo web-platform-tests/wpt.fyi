@@ -19,7 +19,7 @@ import (
 func TestScheduleResultsTask(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(false)
 	if err != nil {
-		assert.FailNowf(t, "Failed to create aetest context: %s", err.Error())
+		assert.FailNowf(t, "Failed to create aetest context", err.Error())
 	}
 	defer done()
 

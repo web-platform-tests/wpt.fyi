@@ -17,7 +17,7 @@ services:
   - docker
 
 language: python
-python: "3.6"
+python: "3.7"
 cache:
   directories:
     - webapp/node_modules
@@ -48,7 +48,7 @@ matrix:
     # pr branch deployments
     - if: type = pull_request
       env:
-      - DEPLOY_PR_STAGING_TARGET=webapp
+      - DEPLOY_PR_STAGING_TARGET=webapp/web
     - if: type = pull_request
       env:
       - DEPLOY_PR_STAGING_TARGET=results-processor
@@ -62,7 +62,7 @@ matrix:
     # master branch deployments
     - if: (type = push) AND (branch = master)
       env:
-      - DEPLOY_STAGING_TARGET=webapp
+      - DEPLOY_STAGING_TARGET=webapp/web
       - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
       - MAKE_TEST_FLAGS="STAGING=true"
     - if: (type = push) AND (branch = master)

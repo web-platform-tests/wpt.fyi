@@ -167,10 +167,6 @@ class PathPart extends PathInfo(PolymerElement) {
   }
 
   computeDisplayableRelativePath(path) {
-    if (!this.isDir) {
-      path = this.encodeTestPath(path || '');
-      return decodeURIComponent(path.substr(path.lastIndexOf('/') + 1));
-    }
     const windowPath = window.location.pathname.replace(`${this.prefix || ''}`, '');
     const pathPrefix = new RegExp(`^${windowPath}${windowPath.endsWith('/') ? '' : '/'}`);
     return `${path.replace(pathPrefix, '')}${this.isDir ? '/' : ''}`;

@@ -14,8 +14,9 @@ import (
 	"sync"
 
 	"cloud.google.com/go/compute/metadata"
-	log "github.com/Hexcles/logrus"
 	mapset "github.com/deckarep/golang-set"
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2/google"
@@ -130,11 +131,23 @@ type Count struct {
 	args  []filter
 }
 
+// LessThan is a query.LessThan bound to an in-memory index.
+type LessThan Count
+
+// MoreThan is a query.MoreThan bound to an in-memory index.
+type MoreThan Count
+
 // Link is a query.Count bound to an in-memory index and MetadataResults.
 type Link struct {
 	index
 	pattern  string
 	metadata map[string][]string
+}
+
+// MetadataQuality is a query.MetadataQuality bound to an in-memory index.
+type MetadataQuality struct {
+	index
+	quality query.MetadataQuality
 }
 
 // And is a query.And bound to an in-memory index.
@@ -246,6 +259,30 @@ func (c *Count) Filter(t TestID) bool {
 	return matches == c.count
 }
 
+// Filter interprets a LessThan as a filter function over TestIDs.
+func (c LessThan) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches < c.count
+}
+
+// Filter interprets a MoreThan as a filter function over TestIDs.
+func (c MoreThan) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches > c.count
+}
+
 // Filter interprets a Link as a filter function over TestIDs.
 func (l Link) Filter(t TestID) bool {
 	name, _, err := l.tests.GetName(t)
@@ -264,6 +301,15 @@ func (l Link) Filter(t TestID) bool {
 		}
 	}
 	return false
+}
+
+// Filter interprets a MetadataQuality as a filter function over TestIDs.
+func (q MetadataQuality) Filter(t TestID) bool {
+	set := mapset.NewSet()
+	for _, result := range q.runResults {
+		set.Add(result.GetResult(t))
+	}
+	return set.Cardinality() > 1
 }
 
 // Filter interprets an And as a filter function over TestIDs.
@@ -323,8 +369,22 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 			return nil, err
 		}
 		return &Count{idx, v.Count, fs}, nil
+	case query.LessThan:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return &LessThan{idx, v.Count.Count, fs}, nil
+	case query.MoreThan:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return &MoreThan{idx, v.Count.Count, fs}, nil
 	case query.Link:
 		return &Link{idx, v.Pattern, v.Metadata}, nil
+	case query.MetadataQuality:
+		return &MetadataQuality{idx, v}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
@@ -377,7 +437,7 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 		go func() {
 			for err := range errs {
 				// TODO: Should this use a context-based logger?
-				log.Errorf("Error executing filter query: %v: %v", fs, err)
+				logrus.Errorf("Error executing filter query: %v: %v", fs, err)
 			}
 		}()
 	}

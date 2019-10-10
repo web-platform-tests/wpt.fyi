@@ -51,6 +51,18 @@ type Count struct {
 	Args  []ConcreteQuery
 }
 
+// MoreThan constrains search results to include only test results where the number
+// of runs that match the given criteria is more than the given count.
+type MoreThan struct {
+	Count
+}
+
+// LessThan constrains search results to include only test results where the number
+// of runs that match the given criteria is less than the given count.
+type LessThan struct {
+	Count
+}
+
 // Link is a ConcreteQuery of AbstractLink.
 type Link struct {
 	Pattern  string
@@ -120,6 +132,12 @@ func (Link) Size() int { return 1 }
 
 // Size of Count is the sum of the sizes of its constituent ConcretQuery instances.
 func (c Count) Size() int { return size(c.Args) }
+
+// Size of Is depends on the quality.
+func (q MetadataQuality) Size() int {
+	// Currently only 'Different' supported, which is one set comparison per row.
+	return 1
+}
 
 // Size of Or is the sum of the sizes of its constituent ConcretQuery instances.
 func (o Or) Size() int { return size(o.Args) }

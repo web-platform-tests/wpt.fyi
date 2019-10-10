@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Hexcles/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -101,27 +101,63 @@ func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
 	for i, arg := range e.Args {
 		var query ConcreteQuery
-		// For sequential + count, we pass all runs.
-		if _, isSeq := arg.(AbstractSequential); isSeq {
-			query = arg.BindToRuns(runs...)
-		} else if _, isCount := arg.(AbstractCount); isCount {
-			query = arg.BindToRuns(runs...)
-		} else {
-			// Everything else is split, one run must satisfy the whole tree.
-			byRun := make([]ConcreteQuery, 0, len(runs))
-			for _, run := range runs {
-				bound := arg.BindToRuns(run)
-				if _, ok := bound.(False); !ok {
-					byRun = append(byRun, bound)
-				}
+		// Exists queries are split; one run must satisfy the whole tree.
+		byRun := make([]ConcreteQuery, 0, len(runs))
+		for _, run := range runs {
+			bound := arg.BindToRuns(run)
+			if _, ok := bound.(False); !ok {
+				byRun = append(byRun, bound)
 			}
-			query = Or{Args: byRun}
 		}
+		query = Or{Args: byRun}
 		queries[i] = query
 	}
 	// And the overall node is true if all its exists queries are true.
 	return And{
 		Args: queries,
+	}
+}
+
+// AbstractAll represents an array of abstract queries, each of which must be
+// satifisfied by all runs. It represents the root of a structured query.
+type AbstractAll struct {
+	Args []AbstractQuery
+}
+
+// BindToRuns binds each abstract query to an and-combo of that query against
+// each specific/individual run.
+func (e AbstractAll) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	queries := make([]ConcreteQuery, len(e.Args))
+	for i, arg := range e.Args {
+		var query ConcreteQuery
+		byRun := make([]ConcreteQuery, 0, len(runs))
+		for _, run := range runs {
+			bound := arg.BindToRuns(run)
+			if _, ok := bound.(True); !ok { // And with True is pointless.
+				byRun = append(byRun, bound)
+			}
+		}
+		query = And{Args: byRun}
+		queries[i] = query
+	}
+	// And the overall node is true if all its exists queries are true.
+	return And{
+		Args: queries,
+	}
+}
+
+// AbstractNone represents an array of abstract queries, each of which must not be
+// satifisfied by any run. It represents the root of a structured query.
+type AbstractNone struct {
+	Args []AbstractQuery
+}
+
+// BindToRuns binds to a not-exists for the same query(s).
+func (e AbstractNone) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return Not{
+		AbstractExists{
+			Args: e.Args,
+		}.BindToRuns(runs...),
 	}
 }
 
@@ -169,7 +205,33 @@ func (c AbstractCount) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 }
 
-// AbstractLink is represents the root of a link query, whic matches Metadata URLs
+// AbstractMoreThan is the root of a moreThan query, where the number of runs
+// that satisfy the query must be more than the given count.
+type AbstractMoreThan struct {
+	AbstractCount
+}
+
+// BindToRuns binds each count query to all of the runs, so that it can count the
+// number of runs that match the criteria.
+func (m AbstractMoreThan) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	c := m.AbstractCount.BindToRuns(runs...).(Count)
+	return MoreThan{c}
+}
+
+// AbstractLessThan is the root of a lessThan query, where the number of runs
+// that satisfy the query must be less than the given count.
+type AbstractLessThan struct {
+	AbstractCount
+}
+
+// BindToRuns binds each count query to all of the runs, so that it can count the
+// number of runs that match the criteria.
+func (l AbstractLessThan) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	c := l.AbstractCount.BindToRuns(runs...).(Count)
+	return LessThan{c}
+}
+
+// AbstractLink is represents the root of a link query, which matches Metadata URLs
 // to a pattern string; it is independent of test runs.
 type AbstractLink struct {
 	Pattern string
@@ -181,13 +243,30 @@ func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 		Timeout: time.Second * 5,
 	}
 
-	metadata, _ := shared.GetMetadataResponse(runs, netClient, log.StandardLogger(), shared.MetadataArchiveURL)
+	metadata, _ := shared.GetMetadataResponse(runs, netClient, logrus.StandardLogger(), shared.MetadataArchiveURL)
 	metadataMap := shared.PrepareLinkFilter(metadata)
 
 	return Link{
 		Pattern:  l.Pattern,
 		Metadata: metadataMap,
 	}
+}
+
+// MetadataQuality represents the root of an "is" query, which asserts known
+// metadata qualities to the results
+type MetadataQuality int
+
+const (
+	// MetadataQualityUnknown is a placeholder for unrecognized values.
+	MetadataQualityUnknown MetadataQuality = 0
+	// MetadataQualityDifferent represents an is:different atom.
+	// "different" ensures that one or more results differs from the other results.
+	MetadataQualityDifferent MetadataQuality = 1
+)
+
+// BindToRuns for MetadataQuality is a no-op; it is independent of test runs.
+func (q MetadataQuality) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return q
 }
 
 // TestStatusEq is a query atom that matches tests where the test status/result
@@ -611,6 +690,58 @@ func (e *AbstractExists) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractAll attempts to interpret a query atom as
+// {"all": [<abstract query>]}.
+func (e *AbstractAll) UnmarshalJSON(b []byte) error {
+	var data struct {
+		All []json.RawMessage `json:"all"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.All) == 0 {
+		return errors.New(`Missing conjunction property: "all"`)
+	}
+
+	qs := make([]AbstractQuery, 0, len(data.All))
+	for _, msg := range data.All {
+		q, err := unmarshalQ(msg)
+		if err != nil {
+			return err
+		}
+		qs = append(qs, q)
+	}
+	e.Args = qs
+	return nil
+}
+
+// UnmarshalJSON for AbstractNone attempts to interpret a query atom as
+// {"none": [<abstract query>]}.
+func (e *AbstractNone) UnmarshalJSON(b []byte) error {
+	var data struct {
+		None []json.RawMessage `json:"none"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.None) == 0 {
+		return errors.New(`Missing conjunction property: "none"`)
+	}
+
+	qs := make([]AbstractQuery, 0, len(data.None))
+	for _, msg := range data.None {
+		q, err := unmarshalQ(msg)
+		if err != nil {
+			return err
+		}
+		qs = append(qs, q)
+	}
+	e.Args = qs
+	return nil
+}
+
 // UnmarshalJSON for AbstractSequential attempts to interpret a query atom as
 // {"exists": [<abstract queries>]}.
 func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
@@ -666,6 +797,64 @@ func (c *AbstractCount) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractLessThan attempts to interpret a query atom as
+// {"count": int, "where": query}.
+func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Count json.RawMessage `json:"lessThan"`
+		Where json.RawMessage `json:"where"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Count) == 0 {
+		return errors.New(`Missing lessThan property: "lessThan"`)
+	}
+	if len(data.Where) == 0 {
+		return errors.New(`Missing count property: "where"`)
+	}
+
+	err = json.Unmarshal(data.Count, &l.Count)
+	if err != nil {
+		return err
+	}
+	l.Where, err = unmarshalQ(data.Where)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// UnmarshalJSON for AbstractMoreThan attempts to interpret a query atom as
+// {"count": int, "where": query}.
+func (m *AbstractMoreThan) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Count json.RawMessage `json:"moreThan"`
+		Where json.RawMessage `json:"where"`
+	}
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	if len(data.Count) == 0 {
+		return errors.New(`Missing moreThan property: "moreThan"`)
+	}
+	if len(data.Where) == 0 {
+		return errors.New(`Missing count property: "where"`)
+	}
+
+	err = json.Unmarshal(data.Count, &m.Count)
+	if err != nil {
+		return err
+	}
+	m.Where, err = unmarshalQ(data.Where)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // UnmarshalJSON for AbstractLink attempts to interpret a query atom as
 // {"link":<metadata url pattern string>}.
 func (l *AbstractLink) UnmarshalJSON(b []byte) error {
@@ -687,71 +876,144 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for MetadataQuality attempts to interpret a query atom as
+// {"is":<metadata quality>}.
+func (q *MetadataQuality) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	is, ok := data["is"]
+	if !ok {
+		return errors.New(`Missing "is" pattern property: "is"`)
+	}
+	var quality string
+	if err := json.Unmarshal(*is, &quality); err != nil {
+		return errors.New(`"is" property is not a string`)
+	}
+
+	*q, err = MetadataQualityFromString(quality)
+	return err
+}
+
+// MetadataQualityFromString returns the enum value for the given string.
+func MetadataQualityFromString(quality string) (MetadataQuality, error) {
+	switch quality {
+	case "different":
+		return MetadataQualityDifferent, nil
+	}
+	return MetadataQualityUnknown, fmt.Errorf(`Unknown "is" quality "%s"`, quality)
+}
+
 func unmarshalQ(b []byte) (AbstractQuery, error) {
-	var tnp TestNamePattern
-	err := json.Unmarshal(b, &tnp)
-	if err == nil {
-		return tnp, nil
+	{
+		var tnp TestNamePattern
+		if err := json.Unmarshal(b, &tnp); err == nil {
+			return tnp, nil
+		}
 	}
-	var fcq FileContentsQuery
-	err = json.Unmarshal(b, &fcq)
-	if err == nil {
-		return fcq, nil
+	{
+		var fcq FileContentsQuery
+		if err := json.Unmarshal(b, &fcq); err == nil {
+			return fcq, nil
+		}
 	}
-	var stnp SubtestNamePattern
-	err = json.Unmarshal(b, &stnp)
-	if err == nil {
-		return stnp, nil
+	{
+		var stnp SubtestNamePattern
+		if err := json.Unmarshal(b, &stnp); err == nil {
+			return stnp, nil
+		}
 	}
-	var tp TestPath
-	err = json.Unmarshal(b, &tp)
-	if err == nil {
-		return tp, nil
+	{
+		var tp TestPath
+		if err := json.Unmarshal(b, &tp); err == nil {
+			return tp, nil
+		}
 	}
-	var tse TestStatusEq
-	err = json.Unmarshal(b, &tse)
-	if err == nil {
-		return tse, nil
+	{
+		var tse TestStatusEq
+		if err := json.Unmarshal(b, &tse); err == nil {
+			return tse, nil
+		}
 	}
-	var tsn TestStatusNeq
-	err = json.Unmarshal(b, &tsn)
-	if err == nil {
-		return tsn, nil
+	{
+		var tsn TestStatusNeq
+		if err := json.Unmarshal(b, &tsn); err == nil {
+			return tsn, nil
+		}
 	}
-	var n AbstractNot
-	err = json.Unmarshal(b, &n)
-	if err == nil {
-		return n, nil
+	{
+		var n AbstractNot
+		if err := json.Unmarshal(b, &n); err == nil {
+			return n, nil
+		}
 	}
-	var o AbstractOr
-	err = json.Unmarshal(b, &o)
-	if err == nil {
-		return o, nil
+	{
+		var o AbstractOr
+		if err := json.Unmarshal(b, &o); err == nil {
+			return o, nil
+		}
 	}
-	var a AbstractAnd
-	err = json.Unmarshal(b, &a)
-	if err == nil {
-		return a, nil
+	{
+		var a AbstractAnd
+		if err := json.Unmarshal(b, &a); err == nil {
+			return a, nil
+		}
 	}
-	var e AbstractExists
-	err = json.Unmarshal(b, &e)
-	if err == nil {
-		return e, nil
+	{
+		var e AbstractExists
+		if err := json.Unmarshal(b, &e); err == nil {
+			return e, nil
+		}
 	}
-	var s AbstractSequential
-	err = json.Unmarshal(b, &s)
-	if err == nil {
-		return s, nil
+	{
+		var a AbstractAll
+		if err := json.Unmarshal(b, &a); err == nil {
+			return a, nil
+		}
 	}
-	var c AbstractCount
-	err = json.Unmarshal(b, &c)
-	if err == nil {
-		return c, nil
+	{
+		var n AbstractNone
+		if err := json.Unmarshal(b, &n); err == nil {
+			return n, nil
+		}
 	}
-	var l AbstractLink
-	err = json.Unmarshal(b, &l)
-	if err == nil {
-		return l, nil
+	{
+		var s AbstractSequential
+		if err := json.Unmarshal(b, &s); err == nil {
+			return s, nil
+		}
+	}
+	{
+		var c AbstractCount
+		if err := json.Unmarshal(b, &c); err == nil {
+			return c, nil
+		}
+	}
+	{
+		var c AbstractLessThan
+		if err := json.Unmarshal(b, &c); err == nil {
+			return c, nil
+		}
+	}
+	{
+		var c AbstractMoreThan
+		if err := json.Unmarshal(b, &c); err == nil {
+			return c, nil
+		}
+	}
+	{
+		var l AbstractLink
+		if err := json.Unmarshal(b, &l); err == nil {
+			return l, nil
+		}
+	}
+	{
+		var i MetadataQuality
+		if err := json.Unmarshal(b, &i); err == nil {
+			return i, nil
+		}
 	}
 	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
 }

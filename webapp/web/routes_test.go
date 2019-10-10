@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package main
 
 import (
 	"fmt"
@@ -76,6 +76,7 @@ func TestApiRunBound(t *testing.T) {
 func TestApiStatusBound(t *testing.T) {
 	assertHandlerIs(t, "/api/status", "api-pending-test-runs")
 	assertHandlerIs(t, "/api/status/pending", "api-pending-test-runs")
+	assertHandlerIs(t, "/api/status/invalid", "api-pending-test-runs")
 	assertHandlerIs(t, "/api/status/123", "api-pending-test-run-update")
 	assertHandlerIsDefault(t, "/api/status/notavalidfilter")
 }
@@ -113,7 +114,6 @@ func TestResultsBound(t *testing.T) {
 
 func TestAdminResultsUploadBound(t *testing.T) {
 	assertHandlerIs(t, "/admin/results/upload", "admin-results-upload")
-	assertHSTS(t, "/admin/results/upload")
 }
 
 func TestAdminCacheFlushBound(t *testing.T) {

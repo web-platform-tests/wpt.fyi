@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	gclog "cloud.google.com/go/logging"
-	log "github.com/Hexcles/logrus"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/appengine"
 	gaelog "google.golang.org/appengine/log"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
@@ -25,7 +25,7 @@ type Logger interface {
 // NewRequestContext creates a new  context bound to an *http.Request.
 func NewRequestContext(r *http.Request) context.Context {
 	ctx := appengine.NewContext(r)
-	return WithLogger(ctx, log.WithFields(log.Fields{
+	return WithLogger(ctx, logrus.WithFields(logrus.Fields{
 		"request": r,
 	}))
 }
@@ -145,7 +145,7 @@ func WithLogger(ctx context.Context, logger Logger) context.Context {
 func GetLogger(ctx context.Context) Logger {
 	logger, ok := ctx.Value(DefaultLoggerCtxKey()).(Logger)
 	if !ok || logger == nil {
-		log.Warningf("Context without logger: %v; logs will be dropped", ctx)
+		logrus.Warningf("Context without logger: %v; logs will be dropped", ctx)
 		return NewNilLogger()
 	}
 
