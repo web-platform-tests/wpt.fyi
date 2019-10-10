@@ -73,9 +73,14 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Process it to a digestable method and send it to Github
-	// Verify cookies
-	// Verify users access
+	// Check cookies
+	user := webapp.getUserFromCookie(r)
+	if user == nil {
+		http.Error(w, "Unauthorized request, please log in first", http.StatusBadRequest)
+		return
+	}
+
+	err := commitMetadataToGithub(user, metadata)
 
 	w.WriteHeader(http.StatusCreated)
 }
@@ -174,4 +179,8 @@ var cacheKey = func(r *http.Request) interface{} {
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 
 	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
+}
+
+func commitMetadataToGithub(user *string, metadata shared.MetadataResults) {
+	return nil
 }
