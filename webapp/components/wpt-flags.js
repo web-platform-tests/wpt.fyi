@@ -33,6 +33,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
+      'githubLogin',
       'interopScoreColumn',
       'permalinks',
       'processorTab',
@@ -254,6 +255,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Show the "Processor" (status) tab.
       </paper-checkbox>
     </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{githubLogin}}">
+        Enable GitHub OAuth login
+      </paper-checkbox>
+    </paper-item>
 `;
   }
 
@@ -345,11 +351,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{processTaskclusterCheckRunEvents}}">
         Process check run events from Taskcluster (needs to be enabled if Taskcluster is using Checks API).
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{githubLogin}}">
-        Enable GitHub OAuth login
       </paper-checkbox>
     </paper-item>
 `;

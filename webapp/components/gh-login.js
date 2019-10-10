@@ -19,9 +19,15 @@ class GHLogin extends PolymerElement {
       paper-button {
         text-transform: inherit;
       }
+      paper-menu-button paper-button {
+        padding: 0;
+      }
       iron-icon {
-        margin-right: 16px;
+        margin-right: 8px;
         fill: white;
+      }
+      paper-icon-button {
+        margin-left: 16px;
       }
     </style>
     <template is="dom-if" if="[[!user]]">
@@ -31,14 +37,9 @@ class GHLogin extends PolymerElement {
       [[user]]
     </template>
     <template is="dom-if" if="[[user]]">
-      <paper-menu-button>
-        <paper-button slot="dropdown-trigger" raised>
-          <iron-icon src="/static/github.svg"></iron-icon>
-          [[user]]
-        </paper-button>
-        <paper-listbox slot="dropdown-content">
-          <paper-item onclick="[[logOut]]">Sign out</paper-item>
-        </paper-listbox>
+      <iron-icon src="/static/github.svg"></iron-icon>
+      [[user]]
+      <paper-icon-button title="Sign out" icon="exit-to-app" onclick="[[logOut]]">
     </template>
     </paper-menu-button>
 `;
