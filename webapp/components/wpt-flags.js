@@ -46,7 +46,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
-      'wptLive',
+      'webPlatformTestsLive',
     ];
   }
 });
@@ -239,8 +239,8 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{wptLive}}">
-        Use wpt.live.
+      <paper-checkbox checked="{{webPlatformTestsLive}}">
+        Use web-platform-tests.live.
       </paper-checkbox>
     </paper-item>
     <paper-item>
