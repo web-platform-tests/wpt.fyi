@@ -19,7 +19,7 @@ handlers:
 - url: /_ah/remote_api
   script: auto
 # Special dynamic components:
-- url: /components/wpt-env-flags.js
+- url: /dynamic-components/wpt-env-flags.js
   script: auto
   secure: always
 - url: /node_modules/.*

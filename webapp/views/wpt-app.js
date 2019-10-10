@@ -94,14 +94,14 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
               <li>
                 <a href\$="https://github.com/web-platform-tests/wpt/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
 
-                <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
+                <template is="dom-if" if="[[ !wptLive ]]">
                   <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
                   browser on w3c-test.org</a></li>
                 </template>
 
-                <template is="dom-if" if="[[ webPlatformTestsLive ]]">
-                  <li><a href\$="[[scheme]]://web-platform-tests.live[[path]]" target="_blank">Run in your
-                    browser on web-platform-tests.live</a></li>
+                <template is="dom-if" if="[[ wptLive ]]">
+                  <li><a href\$="[[scheme]]://wpt.live[[path]]" target="_blank">Run in your
+                    browser on wpt.live</a></li>
                 </template>
             </ul>
           </div>
@@ -133,7 +133,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      path="{{subroute.path}}"
                      test-runs="{{testRuns}}"
                      test-paths="{{testPaths}}"
-                     search-results="{{searchResults}}"></wpt-results>
+                     search-results="{{searchResults}}"
+                     metadata="[[metadata]]"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
@@ -145,7 +146,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <template is="dom-if" if="[[!pathIsRootDir]]">
         <template is="dom-if" if="[[displayMetadata]]">
-          <wpt-metadata products="[[products]]" path="[[path]]"></wpt-metadata>
+          <wpt-metadata products="[[products]]"
+                        path="[[path]]"
+                        displayed-metadata="{{metadata}}"></wpt-metadata>
         </template>
       </template>
 
@@ -177,6 +180,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
       },
       searchResults: Array,
+      metadata: Array,
       resultsTotalsRangeMessage: {
         type: String,
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
