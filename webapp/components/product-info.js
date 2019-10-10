@@ -10,6 +10,7 @@ const DisplayNames = (() => {
   ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
   m.set('uc', 'UC Browser');
+  m.set('webkitgtk', 'WebKitGTK');
   // Platforms
   m.set('android', 'Android');
   m.set('linux', 'Linux');
@@ -118,7 +119,7 @@ const ProductInfo = (superClass) => class extends superClass {
   }
 
   minorIsSignificant(browserName) {
-    return browserName === 'safari';
+    return browserName === 'safari' || browserName === 'webkitgtk';
   }
 
   /**
