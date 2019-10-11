@@ -15,9 +15,6 @@ env_variables:
 
 # Also refer to dispatch.yaml for higher-priority routing rules.
 handlers:
-# Remote API
-- url: /_ah/remote_api
-  script: auto
 # Special dynamic components:
 - url: /components/wpt-env-flags.js
   script: auto
@@ -56,6 +53,10 @@ handlers:
   script: auto
   secure: always
   login: admin
+
+# Remote API
+- url: /_ah/remote_api
+  script: auto
 
 # Everything else (templates & APIs):
 - url: /.*
