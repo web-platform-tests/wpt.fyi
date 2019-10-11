@@ -169,6 +169,15 @@ Combines filters, such that any must apply, e.g.
 > NOTE: Or-conjuction takes less precedence than `and`. Precedence can be modified
 > using parens, e.g. `chrome:pass and (firefox:!pass or safari:!pass)`
 
+#### File contents
+
+> BETA: This feature is under development and may change without warning.
+
+The `contains` atom filters result down to those where the test file's source
+contains the given query in its content.
+
+    `contains:shadowroot`
+
 ## /api/search
 
 The `/api/search` endpoint takes an HTTP `POST` method, where the body is of the format
@@ -301,3 +310,12 @@ Search triaged issues -
 
 See [#meta-qualities](Meta qualities) above for more information on other
 meta qualities than `"different"`.
+
+#### contains
+
+> BETA: This feature is under development and may change without warning.
+
+`contains` query atoms perform an appengine search for test files that contain
+the given string in their content.
+
+    {"contains": "shadowRoot"}
