@@ -204,3 +204,17 @@ func (mr *MockDatastoreMockRecorder) TestRunQuery() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TestRunQuery", reflect.TypeOf((*MockDatastore)(nil).TestRunQuery))
 }
+
+// Update mocks base method
+func (m *MockDatastore) Update(arg0 shared.Key, arg1 interface{}, arg2 func(interface{}) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update
+func (mr *MockDatastoreMockRecorder) Update(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockDatastore)(nil).Update), arg0, arg1, arg2)
+}

@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -107,6 +108,13 @@ func TestScheduleResultsTask(t *testing.T) {
 	stats, err = taskqueue.QueueStats(ctx, []string{""})
 	assert.Nil(t, err)
 	assert.Equal(t, stats[0].Tasks, 1)
+
+	var pendingRun shared.PendingTestRun
+	id, err := strconv.Atoi(task.Name)
+	assert.Nil(t, err)
+	datastore.Get(ctx, datastore.NewKey(ctx, "PendingTestRun", "", int64(id), nil), &pendingRun)
+	assert.Equal(t, "blade-runner", pendingRun.Uploader)
+	assert.Equal(t, shared.StageWptFyiReceived, pendingRun.Stage)
 }
 
 func TestAddTestRun(t *testing.T) {
@@ -116,6 +124,7 @@ func TestAddTestRun(t *testing.T) {
 	a := NewAPI(ctx)
 
 	testRun := shared.TestRun{
+		ID: 123456,
 		ProductAtRevision: shared.ProductAtRevision{
 			Revision: "0123456789",
 		},
@@ -124,10 +133,44 @@ func TestAddTestRun(t *testing.T) {
 	key, err := a.AddTestRun(&testRun)
 	assert.Nil(t, err)
 	assert.Equal(t, "TestRun", key.Kind())
+	assert.Equal(t, int64(123456), key.IntID())
 
 	var testRun2 shared.TestRun
 	datastore.Get(ctx, datastore.NewKey(ctx, key.Kind(), "", key.IntID(), nil), &testRun2)
+	testRun2.ID = key.IntID()
 	assert.Equal(t, testRun, testRun2)
+}
+
+func TestUpdatePendingTestRun(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+	a := NewAPI(ctx)
+
+	key := datastore.NewKey(ctx, "PendingTestRun", "", 1, nil)
+	run := shared.PendingTestRun{
+		ID:         1,
+		CheckRunID: 100,
+		Stage:      shared.StageWptFyiReceived,
+	}
+	assert.Nil(t, a.UpdatePendingTestRun(run))
+	var run2 shared.PendingTestRun
+	datastore.Get(ctx, key, &run2)
+
+	// CheckRunID should not be updated; Stage should be transitioned.
+	run.CheckRunID = 0
+	run.Stage = shared.StageValid
+	assert.Nil(t, a.UpdatePendingTestRun(run))
+	var run3 shared.PendingTestRun
+	datastore.Get(ctx, key, &run3)
+
+	assert.Equal(t, int64(100), run3.CheckRunID)
+	assert.Equal(t, shared.StageValid, run3.Stage)
+	assert.Equal(t, run2.Created, run3.Created)
+
+	run.Stage = shared.StageWptFyiProcessing
+	assert.EqualError(t, a.UpdatePendingTestRun(run),
+		"cannot transition from VALID to WPTFYI_PROCESSING")
 }
 
 func TestAuthenticateUploader(t *testing.T) {

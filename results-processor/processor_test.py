@@ -3,9 +3,13 @@
 # found in the LICENSE file.
 
 import unittest
+from unittest.mock import call, patch
+
+from werkzeug.datastructures import MultiDict
 
 import test_util
-from processor import Processor
+import wptreport
+from processor import Processor, process_report
 
 
 class ProcessorTest(unittest.TestCase):
@@ -51,12 +55,6 @@ class ProcessorTest(unittest.TestCase):
             p._download_http = self.fake_download(
                 'https://wpt.fyi/artifact.zip', 'artifact_test.zip')
 
-            # Test error handling.
-            with self.assertRaises(AssertionError):
-                p.download(['https://wpt.fyi/test.json.gz'],
-                           [],
-                           'https://wpt.fyi/artifact.zip')
-
             p.download([], [], 'https://wpt.fyi/artifact.zip')
             self.assertEqual(len(p.results), 2)
             self.assertTrue(p.results[0].endswith(
@@ -68,6 +66,130 @@ class ProcessorTest(unittest.TestCase):
                 '/artifact_test/wpt_screenshot_1.txt'))
             self.assertTrue(p.screenshots[1].endswith(
                 '/artifact_test/wpt_screenshot_2.txt'))
+
+    def test_download_azure_errors(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download(None, None)
+            p._download_http = self.fake_download(
+                'https://wpt.fyi/artifact.zip', None)
+
+            # Incorrect param combinations (both results & azure_url):
+            with self.assertRaises(AssertionError):
+                p.download(['https://wpt.fyi/test.json.gz'],
+                           [],
+                           'https://wpt.fyi/artifact.zip')
+
+            # Download failure: no exceptions should be raised.
+            p.download([], [], 'https://wpt.fyi/artifact.zip')
+            self.assertEqual(len(p.results), 0)
+
+
+class MockProcessorTest(unittest.TestCase):
+    @patch('processor.Processor')
+    def test_params_plumbing_success(self, MockProcessor):
+        # Set up mock context manager to return self.
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.check_existing_run.return_value = False
+        mock.results = ['/tmp/wpt_report.json.gz']
+        mock.raw_results_url = 'https://wpt.fyi/test/report.json'
+        mock.results_url = 'https://wpt.fyi/test'
+        mock.test_run_id = 654321
+
+        # NOTE: if you need to change the following params, you probably also
+        # want to change api/receiver/api.go.
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'callback_url': 'https://test.wpt.fyi/api',
+            'labels': 'foo,bar',
+            'results': 'https://wpt.fyi/wpt_report.json.gz',
+            'browser_name': 'Chrome',
+            'browser_version': '70',
+            'os_name': 'Linux',
+            'os_version': '5.0',
+            'revision': '21917b36553562d21c14fe086756a57cbe8a381b',
+        })
+        process_report('12345', params)
+        mock.assert_has_calls([
+            call.update_status('654321', 'WPTFYI_PROCESSING', None,
+                               'https://test.wpt.fyi/api'),
+            call.download(['https://wpt.fyi/wpt_report.json.gz'], [], None),
+        ])
+        mock.report.update_metadata.assert_called_once_with(
+            revision='21917b36553562d21c14fe086756a57cbe8a381b',
+            browser_name='Chrome', browser_version='70',
+            os_name='Linux', os_version='5.0')
+        mock.create_run.assert_called_once_with(
+            '654321', 'foo,bar', 'blade-runner', 'https://test.wpt.fyi/api')
+
+    @patch('processor.Processor')
+    def test_params_plumbing_error(self, MockProcessor):
+        # Set up mock context manager to return self.
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.results = ['/tmp/wpt_report.json.gz']
+        mock.load_report.side_effect = wptreport.InvalidJSONError
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'results': 'https://wpt.fyi/wpt_report.json.gz',
+        })
+        # Suppress print_exception.
+        with patch('traceback.print_exception'):
+            process_report('12345', params)
+        mock.assert_has_calls([
+            call.update_status('654321', 'WPTFYI_PROCESSING', None, None),
+            call.download(['https://wpt.fyi/wpt_report.json.gz'], [], None),
+            call.load_report(),
+            call.update_status(
+                '654321', 'INVALID',
+                "Invalid JSON (['https://wpt.fyi/wpt_report.json.gz'])", None),
+        ])
+        mock.create_run.assert_not_called()
+
+    @patch('processor.Processor')
+    def test_params_plumbing_empty(self, MockProcessor):
+        # Set up mock context manager to return self.
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.results = []
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+        })
+        with self.assertLogs():
+            process_report('12345', params)
+        mock.assert_has_calls([
+            call.update_status('654321', 'WPTFYI_PROCESSING', None, None),
+            call.download([], [], None),
+            call.update_status('654321', 'EMPTY', None, None),
+        ])
+        mock.create_run.assert_not_called()
+
+    @patch('processor.Processor')
+    def test_params_plumbing_duplicate(self, MockProcessor):
+        # Set up mock context manager to return self.
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.check_existing_run.return_value = True
+        mock.results = ['/tmp/wpt_report.json.gz']
+        mock.raw_results_url = 'https://wpt.fyi/test/report.json'
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'results': 'https://wpt.fyi/wpt_report.json.gz',
+        })
+        with self.assertLogs():
+            process_report('12345', params)
+        mock.update_status.assert_has_calls([
+            call('654321', 'WPTFYI_PROCESSING', None, None),
+            call('654321', 'DUPLICATE', None, None),
+        ])
+        mock.create_run.assert_not_called()
 
 
 class ProcessorServerTest(unittest.TestCase):

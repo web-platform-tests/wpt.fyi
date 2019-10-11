@@ -7,18 +7,24 @@
 package shared
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"google.golang.org/appengine/urlfetch"
 )
+
+// ErrRunNotInSearchCache is an error for 422 responses from the searchcache.
+var ErrRunNotInSearchCache = errors.New("Run is still being loaded into the searchcache")
 
 // DiffAPI is an abstraction for computing run differences.
 type DiffAPI interface {
@@ -132,16 +138,25 @@ const (
 
 // NewlyPassing is the delta/increase in the number of passing tests when comparing before/after.
 func (d TestDiff) NewlyPassing() int {
+	if d == nil {
+		return 0
+	}
 	return d[newlyPassingIndex]
 }
 
 // Regressions is the delta/increase in the number of failing tests when comparing before/after.
 func (d TestDiff) Regressions() int {
+	if d == nil {
+		return 0
+	}
 	return d[newlyFailingIndex]
 }
 
 // TotalDelta is the delta in the number of total subtests when comparing before/after.
 func (d TestDiff) TotalDelta() int {
+	if d == nil {
+		return 0
+	}
 	return d[totalDeltaIndex]
 }
 
@@ -249,9 +264,11 @@ func (r ResultsDiff) Add(k string, diff TestDiff) {
 // since that can often indicate a failure in a test's setup.
 func (r ResultsDiff) Regressions() mapset.Set {
 	regressions := mapset.NewSet()
-	for test, diff := range r {
-		if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
-			regressions.Add(test)
+	if r != nil {
+		for test, diff := range r {
+			if diff.Regressions() > 0 || diff.TotalDelta() < 0 {
+				regressions.Add(test)
+			}
 		}
 	}
 	return regressions
@@ -329,6 +346,10 @@ func FetchRunResultsJSON(ctx context.Context, run TestRun) (results ResultsSumma
 
 // GetRunsDiff returns a RunDiff for the given runs.
 func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
+	store := NewAppEngineDatastore(d.ctx, false)
+	if IsFeatureEnabled(store, "searchcacheDiffs") {
+		return d.getRunsDiffFromSearchCache(before, after, filter, paths)
+	}
 	beforeJSON, err := FetchRunResultsJSON(d.ctx, before)
 	if err != nil {
 		return diff, fmt.Errorf("Failed to fetch 'before' results: %s", err.Error())
@@ -345,7 +366,7 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
 			beforeSHA = "HEAD"
 		}
-		renames = getDiffRenames(d.ctx, beforeSHA, after.FullRevisionHash)
+		renames = getDiffRenames(d.aeAPI, beforeSHA, after.FullRevisionHash)
 	}
 	return RunDiff{
 		Before:        before,
@@ -353,6 +374,73 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 		After:         after,
 		AfterSummary:  afterJSON,
 		Differences:   GetResultsDiff(beforeJSON, afterJSON, filter, paths, renames),
+		Renames:       renames,
+	}, nil
+}
+
+func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
+	diffURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search", d.aeAPI.GetVersionedHostname()))
+	query := diffURL.Query()
+	query.Set("diff", "")
+	query.Set("filter", filter.String())
+	diffURL.RawQuery = query.Encode()
+
+	type diffBody = struct {
+		RunIDs []int64 `json:"run_ids"`
+	}
+	body, _ := json.Marshal(diffBody{RunIDs: []int64{before.ID, after.ID}})
+
+	client, _ := d.aeAPI.GetSlowHTTPClient(time.Second * 10)
+	resp, err := client.Post(diffURL.String(), "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return diff, err
+	} else if resp.StatusCode == http.StatusUnprocessableEntity {
+		return diff, ErrRunNotInSearchCache
+	}
+
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return diff, err
+	}
+
+	var scDiff SearchResponse
+	err = json.Unmarshal(body, &scDiff)
+	if err != nil {
+		return diff, err
+	}
+	return RunDiffFromSearchResponse(d.aeAPI, before, after, scDiff)
+}
+
+// RunDiffFromSearchResponse builds a RunDiff from a searchcache response.
+func RunDiffFromSearchResponse(aeAPI AppEngineAPI, before, after TestRun, scDiff SearchResponse) (RunDiff, error) {
+	differences := make(map[string]TestDiff)
+	beforeSummary := make(ResultsSummary)
+	afterSummary := make(ResultsSummary)
+	for _, t := range scDiff.Results {
+		differences[t.Test] = t.Diff
+		if len(t.LegacyStatus) > 1 {
+			beforeSummary[t.Test] = TestSummary{t.LegacyStatus[0].Passes, t.LegacyStatus[0].Total}
+			afterSummary[t.Test] = TestSummary{t.LegacyStatus[1].Passes, t.LegacyStatus[1].Total}
+		}
+	}
+
+	var renames map[string]string
+	if aeAPI.IsFeatureEnabled("diffRenames") {
+		beforeSHA := before.FullRevisionHash
+		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
+		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
+			beforeSHA = "HEAD"
+		}
+		renames = getDiffRenames(aeAPI, beforeSHA, after.FullRevisionHash)
+	}
+
+	return RunDiff{
+		Before:        before,
+		BeforeSummary: beforeSummary,
+		After:         after,
+		AfterSummary:  afterSummary,
+		Differences:   differences,
 		Renames:       renames,
 	}, nil
 }
@@ -413,17 +501,18 @@ func GetResultsDiff(
 	return diff
 }
 
-func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
+func getDiffRenames(aeAPI AppEngineAPI, shaBefore, shaAfter string) map[string]string {
 	if shaBefore == shaAfter {
 		return nil
 	}
+	ctx := aeAPI.Context()
 	log := GetLogger(ctx)
-	githubClient, err := NewAppEngineAPI(ctx).GetGitHubClient()
+	githubClient, err := aeAPI.GetGitHubClient()
 	if err != nil {
 		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
 	}
-	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, "web-platform-tests", "wpt", shaBefore, shaAfter)
+	comparison, _, err := githubClient.Repositories.CompareCommits(ctx, WPTRepoOwner, WPTRepoName, shaBefore, shaAfter)
 	if err != nil || comparison == nil {
 		log.Errorf("Failed to fetch diff for %s...%s: %s", CropString(shaBefore, 7), CropString(shaAfter, 7), err.Error())
 		return nil
@@ -440,6 +529,8 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	}
 	if len(renames) < 1 {
 		log.Debugf("No renames for %s...%s", CropString(shaBefore, 7), CropString(shaAfter, 7))
+	} else {
+		log.Debugf("Found %v renames for %s...%s", len(renames), CropString(shaBefore, 7), CropString(shaAfter, 7))
 	}
 	return renames
 }

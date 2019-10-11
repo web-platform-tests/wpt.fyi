@@ -7,13 +7,7 @@
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-const $_documentContainer = document.createElement('template');
 
-$_documentContainer.innerHTML = `<dom-module id="results-navigation">
-
-</dom-module>`;
-
-document.head.appendChild($_documentContainer.content);
 /**
  * QueryBuilder contains a helper method for building a query string from
  * an object of params.
@@ -24,23 +18,46 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
     const props = {
       query: {
         type: String,
-        computed: 'computeQuery(queryParams)',
-        value: '',
         notify: true,
+        observer: '_queryChanged',
       },
       queryParams: {
         type: Object,
         notify: true,
+        observer: 'queryParamsChanged'
+      },
+      _computedQueryParams: {
+        type: Object,
+        computed: opts_queryParamsComputer || 'parseQuery(query)',
+        observer: 'computedQueryChanged',
       },
     };
-    if (opts_queryParamsComputer) {
-      props.queryParams.computed = opts_queryParamsComputer;
-    }
     return props;
   }
 
+  computedQueryChanged(computedQueryParams) {
+    if (!computedQueryParams) {
+      return;
+    }
+    this.queryParams = computedQueryParams;
+  }
+
+  queryParamsChanged(queryParams, queryParamsBefore) {
+    if (this._dontReact) {
+      return;
+    }
+    const query = this.computeQuery(queryParams);
+    if (queryParamsBefore) {
+      const queryBefore = this.computeQuery(queryParamsBefore);
+      if (query === queryBefore) {
+        return;
+      }
+    }
+    this.query = query;
+  }
+
   computeQuery(params) {
-    if (Object.keys(params).length < 1) {
+    if (!params || Object.keys(params).length < 1) {
       return '';
     }
     const url = new URL(window.location.origin);
@@ -52,11 +69,45 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
         url.searchParams.set(k, params[k]);
       }
     }
-    return url.search
+    const afterQ = url.search
       .replace(/=true/g, '')
-      .replace(/:00.000Z/g, '');
+      .replace(/:00.000Z/g, '')
+      // Work around bug where space => + => %2B is not decoded correctly.
+      .replace(/\+/g, '%20')
+      .split('?');
+    return afterQ.length && afterQ[1];
+  }
+
+  _queryChanged(query, queryBefore) {
+    if (!query || this._dontReact) {
+      return;
+    }
+    this.queryChanged(query, queryBefore);
+  }
+
+  queryChanged(query) {
+    if (this._dontReact) {
+      return;
+    }
+    this._dontReact = true;
+    this.queryParams = this.parseQuery(query);
+    this._dontReact = false;
+  }
+
+  parseQuery(query) {
+    const params = new URLSearchParams(query);
+    const result = {};
+    for (const param of params.keys()) {
+      const values = params.getAll(param);
+      if (!values.length) {
+        continue;
+      }
+      result[param] = values.length > 1 ? values : values[0];
+    }
+    return result;
   }
 };
+
 class ResultsTabs extends PolymerElement {
   static get template() {
     return html`
@@ -65,10 +116,14 @@ class ResultsTabs extends PolymerElement {
         --paper-tabs-selection-bar-color: var(--paper-blue-500);
       }
       paper-tab {
+        display: block;
         --paper-tab-ink: var(--paper-blue-300);
       }
       paper-tab a {
-        display: inherit;
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-align: center;
         text-decoration: none;
         color: var(--paper-blue-500);
         font-weight: normal;
@@ -83,12 +138,12 @@ class ResultsTabs extends PolymerElement {
     </style>
     <paper-tabs selected="[[selected]]">
       <paper-tab>
-        <a href="/results[[path]][[query]]">
+        <a href="/results[[path]]?[[query]]">
           <h2>Test Results</h2>
         </a>
       </paper-tab>
       <paper-tab>
-        <a href="/interop[[path]][[query]]">
+        <a href="/interop[[path]]?[[query]]">
           <h2>Interoperability</h2>
         </a>
       </paper-tab>
@@ -117,20 +172,6 @@ class ResultsTabs extends PolymerElement {
         value: '',
       }
     };
-  }
-
-  ready() {
-    super.ready();
-    for (const t of this.shadowRoot.querySelectorAll('paper-tab')) {
-      t.onclick = e => {
-        // Let the tab-switch animation run a little :)
-        e.preventDefault();
-        const a = t.querySelector('a');
-        window.setTimeout(() => {
-          window.location = a.href;
-        }, 300);
-      };
-    }
   }
 
   computeSelectedTab(tab) {

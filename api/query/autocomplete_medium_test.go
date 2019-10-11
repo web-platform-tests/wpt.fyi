@@ -37,8 +37,8 @@ func TestAutocompleteHandler(t *testing.T) {
 		},
 	}
 	summaryBytes := [][]byte{
-		[]byte(`{"/a/b/c":[1,2],"/b/c":[9,9]}`),
-		[]byte(`{"/z/b/c":[0,8],"/x/y/z":[3,4],"/b/c":[5,9]}`),
+		[]byte(`{"/a/b/c.html":[1,2],"/b/c.html":[9,9]}`),
+		[]byte(`{"/z/b/c.html":[0,8],"/x/y/z.html":[3,4],"/b/c.html":[5,9]}`),
 	}
 
 	i, err := sharedtest.NewAEInstance(true)
@@ -84,7 +84,7 @@ func TestAutocompleteHandler(t *testing.T) {
 		"/api/autocomplete?run_ids=%s&q=%s&limit=%s",
 		url.QueryEscape(fmt.Sprintf("%d,%d", testRuns[0].ID, testRuns[1].ID)),
 		url.QueryEscape(q),
-		url.QueryEscape("2"))
+		url.QueryEscape("3"))
 	r, err := i.NewRequest("GET", url, nil)
 	assert.Nil(t, err)
 	ctx := shared.NewAppEngineContext(r)
@@ -92,7 +92,6 @@ func TestAutocompleteHandler(t *testing.T) {
 
 	sh := autocompleteHandler{queryHandler{
 		store:      mockStore,
-		sharedImpl: defaultShared{ctx},
 		dataSource: shared.NewByteCachedStore(ctx, shared.NewMemcacheReadWritable(ctx, 48*time.Hour), cache),
 	}}
 
@@ -106,8 +105,9 @@ func TestAutocompleteHandler(t *testing.T) {
 
 	assert.Equal(t, AutocompleteResponse{
 		Suggestions: []AutocompleteResult{
-			AutocompleteResult{"/b/c"},
-			AutocompleteResult{"/a/b/c"},
+			AutocompleteResult{"/b/"},
+			AutocompleteResult{"/b/c.html"},
+			AutocompleteResult{"/a/b/c.html"},
 		},
 	}, data)
 	assert.True(t, rs[0].IsClosed())

@@ -55,7 +55,12 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
     </style>
 
     <div>
-      <display-logo show-source="[[showSource]]" small="[[small]]" product="[[testRun]]"></display-logo>
+      <display-logo product="[[testRun]]"
+                    show-source="[[showSource]]"
+                    show-platform="[[showPlatform]]"
+                    overlap="[[overlap]]"
+                    small="[[small]]">
+      </display-logo>
 
       <template is="dom-if" if="[[!small]]">
         <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
@@ -75,13 +80,14 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
       </template>
 
       <paper-tooltip offset="0">
-        <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
-          {{displayName(testRun.browser_name)}} {{testRun.browser_version}}<br>
-          Labels: {{displayLabels(testRun.labels)}}<br>
-          Started {{timeFormat(testRun.time_start)}} {{timeTaken(testRun)}}<br>
-          {{moreTooltip(testRun)}}
+        <template is="dom-if" if="[[ !isDiff(testRun.browser_name) ]]">
+          [[displayName(testRun.browser_name)]] [[testRun.browser_version]]<br>
+          Platform: [[displayName(testRun.os_name)]] [[displaySource(testRun)]]<br>
+          Labels: [[displayLabels(testRun.labels)]]<br>
+          Started [[timeFormat(testRun.time_start)]] [[timeTaken(testRun)]]<br>
+          [[moreTooltip(testRun)]]
         </template>
-        <template is="dom-if" if="{{ isDiff(testRun.browser_name) }}">
+        <template is="dom-if" if="[[ isDiff(testRun.browser_name) ]]">
           diff numbers are for:<br>
           [newly passing] / [newly failing] / [total count delta]
         </template>
@@ -107,6 +113,12 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
         type: Boolean,
         value: false
       },
+      showPlatform: {
+        type: Boolean,
+        value: false
+      },
+      // Whether to overlap the platform/browser/source icons a little.
+      overlap: Boolean,
     };
   }
 
@@ -155,6 +167,11 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
 
   sevenCharSHA(sha) {
     return sha && sha.substr(0, 7);
+  }
+
+  displaySource(testRun) {
+    const source = this.sourceName(testRun);
+    return source && `(run on ${source})`;
   }
 }
 

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
@@ -30,8 +30,6 @@ const (
 	wptRepoStagingInstallationID = int64(449270)
 
 	wptRepoID                = int64(3618133)
-	wptRepoOwner             = "web-platform-tests"
-	wptRepoName              = "wpt"
 	checksForAllUsersFeature = "checksAllUsers"
 )
 
@@ -186,12 +184,12 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 	opts := github.CreateCheckSuiteOptions{
 		HeadSHA: sha,
 	}
-	suite, _, err := client.Checks.CreateCheckSuite(s.ctx, wptRepoOwner, wptRepoName, opts)
+	suite, _, err := client.Checks.CreateCheckSuite(s.ctx, shared.WPTRepoOwner, shared.WPTRepoName, opts)
 	if err != nil {
 		log.Errorf("Failed to create GitHub check suite: %s", err.Error())
 	} else if suite != nil {
 		log.Infof("check_suite %v created", suite.GetID())
-		getOrCreateCheckSuite(s.ctx, sha, wptRepoOwner, wptRepoName, appID, installationID, prNumbers...)
+		getOrCreateCheckSuite(s.ctx, sha, shared.WPTRepoOwner, shared.WPTRepoName, appID, installationID, prNumbers...)
 	}
 	return suite != nil, err
 }

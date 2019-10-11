@@ -139,26 +139,130 @@ func (r TestRun) Channel() string {
 	return ""
 }
 
-// TestRunStatus is an enum for PendingTestRun statuses.
-type TestRunStatus int64
+// PendingTestRunStage represents the stage of a test run in its life cycle.
+type PendingTestRunStage int
 
-// TestRunStatusCreated represents a PendingTestRun that was created, but hasn't started.
-const TestRunStatusCreated = TestRunStatus(0)
+// Constant enums for PendingTestRunStage
+const (
+	StageGitHubQueued     PendingTestRunStage = 100
+	StageGitHubInProgress PendingTestRunStage = 200
+	StageCIRunning        PendingTestRunStage = 300
+	StageCIFinished       PendingTestRunStage = 400
+	StageGitHubSuccess    PendingTestRunStage = 500
+	StageGitHubFailure    PendingTestRunStage = 550
+	StageWptFyiReceived   PendingTestRunStage = 600
+	StageWptFyiProcessing PendingTestRunStage = 700
+	StageValid            PendingTestRunStage = 800
+	StageInvalid          PendingTestRunStage = 850
+	StageEmpty            PendingTestRunStage = 851
+	StageDuplicate        PendingTestRunStage = 852
+)
 
-// TestRunStatusRunning represents a PendingTestRun that has been announced as in-flight.
-const TestRunStatusRunning = TestRunStatus(1)
+func (s PendingTestRunStage) String() string {
+	switch s {
+	case StageGitHubQueued:
+		return "GITHUB_QUEUED"
+	case StageGitHubInProgress:
+		return "GITHUB_IN_PROGRESS"
+	case StageCIRunning:
+		return "CI_RUNNING"
+	case StageCIFinished:
+		return "CI_FINISHED"
+	case StageGitHubSuccess:
+		return "GITHUB_SUCCESS"
+	case StageGitHubFailure:
+		return "GITHUB_FAILURE"
+	case StageWptFyiReceived:
+		return "WPTFYI_RECEIVED"
+	case StageWptFyiProcessing:
+		return "WPTFYI_PROCESSING"
+	case StageValid:
+		return "VALID"
+	case StageInvalid:
+		return "INVALID"
+	case StageEmpty:
+		return "EMPTY"
+	case StageDuplicate:
+		return "DUPLICATE"
+	}
+	return ""
+}
 
-// TestRunStatusProcessing represents a PendingTestRun that has completed the run,
-// and the results are being processed.
-const TestRunStatusProcessing = TestRunStatus(2)
+// MarshalJSON is the custom JSON marshaler for PendingTestRunStage.
+func (s PendingTestRunStage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
+// UnmarshalJSON is the custom JSON unmarshaler for PendingTestRunStage.
+func (s *PendingTestRunStage) UnmarshalJSON(b []byte) error {
+	var str string
+	if err := json.Unmarshal(b, &str); err != nil {
+		return err
+	}
+	switch str {
+	case "GITHUB_QUEUED":
+		*s = StageGitHubQueued
+	case "GITHUB_IN_PROGRESS":
+		*s = StageGitHubInProgress
+	case "CI_RUNNING":
+		*s = StageCIRunning
+	case "CI_FINISHED":
+		*s = StageCIFinished
+	case "GITHUB_SUCCESS":
+		*s = StageGitHubSuccess
+	case "GITHUB_FAILURE":
+		*s = StageGitHubFailure
+	case "WPTFYI_RECEIVED":
+		*s = StageWptFyiReceived
+	case "WPTFYI_PROCESSING":
+		*s = StageWptFyiProcessing
+	case "VALID":
+		*s = StageValid
+	case "INVALID":
+		*s = StageInvalid
+	case "EMPTY":
+		*s = StageEmpty
+	case "DUPLICATE":
+		*s = StageDuplicate
+	default:
+		return fmt.Errorf("unknown stage: %s", str)
+	}
+	if s.String() != str {
+		return fmt.Errorf("enum conversion error: %s != %s", s.String(), str)
+	}
+	return nil
+}
 
 // PendingTestRun represents a TestRun that has started, but is not yet
 // completed.
 type PendingTestRun struct {
-	TestRun
+	ID               int64               `json:"id" datastore:"-"`
+	CheckRunID       int64               `json:"check_run_id" datastore:",omitempty"`
+	FullRevisionHash string              `json:"full_revision_hash"`
+	Uploader         string              `json:"uploader"`
+	Error            string              `json:"error" datastore:",omitempty"`
+	Stage            PendingTestRunStage `json:"stage"`
 
-	Status TestRunStatus `json:"status"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 }
+
+// Transition sets Stage to next if the transition is allowed; otherwise an
+// error is returned.
+func (s *PendingTestRun) Transition(next PendingTestRunStage) error {
+	if next == 0 || s.Stage > next {
+		return fmt.Errorf("cannot transition from %s to %s", s.Stage.String(), next.String())
+	}
+	s.Stage = next
+	return nil
+}
+
+// PendingTestRunByUpdated sorts the pending test runs by updated (asc)
+type PendingTestRunByUpdated []PendingTestRun
+
+func (a PendingTestRunByUpdated) Len() int           { return len(a) }
+func (a PendingTestRunByUpdated) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a PendingTestRunByUpdated) Less(i, j int) bool { return a[i].Updated.Before(a[j].Updated) }
 
 // CheckSuite entities represent a GitHub check request that has been noted by
 // wpt.fyi, and will cause creation of a completed check_run when results arrive
@@ -394,4 +498,57 @@ type Uploader struct {
 type Flag struct {
 	Name    string `datastore:"-"` // Name is the key in datastore.
 	Enabled bool
+}
+
+// LegacySearchRunResult is the results data from legacy test summarys.  These
+// summaries contain a "pass count" and a "total count", where the test itself
+// counts as 1, and each subtest counts as 1. The "pass count" contains any
+// status values that are "PASS" or "OK".
+type LegacySearchRunResult struct {
+	// Passes is the number of test results in a PASS/OK state.
+	Passes int `json:"passes"`
+	// Total is the total number of test results for this run/file pair.
+	Total int `json:"total"`
+}
+
+// SearchResult contains data regarding a particular test file over a collection
+// of runs. The runs are identified externally in a parallel slice (see
+// SearchResponse).
+type SearchResult struct {
+	// Test is the name of a test; this often corresponds to a test file path in
+	// the WPT source reposiory.
+	Test string `json:"test"`
+	// LegacyStatus is the results data from legacy test summaries. These
+	// summaries contain a "pass count" and a "total count", where the test itself
+	// counts as 1, and each subtest counts as 1. The "pass count" contains any
+	// status values that are "PASS" or "OK".
+	LegacyStatus []LegacySearchRunResult `json:"legacy_status,omitempty"`
+
+	// Interoperability scores. For N browsers, we have an array of
+	// N+1 items, where the index X is the number of items passing in exactly
+	// X of the N browsers. e.g. for 4 browsers, [0/4, 1/4, 2/4, 3/4, 4/4].
+	Interop []int `json:"interop,omitempty"`
+
+	// Subtests (names) which are included in the LegacyStatus summary.
+	Subtests []string `json:"subtests,omitempty"`
+
+	// Diff count of subtests which are included in the LegacyStatus summary.
+	Diff TestDiff `json:"diff,omitempty"`
+}
+
+// SearchResponse contains a response to search API calls, including specific
+// runs whose results were searched and the search results themselves.
+type SearchResponse struct {
+	// Runs is the specific runs for which results were retrieved. Each run, in
+	// order, corresponds to a Status entry in each SearchResult in Results.
+	Runs []TestRun `json:"runs"`
+	// IgnoredRuns is any runs that the client requested to be included in the
+	// query, but were not included. This optional field may be non-nil if, for
+	// example, results are being served from an incompelte cache of runs and some
+	// runs described in the query request are not resident in the cache.
+	IgnoredRuns []TestRun `json:"ignored_runs,omitempty"`
+	// Results is the collection of test results, grouped by test file name.
+	Results []SearchResult `json:"results"`
+	// MetadataResponse is a response to a wpt-metadata query.
+	MetadataResponse MetadataResults `json:"metadata,omitempty"`
 }

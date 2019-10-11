@@ -13,7 +13,7 @@ import (
 	"io/ioutil"
 	"regexp"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -60,7 +60,7 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 	fetchedSHA = sha
 	if shared.IsLatest(sha) {
 		// Use GitHub's API for latest release.
-		release, _, err = client.Repositories.GetLatestRelease(aeAPI.Context(), "web-platform-tests", "wpt")
+		release, _, err = client.Repositories.GetLatestRelease(aeAPI.Context(), shared.WPTRepoOwner, shared.WPTRepoName)
 	} else {
 		q := fmt.Sprintf("SHA:%s user:web-platform-tests repo:wpt", sha)
 		issues, _, err := client.Search.Issues(aeAPI.Context(), q, nil)
@@ -72,7 +72,7 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 		}
 
 		releaseTag = fmt.Sprintf("merge_pr_%d", issues.Issues[0].GetNumber())
-		release, _, err = client.Repositories.GetReleaseByTag(aeAPI.Context(), "web-platform-tests", "wpt", releaseTag)
+		release, _, err = client.Repositories.GetReleaseByTag(aeAPI.Context(), shared.WPTRepoOwner, shared.WPTRepoName, releaseTag)
 	}
 
 	if err != nil {

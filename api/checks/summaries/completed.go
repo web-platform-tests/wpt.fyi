@@ -5,7 +5,7 @@
 package summaries
 
 import (
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -24,7 +24,7 @@ type Completed struct {
 	CheckState
 	ResultsComparison
 
-	Results map[string][]int
+	Results BeforeAndAfter
 	More    int
 }
 
@@ -40,5 +40,7 @@ func (c Completed) GetSummary() (string, error) {
 
 // GetActions returns the actions that can be taken by the user.
 func (c Completed) GetActions() []*github.CheckRunAction {
-	return nil
+	return []*github.CheckRunAction{
+		RecomputeAction(),
+	}
 }

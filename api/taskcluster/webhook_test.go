@@ -17,8 +17,9 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/stretchr/testify/assert"
+	"github.com/taskcluster/taskcluster/clients/client-go/v19/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
@@ -90,19 +91,19 @@ func TestIsOnMaster(t *testing.T) {
 
 func TestExtractTaskGroupID(t *testing.T) {
 	t.Run("Status", func(t *testing.T) {
-		group, task := extractTaskGroupID("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		group, task := extractTaskGroupID("https://tc.example.com/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
 		assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg", group)
 		assert.Equal(t, "", task)
 	})
 	t.Run("CheckRun", func(t *testing.T) {
-		group, task := extractTaskGroupID("https://tools.taskcluster.net/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
+		group, task := extractTaskGroupID("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "NOToWHr0T-u62B9yGQnD5w", task)
 	})
 }
 
 func TestExtractArtifactURLs_all_success_master(t *testing.T) {
-	group := &taskGroupInfo{Tasks: make([]taskInfo, 4)}
+	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 4)}
 	group.Tasks[0].Task.Metadata.Name = "wpt-firefox-nightly-testharness-1"
 	group.Tasks[1].Task.Metadata.Name = "wpt-firefox-nightly-testharness-2"
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
@@ -113,42 +114,42 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 	}
 
 	t.Run("All", func(t *testing.T) {
-		urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "")
+		urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
 		assert.Nil(t, err)
 		assert.Equal(t, map[string]artifactURLs{
 			"firefox-nightly": {
 				Results: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
-					"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/1/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
-					"https://queue.taskcluster.net/v1/task/1/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/1/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 			"chrome-dev": {
 				Results: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
-					"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/3/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
-					"https://queue.taskcluster.net/v1/task/3/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/3/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
 	})
 
 	t.Run("Filtered", func(t *testing.T) {
-		urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "0")
+		urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "0")
 		assert.Nil(t, err)
 		assert.Equal(t, map[string]artifactURLs{
 			"firefox-nightly": {
 				Results: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
@@ -156,7 +157,7 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
-	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
+	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 3)}
 	group.Tasks[0].Task.Metadata.Name = "wpt-chrome-dev-results"
 	group.Tasks[1].Task.Metadata.Name = "wpt-chrome-dev-stability"
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-results-without-changes"
@@ -166,38 +167,38 @@ func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 	}
 
 	t.Run("All", func(t *testing.T) {
-		urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "")
+		urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
 		assert.Nil(t, err)
 		assert.Equal(t, map[string]artifactURLs{
 			"chrome-dev-pr_head": {
 				Results: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 			"chrome-dev-pr_base": {
 				Results: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
 	})
 
 	t.Run("Filtered", func(t *testing.T) {
-		urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "2")
+		urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "2")
 		assert.Nil(t, err)
 		assert.Equal(t, map[string]artifactURLs{
 			"chrome-dev-pr_base": {
 				Results: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
-					"https://queue.taskcluster.net/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
@@ -205,7 +206,7 @@ func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_with_failures(t *testing.T) {
-	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
+	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 3)}
 	group.Tasks[0].Status.State = "failed"
 	group.Tasks[0].Status.TaskID = "foo"
 	group.Tasks[0].Task.Metadata.Name = "wpt-firefox-nightly-testharness-1"
@@ -216,7 +217,7 @@ func TestExtractArtifactURLs_with_failures(t *testing.T) {
 	group.Tasks[2].Status.TaskID = "baz"
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
 
-	urls, err := extractArtifactURLs(shared.NewNilLogger(), group, "")
+	urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(urls))
 	assert.Contains(t, urls, "chrome-dev")

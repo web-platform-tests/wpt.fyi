@@ -13,7 +13,7 @@ self.addEventListener(
   }
 );
 
-const cacheablePath = new RegExp('^/(components|static|node_modules)/');
+const cacheablePath = new RegExp('^/(components|views|static|node_modules)/');
 
 // Locally cache eligible components/files.
 self.addEventListener(

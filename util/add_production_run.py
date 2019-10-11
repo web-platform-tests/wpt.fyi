@@ -9,7 +9,7 @@ Tool for adding a run from production data as a local TestRun entity in
 the Datastore.
 
 Example usage:
-./add_production-run.py --sha=b952881825
+./add_production-run.py --sha=24278ab617
 """
 
 import argparse

@@ -15,9 +15,9 @@ import (
 	"strings"
 	"testing"
 
-	logrustest "github.com/Hexcles/logrus/hooks/test"
+	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
@@ -37,8 +37,8 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	chrome := "chrome"
 	completed := "completed"
 	created := "created"
-	repoName := "wpt"
-	repoOwner := "web-platform-tests"
+	repoName := shared.WPTRepoName
+	repoOwner := shared.WPTRepoOwner
 	sender := "lukebjerring"
 	event := &github.CheckRunEvent{
 		Action: &created,

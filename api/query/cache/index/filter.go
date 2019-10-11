@@ -11,7 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	log "github.com/Hexcles/logrus"
+	mapset "github.com/deckarep/golang-set"
+	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -30,6 +31,12 @@ type False struct {
 type TestNamePattern struct {
 	index
 	q query.TestNamePattern
+}
+
+// SubtestNamePattern is a query.SubtestNamePattern bound to an in-memory index.
+type SubtestNamePattern struct {
+	index
+	q query.SubtestNamePattern
 }
 
 // TestPath is a query.TestPath bound to an in-memory index.
@@ -57,6 +64,25 @@ type Count struct {
 	index
 	count int
 	args  []filter
+}
+
+// LessThan is a query.LessThan bound to an in-memory index.
+type LessThan Count
+
+// MoreThan is a query.MoreThan bound to an in-memory index.
+type MoreThan Count
+
+// Link is a query.Count bound to an in-memory index and MetadataResults.
+type Link struct {
+	index
+	pattern  string
+	metadata map[string][]string
+}
+
+// MetadataQuality is a query.MetadataQuality bound to an in-memory index.
+type MetadataQuality struct {
+	index
+	quality query.MetadataQuality
 }
 
 // And is a query.And bound to an in-memory index.
@@ -113,6 +139,18 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 	return strings.Contains(name, tnp.q.Pattern)
 }
 
+// Filter interprets a SubtestNamePattern as a filter function over TestIDs.
+func (tnp SubtestNamePattern) Filter(t TestID) bool {
+	_, subtest, err := tnp.tests.GetName(t)
+	if err != nil || subtest == nil {
+		return false
+	}
+	return strings.Contains(
+		strings.ToLower(*subtest),
+		strings.ToLower(tnp.q.Subtest),
+	)
+}
+
 // Filter interprets a TestPath as a filter function over TestIDs.
 func (tp TestPath) Filter(t TestID) bool {
 	name, _, err := tp.tests.GetName(t)
@@ -142,6 +180,59 @@ func (c Count) Filter(t TestID) bool {
 		}
 	}
 	return matches == c.count
+}
+
+// Filter interprets a LessThan as a filter function over TestIDs.
+func (c LessThan) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches < c.count
+}
+
+// Filter interprets a MoreThan as a filter function over TestIDs.
+func (c MoreThan) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches > c.count
+}
+
+// Filter interprets a Link as a filter function over TestIDs.
+func (l Link) Filter(t TestID) bool {
+	name, _, err := l.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+
+	urls, ok := l.metadata[name]
+	if !ok {
+		return false
+	}
+
+	for _, url := range urls {
+		if strings.Contains(url, l.pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+// Filter interprets a MetadataQuality as a filter function over TestIDs.
+func (q MetadataQuality) Filter(t TestID) bool {
+	set := mapset.NewSet()
+	for _, result := range q.runResults {
+		set.Add(result.GetResult(t))
+	}
+	return set.Cardinality() > 1
 }
 
 // Filter interprets an And as a filter function over TestIDs.
@@ -182,6 +273,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return False{idx}, nil
 	case query.TestNamePattern:
 		return TestNamePattern{idx, v}, nil
+	case query.SubtestNamePattern:
+		return SubtestNamePattern{idx, v}, nil
 	case query.TestPath:
 		return TestPath{idx, v}, nil
 	case query.RunTestStatusEq:
@@ -194,6 +287,22 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 			return nil, err
 		}
 		return Count{idx, v.Count, fs}, nil
+	case query.LessThan:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return LessThan{idx, v.Count.Count, fs}, nil
+	case query.MoreThan:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return MoreThan{idx, v.Count.Count, fs}, nil
+	case query.Link:
+		return Link{idx, v.Pattern, v.Metadata}, nil
+	case query.MetadataQuality:
+		return MetadataQuality{idx, v}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
@@ -225,13 +334,13 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 	for i := range runs {
 		rus[i] = RunID(runs[i].ID)
 	}
-	res := make(chan []query.SearchResult, len(fs))
+	res := make(chan []shared.SearchResult, len(fs))
 	errs := make(chan error)
 	for _, f := range fs {
 		go syncRunFilter(rus, f, opts, res, errs)
 	}
 
-	ret := make([]query.SearchResult, 0)
+	ret := make([]shared.SearchResult, 0)
 	for i := 0; i < len(fs); i++ {
 		ts := <-res
 		ret = append(ret, ts...)
@@ -246,7 +355,7 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 		go func() {
 			for err := range errs {
 				// TODO: Should this use a context-based logger?
-				log.Errorf("Error executing filter query: %v: %v", fs, err)
+				logrus.Errorf("Error executing filter query: %v: %v", fs, err)
 			}
 		}()
 	}
@@ -254,7 +363,7 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 	return ret
 }
 
-func syncRunFilter(rus []RunID, f filter, opts query.AggregationOpts, res chan []query.SearchResult, errs chan error) {
+func syncRunFilter(rus []RunID, f filter, opts query.AggregationOpts, res chan []shared.SearchResult, errs chan error) {
 	idx := f.idx()
 	idx.m.RLock()
 	defer idx.m.RUnlock()

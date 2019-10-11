@@ -86,6 +86,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
             Any suggestions?
             <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?template=screenshots.md&projects=web-platform-tests/wpt.fyi/9" target="_blank">File an issue!</a>
           </p>
+          <button onclick="window.history.back()">Go back</button>
         </div>
       </div>
 
@@ -146,8 +147,14 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     return {
       curX: Number,
       curY: Number,
-      before: String,
-      after: String,
+      before: {
+        type: String,
+        value: '',
+      },
+      after: {
+        type: String,
+        value: '',
+      },
       selectedImage: {
         type: String,
         value: 'before',
@@ -173,15 +180,15 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
     this._createMethodObserver('computeDiff(canvasBefore, canvasAfter)');
 
     // Set the img srcs manually so that we can promisify them being loaded.
-    const imagePromises = ['before', 'after'].map(prop => {
+    const imagePromises = ['before', 'after'].map(prop => new Promise((resolve, reject) => {
+      if (!this[prop]) {
+        throw new Error(`${prop} is empty`);
+      }
       const img = this.shadowRoot.querySelector(`#${prop}`);
-      const loaded = new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
+      img.onload = resolve;
+      img.onerror = reject;
       img.src = this[prop];
-      return loaded;
-    });
+    }));
     this.load(
       Promise.all(imagePromises).then(async() => {
         await this.setupZoomSVG();
@@ -261,17 +268,15 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
       out.height = Math.max(before.height, after.height);
       const outCtx = out.getContext('2d');
 
-      for (let y = 0; y < Math.min(before.height, after.height); y++) {
-        const beforePixels = beforeCtx.getImageData(0, y, before.width, 1).data;
-        const afterPixels = afterCtx.getImageData(0, y, after.width, 1).data;
-        for (let x = 0; x < Math.min(before.width, after.width); x++) {
-          for (let i = 0; i < 4; i++) {
-            const pxlBefore = beforePixels[(x * 4) + i];
-            const pxlAfter = afterPixels[(x * 4) + i];
-            if (pxlBefore !== pxlAfter) {
-              outCtx.fillRect(x, y, 1, 1);
-              break;
-            }
+      const beforePixels = beforeCtx.getImageData(0, 0, out.width, out.height);
+      const afterPixels = afterCtx.getImageData(0, 0, out.width, out.height);
+      for (let i = 0; i < out.width * out.height; i++) {
+        for (let j = i * 4; j < i * 4 + 4; j++) {
+          if (beforePixels.data[j] !== afterPixels.data[j]) {
+            const x = i % out.width;
+            const y = Math.floor(i / out.width);
+            outCtx.fillRect(x, y, 1, 1);
+            break;
           }
         }
       }

@@ -54,8 +54,9 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         <!-- TODO: handle onclick with wpt-results.navigate if available -->
         <a href="/">Latest Run</a>
         <a href="/runs">Recent Runs</a>
-        <template is="dom-if" if="[[insightsTab]]">
-          <a href="/insights">Insights</a>
+        <a href="/insights">Insights</a>
+        <template is="dom-if" if="[[processorTab]]">
+          <a href="/status">Processor</a>
         </template>
         <a href="/about">About</a>
         <a href="https://github.com/web-platform-tests/wpt.fyi">GitHub Source</a>

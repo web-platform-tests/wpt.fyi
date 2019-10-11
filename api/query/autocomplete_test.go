@@ -68,34 +68,34 @@ func TestByQueryIndex_same(t *testing.T) {
 }
 
 func TestParseLimit_none(t *testing.T) {
-	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	ah := autocompleteHandler{queryHandler: queryHandler{}}
 	limit, err := ah.parseLimit(httptest.NewRequest("GET", "/api/autocomplete", nil))
 	assert.Equal(t, autocompleteDefaultLimit, limit)
 	assert.Nil(t, err)
 }
 
 func TestParseLimit_tooSmall(t *testing.T) {
-	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	ah := autocompleteHandler{queryHandler: queryHandler{}}
 	limit, err := ah.parseLimit(httptest.NewRequest("GET", fmt.Sprintf("/api/autocomplete?limit=%d", autocompleteMinLimit-1), nil))
 	assert.Equal(t, autocompleteMinLimit, limit)
 	assert.Nil(t, err)
 }
 
 func TestParseLimit_tooBig(t *testing.T) {
-	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	ah := autocompleteHandler{queryHandler: queryHandler{}}
 	limit, err := ah.parseLimit(httptest.NewRequest("GET", fmt.Sprintf("/api/autocomplete?limit=%d", autocompleteMaxLimit+1), nil))
 	assert.Equal(t, autocompleteMaxLimit, limit)
 	assert.Nil(t, err)
 }
 
 func TestParseLimit_bad(t *testing.T) {
-	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	ah := autocompleteHandler{queryHandler: queryHandler{}}
 	_, err := ah.parseLimit(httptest.NewRequest("GET", "/api/autocomplete?limit=notanumber", nil))
 	assert.NotNil(t, err)
 }
 
 func TestParseLimit_ok(t *testing.T) {
-	ah := autocompleteHandler{queryHandler: queryHandler{sharedImpl: defaultShared{}}}
+	ah := autocompleteHandler{queryHandler: queryHandler{}}
 	limit, err := ah.parseLimit(httptest.NewRequest("GET", fmt.Sprintf("/api/autocomplete?limit=%d", autocompleteMaxLimit-1), nil))
 	assert.Equal(t, autocompleteMaxLimit-1, limit)
 	assert.Nil(t, err)
@@ -163,6 +163,7 @@ func TestPrepareAutocompleteResponse_several(t *testing.T) {
 
 	resp := prepareAutocompleteResponse(50, &filters, testRuns, summaries)
 	assert.Equal(t, []AutocompleteResult{
+		AutocompleteResult{"/b/"},
 		AutocompleteResult{"/b/c"},
 		AutocompleteResult{"/a/b/c"},
 		AutocompleteResult{"/z/b/c"},
@@ -197,8 +198,9 @@ func TestPrepareAutocompleteResponse_limited(t *testing.T) {
 		},
 	}
 
-	resp := prepareAutocompleteResponse(2, &filters, testRuns, summaries)
+	resp := prepareAutocompleteResponse(3, &filters, testRuns, summaries)
 	assert.Equal(t, []AutocompleteResult{
+		AutocompleteResult{"/b/"},
 		AutocompleteResult{"/b/c"},
 		AutocompleteResult{"/a/b/c"},
 	}, resp.Suggestions)

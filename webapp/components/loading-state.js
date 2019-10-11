@@ -21,6 +21,7 @@ const LoadingState = (superClass) => class extends superClass {
       isLoading: {
         type: Boolean,
         computed: 'computeIsLoading(loadingCount)',
+        notify: true,
       },
       onLoadingComplete: Function,
     };

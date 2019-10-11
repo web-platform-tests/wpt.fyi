@@ -1,4 +1,4 @@
-# Goolge Cloud Storage
+# Google Cloud Storage
 
 **Note:** to apply the all permissive CORS policy to a new bucket, run:
 `gsutil cors set util/gs-cors.json gs://[BUCKET]`

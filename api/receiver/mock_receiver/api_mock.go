@@ -7,7 +7,7 @@ package mock_receiver
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/github"
+	github "github.com/google/go-github/v28/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	taskqueue "google.golang.org/appengine/taskqueue"
 	io "io"
@@ -296,6 +296,20 @@ func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1, arg2 []string, arg3 map
 func (mr *MockAPIMockRecorder) ScheduleResultsTask(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsTask", reflect.TypeOf((*MockAPI)(nil).ScheduleResultsTask), arg0, arg1, arg2, arg3)
+}
+
+// UpdatePendingTestRun mocks base method
+func (m *MockAPI) UpdatePendingTestRun(arg0 shared.PendingTestRun) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePendingTestRun", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePendingTestRun indicates an expected call of UpdatePendingTestRun
+func (mr *MockAPIMockRecorder) UpdatePendingTestRun(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePendingTestRun", reflect.TypeOf((*MockAPI)(nil).UpdatePendingTestRun), arg0)
 }
 
 // UploadToGCS mocks base method

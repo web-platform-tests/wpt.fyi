@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -58,7 +58,7 @@ type BuildTriggerInfo struct {
 
 // IsMasterBranch returns whether the source branch for the build is the master branch.
 func (a *Build) IsMasterBranch() bool {
-	return a != nil && a.TriggerInfo.SourceBranch == "master"
+	return a != nil && a.SourceBranch == "refs/heads/master"
 }
 
 // API is for Azure Pipelines related requests.

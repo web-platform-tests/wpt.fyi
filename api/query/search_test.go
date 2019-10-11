@@ -52,35 +52,35 @@ func doTestIC(t *testing.T, p, q string) {
 
 	resp := prepareSearchResponse(&filters, testRuns, summaries)
 	assert.Equal(t, testRuns, resp.Runs)
-	expectedResults := []SearchResult{
-		SearchResult{
+	expectedResults := []shared.SearchResult{
+		shared.SearchResult{
 			Test: "/a" + p + "c",
-			LegacyStatus: []LegacySearchRunResult{
-				LegacySearchRunResult{
+			LegacyStatus: []shared.LegacySearchRunResult{
+				shared.LegacySearchRunResult{
 					Passes: 1,
 					Total:  2,
 				},
-				LegacySearchRunResult{},
+				shared.LegacySearchRunResult{},
 			},
 		},
-		SearchResult{
+		shared.SearchResult{
 			Test: p + "c",
-			LegacyStatus: []LegacySearchRunResult{
-				LegacySearchRunResult{
+			LegacyStatus: []shared.LegacySearchRunResult{
+				shared.LegacySearchRunResult{
 					Passes: 9,
 					Total:  9,
 				},
-				LegacySearchRunResult{
+				shared.LegacySearchRunResult{
 					Passes: 5,
 					Total:  9,
 				},
 			},
 		},
-		SearchResult{
+		shared.SearchResult{
 			Test: "/z" + p + "c",
-			LegacyStatus: []LegacySearchRunResult{
-				LegacySearchRunResult{},
-				LegacySearchRunResult{
+			LegacyStatus: []shared.LegacySearchRunResult{
+				shared.LegacySearchRunResult{},
+				shared.LegacySearchRunResult{
 					Passes: 0,
 					Total:  8,
 				},
@@ -133,7 +133,7 @@ func TestStructuredSearchHandler_success(t *testing.T) {
 
 	api.EXPECT().Context().Return(sharedtest.NewTestContext())
 	api.EXPECT().GetServiceHostname("searchcache").Return(hostname)
-	api.EXPECT().GetHTTPClient().Return(server.Client())
+	api.EXPECT().GetSlowHTTPClient(gomock.Any()).Return(server.Client(), func() {})
 	w := httptest.NewRecorder()
 	structuredSearchHandler{queryHandler{}, api}.ServeHTTP(w, r)
 
@@ -163,9 +163,7 @@ func TestStructuredSearchHandler_failure(t *testing.T) {
 
 	api.EXPECT().Context().Return(sharedtest.NewTestContext())
 	api.EXPECT().GetServiceHostname("searchcache").Return(hostname)
-	api.EXPECT().GetHTTPClient().DoAndReturn(func() *http.Client {
-		return server.Client()
-	})
+	api.EXPECT().GetSlowHTTPClient(gomock.Any()).Return(server.Client(), func() {})
 
 	w := httptest.NewRecorder()
 	structuredSearchHandler{queryHandler{}, api}.ServeHTTP(w, r)

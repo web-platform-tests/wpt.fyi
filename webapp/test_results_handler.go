@@ -32,10 +32,11 @@ type testRunUIFilter struct {
 	TestRuns string
 }
 
-type testResultsUIFilter struct {
+type templateData struct {
 	testRunUIFilter
-	Diff       bool
-	DiffFilter string
+	Diff                bool
+	DiffFilter          string
+	EnableServiceWorker bool
 }
 
 // This handler is responsible for all pages that display test results.
@@ -63,25 +64,25 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter, err := parseTestResultsUIFilter(r)
+	data, err := populateTemplateData(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "results.html", filter); err != nil {
+	if err := templates.ExecuteTemplate(w, "index.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 }
 
-// parseTestResultsUIFilter parses the standard TestRunFilter, as well as the extra
-// diff params (diff, before, after).
-func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err error) {
+// populateTemplateData parses the standard TestRunFilter from the incoming
+// request, as well as the extra diff params (diff, before, after) & flags, to
+// populate the template data used for rendering.
+func populateTemplateData(r *http.Request) (data templateData, err error) {
 	q := r.URL.Query()
 	testRunFilter, err := shared.ParseTestRunFilterParams(q)
 	if err != nil {
-		return filter, err
+		return data, err
 	}
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
@@ -89,68 +90,71 @@ func parseTestResultsUIFilter(r *http.Request) (filter testResultsUIFilter, err 
 	var pr *int
 	pr, err = shared.ParsePRParam(q)
 	if err != nil {
-		return filter, err
+		return data, err
 	}
 
 	runIDs, err := shared.ParseRunIDsParam(q)
 	if err != nil {
-		return filter, err
+		return data, err
 	}
 
 	if len(runIDs) > 0 {
 		marshalled, err := json.Marshal(runIDs)
 		if err != nil {
-			return filter, err
+			return data, err
 		}
-		filter.TestRunIDs = string(marshalled)
+		data.TestRunIDs = string(marshalled)
 	} else {
 		if pr == nil && testRunFilter.IsDefaultQuery() {
-			experimentalByDefault := aeAPI.IsFeatureEnabled("experimentalByDefault")
-			experimentalAlignedExceptEdge := aeAPI.IsFeatureEnabled("experimentalAlignedExceptEdge")
-			if experimentalByDefault {
-				if experimentalAlignedExceptEdge {
+			if aeAPI.IsFeatureEnabled("experimentalByDefault") {
+				if aeAPI.IsFeatureEnabled("experimentalAlignedExceptEdge") {
 					testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
 				} else {
 					testRunFilter = testRunFilter.OrExperimentalRuns()
+					if aeAPI.IsFeatureEnabled("experimentalAligned") {
+						aligned := true
+						testRunFilter.Aligned = &aligned
+					}
 				}
 			} else {
 				testRunFilter = testRunFilter.OrAlignedStableRuns()
 			}
 			testRunFilter = testRunFilter.MasterOnly()
 		}
-
-		filter.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
-		filter.PR = pr
+		data.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
+		data.PR = pr
 	}
 
 	diff, err := shared.ParseBooleanParam(q, "diff")
 	if err != nil {
-		return filter, err
+		return data, err
 	}
-	filter.Diff = diff != nil && *diff
-	if filter.Diff {
+	data.Diff = diff != nil && *diff
+	if data.Diff {
 		diffFilter, _, err := shared.ParseDiffFilterParams(q)
 		if err != nil {
-			return filter, err
+			return data, err
 		}
-		filter.DiffFilter = diffFilter.String()
+		data.DiffFilter = diffFilter.String()
 	}
 
 	var beforeAndAfter shared.ProductSpecs
 	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(q); err != nil {
-		return filter, err
+		return data, err
 	} else if len(beforeAndAfter) > 0 {
 		var bytes []byte
 		if bytes, err = json.Marshal(beforeAndAfter.Strings()); err != nil {
-			return filter, err
+			return data, err
 		}
-		filter.Products = string(bytes)
-		filter.Diff = true
+		data.Products = string(bytes)
+		data.Diff = true
 	}
 
-	filter.Search = r.URL.Query().Get("q")
+	data.Search = r.URL.Query().Get("q")
 
-	return filter, nil
+	data.EnableServiceWorker = aeAPI.IsFeatureEnabled("serviceWorker")
+
+	return data, nil
 }
 
 func convertTestRunUIFilter(testRunFilter shared.TestRunFilter) (filter testRunUIFilter) {

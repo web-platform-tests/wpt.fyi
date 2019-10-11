@@ -14,7 +14,18 @@ import os
 import re
 import tempfile
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterator, IO, List, Optional, Set, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    IO,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Union,
+    cast,
+)
 
 import requests
 from mypy_extensions import TypedDict
@@ -56,7 +67,8 @@ class RawWPTReport(TypedDict, total=False):
 
 class WPTReportError(Exception):
     """Base class for all input-related exceptions."""
-    def __init__(self, message: str, path: Optional[str] = None) -> None:
+    def __init__(self, message: str,
+                 path: Optional[Union[str, List[str]]] = None) -> None:
         self.message = message
         self.path = path
 
@@ -524,10 +536,11 @@ def prepare_labels(report: WPTReport,
     return labels
 
 
-def normalize_product(report):
-    """Normalizes the product identifier.
+def normalize_product(report: WPTReport) -> Set[str]:
+    """Normalizes the product identifier in the report.
 
-    Computes what labels need to be added while normalizing the product.
+    In addition to modifying the 'product' of the report, this function also
+    returns a set of labels that need to be added.
 
     Args:
         report: A WPTReport
@@ -536,10 +549,15 @@ def normalize_product(report):
        A set of strings.
     """
     product = report.run_info['product']
-    if "_" in product:
-        tokens = product.split("_")
-        report.run_info['product'] = tokens[0]
-        return set(tokens)
+    if product == 'edge_webdriver':
+        report.run_info['product'] = 'edge'
+        return {'edge', 'webdriver', 'edge_webdriver'}
+    elif product == 'edgechromium':
+        report.run_info['product'] = 'edge'
+        return {'edge', 'edgechromium'}
+    elif product == 'webkitgtk_minibrowser':
+        report.run_info['product'] = 'webkitgtk'
+        return {'webkitgtk', 'minibrowser'}
     else:
         return set()
 
@@ -579,11 +597,7 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
     payload['raw_results_url'] = raw_results_url
     payload['labels'] = sorted(labels)
 
-    response = requests.post(
-        callback_url,
-        auth=auth,
-        data=json.dumps(payload)
-    )
+    response = requests.post(callback_url, auth=auth, json=payload)
     response.raise_for_status()
     response_data = response.json()
     return response_data['id']

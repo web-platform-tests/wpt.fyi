@@ -588,7 +588,7 @@ class HelpersTest(unittest.TestCase):
             {'beta', 'blade-runner', 'firefox'}
         )
 
-    def test_normalize_product(self):
+    def test_normalize_product_edge_webdriver(self):
         r = WPTReport()
         r._report = {
             'run_info': {
@@ -597,13 +597,44 @@ class HelpersTest(unittest.TestCase):
         }
         self.assertSetEqual(
             normalize_product(r),
-            {'edge', 'webdriver'}
+            {'edge', 'webdriver', 'edge_webdriver'}
         )
         self.assertEqual(
             r.run_info['product'],
             'edge'
         )
 
+    def test_normalize_product_edgechromium(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'edgechromium',
+            }
+        }
+        self.assertSetEqual(
+            normalize_product(r),
+            {'edge', 'edgechromium'}
+        )
+        self.assertEqual(
+            r.run_info['product'],
+            'edge'
+        )
+
+    def test_normalize_product_webkitgtk_minibrowser(self):
+        r = WPTReport()
+        r._report = {
+            'run_info': {
+                'product': 'webkitgtk_minibrowser',
+            }
+        }
+        self.assertSetEqual(
+            normalize_product(r),
+            {'webkitgtk', 'minibrowser'}
+        )
+        self.assertEqual(
+            r.run_info['product'],
+            'webkitgtk'
+        )
     def test_normalize_product_noop(self):
         r = WPTReport()
         r._report = {

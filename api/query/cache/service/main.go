@@ -13,12 +13,13 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"syscall"
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
-	"github.com/Hexcles/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
@@ -36,8 +37,8 @@ var (
 	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
-	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", uint(10), "Maximum number of runs that can be ingested before memory monitor must run")
-	maxHeapBytes           = flag.Uint64("max_heap_bytes", uint64(2e+11), "Soft limit on heap-allocated bytes before evicting test runs from memory")
+	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", 10, "Maximum number of runs that can be ingested before memory monitor must run")
+	maxHeapBytes           = flag.Uint64("max_heap_bytes", 0, "Soft limit on heap-allocated bytes before evicting test runs from memory")
 	evictRunsPercent       = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
 	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
 	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
@@ -218,7 +219,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
 	// are missing.
 	if len(runs) == 0 && len(missing) > 0 {
-		data, err = json.Marshal(query.SearchResponse{
+		data, err = json.Marshal(shared.SearchResponse{
 			IgnoredRuns: missing,
 		})
 		if err != nil {
@@ -237,9 +238,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Configure format, from request params.
 	urlQuery := r.URL.Query()
-	_, subtests := urlQuery["subtests"]
-	_, interop := urlQuery["interop"]
-	_, diff := urlQuery["diff"]
+	subtests, _ := shared.ParseBooleanParam(urlQuery, "subtests")
+	interop, _ := shared.ParseBooleanParam(urlQuery, "interop")
+	diff, _ := shared.ParseBooleanParam(urlQuery, "diff")
 	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
 	if err != nil {
 		log.Errorf("%s", err.Error())
@@ -247,9 +248,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	opts := query.AggregationOpts{
-		IncludeSubtests:         subtests,
-		InteropFormat:           interop,
-		IncludeDiff:             diff,
+		IncludeSubtests:         subtests != nil && *subtests,
+		InteropFormat:           interop != nil && *interop,
+		IncludeDiff:             diff != nil && *diff,
 		DiffFilter:              diffFilter,
 		IgnoreTestHarnessResult: shared.IsFeatureEnabled(store, "ignoreHarnessInTotal"),
 	}
@@ -260,7 +261,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := plan.Execute(runs, opts)
-	res, ok := results.([]query.SearchResult)
+	res, ok := results.([]shared.SearchResult)
 	if !ok {
 		log.Errorf("Search index returned bad results: %s", err.Error())
 		http.Error(w, "Search index returned bad results", http.StatusInternalServerError)
@@ -280,19 +281,12 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// - Add missing runs to IgnoredRuns;
 	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
 	//   client.
-	resp := query.SearchResponse{
+	resp := shared.SearchResponse{
 		Runs:    runs,
 		Results: res,
 	}
 	if len(missing) != 0 {
 		resp.IgnoredRuns = missing
-	}
-
-	if showMetadata, _ := shared.ParseBooleanParam(urlQuery, shared.ShowMetadataParam); showMetadata != nil && *showMetadata {
-		var netClient = &http.Client{
-			Timeout: time.Second * 5,
-		}
-		resp.MetadataResponse = shared.GetMetadataResponse(runs, netClient, log)
 	}
 
 	data, err = json.Marshal(resp)
@@ -326,6 +320,21 @@ func getDatastore(ctx context.Context) (shared.Datastore, error) {
 func init() {
 	flag.Parse()
 
+	if *maxHeapBytes == 0 {
+		var sysinfo syscall.Sysinfo_t
+		if err := syscall.Sysinfo(&sysinfo); err != nil {
+			logrus.Fatalf("Unable to get total system memory: %s", err.Error())
+		}
+		sysmem := float64(sysinfo.Totalram) * float64(sysinfo.Unit)
+		// Reserve 2GB or 50% of the total memory for system (whichever is smaller).
+		if sysmem-2e9 > sysmem*0.5 {
+			*maxHeapBytes = uint64(sysmem - 2e9)
+		} else {
+			*maxHeapBytes = uint64(sysmem * 0.5)
+		}
+		logrus.Infof("Detected total system memory: %d; setting max heap size to %d", uint64(sysmem), *maxHeapBytes)
+	}
+
 	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
 
 	autoProjectID, err := metadata.ProjectID()
@@ -333,12 +342,12 @@ func init() {
 		logrus.Warningf("Failed to get project ID from metadata service")
 	} else {
 		if *projectID == "" {
-			logrus.Infof(`Using project ID from metadata service: "%s"`, *projectID)
+			logrus.Infof(`Using project ID from metadata service: %s`, autoProjectID)
 			*projectID = autoProjectID
 		} else if *projectID != autoProjectID {
 			logrus.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
 		} else {
-			logrus.Infof(`Using project ID: "%s"`, *projectID)
+			logrus.Infof(`Using project ID: %s`, *projectID)
 		}
 	}
 
@@ -364,8 +373,11 @@ func main() {
 		logrus.Fatalf("Failed to instantiate index: %v", err)
 	}
 
-	fetcher := backfill.NewDatastoreRunFetcher(*projectID, gcpCredentialsFile, logger)
-	mon, err = backfill.FillIndex(fetcher, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
+	store, err := backfill.GetDatastore(*projectID, gcpCredentialsFile, logger)
+	if err != nil {
+		logrus.Fatalf("Failed to get datastore: %s", err)
+	}
+	mon, err = backfill.FillIndex(store, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
 	if err != nil {
 		logrus.Fatalf("Failed to initiate index backkfill: %v", err)
 	}

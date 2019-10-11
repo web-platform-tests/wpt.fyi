@@ -22,7 +22,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 
-	log "github.com/Hexcles/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,6 +34,7 @@ var (
 	errSomeShardsRequired = errors.New("Index must have at least one shard")
 	errUnexpectedRuns     = errors.New("Unexpected number of runs")
 	errZeroRun            = errors.New("Cannot ingest run with ID of 0")
+	errEmptyReport        = errors.New("Report contains no results")
 )
 
 // ErrRunExists returns the error associated with an attempt to perform
@@ -180,7 +181,7 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 
 	// Delegate loader to construct complete run report.
 	report, err := i.loader.Load(r)
-	if err != nil {
+	if err != nil && err != errEmptyReport {
 		return err
 	}
 
@@ -217,7 +218,7 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 		subs := make(map[string]metrics.SubTest)
 		for _, sub := range res.Subtests {
 			if _, ok := subs[sub.Name]; ok {
-				log.Warningf("Duplicate subtests with the same name: %s %s", res.Test, sub.Name)
+				logrus.Warningf("Duplicate subtests with the same name: %s %s", res.Test, sub.Name)
 				continue
 			}
 			subs[sub.Name] = sub
@@ -305,7 +306,7 @@ func (l HTTPReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, 
 		return nil, err
 	}
 	if len(report.Results) == 0 {
-		return nil, fmt.Errorf("Empty report from run ID=%d (%s)", run.ID, run.RawResultsURL)
+		return &report, errEmptyReport
 	}
 	return &report, nil
 }

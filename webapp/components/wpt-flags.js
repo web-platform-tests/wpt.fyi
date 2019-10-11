@@ -10,7 +10,7 @@
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { WPTEnvironmentFlags } from './wpt-env-flags.js';
+import { WPTEnvironmentFlags } from '../dynamic-components/wpt-env-flags.js';
 
 const $_documentContainer = document.createElement('template');
 
@@ -27,24 +27,26 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
     return [
       'colorHomepage',
       'diffFromAPI',
+      'displayMetadata',
       'experimentalByDefault',
+      'experimentalAligned',
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
-      'insightsTab',
+      'interopScoreColumn',
       'permalinks',
+      'processorTab',
       'queryBuilder',
       'queryBuilderSHA',
       'reftestAnalyzer',
       'reftestAnalyzerMockScreenshots',
       'reftestIframes',
       'searchCacheInterop',
-      'showMetadataInfo',
       'showTestType',
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
-      'webPlatformTestsLive',
+      'wptLive',
     ];
   }
 });
@@ -55,12 +57,14 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'diffRenames',
       'failChecksOnRegression',
       'ignoreHarnessInTotal',
+      'onlyChangesAsRegressions',
       'paginationTokens',
       'pendingChecks',
       'processTaskclusterCheckRunEvents',
       'runsByPRNumber',
       'serviceWorker',
       'taskclusterAllBranches',
+      'searchcacheDiffs',
     ];
   }
 });
@@ -74,7 +78,8 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
     }
     // Fall back to env default.
     if (value === null && typeof(WPTEnvironmentFlags) !== 'undefined') {
-      value = WPTEnvironmentFlags[feature];
+      // 'false' is needed for [[!foo]] Polymer bindings
+      value = WPTEnvironmentFlags[feature] || false;
     }
     target[feature] = {
       type: Boolean,
@@ -106,6 +111,12 @@ const FlagsEditorClass = (environmentFlags) =>
       const features = wpt.ClientSideFeatures;
       for (const feature of features) {
         this._createMethodObserver(`valueChanged(${feature}, '${feature}')`);
+      }
+
+      for (const nestedA of this.shadowRoot.querySelectorAll('paper-checkbox a')) {
+        nestedA.onclick = e => {
+          e.stopPropagation();
+        };
       }
     }
 
@@ -151,7 +162,7 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Query Builder component
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item sub-item>
       <paper-checkbox checked="{{queryBuilderSHA}}">
         SHA input
       </paper-checkbox>
@@ -223,13 +234,23 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{webPlatformTestsLive}}">
-        Use web-platform-tests.live.
+      <paper-checkbox checked="{{interopScoreColumn}}">
+        Show score column in the <a href="/interop">interop</a> view.
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{showMetadataInfo}}">
+      <paper-checkbox checked="{{wptLive}}">
+        Use wpt.live.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{displayMetadata}}">
         Show metadata Information on wpt.fyi result page.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{processorTab}}">
+        Show the "Processor" (status) tab.
       </paper-checkbox>
     </paper-item>
 `;
@@ -258,9 +279,14 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
         Fetch experimental runs as the default (homepage) query
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item sub-item>
+      <paper-checkbox checked="{{experimentalAligned}}">
+        Align the default experimental runs
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
       <paper-checkbox checked="{{experimentalAlignedExceptEdge}}">
-        All experimental, except edge, and aligned
+        All experimental, except edge[stable], and aligned
       </paper-checkbox>
     </paper-item>
     <paper-item>
@@ -279,11 +305,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{insightsTab}}">
-        Show the "Insights" tab in the main navigation, (and enable <a href="/insights">/insights</a>).
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
       <paper-checkbox checked="{{serviceWorker}}">
         Install a service worker to cache all the web components.
       </paper-checkbox>
@@ -293,23 +314,34 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
         Ignore "OK" harness status in test summary numbers.
       </paper-checkbox>
     </paper-item>
-    <h5>GitHub Status Checks</h5>
-    <paper-item sub-item="">
+    <h4>GitHub Status Checks</h4>
+    <paper-item>
+      <paper-checkbox checked="{{searchcacheDiffs}}">
+        Use searchcache (not summaries) to compute diffs when processing check run events.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item sub-item>
+      <paper-checkbox checked="{{onlyChangesAsRegressions}}">
+        Only treat C (changed) differences as possible regressions.
+        (<a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#apidiff">See docs for definition</a>)
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
       <paper-checkbox checked="{{failChecksOnRegression}}">
         Set the wpt.fyi GitHub status check to action_required if regressions are found.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{checksAllUsers}}">
         Run the wpt.fyi GitHub status check for all users, not just whitelisted ones.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{pendingChecks}}">
         Create pending GitHub status check when results first arrive, and are being processed.
       </paper-checkbox>
     </paper-item>
-    <paper-item sub-item="">
+    <paper-item>
       <paper-checkbox checked="{{processTaskclusterCheckRunEvents}}">
         Process check run events from Taskcluster (needs to be enabled if Taskcluster is using Checks API).
       </paper-checkbox>

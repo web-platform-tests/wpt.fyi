@@ -14,10 +14,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill/mock_backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 type countingIndex struct {
@@ -55,9 +55,11 @@ func (*countingIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, e
 func TestStopImmediately(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	fetcher := mock_backfill.NewMockRunFetcher(ctrl)
+	store := sharedtest.NewMockDatastore(ctrl)
+	query := sharedtest.NewMockTestRunQuery(ctrl)
 	product, _ := shared.ParseProductSpec("chrome")
-	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(shared.TestRunsByProduct{
+	store.EXPECT().TestRunQuery().Return(query)
+	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil).Return(shared.TestRunsByProduct{
 		shared.ProductTestRuns{Product: product, TestRuns: shared.TestRuns{
 			shared.TestRun{ID: 1},
 			shared.TestRun{ID: 2},
@@ -71,7 +73,7 @@ func TestStopImmediately(t *testing.T) {
 	mockIdx.EXPECT().IngestRun(gomock.Any()).Return(nil).AnyTimes()
 	mockIdx.EXPECT().SetIngestChan(gomock.Any())
 	idx := countingIndex{index.NewProxyIndex(mockIdx), 0}
-	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, time.Millisecond*10, 10, 1, 0.0, &idx)
+	m, err := FillIndex(store, shared.NewNilLogger(), rt, time.Millisecond*10, 10, 1, 0.0, &idx)
 	assert.Nil(t, err)
 	m.Stop()
 	time.Sleep(time.Second)
@@ -82,9 +84,11 @@ func TestIngestSomeRuns(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	fetcher := mock_backfill.NewMockRunFetcher(ctrl)
+	store := sharedtest.NewMockDatastore(ctrl)
+	query := sharedtest.NewMockTestRunQuery(ctrl)
 	product, _ := shared.ParseProductSpec("chrome")
-	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(shared.TestRunsByProduct{
+	store.EXPECT().TestRunQuery().Return(query)
+	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil).Return(shared.TestRunsByProduct{
 		shared.ProductTestRuns{
 			Product: product,
 			TestRuns: shared.TestRuns{
@@ -123,7 +127,7 @@ func TestIngestSomeRuns(t *testing.T) {
 	mockIdx.EXPECT().EvictRuns(gomock.Any()).Return(1, nil).AnyTimes()
 
 	mockIdx.EXPECT().SetIngestChan(gomock.Any())
-	m, err := FillIndex(fetcher, shared.NewNilLogger(), rt, freq, maxIngestedRuns, maxBytes, 0.0, &idx)
+	m, err := FillIndex(store, shared.NewNilLogger(), rt, freq, maxIngestedRuns, maxBytes, 0.0, &idx)
 	assert.Nil(t, err)
 	defer m.Stop()
 

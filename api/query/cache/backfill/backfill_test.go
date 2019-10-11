@@ -12,25 +12,27 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill/mock_backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func TestNilIndex(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	fetcher := mock_backfill.NewMockRunFetcher(ctrl)
-	_, err := FillIndex(fetcher, nil, nil, 1, uint(10), uint64(1), 0.0, nil)
+	store := sharedtest.NewMockDatastore(ctrl)
+	_, err := FillIndex(store, nil, nil, 1, uint(10), uint64(1), 0.0, nil)
 	assert.Equal(t, errNilIndex, err)
 }
 
 func TestFetchErr(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	fetcher := mock_backfill.NewMockRunFetcher(ctrl)
+	store := sharedtest.NewMockDatastore(ctrl)
+	query := sharedtest.NewMockTestRunQuery(ctrl)
 	idx := index.NewMockIndex(ctrl)
 	expected := errors.New("Fetch error")
-	fetcher.EXPECT().FetchRuns(gomock.Any()).Return(nil, expected)
-	_, err := FillIndex(fetcher, nil, nil, 1, uint(10), uint64(1), 0.0, idx)
+	store.EXPECT().TestRunQuery().Return(query)
+	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil).Return(nil, expected)
+	_, err := FillIndex(store, nil, nil, 1, uint(10), uint64(1), 0.0, idx)
 	assert.Equal(t, expected, err)
 }

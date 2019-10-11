@@ -8,6 +8,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// Average as of Aug 20, 2019
+const averageNumberOfSubtests = int(1655263 / 34236)
+
 // AggregationOpts are options for the aggregation format used when collecting
 // the results.
 type AggregationOpts struct {
@@ -48,6 +51,24 @@ type Count struct {
 	Args  []ConcreteQuery
 }
 
+// MoreThan constrains search results to include only test results where the number
+// of runs that match the given criteria is more than the given count.
+type MoreThan struct {
+	Count
+}
+
+// LessThan constrains search results to include only test results where the number
+// of runs that match the given criteria is less than the given count.
+type LessThan struct {
+	Count
+}
+
+// Link is a ConcreteQuery of AbstractLink.
+type Link struct {
+	Pattern  string
+	Metadata map[string][]string
+}
+
 // RunTestStatusEq constrains search results to include only test results from a
 // particular run that have a particular test status value. Run IDs are those
 // values automatically assigned to shared.TestRun instances by Datastore.
@@ -85,6 +106,10 @@ type Not struct {
 // substring match per test.
 func (TestNamePattern) Size() int { return 1 }
 
+// Size of SubtestNamePattern has a size of 1: servicing such a query requires a
+// substring match per subtest.
+func (SubtestNamePattern) Size() int { return averageNumberOfSubtests }
+
 // Size of TestPath has a size of 1: servicing such a query requires a
 // substring match per test.
 func (TestPath) Size() int { return 1 }
@@ -97,8 +122,18 @@ func (RunTestStatusEq) Size() int { return 1 }
 // lookup in a test run result mapping per test.
 func (RunTestStatusNeq) Size() int { return 1 }
 
+// Size of Link has a size of 1: servicing such a query requires a
+// substring match per Metadata Link Node.
+func (Link) Size() int { return 1 }
+
 // Size of Count is the sum of the sizes of its constituent ConcretQuery instances.
 func (c Count) Size() int { return size(c.Args) }
+
+// Size of Is depends on the quality.
+func (q MetadataQuality) Size() int {
+	// Currently only 'Different' supported, which is one set comparison per row.
+	return 1
+}
 
 // Size of Or is the sum of the sizes of its constituent ConcretQuery instances.
 func (o Or) Size() int { return size(o.Args) }
