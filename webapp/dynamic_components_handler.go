@@ -17,7 +17,7 @@ import (
 var componentTemplates *template.Template
 
 func init() {
-	box := packr.New("dynamic components", "./dynamic-components/")
+	box := packr.New("dynamic components", "./dynamic-components/templates/")
 	componentTemplates = template.New("all.js")
 	for _, t := range box.List() {
 		tmpl := componentTemplates.New(t)

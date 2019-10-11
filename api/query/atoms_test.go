@@ -303,7 +303,7 @@ func TestStructuredQuery_all(t *testing.T) {
 	}`), &rq)
 	assert.Nil(t, err)
 	assert.Equal(t, RunQuery{
-		RunIDs: []int64{0, 1, 2},
+		RunIDs:        []int64{0, 1, 2},
 		AbstractQuery: AbstractAll{[]AbstractQuery{TestNamePattern{"cssom"}}},
 	}, rq)
 }
@@ -832,9 +832,9 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 	expect := Link{
 		Pattern: "bugs.bar",
 		Metadata: map[string][]string{
-			"/randomfolder3/innerfolder1/random3foo.html":                     {"bugs.bar", ""},
-			"/randomfolder2/foo.html":                                         {"", "safari.foo.com"},
-			"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": {"bugs.bar?id=456", ""},
+			"/randomfolder3/innerfolder1/random3foo.html":                     {"bugs.bar"},
+			"/randomfolder2/foo.html":                                         {"safari.foo.com"},
+			"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": {"bugs.bar?id=456"},
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))

@@ -169,7 +169,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
                            products="[[products]]"
-                           diff-run="[[diffRun]]">
+                           diff-run="[[diffRun]]"
+                           metadata="[[metadata]]">
         </test-file-results>
       </template>
 
@@ -357,6 +358,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         type: Array,
         computed: 'computeDisplayedTests(path, searchResults)',
       },
+      metadata: Object,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {
