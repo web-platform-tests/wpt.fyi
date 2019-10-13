@@ -119,8 +119,6 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
     if (labels) {
       labels = new Set(labels);
       if (labels.has('experimental') || labels.has('dev')) {
-        // Legacy run distinction had name suffix -experimental
-        name.replace(/-experimental$/, '');
         name += '-dev';
       } else if (labels.has('beta')) {
         name += '-beta';
