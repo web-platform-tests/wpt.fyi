@@ -118,14 +118,21 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
     }
     if (labels) {
       labels = new Set(labels);
-      if (labels.has('experimental') || labels.has('dev')) {
-        // Legacy run distinction had name suffix -experimental
-        name.replace(/-experimental$/, '');
-        name += '-dev';
-      } else if (labels.has('beta')) {
-        name += '-beta';
-      } else if (labels.has('canary')) {
-        name += '-canary';
+      let channel;
+      const canidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
+      for (const label of canidates) {
+        if (labels.has(label)) {
+          channel = label;
+          break;
+        }
+      }
+      // Fall back to treating 'experimental' as 'dev'.
+      // TODO: Remove after https://github.com/web-platform-tests/wpt.fyi/issues/1539.
+      if (!channel && labels.has('experimental')) {
+        channel = 'dev';
+      }
+      if (channel) {
+        name = `${name}-${channel}`;
       }
     }
     return `/static/${name}_64x64.png`;
