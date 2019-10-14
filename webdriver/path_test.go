@@ -46,22 +46,5 @@ func testPath(t *testing.T, app AppServer, wd selenium.WebDriver, path, elementN
 	}
 	err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
 	assert.Nil(t, err)
-
-	var pathParts []selenium.WebElement
-	filteredPathPartsCondition := func(wd selenium.WebDriver) (bool, error) {
-		pathParts, err = getPathPartElements(wd, elementName)
-		return err == nil, err
-	}
-	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*120)
-	if err != nil || len(pathParts) != 2 {
-		assert.Fail(t, "Expected 2 path-part elements")
-		return
-	}
-	for i := range pathParts {
-		text, err := FindShadowText(wd, pathParts[i], "a")
-		if err != nil {
-			assert.Fail(t, err.Error())
-		}
-		assert.Equal(t, paths[i], text)
-	}
+	assertListIsFiltered(t, wd, elementName, paths...)
 }

@@ -467,24 +467,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
       }
     }
     if (paths) {
-      // Compute all the parent folders for the paths.
-      let folders = new Set();
-      for (const path of paths) {
-        const parts = path.split('/');
-        let c = '/';
-        for (let i = 1; i + 1 < parts.length; i++) {
-          c += parts[i] + '/';
-          folders.add(c);
-        }
-        if (query) {
-          if (!c.toLowerCase().includes(query)) {
-            continue;
-          }
-        } else if (folders.size >= 10) {
-          break;
-        }
-      }
-      let matches = Array.from(folders).sort().concat(Array.from(paths));
+      let matches = Array.from(paths);
       if (query) {
         matches = matches
           .filter(p => p.toLowerCase())
