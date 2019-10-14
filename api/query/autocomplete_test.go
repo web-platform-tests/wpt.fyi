@@ -163,7 +163,6 @@ func TestPrepareAutocompleteResponse_several(t *testing.T) {
 
 	resp := prepareAutocompleteResponse(50, &filters, testRuns, summaries)
 	assert.Equal(t, []AutocompleteResult{
-		AutocompleteResult{"/b/"},
 		AutocompleteResult{"/b/c"},
 		AutocompleteResult{"/a/b/c"},
 		AutocompleteResult{"/z/b/c"},
@@ -198,9 +197,8 @@ func TestPrepareAutocompleteResponse_limited(t *testing.T) {
 		},
 	}
 
-	resp := prepareAutocompleteResponse(3, &filters, testRuns, summaries)
+	resp := prepareAutocompleteResponse(2, &filters, testRuns, summaries)
 	assert.Equal(t, []AutocompleteResult{
-		AutocompleteResult{"/b/"},
 		AutocompleteResult{"/b/c"},
 		AutocompleteResult{"/a/b/c"},
 	}, resp.Suggestions)
