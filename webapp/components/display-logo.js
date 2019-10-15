@@ -119,8 +119,8 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
     if (labels) {
       labels = new Set(labels);
       let channel;
-      const canidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
-      for (const label of canidates) {
+      const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
+      for (const label of candidates) {
         if (labels.has(label)) {
           channel = label;
           break;
