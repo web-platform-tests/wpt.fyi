@@ -37,14 +37,14 @@ prepush: VERBOSE := $() # Empty out the verbose flag.
 prepush: go_build go_test lint
 
 python_test: python3 tox
-	cd $(WPTD_PATH)results-processor; tox
+	tox -c results-processor/
 
 # NOTE: We prune before generate, because node_modules are packr'd into the
 # binary (and part of the build).
 go_build: git mockgen packr2
 	make webapp_node_modules_prune
-	cd $(WPTD_PATH); go generate ./...
-	cd $(WPTD_PATH); go build ./...
+	go generate ./...
+	go build ./...
 
 go_lint: golint go_test_tag_lint
 	@echo "# Linting the go packages..."
@@ -94,7 +94,7 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_dep
 	# The following variables are defined here because we don't know the
 	# path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
-	cd $(WPTD_PATH)webdriver; \
+	cd webdriver; \
 	go test $(VERBOSE) -timeout=15m -tags=large -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
@@ -223,7 +223,7 @@ gcloud: python curl gpg
 	fi
 
 eslint: webapp_node_modules_all
-	cd $(WPTD_PATH)webapp; npm run lint
+	cd webapp; npm run lint
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
@@ -241,9 +241,9 @@ deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
 deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
 	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
-		cd $(WPTD_PATH); util/deploy.sh -q -r -p $(APP_PATH); \
+		util/deploy.sh -q -r -p $(APP_PATH); \
 	else \
-		cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
+		util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
 	fi
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
@@ -253,18 +253,18 @@ cleanup_staging_versions: gcloud_login
 
 deploy_production: deployment_state
 	gcloud config set project wptdashboard
-	cd $(WPTD_PATH); util/deploy.sh -r $(APP_PATH)
+	util/deploy.sh -r $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 webapp_node_modules: node
-	cd $(WPTD_PATH)webapp; npm install --production
+	cd webapp; npm install --production
 
 webapp_node_modules_all: node
-	cd $(WPTD_PATH)webapp; npm install
+	cd webapp; npm install
 
 webapp_node_modules_prune: webapp_node_modules
-	cd $(WPTD_PATH)webapp; npm prune --production
+	cd webapp; npm prune --production
 
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
@@ -278,7 +278,7 @@ gcloud-%: gcloud
 node-%: node
 	@ echo "# Installing $*..."
 	# Hack to (more quickly) detect whether a package is already installed (available in node).
-	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
+	cd webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
 
 apt-get-%:
 	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi
