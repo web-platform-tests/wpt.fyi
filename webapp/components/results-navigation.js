@@ -72,7 +72,9 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
     const afterQ = url.search
       .replace(/=true/g, '')
       .replace(/:00.000Z/g, '')
-      .split('?',);
+      // Work around bug where space => + => %2B is not decoded correctly.
+      .replace(/\+/g, '%20')
+      .split('?');
     return afterQ.length && afterQ[1];
   }
 

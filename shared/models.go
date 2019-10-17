@@ -139,26 +139,130 @@ func (r TestRun) Channel() string {
 	return ""
 }
 
-// TestRunStatus is an enum for PendingTestRun statuses.
-type TestRunStatus int64
+// PendingTestRunStage represents the stage of a test run in its life cycle.
+type PendingTestRunStage int
 
-// TestRunStatusCreated represents a PendingTestRun that was created, but hasn't started.
-const TestRunStatusCreated = TestRunStatus(0)
+// Constant enums for PendingTestRunStage
+const (
+	StageGitHubQueued     PendingTestRunStage = 100
+	StageGitHubInProgress PendingTestRunStage = 200
+	StageCIRunning        PendingTestRunStage = 300
+	StageCIFinished       PendingTestRunStage = 400
+	StageGitHubSuccess    PendingTestRunStage = 500
+	StageGitHubFailure    PendingTestRunStage = 550
+	StageWptFyiReceived   PendingTestRunStage = 600
+	StageWptFyiProcessing PendingTestRunStage = 700
+	StageValid            PendingTestRunStage = 800
+	StageInvalid          PendingTestRunStage = 850
+	StageEmpty            PendingTestRunStage = 851
+	StageDuplicate        PendingTestRunStage = 852
+)
 
-// TestRunStatusRunning represents a PendingTestRun that has been announced as in-flight.
-const TestRunStatusRunning = TestRunStatus(1)
+func (s PendingTestRunStage) String() string {
+	switch s {
+	case StageGitHubQueued:
+		return "GITHUB_QUEUED"
+	case StageGitHubInProgress:
+		return "GITHUB_IN_PROGRESS"
+	case StageCIRunning:
+		return "CI_RUNNING"
+	case StageCIFinished:
+		return "CI_FINISHED"
+	case StageGitHubSuccess:
+		return "GITHUB_SUCCESS"
+	case StageGitHubFailure:
+		return "GITHUB_FAILURE"
+	case StageWptFyiReceived:
+		return "WPTFYI_RECEIVED"
+	case StageWptFyiProcessing:
+		return "WPTFYI_PROCESSING"
+	case StageValid:
+		return "VALID"
+	case StageInvalid:
+		return "INVALID"
+	case StageEmpty:
+		return "EMPTY"
+	case StageDuplicate:
+		return "DUPLICATE"
+	}
+	return ""
+}
 
-// TestRunStatusProcessing represents a PendingTestRun that has completed the run,
-// and the results are being processed.
-const TestRunStatusProcessing = TestRunStatus(2)
+// MarshalJSON is the custom JSON marshaler for PendingTestRunStage.
+func (s PendingTestRunStage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
+// UnmarshalJSON is the custom JSON unmarshaler for PendingTestRunStage.
+func (s *PendingTestRunStage) UnmarshalJSON(b []byte) error {
+	var str string
+	if err := json.Unmarshal(b, &str); err != nil {
+		return err
+	}
+	switch str {
+	case "GITHUB_QUEUED":
+		*s = StageGitHubQueued
+	case "GITHUB_IN_PROGRESS":
+		*s = StageGitHubInProgress
+	case "CI_RUNNING":
+		*s = StageCIRunning
+	case "CI_FINISHED":
+		*s = StageCIFinished
+	case "GITHUB_SUCCESS":
+		*s = StageGitHubSuccess
+	case "GITHUB_FAILURE":
+		*s = StageGitHubFailure
+	case "WPTFYI_RECEIVED":
+		*s = StageWptFyiReceived
+	case "WPTFYI_PROCESSING":
+		*s = StageWptFyiProcessing
+	case "VALID":
+		*s = StageValid
+	case "INVALID":
+		*s = StageInvalid
+	case "EMPTY":
+		*s = StageEmpty
+	case "DUPLICATE":
+		*s = StageDuplicate
+	default:
+		return fmt.Errorf("unknown stage: %s", str)
+	}
+	if s.String() != str {
+		return fmt.Errorf("enum conversion error: %s != %s", s.String(), str)
+	}
+	return nil
+}
 
 // PendingTestRun represents a TestRun that has started, but is not yet
 // completed.
 type PendingTestRun struct {
-	TestRun
+	ID               int64               `json:"id" datastore:"-"`
+	CheckRunID       int64               `json:"check_run_id" datastore:",omitempty"`
+	FullRevisionHash string              `json:"full_revision_hash"`
+	Uploader         string              `json:"uploader"`
+	Error            string              `json:"error" datastore:",omitempty"`
+	Stage            PendingTestRunStage `json:"stage"`
 
-	Status TestRunStatus `json:"status"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 }
+
+// Transition sets Stage to next if the transition is allowed; otherwise an
+// error is returned.
+func (s *PendingTestRun) Transition(next PendingTestRunStage) error {
+	if next == 0 || s.Stage > next {
+		return fmt.Errorf("cannot transition from %s to %s", s.Stage.String(), next.String())
+	}
+	s.Stage = next
+	return nil
+}
+
+// PendingTestRunByUpdated sorts the pending test runs by updated (asc)
+type PendingTestRunByUpdated []PendingTestRun
+
+func (a PendingTestRunByUpdated) Len() int           { return len(a) }
+func (a PendingTestRunByUpdated) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a PendingTestRunByUpdated) Less(i, j int) bool { return a[i].Updated.Before(a[j].Updated) }
 
 // CheckSuite entities represent a GitHub check request that has been noted by
 // wpt.fyi, and will cause creation of a completed check_run when results arrive

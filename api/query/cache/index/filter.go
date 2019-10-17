@@ -5,15 +5,23 @@
 package index
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
 	reflect "reflect"
 	"strings"
 	"sync"
 
-	log "github.com/Hexcles/logrus"
+	"cloud.google.com/go/compute/metadata"
+	mapset "github.com/deckarep/golang-set"
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/appengine/remote_api"
+	"google.golang.org/appengine/search"
 )
 
 // True is a query.True equivalent, bound to an in-memory index.
@@ -30,6 +38,70 @@ type False struct {
 type TestNamePattern struct {
 	index
 	q query.TestNamePattern
+}
+
+// FileContentsQuery is a query.FileContentsQuery bound to an in-memory index.
+type FileContentsQuery struct {
+	index
+	q             query.FileContentsQuery
+	searchResults mapset.Set
+}
+
+func (fcq *FileContentsQuery) loadSearchResults() {
+	if fcq.searchResults != nil {
+		return
+	}
+	fcq.searchResults = mapset.NewSet()
+
+	ctx := context.Background()
+	hc, err := google.DefaultClient(ctx,
+		"https://www.googleapis.com/auth/appengine.apis",
+		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/cloud_search",
+		"https://www.googleapis.com/auth/userinfo.email",
+	)
+	if err != nil {
+		log.Errorf("Failed to create http client: %s", err.Error())
+		return
+	}
+
+	projectID, err := metadata.ProjectID()
+	if err != nil {
+		log.Errorf("Failed to get project id: %s", err.Error())
+	}
+	host := fmt.Sprintf("%s-dot-%s.appspot.com", os.Getenv("GAE_VERSION"), projectID)
+	remoteCtx, err := remote_api.NewRemoteContext(host, hc)
+	if err != nil {
+		log.Errorf("Failed to open remote context: %s", err.Error())
+		return
+	}
+	index, err := search.Open("test-content")
+	if err != nil {
+		log.Errorf("Failed to open search index: %s", err.Error())
+		return
+	}
+	iter := index.Search(remoteCtx, fcq.q.Query, &search.SearchOptions{
+		IDsOnly: true,
+	})
+	count := 0
+	for {
+		id, err := iter.Next(nil)
+		if err == search.Done {
+			break
+		} else if err != nil {
+			log.Errorf("Failed to fetch next result: %s", err.Error())
+			break
+		}
+		fcq.searchResults.Add(id)
+		count++
+	}
+	log.Debugf("Loaded %v results", count)
+}
+
+// SubtestNamePattern is a query.SubtestNamePattern bound to an in-memory index.
+type SubtestNamePattern struct {
+	index
+	q query.SubtestNamePattern
 }
 
 // TestPath is a query.TestPath bound to an in-memory index.
@@ -59,11 +131,23 @@ type Count struct {
 	args  []filter
 }
 
+// LessThan is a query.LessThan bound to an in-memory index.
+type LessThan Count
+
+// MoreThan is a query.MoreThan bound to an in-memory index.
+type MoreThan Count
+
 // Link is a query.Count bound to an in-memory index and MetadataResults.
 type Link struct {
 	index
 	pattern  string
 	metadata map[string][]string
+}
+
+// MetadataQuality is a query.MetadataQuality bound to an in-memory index.
+type MetadataQuality struct {
+	index
+	quality query.MetadataQuality
 }
 
 // And is a query.And bound to an in-memory index.
@@ -102,17 +186,17 @@ type index struct {
 func (i index) idx() index { return i }
 
 // Filter always returns true for true.
-func (True) Filter(t TestID) bool {
+func (*True) Filter(t TestID) bool {
 	return true
 }
 
 // Filter always returns false for false.
-func (False) Filter(t TestID) bool {
+func (*False) Filter(t TestID) bool {
 	return false
 }
 
 // Filter interprets a TestNamePattern as a filter function over TestIDs.
-func (tnp TestNamePattern) Filter(t TestID) bool {
+func (tnp *TestNamePattern) Filter(t TestID) bool {
 	name, _, err := tnp.tests.GetName(t)
 	if err != nil {
 		return false
@@ -120,8 +204,32 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 	return strings.Contains(name, tnp.q.Pattern)
 }
 
+// Filter interprets a FileContentsQuery as a filter function over TestIDs.
+func (fcq *FileContentsQuery) Filter(t TestID) bool {
+	if fcq.searchResults == nil {
+		fcq.loadSearchResults()
+	}
+	name, _, err := fcq.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+	return fcq.searchResults.Contains(name)
+}
+
+// Filter interprets a SubtestNamePattern as a filter function over TestIDs.
+func (tnp SubtestNamePattern) Filter(t TestID) bool {
+	_, subtest, err := tnp.tests.GetName(t)
+	if err != nil || subtest == nil {
+		return false
+	}
+	return strings.Contains(
+		strings.ToLower(*subtest),
+		strings.ToLower(tnp.q.Subtest),
+	)
+}
+
 // Filter interprets a TestPath as a filter function over TestIDs.
-func (tp TestPath) Filter(t TestID) bool {
+func (tp *TestPath) Filter(t TestID) bool {
 	name, _, err := tp.tests.GetName(t)
 	if err != nil {
 		return false
@@ -130,17 +238,17 @@ func (tp TestPath) Filter(t TestID) bool {
 }
 
 // Filter interprets a runTestStatusEq as a filter function over TestIDs.
-func (rtse runTestStatusEq) Filter(t TestID) bool {
+func (rtse *runTestStatusEq) Filter(t TestID) bool {
 	return rtse.runResults[RunID(rtse.q.Run)].GetResult(t) == ResultID(rtse.q.Status)
 }
 
 // Filter interprets a runTestStatusNeq as a filter function over TestIDs.
-func (rtsn runTestStatusNeq) Filter(t TestID) bool {
+func (rtsn *runTestStatusNeq) Filter(t TestID) bool {
 	return rtsn.runResults[RunID(rtsn.q.Run)].GetResult(t) != ResultID(rtsn.q.Status)
 }
 
 // Filter interprets a Count as a filter function over TestIDs.
-func (c Count) Filter(t TestID) bool {
+func (c *Count) Filter(t TestID) bool {
 	args := c.args
 	matches := 0
 	for _, arg := range args {
@@ -149,6 +257,30 @@ func (c Count) Filter(t TestID) bool {
 		}
 	}
 	return matches == c.count
+}
+
+// Filter interprets a LessThan as a filter function over TestIDs.
+func (c LessThan) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches < c.count
+}
+
+// Filter interprets a MoreThan as a filter function over TestIDs.
+func (c MoreThan) Filter(t TestID) bool {
+	args := c.args
+	matches := 0
+	for _, arg := range args {
+		if arg.Filter(t) {
+			matches++
+		}
+	}
+	return matches > c.count
 }
 
 // Filter interprets a Link as a filter function over TestIDs.
@@ -171,8 +303,17 @@ func (l Link) Filter(t TestID) bool {
 	return false
 }
 
+// Filter interprets a MetadataQuality as a filter function over TestIDs.
+func (q MetadataQuality) Filter(t TestID) bool {
+	set := mapset.NewSet()
+	for _, result := range q.runResults {
+		set.Add(result.GetResult(t))
+	}
+	return set.Cardinality() > 1
+}
+
 // Filter interprets an And as a filter function over TestIDs.
-func (a And) Filter(t TestID) bool {
+func (a *And) Filter(t TestID) bool {
 	args := a.args
 	for _, arg := range args {
 		if !arg.Filter(t) {
@@ -183,7 +324,7 @@ func (a And) Filter(t TestID) bool {
 }
 
 // Filter interprets an Or as a filter function over TestIDs.
-func (o Or) Filter(t TestID) bool {
+func (o *Or) Filter(t TestID) bool {
 	args := o.args
 	for _, arg := range args {
 		if arg.Filter(t) {
@@ -194,7 +335,7 @@ func (o Or) Filter(t TestID) bool {
 }
 
 // Filter interprets a Not as a filter function over TestID.
-func (n Not) Filter(t TestID) bool {
+func (n *Not) Filter(t TestID) bool {
 	return !n.arg.Filter(t)
 }
 
@@ -204,43 +345,64 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 	}
 	switch v := q.(type) {
 	case query.True:
-		return True{idx}, nil
+		return &True{idx}, nil
 	case query.False:
-		return False{idx}, nil
+		return &False{idx}, nil
 	case query.TestNamePattern:
-		return TestNamePattern{idx, v}, nil
+		return &TestNamePattern{idx, v}, nil
+	case query.FileContentsQuery:
+		return &FileContentsQuery{
+			index: idx,
+			q:     v,
+		}, nil
+	case query.SubtestNamePattern:
+		return &SubtestNamePattern{idx, v}, nil
 	case query.TestPath:
-		return TestPath{idx, v}, nil
+		return &TestPath{idx, v}, nil
 	case query.RunTestStatusEq:
-		return runTestStatusEq{idx, v}, nil
+		return &runTestStatusEq{idx, v}, nil
 	case query.RunTestStatusNeq:
-		return runTestStatusNeq{idx, v}, nil
+		return &runTestStatusNeq{idx, v}, nil
 	case query.Count:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
-		return Count{idx, v.Count, fs}, nil
+		return &Count{idx, v.Count, fs}, nil
+	case query.LessThan:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return &LessThan{idx, v.Count.Count, fs}, nil
+	case query.MoreThan:
+		fs, err := filters(idx, v.Args)
+		if err != nil {
+			return nil, err
+		}
+		return &MoreThan{idx, v.Count.Count, fs}, nil
 	case query.Link:
-		return Link{idx, v.Pattern, v.Metadata}, nil
+		return &Link{idx, v.Pattern, v.Metadata}, nil
+	case query.MetadataQuality:
+		return &MetadataQuality{idx, v}, nil
 	case query.And:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
-		return And{idx, fs}, nil
+		return &And{idx, fs}, nil
 	case query.Or:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
-		return Or{idx, fs}, nil
+		return &Or{idx, fs}, nil
 	case query.Not:
 		f, err := newFilter(idx, v.Arg)
 		if err != nil {
 			return nil, err
 		}
-		return Not{idx, f}, nil
+		return &Not{idx, f}, nil
 	default:
 		return nil, fmt.Errorf("Unknown ConcreteQuery type %s", reflect.TypeOf(q))
 	}
@@ -275,7 +437,7 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 		go func() {
 			for err := range errs {
 				// TODO: Should this use a context-based logger?
-				log.Errorf("Error executing filter query: %v: %v", fs, err)
+				logrus.Errorf("Error executing filter query: %v: %v", fs, err)
 			}
 		}()
 	}

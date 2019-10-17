@@ -47,7 +47,9 @@ func (p ProductSpec) MatchesProductAtRevision(productAtRevision ProductAtRevisio
 	if productAtRevision.BrowserName != p.BrowserName {
 		return false
 	}
-	if !IsLatest(p.Revision) && p.Revision != productAtRevision.Revision {
+	if !IsLatest(p.Revision) &&
+		p.Revision != productAtRevision.Revision &&
+		!strings.HasPrefix(productAtRevision.FullRevisionHash, p.Revision) {
 		return false
 	}
 	if p.BrowserVersion != "" {
@@ -76,6 +78,8 @@ func (p ProductSpec) DisplayName() string {
 		return "Firefox"
 	case "safari":
 		return "Safari"
+	case "webkitgtk":
+		return "WebKitGTK"
 	default:
 		return p.BrowserName
 	}

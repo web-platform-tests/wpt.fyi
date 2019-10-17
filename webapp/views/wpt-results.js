@@ -7,8 +7,6 @@
 import '../components/info-banner.js';
 import { LoadingState } from '../components/loading-state.js';
 import '../components/path.js';
-import '../components/test-file-results-table-terse.js';
-import '../components/test-file-results-table-verbose.js';
 import '../components/test-file-results.js';
 import '../components/test-results-chart.js';
 import '../components/test-results-history-grid.js';
@@ -171,7 +169,9 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
-                           products="[[products]]">
+                           products="[[products]]"
+                           diff-run="[[diffRun]]"
+                           metadata="[[metadata]]">
         </test-file-results>
       </template>
 
@@ -182,9 +182,9 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
               <th colspan="2">Path</th>
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                 <!-- Repeats for as many different browser test runs are available -->
-                <th><test-run test-run="[[testRun]]" show-source></test-run></th>
+                <th><test-run test-run="[[testRun]]" show-source show-platform></test-run></th>
               </template>
-              <template is="dom-if" if="[[diffShown]]">
+              <template is="dom-if" if="[[diffRun]]">
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
                   <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
@@ -205,7 +205,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                   </template>
                 </td>
                 <td>
-                  <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}" navigate="{{ bindNavigate() }}"></path-part>
+                  <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}"></path-part>
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
@@ -226,7 +226,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                   </template>
 
                 </template>
-                <template is="dom-if" if="[[diffShown]]">
+
+                <template is="dom-if" if="[[diffRun]]">
                   <td class\$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
                     <template is="dom-if" if="[[node.diff]]">
                       <span class="delta passes">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
@@ -320,6 +321,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       path: {
         type: String,
         observer: 'pathUpdated',
+        notify: true,
       },
       pathIsASubfolderOrFile: {
         type: Boolean,
@@ -359,6 +361,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       testPaths: {
         type: Set,
         computed: 'computeTestPaths(searchResults)',
+        notify: true,
       },
       displayedNodes: {
         type: Array,
@@ -368,16 +371,12 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         type: Array,
         computed: 'computeDisplayedTests(path, searchResults)',
       },
+      metadata: Object,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {
         type: Object,
         value: null,
-      },
-      // A diff column is shown if requested by users and there are 2 testRuns.
-      diffShown: {
-        type: Boolean,
-        computed: 'isDiffShown(diff, diffRun)',
       },
       diffURL: {
         type: String,
@@ -398,10 +397,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       manifest: Object,
       screenshots: Array,
     };
-  }
-
-  isDiffShown(diff, diffRun) {
-    return diff && diffRun !== null;
   }
 
   isInvalidDiffUse(diff, testRuns) {
@@ -530,9 +525,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
             revision: 'diff',
             browser_name: 'diff',
           };
-          if (!this.structuredQueries) {
-            this.fetchDiff();
-          }
+          this.fetchDiff();
         }
 
         // Load a manifest.
@@ -612,7 +605,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         5000
       ).then(
         json => {
-          this.searchResults = json.results;
+          this.searchResults = json.results.sort((a, b) => a.test.localeCompare(b.test));
           this.refreshDisplayedNodes();
         },
         (e) => {
@@ -721,7 +714,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     const prefix = this.path === '/' ? '/' : `${this.path}/`;
     const collapsePathOnto = (testPath, nodes) => {
       const suffix = testPath.substring(prefix.length);
-      const slashIdx = suffix.indexOf('/');
+      const slashIdx = suffix.split('?')[0].indexOf('/');
       const isDir = slashIdx !== -1;
       const name = isDir ? suffix.substring(0, slashIdx) : suffix;
       // Either add new node to acc, or add passes, total to an
@@ -971,11 +964,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     };
   }
 
-  handleSearchAutocomplete(e) {
-    this.shadowRoot.querySelector('test-search').clear();
-    this.navigateToPath(e.detail.path);
-  }
-
   queryChanged(query, queryBefore) {
     super.queryChanged(query, queryBefore);
     if (this._fetchedQuery === query) {
@@ -983,6 +971,29 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     }
     this._fetchedQuery = query; // Debounce.
     this.reloadData();
+  }
+
+  moveToNext() {
+    this._move(true);
+  }
+
+  moveToPrev() {
+    this._move(false);
+  }
+
+  _move(forward) {
+    if (!this.searchResults || !this.searchResults.length) {
+      return;
+    }
+    const n = this.searchResults.length;
+    let next = this.searchResults.findIndex(r => r.test.startsWith(this.path));
+    if (next < 0) {
+      next = (forward ? 0 : -1);
+    } else if (this.searchResults[next].test === this.path) { // Only advance 1 for exact match.
+      next = next + (forward ? 1 : -1);
+    }
+    // % in js is not modulo, it's remainder. Ensure it's positive.
+    this.path = this.searchResults[(n + next) % n].test;
   }
 }
 

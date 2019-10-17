@@ -31,7 +31,7 @@ info "Pruning node_modules so dev_appserver can handle watching file updates..."
 wptd_exec make webapp_node_modules_prune
 
 info "Installing other web server code dependencies"
-wptd_exec make webserver_deps
+wptd_exec make dev_appserver_deps
 
 DOCKER_STATUS="${?}"
 if [ "${DOCKER_STATUS}" != "0" ]; then
@@ -49,5 +49,5 @@ wptd_exec_it dev_appserver.py \
    --api_host=$WPTD_CONTAINER_HOST \
    --api_port=9999 \
    -A=wptdashboard \
-   /home/user/wpt.fyi/webapp/app.yaml
+   /home/user/wpt.fyi/webapp/web/app.dev.yaml
 

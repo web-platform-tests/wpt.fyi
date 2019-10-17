@@ -63,6 +63,9 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	// Copy int64 representation of key into TestRun.ID so that clients can
+	// inspect/use key value.
+	testRun.ID = key.IntID()
 
 	// Do not schedule on pr_base to avoid redundancy with pr_head.
 	if !testRun.LabelsSet().Contains(shared.PRBaseLabel) {
@@ -72,16 +75,22 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 		s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
 	}
 
-	// Copy int64 representation of key into TestRun.ID so that clients can
-	// inspect/use key value.
-	testRun.ID = key.IntID()
+	log := shared.GetLogger(a.Context())
+	pendingRun := shared.PendingTestRun{
+		ID:               testRun.ID,
+		Stage:            shared.StageValid,
+		FullRevisionHash: testRun.FullRevisionHash,
+	}
+	if err := a.UpdatePendingTestRun(pendingRun); err != nil {
+		// This is a non-fatal error; don't return.
+		log.Errorf("Failed to update pending test run: %s", err.Error())
+	}
 
 	jsonOutput, err := json.Marshal(testRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log := shared.GetLogger(a.Context())
 	log.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonOutput)

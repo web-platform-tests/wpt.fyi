@@ -7,8 +7,6 @@
 import { LoadingState } from '../components/loading-state.js';
 import { PathInfo } from '../components/path.js';
 import '../components/results-navigation.js';
-import '../components/test-file-results-table-terse.js';
-import '../components/test-file-results-table-verbose.js';
 import '../components/test-file-results.js';
 import '../components/test-run.js';
 import '../components/test-runs-query-builder.js';
@@ -178,7 +176,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
         <template is="dom-repeat" items="{{ displayedNodes }}" as="node">
           <tr>
             <td>
-              <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}" navigate="{{ bindNavigate() }}"></path-part>
+              <path-part prefix="/interop" path="{{ node.path }}" query="{{ query }}" is-dir="{{ !computePathIsATestFile(node.path) }}"></path-part>
             </td>
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
@@ -472,9 +470,9 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
         return (acc, t) => {
           // Compute dir/file name that is direct descendant of this.path.
           const suffix = t.test.substring(pLen);
-          const slashIdx = suffix.indexOf('/');
+          const slashIdx = suffix.split('?')[0].indexOf('/');
           const isDir = slashIdx !== -1;
-          const name = isDir ? suffix.substring(0, slashIdx): suffix;
+          const name = isDir ? suffix.substring(0, slashIdx) : suffix;
 
           // Either add new node to acc, or add data to an existing node.
           if (!nodes.hasOwnProperty(name)) {
@@ -546,6 +544,32 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
       score += 2 * Math.abs(0.5 - (i / products)) * node.interop[i] / node.total;
     }
     return Math.round(score * 100);
+  }
+
+  moveToNext() {
+    this._move(true);
+  }
+
+  moveToPrev() {
+    this._move(false);
+  }
+
+  _move(forward) {
+    if (!this.searchResults
+        || !this.searchResults.results
+        || !this.searchResults.results.length) {
+      return;
+    }
+    const results = this.searchResults.results.sort((a, b) => a.test.localeCompare(b.test));
+    const n = results.length;
+    let next = results.findIndex(r => r.test.startsWith(this.path));
+    if (next < 0) {
+      next = (forward ? 0 : -1);
+    } else if (results[next].test === this.path) { // Only advance 1 for exact match.
+      next = next + (forward ? 1 : -1);
+    }
+    // % in js is not modulo, it's remainder. Ensure it's positive.
+    this.path = results[(n + next) % n].test;
   }
 }
 window.customElements.define(WPTInterop.is, WPTInterop);

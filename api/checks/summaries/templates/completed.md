@@ -1,15 +1,14 @@
 {{ template "_successfully_scraped.md" . }}
 
-Uh-oh - it looks like there are some newly-failing results when we compared the affected tests
-to the latest run against the `master` branch.
+There were no regressions detected in the results.
 
 {{ template "_pr_and_master_specs.md" . }}
 
-### Regressions
+### Results
 
 Test | `master` | `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`
 --- | --- | ---
-{{ range $test, $results := .Regressions -}}
+{{ range $test, $results := .Results -}}
 {{ escapeMD $test }} | {{ $results.PassingBefore }} / {{ $results.TotalBefore }} | {{ $results.PassingAfter }} / {{ $results.TotalAfter }}
 {{end}}
 {{ if gt .More 0 -}}
@@ -24,6 +23,6 @@ Other links that might be useful:
 {{- if .MasterDiffURL }}
 - [`{{ printf "%.7s" .HeadRun.FullRevisionHash }}` vs latest master]({{ .MasterDiffURL }})
 {{- end }}
-- [Latest results for `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`]({{.HostURL}}results/?sha={{.HeadRun.Revision}})
+- [Latest results for `{{ printf "%.7s" .HeadRun.FullRevisionHash }}`]({{.HostURL}}?sha={{.HeadRun.Revision}}&label=pr_head)
 
 {{ template "_file_an_issue.md" . }}

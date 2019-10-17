@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/taskqueue"
@@ -42,6 +43,7 @@ type API interface {
 	shared.AppEngineAPI
 
 	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
+	UpdatePendingTestRun(pendingRun shared.PendingTestRun) error
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 	ScheduleResultsTask(
 		uploader string, results, screenshots []string, extraParams map[string]string) (
@@ -77,6 +79,37 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 		return nil, err
 	}
 	return key, nil
+}
+
+func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {
+	var buffer shared.PendingTestRun
+	key := a.store.NewIDKey("PendingTestRun", newRun.ID)
+	return a.store.Update(key, &buffer, func(obj interface{}) error {
+		run := obj.(*shared.PendingTestRun)
+		if newRun.Stage != 0 {
+			if err := run.Transition(newRun.Stage); err != nil {
+				return err
+			}
+		}
+		if newRun.Error != "" {
+			run.Error = newRun.Error
+		}
+		if newRun.CheckRunID != 0 {
+			run.CheckRunID = newRun.CheckRunID
+		}
+		if newRun.FullRevisionHash != "" {
+			run.FullRevisionHash = newRun.FullRevisionHash
+		}
+		if newRun.Uploader != "" {
+			run.Uploader = newRun.Uploader
+		}
+
+		if run.Created.IsZero() {
+			run.Created = time.Now()
+		}
+		run.Updated = time.Now()
+		return nil
+	})
 }
 
 func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
@@ -117,7 +150,16 @@ func (a apiImpl) ScheduleResultsTask(
 	if err != nil {
 		return nil, err
 	}
-	// TODO(lukebjerring): Create a PendingTestRun entity.
+
+	pendingRun := shared.PendingTestRun{
+		ID:               key.IntID(),
+		Stage:            shared.StageWptFyiReceived,
+		Uploader:         uploader,
+		FullRevisionHash: extraParams["revision"],
+	}
+	if err := a.UpdatePendingTestRun(pendingRun); err != nil {
+		return nil, err
+	}
 
 	payload := url.Values{
 		"results":     results,

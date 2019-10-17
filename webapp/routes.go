@@ -2,33 +2,32 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate packr2
+
 package webapp
 
 import (
 	"html/template"
 
-	"github.com/web-platform-tests/wpt.fyi/api"
-	"github.com/web-platform-tests/wpt.fyi/api/azure"
-	"github.com/web-platform-tests/wpt.fyi/api/checks"
-	"github.com/web-platform-tests/wpt.fyi/api/query"
-	"github.com/web-platform-tests/wpt.fyi/api/receiver"
-	"github.com/web-platform-tests/wpt.fyi/api/screenshot"
-	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	_ "google.golang.org/appengine/remote_api" // Registers the remote API in init
 )
 
-var templates = template.Must(template.ParseGlob("templates/*.html"))
+var templates *template.Template
 
 func init() {
-	// webapp.RegisterRoutes has a catch-all, so needs to go last.
-	api.RegisterRoutes()
-	azure.RegisterRoutes()
-	checks.RegisterRoutes()
-	query.RegisterRoutes()
-	receiver.RegisterRoutes()
-	screenshot.RegisterRoutes()
-	taskcluster.RegisterRoutes()
-	RegisterRoutes()
+	box := packr.New("html templates", "./templates/")
+	templates = template.New("all.html")
+	for _, t := range box.List() {
+		tmpl := templates.New(t)
+		body, err := box.FindString(t)
+		if err != nil {
+			panic(err)
+		} else if _, err = tmpl.Parse(body); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // RegisterRoutes adds the route handlers for the webapp.
@@ -41,7 +40,7 @@ func RegisterRoutes() {
 
 	// Feature flags for wpt.fyi
 	shared.AddRoute("/flags", "flags", flagsHandler)
-	shared.AddRoute("/components/wpt-env-flags.js", "flags-component", flagsComponentHandler)
+	shared.AddRoute("/dynamic-components/wpt-env-flags.js", "flags-component", flagsComponentHandler)
 
 	shared.AddRoute("/node_modules/{path:.*}", "components", componentsHandler)
 
@@ -51,6 +50,9 @@ func RegisterRoutes() {
 
 	// A list of useful/insightful queries
 	shared.AddRoute("/insights", "insights", insightsHandler)
+
+	// List of all pending/in-flight runs
+	shared.AddRoute("/status", "processor-status", processorStatusHandler)
 
 	// List of all test runs, by SHA[0:10]
 	shared.AddRoute("/runs", "test-runs", testRunsHandler)

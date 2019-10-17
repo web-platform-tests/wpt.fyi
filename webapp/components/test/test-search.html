@@ -27,6 +27,10 @@ suite('<test-search>', () => {
       assert.deepEqual(structuredQuery, S(p).eval());
     };
 
+    test('empty pattern', () => {
+      assertQueryParse('', {exists: [{pattern: ''}]});
+    });
+
     test('simple pattern', () => {
       assertQueryParse('2dcontext', {exists: [{pattern: '2dcontext'}]});
       assertQueryParse(
@@ -45,6 +49,14 @@ suite('<test-search>', () => {
       });
     });
 
+    test('subtest', () => {
+      assertQueryParse('subtest:idl_test', {exists: [{subtest: 'idl_test'}]});
+    });
+
+    test('subtest_quoted', () => {
+      assertQueryParse('subtest:"idl_test setup"', {exists: [{subtest: 'idl_test setup'}]});
+    });
+
     test('path', () => {
       assertQueryParse('path:/dom/', {exists: [{path: '/dom/'}]});
     });
@@ -55,6 +67,12 @@ suite('<test-search>', () => {
 
     test('versioned browser', () => {
       assertQueryParse('chrome-64:fail', {exists: [{product: 'chrome-64', status: 'FAIL'}]});
+    });
+
+    test('test status', () => {
+      assertQueryParse('status:missing', {exists: [{status: 'UNKNOWN'}]});
+      assertQueryParse('status:!missing', {exists: [{status: {not: 'UNKNOWN'}}]});
+      assertQueryParse('sTaTuS:UnKnOwN', {exists: [{status: 'UNKNOWN'}]});
     });
 
     test('test status eq', () => {
@@ -216,23 +234,45 @@ suite('<test-search>', () => {
       });
     });
 
+    test('exists', () => {
+      assertQueryParse('exists(status:PASS)', {
+        exists: [{status: 'PASS'}],
+      });
+    });
+
+    test('all', () => {
+      assertQueryParse('all(status:!PASS status:!OK)', {
+        all: [
+          {status: {not: 'PASS'} },
+          {status: {not: 'OK'} },
+        ],
+      });
+    });
+
+    test('none', () => {
+      assertQueryParse('none(status:PASS or status:OK)', {
+        none: [{
+          or: [
+            {status: 'PASS'},
+            {status: 'OK'},
+          ]
+        }],
+      });
+    });
+
     test('sequential', () => {
       // Canon: flip-flopping, which is usually flakiness:
       // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
       assertQueryParse('seq(status:PASS status:!PASS)', {
-        exists: [
-          {
-            sequential: [
-              {status: 'PASS'},
-              {status: {not: 'PASS'} },
-            ]
-          },
-        ],
+        sequential: [
+          {status: 'PASS'},
+          {status: {not: 'PASS'} },
+        ]
       });
       // Canon: flip-flopping, which is usually flakiness:
       // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
       assertQueryParse('seq((status:!PASS and status:!OK) (status:PASS or status:OK)) seq((status:PASS or status:OK) (status:!PASS and status:!OK))', {
-        exists: [
+        and: [
           { sequential: [
             {
               and: [
@@ -255,25 +295,44 @@ suite('<test-search>', () => {
       });
     });
 
+    test('contains', () => {
+      assertQueryParse('contains:abc', {
+        exists: [{contains: 'abc'}],
+      });
+    });
+
+    test('is', () => {
+      assertQueryParse('is:different', {
+        exists: [{ is: 'different' }]
+      });
+    });
+
     test('count', () => {
       assertQueryParse('count:5(status:PASS or status:OK)', {
-        exists: [{
-          count: 5,
-          where: {
-            or: [{status: 'PASS'}, {status: 'OK'}],
-          },
-        }]
+        count: 5,
+        where: {
+          or: [{status: 'PASS'}, {status: 'OK'}],
+        },
       });
       for (const [atom, count] of [['three', 3], ['two', 2], ['one', 1]]) {
         assertQueryParse(`${atom}(status:!PASS and status:!OK)`, {
-          exists: [{
-            count,
-            where: {
-              and: [{status: {not: 'PASS'}}, {status: {not: 'OK'}}],
-            },
-          }]
+          count,
+          where: {
+            and: [{status: {not: 'PASS'}}, {status: {not: 'OK'}}],
+          },
         });
       }
+      assertQueryParse('count=5(status:PASS)', { count: 5, where: {status: 'PASS' }});
+      assertQueryParse('count>1(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+      assertQueryParse('count>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+      assertQueryParse('count<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+      assertQueryParse('count<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+
+      assertQueryParse('count:=5(status:PASS)', { count: 5, where: {status: 'PASS' }});
+      assertQueryParse('count:>1(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+      assertQueryParse('count:>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+      assertQueryParse('count:<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+      assertQueryParse('count:<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
     });
 
     test('simple link search', () => {
@@ -312,6 +371,33 @@ suite('<test-search>', () => {
               },
             ],
           }],
+      });
+    });
+
+    test('multi-root', () => {
+      assertQueryParse('none(status:missing) count>0(status:!pass)', {
+        and: [
+          { none: [{ status: 'UNKNOWN' }] },
+          { moreThan: 0, where: { status: { not: 'PASS' } } },
+        ]
+      });
+      assertQueryParse('all(status:pass) or none(status:pass)', {
+        or: [
+          { all: [{ status: 'PASS' }] },
+          { none: [{ status: 'PASS' }] },
+        ]
+      });
+      assertQueryParse('idlharness all(status:fail)', {
+        and: [
+          { exists: [{ pattern: 'idlharness' }] },
+          { all: [{ status: 'FAIL' }] },
+        ]
+      });
+      assertQueryParse('2dcontext and all(status:fail)', {
+        and: [
+          { exists: [{ pattern: '2dcontext' }] },
+          { all: [{ status: 'FAIL' }] },
+        ]
       });
     });
   });

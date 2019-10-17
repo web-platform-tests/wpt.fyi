@@ -21,7 +21,7 @@ done
 if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
 
 APP_DEPS="${APP_PATH}"
-if [[ "${APP_PATH}" == "webapp" ]]; then APP_DEPS="${APP_DEPS}|api|shared"; fi
+if [[ "${APP_PATH}" == "webapp/web" ]]; then APP_DEPS="webapp|api|shared"; fi
 if [[ "${APP_PATH}" == "revisions/service" ]]; then APP_DEPS="${APP_DEPS}|revisions|shared"; fi
 # Be more conservative: only deploy searchcache when it's directly modified.
 # if [[ "${APP_PATH}" == "api/query/cache/service" ]]; then APP_DEPS="shared|api/query"; fi
@@ -61,5 +61,5 @@ DEPLOYED_URL=$(tr -d "\r" < ${TEMP_FILE} | sed -ne 's/^Deployed service.*to \[\(
 # Add a GitHub comment to the PR (if there is a PR).
 if [[ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]];
 then
-  ${UTIL_DIR}/deploy-comment.sh "${DEPLOYED_URL}";
+  ${UTIL_DIR}/deploy-comment.sh -e "${APP_PATH}" "${DEPLOYED_URL}";
 fi

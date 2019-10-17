@@ -591,7 +591,7 @@ __Parameters__
 __`epochs`__ : A potentially repeated parameter. Each parameter value contains
 the `id` of some epoch known by the announcer. Defaults to all known epochs.
 
-__`num_revision`__: The number of epochal revisions _for each epoch in `epochs`
+__`num_revisions`__: The number of epochal revisions _for each epoch in `epochs`
 values_ to include in the response. Defaults to 100. Response will include an
 `error` field when fewer than the requested number could be found for some
 epoch(s).
@@ -759,6 +759,10 @@ empty string, which will yield all test results for the selected runs.
 
 ### /api/metadata
 
+API endpoint for fetching all of the `link` metadata stored in the wpt-metadata
+repository, with the (normally file-sharded) data all flattened into a JSON
+object which is keyed by test name.
+
 This endpoint accepts POST and GET requests.
 
 - GET request returns Metadata Link Information by product, and requires product parameters;
@@ -787,22 +791,36 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 <details><summary><b>Example JSON</b></summary>
 
 ```json
-[
-   {
-      "test":"/IndexedDB/bindings-inject-key.html",
-      "urls":[
-         "bugs.chromium.org/p/chromium/issues/detail?id=934844",
-         "bugs.webkit.org/show_bug.cgi?id=167052"
+{
+  "/FileAPI/blob/Blob-constructor.html": [
+    {
+      "url": "https://github.com/web-platform-tests/results-collection/issues/661",
+      "product": "chrome",
+      "results:" [
+        {
+          "subtest": "Blob with type \"image/gif;\"",
+          "status": "UNKNOWN"
+        },
+        {
+          "subtest": "Invalid contentType (\"text/plain\")",
+          "status": "UNKNOWN"
+        }
       ]
-   },
-   {
-      "test":"/html/browsers/history/the-history-interface/007.html",
-      "urls":[
-         "bugs.chromium.org/p/chromium/issues/detail?id=592874",
-         ""
-      ]
-   }
-]
+    }
+  ],
+  "/service-workers/service-worker/fetch-request-css-base-url.https.html": [
+    {
+      "url": "https://bugzilla.mozilla.org/show_bug.cgi?id=1201160",
+      "product": "firefox",
+    }
+  ],
+  "/service-workers/service-worker/fetch-request-css-images.https.html": [
+    {
+      "url": "https://bugzilla.mozilla.org/show_bug.cgi?id=1532331",
+      "product": "firefox"
+    }
+  ]
+}
 ```
 </details>
 
@@ -813,21 +831,17 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 <details><summary><b>Example JSON</b></summary>
 
 ```json
-[
+{
+  "/IndexedDB/bindings-inject-key.html": [
     {
-        "test": "/IndexedDB/bindings-inject-key.html",
-        "urls": [
-            "bugs.chromium.org/p/chromium/issues/detail?id=934844",
-            ""
-        ]
-    },
-    {
-        "test": "/html/browsers/history/the-history-interface/007.html",
-        "urls": [
-            "bugs.chromium.org/p/chromium/issues/detail?id=592874",
-            ""
-        ]
+      "url": "bugs.chromium.org/p/chromium/issues/detail?id=934844"
     }
-]
+  ],
+  "/html/browsers/history/the-history-interface/007.html": [
+    {
+      "url": "bugs.chromium.org/p/chromium/issues/detail?id=592874"
+    }
+  ]
+}
 ```
 </details>

@@ -6,7 +6,6 @@ package shared
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/appengine/datastore"
 )
@@ -94,11 +93,24 @@ func (d aeDatastore) Insert(key Key, src interface{}) error {
 		var empty map[string]interface{}
 		err := datastore.Get(ctx, key.(*datastore.Key), &empty)
 		if err == nil {
-			return fmt.Errorf("Entity %v already exists", key.IntID())
+			return ErrEntityAlreadyExists
 		} else if err != datastore.ErrNoSuchEntity {
 			return err
 		}
-		_, err = datastore.Put(d.ctx, key.(*datastore.Key), src)
+		_, err = datastore.Put(ctx, key.(*datastore.Key), src)
+		return err
+	}, nil)
+}
+
+func (d aeDatastore) Update(key Key, dst interface{}, mutator func(obj interface{}) error) error {
+	return datastore.RunInTransaction(d.ctx, func(ctx context.Context) error {
+		if err := datastore.Get(ctx, key.(*datastore.Key), dst); err != nil && err != datastore.ErrNoSuchEntity {
+			return err
+		}
+		if err := mutator(dst); err != nil {
+			return err
+		}
+		_, err := datastore.Put(ctx, key.(*datastore.Key), dst)
 		return err
 	}, nil)
 }

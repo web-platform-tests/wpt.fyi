@@ -26,6 +26,7 @@ func TestShowAdminUploadForm_not_admin(t *testing.T) {
 	resp := httptest.NewRecorder()
 	mockAE := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().IsAdmin().Return(false)
+	mockAE.EXPECT().GetVersionedHostname().Return("")
 
 	showAdminUploadForm(mockAE, resp, req)
 
@@ -41,6 +42,7 @@ func TestShowAdminUploadForm_admin(t *testing.T) {
 	resp := httptest.NewRecorder()
 	mockAE := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	mockAE.EXPECT().IsAdmin().Return(true)
+	mockAE.EXPECT().GetVersionedHostname().Return("")
 
 	showAdminUploadForm(mockAE, resp, req)
 

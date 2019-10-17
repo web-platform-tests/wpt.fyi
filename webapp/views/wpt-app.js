@@ -6,6 +6,7 @@ import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
+import '../components/wpt-metadata.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
@@ -16,7 +17,9 @@ import '../views/wpt-interop.js';
 import '../views/wpt-results.js';
 
 class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
-  static get is() { return 'wpt-app'; }
+  static get is() {
+    return 'wpt-app';
+  }
 
   static get template() {
     return html`
@@ -65,10 +68,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <section class="search">
         <div class="path">
-          <a href="/[[page]]/?[[ query ]]" on-click="navigate">wpt</a>
+          <a href="/[[page]]/?[[ query ]]">wpt</a>
           <!-- The next line is intentionally formatted so to avoid whitespaces between elements. -->
           <template is="dom-repeat" items="[[ splitPathIntoLinkedParts(path) ]]" as="part"
-            ><span class="path-separator">/</span><a href="/[[page]][[ part.path ]]?[[ query ]]" on-click="navigate">[[ part.name ]]</a></template>
+            ><span class="path-separator">/</span><a href="/[[page]][[ part.path ]]?[[ query ]]">[[ part.name ]]</a></template>
         </div>
 
         <template is="dom-if" if="[[searchPRsForDirectories]]">
@@ -127,17 +130,27 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <wpt-results name="results"
                      is-loading="{{resultsLoading}}"
                      structured-search="[[structuredSearch]]"
-                     path="[[subroute.path]]"
+                     path="{{subroute.path}}"
                      test-runs="{{testRuns}}"
-                     search-results="{{searchResults}}"></wpt-results>
+                     test-paths="{{testPaths}}"
+                     search-results="{{searchResults}}"
+                     metadata="[[metadata]]"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
                      structured-search="[[structuredSearch]]"
-                     path="[[subroute.path]]"></wpt-interop>
+                     path="{{subroute.path}}"></wpt-interop>
 
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
+
+      <template is="dom-if" if="[[!pathIsRootDir]]">
+        <template is="dom-if" if="[[displayMetadata]]">
+          <wpt-metadata products="[[products]]"
+                        path="[[path]]"
+                        displayed-metadata="{{metadata}}"></wpt-metadata>
+        </template>
+      </template>
 
       <paper-toast id="masterLabelMissing" duration="15000">
         <div style="display: flex;">
@@ -156,10 +169,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         reflectToAttribute: true,
       },
-      path: {
-        type: String,
-        computed: '_computePath(subroute.path)',
-      },
+      path: String,
+      testPaths: Set,
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
@@ -168,17 +179,20 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
       },
       searchResults: Array,
+      metadata: Array,
       resultsTotalsRangeMessage: {
         type: String,
-        computed: 'computeResultsTotalsRangeMessage(page, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
+        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
       },
     };
   }
 
-  static get observers() { return [
-    '_routeChanged(routeData, routeData.*)',
-    '_subrouteChanged(subrouteData, subrouteData.*)',
-  ]}
+  static get observers() {
+    return [
+      '_routeChanged(routeData, routeData.*)',
+      '_subrouteChanged(subroute, subroute.*)',
+    ];
+  }
 
   constructor() {
     super();
@@ -196,6 +210,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     const testSearch = this.shadowRoot.querySelector('test-search');
     testSearch.addEventListener('commit', this.handleSearchCommit.bind(this));
     testSearch.addEventListener('autocomplete', this.handleSearchAutocomplete.bind(this));
+    document.addEventListener('keydown', this.handleKeyDown.bind(this));
   }
 
   disconnectedCallback() {
@@ -213,7 +228,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       this.shadowRoot.querySelector('#masterLabelMissing').show();
     }
     this.shadowRoot.querySelector('app-location')
-        ._createPropertyObserver('__query', query => this.query = query);
+      ._createPropertyObserver('__query', query => this.query = query);
   }
 
   queryChanged(query) {
@@ -222,6 +237,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     if (this.activeView) {
       this.activeView.query = query;
     }
+    super.queryChanged(query);
   }
 
   _routeChanged(routeData) {
@@ -231,8 +247,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     }
   }
 
-  _subrouteChanged(subrouteData) {
-    this.path = subrouteData.path || '/';
+  _subrouteChanged(subroute) {
+    this.path = subroute.path || '/';
   }
 
   get activeView() {
@@ -243,23 +259,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return interopLoading || resultsLoading;
   }
 
-  _computePath(subroutePath) {
-    return subroutePath || '/';
-  }
-
-  splitPathIntoLinkedParts(inputPath) {
-    const parts = (inputPath || '').split('/').slice(1);
-    const lastPart = parts.pop();
-    let path = '';
-    const linkedParts = parts.map(name => {
-      path += `/${name}`;
-      return {
-        name, path
-      };
-    });
-    path += `/${encodeURIComponent(lastPart)}`;
-    linkedParts.push({name: lastPart, path: path});
-    return linkedParts;
+  handleKeyDown(e) {
+    // Ignore when something other than body has focus.
+    if (!e.path.length || e.path[0] !== document.body) {
+      return;
+    }
+    if (e.key === 'n') {
+      this.activeView.moveToNext();
+    } else if (e.key === 'p') {
+      this.activeView.moveToPrev();
+    }
   }
 
   handleSubmitQuery() {
@@ -278,7 +287,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleSearchAutocomplete(e) {
     this.shadowRoot.querySelector('test-search').clear();
-    this.subroute.path = e.detail.path;
+    this.set('subroute.path', e.detail.path);
   }
 
   handleAddMasterLabel(e) {
@@ -288,7 +297,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.dismissToast(e);
   }
 
-  computeResultsTotalsRangeMessage(page, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
+  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
     const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
     if (page === 'results' && searchResults) {
       let subtests = 0, tests = 0;
@@ -298,9 +307,27 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           subtests += Math.max(...r.legacy_status.map(s => s.total));
         }
       }
+      if (this.computePathIsATestFile(path)) {
+        if (subtests <= 1) {
+          return msg;
+        }
+        return msg.replace('Showing ', `Showing ${subtests} subtests from `);
+      }
+      let folder = '';
+      if (path && path.length > 1) {
+        folder = ` in ${path.substring(1)}`;
+      }
+      let testsAndSubtests = '';
+      if (tests > 1) {
+        testsAndSubtests += `${tests} tests`;
+        if (subtests > 1) {
+          testsAndSubtests += ` (${subtests} subtests)`;
+        }
+        testsAndSubtests += folder;
+      }
       return msg.replace(
         'Showing ',
-        `Showing ${tests} tests (${subtests} subtests) from `);
+        `Showing ${testsAndSubtests} from `);
     }
     return msg;
   }

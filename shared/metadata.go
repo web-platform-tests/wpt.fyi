@@ -6,7 +6,6 @@ package shared
 
 import (
 	"net/http"
-	"sort"
 
 	"github.com/go-yaml/yaml"
 	"github.com/web-platform-tests/wpt-metadata/util"
@@ -19,19 +18,10 @@ var MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-me
 // with a test result query request.
 const ShowMetadataParam = "metadataInfo"
 
-// MetadataResults is a helper type for a MetadataResult slice.
-type MetadataResults []MetadataResult
-
-// MetadataResult mimics the structure of SearchResult and is the response
-// to the wpt.fyi result page.
-type MetadataResult struct {
-	// Test is the name of a test; this often corresponds to a test file path in
-	// the WPT source reposiory.
-	Test string `json:"test"`
-	// URLs represents a list of bug urls that are associated with
-	// this test.
-	URLs []string `json:"urls,omitempty"`
-}
+// MetadataResults is a map from test paths to all of the links under that test path.
+// It represents a flattened copy of the wpt-metadata repository, which has metadata
+// sharded across as large number of files in a directory structure.
+type MetadataResults map[string]MetadataLinks
 
 // Metadata represents a wpt-metadata META.yml file.
 type Metadata struct {
@@ -45,14 +35,18 @@ type MetadataLinks []MetadataLink
 // META.yml file, which lists an external reference, optionally
 // filtered by product and a specific test.
 type MetadataLink struct {
-	Product  ProductSpec
-	TestPath string `yaml:"test"`
-	URL      string
+	Product ProductSpec          `yaml:"product" json:"product,omitempty"`
+	URL     string               `yaml:"url"     json:"url"`
+	Results []MetadataTestResult `yaml:"results" json:"results,omitempty"`
 }
 
-func (m MetadataResults) Len() int           { return len(m) }
-func (m MetadataResults) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
-func (m MetadataResults) Less(i, j int) bool { return m[i].Test < m[j].Test }
+// MetadataTestResult is a filter for test results to which the metadata link
+// should apply.
+type MetadataTestResult struct {
+	TestPath    string      `yaml:"test"    json:"test,omitempty"`
+	SubtestName *string     `yaml:"subtest" json:"subtest,omitempty"`
+	Status      *TestStatus `yaml:"status"  json:"status,omitempty"`
+}
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
 func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, url string) (MetadataResults, error) {
@@ -95,58 +89,56 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 
 // constructMetadataResponse constructs the response to a WPT Metadata query, given ProductSpecs.
 func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Metadata) MetadataResults {
-	res := MetadataResults{}
+	res := make(MetadataResults)
 	for folderPath, data := range metadata {
-		testMap := make(map[string][]string)
-
-		for _, link := range data.Links {
-			var urls []string
-
-			//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
-			var fullTestName = "/" + folderPath + "/" + link.TestPath
-
-			if _, ok := testMap[fullTestName]; !ok {
-				testMap[fullTestName] = make([]string, len(productSpecs))
-			}
-			urls = testMap[fullTestName]
-
-			for i, productSpec := range productSpecs {
-				// Matches browser type if a version is not specified.
-				if link.Product.MatchesProductSpec(productSpec) {
-					urls[i] = link.URL
-				} else if link.Product.BrowserName == "" && urls[i] == "" {
-					// Matches to all browsers if product is not specified.
-					urls[i] = link.URL
+		for i := range data.Links {
+			link := data.Links[i]
+			for _, result := range link.Results {
+				//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
+				var fullTestName = "/" + folderPath + "/" + result.TestPath
+				for _, productSpec := range productSpecs {
+					// Matches browser type if a version is not specified.
+					if link.Product.MatchesProductSpec(productSpec) ||
+						// Matches to all browsers if product is not specified.
+						link.Product.BrowserName == "" {
+						output := MetadataLink{
+							Product: link.Product,
+							URL:     link.URL,
+						}
+						if result.SubtestName != nil || result.Status != nil {
+							output.Results = []MetadataTestResult{
+								{
+									SubtestName: result.SubtestName,
+									Status:      result.Status,
+									// TestPath is redundant (it's the map key)
+								},
+							}
+						}
+						if _, ok := res[fullTestName]; !ok {
+							res[fullTestName] = MetadataLinks{output}
+						} else {
+							res[fullTestName] = append(res[fullTestName], output)
+						}
+						break
+					}
 				}
 			}
-		}
-		for nameKey, urlsVal := range testMap {
-			isMatches := false
-
-			for _, url := range urlsVal {
-				if url != "" {
-					isMatches = true
-				}
-			}
-
-			// No matching testRuns.
-			if !isMatches {
-				continue
-			}
-
-			linkResult := MetadataResult{Test: nameKey, URLs: urlsVal}
-			res = append(res, linkResult)
 		}
 	}
-	sort.Sort(res)
 	return res
 }
 
 // PrepareLinkFilter maps a MetadataResult test name to its URLs.
 func PrepareLinkFilter(metadata MetadataResults) map[string][]string {
 	metadataMap := make(map[string][]string)
-	for _, data := range metadata {
-		metadataMap[data.Test] = data.URLs
+	for test, links := range metadata {
+		for _, link := range links {
+			if urls, ok := metadataMap[test]; !ok {
+				metadataMap[test] = []string{link.URL}
+			} else {
+				metadataMap[test] = append(urls, link.URL)
+			}
+		}
 	}
 	return metadataMap
 }

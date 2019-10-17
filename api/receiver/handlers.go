@@ -33,3 +33,14 @@ func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
 	s := checks.NewAPI(ctx)
 	HandleResultsCreate(a, s, w, r)
 }
+
+func apiPendingTestRunUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "PATCH" {
+		http.Error(w, "Only PATCH is supported", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := shared.NewAppEngineContext(r)
+	a := NewAPI(ctx)
+	HandleUpdatePendingTestRun(a, w, r)
+}

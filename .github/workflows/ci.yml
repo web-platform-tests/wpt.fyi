@@ -1,0 +1,24 @@
+name: Continuous Integration
+on: push
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/make-in-docker
+        with:
+          target: lint
+  python_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/make-in-docker
+        with:
+          target: python_test
+  go_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/make-in-docker
+        with:
+          target: go_test

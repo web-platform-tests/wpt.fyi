@@ -29,6 +29,7 @@ var (
 	staticRuns         = flag.Bool("static_runs", false, "Include runs in the /static dir")
 	remoteRuns         = flag.Bool("remote_runs", true, "Include copies of remote runs")
 	seenTestRunIDs     = mapset.NewSet()
+	labels             = flag.String("labels", "", "Labels for which to fetch runs")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -182,30 +183,41 @@ func main() {
 
 	if *remoteRuns {
 		log.Print("Adding latest production TestRun data...")
+		extraLabels := mapset.NewSet()
+		if labels != nil {
+			for _, s := range strings.Split(*labels, ",") {
+				if s != "" {
+					extraLabels.Add(s)
+				}
+			}
+		}
 		filters := shared.TestRunFilter{
-			Labels:   mapset.NewSetWith(shared.StableLabel),
+			Labels:   extraLabels.Union(mapset.NewSetWith(shared.StableLabel)),
 			MaxCount: numRemoteRuns,
 		}
 		copyProdRuns(ctx, filters)
 
 		log.Print("Adding latest master TestRun data...")
-		filters.Labels = mapset.NewSetWith(shared.MasterLabel)
+		filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.MasterLabel))
 		copyProdRuns(ctx, filters)
 
 		log.Print("Adding latest experimental TestRun data...")
-		filters.Labels = mapset.NewSetWith(shared.ExperimentalLabel)
+		filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.ExperimentalLabel))
 		copyProdRuns(ctx, filters)
 
 		log.Print("Adding latest beta TestRun data...")
-		filters.Labels = mapset.NewSetWith(shared.BetaLabel)
+		filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.BetaLabel))
 		copyProdRuns(ctx, filters)
 
 		log.Print("Adding latest aligned Edge stable and Chrome/Firefox/Safari experimental data...")
-		filters.Labels = mapset.NewSet(shared.MasterLabel)
+		filters.Labels = extraLabels.Union(mapset.NewSet(shared.MasterLabel))
 		filters.Products, _ = shared.ParseProductSpecs("chrome[experimental]", "edge[stable]", "firefox[experimental]", "safari[experimental]")
 		copyProdRuns(ctx, filters)
 
 		log.Printf("Successfully copied a total of %v distinct TestRuns", seenTestRunIDs.Cardinality())
+
+		log.Print("Adding latest production PendingTestRun...")
+		copyProdPendingRuns(ctx, *numRemoteRuns)
 	}
 }
 
@@ -274,6 +286,18 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 	}
 }
 
+func copyProdPendingRuns(ctx context.Context, numRuns int) {
+	pendingRuns, err := FetchPendingRuns(*remoteHost)
+	if err != nil {
+		log.Fatalf("Failed to fetch pending runs: %s", err.Error())
+	}
+	var castRuns []interface{}
+	for i := range pendingRuns {
+		castRuns = append(castRuns, &pendingRuns[i])
+	}
+	addData(ctx, "PendingTestRun", castRuns)
+}
+
 func labelRuns(runs []shared.TestRun, labels ...string) {
 	for i := range runs {
 		for _, label := range labels {
@@ -326,4 +350,12 @@ func FetchInterop(wptdHost string, filter shared.TestRunFilter) (metrics.PassRat
 	var interop metrics.PassRateMetadata
 	err := shared.FetchJSON(url, &interop)
 	return interop, err
+}
+
+// FetchPendingRuns fetches recent PendingTestRuns.
+func FetchPendingRuns(wptdHost string) ([]shared.PendingTestRun, error) {
+	url := "https://" + wptdHost + "/api/status"
+	var pendingRuns []shared.PendingTestRun
+	err := shared.FetchJSON(url, &pendingRuns)
+	return pendingRuns, err
 }

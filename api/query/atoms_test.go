@@ -136,6 +136,30 @@ func TestStructuredQuery_pattern(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: TestNamePattern{"/2dcontext/"}}, rq)
 }
 
+func TestStructuredQuery_contains(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"contains": "shadowRoot"
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: FileContentsQuery{"shadowRoot"}}, rq)
+}
+
+func TestStructuredQuery_subtest(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"subtest": "Subtest name"
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: SubtestNamePattern{"Subtest name"}}, rq)
+}
+
 func TestStructuredQuery_path(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -267,6 +291,40 @@ func TestStructuredQuery_exists(t *testing.T) {
 	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, TestNamePattern{"html"}}}}, rq)
 }
 
+func TestStructuredQuery_all(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"all": [
+				{"pattern": "cssom"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs:        []int64{0, 1, 2},
+		AbstractQuery: AbstractAll{[]AbstractQuery{TestNamePattern{"cssom"}}},
+	}, rq)
+}
+
+func TestStructuredQuery_none(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"none": [
+				{"pattern": "cssom"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs:        []int64{0, 1, 2},
+		AbstractQuery: AbstractNone{[]AbstractQuery{TestNamePattern{"cssom"}}},
+	}, rq)
+}
+
 func TestStructuredQuery_sequential(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -327,6 +385,56 @@ func TestStructuredQuery_count(t *testing.T) {
 			}}, rq)
 }
 
+func TestStructuredQuery_moreThan(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"moreThan": 3,
+				"where": {"status":"PASS"}
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(
+		t,
+		RunQuery{RunIDs: []int64{0, 1, 2},
+			AbstractQuery: AbstractExists{[]AbstractQuery{
+				AbstractMoreThan{
+					AbstractCount{
+						Count: 3,
+						Where: TestStatusEq{Status: shared.TestStatusValueFromString("PASS")},
+					},
+				}},
+			}}, rq)
+}
+
+func TestStructuredQuery_lessThan(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"lessThan": 2,
+				"where": {"status":"PASS"}
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(
+		t,
+		RunQuery{RunIDs: []int64{0, 1, 2},
+			AbstractQuery: AbstractExists{[]AbstractQuery{
+				AbstractLessThan{
+					AbstractCount{
+						Count: 2,
+						Where: TestStatusEq{Status: shared.TestStatusValueFromString("PASS")},
+					},
+				}},
+			}}, rq)
+}
+
 func TestStructuredQuery_link(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -344,6 +452,25 @@ func TestStructuredQuery_link(t *testing.T) {
 				Pattern: "chromium.bug.com/abc",
 			}},
 		}}, rq)
+}
+
+func TestStructuredQuery_is(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"is": "different"
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			MetadataQualityDifferent,
+		}},
+	}, rq)
 }
 
 func TestStructuredQuery_combinedlink(t *testing.T) {
@@ -652,8 +779,7 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 		Where: TestStatusEq{Status: 1},
 	}
 
-	runs := shared.TestRuns{}
-	runs = shared.TestRuns{
+	runs := shared.TestRuns{
 		{
 			ID:                int64(0),
 			ProductAtRevision: e.ProductAtRevision,
@@ -684,8 +810,7 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		Pattern: "bugs.bar",
 	}
 
-	runs := shared.TestRuns{}
-	runs = shared.TestRuns{
+	runs := shared.TestRuns{
 		{
 			ID:                int64(0),
 			ProductAtRevision: e.ProductAtRevision,
@@ -707,12 +832,34 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 	expect := Link{
 		Pattern: "bugs.bar",
 		Metadata: map[string][]string{
-			"/randomfolder3/innerfolder1/random3foo.html":                     {"bugs.bar", ""},
-			"/randomfolder2/foo.html":                                         {"", "safari.foo.com"},
-			"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": {"bugs.bar?id=456", ""},
+			"/randomfolder3/innerfolder1/random3foo.html":                     {"bugs.bar"},
+			"/randomfolder2/foo.html":                                         {"safari.foo.com"},
+			"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": {"bugs.bar?id=456"},
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindIs(t *testing.T) {
+	defer func(url string) {
+		shared.MetadataArchiveURL = url
+	}(shared.MetadataArchiveURL)
+
+	e := shared.ParseProductSpecUnsafe("chrome")
+	f := shared.ParseProductSpecUnsafe("safari")
+	q := MetadataQualityDifferent
+
+	runs := shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: e.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: f.ProductAtRevision,
+		},
+	}
+	assert.Equal(t, q, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindAnd(t *testing.T) {

@@ -38,7 +38,15 @@ suite('<wpt-app>', () => {
         appFixture.searchResults = [];
         expect(appFixture.resultsTotalsRangeMessage).to.not.contain('0 tests');
         appFixture.page = 'results';
-        expect(appFixture.resultsTotalsRangeMessage).to.contain('0 tests');
+        expect(appFixture.resultsTotalsRangeMessage).to.not.contain('0 tests');
+      });
+
+      test('single', () => {
+        appFixture.searchResults = [
+          {test: '/abc.html', legacy_status: [{total: 1}, {total: 1}]},
+        ];
+        expect(appFixture.resultsTotalsRangeMessage).to.not.contain('1 tests');
+        expect(appFixture.resultsTotalsRangeMessage).to.not.contain('1 subtests');
       });
 
       test('some sum', () => {
@@ -49,6 +57,14 @@ suite('<wpt-app>', () => {
         appFixture.page = 'results';
         expect(appFixture.resultsTotalsRangeMessage).to.contain('2 tests');
         expect(appFixture.resultsTotalsRangeMessage).to.contain('7 subtests');
+      });
+    });
+    suite('computePathIsRootDir ', () => {
+      test('root dir', () => {
+        assert.isTrue(appFixture.computePathIsRootDir(appFixture.path));
+      });
+      test('not root dir', () => {
+        assert.isFalse(appFixture.computePathIsRootDir('/a/b'));
       });
     });
   });

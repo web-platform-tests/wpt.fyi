@@ -4,6 +4,8 @@
 
 package shared
 
+import "encoding/json"
+
 //
 // Shared data types used for string WPT test results in query cache.
 //
@@ -97,6 +99,7 @@ const (
 )
 
 var testStatusValues = map[string]TestStatus{
+	"MISSING":             TestStatusUnknown,
 	TestStatusNameUnknown: TestStatusUnknown,
 	TestStatusNamePass:    TestStatusPass,
 	TestStatusNameOK:      TestStatusOK,
@@ -150,4 +153,35 @@ func (s TestStatus) String() string {
 		return TestStatusNameDefault
 	}
 	return str
+}
+
+// UnmarshalJSON is the custom JSON unmarshaler for TestStatus.
+func (s *TestStatus) UnmarshalJSON(b []byte) error {
+	var str string
+	var err error
+	if err = json.Unmarshal(b, &str); err == nil {
+		*s = TestStatusValueFromString(str)
+		return nil
+	}
+	var i int64
+	if err = json.Unmarshal(b, &i); err == nil {
+		*s = TestStatus(i)
+		return nil
+	}
+	return err
+}
+
+// UnmarshalYAML unmarshals a TestStatus as either a name string or a number.
+func (s *TestStatus) UnmarshalYAML(unmarshal func(interface{}) error) (err error) {
+	var str string
+	if err = unmarshal(&str); err == nil {
+		*s = TestStatusValueFromString(str)
+		return nil
+	}
+	var i int64
+	if err = unmarshal(&i); err == nil {
+		*s = TestStatus(i)
+		return nil
+	}
+	return err
 }

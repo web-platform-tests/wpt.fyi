@@ -8,14 +8,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
+	tcurls "github.com/taskcluster/taskcluster-lib-urls"
+	"github.com/taskcluster/taskcluster/clients/client-go/v19/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -167,18 +169,19 @@ func (b branchInfos) GetNames() []string {
 func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
 	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
+	rootURL := os.Getenv("TASKCLUSTER_ROOT_URL")
+
 	log.Debugf("Taskcluster task group %s", taskGroupID)
 	if taskID != "" {
 		log.Debugf("Taskcluster task %s", taskID)
 	}
 
-	client := aeAPI.GetHTTPClient()
-	taskGroup, err := getTaskGroupInfo(client, taskGroupID)
+	taskGroup, err := getTaskGroupInfo(rootURL, taskGroupID)
 	if err != nil {
 		return false, err
 	}
 
-	urlsByProduct, err := extractArtifactURLs(log, taskGroup, taskID)
+	urlsByProduct, err := extractArtifactURLs(rootURL, log, taskGroup, taskID)
 	if err != nil {
 		return false, err
 	}
@@ -228,39 +231,31 @@ func extractTaskGroupID(targetURL string) (string, string) {
 	return "", ""
 }
 
-// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#response-2
 type taskGroupInfo struct {
-	TaskGroupID string     `json:"taskGroupId"`
-	Tasks       []taskInfo `json:"tasks"`
+	TaskGroupID string
+	Tasks       []tcqueue.TaskDefinitionAndStatus
 }
 
-type taskInfo struct {
-	Status struct {
-		TaskID string `json:"taskId"`
-		State  string `json:"state"`
-	} `json:"status"`
-	Task struct {
-		Metadata struct {
-			Name string `json:"name"`
-		} `json:"metadata"`
-	} `json:"task"`
-}
+func getTaskGroupInfo(rootURL string, groupID string) (*taskGroupInfo, error) {
+	queue := tcqueue.New(nil, rootURL)
 
-func getTaskGroupInfo(client *http.Client, groupID string) (*taskGroupInfo, error) {
-	// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#list-task-group
-	taskgroupURL := fmt.Sprintf("https://queue.taskcluster.net/v1/task-group/%s/list", groupID)
-	resp, err := client.Get(taskgroupURL)
-	if err != nil {
-		return nil, err
+	group := taskGroupInfo{
+		TaskGroupID: groupID,
 	}
-	payload, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	var group taskGroupInfo
-	if err := json.Unmarshal(payload, &group); err != nil {
-		return nil, err
+	continuationToken := ""
+
+	for {
+		ltgr, err := queue.ListTaskGroup(groupID, continuationToken, "1000")
+		if err != nil {
+			return nil, err
+		}
+
+		group.Tasks = append(group.Tasks, ltgr.Tasks...)
+
+		continuationToken = ltgr.ContinuationToken
+		if continuationToken == "" {
+			break
+		}
 	}
 	return &group, nil
 }
@@ -270,7 +265,7 @@ type artifactURLs struct {
 	Screenshots []string
 }
 
-func extractArtifactURLs(log shared.Logger, group *taskGroupInfo, taskID string) (
+func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo, taskID string) (
 	urlsByProduct map[string]artifactURLs, err error) {
 	urlsByProduct = make(map[string]artifactURLs)
 	failures := mapset.NewSet()
@@ -304,16 +299,17 @@ func extractArtifactURLs(log shared.Logger, group *taskGroupInfo, taskID string)
 		}
 
 		urls := urlsByProduct[product]
-		// https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/api#get-artifact-from-latest-run
+		// Generate some URLs that point directly to
+		// https://docs.taskcluster.net/docs/reference/platform/queue/api#get-artifact-from-latest-run
 		urls.Results = append(urls.Results,
-			fmt.Sprintf(
-				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_report.json.gz", id,
-			))
+			tcurls.API(
+				rootURL, "queue", "v1",
+				fmt.Sprintf("/task/%s/artifacts/public/results/wpt_report.json.gz", id)))
 		// wpt_screenshot.txt.gz might not exist, which is NOT a fatal error in the receiver.
 		urls.Screenshots = append(urls.Screenshots,
-			fmt.Sprintf(
-				"https://queue.taskcluster.net/v1/task/%s/artifacts/public/results/wpt_screenshot.txt.gz", id,
-			))
+			tcurls.API(
+				rootURL, "queue", "v1",
+				fmt.Sprintf("/task/%s/artifacts/public/results/wpt_screenshot.txt.gz", id)))
 		// urls is a *copy* of the value so we must store it back to the map.
 		urlsByProduct[product] = urls
 	}

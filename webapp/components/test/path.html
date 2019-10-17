@@ -4,10 +4,24 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../path.js"></script>
 </head>
 <body>
+  <dom-module id="path-info-concrete">
+    <script type="module">
+      import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+      import { PathInfo } from '../path.js';
+
+      class ConcreteType extends PathInfo(PolymerElement) {}
+      window.customElements.define('path-info-concrete', ConcreteType);
+    </script>
+  </dom-module>
+
+  <test-fixture id="path-info-fixture">
+    <template>
+      <path-info-concrete></path-info-concrete>
+    </template>
+  </test-fixture>
+
   <test-fixture id="path-part-dir-prefixed-fixture">
     <template>
       <path-part path="/a/b" is-dir="true" prefix="/foo" navigate="navigate"></path-part>
@@ -31,9 +45,69 @@
       <path-part path="/a/b/c.html" is-dir="false" navigate="navigate"></path-part>
     </template>
   </test-fixture>
+
   <script type="module">
 import { PathPart } from '../path.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+
+suite('PathInfo', () => {
+  let pathInfo;
+
+  setup(() => {
+    pathInfo = fixture('path-info-fixture');
+  });
+
+  test('pathIsATestPath', () => {
+    pathInfo.path = '/a/b.html';
+    expect(pathInfo.pathIsATestFile).to.be.true;
+    pathInfo.path = '/a/b.html?x=1';
+    expect(pathInfo.pathIsATestFile).to.be.true;
+    pathInfo.path = '/a/b.html#x=1';
+    expect(pathInfo.pathIsATestFile).to.be.true;
+    pathInfo.path = '/a/b.html?x=1#y=2';
+    expect(pathInfo.pathIsATestFile).to.be.true;
+    pathInfo.path = '/a/b.html?x=:a/b/:';
+    expect(pathInfo.pathIsATestFile).to.be.true;
+    pathInfo.path = '/a/b/';
+    expect(pathInfo.pathIsATestFile).to.be.false;
+  });
+
+  test('encodeTestPath', () => {
+    expect(pathInfo.encodeTestPath('/a/b.html')).to.equal('/a/b.html');
+    expect(pathInfo.encodeTestPath('/a/b/')).to.equal('/a/b/');
+    expect(pathInfo.encodeTestPath('/a/b/?c=d')).to.equal('/a/b/%3Fc%3Dd');
+    expect(pathInfo.encodeTestPath('/a/b/#c=d')).to.equal('/a/b/%23c%3Dd');
+    expect(pathInfo.encodeTestPath('/a/b/?c=d#e=f')).to.equal('/a/b/%3Fc%3Dd%23e%3Df');
+
+    // Specific example.
+    expect(pathInfo.encodeTestPath('/webgpu/cts.html?q=cts:command_buffer/basic:'))
+      .to.equal('/webgpu/cts.html%3Fq%3Dcts%3Acommand_buffer%2Fbasic%3A');
+  });
+
+  test('splitPathIntoLinkedParts', () => {
+    expect(pathInfo.splitPathIntoLinkedParts('/a/b.html')).to.deep.equal([
+      {name: 'a', path: '/a'},
+      {name: 'b.html', path: '/a/b.html'},
+    ]);
+
+    expect(pathInfo.splitPathIntoLinkedParts('/webgpu/cts.html?q=cts:command_buffer/basic:'))
+      .to.deep.equal([
+        {name: 'webgpu', path: '/webgpu'},
+        {name: 'cts.html?q=cts:command_buffer/basic:', path: '/webgpu/cts.html%3Fq%3Dcts%3Acommand_buffer%2Fbasic%3A'},
+      ]);
+
+    expect(pathInfo.splitPathIntoLinkedParts('/a/b.html?x=1#y=2'))
+      .to.deep.equal([
+        {name: 'a', path: '/a'},
+        {name: 'b.html?x=1#y=2', path: '/a/b.html%3Fx%3D1%23y%3D2'},
+      ]);
+
+    expect(pathInfo.splitPathIntoLinkedParts('/a.html#x=1'))
+      .to.deep.equal([
+        {name: 'a.html#x=1', path: '/a.html%23x%3D1'},
+      ]);
+  });
+});
 
 suite('PathPart', () => {
   let sandbox, ppdir, ppfile, ppdirprefixed, ppfileprefixed;
@@ -66,9 +140,9 @@ suite('PathPart', () => {
     suite('href: computeHref(prefix, path)', () => {
       test('computeHref()', () => {
         assert.equal(typeof PathPart.prototype.computeHref, 'function');
-        assert.equal(ppdir.computeHref('x/', 'y').pathname, '/x/y');
-        assert.equal(ppdir.computeHref('', 'y').pathname, '/y');
-        assert.equal(ppdir.computeHref('x', '').pathname, '/x');
+        assert.equal(ppdir.computeHref('x', '/y').pathname, '/x/y');
+        assert.equal(ppdir.computeHref('', '/y').pathname, '/y');
+        assert.equal(ppdir.computeHref('x', '').pathname, '/x/');
         assert.equal(ppdir.computeHref(undefined, '').pathname, '/');
       });
       test('computeHref([default], path)', () => {
@@ -90,17 +164,17 @@ suite('PathPart', () => {
         assert.equal(ppfile.href.pathname, '/bar/a/b/c.html');
       });
     });
-    suite('relativePath: computedDisplayableRelativePath(path)', () => {
-      test('computedDisplayableRelativePath()', () => {
-        assert.equal(typeof PathPart.prototype.computedDisplayableRelativePath, 'function');
-        assert.equal(ppdir.computedDisplayableRelativePath(''), '/');
-        assert.equal(ppdir.computedDisplayableRelativePath('foo'), 'foo/');
+    suite('relativePath: computeDisplayableRelativePath(path)', () => {
+      test('computeDisplayableRelativePath()', () => {
+        assert.equal(typeof PathPart.prototype.computeDisplayableRelativePath, 'function');
+        assert.equal(ppdir.computeDisplayableRelativePath(''), '/');
+        assert.equal(ppdir.computeDisplayableRelativePath('foo'), 'foo/');
       });
 
-      test('computedDisplayableRelativePath(...)', () => {
+      test('computeDisplayableRelativePath(...)', () => {
         assert.equal(ppdir.relativePath, '/a/b/');
       });
-      test('computedDisplayableRelativePath(...) (has prefix, is removed)', () => {
+      test('computeDisplayableRelativePath(...) (has prefix, is removed)', () => {
         assert.equal(ppdirprefixed.relativePath, '/a/b/');
       });
     });

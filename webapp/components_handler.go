@@ -2,39 +2,44 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate packr2
+
 package webapp
 
 import (
 	"fmt"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"path/filepath"
 	"regexp"
 
+	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/mux"
 )
 
-var packageRegex = regexp.MustCompile(`(import .* from|import) (['"])(@[^/]*/)`)
-
 const packageRegexReplacement = "$1 $2/node_modules/$3"
+
+var (
+	packageRegex = regexp.MustCompile(`(import .* from|import) (['"])(@[^/]*/)`)
+	box          *packr.Box
+)
+
+func init() {
+	box = packr.New("node modules", "./node_modules/")
+}
 
 // componentsHandler loads a /node_modules/ path, and replaces any
 // npm package loads in the js file with paths on the host.
 func componentsHandler(w http.ResponseWriter, r *http.Request) {
 	filePath := mux.Vars(r)["path"]
-	var bytes []byte
-	var err error
-	if filePath != "" {
-		bytes, err = ioutil.ReadFile(fmt.Sprintf("./node_modules/%s", filePath))
-	}
-	if err != nil || bytes == nil {
+	body, err := box.FindString(filePath)
+	if err != nil || body == "" {
 		http.Error(w, fmt.Sprintf("Component %s not found", filePath), http.StatusNotFound)
 		return
 	}
-	bytes = packageRegex.ReplaceAll(bytes, []byte(packageRegexReplacement))
+	body = packageRegex.ReplaceAllString(body, packageRegexReplacement)
 	// Cache up to a day (same as the default expiration in app.yaml).
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(filePath)))
-	w.Write(bytes)
+	w.Write([]byte(body))
 }

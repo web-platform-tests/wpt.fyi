@@ -366,7 +366,7 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
 			beforeSHA = "HEAD"
 		}
-		renames = getDiffRenames(d.ctx, beforeSHA, after.FullRevisionHash)
+		renames = getDiffRenames(d.aeAPI, beforeSHA, after.FullRevisionHash)
 	}
 	return RunDiff{
 		Before:        before,
@@ -409,10 +409,11 @@ func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter Di
 	if err != nil {
 		return diff, err
 	}
-	return runDiffFromSearchResponse(before, after, scDiff)
+	return RunDiffFromSearchResponse(d.aeAPI, before, after, scDiff)
 }
 
-func runDiffFromSearchResponse(before, after TestRun, scDiff SearchResponse) (RunDiff, error) {
+// RunDiffFromSearchResponse builds a RunDiff from a searchcache response.
+func RunDiffFromSearchResponse(aeAPI AppEngineAPI, before, after TestRun, scDiff SearchResponse) (RunDiff, error) {
 	differences := make(map[string]TestDiff)
 	beforeSummary := make(ResultsSummary)
 	afterSummary := make(ResultsSummary)
@@ -424,12 +425,23 @@ func runDiffFromSearchResponse(before, after TestRun, scDiff SearchResponse) (Ru
 		}
 	}
 
+	var renames map[string]string
+	if aeAPI.IsFeatureEnabled("diffRenames") {
+		beforeSHA := before.FullRevisionHash
+		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
+		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
+			beforeSHA = "HEAD"
+		}
+		renames = getDiffRenames(aeAPI, beforeSHA, after.FullRevisionHash)
+	}
+
 	return RunDiff{
 		Before:        before,
 		BeforeSummary: beforeSummary,
 		After:         after,
 		AfterSummary:  afterSummary,
 		Differences:   differences,
+		Renames:       renames,
 	}, nil
 }
 
@@ -489,12 +501,13 @@ func GetResultsDiff(
 	return diff
 }
 
-func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]string {
+func getDiffRenames(aeAPI AppEngineAPI, shaBefore, shaAfter string) map[string]string {
 	if shaBefore == shaAfter {
 		return nil
 	}
+	ctx := aeAPI.Context()
 	log := GetLogger(ctx)
-	githubClient, err := NewAppEngineAPI(ctx).GetGitHubClient()
+	githubClient, err := aeAPI.GetGitHubClient()
 	if err != nil {
 		log.Errorf("Failed to get github client: %s", err.Error())
 		return nil
@@ -516,6 +529,8 @@ func getDiffRenames(ctx context.Context, shaBefore, shaAfter string) map[string]
 	}
 	if len(renames) < 1 {
 		log.Debugf("No renames for %s...%s", CropString(shaBefore, 7), CropString(shaAfter, 7))
+	} else {
+		log.Debugf("Found %v renames for %s...%s", len(renames), CropString(shaBefore, 7), CropString(shaAfter, 7))
 	}
 	return renames
 }

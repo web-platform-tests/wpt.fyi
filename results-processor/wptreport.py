@@ -555,6 +555,9 @@ def normalize_product(report: WPTReport) -> Set[str]:
     elif product == 'edgechromium':
         report.run_info['product'] = 'edge'
         return {'edge', 'edgechromium'}
+    elif product == 'webkitgtk_minibrowser':
+        report.run_info['product'] = 'webkitgtk'
+        return {'webkitgtk', 'minibrowser'}
     else:
         return set()
 
@@ -594,11 +597,7 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
     payload['raw_results_url'] = raw_results_url
     payload['labels'] = sorted(labels)
 
-    response = requests.post(
-        callback_url,
-        auth=auth,
-        data=json.dumps(payload)
-    )
+    response = requests.post(callback_url, auth=auth, json=payload)
     response.raise_for_status()
     response_data = response.json()
     return response_data['id']

@@ -10,7 +10,7 @@
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { WPTEnvironmentFlags } from './wpt-env-flags.js';
+import { WPTEnvironmentFlags } from '../dynamic-components/wpt-env-flags.js';
 
 const $_documentContainer = document.createElement('template');
 
@@ -27,14 +27,15 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
     return [
       'colorHomepage',
       'diffFromAPI',
+      'displayMetadata',
       'experimentalByDefault',
       'experimentalAligned',
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
-      'insightsTab',
       'interopScoreColumn',
       'permalinks',
+      'processorTab',
       'queryBuilder',
       'queryBuilderSHA',
       'reftestAnalyzer',
@@ -242,6 +243,16 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Use web-platform-tests.live.
       </paper-checkbox>
     </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{displayMetadata}}">
+        Show metadata Information on wpt.fyi result page.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{processorTab}}">
+        Show the "Processor" (status) tab.
+      </paper-checkbox>
+    </paper-item>
 `;
   }
 
@@ -291,11 +302,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{runsByPRNumber}}">
         Allow /api/runs?pr=[GitHub PR number]
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{insightsTab}}">
-        Show the "Insights" tab in the main navigation, (and enable <a href="/insights">/insights</a>).
       </paper-checkbox>
     </paper-item>
     <paper-item>

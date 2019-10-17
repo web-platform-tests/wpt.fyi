@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package webapp
+package main
 
 import (
 	"fmt"
@@ -73,10 +73,24 @@ func TestApiRunBound(t *testing.T) {
 	assertHandlerIs(t, "/api/runs/123", "api-test-run")
 }
 
+func TestApiStatusBound(t *testing.T) {
+	assertHandlerIs(t, "/api/status", "api-pending-test-runs")
+	assertHandlerIs(t, "/api/status/pending", "api-pending-test-runs")
+	assertHandlerIs(t, "/api/status/invalid", "api-pending-test-runs")
+	assertHandlerIs(t, "/api/status/123", "api-pending-test-run-update")
+	assertHandlerIsDefault(t, "/api/status/notavalidfilter")
+}
+
 func TestApiResultsBoundCORS(t *testing.T) {
 	assertHandlerIs(t, "/api/results", "api-results")
 	assertHSTS(t, "/api/results/upload")
 	assertCORS(t, "/api/results")
+}
+
+func TestApiScreenshotBoundCORS(t *testing.T) {
+	assertHandlerIs(t, "/api/screenshot/sha1:abc", "api-screenshot")
+	assertHSTS(t, "/api/screenshot/sha1:abc")
+	assertCORS(t, "/api/screenshot/sha1:abc")
 }
 
 func TestApiResultsUploadBoundHSTS(t *testing.T) {
@@ -100,7 +114,6 @@ func TestResultsBound(t *testing.T) {
 
 func TestAdminResultsUploadBound(t *testing.T) {
 	assertHandlerIs(t, "/admin/results/upload", "admin-results-upload")
-	assertHSTS(t, "/admin/results/upload")
 }
 
 func TestAdminCacheFlushBound(t *testing.T) {
@@ -162,4 +175,8 @@ func assertNoCORS(t *testing.T, path string) {
 	handler.ServeHTTP(rr, req)
 	res := rr.Result()
 	assert.Equal(t, "", res.Header.Get("Access-Control-Allow-Origin"))
+}
+
+func assertHandlerIsDefault(t *testing.T, path string) {
+	assertHandlerIs(t, path, "results-legacy")
 }

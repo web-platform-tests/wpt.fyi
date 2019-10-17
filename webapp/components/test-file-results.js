@@ -8,9 +8,11 @@ import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
+import './test-file-results-table.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
 import './wpt-colors.js';
+import { timeTaken } from './utils.js';
 import { WPTFlags } from './wpt-flags.js';
 import { PathInfo } from './path.js';
 
@@ -46,17 +48,13 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       </paper-toggle-button>
     </div>
 
-    <template is="dom-if" if="{{!isVerbose}}">
-      <test-file-results-table-terse test-runs="[[testRuns]]"
-                                     results-table="[[resultsTable]]">
-      </test-file-results-table-terse>
-    </template>
-
-    <template is="dom-if" if="{{isVerbose}}">
-      <test-file-results-table-verbose test-runs="[[testRuns]]"
-                                       results-table="[[resultsTable]]">
-      </test-file-results-table-verbose>
-    </template>
+    <test-file-results-table test-runs="[[testRuns]]"
+                             diff-run="[[diffRun]]"
+                             only-show-differences="{{onlyShowDifferences}}"
+                             path="[[path]]"
+                             rows="[[rows]]"
+                             verbose="[[isVerbose]]">
+    </test-file-results-table>
 `;
   }
 
@@ -66,15 +64,28 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
   static get properties() {
     return {
+      diffRun: Object,
+      onlyShowDifferences: {
+        type: Boolean,
+        value: false,
+      },
       structuredSearch: Object,
       resultsTable: {
         type: Array,
         value: [],
       },
+      metadata: {
+        type: Object,
+        value: {},
+      },
       isVerbose: {
         type: Boolean,
         value: false,
       },
+      rows: {
+        type: Array,
+        computed: 'computeRows(resultsTable, metadata, onlyShowDifferences)'
+      }
     };
   }
 
@@ -85,7 +96,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   }
 
   static get observers() {
-    return ['loadData(path, testRuns, structuredSearch)'];
+    return ['loadData(path, testRuns, structuredSearch, onlyShowDifferences)'];
   }
 
   async loadData(path, testRuns, structuredSearch) {
@@ -122,6 +133,9 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
     const url = new URL('/api/search', window.location);
     url.searchParams.set('subtests', '');
+    if (this.diffRun) {
+      url.searchParams.set('diff', true);
+    }
     const fetchOpts = {
       method: 'POST',
       body: JSON.stringify({
@@ -155,18 +169,26 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       testRuns.map(tr => this.loadResultFile(tr)));
 
     // resultsTable[0].name set after discovering subtests.
-    let resultsTable = [{
-      results: resultsPerTestRun.map(data => {
-        const result = {
-          status: data && data.status,
-          message: data && data.message,
-        };
-        if (this.reftestAnalyzer && data && data.screenshots) {
-          result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
-        }
-        return result;
-      }),
-    }];
+    let resultsTable = [
+      {
+        results: resultsPerTestRun.map(data => {
+          const result = {
+            status: data && data.status,
+            message: data && data.message,
+          };
+          if (this.reftestAnalyzer && data && data.screenshots) {
+            result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
+          }
+          return result;
+        })
+      },
+      {
+        name: 'Duration',
+        results: resultsPerTestRun.map(data => {
+          return { status: timeTaken(data.duration) };
+        }),
+      }
+    ];
 
     // Setup test name order according to when they appear in run results.
     let allNames = [];
@@ -262,6 +284,16 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       delete screenshots[path];
     }
     return new Map([...firstScreenshot, ...Object.entries(screenshots)]);
+  }
+
+  computeRows(resultsTable, metadata, onlyShowDifferences) {
+    if (!resultsTable || !resultsTable.length || !onlyShowDifferences) {
+      return resultsTable;
+    }
+    const [first, ...others] = resultsTable;
+    return [first, ...others.filter(r => {
+      return r.results[0].status !== r.results[1].status;
+    })];
   }
 }
 

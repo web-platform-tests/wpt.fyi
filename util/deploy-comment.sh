@@ -3,7 +3,23 @@
 # Helper script for posting a GitHub comment pointing to the deployed environment,
 # from Travis CI. Also see deploy.sh
 
-STAGING_URL="$1"
+usage() {
+  USAGE='Usage: deploy-comment.sh [-e environment-name] [deployed url]
+    -e : Environment name (e.g. webapp)
+    -h : Show (this) help information
+    deployed url: The URL of the deployed environment, e.g. "https://branch-name-dot-wptdashboard-staging.appspot.com"'
+  echo "${USAGE}"
+}
+
+STAGING_URL=${@: -1}
+ENVIRONMENT="staging"
+while getopts ':e:' flag; do
+  case "${flag}" in
+    e) ENVIRONMENT="${OPTARG}" ;;
+    :) echo "Option -$OPTARG requires an argument." && exit 1;;
+    h|*) usage && exit 1;;
+  esac
+done
 
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
@@ -20,35 +36,57 @@ if [[ -z "${TRAVIS_REPO_SLUG}" ]];
 then fatal "Travis Repo slug (user/repo) is required";
 else debug "Travis Repo slug: ${TRAVIS_REPO_SLUG}";
 fi
-if [[ -z "${TRAVIS_PULL_REQUEST}" ]];
-then fatal "Travis pull request is required";
-else debug "Travis pull request: ${TRAVIS_PULL_REQUEST}";
+if [[ -z "${TRAVIS_PULL_REQUEST_BRANCH}" ]];
+then fatal "Travis pull request branch is required";
+else debug "Travis pull request branch: ${TRAVIS_PULL_REQUEST_BRANCH}";
 fi
 
 set -e
 set -o pipefail
 
-info "Checking whether ${TRAVIS_REPO_SLUG} #${TRAVIS_PULL_REQUEST} mentions the deployed URL on GitHub..."
-# Only make a comment mentioning the deploy if no other comment has posted the URL yet.
+info "Posting deployed environment to GitHub..."
+POST_URL="https://api.github.com/repos/${TRAVIS_REPO_SLUG}/deployments"
+debug "${POST_URL}"
 
-TEMP_CURL_FILE=$(mktemp)
-curl -s \
-     -H "Authorization: token ${GITHUB_TOKEN}" \
-     -X GET \
-     https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments \
-     | tee ${TEMP_CURL_FILE}
-if [ "${CURL_EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then fatal "Failed to fetch comments" ${CURL_EXIT_CODE}; fi
+# By default, all commit statuses need to be "success" to deploy.
+# But travis itself will execute this script, so we don't block on anything.
+POST_BODY="{
+                \"ref\": \"${TRAVIS_PULL_REQUEST_BRANCH}\",
+                \"task\": \"deploy\",
+                \"auto_merge\": false,
+                \"environment\": \"${ENVIRONMENT}\",
+                \"transient_environment\": true,
+                \"required_contexts\": []
+            }"
+debug "POST body: ${POST_BODY}"
 
-if [[ -z "$(grep ${STAGING_URL} ${TEMP_CURL_FILE})" ]];
+debug "Copying output to ${TEMP_FILE:=$(mktemp)}"
+curl -H "Authorization: token ${GITHUB_TOKEN}" \
+     -H "Accept: application/vnd.github.ant-man-preview+json" \
+     -X "POST" \
+     -d "${POST_BODY}" \
+     -s \
+     "${POST_URL}" \
+     | tee "${TEMP_FILE}"
+if [[ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]]; then exit ${EXIT_CODE}; fi
+
+DEPLOYMENT_ID=$(jq .id ${TEMP_FILE})
+if [[ "${DEPLOYMENT_ID}" == "null" ]]
 then
-    info "Commenting URL to GitHub..."
-    POST_BODY='{"body": "Staging instance deployed by Travis CI!\nRunning at '"${STAGING_URL}"'"}'
-    debug "POST body: ${POST_BODY}"
-    curl -H "Authorization: token ${GITHUB_TOKEN}" \
-          -X "POST" \
-          -d "${POST_BODY}" \
-          -s \
-          "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments"
-else
-    info "Found existing comment mentioning link:\n${STAGING_URL}"
+    fatal "Something went wrong creating the deployment"
 fi
+
+debug "Created deployment ${DEPLOYMENT_ID}"
+
+debug "Setting status to deployed"
+POST_BODY="{
+                \"state\": \"success\",
+                \"environment_url\": \"${STAGING_URL}\",
+                \"auto_inactive\": true
+            }"
+curl -H "Authorization: token ${GITHUB_TOKEN}" \
+     -H "Accept: application/vnd.github.ant-man-preview+json" \
+     -X "POST" \
+     -d "${POST_BODY}" \
+     -s \
+     "${POST_URL}/${DEPLOYMENT_ID}/statuses"

@@ -23,6 +23,7 @@ const statuses = [
   'skip',
   'assert',
   'unknown',
+  'missing', // UI calls unknown missing.
 ];
 
 const atoms = {
@@ -36,34 +37,49 @@ for (const b of DefaultBrowserNames) {
 /* global ohm */
 const QUERY_GRAMMAR = ohm.grammar(`
   Query {
-    Q = ListOf<RootExp, space*>
+    Root = ListOf<OrQ, space*>
 
-    RootExp
-      = Sequential
+    OrQ = NonemptyListOf<AndQ, or>
+
+    AndQ = NonemptyListOf<Q, and>
+
+    Q = All
+      | None
       | Count
-      | Exp
+      | Sequential
+      | Exists
+
+    All = "all(" ListOf<Exp, space*> ")"
+
+    None = "none(" ListOf<Exp, space*> ")"
 
     Sequential = "seq(" ListOf<Exp, space*> ")"
 
     Count = CountSpecifier "(" Exp ")"
 
     CountSpecifier
-      = "count:" number -- countN
-      | "three"         -- count3
-      | "two"           -- count2
-      | "one"           -- count1
+      = "count" ":"? inequality number -- countInequality
+      | "count:" number                -- countN
+      | "three"                        -- count3
+      | "two"                          -- count2
+      | "one"                          -- count1
+
+    Exists
+      = "exists(" ListOf<Exp, space*> ")" -- explicit
+      | AndPart                           -- implicit
+
 
     Exp = NonemptyListOf<OrPart, or>
-
-    NestedExp
-      = "(" Exp ")"   -- paren
-      | not NestedExp -- not
 
     OrPart = NonemptyListOf<AndPart, and>
 
     AndPart
       = NestedExp
       | Fragment    -- fragment
+
+    NestedExp
+      = "(" Exp ")"   -- paren
+      | not NestedExp -- not
 
     or
       = "|"
@@ -77,12 +93,25 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = "!"
       | "not"
 
+    inequality
+      = ">="
+      | "<="
+      | ">"
+      | "<"
+      | "="
+
     Fragment
       = not Fragment -- not
+      | containsExp
       | linkExp
+      | isExp
       | statusExp
+      | subtestExp
       | pathExp
       | patternExp
+
+    containsExp
+      = caseInsensitive<"contains"> ":" nameFragment
 
     statusExp
       = caseInsensitive<"status"> ":" statusLiteral  -- eq
@@ -90,11 +119,17 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | productSpec ":" statusLiteral                -- product_eq
       | productSpec ":!" statusLiteral               -- product_neq
 
+    subtestExp
+      = caseInsensitive<"subtest"> ":" nameFragment
+
     pathExp
       = caseInsensitive<"path"> ":" nameFragment
 
     linkExp
-    = caseInsensitive<"link"> ":" nameFragment
+      = caseInsensitive<"link"> ":" nameFragment
+
+    isExp
+      = caseInsensitive<"is"> ":" metadataQualityLiteral
 
     patternExp = nameFragment
 
@@ -108,9 +143,16 @@ const QUERY_GRAMMAR = ohm.grammar(`
     statusLiteral
       = ${statuses.map(s => 'caseInsensitive<"' + s + '">').join('\n      |')}
 
+    metadataQualityLiteral
+      = caseInsensitive<"different">
+
     nameFragment
-      = basicNameFragmentChar+                -- basic
-      | quotemark nameFragmentChar+ quotemark -- quoted
+      = basicNameFragment                       -- basic
+      | quotemark complexNameFragment quotemark -- quoted
+
+    basicNameFragment = basicNameFragmentChar+
+
+    complexNameFragment = nameFragmentChar+ (space+ nameFragmentChar+)*
 
     basicNameFragmentChar
       = letter
@@ -138,72 +180,137 @@ const evalNot = (n, p) => {
 };
 const evalSelf = p => p.eval();
 const emptyQuery = Object.freeze({exists: [{pattern: ''}]});
+const andConjunction = l => {
+  const ps = l.eval();
+  return ps.length === 1 ? ps[0] : {and: ps};
+};
+const orConjunction = l => {
+  const ps = l.eval();
+  return ps.length === 1 ? ps[0] : {or: ps};
+};
 const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   _terminal: function() {
     return this.sourceString;
   },
+  Root: (r) => {
+    const ps = r.eval();
+    if (ps.length === 0) {
+      return emptyQuery;
+    }
+    // If there's only separate implicit exists at the root, collapse them.
+    const isImplicitExists = p => 'exists' in p && p.exists.length === 1
+        || 'and' in p && p.and.every(isImplicitExists)
+        || 'or' in p && p.or.every(isImplicitExists);
+    if (ps.every(isImplicitExists)) {
+      const unwrap = p => 'exists' in p && p.exists[0]
+        || 'or' in p && { or: p.or.map(unwrap) }
+        || 'and' in p && { and: p.and.map(unwrap) }
+        || p;
+      return { exists: ps.map(unwrap) };
+    }
+    if (ps.length === 1) {
+      return ps[0];
+    }
+    return { and: ps };
+  },
+  OrQ: orConjunction,
+  AndQ: andConjunction,
   EmptyListOf: function() {
     return [];
   },
   NonemptyListOf: function(fst, seps, rest) {
     return [fst.eval()].concat(rest.eval());
   },
-  Q: l => {
+  Exists_explicit: (l, e, r) => {
+    return { exists: e.eval() };
+  },
+  Exists_implicit: e => {
+    return { exists: [e.eval()] };
+  },
+  All: (_, l, __) => {
     const ps = l.eval();
-    // Separate atoms are each treated as "there exists a run where ...",
-    // and the root is grouped by AND of the separated atoms.
-    // Nested ands, on the other hand, require all conditions to be met by the same run.
-    return ps.length === 0 ? emptyQuery : {exists: ps };
+    return ps.length === 0 ? emptyQuery : { all: ps };
+  },
+  None: (_, l, __) => {
+    const ps = l.eval();
+    return ps.length === 0 ? emptyQuery : { none: ps };
   },
   Sequential: (_, l, __) => {
     const ps = l.eval();
-    return ps.length === 0 ? emptyQuery : {sequential: ps };
+    return ps.length === 0 ? emptyQuery : { sequential: ps };
   },
   Count: (cs, _, exp, __) => {
-    return {
-      count: cs.eval(),
-      where: exp.eval(),
-    }
+    let count = cs.eval();
+    count.where = exp.eval();
+    return count;
   },
-  CountSpecifier_countN: (_, n) => n.eval(),
-  CountSpecifier_count3: (_) => 3,
-  CountSpecifier_count2: (_) => 2,
-  CountSpecifier_count1: (_) => 1,
+  CountSpecifier_countInequality: (_, __, c, n) => {
+    let inequality = c.eval();
+    switch (inequality) {
+      case ">=":
+        return { moreThan: parseInt(n.eval()) - 1 };
+      case ">":
+        return { moreThan: n.eval() };
+      case "<=":
+        return { lessThan: parseInt(n.eval()) + 1 };
+      case "<":
+        return { lessThan: n.eval() };
+      case ":":
+      case "=":
+        return { count: n.eval() };
+    }
+    throw new Error('Unexpected inequality ' + inequality);
+  },
+  CountSpecifier_countN: (_, n) => { return { count: n.eval() }; },
+  CountSpecifier_count3: (_) => {return {count: 3}; },
+  CountSpecifier_count2: (_) => {return {count: 2}; },
+  CountSpecifier_count1: (_) => {return {count: 1}; },
   linkExp: (l, colon, r) => {
     const ps = r.eval();
     return ps.length === 0 ? emptyQuery : {link: ps };
   },
-  Exp: l => {
-    const ps = l.eval();
-    return ps.length === 1 ? ps[0] : {or: ps};
-  },
+  Exp: orConjunction,
   NestedExp: evalSelf,
   NestedExp_paren: (_, p, __) => p.eval(),
   NestedExp_not: evalNot,
-  OrPart: l => {
-    const ps = l.eval();
-    return ps.length === 1 ? ps[0] : {and: ps};
-  },
+  OrPart: andConjunction,
   AndPart_fragment: evalSelf,
   Fragment: evalSelf,
   Fragment_not: evalNot,
+  browserName: (browser) => {
+    return browser.sourceString.toUpperCase();
+  },
+  statusLiteral: (status) => {
+    return status.sourceString.toUpperCase() === 'MISSING'
+        ? 'UNKNOWN'
+        : status.sourceString.toUpperCase();
+  },
   statusExp_eq: (l, colon, r) => {
-    return { status: r.sourceString.toUpperCase() };
+    return { status: r.eval() };
   },
   statusExp_product_eq: (l, colon, r) => {
     return {
       product: l.sourceString.toLowerCase(),
-      status: r.sourceString.toUpperCase(),
+      status: r.eval(),
     };
   },
   statusExp_neq: (l, colonBang, r) => {
-    return { status: {not: r.sourceString.toUpperCase() } };
+    return { status: {not: r.eval() } };
   },
   statusExp_product_neq: (l, colonBang, r) => {
     return {
       product: l.sourceString.toLowerCase(),
-      status: {not: r.sourceString.toUpperCase()},
+      status: {not: r.eval()},
     };
+  },
+  containsExp: (l, colon, r) => {
+    return { contains: r.eval() };
+  },
+  isExp: (l, colon, r) => {
+    return { is: r.eval() };
+  },
+  subtestExp: (l, colon, r) => {
+    return { subtest: r.eval() };
   },
   pathExp: (l, colon, r) => {
     return { path: r.eval() };
@@ -214,7 +321,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   nameFragment_basic: (p) => {
     return p.sourceString;
   },
-  nameFragment_quoted: (_, chars, __) => {
+  nameFragment_quoted: (_, chars,  __) => {
     return chars.sourceString;
   },
   backslash: (v) => '\\',
@@ -291,7 +398,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
         type: Array,
         notify: true,
       },
-      testPaths: Array,
+      testPaths: Set,
       onKeyUp: Function,
       onChange: Function,
       onFocus: Function,

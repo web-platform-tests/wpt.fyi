@@ -96,44 +96,64 @@ func getBeforeAndAfterRuns() (before, after shared.TestRun) {
 }
 
 func TestCollapseSummary_Nesting(t *testing.T) {
-	diff := shared.ResultsSummary{
-		"/foo/test.html":             shared.TestSummary{1, 1},
-		"/foo/bar/test.html":         shared.TestSummary{1, 1},
-		"/foo/bar/baz/test.html":     shared.TestSummary{1, 1},
-		"/foo/bar/baz/qux/test.html": shared.TestSummary{1, 1},
+	diff := shared.RunDiff{
+		BeforeSummary: shared.ResultsSummary{
+			"/foo/test.html":             shared.TestSummary{1, 1},
+			"/foo/bar/test.html":         shared.TestSummary{1, 1},
+			"/foo/bar/baz/test.html":     shared.TestSummary{1, 1},
+			"/foo/bar/baz/qux/test.html": shared.TestSummary{1, 1},
+		},
+		AfterSummary: shared.ResultsSummary{
+			"/foo/test.html":             shared.TestSummary{2, 2},
+			"/foo/bar/test.html":         shared.TestSummary{2, 2},
+			"/foo/bar/baz/test.html":     shared.TestSummary{2, 2},
+			"/foo/bar/baz/qux/test.html": shared.TestSummary{2, 2},
+		},
 	}
-	assert.Equal(t, diff, collapseSummary(diff, 4))
-	assert.Equal(t, shared.ResultsSummary{
-		"/foo/test.html":     shared.TestSummary{1, 1},
-		"/foo/bar/test.html": shared.TestSummary{1, 1},
-		"/foo/bar/baz/":      shared.TestSummary{2, 2},
+	summary := summaries.BeforeAndAfter{
+		"/foo/test.html":             summaries.TestBeforeAndAfter{PassingBefore: 1, TotalBefore: 1, PassingAfter: 2, TotalAfter: 2},
+		"/foo/bar/test.html":         summaries.TestBeforeAndAfter{PassingBefore: 1, TotalBefore: 1, PassingAfter: 2, TotalAfter: 2},
+		"/foo/bar/baz/test.html":     summaries.TestBeforeAndAfter{PassingBefore: 1, TotalBefore: 1, PassingAfter: 2, TotalAfter: 2},
+		"/foo/bar/baz/qux/test.html": summaries.TestBeforeAndAfter{PassingBefore: 1, TotalBefore: 1, PassingAfter: 2, TotalAfter: 2},
+	}
+	assert.Equal(t, summary, collapseSummary(diff, 4))
+	assert.Equal(t, summaries.BeforeAndAfter{
+		"/foo/test.html":     summaries.TestBeforeAndAfter{PassingBefore: 1, TotalBefore: 1, PassingAfter: 2, TotalAfter: 2},
+		"/foo/bar/test.html": summaries.TestBeforeAndAfter{PassingBefore: 1, TotalBefore: 1, PassingAfter: 2, TotalAfter: 2},
+		"/foo/bar/baz/":      summaries.TestBeforeAndAfter{PassingBefore: 2, TotalBefore: 2, PassingAfter: 4, TotalAfter: 4},
 	}, collapseSummary(diff, 3))
-	assert.Equal(t, shared.ResultsSummary{
-		"/foo/test.html": shared.TestSummary{1, 1},
-		"/foo/bar/":      shared.TestSummary{3, 3},
+	assert.Equal(t, summaries.BeforeAndAfter{
+		"/foo/test.html": summaries.TestBeforeAndAfter{PassingBefore: 1, TotalBefore: 1, PassingAfter: 2, TotalAfter: 2},
+		"/foo/bar/":      summaries.TestBeforeAndAfter{PassingBefore: 3, TotalBefore: 3, PassingAfter: 6, TotalAfter: 6},
 	}, collapseSummary(diff, 2))
-	assert.Equal(t, shared.ResultsSummary{
-		"/foo/": shared.TestSummary{4, 4},
+	assert.Equal(t, summaries.BeforeAndAfter{
+		"/foo/": summaries.TestBeforeAndAfter{PassingBefore: 4, TotalBefore: 4, PassingAfter: 8, TotalAfter: 8},
 	}, collapseSummary(diff, 1))
 }
 
 func TestCollapseSummary_ManyFiles(t *testing.T) {
-	diff := shared.ResultsSummary{}
-	for i := 1; i <= 20; i++ {
-		diff[fmt.Sprintf("/foo/test%v.html", i)] = shared.TestSummary{1, 1}
-		diff[fmt.Sprintf("/bar/test%v.html", i)] = shared.TestSummary{1, 1}
-		diff[fmt.Sprintf("/baz/test%v.html", i)] = shared.TestSummary{1, 1}
+	diff := shared.RunDiff{
+		BeforeSummary: make(shared.ResultsSummary),
+		AfterSummary:  make(shared.ResultsSummary),
 	}
-	assert.Equal(t, shared.ResultsSummary{
-		"/foo/": shared.TestSummary{20, 20},
-		"/bar/": shared.TestSummary{20, 20},
-		"/baz/": shared.TestSummary{20, 20},
+	for i := 1; i <= 20; i++ {
+		diff.BeforeSummary[fmt.Sprintf("/foo/test%v.html", i)] = shared.TestSummary{1, 1}
+		diff.BeforeSummary[fmt.Sprintf("/bar/test%v.html", i)] = shared.TestSummary{1, 1}
+		diff.BeforeSummary[fmt.Sprintf("/baz/test%v.html", i)] = shared.TestSummary{1, 1}
+		diff.AfterSummary[fmt.Sprintf("/foo/test%v.html", i)] = shared.TestSummary{2, 3}
+		diff.AfterSummary[fmt.Sprintf("/bar/test%v.html", i)] = shared.TestSummary{2, 3}
+		diff.AfterSummary[fmt.Sprintf("/baz/test%v.html", i)] = shared.TestSummary{2, 3}
+	}
+	assert.Equal(t, summaries.BeforeAndAfter{
+		"/foo/": summaries.TestBeforeAndAfter{PassingBefore: 20, TotalBefore: 20, PassingAfter: 40, TotalAfter: 60},
+		"/bar/": summaries.TestBeforeAndAfter{PassingBefore: 20, TotalBefore: 20, PassingAfter: 40, TotalAfter: 60},
+		"/baz/": summaries.TestBeforeAndAfter{PassingBefore: 20, TotalBefore: 20, PassingAfter: 40, TotalAfter: 60},
 	}, collapseSummary(diff, 10))
 	// A number too small still does its best to collapse.
-	assert.Equal(t, shared.ResultsSummary{
-		"/foo/": shared.TestSummary{20, 20},
-		"/bar/": shared.TestSummary{20, 20},
-		"/baz/": shared.TestSummary{20, 20},
+	assert.Equal(t, summaries.BeforeAndAfter{
+		"/foo/": summaries.TestBeforeAndAfter{PassingBefore: 20, TotalBefore: 20, PassingAfter: 40, TotalAfter: 60},
+		"/bar/": summaries.TestBeforeAndAfter{PassingBefore: 20, TotalBefore: 20, PassingAfter: 40, TotalAfter: 60},
+		"/baz/": summaries.TestBeforeAndAfter{PassingBefore: 20, TotalBefore: 20, PassingAfter: 40, TotalAfter: 60},
 	}, collapseSummary(diff, 1))
 }
 

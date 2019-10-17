@@ -9,18 +9,14 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"text/template"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine"
 )
 
-var (
-	swTemplate = template.Must(template.ParseFiles("templates/service-worker.js"))
-	// NOTE(lukebjerring): If tweaking service worker locally, change to
-	// sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}|None$")
-	sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}$")
-)
+// NOTE(lukebjerring): If tweaking service worker locally, change to
+// sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}|None$")
+var sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}$")
 
 func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
@@ -42,5 +38,5 @@ func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Version: version,
 	}
-	swTemplate.Execute(w, data)
+	templates.ExecuteTemplate(w, "service-worker.js", data)
 }
