@@ -71,7 +71,7 @@ go_medium_test: go_build dev_appserver_deps
 
 # Use sub-make because otherwise make would only execute the first invocation
 # of _go_webdriver_test. Variables will be passed into sub-make implicitly.
-go_large_test:
+go_large_test: gcc
 	make go_firefox_test
 	make go_chrome_test
 
