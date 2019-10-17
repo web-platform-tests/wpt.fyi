@@ -30,7 +30,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
       </style>
       <paper-dialog>
           <h3>Triage Metadata:</h3>
-          <paper-item>1. Go to wpt-metadata&nbsp<a href="[[repo]]" target="_blank">repo.</a></paper-item>
+          <paper-item>1. Go to wpt-metadata&nbsp<a href="[[repo]]" target="_blank">repo</a>.</paper-item>
           <paper-item>2. Copy and append the following to the above file.</paper-item>
           <paper-button onclick="[[copyToClipboard]]" title="Copy link to the clipboard" autofocus>
             <pre>{{ computeLinkNode(hasYml, product, test, path) }}</pre>
@@ -52,7 +52,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
       test: String,
       productIndex: Number,
       metadataDirSet: Set,
-      product : {
+      product: {
         type: String,
         computed: 'computeProduct(productIndex, products)'
       },
@@ -114,7 +114,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
   }
 
   computeRepoUrl(path, hasYml) {
-    if(!path) {
+    if (!path) {
       return;
     }
 
@@ -174,7 +174,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
     this.load(
       window.fetch(url).then(r => r.json()).then(metadata => {
         let metadataDirSet = new Set();
-        for (const eachNode of metadata ) {
+        for (const eachNode of metadata) {
           let fileIndex = eachNode.test.lastIndexOf('/');
           metadataDirSet.add(eachNode.test.substring(0, fileIndex));
         }
