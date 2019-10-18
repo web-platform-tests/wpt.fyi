@@ -61,17 +61,17 @@ go_test_tag_lint:
 	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
-go_test: apt-get-gcc go_small_test go_medium_test
+go_test: go_small_test go_medium_test
 
-go_small_test: go_build
+go_small_test: go_build gcc
 	go test -tags=small $(VERBOSE) ./...
 
-go_medium_test: go_build dev_appserver_deps
+go_medium_test: go_build dev_appserver_deps gcc
 	go test -tags=medium $(VERBOSE) $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
 # of _go_webdriver_test. Variables will be passed into sub-make implicitly.
-go_large_test: gcc
+go_large_test:
 	make go_firefox_test
 	make go_chrome_test
 
@@ -89,7 +89,7 @@ webdriver_node_deps:
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-_go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_deps
+_go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_deps gcc
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
 	# path before installing geckodriver as it includes version strings.
