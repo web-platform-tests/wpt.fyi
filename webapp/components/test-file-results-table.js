@@ -284,7 +284,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
   }
 
   colorClass(status) {
-    if (['OK', 'PASS'].includes(status)) {
+    if (['PASS'].includes(status)) {
       return this.passRateClass(1, 1);
     } else if (['FAIL', 'ERROR'].includes(status)) {
       return this.passRateClass(0, 1);
