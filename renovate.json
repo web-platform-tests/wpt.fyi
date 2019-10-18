@@ -1,0 +1,10 @@
+{
+  "extends": ["config:base"],
+  "enabledManagers": ["gomod"],
+  "gomod": {
+    "minor": {
+      "automerge": true
+    },
+    "postUpdateOptions": ["gomodTidy"]
+  }
+}
