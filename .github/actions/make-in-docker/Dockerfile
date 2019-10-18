@@ -1,6 +1,8 @@
 # vim: set expandtab sw=4
 FROM golang:1.12-buster
 
+# Create a non-priviledged user to run browsers as (Firefox and Chrome do not
+# like to run as root).
 RUN chmod a+rx $HOME && useradd --uid 9999 --user-group --create-home browser
 
 # Sort the package names!
@@ -21,7 +23,9 @@ RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         xvfb && \
     rm /usr/bin/firefox
 
-# Overwrite sudoers to discard the secure_path setting to make go available.
+# The base golang image adds Go paths to PATH, which cannot be inherited in
+# sudo by default because of the `secure_path` directive. Overwrite sudoers to
+# discard the setting.
 RUN echo "root ALL=(ALL:ALL) ALL" > /etc/sudoers
 
 # Provide a fake openjdk-8-jdk for google-cloud-sdk-datastore-eumlator

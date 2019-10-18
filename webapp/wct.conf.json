@@ -17,5 +17,6 @@
     }
   },
   "verbose": false,
+  "timeout": 120000,
   "expanded": true
 }
