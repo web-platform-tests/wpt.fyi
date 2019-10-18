@@ -11,7 +11,7 @@ require (
 	github.com/deckarep/golang-set v1.7.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2
-	github.com/go-yaml/yaml v2.1.0+incompatible
+	github.com/go-yaml/yaml v2.2.4+incompatible
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
 	github.com/golang/mock v1.3.1
