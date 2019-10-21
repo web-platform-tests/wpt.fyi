@@ -10,9 +10,6 @@
 Once the above steps are completed, run the following commands from within `webapp/`:
 
 ```sh
-npm install -g bower
-bower install
-npm install -g web-component-tester
 npm install
 ```
 
