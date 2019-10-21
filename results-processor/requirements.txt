@@ -20,7 +20,7 @@ itsdangerous==1.1.0
 Jinja2==2.10.3
 MarkupSafe==1.1.1
 mccabe==0.6.1
-mypy==0.730
+mypy==0.740
 mypy-extensions==0.4.2
 protobuf==3.10.0
 pyasn1==0.4.7
