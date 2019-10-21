@@ -6,7 +6,7 @@ inputs:
     required: true
 runs:
   using: docker
-  image: docker://webplatformtests/wpt.fyi:latest
+  image: docker://webplatformtests/wpt.fyi:docker-auto-build
   args:
     - /usr/bin/make
     - ${{ inputs.target }}
