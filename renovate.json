@@ -1,6 +1,6 @@
 {
   "extends": ["config:base"],
-  "enabledManagers": ["gomod"],
+  "enabledManagers": ["gomod", "npm"],
   "gomod": {
     "minor": {
       "automerge": true
