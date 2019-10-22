@@ -22,7 +22,7 @@
     "wct": "wct --npm"
   },
   "dependencies": {
-    "@google-web-components/google-chart": "3.1.1",
+    "@google-web-components/google-chart": "3.2.0",
     "@polymer/app-route": "3.0.2",
     "@polymer/iron-collapse": "3.0.1",
     "@polymer/iron-form": "3.0.1",
