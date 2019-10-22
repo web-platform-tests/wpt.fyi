@@ -2,8 +2,8 @@
   "extends": ["config:base"],
   "enabledManagers": ["gomod", "npm"],
   "gomod": {
-    "minor": {
-      "automerge": true
+    "major": {
+      "enabled": false
     },
     "postUpdateOptions": ["gomodTidy"]
   }
