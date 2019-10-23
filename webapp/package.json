@@ -9,7 +9,7 @@
   "devDependencies": {
     "@polymer/test-fixture": "4.0.2",
     "babel-eslint": "10.0.3",
-    "eslint": "4.19.1",
+    "eslint": "6.5.1",
     "eslint-plugin-html": "5.0.5",
     "wct-browser-legacy": "1.0.2",
     "web-component-tester": "6.9.2"
