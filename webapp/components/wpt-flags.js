@@ -262,7 +262,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
 }
 window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
 
-/* global wpt */
 class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ true) {
   static get template() {
     return html`
