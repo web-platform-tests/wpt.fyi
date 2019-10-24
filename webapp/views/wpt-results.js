@@ -848,10 +848,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
   }
 
   hasAmendableMetadata(node, index, testRun) {
-    console.log('hasAmendableMetadata: ' + node + ', ' + index + ', testRun');
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
-    console.log('return this.computePathIsATestFile(' + node.path + ') (which is ' + this.computePathIsATestFile(node.path) + ') && (' + totalTests + ' - ' + passedTests + ') > 0;');
     return this.computePathIsATestFile(node.path) && (totalTests - passedTests) > 0;
   }
 
