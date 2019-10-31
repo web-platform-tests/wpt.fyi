@@ -10,7 +10,7 @@ function wptd_useradd() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" groupadd -g $(id -g $USER) user || [ $? == 4 ]
   # Add user to audio & video groups to ensure Chrome can use sandbox.
   docker exec -u 0:0 "${DOCKER_INSTANCE}" useradd -u $(id -u $USER) -g $(id -g $USER) -G audio,video user
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "%user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers'
+  docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers'
 }
 function wptd_exec() {
   docker exec -u $(id -u $USER) "${DOCKER_INSTANCE}" sh -c "$*"
