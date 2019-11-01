@@ -95,10 +95,15 @@ func TestExtractTaskGroupID(t *testing.T) {
 		assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg", group)
 		assert.Equal(t, "", task)
 	})
-	t.Run("CheckRun", func(t *testing.T) {
+	t.Run("CheckRun with task", func(t *testing.T) {
 		group, task := extractTaskGroupID("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "NOToWHr0T-u62B9yGQnD5w", task)
+	})
+	t.Run("CheckRun without task", func(t *testing.T) {
+		group, task := extractTaskGroupID("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw")
+		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
+		assert.Equal(t, "", task)
 	})
 }
 
