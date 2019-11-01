@@ -33,7 +33,7 @@ var (
 	// This is the pattern for task detail URLs coming from Checks API.
 	inspectorURLRegex = regexp.MustCompile("/task-group-inspector/#/([^/]*)")
 	// This is the pattern for task detail URLs coming from Status API.
-	taskURLRegex = regexp.MustCompile("/groups/([^/]*)/tasks/([^/]*)")
+	taskURLRegex = regexp.MustCompile("/groups/([^/]*)")
 )
 
 // Non-fatal error when there is no result (e.g. nothing finishes yet).
@@ -225,8 +225,8 @@ func extractTaskGroupID(targetURL string) (string, string) {
 	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); len(matches) > 1 {
 		return matches[1], ""
 	}
-	if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
-		return matches[1], matches[2]
+	if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 1 {
+		return matches[1], ""
 	}
 	return "", ""
 }
