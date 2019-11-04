@@ -12,7 +12,7 @@ import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import './browser-picker.js';
 import './channel-picker.js';
 import './info-banner.js';
-import { DefaultProductSpecs, DefaultProducts, DefaultBrowserNames, ProductInfo } from './product-info.js';
+import { AllProducts, DefaultProductSpecs, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
 
 class Insights extends ProductInfo(PolymerElement) {
@@ -63,7 +63,7 @@ class Flakes extends ProductInfo(PolymerElement) {
     <paper-card>
       <div class="card-content">
         <h3>Flakes</h3>
-        <browser-picker browser="{{browser}}"></browser-picker>
+        <browser-picker browser="{{browser}}" default-products="[[allProducts]]"></browser-picker>
         <info-banner>
           <a class="query" href="[[url]]">[[query]]</a>
         </info-banner>
@@ -126,9 +126,9 @@ class Anomalies extends ProductInfo(PolymerElement) {
       <div class="card-content">
         <h3>Anomalies</h3>
         <div>
-          <browser-picker browser="{{browser}}"></browser-picker>
+          <browser-picker browser="{{browser}}" default-products="[[allProducts]]"></browser-picker>
           vs
-          <browser-multi-picker products="[[defaultProductsExcept(browser)]]" selected="{{others}}"></browser-multi-picker>
+          <browser-multi-picker products="[[allProductsExcept(browser)]]" selected="{{others}}"></browser-multi-picker>
         </div>
         where [[browserDisplayName]] is the only one
         <paper-radio-group selected="{{anomalyType}}">
@@ -176,9 +176,8 @@ class Anomalies extends ProductInfo(PolymerElement) {
     };
   }
 
-  defaultProductsExcept(browser) {
-    return DefaultProducts
-      .filter(b => b.browser_name !== browser);
+  allProductsExcept(browser) {
+    return AllProducts.filter(b => b.browser_name !== browser);
   }
 
   computeOthersDisplayNames(others) {
@@ -234,7 +233,7 @@ class ReleaseRegressions extends ProductInfo(PolymerElement) {
       <div class="card-content">
         <h3>Release Regressions</h3>
         <div class="wrapper">
-          <browser-picker browser="{{browser}}"></browser-picker>
+          <browser-picker browser="{{browser}}" default-products="[[allProducts]]"></browser-picker>
           <channel-picker browser="[[browser]]" channel="{{channel}}" channels="[&quot;beta&quot;, &quot;experimental&quot;]"></channel-picker>
           <display-logo product="[[channelBrowser]]"></display-logo>
           vs

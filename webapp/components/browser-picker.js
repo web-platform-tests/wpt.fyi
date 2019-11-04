@@ -7,6 +7,7 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 import './display-logo.js';
 import { DefaultBrowserNames, DefaultProducts, ProductInfo } from './product-info.js';
 
+// A component allowing the user to select one of a list of browsers.
 class BrowserPicker extends ProductInfo(PolymerElement) {
   static get is() {
     return 'browser-picker';
@@ -44,6 +45,9 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
 window.customElements.define(BrowserPicker.is, BrowserPicker);
 export { BrowserPicker };
 
+// A component allowing the user to select multiple browsers from a list. The
+// choice of browsers (passed in as |products|) is rendered as a list of
+// checkboxes, which are all selected initially.
 class BrowserMultiPicker extends ProductInfo(PolymerElement) {
   static get is() {
     return 'browser-multi-picker';
