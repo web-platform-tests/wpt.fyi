@@ -89,19 +89,22 @@ func TestIsOnMaster(t *testing.T) {
 	assert.False(t, status.IsOnMaster())
 }
 
-func TestExtractTaskGroupID(t *testing.T) {
+func TestParseTaskclusterURL(t *testing.T) {
 	t.Run("Status", func(t *testing.T) {
-		group, task := extractTaskGroupID("https://tc.example.com/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		root, group, task := parseTaskclusterURL("https://tc.example.com/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		assert.Equal(t, "https://tc.example.com", root)
 		assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg", group)
 		assert.Equal(t, "", task)
 	})
 	t.Run("CheckRun with task", func(t *testing.T) {
-		group, task := extractTaskGroupID("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
+		root, group, task := parseTaskclusterURL("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
+		assert.Equal(t, "https://tc.example.com", root)
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "NOToWHr0T-u62B9yGQnD5w", task)
 	})
 	t.Run("CheckRun without task", func(t *testing.T) {
-		group, task := extractTaskGroupID("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw")
+		root, group, task := parseTaskclusterURL("https://tc.other-example.com/groups/IWlO7NuxRnO0_8PKMuHFkw")
+		assert.Equal(t, "https://tc.other-example.com", root)
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "", task)
 	})

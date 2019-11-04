@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -33,8 +32,8 @@ var (
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
-	inspectorURLRegex = regexp.MustCompile("/task-group-inspector/#/([^/]*)")
-	taskURLRegex      = regexp.MustCompile("/groups/([^/]*)(?:/tasks/([^/]*))?")
+	inspectorURLRegex = regexp.MustCompile(`^(https://[^/]*)/task-group-inspector/#/([^/]*)`)
+	taskURLRegex      = regexp.MustCompile(`^(https://[^/]*)/groups/([^/]*)(?:/tasks/([^/]*))?`)
 )
 
 // Non-fatal error when there is no result (e.g. nothing finishes yet).
@@ -85,7 +84,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 			if status.TargetURL == nil {
 				return false, errors.New("No target_url on taskcluster status event")
 			}
-			taskGroupID, taskID := extractTaskGroupID(*status.TargetURL)
+			rootURL, taskGroupID, taskID := parseTaskclusterURL(*status.TargetURL)
 			if taskGroupID == "" {
 				return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
 			}
@@ -101,7 +100,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 				labels.Add(shared.GetUserLabel(sender))
 			}
 
-			return processTaskclusterBuild(aeAPI, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
+			return processTaskclusterBuild(aeAPI, rootURL, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
 		}()
 	}
 
@@ -167,10 +166,9 @@ func (b branchInfos) GetNames() []string {
 	return names
 }
 
-func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
+func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
 	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
-	rootURL := os.Getenv("TASKCLUSTER_ROOT_URL")
 
 	log.Debugf("Taskcluster task group %s", taskGroupID)
 	if taskID != "" {
@@ -222,17 +220,17 @@ func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *sta
 	return true
 }
 
-func extractTaskGroupID(targetURL string) (string, string) {
-	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); len(matches) > 1 {
-		return matches[1], ""
+func parseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string) {
+	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
+		return matches[1], matches[2], ""
 	}
-	if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 1 {
+	if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
 		if len(matches) > 2 {
-			return matches[1], matches[2]
+			return matches[1], matches[2], matches[3]
 		}
-		return matches[1], ""
+		return matches[1], matches[2], ""
 	}
-	return "", ""
+	return "", "", ""
 }
 
 type taskGroupInfo struct {

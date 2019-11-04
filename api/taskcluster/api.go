@@ -68,8 +68,10 @@ func (a apiImpl) HandleCheckSuiteEvent(event *github.CheckSuiteEvent) (bool, err
 		return false, err
 	}
 	byGroup := mapset.NewSet()
+	var rootURL string
 	for _, run := range runs.CheckRuns {
-		taskGroupID, _ := extractTaskGroupID(run.GetDetailsURL())
+		var taskGroupID string
+		rootURL, taskGroupID, _ = parseTaskclusterURL(run.GetDetailsURL())
 		if taskGroupID == "" {
 			return false, fmt.Errorf("unrecognized target_url: %s", run.GetDetailsURL())
 		}
@@ -82,7 +84,7 @@ func (a apiImpl) HandleCheckSuiteEvent(event *github.CheckSuiteEvent) (bool, err
 
 	processedSomething := false
 	for _, groupID := range shared.ToStringSlice(byGroup) {
-		processed, err := processTaskclusterBuild(a.aeAPI, groupID, "", sha, shared.ToStringSlice(labels)...)
+		processed, err := processTaskclusterBuild(a.aeAPI, rootURL, groupID, "", sha, shared.ToStringSlice(labels)...)
 		if err != nil {
 			log.Errorf("Failed to process %s: %s", groupID, err.Error())
 			continue
