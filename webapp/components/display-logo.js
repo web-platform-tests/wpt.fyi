@@ -3,21 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-/*
-`<test-run>` is a stateless component for displaying the details of a TestRun.
 
-The schema for the testRun property is as follows:
-{
-  "browser_name": "",
-  "browser_version": "",
-  "os_name": "",
-  "os_version": "",
-  "revision": "",     // the first 10 characters of the SHA
-  "created_at": "",   // the date the TestRun was uploaded
-}
-
-See models.go for more details.
-*/
 import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
