@@ -59,7 +59,6 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           <a href="/status">Processor</a>
         </template>
         <a href="/about">About</a>
-        <a href="https://github.com/web-platform-tests/wpt.fyi">GitHub Source</a>
       </nav>
       <info-banner id="caveat" type="error">
         wpt.fyi is a work in progress. The reported results do not necessarily reflect the true capabilities of each web browser, so they should not be used evaluate or compare feature support.
