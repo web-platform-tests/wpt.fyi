@@ -1,0 +1,22 @@
+# The following images are automatically
+# fetched via `npm` on `npm install`.
+#
+# See also: https://github.com/alrra/browser-logos
+
+static/chrome-beta_64x64.png
+static/chrome-canary_64x64.png
+static/chrome-dev_64x64.png
+static/chrome_64x64.png
+static/edge-beta_64x64.png
+static/edge-canary_64x64.png
+static/edge-dev_64x64.png
+static/edge_64x64.png
+static/firefox-beta_64x64.png
+static/firefox-dev_64x64.png
+static/firefox-nightly_64x64.png
+static/firefox_64x64.png
+static/safari-beta_64x64.png
+static/safari-dev_64x64.png
+static/safari-preview_64x64.png
+static/safari_64x64.png
+static/uc_64x64.png
