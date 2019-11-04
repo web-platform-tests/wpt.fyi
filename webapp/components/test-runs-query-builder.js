@@ -354,7 +354,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         </template>
 
         <br>
-        <browser-picker browser="{{browserName}}" default-products="[[allProducts]]"></browser-picker>
+        <browser-picker browser="{{browserName}}" products="[[allProducts]]"></browser-picker>
 
         <br>
         <paper-dropdown-menu label="Channel" no-animations>

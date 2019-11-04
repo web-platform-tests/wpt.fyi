@@ -17,7 +17,7 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
     return html`
   <paper-dropdown-menu label="Browser" no-animations>
     <paper-listbox slot="dropdown-content" selected="{{ browser }}" attr-for-selected="value">
-      <template is="dom-repeat" items="[[defaultProducts]]" as="product">
+      <template is="dom-repeat" items="[[products]]" as="product">
         <paper-icon-item value="[[product.browser_name]]">
           <display-logo slot="item-icon" product="[[product]]" small></display-logo>
           [[displayName(product.browser_name)]]
@@ -35,7 +35,7 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
         value: DefaultBrowserNames[0],
         notify: true,
       },
-      defaultProducts: {
+      products: {
         type: Array,
         value: DefaultProducts.map(p => Object.assign({}, p)),
       },

@@ -63,7 +63,7 @@ class Flakes extends ProductInfo(PolymerElement) {
     <paper-card>
       <div class="card-content">
         <h3>Flakes</h3>
-        <browser-picker browser="{{browser}}" default-products="[[allProducts]]"></browser-picker>
+        <browser-picker browser="{{browser}}" products="[[allProducts]]"></browser-picker>
         <info-banner>
           <a class="query" href="[[url]]">[[query]]</a>
         </info-banner>
@@ -126,7 +126,7 @@ class Anomalies extends ProductInfo(PolymerElement) {
       <div class="card-content">
         <h3>Anomalies</h3>
         <div>
-          <browser-picker browser="{{browser}}" default-products="[[allProducts]]"></browser-picker>
+          <browser-picker browser="{{browser}}" products="[[allProducts]]"></browser-picker>
           vs
           <browser-multi-picker products="[[allProductsExcept(browser)]]" selected="{{others}}"></browser-multi-picker>
         </div>
@@ -233,7 +233,7 @@ class ReleaseRegressions extends ProductInfo(PolymerElement) {
       <div class="card-content">
         <h3>Release Regressions</h3>
         <div class="wrapper">
-          <browser-picker browser="{{browser}}" default-products="[[allProducts]]"></browser-picker>
+          <browser-picker browser="{{browser}}" products="[[allProducts]]"></browser-picker>
           <channel-picker browser="[[browser]]" channel="{{channel}}" channels="[&quot;beta&quot;, &quot;experimental&quot;]"></channel-picker>
           <display-logo product="[[channelBrowser]]"></display-logo>
           vs
