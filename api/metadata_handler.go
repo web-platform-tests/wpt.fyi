@@ -54,7 +54,8 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	client := aeAPI.GetHTTPClient()
 	logger := shared.GetLogger(ctx)
 
 	data, err := ioutil.ReadAll(r.Body)
@@ -73,15 +74,22 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check cookies
-	user := webapp.getUserFromCookie(r)
-	if user == nil {
-		http.Error(w, "Unauthorized request, please log in first", http.StatusBadRequest)
+	// TODO: Check cookies and verification.
+	//user := webapp.getUserFromCookie(r)
+	//if user == nil {
+	//	http.Error(w, "Unauthorized request, please log in first", http.StatusBadRequest)
+	//	return
+	//}
+
+	//TODO: Check github client permission levels.
+	githubClient, err := aeAPI.GetGitHubClient()
+	if err != nil {
+		http.Error(w, "Unable to get Github Client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err := commitMetadataToGithub(user, metadata)
-
+	tm := triageMetadata{ctx: ctx, githubClient: githubClient, logger: logger, httpClient: client}
+	tm.triage(metadata)
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -179,8 +187,4 @@ var cacheKey = func(r *http.Request) interface{} {
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 
 	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
-}
-
-func commitMetadataToGithub(user *string, metadata shared.MetadataResults) {
-	return nil
 }
