@@ -89,7 +89,12 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tm := triageMetadata{ctx: ctx, githubClient: githubClient, logger: logger, httpClient: client}
-	tm.triage(metadata)
+	err = tm.triage(metadata)
+	if err != nil {
+		http.Error(w, "Unable to triage metadata: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 }
 

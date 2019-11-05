@@ -68,25 +68,38 @@ func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, ur
 	for i, run := range testRuns {
 		productSpecs[i] = ProductSpec{ProductAtRevision: run.ProductAtRevision, Labels: run.LabelsSet()}
 	}
-	return getMetadataResponseOnProductSpecs(productSpecs, client, log, url)
+
+	metadata, err := GetMetadataByteMap(client, log, url)
+	if err != nil {
+		return nil, err
+	}
+
+	return constructMetadataResponse(productSpecs, metadata), nil
 }
 
 // GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
 func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
-	return getMetadataResponseOnProductSpecs(productSpecs, client, log, url)
-}
-
-func getMetadataResponseOnProductSpecs(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
-	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
+	metadata, err := GetMetadataByteMap(client, log, url)
 	if err != nil {
 		return nil, err
 	}
-	metadata := parseMetadata(metadataByteMap, log)
+
 	return constructMetadataResponse(productSpecs, metadata), nil
 }
 
-// parseMetadata collects and parses all META.yml files from
+// GetMetadataByteMap collects and parses all META.yml files from
 // wpt-metadata reposiroty.
+func GetMetadataByteMap(client *http.Client, log Logger, url string) (map[string]Metadata, error) {
+	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
+	if err != nil {
+		log.Errorf("Error from CollectMetadataWithURL: %s", err.Error())
+		return nil, err
+	}
+
+	metadata := parseMetadata(metadataByteMap, log)
+	return metadata, nil
+}
+
 func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Metadata {
 	var metadataMap = make(map[string]Metadata)
 	for path, data := range metadataByteMap {

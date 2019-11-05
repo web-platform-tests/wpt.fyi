@@ -156,11 +156,11 @@ func (tm triageMetadata) createPR() (err error) {
 	return nil
 }
 
-func (tm triageMetadata) mergeToGithub(metadataFiles map[string][]byte) {
-
+func (tm triageMetadata) mergeToGithub(triagedMetadataMap map[string][]byte) error {
 	ref, err := tm.getRef()
 	if err != nil {
 		log.Fatalf("Unable to get/create the commit reference: %s\n", err)
+		return err
 	}
 	if ref == nil {
 		log.Fatalf("No error where returned but the reference is nil")
@@ -169,18 +169,36 @@ func (tm triageMetadata) mergeToGithub(metadataFiles map[string][]byte) {
 	tree, err := tm.getTree(ref)
 	if err != nil {
 		log.Fatalf("Unable to create the tree based on the provided files: %s\n", err)
+		return err
 	}
 
 	if err := tm.pushCommit(ref, tree); err != nil {
 		log.Fatalf("Unable to create the commit: %s\n", err)
+		return err
 	}
 
 	if err := tm.createPR(); err != nil {
 		log.Fatalf("Error while creating the pull request: %s", err)
+		return err
 	}
+
+	return nil
 }
 
-func (tm triageMetadata) triage(traigedMetadata shared.MetadataResults) {
-	//TODO: GET METADATA, FIND DIFF, AMEND AND CREATE A FILE.
-	tm.mergeToGithub(metadataFiles)
+func (tm triageMetadata) addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Metadata) (map[string][]byte, error) {
+
+}
+
+func (tm triageMetadata) triage(metadata shared.MetadataResults) error {
+	filesMap, err := shared.GetMetadataByteMap(tm.httpClient, tm.logger, shared.MetadataArchiveURL)
+	if err != nil {
+		return err
+	}
+
+	triagedMetadataMap, err := tm.addToFiles(metadata, filesMap)
+	if err != nil {
+		return err
+	}
+
+	return tm.mergeToGithub(triagedMetadataMap)
 }
