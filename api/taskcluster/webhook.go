@@ -134,7 +134,8 @@ func (s statusEventPayload) IsCompleted() bool {
 }
 
 func (s statusEventPayload) IsTaskcluster() bool {
-	return s.Context != nil && strings.HasPrefix(*s.Context, "Taskcluster")
+	return s.Context != nil && (strings.HasPrefix(*s.Context, "Taskcluster") ||
+		strings.HasPrefix(*s.Context, "Community-TC"))
 }
 
 func (s statusEventPayload) IsOnMaster() bool {

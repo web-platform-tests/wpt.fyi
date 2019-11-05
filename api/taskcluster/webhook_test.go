@@ -36,6 +36,9 @@ func TestShouldProcessStatus_states(t *testing.T) {
 	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
 	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 
+	status.Context = strPtr("Community-TC")
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+
 	status.State = strPtr("failure")
 	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 
