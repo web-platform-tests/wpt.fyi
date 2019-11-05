@@ -319,7 +319,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		// is:tentative only returns rows from tests with .tentative.
 		// in their name. See
 		// https://web-platform-tests.org/writing-tests/file-names.html
-		name, subtest, err := q.tests.GetName(t)
+		name, _, err := q.tests.GetName(t)
 		if (err != nil) {
 			return false
 		}
