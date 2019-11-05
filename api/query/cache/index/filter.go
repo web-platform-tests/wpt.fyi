@@ -305,11 +305,28 @@ func (l Link) Filter(t TestID) bool {
 
 // Filter interprets a MetadataQuality as a filter function over TestIDs.
 func (q MetadataQuality) Filter(t TestID) bool {
-	set := mapset.NewSet()
-	for _, result := range q.runResults {
-		set.Add(result.GetResult(t))
+	switch (q.quality) {
+	case query.MetadataQualityDifferent:
+		// is:different only returns subtest rows where the result
+		// differs between the runs we are comparing. To detect this,
+		// put them into a set and then check the size.
+		set := mapset.NewSet()
+		for _, result := range q.runResults {
+			set.Add(result.GetResult(t))
+		}
+		return set.Cardinality() > 1
+	case query.MetadataQualityTentative:
+		// is:tentative only returns rows from tests with .tentative.
+		// in their name. See
+		// https://web-platform-tests.org/writing-tests/file-names.html
+		name, subtest, err := q.tests.GetName(t)
+		if (err != nil) {
+			return false
+		}
+		return strings.Contains(name, ".tentative.")
+	default:
+		return false
 	}
-	return set.Cardinality() > 1
 }
 
 // Filter interprets an And as a filter function over TestIDs.
