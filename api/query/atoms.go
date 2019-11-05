@@ -258,13 +258,13 @@ type MetadataQuality int
 
 const (
 	// MetadataQualityUnknown is a placeholder for unrecognized values.
-	MetadataQualityUnknown MetadataQuality = 0
+	MetadataQualityUnknown MetadataQuality = iota
 	// MetadataQualityDifferent represents an is:different atom.
 	// "different" ensures that one or more results differs from the other results.
-	MetadataQualityDifferent MetadataQuality = 1
+	MetadataQualityDifferent
 	// MetadataQualityTentative represents an is:tentative atom.
 	// "tentative" ensures that the results are from a tentative test.
-	MetadataQualityTentative MetadataQuality = 2
+	MetadataQualityTentative
 )
 
 // BindToRuns for MetadataQuality is a no-op; it is independent of test runs.
