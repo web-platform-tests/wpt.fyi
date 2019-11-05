@@ -115,6 +115,7 @@ const ProductInfo = (superClass) => class extends superClass {
       allProducts: {
         type: Array,
         value: AllProducts,
+        readOnly: true,
       }
     };
   }
