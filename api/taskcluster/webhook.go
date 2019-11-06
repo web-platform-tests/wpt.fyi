@@ -223,15 +223,24 @@ func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *sta
 
 func parseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string) {
 	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
-		return matches[1], matches[2], ""
-	}
-	if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
+		rootURL = matches[1]
+		taskGroupID = matches[2]
+	} else if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
 		if len(matches) > 2 {
-			return matches[1], matches[2], matches[3]
+			rootURL = matches[1]
+			taskGroupID = matches[2]
+			taskID = matches[3]
+		} else {
+			rootURL = matches[1]
+			taskGroupID = matches[2]
 		}
-		return matches[1], matches[2], ""
 	}
-	return "", "", ""
+	// Special case for old Taskcluster instance, which uses subdomains for
+	// different services and we need to strip the subdomain away.
+	if strings.HasSuffix(rootURL, "taskcluster.net") {
+		rootURL = "https://taskcluster.net"
+	}
+	return rootURL, taskGroupID, taskID
 }
 
 type taskGroupInfo struct {
