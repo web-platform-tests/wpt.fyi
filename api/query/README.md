@@ -152,9 +152,8 @@ across the runs.
 
 ##### `is:tentative`
 
-Filters to tests whose name matches the [naming
-conventions](https://web-platform-tests.org/writing-tests/file-names.html) for
-tentative tests.
+Filters to tests that are marked as tentative (currently based on [file
+name](https://web-platform-tests.org/writing-tests/file-names.html)).
 
 #### And-conjuction
 

@@ -305,6 +305,9 @@ suite('<test-search>', () => {
       assertQueryParse('is:different', {
         exists: [{ is: 'different' }]
       });
+      assertQueryParse('is:tentative', {
+        exists: [{ is: 'tentative' }]
+      });
     });
 
     test('count', () => {
