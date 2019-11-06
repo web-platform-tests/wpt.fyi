@@ -226,7 +226,7 @@ func parseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string)
 		rootURL = matches[1]
 		taskGroupID = matches[2]
 	} else if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
-		if len(matches) > 2 {
+		if len(matches) > 3 {
 			rootURL = matches[1]
 			taskGroupID = matches[2]
 			taskID = matches[3]
