@@ -33,7 +33,7 @@ var (
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
 	inspectorURLRegex = regexp.MustCompile(`^(https://[^/]*)/task-group-inspector/#/([^/]*)`)
-	taskURLRegex      = regexp.MustCompile(`^(https://[^/]*)/groups/([^/]*)(?:/tasks/([^/]*))?`)
+	taskURLRegex      = regexp.MustCompile(`^(https://[^/]*)(?:/tasks)?/groups/([^/]*)(?:/tasks/([^/]*))?`)
 )
 
 // Non-fatal error when there is no result (e.g. nothing finishes yet).

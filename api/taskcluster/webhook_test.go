@@ -111,6 +111,12 @@ func TestParseTaskclusterURL(t *testing.T) {
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "", task)
 	})
+	t.Run("CheckRun without task", func(t *testing.T) {
+		root, group, task := parseTaskclusterURL("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw")
+		assert.Equal(t, "https://tc.community.com", root)
+		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
+		assert.Equal(t, "", task)
+	})
 }
 
 func TestExtractArtifactURLs_all_success_master(t *testing.T) {
