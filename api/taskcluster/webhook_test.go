@@ -94,8 +94,8 @@ func TestIsOnMaster(t *testing.T) {
 
 func TestParseTaskclusterURL(t *testing.T) {
 	t.Run("Status", func(t *testing.T) {
-		root, group, task := parseTaskclusterURL("https://tc.example.com/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
-		assert.Equal(t, "https://tc.example.com", root)
+		root, group, task := parseTaskclusterURL("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		assert.Equal(t, "https://taskcluster.net", root)
 		assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg", group)
 		assert.Equal(t, "", task)
 	})
