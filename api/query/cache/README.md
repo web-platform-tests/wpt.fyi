@@ -20,7 +20,9 @@ CONTRIBUTING.md file), searchcache development requires:
 1. At least 4GB of RAM (8GB+ preferable). The searchcache loves RAM more than
    Chrome does.
 1. A GCP [service account](https://cloud.google.com/iam/docs/understanding-service-accounts)
-   with the role Cloud Datastore User for the `wptdashboard-staging` project.
+   with the role 'Cloud Datastore User' for the `wptdashboard-staging` project.
+   The key JSON file for this account must be available locally (called
+   `gcp.json` in this README).
 
 ### Building
 
@@ -43,7 +45,7 @@ The following are required flags when running `service`:
 * `--project_id=wptdashboard-staging` - set the project to the staging instance
   of [wpt.fyi](https://wpt.fyi).
 * `--gcp_credentials_file=gcp.json` - provide the necessary credentials to
-  access the datastore. See Prerequisites above.
+  access the datastore. See [Prerequisites](#prerequisites) above.
 * `--max_heap_bytes=256000000` - sets a soft limit on memory usage. Emphasis on
   'soft' - with a 256MB heap set here, the author had their searchcache
   stabilize at approximately 2 **GB** of memory.
