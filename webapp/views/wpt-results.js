@@ -169,7 +169,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
                            products="[[products]]"
-                           diff-run="[[diffRun]]">
+                           diff-run="[[diffRun]]"
+                           metadata="[[metadata]]">
         </test-file-results>
       </template>
 
@@ -357,6 +358,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         type: Array,
         computed: 'computeDisplayedTests(path, searchResults)',
       },
+      metadata: Object,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {
@@ -687,23 +689,18 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       this.displayedNodes = [];
       return;
     }
-    this.collapseResults();
-  }
-
-  collapseResults(explodePrefix) {
     // Prefix: includes trailing slash.
-    const prefix = `${this.path === '/' ? '' : this.path}/${explodePrefix || ''}`;
+    const prefix = this.path === '/' ? '/' : `${this.path}/`;
     const collapsePathOnto = (testPath, nodes) => {
       const suffix = testPath.substring(prefix.length);
       const slashIdx = suffix.split('?')[0].indexOf('/');
       const isDir = slashIdx !== -1;
-      const relativePath = isDir ? suffix.substring(0, slashIdx): suffix;
-      const name = `${explodePrefix || ''}${relativePath}`;
+      const name = isDir ? suffix.substring(0, slashIdx): suffix;
       // Either add new node to acc, or add passes, total to an
       // existing node.
       if (!nodes.hasOwnProperty(name)) {
         nodes[name] = {
-          path: `${prefix}${relativePath}`,
+          path: `${prefix}${name}`,
           isDir,
           results: this.testRuns.map(() => ({
             passes: 0,
@@ -791,16 +788,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         }
         return nodes;
       }, knownNodes);
-
-    const displayed = Array.from(Object.entries(resultsByPath));
-    if (displayed.length === 1 && displayed[0][1].isDir) {
-      const nestedPath = `${displayed[0][0]}/`;
-      this.collapseResults(nestedPath);
-      return;
-    }
-
-    this.displayedNodes = displayed
-      .map(([_, row]) => row)
+    this.displayedNodes = Object.values(resultsByPath)
       .filter(row => {
         if (!this.onlyShowDifferences) {
           return true;

@@ -78,6 +78,8 @@ func (p ProductSpec) DisplayName() string {
 		return "Firefox"
 	case "safari":
 		return "Safari"
+	case "webkitgtk":
+		return "WebKitGTK"
 	default:
 		return p.BrowserName
 	}

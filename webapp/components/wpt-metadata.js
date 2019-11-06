@@ -131,10 +131,12 @@ class WPTMetadata extends LoadingState(PolymerElement) {
         observer: 'loadAllMetadata'
       },
       path: String,
-      metadata: Array,
+      // metadata maps test => links
+      metadata: Object,
       displayedMetadata: {
         type: Array,
-        computed: 'computeDisplayedMetadata(path, metadata, products)'
+        computed: 'computeDisplayedMetadata(path, metadata, products)',
+        notify: true,
       },
       firstThree: {
         type: Array,
@@ -182,20 +184,21 @@ class WPTMetadata extends LoadingState(PolymerElement) {
     }
 
     let displayedMetadata = [];
-    for (let i = 0; i < metadata.length; i++) {
-      const node = metadata[i];
-      if (node.test.startsWith(path)) {
-        const urls = metadata[i]['urls'];
-        let urlSet = new Set();
-        urlSet.add('');
-        for (let j = 0; j < urls.length; j++) {
-          if (urlSet.has(urls[j])) {
-            continue;
-          }
-          urlSet.add(urls[j]);
-          const wptMetadataNode = { test: node.test, url: urls[j], product: products[j].browser_name };
-          displayedMetadata.push(wptMetadataNode);
+    for (const test of Object.keys(metadata).filter(k => k.startsWith(path))) {
+      const seenURLs = new Set();
+      seenURLs.add(''); // Avoids accepting empty URLs.
+      for (const link of metadata[test]) {
+        if (seenURLs.has(link.url)) {
+          continue;
         }
+        seenURLs.add(link.url);
+        const wptMetadataNode = {
+          test,
+          subtest: link.subtest,
+          url: link.url,
+          product: link.product,
+        };
+        displayedMetadata.push(wptMetadataNode);
       }
     }
 

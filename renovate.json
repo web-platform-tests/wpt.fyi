@@ -1,0 +1,10 @@
+{
+  "extends": ["config:base"],
+  "enabledManagers": ["gomod", "npm"],
+  "gomod": {
+    "major": {
+      "enabled": false
+    },
+    "postUpdateOptions": ["gomodTidy"]
+  }
+}

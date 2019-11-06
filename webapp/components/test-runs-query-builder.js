@@ -23,7 +23,7 @@ import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
 import './browser-picker.js';
 import './display-logo.js';
 import './info-banner.js';
-import { Channels, DefaultBrowserNames, ProductInfo, SemanticLabels, Sources } from './product-info.js';
+import { AllBrowserNames, Channels, DefaultBrowserNames, ProductInfo, SemanticLabels, Sources } from './product-info.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { WPTFlags } from './wpt-flags.js';
 
@@ -293,7 +293,7 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   handleAddProduct() {
     // TODO(lukebjerring): Make a smart(er) suggestion.
     let next = { browser_name: 'chrome' };
-    for (const d of DefaultBrowserNames) {
+    for (const d of AllBrowserNames) {
       if (this.products.find(p => p.browser_name === d)) {
         continue;
       }
@@ -354,7 +354,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         </template>
 
         <br>
-        <browser-picker browser="{{browserName}}"></browser-picker>
+        <browser-picker browser="{{browserName}}" products="[[allProducts]]"></browser-picker>
 
         <br>
         <paper-dropdown-menu label="Channel" no-animations>

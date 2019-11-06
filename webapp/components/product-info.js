@@ -10,6 +10,7 @@ const DisplayNames = (() => {
   ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
   m.set('uc', 'UC Browser');
+  m.set('webkitgtk', 'WebKitGTK');
   // Platforms
   m.set('android', 'Android');
   m.set('linux', 'Linux');
@@ -33,9 +34,21 @@ const versionPatterns = Object.freeze({
   Major: /(\d+)/,
   MajorAndMinor: /(\d+\.\d+)/,
 });
+
+// The set of all browsers known to the wpt.fyi UI.
+const AllBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari', 'webkitgtk']);
+
+// The list of default browsers used in cases where the user has not otherwise
+// chosen a set of browsers (e.g. which browsers to show runs for). Stored as
+// an ordered list so that the first entry can be used as a consistent default.
 const DefaultBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari']);
 const DefaultProductSpecs = DefaultBrowserNames;
+
+// The above sets, encoded as product objects. This avoids repeatedly calling
+// parseProductSpec when product objects are needed.
+const AllProducts = AllBrowserNames.map(p => Object.freeze(parseProductSpec(p)));
 const DefaultProducts = DefaultProductSpecs.map(p => Object.freeze(parseProductSpec(p)));
+
 const CommitTypes = new Set(['pr_head', 'master']);
 const Channels = new Set(['stable', 'beta', 'experimental']);
 const Sources = new Set(['buildbot', 'taskcluster', 'msedge', 'azure']);
@@ -96,6 +109,14 @@ function parseProduct(name) {
 const ProductInfo = (superClass) => class extends superClass {
   static get properties() {
     return {
+      // Polymer templates can only access variables in the scope of the owning
+      // class. Forward some declarations so that subclasses can use them in
+      // template parameters.
+      allProducts: {
+        type: Array,
+        value: AllProducts,
+        readOnly: true,
+      }
     };
   }
 
@@ -118,7 +139,7 @@ const ProductInfo = (superClass) => class extends superClass {
   }
 
   minorIsSignificant(browserName) {
-    return browserName === 'safari';
+    return browserName === 'safari' || browserName === 'webkitgtk';
   }
 
   /**
@@ -169,6 +190,8 @@ const ProductInfo = (superClass) => class extends superClass {
 };
 
 export {
+  AllBrowserNames,
+  AllProducts,
   DisplayNames,
   DefaultBrowserNames,
   DefaultProductSpecs,

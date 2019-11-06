@@ -112,11 +112,23 @@ suite('<test-run>', () => {
         assert.equal(trf.shortVersion('safari', '56.0a'), '56.0');
       });
 
+      test('valid, major and minor', () => {
+        assert.equal(trf.shortVersion('webkitgtk', '1'), '1');
+        assert.equal(trf.shortVersion('webkitgtk', '2.3'), '2.3');
+        assert.equal(trf.shortVersion('webkitgtk', '3.4.5'), '3.4');
+        assert.equal(trf.shortVersion('webkitgtk', '4.5.6.7'), '4.5');
+        assert.equal(trf.shortVersion('webkitgtk', '765.687'), '765.687');
+        assert.equal(trf.shortVersion('webkitgtk', '   11.0 '), '11.0');
+        assert.equal(trf.shortVersion('webkitgtk', '56.0a'), '56.0');
+      });
+
       test('invalid', () => {
         assert.equal(trf.shortVersion('chrome', 'five'), 'five');
         assert.equal(trf.shortVersion('chrome', ''), '');
         assert.equal(trf.shortVersion('safari', 'five'), 'five');
         assert.equal(trf.shortVersion('safari', ''), '');
+        assert.equal(trf.shortVersion('webkitgtk', 'five'), 'five');
+        assert.equal(trf.shortVersion('webkitgtk', ''), '');
       });
     });
 

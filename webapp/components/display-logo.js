@@ -3,21 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-/*
-`<test-run>` is a stateless component for displaying the details of a TestRun.
 
-The schema for the testRun property is as follows:
-{
-  "browser_name": "",
-  "browser_version": "",
-  "os_name": "",
-  "os_version": "",
-  "revision": "",     // the first 10 characters of the SHA
-  "created_at": "",   // the date the TestRun was uploaded
-}
-
-See models.go for more details.
-*/
 import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -118,14 +104,21 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
     }
     if (labels) {
       labels = new Set(labels);
-      if (labels.has('experimental') || labels.has('dev')) {
-        // Legacy run distinction had name suffix -experimental
-        name.replace(/-experimental$/, '');
-        name += '-dev';
-      } else if (labels.has('beta')) {
-        name += '-beta';
-      } else if (labels.has('canary')) {
-        name += '-canary';
+      let channel;
+      const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
+      for (const label of candidates) {
+        if (labels.has(label)) {
+          channel = label;
+          break;
+        }
+      }
+      // Fall back to treating 'experimental' as 'dev'.
+      // TODO: Remove after https://github.com/web-platform-tests/wpt.fyi/issues/1539.
+      if (!channel && labels.has('experimental')) {
+        channel = 'dev';
+      }
+      if (channel) {
+        name = `${name}-${channel}`;
       }
     }
     return `/static/${name}_64x64.png`;

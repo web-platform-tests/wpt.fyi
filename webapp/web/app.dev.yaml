@@ -13,16 +13,10 @@ inbound_services:
 
 default_expiration: "1d"
 
-env_variables:
-  TASKCLUSTER_ROOT_URL: https://taskcluster.net
-
 # Also refer to dispatch.yaml for higher-priority routing rules.
 handlers:
-# Remote API
-- url: /_ah/remote_api
-  script: auto
 # Special dynamic components:
-- url: /components/wpt-env-flags.js
+- url: /dynamic-components/wpt-env-flags.js
   script: auto
   secure: always
 - url: /node_modules/.*
@@ -59,6 +53,10 @@ handlers:
   script: auto
   secure: always
   login: admin
+
+# Remote API
+- url: /_ah/remote_api
+  script: _go_app
 
 # Everything else (templates & APIs):
 - url: /.*

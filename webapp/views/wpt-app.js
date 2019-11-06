@@ -133,7 +133,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      path="{{subroute.path}}"
                      test-runs="{{testRuns}}"
                      test-paths="{{testPaths}}"
-                     search-results="{{searchResults}}"></wpt-results>
+                     search-results="{{searchResults}}"
+                     metadata="[[metadata]]"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
@@ -145,7 +146,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <template is="dom-if" if="[[!pathIsRootDir]]">
         <template is="dom-if" if="[[displayMetadata]]">
-          <wpt-metadata products="[[products]]" path="[[path]]"></wpt-metadata>
+          <wpt-metadata products="[[products]]"
+                        path="[[path]]"
+                        displayed-metadata="{{metadata}}"></wpt-metadata>
         </template>
       </template>
 
@@ -176,6 +179,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
       },
       searchResults: Array,
+      metadata: Array,
       resultsTotalsRangeMessage: {
         type: String,
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
@@ -283,11 +287,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleSearchAutocomplete(e) {
     this.shadowRoot.querySelector('test-search').clear();
-    let path = e.detail.path;
-    if (path.endsWith('/')) {
-      path = path.substring(0, path.length - 1);
-    }
-    this.set('subroute.path', path);
+    this.set('subroute.path', e.detail.path);
   }
 
   handleAddMasterLabel(e) {

@@ -295,6 +295,12 @@ suite('<test-search>', () => {
       });
     });
 
+    test('contains', () => {
+      assertQueryParse('contains:abc', {
+        exists: [{contains: 'abc'}],
+      });
+    });
+
     test('is', () => {
       assertQueryParse('is:different', {
         exists: [{ is: 'different' }]

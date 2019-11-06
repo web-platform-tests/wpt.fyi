@@ -41,13 +41,13 @@ links:
 	assert.Equal(t, "firefox", metadatamap[path].Links[1].Product.BrowserName)
 	assert.Equal(t, "2", metadatamap[path].Links[1].Product.BrowserVersion)
 	assert.Equal(t, "b.html", metadatamap[path].Links[1].Results[0].TestPath)
-	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
-	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
+	assert.Equal(t, "Something should happen", *(metadatamap[path].Links[1].Results[0].SubtestName))
+	assert.Equal(t, TestStatusFail, *(metadatamap[path].Links[1].Results[0].Status))
 	assert.Equal(t, "https://bug.com/item", metadatamap[path].Links[1].URL)
 	assert.Len(t, metadatamap[path].Links[1].Results, 2)
 	assert.Equal(t, "b.html", metadatamap[path].Links[1].Results[0].TestPath)
-	assert.Equal(t, "Something should happen", metadatamap[path].Links[1].Results[0].SubtestName)
-	assert.Equal(t, TestStatusFail, metadatamap[path].Links[1].Results[0].Status)
+	assert.Equal(t, "Something should happen", *(metadatamap[path].Links[1].Results[0].SubtestName))
+	assert.Equal(t, TestStatusFail, *(metadatamap[path].Links[1].Results[0].Status))
 }
 
 func TestConstructMetadataResponse_OneLink(t *testing.T) {
@@ -55,6 +55,8 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 		ParseProductSpecUnsafe("Firefox-54"),
 		ParseProductSpecUnsafe("Chrome"),
 	}
+	subtestName := "Something should happen"
+	fail := TestStatusFail
 	metadataMap := map[string]Metadata{
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
@@ -70,8 +72,8 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 					URL:     "https://bug.com/item",
 					Results: []MetadataTestResult{{
 						TestPath:    "a.html",
-						SubtestName: "Something should happen",
-						Status:      TestStatusFail,
+						SubtestName: &subtestName,
+						Status:      &fail,
 					}},
 				},
 			},
@@ -81,9 +83,11 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 1, len(MetadataResults))
-	assert.Equal(t, MetadataResults[0].Test, "/foo/bar/a.html")
-	assert.Equal(t, MetadataResults[0].URLs[0], "https://bug.com/item")
-	assert.Equal(t, MetadataResults[0].URLs[1], "https://external.com/item")
+	assert.Equal(t, 2, len(MetadataResults["/foo/bar/a.html"]))
+	assert.Equal(t, "https://external.com/item", MetadataResults["/foo/bar/a.html"][0].URL)
+	assert.True(t, ParseProductSpecUnsafe("chrome").MatchesProductSpec(MetadataResults["/foo/bar/a.html"][0].Product))
+	assert.Equal(t, "https://bug.com/item", MetadataResults["/foo/bar/a.html"][1].URL)
+	assert.True(t, ParseProductSpecUnsafe("firefox").MatchesProductSpec(MetadataResults["/foo/bar/a.html"][1].Product))
 }
 
 func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
@@ -146,12 +150,8 @@ func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
 	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 2, len(MetadataResults))
-	assert.Equal(t, MetadataResults[0].Test, "/foo/bar/a.html")
-	assert.Equal(t, MetadataResults[0].URLs[0], "https://bug.com/item")
-	assert.Equal(t, MetadataResults[0].URLs[1], "")
-	assert.Equal(t, MetadataResults[1].Test, "/foo/bar/b.html")
-	assert.Equal(t, MetadataResults[1].URLs[0], "")
-	assert.Equal(t, MetadataResults[1].URLs[1], "https://external.com/item")
+	assert.Equal(t, MetadataResults["/foo/bar/a.html"][0].URL, "https://bug.com/item")
+	assert.Equal(t, MetadataResults["/foo/bar/b.html"][0].URL, "https://external.com/item")
 }
 
 func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
@@ -183,9 +183,7 @@ func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
 	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 1, len(MetadataResults))
-	assert.Equal(t, MetadataResults[0].Test, "/foo/bar/a.html")
-	assert.Equal(t, MetadataResults[0].URLs[0], "https://bug.com/item")
-	assert.Equal(t, MetadataResults[0].URLs[1], "")
+	assert.Equal(t, MetadataResults["/foo/bar/a.html"][0].URL, "https://bug.com/item")
 }
 
 func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
@@ -218,12 +216,8 @@ func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
 	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
 
 	assert.Equal(t, 2, len(MetadataResults))
-	assert.Equal(t, MetadataResults[0].Test, "/foo/bar/a.html")
-	assert.Equal(t, MetadataResults[0].URLs[0], "https://bug.com/item")
-	assert.Equal(t, MetadataResults[0].URLs[1], "https://bug.com/item")
-	assert.Equal(t, MetadataResults[0].URLs[1], "https://bug.com/item")
-	assert.Equal(t, MetadataResults[1].Test, "/foo/bar/b.html")
-	assert.Equal(t, MetadataResults[1].URLs[0], "")
-	assert.Equal(t, MetadataResults[1].URLs[1], "https://external.com/item")
-	assert.Equal(t, MetadataResults[1].URLs[2], "")
+	assert.Equal(t, 1, len(MetadataResults["/foo/bar/a.html"]))
+	assert.Equal(t, MetadataResults["/foo/bar/a.html"][0].URL, "https://bug.com/item")
+	assert.Equal(t, 1, len(MetadataResults["/foo/bar/b.html"]))
+	assert.Equal(t, MetadataResults["/foo/bar/b.html"][0].URL, "https://external.com/item")
 }
