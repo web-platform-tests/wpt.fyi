@@ -150,6 +150,11 @@ Filters the results to values which possess/exhibit a given quality.
 Filters to rows where there is more than one resulting status for a test
 across the runs.
 
+##### `is:tentative`
+
+Filters to tests that are marked as tentative (currently based on [file
+name](https://web-platform-tests.org/writing-tests/file-names.html)).
+
 #### And-conjuction
 
     [query1] and [query2] [and ...]
