@@ -6,6 +6,7 @@ package shared
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/web-platform-tests/wpt-metadata/util"
 	"gopkg.in/yaml.v2"
@@ -44,8 +45,8 @@ type MetadataLink struct {
 // should apply.
 type MetadataTestResult struct {
 	TestPath    string      `yaml:"test"    json:"test,omitempty"`
-	SubtestName *string     `yaml:"subtest" json:"subtest,omitempty"`
-	Status      *TestStatus `yaml:"status"  json:"status,omitempty"`
+	SubtestName *string     `yaml:"subtest,omitempty" json:"subtest,omitempty"`
+	Status      *TestStatus `yaml:"status,omitempty"  json:"status,omitempty"`
 }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
@@ -108,7 +109,7 @@ func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Me
 			link := data.Links[i]
 			for _, result := range link.Results {
 				//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
-				var fullTestName = "/" + folderPath + "/" + result.TestPath
+				var fullTestName = GetGithubTestPath(folderPath, result.TestPath)
 				for _, productSpec := range productSpecs {
 					// Matches browser type if a version is not specified.
 					if link.Product.MatchesProductSpec(productSpec) ||
@@ -154,4 +155,32 @@ func PrepareLinkFilter(metadata MetadataResults) map[string][]string {
 		}
 	}
 	return metadataMap
+}
+
+// GetGithubTestPath concatenates a folder path and a test name into a Github path.
+func GetGithubTestPath(folderPath string, testname string) string {
+	if folderPath == "" {
+		return "/" + testname
+	}
+	return "/" + folderPath + "/" + testname
+}
+
+// SplitGithubTestPath splits a Github path into a folder path and a test name.
+func SplitGithubTestPath(githubPath string) (string, string) {
+	if !strings.HasPrefix(githubPath, "/") {
+		return "", ""
+	}
+
+	pathArray := strings.Split(githubPath, "/")
+	if len(pathArray) == 0 {
+		return "", ""
+	}
+
+	if len(pathArray) == 1 {
+		return "", pathArray[0]
+	}
+
+	folderPath := strings.Join(pathArray[:len(pathArray)-1], "/")
+	testName := pathArray[len(pathArray)-1]
+	return folderPath, testName
 }

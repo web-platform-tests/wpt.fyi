@@ -185,8 +185,47 @@ func (tm triageMetadata) mergeToGithub(triagedMetadataMap map[string][]byte) err
 	return nil
 }
 
-func (tm triageMetadata) addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Metadata) (map[string][]byte, error) {
+func (tm triageMetadata) addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Metadata) map[string][]byte {
+	res := make(map[string][]byte)
+	for test, links := range metadata {
+		folderName, _ := shared.SplitGithubTestPath(test)
+		appendTestName(test, metadata)
+		// If the META.YML does not exist in the repository.
+		if _, ok := filesMap[folderName]; !ok {
+			filesMap[folderName] = shared.Metadata{links}
+			continue
+		}
 
+		// Folder already exists.
+		for _, link := range links {
+			existingMetadata := filesMap[folderName]
+			for index, existingLink := range existingMetadata.Links {
+				if link.URL == existingLink.URL && link.Product.MatchesProductSpec(existingLink.Product) {
+					// Add MetadataResult to the existing result.
+					filesMap[folderName].Links[index].Results = append(existingMetadata.Links[index].Results, link.Results...)
+					continue
+				}
+			}
+			// Add MetadataLink to the existing Link.
+			filesMap[folderName] = shared.Metadata{append(filesMap[folderName].Links, link)}
+		}
+	}
+
+	for test := range metadata {
+		folderName, _ := shared.SplitGithubTestPath(test)
+		res[folderName] = filesMap[folderName]
+	}
+	return res
+}
+
+func appendTestName(test string, metadata shared.MetadataResults) {
+	links := metadata[test]
+	_, testName := shared.SplitGithubTestPath(test)
+	for _, link := range links {
+		for _, result := range link.Results {
+			result.TestPath = testName
+		}
+	}
 }
 
 func (tm triageMetadata) triage(metadata shared.MetadataResults) error {
@@ -195,7 +234,7 @@ func (tm triageMetadata) triage(metadata shared.MetadataResults) error {
 		return err
 	}
 
-	triagedMetadataMap, err := tm.addToFiles(metadata, filesMap)
+	triagedMetadataMap := tm.addToFiles(metadata, filesMap)
 	if err != nil {
 		return err
 	}
