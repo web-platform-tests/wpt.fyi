@@ -324,6 +324,15 @@ func (q MetadataQuality) Filter(t TestID) bool {
 			return false
 		}
 		return strings.Contains(name, ".tentative.")
+	case query.MetadataQualityOptional:
+		// is:optional only returns rows from tests with .optional.
+		// in their name. See
+		// https://web-platform-tests.org/writing-tests/file-names.html
+		name, _, err := q.tests.GetName(t)
+		if (err != nil) {
+			return false
+		}
+		return strings.Contains(name, ".optional.")
 	default:
 		return false
 	}
