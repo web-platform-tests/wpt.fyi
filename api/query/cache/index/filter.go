@@ -328,6 +328,8 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		// is:optional only returns rows from tests with .optional.
 		// in their name. See
 		// https://web-platform-tests.org/writing-tests/file-names.html
+		// TODO(gh-1619): Handle the CSS meta flags; see
+		// https://web-platform-tests.org/writing-tests/css-metadata.html#requirement-flags
 		name, _, err := q.tests.GetName(t)
 		if (err != nil) {
 			return false
