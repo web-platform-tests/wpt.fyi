@@ -64,7 +64,7 @@
     "@polymer/paper-toast": "3.0.1",
     "@polymer/paper-toggle-button": "3.0.1",
     "@polymer/paper-tooltip": "3.0.1",
-    "@polymer/polymer": "3.3.0",
+    "@polymer/polymer": "3.3.1",
     "@vaadin/vaadin-date-picker": "4.0.5",
     "@webcomponents/webcomponentsjs": "2.3.0",
     "pluralize": "8.0.0"
