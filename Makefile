@@ -42,7 +42,7 @@ python_test: python3 tox
 # NOTE: We prune before generate, because node_modules are packr'd into the
 # binary (and part of the build).
 go_build: git mockgen packr2
-	make webapp_node_modules_prune
+	make webapp_node_modules_prod
 	go generate ./...
 	go build ./...
 
@@ -257,13 +257,10 @@ deploy_production: deployment_state
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
-webapp_node_modules: node
-	cd webapp; npm install --production
-
 webapp_node_modules_all: node
 	cd webapp; npm install
 
-webapp_node_modules_prune: webapp_node_modules
+webapp_node_modules_prod: webapp_node_modules_all
 	cd webapp; npm prune --production
 
 xvfb:
