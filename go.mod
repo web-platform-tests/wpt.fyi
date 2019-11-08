@@ -40,7 +40,7 @@ require (
 	golang.org/x/tools v0.0.0-20191017163857-e4d7c6f25b8e // indirect
 	google.golang.org/api v0.13.0
 	google.golang.org/appengine v1.6.5
-	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03
+	google.golang.org/genproto v0.0.0-20191108220845-16a3f7862a1a
 	google.golang.org/grpc v1.24.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2
