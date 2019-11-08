@@ -16,6 +16,7 @@ import (
 
 	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"gopkg.in/yaml.v2"
 )
 
 //TODO: Modify these after learning about the gitclient
@@ -66,20 +67,14 @@ func (tm triageMetadata) getRef() (ref *github.Reference, err error) {
 
 // getTree generates the tree to commit based on the given files and the commit
 // of the ref you got in getRef.
-func (tm triageMetadata) getTree(ref *github.Reference) (tree *github.Tree, err error) {
+func (tm triageMetadata) getTree(ref *github.Reference, triagedMetadataMap map[string][]byte) (tree *github.Tree, err error) {
 	client := tm.githubClient
 	// Create a tree with what to commit.
 	entries := []github.TreeEntry{}
 
-	// TODO: GET THE OLD FILE FROM THE TRIP OF THE TRIP AND MODIFY IT FOR METADATA -> READ a single file at a time/ or download the repository using the exising metadata.go in shared
-	for _, fileArg := range strings.Split(sourceFiles, ",") {
-		// TODO: override this to amend the metadata.
-		file, content, err := tm.getFileContent(fileArg)
-		if err != nil {
-			return nil, err
-		}
-		fmt.Println("content")
-		entries = append(entries, github.TreeEntry{Path: github.String(file), Type: github.String("blob"), Content: github.String(string(content)), Mode: github.String("100644")})
+	for folderPath, content := range triagedMetadataMap {
+		dest := shared.GetMetadataFilePath(folderPath)
+		entries = append(entries, github.TreeEntry{Path: github.String(dest), Type: github.String("blob"), Content: github.String(string(content)), Mode: github.String("100644")})
 	}
 
 	tree, _, err = client.Git.CreateTree(tm.ctx, sourceOwner, sourceRepo, *ref.Object.SHA, entries)
@@ -166,7 +161,7 @@ func (tm triageMetadata) mergeToGithub(triagedMetadataMap map[string][]byte) err
 		log.Fatalf("No error where returned but the reference is nil")
 	}
 
-	tree, err := tm.getTree(ref)
+	tree, err := tm.getTree(ref, triagedMetadataMap)
 	if err != nil {
 		log.Fatalf("Unable to create the tree based on the provided files: %s\n", err)
 		return err
@@ -188,42 +183,52 @@ func (tm triageMetadata) mergeToGithub(triagedMetadataMap map[string][]byte) err
 func (tm triageMetadata) addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Metadata) map[string][]byte {
 	res := make(map[string][]byte)
 	for test, links := range metadata {
-		folderName, _ := shared.SplitGithubTestPath(test)
+		folderName, _ := shared.SplitWPTTestPath(test)
 		appendTestName(test, metadata)
 		// If the META.YML does not exist in the repository.
 		if _, ok := filesMap[folderName]; !ok {
-			filesMap[folderName] = shared.Metadata{links}
+			filesMap[folderName] = shared.Metadata{Links: links}
 			continue
 		}
 
 		// Folder already exists.
 		for _, link := range links {
 			existingMetadata := filesMap[folderName]
+			hasMerged := false
 			for index, existingLink := range existingMetadata.Links {
 				if link.URL == existingLink.URL && link.Product.MatchesProductSpec(existingLink.Product) {
-					// Add MetadataResult to the existing result.
+					// Add new MetadataResult to the existing link.
 					filesMap[folderName].Links[index].Results = append(existingMetadata.Links[index].Results, link.Results...)
-					continue
+					hasMerged = true
+					break
 				}
 			}
-			// Add MetadataLink to the existing Link.
-			filesMap[folderName] = shared.Metadata{append(filesMap[folderName].Links, link)}
+
+			// Add new MetadataLink to the existing Link if no link was found.
+			if !hasMerged {
+				filesMap[folderName] = shared.Metadata{Links: append(filesMap[folderName].Links, link)}
+			}
 		}
 	}
 
 	for test := range metadata {
-		folderName, _ := shared.SplitGithubTestPath(test)
-		res[folderName] = filesMap[folderName]
+		folderName, _ := shared.SplitWPTTestPath(test)
+		metadataBytes, err := yaml.Marshal(filesMap[folderName])
+		if err != nil {
+			tm.logger.Errorf("Error from marshal %s: %s", folderName, err.Error())
+			continue
+		}
+		res[folderName] = metadataBytes
 	}
 	return res
 }
 
 func appendTestName(test string, metadata shared.MetadataResults) {
 	links := metadata[test]
-	_, testName := shared.SplitGithubTestPath(test)
-	for _, link := range links {
-		for _, result := range link.Results {
-			result.TestPath = testName
+	_, testName := shared.SplitWPTTestPath(test)
+	for linkIndex, link := range links {
+		for resultIndex := range link.Results {
+			metadata[test][linkIndex].Results[resultIndex].TestPath = testName
 		}
 	}
 }
@@ -235,9 +240,5 @@ func (tm triageMetadata) triage(metadata shared.MetadataResults) error {
 	}
 
 	triagedMetadataMap := tm.addToFiles(metadata, filesMap)
-	if err != nil {
-		return err
-	}
-
 	return tm.mergeToGithub(triagedMetadataMap)
 }

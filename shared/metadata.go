@@ -19,6 +19,9 @@ var MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-me
 // with a test result query request.
 const ShowMetadataParam = "metadataInfo"
 
+// MetadataFileName is the name of Metadata files in the wpt-metadata repo.
+const MetadataFileName = "META.yml"
+
 // MetadataResults is a map from test paths to all of the links under that test path.
 // It represents a flattened copy of the wpt-metadata repository, which has metadata
 // sharded across as large number of files in a directory structure.
@@ -41,7 +44,7 @@ type MetadataLink struct {
 	Results []MetadataTestResult `yaml:"results" json:"results,omitempty"`
 }
 
-// MetadataTestResult is a filter for test results to which the metadata link
+// MetadataTestResult is a filter for test results to which the Metadata link
 // should apply.
 type MetadataTestResult struct {
 	TestPath    string      `yaml:"test"    json:"test,omitempty"`
@@ -109,7 +112,7 @@ func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Me
 			link := data.Links[i]
 			for _, result := range link.Results {
 				//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
-				var fullTestName = GetGithubTestPath(folderPath, result.TestPath)
+				var fullTestName = GetWPTTestPath(folderPath, result.TestPath)
 				for _, productSpec := range productSpecs {
 					// Matches browser type if a version is not specified.
 					if link.Product.MatchesProductSpec(productSpec) ||
@@ -157,16 +160,16 @@ func PrepareLinkFilter(metadata MetadataResults) map[string][]string {
 	return metadataMap
 }
 
-// GetGithubTestPath concatenates a folder path and a test name into a Github path.
-func GetGithubTestPath(folderPath string, testname string) string {
+// GetWPTTestPath concatenates a folder path and a test name into a WPT test path.
+func GetWPTTestPath(folderPath string, testname string) string {
 	if folderPath == "" {
 		return "/" + testname
 	}
 	return "/" + folderPath + "/" + testname
 }
 
-// SplitGithubTestPath splits a Github path into a folder path and a test name.
-func SplitGithubTestPath(githubPath string) (string, string) {
+// SplitWPTTestPath splits a WPT test path into a folder path and a test name.
+func SplitWPTTestPath(githubPath string) (string, string) {
 	if !strings.HasPrefix(githubPath, "/") {
 		return "", ""
 	}
@@ -183,4 +186,9 @@ func SplitGithubTestPath(githubPath string) (string, string) {
 	folderPath := strings.Join(pathArray[:len(pathArray)-1], "/")
 	testName := pathArray[len(pathArray)-1]
 	return folderPath, testName
+}
+
+// GetMetadataFilePath appends MetadataFileName to a Metadata folder path.
+func GetMetadataFilePath(folderName string) string {
+	return folderName + "/" + MetadataFileName
 }
