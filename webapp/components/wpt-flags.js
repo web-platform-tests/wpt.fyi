@@ -240,7 +240,7 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{webPlatformTestsLive}}">
-        Use web-platform-tests.live.
+        Use wpt.live.
       </paper-checkbox>
     </paper-item>
     <paper-item>
