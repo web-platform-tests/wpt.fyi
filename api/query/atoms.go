@@ -265,6 +265,9 @@ const (
 	// MetadataQualityTentative represents an is:tentative atom.
 	// "tentative" ensures that the results are from a tentative test.
 	MetadataQualityTentative
+	// MetadataQualityOptional represents an is:optional atom.
+	// "optional" ensures that the results are from an optional test.
+	MetadataQualityOptional
 )
 
 // BindToRuns for MetadataQuality is a no-op; it is independent of test runs.
@@ -907,6 +910,8 @@ func MetadataQualityFromString(quality string) (MetadataQuality, error) {
 		return MetadataQualityDifferent, nil
 	case "tentative":
 		return MetadataQualityTentative, nil
+	case "optional":
+		return MetadataQualityOptional, nil
 	}
 	return MetadataQualityUnknown, fmt.Errorf(`Unknown "is" quality "%s"`, quality)
 }

@@ -155,6 +155,15 @@ across the runs.
 Filters to tests that are marked as tentative (currently based on [file
 name](https://web-platform-tests.org/writing-tests/file-names.html)).
 
+##### `is:optional`
+
+Filters to tests that are marked as optional (currently based on [file
+name](https://web-platform-tests.org/writing-tests/file-names.html)).
+
+**Note**: At this time, the `may` and `should` [metadata
+flags](https://web-platform-tests.org/writing-tests/css-metadata.html#requirement-flags)
+are not supported.
+
 #### And-conjuction
 
     [query1] and [query2] [and ...]
