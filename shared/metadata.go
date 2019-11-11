@@ -174,7 +174,7 @@ func SplitWPTTestPath(githubPath string) (string, string) {
 		return "", ""
 	}
 
-	pathArray := strings.Split(githubPath, "/")
+	pathArray := strings.Split(githubPath, "/")[1:]
 	if len(pathArray) == 0 {
 		return "", ""
 	}
