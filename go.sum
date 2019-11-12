@@ -182,8 +182,8 @@ github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An
 github.com/spf13/viper v1.3.2/go.mod h1:ZiWeW+zYFKm7srdB9IoDzzZXaJaI5eL9QjNiN/DMA2s=
 github.com/src-d/gcfg v1.4.0 h1:xXbNR5AlLSA315x2UO+fTSSAXCDf+Ar38/6oyGbDKQ4=
 github.com/src-d/gcfg v1.4.0/go.mod h1:p/UMsR43ujA89BJY9duynAwIpvqEujIH/jFlfL7jWoI=
-github.com/stoewer/go-strcase v1.0.2 h1:l3iQ2FPu8+36ars/7syO1dQAkjwMCb1IE3J+Th0ohfE=
-github.com/stoewer/go-strcase v1.0.2/go.mod h1:eLfe5bL3qbL7ep/KafHzthxejrOF5J3xmt03uL5tzek=
+github.com/stoewer/go-strcase v1.1.0 h1:LYi3yl9/mBw9RO3PbYclr+ztp2PNRL0gTobczsVJ5Ic=
+github.com/stoewer/go-strcase v1.1.0/go.mod h1:G7YglbHPK5jX3JcWljxVXRXPh90/dtxfy6xWqxu5b90=
 github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
