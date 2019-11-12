@@ -65,7 +65,7 @@ func TestAppendTestName(t *testing.T) {
 }
 
 func TestAddToFiles_AddNewFile(t *testing.T) {
-	tm := triageMetadata{ctx: nil, githubClient: nil, logger: shared.NewNilLogger(), httpClient: nil}
+	tm := triageMetadata{ctx: nil, metadataGithub: metadataGithub{}, logger: shared.NewNilLogger(), httpClient: nil}
 	var amendment shared.MetadataResults
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/bar.html": [
@@ -116,7 +116,7 @@ links:
 }
 
 func TestAddToFiles_AddNewMetadataResult(t *testing.T) {
-	tm := triageMetadata{ctx: nil, githubClient: nil, logger: shared.NewNilLogger(), httpClient: nil}
+	tm := triageMetadata{ctx: nil, metadataGithub: metadataGithub{}, logger: shared.NewNilLogger(), httpClient: nil}
 	var amendment shared.MetadataResults
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/a.html": [
@@ -170,7 +170,7 @@ links:
 }
 
 func TestAddToFiles_AddNewMetadataLink(t *testing.T) {
-	tm := triageMetadata{ctx: nil, githubClient: nil, logger: shared.NewNilLogger(), httpClient: nil}
+	tm := triageMetadata{ctx: nil, metadataGithub: metadataGithub{}, logger: shared.NewNilLogger(), httpClient: nil}
 	var amendment shared.MetadataResults
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/a.html": [

@@ -74,7 +74,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check cookies and verification.
+	// TODO: Check cookies and verification. Get email and name
 	//user := webapp.getUserFromCookie(r)
 	//if user == nil {
 	//	http.Error(w, "Unauthorized request, please log in first", http.StatusBadRequest)
@@ -88,7 +88,8 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tm := triageMetadata{ctx: ctx, githubClient: githubClient, logger: logger, httpClient: client}
+	git := metadataGithub{githubClient: githubClient, authorName: "kyleju", authorEmail: "kyleju@live.com"}
+	tm := triageMetadata{ctx: ctx, metadataGithub: git, logger: logger, httpClient: client}
 	err = tm.triage(metadata)
 	if err != nil {
 		http.Error(w, "Unable to triage metadata: "+err.Error(), http.StatusInternalServerError)

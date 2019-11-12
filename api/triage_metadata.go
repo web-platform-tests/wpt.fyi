@@ -19,26 +19,29 @@ import (
 
 //TODO: Modify these after learning about the gitclient
 var (
-	sourceOwner   = "kyleju"
-	sourceRepo    = "Bayesian_Inference"
-	commitMessage = "random commit testing from"
+	sourceOwner   = "web-platform-tests"
+	sourceRepo    = "wpt-metadata"
+	commitMessage = "Random commit"
 	commitBranch  = "commit-testing-branch123"
 	baseBranch    = "master"
-	prRepoOwner   = "kyleju"
-	prRepo        = "Bayesian_Inference"
-	prBranch      = "master"
-	prSubject     = "tesing for PR"
-	prDescription = "whatever"
-	sourceFiles   = "distribution.py"
-	authorName    = "kyle"
-	authorEmail   = "kyleju@live.com"
+	prRepoOwner   = sourceOwner
+	prRepo        = sourceRepo
+	prBranch      = baseBranch
+	prSubject     = "Triage Metadata Test"
+	prDescription = "Testing for Triage Metadata"
 )
 
 type triageMetadata struct {
-	ctx          context.Context
+	ctx context.Context
+	metadataGithub
+	logger     shared.Logger
+	httpClient *http.Client
+}
+
+type metadataGithub struct {
 	githubClient *github.Client
-	logger       shared.Logger
-	httpClient   *http.Client
+	authorName   string
+	authorEmail  string
 }
 
 // TODO: Create a branch fresh out of master every time.
@@ -92,7 +95,7 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 
 	// Create the commit using the tree.
 	date := time.Now()
-	author := &github.CommitAuthor{Date: &date, Name: &authorName, Email: &authorEmail}
+	author := &github.CommitAuthor{Date: &date, Name: &tm.authorName, Email: &tm.authorEmail}
 	commit := &github.Commit{Author: author, Message: &commitMessage, Tree: tree, Parents: []github.Commit{*parent.Commit}}
 	newCommit, _, err := client.Git.CreateCommit(tm.ctx, sourceOwner, sourceRepo, commit)
 	if err != nil {
