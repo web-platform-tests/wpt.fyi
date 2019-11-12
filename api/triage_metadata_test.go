@@ -114,3 +114,111 @@ links:
 	assert.Equal(t, "bar.html", actual.Links[0].Results[0].TestPath)
 	assert.Equal(t, shared.TestStatusFail, *actual.Links[0].Results[0].Status)
 }
+
+func TestAddToFiles_AddNewMetadataResult(t *testing.T) {
+	tm := triageMetadata{ctx: nil, githubClient: nil, logger: shared.NewNilLogger(), httpClient: nil}
+	var amendment shared.MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/foo1/a.html": [
+			{
+				"url": "foo",
+				"product": "chrome",
+				"results": [
+					{"status": 6 }
+				]
+			}
+		]
+	}`), &amendment)
+
+	var path = "foo/foo1"
+	var fileMap = make(map[string]shared.Metadata)
+	fileInBytes := []byte(`
+links:
+  - product: chrome
+    url: foo
+    results:
+    - test: b.html
+  - product: firefox-2
+    url: https://bug.com/item
+    results:
+    - test: b.html
+      subtest: Something should happen
+      status: FAIL
+    - test: c.html
+`)
+	var file shared.Metadata
+	yaml.Unmarshal(fileInBytes, &file)
+	fileMap[path] = file
+
+	actualMap := tm.addToFiles(amendment, fileMap)
+
+	assert.Equal(t, 1, len(actualMap))
+	actualInBytes, ok := actualMap["foo/foo1"]
+	assert.True(t, ok)
+
+	var actual shared.Metadata
+	yaml.Unmarshal(actualInBytes, &actual)
+	assert.Equal(t, 2, len(actual.Links))
+	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
+	assert.Equal(t, "foo", actual.Links[0].URL)
+	assert.Equal(t, 2, len(actual.Links[0].Results))
+	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
+	assert.Equal(t, "a.html", actual.Links[0].Results[1].TestPath)
+	assert.Equal(t, shared.TestStatusFail, *actual.Links[0].Results[1].Status)
+	assert.Equal(t, "firefox", actual.Links[1].Product.BrowserName)
+	assert.Equal(t, "https://bug.com/item", actual.Links[1].URL)
+}
+
+func TestAddToFiles_AddNewMetadataLink(t *testing.T) {
+	tm := triageMetadata{ctx: nil, githubClient: nil, logger: shared.NewNilLogger(), httpClient: nil}
+	var amendment shared.MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/foo1/a.html": [
+			{
+				"url": "foo1",
+				"product": "chrome",
+				"results": [
+					{"status": 6 }
+				]
+			}
+		]
+	}`), &amendment)
+
+	var path = "foo/foo1"
+	var fileMap = make(map[string]shared.Metadata)
+	fileInBytes := []byte(`
+links:
+  - product: chrome
+    url: foo
+    results:
+    - test: b.html
+  - product: firefox-2
+    url: https://bug.com/item
+    results:
+    - test: b.html
+      subtest: Something should happen
+      status: FAIL
+    - test: c.html
+`)
+	var file shared.Metadata
+	yaml.Unmarshal(fileInBytes, &file)
+	fileMap[path] = file
+
+	actualMap := tm.addToFiles(amendment, fileMap)
+
+	assert.Equal(t, 1, len(actualMap))
+	actualInBytes, ok := actualMap["foo/foo1"]
+	assert.True(t, ok)
+
+	var actual shared.Metadata
+	yaml.Unmarshal(actualInBytes, &actual)
+	assert.Equal(t, 3, len(actual.Links))
+	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
+	assert.Equal(t, "foo", actual.Links[0].URL)
+	assert.Equal(t, 1, len(actual.Links[0].Results))
+	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
+	assert.Equal(t, "firefox", actual.Links[1].Product.BrowserName)
+	assert.Equal(t, "https://bug.com/item", actual.Links[1].URL)
+	assert.Equal(t, "chrome", actual.Links[2].Product.BrowserName)
+	assert.Equal(t, "foo1", actual.Links[2].URL)
+}
