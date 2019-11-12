@@ -158,6 +158,7 @@ func (tm triageMetadata) mergeToGithub(triagedMetadataMap map[string][]byte) err
 	return nil
 }
 
+// Add Metadata into the existing Metadata YML files and only return modified files.
 func (tm triageMetadata) addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Metadata) map[string][]byte {
 	res := make(map[string][]byte)
 	for test, links := range metadata {

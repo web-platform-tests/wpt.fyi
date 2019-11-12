@@ -162,3 +162,8 @@ func (p *ProductSpec) UnmarshalYAML(unmarshal func(interface{}) error) (err erro
 	*p, err = ParseProductSpec(s)
 	return err
 }
+
+// MarshalYAML marshals ProductSpec in string.
+func (p ProductSpec) MarshalYAML() (interface{}, error) {
+	return p.String(), nil
+}

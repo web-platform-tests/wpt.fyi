@@ -1,0 +1,116 @@
+// Copyright 2019 The WPT Dashboard Project. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+package api
+
+import (
+	"encoding/json"
+	"testing"
+
+	"gopkg.in/yaml.v2"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/web-platform-tests/wpt.fyi/shared"
+)
+
+func TestAppendTestName(t *testing.T) {
+	var actual, expected shared.MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/bar.html": [
+			{
+				"url": "bugs.bar?id=456",
+				"product": "chrome",
+				"results": [
+					{"status": 6 }
+				]
+			}
+		],
+		"/foo1/bar1.html": [
+			{
+				"product": "chrome",
+				"url": "bugs.bar",
+				"results": [
+					{"status": 6 },
+					{"status": 3 }
+				]}
+		]
+	}`), &actual)
+
+	json.Unmarshal([]byte(`{
+		"/foo/bar.html": [
+			{
+				"url": "bugs.bar?id=456",
+				"product": "chrome",
+				"results": [
+					{"status": 6 }
+				]
+			}
+		],
+		"/foo1/bar1.html": [
+			{
+				"product": "chrome",
+				"url": "bugs.bar",
+				"results": [
+					{"status": 6, "test": "bar1.html"},
+					{"status": 3, "test": "bar1.html"}
+				]}
+		]
+	}`), &expected)
+	test := "/foo1/bar1.html"
+
+	appendTestName(test, actual)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestAddToFiles_AddNewFile(t *testing.T) {
+	tm := triageMetadata{ctx: nil, githubClient: nil, logger: shared.NewNilLogger(), httpClient: nil}
+	var amendment shared.MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/foo1/bar.html": [
+			{
+				"url": "bugs.bar?id=456",
+				"product": "chrome",
+				"results": [
+					{"status": 6 }
+				]
+			}
+		]
+	}`), &amendment)
+
+	var path = "a"
+	var fileMap = make(map[string]shared.Metadata)
+	fileInBytes := []byte(`
+links:
+  - product: chrome-64
+    url: https://external.com/item
+    results:
+    - test: a.html
+  - product: firefox-2
+    url: https://bug.com/item
+    results:
+    - test: b.html
+      subtest: Something should happen
+      status: FAIL
+    - test: c.html
+`)
+	var file shared.Metadata
+	yaml.Unmarshal(fileInBytes, &file)
+	fileMap[path] = file
+
+	actualMap := tm.addToFiles(amendment, fileMap)
+
+	assert.Equal(t, 1, len(actualMap))
+	actualInBytes, ok := actualMap["foo/foo1"]
+	assert.True(t, ok)
+
+	var actual shared.Metadata
+	yaml.Unmarshal(actualInBytes, &actual)
+	assert.Equal(t, 1, len(actual.Links))
+	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
+	assert.Equal(t, "bugs.bar?id=456", actual.Links[0].URL)
+	assert.Equal(t, 1, len(actual.Links[0].Results))
+	assert.Equal(t, "bar.html", actual.Links[0].Results[0].TestPath)
+	assert.Equal(t, shared.TestStatusFail, *actual.Links[0].Results[0].Status)
+}

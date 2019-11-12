@@ -29,7 +29,7 @@ type MetadataResults map[string]MetadataLinks
 
 // Metadata represents a wpt-metadata META.yml file.
 type Metadata struct {
-	Links MetadataLinks
+	Links MetadataLinks `yaml:"links"`
 }
 
 // MetadataLinks is a helper type for a MetadataLink slice.

@@ -10,7 +10,33 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
+
+func TestMarshalMetadata(t *testing.T) {
+	var metadata Metadata
+	var metadataInBytes = []byte(`
+links:
+  - product: chrome-64
+    url: https://external.com/item
+    results:
+    - test: a.html
+  - product: firefox-2
+    url: https://bug.com/item
+    results:
+    - test: b.html
+      subtest: Something should happen
+      status: FAIL
+    - test: c.html
+`)
+	yaml.Unmarshal(metadataInBytes, &metadata)
+	acutalInBytes, _ := yaml.Marshal(metadata)
+
+	var actual Metadata
+	yaml.Unmarshal(acutalInBytes, &actual)
+
+	assert.Equal(t, metadata, actual)
+}
 
 func TestParseMetadata(t *testing.T) {
 	var path = "foo/bar"

@@ -185,3 +185,8 @@ func (s *TestStatus) UnmarshalYAML(unmarshal func(interface{}) error) (err error
 	}
 	return err
 }
+
+// MarshalYAML marshals TestStatus in string.
+func (s *TestStatus) MarshalYAML() (interface{}, error) {
+	return s.String(), nil
+}
