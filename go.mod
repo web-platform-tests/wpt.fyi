@@ -23,7 +23,7 @@ require (
 	github.com/rogpeppe/go-internal v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stoewer/go-strcase v1.0.2
+	github.com/stoewer/go-strcase v1.1.0
 	github.com/stretchr/testify v1.4.0
 	github.com/taskcluster/taskcluster-lib-urls v12.0.0+incompatible
 	github.com/taskcluster/taskcluster/clients/client-go/v22 v22.1.1
