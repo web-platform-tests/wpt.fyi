@@ -4,13 +4,6 @@
  * found in the LICENSE file.
  */
 
-/* eslint-disable no-unused-vars */
-function Response(jsonValue) {
-  this.ok = true;
-  this.status = 200;
-  this.json = () => Promise.resolve(jsonValue);
-}
-
 async function waitingOn(predicate) {
   return await new Promise(resolve => {
     let interval = setInterval(() => {
