@@ -240,7 +240,7 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{webPlatformTestsLive}}">
-        Use web-platform-tests.live.
+        Use wpt.live.
       </paper-checkbox>
     </paper-item>
     <paper-item>
@@ -262,7 +262,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
 }
 window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
 
-/* global wpt */
 class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ true) {
   static get template() {
     return html`

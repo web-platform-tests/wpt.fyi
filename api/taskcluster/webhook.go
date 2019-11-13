@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -17,7 +16,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/v28/github"
 	tcurls "github.com/taskcluster/taskcluster-lib-urls"
-	"github.com/taskcluster/taskcluster/clients/client-go/v19/tcqueue"
+	"github.com/taskcluster/taskcluster/clients/client-go/v22/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -30,10 +29,11 @@ var (
 	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
 	// with a notable exception that "*-stability" runs are not included at the moment.
 	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
-	// This is the pattern for task detail URLs coming from Checks API.
-	inspectorURLRegex = regexp.MustCompile("/task-group-inspector/#/([^/]*)")
-	// This is the pattern for task detail URLs coming from Status API.
-	taskURLRegex = regexp.MustCompile("/groups/([^/]*)/tasks/([^/]*)")
+	// Taskcluster has used different forms of URLs in their Check & Status
+	// updates in history. We accept all of them.
+	// See TestExtractTaskGroupID for examples.
+	inspectorURLRegex = regexp.MustCompile(`^(https://[^/]*)/task-group-inspector/#/([^/]*)`)
+	taskURLRegex      = regexp.MustCompile(`^(https://[^/]*)(?:/tasks)?/groups/([^/]*)(?:/tasks/([^/]*))?`)
 )
 
 // Non-fatal error when there is no result (e.g. nothing finishes yet).
@@ -84,7 +84,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 			if status.TargetURL == nil {
 				return false, errors.New("No target_url on taskcluster status event")
 			}
-			taskGroupID, taskID := extractTaskGroupID(*status.TargetURL)
+			rootURL, taskGroupID, taskID := parseTaskclusterURL(*status.TargetURL)
 			if taskGroupID == "" {
 				return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
 			}
@@ -100,7 +100,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 				labels.Add(shared.GetUserLabel(sender))
 			}
 
-			return processTaskclusterBuild(aeAPI, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
+			return processTaskclusterBuild(aeAPI, rootURL, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
 		}()
 	}
 
@@ -134,7 +134,8 @@ func (s statusEventPayload) IsCompleted() bool {
 }
 
 func (s statusEventPayload) IsTaskcluster() bool {
-	return s.Context != nil && strings.HasPrefix(*s.Context, "Taskcluster")
+	return s.Context != nil && (strings.HasPrefix(*s.Context, "Taskcluster") ||
+		strings.HasPrefix(*s.Context, "Community-TC"))
 }
 
 func (s statusEventPayload) IsOnMaster() bool {
@@ -166,10 +167,9 @@ func (b branchInfos) GetNames() []string {
 	return names
 }
 
-func processTaskclusterBuild(aeAPI shared.AppEngineAPI, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
+func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
 	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
-	rootURL := os.Getenv("TASKCLUSTER_ROOT_URL")
 
 	log.Debugf("Taskcluster task group %s", taskGroupID)
 	if taskID != "" {
@@ -221,14 +221,22 @@ func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *sta
 	return true
 }
 
-func extractTaskGroupID(targetURL string) (string, string) {
-	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); len(matches) > 1 {
-		return matches[1], ""
+func parseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string) {
+	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); matches != nil {
+		rootURL = matches[1]
+		taskGroupID = matches[2]
+	} else if matches := taskURLRegex.FindStringSubmatch(targetURL); matches != nil {
+		rootURL = matches[1]
+		taskGroupID = matches[2]
+		// matches[3] may be an empty string -- the capturing group is optional.
+		taskID = matches[3]
 	}
-	if matches := taskURLRegex.FindStringSubmatch(targetURL); len(matches) > 2 {
-		return matches[1], matches[2]
+	// Special case for old Taskcluster instance, which uses subdomains for
+	// different services and we need to strip the subdomain away.
+	if strings.HasSuffix(rootURL, "taskcluster.net") {
+		rootURL = "https://taskcluster.net"
 	}
-	return "", ""
+	return rootURL, taskGroupID, taskID
 }
 
 type taskGroupInfo struct {

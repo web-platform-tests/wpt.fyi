@@ -145,6 +145,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     metadataQualityLiteral
       = caseInsensitive<"different">
+      | caseInsensitive<"tentative">
+      | caseInsensitive<"optional">
 
     nameFragment
       = basicNameFragment                       -- basic

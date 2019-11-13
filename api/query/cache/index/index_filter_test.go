@@ -464,6 +464,151 @@ func TestBindExecute_Link(t *testing.T) {
 	assert.Equal(t, expectedResult, srs[0])
 }
 
+func TestBindExecute_IsDifferent(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+		testRunData{
+			shared.TestRun{ID: 2},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "PASS",
+					},
+				},
+			},
+		},
+	})
+
+	quality := query.MetadataQualityDifferent
+	plan, err := idx.Bind(runs, quality)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: "/d/e/f", // /a/b/c was the same, /d/e/f differed.
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{Passes: 0, Total: 1},
+			shared.LegacySearchRunResult{Passes: 1, Total: 1},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
+}
+
+func TestBindExecute_IsTentative(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/a/b/c.tentative.html",
+						Status: "PASS",
+					},
+				},
+			},
+		},
+	})
+
+	quality := query.MetadataQualityTentative
+	plan, err := idx.Bind(runs, quality)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: "/a/b/c.tentative.html",
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{Passes: 1, Total: 1},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
+}
+
+func TestBindExecute_IsOptional(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   "/a/b/c",
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/a/b/c.optional.html",
+						Status: "PASS",
+					},
+				},
+			},
+		},
+	})
+
+	quality := query.MetadataQualityOptional
+	plan, err := idx.Bind(runs, quality)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: "/a/b/c.optional.html",
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{Passes: 1, Total: 1},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
+}
+
 func TestBindExecute_MoreThan(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

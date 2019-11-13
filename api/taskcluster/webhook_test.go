@@ -19,7 +19,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v28/github"
 	"github.com/stretchr/testify/assert"
-	"github.com/taskcluster/taskcluster/clients/client-go/v19/tcqueue"
+	"github.com/taskcluster/taskcluster/clients/client-go/v22/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
@@ -34,6 +34,9 @@ func TestShouldProcessStatus_states(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+
+	status.Context = strPtr("Community-TC")
 	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
 
 	status.State = strPtr("failure")
@@ -89,16 +92,30 @@ func TestIsOnMaster(t *testing.T) {
 	assert.False(t, status.IsOnMaster())
 }
 
-func TestExtractTaskGroupID(t *testing.T) {
+func TestParseTaskclusterURL(t *testing.T) {
 	t.Run("Status", func(t *testing.T) {
-		group, task := extractTaskGroupID("https://tc.example.com/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		root, group, task := parseTaskclusterURL("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		assert.Equal(t, "https://taskcluster.net", root)
 		assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg", group)
 		assert.Equal(t, "", task)
 	})
-	t.Run("CheckRun", func(t *testing.T) {
-		group, task := extractTaskGroupID("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
+	t.Run("CheckRun with task", func(t *testing.T) {
+		root, group, task := parseTaskclusterURL("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
+		assert.Equal(t, "https://tc.example.com", root)
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "NOToWHr0T-u62B9yGQnD5w", task)
+	})
+	t.Run("CheckRun without task", func(t *testing.T) {
+		root, group, task := parseTaskclusterURL("https://tc.other-example.com/groups/IWlO7NuxRnO0_8PKMuHFkw")
+		assert.Equal(t, "https://tc.other-example.com", root)
+		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
+		assert.Equal(t, "", task)
+	})
+	t.Run("CheckRun without task", func(t *testing.T) {
+		root, group, task := parseTaskclusterURL("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw")
+		assert.Equal(t, "https://tc.community.com", root)
+		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
+		assert.Equal(t, "", task)
 	})
 }
 

@@ -1,0 +1,11 @@
+# The following images are automatically
+# fetched via `npm` on `npm install`.
+#
+# See also: https://github.com/alrra/browser-logos
+
+static/chrome*_64x64.png
+static/edge*_64x64.png
+static/firefox*_64x64.png
+static/safari*_64x64.png
+static/uc_*64x64.png
+static/webkitgtk*_64x64.png

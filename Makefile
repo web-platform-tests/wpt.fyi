@@ -13,12 +13,9 @@
 # All variables can be overridden in command line by `make target FOO=bar`.
 
 SHELL := /bin/bash
-GOPATH := $(shell go env GOPATH)
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 WPT_PATH := $(dir $(WPTD_PATH)/../)
-WPT_GO_PATH := $(GOPATH)/src/github.com/web-platform-tests
-WPTD_GO_PATH := $(WPT_GO_PATH)/wpt.fyi
 NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
@@ -40,45 +37,37 @@ prepush: VERBOSE := $() # Empty out the verbose flag.
 prepush: go_build go_test lint
 
 python_test: python3 tox
-	cd $(WPTD_PATH)results-processor; tox
+	tox -c results-processor/
 
 # NOTE: We prune before generate, because node_modules are packr'd into the
 # binary (and part of the build).
-go_build: git mockgen packr
-	make webapp_node_modules_prune
-	cd $(WPTD_PATH); go get -v ./...
-	cd $(WPTD_PATH); go generate ./...
-	cd $(WPTD_PATH); go build ./...
+go_build: git mockgen packr2
+	make webapp_node_modules_prod
+	go generate ./...
+	go build ./...
 
-go_build_test: go_build gcc
-	cd $(WPTD_PATH); go get -v -t -tags="small medium large" ./...
-
-go_lint: golint_deps go_test_tag_lint $(WPTD_GO_PATH)
+go_lint: golint go_test_tag_lint
 	@echo "# Linting the go packages..."
-	golint -set_exit_status $(WPTD_GO_PATH)/api/...
+	golint -set_exit_status ./api/...
 	# Skip revisions/test
-	golint -set_exit_status $(WPTD_GO_PATH)/revisions/{announcer,api,epoch,git,service}/...
-	golint -set_exit_status $(WPTD_GO_PATH)/shared/...
-	golint -set_exit_status $(WPTD_GO_PATH)/util/...
-	golint -set_exit_status $(WPTD_GO_PATH)/webapp/...
-	golint -set_exit_status $(WPTD_GO_PATH)/webdriver/...
-
-$(WPTD_GO_PATH):
-	mkdir -p $(WPT_GO_PATH)
-	ln -s $(WPTD_PATH) $(WPTD_GO_PATH)
+	golint -set_exit_status ./revisions/{announcer,api,epoch,git,service}/...
+	golint -set_exit_status ./shared/...
+	golint -set_exit_status ./util/...
+	golint -set_exit_status ./webapp/...
+	golint -set_exit_status ./webdriver/...
 
 go_test_tag_lint:
 	# Printing a list of test files without +build tag, asserting empty...
 	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
-go_test: apt-get-gcc go_small_test go_medium_test
+go_test: go_small_test go_medium_test
 
-go_small_test: go_build_test
-	cd $(WPTD_PATH); go test -tags=small $(VERBOSE) ./...
+go_small_test: go_build gcc
+	go test -tags=small $(VERBOSE) ./...
 
-go_medium_test: go_build_test dev_appserver_deps
-	cd $(WPTD_PATH); go test -tags=medium $(VERBOSE) $(FLAGS) ./...
+go_medium_test: go_build dev_appserver_deps gcc
+	go test -tags=medium $(VERBOSE) $(FLAGS) ./...
 
 # Use sub-make because otherwise make would only execute the first invocation
 # of _go_webdriver_test. Variables will be passed into sub-make implicitly.
@@ -100,21 +89,21 @@ webdriver_node_deps:
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-_go_webdriver_test: var-BROWSER java go_build_test xvfb geckodriver dev_appserver_deps
+_go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_deps gcc
 	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	# The following variables are defined here because we don't know the
 	# path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
-	cd $(WPTD_PATH)webdriver; \
-	go test $(VERBOSE) -timeout=15m -tags=large -args \
+	cd webdriver; \
+	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
 		-chromedriver_path=$(CHROMEDRIVER_PATH) \
 		-frame_buffer=$(USE_FRAME_BUFFER) \
 		-staging=$(STAGING) \
-		-test.timeout=30m \
-		-browser=$(BROWSER) $(FLAGS)
+		-browser=$(BROWSER) $(FLAGS)"; \
+	if [ "$$UID" == "0" ]; then sudo -u browser $$COMMAND; else $$COMMAND; fi
 
 # NOTE: psmisc includes killall, needed by wct.sh
 web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
@@ -156,19 +145,19 @@ firefox_deps:
 geckodriver: node-selenium-standalone
 	cd webapp; `npm bin`/selenium-standalone install --singleDriverInstall=firefox
 
-golint_deps: git
+golint: git
 	if [ "$$(which golint)" == "" ]; then \
-		go get -u golang.org/x/lint/golint; \
+		go install golang.org/x/lint/golint; \
 	fi
 
 mockgen: git
 	if [ "$$(which mockgen)" == "" ]; then \
-		go get -u github.com/golang/mock/mockgen; \
+		go install github.com/golang/mock/mockgen; \
 	fi
 
-packr: git
+packr2: git
 	if [ "$$(which packr2)" == "" ]; then \
-		go get -u github.com/gobuffalo/packr/v2/packr2; \
+		go install github.com/gobuffalo/packr/v2/packr2; \
 	fi
 
 package_service: var-APP_PATH
@@ -234,11 +223,10 @@ gcloud: python curl gpg
 	fi
 
 eslint: webapp_node_modules_all
-	cd $(WPTD_PATH)webapp; npm run lint
+	cd webapp; npm run lint
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
-	cd $(WPTD_PATH)/util; go get -t ./...
 	go run $(WPTD_PATH)/util/populate_dev_data.go $(FLAGS)
 
 gcloud_login: gcloud
@@ -253,9 +241,9 @@ deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
 deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
 	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
-		cd $(WPTD_PATH); util/deploy.sh -q -r -p $(APP_PATH); \
+		util/deploy.sh -q -r -p $(APP_PATH); \
 	else \
-		cd $(WPTD_PATH); util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
+		util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
 	fi
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
@@ -265,31 +253,19 @@ cleanup_staging_versions: gcloud_login
 
 deploy_production: deployment_state
 	gcloud config set project wptdashboard
-	cd $(WPTD_PATH); util/deploy.sh -r $(APP_PATH)
+	util/deploy.sh -r $(APP_PATH)
 	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
-webapp_node_modules: node
-	cd $(WPTD_PATH)webapp; npm install --production
-
 webapp_node_modules_all: node
-	cd $(WPTD_PATH)webapp; npm install
+	cd webapp; npm install
 
-webapp_node_modules_prune: webapp_node_modules
-	cd $(WPTD_PATH)webapp; npm prune --production
+webapp_node_modules_prod: webapp_node_modules_all
+	cd webapp; npm prune --production
 
 xvfb:
 	if [[ "$(USE_FRAME_BUFFER)" == "true" && "$$(which Xvfb)" == "" ]]; then \
 		sudo apt-get install -qqy --no-install-suggests xvfb; \
-	fi
-
-# symlinks the Go folder for the wpt.fyi project to (this) folder.
-wpt_fyi_symlink:
-	@if [[ -L $(WPTD_GO_PATH) && -d $(WPTD_GO_PATH) ]]; \
-	then echo "Already a symlink"; \
-	else \
-		if [ -e $(WPTD_GO_PATH) ]; then rm -r $(WPTD_GO_PATH); fi; \
-		ln -s $(WPTD_PATH) $(WPTD_GO_PATH); \
 	fi
 
 gcloud-%: gcloud
@@ -299,7 +275,7 @@ gcloud-%: gcloud
 node-%: node
 	@ echo "# Installing $*..."
 	# Hack to (more quickly) detect whether a package is already installed (available in node).
-	cd $(WPTD_PATH)webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
+	cd webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
 
 apt-get-%:
 	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi
