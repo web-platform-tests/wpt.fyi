@@ -4,17 +4,13 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+  <script type="module" src="../test-runs-query-builder.js"></script>
 </head>
 <body>
   <test-fixture id="query-builder-fixture">
     <template>
       <test-runs-query-builder></test-runs-query-builder>
-    </template>
-  </test-fixture>
-
-  <test-fixture id="product-builder-fixture">
-    <template>
-      <product-builder></product-builder>
     </template>
   </test-fixture>
 
@@ -63,7 +59,6 @@ suite('TestRunsQueryBuilder', () => {
   });
 
   test('delete item', (done) => {
-    // Wait for shadow DOM.
     flush(() => {
       const first = queryBuilder.root.querySelector('product-builder');
       first.deleteProduct();
@@ -192,37 +187,6 @@ suite('TestRunsQueryBuilder', () => {
 
       queryBuilder.master = false;
       expect(queryBuilder.query).to.not.contain('master');
-    });
-  });
-
-  suite('ProductBuilder', () => {
-    let productBuilder;
-
-    setup(() => {
-      productBuilder = fixture('product-builder-fixture');
-      productBuilder.product = {browser_name: 'chrome'};
-    });
-
-    suite('ProductBuilder.prototype.*', () => {
-      suite('_channel', () => {
-        test('updates the labels when value changes', () => {
-          productBuilder._channel = 'stable';
-          assert.isTrue(productBuilder.labels.includes('stable'));
-        });
-        test('updates the spec when value changes', () => {
-          productBuilder._channel = 'experimental';
-          assert.equal(productBuilder.spec, 'chrome[experimental]');
-        });
-        test('changes value when labels are updated', () => {
-          productBuilder.set('labels', ['experimental']);
-          assert.equal(productBuilder._channel, 'experimental');
-          assert.equal(productBuilder._source, 'any');
-
-          productBuilder.set('labels', ['buildbot']);
-          assert.equal(productBuilder._source, 'buildbot');
-          assert.equal(productBuilder._channel, 'any');
-        });
-      });
     });
   });
 });
