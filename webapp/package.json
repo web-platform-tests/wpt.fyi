@@ -32,7 +32,7 @@
     "web-component-tester": "6.9.2"
   },
   "scripts": {
-    "test": "wct --local chrome && wct --local firefox",
+    "test": "wct --local chrome",
     "lint": "eslint 'components/*.js' && eslint --plugin html 'components/test/*.html'",
     "lint-fix": "eslint --fix 'components/**/*.js' && eslint --fix --plugin html 'components/test/*.html' ",
     "postinstall": "cpy node_modules/@browser-logos/{chrome,chrome-beta,chrome-canary,chrome-dev,edge,edge-beta,edge-canary,edge-dev,firefox,firefox-beta,firefox-nightly,safari,uc}/*_64x64.png static && cpy node_modules/@browser-logos/firefox-developer-edition/*_64x64.png static --rename=firefox-dev_64x64.png && cpy node_modules/@browser-logos/safari/*_64x64.png static --rename=safari-beta_64x64.png && cpy node_modules/@browser-logos/safari-technology-preview/*_64x64.png  static --rename=safari-dev_64x64.png && cpy node_modules/@browser-logos/safari-technology-preview/*_64x64.png static --rename=safari-preview_64x64.png && cpy node_modules/@browser-logos/web/*_64x64.png static --rename=webkitgtk_64x64.png && cpy node_modules/@browser-logos/web/*_64x64.png static --rename=webkitgtk-beta_64x64.png && cpy node_modules/@browser-logos/web/*_64x64.png static --rename=webkitgtk-dev_64x64.png && cpy node_modules/@browser-logos/web/*_64x64.png static --rename=webkitgtk-nightly_64x64.png",
