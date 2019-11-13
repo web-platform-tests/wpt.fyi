@@ -577,15 +577,24 @@ class HelpersTest(unittest.TestCase):
             prepare_labels(r, '', 'blade-runner'),
             {'blade-runner', 'dev', 'experimental', 'firefox'}
         )
+
         r._report['run_info']['browser_channel'] = 'nightly'
         self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
             {'blade-runner', 'experimental', 'firefox', 'nightly'}
         )
+
         r._report['run_info']['browser_channel'] = 'beta'
         self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
             {'beta', 'blade-runner', 'firefox'}
+        )
+
+        r._report['run_info']['product'] = 'chrome'
+        r._report['run_info']['browser_channel'] = 'canary'
+        self.assertSetEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            {'blade-runner', 'canary', 'chrome', 'experimental'}
         )
 
     def test_normalize_product_edge_webdriver(self):

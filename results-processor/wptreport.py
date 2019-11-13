@@ -38,6 +38,7 @@ CHANNEL_TO_LABEL = {
     'stable': 'stable',
     'beta': 'beta',
     'dev': 'experimental',
+    'canary': 'experimental',
     'experimental': 'experimental',
     'nightly': 'experimental',
     'preview': 'experimental',
