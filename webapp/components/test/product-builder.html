@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+  <script type="module" src="../product-builder.js"></script>
+</head>
+<body>
+  <test-fixture id="product-builder-fixture">
+    <template>
+      <product-builder></product-builder>
+    </template>
+  </test-fixture>
+
+  <script type="module">
+import '../product-builder.js';
+
+suite('ProductBuilder', () => {
+  let productBuilder;
+
+  setup(() => {
+    productBuilder = fixture('product-builder-fixture');
+    productBuilder.product = {browser_name: 'chrome'};
+  });
+
+  suite('ProductBuilder.prototype.*', () => {
+    suite('_channel', () => {
+      test('updates the labels when value changes', () => {
+        productBuilder._channel = 'stable';
+        assert.isTrue(productBuilder.labels.includes('stable'));
+      });
+      test('updates the spec when value changes', () => {
+        productBuilder._channel = 'experimental';
+        assert.equal(productBuilder.spec, 'chrome[experimental]');
+      });
+      test('changes value when labels are updated', () => {
+        productBuilder.set('labels', ['experimental']);
+        assert.equal(productBuilder._channel, 'experimental');
+        assert.equal(productBuilder._source, 'any');
+
+        productBuilder.set('labels', ['buildbot']);
+        assert.equal(productBuilder._source, 'buildbot');
+        assert.equal(productBuilder._channel, 'any');
+      });
+    });
+  });
+});
+
+</script>
+</body>
+</html>
