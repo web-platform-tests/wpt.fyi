@@ -51,7 +51,7 @@ if [[ "${APP_PATH}" == "webapp" ]]; then
 fi
 
 # Create a name for this version
-VERSION_BRANCH_NAME="$(echo ${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"} | tr [:upper:] [:lower:] | tr -c [:alnum:] - | cut -c 1-28)"
+VERSION_BRANCH_NAME="$(echo ${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"} | tr [:upper:] [:lower:] | tr -c '[:alnum:]\n' - | cut -c 1-28)"
 USER="$(git remote -v get-url origin | sed -E 's#(https?:\/\/|git@)github.com(\/|:)##' | sed 's#/.*$##')-"
 if [[ "${USER}" == "web-platform-tests-" ]]; then USER=""; fi
 
