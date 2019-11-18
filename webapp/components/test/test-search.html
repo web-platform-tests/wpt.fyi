@@ -30,7 +30,6 @@ suite('<test-search>', () => {
 
     const assertQueryFail = (query) => {
       const G = TestSearch.QUERY_GRAMMAR;
-      const S = TestSearch.QUERY_SEMANTICS;
       const p = G.match(query);
       assert.isFalse(p.succeeded(), p.message);
     };
