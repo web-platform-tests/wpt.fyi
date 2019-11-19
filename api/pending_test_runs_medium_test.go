@@ -3,6 +3,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -18,6 +19,13 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
+func createPendingRun(ctx context.Context, run *shared.PendingTestRun) error {
+	key := datastore.NewIncompleteKey(ctx, "PendingTestRun", nil)
+	key, err := datastore.Put(ctx, key, run)
+	run.ID = key.IntID()
+	return err
+}
+
 func TestAPIPendingTestHandler(t *testing.T) {
 	i, err := sharedtest.NewAEInstance(true)
 	assert.Nil(t, err)
@@ -30,23 +38,40 @@ func TestAPIPendingTestHandler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute).In(time.UTC)
 	yesterday := now.Add(time.Hour * -24)
 
-	invalid := shared.PendingTestRun{}
-	invalid.Created = yesterday
-	invalid.Updated = now
-	invalid.Stage = shared.StageInvalid
-	key := datastore.NewIncompleteKey(ctx, "PendingTestRun", nil)
-	key, err = datastore.Put(ctx, key, &invalid)
-	assert.Nil(t, err)
-	invalid.ID = key.IntID()
+	invalid := shared.PendingTestRun{
+		Created: yesterday,
+		Updated: now,
+		Stage:   shared.StageInvalid,
+	}
+	assert.Nil(t, createPendingRun(ctx, &invalid))
 
-	running := shared.PendingTestRun{}
-	running.Created = yesterday.Add(time.Hour)
-	running.Updated = now.Add(time.Minute * -5)
-	running.Stage = shared.StageCIRunning
-	key = datastore.NewIncompleteKey(ctx, "PendingTestRun", nil)
-	key, err = datastore.Put(ctx, key, &running)
-	assert.Nil(t, err)
-	running.ID = key.IntID()
+	empty := shared.PendingTestRun{
+		Created: yesterday,
+		Updated: now.Add(time.Minute * -1),
+		Stage:   shared.StageEmpty,
+	}
+	assert.Nil(t, createPendingRun(ctx, &empty))
+
+	duplicate := shared.PendingTestRun{
+		Created: yesterday,
+		Updated: now.Add(time.Minute * -2),
+		Stage:   shared.StageDuplicate,
+	}
+	assert.Nil(t, createPendingRun(ctx, &duplicate))
+
+	received := shared.PendingTestRun{
+		Created: yesterday.Add(time.Hour),
+		Updated: now.Add(time.Minute * -10),
+		Stage:   shared.StageWptFyiReceived,
+	}
+	assert.Nil(t, createPendingRun(ctx, &received))
+
+	running := shared.PendingTestRun{
+		Created: yesterday.Add(time.Hour),
+		Updated: now.Add(time.Minute * -5),
+		Stage:   shared.StageCIRunning,
+	}
+	assert.Nil(t, createPendingRun(ctx, &running))
 
 	t.Run("/api/status", func(t *testing.T) {
 		r, _ = i.NewRequest("GET", "/api/status", nil)
@@ -56,9 +81,13 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.Code, string(body))
 		var results []shared.PendingTestRun
 		json.Unmarshal(body, &results)
-		assert.Len(t, results, 2)
+		assert.Len(t, results, 5)
+		// Sorted by Update.
 		assert.Equal(t, results[0].ID, invalid.ID)
-		assert.Equal(t, results[1].ID, running.ID)
+		assert.Equal(t, results[1].ID, empty.ID)
+		assert.Equal(t, results[2].ID, duplicate.ID)
+		assert.Equal(t, results[3].ID, running.ID)
+		assert.Equal(t, results[4].ID, received.ID)
 	})
 
 	t.Run("/api/status/pending", func(t *testing.T) {
@@ -70,20 +99,39 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.Code, string(body))
 		var results []shared.PendingTestRun
 		json.Unmarshal(body, &results)
-		assert.Len(t, results, 1)
+		assert.Len(t, results, 2)
 		assert.Equal(t, results[0].ID, running.ID)
+		assert.Equal(t, results[1].ID, received.ID)
 	})
 
-	t.Run("/api/status/invalid", func(t *testing.T) {
-		r, _ = i.NewRequest("GET", "/api/status/invalid", nil)
-		r = mux.SetURLVars(r, map[string]string{"filter": "invalid"})
-		resp := httptest.NewRecorder()
-		apiPendingTestRunsHandler(resp, r)
-		body, _ := ioutil.ReadAll(resp.Result().Body)
-		assert.Equal(t, http.StatusOK, resp.Code, string(body))
-		var results []shared.PendingTestRun
-		json.Unmarshal(body, &results)
-		assert.Len(t, results, 1)
-		assert.Equal(t, results[0].ID, invalid.ID)
-	})
+	filters := []string{"invalid", "empty", "duplicate"}
+	runs := []*shared.PendingTestRun{&invalid, &empty, &duplicate}
+
+	for index, filter := range filters {
+		url := "/api/status/" + filter
+		t.Run(url, func(t *testing.T) {
+			r, _ = i.NewRequest("GET", url, nil)
+			r = mux.SetURLVars(r, map[string]string{"filter": filter})
+			resp := httptest.NewRecorder()
+			apiPendingTestRunsHandler(resp, r)
+			body, _ := ioutil.ReadAll(resp.Result().Body)
+			assert.Equal(t, http.StatusOK, resp.Code, string(body))
+			var results []shared.PendingTestRun
+			json.Unmarshal(body, &results)
+			assert.Len(t, results, 1)
+			assert.Equal(t, results[0].ID, runs[index].ID)
+		})
+	}
+}
+
+func TestAPIPendingTestHandler_invalidFilter(t *testing.T) {
+	i, err := sharedtest.NewAEInstance(true)
+	assert.Nil(t, err)
+	defer i.Close()
+
+	r, _ := i.NewRequest("GET", "/api/status/foobar", nil)
+	r = mux.SetURLVars(r, map[string]string{"filter": "foobar"})
+	resp := httptest.NewRecorder()
+	apiPendingTestRunsHandler(resp, r)
+	assert.Equal(t, http.StatusBadRequest, resp.Code)
 }
