@@ -25,7 +25,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stoewer/go-strcase v1.1.0
 	github.com/stretchr/testify v1.4.0
-	github.com/taskcluster/taskcluster-lib-urls v12.0.0+incompatible
+	github.com/taskcluster/taskcluster-lib-urls v12.1.0+incompatible
 	github.com/taskcluster/taskcluster/clients/client-go/v22 v22.1.1
 	github.com/tebeka/selenium v0.9.9
 	github.com/web-platform-tests/wpt-metadata v0.0.0-20190925201856-2889886bed8f
