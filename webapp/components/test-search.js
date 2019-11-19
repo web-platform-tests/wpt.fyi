@@ -9,7 +9,7 @@ import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTFlags } from './wpt-flags.js';
 import './ohm.js';
-import { DefaultBrowserNames } from './product-info.js';
+import { AllBrowserNames } from './product-info.js';
 
 /* eslint-enable */
 const statuses = [
@@ -30,7 +30,7 @@ const atoms = {
   status: statuses,
 };
 
-for (const b of DefaultBrowserNames) {
+for (const b of AllBrowserNames) {
   atoms[b] = statuses;
 }
 
@@ -136,7 +136,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
     productSpec = browserName ("-" browserVersion)?
 
     browserName
-      = ${DefaultBrowserNames.map(b => 'caseInsensitive<"' + b + '">').join('\n      |')}
+      = ${AllBrowserNames.map(b => 'caseInsensitive<"' + b + '">').join('\n      |')}
 
     browserVersion = number ("." number)*
 
