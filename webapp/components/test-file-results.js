@@ -225,14 +225,11 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         // resultsTable[0].name will be set later depending on the number of subtests.
         name: '',
         results: resultsPerTestRun.map(data => {
-          if (!data) {
-            return null;
-          }
           const result = {
-            status: data.status,
-            message: data.message,
+            status: data && data.status,
+            message: data && data.message,
           };
-          if (this.reftestAnalyzer && data.screenshots) {
+          if (this.reftestAnalyzer && data && data.screenshots) {
             result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
           }
           return result;
@@ -240,7 +237,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       },
       {
         name: 'Duration',
-        results: resultsPerTestRun.map(data => (data && {status: timeTaken(data.duration)}))
+        results: resultsPerTestRun.map(data => ({status: data && timeTaken(data.duration), message: null}))
       }
     ];
   }
