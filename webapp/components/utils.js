@@ -1,4 +1,7 @@
 function timeTaken(millis) {
+  if (!millis) {
+    return 'N/A';
+  }
   const s = millis / 1000;
   const units = [
     [60 * 60 * 24 * 365, 'years'],

@@ -53,6 +53,45 @@ suite('TestFileResults', () => {
       });
     });
 
+    suite('resultsTableHeaders', () => {
+      test('empty array', () => {
+        expect(tfr.resultsTableHeaders([])).to.deep.equal([
+          {name: '', results: []},
+          {name: 'Duration', results: []},
+        ]);
+      });
+
+      test('null', () => {
+        expect(tfr.resultsTableHeaders([null])).to.deep.equal([
+          {name: '', results: [{status: null, message: null}]},
+          {name: 'Duration', results: [{status: null, message: null}]},
+        ]);
+      });
+
+      test('missing fields', () => {
+        const resultsPerTestRun = [
+          {status: 'PASS', duration: '1000'},
+          {status: 'PASS', message: 'OK'},
+        ];
+        expect(tfr.resultsTableHeaders(resultsPerTestRun)).to.deep.equal([
+          {
+            name: '',
+            results: [
+              {status: 'PASS', message: undefined},
+              {status: 'PASS', message: 'OK'}
+            ]
+          },
+          {
+            name: 'Duration',
+            results: [
+              {status: '1 seconds', message: null},
+              {status: 'N/A', message: null}
+            ]
+          },
+        ]);
+      });
+    });
+
     suite('mergeNamesInto', () => {
       test('empty', () => {
         const names = ['a', 'b'];
@@ -81,7 +120,7 @@ suite('TestFileResults', () => {
       });
     });
 
-    suite('statusName', () => {
+    suite('shuffleScreenshots', () => {
       test('path in screenshots - first', () => {
         const rawScreenshots = {
           '/foo/bar/baz.html': 'sha1:060311f9cd4c5b09202a034c4961ca42a3f83ce2',
