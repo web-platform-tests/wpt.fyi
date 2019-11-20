@@ -261,7 +261,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleKeyDown(e) {
     // Ignore when something other than body has focus.
-    if (!e.path.length || e.path[0] !== document.body) {
+    if (e.target !== document.body) {
       return;
     }
     if (e.key === 'n') {
