@@ -8,7 +8,7 @@ ga('create', 'UA-89387706-1', 'auto');
 // self-navigator.js sends more pageview events for in-page navigations.
 ga('send', 'pageview');
 
-window.addEventListener('error', function(message, source, lineno, colno) {
+window.onerror = function(message, source, lineno, colno) {
   let description;
   // https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
   if (message.toLowerCase().indexOf('script error') > -1) {
