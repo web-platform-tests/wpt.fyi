@@ -63,8 +63,8 @@ suite('TestFileResults', () => {
 
       test('null', () => {
         expect(tfr.resultsTableHeaders([null])).to.deep.equal([
-          {name: '', results: [null]},
-          {name: 'Duration', results: [null]},
+          {name: '', results: [{status: null, message: null}]},
+          {name: 'Duration', results: [{status: null, message: null}]},
         ]);
       });
 
@@ -84,8 +84,8 @@ suite('TestFileResults', () => {
           {
             name: 'Duration',
             results: [
-              {status: '1 seconds'},
-              {status: 'N/A'}
+              {status: '1 seconds', messsage: null},
+              {status: 'N/A', message: null}
             ]
           },
         ]);
