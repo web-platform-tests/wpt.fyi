@@ -32,11 +32,11 @@ env:
 # In jobs.include, each job will inherit the stage of the previous job and the
 # default stage is "test".
 stages:
-  - name: clean up versions
-    if: type = pull_request
   - name: deploy PR
-    if: (type = push) AND (branch = master)
+    if: type = pull_request
   - name: deploy master
+    if: (type = push) AND (branch = master)
+  - name: clean up versions
     if: (type = push) AND (branch = master)
 
 jobs:
