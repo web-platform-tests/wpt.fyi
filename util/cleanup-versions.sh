@@ -10,7 +10,7 @@ source "${UTIL_DIR}/logging.sh"
 
 # A safety cutoff. Only versions last deployed more than 1 day ago may be
 # deleted.
-CUTOFF="-P1D"
+CUTOFF="-P1H"
 
 # This is a constant instead of an argument because production versions should
 # be deleted carefully and manually.
@@ -22,6 +22,8 @@ function cleanup() {
   local SERVICE_ARG="-s $1"
   local FILTER_ARG="traffic_split=0.0 last_deployed_time.datetime<$CUTOFF"
   local versions_to_delete=()
+
+  gcloud app versions list $PROJECT_ARG $SERVICE_ARG --filter="$FILTER_ARG" --format="value(id)"
 
   for version in $( gcloud app versions list $PROJECT_ARG $SERVICE_ARG --filter="$FILTER_ARG" --format="value(id)" ); do
     if ! git show-ref --quiet --verify refs/remotes/origin/$version; then
@@ -35,7 +37,7 @@ function cleanup() {
     return 0
   fi
 
-  gcloud app versions delete --quiet $PROJECT_ARG $SERVICE_ARG ${versions_to_delete[*]}
+  #gcloud app versions delete --quiet $PROJECT_ARG $SERVICE_ARG ${versions_to_delete[*]}
 }
 
 
@@ -47,6 +49,8 @@ fi
 
 # Ensure ALL remote branches are fetched.
 git fetch --unshallow origin
+
+git show-ref
 
 cleanup "default"
 cleanup "processor"
