@@ -12,6 +12,8 @@ on:
     - cron: '0 0 * * 0'
 jobs:
   build-and-push:
+    # Forks cannot access secrets so the job would fail.
+    if: github.repository == 'web-platform-tests/wpt.fyi'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
