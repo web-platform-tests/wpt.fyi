@@ -100,16 +100,12 @@ func (a appEngineAPIImpl) GetSlowHTTPClient(timeout time.Duration) (*http.Client
 
 func (a *appEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
 	if a.githubClient == nil {
-		ds := NewAppEngineDatastore(a.ctx, false)
-		secret, err := GetSecret(ds, "github-api-token")
+		client, err := a.getGithubClientFromKey("github-api-token")
 		if err != nil {
 			return nil, err
 		}
 
-		oauthClient := oauth2.NewClient(a.ctx, oauth2.StaticTokenSource(&oauth2.Token{
-			AccessToken: secret,
-		}))
-		a.githubClient = github.NewClient(oauthClient)
+		a.githubClient = client
 	}
 	return a.githubClient, nil
 }
@@ -185,6 +181,15 @@ func (a appEngineAPIImpl) GetRunsURL(filter TestRunFilter) *url.URL {
 	return getURL(a.GetHostname(), "/runs", filter)
 }
 
+func (a appEngineAPIImpl) GetWPTFYIGithubBot() (*github.Client, error) {
+	client, err := a.getGithubClientFromKey("github-wpt-fyi-bot-token")
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
 func (a appEngineAPIImpl) GetResultsUploadURL() *url.URL {
 	result, _ := url.Parse(fmt.Sprintf("https://%s%s", a.GetVersionedHostname(), "/api/results/upload"))
 	return result
@@ -194,4 +199,19 @@ func getURL(host, path string, filter TestRunFilter) *url.URL {
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s%s", host, path))
 	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL
+}
+
+func (a appEngineAPIImpl) getGithubClientFromKey(key string) (*github.Client, error) {
+	ds := NewAppEngineDatastore(a.ctx, false)
+	secret, err := GetSecret(ds, key)
+	if err != nil {
+		return nil, err
+	}
+
+	oauthClient := oauth2.NewClient(a.ctx, oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: secret,
+	}))
+	githubClient := github.NewClient(oauthClient)
+
+	return githubClient, nil
 }
