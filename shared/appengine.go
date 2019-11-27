@@ -201,9 +201,9 @@ func getURL(host, path string, filter TestRunFilter) *url.URL {
 	return detailsURL
 }
 
-func (a appEngineAPIImpl) getGithubClientFromKey(key string) (*github.Client, error) {
+func (a appEngineAPIImpl) getGithubClientFromKey(token string) (*github.Client, error) {
 	ds := NewAppEngineDatastore(a.ctx, false)
-	secret, err := GetSecret(ds, key)
+	secret, err := GetSecret(ds, token)
 	if err != nil {
 		return nil, err
 	}
