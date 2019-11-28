@@ -5,6 +5,7 @@
 package api
 
 import (
+	"context"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -82,7 +84,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	//}
 
 	//TODO: Check github client permission levels.
-	githubClient, err := aeAPI.GetGitHubClient()
+	githubClient, err := getWPTFYIGithubBot(ctx)
 	if err != nil {
 		http.Error(w, "Unable to get Github Client: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -194,4 +196,14 @@ var cacheKey = func(r *http.Request) interface{} {
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 
 	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
+}
+
+
+func getWPTFYIGithubBot(ctx context.Context) (*github.Client, error) {
+	client, err := shared.GetGithubClientFromKey(ctx, "github-wpt-fyi-bot-token")
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
