@@ -28,7 +28,7 @@ require (
 	github.com/taskcluster/taskcluster-lib-urls v12.1.0+incompatible
 	github.com/taskcluster/taskcluster/clients/client-go/v22 v22.1.1
 	github.com/tebeka/selenium v0.9.9
-	github.com/web-platform-tests/wpt-metadata v0.0.0-20190925201856-2889886bed8f
+	github.com/web-platform-tests/wpt-metadata v0.0.0-20191118215926-3b9e09ad93d6
 	go.opencensus.io v0.22.1 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
