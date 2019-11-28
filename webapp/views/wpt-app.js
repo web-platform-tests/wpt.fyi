@@ -100,8 +100,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                 </template>
 
                 <template is="dom-if" if="[[ webPlatformTestsLive ]]">
-                  <li><a href\$="[[scheme]]://web-platform-tests.live[[path]]" target="_blank">Run in your
-                    browser on web-platform-tests.live</a></li>
+                  <li><a href\$="[[scheme]]://wpt.live[[path]]" target="_blank">Run in your
+                    browser on wpt.live</a></li>
                 </template>
             </ul>
           </div>
@@ -261,7 +261,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleKeyDown(e) {
     // Ignore when something other than body has focus.
-    if (!e.path.length || e.path[0] !== document.body) {
+    if (e.target !== document.body) {
       return;
     }
     if (e.key === 'n') {

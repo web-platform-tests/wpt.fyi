@@ -454,7 +454,7 @@ func TestStructuredQuery_link(t *testing.T) {
 		}}, rq)
 }
 
-func TestStructuredQuery_is(t *testing.T) {
+func TestStructuredQuery_isDifferent(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
 		"run_ids": [0, 1, 2],
@@ -469,6 +469,44 @@ func TestStructuredQuery_is(t *testing.T) {
 		RunIDs: []int64{0, 1, 2},
 		AbstractQuery: AbstractExists{[]AbstractQuery{
 			MetadataQualityDifferent,
+		}},
+	}, rq)
+}
+
+func TestStructuredQuery_isTentative(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"is": "tentative"
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			MetadataQualityTentative,
+		}},
+	}, rq)
+}
+
+func TestStructuredQuery_isOptional(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"is": "optional"
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{
+		RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			MetadataQualityOptional,
 		}},
 	}, rq)
 }
@@ -859,6 +897,8 @@ func TestStructuredQuery_bindIs(t *testing.T) {
 			ProductAtRevision: f.ProductAtRevision,
 		},
 	}
+	// BindToRuns for MetadataQuality is a no-op, as they are independent
+	// of runs.
 	assert.Equal(t, q, q.BindToRuns(runs...))
 }
 

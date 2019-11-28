@@ -168,27 +168,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     const resultsPerTestRun = await Promise.all(
       testRuns.map(tr => this.loadResultFile(tr)));
 
-    // resultsTable[0].name set after discovering subtests.
-    let resultsTable = [
-      {
-        results: resultsPerTestRun.map(data => {
-          const result = {
-            status: data && data.status,
-            message: data && data.message,
-          };
-          if (this.reftestAnalyzer && data && data.screenshots) {
-            result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
-          }
-          return result;
-        })
-      },
-      {
-        name: 'Duration',
-        results: resultsPerTestRun.map(data => {
-          return { status: timeTaken(data.duration) };
-        }),
-      }
-    ];
+    // Special setup for the first two rows (status + duration).
+    const resultsTable = this.resultsTableHeaders(resultsPerTestRun);
 
     // Setup test name order according to when they appear in run results.
     let allNames = [];
@@ -236,6 +217,29 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     screenshots[this.path.replace(/.html$/, '-ref.html')] = 'sha1:000c495e8f587dac40894d0cacb5a7ca769410c6';
     return response.json()
       .then(r => Object.assign({ screenshots }, r));
+  }
+
+  resultsTableHeaders(resultsPerTestRun) {
+    return [
+      {
+        // resultsTable[0].name will be set later depending on the number of subtests.
+        name: '',
+        results: resultsPerTestRun.map(data => {
+          const result = {
+            status: data && data.status,
+            message: data && data.message,
+          };
+          if (this.reftestAnalyzer && data && data.screenshots) {
+            result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
+          }
+          return result;
+        })
+      },
+      {
+        name: 'Duration',
+        results: resultsPerTestRun.map(data => ({status: data && timeTaken(data.duration), message: null}))
+      }
+    ];
   }
 
   mergeNamesInto(names, allNames) {

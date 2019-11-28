@@ -15,6 +15,7 @@
   </test-fixture>
 
   <script type="module">
+import { AllBrowserNames } from '../product-info.js';
 import { TestSearch } from '../test-search.js';
 
 suite('<test-search>', () => {
@@ -25,6 +26,12 @@ suite('<test-search>', () => {
       const p = G.match(query);
       assert.isTrue(p.succeeded(), p.message);
       assert.deepEqual(structuredQuery, S(p).eval());
+    };
+
+    const assertQueryFail = (query) => {
+      const G = TestSearch.QUERY_GRAMMAR;
+      const p = G.match(query);
+      assert.isFalse(p.succeeded(), p.message);
     };
 
     test('empty pattern', () => {
@@ -84,6 +91,15 @@ suite('<test-search>', () => {
     });
 
     test('browser test status eq', () => {
+      // All known browsers.
+      for (const browser of AllBrowserNames) {
+        assertQueryParse(browser + ':ok', {exists: [{product: browser, status: 'OK'}]});
+      }
+
+      // Make sure unknown ones don't parse.
+      assertQueryFail('darkmatter:ok');
+
+      // Comparisons are case-insensitive.
       assertQueryParse('cHrOmE:oK', {exists: [{product: 'chrome', status: 'OK'}]});
     });
 
@@ -304,6 +320,12 @@ suite('<test-search>', () => {
     test('is', () => {
       assertQueryParse('is:different', {
         exists: [{ is: 'different' }]
+      });
+      assertQueryParse('is:tentative', {
+        exists: [{ is: 'tentative' }]
+      });
+      assertQueryParse('is:optional', {
+        exists: [{ is: 'optional' }]
       });
     });
 

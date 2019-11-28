@@ -258,10 +258,16 @@ type MetadataQuality int
 
 const (
 	// MetadataQualityUnknown is a placeholder for unrecognized values.
-	MetadataQualityUnknown MetadataQuality = 0
+	MetadataQualityUnknown MetadataQuality = iota
 	// MetadataQualityDifferent represents an is:different atom.
 	// "different" ensures that one or more results differs from the other results.
-	MetadataQualityDifferent MetadataQuality = 1
+	MetadataQualityDifferent
+	// MetadataQualityTentative represents an is:tentative atom.
+	// "tentative" ensures that the results are from a tentative test.
+	MetadataQualityTentative
+	// MetadataQualityOptional represents an is:optional atom.
+	// "optional" ensures that the results are from an optional test.
+	MetadataQualityOptional
 )
 
 // BindToRuns for MetadataQuality is a no-op; it is independent of test runs.
@@ -902,6 +908,10 @@ func MetadataQualityFromString(quality string) (MetadataQuality, error) {
 	switch quality {
 	case "different":
 		return MetadataQualityDifferent, nil
+	case "tentative":
+		return MetadataQualityTentative, nil
+	case "optional":
+		return MetadataQualityOptional, nil
 	}
 	return MetadataQualityUnknown, fmt.Errorf(`Unknown "is" quality "%s"`, quality)
 }

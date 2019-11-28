@@ -24,7 +24,7 @@ function cleanup() {
   local versions_to_delete=()
 
   for version in $( gcloud app versions list $PROJECT_ARG $SERVICE_ARG --filter="$FILTER_ARG" --format="value(id)" ); do
-    if ! git show-ref --quiet --verify refs/remotes/origin/$version; then
+    if ! git ls-remote --exit-code origin $version; then
       debug "'$version' is not a branch in upstream and will be deleted."
       versions_to_delete+=($version)
     fi
@@ -44,9 +44,6 @@ REMOTE_URL=$(git remote get-url origin)
 if [[ $REMOTE_URL != *web-platform-tests/wpt.fyi* ]]; then
   fatal "origin isn't web-platform-tests/wpt.fyi" 1
 fi
-
-# Ensure ALL remote branches are fetched.
-git fetch --unshallow origin
 
 cleanup "default"
 cleanup "processor"
