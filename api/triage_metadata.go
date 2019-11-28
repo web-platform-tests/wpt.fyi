@@ -17,7 +17,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//TODO: Modify these after learning about the gitclient
 var (
 	sourceOwner   = "web-platform-tests"
 	sourceRepo    = "wpt-metadata"

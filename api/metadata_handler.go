@@ -83,13 +83,13 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 
-	//TODO: Check github client permission levels.
 	githubClient, err := getWPTFYIGithubBot(ctx)
 	if err != nil {
 		http.Error(w, "Unable to get Github Client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	//TODO: Check github client permission levels.
 	git := metadataGithub{githubClient: githubClient, authorName: "kyleju", authorEmail: "kyleju@live.com"}
 	tm := triageMetadata{ctx: ctx, metadataGithub: git, logger: logger, httpClient: client}
 	err = tm.triage(metadata)
@@ -200,7 +200,7 @@ var cacheKey = func(r *http.Request) interface{} {
 
 
 func getWPTFYIGithubBot(ctx context.Context) (*github.Client, error) {
-	client, err := shared.GetGithubClientFromKey(ctx, "github-wpt-fyi-bot-token")
+	client, err := shared.GetGithubClientFromToken(ctx, "github-wpt-fyi-bot-token")
 	if err != nil {
 		return nil, err
 	}

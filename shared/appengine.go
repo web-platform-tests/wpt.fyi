@@ -100,7 +100,7 @@ func (a appEngineAPIImpl) GetSlowHTTPClient(timeout time.Duration) (*http.Client
 
 func (a *appEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
 	if a.githubClient == nil {
-		client, err := GetGithubClientFromKey(a.ctx, "github-api-token")
+		client, err := GetGithubClientFromToken(a.ctx, "github-api-token")
 		if err != nil {
 			return nil, err
 		}
@@ -192,7 +192,8 @@ func getURL(host, path string, filter TestRunFilter) *url.URL {
 	return detailsURL
 }
 
-func GetGithubClientFromKey(ctx context.Context, token string) (*github.Client, error) {
+// GetGithubClientFromToken returns a new Github client using the token stored in Datastore.
+func GetGithubClientFromToken(ctx context.Context, token string) (*github.Client, error) {
 	ds := NewAppEngineDatastore(ctx, false)
 	secret, err := GetSecret(ds, token)
 	if err != nil {
