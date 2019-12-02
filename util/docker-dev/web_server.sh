@@ -27,8 +27,8 @@ while getopts ':rh' flag; do
   esac
 done
 
-info "Deleting node_modules so dev_appserver can fall back to local files..."
-wptd_exec make go_build FLAGS="-tags=skippackr"
+info "Pruning node_modules so dev_appserver can handle watching file updates..."
+wptd_exec make webapp_node_modules_prod
 
 info "Installing other web server code dependencies"
 wptd_exec make dev_appserver_deps

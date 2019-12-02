@@ -6,7 +6,7 @@ inputs:
     required: true
 runs:
   using: docker
-  image: docker://hexcles/wpt.fyi-make-in-docker:latest
+  image: docker://webplatformtests/wpt.fyi:latest
   args:
     - /usr/bin/make
     - ${{ inputs.target }}

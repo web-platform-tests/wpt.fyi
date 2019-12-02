@@ -9,7 +9,7 @@ import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTFlags } from './wpt-flags.js';
 import './ohm.js';
-import { DefaultBrowserNames } from './product-info.js';
+import { AllBrowserNames } from './product-info.js';
 
 /* eslint-enable */
 const statuses = [
@@ -30,7 +30,7 @@ const atoms = {
   status: statuses,
 };
 
-for (const b of DefaultBrowserNames) {
+for (const b of AllBrowserNames) {
   atoms[b] = statuses;
 }
 
@@ -102,12 +102,16 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     Fragment
       = not Fragment -- not
+      | containsExp
       | linkExp
       | isExp
       | statusExp
       | subtestExp
       | pathExp
       | patternExp
+
+    containsExp
+      = caseInsensitive<"contains"> ":" nameFragment
 
     statusExp
       = caseInsensitive<"status"> ":" statusLiteral  -- eq
@@ -132,7 +136,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
     productSpec = browserName ("-" browserVersion)?
 
     browserName
-      = ${DefaultBrowserNames.map(b => 'caseInsensitive<"' + b + '">').join('\n      |')}
+      = ${AllBrowserNames.map(b => 'caseInsensitive<"' + b + '">').join('\n      |')}
 
     browserVersion = number ("." number)*
 
@@ -141,6 +145,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     metadataQualityLiteral
       = caseInsensitive<"different">
+      | caseInsensitive<"tentative">
+      | caseInsensitive<"optional">
 
     nameFragment
       = basicNameFragment                       -- basic
@@ -298,6 +304,9 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
       product: l.sourceString.toLowerCase(),
       status: {not: r.eval()},
     };
+  },
+  containsExp: (l, colon, r) => {
+    return { contains: r.eval() };
   },
   isExp: (l, colon, r) => {
     return { is: r.eval() };
@@ -460,24 +469,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
       }
     }
     if (paths) {
-      // Compute all the parent folders for the paths.
-      let folders = new Set();
-      for (const path of paths) {
-        const parts = path.split('/');
-        let c = '/';
-        for (let i = 1; i + 1 < parts.length; i++) {
-          c += parts[i] + '/';
-          folders.add(c);
-        }
-        if (query) {
-          if (!c.toLowerCase().includes(query)) {
-            continue;
-          }
-        } else if (folders.size >= 10) {
-          break;
-        }
-      }
-      let matches = Array.from(folders).sort().concat(Array.from(paths));
+      let matches = Array.from(paths);
       if (query) {
         matches = matches
           .filter(p => p.toLowerCase())

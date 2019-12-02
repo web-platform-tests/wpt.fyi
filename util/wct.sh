@@ -21,4 +21,9 @@ if [ "$USE_FRAME_BUFFER" == "true" ]; then
 fi
 
 cd webapp
-npm test
+if [ "$UID" == "0" ]; then
+  # Used in .github/actions/make-in-docker/Dockerfile
+  sudo -u browser npm test
+else
+  npm test
+fi

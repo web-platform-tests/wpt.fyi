@@ -11,6 +11,7 @@ import (
 
 	"github.com/gobuffalo/packr/v2"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	_ "google.golang.org/appengine/remote_api" // Registers the remote API in init
 )
 
 var templates *template.Template

@@ -7,8 +7,8 @@ package shared
 import (
 	"net/http"
 
-	"github.com/go-yaml/yaml"
 	"github.com/web-platform-tests/wpt-metadata/util"
+	"gopkg.in/yaml.v2"
 )
 
 // MetadataArchiveURL is the URL that retrieves an archive of wpt-metadata repository.

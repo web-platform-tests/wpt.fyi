@@ -1,32 +1,27 @@
 name: Update Docker image
 on:
   push:
-    branches:
-      - master
+    # Rebuild the image when Dockerfile is changed. This is safe on a PR
+    # branch, too -- the automatically built Docker image will be tagged with
+    # the branch name instead of "latest".
     paths:
       - '.github/actions/make-in-docker/Dockerfile'
+      - '.github/workflows/docker-update.yml'
   schedule:
     # Rebuild the image weekly.
     - cron: '0 0 * * 0'
 jobs:
   build-and-push:
+    # Forks cannot access secrets so the job would fail.
+    if: github.repository == 'web-platform-tests/wpt.fyi'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/docker/login@master
-        # This action takes caution not to expose secrets in logs.
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: actions/docker/cli@master
-        name: docker build
+      - uses: elgohr/Publish-Docker-Github-Action@master
+        # https://github.com/elgohr/Publish-Docker-Github-Action
         with:
-          args: build -t hexcles/wpt.fyi-make-in-docker:latest -t hexcles/wpt.fyi-make-in-docker:${{ github.sha }} ./.github/actions/make-in-docker
-      - uses: actions/docker/cli@master
-        name: docker push SHA
-        with:
-          args: push hexcles/wpt.fyi-make-in-docker:${{ github.sha }}
-      - uses: actions/docker/cli@master
-        name: docker push latest
-        with:
-          args: push hexcles/wpt.fyi-make-in-docker:latest
+          name: webplatformtests/wpt.fyi
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          dockerfile: .github/actions/make-in-docker/Dockerfile
+          snapshot: true

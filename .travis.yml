@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-dist: xenial
+dist: bionic
 
 notifications:
   email:
@@ -28,53 +28,52 @@ env:
   global:
     - secure: "wQIAV/OJdWTKkqnnL6pKQC8R0nChV6yRT2MK49qZV0ulA/0a6V9G+oIlbixI04CgLbsjExGDUY6ZiSYgd8rPixuWNIP1sG//AwUfNggpyQF0rFqPRrGOKJD+TkvGgTu8c8nSK0Rxlw3d+Yy7wXKdtzsP/4euub7eYLHhYlDXhw6ANE9jmtwyTCyM+MdHvnEsvDEXkXExvpurGSsXxPwG8CCLKLRp1O2BJwh9PPn+likU9AT6HFedhoW+Jv9YFnrqCtgCNzucQTTILDoLLvz4+Kk7FYmLriWXPT+QWL87tYFGI0gZev3+XdpTLJWjh1XUw35pYZzZsgRkl7y7uVUPFsYWoUXLoX9gv6Qp1sR+2hN9Z/CNSMNwrTVIAyE+db9q+wWpesy7L72bmaVri2PFqhz+uvNQ3hM2Lu4e/mjj4E8uVE9nTiWtBwnb7376nDemeHxeV3ADbEZceTHuIKxtyP1A6gXCxswGGzPJLrmCjq0XSPgskcpWOR4xRSKYior0Bhd+ULPKO7GzX2AMKxMpkELUf8XjhVpJXZjdemqV+ppV69JBmRQLDWsZQgmT0y/aclgSNVk3lVr/c2STHpmdhAWlgkjnaxqofLt5JIh1YHkJYaDxWbLyuuMTcpPKCdbJGAg4/PvCMo6bwurVBCS2+mqTxD6SfYXm7eFwhd7aJDA="
 
-matrix:
-  include:
-    - env:
-        - MAKE_TEST_TARGET=python_test
-    - env:
-        - MAKE_TEST_TARGET=web_components_test
-    - env:
-        - MAKE_TEST_TARGET=go_firefox_test
-    - env:
-        - MAKE_TEST_TARGET=go_chrome_test
+# Stages run in order. Jobs in the same stage run in parallel.
+# In jobs.include, each job will inherit the stage of the previous job and the
+# default stage is "test".
+stages:
+  - name: deploy PR
+    if: type = pull_request
+  - name: deploy master
+    if: (type = push) AND (branch = master)
+  - name: clean up versions
+    if: (type = push) AND (branch = master)
+
+jobs:
+  allow_failures:
     - env:
         - MAKE_TEST_TARGET=puppeteer_chrome_test
-    - env:
-        - MAKE_TEST_TARGET=lint
-    - env:
-        - MAKE_TEST_TARGET=go_test
 
-    # pr branch deployments
-    - if: type = pull_request
+  include:
+    # All the other tests run on GitHub Actions now. We haven't migrated
+    # Puppeteer tests because it is experimental and has little coverage.
+    - env:
+        - MAKE_TEST_TARGET=puppeteer_chrome_test
+
+    - stage: deploy PR
       env:
       - DEPLOY_PR_STAGING_TARGET=webapp/web
-    - if: type = pull_request
-      env:
+    - env:
       - DEPLOY_PR_STAGING_TARGET=results-processor
-    - if: type = pull_request
-      env:
+    - env:
       - DEPLOY_PR_STAGING_TARGET=revisions/service
-    - if: type = pull_request
-      env:
+    - env:
       - DEPLOY_PR_STAGING_TARGET=api/query/cache/service/app.staging.yaml
 
-    # master branch deployments
-    - if: (type = push) AND (branch = master)
+    - stage: deploy master
       env:
       - DEPLOY_STAGING_TARGET=webapp/web
       - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
       - MAKE_TEST_FLAGS="STAGING=true"
-    - if: (type = push) AND (branch = master)
-      env:
+    - env:
       - DEPLOY_STAGING_TARGET=results-processor
-    - if: (type = push) AND (branch = master)
-      env:
+    - env:
       - DEPLOY_STAGING_TARGET=revisions/service
-    - if: (type = push) AND (branch = master)
-      env:
+    - env:
       - DEPLOY_STAGING_TARGET=api/query/cache/service
-    - if: (type = push) AND (branch = master)
+
+    # Run this job in a different stage to prevent racing with deployment.
+    - stage: clean up versions
       env:
       - MAKE_TEST_TARGET=cleanup_staging_versions
 

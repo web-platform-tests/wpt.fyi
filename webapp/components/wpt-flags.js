@@ -47,7 +47,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
-      'wptLive',
+      'webPlatformTestsLive',
     ];
   }
 });
@@ -241,7 +241,7 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{wptLive}}">
+      <paper-checkbox checked="{{webPlatformTestsLive}}">
         Use wpt.live.
       </paper-checkbox>
     </paper-item>
@@ -269,7 +269,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
 }
 window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
 
-/* global wpt */
 class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ true) {
   static get template() {
     return html`

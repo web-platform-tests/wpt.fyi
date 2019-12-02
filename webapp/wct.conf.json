@@ -2,6 +2,23 @@
   "suites": [
     "components/test/*.html"
   ],
+  "plugins": {
+    "local": {
+      "browserOptions": {
+        "chrome": [
+          "headless",
+          "disable-gpu",
+          "no-sandbox"
+        ],
+        "firefox": [
+          "-headless"
+        ]
+      }
+    }
+  },
+  "compile": "never",
+  "npm": true,
+  "expanded": true,
   "verbose": false,
-  "expanded": true
+  "testTimeout": 300000
 }

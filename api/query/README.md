@@ -150,6 +150,20 @@ Filters the results to values which possess/exhibit a given quality.
 Filters to rows where there is more than one resulting status for a test
 across the runs.
 
+##### `is:tentative`
+
+Filters to tests that are marked as tentative (currently based on [file
+name](https://web-platform-tests.org/writing-tests/file-names.html)).
+
+##### `is:optional`
+
+Filters to tests that are marked as optional (currently based on [file
+name](https://web-platform-tests.org/writing-tests/file-names.html)).
+
+**Note**: At this time, the `may` and `should` [metadata
+flags](https://web-platform-tests.org/writing-tests/css-metadata.html#requirement-flags)
+are not supported.
+
 #### And-conjuction
 
     [query1] and [query2] [and ...]
@@ -168,6 +182,15 @@ Combines filters, such that any must apply, e.g.
 
 > NOTE: Or-conjuction takes less precedence than `and`. Precedence can be modified
 > using parens, e.g. `chrome:pass and (firefox:!pass or safari:!pass)`
+
+#### File contents
+
+> BETA: This feature is under development and may change without warning.
+
+The `contains` atom filters result down to those where the test file's source
+contains the given query in its content.
+
+    `contains:shadowroot`
 
 ## /api/search
 
@@ -301,3 +324,12 @@ Search triaged issues -
 
 See [#meta-qualities](Meta qualities) above for more information on other
 meta qualities than `"different"`.
+
+#### contains
+
+> BETA: This feature is under development and may change without warning.
+
+`contains` query atoms perform an appengine search for test files that contain
+the given string in their content.
+
+    {"contains": "shadowRoot"}

@@ -58,6 +58,16 @@ func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
+// FileContentsQuery is a query atom that matches test contents to a query string.
+type FileContentsQuery struct {
+	Query string
+}
+
+// BindToRuns for FileContentsQuery is a no-op; it is independent of test runs.
+func (fcq FileContentsQuery) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	return fcq
+}
+
 // SubtestNamePattern is a query atom that matches subtest names to a pattern string.
 type SubtestNamePattern struct {
 	Subtest string
@@ -248,10 +258,16 @@ type MetadataQuality int
 
 const (
 	// MetadataQualityUnknown is a placeholder for unrecognized values.
-	MetadataQualityUnknown MetadataQuality = 0
+	MetadataQualityUnknown MetadataQuality = iota
 	// MetadataQualityDifferent represents an is:different atom.
 	// "different" ensures that one or more results differs from the other results.
-	MetadataQualityDifferent MetadataQuality = 1
+	MetadataQualityDifferent
+	// MetadataQualityTentative represents an is:tentative atom.
+	// "tentative" ensures that the results are from a tentative test.
+	MetadataQualityTentative
+	// MetadataQualityOptional represents an is:optional atom.
+	// "optional" ensures that the results are from an optional test.
+	MetadataQualityOptional
 )
 
 // BindToRuns for MetadataQuality is a no-op; it is independent of test runs.
@@ -435,6 +451,27 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	}
 
 	tnp.Pattern = pattern
+	return nil
+}
+
+// UnmarshalJSON for FileContentsQuery attempts to interpret a query atom as
+// {"contains":<test contents contains string>}.
+func (fcq *FileContentsQuery) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	containsData, ok := data["contains"]
+	if !ok {
+		return errors.New(`Missing test contents property: "contains"`)
+	}
+	var contains string
+	if err := json.Unmarshal(*containsData, &contains); err != nil {
+		return errors.New(`Test contents property "contains" is not a string`)
+	}
+
+	fcq.Query = contains
 	return nil
 }
 
@@ -871,6 +908,10 @@ func MetadataQualityFromString(quality string) (MetadataQuality, error) {
 	switch quality {
 	case "different":
 		return MetadataQualityDifferent, nil
+	case "tentative":
+		return MetadataQualityTentative, nil
+	case "optional":
+		return MetadataQualityOptional, nil
 	}
 	return MetadataQualityUnknown, fmt.Errorf(`Unknown "is" quality "%s"`, quality)
 }
@@ -878,120 +919,109 @@ func MetadataQualityFromString(quality string) (MetadataQuality, error) {
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	{
 		var tnp TestNamePattern
-		err := json.Unmarshal(b, &tnp)
-		if err == nil {
+		if err := json.Unmarshal(b, &tnp); err == nil {
 			return tnp, nil
 		}
 	}
 	{
+		var fcq FileContentsQuery
+		if err := json.Unmarshal(b, &fcq); err == nil {
+			return fcq, nil
+		}
+	}
+	{
 		var stnp SubtestNamePattern
-		err := json.Unmarshal(b, &stnp)
-		if err == nil {
+		if err := json.Unmarshal(b, &stnp); err == nil {
 			return stnp, nil
 		}
 	}
 	{
 		var tp TestPath
-		err := json.Unmarshal(b, &tp)
-		if err == nil {
+		if err := json.Unmarshal(b, &tp); err == nil {
 			return tp, nil
 		}
 	}
 	{
 		var tse TestStatusEq
-		err := json.Unmarshal(b, &tse)
-		if err == nil {
+		if err := json.Unmarshal(b, &tse); err == nil {
 			return tse, nil
 		}
 	}
 	{
 		var tsn TestStatusNeq
-		err := json.Unmarshal(b, &tsn)
-		if err == nil {
+		if err := json.Unmarshal(b, &tsn); err == nil {
 			return tsn, nil
 		}
 	}
 	{
 		var n AbstractNot
-		err := json.Unmarshal(b, &n)
-		if err == nil {
+		if err := json.Unmarshal(b, &n); err == nil {
 			return n, nil
 		}
 	}
 	{
 		var o AbstractOr
-		err := json.Unmarshal(b, &o)
-		if err == nil {
+		if err := json.Unmarshal(b, &o); err == nil {
 			return o, nil
 		}
 	}
 	{
 		var a AbstractAnd
-		err := json.Unmarshal(b, &a)
-		if err == nil {
+		if err := json.Unmarshal(b, &a); err == nil {
 			return a, nil
 		}
 	}
 	{
 		var e AbstractExists
-		err := json.Unmarshal(b, &e)
-		if err == nil {
+		if err := json.Unmarshal(b, &e); err == nil {
 			return e, nil
 		}
 	}
 	{
 		var a AbstractAll
-		err := json.Unmarshal(b, &a)
-		if err == nil {
+		if err := json.Unmarshal(b, &a); err == nil {
 			return a, nil
 		}
 	}
 	{
 		var n AbstractNone
-		err := json.Unmarshal(b, &n)
-		if err == nil {
+		if err := json.Unmarshal(b, &n); err == nil {
 			return n, nil
 		}
 	}
 	{
 		var s AbstractSequential
-		err := json.Unmarshal(b, &s)
-		if err == nil {
+		if err := json.Unmarshal(b, &s); err == nil {
 			return s, nil
 		}
 	}
 	{
 		var c AbstractCount
-		err := json.Unmarshal(b, &c)
-		if err == nil {
+		if err := json.Unmarshal(b, &c); err == nil {
 			return c, nil
 		}
 	}
 	{
 		var c AbstractLessThan
-		err := json.Unmarshal(b, &c)
-		if err == nil {
+		if err := json.Unmarshal(b, &c); err == nil {
 			return c, nil
 		}
 	}
 	{
 		var c AbstractMoreThan
-		err := json.Unmarshal(b, &c)
-		if err == nil {
+		if err := json.Unmarshal(b, &c); err == nil {
 			return c, nil
 		}
 	}
 	{
 		var l AbstractLink
-		err := json.Unmarshal(b, &l)
-		if err == nil {
+		if err := json.Unmarshal(b, &l); err == nil {
 			return l, nil
 		}
 	}
 	{
 		var i MetadataQuality
-		err := json.Unmarshal(b, &i)
-		if err == nil {
+		if err := json.Unmarshal(b, &i); err == nil {
 			return i, nil
 		}
 	}

@@ -1,5 +1,9 @@
 name: Continuous Integration
-on: push
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -22,3 +26,24 @@ jobs:
       - uses: ./.github/actions/make-in-docker
         with:
           target: go_test
+  web_components_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/make-in-docker
+        with:
+          target: web_components_test
+  go_chrome_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/make-in-docker
+        with:
+          target: go_chrome_test
+  go_firefox_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/make-in-docker
+        with:
+          target: go_firefox_test

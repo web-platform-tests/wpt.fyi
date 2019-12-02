@@ -94,12 +94,12 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
               <li>
                 <a href\$="https://github.com/web-platform-tests/wpt/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
 
-                <template is="dom-if" if="[[ !wptLive ]]">
+                <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
                   <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
                   browser on w3c-test.org</a></li>
                 </template>
 
-                <template is="dom-if" if="[[ wptLive ]]">
+                <template is="dom-if" if="[[ webPlatformTestsLive ]]">
                   <li><a href\$="[[scheme]]://wpt.live[[path]]" target="_blank">Run in your
                     browser on wpt.live</a></li>
                 </template>
@@ -262,7 +262,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleKeyDown(e) {
     // Ignore when something other than body has focus.
-    if (!e.path.length || e.path[0] !== document.body) {
+    if (e.target !== document.body) {
       return;
     }
     if (e.key === 'n') {
@@ -288,11 +288,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleSearchAutocomplete(e) {
     this.shadowRoot.querySelector('test-search').clear();
-    let path = e.detail.path;
-    if (path.endsWith('/')) {
-      path = path.substring(0, path.length - 1);
-    }
-    this.set('subroute.path', path);
+    this.set('subroute.path', e.detail.path);
   }
 
   handleAddMasterLabel(e) {
