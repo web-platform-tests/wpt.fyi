@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@browser-logos/chrome": "1.0.16",
-    "@browser-logos/chrome-beta": "2.1.4",
+    "@browser-logos/chrome-beta": "2.1.5",
     "@browser-logos/chrome-canary": "1.1.8",
     "@browser-logos/chrome-dev": "2.1.7",
     "@browser-logos/edge": "2.0.1",
