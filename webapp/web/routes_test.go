@@ -121,6 +121,27 @@ func TestAdminCacheFlushBound(t *testing.T) {
 	assertHSTS(t, "/admin/cache/flush")
 }
 
+func TestApiMetadataCORS(t *testing.T) {
+	assertHandlerIs(t, "/api/metadata", "api-metadata")
+
+	successReq := httptest.NewRequest("OPTIONS", "/api/metadata", nil)
+	successReq.Header.Set("Access-Control-Request-Headers", "content-type")
+	successReq.Header.Add("Origin", "https://developer.mozilla.org")
+	successReq.Header.Add("Access-Control-Request-Method", "PATCH")
+	rr := sendHttptestRequest(successReq)
+
+	assert.Equal(t, http.StatusOK, rr.Result().StatusCode)
+	assert.Equal(t, "Content-Type", rr.Result().Header.Get("Access-Control-Allow-Headers"))
+	assert.Equal(t, "PATCH", rr.Result().Header.Get("Access-Control-Allow-Methods"))
+	assert.Equal(t, "https://developer.mozilla.org", rr.Result().Header.Get("Access-Control-Allow-Origin"))
+
+	invalidOriginReq := httptest.NewRequest("PATCH", "/api/metadata", nil)
+	invalidOriginReq.Header.Add("Origin", "https://foo")
+	rr = sendHttptestRequest(invalidOriginReq)
+
+	assert.Equal(t, "", rr.Result().Header.Get("Access-Control-Allow-Origin"))
+}
+
 func assertBound(t *testing.T, path string) mux.RouteMatch {
 	req := httptest.NewRequest("GET", path, nil)
 	router := shared.Router()
@@ -146,6 +167,13 @@ func assertHSTS(t *testing.T, path string) {
 		t,
 		"[max-age=31536000; preload]",
 		fmt.Sprintf("%s", res.Header["Strict-Transport-Security"]))
+}
+
+func sendHttptestRequest(req *http.Request) *httptest.ResponseRecorder {
+	rr := httptest.NewRecorder()
+	handler, _ := http.DefaultServeMux.Handler(req)
+	handler.ServeHTTP(rr, req)
+	return rr
 }
 
 func assertCORS(t *testing.T, path string) {

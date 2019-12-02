@@ -42,8 +42,14 @@ func WrapHSTS(h http.HandlerFunc) http.HandlerFunc {
 // WrapPermissiveCORS wraps the given handler func in one that sets an
 // all-permissive CORS header on the response.
 func WrapPermissiveCORS(h http.HandlerFunc, methods ...string) http.HandlerFunc {
+	return WrapRestrictiveCORS(h, []string{"*"}, methods)
+}
+
+// WrapRestrictiveCORS wraps the given handler func in one that sets
+// a CORS header with specified origins and methods on the response.
+func WrapRestrictiveCORS(h http.HandlerFunc, origins []string, methods []string) http.HandlerFunc {
 	opts := []handlers.CORSOption{
-		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedOrigins(origins),
 		handlers.AllowedHeaders([]string{"Content-Type"}),
 	}
 	if len(methods) > 0 {
