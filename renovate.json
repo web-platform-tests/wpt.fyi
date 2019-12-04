@@ -1,9 +1,9 @@
 {
   "extends": [
     "config:base",
-    "automergeMinor",
-    "automergeLinters",
-    "automergeTypes"
+    ":automergeMinor",
+    ":automergeLinters",
+    ":automergeTypes"
   ],
   "enabledManagers": ["gomod", "npm"],
   "gomod": {
