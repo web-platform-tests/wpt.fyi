@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"net/http"
+	"crypto/rand"
 
 	"github.com/google/go-github/github"
 	"github.com/gorilla/securecookie"
@@ -29,6 +30,8 @@ type User struct {
 	GitHubHandle string
 }
 
+var returnURLMap = make(map[string]string)
+
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
@@ -42,8 +45,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 	if user == nil {
 		conf := getGithubOAuthConfig(ctx)
-		state := base64.URLEncoding.EncodeToString([]byte(redirect))
+		state, err := generateRandomState(32)
+		if err != nil {
+			log.Errorf("Failed to generate random state")
+			http.Error(w, "Error creating a random state for login", http.StatusInternalServerError)
+			return
+		}
 		redirect = conf.AuthCodeURL(state, oauth2.AccessTypeOnline)
+		setState(ctx, state, w)
+		returnURLMap[state] = returnURL
 		log.Infof("OAuthing with github and returning to %s", returnURL)
 	} else {
 		if redirect == "" {
@@ -89,13 +99,20 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	setSession(ctx, user, w)
 	log.Infof("User %s logged in", user.GitHubHandle)
-	state := r.FormValue("state")
-	ret, err := base64.URLEncoding.DecodeString(state)
-	if err != nil {
-		log.Errorf("Failed to decode return url")
-		ret = []byte("/")
+
+	ret := "/"
+	encodedState := r.FormValue("state")
+	stateFromCookie := getState(r)
+	if encodedState != stateFromCookie {
+		log.Errorf("Failed to verify encoded state")
+		http.Error(w, "Failed to verify encoded state", http.StatusBadRequest)
+		return
 	}
-	http.Redirect(w, r, string(ret), http.StatusTemporaryRedirect)
+
+	if val, ok := returnURLMap[encodedState]; ok {
+		ret = val
+	}
+	http.Redirect(w, r, ret, http.StatusTemporaryRedirect)
 }
 
 func logoutHandler(response http.ResponseWriter, ruest *http.Request) {
@@ -136,6 +153,32 @@ func setSession(ctx context.Context, user *User, response http.ResponseWriter) {
 		log := shared.GetLogger(ctx)
 		log.Errorf("Failed to set session cookie: %s", err.Error())
 	}
+}
+
+func setState(ctx context.Context, state string, response http.ResponseWriter) {
+	if encoded, err := getSecureCookie(ctx).Encode("state", state); err == nil {
+		cookie := &http.Cookie{
+			Name:  "state",
+			Value: encoded,
+			Path:  "/",
+		}
+		http.SetCookie(response, cookie)
+	} else {
+		log := shared.GetLogger(ctx)
+		log.Errorf("Failed to set state cookie: %s", err.Error())
+	}
+}
+
+func getState(r *http.Request) string {
+	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
+	cookieValue := ""
+	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
+		if err = getSecureCookie(ctx).Decode("state", cookie.Value, &cookieValue); err != nil {
+			log.Errorf("Failed to Decode cookie: %s", err.Error())
+		}
+	}
+	return cookieValue
 }
 
 var secureCookie *securecookie.SecureCookie
@@ -180,4 +223,14 @@ func getGithubOAuthConfig(ctx context.Context) *oauth2.Config {
 		Scopes:   []string{},
 		Endpoint: ghOAuth.Endpoint,
 	}
+}
+
+func generateRandomState(size int) (string, error) {
+	byteArray := make([]byte, size)
+    _, err := rand.Read(byteArray)
+    if err != nil {
+        return "", err
+    }
+
+    return base64.URLEncoding.EncodeToString(byteArray), nil
 }
