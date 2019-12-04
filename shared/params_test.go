@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	mapset "github.com/deckarep/golang-set"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseSHAParam(t *testing.T) {
@@ -50,15 +50,26 @@ func TestParseSHAParam_FullSHA(t *testing.T) {
 	assert.Equal(t, sha, runSHA.FirstOrLatest())
 }
 
-func TestParseSHAParam_NonSHA(t *testing.T) {
+func TestParseSHAParam_TooShortSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=123", nil)
 	_, err := ParseSHAParam(r.URL.Query())
 	assert.NotNil(t, err)
 }
 
-func TestParseSHAParam_NonSHA_2(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=zapper0123", nil)
+func TestParseSHAParam_TooLongSHA(t *testing.T) {
+	sha := "0123456789aaaaabbbbbcccccdddddeeeeefffff1"
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
 	_, err := ParseSHAParam(r.URL.Query())
+	assert.NotNil(t, err)
+}
+
+func TestParseSHAParam_NonSHAs(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=xabcd0123", nil)
+	_, err := ParseSHAParam(r.URL.Query())
+	assert.NotNil(t, err)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/?sha=abcd0123x", nil)
+	_, err = ParseSHAParam(r.URL.Query())
 	assert.NotNil(t, err)
 }
 
