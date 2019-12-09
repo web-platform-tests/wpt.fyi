@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/gob"
 	"net/http"
 	"net/url"
 
@@ -18,6 +19,12 @@ import (
 // Copyright 2019 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+func init() {
+	gob.Register(map[string]interface{}{})
+	// Need RegisterName - for local packages, Register appends main[0-9]{5}.User
+	gob.RegisterName("User", User{})
+}
 
 // User represents an authenticated GitHub user.
 type User struct {
