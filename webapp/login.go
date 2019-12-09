@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/gob"
 	"net/http"
 	"net/url"
 
@@ -20,15 +19,10 @@ import (
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-func init() {
-	gob.Register(map[string]interface{}{})
-	// Need RegisterName - for local packages, Register appends main[0-9]{5}.User
-	gob.RegisterName("User", User{})
-}
-
 // User represents an authenticated GitHub user.
 type User struct {
 	GitHubHandle string
+	GithuhEmail  string
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +38,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	redirect := returnURL
 	log := shared.GetLogger(ctx)
 	if user == nil || token == nil {
+		log.Infof("Initiating a new user login.")
 		conf := getGithubOAuthConfig(ctx)
 		conf.RedirectURL = getCallbackURI(returnURL, r)
 		state, err := generateRandomState(32)
@@ -97,6 +92,7 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	user := &User{
 		GitHubHandle: ghUser.GetLogin(),
+		GithuhEmail:  ghUser.GetEmail(),
 	}
 	setSession(ctx, user, &token.AccessToken, w)
 	log.Infof("User %s logged in", user.GitHubHandle)
@@ -113,9 +109,13 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, ret, http.StatusTemporaryRedirect)
 }
 
-func logoutHandler(response http.ResponseWriter, ruest *http.Request) {
+func logoutHandler(response http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
 	clearSession(response)
-	http.Redirect(response, ruest, "/", http.StatusFound)
+
+	log.Infof("User logged out")
+	http.Redirect(response, r, "/", http.StatusFound)
 }
 
 func getUserFromCookie(r *http.Request) (*User, *string) {
@@ -129,7 +129,7 @@ func getUserFromCookie(r *http.Request) (*User, *string) {
 			if okUser && okToken {
 				return &decodedUser, &decodedToken
 			} else if appengine.IsDevAppServer() {
-				log.Errorf("Failed to cast use or toekm")
+				log.Errorf("Failed to cast user or token")
 			}
 		} else if appengine.IsDevAppServer() {
 			log.Errorf("Failed to Decode cookie: %s", err.Error())
@@ -188,7 +188,7 @@ func getState(r *http.Request) string {
 	cookieValue := ""
 	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
 		if err = getSecureCookie(ctx).Decode("state", cookie.Value, &cookieValue); err != nil {
-			log.Errorf("Failed to Decode cookie: %s", err.Error())
+			log.Errorf("Failed to Decode cookie for state: %s", err.Error())
 		}
 	}
 	return cookieValue
@@ -214,15 +214,6 @@ func clearSession(response http.ResponseWriter) {
 		MaxAge: -1,
 	}
 	http.SetCookie(response, cookie)
-}
-
-func extractString(object map[string]interface{}, field string) string {
-	if value, ok := object[field]; ok {
-		if str, ok := value.(string); ok {
-			return str
-		}
-	}
-	return ""
 }
 
 func getGithubOAuthConfig(ctx context.Context) *oauth2.Config {
