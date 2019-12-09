@@ -149,7 +149,11 @@ class WPTReportTest(unittest.TestCase):
         with open(tmp_path, 'wt') as f:
             json.dump({
                 'results': [{'test1': 'foo'}],
-                'run_info': {'product': 'firefox'},
+                'run_info': {
+                    'revision': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+                    'product': 'firefox',
+                    'browser_version': '59',
+                },
             }, f)
         with open(tmp_path, 'rb') as f:
             r.load_json(f)
@@ -157,11 +161,23 @@ class WPTReportTest(unittest.TestCase):
         with open(tmp_path, 'wt') as f:
             json.dump({
                 'results': [{'test2': 'bar'}],
-                'run_info': {'product': 'chrome'},
+                'run_info': {
+                    'revision': '0bdaaf9c1622ca49eb140381af1ece6d8001c934',
+                    'product': 'chrome',
+                    'browser_version': '70',
+                },
             }, f)
         with open(tmp_path, 'rb') as f:
-            with self.assertRaises(ConflictingDataError):
+            with self.assertRaisesRegex(ConflictingDataError,
+                                        "product, browser_version"):
                 r.load_json(f)
+
+        # Fields without conflict should be preserved.
+        self.assertEqual(r.run_info['revision'],
+                         '0bdaaf9c1622ca49eb140381af1ece6d8001c934')
+        # Conflicting fields should be set to None.
+        self.assertIsNone(r.run_info['product'])
+        self.assertIsNone(r.run_info['browser_version'])
 
     def test_load_json_multiple_chunks_ignored_conflicting_data(self):
         tmp_path = os.path.join(self.tmp_dir, 'test.json')
