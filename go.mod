@@ -1,6 +1,6 @@
 module github.com/web-platform-tests/wpt.fyi
 
-go 1.12
+go 1.11
 
 require (
 	cloud.google.com/go v0.49.0
@@ -17,9 +17,11 @@ require (
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v28 v28.1.1
 	github.com/google/uuid v1.1.1
-	github.com/gorilla/handlers v1.4.0
-	github.com/gorilla/mux v1.7.2
+	github.com/gorilla/handlers v1.4.2
+	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/securecookie v1.1.1
+	github.com/jstemmer/go-junit-report v0.9.1 // indirect
+	github.com/rogpeppe/go-internal v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stoewer/go-strcase v1.1.0
