@@ -257,7 +257,7 @@ class Processor(object):
         payload = {'id': int(run_id), 'stage': stage}
         if error:
             payload['error'] = error
-        revision = self.report.run_info.get('full_revision_hash')
+        revision = self.report.run_info.get('revision')
         if revision:
             payload['full_revision_hash'] = revision
         try:

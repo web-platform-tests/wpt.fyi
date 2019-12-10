@@ -11,6 +11,9 @@ import time
 
 import flask
 
+# Exported credentials for authenticated APIs
+AUTH_CREDENTIALS = ('TEST_USERNAME', 'TEST_PASSWORD')
+
 logging.basicConfig(level=logging.ERROR, stream=sys.stdout)
 app = flask.Flask(__name__)
 
@@ -41,6 +44,26 @@ def download_attachment():
 @app.route('/download/test.txt', methods=['GET'])
 def download_json():
     return 'Hello, world!'
+
+
+@app.route('/api/status/<run_id>', methods=['PATCH'])
+def echo_status(run_id):
+    assert flask.request.authorization.username == AUTH_CREDENTIALS[0]
+    assert flask.request.authorization.password == AUTH_CREDENTIALS[1]
+    payload = flask.request.get_json()
+    assert str(payload.get('id')) == run_id
+    sys.stderr.write(flask.request.get_data(as_text=True))
+    sys.stderr.write('\n')
+    sys.stderr.flush()
+    return 'Success'
+
+
+@app.route('/api/results/create', methods=['POST'])
+def echo_create():
+    assert flask.request.authorization.username == AUTH_CREDENTIALS[0]
+    assert flask.request.authorization.password == AUTH_CREDENTIALS[1]
+    payload = flask.request.get_json()
+    return flask.jsonify(id=payload['id'])
 
 
 if __name__ == '__main__':

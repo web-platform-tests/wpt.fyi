@@ -10,6 +10,7 @@ from werkzeug.datastructures import MultiDict
 import test_util
 import wptreport
 from processor import Processor, process_report
+from test_server import AUTH_CREDENTIALS
 
 
 class ProcessorTest(unittest.TestCase):
@@ -192,7 +193,11 @@ class MockProcessorTest(unittest.TestCase):
         mock.create_run.assert_not_called()
 
 
-class ProcessorServerTest(unittest.TestCase):
+class ProcessorDownloadServerTest(unittest.TestCase):
+    """This class tests behaviours of Processor related to downloading
+    artifacts (e.g. JSON reports) from an external server. test_server is used
+    to emulate the success and failure modes of an external server.
+    """
     def setUp(self):
         self.server, self.url = test_util.start_server(False)
 
@@ -232,3 +237,49 @@ class ProcessorServerTest(unittest.TestCase):
             # artifact_test.zip as the filename.
             path = p._download_single(self.url + '/download/attachment')
             self.assertTrue(path.endswith('.zip'))
+
+
+class ProcessorAPIServerTest(unittest.TestCase):
+    """This class tests API calls from Processor to webapp (e.g.
+    /api/results/create, /api/status). test_server is used to emulate webapp
+    and verify credentials and payloads.
+    """
+    def setUp(self):
+        self.server, self.url = test_util.start_server(True)
+
+    def tearDown(self):
+        if self.server.poll() is None:
+            self.server.kill()
+
+    def test_update_status(self):
+        with Processor() as p:
+            p._auth = AUTH_CREDENTIALS
+            p.report.update_metadata(
+                revision='21917b36553562d21c14fe086756a57cbe8a381b')
+            p.update_status(
+                run_id='12345', stage='INVALID',
+                error='Sample error', callback_url=self.url)
+        self.server.terminate()
+        _, err = self.server.communicate()
+        self.assertEqual(
+            err,
+            b'{"id": 12345, "stage": "INVALID", "error": "Sample error", '
+            b'"full_revision_hash": "21917b36553562d21c14fe086756a57cbe8a381b"}\n')
+
+    def test_create_run(self):
+        api = self.url + '/api/results/create'
+        with Processor() as p:
+            p._auth = AUTH_CREDENTIALS
+            p.report.update_metadata(
+                browser_name='chrome',
+                browser_version='70',
+                os_name='Linux',
+                revision='21917b36553562d21c14fe086756a57cbe8a381b')
+            p.create_run('12345', '', 'blade-runner', callback_url=api)
+            # p.test_run_id is set based on the response from the API, which in
+            # turn is set according to the request. Hence this verifies that we
+            # pass the run ID to the API correctly.
+            self.assertEqual(p.test_run_id, 12345)
+        self.server.terminate()
+        # This is needed to close the stdio pipes.
+        self.server.communicate()
