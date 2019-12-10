@@ -59,7 +59,7 @@ class WPTProcessor extends LoadingState(PolymerElement) {
       <div id="before-grid">
         <p>Note: timestamps are displayed in your local timezone.</p>
         <vaadin-context-menu open-on="click">
-          <vaadin-button theme="icon" aria-label="Hide column menu">
+          <vaadin-button theme="icon" aria-label="Select columns">
             <iron-icon icon="icons:menu"></iron-icon>
           </vaadin-button>
         </vaadin-context-menu>
