@@ -22,10 +22,10 @@ class WPTProcessor extends LoadingState(PolymerElement) {
         display: flex;
         flex-direction: column;
       }
-      #note p {
+      #before-grid p {
         float: left;
       }
-      #note vaadin-context-menu {
+      #before-grid vaadin-context-menu {
         float: right;
       }
       .timestamp {
@@ -56,7 +56,7 @@ class WPTProcessor extends LoadingState(PolymerElement) {
     <template is="dom-if" if="[[testRuns.length]]" on-dom-change="refreshContextMenu">
       <x-data-provider data-provider="[[testRuns]]"></x-data-provider>
 
-      <div id="note">
+      <div id="before-grid">
         <p>Note: timestamps are displayed in your local timezone.</p>
         <vaadin-context-menu open-on="click">
           <vaadin-button theme="icon" aria-label="Hide column menu">
