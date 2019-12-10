@@ -651,6 +651,7 @@ class HelpersTest(unittest.TestCase):
             r.run_info['product'],
             'webkitgtk'
         )
+
     def test_normalize_product_noop(self):
         r = WPTReport()
         r._report = {
