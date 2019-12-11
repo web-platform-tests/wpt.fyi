@@ -158,6 +158,15 @@ func TestApiMetadataTriageCORS(t *testing.T) {
 	rr = sendHttptestRequest(invalidOriginReq)
 
 	assert.Equal(t, "", rr.Header.Get("Access-Control-Allow-Origin"))
+
+	invalidMethodReq := httptest.NewRequest("OPTIONS", "/api/metadata/triage", nil)
+	invalidMethodReq.Header.Set("Access-Control-Request-Headers", "content-type")
+	invalidMethodReq.Header.Add("Origin", "https://developer.mozilla.org")
+	invalidMethodReq.Header.Add("Access-Control-Request-Method", "POST")
+
+	rr = sendHttptestRequest(invalidMethodReq)
+
+	assert.Equal(t, http.StatusMethodNotAllowed, rr.StatusCode)
 }
 
 func assertBound(t *testing.T, path string) mux.RouteMatch {
