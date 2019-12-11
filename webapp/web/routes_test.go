@@ -123,23 +123,41 @@ func TestAdminCacheFlushBound(t *testing.T) {
 
 func TestApiMetadataCORS(t *testing.T) {
 	assertHandlerIs(t, "/api/metadata", "api-metadata")
+	successPost := httptest.NewRequest("OPTIONS", "/api/metadata", nil)
+	successPost.Header.Set("Access-Control-Request-Headers", "content-type")
+	successPost.Header.Add("Origin", "https://developer.mozilla.org")
+	successPost.Header.Add("Access-Control-Request-Method", "POST")
 
-	successReq := httptest.NewRequest("OPTIONS", "/api/metadata", nil)
+	rr := sendHttptestRequest(successPost)
+
+	assert.Equal(t, http.StatusOK, rr.StatusCode)
+	assert.Equal(t, "Content-Type", rr.Header.Get("Access-Control-Allow-Headers"))
+	assert.Equal(t, "*", rr.Header.Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "", rr.Header.Get("Access-Control-Allow-Credentials"))
+}
+
+func TestApiMetadataTriageCORS(t *testing.T) {
+	assertHandlerIs(t, "/api/metadata/triage", "api-metadata-triage")
+
+	successReq := httptest.NewRequest("OPTIONS", "/api/metadata/triage", nil)
 	successReq.Header.Set("Access-Control-Request-Headers", "content-type")
 	successReq.Header.Add("Origin", "https://developer.mozilla.org")
 	successReq.Header.Add("Access-Control-Request-Method", "PATCH")
+
 	rr := sendHttptestRequest(successReq)
 
-	assert.Equal(t, http.StatusOK, rr.Result().StatusCode)
-	assert.Equal(t, "Content-Type", rr.Result().Header.Get("Access-Control-Allow-Headers"))
-	assert.Equal(t, "PATCH", rr.Result().Header.Get("Access-Control-Allow-Methods"))
-	assert.Equal(t, "https://developer.mozilla.org", rr.Result().Header.Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, http.StatusOK, rr.StatusCode)
+	assert.Equal(t, "Content-Type", rr.Header.Get("Access-Control-Allow-Headers"))
+	assert.Equal(t, "PATCH", rr.Header.Get("Access-Control-Allow-Methods"))
+	assert.Equal(t, "https://developer.mozilla.org", rr.Header.Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "true", rr.Header.Get("Access-Control-Allow-Credentials"))
 
-	invalidOriginReq := httptest.NewRequest("PATCH", "/api/metadata", nil)
+	invalidOriginReq := httptest.NewRequest("OPTIONS", "/api/metadata/triage", nil)
 	invalidOriginReq.Header.Add("Origin", "https://foo")
+
 	rr = sendHttptestRequest(invalidOriginReq)
 
-	assert.Equal(t, "", rr.Result().Header.Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "", rr.Header.Get("Access-Control-Allow-Origin"))
 }
 
 func assertBound(t *testing.T, path string) mux.RouteMatch {
@@ -169,11 +187,11 @@ func assertHSTS(t *testing.T, path string) {
 		fmt.Sprintf("%s", res.Header["Strict-Transport-Security"]))
 }
 
-func sendHttptestRequest(req *http.Request) *httptest.ResponseRecorder {
+func sendHttptestRequest(req *http.Request) *http.Response {
 	rr := httptest.NewRecorder()
 	handler, _ := http.DefaultServeMux.Handler(req)
 	handler.ServeHTTP(rr, req)
-	return rr
+	return rr.Result()
 }
 
 func assertCORS(t *testing.T, path string) {

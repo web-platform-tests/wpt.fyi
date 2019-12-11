@@ -71,5 +71,8 @@ func RegisterRoutes() {
 	shared.AddRoute("/api/screenshot/{screenshot:.*}", "api-screenshot", shared.WrapPermissiveCORS(apiScreenshotRedirectHandler))
 
 	// API endpoint for searching Metadata for the products.
-	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapRestrictiveCORS(apiMetadataHandler, []string{"https://developer.mozilla.org"}, []string{"GET", "POST", "PATCH", "OPTIONS"}))
+	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapPermissiveCORS(apiMetadataHandler))
+
+	// API endpoint for modifying Metadata.
+	shared.AddRoute("/api/metadata/triage", "api-metadata-triage", shared.WrapTrustedCORS(apiMetadataTriageHandler, []string{"https://developer.mozilla.org"}, []string{"PATCH"}))
 }

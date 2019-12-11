@@ -24,6 +24,10 @@ type MetadataHandler struct {
 	metadataURL string
 }
 
+// A temporary place holder for the apiMetadataTriageHandler from another PR.
+func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
+}
+
 // apiMetadataHandler searches Metadata for given products.
 func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "POST" {
