@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 The WPT Dashboard Project. All rights reserved.
+ * Copyright 2019 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,7 +12,7 @@ import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 
-class GHLogin extends PolymerElement {
+class GitHubLogin extends PolymerElement {
   static get template() {
     return html`
     <style>
@@ -46,7 +46,7 @@ class GHLogin extends PolymerElement {
   }
 
   static get is() {
-    return 'gh-login';
+    return 'github-login';
   }
 
   static get properties() {
@@ -76,4 +76,4 @@ class GHLogin extends PolymerElement {
     window.location = url;
   }
 }
-window.customElements.define(GHLogin.is, GHLogin);
+window.customElements.define(GitHubLogin.is, GitHubLogin);

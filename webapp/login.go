@@ -1,3 +1,7 @@
+// Copyright 2019 The WPT Dashboard Project. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package webapp
 
 import (
@@ -8,17 +12,13 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/gorilla/securecookie"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
 	ghOAuth "golang.org/x/oauth2/github"
 	"google.golang.org/appengine"
 )
-
-// Copyright 2019 The WPT Dashboard Project. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
 
 func init() {
 	gob.Register(map[string]interface{}{})
@@ -36,13 +36,17 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	if !aeAPI.IsFeatureEnabled("githubLogin") {
-		http.Error(w, "Feature not implemented", http.StatusNotImplemented)
+		http.Error(w, "Feature not enabled", http.StatusNotImplemented)
 		return
 	}
 
 	user, token := getUserFromCookie(r)
 	returnURL := r.FormValue("return")
-	redirect := returnURL
+	if returnURL == "" {
+		returnURL = "/"
+	}
+
+	redirect := ""
 	log := shared.GetLogger(ctx)
 	if user == nil || token == nil {
 		log.Infof("Initiating a new user login.")
@@ -50,12 +54,18 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		conf.RedirectURL = getCallbackURI(returnURL, r)
 		state, err := generateRandomState(32)
 		if err != nil {
-			log.Errorf("Failed to generate random state")
+			log.Errorf("Failed to generate random state: %v", err)
 			http.Error(w, "Error creating a random state for login", http.StatusInternalServerError)
 			return
 		}
+
 		redirect = conf.AuthCodeURL(state, oauth2.AccessTypeOnline)
-		setState(ctx, state, w)
+		err = setState(ctx, state, w)
+		if err != nil {
+			log.Errorf("Failed to set state cookie: %s", err.Error())
+			http.Error(w, "Error setting state cookie for login", http.StatusInternalServerError)
+		}
+
 		log.Infof("OAuthing with github and returning to %s", returnURL)
 	} else {
 		if redirect == "" {
@@ -68,16 +78,36 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func oauthHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	log := shared.GetLogger(ctx)
+
+	encodedState := r.FormValue("state")
+	if encodedState == "" {
+		log.Errorf("Failed to get state URL param")
+		http.Error(w, "Failed to get state URL param", http.StatusBadRequest)
+		return
+	}
+
+	stateFromCookie := getState(r)
+	if stateFromCookie == "" {
+		http.Error(w, "Failed to get state cookie", http.StatusBadRequest)
+		return
+	}
+
+	if encodedState != stateFromCookie {
+		log.Errorf("Failed to verify encoded state")
+		http.Error(w, "Failed to verify encoded state", http.StatusBadRequest)
+		return
+	}
+
 	oauthToken := r.FormValue("code")
 	if oauthToken == "" {
 		http.Error(w, "No token or username provided", http.StatusBadRequest)
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
 	conf := getGithubOAuthConfig(ctx)
 	token, err := conf.Exchange(ctx, oauthToken)
-	log := shared.GetLogger(ctx)
 	if err != nil {
 		log.Errorf("Invalid OAuth2 token: %s", err.Error())
 		http.Error(w, "Invalid OAuth2 token", http.StatusBadRequest)
@@ -86,33 +116,26 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 
 	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
 	client := github.NewClient(oauthClient)
-	if err != nil {
-		log.Errorf("Failed to get GitHub client")
-		http.Error(w, "Error fetching user", http.StatusInternalServerError)
-		return
-	}
-	ghUser, _, err := client.Users.Get(ctx, "") // Empty string => Authenticated user.
+	// Passing the empty string will fetch the authenticated user.
+	ghUser, _, err := client.Users.Get(ctx, "")
 	if err != nil || ghUser == nil {
-		log.Errorf("Failed to get authenticated user")
+		log.Errorf("Failed to get authenticated user: %s", err.Error())
 		http.Error(w, "Failed to get authenticated user", http.StatusBadRequest)
 		return
 	}
+
 	user := &User{
 		GitHubHandle: ghUser.GetLogin(),
 		GithuhEmail:  ghUser.GetEmail(),
 	}
 	setSession(ctx, user, &token.AccessToken, w)
+	if err != nil {
+		http.Error(w, "Failed to set credential cookie", http.StatusInternalServerError)
+		return
+	}
 	log.Infof("User %s logged in", user.GitHubHandle)
 
 	ret := r.FormValue("return")
-	encodedState := r.FormValue("state")
-	stateFromCookie := getState(r)
-	if encodedState != stateFromCookie {
-		log.Errorf("Failed to verify encoded state")
-		http.Error(w, "Failed to verify encoded state", http.StatusBadRequest)
-		return
-	}
-
 	http.Redirect(w, r, ret, http.StatusTemporaryRedirect)
 }
 
@@ -145,7 +168,8 @@ func getUserFromCookie(r *http.Request) (*User, *string) {
 	return nil, nil
 }
 
-func setSession(ctx context.Context, user *User, token *string, response http.ResponseWriter) {
+func setSession(ctx context.Context, user *User, token *string, response http.ResponseWriter) error {
+	var err error
 	value := map[string]interface{}{
 		"user":  *user,
 		"token": *token,
@@ -169,9 +193,12 @@ func setSession(ctx context.Context, user *User, token *string, response http.Re
 		log := shared.GetLogger(ctx)
 		log.Errorf("Failed to set session cookie: %s", err.Error())
 	}
+
+	return err
 }
 
-func setState(ctx context.Context, state string, response http.ResponseWriter) {
+func setState(ctx context.Context, state string, response http.ResponseWriter) error {
+	var err error
 	if encoded, err := getSecureCookie(ctx).Encode("state", state); err == nil {
 		cookie := &http.Cookie{
 			Name:     "state",
@@ -180,13 +207,12 @@ func setState(ctx context.Context, state string, response http.ResponseWriter) {
 			MaxAge:   600,
 			Secure:   true,
 			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		}
 		http.SetCookie(response, cookie)
-	} else {
-		log := shared.GetLogger(ctx)
-		log.Errorf("Failed to set state cookie: %s", err.Error())
 	}
+
+	return err
 }
 
 func getState(r *http.Request) string {
@@ -195,8 +221,10 @@ func getState(r *http.Request) string {
 	cookieValue := ""
 	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
 		if err = getSecureCookie(ctx).Decode("state", cookie.Value, &cookieValue); err != nil {
-			log.Errorf("Failed to Decode cookie for state: %s", err.Error())
+			log.Errorf("Failed to decode cookie for state: %s", err.Error())
 		}
+	} else {
+		log.Errorf("Failed to get state cookie: %s", err.Error())
 	}
 	return cookieValue
 }

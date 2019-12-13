@@ -14,7 +14,7 @@ require (
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
 	github.com/golang/mock v1.3.1
-	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/go-github/v28 v28.1.1
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.2

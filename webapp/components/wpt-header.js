@@ -7,7 +7,7 @@
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import './gh-login.js';
+import './github-login';
 import './info-banner.js';
 import { WPTFlags } from './wpt-flags.js';
 
@@ -58,7 +58,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           <a href="/">web-platform-tests dashboard</a>
         </h1>
         <template is="dom-if" if="[[githubLogin]]">
-          <gh-login user="[[user]]"></gh-login>
+          <github-login user="[[user]]"></github-login>
         </template>
       </div>
 
