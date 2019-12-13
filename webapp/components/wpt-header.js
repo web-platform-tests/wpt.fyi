@@ -7,7 +7,7 @@
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import './github-login';
+import './github-login.js';
 import './info-banner.js';
 import { WPTFlags } from './wpt-flags.js';
 
