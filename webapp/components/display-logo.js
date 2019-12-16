@@ -102,7 +102,8 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
     if (!name) {
       return;
     }
-    if (labels) {
+    // TODO: Remove the special case for Servo when it has per-channel logos.
+    if (name !== 'servo' && labels) {
       labels = new Set(labels);
       let channel;
       const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
