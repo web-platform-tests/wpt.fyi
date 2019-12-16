@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import json
 import unittest
 from unittest.mock import call, patch
 
@@ -255,16 +256,23 @@ class ProcessorAPIServerTest(unittest.TestCase):
         with Processor() as p:
             p._auth = AUTH_CREDENTIALS
             p.report.update_metadata(
+                browser_name='Chrome',
+                browser_version='70',
+                os_name='Linux',
+                os_version='5.0',
                 revision='21917b36553562d21c14fe086756a57cbe8a381b')
             p.update_status(
                 run_id='12345', stage='INVALID',
                 error='Sample error', callback_url=self.url)
         self.server.terminate()
         _, err = self.server.communicate()
-        self.assertEqual(
-            err,
-            b'{"id": 12345, "stage": "INVALID", "error": "Sample error", '
-            b'"full_revision_hash": "21917b36553562d21c14fe086756a57cbe8a381b"}\n')
+        response = json.loads(err)
+        self.assertDictEqual(response, {
+            'id': 12345, 'stage': 'INVALID', 'error': 'Sample error',
+            'browser_name': 'Chrome', 'browser_version': '70',
+            'os_name': 'Linux', 'os_version': '5.0',
+            'full_revision_hash': '21917b36553562d21c14fe086756a57cbe8a381b',
+        })
 
     def test_create_run(self):
         api = self.url + '/api/results/create'
