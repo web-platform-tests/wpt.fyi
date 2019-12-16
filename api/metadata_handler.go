@@ -5,8 +5,8 @@
 package api
 
 import (
-	"context"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -60,13 +60,22 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	client := aeAPI.GetHTTPClient()
 	logger := shared.GetLogger(ctx)
 
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		http.Error(w, "Invalid content-type: %s"+contentType, http.StatusBadRequest)
+		return
+	}
+
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read PATCH request body", http.StatusInternalServerError)
+		return
 	}
+
 	err = r.Body.Close()
 	if err != nil {
 		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
+		return
 	}
 
 	var metadata shared.MetadataResults
@@ -107,10 +116,13 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+			return
 		}
+
 		err = r.Body.Close()
 		if err != nil {
 			http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
+			return
 		}
 
 		var ae query.AbstractExists
@@ -197,7 +209,6 @@ var cacheKey = func(r *http.Request) interface{} {
 
 	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
 }
-
 
 func getWPTFYIGithubBot(ctx context.Context) (*github.Client, error) {
 	client, err := shared.GetGithubClientFromToken(ctx, "github-wpt-fyi-bot-token")
