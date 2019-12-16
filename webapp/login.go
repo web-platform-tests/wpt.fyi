@@ -153,7 +153,12 @@ func getUserFromCookie(r *http.Request) (*User, *string) {
 	log := shared.GetLogger(ctx)
 	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
 		cookieValue := make(map[string]interface{})
-		if err = getSecureCookie(ctx).Decode("session", cookie.Value, &cookieValue); err == nil {
+		sc, err := getSecureCookie(ctx)
+		if err != nil {
+			return nil, nil
+		}
+
+		if err = sc.Decode("session", cookie.Value, &cookieValue); err == nil {
 			decodedUser, okUser := cookieValue["user"].(User)
 			decodedToken, okToken := cookieValue["token"].(string)
 			if okUser && okToken {
@@ -174,7 +179,13 @@ func setSession(ctx context.Context, user *User, token *string, response http.Re
 		"user":  *user,
 		"token": *token,
 	}
-	if encoded, err := getSecureCookie(ctx).Encode("session", value); err == nil {
+
+	sc, err := getSecureCookie(ctx)
+	if err != nil {
+		return err
+	}
+
+	if encoded, err := sc.Encode("session", value); err == nil {
 		cookie := &http.Cookie{
 			Name:     "session",
 			Value:    encoded,
@@ -199,7 +210,12 @@ func setSession(ctx context.Context, user *User, token *string, response http.Re
 
 func setState(ctx context.Context, state string, response http.ResponseWriter) error {
 	var err error
-	if encoded, err := getSecureCookie(ctx).Encode("state", state); err == nil {
+	sc, err := getSecureCookie(ctx)
+	if err != nil {
+		return err
+	}
+
+	if encoded, err := sc.Encode("state", state); err == nil {
 		cookie := &http.Cookie{
 			Name:     "state",
 			Value:    encoded,
@@ -220,7 +236,12 @@ func getState(r *http.Request) string {
 	log := shared.GetLogger(ctx)
 	cookieValue := ""
 	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
-		if err = getSecureCookie(ctx).Decode("state", cookie.Value, &cookieValue); err != nil {
+		sc, err := getSecureCookie(ctx)
+		if err != nil {
+			return ""
+		}
+
+		if err = sc.Decode("state", cookie.Value, &cookieValue); err != nil {
 			log.Errorf("Failed to decode cookie for state: %s", err.Error())
 		}
 	} else {
@@ -231,14 +252,25 @@ func getState(r *http.Request) string {
 
 var secureCookie *securecookie.SecureCookie
 
-func getSecureCookie(ctx context.Context) *securecookie.SecureCookie {
+func getSecureCookie(ctx context.Context) (*securecookie.SecureCookie, error) {
+	log := shared.GetLogger(ctx)
 	if secureCookie == nil {
 		store := shared.NewAppEngineDatastore(ctx, false)
-		hashKey, _ := shared.GetSecret(store, "secure-cookie-hashkey")
-		blockKey, _ := shared.GetSecret(store, "secure-cookie-blockkey")
+		hashKey, err := shared.GetSecret(store, "secure-cookie-hashkey")
+		if err != nil {
+			log.Errorf("Failed to get secure-cookie-hashkey secret: %s", err.Error())
+			return nil, err
+		}
+
+		blockKey, err := shared.GetSecret(store, "secure-cookie-blockkey")
+		if err != nil {
+			log.Errorf("Failed to get secure-cookie-blockkey secret: %s", err.Error())
+			return nil, err
+		}
+
 		secureCookie = securecookie.New([]byte(hashKey), []byte(blockKey))
 	}
-	return secureCookie
+	return secureCookie, nil
 }
 
 func clearSession(response http.ResponseWriter) {
@@ -253,8 +285,17 @@ func clearSession(response http.ResponseWriter) {
 
 func getGithubOAuthConfig(ctx context.Context) *oauth2.Config {
 	store := shared.NewAppEngineDatastore(ctx, false)
-	clientID, _ := shared.GetSecret(store, "github-oauth-client-id")
-	secret, _ := shared.GetSecret(store, "github-oauth-client-secret")
+	log := shared.GetLogger(ctx)
+	clientID, err := shared.GetSecret(store, "github-oauth-client-id")
+	if err != nil {
+		log.Errorf("Failed to get github-oauth-client-id secret: %s", err.Error())
+	}
+
+	secret, err := shared.GetSecret(store, "github-oauth-client-secret")
+	if err != nil {
+		log.Errorf("Failed to get github-oauth-client-secret: %s", err.Error())
+	}
+
 	return &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: secret,
