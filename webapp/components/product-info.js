@@ -168,7 +168,7 @@ const ProductInfo = (superClass) => class extends superClass {
     return parseProduct(name);
   }
 
-  getSpec(product) {
+  getSpec(product, withRevision=true) {
     let spec = product.browser_name;
     if (product.browser_version) {
       spec += `-${product.browser_version}`;
@@ -176,7 +176,7 @@ const ProductInfo = (superClass) => class extends superClass {
     if (product.labels && product.labels.length) {
       spec += `[${product.labels.join(',')}]`;
     }
-    if (product.revision && !this.computeIsLatest(product.revision)) {
+    if (withRevision && product.revision && !this.computeIsLatest(product.revision)) {
       spec += `@${product.revision}`;
     }
     return spec;

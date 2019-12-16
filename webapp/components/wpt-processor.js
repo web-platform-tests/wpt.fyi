@@ -13,8 +13,9 @@ import '../node_modules/@vaadin/vaadin-context-menu/vaadin-context-menu.js';
 import '../node_modules/@vaadin/vaadin-grid/vaadin-grid.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
+import { ProductInfo } from './product-info.js';
 
-class WPTProcessor extends LoadingState(PolymerElement) {
+class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
   static get template() {
     return html`
     <style>
@@ -73,23 +74,27 @@ class WPTProcessor extends LoadingState(PolymerElement) {
         <vaadin-grid-column auto-width header="GitHub Check Run" hidden>
           <template>[[item.check_run_id]]</template>
         </vaadin-grid-column>
-        <vaadin-grid-column auto-width header="SHA">
-          <template>[[item.full_revision_hash]]</template>
+        <vaadin-grid-column auto-width header="Product">
+          <template>[[_product(item)]]</template>
+        </vaadin-grid-column>
+        <!-- Set explicit width to only show the prefix of a SHA, but still allow find-in-page. -->
+        <vaadin-grid-column width="10em" header="SHA">
+          <template><code>[[item.full_revision_hash]]</code></template>
         </vaadin-grid-column>
         <vaadin-grid-column auto-width header="Uploader">
           <template>[[item.uploader]]</template>
         </vaadin-grid-column>
         <vaadin-grid-column auto-width header="Created">
-          <template>[[timestamp(item.created)]]</template>
+          <template>[[_timestamp(item.created)]]</template>
         </vaadin-grid-column>
         <vaadin-grid-column auto-width header="Uploaded">
-          <template>[[timestamp(item.updated)]]</template>
+          <template>[[_timestamp(item.updated)]]</template>
         </vaadin-grid-column>
         <vaadin-grid-column auto-width header="Stage">
           <template>[[item.stage]]</template>
         </vaadin-grid-column>
 
-        <vaadin-grid-column autowidth header="Show error">
+        <vaadin-grid-column auto-width header="Show error">
           <template class="header">
             Show error <vaadin-checkbox aria-label="Show all" on-checked-changed="toggleAllDetails" id="show-all"></vaadin-checkbox>
           </template>
@@ -162,7 +167,13 @@ class WPTProcessor extends LoadingState(PolymerElement) {
     }
   }
 
-  timestamp(date) {
+  _product(item) {
+    // Polymer data binding does not recognize boolean literals as arguments to
+    // computed bindings, so we wrap the function call here.
+    return this.getSpec(item, /* withRevision */ false);
+  }
+
+  _timestamp(date) {
     const opts = {
       dateStyle: 'short',
       timeStyle: 'medium',
