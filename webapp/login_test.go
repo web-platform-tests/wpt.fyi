@@ -19,8 +19,10 @@ func TestHandleLogin(t *testing.T) {
 
 	mockgo := mock_webapp.NewMockGithubOAuth(mockCtrl)
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/login", nil)
+	req := httptest.NewRequest("GET", "https://foo/login", nil)
 	mockgo.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+	mockgo.EXPECT().SetRedirectURL("https://foo/oauth?return=%2F").Return()
+	mockgo.EXPECT().GetAuthCodeURL(gomock.Any(), gomock.Any()).Return("foo")
 
 	handleLogin(mockgo, w, req)
 
