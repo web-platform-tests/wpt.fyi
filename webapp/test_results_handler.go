@@ -155,7 +155,7 @@ func populateTemplateData(r *http.Request) (data templateData, err error) {
 
 	data.EnableServiceWorker = aeAPI.IsFeatureEnabled("serviceWorker")
 
-	user, _ := getUserFromCookie(r)
+	user, _ := getUserFromCookie(ctx, r)
 	if user != nil {
 		data.User = user.GitHubHandle
 	}

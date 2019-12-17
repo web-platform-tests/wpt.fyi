@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate mockgen -destination mock_webapp/mock_githubOAuth.go github.com/web-platform-tests/wpt.fyi/webapp GithubOAuth
+
 package webapp
 
 import (
@@ -33,6 +35,7 @@ type User struct {
 }
 
 type GithubOAuth interface {
+	Context() context.Context
 	GetAccessToken() *string
 	SetRedirectURL(url string)
 	GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
@@ -44,6 +47,10 @@ type GithubOAuthImp struct {
 	ctx         context.Context
 	conf        *oauth2.Config
 	accessToken *string
+}
+
+func (g GithubOAuthImp) Context() context.Context {
+	return g.ctx
 }
 
 func (g GithubOAuthImp) GetAccessToken() *string {
@@ -123,8 +130,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleLogin(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
-	user, token := getUserFromCookie(r)
+	ctx := g.Context()
+	user, token := getUserFromCookie(ctx, r)
 	returnURL := r.FormValue("return")
 	if returnURL == "" {
 		returnURL = "/"
@@ -171,7 +178,7 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleOauth(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := g.Context()
 	log := shared.GetLogger(ctx)
 
 	encodedState := r.FormValue("state")
@@ -181,7 +188,7 @@ func handleOauth(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stateFromCookie := getState(r)
+	stateFromCookie := getState(ctx, r)
 	if stateFromCookie == "" {
 		http.Error(w, "Failed to get state cookie", http.StatusBadRequest)
 		return
@@ -238,8 +245,7 @@ func logoutHandler(response http.ResponseWriter, r *http.Request) {
 	http.Redirect(response, r, "/", http.StatusFound)
 }
 
-func getUserFromCookie(r *http.Request) (*User, *string) {
-	ctx := shared.NewAppEngineContext(r)
+func getUserFromCookie(ctx context.Context, r *http.Request) (*User, *string) {
 	log := shared.GetLogger(ctx)
 	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
 		cookieValue := make(map[string]interface{})
@@ -321,8 +327,7 @@ func setState(ctx context.Context, state string, response http.ResponseWriter) e
 	return err
 }
 
-func getState(r *http.Request) string {
-	ctx := shared.NewAppEngineContext(r)
+func getState(ctx context.Context, r *http.Request) string {
 	log := shared.GetLogger(ctx)
 	cookieValue := ""
 	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
