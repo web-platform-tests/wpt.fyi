@@ -32,6 +32,80 @@ type User struct {
 	GithuhEmail  string
 }
 
+type GithubOAuth interface {
+	GetAccessToken() *string
+	SetRedirectURL(url string)
+	GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
+	GetNewClient(oauthToken string) (*github.Client, error)
+	GetGithubUser(client *github.Client) (*github.User, error)
+}
+
+type GithubOAuthImp struct {
+	ctx         context.Context
+	conf        *oauth2.Config
+	accessToken *string
+}
+
+func (g GithubOAuthImp) GetAccessToken() *string {
+	return g.accessToken
+}
+
+func (g GithubOAuthImp) SetRedirectURL(url string) {
+	g.conf.RedirectURL = url
+}
+
+func (g GithubOAuthImp) GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	return g.conf.AuthCodeURL(state, opts...)
+}
+
+func (g GithubOAuthImp) GetNewClient(oauthToken string) (*github.Client, error) {
+	token, err := g.conf.Exchange(g.ctx, oauthToken)
+	if err != nil {
+		return nil, err
+	}
+	g.accessToken = &token.AccessToken
+
+	oauthClient := oauth2.NewClient(g.ctx, oauth2.StaticTokenSource(token))
+	client := github.NewClient(oauthClient)
+
+	return client, nil
+}
+
+func (g GithubOAuthImp) GetGithubUser(client *github.Client) (*github.User, error) {
+	ghUser, _, err := client.Users.Get(g.ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return ghUser, nil
+}
+
+func newGithubOAuth(ctx context.Context) (GithubOAuth, error) {
+	store := shared.NewAppEngineDatastore(ctx, false)
+	log := shared.GetLogger(ctx)
+	clientID, err := shared.GetSecret(store, "github-oauth-client-id")
+	if err != nil {
+		log.Errorf("Failed to get github-oauth-client-id secret: %s", err.Error())
+		return GithubOAuthImp{}, err
+	}
+
+	secret, err := shared.GetSecret(store, "github-oauth-client-secret")
+	if err != nil {
+		log.Errorf("Failed to get github-oauth-client-secret: %s", err.Error())
+		return GithubOAuthImp{}, err
+	}
+
+	oauth := &oauth2.Config{
+		ClientID:     clientID,
+		ClientSecret: secret,
+		// (no scope) - see https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/#available-scopes
+		Scopes:   []string{},
+		Endpoint: ghOAuth.Endpoint,
+	}
+
+	return GithubOAuthImp{ctx: ctx, conf: oauth}, nil
+}
+
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
@@ -40,6 +114,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	githubOuathImp, err := newGithubOAuth(ctx)
+	if err != nil {
+		http.Error(w, "Error creating githubOuathImp", http.StatusInternalServerError)
+		return
+	}
+	handleLogin(githubOuathImp, w, r)
+}
+
+func handleLogin(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
 	user, token := getUserFromCookie(r)
 	returnURL := r.FormValue("return")
 	if returnURL == "" {
@@ -50,8 +134,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 	if user == nil || token == nil {
 		log.Infof("Initiating a new user login.")
-		conf := getGithubOAuthConfig(ctx)
-		conf.RedirectURL = getCallbackURI(returnURL, r)
+		g.SetRedirectURL(getCallbackURI(returnURL, r))
 		state, err := generateRandomState(32)
 		if err != nil {
 			log.Errorf("Failed to generate random state: %v", err)
@@ -59,7 +142,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		redirect = conf.AuthCodeURL(state, oauth2.AccessTypeOnline)
+		redirect = g.GetAuthCodeURL(state, oauth2.AccessTypeOnline)
 		err = setState(ctx, state, w)
 		if err != nil {
 			log.Errorf("Failed to set state cookie: %s", err.Error())
@@ -78,6 +161,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func oauthHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	githubOuathImp, err := newGithubOAuth(ctx)
+	if err != nil {
+		http.Error(w, "Error creating githubOuathImp", http.StatusInternalServerError)
+		return
+	}
+	handleOauth(githubOuathImp, w, r)
+}
+
+func handleOauth(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	log := shared.GetLogger(ctx)
 
@@ -106,18 +199,15 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conf := getGithubOAuthConfig(ctx)
-	token, err := conf.Exchange(ctx, oauthToken)
+	client, err := g.GetNewClient(oauthToken)
 	if err != nil {
-		log.Errorf("Invalid OAuth2 token: %s", err.Error())
-		http.Error(w, "Invalid OAuth2 token", http.StatusBadRequest)
+		log.Errorf("Error creating Github client using OAuth2 token: %s", err.Error())
+		http.Error(w, "Error creating Github client using OAuth2 token", http.StatusBadRequest)
 		return
 	}
 
-	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
-	client := github.NewClient(oauthClient)
 	// Passing the empty string will fetch the authenticated user.
-	ghUser, _, err := client.Users.Get(ctx, "")
+	ghUser, err := g.GetGithubUser(client)
 	if err != nil || ghUser == nil {
 		log.Errorf("Failed to get authenticated user: %s", err.Error())
 		http.Error(w, "Failed to get authenticated user", http.StatusBadRequest)
@@ -128,7 +218,7 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 		GitHubHandle: ghUser.GetLogin(),
 		GithuhEmail:  ghUser.GetEmail(),
 	}
-	setSession(ctx, user, &token.AccessToken, w)
+	setSession(ctx, user, g.GetAccessToken(), w)
 	if err != nil {
 		http.Error(w, "Failed to set credential cookie", http.StatusInternalServerError)
 		return
@@ -283,6 +373,7 @@ func clearSession(response http.ResponseWriter) {
 	http.SetCookie(response, cookie)
 }
 
+/*
 func getGithubOAuthConfig(ctx context.Context) *oauth2.Config {
 	store := shared.NewAppEngineDatastore(ctx, false)
 	log := shared.GetLogger(ctx)
@@ -304,6 +395,7 @@ func getGithubOAuthConfig(ctx context.Context) *oauth2.Config {
 		Endpoint: ghOAuth.Endpoint,
 	}
 }
+*/
 
 func generateRandomState(size int) (string, error) {
 	byteArray := make([]byte, size)
