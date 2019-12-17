@@ -21,8 +21,7 @@ import (
 )
 
 func init() {
-	gob.Register(map[string]interface{}{})
-	// Need RegisterName - for local packages, Register appends main[0-9]{5}.User
+	// Need RegisterName for securecookie encoding - for local packages, Register appends main[0-9]{5}.User
 	gob.RegisterName("User", User{})
 }
 
