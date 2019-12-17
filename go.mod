@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.11
 
 require (
-	cloud.google.com/go v0.49.0
+	cloud.google.com/go v0.50.0
 	cloud.google.com/go/datastore v1.0.0
 	cloud.google.com/go/logging v1.0.0
 	cloud.google.com/go/storage v1.1.1
@@ -30,7 +30,6 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	github.com/web-platform-tests/wpt-metadata v0.0.0-20191118215926-3b9e09ad93d6
 	go.opencensus.io v0.22.1 // indirect
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
 	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582 // indirect
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
@@ -38,7 +37,7 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/api v0.14.0
 	google.golang.org/appengine v1.6.5
-	google.golang.org/genproto v0.0.0-20191115221424-83cc0476cb11
+	google.golang.org/genproto v0.0.0-20191216164720-4f79533eabd1
 	google.golang.org/grpc v1.24.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2
