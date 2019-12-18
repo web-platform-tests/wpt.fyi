@@ -35,6 +35,7 @@ type User struct {
 }
 
 type GithubOAuth interface {
+	Datastore() shared.Datastore
 	Context() context.Context
 	GetAccessToken() *string
 	SetRedirectURL(url string)
@@ -45,8 +46,13 @@ type GithubOAuth interface {
 
 type GithubOAuthImp struct {
 	ctx         context.Context
+	ds          shared.Datastore
 	conf        *oauth2.Config
 	accessToken *string
+}
+
+func (g GithubOAuthImp) Datastore() shared.Datastore {
+	return g.ds
 }
 
 func (g GithubOAuthImp) Context() context.Context {
@@ -110,7 +116,7 @@ func newGithubOAuth(ctx context.Context) (GithubOAuth, error) {
 		Endpoint: ghOAuth.Endpoint,
 	}
 
-	return GithubOAuthImp{ctx: ctx, conf: oauth}, nil
+	return GithubOAuthImp{ctx: ctx, conf: oauth, ds: store}, nil
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +137,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 func handleLogin(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 	ctx := g.Context()
-	user, token := getUserFromCookie(ctx, r)
+	ds := g.Datastore()
+	user, token := getUserFromCookie(ctx, ds, r)
 	returnURL := r.FormValue("return")
 	if returnURL == "" {
 		returnURL = "/"
@@ -150,10 +157,11 @@ func handleLogin(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 		}
 
 		redirect = g.GetAuthCodeURL(state, oauth2.AccessTypeOnline)
-		err = setState(ctx, state, w)
+		err = setState(ctx, ds, state, w)
 		if err != nil {
 			log.Errorf("Failed to set state cookie: %s", err.Error())
 			http.Error(w, "Error setting state cookie for login", http.StatusInternalServerError)
+			return
 		}
 
 		log.Infof("OAuthing with github and returning to %s", returnURL)
@@ -180,6 +188,7 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 func handleOauth(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 	ctx := g.Context()
 	log := shared.GetLogger(ctx)
+	ds := g.Datastore()
 
 	encodedState := r.FormValue("state")
 	if encodedState == "" {
@@ -188,7 +197,7 @@ func handleOauth(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stateFromCookie := getState(ctx, r)
+	stateFromCookie := getState(ctx, ds, r)
 	if stateFromCookie == "" {
 		http.Error(w, "Failed to get state cookie", http.StatusBadRequest)
 		return
@@ -225,7 +234,7 @@ func handleOauth(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 		GitHubHandle: ghUser.GetLogin(),
 		GithuhEmail:  ghUser.GetEmail(),
 	}
-	setSession(ctx, user, g.GetAccessToken(), w)
+	setSession(ctx, ds, user, g.GetAccessToken(), w)
 	if err != nil {
 		http.Error(w, "Failed to set credential cookie", http.StatusInternalServerError)
 		return
@@ -245,11 +254,11 @@ func logoutHandler(response http.ResponseWriter, r *http.Request) {
 	http.Redirect(response, r, "/", http.StatusFound)
 }
 
-func getUserFromCookie(ctx context.Context, r *http.Request) (*User, *string) {
+func getUserFromCookie(ctx context.Context, ds shared.Datastore, r *http.Request) (*User, *string) {
 	log := shared.GetLogger(ctx)
 	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
 		cookieValue := make(map[string]interface{})
-		sc, err := getSecureCookie(ctx)
+		sc, err := getSecureCookie(ctx, ds)
 		if err != nil {
 			return nil, nil
 		}
@@ -269,14 +278,14 @@ func getUserFromCookie(ctx context.Context, r *http.Request) (*User, *string) {
 	return nil, nil
 }
 
-func setSession(ctx context.Context, user *User, token *string, response http.ResponseWriter) error {
+func setSession(ctx context.Context, ds shared.Datastore, user *User, token *string, response http.ResponseWriter) error {
 	var err error
 	value := map[string]interface{}{
 		"user":  *user,
 		"token": *token,
 	}
 
-	sc, err := getSecureCookie(ctx)
+	sc, err := getSecureCookie(ctx, ds)
 	if err != nil {
 		return err
 	}
@@ -304,9 +313,9 @@ func setSession(ctx context.Context, user *User, token *string, response http.Re
 	return err
 }
 
-func setState(ctx context.Context, state string, response http.ResponseWriter) error {
+func setState(ctx context.Context, ds shared.Datastore, state string, response http.ResponseWriter) error {
 	var err error
-	sc, err := getSecureCookie(ctx)
+	sc, err := getSecureCookie(ctx, ds)
 	if err != nil {
 		return err
 	}
@@ -327,11 +336,11 @@ func setState(ctx context.Context, state string, response http.ResponseWriter) e
 	return err
 }
 
-func getState(ctx context.Context, r *http.Request) string {
+func getState(ctx context.Context, ds shared.Datastore, r *http.Request) string {
 	log := shared.GetLogger(ctx)
 	cookieValue := ""
 	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
-		sc, err := getSecureCookie(ctx)
+		sc, err := getSecureCookie(ctx, ds)
 		if err != nil {
 			return ""
 		}
@@ -347,10 +356,9 @@ func getState(ctx context.Context, r *http.Request) string {
 
 var secureCookie *securecookie.SecureCookie
 
-func getSecureCookie(ctx context.Context) (*securecookie.SecureCookie, error) {
+func getSecureCookie(ctx context.Context, store shared.Datastore) (*securecookie.SecureCookie, error) {
 	log := shared.GetLogger(ctx)
 	if secureCookie == nil {
-		store := shared.NewAppEngineDatastore(ctx, false)
 		hashKey, err := shared.GetSecret(store, "secure-cookie-hashkey")
 		if err != nil {
 			log.Errorf("Failed to get secure-cookie-hashkey secret: %s", err.Error())

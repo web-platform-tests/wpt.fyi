@@ -8,6 +8,7 @@ import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/v28/github"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	oauth2 "golang.org/x/oauth2"
 	reflect "reflect"
 )
@@ -47,6 +48,20 @@ func (m *MockGithubOAuth) Context() context.Context {
 func (mr *MockGithubOAuthMockRecorder) Context() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockGithubOAuth)(nil).Context))
+}
+
+// Datastore mocks base method
+func (m *MockGithubOAuth) Datastore() shared.Datastore {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Datastore")
+	ret0, _ := ret[0].(shared.Datastore)
+	return ret0
+}
+
+// Datastore indicates an expected call of Datastore
+func (mr *MockGithubOAuthMockRecorder) Datastore() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Datastore", reflect.TypeOf((*MockGithubOAuth)(nil).Datastore))
 }
 
 // GetAccessToken mocks base method
