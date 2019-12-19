@@ -49,7 +49,6 @@ func TestHandleLogin(t *testing.T) {
 	assert.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode)
 	assert.Equal(t, "https://redirect?", w.Header().Get("Location"))
 
-	assert.Equal(t, "a", cookies)
 	assert.True(t, strings.Contains(cookies, "state="))
 	assert.True(t, strings.Contains(cookies, "Path=/"))
 	assert.True(t, strings.Contains(cookies, "Max-Age=600"))
