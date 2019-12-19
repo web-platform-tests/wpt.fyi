@@ -33,6 +33,7 @@ type User struct {
 	GithuhEmail  string
 }
 
+// GithubOAuth encapsulates implementation details of GitHub OAuth flow.
 type GithubOAuth interface {
 	Datastore() shared.Datastore
 	Context() context.Context
