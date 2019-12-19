@@ -76,7 +76,7 @@ func (g githubOAuthImp) GetNewClient(oauthToken string) (*github.Client, error) 
 	if err != nil {
 		return nil, err
 	}
-	g.accessToken = &token.AccessToken
+	g.accessToken = &(token.AccessToken)
 
 	oauthClient := oauth2.NewClient(g.ctx, oauth2.StaticTokenSource(token))
 	client := github.NewClient(oauthClient)
