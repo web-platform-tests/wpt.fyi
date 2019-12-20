@@ -30,7 +30,7 @@ func TestHandleLogin(t *testing.T) {
 	mockStore.EXPECT().NewNameKey("Token", gomock.Any()).AnyTimes().Return(nil)
 	mockStore.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes().Return(nil).Do(func(key shared.Key, dst interface{}) {
 		token, _ := dst.(*shared.Token)
-		// Need to create a 16 bytes fake secrete for securecookie.
+		// sc is the encryption key for securecookie, that can be any value of 16/32/64 bytes length.
 		sc := "dIS6V5HAQppr4QyLCSTEyg=="
 		(*token).Secret = sc
 	})
@@ -61,11 +61,12 @@ func TestHandleOauth(t *testing.T) {
 	defer mockCtrl.Finish()
 	ctx := sharedtest.NewTestContext()
 	w := httptest.NewRecorder()
-	sessionVal := "MTU3Njc4MDA0N3xpSXVpeXJyWFRFZUZBRTBDdGVISG00Q1h3YWlqM3ZmdkFORmk1Z1pWTFQtd24yQjlXM0ZsTkF5Ti1sS1ozZS1EWjZub1dSRXVyMHd5TnprZV9ZeHF0Zz09fNRqZ-8jwop8p39BpJTXlpNrRsfMeWMTH4CuRfA0QS0e"
+	// stateVal is the encrypted value of YZ6kSZ4PwwHMCcNHwd8xnd9u4ePzv9MmXrNNkYkPZ8Y using securecookie, with dIS6V5HAQppr4QyLCSTEyg== as the hashkey and blockey value.
+	stateVal := "MTU3Njc4MDA0N3xpSXVpeXJyWFRFZUZBRTBDdGVISG00Q1h3YWlqM3ZmdkFORmk1Z1pWTFQtd24yQjlXM0ZsTkF5Ti1sS1ozZS1EWjZub1dSRXVyMHd5TnprZV9ZeHF0Zz09fNRqZ-8jwop8p39BpJTXlpNrRsfMeWMTH4CuRfA0QS0e"
 	req := httptest.NewRequest("GET", "https://oauth?state=YZ6kSZ4PwwHMCcNHwd8xnd9u4ePzv9MmXrNNkYkPZ8Y=&code=bar", nil)
 	req.AddCookie(&http.Cookie{
 		Name:  "state",
-		Value: sessionVal,
+		Value: stateVal,
 		Path:  "/",
 	})
 
@@ -73,7 +74,7 @@ func TestHandleOauth(t *testing.T) {
 	mockStore.EXPECT().NewNameKey("Token", gomock.Any()).AnyTimes().Return(nil)
 	mockStore.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes().Return(nil).Do(func(key shared.Key, dst interface{}) {
 		token, _ := dst.(*shared.Token)
-		// Need to create a 16 bytes fake secrete for securecookie.
+		// sc is the encryption key for securecookie, that can be any value of 16/32/64 bytes length.
 		sc := "dIS6V5HAQppr4QyLCSTEyg=="
 		(*token).Secret = sc
 	})
