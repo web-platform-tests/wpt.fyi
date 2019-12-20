@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	// Need RegisterName for securecookie encoding - for local packages, Register appends main[0-9]{5}.User
+	// All custom types stored in securecookie are needed to be registered.
 	gob.RegisterName("User", User{})
 }
 
