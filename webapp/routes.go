@@ -32,7 +32,7 @@ func init() {
 
 // RegisterRoutes adds the route handlers for the webapp.
 func RegisterRoutes() {
-	// Ensure login in (with GitHub)
+	// GitHub OAuth login
 	shared.AddRoute("/login", "login", loginHandler)
 	shared.AddRoute("/logout", "logout", logoutHandler)
 	shared.AddRoute("/oauth", "oauth", oauthHandler)
