@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination mock_webapp/mock_githubOAuth.go github.com/web-platform-tests/wpt.fyi/webapp GithubOAuth
-
 package webapp
 
 import (
@@ -31,17 +29,6 @@ func init() {
 type User struct {
 	GitHubHandle string
 	GithuhEmail  string
-}
-
-// GithubOAuth encapsulates implementation details of GitHub OAuth flow.
-type GithubOAuth interface {
-	Datastore() shared.Datastore
-	Context() context.Context
-	GetAccessToken() *string
-	SetRedirectURL(url string)
-	GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
-	GetNewClient(oauthToken string) (*github.Client, error)
-	GetGithubUser(client *github.Client) (*github.User, error)
 }
 
 type githubOAuthImp struct {
@@ -84,7 +71,7 @@ func (g *githubOAuthImp) GetNewClient(oauthToken string) (*github.Client, error)
 	return client, nil
 }
 
-func (g *githubOAuthImp) GetGithubUser(client *github.Client) (*github.User, error) {
+func (g *githubOAuthImp) GetGitHubUser(client *github.Client) (*github.User, error) {
 	ghUser, _, err := client.Users.Get(g.ctx, "")
 	if err != nil {
 		return nil, err
@@ -93,7 +80,7 @@ func (g *githubOAuthImp) GetGithubUser(client *github.Client) (*github.User, err
 	return ghUser, nil
 }
 
-func newGithubOAuth(ctx context.Context) (GithubOAuth, error) {
+func newGitHubOAuth(ctx context.Context) (shared.GitHubOAuth, error) {
 	store := shared.NewAppEngineDatastore(ctx, false)
 	log := shared.GetLogger(ctx)
 	clientID, err := shared.GetSecret(store, "github-oauth-client-id")
@@ -127,15 +114,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	githubOuathImp, err := newGithubOAuth(ctx)
+	githubOauthImp, err := newGitHubOAuth(ctx)
 	if err != nil {
-		http.Error(w, "Error creating githubOuathImp", http.StatusInternalServerError)
+		http.Error(w, "Error creating githuboauthImp", http.StatusInternalServerError)
 		return
 	}
-	handleLogin(githubOuathImp, w, r)
+	handleLogin(githubOauthImp, w, r)
 }
 
-func handleLogin(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
+func handleLogin(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 	ctx := g.Context()
 	ds := g.Datastore()
 	user, token := getUserFromCookie(ctx, ds, r)
@@ -177,15 +164,15 @@ func handleLogin(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 
 func oauthHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
-	githubOuathImp, err := newGithubOAuth(ctx)
+	githuboauthImp, err := newGitHubOAuth(ctx)
 	if err != nil {
-		http.Error(w, "Error creating githubOuathImp", http.StatusInternalServerError)
+		http.Error(w, "Error creating githuboauthImp", http.StatusInternalServerError)
 		return
 	}
-	handleOauth(githubOuathImp, w, r)
+	handleOauth(githuboauthImp, w, r)
 }
 
-func handleOauth(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
+func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 	ctx := g.Context()
 	log := shared.GetLogger(ctx)
 	ds := g.Datastore()
@@ -217,13 +204,13 @@ func handleOauth(g GithubOAuth, w http.ResponseWriter, r *http.Request) {
 
 	client, err := g.GetNewClient(oauthToken)
 	if err != nil {
-		log.Errorf("Error creating Github client using OAuth2 token: %s", err.Error())
-		http.Error(w, "Error creating Github client using OAuth2 token", http.StatusBadRequest)
+		log.Errorf("Error creating GitHub client using OAuth2 token: %s", err.Error())
+		http.Error(w, "Error creating GitHub client using OAuth2 token", http.StatusBadRequest)
 		return
 	}
 
 	// Passing the empty string will fetch the authenticated user.
-	ghUser, err := g.GetGithubUser(client)
+	ghUser, err := g.GetGitHubUser(client)
 	if err != nil || ghUser == nil {
 		log.Errorf("Failed to get authenticated user: %s", err.Error())
 		http.Error(w, "Failed to get authenticated user", http.StatusBadRequest)

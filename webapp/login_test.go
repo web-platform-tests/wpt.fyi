@@ -17,7 +17,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"github.com/web-platform-tests/wpt.fyi/webapp/mock_webapp"
 )
 
 func TestHandleLogin(t *testing.T) {
@@ -36,7 +35,7 @@ func TestHandleLogin(t *testing.T) {
 		(*token).Secret = sc
 	})
 
-	mockgo := mock_webapp.NewMockGithubOAuth(mockCtrl)
+	mockgo := sharedtest.NewMockGitHubOAuth(mockCtrl)
 	mockgo.EXPECT().Context().AnyTimes().Return(ctx)
 	mockgo.EXPECT().SetRedirectURL("https://foo/oauth?return=%2F").Return()
 	mockgo.EXPECT().GetAuthCodeURL(gomock.Any(), gomock.Any()).Return("https://redirect?")
@@ -82,10 +81,10 @@ func TestHandleOauth(t *testing.T) {
 	userName := "ufoo"
 	userEmail := "ebar"
 	secrete := "token"
-	mockgo := mock_webapp.NewMockGithubOAuth(mockCtrl)
+	mockgo := sharedtest.NewMockGitHubOAuth(mockCtrl)
 	mockgo.EXPECT().Context().AnyTimes().Return(ctx)
 	mockgo.EXPECT().GetNewClient(gomock.Any()).Return(nil, nil)
-	mockgo.EXPECT().GetGithubUser(gomock.Any()).Return(&github.User{Login: &userName, Email: &userEmail}, nil)
+	mockgo.EXPECT().GetGitHubUser(gomock.Any()).Return(&github.User{Login: &userName, Email: &userEmail}, nil)
 	mockgo.EXPECT().Datastore().AnyTimes().Return(mockStore)
 	mockgo.EXPECT().GetAccessToken().Return(&secrete)
 
