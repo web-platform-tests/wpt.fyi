@@ -12,11 +12,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/google/go-github/v28/github"
 	"github.com/gorilla/securecookie"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
-	ghOAuth "golang.org/x/oauth2/github"
 	"google.golang.org/appengine"
 )
 
@@ -39,7 +37,18 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, token := getUserFromCookie(r)
+	githubOauthImp, err := shared.NewGitHubOAuth(ctx)
+	if err != nil {
+		http.Error(w, "Error creating githuboauthImp", http.StatusInternalServerError)
+		return
+	}
+	handleLogin(githubOauthImp, w, r)
+}
+
+func handleLogin(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
+	ctx := g.Context()
+	ds := g.Datastore()
+	user, token := getUserFromCookie(ctx, ds, r)
 	returnURL := r.FormValue("return")
 	if returnURL == "" {
 		returnURL = "/"
@@ -49,8 +58,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 	if user == nil || token == nil {
 		log.Infof("Initiating a new user login.")
-		conf := getGithubOAuthConfig(ctx)
-		conf.RedirectURL = getCallbackURI(returnURL, r)
+		g.SetRedirectURL(getCallbackURI(returnURL, r))
 		state, err := generateRandomState(32)
 		if err != nil {
 			log.Errorf("Failed to generate random state: %v", err)
@@ -58,11 +66,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		redirect = conf.AuthCodeURL(state, oauth2.AccessTypeOnline)
-		err = setState(ctx, state, w)
+		redirect = g.GetAuthCodeURL(state, oauth2.AccessTypeOnline)
+		err = setState(ctx, ds, state, w)
 		if err != nil {
 			log.Errorf("Failed to set state cookie: %s", err.Error())
 			http.Error(w, "Error setting state cookie for login", http.StatusInternalServerError)
+			return
 		}
 
 		log.Infof("OAuthing with github and returning to %s", returnURL)
@@ -78,7 +87,18 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 func oauthHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
+	githuboauthImp, err := shared.NewGitHubOAuth(ctx)
+	if err != nil {
+		http.Error(w, "Error creating githuboauthImp", http.StatusInternalServerError)
+		return
+	}
+	handleOauth(githuboauthImp, w, r)
+}
+
+func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
+	ctx := g.Context()
 	log := shared.GetLogger(ctx)
+	ds := g.Datastore()
 
 	encodedState := r.FormValue("state")
 	if encodedState == "" {
@@ -87,7 +107,7 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stateFromCookie := getState(r)
+	stateFromCookie := getState(ctx, ds, r)
 	if stateFromCookie == "" {
 		http.Error(w, "Failed to get state cookie", http.StatusBadRequest)
 		return
@@ -105,18 +125,15 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conf := getGithubOAuthConfig(ctx)
-	token, err := conf.Exchange(ctx, oauthToken)
+	client, err := g.GetNewClient(oauthToken)
 	if err != nil {
-		log.Errorf("Invalid OAuth2 token: %s", err.Error())
-		http.Error(w, "Invalid OAuth2 token", http.StatusBadRequest)
+		log.Errorf("Error creating GitHub client using OAuth2 token: %s", err.Error())
+		http.Error(w, "Error creating GitHub client using OAuth2 token", http.StatusBadRequest)
 		return
 	}
 
-	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
-	client := github.NewClient(oauthClient)
 	// Passing the empty string will fetch the authenticated user.
-	ghUser, _, err := client.Users.Get(ctx, "")
+	ghUser, err := g.GetGitHubUser(client)
 	if err != nil || ghUser == nil {
 		log.Errorf("Failed to get authenticated user: %s", err.Error())
 		http.Error(w, "Failed to get authenticated user", http.StatusBadRequest)
@@ -127,7 +144,7 @@ func oauthHandler(w http.ResponseWriter, r *http.Request) {
 		GitHubHandle: ghUser.GetLogin(),
 		GithuhEmail:  ghUser.GetEmail(),
 	}
-	setSession(ctx, user, &token.AccessToken, w)
+	setSession(ctx, ds, user, g.GetAccessToken(), w)
 	if err != nil {
 		http.Error(w, "Failed to set credential cookie", http.StatusInternalServerError)
 		return
@@ -147,12 +164,11 @@ func logoutHandler(response http.ResponseWriter, r *http.Request) {
 	http.Redirect(response, r, "/", http.StatusFound)
 }
 
-func getUserFromCookie(r *http.Request) (*User, *string) {
-	ctx := shared.NewAppEngineContext(r)
+func getUserFromCookie(ctx context.Context, ds shared.Datastore, r *http.Request) (*User, *string) {
 	log := shared.GetLogger(ctx)
 	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
 		cookieValue := make(map[string]interface{})
-		sc, err := getSecureCookie(ctx)
+		sc, err := getSecureCookie(ctx, ds)
 		if err != nil {
 			return nil, nil
 		}
@@ -172,14 +188,14 @@ func getUserFromCookie(r *http.Request) (*User, *string) {
 	return nil, nil
 }
 
-func setSession(ctx context.Context, user *User, token *string, response http.ResponseWriter) error {
+func setSession(ctx context.Context, ds shared.Datastore, user *User, token *string, response http.ResponseWriter) error {
 	var err error
 	value := map[string]interface{}{
 		"user":  *user,
 		"token": *token,
 	}
 
-	sc, err := getSecureCookie(ctx)
+	sc, err := getSecureCookie(ctx, ds)
 	if err != nil {
 		return err
 	}
@@ -207,9 +223,9 @@ func setSession(ctx context.Context, user *User, token *string, response http.Re
 	return err
 }
 
-func setState(ctx context.Context, state string, response http.ResponseWriter) error {
+func setState(ctx context.Context, ds shared.Datastore, state string, response http.ResponseWriter) error {
 	var err error
-	sc, err := getSecureCookie(ctx)
+	sc, err := getSecureCookie(ctx, ds)
 	if err != nil {
 		return err
 	}
@@ -230,12 +246,11 @@ func setState(ctx context.Context, state string, response http.ResponseWriter) e
 	return err
 }
 
-func getState(r *http.Request) string {
-	ctx := shared.NewAppEngineContext(r)
+func getState(ctx context.Context, ds shared.Datastore, r *http.Request) string {
 	log := shared.GetLogger(ctx)
 	cookieValue := ""
 	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
-		sc, err := getSecureCookie(ctx)
+		sc, err := getSecureCookie(ctx, ds)
 		if err != nil {
 			return ""
 		}
@@ -251,10 +266,9 @@ func getState(r *http.Request) string {
 
 var secureCookie *securecookie.SecureCookie
 
-func getSecureCookie(ctx context.Context) (*securecookie.SecureCookie, error) {
+func getSecureCookie(ctx context.Context, store shared.Datastore) (*securecookie.SecureCookie, error) {
 	log := shared.GetLogger(ctx)
 	if secureCookie == nil {
-		store := shared.NewAppEngineDatastore(ctx, false)
 		hashKey, err := shared.GetSecret(store, "secure-cookie-hashkey")
 		if err != nil {
 			log.Errorf("Failed to get secure-cookie-hashkey secret: %s", err.Error())
@@ -280,28 +294,6 @@ func clearSession(response http.ResponseWriter) {
 		MaxAge: -1,
 	}
 	http.SetCookie(response, cookie)
-}
-
-func getGithubOAuthConfig(ctx context.Context) *oauth2.Config {
-	store := shared.NewAppEngineDatastore(ctx, false)
-	log := shared.GetLogger(ctx)
-	clientID, err := shared.GetSecret(store, "github-oauth-client-id")
-	if err != nil {
-		log.Errorf("Failed to get github-oauth-client-id secret: %s", err.Error())
-	}
-
-	secret, err := shared.GetSecret(store, "github-oauth-client-secret")
-	if err != nil {
-		log.Errorf("Failed to get github-oauth-client-secret: %s", err.Error())
-	}
-
-	return &oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: secret,
-		// (no scope) - see https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/#available-scopes
-		Scopes:   []string{},
-		Endpoint: ghOAuth.Endpoint,
-	}
 }
 
 func generateRandomState(size int) (string, error) {
