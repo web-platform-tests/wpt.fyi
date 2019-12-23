@@ -8,26 +8,12 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/gob"
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/securecookie"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
-	"google.golang.org/appengine"
 )
-
-func init() {
-	// All custom types stored in securecookie are needed to be registered.
-	gob.RegisterName("User", User{})
-}
-
-// User represents an authenticated GitHub user.
-type User struct {
-	GitHubHandle string
-	GithuhEmail  string
-}
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
@@ -48,7 +34,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 func handleLogin(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 	ctx := g.Context()
 	ds := g.Datastore()
-	user, token := getUserFromCookie(ctx, ds, r)
+	user, token := shared.GetUserFromCookie(ctx, ds, r)
 	returnURL := r.FormValue("return")
 	if returnURL == "" {
 		returnURL = "/"
@@ -140,7 +126,7 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := &User{
+	user := &shared.User{
 		GitHubHandle: ghUser.GetLogin(),
 		GithuhEmail:  ghUser.GetEmail(),
 	}
@@ -164,38 +150,14 @@ func logoutHandler(response http.ResponseWriter, r *http.Request) {
 	http.Redirect(response, r, "/", http.StatusFound)
 }
 
-func getUserFromCookie(ctx context.Context, ds shared.Datastore, r *http.Request) (*User, *string) {
-	log := shared.GetLogger(ctx)
-	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
-		cookieValue := make(map[string]interface{})
-		sc, err := getSecureCookie(ctx, ds)
-		if err != nil {
-			return nil, nil
-		}
-
-		if err = sc.Decode("session", cookie.Value, &cookieValue); err == nil {
-			decodedUser, okUser := cookieValue["user"].(User)
-			decodedToken, okToken := cookieValue["token"].(string)
-			if okUser && okToken {
-				return &decodedUser, &decodedToken
-			} else if appengine.IsDevAppServer() {
-				log.Errorf("Failed to cast user or token")
-			}
-		} else if appengine.IsDevAppServer() {
-			log.Errorf("Failed to Decode cookie: %s", err.Error())
-		}
-	}
-	return nil, nil
-}
-
-func setSession(ctx context.Context, ds shared.Datastore, user *User, token *string, response http.ResponseWriter) error {
+func setSession(ctx context.Context, ds shared.Datastore, user *shared.User, token *string, response http.ResponseWriter) error {
 	var err error
 	value := map[string]interface{}{
 		"user":  *user,
 		"token": *token,
 	}
 
-	sc, err := getSecureCookie(ctx, ds)
+	sc, err := shared.GetSecureCookie(ctx, ds)
 	if err != nil {
 		return err
 	}
@@ -225,7 +187,7 @@ func setSession(ctx context.Context, ds shared.Datastore, user *User, token *str
 
 func setState(ctx context.Context, ds shared.Datastore, state string, response http.ResponseWriter) error {
 	var err error
-	sc, err := getSecureCookie(ctx, ds)
+	sc, err := shared.GetSecureCookie(ctx, ds)
 	if err != nil {
 		return err
 	}
@@ -250,7 +212,7 @@ func getState(ctx context.Context, ds shared.Datastore, r *http.Request) string 
 	log := shared.GetLogger(ctx)
 	cookieValue := ""
 	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
-		sc, err := getSecureCookie(ctx, ds)
+		sc, err := shared.GetSecureCookie(ctx, ds)
 		if err != nil {
 			return ""
 		}
@@ -262,28 +224,6 @@ func getState(ctx context.Context, ds shared.Datastore, r *http.Request) string 
 		log.Errorf("Failed to get state cookie: %s", err.Error())
 	}
 	return cookieValue
-}
-
-var secureCookie *securecookie.SecureCookie
-
-func getSecureCookie(ctx context.Context, store shared.Datastore) (*securecookie.SecureCookie, error) {
-	log := shared.GetLogger(ctx)
-	if secureCookie == nil {
-		hashKey, err := shared.GetSecret(store, "secure-cookie-hashkey")
-		if err != nil {
-			log.Errorf("Failed to get secure-cookie-hashkey secret: %s", err.Error())
-			return nil, err
-		}
-
-		blockKey, err := shared.GetSecret(store, "secure-cookie-blockkey")
-		if err != nil {
-			log.Errorf("Failed to get secure-cookie-blockkey secret: %s", err.Error())
-			return nil, err
-		}
-
-		secureCookie = securecookie.New([]byte(hashKey), []byte(blockKey))
-	}
-	return secureCookie, nil
 }
 
 func clearSession(response http.ResponseWriter) {
