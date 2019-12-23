@@ -122,6 +122,7 @@ func TestAdminCacheFlushBound(t *testing.T) {
 }
 
 func TestApiMetadataCORS(t *testing.T) {
+	// TODO(kyleju): Test CORS for POST/GET request.
 	assertHandlerIs(t, "/api/metadata", "api-metadata")
 	successPost := httptest.NewRequest("OPTIONS", "/api/metadata", nil)
 	successPost.Header.Set("Access-Control-Request-Headers", "content-type")
@@ -137,6 +138,7 @@ func TestApiMetadataCORS(t *testing.T) {
 }
 
 func TestApiMetadataTriageCORS(t *testing.T) {
+	// TODO(kyleju): Test CORS for PATCH request.
 	assertHandlerIs(t, "/api/metadata/triage", "api-metadata-triage")
 
 	successReq := httptest.NewRequest("OPTIONS", "/api/metadata/triage", nil)
