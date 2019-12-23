@@ -140,6 +140,14 @@ func main() {
 	log.Print("Adding local (empty) secrets...")
 	addSecretToken(ctx, "upload-token", emptySecretToken)
 	addSecretToken(ctx, "github-api-token", emptySecretToken)
+	addSecretToken(ctx, "github-oauth-client-id", emptySecretToken)
+	addSecretToken(ctx, "github-oauth-client-secret", emptySecretToken)
+	addSecretToken(ctx, "secure-cookie-hashkey", &shared.Token{
+		Secret: "a-very-secret-sixty-four-bytes!!a-very-secret-sixty-four-bytes!!",
+	})
+	addSecretToken(ctx, "secure-cookie-blockkey", &shared.Token{
+		Secret: "a-very-secret-thirty-two-bytes!!",
+	})
 
 	log.Print("Adding flag defaults...")
 	addFlag(ctx, "queryBuilder", enabledFlag)

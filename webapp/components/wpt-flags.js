@@ -33,6 +33,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
+      'githubLogin',
       'interopScoreColumn',
       'permalinks',
       'processorTab',
@@ -56,6 +57,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'checksAllUsers',
       'diffRenames',
       'failChecksOnRegression',
+      'githubLogin',
       'ignoreHarnessInTotal',
       'onlyChangesAsRegressions',
       'paginationTokens',
@@ -251,6 +253,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{processorTab}}">
         Show the "Processor" (status) tab.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{githubLogin}}">
+        Enable GitHub OAuth login
       </paper-checkbox>
     </paper-item>
 `;
