@@ -32,6 +32,11 @@ func init() {
 
 // RegisterRoutes adds the route handlers for the webapp.
 func RegisterRoutes() {
+	// GitHub OAuth login
+	shared.AddRoute("/login", "login", loginHandler)
+	shared.AddRoute("/logout", "logout", logoutHandler)
+	shared.AddRoute("/oauth", "oauth", oauthHandler)
+
 	// About wpt.fyi
 	shared.AddRoute("/about", "about", aboutHandler)
 

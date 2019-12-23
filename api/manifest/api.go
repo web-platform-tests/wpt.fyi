@@ -17,6 +17,10 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// AssetRegex is the pattern for a valid manifest filename.
+// The full sha is captured in group 1.
+var AssetRegex = regexp.MustCompile(`^MANIFEST-([0-9a-fA-F]{40}).json.gz$`)
+
 // API handles manifest-related fetches and caching.
 type API interface {
 	GetManifestForSHA(string) (string, []byte, error)
@@ -57,18 +61,17 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 	}
 	var release *github.RepositoryRelease
 	releaseTag := "latest"
-	fetchedSHA = sha
 	if shared.IsLatest(sha) {
 		// Use GitHub's API for latest release.
 		release, _, err = client.Repositories.GetLatestRelease(aeAPI.Context(), shared.WPTRepoOwner, shared.WPTRepoName)
 	} else {
-		q := fmt.Sprintf("SHA:%s user:web-platform-tests repo:wpt", sha)
+		q := fmt.Sprintf("SHA:%s repo:web-platform-tests/wpt", sha)
 		issues, _, err := client.Search.Issues(aeAPI.Context(), q, nil)
 		if err != nil {
-			return fetchedSHA, nil, err
+			return "", nil, err
 		}
 		if issues == nil || len(issues.Issues) < 1 {
-			return fetchedSHA, nil, fmt.Errorf("No search results found for SHA %s", sha)
+			return "", nil, fmt.Errorf("No search results found for SHA %s", sha)
 		}
 
 		releaseTag = fmt.Sprintf("merge_pr_%d", issues.Issues[0].GetNumber())
@@ -76,21 +79,16 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 	}
 
 	if err != nil {
-		return fetchedSHA, nil, err
+		return "", nil, err
 	} else if release == nil || len(release.Assets) < 1 {
-		return fetchedSHA, nil, fmt.Errorf("No assets found for %s release", releaseTag)
+		return "", nil, fmt.Errorf("No assets found for %s release", releaseTag)
 	}
 	// Get (and unzip) the asset with name "MANIFEST-{sha}.json.gz"
-	shaMatch := sha
-	if sha == "" || sha == "latest" {
-		shaMatch = "[0-9a-f]{40}"
-	}
-	assetRegex := regexp.MustCompile(fmt.Sprintf("MANIFEST-(%s).json.gz", shaMatch))
 	for _, asset := range release.Assets {
 		name := asset.GetName()
 		var url string
-		if assetRegex.MatchString(name) {
-			fetchedSHA = assetRegex.FindStringSubmatch(name)[1]
+		if matches := AssetRegex.FindStringSubmatch(name); matches != nil {
+			fetchedSHA = matches[1]
 			url = asset.GetBrowserDownloadURL()
 
 			client := aeAPI.GetHTTPClient()
@@ -101,5 +99,5 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 			return fetchedSHA, resp.Body, err
 		}
 	}
-	return fetchedSHA, nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
+	return "", nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
 }

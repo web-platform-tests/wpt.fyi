@@ -77,9 +77,9 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 
 	log := shared.GetLogger(a.Context())
 	pendingRun := shared.PendingTestRun{
-		ID:               testRun.ID,
-		Stage:            shared.StageValid,
-		FullRevisionHash: testRun.FullRevisionHash,
+		ID:                testRun.ID,
+		Stage:             shared.StageValid,
+		ProductAtRevision: testRun.ProductAtRevision,
 	}
 	if err := a.UpdatePendingTestRun(pendingRun); err != nil {
 		// This is a non-fatal error; don't return.

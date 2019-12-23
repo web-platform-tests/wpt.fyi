@@ -152,33 +152,42 @@ class WPTReport(object):
         self._report['results'].extend(chunk['results'])
 
         def update_property(key: str, source: Dict, target: Dict,
-                            conflict_func: Optional[Callable] = None) -> None:
+                            conflict_func: Optional[Callable] = None) -> bool:
             """Updates target[key] if source[key] is set.
 
-            If target[key] is already set, use conflict_func to resolve the
-            conflict or raise an exception if conflict_func is None.
+            If target[key] is already set and different from source[key], we
+            have a conflict:
+            * If conflict_func is None, a ConflictingDataError is raised.
+            * If conflict_func is not None, target[key] =
+              conflict_func(target[key], source[key]), and True is returned.
+
+            Returns: False if there is no conflict.
             """
             if key not in source:
-                return
+                return False
             if key in target and source[key] != target[key]:
                 if conflict_func:
                     target[key] = conflict_func(source[key], target[key])
-                else:
-                    raise ConflictingDataError(key)
-            else:
-                target[key] = source[key]
+                    return True
+                raise ConflictingDataError(key)
+            target[key] = source[key]
+            return False
 
         if 'run_info' in chunk:
-            def ignore_conflict(a, b):
-                return a if a == b else None
-
+            conflicts = []
             for key in chunk['run_info']:
-                update_property(
+                conflict = update_property(
                     key,
                     cast(Dict, chunk['run_info']),
                     cast(Dict, self._report['run_info']),
-                    ignore_conflict if key in IGNORED_CONFLICTS else None,
+                    lambda _1, _2: None,  # Set conflicting fields to None.
                 )
+                # Delay raising exceptions even when conflicts are not ignored,
+                # so that we can set as much metadata as possible.
+                if conflict and key not in IGNORED_CONFLICTS:
+                    conflicts.append(key)
+            if conflicts:
+                raise ConflictingDataError(', '.join(conflicts))
 
         update_property(
             'time_start', cast(Dict, chunk), cast(Dict, self._report), min)

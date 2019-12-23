@@ -9,6 +9,7 @@ const DisplayNames = (() => {
   ['edge', 'edge-experimental'].forEach(n => m.set(n, 'Edge'));
   ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
+  m.set('servo', 'Servo');
   m.set('uc', 'UC Browser');
   m.set('webkitgtk', 'WebKitGTK');
   // Platforms
@@ -36,7 +37,7 @@ const versionPatterns = Object.freeze({
 });
 
 // The set of all browsers known to the wpt.fyi UI.
-const AllBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari', 'webkitgtk']);
+const AllBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari', 'servo', 'webkitgtk']);
 
 // The list of default browsers used in cases where the user has not otherwise
 // chosen a set of browsers (e.g. which browsers to show runs for). Stored as
@@ -167,7 +168,7 @@ const ProductInfo = (superClass) => class extends superClass {
     return parseProduct(name);
   }
 
-  getSpec(product) {
+  getSpec(product, withRevision=true) {
     let spec = product.browser_name;
     if (product.browser_version) {
       spec += `-${product.browser_version}`;
@@ -175,7 +176,7 @@ const ProductInfo = (superClass) => class extends superClass {
     if (product.labels && product.labels.length) {
       spec += `[${product.labels.join(',')}]`;
     }
-    if (product.revision && !this.computeIsLatest(product.revision)) {
+    if (withRevision && product.revision && !this.computeIsLatest(product.revision)) {
       spec += `@${product.revision}`;
     }
     return spec;

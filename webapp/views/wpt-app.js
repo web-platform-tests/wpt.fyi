@@ -62,7 +62,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <app-location route="{{route}}" url-space-regex="^/(results|interop)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
-      <wpt-header></wpt-header>
+      <wpt-header user="[[user]]"></wpt-header>
 
       <results-tabs tab="[[page]]" path="[[encodedPath]]" query="[[query]]"></results-tabs>
 
@@ -169,6 +169,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         reflectToAttribute: true,
       },
+      user: String,
       path: String,
       testPaths: Set,
       structuredSearch: Object,

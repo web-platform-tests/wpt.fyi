@@ -72,4 +72,7 @@ func RegisterRoutes() {
 
 	// API endpoint for searching Metadata for the products.
 	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapPermissiveCORS(apiMetadataHandler))
+
+	// API endpoint for modifying Metadata.
+	shared.AddRoute("/api/metadata/triage", "api-metadata-triage", shared.WrapTrustedCORS(apiMetadataTriageHandler, []string{"https://developer.mozilla.org"}, []string{"PATCH"}))
 }

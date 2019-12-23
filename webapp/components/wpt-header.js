@@ -7,6 +7,7 @@
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import './github-login.js';
 import './info-banner.js';
 import { WPTFlags } from './wpt-flags.js';
 
@@ -38,6 +39,11 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         display: flex;
         align-items: center;
       }
+      header > div {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
       header nav a {
         margin-right: 1em;
       }
@@ -46,10 +52,16 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       }
     </style>
     <header>
-      <h1>
-        <img src="/static/logo.svg">
-        <a href="/">web-platform-tests dashboard</a>
-      </h1>
+      <div>
+        <h1>
+          <img src="/static/logo.svg">
+          <a href="/">web-platform-tests dashboard</a>
+        </h1>
+        <template is="dom-if" if="[[githubLogin]]">
+          <github-login user="[[user]]"></github-login>
+        </template>
+      </div>
+
       <nav>
         <!-- TODO: handle onclick with wpt-results.navigate if available -->
         <a href="/">Latest Run</a>
@@ -69,6 +81,12 @@ class WPTHeader extends WPTFlags(PolymerElement) {
 
   static get is() {
     return 'wpt-header';
+  }
+
+  static get properties() {
+    return {
+      user: String,
+    };
   }
 }
 window.customElements.define(WPTHeader.is, WPTHeader);

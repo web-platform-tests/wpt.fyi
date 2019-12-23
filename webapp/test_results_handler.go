@@ -37,6 +37,7 @@ type templateData struct {
 	Diff                bool
 	DiffFilter          string
 	EnableServiceWorker bool
+	User                string
 }
 
 // This handler is responsible for all pages that display test results.
@@ -153,6 +154,12 @@ func populateTemplateData(r *http.Request) (data templateData, err error) {
 	data.Search = r.URL.Query().Get("q")
 
 	data.EnableServiceWorker = aeAPI.IsFeatureEnabled("serviceWorker")
+
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	user, _ := getUserFromCookie(ctx, ds, r)
+	if user != nil {
+		data.User = user.GitHubHandle
+	}
 
 	return data, nil
 }

@@ -3,13 +3,24 @@
 <head>
 {{ template "_head_common.html" }}
 <script type="module" src="/components/wpt-processor.js"></script>
+<style>
+  html, body { height: 100% }
+  #full-screen-content {
+    margin: 0 auto;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    height: 98%;
+  }
+  wpt-processor {
+    flex-grow: 1;
+  }
+</style>
 </head>
 <body>
-<div id="content">
+<div id="full-screen-content">
   <wpt-header></wpt-header>
-  <div>
-    <wpt-processor></wpt-processor>
-  </div>
+  <wpt-processor></wpt-processor>
 </div>
 </body>
 </html>
