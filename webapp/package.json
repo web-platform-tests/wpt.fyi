@@ -68,7 +68,7 @@
     "@polymer/polymer": "3.3.1",
     "@vaadin/vaadin-context-menu": "4.3.15",
     "@vaadin/vaadin-date-picker": "4.0.5",
-    "@vaadin/vaadin-grid": "5.4.12",
+    "@vaadin/vaadin-grid": "5.5.0",
     "@webcomponents/webcomponentsjs": "2.4.0",
     "pluralize": "8.0.0"
   }
