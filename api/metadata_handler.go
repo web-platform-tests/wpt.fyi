@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -26,19 +28,10 @@ type MetadataHandler struct {
 	metadataURL string
 }
 
-// A temporary place holder for the apiMetadataTriageHandler from another PR.
-func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
-}
-
 // apiMetadataHandler searches Metadata for given products.
 func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" && r.Method != "POST" && r.Method != "PATCH" {
+	if r.Method != "GET" && r.Method != "POST" {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
-		return
-	}
-
-	if r.Method == "PATCH" {
-		apiMetadataTriageHandler(w, r)
 		return
 	}
 
@@ -59,10 +52,10 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	client := aeAPI.GetHTTPClient()
-	logger := shared.GetLogger(ctx)
+	if r.Method != "PATCH" {
+		http.Error(w, "Invalid HTTP method; only accpet PATCH request", http.StatusBadRequest)
+		return
+	}
 
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
@@ -89,21 +82,57 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check cookies and verification. Get email and name
-	//user := webapp.getUserFromCookie(r)
-	//if user == nil {
-	//	http.Error(w, "Unauthorized request, please log in first", http.StatusBadRequest)
-	//	return
-	//}
+	ctx := shared.NewAppEngineContext(r)
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	client := aeAPI.GetHTTPClient()
+	logger := shared.GetLogger(ctx)
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	user, token := shared.GetUserFromCookie(ctx, ds, r)
+	if user == nil || token == nil {
+		http.Error(w, "User is not logged in", http.StatusBadRequest)
+		return
+	}
 
-	githubClient, err := getWPTFYIGithubBot(ctx)
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: *token})
+	tc := oauth2.NewClient(ctx, ts)
+	githubClient := github.NewClient(tc)
+	clientID, err := shared.GetSecret(ds, "github-oauth-client-id")
+	if err != nil {
+		http.Error(w, "Failed to get github-oauth-client-id secret: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Check if the token is still valid.
+	_, res, err := githubClient.Authorizations.Check(ctx, clientID, *token)
+	if err != nil {
+		http.Error(w, "Fail to validate user token "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if res.StatusCode != http.StatusOK {
+		http.Error(w, "User token invalid; please log in again. ", http.StatusBadRequest)
+		return
+	}
+
+	_, res, err = githubClient.Organizations.GetOrgMembership(ctx, "", "web-platform-tests")
+	if err != nil {
+		http.Error(w, "Fail to validate web-platform-tests membership: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if res.StatusCode != http.StatusOK {
+		http.Error(w, "User is not a part of web-platform-tests", http.StatusBadRequest)
+		return
+	}
+
+	githubBotClient, err := getWPTFYIGithubBot(ctx)
 	if err != nil {
 		http.Error(w, "Unable to get Github Client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	//TODO: Check github client permission levels.
-	git := metadataGithub{githubClient: githubClient, authorName: "kyleju", authorEmail: "kyleju@live.com"}
+	//TODO: Check github client permission levels for auto merge.
+	git := metadataGithub{githubClient: githubBotClient, authorName: user.GitHubHandle, authorEmail: user.GithuhEmail}
 	tm := triageMetadata{ctx: ctx, metadataGithub: git, logger: logger, httpClient: client}
 	err = tm.triage(metadata)
 	if err != nil {

@@ -7,9 +7,9 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/google/go-github/v28/github"
@@ -20,14 +20,14 @@ import (
 var (
 	sourceOwner   = "web-platform-tests"
 	sourceRepo    = "wpt-metadata"
-	commitMessage = "Random commit"
-	commitBranch  = "commit-testing-branch123"
+	commitMessage = "Commit New Metadata"
+	commitBranch  = "auto-triage-branch" + generateRandomInt()
 	baseBranch    = "master"
 	prRepoOwner   = sourceOwner
 	prRepo        = sourceRepo
 	prBranch      = baseBranch
-	prSubject     = "Triage Metadata Test"
-	prDescription = "Testing for Triage Metadata"
+	prSubject     = "Triage New Metadata"
+	prDescription = "PR for Triage Metadata"
 )
 
 type triageMetadata struct {
@@ -43,7 +43,6 @@ type metadataGithub struct {
 	authorEmail  string
 }
 
-// TODO: Create a branch fresh out of master every time.
 func (tm triageMetadata) getRef() (ref *github.Reference, err error) {
 	client := tm.githubClient
 	if ref, _, err = client.Git.GetRef(tm.ctx, sourceOwner, sourceRepo, "refs/heads/"+commitBranch); err == nil {
@@ -108,7 +107,7 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 }
 
 // createPR creates a pull request. Based on: https://godoc.org/github.com/google/go-github/github#example-PullRequestsService-Create
-func (tm triageMetadata) createPR() (err error) {
+func (tm triageMetadata) createPR(log shared.Logger) (err error) {
 	client := tm.githubClient
 	if prSubject == "" {
 		return errors.New("missing `-pr-title` flag; skipping PR creation")
@@ -127,33 +126,33 @@ func (tm triageMetadata) createPR() (err error) {
 		return err
 	}
 
-	fmt.Printf("PR created: %s\n", pr.GetHTMLURL())
+	log.Infof("PR created: %s\n", pr.GetHTMLURL())
 	return nil
 }
 
-func (tm triageMetadata) mergeToGithub(triagedMetadataMap map[string][]byte) error {
+func (tm triageMetadata) mergeToGithub(triagedMetadataMap map[string][]byte, log shared.Logger) error {
 	ref, err := tm.getRef()
 	if err != nil {
-		log.Fatalf("Unable to get/create the commit reference: %s\n", err)
+		log.Errorf("Unable to get/create the commit reference: %s\n", err)
 		return err
 	}
 	if ref == nil {
-		log.Fatalf("No error where returned but the reference is nil")
+		log.Errorf("No error where returned but the reference is nil")
 	}
 
 	tree, err := tm.getTree(ref, triagedMetadataMap)
 	if err != nil {
-		log.Fatalf("Unable to create the tree based on the provided files: %s\n", err)
+		log.Errorf("Unable to create the tree based on the provided files: %s\n", err)
 		return err
 	}
 
 	if err := tm.pushCommit(ref, tree); err != nil {
-		log.Fatalf("Unable to create the commit: %s\n", err)
+		log.Errorf("Unable to create the commit: %s\n", err)
 		return err
 	}
 
-	if err := tm.createPR(); err != nil {
-		log.Fatalf("Error while creating the pull request: %s", err)
+	if err := tm.createPR(log); err != nil {
+		log.Errorf("Error while creating the pull request: %s", err)
 		return err
 	}
 
@@ -221,5 +220,10 @@ func (tm triageMetadata) triage(metadata shared.MetadataResults) error {
 	}
 
 	triagedMetadataMap := tm.addToFiles(metadata, filesMap)
-	return tm.mergeToGithub(triagedMetadataMap)
+	return tm.mergeToGithub(triagedMetadataMap, tm.logger)
+}
+
+func generateRandomInt() string {
+	rand.Seed(time.Now().UnixNano())
+	return strconv.Itoa(rand.Intn(10000))
 }
