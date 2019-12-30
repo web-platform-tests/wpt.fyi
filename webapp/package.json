@@ -7,7 +7,7 @@
     "url": "https://github.com/web-platform-tests/wpt.fyi.git"
   },
   "devDependencies": {
-    "@browser-logos/chrome": "1.0.16",
+    "@browser-logos/chrome": "1.0.17",
     "@browser-logos/chrome-beta": "2.1.6",
     "@browser-logos/chrome-canary": "1.1.8",
     "@browser-logos/chrome-dev": "2.1.9",
