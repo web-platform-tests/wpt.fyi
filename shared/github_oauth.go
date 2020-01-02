@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	// All custom types stored in securecookie are needed to be registered.
+	// All custom types stored in securecookie need to be registered.
 	gob.RegisterName("User", User{})
 }
 
@@ -116,30 +116,29 @@ func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 	return &githubOAuthImp{ctx: ctx, conf: oauth, ds: store}, nil
 }
 
-var secureCookie *securecookie.SecureCookie
-
-// GetSecureCookie returns an instance of securecookie.
+// GetSecureCookie returns the securecookie instance for wpt.fyi. This instance can
+// be used to encode and decode cookies set by wpt.fyi.
 func GetSecureCookie(ctx context.Context, store Datastore) (*securecookie.SecureCookie, error) {
 	log := GetLogger(ctx)
-	if secureCookie == nil {
-		hashKey, err := GetSecret(store, "secure-cookie-hashkey")
-		if err != nil {
-			log.Errorf("Failed to get secure-cookie-hashkey secret: %s", err.Error())
-			return nil, err
-		}
-
-		blockKey, err := GetSecret(store, "secure-cookie-blockkey")
-		if err != nil {
-			log.Errorf("Failed to get secure-cookie-blockkey secret: %s", err.Error())
-			return nil, err
-		}
-
-		secureCookie = securecookie.New([]byte(hashKey), []byte(blockKey))
+	hashKey, err := GetSecret(store, "secure-cookie-hashkey")
+	if err != nil {
+		log.Errorf("Failed to get secure-cookie-hashkey secret: %s", err.Error())
+		return nil, err
 	}
+
+	blockKey, err := GetSecret(store, "secure-cookie-blockkey")
+	if err != nil {
+		log.Errorf("Failed to get secure-cookie-blockkey secret: %s", err.Error())
+		return nil, err
+	}
+
+	secureCookie := securecookie.New([]byte(hashKey), []byte(blockKey))
 	return secureCookie, nil
 }
 
-// GetUserFromCookie returns User and GitHub Oauth token from a session cookie.
+// GetUserFromCookie extracts the User and GitHub OAuth token from a request's
+// session cookie, if it exists. If the cookie does not exist or cannot be decoded, nil
+// is returned for both.
 func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*User, *string) {
 	log := GetLogger(ctx)
 	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
