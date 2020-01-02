@@ -26,8 +26,8 @@ var (
 	prRepoOwner   = sourceOwner
 	prRepo        = sourceRepo
 	prBranch      = baseBranch
-	prSubject     = "Triage New Metadata"
-	prDescription = "PR for Triage Metadata"
+	prSubject     = "Automatically Triage New Metadata"
+	prDescription = "PR for metadata triaged through /api/metadata/triage endpoint. See <insert a doc> for more information about how to use this service."
 )
 
 type triageMetadata struct {
@@ -136,8 +136,10 @@ func (tm triageMetadata) mergeToGithub(triagedMetadataMap map[string][]byte, log
 		log.Errorf("Unable to get/create the commit reference: %s\n", err)
 		return err
 	}
+
 	if ref == nil {
-		log.Errorf("No error where returned but the reference is nil")
+		log.Errorf("No error returned but the reference is nil")
+		return errors.New("No error returned but the reference is nil")
 	}
 
 	tree, err := tm.getTree(ref, triagedMetadataMap)

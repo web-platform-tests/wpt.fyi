@@ -223,3 +223,9 @@ links:
 	assert.Equal(t, "chrome", actual.Links[2].Product.BrowserName)
 	assert.Equal(t, "foo1", actual.Links[2].URL)
 }
+
+func TestGenerateRandomInt(t *testing.T) {
+	int1 := generateRandomInt()
+	int2 := generateRandomInt()
+	assert.True(t, int1 != int2)
+}
