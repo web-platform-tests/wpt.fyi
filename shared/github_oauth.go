@@ -8,11 +8,26 @@ package shared
 
 import (
 	"context"
+	"encoding/gob"
+	"net/http"
 
 	"github.com/google/go-github/v28/github"
+	"github.com/gorilla/securecookie"
 	"golang.org/x/oauth2"
 	ghOAuth "golang.org/x/oauth2/github"
+	"google.golang.org/appengine"
 )
+
+func init() {
+	// All custom types stored in securecookie need to be registered.
+	gob.RegisterName("User", User{})
+}
+
+// User represents an authenticated GitHub user.
+type User struct {
+	GitHubHandle string
+	GithuhEmail  string
+}
 
 // GitHubOAuth encapsulates implementation details of GitHub OAuth flow.
 type GitHubOAuth interface {
@@ -99,4 +114,51 @@ func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 	}
 
 	return &githubOAuthImp{ctx: ctx, conf: oauth, ds: store}, nil
+}
+
+// GetSecureCookie returns the securecookie instance for wpt.fyi. This instance can
+// be used to encode and decode cookies set by wpt.fyi.
+func GetSecureCookie(ctx context.Context, store Datastore) (*securecookie.SecureCookie, error) {
+	log := GetLogger(ctx)
+	hashKey, err := GetSecret(store, "secure-cookie-hashkey")
+	if err != nil {
+		log.Errorf("Failed to get secure-cookie-hashkey secret: %s", err.Error())
+		return nil, err
+	}
+
+	blockKey, err := GetSecret(store, "secure-cookie-blockkey")
+	if err != nil {
+		log.Errorf("Failed to get secure-cookie-blockkey secret: %s", err.Error())
+		return nil, err
+	}
+
+	secureCookie := securecookie.New([]byte(hashKey), []byte(blockKey))
+	return secureCookie, nil
+}
+
+// GetUserFromCookie extracts the User and GitHub OAuth token from a request's
+// session cookie, if it exists. If the cookie does not exist or cannot be decoded, nil
+// is returned for both.
+func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*User, *string) {
+	log := GetLogger(ctx)
+	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
+		cookieValue := make(map[string]interface{})
+		sc, err := GetSecureCookie(ctx, ds)
+		if err != nil {
+			return nil, nil
+		}
+
+		if err = sc.Decode("session", cookie.Value, &cookieValue); err == nil {
+			decodedUser, okUser := cookieValue["user"].(User)
+			decodedToken, okToken := cookieValue["token"].(string)
+			if okUser && okToken {
+				return &decodedUser, &decodedToken
+			} else if appengine.IsDevAppServer() {
+				log.Errorf("Failed to cast user or token")
+			}
+		} else if appengine.IsDevAppServer() {
+			log.Errorf("Failed to Decode cookie: %s", err.Error())
+		}
+	}
+	return nil, nil
 }
