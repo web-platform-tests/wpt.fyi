@@ -127,9 +127,7 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 // createPR creates a pull request from the commit branch (with the new triage changes) to the
 // master branch of the repository.
 // Based on: https://godoc.org/github.com/google/go-github/github#example-PullRequestsService-Create
-func (tm triageMetadata) createPR(log shared.Logger) (err error) {
-	client := tm.githubClient
-
+func (tm triageMetadata) createPR() (err error) {
 	newPR := &github.NewPullRequest{
 		Title:               &tm.prSubject,
 		Head:                &tm.commitBranch,
@@ -138,16 +136,17 @@ func (tm triageMetadata) createPR(log shared.Logger) (err error) {
 		MaintainerCanModify: github.Bool(true),
 	}
 
-	pr, _, err := client.PullRequests.Create(tm.ctx, tm.prRepoOwner, tm.prRepo, newPR)
+	pr, _, err := tm.githubClient.PullRequests.Create(tm.ctx, tm.prRepoOwner, tm.prRepo, newPR)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("PR created: %s", pr.GetHTMLURL())
+	tm.logger.Infof("PR created: %s", pr.GetHTMLURL())
 	return nil
 }
 
-func (tm triageMetadata) createWPTMetadataPR(triagedMetadataMap map[string][]byte, log shared.Logger) error {
+func (tm triageMetadata) createWPTMetadataPR(triagedMetadataMap map[string][]byte) error {
+	log := tm.logger
 	ref, err := tm.getCommitBranchRef()
 	if err != nil {
 		log.Errorf("Unable to get/create the commit reference: %s", err)
@@ -170,7 +169,7 @@ func (tm triageMetadata) createWPTMetadataPR(triagedMetadataMap map[string][]byt
 		return err
 	}
 
-	if err := tm.createPR(log); err != nil {
+	if err := tm.createPR(); err != nil {
 		log.Errorf("Error while creating the pull request: %s", err)
 		return err
 	}
@@ -248,5 +247,5 @@ func (tm triageMetadata) triage(metadata shared.MetadataResults) error {
 
 	triagedMetadataMap := addToFiles(metadata, filesMap, tm.logger)
 	tm.metadataGithub.wptmetadataGitHubInfo = getWptmetadataGitHubInfo(tm.ctx, tm.githubClient)
-	return tm.createWPTMetadataPR(triagedMetadataMap, tm.logger)
+	return tm.createWPTMetadataPR(triagedMetadataMap)
 }
