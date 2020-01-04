@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+//go:generate mockgen -destination sharedtest/triage_metadata_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared TriageMetadataInterface
+
+package shared
 
 import (
 	"context"
@@ -13,14 +15,18 @@ import (
 	"time"
 
 	"github.com/google/go-github/v28/github"
-	"github.com/web-platform-tests/wpt.fyi/shared"
 	"gopkg.in/yaml.v2"
 )
+
+// TriageMetadataInterface encapsulates triage() method for testing purpose.
+type TriageMetadataInterface interface {
+	Triage(metadata MetadataResults) error
+}
 
 type triageMetadata struct {
 	ctx context.Context
 	metadataGithub
-	logger     shared.Logger
+	logger     Logger
 	httpClient *http.Client
 }
 
@@ -92,7 +98,7 @@ func (tm triageMetadata) getTree(ref *github.Reference, triagedMetadataMap map[s
 
 	entries := []github.TreeEntry{}
 	for folderPath, content := range triagedMetadataMap {
-		dest := shared.GetMetadataFilePath(folderPath)
+		dest := GetMetadataFilePath(folderPath)
 		entries = append(entries, github.TreeEntry{Path: github.String(dest), Type: github.String("blob"), Content: github.String(string(content)), Mode: github.String("100644")})
 	}
 
@@ -178,14 +184,14 @@ func (tm triageMetadata) createWPTMetadataPR(triagedMetadataMap map[string][]byt
 }
 
 // Add Metadata into the existing Metadata YML files and only return modified files.
-func addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Metadata, logger shared.Logger) map[string][]byte {
+func addToFiles(metadata MetadataResults, filesMap map[string]Metadata, logger Logger) map[string][]byte {
 	// Update filesMap with the new information in metadata.
 	for test, links := range metadata {
-		folderName, _ := shared.SplitWPTTestPath(test)
+		folderName, _ := SplitWPTTestPath(test)
 		appendTestName(test, metadata)
 		// If the META.YML does not exist in the repository.
 		if _, ok := filesMap[folderName]; !ok {
-			filesMap[folderName] = shared.Metadata{Links: links}
+			filesMap[folderName] = Metadata{Links: links}
 			continue
 		}
 
@@ -204,7 +210,7 @@ func addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Meta
 
 			// Add new MetadataLink to the existing Link if no link was found.
 			if !hasMerged {
-				filesMap[folderName] = shared.Metadata{Links: append(filesMap[folderName].Links, link)}
+				filesMap[folderName] = Metadata{Links: append(filesMap[folderName].Links, link)}
 			}
 		}
 	}
@@ -212,7 +218,7 @@ func addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Meta
 	// Grab all newly updated metadata files.
 	res := make(map[string][]byte)
 	for test := range metadata {
-		folderName, _ := shared.SplitWPTTestPath(test)
+		folderName, _ := SplitWPTTestPath(test)
 		metadataBytes, err := yaml.Marshal(filesMap[folderName])
 		if err != nil {
 			logger.Errorf("Error from marshal %s: %s", folderName, err.Error())
@@ -224,9 +230,9 @@ func addToFiles(metadata shared.MetadataResults, filesMap map[string]shared.Meta
 }
 
 // appendTestName populate TestPath name of metadata from test.
-func appendTestName(test string, metadata shared.MetadataResults) {
+func appendTestName(test string, metadata MetadataResults) {
 	links := metadata[test]
-	_, testName := shared.SplitWPTTestPath(test)
+	_, testName := SplitWPTTestPath(test)
 	for linkIndex, link := range links {
 		for resultIndex := range link.Results {
 			metadata[test][linkIndex].Results[resultIndex].TestPath = testName
@@ -239,8 +245,8 @@ func generateRandomInt() string {
 	return strconv.Itoa(rand.Intn(10000))
 }
 
-func (tm triageMetadata) triage(metadata shared.MetadataResults) error {
-	filesMap, err := shared.GetMetadataByteMap(tm.httpClient, tm.logger, shared.MetadataArchiveURL)
+func (tm triageMetadata) Triage(metadata MetadataResults) error {
+	filesMap, err := GetMetadataByteMap(tm.httpClient, tm.logger, MetadataArchiveURL)
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package shared
 
 import (
 	"encoding/json"
@@ -12,11 +12,10 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 func TestAppendTestName(t *testing.T) {
-	var actual, expected shared.MetadataResults
+	var actual, expected MetadataResults
 	json.Unmarshal([]byte(`{
 		"/foo/bar.html": [
 			{
@@ -66,7 +65,7 @@ func TestAppendTestName(t *testing.T) {
 }
 
 func TestAddToFiles_AddNewFile(t *testing.T) {
-	var amendment shared.MetadataResults
+	var amendment MetadataResults
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/bar.html": [
 			{
@@ -80,7 +79,7 @@ func TestAddToFiles_AddNewFile(t *testing.T) {
 	}`), &amendment)
 
 	var path = "a"
-	var fileMap = make(map[string]shared.Metadata)
+	var fileMap = make(map[string]Metadata)
 	fileInBytes := []byte(`
 links:
   - product: chrome-64
@@ -95,28 +94,28 @@ links:
       status: FAIL
     - test: c.html
 `)
-	var file shared.Metadata
+	var file Metadata
 	yaml.Unmarshal(fileInBytes, &file)
 	fileMap[path] = file
 
-	actualMap := addToFiles(amendment, fileMap, shared.NewNilLogger())
+	actualMap := addToFiles(amendment, fileMap, NewNilLogger())
 
 	assert.Equal(t, 1, len(actualMap))
 	actualInBytes, ok := actualMap["foo/foo1"]
 	assert.True(t, ok)
 
-	var actual shared.Metadata
+	var actual Metadata
 	yaml.Unmarshal(actualInBytes, &actual)
 	assert.Equal(t, 1, len(actual.Links))
 	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
 	assert.Equal(t, "bugs.bar?id=456", actual.Links[0].URL)
 	assert.Equal(t, 1, len(actual.Links[0].Results))
 	assert.Equal(t, "bar.html", actual.Links[0].Results[0].TestPath)
-	assert.Equal(t, shared.TestStatusFail, *actual.Links[0].Results[0].Status)
+	assert.Equal(t, TestStatusFail, *actual.Links[0].Results[0].Status)
 }
 
 func TestAddToFiles_AddNewMetadataResult(t *testing.T) {
-	var amendment shared.MetadataResults
+	var amendment MetadataResults
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/a.html": [
 			{
@@ -130,7 +129,7 @@ func TestAddToFiles_AddNewMetadataResult(t *testing.T) {
 	}`), &amendment)
 
 	var path = "foo/foo1"
-	var fileMap = make(map[string]shared.Metadata)
+	var fileMap = make(map[string]Metadata)
 	fileInBytes := []byte(`
 links:
   - product: chrome
@@ -145,17 +144,17 @@ links:
       status: FAIL
     - test: c.html
 `)
-	var file shared.Metadata
+	var file Metadata
 	yaml.Unmarshal(fileInBytes, &file)
 	fileMap[path] = file
 
-	actualMap := addToFiles(amendment, fileMap, shared.NewNilLogger())
+	actualMap := addToFiles(amendment, fileMap, NewNilLogger())
 
 	assert.Equal(t, 1, len(actualMap))
 	actualInBytes, ok := actualMap["foo/foo1"]
 	assert.True(t, ok)
 
-	var actual shared.Metadata
+	var actual Metadata
 	yaml.Unmarshal(actualInBytes, &actual)
 	assert.Equal(t, 2, len(actual.Links))
 	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
@@ -163,13 +162,13 @@ links:
 	assert.Equal(t, 2, len(actual.Links[0].Results))
 	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
 	assert.Equal(t, "a.html", actual.Links[0].Results[1].TestPath)
-	assert.Equal(t, shared.TestStatusFail, *actual.Links[0].Results[1].Status)
+	assert.Equal(t, TestStatusFail, *actual.Links[0].Results[1].Status)
 	assert.Equal(t, "firefox", actual.Links[1].Product.BrowserName)
 	assert.Equal(t, "https://bug.com/item", actual.Links[1].URL)
 }
 
 func TestAddToFiles_AddNewMetadataLink(t *testing.T) {
-	var amendment shared.MetadataResults
+	var amendment MetadataResults
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/a.html": [
 			{
@@ -183,7 +182,7 @@ func TestAddToFiles_AddNewMetadataLink(t *testing.T) {
 	}`), &amendment)
 
 	var path = "foo/foo1"
-	var fileMap = make(map[string]shared.Metadata)
+	var fileMap = make(map[string]Metadata)
 	fileInBytes := []byte(`
 links:
   - product: chrome
@@ -198,17 +197,17 @@ links:
       status: FAIL
     - test: c.html
 `)
-	var file shared.Metadata
+	var file Metadata
 	yaml.Unmarshal(fileInBytes, &file)
 	fileMap[path] = file
 
-	actualMap := addToFiles(amendment, fileMap, shared.NewNilLogger())
+	actualMap := addToFiles(amendment, fileMap, NewNilLogger())
 
 	assert.Equal(t, 1, len(actualMap))
 	actualInBytes, ok := actualMap["foo/foo1"]
 	assert.True(t, ok)
 
-	var actual shared.Metadata
+	var actual Metadata
 	yaml.Unmarshal(actualInBytes, &actual)
 	assert.Equal(t, 3, len(actual.Links))
 	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
