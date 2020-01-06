@@ -69,10 +69,10 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	tm := shared.GetTriageMetadata(ctx, git, shared.GetLogger(ctx), aeAPI.GetHTTPClient())
 
 	gac := shared.NewGitAccessControl(ctx, ds, *token)
-	handleMetadataTriage(ctx, ds, gac, tm, w, r)
+	handleMetadataTriage(ctx, gac, tm, w, r)
 }
 
-func handleMetadataTriage(ctx context.Context, ds shared.Datastore, gac shared.GitHubAccessControl, tm shared.TriageMetadataInterface, w http.ResponseWriter, r *http.Request) {
+func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, tm shared.TriageMetadataInterface, w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PATCH" {
 		http.Error(w, "Invalid HTTP method; only accpet PATCH request", http.StatusBadRequest)
 		return
