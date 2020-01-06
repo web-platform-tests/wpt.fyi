@@ -78,7 +78,7 @@ func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Clien
 }
 
 // GetMetadataByteMap collects and parses all META.yml files from
-// wpt-metadata reposiroty.
+// the wpt-metadata repository.
 func GetMetadataByteMap(client *http.Client, log Logger, url string) (map[string]Metadata, error) {
 	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
 	if err != nil {
@@ -175,10 +175,6 @@ func SplitWPTTestPath(githubPath string) (string, string) {
 	}
 
 	pathArray := strings.Split(githubPath, "/")[1:]
-	if len(pathArray) == 0 {
-		return "", ""
-	}
-
 	if len(pathArray) == 1 {
 		return "", pathArray[0]
 	}
@@ -190,5 +186,9 @@ func SplitWPTTestPath(githubPath string) (string, string) {
 
 // GetMetadataFilePath appends MetadataFileName to a Metadata folder path.
 func GetMetadataFilePath(folderName string) string {
+	if folderName == "" {
+		return MetadataFileName
+	}
+
 	return folderName + "/" + MetadataFileName
 }

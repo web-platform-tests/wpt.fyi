@@ -287,6 +287,9 @@ func TestSplitWPTTestPath_Success(t *testing.T) {
 }
 
 func TestGetMetadataFilePath(t *testing.T) {
-	actual := GetMetadataFilePath("foo")
+	actual := GetMetadataFilePath("")
+	assert.Equal(t, "META.yml", actual)
+
+	actual = GetMetadataFilePath("foo")
 	assert.Equal(t, "foo/META.yml", actual)
 }

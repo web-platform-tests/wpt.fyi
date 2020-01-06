@@ -18,11 +18,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// TriageMetadataInterface encapsulates triage() method for testing purpose.
+// TriageMetadataInterface encapsulates the Triage() method for testing.
 type TriageMetadataInterface interface {
 	Triage(metadata MetadataResults) error
 }
 
+// triageMetadata encapsulates all dependencies for the Triage() method.
 type triageMetadata struct {
 	ctx context.Context
 	metadataGithub
@@ -30,6 +31,7 @@ type triageMetadata struct {
 	httpClient *http.Client
 }
 
+// metadataGithub encapsulates all Github Information for the createWPTMetadataPR() method.
 type metadataGithub struct {
 	githubClient *github.Client
 	authorName   string
@@ -37,6 +39,7 @@ type metadataGithub struct {
 	wptmetadataGitHubInfo
 }
 
+// wptmetadataGitHubInfo encapsulates all static Github Information for the createWPTMetadataPR() method.
 type wptmetadataGitHubInfo struct {
 	sourceOwner   string
 	sourceRepo    string
@@ -50,11 +53,20 @@ type wptmetadataGitHubInfo struct {
 	prDescription string
 }
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 func getNewCommitBranchName(ctx context.Context, client *github.Client, sourceOwner string, sourceRepo string) string {
 	commitBranch := "auto-triage-branch" + generateRandomInt()
-	// If the commitBranch name already exist, genereate a new one. We consider that an error means the branch has not been found and needs to
-	// be created.
-	for ref, _, err := client.Git.GetRef(ctx, sourceOwner, sourceRepo, "refs/heads/"+commitBranch); err == nil && ref != nil; {
+	bound := 0
+	// If the commitBranch name already exists, generate a new one. We consider an error to mean that the branch
+	// has not been found and needs to be created.
+	for ref, _, err := client.Git.GetRef(ctx, sourceOwner, sourceRepo, "refs/heads/"+commitBranch); err == nil && ref != nil; bound++ {
+		// This loop will rarely run more than 10 times because only a handful of random PR branches should exist at any time.
+		if bound >= 10 {
+			break
+		}
 		commitBranch = "auto-triage-branch" + generateRandomInt()
 	}
 
@@ -229,7 +241,9 @@ func addToFiles(metadata MetadataResults, filesMap map[string]Metadata, logger L
 	return res
 }
 
-// appendTestName populate TestPath name of metadata from test.
+// The metadata triage API end-point accepts metadata in a flattened JSON structure. To re-create
+// the file-sharded structure of the wpt-metadata repository, we have to re-fill in the TestPath field
+// for each new test added.
 func appendTestName(test string, metadata MetadataResults) {
 	links := metadata[test]
 	_, testName := SplitWPTTestPath(test)
@@ -241,7 +255,6 @@ func appendTestName(test string, metadata MetadataResults) {
 }
 
 func generateRandomInt() string {
-	rand.Seed(time.Now().UnixNano())
 	return strconv.Itoa(rand.Intn(10000))
 }
 
