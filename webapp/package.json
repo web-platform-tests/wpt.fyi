@@ -7,7 +7,7 @@
     "url": "https://github.com/web-platform-tests/wpt.fyi.git"
   },
   "devDependencies": {
-    "@browser-logos/chrome": "1.0.16",
+    "@browser-logos/chrome": "1.0.17",
     "@browser-logos/chrome-beta": "2.1.6",
     "@browser-logos/chrome-canary": "1.1.8",
     "@browser-logos/chrome-dev": "2.1.9",
@@ -68,7 +68,7 @@
     "@polymer/polymer": "3.3.1",
     "@vaadin/vaadin-context-menu": "4.3.15",
     "@vaadin/vaadin-date-picker": "4.0.5",
-    "@vaadin/vaadin-grid": "5.4.12",
+    "@vaadin/vaadin-grid": "5.5.0",
     "@webcomponents/webcomponentsjs": "2.4.0",
     "pluralize": "8.0.0"
   }
