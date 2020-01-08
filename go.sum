@@ -223,8 +223,8 @@ github.com/tebeka/selenium v0.9.9/go.mod h1:5Fr8+pUvU6B1OiPfkdCKdXZyr5znvVkxuPd0
 github.com/tent/hawk-go v0.0.0-20161026210932-d341ea318957 h1:6Fre/uvwovW5YY4nfHZk66cAg9HjT9YdFSAJHUUgOyQ=
 github.com/tent/hawk-go v0.0.0-20161026210932-d341ea318957/go.mod h1:dch7ywQEefE1ibFqBG1erFibrdUIwovcwQjksYuHuP4=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
-github.com/web-platform-tests/wpt-metadata v0.0.0-20191118215926-3b9e09ad93d6 h1:T0pUnkwLAjMBgszdRf2A0lRDUV+kyCJWdosx0xflJ+o=
-github.com/web-platform-tests/wpt-metadata v0.0.0-20191118215926-3b9e09ad93d6/go.mod h1:LKnTYz5JXTBggKQjU8z4l21yuF3P0qqatraZvlu4tHc=
+github.com/web-platform-tests/wpt-metadata v0.0.0-20191219143317-d52f5b6770cf h1:sWoqxA/4xXXsWccnmEi3lEufJww2a6huLC7jPiqRqjk=
+github.com/web-platform-tests/wpt-metadata v0.0.0-20191219143317-d52f5b6770cf/go.mod h1:LKnTYz5JXTBggKQjU8z4l21yuF3P0qqatraZvlu4tHc=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
