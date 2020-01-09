@@ -196,7 +196,7 @@ func (tm triageMetadata) createWPTMetadataPR(triagedMetadataMap map[string][]byt
 	return pr, nil
 }
 
-// Add Metadata into the existing Metadata YML files and only return modified files.
+// Add Metadata into the existing Metadata YML files and only return the modified files.
 func addToFiles(metadata MetadataResults, filesMap map[string]Metadata, logger Logger) map[string][]byte {
 	// Update filesMap with the new information in metadata.
 	for test, links := range metadata {
@@ -270,7 +270,7 @@ func (tm triageMetadata) Triage(metadata MetadataResults) (string, error) {
 	return tm.createWPTMetadataPR(triagedMetadataMap)
 }
 
-// GetTriageMetadata returns an instance of triageMetadata struct.
+// GetTriageMetadata returns an instance of the triageMetadata struct to run Triage() method.
 func GetTriageMetadata(ctx context.Context, git MetadataGithub, logger Logger, httpClient *http.Client) TriageMetadataInterface {
 	return triageMetadata{
 		ctx:            ctx,
@@ -279,7 +279,7 @@ func GetTriageMetadata(ctx context.Context, git MetadataGithub, logger Logger, h
 		httpClient:     httpClient}
 }
 
-// GetMetadataGithub returns an instance of MetadataGithub struct.
+// GetMetadataGithub returns an instance of the MetadataGithub struct as a part of a triageMetadata struct.
 func GetMetadataGithub(githubClient *github.Client, authorName string, authorEmail string) MetadataGithub {
 	return MetadataGithub{
 		githubClient: githubClient,

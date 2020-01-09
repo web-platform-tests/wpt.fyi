@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v28/github"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -54,11 +53,11 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	user, token := shared.GetUserFromCookie(ctx, ds, r)
 	if user == nil || token == nil {
-		http.Error(w, "User is not logged in", http.StatusBadRequest)
+		http.Error(w, "User is not logged in", http.StatusUnauthorized)
 		return
 	}
 
-	githubBotClient, err := getWPTFYIGithubBot(ctx)
+	githubBotClient, err := shared.GetGithubClientFromToken(ctx, "github-wpt-fyi-bot-token")
 	if err != nil {
 		http.Error(w, "Unable to get Github Client: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -74,7 +73,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 
 func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, tm shared.TriageMetadataInterface, w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PATCH" {
-		http.Error(w, "Invalid HTTP method; only accpet PATCH request", http.StatusBadRequest)
+		http.Error(w, "Invalid HTTP method; only accept PATCH", http.StatusBadRequest)
 		return
 	}
 
@@ -103,30 +102,29 @@ func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, t
 		return
 	}
 
-	// Check if the token is still valid.
 	code, err := gac.IsValidAccessToken()
 	if err != nil {
-		http.Error(w, "Fail to validate user token "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to validate user token:"+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if code != http.StatusOK {
-		http.Error(w, "User token invalid; please log in again. ", http.StatusBadRequest)
+		http.Error(w, "User token invalid; please log in again.", http.StatusBadRequest)
 		return
 	}
 
 	code, err = gac.IsValidWPTMember()
 	if err != nil {
-		http.Error(w, "Fail to validate web-platform-tests membership: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to validate web-platform-tests membership: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if code != http.StatusOK {
-		http.Error(w, "User is not a part of web-platform-tests org", http.StatusBadRequest)
+		http.Error(w, "Logged-in user must be a member of the web-platform-tests GitHub organization. To join, please contact wpt.fyi team members.", http.StatusBadRequest)
 		return
 	}
 
-	//TODO(kyleju): Check github client permission levels for auto merge.
+	// TODO(kyleju): Check github client permission levels for auto merge.
 	pr, err := tm.Triage(metadata)
 	if err != nil {
 		http.Error(w, "Unable to triage metadata: "+err.Error(), http.StatusInternalServerError)
@@ -200,7 +198,7 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// filterMetadata filters the given Metadata down to entries where the value (links) contain
+// filterMetadata filters the given metadata down to entries where the value (links) contain
 // at least one link where the URL contains the substring provided in the "link" search atom.
 func filterMetadata(linkQuery query.AbstractLink, metadata shared.MetadataResults) shared.MetadataResults {
 	res := make(shared.MetadataResults)
@@ -234,13 +232,4 @@ var cacheKey = func(r *http.Request) interface{} {
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 
 	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
-}
-
-func getWPTFYIGithubBot(ctx context.Context) (*github.Client, error) {
-	client, err := shared.GetGithubClientFromToken(ctx, "github-wpt-fyi-bot-token")
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
 }

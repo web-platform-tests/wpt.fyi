@@ -29,13 +29,13 @@ type User struct {
 	GithuhEmail  string
 }
 
-// GitHubAccessControl encapsulates implementation details of access control for wpt-metadata repository.
+// GitHubAccessControl encapsulates implementation details of access control for the wpt-metadata repository.
 type GitHubAccessControl interface {
 	IsValidAccessToken() (int, error)
 	IsValidWPTMember() (int, error)
 }
 
-type githubAccessControlImp struct {
+type githubAccessControlImpl struct {
 	ctx    context.Context
 	ds     Datastore
 	client *github.Client
@@ -53,34 +53,34 @@ type GitHubOAuth interface {
 	GetGitHubUser(client *github.Client) (*github.User, error)
 }
 
-type githubOAuthImp struct {
+type githubOAuthImpl struct {
 	ctx         context.Context
 	ds          Datastore
 	conf        *oauth2.Config
 	accessToken *string
 }
 
-func (g *githubOAuthImp) Datastore() Datastore {
+func (g *githubOAuthImpl) Datastore() Datastore {
 	return g.ds
 }
 
-func (g *githubOAuthImp) Context() context.Context {
+func (g *githubOAuthImpl) Context() context.Context {
 	return g.ctx
 }
 
-func (g *githubOAuthImp) GetAccessToken() *string {
+func (g *githubOAuthImpl) GetAccessToken() *string {
 	return g.accessToken
 }
 
-func (g *githubOAuthImp) SetRedirectURL(url string) {
+func (g *githubOAuthImpl) SetRedirectURL(url string) {
 	g.conf.RedirectURL = url
 }
 
-func (g *githubOAuthImp) GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+func (g *githubOAuthImpl) GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
 	return g.conf.AuthCodeURL(state, opts...)
 }
 
-func (g *githubOAuthImp) GetNewClient(oauthToken string) (*github.Client, error) {
+func (g *githubOAuthImpl) GetNewClient(oauthToken string) (*github.Client, error) {
 	token, err := g.conf.Exchange(g.ctx, oauthToken)
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (g *githubOAuthImp) GetNewClient(oauthToken string) (*github.Client, error)
 	return client, nil
 }
 
-func (g *githubOAuthImp) GetGitHubUser(client *github.Client) (*github.User, error) {
+func (g *githubOAuthImpl) GetGitHubUser(client *github.Client) (*github.User, error) {
 	ghUser, _, err := client.Users.Get(g.ctx, "")
 	if err != nil {
 		return nil, err
@@ -109,13 +109,13 @@ func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 	clientID, err := GetSecret(store, "github-oauth-client-id")
 	if err != nil {
 		log.Errorf("Failed to get github-oauth-client-id secret: %s", err.Error())
-		return &githubOAuthImp{}, err
+		return &githubOAuthImpl{}, err
 	}
 
 	secret, err := GetSecret(store, "github-oauth-client-secret")
 	if err != nil {
 		log.Errorf("Failed to get github-oauth-client-secret: %s", err.Error())
-		return &githubOAuthImp{}, err
+		return &githubOAuthImpl{}, err
 	}
 
 	oauth := &oauth2.Config{
@@ -126,10 +126,10 @@ func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 		Endpoint: ghOAuth.Endpoint,
 	}
 
-	return &githubOAuthImp{ctx: ctx, conf: oauth, ds: store}, nil
+	return &githubOAuthImpl{ctx: ctx, conf: oauth, ds: store}, nil
 }
 
-func (gaci githubAccessControlImp) IsValidAccessToken() (int, error) {
+func (gaci githubAccessControlImpl) IsValidAccessToken() (int, error) {
 	clientID, err := GetSecret(gaci.ds, "github-oauth-client-id")
 	if err != nil {
 		return -1, err
@@ -154,7 +154,7 @@ func (gaci githubAccessControlImp) IsValidAccessToken() (int, error) {
 	return res.StatusCode, nil
 }
 
-func (gaci githubAccessControlImp) IsValidWPTMember() (int, error) {
+func (gaci githubAccessControlImpl) IsValidWPTMember() (int, error) {
 	_, res, err := gaci.client.Organizations.GetOrgMembership(gaci.ctx, "", "web-platform-tests")
 	if err != nil {
 		return -1, err
@@ -165,7 +165,7 @@ func (gaci githubAccessControlImp) IsValidWPTMember() (int, error) {
 
 // NewGitAccessControl returns the implementation of GitHubAccessControl for apiMetadataTriageHandler.
 func NewGitAccessControl(ctx context.Context, ds Datastore, client *github.Client, token string) GitHubAccessControl {
-	return githubAccessControlImp{
+	return githubAccessControlImpl{
 		ctx:    ctx,
 		ds:     ds,
 		client: client,
