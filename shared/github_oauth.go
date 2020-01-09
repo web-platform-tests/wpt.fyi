@@ -135,7 +135,18 @@ func (gaci githubAccessControlImp) IsValidAccessToken() (int, error) {
 		return -1, err
 	}
 
-	_, res, err := gaci.client.Authorizations.Check(gaci.ctx, clientID, gaci.token)
+	secret, err := GetSecret(gaci.ds, "github-oauth-client-secret")
+	if err != nil {
+		return -1, err
+	}
+
+	tp := github.BasicAuthTransport{
+		Username: clientID,
+		Password: secret,
+	}
+
+	oauthAppClient := github.NewClient(tp.Client())
+	_, res, err := oauthAppClient.Authorizations.Check(gaci.ctx, clientID, gaci.token)
 	if err != nil {
 		return -1, err
 	}
@@ -153,15 +164,11 @@ func (gaci githubAccessControlImp) IsValidWPTMember() (int, error) {
 }
 
 // NewGitAccessControl returns the implementation of GitHubAccessControl for apiMetadataTriageHandler.
-func NewGitAccessControl(ctx context.Context, ds Datastore, token string) GitHubAccessControl {
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	tc := oauth2.NewClient(ctx, ts)
-	githubClient := github.NewClient(tc)
-
+func NewGitAccessControl(ctx context.Context, ds Datastore, client *github.Client, token string) GitHubAccessControl {
 	return githubAccessControlImp{
 		ctx:    ctx,
 		ds:     ds,
-		client: githubClient,
+		client: client,
 		token:  token}
 }
 

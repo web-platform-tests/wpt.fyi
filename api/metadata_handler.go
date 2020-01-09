@@ -68,7 +68,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	git := shared.GetMetadataGithub(githubBotClient, user.GitHubHandle, user.GithuhEmail)
 	tm := shared.GetTriageMetadata(ctx, git, shared.GetLogger(ctx), aeAPI.GetHTTPClient())
 
-	gac := shared.NewGitAccessControl(ctx, ds, *token)
+	gac := shared.NewGitAccessControl(ctx, ds, githubBotClient, *token)
 	handleMetadataTriage(ctx, gac, tm, w, r)
 }
 

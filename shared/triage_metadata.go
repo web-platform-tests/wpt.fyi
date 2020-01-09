@@ -85,7 +85,7 @@ func getWptmetadataGitHubInfo(ctx context.Context, client *github.Client) wptmet
 		commitMessage: "Commit New Metadata",
 		commitBranch:  commitBranch,
 		baseBranch:    baseBranch,
-		prRepoOwner:   sourceRepo,
+		prRepoOwner:   sourceOwner,
 		prRepo:        sourceRepo,
 		prBranch:      baseBranch,
 		prSubject:     "Automatically Triage New Metadata",
@@ -99,6 +99,7 @@ func (tm triageMetadata) getCommitBranchRef() (ref *github.Reference, err error)
 	if baseRef, _, err = client.Git.GetRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, "refs/heads/"+tm.baseBranch); err != nil {
 		return nil, err
 	}
+
 	newRef := &github.Reference{Ref: github.String("refs/heads/" + tm.commitBranch), Object: &github.GitObject{SHA: baseRef.Object.SHA}}
 	ref, _, err = client.Git.CreateRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, newRef)
 	return ref, err
