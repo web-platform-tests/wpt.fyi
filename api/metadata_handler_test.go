@@ -44,11 +44,11 @@ func TestHandleMetadataTriage_Success(t *testing.T) {
 	mockgac.EXPECT().IsValidWPTMember().Return(http.StatusOK, nil)
 
 	mocktm := sharedtest.NewMockTriageMetadataInterface(mockCtrl)
-	mocktm.EXPECT().Triage(gomock.Any()).Return(nil)
+	mocktm.EXPECT().Triage(gomock.Any()).Return("", nil)
 
 	handleMetadataTriage(ctx, mockgac, mocktm, w, req)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestHandleMetadataTriage_NonSimpleRequests(t *testing.T) {

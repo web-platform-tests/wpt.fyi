@@ -20,7 +20,7 @@ import (
 
 // TriageMetadataInterface encapsulates the Triage() method for testing.
 type TriageMetadataInterface interface {
-	Triage(metadata MetadataResults) error
+	Triage(metadata MetadataResults) (string, error)
 }
 
 // triageMetadata encapsulates all dependencies for the Triage() method.
@@ -146,7 +146,7 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 // createPR creates a pull request from the commit branch (with the new triage changes) to the
 // master branch of the repository.
 // Based on: https://godoc.org/github.com/google/go-github/github#example-PullRequestsService-Create
-func (tm triageMetadata) createPR() (err error) {
+func (tm triageMetadata) createPR() (string, error) {
 	newPR := &github.NewPullRequest{
 		Title:               &tm.prSubject,
 		Head:                &tm.commitBranch,
@@ -157,43 +157,43 @@ func (tm triageMetadata) createPR() (err error) {
 
 	pr, _, err := tm.githubClient.PullRequests.Create(tm.ctx, tm.prRepoOwner, tm.prRepo, newPR)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	tm.logger.Infof("PR created: %s", pr.GetHTMLURL())
-	return nil
+	return pr.GetHTMLURL(), nil
 }
 
-func (tm triageMetadata) createWPTMetadataPR(triagedMetadataMap map[string][]byte) error {
+func (tm triageMetadata) createWPTMetadataPR(triagedMetadataMap map[string][]byte) (string, error) {
 	log := tm.logger
 	ref, err := tm.getCommitBranchRef()
 	if err != nil {
 		log.Errorf("Unable to get/create the commit reference: %s", err)
-		return err
+		return "", err
 	}
 
 	if ref == nil {
 		log.Errorf("No error returned but the reference is nil")
-		return errors.New("No error returned but the reference is nil")
+		return "", errors.New("No error returned but the reference is nil")
 	}
 
 	tree, err := tm.getTree(ref, triagedMetadataMap)
 	if err != nil {
 		log.Errorf("Unable to create the tree based on the provided files: %s", err)
-		return err
+		return "", err
 	}
 
 	if err := tm.pushCommit(ref, tree); err != nil {
 		log.Errorf("Unable to create the commit: %s", err)
-		return err
+		return "", err
 	}
-
-	if err := tm.createPR(); err != nil {
+	pr, err := tm.createPR()
+	if err != nil {
 		log.Errorf("Error while creating the pull request: %s", err)
-		return err
+		return "", err
 	}
 
-	return nil
+	return pr, nil
 }
 
 // Add Metadata into the existing Metadata YML files and only return modified files.
@@ -259,10 +259,10 @@ func generateRandomInt() string {
 	return strconv.Itoa(rand.Intn(10000))
 }
 
-func (tm triageMetadata) Triage(metadata MetadataResults) error {
+func (tm triageMetadata) Triage(metadata MetadataResults) (string, error) {
 	filesMap, err := GetMetadataByteMap(tm.httpClient, tm.logger, MetadataArchiveURL)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	triagedMetadataMap := addToFiles(metadata, filesMap, tm.logger)

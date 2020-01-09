@@ -34,11 +34,12 @@ func (m *MockTriageMetadataInterface) EXPECT() *MockTriageMetadataInterfaceMockR
 }
 
 // Triage mocks base method
-func (m *MockTriageMetadataInterface) Triage(arg0 shared.MetadataResults) error {
+func (m *MockTriageMetadataInterface) Triage(arg0 shared.MetadataResults) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Triage", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Triage indicates an expected call of Triage

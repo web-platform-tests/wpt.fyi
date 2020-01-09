@@ -127,13 +127,13 @@ func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, t
 	}
 
 	//TODO(kyleju): Check github client permission levels for auto merge.
-	err = tm.Triage(metadata)
+	pr, err := tm.Triage(metadata)
 	if err != nil {
 		http.Error(w, "Unable to triage metadata: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(pr))
 }
 
 func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
