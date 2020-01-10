@@ -5,16 +5,14 @@ FROM gcr.io/gcp-runtimes/go1-builder:1.12 as builder
 
 RUN apt-get update
 RUN apt-get install -qy --no-install-suggests git
-WORKDIR /go/src/app
-COPY *.go .
+WORKDIR /go/src/wpt.fyi
 
-COPY wpt.fyi /root/go/src/github.com/web-platform-tests/wpt.fyi/
-RUN /usr/local/go/bin/go get -d .
-RUN /usr/local/go/bin/go build -o app .
+COPY wpt.fyi .
+RUN /usr/local/go/bin/go build -o ../../bin/app ./revisions/service
 
 # Application image.
 FROM gcr.io/distroless/base:latest
 
-COPY --from=builder /go/src/app/app /usr/local/bin/app
+COPY --from=builder /go/bin/app /usr/local/bin/app
 
 CMD ["/usr/local/bin/app"]
