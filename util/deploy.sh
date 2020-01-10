@@ -18,7 +18,11 @@ usage() {
   echo "${USAGE}"
 }
 
+# Take the last argument.
 APP_PATH=${@: -1}
+# Trim the trailing slash (if any).
+APP_PATH=${APP_PATH%/}
+
 while getopts ':b:prhq' flag; do
   case "${flag}" in
     r) RELEASE='true' ;;
@@ -85,16 +89,10 @@ else
 fi
 COMMAND="gcloud app deploy ${PROMOTE_FLAG} ${QUIET_FLAG} --version=${VERSION} ${APP_PATH}"
 
-if [[ -z "${QUIET}" ]]
-then
-    info "Deploy command:\n${COMMAND}"
-    confirm "Execute?"
-    if [[ "${?}" != "0" ]]; then fatal "User cancelled the deploy"; fi
-fi
+if [[ -z "${QUIET}" ]]; then info "Executing deploy command:\n${COMMAND}"; fi
 
 set -e
 
-if [[ -z "${QUIET}" ]]; then info "Executing..."; fi
 ${COMMAND} || fatal "Deploy returned non-zero exit code $?"
 
 exit 0
