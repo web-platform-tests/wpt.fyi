@@ -56,8 +56,6 @@ jobs:
     - env:
       - DEPLOY_PR_STAGING_TARGET=results-processor
     - env:
-      - DEPLOY_PR_STAGING_TARGET=revisions/service
-    - env:
       - DEPLOY_PR_STAGING_TARGET=api/query/cache/service/app.staging.yaml
 
     - stage: deploy master
@@ -67,8 +65,6 @@ jobs:
       - MAKE_TEST_FLAGS="STAGING=true"
     - env:
       - DEPLOY_STAGING_TARGET=results-processor
-    - env:
-      - DEPLOY_STAGING_TARGET=revisions/service
     - env:
       - DEPLOY_STAGING_TARGET=api/query/cache/service
 
