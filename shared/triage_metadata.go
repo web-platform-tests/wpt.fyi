@@ -249,6 +249,12 @@ func appendTestName(test string, metadata MetadataResults) {
 	links := metadata[test]
 	_, testName := SplitWPTTestPath(test)
 	for linkIndex, link := range links {
+		if len(link.Results) == 0 {
+			links[linkIndex].Results = make([]MetadataTestResult, 0)
+			links[linkIndex].Results = append(link.Results, MetadataTestResult{TestPath: testName})
+			continue
+		}
+
 		for resultIndex := range link.Results {
 			metadata[test][linkIndex].Results[resultIndex].TestPath = testName
 		}
