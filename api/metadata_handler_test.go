@@ -53,14 +53,25 @@ func TestHandleMetadataTriage_Success(t *testing.T) {
 
 func TestHandleMetadataTriage_NonSimpleRequests(t *testing.T) {
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "https://foo/metadata", nil)
+	body :=
+		`{
+		"/bar/foo.html": [
+			{
+				"product":"chrome",
+				"url":"bugs.bar",
+				"results":[{"status":6}]
+			}
+		]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("GET", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
 
 	handleMetadataTriage(nil, nil, nil, w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	w = httptest.NewRecorder()
-	req = httptest.NewRequest("POST", "https://foo/metadata", nil)
+	req = httptest.NewRequest("POST", "https://foo/metadata", bodyReader)
 
 	handleMetadataTriage(nil, nil, nil, w, req)
 
@@ -69,7 +80,17 @@ func TestHandleMetadataTriage_NonSimpleRequests(t *testing.T) {
 
 func TestHandleMetadataTriage_WrongContentType(t *testing.T) {
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest("PATCH", "https://foo/metadata", nil)
+	body :=
+		`{
+	"/bar/foo.html": [
+		{
+			"product":"chrome",
+			"url":"bugs.bar",
+			"results":[{"status":6}]
+		}
+	]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	handleMetadataTriage(nil, nil, nil, w, req)

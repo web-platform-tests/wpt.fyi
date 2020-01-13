@@ -109,7 +109,7 @@ func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, t
 	}
 
 	if code != http.StatusOK {
-		http.Error(w, "User token invalid; please log in again.", http.StatusBadRequest)
+		http.Error(w, "User token invalid; please log in again.", http.StatusUnauthorized)
 		return
 	}
 

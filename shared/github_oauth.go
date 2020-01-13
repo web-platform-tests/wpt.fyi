@@ -140,6 +140,8 @@ func (gaci githubAccessControlImpl) IsValidAccessToken() (int, error) {
 		return -1, err
 	}
 
+	// TODO(kyleju): Switch to non-deprecating token checking once go-github supports it;
+	// see https://github.com/google/go-github/issues/1331
 	tp := github.BasicAuthTransport{
 		Username: clientID,
 		Password: secret,
