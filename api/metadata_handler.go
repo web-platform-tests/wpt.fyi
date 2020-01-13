@@ -6,6 +6,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -22,10 +23,6 @@ type MetadataHandler struct {
 	logger      shared.Logger
 	httpClient  *http.Client
 	metadataURL string
-}
-
-// A temporary place holder for the apiMetadataTriageHandler from another PR.
-func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // apiMetadataHandler searches Metadata for given products.
@@ -51,16 +48,105 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		shared.CacheStatusOK).ServeHTTP(w, r)
 }
 
+func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	user, token := shared.GetUserFromCookie(ctx, ds, r)
+	if user == nil || token == nil {
+		http.Error(w, "User is not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	githubBotClient, err := shared.GetGithubClientFromToken(ctx, "github-wpt-fyi-bot-token")
+	if err != nil {
+		http.Error(w, "Unable to get Github Client: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	git := shared.GetMetadataGithub(githubBotClient, user.GitHubHandle, user.GithuhEmail)
+	tm := shared.GetTriageMetadata(ctx, git, shared.GetLogger(ctx), aeAPI.GetHTTPClient())
+
+	gac := shared.NewGitAccessControl(ctx, ds, githubBotClient, *token)
+	handleMetadataTriage(ctx, gac, tm, w, r)
+}
+
+func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, tm shared.TriageMetadataInterface, w http.ResponseWriter, r *http.Request) {
+	if r.Method != "PATCH" {
+		http.Error(w, "Invalid HTTP method; only accept PATCH", http.StatusBadRequest)
+		return
+	}
+
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		http.Error(w, "Invalid content-type: %s"+contentType, http.StatusBadRequest)
+		return
+	}
+
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read PATCH request body", http.StatusInternalServerError)
+		return
+	}
+
+	err = r.Body.Close()
+	if err != nil {
+		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	var metadata shared.MetadataResults
+	err = json.Unmarshal(data, &metadata)
+	if err != nil {
+		http.Error(w, "Failed to parse JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	code, err := gac.IsValidAccessToken()
+	if err != nil {
+		http.Error(w, "Failed to validate user token:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if code != http.StatusOK {
+		http.Error(w, "User token invalid; please log in again.", http.StatusUnauthorized)
+		return
+	}
+
+	code, err = gac.IsValidWPTMember()
+	if err != nil {
+		http.Error(w, "Failed to validate web-platform-tests membership: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if code != http.StatusOK {
+		http.Error(w, "Logged-in user must be a member of the web-platform-tests GitHub organization. To join, please contact wpt.fyi team members.", http.StatusBadRequest)
+		return
+	}
+
+	// TODO(kyleju): Check github client permission levels for auto merge.
+	pr, err := tm.Triage(metadata)
+	if err != nil {
+		http.Error(w, "Unable to triage metadata: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte(pr))
+}
+
 func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var abstractLink query.AbstractLink
 	if r.Method == "POST" {
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+			return
 		}
+
 		err = r.Body.Close()
 		if err != nil {
 			http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
+			return
 		}
 
 		var ae query.AbstractExists
