@@ -53,7 +53,7 @@
     "@polymer/paper-checkbox": "3.1.0",
     "@polymer/paper-dialog": "3.0.1",
     "@polymer/paper-dropdown-menu": "3.1.0",
-    "@polymer/paper-input": "3.1.0",
+    "@polymer/paper-input": "3.2.0",
     "@polymer/paper-item": "3.0.1",
     "@polymer/paper-listbox": "3.0.1",
     "@polymer/paper-progress": "3.0.1",
@@ -69,7 +69,7 @@
     "@vaadin/vaadin-context-menu": "4.3.15",
     "@vaadin/vaadin-date-picker": "4.0.5",
     "@vaadin/vaadin-grid": "5.5.0",
-    "@webcomponents/webcomponentsjs": "2.4.0",
+    "@webcomponents/webcomponentsjs": "2.4.1",
     "pluralize": "8.0.0"
   }
 }
