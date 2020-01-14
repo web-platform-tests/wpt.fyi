@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/web-platform-tests/wpt-metadata/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -80,7 +79,7 @@ func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Clien
 // GetMetadataByteMap collects and parses all META.yml files from
 // the wpt-metadata repository.
 func GetMetadataByteMap(client *http.Client, log Logger, url string) (map[string]Metadata, error) {
-	metadataByteMap, err := util.CollectMetadataWithURL(client, url)
+	metadataByteMap, err := CollectMetadataWithURL(client, url)
 	if err != nil {
 		log.Errorf("Error from CollectMetadataWithURL: %s", err.Error())
 		return nil, err
