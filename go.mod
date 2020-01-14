@@ -26,7 +26,6 @@ require (
 	github.com/taskcluster/taskcluster-lib-urls v12.1.0+incompatible
 	github.com/taskcluster/taskcluster/clients/client-go/v22 v22.1.1
 	github.com/tebeka/selenium v0.9.9
-	github.com/web-platform-tests/wpt-metadata v0.0.0-20191118215926-3b9e09ad93d6
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
