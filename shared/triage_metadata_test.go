@@ -64,16 +64,41 @@ func TestAppendTestName(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestAppendTestName_EmptyResults(t *testing.T) {
+	var actual, expected MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo1/bar1.html": [
+			{
+				"product": "chrome",
+				"url": "bugs.bar"
+			}
+		]
+	}`), &actual)
+
+	json.Unmarshal([]byte(`{
+		"/foo1/bar1.html": [
+			{
+				"product": "chrome",
+				"url": "bugs.bar",
+				"results": [
+					{"test": "bar1.html"}
+				]}
+		]
+	}`), &expected)
+	test := "/foo1/bar1.html"
+
+	appendTestName(test, actual)
+
+	assert.Equal(t, expected, actual)
+}
+
 func TestAddToFiles_AddNewFile(t *testing.T) {
 	var amendment MetadataResults
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/bar.html": [
 			{
 				"url": "bugs.bar?id=456",
-				"product": "chrome",
-				"results": [
-					{"status": 6 }
-				]
+				"product": "chrome"
 			}
 		]
 	}`), &amendment)
@@ -111,7 +136,6 @@ links:
 	assert.Equal(t, "bugs.bar?id=456", actual.Links[0].URL)
 	assert.Equal(t, 1, len(actual.Links[0].Results))
 	assert.Equal(t, "bar.html", actual.Links[0].Results[0].TestPath)
-	assert.Equal(t, TestStatusFail, *actual.Links[0].Results[0].Status)
 }
 
 func TestAddToFiles_AddNewMetadataResult(t *testing.T) {
