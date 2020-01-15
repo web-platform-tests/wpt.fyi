@@ -77,7 +77,11 @@ class WPTMetadataNode extends PolymerElement {
 
   computeTestHref(path, metadataNode) {
     const currentUrl = window.location.href;
-    return currentUrl.replace(path, metadataNode.test);
+    let testname = metadataNode.test;
+    if (testname.endsWith('/*')) {
+      return currentUrl.replace(path, testname.substring(0, testname.length - 2));
+    }
+    return currentUrl.replace(path, testname);
   }
 
   displayLogo(product) {
@@ -184,7 +188,7 @@ class WPTMetadata extends LoadingState(PolymerElement) {
     }
 
     let displayedMetadata = [];
-    for (const test of Object.keys(metadata).filter(k => k.startsWith(path))) {
+    for (const test of Object.keys(metadata).filter(k => this.checkPath(k, path))) {
       const seenURLs = new Set();
       seenURLs.add(''); // Avoids accepting empty URLs.
       for (const link of metadata[test]) {
@@ -220,6 +224,13 @@ class WPTMetadata extends LoadingState(PolymerElement) {
   handleOpenCollapsible() {
     this.shadowRoot.querySelector('#metadata-toggle').hidden = true;
     this.shadowRoot.querySelector('#metadata-collapsible').opened = true;
+  }
+
+  checkPath(testname, path) {
+    if (testname.endsWith('/*')) {
+      return path.startsWith(testname.substring(0, testname.length - 1));
+    }
+    return testname.startsWith(path);
   }
 }
 window.customElements.define(WPTMetadata.is, WPTMetadata);
