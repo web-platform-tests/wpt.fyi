@@ -18,6 +18,7 @@ import { WPTColors } from '../components/wpt-colors.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-prs.js';
+import '../components/wpt-amend-metadata.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
@@ -209,11 +210,22 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                  <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
-                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                    /
-                    <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-                  </td>
+                  <template is="dom-if" if="[[ canAmendMetadata(node, index, testRun) ]]">
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[openAmendMetadata(index, node)]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                    </td>
+                  </template>
+
+                  <template is="dom-if" if="[[ !canAmendMetadata(node, index, testRun) ]]">
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                    </td>
+                  </template>
+
                 </template>
 
                 <template is="dom-if" if="[[diffRun]]">
@@ -297,6 +309,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         </section>
       </template>
     </template>
+    <wpt-amend-metadata path="[[ path ]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]"></wpt-amend-metadata>
 `;
   }
 
@@ -459,7 +472,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   computeDisplayedTests(path, searchResults) {
     return searchResults
-      && searchResults.map(r => r.test) .filter(name => name.startsWith(path))
+      && searchResults.map(r => r.test).filter(name => name.startsWith(path))
       || [];
   }
 
@@ -477,6 +490,14 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   constructor() {
     super();
+    this.openAmendMetadata = (i, node) => {
+      return () => {
+        const amend = this.shadowRoot.querySelector('wpt-amend-metadata');
+        amend.test = node.path;
+        amend.productIndex = i;
+        amend.open();
+      };
+    };
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
@@ -696,7 +717,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       const suffix = testPath.substring(prefix.length);
       const slashIdx = suffix.split('?')[0].indexOf('/');
       const isDir = slashIdx !== -1;
-      const name = isDir ? suffix.substring(0, slashIdx): suffix;
+      const name = isDir ? suffix.substring(0, slashIdx) : suffix;
       // Either add new node to acc, or add passes, total to an
       // existing node.
       if (!nodes.hasOwnProperty(name)) {
@@ -719,7 +740,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     // Add an empty row for all the tests known from the manifest.
     const knownNodes = {};
     if (this.manifest && !this.search) {
-      for (const [path, {type}] of Object.entries(this.manifest)) {
+      for (const [path, { type }] of Object.entries(this.manifest)) {
         if (TEST_TYPES.includes(type)) {
           if (path.startsWith(prefix)) {
             collapsePathOnto(path, knownNodes);
@@ -823,8 +844,14 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     }
   }
 
-  platformID({browser_name, browser_version, os_name, os_version}) {
+  platformID({ browser_name, browser_version, os_name, os_version }) {
     return `${browser_name}-${browser_version}-${os_name}-${os_version}`;
+  }
+
+  canAmendMetadata(node, index, testRun) {
+    const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
+    const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
+    return this.computePathIsATestFile(node.path) && (totalTests - passedTests) > 0 && this.triageMetadataUI;
   }
 
   testResultClass(node, index, testRun, prop) {
@@ -906,7 +933,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
     this.testRuns.forEach(testRun => {
       const testRunID = this.platformID(testRun);
-      totals[testRunID] = {passes: 0, total: 0};
+      totals[testRunID] = { passes: 0, total: 0 };
 
       Object.keys(this.specDirs).forEach(specKey => {
         let { passes, total } = this.specDirs[specKey].results[testRun.results_url];

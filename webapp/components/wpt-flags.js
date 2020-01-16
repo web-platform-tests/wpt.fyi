@@ -47,6 +47,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
+      'triageMetadataUI',
       'webPlatformTestsLive',
     ];
   }
@@ -247,7 +248,12 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{displayMetadata}}">
-        Show metadata Information on wpt.fyi result page.
+        Show metadata Information on the wpt.fyi result page.
+      </paper-checkbox>
+    </paper-item>
+      <paper-item>
+      <paper-checkbox checked="{{triageMetadataUI}}">
+        Show Triage Metadata UI on the wpt.fyi result page.
       </paper-checkbox>
     </paper-item>
     <paper-item>
