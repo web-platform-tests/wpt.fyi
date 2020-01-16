@@ -13,6 +13,7 @@ import {
   PolymerElement
 } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
+import { PathInfo } from '../components/path.js';
 
 class WPTMetadataNode extends PolymerElement {
   static get template() {
@@ -93,7 +94,7 @@ class WPTMetadataNode extends PolymerElement {
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
 
-class WPTMetadata extends LoadingState(PolymerElement) {
+class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
   static get template() {
     return html`
       <style>
@@ -228,7 +229,11 @@ class WPTMetadata extends LoadingState(PolymerElement) {
 
   checkPath(testname, path) {
     if (testname.endsWith('/*')) {
-      return path.startsWith(testname.substring(0, testname.length - 1));
+      let curPath = path;
+      if (this.pathIsASubfolder) {
+        curPath = curPath + '/';
+      }
+      return curPath.startsWith(testname.substring(0, testname.length - 1));
     }
     return testname.startsWith(path);
   }

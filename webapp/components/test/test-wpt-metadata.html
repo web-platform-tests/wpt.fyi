@@ -59,6 +59,15 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[0].test, '/foo/*');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+
+      appFixture.path = '/foo';
+      assert.equal(appFixture.displayedMetadata.length, 1);
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo/*');
+      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+
+      appFixture.path = '/foobar';
+      assert.equal(appFixture.displayedMetadata.length, 0);
     });
     test('exclude path', () => {
       appFixture.products = [{ browser_name: 'chrome' }];
