@@ -66,7 +66,7 @@ type API interface {
 	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
 	GetBuildURL(owner, repo string, buildID int64) string
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
-	GetBuild(owner, repo string, buildID int64) *Build
+	GetBuild(owner, repo string, buildID int64) (*Build, error)
 }
 
 type apiImpl struct {
@@ -99,29 +99,26 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 		buildID)
 }
 
-func (a apiImpl) GetBuild(owner, repo string, buildID int64) *Build {
+func (a apiImpl) GetBuild(owner, repo string, buildID int64) (*Build, error) {
 	buildURL := a.GetBuildURL(owner, repo, buildID)
 	client := shared.NewAppEngineAPI(a.ctx).GetHTTPClient()
-	log := shared.GetLogger(a.ctx)
 	resp, err := client.Get(buildURL)
 	if err != nil {
-		log.Errorf("Failed to fetch build: %s", err.Error())
-		return nil
+		return nil, fmt.Errorf("failed to handle fetch build: %v", err)
 	}
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("Failed to read request response: %s", err.Error())
-		return nil
+		return nil, fmt.Errorf("failed to read request response: %v", err)
 	}
 	var build Build
 	if err := json.Unmarshal(data, &build); err != nil {
-		log.Errorf("Failed to unmarshal request response: %s", err.Error())
-		return nil
+		return nil, fmt.Errorf("failed to unmarshal request response: %v", err)
 	}
+	log := shared.GetLogger(a.ctx)
 	log.Debugf("Source branch: %s", build.SourceBranch)
 	log.Debugf("Trigger PR branch: %s", build.TriggerInfo.SourceBranch)
-	return &build
+	return &build, nil
 }
 
 // HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.

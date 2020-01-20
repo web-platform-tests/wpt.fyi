@@ -15,9 +15,9 @@ import (
 	"strings"
 	"testing"
 
-	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v28/github"
+	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
@@ -90,7 +90,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
 	serverURL, _ := url.Parse(server.URL)
 	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
-	azureAPI.EXPECT().GetBuild(repoOwner, repoName, int64(123)).Return(&build)
+	azureAPI.EXPECT().GetBuild(repoOwner, repoName, int64(123)).Return(&build, nil)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return(serverURL.Host)

@@ -49,11 +49,12 @@ func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(arg0, arg1, arg2 interface{}
 }
 
 // GetBuild mocks base method
-func (m *MockAPI) GetBuild(arg0, arg1 string, arg2 int64) *azure.Build {
+func (m *MockAPI) GetBuild(arg0, arg1 string, arg2 int64) (*azure.Build, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBuild", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*azure.Build)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetBuild indicates an expected call of GetBuild
