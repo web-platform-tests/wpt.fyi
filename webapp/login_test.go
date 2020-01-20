@@ -6,6 +6,7 @@
 package webapp
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -44,9 +45,10 @@ func TestHandleLogin(t *testing.T) {
 	handleLogin(mockgo, w, req)
 
 	resp := w.Result()
-	cookies := w.Header().Get("Set-Cookie")
-	assert.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode)
-	assert.Equal(t, "https://redirect?", w.Header().Get("Location"))
+	body, _ := ioutil.ReadAll(resp.Body)
+	cookies := resp.Header.Get("Set-Cookie")
+	assert.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode, string(body))
+	assert.Equal(t, "https://redirect?", resp.Header.Get("Location"))
 
 	assert.True(t, strings.Contains(cookies, "state="))
 	assert.True(t, strings.Contains(cookies, "Path=/"))
@@ -81,20 +83,21 @@ func TestHandleOauth(t *testing.T) {
 
 	userName := "ufoo"
 	userEmail := "ebar"
-	secrete := "token"
+	secret := "token"
 	mockgo := sharedtest.NewMockGitHubOAuth(mockCtrl)
 	mockgo.EXPECT().Context().AnyTimes().Return(ctx)
 	mockgo.EXPECT().GetNewClient(gomock.Any()).Return(nil, nil)
 	mockgo.EXPECT().GetGitHubUser(gomock.Any()).Return(&github.User{Login: &userName, Email: &userEmail}, nil)
 	mockgo.EXPECT().Datastore().AnyTimes().Return(mockStore)
-	mockgo.EXPECT().GetAccessToken().Return(&secrete)
+	mockgo.EXPECT().GetAccessToken().Return(&secret)
 
 	handleOauth(mockgo, w, req)
 
 	resp := w.Result()
-	cookies := w.Header().Get("Set-Cookie")
-	assert.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode)
-	assert.Equal(t, "/", w.Header().Get("Location"))
+	body, _ := ioutil.ReadAll(resp.Body)
+	cookies := resp.Header.Get("Set-Cookie")
+	assert.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode, string(body))
+	assert.Equal(t, "/", resp.Header.Get("Location"))
 
 	assert.True(t, strings.Contains(cookies, "session="))
 	assert.True(t, strings.Contains(cookies, "Path=/"))
