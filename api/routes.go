@@ -74,5 +74,5 @@ func RegisterRoutes() {
 	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapPermissiveCORS(apiMetadataHandler))
 
 	// API endpoint for modifying Metadata.
-	shared.AddRoute("/api/metadata/triage", "api-metadata-triage", shared.WrapTrustedCORS(apiMetadataTriageHandler, []string{"https://developer.mozilla.org"}, []string{"PATCH"}))
+	shared.AddRoute("/api/metadata/triage", "api-metadata-triage", shared.WrapTrustedCORS(apiMetadataTriageHandler, []string{"https://jgraham.github.io"}, []string{"PATCH"}))
 }
