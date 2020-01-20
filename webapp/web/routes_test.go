@@ -126,7 +126,7 @@ func TestApiMetadataCORS(t *testing.T) {
 	assertHandlerIs(t, "/api/metadata", "api-metadata")
 	successPost := httptest.NewRequest("OPTIONS", "/api/metadata", nil)
 	successPost.Header.Set("Access-Control-Request-Headers", "content-type")
-	successPost.Header.Add("Origin", "https://developer.mozilla.org")
+	successPost.Header.Add("Origin", "https://jgraham.github.io")
 	successPost.Header.Add("Access-Control-Request-Method", "POST")
 
 	rr := sendHttptestRequest(successPost)
@@ -143,7 +143,7 @@ func TestApiMetadataTriageCORS(t *testing.T) {
 
 	successReq := httptest.NewRequest("OPTIONS", "/api/metadata/triage", nil)
 	successReq.Header.Set("Access-Control-Request-Headers", "content-type")
-	successReq.Header.Add("Origin", "https://developer.mozilla.org")
+	successReq.Header.Add("Origin", "https://jgraham.github.io")
 	successReq.Header.Add("Access-Control-Request-Method", "PATCH")
 
 	rr := sendHttptestRequest(successReq)
@@ -151,7 +151,7 @@ func TestApiMetadataTriageCORS(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.StatusCode)
 	assert.Equal(t, "Content-Type", rr.Header.Get("Access-Control-Allow-Headers"))
 	assert.Equal(t, "PATCH", rr.Header.Get("Access-Control-Allow-Methods"))
-	assert.Equal(t, "https://developer.mozilla.org", rr.Header.Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "https://jgraham.github.io", rr.Header.Get("Access-Control-Allow-Origin"))
 	assert.Equal(t, "true", rr.Header.Get("Access-Control-Allow-Credentials"))
 
 	invalidOriginReq := httptest.NewRequest("OPTIONS", "/api/metadata/triage", nil)
@@ -163,7 +163,7 @@ func TestApiMetadataTriageCORS(t *testing.T) {
 
 	invalidMethodReq := httptest.NewRequest("OPTIONS", "/api/metadata/triage", nil)
 	invalidMethodReq.Header.Set("Access-Control-Request-Headers", "content-type")
-	invalidMethodReq.Header.Add("Origin", "https://developer.mozilla.org")
+	invalidMethodReq.Header.Add("Origin", "https://jgraham.github.io")
 	invalidMethodReq.Header.Add("Access-Control-Request-Method", "POST")
 
 	rr = sendHttptestRequest(invalidMethodReq)
