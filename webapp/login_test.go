@@ -6,6 +6,7 @@
 package webapp
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -13,11 +14,17 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v28/github"
+	"github.com/gorilla/securecookie"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/golang/mock/gomock"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
+)
+
+var (
+	// This is both the blockkey and the hashkey for securecookie for *testing only*. It has 32 bytes.
+	secretKey = "cd2a2650545fa9dc9f5aa265133a703a"
 )
 
 func TestHandleLogin(t *testing.T) {
@@ -31,9 +38,7 @@ func TestHandleLogin(t *testing.T) {
 	mockStore.EXPECT().NewNameKey("Token", gomock.Any()).AnyTimes().Return(nil)
 	mockStore.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes().Return(nil).Do(func(key shared.Key, dst interface{}) {
 		token, _ := dst.(*shared.Token)
-		// sc is the encryption key for securecookie, that can be any value of 16/32/64 bytes length.
-		sc := "dIS6V5HAQppr4QyLCSTEyg=="
-		(*token).Secret = sc
+		(*token).Secret = secretKey
 	})
 
 	mockgo := sharedtest.NewMockGitHubOAuth(mockCtrl)
@@ -59,16 +64,19 @@ func TestHandleLogin(t *testing.T) {
 }
 
 func TestHandleOauth(t *testing.T) {
+	state := "YZ6kSZ4PwwHMCcNHwd8xnd9u4ePzv9MmXrNNkYkPZ8Y"
+	sc := securecookie.New([]byte(secretKey), []byte(secretKey))
+	encodedState, err := sc.Encode("state", state)
+	assert.Nil(t, err)
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := sharedtest.NewTestContext()
 	w := httptest.NewRecorder()
-	// stateVal is the encrypted value of YZ6kSZ4PwwHMCcNHwd8xnd9u4ePzv9MmXrNNkYkPZ8Y using securecookie, with dIS6V5HAQppr4QyLCSTEyg== as the hashkey and blockey value.
-	stateVal := "MTU3Njc4MDA0N3xpSXVpeXJyWFRFZUZBRTBDdGVISG00Q1h3YWlqM3ZmdkFORmk1Z1pWTFQtd24yQjlXM0ZsTkF5Ti1sS1ozZS1EWjZub1dSRXVyMHd5TnprZV9ZeHF0Zz09fNRqZ-8jwop8p39BpJTXlpNrRsfMeWMTH4CuRfA0QS0e"
-	req := httptest.NewRequest("GET", "https://oauth?state=YZ6kSZ4PwwHMCcNHwd8xnd9u4ePzv9MmXrNNkYkPZ8Y=&code=bar", nil)
+	req := httptest.NewRequest("GET", fmt.Sprintf("https://oauth?state=%s&code=bar", state), nil)
 	req.AddCookie(&http.Cookie{
 		Name:  "state",
-		Value: stateVal,
+		Value: encodedState,
 		Path:  "/",
 	})
 
@@ -76,9 +84,7 @@ func TestHandleOauth(t *testing.T) {
 	mockStore.EXPECT().NewNameKey("Token", gomock.Any()).AnyTimes().Return(nil)
 	mockStore.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes().Return(nil).Do(func(key shared.Key, dst interface{}) {
 		token, _ := dst.(*shared.Token)
-		// sc is the encryption key for securecookie, that can be any value of 16/32/64 bytes length.
-		sc := "dIS6V5HAQppr4QyLCSTEyg=="
-		(*token).Secret = sc
+		(*token).Secret = secretKey
 	})
 
 	userName := "ufoo"
