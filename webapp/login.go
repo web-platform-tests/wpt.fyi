@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -47,16 +48,16 @@ func handleLogin(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 		g.SetRedirectURL(getCallbackURI(returnURL, r))
 		state, err := generateRandomState(32)
 		if err != nil {
-			log.Errorf("Failed to generate random state: %v", err)
-			http.Error(w, "Error creating a random state for login", http.StatusInternalServerError)
+			log.Errorf("Failed to generate a random state for OAuth: %v", err)
+			http.Error(w, "Failed to generate a random state for OAuth", http.StatusInternalServerError)
 			return
 		}
 
 		redirect = g.GetAuthCodeURL(state, oauth2.AccessTypeOnline)
 		err = setState(ctx, ds, state, w)
 		if err != nil {
-			log.Errorf("Failed to set state cookie: %s", err.Error())
-			http.Error(w, "Error setting state cookie for login", http.StatusInternalServerError)
+			log.Errorf("Failed to set state cookie for OAuth: %v", err)
+			http.Error(w, "Failed to set state cookie for OAuth", http.StatusInternalServerError)
 			return
 		}
 
@@ -88,19 +89,28 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 
 	encodedState := r.FormValue("state")
 	if encodedState == "" {
-		log.Errorf("Failed to get state URL param")
-		http.Error(w, "Failed to get state URL param", http.StatusBadRequest)
+		http.Error(w, "Missing URL param \"state\"", http.StatusBadRequest)
 		return
 	}
 
-	stateFromCookie := getState(ctx, ds, r)
+	encryptedState, err := r.Cookie("state")
+	if err != nil || encryptedState == nil {
+		http.Error(w, "Missing cookie \"state\"", http.StatusBadRequest)
+		return
+	}
+	stateFromCookie, err := decodeState(ctx, ds, encryptedState)
+	if err != nil {
+		log.Errorf(err.Error())
+		http.Error(w, "Failed to decode state from cookies", http.StatusBadRequest)
+		return
+	}
+
 	if stateFromCookie == "" {
 		http.Error(w, "Failed to get state cookie", http.StatusBadRequest)
 		return
 	}
 
 	if encodedState != stateFromCookie {
-		log.Errorf("Failed to verify encoded state")
 		http.Error(w, "Failed to verify encoded state", http.StatusBadRequest)
 		return
 	}
@@ -113,7 +123,7 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 
 	client, err := g.GetNewClient(oauthToken)
 	if err != nil {
-		log.Errorf("Error creating GitHub client using OAuth2 token: %s", err.Error())
+		log.Errorf("Error creating GitHub client using OAuth2 token: %v", err)
 		http.Error(w, "Error creating GitHub client using OAuth2 token", http.StatusBadRequest)
 		return
 	}
@@ -121,7 +131,7 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 	// Passing the empty string will fetch the authenticated user.
 	ghUser, err := g.GetGitHubUser(client)
 	if err != nil || ghUser == nil {
-		log.Errorf("Failed to get authenticated user: %s", err.Error())
+		log.Errorf("Failed to get authenticated user: %v", err)
 		http.Error(w, "Failed to get authenticated user", http.StatusBadRequest)
 		return
 	}
@@ -179,7 +189,7 @@ func setSession(ctx context.Context, ds shared.Datastore, user *shared.User, tok
 		}
 	} else {
 		log := shared.GetLogger(ctx)
-		log.Errorf("Failed to set session cookie: %s", err.Error())
+		log.Errorf("Failed to set session cookie: %v", err)
 	}
 
 	return err
@@ -208,22 +218,17 @@ func setState(ctx context.Context, ds shared.Datastore, state string, response h
 	return err
 }
 
-func getState(ctx context.Context, ds shared.Datastore, r *http.Request) string {
-	log := shared.GetLogger(ctx)
+func decodeState(ctx context.Context, ds shared.Datastore, encryptedState *http.Cookie) (string, error) {
 	cookieValue := ""
-	if cookie, err := r.Cookie("state"); err == nil && cookie != nil {
-		sc, err := shared.GetSecureCookie(ctx, ds)
-		if err != nil {
-			return ""
-		}
-
-		if err = sc.Decode("state", cookie.Value, &cookieValue); err != nil {
-			log.Errorf("Failed to decode cookie for state: %s", err.Error())
-		}
-	} else {
-		log.Errorf("Failed to get state cookie: %s", err.Error())
+	sc, err := shared.GetSecureCookie(ctx, ds)
+	if err != nil {
+		return "", fmt.Errorf("failed to create securecookie decoder: %v", err)
 	}
-	return cookieValue
+
+	if err := sc.Decode("state", encryptedState.Value, &cookieValue); err != nil {
+		return "", fmt.Errorf("failed to decode state cookie: %v", err)
+	}
+	return cookieValue, nil
 }
 
 func clearSession(response http.ResponseWriter) {
