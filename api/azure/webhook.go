@@ -6,6 +6,7 @@ package azure
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"regexp"
 
@@ -28,11 +29,14 @@ var (
 )
 
 func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
-	build := azureAPI.GetBuild(owner, repo, buildID)
-	sha := ""
-	if build != nil {
-		sha = build.TriggerInfo.SourceSHA
+	build, err := azureAPI.GetBuild(owner, repo, buildID)
+	if err != nil {
+		return false, err
 	}
+	if build == nil {
+		return false, fmt.Errorf("cannot get build %s/%s/%d", owner, repo, buildID)
+	}
+	sha := build.TriggerInfo.SourceSHA
 
 	// https://docs.microsoft.com/en-us/rest/api/azure/devops/build/artifacts/get?view=azure-devops-rest-4.1
 	artifactsURL := azureAPI.GetAzureArtifactsURL(owner, repo, buildID)
@@ -43,17 +47,14 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 	client := aeAPI.GetHTTPClient()
 	resp, err := client.Get(artifactsURL)
 	if err != nil {
-		log.Errorf("Failed to fetch artifacts for %s/%s build %v", owner, repo, buildID)
-		return false, err
+		return false, fmt.Errorf("failed to fetch artifacts for %s/%s/%d: %v", owner, repo, buildID, err)
 	}
 
 	var artifacts BuildArtifacts
 	if body, err := ioutil.ReadAll(resp.Body); err != nil {
-		log.Errorf("Failed to read response body")
-		return false, err
+		return false, fmt.Errorf("failed to read response body: %v", err)
 	} else if err = json.Unmarshal(body, &artifacts); err != nil {
-		log.Errorf("Failed to unmarshal JSON")
-		return false, err
+		return false, fmt.Errorf("failed to unmarshal JSON: %v", err)
 	}
 
 	uploadedAny := false
@@ -82,8 +83,7 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 
 		uploader, err := aeAPI.GetUploader(uploaderName)
 		if err != nil {
-			log.Errorf("Failed to get uploader creds from Datastore")
-			return false, err
+			return false, fmt.Errorf("failed to get uploader creds from Datastore: %v", err)
 		}
 
 		uploadClient := uc.NewClient(aeAPI)
@@ -96,8 +96,7 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 			nil,
 			shared.ToStringSlice(labels))
 		if err != nil {
-			log.Errorf("Failed to create run: %s", err.Error())
-			errors <- err
+			errors <- fmt.Errorf("failed to create run: %v", err)
 		} else {
 			uploadedAny = true
 		}
