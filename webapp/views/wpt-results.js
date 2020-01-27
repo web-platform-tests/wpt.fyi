@@ -89,6 +89,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       }
       td.numbers {
         white-space: nowrap;
+        color: black;
       }
       .yellow-button {
         color: var(--paper-yellow-500);

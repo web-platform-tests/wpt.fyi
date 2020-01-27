@@ -10,13 +10,13 @@ const $_documentContainer = document.createElement('template');
 $_documentContainer.innerHTML = `<dom-module id="wpt-colors">
   <template>
     <style>
-      .passes-none { background-color: var(--paper-red-400); }
-      .passes-hardly { background-color: var(--paper-orange-400); }
-      .passes-a-few { background-color: var(--paper-amber-400); }
-      .passes-half { background-color: var(--paper-yellow-400); }
-      .passes-lots { background-color: var(--paper-lime-400); }
-      .passes-most { background-color: var(--paper-light-green-400); }
-      .passes-all { background-color: var(--paper-green-400); }
+      .passes-none { background-color: var(--paper-red-300); }
+      .passes-hardly { background-color: var(--paper-orange-300); }
+      .passes-a-few { background-color: var(--paper-amber-300); }
+      .passes-half { background-color: var(--paper-yellow-300); }
+      .passes-lots { background-color: var(--paper-lime-300); }
+      .passes-most { background-color: var(--paper-light-green-300); }
+      .passes-all { background-color: var(--paper-green-300); }
     </style>
   </template>
 
@@ -27,13 +27,13 @@ document.head.appendChild($_documentContainer.content);
 const wpt = window.wpt || {};
 // RGB values from https://material.io/design/color/
 wpt.colors = [
-  { class: 'passes-none', colorVar: '--paper-red-400', rgb: [239, 83, 80] },
-  { class: 'passes-hardly', colorVar: '--paper-orange-400', rgb: [255, 167, 38] },
-  { class: 'passes-a-few', colorVar: '--paper-amber-400', rgb: [255, 202, 40] },
-  { class: 'passes-half', colorVar: '--paper-yellow-400', rgb: [255, 238, 88] },
-  { class: 'passes-lots', colorVar: '--paper-lime-400', rgb: [212,225,87] },
-  { class: 'passes-most', colorVar: '--paper-light-green-400', rgb: [156, 204, 101] },
-  { class: 'passes-all', colorVar: '--paper-green-400', rgb: [102, 187, 106] },
+  { class: 'passes-none', colorVar: '--paper-red-300', rgb: [229, 115, 115] },
+  { class: 'passes-hardly', colorVar: '--paper-orange-300', rgb: [255, 183, 77] },
+  { class: 'passes-a-few', colorVar: '--paper-amber-300', rgb: [255, 213, 79] },
+  { class: 'passes-half', colorVar: '--paper-yellow-300', rgb: [255, 241, 118] },
+  { class: 'passes-lots', colorVar: '--paper-lime-300', rgb: [220, 231, 117] },
+  { class: 'passes-most', colorVar: '--paper-light-green-300', rgb: [174, 213, 129] },
+  { class: 'passes-all', colorVar: '--paper-green-300', rgb: [129, 199, 132] },
 ];
 wpt.passRateClass = (passes, total) => {
   return wpt.getColor(passes, total).class;

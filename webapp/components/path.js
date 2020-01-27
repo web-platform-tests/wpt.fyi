@@ -103,12 +103,12 @@ class PathPart extends PathInfo(PolymerElement) {
     <style>
       a {
         text-decoration: none;
-        color: var(--paper-blue-500);
+        color: var(--paper-blue-700);
         font-family: monospace;
       }
       a:hover {
         cursor: pointer;
-        color: var(--paper-blue-700);
+        color: var(--paper-blue-900);
       }
       .dir-path {
         font-weight: bold;
