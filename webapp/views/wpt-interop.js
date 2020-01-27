@@ -90,6 +90,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     }
 
     td.score {
+      color: black;
       text-align: center;
     }
 
