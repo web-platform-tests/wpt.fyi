@@ -49,8 +49,6 @@ go_build: git mockgen packr2
 go_lint: golint go_test_tag_lint
 	@echo "# Linting the go packages..."
 	golint -set_exit_status ./api/...
-	# Skip revisions/test
-	golint -set_exit_status ./revisions/{announcer,api,epoch,git,service}/...
 	golint -set_exit_status ./shared/...
 	golint -set_exit_status ./util/...
 	golint -set_exit_status ./webapp/...
@@ -167,7 +165,7 @@ package_service: var-APP_PATH
 	else \
 		APP_PATH="$(APP_PATH)"; \
 	fi ; \
-	if [[ "$${APP_PATH}" == "revisions/service" || "$${APP_PATH}" == "api/query/cache/service" ]]; then \
+	if [[ "$${APP_PATH}" == "api/query/cache/service" ]]; then \
 		TMP_DIR=$$(mktemp -d); \
 		rm -rf $(WPTD_PATH)$${APP_PATH}/wpt.fyi; \
 		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
@@ -245,7 +243,6 @@ deploy_staging: deployment_state var-BRANCH_NAME
 	else \
 		util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
 	fi
-	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 cleanup_staging_versions: gcloud_login
@@ -254,7 +251,6 @@ cleanup_staging_versions: gcloud_login
 deploy_production: deployment_state
 	gcloud config set project wptdashboard
 	util/deploy.sh -r $(APP_PATH)
-	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 webapp_node_modules_all: node
