@@ -464,6 +464,61 @@ func TestBindExecute_Link(t *testing.T) {
 	assert.Equal(t, expectedResult, srs[0])
 }
 
+func TestBindExecute_LinkWithWildcards(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	matchingTestName := "/a/b/c"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		testRunData{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					&metrics.TestResults{
+						Test:   matchingTestName,
+						Status: "PASS",
+					},
+					&metrics.TestResults{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	})
+	metadata := map[string][]string{
+		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		"/a/*": []string{"", "https://external.com/item", ""},
+	}
+
+	// Create an execute a plan for `link:external`. Inside the metadata
+	// this matches the wildcard "/a/*". When mapped to test runs, that
+	// means it should match "/a/b/c" due to wildcard expansion.
+	link := query.Link{Pattern: "external", Metadata: metadata}
+	plan, err := idx.Bind(runs, link)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: matchingTestName,
+		LegacyStatus: []shared.LegacySearchRunResult{
+			shared.LegacySearchRunResult{
+				// Only matching test passes.
+				Passes: 1,
+				Total:  1,
+			},
+		},
+	}
+	assert.Equal(t, expectedResult, srs[0])
+}
+
 func TestBindExecute_IsDifferent(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
