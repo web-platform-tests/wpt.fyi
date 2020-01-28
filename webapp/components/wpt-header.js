@@ -54,7 +54,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
     <header>
       <div>
         <h1>
-          <img src="/static/logo.svg">
+          <img src="/static/logo.svg" alt="wpt.fyi logo">
           <a href="/">web-platform-tests dashboard</a>
         </h1>
         <template is="dom-if" if="[[githubLogin]]">
