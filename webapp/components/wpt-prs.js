@@ -32,7 +32,7 @@ class WPTPR extends PolymerElement {
       }
     </style>
     <div class="pr">
-      <img src="/static/github.svg">
+      <img src="/static/github.svg" alt="GitHub logo">
       <div>
         <a href="[[pr.html_url]]">#[[pr.number]]</a>: [[pr.title]]
         <br>
