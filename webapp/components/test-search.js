@@ -105,6 +105,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | containsExp
       | linkExp
       | isExp
+      | triagedExp
       | statusExp
       | subtestExp
       | pathExp
@@ -127,6 +128,9 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     linkExp
       = caseInsensitive<"link"> ":" nameFragment
+
+    triagedExp
+      = caseInsensitive<"triaged"> ":" browserName
 
     isExp
       = caseInsensitive<"is"> ":" metadataQualityLiteral
@@ -310,6 +314,10 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   },
   isExp: (l, colon, r) => {
     return { is: r.eval() };
+  },
+  triagedExp: (l, colon, r) => {
+    const ps = r.eval();
+    return ps.length === 0 ? emptyQuery : {triaged: ps.toLowerCase() };
   },
   subtestExp: (l, colon, r) => {
     return { subtest: r.eval() };

@@ -137,10 +137,16 @@ type LessThan Count
 // MoreThan is a query.MoreThan bound to an in-memory index.
 type MoreThan Count
 
-// Link is a query.Count bound to an in-memory index and MetadataResults.
+// Link is a query.Link bound to an in-memory index and MetadataResults.
 type Link struct {
 	index
 	pattern  string
+	metadata map[string][]string
+}
+
+// Triaged is a query.Triaged bound to an in-memory index and MetadataResults of a single browser.
+type Triaged struct {
+	index
 	metadata map[string][]string
 }
 
@@ -303,9 +309,33 @@ func (l Link) Filter(t TestID) bool {
 	return false
 }
 
+// Filter interprets a Traiged as a filter function over TestIDs.
+func (tr Triaged) Filter(t TestID) bool {
+	name, _, err := tr.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+
+	val, ok := tr.metadata[name]
+	if !ok {
+		return false
+	}
+
+	if len(val) == 0 {
+		return false
+	}
+
+	if len(val) > 1 {
+		logrus.Errorf("Error executing filter query %v: test %v has more than one url", tr, name)
+		return false
+	}
+
+	return val[0] != ""
+}
+
 // Filter interprets a MetadataQuality as a filter function over TestIDs.
 func (q MetadataQuality) Filter(t TestID) bool {
-	switch (q.quality) {
+	switch q.quality {
 	case query.MetadataQualityDifferent:
 		// is:different only returns subtest rows where the result
 		// differs between the runs we are comparing. To detect this,
@@ -320,7 +350,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		// in their name. See
 		// https://web-platform-tests.org/writing-tests/file-names.html
 		name, _, err := q.tests.GetName(t)
-		if (err != nil) {
+		if err != nil {
 			return false
 		}
 		return strings.Contains(name, ".tentative.")
@@ -331,7 +361,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		// TODO(gh-1619): Handle the CSS meta flags; see
 		// https://web-platform-tests.org/writing-tests/css-metadata.html#requirement-flags
 		name, _, err := q.tests.GetName(t)
-		if (err != nil) {
+		if err != nil {
 			return false
 		}
 		return strings.Contains(name, ".optional.")
@@ -411,6 +441,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return &MoreThan{idx, v.Count.Count, fs}, nil
 	case query.Link:
 		return &Link{idx, v.Pattern, v.Metadata}, nil
+	case query.Triaged:
+		return &Triaged{idx, v.Metadata}, nil
 	case query.MetadataQuality:
 		return &MetadataQuality{idx, v}, nil
 	case query.And:
