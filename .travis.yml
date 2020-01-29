@@ -54,6 +54,8 @@ jobs:
         - MAKE_TEST_TARGET=puppeteer_chrome_test
     - env:
         - MAKE_TEST_TARGET=lighthouse
+      # Only run Lighthouse CI on master (against staging).
+      if: (type = push) AND (branch = master)
 
     - stage: deploy PR
       env:
