@@ -107,6 +107,9 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_dep
 web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
 
+lighthouse: chrome webapp_node_modules_all
+	cd webapp; npx lhci autorun
+
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
 chrome: wget
@@ -141,7 +144,7 @@ firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 geckodriver: node-selenium-standalone
-	cd webapp; `npm bin`/selenium-standalone install --singleDriverInstall=firefox
+	cd webapp; npx selenium-standalone install --singleDriverInstall=firefox
 
 golint: git
 	if [ "$$(which golint)" == "" ]; then \
