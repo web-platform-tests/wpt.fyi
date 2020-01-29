@@ -109,11 +109,10 @@ script:
     fi
   - |
     # Run tests
-    if [[ -n "${MAKE_TEST_TARGET}" && "${MAKE_TEST_TARGET}" != "python_test" ]]; then
-      docker exec -t "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS};
-    fi
-  - |
-    # Run Python tests
     if [[ "${MAKE_TEST_TARGET}" == "python_test" ]]; then
       cd results-processor; tox;
+    elif [[ "${MAKE_TEST_TARGET}" == "lighthouse" ]]; then
+      docker exec -e LHCI_GITHUB_APP_TOKEN -t "${DOCKER_INSTANCE}" make lighthouse;
+    elif [[ -n "${MAKE_TEST_TARGET}" ]]; then
+      docker exec -t "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS};
     fi
