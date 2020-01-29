@@ -32,7 +32,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         display: flex;
         justify-content: flex-end;
       }
-      .right .pad {
+      .right paper-toggle-button {
         padding: 8px;
       }
       paper-toggle-button {
@@ -43,8 +43,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     </style>
 
     <div class="right">
-      <label class="pad">Expand</label>
-      <paper-toggle-button class="pad" checked="{{isVerbose}}">
+      <paper-toggle-button checked="{{isVerbose}}">
+        Expand
       </paper-toggle-button>
     </div>
 

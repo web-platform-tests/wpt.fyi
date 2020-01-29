@@ -345,13 +345,14 @@ class TestSearch extends WPTFlags(PolymerElement) {
         width: 100%;
       }
       .help {
-        font-size: x-small;
         float: right;
       }
     </style>
 
     <div>
-      <input value="{{ queryInput::input }}" class="query" list="query-list" placeholder="[[placeholder]]" onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
+      <input class="query" list="query-list" aria-label="Search test files"
+             value="{{ queryInput::input }}" placeholder="[[placeholder]]"
+             onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
       <span class="help">
         For information on the search syntax, <a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/query/README.md">view the search documentation</a>
       </span>
