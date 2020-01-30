@@ -8,11 +8,13 @@ ci:
     assertions:
       categories:accessibility:
         - error
-        - minScore: 0.75
+        - minScore: 0.9
       color-contrast: error
       document-title: error
       html-has-lang: error
       html-lang-valid: error
+      label: error
+      link-name: error
 
   upload:
     target: temporary-public-storage
