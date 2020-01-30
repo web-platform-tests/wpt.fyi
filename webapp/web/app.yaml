@@ -35,6 +35,10 @@ handlers:
   static_files: webapp/static/favicon.ico
   upload: webapp/static/favicon.ico
   secure: always
+- url: /robots.txt
+  static_files: webapp/static/robots.txt
+  upload: webapp/static/robots.txt
+  secure: always
 # Static files that change often (i.e. our own code).
 - url: /components
   static_dir: webapp/components
