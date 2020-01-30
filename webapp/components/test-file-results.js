@@ -44,7 +44,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
     <div class="right">
       <paper-toggle-button checked="{{isVerbose}}">
-        Expand
+        Show Details
       </paper-toggle-button>
     </div>
 
@@ -304,4 +304,3 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 window.customElements.define(TestFileResults.is, TestFileResults);
 
 export { TestFileResults };
-
