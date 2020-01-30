@@ -1,0 +1,18 @@
+ci:
+  collect:
+    url:
+      - https://staging.wpt.fyi/results/?label=experimental&label=master&aligned
+      - https://staging.wpt.fyi/results/infrastructure/expected-fail/uncaught-exception-following-subtest.html?label=experimental&label=master&aligned
+
+  assert:
+    assertions:
+      categories:accessibility:
+        - error
+        - minScore: 0.75
+      color-contrast: error
+      document-title: error
+      html-has-lang: error
+      html-lang-valid: error
+
+  upload:
+    target: temporary-public-storage
