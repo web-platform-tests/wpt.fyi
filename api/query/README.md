@@ -318,7 +318,9 @@ Search triaged issues -
 
 `triaged` query atoms perform a search for tests of a specific browser that have link metadata.
 
-    {"triaged": chrome}
+    {"triaged": [browsername]}
+
+Where [browsername] is a browser specification (e.g. safari, chrome).
 
  E.g.
 
