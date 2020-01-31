@@ -79,8 +79,13 @@ const PathInfo = (superClass) => class extends superClass {
   }
 
   splitPathIntoLinkedParts(inputPath) {
-    const encoded = this.encodeTestPath(inputPath);
-    const parts = encoded.split('/').slice(1);
+    // Remove the leading slash.
+    const encoded = this.encodeTestPath(inputPath).slice(1);
+    if (encoded === '') {
+      // Return an empty array instead of an array with an empty string.
+      return [];
+    }
+    const parts = encoded.split('/');
     let path = '';
     const linkedParts = parts.map(part => {
       path += `/${part}`;

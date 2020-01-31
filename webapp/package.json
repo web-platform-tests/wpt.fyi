@@ -23,6 +23,7 @@
     "@browser-logos/safari-technology-preview": "1.0.8",
     "@browser-logos/servo": "1.0.4",
     "@browser-logos/uc": "1.0.6",
+    "@lhci/cli": "0.3.8",
     "@polymer/test-fixture": "4.0.2",
     "babel-eslint": "10.0.3",
     "cpy-cli": "3.0.0",

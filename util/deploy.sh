@@ -38,7 +38,6 @@ if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
 case "${APP_PATH}" in
   "webapp/web" | \
   "results-processor" | \
-  "revisions/service" | \
   "api/query/cache/service" | \
   "api/query/cache/service/app.staging.yaml")
   ;;

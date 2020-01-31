@@ -1,3 +1,5 @@
+.lighthouseci/
+
 # The following images are automatically
 # fetched via `npm` on `npm install`.
 #

@@ -7,7 +7,8 @@ each of which has an `app.yaml` file in its directory.
    APIs.
 2. **processor**: `/results-processor/`, the internal backend of the Results
    Receiver (not accessible externally) which processes the incoming results.
-3. **announcer**: `/revisions/service/`, the Revision Announcer.
+3. **searchcache**: `/api/query/cache/service/`, an in-memory cache and query
+   executor for [structured searches](../api/query/README.md).
 
 The `default` service is a standard AppEngine service while the other two are
 Flex.
@@ -22,7 +23,7 @@ git checkout master
 git pull
 make deploy_production PROJECT=wptdashboard APP_PATH=webapp
 make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
-make deploy_production PROJECT=wptdashboard APP_PATH=revisions/service
+make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
 ```
 
 If you've updated [`index.yaml`](../webapp/index.yaml),
