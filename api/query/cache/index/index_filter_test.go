@@ -545,7 +545,7 @@ func TestBindExecute_TriagedWilds(t *testing.T) {
 	})
 	metadata := map[string][]string{"/foo/bar/b.html": []string{
 		""},
-		"/a/*":   []string{"https://bug.com/item"},
+		"/a/*":   []string{"https://bug.com/item", "https://bug.com/item1"},
 		"/d/e/f": []string{""},
 	}
 

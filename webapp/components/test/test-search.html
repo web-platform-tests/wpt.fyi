@@ -400,7 +400,7 @@ suite('<test-search>', () => {
       assertQueryParse('triaged:chrome', { exists: [{ triaged: 'chrome' }] });
     });
 
-    test('test status | triaged', () => {
+    test('test status and triaged', () => {
       assertQueryParse('firefox:timeout triaged:firefox', {
         exists: [
           { product: 'firefox', status: 'TIMEOUT' },

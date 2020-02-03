@@ -259,7 +259,7 @@ type AbstractTriaged struct {
 }
 
 // BindToRuns for AbstractTriaged binds each run of the AbstractTriaged ProductSpec
-// to a Traiged object.
+// to a triaged object.
 func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	cq := make([]ConcreteQuery, 0)
 	var netClient = &http.Client{
@@ -926,7 +926,7 @@ func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
 
 	var browserName string
 	if err := json.Unmarshal(*browserNameMsg, &browserName); err != nil {
-		return errors.New(`Browsername is not a srting in the triaged query`)
+		return errors.New(`Triaged property "triaged" is not a string`)
 	}
 
 	var product *shared.ProductSpec
@@ -1091,5 +1091,5 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 			return t, nil
 		}
 	}
-	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
+	return nil, errors.New(`Failed to parse query fragment as any of the exisiting search atoms in wpt.fyi/api/query/README.md`)
 }

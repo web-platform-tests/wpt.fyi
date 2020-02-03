@@ -310,7 +310,7 @@ func (l Link) Filter(t TestID) bool {
 	return false
 }
 
-// Filter interprets a Traiged as a filter function over TestIDs.
+// Filter interprets a Triaged as a filter function over TestIDs.
 func (tr Triaged) Filter(t TestID) bool {
 	name, _, err := tr.tests.GetName(t)
 	if err != nil {
@@ -343,12 +343,13 @@ func (tr Triaged) Filter(t TestID) bool {
 		return false
 	}
 
-	if len(val) > 1 {
-		logrus.Errorf("Error executing filter query %v: test %v has more than one url", tr, name)
-		return false
+	for _, url := range val {
+		if url != "" {
+			return true
+		}
 	}
 
-	return val[0] != ""
+	return false
 }
 
 // Filter interprets a MetadataQuality as a filter function over TestIDs.
