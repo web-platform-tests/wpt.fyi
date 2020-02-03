@@ -20,9 +20,8 @@ import (
 
 // MetadataHandler is an http.Handler for /api/metadata endpoint.
 type MetadataHandler struct {
-	logger      shared.Logger
-	httpClient  *http.Client
-	metadataURL string
+	logger  shared.Logger
+	fetcher shared.MetadataFetcher
 }
 
 // apiMetadataHandler searches Metadata for given products.
@@ -35,8 +34,8 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
 	logger := shared.GetLogger(ctx)
-	metadataURL := shared.MetadataArchiveURL
-	delegate := MetadataHandler{logger, client, metadataURL}
+	fetcher := webappMetadataFetcher{ctx: ctx, client: client, log: logger, url: shared.MetadataArchiveURL}
+	delegate := MetadataHandler{logger, fetcher}
 
 	// Serve cached with 5 minute expiry. Delegate to Metadata Handler on cache miss.
 	shared.NewCachingHandler(
@@ -65,7 +64,9 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	git := shared.GetMetadataGithub(githubBotClient, user.GitHubHandle, user.GithuhEmail)
-	tm := shared.GetTriageMetadata(ctx, git, shared.GetLogger(ctx), aeAPI.GetHTTPClient())
+	log := shared.GetLogger(ctx)
+	fetcher := webappMetadataFetcher{ctx: ctx, client: aeAPI.GetHTTPClient(), log: log, url: shared.MetadataArchiveURL}
+	tm := shared.GetTriageMetadata(ctx, git, log, fetcher)
 
 	gac := shared.NewGitAccessControl(ctx, ds, githubBotClient, *token)
 	handleMetadataTriage(ctx, gac, tm, w, r)
@@ -178,7 +179,7 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metadataResponse, err := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger, h.metadataURL)
+	metadataResponse, err := shared.GetMetadataResponseOnProducts(productSpecs, h.logger, h.fetcher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

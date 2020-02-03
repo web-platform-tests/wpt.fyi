@@ -10,7 +10,6 @@ import (
 	"context"
 	"errors"
 	"math/rand"
-	"net/http"
 	"strconv"
 	"time"
 
@@ -27,8 +26,8 @@ type TriageMetadataInterface interface {
 type triageMetadata struct {
 	ctx context.Context
 	MetadataGithub
-	logger     Logger
-	httpClient *http.Client
+	fetcher MetadataFetcher
+	logger  Logger
 }
 
 // MetadataGithub encapsulates all Github Information for the createWPTMetadataPR() method.
@@ -266,7 +265,7 @@ func generateRandomInt() string {
 }
 
 func (tm triageMetadata) Triage(metadata MetadataResults) (string, error) {
-	filesMap, err := GetMetadataByteMap(tm.httpClient, tm.logger, MetadataArchiveURL)
+	filesMap, err := GetMetadataByteMap(tm.logger, tm.fetcher)
 	if err != nil {
 		return "", err
 	}
@@ -277,12 +276,12 @@ func (tm triageMetadata) Triage(metadata MetadataResults) (string, error) {
 }
 
 // GetTriageMetadata returns an instance of the triageMetadata struct to run Triage() method.
-func GetTriageMetadata(ctx context.Context, git MetadataGithub, logger Logger, httpClient *http.Client) TriageMetadataInterface {
+func GetTriageMetadata(ctx context.Context, git MetadataGithub, logger Logger, fetcher MetadataFetcher) TriageMetadataInterface {
 	return triageMetadata{
 		ctx:            ctx,
 		MetadataGithub: git,
 		logger:         logger,
-		httpClient:     httpClient}
+		fetcher:        fetcher}
 }
 
 // GetMetadataGithub returns an instance of the MetadataGithub struct as a part of a triageMetadata struct.

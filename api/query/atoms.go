@@ -243,7 +243,8 @@ func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 		Timeout: time.Second * 5,
 	}
 
-	metadata, _ := shared.GetMetadataResponse(runs, netClient, logrus.StandardLogger(), shared.MetadataArchiveURL)
+	fetcher := searchcacheMetadataFetcher{client: netClient, url: shared.MetadataArchiveURL}
+	metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), fetcher)
 	metadataMap := shared.PrepareLinkFilter(metadata)
 
 	return Link{
