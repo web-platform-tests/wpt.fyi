@@ -34,4 +34,4 @@ six==1.14.0
 typed-ast==1.4.1
 typing-extensions==3.7.4.1
 urllib3==1.25.8
-Werkzeug==0.16.0
+Werkzeug==0.16.1
