@@ -7,7 +7,7 @@ filelock==3.0.12
 flake8==3.7.9
 Flask==1.1.1
 google-api-core==1.16.0
-google-auth==1.9.0
+google-auth==1.11.0
 google-cloud-core==1.1.0
 google-cloud-datastore==1.10.0
 google-cloud-storage==1.23.0
