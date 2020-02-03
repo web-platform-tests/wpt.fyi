@@ -317,7 +317,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   },
   triagedExp: (l, colon, r) => {
     const ps = r.eval();
-    return ps.length === 0 ? emptyQuery : {triaged: ps.toLowerCase() };
+    return ps.length === 0 ? emptyQuery : { triaged: ps.toLowerCase() };
   },
   subtestExp: (l, colon, r) => {
     return { subtest: r.eval() };
