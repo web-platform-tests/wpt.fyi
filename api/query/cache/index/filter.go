@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	reflect "reflect"
 	"strings"
 	"sync"
@@ -290,7 +291,23 @@ func (l Link) Filter(t TestID) bool {
 		return false
 	}
 
+	// WPT metadata can contain wildcards that match arbitrary
+	// subdirectories, so if we fail to lookup the map we keep stripping
+	// directories and try again.
+	// TODO: Verify whether this is too slow; if so, try building a trie
+	// from the wildcards only and match to that as a fallback.
 	urls, ok := l.metadata[name]
+	dir := filepath.Dir(name)
+	// Dir terminates with either '.' (when the top-level is a file) or '/'
+	// (when the top-level is a directory).
+	for !ok && len(dir) > 1 {
+		urls, ok = l.metadata[dir + "/*"]
+		if ok {
+			break
+		}
+
+		dir = filepath.Dir(dir)
+	}
 	if !ok {
 		return false
 	}
