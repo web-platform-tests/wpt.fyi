@@ -38,6 +38,8 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	metadataURL := shared.MetadataArchiveURL
 	delegate := MetadataHandler{logger, client, metadataURL}
 
+	updateMetadataFromMemcache(ctx, logger, client)
+
 	// Serve cached with 5 minute expiry. Delegate to Metadata Handler on cache miss.
 	shared.NewCachingHandler(
 		ctx,
@@ -64,8 +66,12 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
+	log := shared.GetLogger(ctx)
+	httpClient := aeAPI.GetHTTPClient()
 	git := shared.GetMetadataGithub(githubBotClient, user.GitHubHandle, user.GithuhEmail)
-	tm := shared.GetTriageMetadata(ctx, git, shared.GetLogger(ctx), aeAPI.GetHTTPClient())
+	tm := shared.GetTriageMetadata(ctx, git, log, httpClient)
+
+	updateMetadataFromMemcache(ctx, log, httpClient)
 
 	gac := shared.NewGitAccessControl(ctx, ds, githubBotClient, *token)
 	handleMetadataTriage(ctx, gac, tm, w, r)

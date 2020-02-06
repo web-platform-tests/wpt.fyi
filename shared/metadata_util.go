@@ -14,7 +14,27 @@ import (
 	"strings"
 )
 
+// metadataMapCached is the local cache of Metadata.
+var metadataMapCached map[string][]byte = nil
+
 const metadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
+
+// UpdatedMetadataInWebapp updates metadataMapCached in webapp.
+func UpdatedMetadataInWebapp(metadataByteMap map[string][]byte) {
+	metadataMapCached = metadataByteMap
+}
+
+// UpdatedMetadata fetches Metadata from the wpt-metadata repo and updates metadataMapCached.
+func UpdatedMetadata(client *http.Client, log Logger) (res map[string][]byte, err error) {
+	metadataByteMap, err := CollectMetadataWithURL(client, MetadataArchiveURL)
+	if err != nil {
+		log.Errorf("Error from collectMetadataWithURL: %s", err.Error())
+		return nil, err
+	}
+
+	metadataMapCached = metadataByteMap
+	return metadataByteMap, nil
+}
 
 // CollectMetadata iterates through wpt-metadata repository and returns a
 // map that maps a test path to its META.yml file content.
