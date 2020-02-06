@@ -326,7 +326,7 @@ Where [browsername] is a browser specification (e.g. safari, chrome).
 
 Search untriaged Chrome failures -
 
-    chrome:fail and None(triaged:chrome)
+    chrome:fail and none(triaged:chrome)
 
 Search triaged Chrome tests -
 
