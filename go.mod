@@ -27,7 +27,7 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	google.golang.org/api v0.16.0
+	google.golang.org/api v0.17.0
 	google.golang.org/appengine v1.6.5
 	google.golang.org/genproto v0.0.0-20200115191322-ca5a22157cba
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
