@@ -24,7 +24,7 @@ func updateMetadataFromMemcache(ctx context.Context, log shared.Logger, client *
 		return
 	}
 
-	if err == nil {
+	if err == nil && cached != nil {
 		// Caches hit; update Metadata.
 		var metadataMap map[string][]byte
 		err = json.Unmarshal(cached.Value, &metadataMap)
