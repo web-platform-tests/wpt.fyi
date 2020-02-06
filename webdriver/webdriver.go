@@ -83,7 +83,8 @@ func runWebdriverTest(t *testing.T, test webdriverTest) {
 func GetWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	var options []selenium.ServiceOption
 	if *startFrameBuffer {
-		options = append(options, selenium.StartFrameBuffer())
+		options = append(options, selenium.StartFrameBufferWithOptions(
+			selenium.FrameBufferOptions{ScreenSize: "1280x1024x24"}))
 	}
 	if *debug {
 		selenium.SetDebug(true)
