@@ -83,7 +83,9 @@ func runWebdriverTest(t *testing.T, test webdriverTest) {
 func GetWebDriver() (*selenium.Service, selenium.WebDriver, error) {
 	var options []selenium.ServiceOption
 	if *startFrameBuffer {
-		options = append(options, selenium.StartFrameBuffer())
+		// Use a 24-bit display to avoid https://github.com/web-platform-tests/wpt.fyi/issues/1788.
+		options = append(options, selenium.StartFrameBufferWithOptions(
+			selenium.FrameBufferOptions{ScreenSize: "1280x1024x24"}))
 	}
 	if *debug {
 		selenium.SetDebug(true)
