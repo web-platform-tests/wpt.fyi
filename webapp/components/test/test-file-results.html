@@ -92,6 +92,84 @@ suite('TestFileResults', () => {
       });
     });
 
+    suite('filterResultsTableBySearch', () => {
+      const resultsTable = [
+        {
+          name: 'Harness status',
+          results: [
+            {status: 'OK', message: null},
+            {status: 'OK', message: null}
+          ]
+        },
+        {
+          name: 'Duration',
+          results: [
+            {status: '0.5 seconds', message: null},
+            {status: '0.6 seconds', message: null}
+          ]
+        },
+        {
+          name: 'subtest foo',
+          results: [
+            {status: 'PASS', message: null},
+            {status: 'PASS', message: null}
+          ]
+        },
+        {
+          name: 'subtest bar',
+          results: [
+            {status: 'PASS', message: null},
+            {status: 'PASS', message: null}
+          ]
+        }
+      ];
+      const searchResults = {results: [
+        {
+          test: '/foo/bar.html',
+          subtests: ['subtest foo']
+        }
+      ]};
+
+      test('smoke test', () => {
+        expect(
+          tfr.filterResultsTableBySearch('/foo/bar.html', resultsTable, searchResults)
+        ).to.deep.equal([
+          {
+            name: 'Harness status',
+            results: [
+              {status: 'OK', message: null},
+              {status: 'OK', message: null}
+            ]
+          },
+          {
+            name: 'Duration',
+            results: [
+              {status: '0.5 seconds', message: null},
+              {status: '0.6 seconds', message: null}
+            ]
+          },
+          {
+            name: 'subtest foo',
+            results: [
+              {status: 'PASS', message: null},
+              {status: 'PASS', message: null}
+            ]
+          },
+        ]);
+      });
+
+      test('empty values', () => {
+        expect(tfr.filterResultsTableBySearch('', null, searchResults)).to.equal(null);
+        expect(tfr.filterResultsTableBySearch('', resultsTable, null)).to.deep.equal(resultsTable);
+      });
+
+      test('unmatching paths', () => {
+        expect(
+          tfr.filterResultsTableBySearch('/foo/notbar.html', resultsTable, searchResults)
+        ).to.deep.equal(resultsTable);
+      });
+    });
+
     suite('mergeNamesInto', () => {
       test('empty', () => {
         const names = ['a', 'b'];
