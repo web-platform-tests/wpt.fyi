@@ -59,8 +59,7 @@ jobs:
 
     - stage: deploy PR
       env:
-      - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
-      - MAKE_TEST_FLAGS="STAGING=true"
+      - DEPLOY_PR_STAGING_TARGET=webapp/web
     - env:
       - DEPLOY_PR_STAGING_TARGET=results-processor
     - env:
