@@ -96,7 +96,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   }
 
   static get observers() {
-    return ['loadData(path, testRuns, structuredSearch, onlyShowDifferences)'];
+    return ['loadData(path, testRuns, structuredSearch)'];
   }
 
   async loadData(path, testRuns, structuredSearch) {
@@ -106,16 +106,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       this.fetchTestFile(path, testRuns),
     ]);
 
-    if (resultsTable && searchResults) {
-      const test = searchResults.results.find(r => r.test === path);
-      if (test) {
-        const subtests = new Set(test.subtests);
-        const [first, ...others] = resultsTable;
-        const matches = others.filter(t => subtests.has(t.name));
-        resultsTable = [first, ...matches];
-      }
-    }
-    this.resultsTable = resultsTable;
+    this.resultsTable = this.filterResultsTableBySearch(path, resultsTable, searchResults);
   }
 
   async fetchSearchResults(path, testRuns, structuredSearch) {
@@ -240,6 +231,20 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         results: resultsPerTestRun.map(data => ({status: data && timeTaken(data.duration), message: null}))
       }
     ];
+  }
+
+  filterResultsTableBySearch(path, resultsTable, searchResults) {
+    if (!resultsTable || !searchResults) {
+      return resultsTable;
+    }
+    const test = searchResults.results.find(r => r.test === path);
+    if (!test) {
+      return resultsTable;
+    }
+    const subtests = new Set(test.subtests);
+    const [status, duration, ...others] = resultsTable;
+    const matches = others.filter(t => subtests.has(t.name));
+    return [status, duration, ...matches];
   }
 
   mergeNamesInto(names, allNames) {
