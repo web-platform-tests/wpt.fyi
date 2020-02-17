@@ -13,7 +13,7 @@ google-cloud-datastore==1.10.0
 google-cloud-storage==1.26.0
 google-resumable-media==0.5.0
 googleapis-common-protos==1.51.0
-grpcio==1.27.1
+grpcio==1.27.2
 gunicorn==20.0.4
 idna==2.8
 itsdangerous==1.1.0
