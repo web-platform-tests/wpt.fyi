@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -137,10 +136,16 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			}
 			logger.Errorf(msg)
 		}
-
 		defer resp.Body.Close()
 		w.WriteHeader(resp.StatusCode)
-		_, err = io.Copy(w, resp.Body)
+
+		body, err2 := ioutil.ReadAll(resp.Body)
+		if err2 != nil {
+			logger.Errorf("Error calling ioutil.ReadAll")
+		}
+		logger.Errorf(fmt.Sprintf("%s", string(body)))
+
+		_, err = w.Write(body)
 		if err != nil {
 			logger.Errorf("Error forwarding response payload from search cache: %v", err)
 		}
