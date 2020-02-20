@@ -249,7 +249,7 @@ var shouldCacheSearchResponse = func(ctx context.Context, statusCode int, payloa
 	var resp shared.SearchResponse
 	err := json.Unmarshal(payload, &resp)
 	if err != nil {
-		shared.GetLogger(ctx).Errorf("Malformed search response")
+		shared.GetLogger(ctx).Errorf("Malformed search response: " + string(payload[:]))
 		return false
 	}
 
