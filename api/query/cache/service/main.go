@@ -226,7 +226,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 	}
 
-	log.Infof("w.Write of " + string(data[:]))
 	w.Write(data)
 }
 
