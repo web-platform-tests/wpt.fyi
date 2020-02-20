@@ -578,7 +578,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
             }
             throw 'Failed to fetch results data.';
           }
-          return r.json();
+          let txt = await r.text();
+          return JSON.parse(txt);
         },
         err => err === 422,
         5,
