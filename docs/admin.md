@@ -6,7 +6,7 @@
 
 ## Flushing caches
 
-[`/admin/cache/flush`](https://wpt.fyi//admin/cache/flush) flushes some caches.
+[`/admin/cache/flush`](https://wpt.fyi//admin/cache/flush) flushes some caches used by the webapp. Note that this does not affect the [searchcache](https://github.com/web-platform-tests/wpt.fyi/blob/master/api/query/cache/README.md), which runs as a separate service.
 
 ## Uploading results
 
