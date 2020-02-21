@@ -81,6 +81,20 @@ func (mr *MockAppEngineAPIMockRecorder) GetHTTPClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHTTPClient))
 }
 
+// GetHTTPClientWithTimeout mocks base method
+func (m *MockAppEngineAPI) GetHTTPClientWithTimeout(arg0 time.Duration) *http.Client {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHTTPClientWithTimeout", arg0)
+	ret0, _ := ret[0].(*http.Client)
+	return ret0
+}
+
+// GetHTTPClientWithTimeout indicates an expected call of GetHTTPClientWithTimeout
+func (mr *MockAppEngineAPIMockRecorder) GetHTTPClientWithTimeout(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClientWithTimeout", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHTTPClientWithTimeout), arg0)
+}
+
 // GetHostname mocks base method
 func (m *MockAppEngineAPI) GetHostname() string {
 	m.ctrl.T.Helper()
@@ -149,21 +163,6 @@ func (m *MockAppEngineAPI) GetServiceHostname(arg0 string) string {
 func (mr *MockAppEngineAPIMockRecorder) GetServiceHostname(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetServiceHostname), arg0)
-}
-
-// GetSlowHTTPClient mocks base method
-func (m *MockAppEngineAPI) GetSlowHTTPClient(arg0 time.Duration) (*http.Client, context.CancelFunc) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSlowHTTPClient", arg0)
-	ret0, _ := ret[0].(*http.Client)
-	ret1, _ := ret[1].(context.CancelFunc)
-	return ret0, ret1
-}
-
-// GetSlowHTTPClient indicates an expected call of GetSlowHTTPClient
-func (mr *MockAppEngineAPIMockRecorder) GetSlowHTTPClient(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSlowHTTPClient", reflect.TypeOf((*MockAppEngineAPI)(nil).GetSlowHTTPClient), arg0)
 }
 
 // GetUploader mocks base method

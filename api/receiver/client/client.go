@@ -77,9 +77,8 @@ func (c client) CreateRun(
 	}
 	req.SetBasicAuth(username, password)
 
-	slowClient, cancel := c.aeAPI.GetSlowHTTPClient(UploadTimeout)
-	defer cancel()
-	resp, err := slowClient.Do(req)
+	hc := c.aeAPI.GetHTTPClientWithTimeout(UploadTimeout)
+	resp, err := hc.Do(req)
 	if err != nil {
 		return err
 	}

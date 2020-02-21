@@ -256,7 +256,7 @@ func TestCreateAllRuns_success(t *testing.T) {
 	defer mockC.Finish()
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return("localhost:8080")
-	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).AnyTimes().Return(&http.Client{}, func() {})
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).AnyTimes().Return(server.Client())
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	t.Run("master", func(t *testing.T) {
@@ -319,7 +319,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
-	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).Times(2).Return(&http.Client{}, func() {})
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).Times(2).Return(server.Client())
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
@@ -355,7 +355,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	// Give a very short timeout (instead of the asked 1min) to make tests faster.
-	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Microsecond}, func() {})
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Microsecond})
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
