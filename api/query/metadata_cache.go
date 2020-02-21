@@ -6,6 +6,7 @@ package query
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -14,8 +15,7 @@ import (
 var MetadataMapCached map[string][]byte = nil
 
 type searchcacheMetadataFetcher struct {
-	client *http.Client
-	url    string
+	url string
 }
 
 func (f searchcacheMetadataFetcher) Fetch() (res map[string][]byte, err error) {
@@ -23,5 +23,8 @@ func (f searchcacheMetadataFetcher) Fetch() (res map[string][]byte, err error) {
 		return MetadataMapCached, nil
 	}
 
-	return shared.CollectMetadataWithURL(f.client, f.url)
+	var netClient = &http.Client{
+		Timeout: time.Second * 5,
+	}
+	return shared.CollectMetadataWithURL(netClient, f.url)
 }

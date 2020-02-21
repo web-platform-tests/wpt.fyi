@@ -121,7 +121,7 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	client := server.Client()
 
 	ctx := sharedtest.NewTestContext()
-	fetcher := webappMetadataFetcher{ctx, client, shared.NewNilLogger(), server.URL}
+	fetcher := webappMetadataFetcher{ctx, client, server.URL}
 	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 
@@ -186,7 +186,7 @@ func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 	client := server.Client()
 
 	ctx := sharedtest.NewTestContext()
-	fetcher := webappMetadataFetcher{ctx, client, shared.NewNilLogger(), server.URL}
+	fetcher := webappMetadataFetcher{ctx, client, server.URL}
 	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 

@@ -19,12 +19,11 @@ const metadataCacheKey = "WPT-METADATA"
 type webappMetadataFetcher struct {
 	ctx    context.Context
 	client *http.Client
-	log    shared.Logger
 	url    string
 }
 
 func (f webappMetadataFetcher) Fetch() (res map[string][]byte, err error) {
-	metadataMap, err := getMetadataFromMemcache(f.ctx, f.log, f.client, f.url)
+	metadataMap, err := getMetadataFromMemcache(f.ctx, f.client, f.url)
 	if err == nil && metadataMap != nil {
 		return metadataMap, nil
 	}
@@ -32,7 +31,8 @@ func (f webappMetadataFetcher) Fetch() (res map[string][]byte, err error) {
 	return shared.CollectMetadataWithURL(f.client, f.url)
 }
 
-func getMetadataFromMemcache(ctx context.Context, log shared.Logger, client *http.Client, url string) (res map[string][]byte, err error) {
+func getMetadataFromMemcache(ctx context.Context, client *http.Client, url string) (res map[string][]byte, err error) {
+	log := shared.GetLogger(ctx)
 	cached, err := memcache.Get(ctx, metadataCacheKey)
 
 	if err != nil && err != memcache.ErrCacheMiss {

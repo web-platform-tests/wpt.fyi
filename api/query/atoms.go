@@ -8,9 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -239,11 +237,7 @@ type AbstractLink struct {
 
 // BindToRuns for AbstractLink is a no-op; it is independent of test runs
 func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
-	var netClient = &http.Client{
-		Timeout: time.Second * 5,
-	}
-
-	fetcher := searchcacheMetadataFetcher{client: netClient, url: shared.MetadataArchiveURL}
+	fetcher := searchcacheMetadataFetcher{url: shared.MetadataArchiveURL}
 	metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), fetcher)
 	metadataMap := shared.PrepareLinkFilter(metadata)
 
