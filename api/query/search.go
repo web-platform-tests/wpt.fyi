@@ -127,6 +127,8 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
+		logger.Infof(fmt.Sprintf("Searchcache response headers: %v", resp.Header))
+
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			msg := fmt.Sprintf("Error from request: POST %s: STATUS %d", fwdURL.String(), resp.StatusCode)
 			errBody, err2 := ioutil.ReadAll(resp.Body)
