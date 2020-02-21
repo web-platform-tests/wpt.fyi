@@ -5,7 +5,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -202,25 +201,4 @@ func filterMetadata(linkQuery query.AbstractLink, metadata shared.MetadataResult
 		}
 	}
 	return res
-}
-
-// TODO(kyleju): Refactor this part to shared package.
-var cacheKey = func(r *http.Request) interface{} {
-	if r.Method == "GET" {
-		return shared.URLAsCacheKey(r)
-	}
-
-	body := r.Body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		msg := fmt.Sprintf("Failed to read non-GET request body for generating cache key: %v", err)
-		shared.GetLogger(shared.NewAppEngineContext(r)).Errorf(msg)
-		panic(msg)
-	}
-	defer body.Close()
-
-	// Ensure that r.Body can be read again by other request handling routines.
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
-
-	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
 }
