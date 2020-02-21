@@ -103,7 +103,9 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	if !isSimpleQ {
 		ctx := sh.api.Context()
-		hostname := sh.api.GetServiceHostname("searchcache")
+		// TODO: When not using urlfetch, it seems like the app-engine forwarding of
+		// service names doesn't work.
+		hostname := "searchcache.wptdashboard-staging.appspot.com"
 		// TODO: This will not work when hostname is localhost (http scheme needed).
 		// TODO: urlfetch allows https here, but net/http complains that the cert isn't
 		// valid for smcgruer-net-http.searchcache.wptdashboard-staging.appspot.com
