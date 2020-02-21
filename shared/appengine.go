@@ -41,14 +41,18 @@ type AppEngineAPI interface {
 	// GetHostname returns the canonical hostname for the current AppEngine project,
 	// i.e. staging.wpt.fyi or wpt.fyi.
 	GetHostname() string
-	// GetVersionedHostname returns the AppEngine hostname for the current version,
+	// GetVersionedHostname returns the AppEngine hostname for the current version of the default service,
 	// i.e. version-dot-wptdashboard{,-staging}.appspot.com.
+	// Note: if the default service does not have the current version,
+	// AppEngine routing will find a version according to traffic split.
+	// https://cloud.google.com/appengine/docs/standard/go/how-requests-are-routed#soft_routing
 	GetVersionedHostname() string
-	// GetServiceHostname returns the AppEngine hostname for the given service (module) of the
-	// current version,
+	// GetServiceHostname returns the AppEngine hostname for the current version of the given service,
 	// i.e. version-dot-service-dot-wptdashboard{,-staging}.appspot.com.
-	// Note that if the current version does not have the specified service, AppEngine routing
-	// will fall back to its default version.
+	// Note: if the specified service does not have the current version,
+	// AppEngine routing will find a version according to traffic split;
+	// if the service does not exist at all, AppEngine will fall back to
+	// the default service.
 	GetServiceHostname(service string) string
 
 	// GetResultsURL returns a URL for the wpt.fyi results page for the test runs loaded for the
@@ -155,15 +159,7 @@ func (a appEngineAPIImpl) GetVersionedHostname() string {
 }
 
 func (a appEngineAPIImpl) GetServiceHostname(service string) string {
-	// version and instance (last 2 params) left blank means that the version of the current
-	// instance will be used. This is desirable for branches that push multiple services, and
-	// means that we should keep service production versions in sync.
-	hostname, err := appengine.ModuleHostname(a.ctx, service, "", "")
-	if err == nil {
-		return hostname
-	}
-	// Fallback to roughly the same strategy.
-	hostname = appengine.DefaultVersionHostname(a.ctx)
+	hostname := appengine.DefaultVersionHostname(a.ctx)
 	return fmt.Sprintf("%s-dot-%s-dot-%s", a.GetVersion(), service, hostname)
 }
 
