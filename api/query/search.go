@@ -111,7 +111,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		logger := shared.GetLogger(ctx)
 		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
-		client, cancel := sh.api.GetSlowHTTPClient(time.Second * 15)
+		slowCtx, cancel := context.WithTimeout(ctx, time.Second * 15)
 		defer cancel()
 		req, err := http.NewRequest("POST", fwdURL.String(), bytes.NewBuffer(data))
 		if err != nil {
@@ -119,9 +119,14 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
 			return
 		}
+		req = req.WithContext(slowCtx)
 		req.Header.Add("Content-Type", "application/json")
 
-		resp, err := client.Do(req)
+		// TODO:
+		// https://medium.com/@nate510/don-t-use-go-s-default-http-client-4804cb19f779
+		// implies not to use the default http client, but maybe its ok
+		// if we have timeouts on the requests?
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			logger.Errorf("Error connecting to search API cache: %v", err)
 			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
