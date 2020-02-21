@@ -105,7 +105,9 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		ctx := sh.api.Context()
 		hostname := sh.api.GetServiceHostname("searchcache")
 		// TODO: This will not work when hostname is localhost (http scheme needed).
-		fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
+		// TODO: urlfetch allows https here, but net/http complains that the cert isn't
+		// valid for smcgruer-net-http.searchcache.wptdashboard-staging.appspot.com
+		fwdURL, _ := url.Parse(fmt.Sprintf("http://%s/api/search/cache", hostname))
 		fwdURL.RawQuery = r.URL.RawQuery
 
 		logger := shared.GetLogger(ctx)
