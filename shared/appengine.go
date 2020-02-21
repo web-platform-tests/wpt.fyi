@@ -18,7 +18,6 @@ import (
 	"github.com/google/go-github/v28/github"
 	"golang.org/x/oauth2"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/urlfetch"
 	"google.golang.org/appengine/user"
 )
 
@@ -28,9 +27,9 @@ type AppEngineAPI interface {
 
 	// GitHub OAuth client
 	GetGitHubClient() (*github.Client, error)
-	// urlfetch cilents
+	// http.Client
 	GetHTTPClient() *http.Client
-	GetSlowHTTPClient(time.Duration) (*http.Client, context.CancelFunc)
+	GetHTTPClientWithTimeout(time.Duration) *http.Client
 
 	// AppEngine User API
 	IsAdmin() bool
@@ -76,9 +75,7 @@ func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 
 // appEngineAPIImpl implements the AppEngineAPI interface.
 type appEngineAPIImpl struct {
-	ctx context.Context
-	// Cached client objects
-	httpClient   *http.Client
+	ctx          context.Context
 	githubClient *github.Client
 }
 
@@ -86,16 +83,13 @@ func (a appEngineAPIImpl) Context() context.Context {
 	return a.ctx
 }
 
-func (a *appEngineAPIImpl) GetHTTPClient() *http.Client {
-	if a.httpClient == nil {
-		a.httpClient = urlfetch.Client(a.ctx)
-	}
-	return a.httpClient
+func (a appEngineAPIImpl) GetHTTPClient() *http.Client {
+	// Set timeout to 5s for compatibility with legacy appengine.urlfetch.Client.
+	return a.GetHTTPClientWithTimeout(time.Second * 5)
 }
 
-func (a appEngineAPIImpl) GetSlowHTTPClient(timeout time.Duration) (*http.Client, context.CancelFunc) {
-	slowCtx, cancel := context.WithTimeout(a.ctx, timeout)
-	return urlfetch.Client(slowCtx), cancel
+func (a appEngineAPIImpl) GetHTTPClientWithTimeout(timeout time.Duration) *http.Client {
+	return &http.Client{Timeout: timeout}
 }
 
 func (a *appEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
