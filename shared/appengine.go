@@ -38,30 +38,32 @@ type AppEngineAPI interface {
 
 	// GetVersion returns the version name for the current environment.
 	GetVersion() string
-	// GetHostname returns the canonical hostname for the current AppEngine project,
-	// i.e. staging.wpt.fyi or wpt.fyi.
+	// GetHostname returns the canonical hostname for the current AppEngine
+	// project, i.e. staging.wpt.fyi or wpt.fyi.
 	GetHostname() string
-	// GetVersionedHostname returns the AppEngine hostname for the current version of the default service,
-	// i.e. version-dot-wptdashboard{,-staging}.appspot.com.
+	// GetVersionedHostname returns the AppEngine hostname for the current
+	// version of the default service, i.e.,
+	//   version-dot-wptdashboard{,-staging}.appspot.com.
 	// Note: if the default service does not have the current version,
 	// AppEngine routing will find a version according to traffic split.
 	// https://cloud.google.com/appengine/docs/standard/go/how-requests-are-routed#soft_routing
 	GetVersionedHostname() string
-	// GetServiceHostname returns the AppEngine hostname for the current version of the given service,
-	// i.e. version-dot-service-dot-wptdashboard{,-staging}.appspot.com.
+	// GetServiceHostname returns the AppEngine hostname for the current
+	// version of the given service, i.e.,
+	//   version-dot-service-dot-wptdashboard{,-staging}.appspot.com.
 	// Note: if the specified service does not have the current version,
 	// AppEngine routing will find a version according to traffic split;
 	// if the service does not exist at all, AppEngine will fall back to
 	// the default service.
 	GetServiceHostname(service string) string
 
-	// GetResultsURL returns a URL for the wpt.fyi results page for the test runs loaded for the
+	// GetResultsURL returns a URL to {staging.,}wpt.fyi/results with the
 	// given filter.
 	GetResultsURL(filter TestRunFilter) *url.URL
-	// GetRunsURL returns a URL for the wpt.fyi results page for the test runs loaded for the
-	// given filter.
+	// GetRunsURL returns a URL to {staging.,}wpt.fyi/runs with the given
+	// filter.
 	GetRunsURL(filter TestRunFilter) *url.URL
-	// GetResultsUploadURL returns a URL for uploading results (i.e. results receiver).
+	// GetResultsUploadURL returns a URL for uploading results.
 	GetResultsUploadURL() *url.URL
 
 	// Simple wrappers that delegate to Datastore
