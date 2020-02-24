@@ -1,4 +1,4 @@
-// Copyright 2018 The WPT Dashboard Project. All rights reserved.
+// Copyright 2020 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -17,7 +17,7 @@ import (
 )
 
 type searchErr struct {
-	// Detail is the internal (inner) error that should not be exposed.
+	// Detail is the internal error that should not be exposed to the end-user.
 	Detail error
 	// Message is the user-facing error message.
 	Message string
