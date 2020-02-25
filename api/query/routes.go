@@ -13,6 +13,4 @@ func RegisterRoutes() {
 		"/api/search",
 		"api-search",
 		shared.WrapPermissiveCORS(apiSearchHandler))
-	// API endpoint for search autocomplete.
-	shared.AddRoute("/api/autocomplete", "api-autocomplete", apiAutocompleteHandler)
 }
