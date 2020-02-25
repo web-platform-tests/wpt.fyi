@@ -91,6 +91,14 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       td.numbers {
         white-space: nowrap;
         color: black;
+        opacity: 1;
+      }
+      td.triage {
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      td.triage:hover {
+        opacity: 0.7;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
@@ -211,7 +219,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <template is="dom-if" if="[[ canAmendMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[openAmendMetadata(index, node)]]">
+                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[openAmendMetadata(index, node)]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>

@@ -95,6 +95,14 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
       text-align: center;
     }
 
+    td.triage {
+      cursor: pointer;
+    }
+
+    td.triage:hover {
+      opacity: 0.7;
+    }
+
     tr td {
       padding: 0 0.5em;
     }
@@ -182,7 +190,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
               <template is="dom-if" if="[[ canAmendMetadata(node.path, node.total, passRate) ]]">
-                <td class="score" onclick="[[openAmendMetadata(i, node)]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
+                <td class="score triage" onclick="[[openAmendMetadata(i, node)]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
               </template>
 
               <template is="dom-if" if="[[ !canAmendMetadata(node.path, node.total, passRate) ]]">

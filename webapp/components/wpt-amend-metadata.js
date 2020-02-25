@@ -30,7 +30,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
         paper-input {
           text-transform: none;
           align-items: center;
-          margin-bottom: 15px;
+          margin-bottom: 20px;
         }
         .metadataEntry {
           display: flex;
@@ -42,24 +42,25 @@ class AmendMetadata extends LoadingState(PolymerElement) {
         }
       </style>
       <paper-dialog>
-        <h3>Triage Metadata</h3>
+        <h3>Triage Failing Test</h3>
         <div class="metadataEntry">
           <img class="browser" src="[[displayLogo(product)]]">
           &nbsp; >> [[test]] : &nbsp;
-          <paper-input value=""></paper-input>
+          <paper-input label="Bug URL" value="{{url}}" autofocus></paper-input>
         </div>
         <div class="buttons">
-        <paper-button dialog-dismiss>Dismiss</paper-button>
-        <paper-button onclick="[[triage]]">Triage</paper-button>
+        <paper-button onclick="[[close]]">Dismiss</paper-button>
+        <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>
         </div>
       </paper-dialog>
-      <paper-toast id="showPR" duration="5000"><a class="link" target="_blank" href="[[pr]]">[[pr]]</a></paper-toast>
+      <paper-toast id="showPR" duration="8000"><a id="prLink" class="link" target="_blank" href="[[pr]]"></a></paper-toast>
 `;
   }
 
   static get properties() {
     return {
       pr: String,
+      url: String,
       path: String,
       products: String,
       test: String,
@@ -74,6 +75,8 @@ class AmendMetadata extends LoadingState(PolymerElement) {
   constructor() {
     super();
     this.triage = this.handleTriage.bind(this);
+    this.close = this.close.bind(this);
+    this.enter = this.triageOnEnter.bind(this);
   }
 
   get dialog() {
@@ -82,6 +85,19 @@ class AmendMetadata extends LoadingState(PolymerElement) {
 
   open() {
     this.dialog.open();
+    this.dialog.addEventListener('keydown',this.enter);
+  }
+
+  close() {
+    this.url = '';
+    this.dialog.removeEventListener('keydown', this.enter);
+    this.dialog.close();
+  }
+
+  triageOnEnter(e) {
+    if (e.which === 13) {
+      this.handleTriage();
+    }
   }
 
   computeProduct(productIndex, products) {
@@ -98,11 +114,8 @@ class AmendMetadata extends LoadingState(PolymerElement) {
   }
 
   getTriagedMetadataMap(product, test) {
-    const input = this
-      .shadowRoot.querySelector('paper-input')
-      .shadowRoot.querySelector('input');
     var link = {};
-    link[test] = [{ 'url': input.value, 'product': product }];
+    link[test] = [{ 'url': this.url, 'product': product }];
     return link;
 
   }
@@ -126,19 +139,25 @@ class AmendMetadata extends LoadingState(PolymerElement) {
     };
 
     const toast = this.shadowRoot.querySelector('#showPR');
+    const prLink = this.shadowRoot.querySelector('#prLink');
     this.load(
       window.fetch(url, fetchOpts)
         .then(r => {
           if (!r.ok || r.status !== 200) {
-            return Promise.reject('Failed to triage metadata.');
+            this.pr = '';
+            prLink.text = 'Fail to triage failing tests';
+            toast.open();
+            throw 'Fail to triage failing tests: ' + r.status;
           }
           return r.text();
         })
         .then(text => {
           this.pr = text;
+          prLink.text = 'Created traige ' + text;
           toast.open();
         })
     );
+    this.url = '';
   }
 }
 
