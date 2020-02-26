@@ -138,10 +138,16 @@ type LessThan Count
 // MoreThan is a query.MoreThan bound to an in-memory index.
 type MoreThan Count
 
-// Link is a query.Count bound to an in-memory index and MetadataResults.
+// Link is a query.Link bound to an in-memory index and MetadataResults.
 type Link struct {
 	index
 	pattern  string
+	metadata map[string][]string
+}
+
+// Triaged is a query.Triaged bound to an in-memory index and MetadataResults of a single browser.
+type Triaged struct {
+	index
 	metadata map[string][]string
 }
 
@@ -320,9 +326,51 @@ func (l Link) Filter(t TestID) bool {
 	return false
 }
 
+// Filter interprets a Triaged as a filter function over TestIDs.
+func (tr Triaged) Filter(t TestID) bool {
+	name, _, err := tr.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+
+	// WPT metadata can contain wildcards that match arbitrary
+	// subdirectories, so if we fail to lookup the map we keep stripping
+	// directories and try again.
+	// TODO: Verify whether this is too slow; if so, try building a trie
+	// from the wildcards only and match to that as a fallback.
+	val, ok := tr.metadata[name]
+	dir := filepath.Dir(name)
+	// Dir terminates with either '.' (when the top-level is a file) or '/'
+	// (when the top-level is a directory).
+	for !ok && len(dir) > 1 {
+		val, ok = tr.metadata[dir+"/*"]
+		if ok {
+			break
+		}
+
+		dir = filepath.Dir(dir)
+	}
+
+	if !ok {
+		return false
+	}
+
+	if len(val) == 0 {
+		return false
+	}
+
+	for _, url := range val {
+		if url != "" {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Filter interprets a MetadataQuality as a filter function over TestIDs.
 func (q MetadataQuality) Filter(t TestID) bool {
-	switch (q.quality) {
+	switch q.quality {
 	case query.MetadataQualityDifferent:
 		// is:different only returns subtest rows where the result
 		// differs between the runs we are comparing. To detect this,
@@ -337,7 +385,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		// in their name. See
 		// https://web-platform-tests.org/writing-tests/file-names.html
 		name, _, err := q.tests.GetName(t)
-		if (err != nil) {
+		if err != nil {
 			return false
 		}
 		return strings.Contains(name, ".tentative.")
@@ -348,7 +396,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		// TODO(gh-1619): Handle the CSS meta flags; see
 		// https://web-platform-tests.org/writing-tests/css-metadata.html#requirement-flags
 		name, _, err := q.tests.GetName(t)
-		if (err != nil) {
+		if err != nil {
 			return false
 		}
 		return strings.Contains(name, ".optional.")
@@ -428,6 +476,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return &MoreThan{idx, v.Count.Count, fs}, nil
 	case query.Link:
 		return &Link{idx, v.Pattern, v.Metadata}, nil
+	case query.Triaged:
+		return &Triaged{idx, v.Metadata}, nil
 	case query.MetadataQuality:
 		return &MetadataQuality{idx, v}, nil
 	case query.And:
