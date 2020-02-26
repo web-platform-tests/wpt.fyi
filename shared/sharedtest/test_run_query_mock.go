@@ -5,7 +5,7 @@
 package sharedtest
 
 import (
-	golang_set "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	reflect "reflect"
@@ -36,7 +36,7 @@ func (m *MockTestRunQuery) EXPECT() *MockTestRunQueryMockRecorder {
 }
 
 // GetAlignedRunSHAs mocks base method
-func (m *MockTestRunQuery) GetAlignedRunSHAs(arg0 shared.ProductSpecs, arg1 golang_set.Set, arg2, arg3 *time.Time, arg4, arg5 *int) ([]string, map[string]shared.KeysByProduct, error) {
+func (m *MockTestRunQuery) GetAlignedRunSHAs(arg0 shared.ProductSpecs, arg1 mapset.Set, arg2, arg3 *time.Time, arg4, arg5 *int) ([]string, map[string]shared.KeysByProduct, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAlignedRunSHAs", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].([]string)
@@ -52,7 +52,7 @@ func (mr *MockTestRunQueryMockRecorder) GetAlignedRunSHAs(arg0, arg1, arg2, arg3
 }
 
 // LoadTestRunKeys mocks base method
-func (m *MockTestRunQuery) LoadTestRunKeys(arg0 []shared.ProductSpec, arg1 golang_set.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.KeysByProduct, error) {
+func (m *MockTestRunQuery) LoadTestRunKeys(arg0 []shared.ProductSpec, arg1 mapset.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.KeysByProduct, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadTestRunKeys", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 	ret0, _ := ret[0].(shared.KeysByProduct)
@@ -67,7 +67,7 @@ func (mr *MockTestRunQueryMockRecorder) LoadTestRunKeys(arg0, arg1, arg2, arg3, 
 }
 
 // LoadTestRuns mocks base method
-func (m *MockTestRunQuery) LoadTestRuns(arg0 []shared.ProductSpec, arg1 golang_set.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.TestRunsByProduct, error) {
+func (m *MockTestRunQuery) LoadTestRuns(arg0 []shared.ProductSpec, arg1 mapset.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.TestRunsByProduct, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 	ret0, _ := ret[0].(shared.TestRunsByProduct)

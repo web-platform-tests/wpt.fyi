@@ -535,8 +535,7 @@ func ParsePRParam(v url.Values) (*int, error) {
 	return ParseIntParam(v, "pr")
 }
 
-// ParseQueryFilterParams parses shared params for the search and autocomplete
-// APIs.
+// ParseQueryFilterParams parses shared params for the search APIs.
 func ParseQueryFilterParams(v url.Values) (filter QueryFilter, err error) {
 	keys, err := ParseRunIDsParam(v)
 	if err != nil {

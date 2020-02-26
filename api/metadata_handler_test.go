@@ -120,7 +120,9 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, server.URL}
+	ctx := sharedtest.NewTestContext()
+	fetcher := webappMetadataFetcher{ctx, client, server.URL}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -159,7 +161,7 @@ func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", nil)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -183,7 +185,9 @@ func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, server.URL}
+	ctx := sharedtest.NewTestContext()
+	fetcher := webappMetadataFetcher{ctx, client, server.URL}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -224,7 +228,7 @@ func TestFilterMetadataHandlerPost_MissingProducts(t *testing.T) {
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -241,7 +245,7 @@ func TestFilterMetadataHandlerPost_NotLink(t *testing.T) {
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -261,7 +265,7 @@ func TestFilterMetadataHandlerPost_NotJustLink(t *testing.T) {
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)

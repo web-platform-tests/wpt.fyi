@@ -5,14 +5,12 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -20,9 +18,8 @@ import (
 
 // MetadataHandler is an http.Handler for /api/metadata endpoint.
 type MetadataHandler struct {
-	logger      shared.Logger
-	httpClient  *http.Client
-	metadataURL string
+	logger  shared.Logger
+	fetcher shared.MetadataFetcher
 }
 
 // apiMetadataHandler searches Metadata for given products.
@@ -35,17 +32,8 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
 	logger := shared.GetLogger(ctx)
-	metadataURL := shared.MetadataArchiveURL
-	delegate := MetadataHandler{logger, client, metadataURL}
-
-	// Serve cached with 5 minute expiry. Delegate to Metadata Handler on cache miss.
-	shared.NewCachingHandler(
-		ctx,
-		delegate,
-		shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)),
-		shared.AlwaysCachable,
-		cacheKey,
-		shared.CacheStatusOK).ServeHTTP(w, r)
+	fetcher := webappMetadataFetcher{ctx: ctx, client: client, url: shared.MetadataArchiveURL}
+	MetadataHandler{logger, fetcher}.ServeHTTP(w, r)
 }
 
 func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +53,9 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	git := shared.GetMetadataGithub(githubBotClient, user.GitHubHandle, user.GithuhEmail)
-	tm := shared.GetTriageMetadata(ctx, git, shared.GetLogger(ctx), aeAPI.GetHTTPClient())
+	log := shared.GetLogger(ctx)
+	fetcher := webappMetadataFetcher{ctx: ctx, client: aeAPI.GetHTTPClient(), url: shared.MetadataArchiveURL}
+	tm := shared.GetTriageMetadata(ctx, git, log, fetcher)
 
 	gac := shared.NewGitAccessControl(ctx, ds, githubBotClient, *token)
 	handleMetadataTriage(ctx, gac, tm, w, r)
@@ -178,7 +168,7 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metadataResponse, err := shared.GetMetadataResponseOnProducts(productSpecs, h.httpClient, h.logger, h.metadataURL)
+	metadataResponse, err := shared.GetMetadataResponseOnProducts(productSpecs, h.logger, h.fetcher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -211,25 +201,4 @@ func filterMetadata(linkQuery query.AbstractLink, metadata shared.MetadataResult
 		}
 	}
 	return res
-}
-
-// TODO(kyleju): Refactor this part to shared package.
-var cacheKey = func(r *http.Request) interface{} {
-	if r.Method == "GET" {
-		return shared.URLAsCacheKey(r)
-	}
-
-	body := r.Body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		msg := fmt.Sprintf("Failed to read non-GET request body for generating cache key: %v", err)
-		shared.GetLogger(shared.NewAppEngineContext(r)).Errorf(msg)
-		panic(msg)
-	}
-	defer body.Close()
-
-	// Ensure that r.Body can be read again by other request handling routines.
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
-
-	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
 }

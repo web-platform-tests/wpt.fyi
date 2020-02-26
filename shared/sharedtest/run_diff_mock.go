@@ -5,7 +5,7 @@
 package sharedtest
 
 import (
-	golang_set "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 	gomock "github.com/golang/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	url "net/url"
@@ -64,7 +64,7 @@ func (mr *MockDiffAPIMockRecorder) GetMasterDiffURL(arg0, arg1 interface{}) *gom
 }
 
 // GetRunsDiff mocks base method
-func (m *MockDiffAPI) GetRunsDiff(arg0, arg1 shared.TestRun, arg2 shared.DiffFilterParam, arg3 golang_set.Set) (shared.RunDiff, error) {
+func (m *MockDiffAPI) GetRunsDiff(arg0, arg1 shared.TestRun, arg2 shared.DiffFilterParam, arg3 mapset.Set) (shared.RunDiff, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRunsDiff", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(shared.RunDiff)
