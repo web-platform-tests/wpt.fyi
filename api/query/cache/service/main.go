@@ -155,6 +155,12 @@ func main() {
 	// after backfilling was started.
 	go poll.KeepRunsUpdated(store, logger, *updateInterval, *updateMaxRuns, idx)
 
+	var netClient = &http.Client{
+		Timeout: time.Second * 5,
+	}
+	// Polls Metadata update every 10 minutes.
+	go poll.KeepMetadataUpdated(netClient, logger, time.Minute*10)
+
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
 	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID, &monitoredResource))

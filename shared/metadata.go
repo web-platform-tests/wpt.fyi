@@ -5,7 +5,6 @@
 package shared
 
 import (
-	"net/http"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -52,13 +51,13 @@ type MetadataTestResult struct {
 }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query.
-func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, url string) (MetadataResults, error) {
+func GetMetadataResponse(testRuns []TestRun, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
 	var productSpecs = make([]ProductSpec, len(testRuns))
 	for i, run := range testRuns {
 		productSpecs[i] = ProductSpec{ProductAtRevision: run.ProductAtRevision, Labels: run.LabelsSet()}
 	}
 
-	metadata, err := GetMetadataByteMap(client, log, url)
+	metadata, err := GetMetadataByteMap(log, fetcher)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +66,8 @@ func GetMetadataResponse(testRuns []TestRun, client *http.Client, log Logger, ur
 }
 
 // GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
-func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Client, log Logger, url string) (MetadataResults, error) {
-	metadata, err := GetMetadataByteMap(client, log, url)
+func GetMetadataResponseOnProducts(productSpecs ProductSpecs, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
+	metadata, err := GetMetadataByteMap(log, fetcher)
 	if err != nil {
 		return nil, err
 	}
@@ -78,10 +77,10 @@ func GetMetadataResponseOnProducts(productSpecs ProductSpecs, client *http.Clien
 
 // GetMetadataByteMap collects and parses all META.yml files from
 // the wpt-metadata repository.
-func GetMetadataByteMap(client *http.Client, log Logger, url string) (map[string]Metadata, error) {
-	metadataByteMap, err := CollectMetadataWithURL(client, url)
+func GetMetadataByteMap(log Logger, fetcher MetadataFetcher) (map[string]Metadata, error) {
+	metadataByteMap, err := fetcher.Fetch()
 	if err != nil {
-		log.Errorf("Error from CollectMetadataWithURL: %s", err.Error())
+		log.Errorf("Error from FetchMetadata: %s", err.Error())
 		return nil, err
 	}
 

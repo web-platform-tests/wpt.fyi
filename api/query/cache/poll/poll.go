@@ -5,8 +5,10 @@
 package poll
 
 import (
+	"net/http"
 	"time"
 
+	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -79,5 +81,23 @@ func wait(start time.Time, total time.Duration) {
 	t := total - time.Now().Sub(start)
 	if t > 0 {
 		time.Sleep(t)
+	}
+}
+
+// KeepMetadataUpdated implements updates to metadataMapCached via simple polling every
+// interval duration.
+func KeepMetadataUpdated(client *http.Client, logger shared.Logger, interval time.Duration) {
+	logger.Infof("Metadata update via polling started")
+	for {
+		metadataCache, err := shared.CollectMetadataWithURL(client, shared.MetadataArchiveURL)
+		if err != nil {
+			logger.Errorf("Error fetching Metadata for update: %v", err)
+		}
+
+		if err == nil && metadataCache != nil {
+			query.MetadataMapCached = metadataCache
+		}
+
+		time.Sleep(interval)
 	}
 }
