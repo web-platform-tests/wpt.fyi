@@ -14,6 +14,9 @@ type Manifest struct {
 	Items   map[string]rawManifestTrie `json:"items,omitempty"`
 	Version int                        `json:"version,omitempty"`
 	URLBase string                     `json:"url_base,omitempty"`
+
+	// Cache map containing the fully unmarshalled "items" object, only initialized when needed.
+	imap map[string]interface{}
 }
 
 // We use a recursive map[string]json.RawMessage structure to parse one layer
@@ -51,6 +54,39 @@ func (m Manifest) FilterByPath(paths ...string) (*Manifest, error) {
 		}
 	}
 	return result, nil
+}
+
+func (m *Manifest) unmarshalAll() error {
+	m.imap = make(map[string]interface{})
+	for testType, trie := range m.Items {
+		var decoded map[string]interface{}
+		if err := json.Unmarshal(trie, &decoded); err != nil {
+			return err
+		}
+		m.imap[testType] = decoded
+	}
+	return nil
+}
+
+// Contains checks whether m contains the path.
+func (m *Manifest) Contains(path string) (bool, error) {
+	if m.imap == nil {
+		if err := m.unmarshalAll(); err != nil {
+			return false, err
+		}
+	}
+	parts := strings.Split(path, "/")
+	// Split always returns at least one element.
+	// Remove the leading empty part.
+	if parts[0] == "" {
+		parts = parts[1:]
+	}
+	for _, items := range m.imap {
+		if trieContains(items, parts) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (t rawManifestTrie) FilterByPath(pathParts []string) (rawManifestTrie, error) {
@@ -116,4 +152,17 @@ func ExplodePossibleFilenames(filePath string) []string {
 		}
 	}
 	return nil
+}
+
+func trieContains(t interface{}, parts []string) bool {
+	if len(parts) == 0 {
+		return t != nil
+	}
+
+	// t could be nil (e.g. if the previous part does not exist in the map), in which case casting will fail.
+	trie, ok := t.(map[string]interface{})
+	if !ok {
+		return false
+	}
+	return trieContains(trie[parts[0]], parts[1:])
 }
