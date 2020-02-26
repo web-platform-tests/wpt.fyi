@@ -7,55 +7,45 @@
 package manifest
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func TestFilter_Reftest(t *testing.T) {
+func TestFilter(t *testing.T) {
+	// This is a smoke test; see shared/manifest_test.go for more tests.
 	bytes := []byte(`{
-	"items": {
-		"reftest": {
-      "css/css-images/linear-gradient-2.html": [
-        [
-					"/css/css-images/linear-gradient-2.html",
-					[ ["/css/css-images/linear-gradient-ref.html","=="] ],
-          {}
-        ]
-      ],
-      "css/css-images/tiled-gradients.html": [
-        [
-					"/css/css-images/tiled-gradients.html",
-					[ ["/css/css-images/tiled-gradients-ref.html","=="] ],
-          {}
-        ]
+"items": {
+	"testharness": {
+		"foo": {
+			"bar": {
+				"test.html": [
+					"1d3166465cc6f2e8f9f18f53e499ca61e12d59bd",
+					[null, {}]
+				]
+
+			}
+		},
+		"foobar": {
+			"mytest.html": [
+				"2d3166465cc6f2e8f9f18f53e499ca61e12d59bd",
+				[null, {}]
+			]
+		}
+	},
+	"manual": {
+		"foobar": {
+			"test-manual.html": [
+				"3d3166465cc6f2e8f9f18f53e499ca61e12d59bd",
+				[null, {}]
 			]
 		}
 	}
+},
+"version": 8
 }`)
 
-	// Specific file
-	filtered, err := Filter(bytes, []string{"/css/css-images/tiled-gradients.html"})
+	filtered, err := Filter(bytes, []string{"/foo/bar"})
 	assert.Nil(t, err)
-	unmarshalled := shared.Manifest{}
-	json.Unmarshal(filtered, &unmarshalled)
-	assert.NotNil(t, unmarshalled.Items.Reftest)
-	assert.Equal(t, 1, len(unmarshalled.Items.Reftest))
-
-	// Prefix
-	filtered, err = Filter(bytes, []string{"/css/css-images/"})
-	assert.Nil(t, err)
-	unmarshalled = shared.Manifest{}
-	json.Unmarshal(filtered, &unmarshalled)
-	assert.NotNil(t, unmarshalled.Items.Reftest)
-	assert.Equal(t, 2, len(unmarshalled.Items.Reftest))
-
-	// No matches
-	filtered, err = Filter(bytes, []string{"/not-a-folder/test.html"})
-	assert.Nil(t, err)
-	unmarshalled = shared.Manifest{}
-	json.Unmarshal(filtered, &unmarshalled)
-	assert.Equal(t, 0, len(unmarshalled.Items.Reftest))
+	assert.Equal(t, `{"items":{"testharness":{"foo":{"bar":{"test.html":["1d3166465cc6f2e8f9f18f53e499ca61e12d59bd",[null,{}]]}}}},"version":8}`, string(filtered))
 }
