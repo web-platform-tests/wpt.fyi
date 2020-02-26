@@ -25,7 +25,7 @@
     "@browser-logos/uc": "1.0.6",
     "@lhci/cli": "0.3.9",
     "@polymer/test-fixture": "4.0.2",
-    "babel-eslint": "10.0.3",
+    "babel-eslint": "10.1.0",
     "cpy-cli": "3.1.0",
     "eslint": "6.8.0",
     "eslint-plugin-html": "6.0.0",
