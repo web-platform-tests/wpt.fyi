@@ -13,8 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestManifestFilterByPath(t *testing.T) {
-	manifest := []byte(`{
+var testManifest = []byte(`{
 "items": {
 	"testharness": {
 		"foo": {
@@ -42,14 +41,16 @@ func TestManifestFilterByPath(t *testing.T) {
 		}
 	}
 },
-"version": 8
+"version": 8,
+"url_base": "/"
 }`)
 
-	t.Run("empty match", func(t *testing.T) {
-		var m Manifest
-		err := json.Unmarshal(manifest, &m)
-		assert.Nil(t, err)
+func TestManifestFilterByPath(t *testing.T) {
+	var m Manifest
+	err := json.Unmarshal(testManifest, &m)
+	assert.Nil(t, err)
 
+	t.Run("empty match", func(t *testing.T) {
 		res, err := m.FilterByPath("/non-existent")
 		assert.Nil(t, err)
 		assert.Equal(t, 0, len(res.Items))
@@ -57,10 +58,6 @@ func TestManifestFilterByPath(t *testing.T) {
 	})
 
 	t.Run("match nested", func(t *testing.T) {
-		var m Manifest
-		err := json.Unmarshal(manifest, &m)
-		assert.Nil(t, err)
-
 		res, err := m.FilterByPath("/foo/bar")
 		assert.Nil(t, err)
 		assert.Equal(t, `{"foo":{"bar":{"test.html":["1d3166465cc6f2e8f9f18f53e499ca61e12d59bd",[null,{}]]}}}`, string(res.Items["testharness"]))
@@ -70,10 +67,6 @@ func TestManifestFilterByPath(t *testing.T) {
 	})
 
 	t.Run("match single", func(t *testing.T) {
-		var m Manifest
-		err := json.Unmarshal(manifest, &m)
-		assert.Nil(t, err)
-
 		res, err := m.FilterByPath("/foo")
 		assert.Nil(t, err)
 		assert.Equal(t, `{"foo":{"bar":{"test.html":["1d3166465cc6f2e8f9f18f53e499ca61e12d59bd",[null,{}]]}}}`, string(res.Items["testharness"]))
@@ -83,10 +76,6 @@ func TestManifestFilterByPath(t *testing.T) {
 	})
 
 	t.Run("match multiple", func(t *testing.T) {
-		var m Manifest
-		err := json.Unmarshal(manifest, &m)
-		assert.Nil(t, err)
-
 		res, err := m.FilterByPath("/foobar")
 		assert.Nil(t, err)
 		assert.Equal(t, `{"foobar":{"mytest.html":["2d3166465cc6f2e8f9f18f53e499ca61e12d59bd",[null,{}]]}}`, string(res.Items["testharness"]))
@@ -147,4 +136,37 @@ func TestExplodePossibleRenames_WorkerJS(t *testing.T) {
 		"/test/file.worker.html": "/test/file.https.worker.html",
 	}
 	assert.Equal(t, ExplodePossibleRenames(before, after), renames)
+}
+
+func TestManifestContains(t *testing.T) {
+	var m Manifest
+	err := json.Unmarshal(testManifest, &m)
+	assert.Nil(t, err)
+	assert.Nil(t, m.imap)
+
+	var ok bool
+	ok, err = m.Contains("/foo")
+	addr := &m.imap
+	assert.True(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.Contains("/foo/bar")
+	assert.True(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.Contains("/foo/bar/test.html")
+	assert.True(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.Contains("/foobar/mytest.html")
+	assert.True(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.Contains("/foobar/test-manual.html")
+	assert.True(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.Contains("/foobar/non-existent.html")
+	assert.False(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.Contains("/nonexistent/non-existent.html")
+	assert.False(t, ok)
+	assert.Nil(t, err)
+
+	assert.Equal(t, addr, &m.imap, "Cache should only be initialized once.")
 }
