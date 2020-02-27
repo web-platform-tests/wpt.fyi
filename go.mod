@@ -10,7 +10,7 @@ require (
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/deckarep/golang-set v1.7.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2
+	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/golang/mock v1.4.1
 	github.com/google/go-github/v28 v28.1.1
