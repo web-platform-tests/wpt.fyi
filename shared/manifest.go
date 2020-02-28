@@ -114,7 +114,6 @@ func (m *Manifest) ContainsTest(testURL string) (bool, error) {
 	testURL = strings.TrimLeft(testURL, "/")
 	path, query := ParseTestURL(testURL)
 	parts := strings.Split(path, "/")
-	// parts=["foo", "bar", "test.any.js"]
 	for _, trie := range m.imap {
 		leaf, ok := findNode(trie, parts).([]interface{})
 		if !ok {
@@ -128,7 +127,7 @@ func (m *Manifest) ContainsTest(testURL string) (bool, error) {
 			return false, ErrInvalidManifest
 		}
 		for _, v := range leaf[1:] {
-			// variant=[url, extra]
+			// variant=[url, extras...]
 			variant, ok := v.([]interface{})
 			if !ok || len(variant) < 2 {
 				return false, ErrInvalidManifest
@@ -234,7 +233,7 @@ func ExplodePossibleFilenames(filePath string) []string {
 // ParseTestURL parses a WPT test URL and returns its file path and query
 // components. If the test is a multi-global (auto-generated) test, the
 // function returns the underlying file name of the test.
-// e.g. testURL="foo/bar/test.any.worker.html?varaint"
+// e.g. testURL="foo/bar/test.any.worker.html?variant"
 //      filepath="foo/bar/test.any.js"
 //      query="?variant"
 func ParseTestURL(testURL string) (filePath, query string) {
@@ -244,10 +243,10 @@ func ParseTestURL(testURL string) (filePath, query string) {
 		query = testURL[qPos:]
 	}
 	for _, i := range implosions() {
-		tSuffix := i[0]
-		fSuffix := i[1]
-		if strings.HasSuffix(filePath, tSuffix) {
-			filePath = strings.TrimSuffix(filePath, tSuffix) + fSuffix
+		testSuffix := i[0]
+		fileSuffix := i[1]
+		if strings.HasSuffix(filePath, testSuffix) {
+			filePath = strings.TrimSuffix(filePath, testSuffix) + fileSuffix
 			break
 		}
 	}
