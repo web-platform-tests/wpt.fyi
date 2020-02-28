@@ -16,12 +16,9 @@ branches:
 services:
   - docker
 
-language: python
-python: "3.7"
 cache:
   directories:
     - webapp/node_modules
-    - results-processor/.tox
 
 env:
   global:
@@ -91,11 +88,7 @@ before_install: |
 
 install: |
   # Retry `go get` to avoid intermittent network issues.
-  if [[ "${MAKE_TEST_TARGET}" == "python_test" || "DEPLOY_PR_STAGING_TARGET" == "results-processor" ]]; then
-    travis_retry pip install tox;
-  else
-    travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_build;
-  fi
+  travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_build;
 
 script:
   - |
@@ -111,9 +104,7 @@ script:
     fi
   - |
     # Run tests
-    if [[ "${MAKE_TEST_TARGET}" == "python_test" ]]; then
-      cd results-processor; tox;
-    elif [[ "${MAKE_TEST_TARGET}" == "lighthouse" ]]; then
+    if [[ "${MAKE_TEST_TARGET}" == "lighthouse" ]]; then
       docker exec -e LHCI_GITHUB_APP_TOKEN -t "${DOCKER_INSTANCE}" make lighthouse;
     elif [[ -n "${MAKE_TEST_TARGET}" ]]; then
       docker exec -t "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS};
