@@ -71,7 +71,7 @@ func (m *Manifest) unmarshalAll() error {
 	return nil
 }
 
-func trieContains(t interface{}, parts []string) interface{} {
+func findNode(t interface{}, parts []string) interface{} {
 	if len(parts) == 0 {
 		return t
 	}
@@ -81,7 +81,7 @@ func trieContains(t interface{}, parts []string) interface{} {
 	if !ok {
 		return nil
 	}
-	return trieContains(trie[parts[0]], parts[1:])
+	return findNode(trie[parts[0]], parts[1:])
 }
 
 // ContainsFile checks whether m contains a file path (including directories).
@@ -97,7 +97,7 @@ func (m *Manifest) ContainsFile(path string) (bool, error) {
 	}
 	parts := strings.Split(path, "/")
 	for _, items := range m.imap {
-		if trieContains(items, parts) != nil {
+		if findNode(items, parts) != nil {
 			return true, nil
 		}
 	}
@@ -112,30 +112,22 @@ func (m *Manifest) ContainsTest(testURL string) (bool, error) {
 
 	// URLs in the manifest do not include the leading slash (url_base).
 	testURL = strings.TrimLeft(testURL, "/")
-	path := testURL
-	query := ""
-	if qPos := strings.Index(testURL, "?"); qPos > -1 {
-		path = testURL[:qPos]
-		query = testURL[qPos:]
-	}
-	path = RecoverTestFilename(path)
+	path, query := ParseTestURL(testURL)
 	parts := strings.Split(path, "/")
-	// e.g. testURL="/foo/bar/test.any.html?varaint" would become
-	// testURL="foo/bar/test.any.html?varaint"
-	// path="foo/bar/test.any.js"
-	// query="?variant"
 	// parts=["foo", "bar", "test.any.js"]
-	for _, items := range m.imap {
-		item, ok := trieContains(items, parts).([]interface{})
+	for _, trie := range m.imap {
+		leaf, ok := findNode(trie, parts).([]interface{})
 		if !ok {
-			// The node may not be a leaf.
+			// Either we have not found a node (nil), or the node
+			// is not a list (i.e. not a leaf).
 			continue
 		}
-		// item=[SHA, variants...]
-		if len(item) < 2 {
+		// A leaf node represents a test file, and has at least two
+		// elements: [SHA, variants...].
+		if len(leaf) < 2 {
 			return false, ErrInvalidManifest
 		}
-		for _, v := range item[1:] {
+		for _, v := range leaf[1:] {
 			// variant=[url, extra]
 			variant, ok := v.([]interface{})
 			if !ok || len(variant) < 2 {
@@ -239,10 +231,18 @@ func ExplodePossibleFilenames(filePath string) []string {
 	return nil
 }
 
-// RecoverTestFilename tries to recover the file path from a test URL (query
-// strings need to be stripped first).
-func RecoverTestFilename(testURL string) string {
-	filePath := testURL
+// ParseTestURL parses a WPT test URL and returns its file path and query
+// components. If the test is a multi-global (auto-generated) test, the
+// function returns the underlying file name of the test.
+// e.g. testURL="foo/bar/test.any.worker.html?varaint"
+//      filepath="foo/bar/test.any.js"
+//      query="?variant"
+func ParseTestURL(testURL string) (filePath, query string) {
+	filePath = testURL
+	if qPos := strings.Index(testURL, "?"); qPos > -1 {
+		filePath = testURL[:qPos]
+		query = testURL[qPos:]
+	}
 	for _, i := range implosions() {
 		tSuffix := i[0]
 		fSuffix := i[1]
@@ -251,5 +251,5 @@ func RecoverTestFilename(testURL string) string {
 			break
 		}
 	}
-	return filePath
+	return filePath, query
 }

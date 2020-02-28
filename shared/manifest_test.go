@@ -145,12 +145,30 @@ func TestExplodePossibleRenames_WorkerJS(t *testing.T) {
 	assert.Equal(t, ExplodePossibleRenames(before, after), renames)
 }
 
-func TestRecoverTestFilename(t *testing.T) {
-	assert.Equal(t, "/normal/file.html", RecoverTestFilename("/normal/file.html"))
-	assert.Equal(t, "file.html", RecoverTestFilename("file.html"))
-	assert.Equal(t, "/test/file.any.js", RecoverTestFilename("/test/file.any.html"))
-	assert.Equal(t, "file.any.js", RecoverTestFilename("file.any.worker.html"))
-	assert.Equal(t, "file.worker.js", RecoverTestFilename("file.worker.html"))
+func TestParseTestURL(t *testing.T) {
+	t.Run("normal/file.html", func(t *testing.T) {
+		p, q := ParseTestURL("normal/file.html")
+		assert.Equal(t, "normal/file.html", p)
+		assert.Equal(t, "", q)
+	})
+	t.Run("test/file.any.html", func(t *testing.T) {
+		p, q := ParseTestURL("test/file.any.html")
+		assert.Equal(t, "test/file.any.js", p)
+		assert.Equal(t, "", q)
+
+	})
+	t.Run("test/file.any.worker.html?variant", func(t *testing.T) {
+		p, q := ParseTestURL("test/file.any.worker.html?variant")
+		assert.Equal(t, "test/file.any.js", p)
+		assert.Equal(t, "?variant", q)
+
+	})
+	t.Run("file.worker.html?t=1/2", func(t *testing.T) {
+		p, q := ParseTestURL("file.worker.html?t=1/2")
+		assert.Equal(t, "file.worker.js", p)
+		assert.Equal(t, "?t=1/2", q)
+
+	})
 }
 
 func TestManifestContainsFile(t *testing.T) {
