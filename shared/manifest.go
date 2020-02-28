@@ -6,8 +6,13 @@ package shared
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 )
+
+// ErrInvalidManifest is the error returned when the manifest is a valid JSON
+// but without the correct structure.
+var ErrInvalidManifest = errors.New("invalid manifest")
 
 // Manifest represents a JSON blob of all the WPT tests.
 type Manifest struct {
@@ -37,12 +42,7 @@ func (t *rawManifestTrie) UnmarshalJSON(b []byte) error {
 func (m Manifest) FilterByPath(paths ...string) (*Manifest, error) {
 	result := &Manifest{Items: make(map[string]rawManifestTrie), Version: m.Version}
 	for _, p := range paths {
-		parts := strings.Split(p, "/")
-		// Split always returns at least one element.
-		// Remove the leading empty part.
-		if parts[0] == "" {
-			parts = parts[1:]
-		}
+		parts := strings.Split(strings.Trim(p, "/"), "/")
 		for testType, trie := range m.Items {
 			filtered, err := trie.FilterByPath(parts)
 			if err != nil {
@@ -57,6 +57,9 @@ func (m Manifest) FilterByPath(paths ...string) (*Manifest, error) {
 }
 
 func (m *Manifest) unmarshalAll() error {
+	if m.imap != nil {
+		return nil
+	}
 	m.imap = make(map[string]interface{})
 	for testType, trie := range m.Items {
 		var decoded map[string]interface{}
@@ -68,22 +71,90 @@ func (m *Manifest) unmarshalAll() error {
 	return nil
 }
 
-// Contains checks whether m contains the path.
-func (m *Manifest) Contains(path string) (bool, error) {
-	if m.imap == nil {
-		if err := m.unmarshalAll(); err != nil {
-			return false, err
-		}
+func trieContains(t interface{}, parts []string) interface{} {
+	if len(parts) == 0 {
+		return t
+	}
+
+	// t could be nil (e.g. if the previous part does not exist in the map), in which case casting will fail.
+	trie, ok := t.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	return trieContains(trie[parts[0]], parts[1:])
+}
+
+// ContainsFile checks whether m contains a file path (including directories).
+func (m *Manifest) ContainsFile(path string) (bool, error) {
+	if err := m.unmarshalAll(); err != nil {
+		return false, err
+	}
+
+	path = strings.Trim(path, "/")
+	if path == "" {
+		// Root directory always exists.
+		return true, nil
 	}
 	parts := strings.Split(path, "/")
-	// Split always returns at least one element.
-	// Remove the leading empty part.
-	if parts[0] == "" {
-		parts = parts[1:]
-	}
 	for _, items := range m.imap {
-		if trieContains(items, parts) {
+		if trieContains(items, parts) != nil {
 			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// ContainsTest checks whether m contains a full test URL.
+func (m *Manifest) ContainsTest(testURL string) (bool, error) {
+	if err := m.unmarshalAll(); err != nil {
+		return false, err
+	}
+
+	// URLs in the manifest do not include the leading slash (url_base).
+	testURL = strings.TrimLeft(testURL, "/")
+	path := testURL
+	query := ""
+	if qPos := strings.Index(testURL, "?"); qPos > -1 {
+		path = testURL[:qPos]
+		query = testURL[qPos:]
+	}
+	path = RecoverTestFilename(path)
+	parts := strings.Split(path, "/")
+	// e.g. testURL="/foo/bar/test.any.html?varaint" would become
+	// testURL="foo/bar/test.any.html?varaint"
+	// path="foo/bar/test.any.js"
+	// query="?variant"
+	// parts=["foo", "bar", "test.any.js"]
+	for _, items := range m.imap {
+		item, ok := trieContains(items, parts).([]interface{})
+		if !ok {
+			// The node may not be a leaf.
+			continue
+		}
+		// item=[SHA, variants...]
+		if len(item) < 2 {
+			return false, ErrInvalidManifest
+		}
+		for _, v := range item[1:] {
+			// variant=[url, extra]
+			variant, ok := v.([]interface{})
+			if !ok || len(variant) < 2 {
+				return false, ErrInvalidManifest
+			}
+			// If url is nil, then this is the "base variant" (no query).
+			if variant[0] == nil {
+				if query == "" {
+					return true, nil
+				}
+				continue
+			}
+			url, ok := variant[0].(string)
+			if !ok {
+				return false, ErrInvalidManifest
+			}
+			if url == testURL {
+				return true, nil
+			}
 		}
 	}
 	return false, nil
@@ -108,7 +179,7 @@ func (t rawManifestTrie) FilterByPath(pathParts []string) (rawManifestTrie, erro
 	return json.Marshal(filtered)
 }
 
-// explosions returns a map of the exploded test by filename suffix.
+// explosions returns a map of the exploded test suffixes by filename suffixes.
 // https://web-platform-tests.org/writing-tests/testharness.html#multi-global-tests
 func explosions() map[string][]string {
 	return map[string][]string{
@@ -120,6 +191,20 @@ func explosions() map[string][]string {
 			".any.serviceworker.html",
 			".any.sharedworker.html",
 		},
+	}
+}
+
+// implosions returns an ordered list of test suffixes and their corresponding
+// filename suffixes.
+func implosions() [][]string {
+	// The order is important! We must match .any.* first.
+	return [][]string{
+		[]string{".any.html", ".any.js"},
+		[]string{".any.worker.html", ".any.js"},
+		[]string{".any.serviceworker.html", ".any.js"},
+		[]string{".any.sharedworker.html", ".any.js"},
+		[]string{".window.html", ".window.js"},
+		[]string{".worker.html", ".worker.js"},
 	}
 }
 
@@ -154,15 +239,17 @@ func ExplodePossibleFilenames(filePath string) []string {
 	return nil
 }
 
-func trieContains(t interface{}, parts []string) bool {
-	if len(parts) == 0 {
-		return t != nil
+// RecoverTestFilename tries to recover the file path from a test URL (query
+// strings need to be stripped first).
+func RecoverTestFilename(testURL string) string {
+	filePath := testURL
+	for _, i := range implosions() {
+		tSuffix := i[0]
+		fSuffix := i[1]
+		if strings.HasSuffix(filePath, tSuffix) {
+			filePath = strings.TrimSuffix(filePath, tSuffix) + fSuffix
+			break
+		}
 	}
-
-	// t could be nil (e.g. if the previous part does not exist in the map), in which case casting will fail.
-	trie, ok := t.(map[string]interface{})
-	if !ok {
-		return false
-	}
-	return trieContains(trie[parts[0]], parts[1:])
+	return filePath
 }

@@ -30,6 +30,13 @@ var testManifest = []byte(`{
 				"2d3166465cc6f2e8f9f18f53e499ca61e12d59bd",
 				[null, {}]
 			]
+		},
+		"variants": {
+			"test.any.js": [
+				"0d3166465cc6f2e8f9f18f53e499ca61e12d59bd",
+				["variants/test.any.html", {}],
+				["variants/test.any.worker.html?test", {}]
+			]
 		}
 	},
 	"manual": {
@@ -138,33 +145,82 @@ func TestExplodePossibleRenames_WorkerJS(t *testing.T) {
 	assert.Equal(t, ExplodePossibleRenames(before, after), renames)
 }
 
-func TestManifestContains(t *testing.T) {
+func TestRecoverTestFilename(t *testing.T) {
+	assert.Equal(t, "/normal/file.html", RecoverTestFilename("/normal/file.html"))
+	assert.Equal(t, "file.html", RecoverTestFilename("file.html"))
+	assert.Equal(t, "/test/file.any.js", RecoverTestFilename("/test/file.any.html"))
+	assert.Equal(t, "file.any.js", RecoverTestFilename("file.any.worker.html"))
+	assert.Equal(t, "file.worker.js", RecoverTestFilename("file.worker.html"))
+}
+
+func TestManifestContainsFile(t *testing.T) {
 	var m Manifest
 	err := json.Unmarshal(testManifest, &m)
 	assert.Nil(t, err)
 	assert.Nil(t, m.imap)
 
 	var ok bool
-	ok, err = m.Contains("/foo")
+	ok, err = m.ContainsFile("/")
 	addr := &m.imap
 	assert.True(t, ok)
 	assert.Nil(t, err)
-	ok, err = m.Contains("/foo/bar")
+	ok, err = m.ContainsFile("")
 	assert.True(t, ok)
 	assert.Nil(t, err)
-	ok, err = m.Contains("/foo/bar/test.html")
+	ok, err = m.ContainsFile("/foo")
 	assert.True(t, ok)
 	assert.Nil(t, err)
-	ok, err = m.Contains("/foobar/mytest.html")
+	ok, err = m.ContainsFile("foo/bar")
 	assert.True(t, ok)
 	assert.Nil(t, err)
-	ok, err = m.Contains("/foobar/test-manual.html")
+	ok, err = m.ContainsFile("/foo/bar/test.html")
 	assert.True(t, ok)
 	assert.Nil(t, err)
-	ok, err = m.Contains("/foobar/non-existent.html")
+	ok, err = m.ContainsFile("/foobar/mytest.html")
+	assert.True(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.ContainsFile("foobar/test-manual.html")
+	assert.True(t, ok)
+	assert.Nil(t, err)
+
+	ok, err = m.ContainsFile("/foobar/non-existent.html")
 	assert.False(t, ok)
 	assert.Nil(t, err)
-	ok, err = m.Contains("/nonexistent/non-existent.html")
+	ok, err = m.ContainsFile("nonexistent/non-existent.html")
+	assert.False(t, ok)
+	assert.Nil(t, err)
+
+	assert.Equal(t, addr, &m.imap, "Cache should only be initialized once.")
+}
+
+func TestManifestContainsTest(t *testing.T) {
+	var m Manifest
+	err := json.Unmarshal(testManifest, &m)
+	assert.Nil(t, err)
+	assert.Nil(t, m.imap)
+
+	var ok bool
+	ok, err = m.ContainsTest("foo/bar/test.html")
+	addr := &m.imap
+	assert.True(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.ContainsTest("variants/test.any.html")
+	assert.True(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.ContainsTest("/variants/test.any.worker.html?test")
+	assert.True(t, ok)
+	assert.Nil(t, err)
+
+	ok, err = m.ContainsTest("/foo")
+	assert.False(t, ok)
+	assert.Nil(t, err, "A directory is not a test.")
+	ok, err = m.ContainsTest("/variants/test.any.js")
+	assert.False(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.ContainsTest("/variants/test.any.worker.html?nonexistent")
+	assert.False(t, ok)
+	assert.Nil(t, err)
+	ok, err = m.ContainsTest("/variants/test.any.serviceworker.html")
 	assert.False(t, ok)
 	assert.Nil(t, err)
 
