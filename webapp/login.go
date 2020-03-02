@@ -19,7 +19,7 @@ import (
 
 type loginResponse struct {
 	User  *shared.User `json:"user,omitempty"`
-	Error *string      `json:"error,omitempty"`
+	Error string       `json:"error,omitempty"`
 }
 
 func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,8 +31,7 @@ func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cookie, err := r.Cookie("session"); err != nil || cookie == nil {
-		errMsg := "User is not logged in"
-		response := loginResponse{Error: &errMsg}
+		response := loginResponse{Error: "User is not logged in"}
 		marshalled, err := json.Marshal(response)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
