@@ -16,6 +16,31 @@ import (
 	"golang.org/x/oauth2"
 )
 
+func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := shared.NewAppEngineContext(r)
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	if !aeAPI.IsFeatureEnabled("githubLogin") {
+		http.Error(w, "Feature not enabled", http.StatusNotImplemented)
+		return
+	}
+
+	if cookie, err := r.Cookie("session"); err != nil || cookie == nil {
+		w.Write([]byte("User is not logged in"))
+		return
+	}
+
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	user, token := shared.GetUserFromCookie(ctx, ds, r)
+	if user == nil || token == nil {
+		http.Error(w, "Unable to retrieve log-in information, please log in again", http.StatusBadRequest)
+		return
+	}
+
+	loginStatus := fmt.Sprintf("User %s is logged in", user.GitHubHandle)
+	shared.GetLogger(ctx).Infof(loginStatus)
+	w.Write([]byte(loginStatus))
+}
+
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
