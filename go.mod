@@ -25,7 +25,7 @@ require (
 	github.com/taskcluster/taskcluster-lib-urls v12.1.0+incompatible
 	github.com/taskcluster/taskcluster/clients/client-go/v22 v22.1.1
 	github.com/tebeka/selenium v0.9.9
-	golang.org/x/lint v0.0.0-20200130185559-910be7a94367
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/api v0.19.0
 	google.golang.org/appengine v1.6.5
