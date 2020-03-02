@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -25,7 +26,9 @@ func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cookie, err := r.Cookie("session"); err != nil || cookie == nil {
-		w.Write([]byte("User is not logged in"))
+		respond, _ := json.Marshal("User is not logged in")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(respond)
 		return
 	}
 
@@ -38,7 +41,8 @@ func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	loginStatus := fmt.Sprintf("User %s is logged in", user.GitHubHandle)
 	shared.GetLogger(ctx).Infof(loginStatus)
-	w.Write([]byte(loginStatus))
+	respond, _ := json.Marshal(loginStatus)
+	w.Write(respond)
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
