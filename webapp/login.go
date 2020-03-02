@@ -17,6 +17,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type loginResponse struct {
+	User  *shared.User `json:"user,omitempty"`
+	Error *string      `json:"error,omitempty"`
+}
+
 func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	aeAPI := shared.NewAppEngineAPI(ctx)
@@ -26,9 +31,16 @@ func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cookie, err := r.Cookie("session"); err != nil || cookie == nil {
-		respond, _ := json.Marshal("User is not logged in")
+		errMsg := "User is not logged in"
+		response := loginResponse{Error: &errMsg}
+		marshalled, err := json.Marshal(response)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(respond)
+		w.Write(marshalled)
 		return
 	}
 
@@ -39,10 +51,13 @@ func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginStatus := fmt.Sprintf("User %s is logged in", user.GitHubHandle)
-	shared.GetLogger(ctx).Infof(loginStatus)
-	respond, _ := json.Marshal(loginStatus)
-	w.Write(respond)
+	response := loginResponse{User: user}
+	marshalled, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(marshalled)
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
