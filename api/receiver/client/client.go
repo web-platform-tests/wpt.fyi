@@ -76,6 +76,7 @@ func (c client) CreateRun(
 		return err
 	}
 	req.SetBasicAuth(username, password)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	hc := c.aeAPI.GetHTTPClientWithTimeout(UploadTimeout)
 	resp, err := hc.Do(req)
