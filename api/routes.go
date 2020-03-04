@@ -77,5 +77,5 @@ func RegisterRoutes() {
 	shared.AddRoute("/api/metadata/triage", "api-metadata-triage", shared.WrapTrustedCORS(apiMetadataTriageHandler, CORSList, []string{"PATCH"}))
 
 	// API endpoint for checking a user's login status.
-	shared.AddRoute("/api/user", "login-status", shared.WrapApplicationJSON(shared.WrapTrustedCORS(apiUserHandler, CORSList, nil)))
+	shared.AddRoute("/api/user", "api-user", shared.WrapApplicationJSON(shared.WrapTrustedCORS(apiUserHandler, CORSList, nil)))
 }
