@@ -34,7 +34,6 @@ func init() {
 func RegisterRoutes() {
 	// GitHub OAuth login
 	shared.AddRoute("/login", "login", loginHandler)
-	shared.AddRoute("/login/status", "login-status", shared.WrapApplicationJSON(shared.WrapTrustedCORS(loginStatusHandler, shared.CORSList, nil)))
 	shared.AddRoute("/logout", "logout", logoutHandler)
 	shared.AddRoute("/oauth", "oauth", oauthHandler)
 

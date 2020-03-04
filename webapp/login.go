@@ -8,7 +8,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -16,48 +15,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
 )
-
-type loginResponse struct {
-	User  *shared.User `json:"user,omitempty"`
-	Error string       `json:"error,omitempty"`
-}
-
-func loginStatusHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	if !aeAPI.IsFeatureEnabled("githubLogin") {
-		http.Error(w, "Feature not enabled", http.StatusNotImplemented)
-		return
-	}
-
-	if cookie, err := r.Cookie("session"); err != nil || cookie == nil {
-		response := loginResponse{Error: "User is not logged in"}
-		marshalled, err := json.Marshal(response)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(marshalled)
-		return
-	}
-
-	ds := shared.NewAppEngineDatastore(ctx, false)
-	user, token := shared.GetUserFromCookie(ctx, ds, r)
-	if user == nil || token == nil {
-		http.Error(w, "Unable to retrieve log-in information, please log in again", http.StatusBadRequest)
-		return
-	}
-
-	response := loginResponse{User: user}
-	marshalled, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write(marshalled)
-}
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
