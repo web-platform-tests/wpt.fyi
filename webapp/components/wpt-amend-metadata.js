@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 The WPT Dashboard Project. All rights reserved.
+ * Copyright 2020 The WPT Dashboard Project. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -117,7 +117,6 @@ class AmendMetadata extends LoadingState(PolymerElement) {
     var link = {};
     link[test] = [{ 'url': this.url, 'product': product }];
     return link;
-
   }
 
   displayLogo(product) {
