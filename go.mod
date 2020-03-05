@@ -20,10 +20,9 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/rogpeppe/go-internal v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/taskcluster/taskcluster-lib-urls v12.1.0+incompatible
-	github.com/taskcluster/taskcluster/clients/client-go/v22 v22.1.1
+	github.com/taskcluster/taskcluster-lib-urls v13.0.0+incompatible
+	github.com/taskcluster/taskcluster/v25 v25.4.0
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
@@ -32,7 +31,6 @@ require (
 	google.golang.org/genproto v0.0.0-20200305110556-506484158171
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.8
-	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
 
 // The project has been moved to GitHub and we don't want to depend on bzr (used by launchpad).
