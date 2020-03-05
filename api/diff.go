@@ -49,8 +49,10 @@ func loadDiffRuns(store shared.Datastore, q url.Values) (shared.TestRuns, error)
 				return nil, nil
 			}
 		}
-		// err many be non nil here.
-		return runs, err
+		if err != nil {
+			return nil, err
+		}
+		return runs, nil
 	}
 
 	// NOTE: We use the same params as /results, but also support
@@ -76,6 +78,12 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	store := shared.NewAppEngineDatastore(ctx, true)
 	q := r.URL.Query()
 
+	diffFilter, paths, err := shared.ParseDiffFilterParams(q)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	runs, err := loadDiffRuns(store, q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -91,11 +99,6 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diffFilter, paths, err := shared.ParseDiffFilterParams(q)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 	diffAPI := shared.NewDiffAPI(ctx)
 	diff, err := diffAPI.GetRunsDiff(runs[0], runs[1], diffFilter, paths)
 	if err != nil {
