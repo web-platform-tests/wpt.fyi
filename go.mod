@@ -3,10 +3,10 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.11
 
 require (
-	cloud.google.com/go v0.53.0
-	cloud.google.com/go/datastore v1.0.0
+	cloud.google.com/go v0.54.0
+	cloud.google.com/go/datastore v1.1.0
 	cloud.google.com/go/logging v1.0.0
-	cloud.google.com/go/storage v1.5.0
+	cloud.google.com/go/storage v1.6.0
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/deckarep/golang-set v1.7.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -29,7 +29,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/api v0.20.0
 	google.golang.org/appengine v1.6.5
-	google.golang.org/genproto v0.0.0-20200212174721-66ed5ce911ce
+	google.golang.org/genproto v0.0.0-20200305110556-506484158171
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
