@@ -126,7 +126,7 @@ func FindShadowElements(
 		result, err := d.ExecuteScriptRaw(
 			fmt.Sprintf(`return Array.from(arguments)
 				.reduce((s, e) => {
-					return s.concat(Array.from(e.shadowRoot.querySelectorAll('%s')))
+					return e.shadowRoot ? s.concat(Array.from(e.shadowRoot.querySelectorAll('%s'))) : s
 				}, [])`,
 				selector),
 			interfaces)
