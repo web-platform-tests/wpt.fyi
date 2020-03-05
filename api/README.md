@@ -211,6 +211,10 @@ in the format of an array of [improved, regressed, total-delta].
 
 __Parameters__
 
+__`run_ids`__ : Exactly two numerical IDs for the "before" and "after" runs (in
+that order), separted by a comma. IDs associated with runs can be obtained by
+querying the `/api/runs` API. This overrides the `before` and `after` params.
+
 __`before`__ : [product]@[sha] spec for the TestRun to use as the before state.
 
 __`after`__ : [product]@[sha] spec for the TestRun to use as the after state.
