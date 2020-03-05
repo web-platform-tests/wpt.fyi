@@ -25,8 +25,8 @@ func init() {
 
 // User represents an authenticated GitHub user.
 type User struct {
-	GitHubHandle string `json:"handle,omitempty"`
-	GithuhEmail  string `json:"email,omitempty"`
+	GitHubHandle string `json:"github_handle,omitempty"`
+	GithuhEmail  string `json:"github_email,omitempty"`
 }
 
 // GitHubAccessControl encapsulates implementation details of access control for the wpt-metadata repository.
