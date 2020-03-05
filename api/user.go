@@ -24,8 +24,10 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cookie, err := r.Cookie("session"); err != nil || cookie == nil {
-		response := loginResponse{Error: "User is not logged in"}
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	user, token := shared.GetUserFromCookie(ctx, ds, r)
+	if user == nil || token == nil {
+		response := loginResponse{Error: "Unable to retrieve log-in information, please log in again"}
 		marshalled, err := json.Marshal(response)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -34,13 +36,6 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(marshalled)
-		return
-	}
-
-	ds := shared.NewAppEngineDatastore(ctx, false)
-	user, token := shared.GetUserFromCookie(ctx, ds, r)
-	if user == nil || token == nil {
-		http.Error(w, "Unable to retrieve log-in information, please log in again", http.StatusBadRequest)
 		return
 	}
 
