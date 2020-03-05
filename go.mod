@@ -8,9 +8,13 @@ require (
 	cloud.google.com/go/logging v1.0.0
 	cloud.google.com/go/storage v1.6.0
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
+	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/deckarep/golang-set v1.7.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
+	github.com/gobuffalo/envy v1.9.0 // indirect
+	github.com/gobuffalo/logger v1.0.3 // indirect
+	github.com/gobuffalo/packd v1.0.0 // indirect
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/golang/mock v1.4.1
 	github.com/google/go-github/v29 v29.0.3
@@ -18,14 +22,17 @@ require (
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/securecookie v1.1.1
-	github.com/rogpeppe/go-internal v1.5.0 // indirect
+	github.com/rogpeppe/go-internal v1.5.2 // indirect
 	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/cobra v0.0.6 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/taskcluster/taskcluster-lib-urls v13.0.0+incompatible
 	github.com/taskcluster/taskcluster/v25 v25.4.0
 	github.com/tebeka/selenium v0.9.9
+	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	golang.org/x/tools v0.0.0-20200305224536-de023d59a5d1 // indirect
 	google.golang.org/api v0.20.0
 	google.golang.org/appengine v1.6.5
 	google.golang.org/genproto v0.0.0-20200305110556-506484158171
