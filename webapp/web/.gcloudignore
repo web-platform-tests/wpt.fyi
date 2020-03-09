@@ -1,28 +1,35 @@
-# Don't upload test data, package config, etc. to AppEngine.
-**/*_test.go
-.eslintrc.json
-.git/
-.github/
-.vscode/
-build/
-CODE_OF_CONDUCT.md
-components/test/
-docs/
-git/
-ISSUE_TEMPLATE/
-ISSUE_TEMPLATE.md
-LICENSE
-package-lock.json
-package.json
-PULL_REQUEST_TEMPLATE.md
-README.md
-results-processor/
-revisions/
+# Tests
+*_test.go
+test/
+webdriver/
 static/24278ab617/
 static/wptd-metrics/
-test/
+
+# Configurations
+.eslintrc.json
+package-lock.json
+package.json
+renovate.json
 wct.conf.json
-webdriver/
+
+# Misc
+.git/
+.github/
+.lighthouseci/
+.vscode/
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+ISSUE_TEMPLATE.md
+ISSUE_TEMPLATE/
+PULL_REQUEST_TEMPLATE.md
+README.md
+docs/
+git/
+
+# Other services
+api/query/cache/service/
+results-processor/
+util/
 
 # Ignore files bundled with packr
 api/checks/summaries/templates/
