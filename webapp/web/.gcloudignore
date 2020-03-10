@@ -4,10 +4,10 @@
 
 # Tests
 *_test.go
+/webapp/static/wptd-metrics/
+/webapp/static/24278ab617/
+/webdriver/
 test/
-webdriver/
-static/24278ab617/
-static/wptd-metrics/
 
 # Configurations
 .eslintrc.json
@@ -21,22 +21,22 @@ wct.conf.json
 .github/
 .lighthouseci/
 .vscode/
+/docs/
+/git/
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
 ISSUE_TEMPLATE.md
 ISSUE_TEMPLATE/
 PULL_REQUEST_TEMPLATE.md
 README.md
-docs/
-git/
 
 # Other services
-api/query/cache/service/
-results-processor/
-util/
+/api/query/cache/service/
+/results-processor/
+/util/
 
 # Ignore files bundled with packr
-api/checks/summaries/templates/
-webapp/dynamic-components/
-webapp/node_modules/
-webapp/templates/
+/api/checks/summaries/templates/
+/webapp/dynamic-components/
+/webapp/node_modules/
+/webapp/templates/
