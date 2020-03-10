@@ -1,31 +1,42 @@
-# Don't upload test data, package config, etc. to AppEngine.
-**/*_test.go
+# Files matching the following rules won't be uploaded to AppEngine (webapp).
+# The syntax is the same as `.gitignore`; we do not use `.gitignore` directly
+# because we need to update some generated files.
+
+# Tests
+*_test.go
+/webapp/static/wptd-metrics/
+/webapp/static/24278ab617/
+/webdriver/
+test/
+
+# Configurations
 .eslintrc.json
-.git/
-.github/
-.vscode/
-build/
-CODE_OF_CONDUCT.md
-components/test/
-docs/
-git/
-ISSUE_TEMPLATE/
-ISSUE_TEMPLATE.md
-LICENSE
 package-lock.json
 package.json
+renovate.json
+wct.conf.json
+
+# Misc
+.git/
+.github/
+.lighthouseci/
+.vscode/
+/docs/
+/git/
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+ISSUE_TEMPLATE.md
+ISSUE_TEMPLATE/
 PULL_REQUEST_TEMPLATE.md
 README.md
-results-processor/
-revisions/
-static/24278ab617/
-static/wptd-metrics/
-test/
-wct.conf.json
-webdriver/
+
+# Other services
+/api/query/cache/service/
+/results-processor/
+/util/
 
 # Ignore files bundled with packr
-api/checks/summaries/templates/
-webapp/dynamic-components/
-webapp/node_modules/
-webapp/templates/
+/api/checks/summaries/templates/
+/webapp/dynamic-components/
+/webapp/node_modules/
+/webapp/templates/
