@@ -53,7 +53,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
         <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>
         </div>
       </paper-dialog>
-      <paper-toast id="showPR" duration="8000"><a id="prLink" class="link" target="_blank" href="[[pr]]"></a></paper-toast>
+      <paper-toast id="showPR" duration="10000"><a id="prLink" class="link" target="_blank" href="[[pr]]"></a></paper-toast>
 `;
   }
 
@@ -85,7 +85,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
 
   open() {
     this.dialog.open();
-    this.dialog.addEventListener('keydown',this.enter);
+    this.dialog.addEventListener('keydown', this.enter);
   }
 
   close() {
@@ -97,6 +97,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
   triageOnEnter(e) {
     if (e.which === 13) {
       this.handleTriage();
+      this.close();
     }
   }
 
@@ -144,9 +145,9 @@ class AmendMetadata extends LoadingState(PolymerElement) {
         .then(r => {
           if (!r.ok || r.status !== 200) {
             this.pr = '';
-            prLink.text = 'Fail to triage failing tests';
+            prLink.text = r.status + ': ' + r.statusText;
             toast.open();
-            throw 'Fail to triage failing tests: ' + r.status;
+            throw 'Failed to triage failing tests: ' + r.status;
           }
           return r.text();
         })
