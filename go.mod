@@ -13,7 +13,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.0
-	github.com/golang/mock v1.4.1
+	github.com/golang/mock v1.4.2
 	github.com/google/go-github/v29 v29.0.3
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.2
