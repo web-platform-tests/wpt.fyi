@@ -70,7 +70,7 @@
     "@vaadin/vaadin-context-menu": "4.3.15",
     "@vaadin/vaadin-date-picker": "4.0.8",
     "@vaadin/vaadin-grid": "5.5.2",
-    "@webcomponents/webcomponentsjs": "2.4.2",
+    "@webcomponents/webcomponentsjs": "2.4.3",
     "pluralize": "8.0.0"
   }
 }
