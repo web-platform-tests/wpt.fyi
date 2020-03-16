@@ -95,7 +95,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       }
       td.triage {
         cursor: pointer;
-        transition: 0.2s;
       }
       td.triage:hover {
         opacity: 0.7;
@@ -1009,4 +1008,3 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 window.customElements.define(WPTResults.is, WPTResults);
 
 export { WPTResults };
-
