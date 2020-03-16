@@ -454,6 +454,26 @@ func TestStructuredQuery_link(t *testing.T) {
 		}}, rq)
 }
 
+func TestStructuredQuery_triaged(t *testing.T) {
+	p := shared.ParseProductSpecUnsafe("Chrome")
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"triaged": "chrome"
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			AbstractTriaged{
+				Product: &p,
+			}},
+		}}, rq)
+}
+
 func TestStructuredQuery_isDifferent(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{

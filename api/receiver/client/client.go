@@ -76,10 +76,10 @@ func (c client) CreateRun(
 		return err
 	}
 	req.SetBasicAuth(username, password)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	slowClient, cancel := c.aeAPI.GetSlowHTTPClient(UploadTimeout)
-	defer cancel()
-	resp, err := slowClient.Do(req)
+	hc := c.aeAPI.GetHTTPClientWithTimeout(UploadTimeout)
+	resp, err := hc.Do(req)
 	if err != nil {
 		return err
 	}

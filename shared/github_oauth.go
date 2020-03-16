@@ -11,7 +11,7 @@ import (
 	"encoding/gob"
 	"net/http"
 
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v29/github"
 	"github.com/gorilla/securecookie"
 	"golang.org/x/oauth2"
 	ghOAuth "golang.org/x/oauth2/github"
@@ -25,8 +25,8 @@ func init() {
 
 // User represents an authenticated GitHub user.
 type User struct {
-	GitHubHandle string
-	GithuhEmail  string
+	GitHubHandle string `json:"github_handle,omitempty"`
+	GithuhEmail  string `json:"github_email,omitempty"`
 }
 
 // GitHubAccessControl encapsulates implementation details of access control for the wpt-metadata repository.

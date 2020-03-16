@@ -16,7 +16,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v29/github"
 	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 
@@ -98,7 +98,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	aeAPI.EXPECT().GetResultsUploadURL().Return(uploadURL)
 	aeAPI.EXPECT().GetUploader("azure").Return(shared.Uploader{Username: "azure", Password: "123"}, nil)
 	aeAPI.EXPECT().GetHTTPClient().AnyTimes().Return(server.Client())
-	aeAPI.EXPECT().GetSlowHTTPClient(gomock.Any()).AnyTimes().Return(server.Client(), func() {})
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(gomock.Any()).AnyTimes().Return(server.Client())
 
 	log, hook := logrustest.NewNullLogger()
 	ctx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), log)

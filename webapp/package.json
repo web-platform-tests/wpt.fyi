@@ -11,7 +11,7 @@
     "@browser-logos/chrome-beta": "2.1.6",
     "@browser-logos/chrome-canary": "1.1.8",
     "@browser-logos/chrome-dev": "2.1.9",
-    "@browser-logos/edge": "2.0.3",
+    "@browser-logos/edge": "2.0.4",
     "@browser-logos/edge-beta": "2.0.1",
     "@browser-logos/edge-canary": "2.0.1",
     "@browser-logos/edge-dev": "2.0.2",
@@ -23,9 +23,9 @@
     "@browser-logos/safari-technology-preview": "1.0.8",
     "@browser-logos/servo": "1.0.4",
     "@browser-logos/uc": "1.0.6",
-    "@lhci/cli": "0.3.8",
+    "@lhci/cli": "0.3.9",
     "@polymer/test-fixture": "4.0.2",
-    "babel-eslint": "10.0.3",
+    "babel-eslint": "10.1.0",
     "cpy-cli": "3.1.0",
     "eslint": "6.8.0",
     "eslint-plugin-html": "6.0.0",
@@ -68,9 +68,9 @@
     "@polymer/paper-tooltip": "3.0.1",
     "@polymer/polymer": "3.3.1",
     "@vaadin/vaadin-context-menu": "4.3.15",
-    "@vaadin/vaadin-date-picker": "4.0.7",
-    "@vaadin/vaadin-grid": "5.5.1",
-    "@webcomponents/webcomponentsjs": "2.4.1",
+    "@vaadin/vaadin-date-picker": "4.0.8",
+    "@vaadin/vaadin-grid": "5.5.2",
+    "@webcomponents/webcomponentsjs": "2.4.2",
     "pluralize": "8.0.0"
   }
 }

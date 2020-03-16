@@ -396,6 +396,19 @@ suite('<test-search>', () => {
       });
     });
 
+    test('simple triaged search', () => {
+      assertQueryParse('triaged:chrome', { exists: [{ triaged: 'chrome' }] });
+    });
+
+    test('test status and triaged', () => {
+      assertQueryParse('firefox:timeout triaged:firefox', {
+        exists: [
+          { product: 'firefox', status: 'TIMEOUT' },
+          { triaged: 'firefox' },
+        ],
+      });
+    });
+
     test('multi-root', () => {
       assertQueryParse('none(status:missing) count>0(status:!pass)', {
         and: [

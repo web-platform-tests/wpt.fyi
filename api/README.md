@@ -211,6 +211,10 @@ in the format of an array of [improved, regressed, total-delta].
 
 __Parameters__
 
+__`run_ids`__ : Exactly two numerical IDs for the "before" and "after" runs (in
+that order), separted by a comma. IDs associated with runs can be obtained by
+querying the `/api/runs` API. This overrides the `before` and `after` params.
+
 __`before`__ : [product]@[sha] spec for the TestRun to use as the before state.
 
 __`after`__ : [product]@[sha] spec for the TestRun to use as the after state.
@@ -592,3 +596,50 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 }
 ```
 </details>
+
+### /api/metadata/triage
+
+This API is available for trusted third parties.
+
+To use the Triage Metadata API, you first need to sign in to [wpt.fyi](https://wpt.fyi/) (top-right corner; 'Sign in with GitHub'). For more information on wpt.fyi login, see [here](https://docs.google.com/document/d/1iRkaK6cGgXp3DKbNbPMVsYGMaOHO-5CfqEuLPUR_2HM).
+
+The logged-in user also needs to belong to the ['web-platform-tests' GitHub organization](https://github.com/orgs/web-platform-tests/people). To join, please [file an issue](https://github.com/web-platform-tests/wpt/issues/new?), including the reason you need access to the Triage Metadata API.
+
+Once logged in, you can send a request to /api/metadata/triage to triage metadata. This endpoint only accepts PATCH requests and appends a triage JSON object to the existing Metadata YML files. The JSON object is a flattened YAML `Links` structure that is keyed by test name [Test path](https://docs.google.com/document/d/1oWYVkc2ztANCGUxwNVTQHlWV32zq6Ifq9jkkbYNbSAg/edit#heading=h.t7ysbpr8er1y); see below for an example.
+
+This endpoint returns the URL of a PR that is created in the wpt-metadata repo.
+
+<details><summary><b>Example JSON Body</b></summary>
+
+```json
+{
+  "/FileAPI/blob/Blob-constructor.html": [
+    {
+      "url": "https://github.com/web-platform-tests/results-collection/issues/661",
+      "product": "chrome",
+      "results:" [
+        {
+          "subtest": "Blob with type \"image/gif;\"",
+          "status": 6
+        },
+        {
+          "subtest": "Invalid contentType (\"text/plain\")",
+          "status": 0
+        }
+      ]
+    }
+  ],
+  "/service-workers/service-worker/fetch-request-css-base-url.https.html": [
+    {
+      "url": "https://bugzilla.mozilla.org/show_bug.cgi?id=1201160",
+      "product": "firefox",
+    }
+  ],
+  "/service-workers/service-worker/fetch-request-css-images.https.html": [
+    {
+      "url": "https://bugzilla.mozilla.org/show_bug.cgi?id=1532331",
+      "product": "firefox"
+    }
+  ]
+}
+```

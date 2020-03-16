@@ -8,9 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -239,17 +237,40 @@ type AbstractLink struct {
 
 // BindToRuns for AbstractLink is a no-op; it is independent of test runs
 func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
-	var netClient = &http.Client{
-		Timeout: time.Second * 5,
-	}
-
-	metadata, _ := shared.GetMetadataResponse(runs, netClient, logrus.StandardLogger(), shared.MetadataArchiveURL)
+	fetcher := searchcacheMetadataFetcher{url: shared.MetadataArchiveURL}
+	metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), fetcher)
 	metadataMap := shared.PrepareLinkFilter(metadata)
 
 	return Link{
 		Pattern:  l.Pattern,
 		Metadata: metadataMap,
 	}
+}
+
+// AbstractTriaged represents the root of a triaged query that matches
+// tests where the test of a specific browser has been triaged through Metadata
+type AbstractTriaged struct {
+	Product *shared.ProductSpec
+}
+
+// BindToRuns for AbstractTriaged binds each run of the AbstractTriaged ProductSpec
+// to a triaged object.
+func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	cq := make([]ConcreteQuery, 0)
+	fetcher := searchcacheMetadataFetcher{url: shared.MetadataArchiveURL}
+	for _, run := range runs {
+		if t.Product == nil || t.Product.Matches(run) {
+			metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), fetcher)
+			metadataMap := shared.PrepareLinkFilter(metadata)
+			cq = append(cq, Triaged{run.ID, metadataMap})
+		}
+	}
+
+	if len(cq) == 0 {
+		return False{}
+	}
+
+	return Or{cq}
 }
 
 // MetadataQuality represents the root of an "is" query, which asserts known
@@ -882,6 +903,38 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractTriaged attempts to interpret a query atom as
+// {"triaged":<browser name>}.
+func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+
+	browserNameMsg, ok := data["triaged"]
+	if !ok {
+		return errors.New(`Missing Triaged property: "triaged"`)
+	}
+
+	var browserName string
+	if err := json.Unmarshal(*browserNameMsg, &browserName); err != nil {
+		return errors.New(`Triaged property "triaged" is not a string`)
+	}
+
+	var product *shared.ProductSpec
+	if browserName != "" {
+		p, err := shared.ParseProductSpec(browserName)
+		if err != nil {
+			return err
+		}
+		product = &p
+	}
+
+	t.Product = product
+	return nil
+}
+
 // UnmarshalJSON for MetadataQuality attempts to interpret a query atom as
 // {"is":<metadata quality>}.
 func (q *MetadataQuality) UnmarshalJSON(b []byte) error {
@@ -1025,5 +1078,11 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 			return i, nil
 		}
 	}
-	return nil, errors.New(`Failed to parse query fragment as test name pattern, test status constraint, negation, disjunction, conjunction, sequential or count`)
+	{
+		var t AbstractTriaged
+		if err := json.Unmarshal(b, &t); err == nil {
+			return t, nil
+		}
+	}
+	return nil, errors.New(`Failed to parse query fragment as any of the exisiting search atoms in wpt.fyi/api/query/README.md`)
 }

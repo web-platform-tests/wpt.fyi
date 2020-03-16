@@ -14,12 +14,10 @@ import (
 	"strings"
 )
 
-const metadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
-
-// CollectMetadata iterates through wpt-metadata repository and returns a
-// map that maps a test path to its META.yml file content.
-func CollectMetadata(client *http.Client) (res map[string][]byte, err error) {
-	return CollectMetadataWithURL(client, metadataArchiveURL)
+// MetadataFetcher is an abstract interface that encapsulates the Fetch() method. Fetch() fetches metadata
+// for webapp and searchcache.
+type MetadataFetcher interface {
+	Fetch() (res map[string][]byte, err error)
 }
 
 // CollectMetadataWithURL iterates through wpt-metadata repository and returns a

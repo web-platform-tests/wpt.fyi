@@ -260,3 +260,23 @@ func TestHandleResultsUpload_fail_uploading(t *testing.T) {
 	HandleResultsUpload(mockAE, resp, req)
 	assert.Equal(t, resp.Code, http.StatusInternalServerError)
 }
+
+func TestHandleResultsUpload_empty_payload(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	req := httptest.NewRequest("POST", "/api/results/upload", nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth("blade-runner", "123")
+	resp := httptest.NewRecorder()
+
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
+	)
+
+	HandleResultsUpload(mockAE, resp, req)
+	assert.Equal(t, resp.Code, http.StatusBadRequest)
+}

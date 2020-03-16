@@ -314,6 +314,24 @@ Search triaged issues -
 
     chrome:pass and link:bugs.chromium.org
 
+#### triaged
+
+`triaged` query atoms perform a search for tests of a specific browser that have link metadata.
+
+    {"triaged": [browsername]}
+
+Where [browsername] is a browser specification (e.g. safari, chrome).
+
+ E.g.
+
+Search untriaged Chrome failures -
+
+    chrome:fail and none(triaged:chrome)
+
+Search triaged Chrome tests -
+
+    chrome:pass and triaged:chrome
+
 #### is
 
 `is` query atoms perform a search for tests that possess some meta quality.
