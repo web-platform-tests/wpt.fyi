@@ -42,7 +42,7 @@ class WPTMetadataNode extends ProductInfo(PolymerElement) {
         <iron-icon class="bug" icon="bug-report"></iron-icon>
         <div>
           <a href="[[testHref]]" target="_blank">[[metadataNode.test]]</a> >
-          <img class="browser" src="[[getLogo(metadataNode.product)]]"> :
+          <img class="browser" src="[[displayLogo(metadataNode.product)]]"> :
           <a href="[[urlHref]]" target="_blank">[[metadataNode.url]]</a>
           <br />
         </div>
@@ -84,10 +84,6 @@ class WPTMetadataNode extends ProductInfo(PolymerElement) {
       return currentUrl.replace(path, testname.substring(0, testname.length - 2));
     }
     return currentUrl.replace(path, testname);
-  }
-
-  getLogo(product) {
-    return this.displayLogo(product, '');
   }
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
