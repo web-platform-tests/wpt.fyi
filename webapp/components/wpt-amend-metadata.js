@@ -9,8 +9,9 @@ import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
+import { ProductInfo } from './product-info.js';
 
-class AmendMetadata extends LoadingState(PolymerElement) {
+class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
   static get is() {
     return 'wpt-amend-metadata';
   }
@@ -41,10 +42,10 @@ class AmendMetadata extends LoadingState(PolymerElement) {
           color: white;
         }
       </style>
-      <paper-dialog>
+      <paper-dialog id="dialog">
         <h3>Triage Failing Test</h3>
         <div class="metadataEntry">
-          <img class="browser" src="[[displayLogo(product)]]">
+          <img class="browser" src="[[getLogo(product)]]">
           &nbsp; >> [[test]] : &nbsp;
           <paper-input label="Bug URL" value="{{url}}" autofocus></paper-input>
         </div>
@@ -80,7 +81,7 @@ class AmendMetadata extends LoadingState(PolymerElement) {
   }
 
   get dialog() {
-    return this.shadowRoot.querySelector('paper-dialog');
+    return this.$.dialog;
   }
 
   open() {
@@ -120,11 +121,8 @@ class AmendMetadata extends LoadingState(PolymerElement) {
     return link;
   }
 
-  displayLogo(product) {
-    if (!product) {
-      return;
-    }
-    return `/static/${product}_64x64.png`;
+  getLogo(product) {
+    return this.displayLogo(product, '');
   }
 
   handleTriage() {
@@ -140,23 +138,25 @@ class AmendMetadata extends LoadingState(PolymerElement) {
 
     const toast = this.shadowRoot.querySelector('#showPR');
     const prLink = this.shadowRoot.querySelector('#prLink');
-    this.load(
-      window.fetch(url, fetchOpts)
-        .then(r => {
-          if (!r.ok || r.status !== 200) {
-            this.pr = '';
-            prLink.text = r.status + ': ' + r.statusText;
-            toast.open();
-            throw 'Failed to triage failing tests: ' + r.status;
-          }
-          return r.text();
-        })
-        .then(text => {
-          this.pr = text;
-          prLink.text = 'Created traige ' + text;
-          toast.open();
-        })
-    );
+    window.fetch(url, fetchOpts).then(
+      async r => {
+        this.pr = '';
+        let text = await r.text();
+        if (!r.ok || r.status !== 200) {
+          throw new Error(`${r.status}: ${text}`);
+        }
+
+        return text;
+      })
+      .then(text => {
+        this.pr = text;
+        prLink.text = 'Created traige ' + text;
+        toast.open();
+      }).catch(error => {
+        prLink.text = error.message;
+        toast.open();
+      });
+
     this.url = '';
   }
 }

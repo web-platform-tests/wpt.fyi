@@ -14,8 +14,9 @@ import {
 } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { PathInfo } from '../components/path.js';
+import { ProductInfo } from './product-info.js';
 
-class WPTMetadataNode extends PolymerElement {
+class WPTMetadataNode extends ProductInfo(PolymerElement) {
   static get template() {
     return html`
       <style>
@@ -41,7 +42,7 @@ class WPTMetadataNode extends PolymerElement {
         <iron-icon class="bug" icon="bug-report"></iron-icon>
         <div>
           <a href="[[testHref]]" target="_blank">[[metadataNode.test]]</a> >
-          <img class="browser" src="[[displayLogo(metadataNode.product)]]"> :
+          <img class="browser" src="[[getLogo(metadataNode.product)]]"> :
           <a href="[[urlHref]]" target="_blank">[[metadataNode.url]]</a>
           <br />
         </div>
@@ -85,11 +86,8 @@ class WPTMetadataNode extends PolymerElement {
     return currentUrl.replace(path, testname);
   }
 
-  displayLogo(product) {
-    if (!product) {
-      return;
-    }
-    return `/static/${product}_64x64.png`;
+  getLogo(product) {
+    return this.displayLogo(product, '');
   }
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);

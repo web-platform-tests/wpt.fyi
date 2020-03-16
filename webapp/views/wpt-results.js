@@ -317,7 +317,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         </section>
       </template>
     </template>
-    <wpt-amend-metadata path="[[ path ]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" path="[[path]]" products="[[products]]"></wpt-amend-metadata>
 `;
   }
 
@@ -500,7 +500,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     super();
     this.openAmendMetadata = (i, node) => {
       return () => {
-        const amend = this.shadowRoot.querySelector('wpt-amend-metadata');
+        const amend = this.$.amend;
         amend.test = node.path;
         amend.productIndex = i;
         amend.open();
@@ -856,6 +856,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     return `${browser_name}-${browser_version}-${os_name}-${os_version}`;
   }
 
+  // TODO(kyle): Add a test for this.
   canAmendMetadata(node, index, testRun) {
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');

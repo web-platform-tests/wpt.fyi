@@ -11,7 +11,6 @@ import '../components/test-file-results.js';
 import '../components/test-run.js';
 import '../components/test-runs-query-builder.js';
 import '../components/test-runs-query.js';
-import '../components/wpt-amend-metadata.js';
 import { TestRunsUIQuery } from '../components/test-runs-query.js';
 import { TestRunsQueryLoader } from '../components/test-runs.js';
 import '../components/test-search.js';
@@ -33,7 +32,7 @@ const interopQueryCompute =
   'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)';
 
 class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
-  TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
+    TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
   static get template() {
     return html`
   <style>
@@ -93,14 +92,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     td.score {
       color: black;
       text-align: center;
-    }
-
-    td.triage {
-      cursor: pointer;
-    }
-
-    td.triage:hover {
-      opacity: 0.7;
     }
 
     tr td {
@@ -189,19 +180,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
             </td>
 
             <template is="dom-repeat" items="{{node.interop}}" as="passRate" index-as="i">
-              <template is="dom-if" if="[[ canAmendMetadata(node.path, node.total, passRate) ]]">
-                <td class="score triage" onclick="[[openAmendMetadata(i, node)]]" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
-              </template>
-
-              <template is="dom-if" if="[[ !canAmendMetadata(node.path, node.total, passRate) ]]">
-                <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
-              </template>
-            </template>
-
-            <template is="dom-if" if="[[ interopScoreColumn ]]">
-              <td>
-                <paper-progress value="[[ interopScore(node) ]]"></paper-progress>
-              </td>
+              <td class="score" style="{{ passRateStyle(node.total, passRate, i) }}">{{ passRate }} / {{ node.total }}</td>
             </template>
 
             <template is="dom-if" if="[[ interopScoreColumn ]]">
@@ -218,7 +197,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
   <template is="dom-if" if="[[ pathIsATestFile ]]">
     <test-file-results test-runs="[[testRuns]]" path="[[path]]"></test-file-results>
   </template>
-  <wpt-amend-metadata path="[[ path ]]" products="[[products]]" test="[[node.path]]" product-index="[[i]]"></wpt-amend-metadata>
+
   <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
 `;
   }
@@ -267,14 +246,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
 
   constructor() {
     super();
-    this.openAmendMetadata = (i, node) => {
-      return () => {
-        const amend = this.shadowRoot.querySelector('wpt-amend-metadata');
-        amend.test = node.path;
-        amend.productIndex = i;
-        amend.open();
-      };
-    };
     this.onLoadingComplete = () => {
       this.interopLoadFailed =
         !(this.searchResults && this.searchResults.results && this.searchResults.results.length);
@@ -445,10 +416,6 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
     const fraction = passRate / total;
     const alpha = Math.round(fraction * 1000) / 1000;
     return `background-color: ${this.passRateColorRGBA(browserCount, this.testRuns.length, alpha)}`;
-  }
-
-  canAmendMetadata(nodePath, nodeTotal, passRate) {
-    return this.computePathIsATestFile(nodePath) && (nodeTotal - passRate) > 0 && this.triageMetadataUI;
   }
 
   handleSearchCommit() {
