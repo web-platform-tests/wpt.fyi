@@ -98,6 +98,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       }
       td.triage:hover {
         opacity: 0.7;
+        box-shadow: 5px 5px 5px;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
