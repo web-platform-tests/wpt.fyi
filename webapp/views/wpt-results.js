@@ -91,7 +91,6 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       td.numbers {
         white-space: nowrap;
         color: black;
-        opacity: 1;
       }
       td.triage {
         cursor: pointer;
