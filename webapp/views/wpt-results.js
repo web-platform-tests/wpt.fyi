@@ -91,14 +91,13 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       td.numbers {
         white-space: nowrap;
         color: black;
-        opacity: 1;
       }
       td.triage {
         cursor: pointer;
-        transition: 0.2s;
       }
       td.triage:hover {
         opacity: 0.7;
+        box-shadow: 5px 5px 5px;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
@@ -1010,4 +1009,3 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 window.customElements.define(WPTResults.is, WPTResults);
 
 export { WPTResults };
-
