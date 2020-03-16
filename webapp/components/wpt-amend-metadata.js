@@ -49,8 +49,8 @@ class AmendMetadata extends LoadingState(PolymerElement) {
           <paper-input label="Bug URL" value="{{url}}" autofocus></paper-input>
         </div>
         <div class="buttons">
-        <paper-button onclick="[[close]]">Dismiss</paper-button>
-        <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>
+          <paper-button onclick="[[close]]">Dismiss</paper-button>
+          <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>
         </div>
       </paper-dialog>
       <paper-toast id="showPR" duration="10000"><a id="prLink" class="link" target="_blank" href="[[pr]]"></a></paper-toast>
