@@ -54,12 +54,15 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>
         </div>
       </paper-dialog>
-      <paper-toast id="show-pr" duration="10000"><span>[[errorMessage]]</span><a id="pr-link" class="link" target="_blank" href="[[prLink]]">[[prText]]</a></paper-toast>
+      <paper-toast id="show-pr" duration="10000"><span>[[errorMessage]]</span><a class="link" target="_blank" href="[[prLink]]">[[prText]]</a></paper-toast>
 `;
   }
 
   static get properties() {
     return {
+      prLink: String,
+      prText: String,
+      errorMessage: String,
       url: String,
       path: String,
       products: String,
@@ -132,12 +135,11 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
     };
 
     const toast = this.shadowRoot.querySelector('#show-pr');
-    const prLink = this.shadowRoot.querySelector('#prLink');
     window.fetch(url, fetchOpts).then(
       async r => {
-        prLink.text = '';
-        prLink.href = '';
-        this.$.msg.textContent = '';
+        this.prText = '';
+        this.prLink = '';
+        this.errorMessage = '';
         let text = await r.text();
         if (!r.ok || r.status !== 200) {
           throw new Error(`${r.status}: ${text}`);
@@ -146,11 +148,11 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         return text;
       })
       .then(text => {
-        prLink.href = text;
-        prLink.text = 'Created traige ' + text;
+        this.prLink = text;
+        this.prText = 'Created traige ' + text;
         toast.open();
       }).catch(error => {
-        this.$.msg.textContent = error.message;
+        this.errorMessage = error.message;
         toast.open();
       });
 
