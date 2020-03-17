@@ -132,6 +132,33 @@ const ProductInfo = (superClass) => class extends superClass {
     return '';
   }
 
+  displayLogo(name, labels) {
+    if (!name) {
+      return;
+    }
+    // TODO: Remove the special case for Servo when it has per-channel logos.
+    if (name !== 'servo' && labels) {
+      labels = new Set(labels);
+      let channel;
+      const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
+      for (const label of candidates) {
+        if (labels.has(label)) {
+          channel = label;
+          break;
+        }
+      }
+      // Fall back to treating 'experimental' as 'dev'.
+      // TODO: Remove after https://github.com/web-platform-tests/wpt.fyi/issues/1539.
+      if (!channel && labels.has('experimental')) {
+        channel = 'dev';
+      }
+      if (channel) {
+        name = `${name}-${channel}`;
+      }
+    }
+    return `/static/${name}_64x64.png`;
+  }
+
   sourceName(product) {
     if (product.labels) {
       return this.displayName(product.labels.find(s => Sources.has(s)));

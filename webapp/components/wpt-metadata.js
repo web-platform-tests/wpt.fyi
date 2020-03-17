@@ -14,8 +14,9 @@ import {
 } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { PathInfo } from '../components/path.js';
+import { ProductInfo } from './product-info.js';
 
-class WPTMetadataNode extends PolymerElement {
+class WPTMetadataNode extends ProductInfo(PolymerElement) {
   static get template() {
     return html`
       <style>
@@ -83,13 +84,6 @@ class WPTMetadataNode extends PolymerElement {
       return currentUrl.replace(path, testname.substring(0, testname.length - 2));
     }
     return currentUrl.replace(path, testname);
-  }
-
-  displayLogo(product) {
-    if (!product) {
-      return;
-    }
-    return `/static/${product}_64x64.png`;
   }
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
