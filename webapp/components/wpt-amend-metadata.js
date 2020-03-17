@@ -54,7 +54,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>
         </div>
       </paper-dialog>
-      <paper-toast id="show-pr" duration="10000"><span id="msg"></span><a id="prLink" class="link" target="_blank"]"></a></paper-toast>
+      <paper-toast id="show-pr" duration="10000"><span>[[errorMessage]]</span><a id="pr-link" class="link" target="_blank" href="[[prLink]]">[[prText]]</a></paper-toast>
 `;
   }
 
