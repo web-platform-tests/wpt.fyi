@@ -36,6 +36,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         .metadataEntry {
           display: flex;
           align-items: center;
+          margin-top: 0px;
         }
         .link {
           align-items: center;
@@ -43,12 +44,14 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         }
       </style>
       <paper-dialog id="dialog">
-        <h3>Triage Failing Test</h3>
-        <div class="metadataEntry">
-          <img class="browser" src="[[displayLogo(product)]]">
-          &nbsp; >> [[test]] : &nbsp;
-          <paper-input label="Bug URL" value="{{url}}" autofocus></paper-input>
-        </div>
+        <h3>Triage Failing Tests</h3>
+        <template is="dom-repeat" items="[[selectedMetadata]]" as="node">
+          <div class="metadataEntry">
+            <img class="browser" src="[[displayBrowserLogo(node.productIndex, browserNames)]]">
+            &nbsp; >> [[node.test]] : &nbsp;
+            <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
+          </div>
+        </template>
         <div class="buttons">
           <paper-button onclick="[[close]]">Dismiss</paper-button>
           <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>
@@ -63,14 +66,14 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       prLink: String,
       prText: String,
       errorMessage: String,
-      url: String,
-      path: String,
       products: String,
-      test: String,
-      productIndex: Number,
-      product: {
-        type: String,
-        computed: 'computeProduct(productIndex, products)'
+      selectedMetadata: {
+        type: Array,
+        notify: true,
+      },
+      browserNames: {
+        type: Array,
+        computed: 'computeBroswerNames(products)'
       },
     };
   }
@@ -92,8 +95,8 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
   }
 
   close() {
-    this.url = '';
     this.dialog.removeEventListener('keydown', this.enter);
+    this.selectedMetadata = [];
     this.dialog.close();
   }
 
@@ -104,7 +107,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
     }
   }
 
-  computeProduct(productIndex, products) {
+  computeBroswerNames(products) {
     if (!products) {
       return;
     }
@@ -114,12 +117,26 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       productVal.push(products[i].browser_name);
     }
 
-    return productVal[productIndex];
+    return productVal;
   }
 
-  getTriagedMetadataMap(product, test) {
+  displayBrowserLogo(index, browserNames) {
+    return this.displayLogo(browserNames[index], '');
+  }
+
+  getTriagedMetadataMap(selectedMetadata) {
     var link = {};
-    link[test] = [{ 'url': this.url, 'product': product }];
+    for (const node of selectedMetadata) {
+      if (node.url === '') {
+        continue;
+      }
+
+      const value = [{ 'url': node.url, 'product': this.browserNames[node.productIndex] }];
+      if (!(node.test in link)) {
+        link[node.test] = [];
+      }
+      link[node.test].push(value);
+    }
     return link;
   }
 
@@ -127,7 +144,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
     const url = new URL('/api/metadata/triage', window.location);
     const fetchOpts = {
       method: 'PATCH',
-      body: JSON.stringify(this.getTriagedMetadataMap(this.product, this.test)),
+      body: JSON.stringify(this.getTriagedMetadataMap(this.selectedMetadata)),
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json'
@@ -156,7 +173,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         toast.open();
       });
 
-    this.url = '';
+    this.selectedMetadata = [];
   }
 }
 

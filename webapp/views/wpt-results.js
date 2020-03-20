@@ -34,10 +34,11 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PathInfo } from '../components/path.js';
+import { Pluralizer } from '../components/pluralize.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))) {
+class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase))))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -99,6 +100,9 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         opacity: 0.7;
         box-shadow: 5px 5px 5px;
       }
+      td[selected] {
+        opacity: 0.4;
+      }
       .yellow-button {
         color: var(--paper-yellow-500);
         margin-left: 32px;
@@ -147,7 +151,15 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         width: 100%;
         height: 600px;
       }
+      .view-triage {
+        margin-left: 20px;
+      }
     </style>
+
+    <paper-toast id="selected-toast" duration="0">
+       <span>[[selectedMetadata.length]] [[testPlural]] selected</span>
+       <paper-button class="view-triage" onclick="[[openAmendMetadata]]">View Triage</paper-button>
+    </paper-toast>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
       <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
@@ -218,7 +230,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <template is="dom-if" if="[[ canAmendMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[openAmendMetadata(index, node)]]">
+                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" data-index$="[[index]]" data-test$="[[node.path]]" onclick="[[selectMetadata]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
@@ -316,7 +328,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         </section>
       </template>
     </template>
-    <wpt-amend-metadata id="amend" path="[[path]]" products="[[products]]"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" products="[[products]]" selected-metadata="{{selectedMetadata}}"></wpt-amend-metadata>
 `;
   }
 
@@ -404,6 +416,19 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       // path => {type, file[, refPath]} simplification.
       manifest: Object,
       screenshots: Array,
+      selectedMetadata: {
+        type: Array,
+        value: [],
+        observer: 'clearSelectedCells',
+      },
+      selectedCells: {
+        type: Array,
+        value: [],
+      },
+      testPlural: {
+        type: String,
+        computed: 'computeTestPlural(selectedMetadata)',
+      },
     };
   }
 
@@ -467,8 +492,8 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   computeTestTypeIcon(testType) {
     switch (testType) {
-    case 'manual': return 'touch-app';
-    case 'reftest': return 'image:compare';
+      case 'manual': return 'touch-app';
+      case 'reftest': return 'image:compare';
     }
   }
 
@@ -497,13 +522,9 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   constructor() {
     super();
-    this.openAmendMetadata = (i, node) => {
-      return () => {
-        const amend = this.$.amend;
-        amend.test = node.path;
-        amend.productIndex = i;
-        amend.open();
-      };
+    this.openAmendMetadata = () => {
+      const amend = this.$.amend;
+      amend.open();
     };
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
@@ -517,6 +538,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       this.refreshDisplayedNodes();
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
+    this.selectMetadata = this.handleSelectMetadata.bind(this);
   }
 
   loadData() {
@@ -597,7 +619,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     const toast = this.shadowRoot.querySelector('#runsNotInCache');
     this.load(
       this.retry(
-        async() => {
+        async () => {
           const r = await window.fetch(url, fetchOpts);
           if (!r.ok) {
             if (fetchOpts.method === 'POST' && r.status === 422) {
@@ -700,6 +722,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
   }
 
   pathUpdated(path) {
+    this.selectedMetadata = [];
     this.refreshDisplayedNodes();
   }
 
@@ -1003,6 +1026,42 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     }
     // % in js is not modulo, it's remainder. Ensure it's positive.
     this.path = this.searchResults[(n + next) % n].test;
+  }
+
+  computeTestPlural(selectedMetadata) {
+    return this.pluralize('test', selectedMetadata.length);
+  }
+
+  clearSelectedCells(selectedMetadata) {
+    if (selectedMetadata.length === 0 && this.selectedCells.length) {
+      for (const cell of this.selectedCells) {
+        cell.removeAttribute('selected');
+      }
+      const toast = this.shadowRoot.querySelector('#selected-toast');
+      toast.hide();
+      this.selectedCells = [];
+    }
+  }
+
+  handleSelectMetadata(e) {
+    const td = e.target.closest('td');
+    const test = td.getAttribute('data-test');
+    const index = td.getAttribute('data-index');
+    if (this.selectedMetadata.find(s => s.test === test && s.productIndex === index)) {
+      this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.productIndex === index));
+      td.removeAttribute('selected');
+    } else {
+      const selected = { test: test, productIndex: index, url: '' };
+      this.selectedMetadata = [...this.selectedMetadata, selected];
+      td.setAttribute('selected', 'selected');
+      this.selectedCells.push(td);
+    }
+    const toast = this.shadowRoot.querySelector('#selected-toast');
+    if (this.selectedMetadata.length) {
+      toast.show();
+    } else {
+      toast.hide();
+    }
   }
 }
 
