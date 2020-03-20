@@ -149,7 +149,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       })
       .then(text => {
         this.prLink = text;
-        this.prText = 'Created traige ' + text;
+        this.prText = 'Created PR: ' + text;
         toast.open();
       }).catch(error => {
         this.errorMessage = error.message;
