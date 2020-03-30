@@ -36,21 +36,28 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         .metadataEntry {
           display: flex;
           align-items: center;
-          margin-top: 0px;
+          margin-top: 20px;
+          margin-bottom: 0px;
         }
         .link {
           align-items: center;
           color: white;
         }
+        li {
+          margin-top: 5px;
+          margin-left: 30px;
+        }
       </style>
       <paper-dialog id="dialog">
         <h3>Triage Failing Tests</h3>
-        <template is="dom-repeat" items="[[selectedMetadata]]" as="node">
+        <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
           <div class="metadataEntry">
-            <img class="browser" src="[[displayBrowserLogo(node.productIndex, browserNames)]]">
-            &nbsp; >> [[node.test]] : &nbsp;
-            <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
+            <img class="browser" src="[[displayBrowserLogo(node.product)]]">
+            &nbsp; : &nbsp; <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
+          <template is="dom-repeat" items="[[node.tests]]" as="test">
+           <li>[[test]]</li>
+          </template>
         </template>
         <div class="buttons">
           <paper-button onclick="[[close]]">Dismiss</paper-button>
@@ -66,14 +73,13 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       prLink: String,
       prText: String,
       errorMessage: String,
-      products: String,
       selectedMetadata: {
         type: Array,
         notify: true,
       },
-      browserNames: {
+      displayedMetadata: {
         type: Array,
-        computed: 'computeBroswerNames(products)'
+        value: []
       },
     };
   }
@@ -91,6 +97,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
 
   open() {
     this.dialog.open();
+    this.populateDisplayData();
     this.dialog.addEventListener('keydown', this.enter);
   }
 
@@ -107,44 +114,48 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
     }
   }
 
-  computeBroswerNames(products) {
-    if (!products) {
-      return;
-    }
-
-    let productVal = [];
-    for (let i = 0; i < products.length; i++) {
-      productVal.push(products[i].browser_name);
-    }
-
-    return productVal;
+  displayBrowserLogo(product) {
+    return this.displayLogo(product, '');
   }
 
-  displayBrowserLogo(index, browserNames) {
-    return this.displayLogo(browserNames[index], '');
-  }
-
-  getTriagedMetadataMap(selectedMetadata) {
+  getTriagedMetadataMap(displayedMetadata) {
     var link = {};
-    for (const node of selectedMetadata) {
-      if (node.url === '') {
+    for (const entry of displayedMetadata) {
+      if (entry.url === '') {
         continue;
       }
 
-      const value = [{ 'url': node.url, 'product': this.browserNames[node.productIndex] }];
-      if (!(node.test in link)) {
-        link[node.test] = [];
+      for (const test of entry.tests) {
+        const value = [{ 'url': entry.url, 'product': entry.product }];
+        if (!(test in link)) {
+          link[test] = [];
+        }
+        link[test].push(value);
       }
-      link[node.test].push(value);
     }
     return link;
+  }
+
+  populateDisplayData() {
+    this.displayedMetadata = [];
+    const browserMap = {};
+    for (const entry of this.selectedMetadata) {
+      if (!(entry.product in browserMap)) {
+        browserMap[entry.product] = [];
+      }
+      browserMap[entry.product].push(entry.test);
+    }
+
+    for (const key in browserMap) {
+      this.displayedMetadata.push({ product: key, url: '', tests: browserMap[key] });
+    }
   }
 
   handleTriage() {
     const url = new URL('/api/metadata/triage', window.location);
     const fetchOpts = {
       method: 'PATCH',
-      body: JSON.stringify(this.getTriagedMetadataMap(this.selectedMetadata)),
+      body: JSON.stringify(this.getTriagedMetadataMap(this.displayedMetadata)),
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json'

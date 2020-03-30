@@ -101,7 +101,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         box-shadow: 5px 5px 5px;
       }
       td[selected] {
-        opacity: 0.4;
+        border: 2px solid #000000;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
@@ -152,13 +152,13 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         height: 600px;
       }
       .view-triage {
-        margin-left: 20px;
+        margin-left: 30px;
       }
     </style>
 
     <paper-toast id="selected-toast" duration="0">
-       <span>[[selectedMetadata.length]] [[testPlural]] selected</span>
-       <paper-button class="view-triage" onclick="[[openAmendMetadata]]">View Triage</paper-button>
+      <span>[[selectedMetadata.length]] [[testPlural]] selected</span>
+      <paper-button class="view-triage" onclick="[[openAmendMetadata]]" raised>TRIAGE</paper-button>
     </paper-toast>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
@@ -328,7 +328,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         </section>
       </template>
     </template>
-    <wpt-amend-metadata id="amend" products="[[products]]" selected-metadata="{{selectedMetadata}}"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}"></wpt-amend-metadata>
 `;
   }
 
@@ -882,7 +882,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
   canAmendMetadata(node, index, testRun) {
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
-    return this.computePathIsATestFile(node.path) && (totalTests - passedTests) > 0 && this.triageMetadataUI;
+    return (totalTests - passedTests) > 0 && this.triageMetadataUI && this.multiselectTriageUI;
   }
 
   testResultClass(node, index, testRun, prop) {
@@ -1045,13 +1045,17 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
 
   handleSelectMetadata(e) {
     const td = e.target.closest('td');
-    const test = td.getAttribute('data-test');
-    const index = td.getAttribute('data-index');
-    if (this.selectedMetadata.find(s => s.test === test && s.productIndex === index)) {
-      this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.productIndex === index));
+    var test = td.getAttribute('data-test');
+    const browser = this.products[td.getAttribute('data-index')].browser_name;
+    if (this.computePathIsASubfolder(test)) {
+      test = test + '/*';
+    }
+
+    if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
+      this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
       td.removeAttribute('selected');
     } else {
-      const selected = { test: test, productIndex: index, url: '' };
+      const selected = { test: test, product: browser };
       this.selectedMetadata = [...this.selectedMetadata, selected];
       td.setAttribute('selected', 'selected');
       this.selectedCells.push(td);

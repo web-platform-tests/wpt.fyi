@@ -12,6 +12,7 @@ import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/paper-styles/color.js';
+import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 
 class GitHubLogin extends WPTFlags(PolymerElement) {
@@ -49,7 +50,11 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
       <div>Logging in to wpt.fyi enables users to have a customized landing page, set default
       configurations, and triage tests from the wpt.fyi UI </div>
       <div>To annotate tests, click on Triage Mode below </div>
-      <paper-button id="mode" onclick="[[changeMode]]" raised></paper-button>
+      <template is="dom-if" if="[[user]]">
+        <paper-toggle-button checked="{{multiselectTriageUI}}">
+          Triage Mode
+        </paper-toggle-button>
+      </template>
       <div class="buttons">
         <paper-button dialog-dismiss>Dismiss</paper-button>
       </div>
@@ -66,10 +71,6 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
       user: {
         type: String,
         value: null,
-      },
-      isTriagedMode: {
-        type: Boolean,
-        value: false,
       }
     };
   }
@@ -79,7 +80,6 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
     this.logIn = this.handleLogIn.bind(this);
     this.logOut = this.handleLogOut.bind(this);
     this.openHelpDialog = this.openHelpDialog.bind(this);
-    this.changeMode = this.changeMode.bind(this);
   }
 
   handleLogIn() {
@@ -96,21 +96,7 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
 
   openHelpDialog() {
     const dialog = this.$.dialog;
-    this.setButtonText(this.triageMetadataUI);
     dialog.open();
-  }
-
-  changeMode() {
-    this.triageMetadataUI = !this.triageMetadataUI;
-    this.setButtonText(this.triageMetadataUI);
-  }
-
-  setButtonText(triageMetadataUI) {
-    if (triageMetadataUI) {
-      this.$.mode.textContent = 'Triage Mode';
-    } else {
-      this.$.mode.textContent = 'Default Mode';
-    }
   }
 
 }
