@@ -301,5 +301,5 @@ links:
 	assert.Equal(t, "https://bug.com/item", actual.Links[1].URL)
 	assert.Equal(t, "chrome", actual.Links[2].Product.BrowserName)
 	assert.Equal(t, "foo1", actual.Links[2].URL)
-	assert.Equal(t, "0", actual.Links[2].Results[0].TestPath)
+	assert.Equal(t, "*", actual.Links[2].Results[0].TestPath)
 }
