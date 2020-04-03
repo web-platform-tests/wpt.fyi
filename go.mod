@@ -27,7 +27,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	google.golang.org/api v0.20.0
+	google.golang.org/api v0.21.0
 	google.golang.org/appengine v1.6.5
 	google.golang.org/genproto v0.0.0-20200317114155-1f3552e48f24
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
