@@ -57,7 +57,7 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
       <h3>wpt.fyi Login</h3>
       <div>Logging in to wpt.fyi enables users to have a customized landing page, set default
       configurations, and triage tests from the wpt.fyi UI </div>
-      <div>To annotate tests, click on Triage Mode below </div>
+      <div>To enable the triage UI, toggle Triage Mode after login </div>
       <div class="buttons">
         <paper-button dialog-dismiss>Dismiss</paper-button>
       </div>

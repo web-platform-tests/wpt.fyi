@@ -878,7 +878,6 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
     return `${browser_name}-${browser_version}-${os_name}-${os_version}`;
   }
 
-  // TODO(kyle): Add a test for this.
   canAmendMetadata(node, index, testRun) {
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');

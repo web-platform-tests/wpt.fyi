@@ -52,7 +52,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         <h3>Triage Failing Tests</h3>
         <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
           <div class="metadataEntry">
-            <img class="browser" src="[[displayBrowserLogo(node.product)]]">
+            <img class="browser" src="[[displayLogo(node.product)]]">
             &nbsp; : &nbsp; <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
@@ -112,10 +112,6 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       this.handleTriage();
       this.close();
     }
-  }
-
-  displayBrowserLogo(product) {
-    return this.displayLogo(product, '');
   }
 
   getTriagedMetadataMap(displayedMetadata) {
