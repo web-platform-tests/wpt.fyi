@@ -26,7 +26,7 @@ const flagTaskclusterAllBranches = "taskclusterAllBranches"
 const flagPendingChecks = "pendingChecks"
 
 var (
-	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
+	// This should follow https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml
 	// with a notable exception that "*-stability" runs are not included at the moment.
 	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|crashtest|results|results-without-changes)(?:-\d+)?$`)
 	// Taskcluster has used different forms of URLs in their Check & Status
