@@ -28,7 +28,7 @@ const flagPendingChecks = "pendingChecks"
 var (
 	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
 	// with a notable exception that "*-stability" runs are not included at the moment.
-	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
+	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|crashtest|results|results-without-changes)(?:-\d+)?$`)
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
