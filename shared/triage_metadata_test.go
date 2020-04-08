@@ -303,3 +303,12 @@ links:
 	assert.Equal(t, "foo1", actual.Links[2].URL)
 	assert.Equal(t, "*", actual.Links[2].Results[0].TestPath)
 }
+
+func TestGetMetadataGithub(t *testing.T) {
+	m := GetMetadataGithub(nil, "testuser", "testemail@example.com")
+	assert.Equal(t, m.authorName, "testuser")
+	assert.Equal(t, m.authorEmail, "testemail@example.com")
+	m = GetMetadataGithub(nil, "testuser", "")
+	assert.Equal(t, m.authorName, "testuser")
+	assert.Equal(t, m.authorEmail, "testuser@users.noreply.github.com")
+}

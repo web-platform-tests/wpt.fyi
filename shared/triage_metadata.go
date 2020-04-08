@@ -286,6 +286,12 @@ func GetTriageMetadata(ctx context.Context, git MetadataGithub, logger Logger, f
 
 // GetMetadataGithub returns an instance of the MetadataGithub struct as a part of a triageMetadata struct.
 func GetMetadataGithub(githubClient *github.Client, authorName string, authorEmail string) MetadataGithub {
+	if authorEmail == "" {
+		// Email is required when pushing commits. Use the no-reply email provided
+		// by GitHub as the fallback if the user does not have a public email:
+		// https://help.github.com/en/github/setting-up-and-managing-your-github-user-account/setting-your-commit-email-address#about-commit-email-addresses
+		authorEmail = authorName + "@users.noreply.github.com"
+	}
 	return MetadataGithub{
 		githubClient: githubClient,
 		authorName:   authorName,
