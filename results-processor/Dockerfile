@@ -2,12 +2,11 @@ FROM gcr.io/google-appengine/python
 
 # Default WORKDIR: /home/vmagent/app (/app symlinks to this)
 
-# Install curl & gcloud SDK.
-RUN apt-get update -q
-# curl needed by install-gcloud.sh
+# Install runtime dependencies.
 # python-crcmod for faster gsutil checksum
 # https://cloud.google.com/storage/docs/gsutil/commands/rsync#slow-checksums
-RUN apt-get install -qy curl python-crcmod
+RUN apt-get update -q && apt-get install -qy python-crcmod && apt-get clean
+# gcloud SDK
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
 RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null
 ENV PATH=/opt/google-cloud-sdk/bin:$PATH
@@ -19,7 +18,7 @@ RUN gcloud config set disable_usage_reporting false
 RUN rm -f $HOME/.config/gcloud/gce
 
 # Setup and activate virtualenv.
-RUN virtualenv --no-download /env -p python3.7
+RUN virtualenv -p python3.7 /env
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
