@@ -45,7 +45,7 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
     </template>
     <template is="dom-if" if="[[user]]">
       <div>
-        <paper-toggle-button class="triage-toggle" checked="{{multiselectTriageUI}}">
+        <paper-toggle-button class="triage-toggle" checked="{{multiselectTriageUI}}" on-change="handleToggle">
           Triage Mode
         </paper-toggle-button>
         <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
@@ -75,7 +75,15 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
         type: String,
         value: null,
       },
+      isTriagable: {
+        type: Boolean,
+        notify: true,
+      }
     };
+  }
+
+  handleToggle() {
+    this.isTriagable = this.multiselectTriageUI;
   }
 
   handleLogIn() {

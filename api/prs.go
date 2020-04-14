@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -59,7 +59,7 @@ func (h PRsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // getPRsByPaths searches GitHub for PRs that are (probably) related to the given paths.
 // It searches indiscriminately for the paths, so may overmatch.
-func getPRsByPaths(aeAPI shared.AppEngineAPI, paths ...string) ([]github.Issue, error) {
+func getPRsByPaths(aeAPI shared.AppEngineAPI, paths ...string) ([]*github.Issue, error) {
 	client, err := aeAPI.GetGitHubClient()
 	q := fmt.Sprintf("type:pr user:web-platform-tests repo:wpt state:open %s", strings.Join(paths, " "))
 	prs, _, err := client.Search.Issues(aeAPI.Context(), q, &github.SearchOptions{

@@ -7,7 +7,7 @@ package mock_checks
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/v29/github"
+	github "github.com/google/go-github/v31/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	reflect "reflect"
 )

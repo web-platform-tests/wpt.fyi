@@ -58,7 +58,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           <a href="/">web-platform-tests dashboard</a>
         </h1>
         <template is="dom-if" if="[[githubLogin]]">
-          <github-login user="[[user]]"></github-login>
+          <github-login user="[[user]]" is-triagable="{{isTriagable}}"></github-login>
         </template>
       </div>
 
@@ -83,6 +83,10 @@ class WPTHeader extends WPTFlags(PolymerElement) {
   static get properties() {
     return {
       user: String,
+      isTriagable: {
+        type: Boolean,
+        notify: true,
+      }
     };
   }
 }

@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 	"gopkg.in/yaml.v2"
 )
 
@@ -108,10 +108,10 @@ func (tm triageMetadata) getCommitBranchRef() (ref *github.Reference, err error)
 func (tm triageMetadata) getTree(ref *github.Reference, triagedMetadataMap map[string][]byte) (tree *github.Tree, err error) {
 	client := tm.githubClient
 
-	entries := []github.TreeEntry{}
+	entries := []*github.TreeEntry{}
 	for folderPath, content := range triagedMetadataMap {
 		dest := GetMetadataFilePath(folderPath)
-		entries = append(entries, github.TreeEntry{Path: github.String(dest), Type: github.String("blob"), Content: github.String(string(content)), Mode: github.String("100644")})
+		entries = append(entries, &github.TreeEntry{Path: github.String(dest), Type: github.String("blob"), Content: github.String(string(content)), Mode: github.String("100644")})
 	}
 
 	tree, _, err = client.Git.CreateTree(tm.ctx, tm.sourceOwner, tm.sourceRepo, *ref.Object.SHA, entries)
@@ -131,7 +131,7 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 	// Create the commit using the tree.
 	date := time.Now()
 	author := &github.CommitAuthor{Date: &date, Name: &tm.authorName, Email: &tm.authorEmail}
-	commit := &github.Commit{Author: author, Message: &tm.commitMessage, Tree: tree, Parents: []github.Commit{*parent.Commit}}
+	commit := &github.Commit{Author: author, Message: &tm.commitMessage, Tree: tree, Parents: []*github.Commit{parent.Commit}}
 	newCommit, _, err := client.Git.CreateCommit(tm.ctx, tm.sourceOwner, tm.sourceRepo, commit)
 	if err != nil {
 		return err

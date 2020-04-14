@@ -124,7 +124,6 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
   }
 
   valueChangedInLocalStorage(value, feature) {
-    window.location.reload();
     return localStorage.setItem(
       `features.${feature}`,
       JSON.stringify(value));
