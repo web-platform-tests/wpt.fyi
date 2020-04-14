@@ -230,7 +230,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <template is="dom-if" if="[[ canAmendMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" data-index$="[[index]]" data-test$="[[node.path]]" onclick="[[selectMetadata]]">
+                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" data-index$="[[index]]" data-test$="[[node.path]]" on-click="handleSelectMetadata">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
@@ -492,8 +492,8 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
 
   computeTestTypeIcon(testType) {
     switch (testType) {
-      case 'manual': return 'touch-app';
-      case 'reftest': return 'image:compare';
+    case 'manual': return 'touch-app';
+    case 'reftest': return 'image:compare';
     }
   }
 
@@ -538,7 +538,6 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
       this.refreshDisplayedNodes();
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
-    this.selectMetadata = this.handleSelectMetadata.bind(this);
   }
 
   loadData() {
@@ -619,7 +618,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
     const toast = this.shadowRoot.querySelector('#runsNotInCache');
     this.load(
       this.retry(
-        async () => {
+        async() => {
           const r = await window.fetch(url, fetchOpts);
           if (!r.ok) {
             if (fetchOpts.method === 'POST' && r.status === 422) {

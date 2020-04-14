@@ -19,7 +19,7 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
   static get template() {
     return html`
     <style>
-      .log-in-button {
+      .login-button {
         text-transform: inherit;
       }
       .github-icon {
@@ -37,20 +37,20 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
       }
     </style>
     <template is="dom-if" if="[[!user]]">
-     <iron-icon class="help" src="/static/help.svg" onclick="[[openHelpDialog]]"></iron-icon>
-      <paper-button class="log-in-button" raised onclick="[[logIn]]">
-      <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
-      Sign in with GitHub
+      <iron-icon class="help" icon="icons:help-outline" on-click="openHelpDialog"></iron-icon>
+      <paper-button class="login-button" raised on-click="handleLogIn">
+        <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
+          Sign in with GitHub
       </paper-button>
     </template>
     <template is="dom-if" if="[[user]]">
       <div>
         <paper-toggle-button class="triage-toggle" checked="{{multiselectTriageUI}}">
           Triage Mode
-         </paper-toggle-button>
+        </paper-toggle-button>
         <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
-          [[user]]
-        <paper-icon-button title="Sign out" icon="exit-to-app" onclick="[[logOut]]"></paper-icon-button>
+        [[user]]
+        <paper-icon-button title="Sign out" icon="exit-to-app" on-click="handleLogOut"></paper-icon-button>
       </div>
     </template>
     <paper-dialog id="dialog">
@@ -78,13 +78,6 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
     };
   }
 
-  constructor() {
-    super();
-    this.logIn = this.handleLogIn.bind(this);
-    this.logOut = this.handleLogOut.bind(this);
-    this.openHelpDialog = this.openHelpDialog.bind(this);
-  }
-
   handleLogIn() {
     const url = new URL('/login', window.location);
     url.searchParams.set('return', window.location);
@@ -98,8 +91,7 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
   }
 
   openHelpDialog() {
-    const dialog = this.$.dialog;
-    dialog.open();
+    this.$.dialog.open();
   }
 
 }

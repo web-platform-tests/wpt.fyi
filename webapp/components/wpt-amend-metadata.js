@@ -56,7 +56,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
             &nbsp; : &nbsp; <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
-           <li>[[test]]</li>
+            <li>[[test]]</li>
           </template>
         </template>
         <div class="buttons">
