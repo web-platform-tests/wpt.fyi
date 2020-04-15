@@ -72,9 +72,6 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         </template>
         <a href="/about">About</a>
       </nav>
-      <info-banner id="caveat" type="error">
-        wpt.fyi is a work in progress. The reported results do not necessarily reflect the true capabilities of each web browser, so they should not be used evaluate or compare feature support.
-      </info-banner>
     </header>
 `;
   }
