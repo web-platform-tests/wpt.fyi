@@ -12,13 +12,6 @@ import '../node_modules/@polymer/paper-item/paper-item.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTEnvironmentFlags } from '../dynamic-components/wpt-env-flags.js';
 
-const $_documentContainer = document.createElement('template');
-
-$_documentContainer.innerHTML = `<dom-module id="wpt-flags">
-
-</dom-module>`;
-
-document.head.appendChild($_documentContainer.content);
 window.wpt = window.wpt || {};
 
 /* global wpt */
