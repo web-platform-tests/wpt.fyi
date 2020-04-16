@@ -9,7 +9,7 @@ package summaries
 import (
 	"testing"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 	"github.com/stretchr/testify/assert"
 )
 

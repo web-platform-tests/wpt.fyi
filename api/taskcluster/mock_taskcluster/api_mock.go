@@ -6,7 +6,7 @@ package mock_taskcluster
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/v29/github"
+	github "github.com/google/go-github/v31/github"
 	reflect "reflect"
 )
 
