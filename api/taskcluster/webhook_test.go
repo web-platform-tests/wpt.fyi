@@ -179,7 +179,7 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 3)}
 	group.Tasks[0].Task.Metadata.Name = "wpt-chrome-dev-results"
-	group.Tasks[1].Task.Metadata.Name = "wpt-chrome-dev-stability"
+	group.Tasks[1].Task.Metadata.Name = "wpt-chrome-dev-stability" // must be skipped
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-results-without-changes"
 	for i := 0; i < len(group.Tasks); i++ {
 		group.Tasks[i].Status.State = "completed"
@@ -380,10 +380,12 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 
 func TestTaskNameRegex(t *testing.T) {
 	assert.Equal(t, []string{"chrome-dev", "results"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results")[1:])
+	assert.Equal(t, []string{"chrome-dev", "results-without-changes"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results-without-changes")[1:])
+	assert.Equal(t, []string{"chrome-dev", "stability"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-stability")[1:])
 	assert.Equal(t, []string{"chrome-stable", "reftest"}, taskNameRegex.FindStringSubmatch("wpt-chrome-stable-reftest-1")[1:])
+	assert.Equal(t, []string{"firefox-beta", "crashtest"}, taskNameRegex.FindStringSubmatch("wpt-firefox-beta-crashtest-2")[1:])
 	assert.Equal(t, []string{"firefox-nightly", "testharness"}, taskNameRegex.FindStringSubmatch("wpt-firefox-nightly-testharness-5")[1:])
 	assert.Equal(t, []string{"firefox-stable", "wdspec"}, taskNameRegex.FindStringSubmatch("wpt-firefox-stable-wdspec-1")[1:])
-	assert.Equal(t, []string{"firefox-beta", "crashtest"}, taskNameRegex.FindStringSubmatch("wpt-firefox-beta-crashtest-2")[1:])
-	assert.Equal(t, []string{"chrome-dev", "results-without-changes"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results-without-changes")[1:])
-	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-stability"))
+	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-foo-bar--1"))
+	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-foo-bar-"))
 }
