@@ -111,8 +111,7 @@ func (tm triageMetadata) getTree(ref *github.Reference, triagedMetadataMap map[s
 	entries := []*github.TreeEntry{}
 	for folderPath, content := range triagedMetadataMap {
 		dest := GetMetadataFilePath(folderPath)
-		newEntry := github.TreeEntry{Path: github.String(dest), Type: github.String("blob"), Content: github.String(string(content)), Mode: github.String("100644")}
-		entries = append(entries, &newEntry)
+		entries = append(entries, &github.TreeEntry{Path: github.String(dest), Type: github.String("blob"), Content: github.String(string(content)), Mode: github.String("100644")})
 	}
 
 	tree, _, err = client.Git.CreateTree(tm.ctx, tm.sourceOwner, tm.sourceRepo, *ref.Object.SHA, entries)
