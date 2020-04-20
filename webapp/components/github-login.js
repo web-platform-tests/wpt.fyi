@@ -24,15 +24,13 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
       }
       .github-icon {
         margin-right: 8px;
+        margin-left: 8px;
         fill: white;
-      }
-      paper-icon-button {
-        margin-left: 16px;
       }
       .help {
         vertical-align: baseline;
       }
-      .triage-toggle {
+      .logged-in {
         display: inline-flex;
         align-items: center;
       }
@@ -45,11 +43,9 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
       </paper-button>
     </template>
     <template is="dom-if" if="[[user]]">
-      <div>
-        <div class="triage-toggle">
-          <paper-toggle-button checked="{{isTriageMode}}"></paper-toggle-button>
-          <span>Triage Mode</span>
-        </div>
+      <div class="logged-in">
+        <paper-toggle-button checked="{{isTriageMode}}"></paper-toggle-button>
+        Triage Mode
         <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
         [[user]]
         <paper-icon-button title="Sign out" icon="exit-to-app" on-click="handleLogOut"></paper-icon-button>
