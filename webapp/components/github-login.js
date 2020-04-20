@@ -47,7 +47,7 @@ class GitHubLogin extends WPTFlags(PolymerElement) {
     <template is="dom-if" if="[[user]]">
       <div>
         <div class="triage-toggle">
-          <paper-toggle-button checked="{{isTriageMode}}" on-change="handleToggle"></paper-toggle-button>
+          <paper-toggle-button checked="{{isTriageMode}}"></paper-toggle-button>
           <span>Triage Mode</span>
         </div>
         <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>

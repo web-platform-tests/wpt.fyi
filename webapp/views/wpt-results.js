@@ -54,7 +54,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         background-color: var(--paper-grey-200);
       }
       tr td {
-        padding: 0 0.5em;
+        padding: 0.25em 0.5em;
       }
       tr.spec td {
         padding: 0.2em 0.5em;
