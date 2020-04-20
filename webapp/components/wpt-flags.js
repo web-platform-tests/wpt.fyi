@@ -52,13 +52,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
     ];
   }
 });
-Object.defineProperty(wpt, 'ClientSideWriteableFeatures', {
-  get: function() {
-    return [
-      'multiselectTriageUI',
-    ];
-  }
-});
 Object.defineProperty(wpt, 'ServerSideFeatures', {
   get: function() {
     return [
@@ -108,25 +101,7 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
   static get properties() {
     const props = {};
     makeFeatureProperties(props, wpt.ClientSideFeatures, readOnly, useLocalStorage);
-    if (useLocalStorage) {
-      makeFeatureProperties(props, wpt.ClientSideWriteableFeatures, false, useLocalStorage);
-    }
     return props;
-  }
-
-  ready() {
-    super.ready();
-    if (useLocalStorage) {
-      for (const feature of wpt.ClientSideWriteableFeatures) {
-        this._createMethodObserver(`valueChangedInLocalStorage(${feature}, '${feature}')`);
-      }
-    }
-  }
-
-  valueChangedInLocalStorage(value, feature) {
-    return localStorage.setItem(
-      `features.${feature}`,
-      JSON.stringify(value));
   }
 };
 

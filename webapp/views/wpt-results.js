@@ -429,14 +429,14 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         type: String,
         computed: 'computeTestPlural(selectedMetadata)',
       },
-      isTriagable: {
+      isTriageMode: {
         type: Boolean,
-        observer: 'isTriagableUpdated',
+        observer: 'isTriageModeUpdated',
       }
     };
   }
 
-  isTriagableUpdated(isTriagable) {
+  isTriageModeUpdated(isTriageMode) {
     this.reloadData();
   }
 
@@ -888,7 +888,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
   canAmendMetadata(node, index, testRun) {
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
-    return (totalTests - passedTests) > 0 && this.triageMetadataUI && this.isTriagable;
+    return (totalTests - passedTests) > 0 && this.triageMetadataUI && this.isTriageMode;
   }
 
   testResultClass(node, index, testRun, prop) {

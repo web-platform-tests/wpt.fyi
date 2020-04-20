@@ -62,7 +62,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <app-location route="{{route}}" url-space-regex="^/(results|interop)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
-      <wpt-header user="[[user]]" is-triagable="{{isTriagable}}"></wpt-header>
+      <wpt-header user="[[user]]" is-triage-mode="{{isTriageMode}}"></wpt-header>
 
       <results-tabs tab="[[page]]" path="[[encodedPath]]" query="[[query]]"></results-tabs>
 
@@ -135,7 +135,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
                      metadata="[[metadata]]"
-                     is-triagable="[[isTriagable]]"></wpt-results>
+                     is-triage-mode="[[isTriageMode]]"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
@@ -186,7 +186,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
       },
-      isTriagable: Boolean,
+      isTriageMode: Boolean,
     };
   }
 
