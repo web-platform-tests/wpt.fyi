@@ -17,12 +17,18 @@ import (
 // MetadataFetcher is an abstract interface that encapsulates the Fetch() method. Fetch() fetches metadata
 // for webapp and searchcache.
 type MetadataFetcher interface {
-	Fetch() (res map[string][]byte, err error)
+	Fetch() (sha string, res map[string][]byte, err error)
 }
 
 // CollectMetadataWithURL iterates through wpt-metadata repository and returns a
 // map that maps a test path to its META.yml file content, using a given URL.
 func CollectMetadataWithURL(client *http.Client, url string) (res map[string][]byte, err error) {
+
+	// 1.Pass in a github object reference (instead of http.client and url), 2. mock that reference, 3. change all tests
+	// Here
+	//TODO: Get ref from master, client.Git.GetRef
+	//TODO: Get archive from ref, https://github.com/google/go-github/blob/259aa56b9e3f43b924520fb5b5bc0784a901f90d/github/repos_contents.go#L247
+
 	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
