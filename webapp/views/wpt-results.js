@@ -158,7 +158,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
 
     <paper-toast id="selected-toast" duration="0">
       <span>[[selectedMetadata.length]] [[testPlural]] selected</span>
-      <paper-button class="view-triage" onclick="[[openAmendMetadata]]" raised>TRIAGE</paper-button>
+      <paper-button class="view-triage" on-click="openAmendMetadata" raised>TRIAGE</paper-button>
     </paper-toast>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
@@ -230,7 +230,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <template is="dom-if" if="[[ canAmendMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" data-index$="[[index]]" data-test$="[[node.path]]" on-click="handleSelectMetadata">
+                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleSelectMetadata(index, node.path)]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                       /
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
@@ -530,10 +530,6 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
 
   constructor() {
     super();
-    this.openAmendMetadata = () => {
-      const amend = this.$.amend;
-      amend.open();
-    };
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
@@ -1049,29 +1045,35 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
     }
   }
 
-  handleSelectMetadata(e) {
-    const td = e.target.closest('td');
-    var test = td.getAttribute('data-test');
-    const browser = this.products[td.getAttribute('data-index')].browser_name;
-    if (this.computePathIsASubfolder(test)) {
-      test = test + '/*';
-    }
+  handleSelectMetadata(index, test) {
+    return (e) => {
+      const td = e.target.closest('td');
+      const browser = this.products[index].browser_name;
+      if (this.computePathIsASubfolder(test)) {
+        test = test + '/*';
+      }
 
-    if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
-      this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
-      td.removeAttribute('selected');
-    } else {
-      const selected = { test: test, product: browser };
-      this.selectedMetadata = [...this.selectedMetadata, selected];
-      td.setAttribute('selected', 'selected');
-      this.selectedCells.push(td);
-    }
-    const toast = this.shadowRoot.querySelector('#selected-toast');
-    if (this.selectedMetadata.length) {
-      toast.show();
-    } else {
-      toast.hide();
-    }
+      if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
+        this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
+        this.selectedCells = this.selectedCells.filter(c => c !== td);
+        td.removeAttribute('selected');
+      } else {
+        const selected = { test: test, product: browser };
+        this.selectedMetadata = [...this.selectedMetadata, selected];
+        td.setAttribute('selected', 'selected');
+        this.selectedCells.push(td);
+      }
+      const toast = this.shadowRoot.querySelector('#selected-toast');
+      if (this.selectedMetadata.length) {
+        toast.show();
+      } else {
+        toast.hide();
+      }
+    };
+  }
+
+  openAmendMetadata() {
+    this.$.amend.open();
   }
 }
 

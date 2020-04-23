@@ -23,6 +23,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           height: 26px;
           width: 26px;
           position: relative;
+          margin-right: 10px;
         }
         paper-button {
           text-transform: none;
@@ -32,6 +33,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           text-transform: none;
           align-items: center;
           margin-bottom: 20px;
+          margin-left: 10px;
         }
         .metadataEntry {
           display: flex;
@@ -53,7 +55,8 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
           <div class="metadataEntry">
             <img class="browser" src="[[displayLogo(node.product)]]">
-            &nbsp; : &nbsp; <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
+            : 
+            <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
             <li>[[test]]</li>

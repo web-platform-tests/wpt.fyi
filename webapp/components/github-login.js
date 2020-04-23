@@ -13,9 +13,8 @@ import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
-import { WPTFlags } from '../components/wpt-flags.js';
 
-class GitHubLogin extends WPTFlags(PolymerElement) {
+class GitHubLogin extends PolymerElement {
   static get template() {
     return html`
     <style>
