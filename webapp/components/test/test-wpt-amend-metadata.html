@@ -25,33 +25,33 @@ suite('<wpt-amend-metadata>', () => {
     appFixture = fixture('wpt-amend-metadata-fixture');
   });
 
-	test('getTriagedMetadataMap(displayedMetadata)', () => {
-		let displayedMetadata = [
-			{ product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
-			{ product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
-		];
-		let expected = {
-			'testA': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }],
-			'testB': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }]
-		};
+  test('getTriagedMetadataMap(displayedMetadata)', () => {
+    let displayedMetadata = [
+      { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
+      { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
+    ];
+    let expected = {
+      'testA': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }],
+      'testB': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }]
+    };
 
-		assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
-	});
-	test('populateDisplayData()', () => {
-		appFixture.selectedMetadata = [
-			{ product: 'firefox', test: 'testA' },
-			{ product: 'firefox', test: 'testB' },
-			{ product: 'chrome',  test: 'testA' },
-			{ product: 'chrome',  test: 'testB' }
-		];
-		let expected = [
-			{ product: 'firefox', url: '', tests: ['testA', 'testB'] },
-			{ product: 'chrome', url: '', tests: ['testA', 'testB'] }
-		];
+    assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
+  });
+  test('populateDisplayData()', () => {
+    appFixture.selectedMetadata = [
+      { product: 'firefox', test: 'testA' },
+      { product: 'firefox', test: 'testB' },
+      { product: 'chrome', test: 'testA' },
+      { product: 'chrome', test: 'testB' }
+    ];
+    let expected = [
+      { product: 'firefox', url: '', tests: ['testA', 'testB'] },
+      { product: 'chrome', url: '', tests: ['testA', 'testB'] }
+    ];
 
     appFixture.populateDisplayData();
-		assert.deepEqual(appFixture.displayedMetadata, expected);
-	});
+    assert.deepEqual(appFixture.displayedMetadata, expected);
+  });
 });
 </script>
 </body>
