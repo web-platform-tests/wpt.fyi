@@ -125,7 +125,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       }
 
       for (const test of entry.tests) {
-        const value = [{ 'url': entry.url, 'product': entry.product }];
+        const value = { 'url': entry.url, 'product': entry.product };
         if (!(test in link)) {
           link[test] = [];
         }

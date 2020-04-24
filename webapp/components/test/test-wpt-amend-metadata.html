@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+  <script type="module" src="../wpt-amend-metadata.js"></script>
+</head>
+
+<body>
+  <test-fixture id="wpt-amend-metadata-fixture">
+    <template>
+      <wpt-amend-metadadta></wpt-amend-metadadta>
+    </template>
+  </test-fixture>
+
+  <script type="module">
+
+import '../wpt-amend-metadata.js';
+suite('<wpt-amend-metadata>', () => {
+  let appFixture = null;
+  setup(() => {
+    appFixture = fixture('wpt-amend-metadata-fixture');
+  });
+  suite('compute display metadata', () => {
+    test('getTriagedMetadataMap(displayedMetadata)', () => {
+      displayedMetadata = [
+        { product: "firefox", url: "foo", tests: ["testA", "testB"] },
+        { product: "chrome", url: "bar", tests: ["testA", "testB"] }
+      ];
+      expected = [
+        { "testA": [{ url: "foo", product: "firefox" }, { url: "bar", product: "chrome" }] },
+        { "testB": [{ url: "foo", product: "firefox" }, { url: "bar", product: "chrome" }] }
+      ]
+
+      assert.equal(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
+    });
+    test('populateDisplayData()', () => {
+      appFixture.selectedMetadata = [
+        { product: "firefox", test: "testA" },
+        { product: "firefox", test: "testB" },
+        { product: "chrome",  test: "testA" },
+        { product: "chrome",  test: "testB" }
+      ];
+      expected = [
+        { "testA": [{ url: "foo", product: "firefox" }, { url: "", product: "chrome" }] },
+        { "testB": [{ url: "foo", product: "firefox" }, { url: "", product: "chrome" }] }
+      ]
+
+      assert.equal(appFixture.populateDisplayData(), expected);
+    });
+  });
+});
+</script>
+</body>
+
+</html>
