@@ -23,6 +23,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           height: 26px;
           width: 26px;
           position: relative;
+          margin-right: 10px;
         }
         paper-button {
           text-transform: none;
@@ -32,23 +33,35 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           text-transform: none;
           align-items: center;
           margin-bottom: 20px;
+          margin-left: 10px;
         }
         .metadataEntry {
           display: flex;
           align-items: center;
+          margin-top: 20px;
+          margin-bottom: 0px;
         }
         .link {
           align-items: center;
           color: white;
         }
+        li {
+          margin-top: 5px;
+          margin-left: 30px;
+        }
       </style>
       <paper-dialog id="dialog">
-        <h3>Triage Failing Test</h3>
-        <div class="metadataEntry">
-          <img class="browser" src="[[displayLogo(product)]]">
-          &nbsp; >> [[test]] : &nbsp;
-          <paper-input label="Bug URL" value="{{url}}" autofocus></paper-input>
-        </div>
+        <h3>Triage Failing Tests</h3>
+        <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
+          <div class="metadataEntry">
+            <img class="browser" src="[[displayLogo(node.product)]]">
+            : 
+            <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
+          </div>
+          <template is="dom-repeat" items="[[node.tests]]" as="test">
+            <li>[[test]]</li>
+          </template>
+        </template>
         <div class="buttons">
           <paper-button onclick="[[close]]">Dismiss</paper-button>
           <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>
@@ -63,14 +76,13 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       prLink: String,
       prText: String,
       errorMessage: String,
-      url: String,
-      path: String,
-      products: String,
-      test: String,
-      productIndex: Number,
-      product: {
-        type: String,
-        computed: 'computeProduct(productIndex, products)'
+      selectedMetadata: {
+        type: Array,
+        notify: true,
+      },
+      displayedMetadata: {
+        type: Array,
+        value: []
       },
     };
   }
@@ -88,12 +100,13 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
 
   open() {
     this.dialog.open();
+    this.populateDisplayData();
     this.dialog.addEventListener('keydown', this.enter);
   }
 
   close() {
-    this.url = '';
     this.dialog.removeEventListener('keydown', this.enter);
+    this.selectedMetadata = [];
     this.dialog.close();
   }
 
@@ -104,30 +117,44 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
     }
   }
 
-  computeProduct(productIndex, products) {
-    if (!products) {
-      return;
-    }
+  getTriagedMetadataMap(displayedMetadata) {
+    var link = {};
+    for (const entry of displayedMetadata) {
+      if (entry.url === '') {
+        continue;
+      }
 
-    let productVal = [];
-    for (let i = 0; i < products.length; i++) {
-      productVal.push(products[i].browser_name);
+      for (const test of entry.tests) {
+        const value = { 'url': entry.url, 'product': entry.product };
+        if (!(test in link)) {
+          link[test] = [];
+        }
+        link[test].push(value);
+      }
     }
-
-    return productVal[productIndex];
+    return link;
   }
 
-  getTriagedMetadataMap(product, test) {
-    var link = {};
-    link[test] = [{ 'url': this.url, 'product': product }];
-    return link;
+  populateDisplayData() {
+    this.displayedMetadata = [];
+    const browserMap = {};
+    for (const entry of this.selectedMetadata) {
+      if (!(entry.product in browserMap)) {
+        browserMap[entry.product] = [];
+      }
+      browserMap[entry.product].push(entry.test);
+    }
+
+    for (const key in browserMap) {
+      this.displayedMetadata.push({ product: key, url: '', tests: browserMap[key] });
+    }
   }
 
   handleTriage() {
     const url = new URL('/api/metadata/triage', window.location);
     const fetchOpts = {
       method: 'PATCH',
-      body: JSON.stringify(this.getTriagedMetadataMap(this.product, this.test)),
+      body: JSON.stringify(this.getTriagedMetadataMap(this.displayedMetadata)),
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json'
@@ -156,7 +183,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         toast.open();
       });
 
-    this.url = '';
+    this.selectedMetadata = [];
   }
 }
 
