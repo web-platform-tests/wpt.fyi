@@ -171,6 +171,9 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 		var keys []Key
 		if productIDFilter != nil {
 			keys, err = clientSideFilter(t.store, product, productIDFilter, from, to, limit)
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			// Otherwise, just run a "GetAll" filter. Expensive.
 			log.Debugf("Falling back to GetAll datastore query.")
@@ -210,10 +213,18 @@ func clientSideFilter(
 	to *time.Time,
 	limit *int) (keys []Key, err error) {
 	log := GetLogger(store.Context())
-	log.Debugf("Loading %v viable runs to filter them.", productIDFilter.Cardinality())
-	keys = make([]Key, 0, productIDFilter.Cardinality())
+	capacity := productIDFilter.Cardinality()
+	if productIDFilter.Cardinality() > MaxKeysPerLookup {
+		log.Warningf("Too many viable runs: %d>%d", productIDFilter.Cardinality(), MaxKeysPerLookup)
+		capacity = MaxKeysPerLookup
+	}
+	log.Debugf("Loading %d viable runs to filter.", capacity)
+	keys = make([]Key, 0, capacity)
 	for key := range productIDFilter.Iter() {
 		keys = append(keys, store.NewIDKey("TestRun", key.(int64)))
+		if len(keys) == capacity {
+			break
+		}
 	}
 	runs := make(TestRuns, len(keys))
 	err = store.GetMulti(keys, runs)
