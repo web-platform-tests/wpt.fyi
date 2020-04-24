@@ -404,7 +404,7 @@ func TestParseVersion(t *testing.T) {
 	assert.Nil(t, v.Revision)
 	assert.Empty(t, v.Channel)
 
-	// FF
+	// Firefox
 	v, err = ParseVersion("65.0a1")
 	assert.Nil(t, err)
 	assert.Equal(t, 65, v.Major)
@@ -421,6 +421,15 @@ func TestParseVersion(t *testing.T) {
 	assert.Equal(t, 3578, *v.Build)
 	assert.Equal(t, 20, *v.Revision)
 	assert.Equal(t, " dev", v.Channel)
+
+	// Safari Technology Preview
+	v, err = ParseVersion("100 preview")
+	assert.Nil(t, err)
+	assert.Equal(t, 100, v.Major)
+	assert.Nil(t, v.Minor)
+	assert.Nil(t, v.Build)
+	assert.Nil(t, v.Revision)
+	assert.Equal(t, " preview", v.Channel)
 }
 
 func TestParseProductSpec(t *testing.T) {
@@ -452,6 +461,11 @@ func TestParseProductSpec_BrowserVersion(t *testing.T) {
 	assert.Equal(t, "chrome", productSpec.BrowserName)
 	assert.Equal(t, "63.0", productSpec.BrowserVersion)
 	assert.Equal(t, "latest", productSpec.Revision)
+
+	productSpec, err = ParseProductSpec("safari-100 preview")
+	assert.Nil(t, err)
+	assert.Equal(t, "safari", productSpec.BrowserName)
+	assert.Equal(t, "100 preview", productSpec.BrowserVersion)
 }
 
 func TestParseProductSpec_OS(t *testing.T) {
@@ -659,7 +673,12 @@ func TestProductSpecMatches(t *testing.T) {
 
 	safariRun := TestRun{}
 	safariRun.BrowserName = "safari"
+	safariRun.BrowserVersion = "100 preview"
 	assert.False(t, chrome.Matches(safariRun))
+
+	safari100, err := ParseProductSpec("safari-100 preview")
+	assert.Nil(t, err)
+	assert.True(t, safari100.Matches(safariRun))
 }
 
 func TestProductSpecMatches_Labels(t *testing.T) {
