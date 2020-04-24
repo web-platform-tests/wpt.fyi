@@ -430,13 +430,15 @@ Search for test results over some set of test runs.
 
 __Parameters__
 
-__`run_ids`__ : Array-separated list of numerical ids associated with the runs
-over which to search. IDs associated with runs can be obtained by querying the
-`/api/runs` API. Defaults to the default runs returned by `/api/runs`.
+__`run_ids`__ : (Optional) A comma-separated list of numerical ids associated
+with the runs over which to search. IDs associated with runs can be obtained by
+querying the `/api/runs` API. Defaults to the default runs returned by
+`/api/runs`. NOTE: This is not the same set of runs as is shown on wpt.fyi by
+default.
 
-__`q`__: Query string for search. Only results data for tests that contain the
-`q` value as a substring of the test name will be returned. Defaults to the
-empty string, which will yield all test results for the selected runs.
+__`q`__: (Optional) A query string for search. Only results data for tests that
+contain the `q` value as a substring of the test name will be returned. Defaults
+to the empty string, which will yield all test results for the selected runs.
 
 #### Examples
 
