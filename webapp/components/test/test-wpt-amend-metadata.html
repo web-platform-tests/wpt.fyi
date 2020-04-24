@@ -12,7 +12,7 @@
 <body>
   <test-fixture id="wpt-amend-metadata-fixture">
     <template>
-      <wpt-amend-metadadta></wpt-amend-metadadta>
+      <wpt-amend-metadata></wpt-amend-metadata>
     </template>
   </test-fixture>
 
@@ -24,34 +24,34 @@ suite('<wpt-amend-metadata>', () => {
   setup(() => {
     appFixture = fixture('wpt-amend-metadata-fixture');
   });
-  suite('compute display metadata', () => {
-    test('getTriagedMetadataMap(displayedMetadata)', () => {
-      displayedMetadata = [
-        { product: "firefox", url: "foo", tests: ["testA", "testB"] },
-        { product: "chrome", url: "bar", tests: ["testA", "testB"] }
-      ];
-      expected = [
-        { "testA": [{ url: "foo", product: "firefox" }, { url: "bar", product: "chrome" }] },
-        { "testB": [{ url: "foo", product: "firefox" }, { url: "bar", product: "chrome" }] }
-      ]
 
-      assert.equal(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
-    });
-    test('populateDisplayData()', () => {
-      appFixture.selectedMetadata = [
-        { product: "firefox", test: "testA" },
-        { product: "firefox", test: "testB" },
-        { product: "chrome",  test: "testA" },
-        { product: "chrome",  test: "testB" }
-      ];
-      expected = [
-        { "testA": [{ url: "foo", product: "firefox" }, { url: "", product: "chrome" }] },
-        { "testB": [{ url: "foo", product: "firefox" }, { url: "", product: "chrome" }] }
-      ]
+	test('getTriagedMetadataMap(displayedMetadata)', () => {
+		let displayedMetadata = [
+			{ product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
+			{ product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
+		];
+		let expected = {
+			'testA': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }],
+			'testB': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }]
+		};
 
-      assert.equal(appFixture.populateDisplayData(), expected);
-    });
-  });
+		assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
+	});
+	test('populateDisplayData()', () => {
+		appFixture.selectedMetadata = [
+			{ product: 'firefox', test: 'testA' },
+			{ product: 'firefox', test: 'testB' },
+			{ product: 'chrome',  test: 'testA' },
+			{ product: 'chrome',  test: 'testB' }
+		];
+		let expected = [
+			{ product: 'firefox', url: '', tests: ['testA', 'testB'] },
+			{ product: 'chrome', url: '', tests: ['testA', 'testB'] }
+		];
+
+    appFixture.populateDisplayData();
+		assert.deepEqual(appFixture.displayedMetadata, expected);
+	});
 });
 </script>
 </body>
