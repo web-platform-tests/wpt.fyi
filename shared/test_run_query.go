@@ -223,6 +223,8 @@ func clientSideFilter(
 	for key := range productIDFilter.Iter() {
 		keys = append(keys, store.NewIDKey("TestRun", key.(int64)))
 		if len(keys) == capacity {
+			// FIXME: This might produce incomplete results.
+			// https://github.com/web-platform-tests/wpt.fyi/pull/1914
 			break
 		}
 	}
