@@ -26,11 +26,11 @@ suite('<wpt-amend-metadata>', () => {
   });
 
   test('getTriagedMetadataMap(displayedMetadata)', () => {
-    let displayedMetadata = [
+    const displayedMetadata = [
       { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
       { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
     ];
-    let expected = {
+    const expected = {
       'testA': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }],
       'testB': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }]
     };
@@ -44,7 +44,7 @@ suite('<wpt-amend-metadata>', () => {
       { product: 'chrome', test: 'testA' },
       { product: 'chrome', test: 'testB' }
     ];
-    let expected = [
+    const expected = [
       { product: 'firefox', url: '', tests: ['testA', 'testB'] },
       { product: 'chrome', url: '', tests: ['testA', 'testB'] }
     ];
