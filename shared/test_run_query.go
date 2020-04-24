@@ -215,7 +215,7 @@ func clientSideFilter(
 	log := GetLogger(store.Context())
 	capacity := productIDFilter.Cardinality()
 	if productIDFilter.Cardinality() > MaxKeysPerLookup {
-		log.Warningf("Too many viable runs: %d>%d", productIDFilter.Cardinality(), MaxKeysPerLookup)
+		log.Warningf("%d viable runs exceed the lookup limit %d", productIDFilter.Cardinality(), MaxKeysPerLookup)
 		capacity = MaxKeysPerLookup
 	}
 	log.Debugf("Loading %d viable runs to filter.", capacity)
