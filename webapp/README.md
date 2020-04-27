@@ -32,7 +32,8 @@ underlying command. For example, to run a specific test only on chrome:
 - `npm run wct -l chrome path/to/test/test-file.html`
 
 ### Running web_components_test
-To run `web_components_test` in any platform, first start a Docker instance. Once the instance is running, execute the following in another terminal:
+To run `web_components_test` in any platform, first start a Docker instance.
+Once the instance is running, execute the following in another terminal:
 ```sh
 ./util/commands.sh
 wptd_exec make web_components_test
