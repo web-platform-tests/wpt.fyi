@@ -73,9 +73,6 @@ func getNewCommitBranchName(ctx context.Context, client *github.Client, sourceOw
 }
 
 func getWptmetadataGitHubInfo(ctx context.Context, client *github.Client) wptmetadataGitHubInfo {
-	sourceOwner := "web-platform-tests"
-	sourceRepo := "wpt-metadata"
-	baseBranch := "master"
 	commitBranch := getNewCommitBranchName(ctx, client, sourceOwner, sourceRepo)
 
 	return wptmetadataGitHubInfo{
