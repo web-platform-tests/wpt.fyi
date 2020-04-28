@@ -91,17 +91,7 @@ func getWptmetadataGitHubInfo(ctx context.Context, client *github.Client) wptmet
 
 func (tm triageMetadata) getCommitBranchRef(sha *string) (ref *github.Reference, err error) {
 	client := tm.githubClient
-	objectSha := sha
-	if *sha == "master" {
-		baseRef, _, err := client.Git.GetRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, "refs/heads/master")
-		if err != nil {
-			return nil, err
-		}
-
-		objectSha = baseRef.Object.SHA
-	}
-
-	newRef := &github.Reference{Ref: github.String("refs/heads/" + tm.commitBranch), Object: &github.GitObject{SHA: objectSha}}
+	newRef := &github.Reference{Ref: github.String("refs/heads/" + tm.commitBranch), Object: &github.GitObject{SHA: sha}}
 	ref, _, err = client.Git.CreateRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, newRef)
 	return ref, err
 }

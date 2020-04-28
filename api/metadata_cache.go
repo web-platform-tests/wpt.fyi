@@ -17,8 +17,6 @@ import (
 
 const metadataCacheKey = "WPT-METADATA"
 
-var fallBackSHA = "master"
-
 type webappMetadataFetcher struct {
 	ctx        context.Context
 	client     *http.Client
@@ -32,9 +30,14 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 		return sha, metadataMap, nil
 	}
 
+	shaKey, err := f.gitHubUtil.GetWPTMetadataMasterSHA()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// CollectMetadataWithURL retrives the content of the wpt-metadata repo from master by default.
 	res, err = shared.CollectMetadataWithURL(f.client, f.url)
-	return &fallBackSHA, res, err
+	return shaKey, res, err
 }
 
 func getMetadataFromMemcache(ctx context.Context, client *http.Client, url string, gitHubUtil shared.GitHubUtil) (sha *string, res map[string][]byte, err error) {
