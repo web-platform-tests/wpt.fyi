@@ -7,6 +7,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -17,52 +18,79 @@ import (
 const metadataCacheKey = "WPT-METADATA"
 
 type webappMetadataFetcher struct {
-	ctx    context.Context
-	client *http.Client
-	url    string
+	ctx        context.Context
+	client     *http.Client
+	url        string
+	gitHubUtil shared.GitHubUtil
 }
 
-func (f webappMetadataFetcher) Fetch() (res map[string][]byte, err error) {
-	metadataMap, err := getMetadataFromMemcache(f.ctx, f.client, f.url)
-	if err == nil && metadataMap != nil {
-		return metadataMap, nil
+func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
+	sha, metadataMap, err := getMetadataFromMemcache(f.ctx, f.client, f.url, f.gitHubUtil)
+	if err == nil && metadataMap != nil && sha != nil {
+		return sha, metadataMap, nil
 	}
 
-	return shared.CollectMetadataWithURL(f.client, f.url)
+	shaKey, err := f.gitHubUtil.GetWPTMetadataMasterSHA()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// CollectMetadataWithURL retrives the content of the wpt-metadata repo from master by default.
+	res, err = shared.CollectMetadataWithURL(f.client, f.url)
+	return shaKey, res, err
 }
 
-func getMetadataFromMemcache(ctx context.Context, client *http.Client, url string) (res map[string][]byte, err error) {
+func getMetadataFromMemcache(ctx context.Context, client *http.Client, url string, gitHubUtil shared.GitHubUtil) (sha *string, res map[string][]byte, err error) {
 	log := shared.GetLogger(ctx)
 	cached, err := memcache.Get(ctx, metadataCacheKey)
 
 	if err != nil && err != memcache.ErrCacheMiss {
 		log.Errorf("Error from getting Metadata in memcache: %s", err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err == nil && cached != nil {
 		// Caches hit; update Metadata.
-		var metadataMap map[string][]byte
-		err = json.Unmarshal(cached.Value, &metadataMap)
+		var metadataSHAMap map[string]map[string][]byte
+		err = json.Unmarshal(cached.Value, &metadataSHAMap)
 		if err != nil {
 			log.Errorf("Error from unmarshaling Metadata in memcache: %s", err.Error())
-			return nil, err
+			return nil, nil, err
 		}
 
-		return metadataMap, nil
+		var keys []string
+		for key := range metadataSHAMap {
+			keys = append(keys, key)
+		}
+
+		if len(keys) != 1 {
+			log.Errorf("Error from getting the wpt-metadata SHA in metadataSHAMap")
+			return nil, nil, errors.New("Error from getting the wpt-metadata SHA in metadataSHAMap")
+		}
+
+		shaKey := keys[0]
+		return &shaKey, metadataSHAMap[shaKey], nil
 	}
 
 	// Caches missed.
+	shaKey, err := gitHubUtil.GetWPTMetadataMasterSHA()
+	if err != nil {
+		log.Errorf("Error from getWPTMetadataMasterSHA in a cache miss: %s", err.Error())
+		return nil, nil, err
+	}
+
 	metadataByteMap, err := shared.CollectMetadataWithURL(client, url)
 	if err != nil {
 		log.Errorf("Error from CollectMetadataWithURL in a cache miss: %s", err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
-	body, err := json.Marshal(metadataByteMap)
+	var metadataSHAMap = make(map[string]map[string][]byte)
+	metadataSHAMap[*shaKey] = metadataByteMap
+	body, err := json.Marshal(metadataSHAMap)
 	if err != nil {
-		log.Errorf("Error from marshaling metadataByteMap in a cache miss: %s", err.Error())
-		return metadataByteMap, nil
+		log.Errorf("Error from marshaling metadataSHAMap in a cache miss: %s", err.Error())
+		return shaKey, metadataByteMap, nil
 	}
 
 	item := &memcache.Item{
@@ -71,5 +99,5 @@ func getMetadataFromMemcache(ctx context.Context, client *http.Client, url strin
 		Expiration: time.Minute * 10,
 	}
 	memcache.Set(ctx, item)
-	return metadataByteMap, nil
+	return shaKey, metadataByteMap, nil
 }
