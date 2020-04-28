@@ -85,7 +85,7 @@ func getMetadataFromMemcache(ctx context.Context, client *http.Client, url strin
 		return nil, nil, err
 	}
 
-	var metadataSHAMap map[string]map[string][]byte
+	var metadataSHAMap = make(map[string]map[string][]byte)
 	metadataSHAMap[*shaKey] = metadataByteMap
 	body, err := json.Marshal(metadataSHAMap)
 	if err != nil {
