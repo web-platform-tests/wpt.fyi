@@ -110,6 +110,9 @@ func TestHandleMetadataTriage_InvalidBody(t *testing.T) {
 }
 
 func TestFilterMetadataHanlder_Success(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../shared/metadata_testdata/gzip_testfile.tar.gz")
 	}
@@ -120,8 +123,12 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
+	sha := "abc"
+	mockgu := sharedtest.NewMockGitHubUtil(mockCtrl)
+	mockgu.EXPECT().GetWPTMetadataMasterSHA().Return(&sha, nil)
+
 	ctx := sharedtest.NewTestContext()
-	fetcher := webappMetadataFetcher{ctx, client, server.URL}
+	fetcher := webappMetadataFetcher{ctx, client, server.URL, mockgu}
 	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 
@@ -168,6 +175,9 @@ func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 }
 
 func TestFilterMetadataHandlerPost_Success(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../shared/metadata_testdata/gzip_testfile.tar.gz")
 	}
@@ -185,8 +195,12 @@ func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
+	sha := "abc"
+	mockgu := sharedtest.NewMockGitHubUtil(mockCtrl)
+	mockgu.EXPECT().GetWPTMetadataMasterSHA().Return(&sha, nil)
+
 	ctx := sharedtest.NewTestContext()
-	fetcher := webappMetadataFetcher{ctx, client, server.URL}
+	fetcher := webappMetadataFetcher{ctx, client, server.URL, mockgu}
 	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 
