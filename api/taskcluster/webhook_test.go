@@ -386,6 +386,7 @@ func TestTaskNameRegex(t *testing.T) {
 	assert.Equal(t, []string{"firefox-beta", "crashtest"}, taskNameRegex.FindStringSubmatch("wpt-firefox-beta-crashtest-2")[1:])
 	assert.Equal(t, []string{"firefox-nightly", "testharness"}, taskNameRegex.FindStringSubmatch("wpt-firefox-nightly-testharness-5")[1:])
 	assert.Equal(t, []string{"firefox-stable", "wdspec"}, taskNameRegex.FindStringSubmatch("wpt-firefox-stable-wdspec-1")[1:])
+	assert.Equal(t, []string{"webkitgtk_minibrowser-nightly", "testharness"}, taskNameRegex.FindStringSubmatch("wpt-webkitgtk_minibrowser-nightly-testharness-2")[1:])
 	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-foo-bar--1"))
 	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-foo-bar-"))
 }
