@@ -27,7 +27,7 @@ const flagPendingChecks = "pendingChecks"
 
 var (
 	// The pattern is based on task names in https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml
-	taskNameRegex = regexp.MustCompile(`^wpt-([a-z]+-[a-z]+)-([a-z]+(?:-[a-z]+)*)(?:-\d+)?$`)
+	taskNameRegex = regexp.MustCompile(`^wpt-([a-z_]+-[a-z]+)-([a-z]+(?:-[a-z]+)*)(?:-\d+)?$`)
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
