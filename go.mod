@@ -21,7 +21,7 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/securecookie v1.1.1
 	github.com/karrick/godirwalk v1.15.6 // indirect
-	github.com/sirupsen/logrus v1.5.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/taskcluster/httpbackoff/v3 v3.1.0 // indirect
