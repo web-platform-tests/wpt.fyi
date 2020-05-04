@@ -17,7 +17,7 @@ import (
 // MetadataFetcher is an abstract interface that encapsulates the Fetch() method. Fetch() fetches metadata
 // for webapp and searchcache.
 type MetadataFetcher interface {
-	Fetch() (res map[string][]byte, err error)
+	Fetch() (sha *string, res map[string][]byte, err error)
 }
 
 // CollectMetadataWithURL iterates through wpt-metadata repository and returns a

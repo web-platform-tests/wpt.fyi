@@ -32,7 +32,13 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
 	logger := shared.GetLogger(ctx)
-	fetcher := webappMetadataFetcher{ctx: ctx, client: client, url: shared.MetadataArchiveURL}
+	gitHubUtilClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
+	if err != nil {
+		http.Error(w, "Unable to get Github Client for GitHubUtil: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	gitHubUtil := shared.GetGitHubUtil(ctx, gitHubUtilClient)
+	fetcher := webappMetadataFetcher{ctx: ctx, client: client, url: shared.MetadataArchiveURL, gitHubUtil: gitHubUtil}
 	MetadataHandler{logger, fetcher}.ServeHTTP(w, r)
 }
 
@@ -54,7 +60,14 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	git := shared.GetMetadataGithub(githubBotClient, user.GitHubHandle, user.GithuhEmail)
 	log := shared.GetLogger(ctx)
-	fetcher := webappMetadataFetcher{ctx: ctx, client: aeAPI.GetHTTPClient(), url: shared.MetadataArchiveURL}
+	gitHubUtilClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
+	if err != nil {
+		http.Error(w, "Unable to get Github Client for GitHubUtil: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	gitHubUtil := shared.GetGitHubUtil(ctx, gitHubUtilClient)
+	fetcher := webappMetadataFetcher{ctx: ctx, client: aeAPI.GetHTTPClient(), url: shared.MetadataArchiveURL, gitHubUtil: gitHubUtil}
 	tm := shared.GetTriageMetadata(ctx, git, log, fetcher)
 
 	gac := shared.NewGitAccessControl(ctx, ds, githubBotClient, *token)

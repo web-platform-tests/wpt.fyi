@@ -18,13 +18,14 @@ type searchcacheMetadataFetcher struct {
 	url string
 }
 
-func (f searchcacheMetadataFetcher) Fetch() (res map[string][]byte, err error) {
+func (f searchcacheMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
 	if MetadataMapCached != nil {
-		return MetadataMapCached, nil
+		return nil, MetadataMapCached, nil
 	}
 
 	var netClient = &http.Client{
 		Timeout: time.Second * 5,
 	}
-	return shared.CollectMetadataWithURL(netClient, f.url)
+	res, err = shared.CollectMetadataWithURL(netClient, f.url)
+	return nil, res, err
 }
