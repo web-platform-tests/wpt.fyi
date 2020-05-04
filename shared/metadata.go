@@ -57,7 +57,7 @@ func GetMetadataResponse(testRuns []TestRun, log Logger, fetcher MetadataFetcher
 		productSpecs[i] = ProductSpec{ProductAtRevision: run.ProductAtRevision, Labels: run.LabelsSet()}
 	}
 
-	metadata, err := GetMetadataByteMap(log, fetcher)
+	_, metadata, err := GetMetadataByteMap(log, fetcher)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func GetMetadataResponse(testRuns []TestRun, log Logger, fetcher MetadataFetcher
 
 // GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
 func GetMetadataResponseOnProducts(productSpecs ProductSpecs, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
-	metadata, err := GetMetadataByteMap(log, fetcher)
+	_, metadata, err := GetMetadataByteMap(log, fetcher)
 	if err != nil {
 		return nil, err
 	}
@@ -77,15 +77,15 @@ func GetMetadataResponseOnProducts(productSpecs ProductSpecs, log Logger, fetche
 
 // GetMetadataByteMap collects and parses all META.yml files from
 // the wpt-metadata repository.
-func GetMetadataByteMap(log Logger, fetcher MetadataFetcher) (map[string]Metadata, error) {
-	metadataByteMap, err := fetcher.Fetch()
+func GetMetadataByteMap(log Logger, fetcher MetadataFetcher) (*string, map[string]Metadata, error) {
+	sha, metadataByteMap, err := fetcher.Fetch()
 	if err != nil {
 		log.Errorf("Error from FetchMetadata: %s", err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
 	metadata := parseMetadata(metadataByteMap, log)
-	return metadata, nil
+	return sha, metadata, nil
 }
 
 func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Metadata {

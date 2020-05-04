@@ -1,4 +1,6 @@
-# [web-platform-tests dashboard](https://wpt.fyi/) 📈 [![Build Status](https://travis-ci.com/web-platform-tests/wpt.fyi.svg?branch=master)](https://travis-ci.com/web-platform-tests/wpt.fyi)
+# [web-platform-tests dashboard](https://wpt.fyi/) 📈
+
+[![GitHub Actions](https://github.com/web-platform-tests/wpt.fyi/workflows/Continuous%20Integration/badge.svg)](https://github.com/web-platform-tests/wpt.fyi/actions?query=workflow%3A%22Continuous+Integration%22+branch%3Amaster) [![Travis Status](https://travis-ci.com/web-platform-tests/wpt.fyi.svg)](https://travis-ci.com/web-platform-tests/wpt.fyi) [![Python Updates](https://pyup.io/repos/github/web-platform-tests/wpt.fyi/shield.svg)](https://pyup.io/repos/github/web-platform-tests/wpt.fyi/)
 
 wpt.fyi is a dashboard of cross-browser results for [web-platform-tests](https://github.com/web-platform-tests/wpt), the data for which is uploaded by external services, primarily from various CI integrations in the wpt repo.
 
