@@ -286,7 +286,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRu
   }
 
   isTriageModeUpdated(isTriageMode) {
-    this.rows = Object.value(this.rows);
+    this.rows = Object.values(this.rows);
   }
 
   subtestMessage(result, verbose) {
