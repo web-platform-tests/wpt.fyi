@@ -14,9 +14,9 @@ import (
 	"sync"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v31/github"
 	tcurls "github.com/taskcluster/taskcluster-lib-urls"
-	"github.com/taskcluster/taskcluster/clients/client-go/v22/tcqueue"
+	"github.com/taskcluster/taskcluster/v25/clients/client-go/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -26,9 +26,8 @@ const flagTaskclusterAllBranches = "taskclusterAllBranches"
 const flagPendingChecks = "pendingChecks"
 
 var (
-	// This should follow https://github.com/web-platform-tests/wpt/blob/master/.taskcluster.yml
-	// with a notable exception that "*-stability" runs are not included at the moment.
-	taskNameRegex = regexp.MustCompile(`^wpt-(\w+-\w+)-(testharness|reftest|wdspec|results|results-without-changes)(?:-\d+)?$`)
+	// The pattern is based on task names in https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml
+	taskNameRegex = regexp.MustCompile(`^wpt-([a-z]+-[a-z]+)-([a-z]+(?:-[a-z]+)*)(?:-\d+)?$`)
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
@@ -288,11 +287,14 @@ func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo
 
 		matches := taskNameRegex.FindStringSubmatch(task.Task.Metadata.Name)
 		if len(matches) != 3 { // full match, browser-channel, test type
-			log.Debugf("Ignoring unrecognized task: %s", task.Task.Metadata.Name)
+			log.Infof("Ignoring unrecognized task: %s", task.Task.Metadata.Name)
 			continue
 		}
 		product := matches[1]
 		switch matches[2] {
+		case "stability":
+			// Skip stability checks.
+			continue
 		case "results":
 			product += "-" + shared.PRHeadLabel
 		case "results-without-changes":

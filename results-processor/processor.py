@@ -257,9 +257,16 @@ class Processor(object):
         payload = {'id': int(run_id), 'stage': stage}
         if error:
             payload['error'] = error
-        revision = self.report.run_info.get('full_revision_hash')
-        if revision:
-            payload['full_revision_hash'] = revision
+        if self.report.run_info.get('revision'):
+            payload['full_revision_hash'] = self.report.run_info['revision']
+        if self.report.run_info.get('product'):
+            payload['browser_name'] = self.report.run_info['product']
+        if self.report.run_info.get('browser_version'):
+            payload['browser_version'] = self.report.run_info['browser_version']
+        if self.report.run_info.get('os'):
+            payload['os_name'] = self.report.run_info['os']
+        if self.report.run_info.get('os_version'):
+            payload['os_version'] = self.report.run_info['os_version']
         try:
             response = requests.patch(api, auth=self.auth, json=payload)
             response.raise_for_status()

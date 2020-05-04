@@ -68,7 +68,7 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
           <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
           <template is="dom-if" if="[[githubCommitLinks]]">
             <a class="github" href="https://github.com/web-platform-tests/wpt/commit/[[testRun.revision]]">
-              <img src="/static/github.svg">
+              <img src="/static/github.svg" alt="GitHub logo">
               [[sevenCharSHA(testRun.revision)]]
             </a>
           </template>

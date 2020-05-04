@@ -32,7 +32,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         display: flex;
         justify-content: flex-end;
       }
-      .right .pad {
+      .right paper-toggle-button {
         padding: 8px;
       }
       paper-toggle-button {
@@ -43,8 +43,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     </style>
 
     <div class="right">
-      <label class="pad">Expand</label>
-      <paper-toggle-button class="pad" checked="{{isVerbose}}">
+      <paper-toggle-button checked="{{isVerbose}}">
+        Show Details
       </paper-toggle-button>
     </div>
 
@@ -96,7 +96,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   }
 
   static get observers() {
-    return ['loadData(path, testRuns, structuredSearch, onlyShowDifferences)'];
+    return ['loadData(path, testRuns, structuredSearch)'];
   }
 
   async loadData(path, testRuns, structuredSearch) {
@@ -106,16 +106,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       this.fetchTestFile(path, testRuns),
     ]);
 
-    if (resultsTable && searchResults) {
-      const test = searchResults.results.find(r => r.test === path);
-      if (test) {
-        const subtests = new Set(test.subtests);
-        const [first, ...others] = resultsTable;
-        const matches = others.filter(t => subtests.has(t.name));
-        resultsTable = [first, ...matches];
-      }
-    }
-    this.resultsTable = resultsTable;
+    this.resultsTable = this.filterResultsTableBySearch(path, resultsTable, searchResults);
   }
 
   async fetchSearchResults(path, testRuns, structuredSearch) {
@@ -168,27 +159,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     const resultsPerTestRun = await Promise.all(
       testRuns.map(tr => this.loadResultFile(tr)));
 
-    // resultsTable[0].name set after discovering subtests.
-    let resultsTable = [
-      {
-        results: resultsPerTestRun.map(data => {
-          const result = {
-            status: data && data.status,
-            message: data && data.message,
-          };
-          if (this.reftestAnalyzer && data && data.screenshots) {
-            result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
-          }
-          return result;
-        })
-      },
-      {
-        name: 'Duration',
-        results: resultsPerTestRun.map(data => {
-          return { status: timeTaken(data.duration) };
-        }),
-      }
-    ];
+    // Special setup for the first two rows (status + duration).
+    const resultsTable = this.resultsTableHeaders(resultsPerTestRun);
 
     // Setup test name order according to when they appear in run results.
     let allNames = [];
@@ -236,6 +208,43 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     screenshots[this.path.replace(/.html$/, '-ref.html')] = 'sha1:000c495e8f587dac40894d0cacb5a7ca769410c6';
     return response.json()
       .then(r => Object.assign({ screenshots }, r));
+  }
+
+  resultsTableHeaders(resultsPerTestRun) {
+    return [
+      {
+        // resultsTable[0].name will be set later depending on the number of subtests.
+        name: '',
+        results: resultsPerTestRun.map(data => {
+          const result = {
+            status: data && data.status,
+            message: data && data.message,
+          };
+          if (this.reftestAnalyzer && data && data.screenshots) {
+            result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
+          }
+          return result;
+        })
+      },
+      {
+        name: 'Duration',
+        results: resultsPerTestRun.map(data => ({status: data && timeTaken(data.duration), message: null}))
+      }
+    ];
+  }
+
+  filterResultsTableBySearch(path, resultsTable, searchResults) {
+    if (!resultsTable || !searchResults) {
+      return resultsTable;
+    }
+    const test = searchResults.results.find(r => r.test === path);
+    if (!test) {
+      return resultsTable;
+    }
+    const subtests = new Set(test.subtests);
+    const [status, duration, ...others] = resultsTable;
+    const matches = others.filter(t => subtests.has(t.name));
+    return [status, duration, ...matches];
   }
 
   mergeNamesInto(names, allNames) {
@@ -300,4 +309,3 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 window.customElements.define(TestFileResults.is, TestFileResults);
 
 export { TestFileResults };
-

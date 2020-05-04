@@ -147,15 +147,22 @@ func TestUpdatePendingTestRun(t *testing.T) {
 	defer done()
 	a := NewAPI(ctx)
 
+	sha := "0123456789012345678901234567890123456789"
 	key := datastore.NewKey(ctx, "PendingTestRun", "", 1, nil)
 	run := shared.PendingTestRun{
 		ID:         1,
 		CheckRunID: 100,
 		Stage:      shared.StageWptFyiReceived,
+		ProductAtRevision: shared.ProductAtRevision{
+			FullRevisionHash: sha,
+		},
 	}
 	assert.Nil(t, a.UpdatePendingTestRun(run))
 	var run2 shared.PendingTestRun
 	datastore.Get(ctx, key, &run2)
+	assert.Equal(t, shared.StageWptFyiReceived, run2.Stage)
+	assert.Equal(t, sha, run2.FullRevisionHash)
+	assert.Equal(t, sha[:10], run2.Revision)
 
 	// CheckRunID should not be updated; Stage should be transitioned.
 	run.CheckRunID = 0
@@ -163,11 +170,11 @@ func TestUpdatePendingTestRun(t *testing.T) {
 	assert.Nil(t, a.UpdatePendingTestRun(run))
 	var run3 shared.PendingTestRun
 	datastore.Get(ctx, key, &run3)
-
 	assert.Equal(t, int64(100), run3.CheckRunID)
 	assert.Equal(t, shared.StageValid, run3.Stage)
 	assert.Equal(t, run2.Created, run3.Created)
 
+	// Stage cannot be transitioned backwards.
 	run.Stage = shared.StageWptFyiProcessing
 	assert.EqualError(t, a.UpdatePendingTestRun(run),
 		"cannot transition from VALID to WPTFYI_PROCESSING")

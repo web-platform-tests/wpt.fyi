@@ -7,7 +7,6 @@ package shared
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -236,12 +235,12 @@ func (s *PendingTestRunStage) UnmarshalJSON(b []byte) error {
 // PendingTestRun represents a TestRun that has started, but is not yet
 // completed.
 type PendingTestRun struct {
-	ID               int64               `json:"id" datastore:"-"`
-	CheckRunID       int64               `json:"check_run_id" datastore:",omitempty"`
-	FullRevisionHash string              `json:"full_revision_hash"`
-	Uploader         string              `json:"uploader"`
-	Error            string              `json:"error" datastore:",omitempty"`
-	Stage            PendingTestRunStage `json:"stage"`
+	ID int64 `json:"id" datastore:"-"`
+	ProductAtRevision
+	CheckRunID int64               `json:"check_run_id" datastore:",omitempty"`
+	Uploader   string              `json:"uploader"`
+	Error      string              `json:"error" datastore:",omitempty"`
+	Stage      PendingTestRunStage `json:"stage"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -421,70 +420,6 @@ type Browser struct {
 // Token is used for test result uploads.
 type Token struct {
 	Secret string `json:"secret"`
-}
-
-// Manifest represents a JSON blob of all the WPT tests.
-type Manifest struct {
-	Items   ManifestItems `json:"items,omitempty"`
-	Version *int          `json:"version,omitempty"`
-}
-
-// FilterByPath filters all the manifest items by path.
-func (m Manifest) FilterByPath(paths ...string) (result Manifest, err error) {
-	result = m
-	if result.Items.Manual, err = m.Items.Manual.FilterByPath(paths...); err != nil {
-		return result, err
-	}
-	if result.Items.Reftest, err = m.Items.Reftest.FilterByPath(paths...); err != nil {
-		return result, err
-	}
-	if result.Items.TestHarness, err = m.Items.TestHarness.FilterByPath(paths...); err != nil {
-		return result, err
-	}
-	if result.Items.WDSpec, err = m.Items.WDSpec.FilterByPath(paths...); err != nil {
-		return result, err
-	}
-	return result, nil
-}
-
-// ManifestItems groups the different manifest item types.
-type ManifestItems struct {
-	Manual      ManifestItem `json:"manual"`
-	Reftest     ManifestItem `json:"reftest"`
-	TestHarness ManifestItem `json:"testharness"`
-	WDSpec      ManifestItem `json:"wdspec"`
-}
-
-// ManifestItem represents a map of files to item details, for a specific test type.
-type ManifestItem map[string][][]*json.RawMessage
-
-// FilterByPath culls out entries in the ManifestItem that don't have any items with
-// a URL that starts with the given path.
-func (m ManifestItem) FilterByPath(paths ...string) (item ManifestItem, err error) {
-	if m == nil {
-		return nil, nil
-	}
-	filtered := make(ManifestItem)
-	for path, items := range m {
-		match := false
-		for _, item := range items {
-			var url string
-			if err = json.Unmarshal(*item[0], &url); err != nil {
-				return nil, err
-			}
-			for _, prefix := range paths {
-				if strings.Index(url, prefix) == 0 {
-					match = true
-					break
-				}
-			}
-		}
-		if !match {
-			continue
-		}
-		filtered[path] = items
-	}
-	return filtered, nil
 }
 
 // Uploader is a username/password combo accepted by

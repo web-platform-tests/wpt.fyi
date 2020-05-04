@@ -62,15 +62,16 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 
 	log := shared.GetLogger(a.Context())
 	var results, screenshots []string
-	if r.MultipartForm != nil && r.MultipartForm.File != nil && len(r.MultipartForm.File["result_file"]) > 0 {
+	if f := r.MultipartForm; f != nil && f.File != nil && len(f.File["result_file"]) > 0 {
 		// result_file[] payload
-		files := r.MultipartForm.File["result_file"]
-		sFiles := r.MultipartForm.File["screenshot_file"]
+		files := f.File["result_file"]
+		sFiles := f.File["screenshot_file"]
 		log.Debugf("Found %d result files, %d screenshot files", results, screenshots)
 		var err error
 		results, screenshots, err = saveToGCS(a, uploader, files, sFiles)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Errorf("Failed to save files to GCS: %v", err)
+			http.Error(w, "Failed to save files to GCS", http.StatusInternalServerError)
 			return
 		}
 	} else if artifactName := getAzureArtifactName(r.PostForm.Get("result_url")); artifactName != "" {
@@ -78,17 +79,21 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		azureURL := r.PostForm.Get("result_url")
 		log.Debugf("Found Azure URL: %s", azureURL)
 		extraParams["azure_url"] = azureURL
-	} else {
+	} else if len(r.PostForm["result_url"]) > 0 {
 		// General result_url[] payload
 		results = r.PostForm["result_url"]
 		screenshots = r.PostForm["screenshot_url"]
 		log.Debugf("Found %d result URLs, %d screenshot URLs", results, screenshots)
+	} else {
+		log.Errorf("No results found")
+		http.Error(w, "No results found", http.StatusBadRequest)
+		return
 	}
 
 	t, err := a.ScheduleResultsTask(uploader, results, screenshots, extraParams)
 	if err != nil {
-		log.Errorf("%s", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Errorf("Failed to schedule task: %v", err)
+		http.Error(w, "Failed to schedule task", http.StatusInternalServerError)
 		return
 	}
 	log.Infof("Task %s added to queue", t.Name)

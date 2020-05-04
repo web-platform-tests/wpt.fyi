@@ -45,27 +45,28 @@ func TestHandleResultsCreate(t *testing.T) {
 	assert.Nil(t, err)
 	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
 	req.SetBasicAuth("_processor", "secret-token")
-	testRunIn := &shared.TestRun{
-		ID:        12345,
-		TimeStart: time.Date(2018, time.June, 21, 18, 39, 54, 218000000, time.UTC),
-		TimeEnd:   time.Date(2018, time.June, 21, 20, 3, 49, 0, time.UTC),
-		Labels:    []string{"foo", "bar"},
-		ProductAtRevision: shared.ProductAtRevision{
-			Product: shared.Product{
-				BrowserName:    "firefox",
-				BrowserVersion: "59.0",
-				OSName:         "linux",
-				OSVersion:      "4.4",
-			},
-			Revision:         sha[:10],
-			FullRevisionHash: sha,
+	pAtR := shared.ProductAtRevision{
+		Product: shared.Product{
+			BrowserName:    "firefox",
+			BrowserVersion: "59.0",
+			OSName:         "linux",
+			OSVersion:      "4.4",
 		},
+		Revision:         sha[:10],
+		FullRevisionHash: sha,
+	}
+	testRunIn := &shared.TestRun{
+		ID:                12345,
+		TimeStart:         time.Date(2018, time.June, 21, 18, 39, 54, 218000000, time.UTC),
+		TimeEnd:           time.Date(2018, time.June, 21, 20, 3, 49, 0, time.UTC),
+		Labels:            []string{"foo", "bar"},
+		ProductAtRevision: pAtR,
 	}
 	testKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 12345}
 	pendingRun := shared.PendingTestRun{
-		ID:               12345,
-		Stage:            shared.StageValid,
-		FullRevisionHash: sha,
+		ID:                12345,
+		Stage:             shared.StageValid,
+		ProductAtRevision: pAtR,
 	}
 
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
@@ -110,11 +111,21 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	assert.Nil(t, err)
 	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
 	req.SetBasicAuth("_processor", "secret-token")
-	testKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 1}
-	pendingRun := shared.PendingTestRun{
-		ID:               1,
-		Stage:            shared.StageValid,
+	pAtR := shared.ProductAtRevision{
+		Product: shared.Product{
+			BrowserName:    "firefox",
+			BrowserVersion: "59.0",
+			OSName:         "linux",
+		},
+		Revision:         sha[:10],
 		FullRevisionHash: sha,
+	}
+	testRunIn := &shared.TestRun{ProductAtRevision: pAtR}
+	testKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 123}
+	pendingRun := shared.PendingTestRun{
+		ID:                123,
+		Stage:             shared.StageValid,
+		ProductAtRevision: pAtR,
 	}
 
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
@@ -122,7 +133,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	mockS := mock_checks.NewMockAPI(mockCtrl)
 	gomock.InOrder(
 		mockAE.EXPECT().GetUploader("_processor").Return(shared.Uploader{"_processor", "secret-token"}, nil),
-		mockAE.EXPECT().AddTestRun(gomock.Any()).Return(testKey, nil),
+		mockAE.EXPECT().AddTestRun(sharedtest.SameProductSpec(testRunIn.String())).Return(testKey, nil),
 		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("firefox")).Return(nil),
 		mockAE.EXPECT().UpdatePendingTestRun(pendingRun).Return(nil),
 	)

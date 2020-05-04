@@ -39,6 +39,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     border-left: 8px solid white;
   }
   td code {
+    color: black;
     line-height: 1.6em;
     white-space: pre-wrap;
     word-break: break-all;

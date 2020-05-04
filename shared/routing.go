@@ -52,6 +52,20 @@ func WrapPermissiveCORS(h http.HandlerFunc, methods ...string) http.HandlerFunc 
 	return handlers.CORS(opts...)(h).ServeHTTP
 }
 
+// WrapTrustedCORS wraps the given handler func in one that sets
+// an Allow-Credentials CORS header with specified origins and methods on the response.
+func WrapTrustedCORS(h http.HandlerFunc, origins []string, methods []string) http.HandlerFunc {
+	opts := []handlers.CORSOption{
+		handlers.AllowedOrigins(origins),
+		handlers.AllowedHeaders([]string{"Content-Type"}),
+		handlers.AllowCredentials(),
+	}
+	if len(methods) > 0 {
+		opts = append(opts, handlers.AllowedMethods(methods))
+	}
+	return handlers.CORS(opts...)(h).ServeHTTP
+}
+
 // WrapApplicationJSON wraps the given handler func in one that sets a Content-Type
 // header of "text/json" on the response.
 func WrapApplicationJSON(h http.HandlerFunc) http.HandlerFunc {

@@ -390,7 +390,7 @@ func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter Di
 	}
 	body, _ := json.Marshal(diffBody{RunIDs: []int64{before.ID, after.ID}})
 
-	client, _ := d.aeAPI.GetSlowHTTPClient(time.Second * 10)
+	client := d.aeAPI.GetHTTPClientWithTimeout(time.Second * 10)
 	resp, err := client.Post(diffURL.String(), "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return diff, err

@@ -9,6 +9,7 @@ const DisplayNames = (() => {
   ['edge', 'edge-experimental'].forEach(n => m.set(n, 'Edge'));
   ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
+  m.set('servo', 'Servo');
   m.set('uc', 'UC Browser');
   m.set('webkitgtk', 'WebKitGTK');
   // Platforms
@@ -36,7 +37,7 @@ const versionPatterns = Object.freeze({
 });
 
 // The set of all browsers known to the wpt.fyi UI.
-const AllBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari', 'webkitgtk']);
+const AllBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari', 'servo', 'webkitgtk']);
 
 // The list of default browsers used in cases where the user has not otherwise
 // chosen a set of browsers (e.g. which browsers to show runs for). Stored as
@@ -131,6 +132,33 @@ const ProductInfo = (superClass) => class extends superClass {
     return '';
   }
 
+  displayLogo(name, labels) {
+    if (!name) {
+      return;
+    }
+    // TODO: Remove the special case for Servo when it has per-channel logos.
+    if (name !== 'servo' && labels) {
+      labels = new Set(labels);
+      let channel;
+      const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
+      for (const label of candidates) {
+        if (labels.has(label)) {
+          channel = label;
+          break;
+        }
+      }
+      // Fall back to treating 'experimental' as 'dev'.
+      // TODO: Remove after https://github.com/web-platform-tests/wpt.fyi/issues/1539.
+      if (!channel && labels.has('experimental')) {
+        channel = 'dev';
+      }
+      if (channel) {
+        name = `${name}-${channel}`;
+      }
+    }
+    return `/static/${name}_64x64.png`;
+  }
+
   sourceName(product) {
     if (product.labels) {
       return this.displayName(product.labels.find(s => Sources.has(s)));
@@ -167,7 +195,7 @@ const ProductInfo = (superClass) => class extends superClass {
     return parseProduct(name);
   }
 
-  getSpec(product) {
+  getSpec(product, withRevision=true) {
     let spec = product.browser_name;
     if (product.browser_version) {
       spec += `-${product.browser_version}`;
@@ -175,7 +203,7 @@ const ProductInfo = (superClass) => class extends superClass {
     if (product.labels && product.labels.length) {
       spec += `[${product.labels.join(',')}]`;
     }
-    if (product.revision && !this.computeIsLatest(product.revision)) {
+    if (withRevision && product.revision && !this.computeIsLatest(product.revision)) {
       spec += `@${product.revision}`;
     }
     return spec;

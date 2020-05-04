@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v31/github"
 	"github.com/stretchr/testify/assert"
-	"github.com/taskcluster/taskcluster/clients/client-go/v22/tcqueue"
+	"github.com/taskcluster/taskcluster/v25/clients/client-go/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
@@ -120,11 +120,12 @@ func TestParseTaskclusterURL(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_all_success_master(t *testing.T) {
-	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 4)}
+	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 5)}
 	group.Tasks[0].Task.Metadata.Name = "wpt-firefox-nightly-testharness-1"
 	group.Tasks[1].Task.Metadata.Name = "wpt-firefox-nightly-testharness-2"
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
 	group.Tasks[3].Task.Metadata.Name = "wpt-chrome-dev-reftest-1"
+	group.Tasks[4].Task.Metadata.Name = "wpt-chrome-dev-crashtest-1"
 	for i := 0; i < len(group.Tasks); i++ {
 		group.Tasks[i].Status.State = "completed"
 		group.Tasks[i].Status.TaskID = fmt.Sprint(i)
@@ -148,10 +149,12 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 				Results: []string{
 					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_report.json.gz",
 					"https://tc.example.com/api/queue/v1/task/3/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/4/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
 					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
 					"https://tc.example.com/api/queue/v1/task/3/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/4/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
@@ -176,7 +179,7 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 3)}
 	group.Tasks[0].Task.Metadata.Name = "wpt-chrome-dev-results"
-	group.Tasks[1].Task.Metadata.Name = "wpt-chrome-dev-stability"
+	group.Tasks[1].Task.Metadata.Name = "wpt-chrome-dev-stability" // must be skipped
 	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-results-without-changes"
 	for i := 0; i < len(group.Tasks); i++ {
 		group.Tasks[i].Status.State = "completed"
@@ -256,7 +259,7 @@ func TestCreateAllRuns_success(t *testing.T) {
 	defer mockC.Finish()
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return("localhost:8080")
-	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).AnyTimes().Return(&http.Client{}, func() {})
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).AnyTimes().Return(server.Client())
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	t.Run("master", func(t *testing.T) {
@@ -319,7 +322,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
-	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).Times(2).Return(&http.Client{}, func() {})
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).Times(2).Return(server.Client())
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
@@ -355,7 +358,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
 	// Give a very short timeout (instead of the asked 1min) to make tests faster.
-	aeAPI.EXPECT().GetSlowHTTPClient(uc.UploadTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Microsecond}, func() {})
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Microsecond})
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
@@ -377,9 +380,12 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 
 func TestTaskNameRegex(t *testing.T) {
 	assert.Equal(t, []string{"chrome-dev", "results"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results")[1:])
+	assert.Equal(t, []string{"chrome-dev", "results-without-changes"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results-without-changes")[1:])
+	assert.Equal(t, []string{"chrome-dev", "stability"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-stability")[1:])
 	assert.Equal(t, []string{"chrome-stable", "reftest"}, taskNameRegex.FindStringSubmatch("wpt-chrome-stable-reftest-1")[1:])
+	assert.Equal(t, []string{"firefox-beta", "crashtest"}, taskNameRegex.FindStringSubmatch("wpt-firefox-beta-crashtest-2")[1:])
 	assert.Equal(t, []string{"firefox-nightly", "testharness"}, taskNameRegex.FindStringSubmatch("wpt-firefox-nightly-testharness-5")[1:])
 	assert.Equal(t, []string{"firefox-stable", "wdspec"}, taskNameRegex.FindStringSubmatch("wpt-firefox-stable-wdspec-1")[1:])
-	assert.Equal(t, []string{"chrome-dev", "results-without-changes"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results-without-changes")[1:])
-	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-stability"))
+	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-foo-bar--1"))
+	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-foo-bar-"))
 }

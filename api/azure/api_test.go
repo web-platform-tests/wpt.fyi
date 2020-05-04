@@ -15,9 +15,9 @@ import (
 	"strings"
 	"testing"
 
-	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v31/github"
+	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
@@ -90,7 +90,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	azureAPI := mock_azure.NewMockAPI(mockCtrl)
 	serverURL, _ := url.Parse(server.URL)
 	azureAPI.EXPECT().GetAzureArtifactsURL(repoOwner, repoName, int64(123)).Return(server.URL + "/123/artifacts")
-	azureAPI.EXPECT().GetBuild(repoOwner, repoName, int64(123)).Return(&build)
+	azureAPI.EXPECT().GetBuild(repoOwner, repoName, int64(123)).Return(&build, nil)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return(serverURL.Host)
@@ -98,7 +98,7 @@ func TestHandleCheckRunEvent(t *testing.T) {
 	aeAPI.EXPECT().GetResultsUploadURL().Return(uploadURL)
 	aeAPI.EXPECT().GetUploader("azure").Return(shared.Uploader{Username: "azure", Password: "123"}, nil)
 	aeAPI.EXPECT().GetHTTPClient().AnyTimes().Return(server.Client())
-	aeAPI.EXPECT().GetSlowHTTPClient(gomock.Any()).AnyTimes().Return(server.Client(), func() {})
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(gomock.Any()).AnyTimes().Return(server.Client())
 
 	log, hook := logrustest.NewNullLogger()
 	ctx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), log)

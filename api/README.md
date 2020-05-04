@@ -16,9 +16,6 @@ the endpoints can be found in `routes.go`.
  - [/api/results](#apiresults)
  - [/api/interop](#apiinterop)
  - [/api/manifest](#apimanifest)
- - [/api/revisions/epochs](#apirevisionsepochs)
- - [/api/revisions/latest](#apirevisionslatest)
- - [/api/revisions/list](#apirevisionslist)
  - [/api/search](#apisearch)
  - [/api/metadata](#apimetadata)
 
@@ -213,6 +210,10 @@ Computes a summary JSON blob of the differences between two TestRun summary blob
 in the format of an array of [improved, regressed, total-delta].
 
 __Parameters__
+
+__`run_ids`__ : Exactly two numerical IDs for the "before" and "after" runs (in
+that order), separted by a comma. IDs associated with runs can be obtained by
+querying the `/api/runs` API. This overrides the `before` and `after` params.
 
 __`before`__ : [product]@[sha] spec for the TestRun to use as the before state.
 
@@ -421,256 +422,6 @@ labels are "experimental" and "stable" (the release channel of the tested browse
 
 This is an *internal* endpoint used by the results processor.
 
-## Announcement of revisions-of-interest
-
-The `/api/revisions` namespace contains APIs for accessing WPT
-_revisions-of-interest_. The primary use case for this API is synchronizing the
-WPT revision used by active test runners.
-
-In rare cases, [this namespace may go offline without advanced
-notice](https://github.com/web-platform-tests/wpt.fyi/issues/802). Users should
-allow 10 minutes for the service to return before reporting an issue.
-
-### /api/revisions/epochs
-
-Get the collection of epochs over which revisions are announced. For example,
-the `two_hourly` epoch announces the last revision prior to every two-hour
-interval (for each day: last revision prior to midnight, 2AM, 4AM, etc.). Weeks
-start on Monday. All epochs calculated relative to UTC times.
-
-__Parameters__
-
-None
-
-<details><summary><b>Example JSON</b></summary>
-
-```json
-[
-  {
-    "id": "weekly",
-    "label": "Once per week (weekly)",
-    "description": "The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Monday.",
-    "min_duration_sec": 604800,
-    "max_duration_sec": 604800
-  },
-  {
-    "id": "daily",
-    "label": "Once per day (daily)",
-    "description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
-    "min_duration_sec": 86400,
-    "max_duration_sec": 86400
-  },
-  {
-    "id": "eight_hourly",
-    "label": "Once every eight hours",
-    "description": "The last PR merge commit of eight-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
-    "min_duration_sec": 28800,
-    "max_duration_sec": 28800
-  },
-  {
-    "id": "four_hourly",
-    "label": "Once every four hours",
-    "description": "The last PR merge commit of four-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:04:00, etc..",
-    "min_duration_sec": 14400,
-    "max_duration_sec": 14400
-  },
-  {
-    "id": "two_hourly",
-    "label": "Once every two hours",
-    "description": "The last PR merge commit of two-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:02:00, etc..",
-    "min_duration_sec": 7200,
-    "max_duration_sec": 7200
-  },
-  {
-    "id": "hourly",
-    "label": "Once per hour (hourly)",
-    "description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
-    "min_duration_sec": 3600,
-    "max_duration_sec": 3600
-  }
-]
-```
-
-</details>
-
-### /api/revisions/latest
-
-Get the latest announced revision for all epochs. For convenience, the metadata
-for the epochs is included as well.
-
-__Parameters__
-
-None
-
-<details><summary><b>Example JSON</b></summary>
-
-```json
-{
-  "revisions": {
-    "daily": {
-      "hash": "5462552a420cba8886cf50bb9d9674d7a79fdc4e",
-      "commit_time": "2018-08-13T23:36:57Z"
-    },
-    "eight_hourly": {
-      "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-      "commit_time": "2018-08-14T15:14:39Z"
-    },
-    "four_hourly": {
-      "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-      "commit_time": "2018-08-14T15:14:39Z"
-    },
-    "hourly": {
-      "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-      "commit_time": "2018-08-14T15:14:39Z"
-    },
-    "two_hourly": {
-      "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-      "commit_time": "2018-08-14T15:14:39Z"
-    },
-    "weekly": {
-      "hash": "d31eacaff0c4d96f8c125c21faac6e0f75dd683c",
-      "commit_time": "2018-08-11T18:20:16Z"
-    }
-  },
-  "epochs": [
-    {
-      "id": "hourly",
-      "label": "Once per hour (hourly)",
-      "description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
-      "min_duration_sec": 3600,
-      "max_duration_sec": 3600
-    },
-    {
-      "id": "two_hourly",
-      "label": "Once every two hours",
-      "description": "The last PR merge commit of two-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:02:00, etc..",
-      "min_duration_sec": 7200,
-      "max_duration_sec": 7200
-    },
-    {
-      "id": "four_hourly",
-      "label": "Once every four hours",
-      "description": "The last PR merge commit of four-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:04:00, etc..",
-      "min_duration_sec": 14400,
-      "max_duration_sec": 14400
-    },
-    {
-      "id": "eight_hourly",
-      "label": "Once every eight hours",
-      "description": "The last PR merge commit of eight-hour partition of the day, by UTC commit timestamp on master. E.g., epoch changes at 00:00:00, 00:08:00, etc..",
-      "min_duration_sec": 28800,
-      "max_duration_sec": 28800
-    },
-    {
-      "id": "daily",
-      "label": "Once per day (daily)",
-      "description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
-      "min_duration_sec": 86400,
-      "max_duration_sec": 86400
-    },
-    {
-      "id": "weekly",
-      "label": "Once per week (weekly)",
-      "description": "The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Monday.",
-      "min_duration_sec": 604800,
-      "max_duration_sec": 604800
-    }
-  ]
-}
-```
-
-</details>
-
-### /api/revisions/list
-
-List a particular range of revision. This API allows the client to query for
-announced revisions for particular epochs, a particular time range, etc..
-
-__Parameters__
-
-__`epochs`__ : A potentially repeated parameter. Each parameter value contains
-the `id` of some epoch known by the announcer. Defaults to all known epochs.
-
-__`num_revisions`__: The number of epochal revisions _for each epoch in `epochs`
-values_ to include in the response. Defaults to 100. Response will include an
-`error` field when fewer than the requested number could be found for some
-epoch(s).
-
-__`at`__ : An RFC3339-encoded timestamp describing the upper limit on the time
-range for fetching epochal revisions. Defaults to now.
-
-__`start`__: An RFC3339-encoded timestamp describing the lower limit on the time
-range for fetching epochal revisions. Defaults to the date which is
-`num_revisions * longest(epochs).max_duration_sec` seconds prior to now.
-
-#### Examples
-
-- https://wpt.fyi/api/revisions/list?epochs=hourly&epochs=two_hourly&num_revisions=10&at=2018-01-10T00:00:00Z&start=2018-01-01T00:00:00Z
-- https://wpt.fyi/api/revisions/list?epochs=daily&num_revisions=10
-
-<details><summary><b>Example JSON</b></summary>
-
-```json
-{
-  "revisions": {
-    "daily": [
-      {
-        "hash": "5462552a420cba8886cf50bb9d9674d7a79fdc4e",
-        "commit_time": "2018-08-13T23:36:57Z"
-      },
-      {
-        "hash": "d31eacaff0c4d96f8c125c21faac6e0f75dd683c",
-        "commit_time": "2018-08-11T18:20:16Z"
-      },
-      {
-        "hash": "b382ac7192087da0a7439902e20be76ab7587ee8",
-        "commit_time": "2018-08-10T21:32:20Z"
-      },
-      {
-        "hash": "9f51afc215d4f882a7ae069494ed37ea2c9503b1",
-        "commit_time": "2018-08-09T22:03:24Z"
-      }
-    ],
-    "hourly": [
-      {
-        "hash": "1f8b6c9a44e5c6b64bac140c542b570360f886ac",
-        "commit_time": "2018-08-14T15:14:39Z"
-      },
-      {
-        "hash": "39aac0cde328471b8a97b136c26a5293f55771b3",
-        "commit_time": "2018-08-14T14:56:57Z"
-      },
-      {
-        "hash": "c02862684bb2faac9000b1ec1ad785464c97f5d9",
-        "commit_time": "2018-08-14T13:19:39Z"
-      },
-      {
-        "hash": "a20165544242305af9b699fbe5d1be2ec78243cd",
-        "commit_time": "2018-08-14T10:12:12Z"
-      }
-    ]
-  },
-  "epochs": [
-    {
-      "id": "hourly",
-      "label": "Once per hour (hourly)",
-      "description": "The last PR merge commit of each hour, by UTC commit timestamp on master.",
-      "min_duration_sec": 3600,
-      "max_duration_sec": 3600
-    },
-    {
-      "id": "daily",
-      "label": "Once per day (daily)",
-      "description": "The last PR merge commit of each day, by UTC commit timestamp on master.",
-      "min_duration_sec": 86400,
-      "max_duration_sec": 86400
-    }
-  ]
-}
-```
-
-</details>
-
 ## Querying test results
 
 ### /api/search
@@ -679,13 +430,15 @@ Search for test results over some set of test runs.
 
 __Parameters__
 
-__`run_ids`__ : Array-separated list of numerical ids associated with the runs
-over which to search. IDs associated with runs can be obtained by querying the
-`/api/runs` API. Defaults to the default runs returned by `/api/runs`.
+__`run_ids`__ : (Optional) A comma-separated list of numerical ids associated
+with the runs over which to search. IDs associated with runs can be obtained by
+querying the `/api/runs` API. Defaults to the default runs returned by
+`/api/runs`. NOTE: This is not the same set of runs as is shown on wpt.fyi by
+default.
 
-__`q`__: Query string for search. Only results data for tests that contain the
-`q` value as a substring of the test name will be returned. Defaults to the
-empty string, which will yield all test results for the selected runs.
+__`q`__: (Optional) A query string for search. Only results data for tests that
+contain the `q` value as a substring of the test name will be returned. Defaults
+to the empty string, which will yield all test results for the selected runs.
 
 #### Examples
 
@@ -845,3 +598,50 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 }
 ```
 </details>
+
+### /api/metadata/triage
+
+This API is available for trusted third parties.
+
+To use the Triage Metadata API, you first need to sign in to [wpt.fyi](https://wpt.fyi/) (top-right corner; 'Sign in with GitHub'). For more information on wpt.fyi login, see [here](https://docs.google.com/document/d/1iRkaK6cGgXp3DKbNbPMVsYGMaOHO-5CfqEuLPUR_2HM).
+
+The logged-in user also needs to belong to the ['web-platform-tests' GitHub organization](https://github.com/orgs/web-platform-tests/people). To join, please [file an issue](https://github.com/web-platform-tests/wpt/issues/new?), including the reason you need access to the Triage Metadata API.
+
+Once logged in, you can send a request to /api/metadata/triage to triage metadata. This endpoint only accepts PATCH requests and appends a triage JSON object to the existing Metadata YML files. The JSON object is a flattened YAML `Links` structure that is keyed by test name [Test path](https://docs.google.com/document/d/1oWYVkc2ztANCGUxwNVTQHlWV32zq6Ifq9jkkbYNbSAg/edit#heading=h.t7ysbpr8er1y); see below for an example.
+
+This endpoint returns the URL of a PR that is created in the wpt-metadata repo.
+
+<details><summary><b>Example JSON Body</b></summary>
+
+```json
+{
+  "/FileAPI/blob/Blob-constructor.html": [
+    {
+      "url": "https://github.com/web-platform-tests/results-collection/issues/661",
+      "product": "chrome",
+      "results:" [
+        {
+          "subtest": "Blob with type \"image/gif;\"",
+          "status": 6
+        },
+        {
+          "subtest": "Invalid contentType (\"text/plain\")",
+          "status": 0
+        }
+      ]
+    }
+  ],
+  "/service-workers/service-worker/fetch-request-css-base-url.https.html": [
+    {
+      "url": "https://bugzilla.mozilla.org/show_bug.cgi?id=1201160",
+      "product": "firefox",
+    }
+  ],
+  "/service-workers/service-worker/fetch-request-css-images.https.html": [
+    {
+      "url": "https://bugzilla.mozilla.org/show_bug.cgi?id=1532331",
+      "product": "firefox"
+    }
+  ]
+}
+```

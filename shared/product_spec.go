@@ -78,6 +78,8 @@ func (p ProductSpec) DisplayName() string {
 		return "Firefox"
 	case "safari":
 		return "Safari"
+	case "servo":
+		return "Servo"
 	case "webkitgtk":
 		return "WebKitGTK"
 	default:
@@ -161,4 +163,9 @@ func (p *ProductSpec) UnmarshalYAML(unmarshal func(interface{}) error) (err erro
 	}
 	*p, err = ParseProductSpec(s)
 	return err
+}
+
+// MarshalYAML serializes a ProductSpec into a YAML string.
+func (p ProductSpec) MarshalYAML() (interface{}, error) {
+	return p.String(), nil
 }

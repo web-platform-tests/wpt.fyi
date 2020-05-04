@@ -14,6 +14,10 @@ import (
 // ErrEntityAlreadyExists is returned by Datastore.Insert when the entity already exists.
 var ErrEntityAlreadyExists = errors.New("datastore: entity already exists")
 
+// MaxKeysPerLookup is the max number of keys allowed per lookup (e.g. GetMulti).
+// https://cloud.google.com/datastore/docs/concepts/limits
+const MaxKeysPerLookup = 1000
+
 // Key abstracts an int64 based datastore.Key
 type Key interface {
 	IntID() int64

@@ -97,11 +97,25 @@ func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {
 		if newRun.CheckRunID != 0 {
 			run.CheckRunID = newRun.CheckRunID
 		}
-		if newRun.FullRevisionHash != "" {
-			run.FullRevisionHash = newRun.FullRevisionHash
-		}
 		if newRun.Uploader != "" {
 			run.Uploader = newRun.Uploader
+		}
+		// ProductAtRevision
+		if newRun.BrowserName != "" {
+			run.BrowserName = newRun.BrowserName
+		}
+		if newRun.BrowserVersion != "" {
+			run.BrowserVersion = newRun.BrowserVersion
+		}
+		if newRun.OSName != "" {
+			run.OSName = newRun.OSName
+		}
+		if newRun.OSVersion != "" {
+			run.OSVersion = newRun.OSVersion
+		}
+		if newRun.FullRevisionHash != "" {
+			run.Revision = newRun.FullRevisionHash[:10]
+			run.FullRevisionHash = newRun.FullRevisionHash
 		}
 
 		if run.Created.IsZero() {
@@ -152,10 +166,12 @@ func (a apiImpl) ScheduleResultsTask(
 	}
 
 	pendingRun := shared.PendingTestRun{
-		ID:               key.IntID(),
-		Stage:            shared.StageWptFyiReceived,
-		Uploader:         uploader,
-		FullRevisionHash: extraParams["revision"],
+		ID:       key.IntID(),
+		Stage:    shared.StageWptFyiReceived,
+		Uploader: uploader,
+		ProductAtRevision: shared.ProductAtRevision{
+			FullRevisionHash: extraParams["revision"],
+		},
 	}
 	if err := a.UpdatePendingTestRun(pendingRun); err != nil {
 		return nil, err

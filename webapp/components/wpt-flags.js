@@ -12,13 +12,6 @@ import '../node_modules/@polymer/paper-item/paper-item.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTEnvironmentFlags } from '../dynamic-components/wpt-env-flags.js';
 
-const $_documentContainer = document.createElement('template');
-
-$_documentContainer.innerHTML = `<dom-module id="wpt-flags">
-
-</dom-module>`;
-
-document.head.appendChild($_documentContainer.content);
 window.wpt = window.wpt || {};
 
 /* global wpt */
@@ -33,6 +26,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
+      'githubLogin',
       'interopScoreColumn',
       'permalinks',
       'processorTab',
@@ -46,6 +40,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showTestRefURL',
       'structuredQueries',
       'searchPRsForDirectories',
+      'triageMetadataUI',
       'webPlatformTestsLive',
     ];
   }
@@ -56,6 +51,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'checksAllUsers',
       'diffRenames',
       'failChecksOnRegression',
+      'githubLogin',
       'ignoreHarnessInTotal',
       'onlyChangesAsRegressions',
       'paginationTokens',
@@ -245,12 +241,22 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{displayMetadata}}">
-        Show metadata Information on wpt.fyi result page.
+        Show metadata Information on the wpt.fyi result page.
+      </paper-checkbox>
+    </paper-item>
+      <paper-item>
+      <paper-checkbox checked="{{triageMetadataUI}}">
+        Show Triage Metadata UI on the wpt.fyi result page.
       </paper-checkbox>
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{processorTab}}">
         Show the "Processor" (status) tab.
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{githubLogin}}">
+        Enable GitHub OAuth login
       </paper-checkbox>
     </paper-item>
 `;

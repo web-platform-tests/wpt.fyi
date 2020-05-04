@@ -34,8 +34,8 @@ const MaxCountMaxValue = 500
 // MaxCountMinValue is the minimum allowed value for the max-count param.
 const MaxCountMinValue = 1
 
-// SHARegex is a regex for 7 to 40 char prefix of a git hash.
-var SHARegex = regexp.MustCompile("[0-9a-fA-F]{7,40}")
+// SHARegex is the pattern for a valid SHA1 hash that's at least 7 characters long.
+var SHARegex = regexp.MustCompile(`^[0-9a-fA-F]{7,40}$`)
 
 // ParseSHAParam parses and validates any 'sha' param(s) for the request.
 func ParseSHAParam(v url.Values) (SHAs, error) {
@@ -535,8 +535,7 @@ func ParsePRParam(v url.Values) (*int, error) {
 	return ParseIntParam(v, "pr")
 }
 
-// ParseQueryFilterParams parses shared params for the search and autocomplete
-// APIs.
+// ParseQueryFilterParams parses shared params for the search APIs.
 func ParseQueryFilterParams(v url.Values) (filter QueryFilter, err error) {
 	keys, err := ParseRunIDsParam(v)
 	if err != nil {

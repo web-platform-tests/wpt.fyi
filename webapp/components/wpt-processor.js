@@ -4,24 +4,30 @@
  * found in the LICENSE file.
  */
 
+import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import '../node_modules/@vaadin/vaadin-button/vaadin-button.js';
+import '../node_modules/@vaadin/vaadin-context-menu/vaadin-context-menu.js';
+import '../node_modules/@vaadin/vaadin-grid/vaadin-grid.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
-import { timeAgo } from './utils.js';
+import { ProductInfo } from './product-info.js';
 
-class WPTProcessor extends LoadingState(PolymerElement) {
+class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
   static get template() {
     return html`
     <style>
-      table {
-        width: 100%;
-        max-width: 1200px;
+      :host {
+        display: flex;
+        flex-direction: column;
       }
-      td {
-        text-align: center;
+      #before-grid p {
+        float: left;
+      }
+      #before-grid vaadin-context-menu {
+        float: right;
       }
       .timestamp {
         text-align: right;
@@ -38,6 +44,9 @@ class WPTProcessor extends LoadingState(PolymerElement) {
       paper-tab {
         --paper-tab-ink: var(--paper-blue-300);
       }
+      vaadin-grid {
+        flex-grow: 1;
+      }
     </style>
 
     <paper-tabs selected="{{selectedTab}}">
@@ -45,32 +54,58 @@ class WPTProcessor extends LoadingState(PolymerElement) {
       <paper-tab>Invalid runs</paper-tab>
     </paper-tabs>
 
-    <template is="dom-if" if="[[testRuns.length]]">
-      <table>
-        <thead>
-          <tr>
-            <th width="120">ID</th>
-            <th width="120">SHA</th>
-            <th colspan=2>Updated</th>
-            <th colspan=2>Created</th>
-            <th>Stage</th>
-            <th>Uploader</th>
-          </tr>
-        </thead>
-        <tbody>
-        <template is="dom-repeat" items="[[testRuns]]" as="run">
-          <tr>
-            <td>[[ run.id ]]</td>
-            <td title="[[run.full_revision_hash]]">[[ shortSHA(run.full_revision_hash) ]]</td>
-            <td class="timestamp">[[ timestamp(run.updated) ]]</td>
-            <td class="time-ago">[[ timeAgo(run.updated) ]]</td>
-            <td class="timestamp">[[ timestamp(run.created) ]]</td>
-            <td class="time-ago">[[ timeAgo(run.created) ]]</td>
-            <td title="[[run.error]]">[[ run.stage ]]</td>
-            <td>[[ run.uploader ]]</td>
-          </tr>
+    <template is="dom-if" if="[[testRuns.length]]" on-dom-change="refreshContextMenu">
+      <x-data-provider data-provider="[[testRuns]]"></x-data-provider>
+
+      <div id="before-grid">
+        <p>Note: timestamps are displayed in your local timezone.</p>
+        <vaadin-context-menu open-on="click">
+          <vaadin-button theme="icon" aria-label="Select columns">
+            <iron-icon icon="icons:menu"></iron-icon>
+          </vaadin-button>
+        </vaadin-context-menu>
+      </div>
+
+      <vaadin-grid aria-label="Test runs" items="[[testRuns]]">
+        <vaadin-grid-column auto-width header="ID">
+          <template>[[item.id]]</template>
+        </vaadin-grid-column>
+        <!-- TODO(Hexcles): Show this column by default when we have data. -->
+        <vaadin-grid-column auto-width header="GitHub Check Run" hidden>
+          <template>[[item.check_run_id]]</template>
+        </vaadin-grid-column>
+        <vaadin-grid-column auto-width header="Product">
+          <template>[[_product(item)]]</template>
+        </vaadin-grid-column>
+        <!-- Set explicit width to only show the prefix of a SHA, but still allow find-in-page. -->
+        <vaadin-grid-column width="10em" header="SHA">
+          <template><code>[[item.full_revision_hash]]</code></template>
+        </vaadin-grid-column>
+        <vaadin-grid-column auto-width header="Uploader">
+          <template>[[item.uploader]]</template>
+        </vaadin-grid-column>
+        <vaadin-grid-column auto-width header="Created">
+          <template>[[_timestamp(item.created)]]</template>
+        </vaadin-grid-column>
+        <vaadin-grid-column auto-width header="Uploaded">
+          <template>[[_timestamp(item.updated)]]</template>
+        </vaadin-grid-column>
+        <vaadin-grid-column auto-width header="Stage">
+          <template>[[item.stage]]</template>
+        </vaadin-grid-column>
+
+        <vaadin-grid-column auto-width header="Show error">
+          <template class="header">
+            Show error <vaadin-checkbox aria-label="Show all" on-checked-changed="toggleAllDetails" id="show-all"></vaadin-checkbox>
+          </template>
+          <template>
+            <vaadin-checkbox class="show-details" aria-label$="Show error for [[item.id]]" checked="{{detailsOpened}}"></vaadin-checkbox>
+          </template>
+        </vaadin-grid-column>
+        <template class="row-details">
+          <code>[[item.error]]</code>
         </template>
-      </table>
+      </vaadin-grid>
     </template>
 
     <template is="dom-if" if="[[!testRuns.length]]">
@@ -126,23 +161,65 @@ class WPTProcessor extends LoadingState(PolymerElement) {
       throw 'Failed to fetch pending runs.';
     }
     this.testRuns = await r.json();
+    const showAll = this.shadowRoot.querySelector('#show-all');
+    if (showAll) {
+      showAll.checked = false;
+    }
   }
 
-  shortSHA(sha) {
-    return sha.substr(0, 7);
+  _product(item) {
+    // Polymer data binding does not recognize boolean literals as arguments to
+    // computed bindings, so we wrap the function call here.
+    return this.getSpec(item, /* withRevision */ false);
   }
 
-  timestamp(date) {
+  _timestamp(date) {
     const opts = {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+      dateStyle: 'short',
+      timeStyle: 'medium',
     };
     return new Date(date).toLocaleDateString('en-US', opts);
   }
 
-  timeAgo(date) {
-    return timeAgo(date);
+  refreshContextMenu(e) {
+    if (!e.target.if) {
+      // Early return if there is nothing to display.
+      return;
+    }
+    const grid = this.shadowRoot.querySelector('vaadin-grid');
+    const columns = this.shadowRoot.querySelectorAll('vaadin-grid-column');
+    const contextMenu = this.shadowRoot.querySelector('vaadin-context-menu');
+    contextMenu.renderer = function(root) {
+      root.innerHTML = '';
+      columns.forEach(function(column) {
+        const checkbox = document.createElement('vaadin-checkbox');
+        checkbox.style.display = 'block';
+        checkbox.textContent = column.header;
+        checkbox.checked = !column.hidden;
+        checkbox.addEventListener('checked-changed', function() {
+          column.hidden = !checkbox.checked;
+          // Adjust auto-width columns.
+          grid.recalculateColumnWidths();
+        });
+        // Prevent the context menu from closing when clicking a checkbox
+        checkbox.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+        root.appendChild(checkbox);
+      });
+    };
+  }
+
+  toggleAllDetails(e) {
+    const grid = this.shadowRoot.querySelector('vaadin-grid');
+    // checked
+    if (e.detail.value) {
+      grid.detailsOpenedItems = this.testRuns;
+    } else {
+      grid.detailsOpenedItems = [];
+    }
+    // Force a render to propagate {{detailsOpened}} to checked correctly.
+    grid.render();
   }
 }
 

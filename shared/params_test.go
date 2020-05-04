@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	mapset "github.com/deckarep/golang-set"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseSHAParam(t *testing.T) {
@@ -50,15 +50,26 @@ func TestParseSHAParam_FullSHA(t *testing.T) {
 	assert.Equal(t, sha, runSHA.FirstOrLatest())
 }
 
-func TestParseSHAParam_NonSHA(t *testing.T) {
+func TestParseSHAParam_TooShortSHA(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=123", nil)
 	_, err := ParseSHAParam(r.URL.Query())
 	assert.NotNil(t, err)
 }
 
-func TestParseSHAParam_NonSHA_2(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=zapper0123", nil)
+func TestParseSHAParam_TooLongSHA(t *testing.T) {
+	sha := "0123456789aaaaabbbbbcccccdddddeeeeefffff1"
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha="+sha, nil)
 	_, err := ParseSHAParam(r.URL.Query())
+	assert.NotNil(t, err)
+}
+
+func TestParseSHAParam_NonSHAs(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://wpt.fyi/?sha=xabcd0123", nil)
+	_, err := ParseSHAParam(r.URL.Query())
+	assert.NotNil(t, err)
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/?sha=abcd0123x", nil)
+	_, err = ParseSHAParam(r.URL.Query())
 	assert.NotNil(t, err)
 }
 
@@ -393,7 +404,7 @@ func TestParseVersion(t *testing.T) {
 	assert.Nil(t, v.Revision)
 	assert.Empty(t, v.Channel)
 
-	// FF
+	// Firefox
 	v, err = ParseVersion("65.0a1")
 	assert.Nil(t, err)
 	assert.Equal(t, 65, v.Major)
@@ -410,6 +421,15 @@ func TestParseVersion(t *testing.T) {
 	assert.Equal(t, 3578, *v.Build)
 	assert.Equal(t, 20, *v.Revision)
 	assert.Equal(t, " dev", v.Channel)
+
+	// Safari Technology Preview
+	v, err = ParseVersion("100 preview")
+	assert.Nil(t, err)
+	assert.Equal(t, 100, v.Major)
+	assert.Nil(t, v.Minor)
+	assert.Nil(t, v.Build)
+	assert.Nil(t, v.Revision)
+	assert.Equal(t, " preview", v.Channel)
 }
 
 func TestParseProductSpec(t *testing.T) {
@@ -441,6 +461,11 @@ func TestParseProductSpec_BrowserVersion(t *testing.T) {
 	assert.Equal(t, "chrome", productSpec.BrowserName)
 	assert.Equal(t, "63.0", productSpec.BrowserVersion)
 	assert.Equal(t, "latest", productSpec.Revision)
+
+	productSpec, err = ParseProductSpec("safari-100 preview")
+	assert.Nil(t, err)
+	assert.Equal(t, "safari", productSpec.BrowserName)
+	assert.Equal(t, "100 preview", productSpec.BrowserVersion)
 }
 
 func TestParseProductSpec_OS(t *testing.T) {
@@ -648,7 +673,12 @@ func TestProductSpecMatches(t *testing.T) {
 
 	safariRun := TestRun{}
 	safariRun.BrowserName = "safari"
+	safariRun.BrowserVersion = "100 preview"
 	assert.False(t, chrome.Matches(safariRun))
+
+	safari100, err := ParseProductSpec("safari-100 preview")
+	assert.Nil(t, err)
+	assert.True(t, safari100.Matches(safariRun))
 }
 
 func TestProductSpecMatches_Labels(t *testing.T) {

@@ -18,6 +18,7 @@ import { WPTColors } from '../components/wpt-colors.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-prs.js';
+import '../components/wpt-amend-metadata.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
@@ -33,10 +34,11 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PathInfo } from '../components/path.js';
+import { Pluralizer } from '../components/pluralize.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))) {
+class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase))))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -52,7 +54,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         background-color: var(--paper-grey-200);
       }
       tr td {
-        padding: 0 0.5em;
+        padding: 0.25em 0.5em;
       }
       tr.spec td {
         padding: 0.2em 0.5em;
@@ -89,6 +91,17 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       }
       td.numbers {
         white-space: nowrap;
+        color: black;
+      }
+      td.triage {
+        cursor: pointer;
+      }
+      td.triage:hover {
+        opacity: 0.7;
+        box-shadow: 5px 5px 5px;
+      }
+      td[selected] {
+        border: 2px solid #000000;
       }
       .yellow-button {
         color: var(--paper-yellow-500);
@@ -138,7 +151,15 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         width: 100%;
         height: 600px;
       }
+      .view-triage {
+        margin-left: 30px;
+      }
     </style>
+
+    <paper-toast id="selected-toast" duration="0">
+      <span>[[selectedMetadata.length]] [[testPlural]] selected</span>
+      <paper-button class="view-triage" on-click="openAmendMetadata" raised>TRIAGE</paper-button>
+    </paper-toast>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
       <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
@@ -208,11 +229,22 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                  <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
-                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                    /
-                    <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-                  </td>
+                  <template is="dom-if" if="[[ canAmendMetadata(node, index, testRun) ]]">
+                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleSelectMetadata(index, node.path)]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                    </td>
+                  </template>
+
+                  <template is="dom-if" if="[[ !canAmendMetadata(node, index, testRun) ]]">
+                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                    </td>
+                  </template>
+
                 </template>
 
                 <template is="dom-if" if="[[diffRun]]">
@@ -296,6 +328,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
         </section>
       </template>
     </template>
+    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}"></wpt-amend-metadata>
 `;
   }
 
@@ -383,7 +416,28 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       // path => {type, file[, refPath]} simplification.
       manifest: Object,
       screenshots: Array,
+      selectedMetadata: {
+        type: Array,
+        value: [],
+        observer: 'clearSelectedCells',
+      },
+      selectedCells: {
+        type: Array,
+        value: [],
+      },
+      testPlural: {
+        type: String,
+        computed: 'computeTestPlural(selectedMetadata)',
+      },
+      isTriageMode: {
+        type: Boolean,
+        observer: 'isTriageModeUpdated',
+      }
     };
+  }
+
+  isTriageModeUpdated(isTriageMode) {
+    this.reloadData();
   }
 
   isInvalidDiffUse(diff, testRuns) {
@@ -458,7 +512,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
   computeDisplayedTests(path, searchResults) {
     return searchResults
-      && searchResults.map(r => r.test) .filter(name => name.startsWith(path))
+      && searchResults.map(r => r.test).filter(name => name.startsWith(path))
       || [];
   }
 
@@ -671,6 +725,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
   }
 
   pathUpdated(path) {
+    this.selectedMetadata = [];
     this.refreshDisplayedNodes();
   }
 
@@ -695,7 +750,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
       const suffix = testPath.substring(prefix.length);
       const slashIdx = suffix.split('?')[0].indexOf('/');
       const isDir = slashIdx !== -1;
-      const name = isDir ? suffix.substring(0, slashIdx): suffix;
+      const name = isDir ? suffix.substring(0, slashIdx) : suffix;
       // Either add new node to acc, or add passes, total to an
       // existing node.
       if (!nodes.hasOwnProperty(name)) {
@@ -718,7 +773,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     // Add an empty row for all the tests known from the manifest.
     const knownNodes = {};
     if (this.manifest && !this.search) {
-      for (const [path, {type}] of Object.entries(this.manifest)) {
+      for (const [path, { type }] of Object.entries(this.manifest)) {
         if (TEST_TYPES.includes(type)) {
           if (path.startsWith(prefix)) {
             collapsePathOnto(path, knownNodes);
@@ -822,8 +877,14 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     }
   }
 
-  platformID({browser_name, browser_version, os_name, os_version}) {
+  platformID({ browser_name, browser_version, os_name, os_version }) {
     return `${browser_name}-${browser_version}-${os_name}-${os_version}`;
+  }
+
+  canAmendMetadata(node, index, testRun) {
+    const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
+    const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
+    return (totalTests - passedTests) > 0 && this.triageMetadataUI && this.isTriageMode;
   }
 
   testResultClass(node, index, testRun, prop) {
@@ -905,7 +966,7 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
 
     this.testRuns.forEach(testRun => {
       const testRunID = this.platformID(testRun);
-      totals[testRunID] = {passes: 0, total: 0};
+      totals[testRunID] = { passes: 0, total: 0 };
 
       Object.keys(this.specDirs).forEach(specKey => {
         let { passes, total } = this.specDirs[specKey].results[testRun.results_url];
@@ -968,9 +1029,54 @@ class WPTResults extends WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase
     // % in js is not modulo, it's remainder. Ensure it's positive.
     this.path = this.searchResults[(n + next) % n].test;
   }
+
+  computeTestPlural(selectedMetadata) {
+    return this.pluralize('test', selectedMetadata.length);
+  }
+
+  clearSelectedCells(selectedMetadata) {
+    if (selectedMetadata.length === 0 && this.selectedCells.length) {
+      for (const cell of this.selectedCells) {
+        cell.removeAttribute('selected');
+      }
+      const toast = this.shadowRoot.querySelector('#selected-toast');
+      toast.hide();
+      this.selectedCells = [];
+    }
+  }
+
+  handleSelectMetadata(index, test) {
+    return (e) => {
+      const td = e.target.closest('td');
+      const browser = this.products[index].browser_name;
+      if (this.computePathIsASubfolder(test)) {
+        test = test + '/*';
+      }
+
+      if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
+        this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
+        this.selectedCells = this.selectedCells.filter(c => c !== td);
+        td.removeAttribute('selected');
+      } else {
+        const selected = { test: test, product: browser };
+        this.selectedMetadata = [...this.selectedMetadata, selected];
+        td.setAttribute('selected', 'selected');
+        this.selectedCells.push(td);
+      }
+      const toast = this.shadowRoot.querySelector('#selected-toast');
+      if (this.selectedMetadata.length) {
+        toast.show();
+      } else {
+        toast.hide();
+      }
+    };
+  }
+
+  openAmendMetadata() {
+    this.$.amend.open();
+  }
 }
 
 window.customElements.define(WPTResults.is, WPTResults);
 
 export { WPTResults };
-

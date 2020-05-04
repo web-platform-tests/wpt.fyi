@@ -26,14 +26,19 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	case "pending":
 		q = q.Order("-Stage").Filter("Stage < ", shared.StageValid)
 	case "invalid":
-		q = q.Order("-Stage").Filter("Stage > ", shared.StageValid)
+		q = q.Filter("Stage = ", shared.StageInvalid)
+	case "empty":
+		q = q.Filter("Stage = ", shared.StageEmpty)
+	case "duplicate":
+		q = q.Filter("Stage = ", shared.StageDuplicate)
 	case "":
 		// No-op
 	default:
 		http.Error(w, "Invalid filter: "+filter, http.StatusBadRequest)
 		return
 	}
-	q = q.Order("-Updated")
+	// TODO(Hexcles): Support pagination.
+	q = q.Order("-Updated").Limit(shared.MaxCountMaxValue)
 
 	var runs []shared.PendingTestRun
 	keys, err := store.GetAll(q, &runs)

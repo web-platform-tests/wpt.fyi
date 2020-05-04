@@ -49,8 +49,6 @@ go_build: git mockgen packr2
 go_lint: golint go_test_tag_lint
 	@echo "# Linting the go packages..."
 	golint -set_exit_status ./api/...
-	# Skip revisions/test
-	golint -set_exit_status ./revisions/{announcer,api,epoch,git,service}/...
 	golint -set_exit_status ./shared/...
 	golint -set_exit_status ./util/...
 	golint -set_exit_status ./webapp/...
@@ -109,6 +107,9 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_dep
 web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
 
+lighthouse: chrome webapp_node_modules_all
+	cd webapp; npx lhci autorun
+
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
 chrome: wget
@@ -143,7 +144,7 @@ firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 geckodriver: node-selenium-standalone
-	cd webapp; `npm bin`/selenium-standalone install --singleDriverInstall=firefox
+	cd webapp; npx selenium-standalone install --singleDriverInstall=firefox
 
 golint: git
 	if [ "$$(which golint)" == "" ]; then \
@@ -167,7 +168,7 @@ package_service: var-APP_PATH
 	else \
 		APP_PATH="$(APP_PATH)"; \
 	fi ; \
-	if [[ "$${APP_PATH}" == "revisions/service" || "$${APP_PATH}" == "api/query/cache/service" ]]; then \
+	if [[ "$${APP_PATH}" == "api/query/cache/service" ]]; then \
 		TMP_DIR=$$(mktemp -d); \
 		rm -rf $(WPTD_PATH)$${APP_PATH}/wpt.fyi; \
 		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
@@ -245,7 +246,6 @@ deploy_staging: deployment_state var-BRANCH_NAME
 	else \
 		util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
 	fi
-	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 cleanup_staging_versions: gcloud_login
@@ -254,7 +254,6 @@ cleanup_staging_versions: gcloud_login
 deploy_production: deployment_state
 	gcloud config set project wptdashboard
 	util/deploy.sh -r $(APP_PATH)
-	rm -rf $(WPTD_PATH)revisions/service/wpt.fyi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 
 webapp_node_modules_all: node

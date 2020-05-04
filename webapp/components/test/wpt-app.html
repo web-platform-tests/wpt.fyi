@@ -1,10 +1,11 @@
 <!doctype html>
 <html>
-
 <head>
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+  <script type="module" src="../../views/wpt-app.js"></script>
 </head>
 
 <body>
@@ -18,16 +19,41 @@
 import '../../views/wpt-app.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
+suiteSetup(() => {
+  window.fetch = (url) => {
+    const href = url instanceof URL ? url.href : 'unknown';
+    assert.fail('actual', 'expected', `uncaptured fetch: ${href}`);
+  };
+});
+
 suite('<wpt-app>', () => {
-  let appFixture = null;
+  let sandbox;
 
   setup(() => {
-    appFixture = fixture('wpt-app-fixture');
-    appFixture.path = '/';
+    sandbox = sinon.sandbox.create();
+    // Spoof an empty result for APIs used in this suite.
+    const captured = new RegExp('/api/(shas|versions|interop)');
+    sandbox.stub(window, 'fetch', url => {
+      if (url === undefined) {
+        throw 'url is undefined';
+      }
+      if (captured.test(url.pathname)) {
+        return Promise.resolve(new Response('[]'));
+      }
+      throw url.pathname;
+    });
+  });
+
+  teardown(() => {
+    sandbox.restore();
   });
 
   suite('WPTApp.prototype.*', () => {
+    let appFixture;
+
     setup(() => {
+      appFixture = fixture('wpt-app-fixture');
+      appFixture.path = '/';
       appFixture.testRuns = Array.from(TEST_RUNS_DATA);
     });
 
@@ -45,6 +71,7 @@ suite('<wpt-app>', () => {
         appFixture.searchResults = [
           {test: '/abc.html', legacy_status: [{total: 1}, {total: 1}]},
         ];
+        appFixture.page = 'results';
         expect(appFixture.resultsTotalsRangeMessage).to.not.contain('1 tests');
         expect(appFixture.resultsTotalsRangeMessage).to.not.contain('1 subtests');
       });
@@ -59,6 +86,7 @@ suite('<wpt-app>', () => {
         expect(appFixture.resultsTotalsRangeMessage).to.contain('7 subtests');
       });
     });
+
     suite('computePathIsRootDir ', () => {
       test('root dir', () => {
         assert.isTrue(appFixture.computePathIsRootDir(appFixture.path));

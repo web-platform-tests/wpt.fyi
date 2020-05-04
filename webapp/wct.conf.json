@@ -11,12 +11,14 @@
           "no-sandbox"
         ],
         "firefox": [
-          "--headless"
+          "-headless"
         ]
       }
     }
   },
+  "compile": "never",
+  "npm": true,
+  "expanded": true,
   "verbose": false,
-  "timeout": 120000,
-  "expanded": true
+  "testTimeout": 300000
 }

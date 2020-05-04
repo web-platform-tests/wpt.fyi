@@ -45,11 +45,13 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
 
     <div class\$="icon [[containerClass(small)]]">
       <template is="dom-if" if="[[platform]]" restamp>
-        <img class="platform" src="/static/[[platform]].svg" />
+        <img class="platform" src="/static/[[platform]].svg" alt="[[platform]] logo">
       </template>
-      <img class="browser" src="[[displayLogo(product.browser_name, product.labels)]]">
+      <img class="browser"
+           src="[[displayLogo(product.browser_name, product.labels)]]"
+           alt="[[product.browser_name]] [[product.labels]] logo">
       <template is="dom-if" if="[[source]]" restamp>
-        <img class="source" src="/static/[[source]].svg" />
+        <img class="source" src="/static/[[source]].svg" alt="[[source]] logo">
       </template>
     </div>
 `;
@@ -96,32 +98,6 @@ class DisplayLogo extends ProductInfo(PolymerElement) {
 
   containerClass(small) {
     return small ? 'small' : '';
-  }
-
-  displayLogo(name, labels) {
-    if (!name) {
-      return;
-    }
-    if (labels) {
-      labels = new Set(labels);
-      let channel;
-      const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
-      for (const label of candidates) {
-        if (labels.has(label)) {
-          channel = label;
-          break;
-        }
-      }
-      // Fall back to treating 'experimental' as 'dev'.
-      // TODO: Remove after https://github.com/web-platform-tests/wpt.fyi/issues/1539.
-      if (!channel && labels.has('experimental')) {
-        channel = 'dev';
-      }
-      if (channel) {
-        name = `${name}-${channel}`;
-      }
-    }
-    return `/static/${name}_64x64.png`;
   }
 
   computeSource(product, showSource) {

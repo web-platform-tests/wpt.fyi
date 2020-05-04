@@ -53,6 +53,123 @@ suite('TestFileResults', () => {
       });
     });
 
+    suite('resultsTableHeaders', () => {
+      test('empty array', () => {
+        expect(tfr.resultsTableHeaders([])).to.deep.equal([
+          {name: '', results: []},
+          {name: 'Duration', results: []},
+        ]);
+      });
+
+      test('null', () => {
+        expect(tfr.resultsTableHeaders([null])).to.deep.equal([
+          {name: '', results: [{status: null, message: null}]},
+          {name: 'Duration', results: [{status: null, message: null}]},
+        ]);
+      });
+
+      test('missing fields', () => {
+        const resultsPerTestRun = [
+          {status: 'PASS', duration: '1000'},
+          {status: 'PASS', message: 'OK'},
+        ];
+        expect(tfr.resultsTableHeaders(resultsPerTestRun)).to.deep.equal([
+          {
+            name: '',
+            results: [
+              {status: 'PASS', message: undefined},
+              {status: 'PASS', message: 'OK'}
+            ]
+          },
+          {
+            name: 'Duration',
+            results: [
+              {status: '1 seconds', message: null},
+              {status: 'N/A', message: null}
+            ]
+          },
+        ]);
+      });
+    });
+
+    suite('filterResultsTableBySearch', () => {
+      const resultsTable = [
+        {
+          name: 'Harness status',
+          results: [
+            {status: 'OK', message: null},
+            {status: 'OK', message: null}
+          ]
+        },
+        {
+          name: 'Duration',
+          results: [
+            {status: '0.5 seconds', message: null},
+            {status: '0.6 seconds', message: null}
+          ]
+        },
+        {
+          name: 'subtest foo',
+          results: [
+            {status: 'PASS', message: null},
+            {status: 'PASS', message: null}
+          ]
+        },
+        {
+          name: 'subtest bar',
+          results: [
+            {status: 'PASS', message: null},
+            {status: 'PASS', message: null}
+          ]
+        }
+      ];
+      const searchResults = {results: [
+        {
+          test: '/foo/bar.html',
+          subtests: ['subtest foo']
+        }
+      ]};
+
+      test('smoke test', () => {
+        expect(
+          tfr.filterResultsTableBySearch('/foo/bar.html', resultsTable, searchResults)
+        ).to.deep.equal([
+          {
+            name: 'Harness status',
+            results: [
+              {status: 'OK', message: null},
+              {status: 'OK', message: null}
+            ]
+          },
+          {
+            name: 'Duration',
+            results: [
+              {status: '0.5 seconds', message: null},
+              {status: '0.6 seconds', message: null}
+            ]
+          },
+          {
+            name: 'subtest foo',
+            results: [
+              {status: 'PASS', message: null},
+              {status: 'PASS', message: null}
+            ]
+          },
+        ]);
+      });
+
+      test('empty values', () => {
+        expect(tfr.filterResultsTableBySearch('', null, searchResults)).to.equal(null);
+        expect(tfr.filterResultsTableBySearch('', resultsTable, null)).to.deep.equal(resultsTable);
+      });
+
+      test('unmatching paths', () => {
+        expect(
+          tfr.filterResultsTableBySearch('/foo/notbar.html', resultsTable, searchResults)
+        ).to.deep.equal(resultsTable);
+      });
+    });
+
     suite('mergeNamesInto', () => {
       test('empty', () => {
         const names = ['a', 'b'];
@@ -81,7 +198,7 @@ suite('TestFileResults', () => {
       });
     });
 
-    suite('statusName', () => {
+    suite('shuffleScreenshots', () => {
       test('path in screenshots - first', () => {
         const rawScreenshots = {
           '/foo/bar/baz.html': 'sha1:060311f9cd4c5b09202a034c4961ca42a3f83ce2',

@@ -5,5 +5,18 @@ m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
 ga('create', 'UA-89387706-1', 'auto');
+// self-navigator.js sends more pageview events for in-page navigations.
 ga('send', 'pageview');
+
+window.onerror = function(message, source, lineno, colno) {
+  let description;
+  // https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
+  if (message.toLowerCase().indexOf('script error') > -1) {
+    description = `External error: ${message}`;
+  } else {
+    description = `${message} at ${source}:${lineno}:${colno}`;
+  }
+  // https://developers.google.com/analytics/devguides/collection/analyticsjs/exceptions
+  ga('send', 'exception', {'exDescription': description});
+};
 </script>

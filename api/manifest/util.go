@@ -13,7 +13,7 @@ import (
 // Filter filters items in the the given manifest JSON, omitting anything that isn't an
 // item which has a URL beginning with one of the given paths.
 func Filter(body []byte, paths []string) (result []byte, err error) {
-	var parsed shared.Manifest
+	var parsed *shared.Manifest
 	if err = json.Unmarshal(body, &parsed); err != nil {
 		return nil, err
 	}

@@ -13,10 +13,101 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
+
+func TestHandleMetadataTriage_Success(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := sharedtest.NewTestContext()
+	w := httptest.NewRecorder()
+
+	body :=
+		`{
+		"/bar/foo.html": [
+			{
+				"product":"chrome",
+				"url":"bugs.bar",
+				"results":[{"status":6}]
+			}
+		]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
+
+	mockgac := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+	mockgac.EXPECT().IsValidAccessToken().Return(http.StatusOK, nil)
+	mockgac.EXPECT().IsValidWPTMember().Return(http.StatusOK, nil)
+
+	mocktm := sharedtest.NewMockTriageMetadataInterface(mockCtrl)
+	mocktm.EXPECT().Triage(gomock.Any()).Return("", nil)
+
+	handleMetadataTriage(ctx, mockgac, mocktm, w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestHandleMetadataTriage_NonSimpleRequests(t *testing.T) {
+	w := httptest.NewRecorder()
+	body :=
+		`{
+		"/bar/foo.html": [
+			{
+				"product":"chrome",
+				"url":"bugs.bar",
+				"results":[{"status":6}]
+			}
+		]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("GET", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
+
+	handleMetadataTriage(nil, nil, nil, w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	w = httptest.NewRecorder()
+	req = httptest.NewRequest("POST", "https://foo/metadata", bodyReader)
+
+	handleMetadataTriage(nil, nil, nil, w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestHandleMetadataTriage_WrongContentType(t *testing.T) {
+	w := httptest.NewRecorder()
+	body :=
+		`{
+	"/bar/foo.html": [
+		{
+			"product":"chrome",
+			"url":"bugs.bar",
+			"results":[{"status":6}]
+		}
+	]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	handleMetadataTriage(nil, nil, nil, w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestHandleMetadataTriage_InvalidBody(t *testing.T) {
+	w := httptest.NewRecorder()
+	bodyReader := strings.NewReader("abc")
+	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
+
+	handleMetadataTriage(nil, nil, nil, w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
 
 func TestFilterMetadataHanlder_Success(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +120,9 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, server.URL}
+	ctx := sharedtest.NewTestContext()
+	fetcher := webappMetadataFetcher{ctx, client, server.URL}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -68,7 +161,7 @@ func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", nil)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -92,7 +185,9 @@ func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), client, server.URL}
+	ctx := sharedtest.NewTestContext()
+	fetcher := webappMetadataFetcher{ctx, client, server.URL}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -133,7 +228,7 @@ func TestFilterMetadataHandlerPost_MissingProducts(t *testing.T) {
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -150,7 +245,7 @@ func TestFilterMetadataHandlerPost_NotLink(t *testing.T) {
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -170,7 +265,7 @@ func TestFilterMetadataHandlerPost_NotJustLink(t *testing.T) {
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
 
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil, ""}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), nil}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)

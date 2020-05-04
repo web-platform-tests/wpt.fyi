@@ -18,6 +18,13 @@
 import { WPTResults } from '../../views/wpt-results.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
+suiteSetup(() => {
+  window.fetch = (url) => {
+    const href = url instanceof URL ? url.href : 'unknown';
+    assert.fail('actual', 'expected', `uncaptured fetch: ${href}`);
+  };
+});
+
 suite('<wpt-results>', () => {
   let sandbox, trf = null;
 

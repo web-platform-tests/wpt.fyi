@@ -62,7 +62,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <app-location route="{{route}}" url-space-regex="^/(results|interop)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
-      <wpt-header></wpt-header>
+      <wpt-header user="[[user]]" is-triage-mode="{{isTriageMode}}"></wpt-header>
 
       <results-tabs tab="[[page]]" path="[[encodedPath]]" query="[[query]]"></results-tabs>
 
@@ -134,7 +134,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      test-runs="{{testRuns}}"
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
-                     metadata="[[metadata]]"></wpt-results>
+                     metadata="[[metadata]]"
+                     is-triage-mode="[[isTriageMode]]"></wpt-results>
 
         <wpt-interop name="interop"
                      is-loading="{{interopLoading}}"
@@ -169,6 +170,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         reflectToAttribute: true,
       },
+      user: String,
       path: String,
       testPaths: Set,
       structuredSearch: Object,
@@ -184,6 +186,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
       },
+      isTriageMode: Boolean,
     };
   }
 
@@ -261,7 +264,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleKeyDown(e) {
     // Ignore when something other than body has focus.
-    if (!e.path.length || e.path[0] !== document.body) {
+    if (e.target !== document.body) {
       return;
     }
     if (e.key === 'n') {

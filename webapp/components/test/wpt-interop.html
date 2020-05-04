@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+  <script type="module" src="../../views/wpt-interop.js"></script>
 </head>
 <body>
   <test-fixture id="wpt-interop-fixture">
@@ -16,27 +18,35 @@ import { waitingOn } from './util/helpers.js';
 import { WPTInterop } from '../../views/wpt-interop.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 
-suite('WPTInterop', () => {
-  const fetches = {};
-  let sandbox;
+// A map from API pathnames to canned responses
+const cannedFetches = {};
 
-  suiteSetup(async() => {
-    const interopScores = await fetch('fixtures/interop.json').then(r => r.json());
-    fetches['/api/interop'] = interopScores;
-    fetches['/api/search'] = interopScores;
-    fetches[interopScores.url] = await fetch('fixtures/passrates.json').then(r => r.json());
-  });
+suiteSetup(async() => {
+  const interopScores = await fetch('fixtures/interop.json').then(r => r.json());
+  cannedFetches['/api/interop'] = interopScores;
+  cannedFetches['/api/search'] = interopScores;
+  cannedFetches[interopScores.url] = await fetch('fixtures/passrates.json').then(r => r.json());
+  window.fetch = (url) => {
+    const href = url instanceof URL ? url.href : 'unknown';
+    assert.fail('actual', 'expected', `uncaptured fetch: ${href}`);
+  };
+});
+
+suite('<wpt-interop>', () => {
+  let fetchSandbox;
 
   setup(() => {
-    sandbox = sinon.sandbox.create();
-    sandbox.stub(window, 'fetch', (url) => {
-      const path = new URL(url, window.location).pathname; // Ignore params.
-      return Promise.resolve(new Response(JSON.stringify(fetches[path])));
+    fetchSandbox = sinon.sandbox.create();
+    fetchSandbox.stub(window, 'fetch', (url) => {
+      if (url === undefined) {
+        throw 'url is undefined';
+      }
+      return Promise.resolve(new Response(JSON.stringify(cannedFetches[url.pathname])));
     });
   });
 
   teardown(() => {
-    sandbox.restore();
+    fetchSandbox.restore();
   });
 
   test('instanceof Polymer.Element', () => {
@@ -51,10 +61,16 @@ suite('WPTInterop', () => {
   });
 
   suite('WPTInterop.prototype.*', () => {
-    let interop;
+    let interop, sandbox;
+
     setup(() => {
+      sandbox = sinon.sandbox.create();
       sandbox.spy(PolymerElement.prototype, 'ready');
       interop = fixture('wpt-interop-fixture');
+    });
+
+    teardown(() => {
+      sandbox.restore();
     });
 
     test('super.ready()', () => {

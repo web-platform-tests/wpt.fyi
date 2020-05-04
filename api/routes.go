@@ -62,7 +62,7 @@ func RegisterRoutes() {
 	pendingTestRuns := shared.WrapApplicationJSON(
 		shared.WrapPermissiveCORS(apiPendingTestRunsHandler))
 	shared.AddRoute("/api/status", "api-pending-test-runs", pendingTestRuns)
-	shared.AddRoute("/api/status/{filter:pending|invalid}", "api-pending-test-runs", pendingTestRuns)
+	shared.AddRoute("/api/status/{filter:pending|invalid|empty|duplicate}", "api-pending-test-runs", pendingTestRuns)
 
 	// API endpoint for redirecting to a run's summary JSON blob.
 	shared.AddRoute("/api/results", "api-results", shared.WrapPermissiveCORS(apiResultsRedirectHandler))
@@ -72,4 +72,10 @@ func RegisterRoutes() {
 
 	// API endpoint for searching Metadata for the products.
 	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapPermissiveCORS(apiMetadataHandler))
+
+	// API endpoint for modifying Metadata.
+	shared.AddRoute("/api/metadata/triage", "api-metadata-triage", shared.WrapTrustedCORS(apiMetadataTriageHandler, CORSList, []string{"PATCH"}))
+
+	// API endpoint for checking a user's login status.
+	shared.AddRoute("/api/user", "api-user", shared.WrapApplicationJSON(shared.WrapTrustedCORS(apiUserHandler, CORSList, nil)))
 }

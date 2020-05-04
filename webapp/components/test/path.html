@@ -85,6 +85,8 @@ suite('PathInfo', () => {
   });
 
   test('splitPathIntoLinkedParts', () => {
+    expect(pathInfo.splitPathIntoLinkedParts('/')).to.deep.equal([]);
+
     expect(pathInfo.splitPathIntoLinkedParts('/a/b.html')).to.deep.equal([
       {name: 'a', path: '/a'},
       {name: 'b.html', path: '/a/b.html'},

@@ -6,10 +6,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"runtime"
@@ -19,12 +17,10 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
 	"github.com/sirupsen/logrus"
-	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/monitor"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
-	cq "github.com/web-platform-tests/wpt.fyi/api/query/cache/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/api/option"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
@@ -67,166 +63,12 @@ func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	log := shared.GetLogger(ctx)
-	if r.Method != "POST" {
-		log.Errorf("Invalid HTTP method %s", r.Method)
-		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
-		return
-	}
-
-	data, err := ioutil.ReadAll(r.Body)
+	err := searchHandlerImpl(w, r)
 	if err != nil {
-		log.Errorf("Failed to read request body: %s", err.Error())
-		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+		log := shared.GetLogger(r.Context())
+		log.Errorf(err.Error())
+		http.Error(w, err.Message, err.Code)
 	}
-	log.Infof(string(data))
-	err = r.Body.Close()
-	if err != nil {
-		log.Errorf("Failed to close request body: %s", err.Error())
-		http.Error(w, "Failed to finish reading request body", http.StatusInternalServerError)
-	}
-
-	var rq query.RunQuery
-	err = json.Unmarshal(data, &rq)
-	if err != nil {
-		log.Errorf("Failed to unmarshal RunQuery: %s", err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if len(rq.RunIDs) > *maxRunsPerRequest {
-		http.Error(w, maxRunsPerRequestMsg, http.StatusBadRequest)
-		return
-	}
-
-	// Ensure runs are loaded before executing query. This is best effort: It is
-	// possible, though unlikely, that a run may exist in the cache at this point
-	// and be evicted before binding the query to a query execution plan. In such
-	// a case, `idx.Bind()` below will return an error.
-	//
-	// Accumulate missing runs in `missing` to report which runs have initiated
-	// write-on-read. Return to client `http.StatusUnprocessableEntity`
-	// immediately if any runs are missing.
-	//
-	// `ids` and `runs` tracks run IDs and run metadata for requested runs that
-	// are currently resident in `idx`.
-	store, err := getDatastore(ctx)
-	if err != nil {
-		log.Errorf("Failed to open datastore: %s", err.Error())
-		http.Error(w, fmt.Sprintf("Failed to open datastore: %s", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	ids := make([]int64, 0, len(rq.RunIDs))
-	runs := make([]shared.TestRun, 0, len(rq.RunIDs))
-	missing := make([]shared.TestRun, 0, len(rq.RunIDs))
-	for i := range rq.RunIDs {
-		id := index.RunID(rq.RunIDs[i])
-		run, err := idx.Run(id)
-		// If getting run metadata fails, attempt write-on-read for this run.
-		if err != nil {
-			runPtr := new(shared.TestRun)
-			err := store.Get(store.NewIDKey("TestRun", int64(id)), runPtr)
-			if err != nil {
-				log.Errorf("Unknown test run ID: %s", id)
-				http.Error(w, fmt.Sprintf("Unknown test run ID: %d", id), http.StatusBadRequest)
-				return
-			}
-			runPtr.ID = int64(id)
-			go idx.IngestRun(*runPtr)
-			missing = append(missing, *runPtr)
-		} else {
-			// Ensure that both `ids` and `runs` correspond to the same test runs.
-			ids = append(ids, rq.RunIDs[i])
-			runs = append(runs, run)
-		}
-	}
-
-	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
-	// are missing.
-	if len(runs) == 0 && len(missing) > 0 {
-		data, err = json.Marshal(shared.SearchResponse{
-			IgnoredRuns: missing,
-		})
-		if err != nil {
-			log.Errorf("Failed to marshal results: %s", err.Error())
-			http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
-		}
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write(data)
-		return
-	}
-
-	// Prepare user query based on `ids` that are (or at least were a moment ago)
-	// resident in `idx`. In the unlikely event that a run in `ids`/`runs` is no
-	// longer in `idx`, `idx.Bind()` below will return an error.
-	q := cq.PrepareUserQuery(ids, rq.AbstractQuery.BindToRuns(runs...))
-
-	// Configure format, from request params.
-	urlQuery := r.URL.Query()
-	subtests, _ := shared.ParseBooleanParam(urlQuery, "subtests")
-	interop, _ := shared.ParseBooleanParam(urlQuery, "interop")
-	diff, _ := shared.ParseBooleanParam(urlQuery, "diff")
-	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
-	if err != nil {
-		log.Errorf("%s", err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	opts := query.AggregationOpts{
-		IncludeSubtests:         subtests != nil && *subtests,
-		InteropFormat:           interop != nil && *interop,
-		IncludeDiff:             diff != nil && *diff,
-		DiffFilter:              diffFilter,
-		IgnoreTestHarnessResult: shared.IsFeatureEnabled(store, "ignoreHarnessInTotal"),
-	}
-	plan, err := idx.Bind(runs, q)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	results := plan.Execute(runs, opts)
-	res, ok := results.([]shared.SearchResult)
-	if !ok {
-		log.Errorf("Search index returned bad results: %s", err.Error())
-		http.Error(w, "Search index returned bad results", http.StatusInternalServerError)
-		return
-	}
-
-	// Cull unchanged diffs, if applicable.
-	if opts.IncludeDiff && !opts.DiffFilter.Unchanged {
-		for i := range res {
-			if res[i].Diff.IsEmpty() {
-				res[i].Diff = nil
-			}
-		}
-	}
-
-	// Response always contains Runs and Results. If some runs are missing, then:
-	// - Add missing runs to IgnoredRuns;
-	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
-	//   client.
-	resp := shared.SearchResponse{
-		Runs:    runs,
-		Results: res,
-	}
-	if len(missing) != 0 {
-		resp.IgnoredRuns = missing
-	}
-
-	data, err = json.Marshal(resp)
-	if err != nil {
-		log.Errorf("Failed to marshal results: %s", err.Error())
-		http.Error(w, "Failed to marshal results to JSON", http.StatusInternalServerError)
-		return
-	}
-	if len(missing) != 0 {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-	}
-
-	w.Write(data)
 }
 
 func getDatastore(ctx context.Context) (shared.Datastore, error) {
@@ -312,6 +154,12 @@ func main() {
 	// Index, backfiller, monitor now in place. Start polling to load runs added
 	// after backfilling was started.
 	go poll.KeepRunsUpdated(store, logger, *updateInterval, *updateMaxRuns, idx)
+
+	var netClient = &http.Client{
+		Timeout: time.Second * 5,
+	}
+	// Polls Metadata update every 10 minutes.
+	go poll.KeepMetadataUpdated(netClient, logger, time.Minute*10)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)

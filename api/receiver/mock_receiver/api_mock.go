@@ -7,7 +7,7 @@ package mock_receiver
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/v28/github"
+	github "github.com/google/go-github/v31/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	taskqueue "google.golang.org/appengine/taskqueue"
 	io "io"
@@ -98,6 +98,20 @@ func (mr *MockAPIMockRecorder) GetHTTPClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClient", reflect.TypeOf((*MockAPI)(nil).GetHTTPClient))
 }
 
+// GetHTTPClientWithTimeout mocks base method
+func (m *MockAPI) GetHTTPClientWithTimeout(arg0 time.Duration) *http.Client {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHTTPClientWithTimeout", arg0)
+	ret0, _ := ret[0].(*http.Client)
+	return ret0
+}
+
+// GetHTTPClientWithTimeout indicates an expected call of GetHTTPClientWithTimeout
+func (mr *MockAPIMockRecorder) GetHTTPClientWithTimeout(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClientWithTimeout", reflect.TypeOf((*MockAPI)(nil).GetHTTPClientWithTimeout), arg0)
+}
+
 // GetHostname mocks base method
 func (m *MockAPI) GetHostname() string {
 	m.ctrl.T.Helper()
@@ -166,21 +180,6 @@ func (m *MockAPI) GetServiceHostname(arg0 string) string {
 func (mr *MockAPIMockRecorder) GetServiceHostname(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceHostname", reflect.TypeOf((*MockAPI)(nil).GetServiceHostname), arg0)
-}
-
-// GetSlowHTTPClient mocks base method
-func (m *MockAPI) GetSlowHTTPClient(arg0 time.Duration) (*http.Client, context.CancelFunc) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSlowHTTPClient", arg0)
-	ret0, _ := ret[0].(*http.Client)
-	ret1, _ := ret[1].(context.CancelFunc)
-	return ret0, ret1
-}
-
-// GetSlowHTTPClient indicates an expected call of GetSlowHTTPClient
-func (mr *MockAPIMockRecorder) GetSlowHTTPClient(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSlowHTTPClient", reflect.TypeOf((*MockAPI)(nil).GetSlowHTTPClient), arg0)
 }
 
 // GetUploader mocks base method

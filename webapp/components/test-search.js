@@ -9,7 +9,7 @@ import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTFlags } from './wpt-flags.js';
 import './ohm.js';
-import { DefaultBrowserNames } from './product-info.js';
+import { AllBrowserNames } from './product-info.js';
 
 /* eslint-enable */
 const statuses = [
@@ -30,7 +30,7 @@ const atoms = {
   status: statuses,
 };
 
-for (const b of DefaultBrowserNames) {
+for (const b of AllBrowserNames) {
   atoms[b] = statuses;
 }
 
@@ -105,6 +105,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | containsExp
       | linkExp
       | isExp
+      | triagedExp
       | statusExp
       | subtestExp
       | pathExp
@@ -128,6 +129,9 @@ const QUERY_GRAMMAR = ohm.grammar(`
     linkExp
       = caseInsensitive<"link"> ":" nameFragment
 
+    triagedExp
+      = caseInsensitive<"triaged"> ":" browserName
+
     isExp
       = caseInsensitive<"is"> ":" metadataQualityLiteral
 
@@ -136,7 +140,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
     productSpec = browserName ("-" browserVersion)?
 
     browserName
-      = ${DefaultBrowserNames.map(b => 'caseInsensitive<"' + b + '">').join('\n      |')}
+      = ${AllBrowserNames.map(b => 'caseInsensitive<"' + b + '">').join('\n      |')}
 
     browserVersion = number ("." number)*
 
@@ -311,6 +315,10 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   isExp: (l, colon, r) => {
     return { is: r.eval() };
   },
+  triagedExp: (l, colon, r) => {
+    const ps = r.eval();
+    return ps.length === 0 ? emptyQuery : { triaged: ps.toLowerCase() };
+  },
   subtestExp: (l, colon, r) => {
     return { subtest: r.eval() };
   },
@@ -345,13 +353,14 @@ class TestSearch extends WPTFlags(PolymerElement) {
         width: 100%;
       }
       .help {
-        font-size: x-small;
         float: right;
       }
     </style>
 
     <div>
-      <input value="{{ queryInput::input }}" class="query" list="query-list" placeholder="[[placeholder]]" onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
+      <input class="query" list="query-list" aria-label="Search test files"
+             value="{{ queryInput::input }}" placeholder="[[placeholder]]"
+             onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
       <span class="help">
         For information on the search syntax, <a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/query/README.md">view the search documentation</a>
       </span>

@@ -13,8 +13,10 @@ import {
   PolymerElement
 } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
+import { PathInfo } from '../components/path.js';
+import { ProductInfo } from './product-info.js';
 
-class WPTMetadataNode extends PolymerElement {
+class WPTMetadataNode extends ProductInfo(PolymerElement) {
   static get template() {
     return html`
       <style>
@@ -77,19 +79,16 @@ class WPTMetadataNode extends PolymerElement {
 
   computeTestHref(path, metadataNode) {
     const currentUrl = window.location.href;
-    return currentUrl.replace(path, metadataNode.test);
-  }
-
-  displayLogo(product) {
-    if (!product) {
-      return;
+    let testname = metadataNode.test;
+    if (testname.endsWith('/*')) {
+      return currentUrl.replace(path, testname.substring(0, testname.length - 2));
     }
-    return `/static/${product}_64x64.png`;
+    return currentUrl.replace(path, testname);
   }
 }
 window.customElements.define(WPTMetadataNode.is, WPTMetadataNode);
 
-class WPTMetadata extends LoadingState(PolymerElement) {
+class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
   static get template() {
     return html`
       <style>
@@ -184,7 +183,7 @@ class WPTMetadata extends LoadingState(PolymerElement) {
     }
 
     let displayedMetadata = [];
-    for (const test of Object.keys(metadata).filter(k => k.startsWith(path))) {
+    for (const test of Object.keys(metadata).filter(k => this.checkPath(k, path))) {
       const seenURLs = new Set();
       seenURLs.add(''); // Avoids accepting empty URLs.
       for (const link of metadata[test]) {
@@ -220,6 +219,17 @@ class WPTMetadata extends LoadingState(PolymerElement) {
   handleOpenCollapsible() {
     this.shadowRoot.querySelector('#metadata-toggle').hidden = true;
     this.shadowRoot.querySelector('#metadata-collapsible').opened = true;
+  }
+
+  checkPath(testname, path) {
+    if (testname.endsWith('/*')) {
+      let curPath = path;
+      if (this.pathIsASubfolder) {
+        curPath = curPath + '/';
+      }
+      return curPath.startsWith(testname.substring(0, testname.length - 1));
+    }
+    return testname.startsWith(path);
   }
 }
 window.customElements.define(WPTMetadata.is, WPTMetadata);
