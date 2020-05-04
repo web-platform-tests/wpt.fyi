@@ -191,7 +191,8 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
                            labels="[[labels]]"
                            products="[[products]]"
                            diff-run="[[diffRun]]"
-                           metadata="[[metadata]]">
+                           metadata="[[metadata]]"
+                           is-triage-mode="[[isTriageMode]]>
         </test-file-results>
       </template>
 
