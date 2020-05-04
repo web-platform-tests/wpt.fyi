@@ -25,10 +25,11 @@ suite('<wpt-amend-metadata>', () => {
     appFixture = fixture('wpt-amend-metadata-fixture');
   });
 
-  test('getTriagedMetadataMap(displayedMetadata)', () => {
+  test('getTriagedMetadataMap(displayedMetadata) with a non-testfile path', () => {
+    appFixture.path = '/abc';
     const displayedMetadata = [
-      { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
-      { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
+      { product: 'firefox', url: 'foo', tests: [{ testname: 'testA' }, { testname: 'testB' }] },
+      { product: 'chrome', url: 'bar', tests: [{ testname: 'testA' }, { testname: 'testB' }] }
     ];
     const expected = {
       'testA': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }],
@@ -37,7 +38,22 @@ suite('<wpt-amend-metadata>', () => {
 
     assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
   });
-  test('populateDisplayData()', () => {
+  test('getTriagedMetadataMap(displayedMetadata) with a testfile path', () => {
+    appFixture.path = '/abc/foo.html';
+    const displayedMetadata = [
+      { product: 'firefox', url: 'foo', tests: [{ testname: 'testA', status: 'FAIL' }, { testname: 'testB', status: 'TIMEOUT' }] },
+      { product: 'chrome', url: 'bar', tests: [{ testname: 'testA', status: 'ERROR' }, { testname: 'testB', status: 'FAIL' }] }
+    ];
+    const resultsFirefox = [{ subtest: 'testA', status: 6 }, { subtest: 'testB', status: 4 }];
+    const resultsChrome = [{ subtest: 'testA', status: 3 }, { subtest: 'testB', status: 6 }];
+    const expected = {
+      '/abc/foo.html': [{ url: 'foo', product: 'firefox', results: resultsFirefox }, { url: 'bar', product: 'chrome', results: resultsChrome }],
+    };
+
+    assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
+  });
+  test('populateDisplayData() with a non-testfile path', () => {
+    appFixture.path = '/abc';
     appFixture.selectedMetadata = [
       { product: 'firefox', test: 'testA' },
       { product: 'firefox', test: 'testB' },
@@ -45,8 +61,24 @@ suite('<wpt-amend-metadata>', () => {
       { product: 'chrome', test: 'testB' }
     ];
     const expected = [
-      { product: 'firefox', url: '', tests: ['testA', 'testB'] },
-      { product: 'chrome', url: '', tests: ['testA', 'testB'] }
+      { product: 'firefox', url: '', tests: [{ testname: 'testA' }, { testname: 'testB' }] },
+      { product: 'chrome', url: '', tests: [{ testname: 'testA' }, { testname: 'testB' }] }
+    ];
+
+    appFixture.populateDisplayData();
+    assert.deepEqual(appFixture.displayedMetadata, expected);
+  });
+  test('populateDisplayData() with a testfile path', () => {
+    appFixture.path = '/abc/foo.html';
+    appFixture.selectedMetadata = [
+      { product: 'firefox', test: 'testA', status: 'FAIL' },
+      { product: 'firefox', test: 'testB', status: 'TIMEOUT' },
+      { product: 'chrome', test: 'testA', status: 'ERROR' },
+      { product: 'chrome', test: 'testB', status: 'FAIL' }
+    ];
+    const expected = [
+      { product: 'firefox', url: '', tests: [{ testname: 'testA', status: 'FAIL' }, { testname: 'testB', status: 'TIMEOUT' }] },
+      { product: 'chrome', url: '', tests: [{ testname: 'testA', status: 'ERROR' }, { testname: 'testB', status: 'FAIL' }] }
     ];
 
     appFixture.populateDisplayData();
