@@ -4,18 +4,21 @@
  * found in the LICENSE file.
  */
 
-import '../components/wpt-amend-metadata.js';
+import './wpt-amend-metadata.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
 import { PathInfo } from './path.js';
-import { Pluralizer } from '../components/pluralize.js';
+import { Pluralizer } from './pluralize.js';
+import { WPTFlags } from './wpt-flags.js';
 
-class TestFileResultsTable extends Pluralizer(WPTColors(PathInfo(TestRunsBase))) {
+class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRunsBase)))) {
   static get is() {
     return 'test-file-results-table';
   }
@@ -407,7 +410,7 @@ class TestFileResultsTable extends Pluralizer(WPTColors(PathInfo(TestRunsBase)))
   }
 
   canAmendMetadata(status) {
-    return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status) && this.triageMetadataUI;
+    return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status) && this.triageMetadataUI && this.isTriageMode;
   }
 
   handleSelectMetadata(index, test) {
