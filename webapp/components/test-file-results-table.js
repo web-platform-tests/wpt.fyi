@@ -4,16 +4,21 @@
  * found in the LICENSE file.
  */
 
+import './wpt-amend-metadata.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
 import { PathInfo } from './path.js';
+import { Pluralizer } from './pluralize.js';
+import { WPTFlags } from './wpt-flags.js';
 
-class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
+class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRunsBase)))) {
   static get is() {
     return 'test-file-results-table';
   }
@@ -49,6 +54,9 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
   }
   td.result {
     background-color: #eee;
+  }
+  td[selected] {
+    border: 2px solid #000000;
   }
   .ref-button {
     color: #333;
@@ -91,7 +99,15 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     width: -moz-max-content;
     width: max-content;
   }
+  .view-triage {
+    margin-left: 30px;
+  }
 </style>
+
+<paper-toast id="selected-toast" duration="0">
+  <span>[[selectedMetadata.length]] [[testPlural]] selected</span>
+  <paper-button class="view-triage" on-click="openAmendMetadata" raised>TRIAGE</paper-button>
+</paper-toast>
 
 <table terse$="[[!verbose]]" verbose$="[[verbose]]">
   <thead>
@@ -116,16 +132,29 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
         <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
         <template is="dom-repeat" items="[[row.results]]" as="result">
-          <td class$="[[ colorClass(result.status) ]]">
-            <code>[[ subtestMessage(result, verbose) ]]</code>
+          <template is="dom-if" if="[[ !canAmendMetadata(result.status) ]]">
+            <td class$="[[ colorClass(result.status) ]]">
+              <code>[[ subtestMessage(result, verbose) ]]</code>
+              <template is="dom-if" if="[[result.screenshots]]">
+                <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
+                  <iron-icon icon="image:compare"></iron-icon>
+                  COMPARE
+                </a>
+              </template>
+            </td>
+          </template>
 
-            <template is="dom-if" if="[[result.screenshots]]">
-              <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
-                <iron-icon icon="image:compare"></iron-icon>
-                COMPARE
-              </a>
-            </template>
-          </td>
+          <template is="dom-if" if="[[ canAmendMetadata(result.status) ]]">
+            <td class$="[[ colorClass(result.status) ]]" onclick="[[handleSelectMetadata(index, row.name, result.status)]]">
+              <code>[[ subtestMessage(result, verbose) ]]</code>
+              <template is="dom-if" if="[[result.screenshots]]">
+                <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
+                  <iron-icon icon="image:compare"></iron-icon>
+                  COMPARE
+                </a>
+              </template>
+            </td>
+          </template>
         </template>
 
         <template is="dom-if" if="[[diffRun]]">
@@ -154,6 +183,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     </template>
   </tbody>
 </table>
+<wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
@@ -183,6 +213,23 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
       verbose: {
         type: Boolean,
         value: false,
+      },
+      selectedMetadata: {
+        type: Array,
+        value: [],
+        observer: 'clearSelectedCells',
+      },
+      selectedCells: {
+        type: Array,
+        value: [],
+      },
+      testPlural: {
+        type: String,
+        computed: 'computeTestPlural(selectedMetadata)',
+      },
+      isTriageMode: {
+        type: Boolean,
+        observer: 'isTriageModeUpdated',
       },
       matchers: {
         type: Array,
@@ -232,11 +279,25 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     };
   }
 
+  static get observers() {
+    return [
+      'pathUpdated(path)',
+    ];
+  }
+
   constructor() {
     super();
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;
     };
+  }
+
+  pathUpdated() {
+    this.selectedMetadata = [];
+  }
+
+  isTriageModeUpdated() {
+    this.rows = Object.values(this.rows);
   }
 
   subtestMessage(result, verbose) {
@@ -342,6 +403,52 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     } else if (passed[1] && !passed[0]) {
       return this.passRateClass(1, 1);
     }
+  }
+
+  computeTestPlural(selectedMetadata) {
+    return this.pluralize('test', selectedMetadata.length);
+  }
+
+  clearSelectedCells(selectedMetadata) {
+    if (selectedMetadata.length === 0 && this.selectedCells.length) {
+      for (const cell of this.selectedCells) {
+        cell.removeAttribute('selected');
+      }
+      this.$['selected-toast'].hide();
+      this.selectedCells = [];
+    }
+  }
+
+  canAmendMetadata(status) {
+    return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status) && this.triageMetadataUI && this.isTriageMode;
+  }
+
+  handleSelectMetadata(index, test, status) {
+    return (e) => {
+      const td = e.target.closest('td');
+      const browser = this.products[index].browser_name;
+
+      if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
+        this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
+        this.selectedCells = this.selectedCells.filter(c => c !== td);
+        td.removeAttribute('selected');
+      } else {
+        const selected = { test: test, product: browser, status: status };
+        this.selectedMetadata = [...this.selectedMetadata, selected];
+        td.setAttribute('selected', 'selected');
+        this.selectedCells.push(td);
+      }
+
+      if (this.selectedMetadata.length) {
+        this.$['selected-toast'].show();
+      } else {
+        this.$['selected-toast'].hide();
+      }
+    };
+  }
+
+  openAmendMetadata() {
+    this.$.amend.open();
   }
 }
 window.customElements.define(TestFileResultsTable.is, TestFileResultsTable);

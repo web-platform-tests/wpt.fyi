@@ -10,8 +10,9 @@ import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
+import { PathInfo } from './path.js';
 
-class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
+class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) {
   static get is() {
     return 'wpt-amend-metadata';
   }
@@ -59,7 +60,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
             <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
-            <li>[[test]]</li>
+            <li>[[test.testname]]</li>
           </template>
         </template>
         <div class="buttons">
@@ -84,6 +85,11 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
         type: Array,
         value: []
       },
+      // This testStatusValues mapping is defined at shared/statuses.go.
+      testStatusValues: {
+        type: Object,
+        value: { 'FAIL': 6, 'TIMEOUT': 4, 'ERROR': 3 }
+      }
     };
   }
 
@@ -119,17 +125,31 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
 
   getTriagedMetadataMap(displayedMetadata) {
     var link = {};
-    for (const entry of displayedMetadata) {
-      if (entry.url === '') {
-        continue;
-      }
-
-      for (const test of entry.tests) {
-        const value = { 'url': entry.url, 'product': entry.product };
-        if (!(test in link)) {
-          link[test] = [];
+    if (this.computePathIsATestFile(this.path)) {
+      link[this.path] = [];
+      for (const entry of displayedMetadata) {
+        if (entry.url === '') {
+          continue;
         }
-        link[test].push(value);
+
+        const results = [];
+        for (const test of entry.tests) {
+          results.push({ 'subtest': test.testname, 'status': this.testStatusValues[test.status] });
+        }
+        link[this.path].push({ 'url': entry.url, 'product': entry.product, 'results': results });
+      }
+    } else {
+      for (const entry of displayedMetadata) {
+        if (entry.url === '') {
+          continue;
+        }
+
+        for (const test of entry.tests) {
+          if (!(test.testname in link)) {
+            link[test.testname] = [];
+          }
+          link[test.testname].push({ 'url': entry.url, 'product': entry.product });
+        }
       }
     }
     return link;
@@ -142,7 +162,11 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       if (!(entry.product in browserMap)) {
         browserMap[entry.product] = [];
       }
-      browserMap[entry.product].push(entry.test);
+      if (this.computePathIsATestFile(this.path)) {
+        browserMap[entry.product].push({ testname: entry.test, status: entry.status });
+      } else {
+        browserMap[entry.product].push({ testname: entry.test });
+      }
     }
 
     for (const key in browserMap) {

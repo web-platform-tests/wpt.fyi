@@ -191,6 +191,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
                            labels="[[labels]]"
                            products="[[products]]"
                            diff-run="[[diffRun]]"
+                           is-triage-mode="[[isTriageMode]]"
                            metadata="[[metadata]]">
         </test-file-results>
       </template>
@@ -328,7 +329,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         </section>
       </template>
     </template>
-    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
@@ -1039,8 +1040,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
       for (const cell of this.selectedCells) {
         cell.removeAttribute('selected');
       }
-      const toast = this.shadowRoot.querySelector('#selected-toast');
-      toast.hide();
+      this.$['selected-toast'].hide();
       this.selectedCells = [];
     }
   }
@@ -1063,11 +1063,11 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         td.setAttribute('selected', 'selected');
         this.selectedCells.push(td);
       }
-      const toast = this.shadowRoot.querySelector('#selected-toast');
+
       if (this.selectedMetadata.length) {
-        toast.show();
+        this.$['selected-toast'].show();
       } else {
-        toast.hide();
+        this.$['selected-toast'].hide();
       }
     };
   }
