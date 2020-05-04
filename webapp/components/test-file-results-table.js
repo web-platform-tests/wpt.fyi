@@ -283,9 +283,7 @@ class TestFileResultsTable extends Pluralizer(WPTColors(PathInfo(TestRunsBase)))
   }
 
   isTriageModeUpdated(isTriageMode) {
-    const temp = this.row;
-    this.row = [];
-    this.row = temp;
+    this.row = Object.value(this.row);
   }
 
   subtestMessage(result, verbose) {
