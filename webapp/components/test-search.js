@@ -352,6 +352,9 @@ class TestSearch extends WPTFlags(PolymerElement) {
         padding: 0.5em 0;
         width: 100%;
       }
+      input::-webkit-calendar-picker-indicator {
+        display: none;
+      }
       .help {
         float: right;
       }
