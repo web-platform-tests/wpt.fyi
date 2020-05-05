@@ -25,7 +25,7 @@ type webappMetadataFetcher struct {
 }
 
 func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
-	sha, metadataMap, err := getMetadataFromMemcache(f.ctx, f.client, f.url, f.gitHubUtil)
+	sha, metadataMap, err := getMetadataFromMemcache(f.ctx)
 	if err == nil && metadataMap != nil && sha != nil {
 		return sha, metadataMap, nil
 	}
@@ -41,11 +41,11 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 	}
 
 	// Caches missed.
-	fillMetadataCache(f.ctx, *sha, res)
+	fillMetadataToMemcache(f.ctx, *sha, res)
 	return sha, res, err
 }
 
-func getMetadataFromMemcache(ctx context.Context, client *http.Client, url string, gitHubUtil shared.GitHubUtil) (sha *string, res map[string][]byte, err error) {
+func getMetadataFromMemcache(ctx context.Context) (sha *string, res map[string][]byte, err error) {
 	log := shared.GetLogger(ctx)
 	cached, err := memcache.Get(ctx, metadataCacheKey)
 
@@ -80,7 +80,7 @@ func getMetadataFromMemcache(ctx context.Context, client *http.Client, url strin
 	return nil, nil, memcache.ErrCacheMiss
 }
 
-func fillMetadataCache(ctx context.Context, sha string, metadataByteMap map[string][]byte) {
+func fillMetadataToMemcache(ctx context.Context, sha string, metadataByteMap map[string][]byte) {
 	log := shared.GetLogger(ctx)
 
 	var metadataSHAMap = make(map[string]map[string][]byte)

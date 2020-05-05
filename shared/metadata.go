@@ -57,7 +57,7 @@ func GetMetadataResponse(testRuns []TestRun, log Logger, fetcher MetadataFetcher
 		productSpecs[i] = ProductSpec{ProductAtRevision: run.ProductAtRevision, Labels: run.LabelsSet()}
 	}
 
-	// TODO(kyleju): Include this SHA information in API response;
+	// TODO(kyleju): Include the SHA information in API response;
 	// see https://github.com/web-platform-tests/wpt.fyi/issues/1938
 	_, metadata, err := GetMetadataByteMap(log, fetcher)
 	if err != nil {
@@ -69,7 +69,7 @@ func GetMetadataResponse(testRuns []TestRun, log Logger, fetcher MetadataFetcher
 
 // GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
 func GetMetadataResponseOnProducts(productSpecs ProductSpecs, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
-	// TODO(kyleju): Include this SHA information in API response;
+	// TODO(kyleju): Include the SHA information in API response;
 	// see https://github.com/web-platform-tests/wpt.fyi/issues/1938
 	_, metadata, err := GetMetadataByteMap(log, fetcher)
 	if err != nil {
