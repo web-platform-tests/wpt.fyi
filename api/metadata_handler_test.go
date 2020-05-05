@@ -123,7 +123,7 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
-	sha := "abc"
+	sha := ""
 	mockgu := sharedtest.NewMockGitHubUtil(mockCtrl)
 	mockgu.EXPECT().GetWPTMetadataMasterSHA().Return(&sha, nil)
 
@@ -195,7 +195,7 @@ func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	client := server.Client()
 
-	sha := "abc"
+	sha := ""
 	mockgu := sharedtest.NewMockGitHubUtil(mockCtrl)
 	mockgu.EXPECT().GetWPTMetadataMasterSHA().Return(&sha, nil)
 

@@ -30,14 +30,19 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 		return sha, metadataMap, nil
 	}
 
-	shaKey, err := f.gitHubUtil.GetWPTMetadataMasterSHA()
+	sha, err = f.gitHubUtil.GetWPTMetadataMasterSHA()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// CollectMetadataWithURL retrieves the content of the wpt-metadata repo from master by default.
-	res, err = shared.CollectMetadataWithURL(f.client, f.url)
-	return shaKey, res, err
+	res, err = shared.CollectMetadataWithURL(f.client, f.url, sha)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Caches missed.
+	fillMetadataCache(f.ctx, *sha, res)
+	return sha, res, err
 }
 
 func getMetadataFromMemcache(ctx context.Context, client *http.Client, url string, gitHubUtil shared.GitHubUtil) (sha *string, res map[string][]byte, err error) {
@@ -68,29 +73,21 @@ func getMetadataFromMemcache(ctx context.Context, client *http.Client, url strin
 			return nil, nil, errors.New("Error from getting the wpt-metadata SHA in metadataSHAMap")
 		}
 
-		shaKey := keys[0]
-		return &shaKey, metadataSHAMap[shaKey], nil
+		sha = &keys[0]
+		return sha, metadataSHAMap[*sha], nil
 	}
 
-	// Caches missed.
-	shaKey, err := gitHubUtil.GetWPTMetadataMasterSHA()
-	if err != nil {
-		log.Errorf("Error from getWPTMetadataMasterSHA in a cache miss: %s", err.Error())
-		return nil, nil, err
-	}
+	return nil, nil, memcache.ErrCacheMiss
+}
 
-	metadataByteMap, err := shared.CollectMetadataWithURL(client, url)
-	if err != nil {
-		log.Errorf("Error from CollectMetadataWithURL in a cache miss: %s", err.Error())
-		return nil, nil, err
-	}
+func fillMetadataCache(ctx context.Context, sha string, metadataByteMap map[string][]byte) {
+	log := shared.GetLogger(ctx)
 
 	var metadataSHAMap = make(map[string]map[string][]byte)
-	metadataSHAMap[*shaKey] = metadataByteMap
+	metadataSHAMap[sha] = metadataByteMap
 	body, err := json.Marshal(metadataSHAMap)
 	if err != nil {
 		log.Errorf("Error from marshaling metadataSHAMap in a cache miss: %s", err.Error())
-		return shaKey, metadataByteMap, nil
 	}
 
 	item := &memcache.Item{
@@ -99,5 +96,4 @@ func getMetadataFromMemcache(ctx context.Context, client *http.Client, url strin
 		Expiration: time.Minute * 10,
 	}
 	memcache.Set(ctx, item)
-	return shaKey, metadataByteMap, nil
 }

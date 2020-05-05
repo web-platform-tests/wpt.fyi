@@ -35,7 +35,7 @@ func (g gitHubUtilImpl) GetWPTMetadataMasterSHA() (*string, error) {
 	return baseRef.Object.SHA, nil
 }
 
-// GetGitHubUtil returns an instance of the GitHubUtil interface.
-func GetGitHubUtil(ctx context.Context, client *github.Client) GitHubUtil {
+// NewGithubUtil returns an instance of the GitHubUtil interface.
+func NewGithubUtil(ctx context.Context, client *github.Client) GitHubUtil {
 	return gitHubUtilImpl{ctx, client}
 }

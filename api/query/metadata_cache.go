@@ -26,6 +26,8 @@ func (f searchcacheMetadataFetcher) Fetch() (sha *string, res map[string][]byte,
 	var netClient = &http.Client{
 		Timeout: time.Second * 5,
 	}
-	res, err = shared.CollectMetadataWithURL(netClient, f.url)
+	// TODO(kyleju): plumb the SHA of a returned wpt-metadata to solve
+	// the race condition; see https://github.com/web-platform-tests/wpt.fyi/issues/1890.
+	res, err = shared.CollectMetadataWithURL(netClient, f.url, nil)
 	return nil, res, err
 }

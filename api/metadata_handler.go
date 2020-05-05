@@ -38,7 +38,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gitHubUtil := shared.GetGitHubUtil(ctx, gitHubUtilClient)
+	gitHubUtil := shared.NewGithubUtil(ctx, gitHubUtilClient)
 	fetcher := webappMetadataFetcher{ctx: ctx, client: client, url: shared.MetadataArchiveURL, gitHubUtil: gitHubUtil}
 	MetadataHandler{logger, fetcher}.ServeHTTP(w, r)
 }
@@ -67,7 +67,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gitHubUtil := shared.GetGitHubUtil(ctx, gitHubUtilClient)
+	gitHubUtil := shared.NewGithubUtil(ctx, gitHubUtilClient)
 	fetcher := webappMetadataFetcher{ctx: ctx, client: aeAPI.GetHTTPClient(), url: shared.MetadataArchiveURL, gitHubUtil: gitHubUtil}
 	tm := shared.GetTriageMetadata(ctx, git, log, fetcher)
 

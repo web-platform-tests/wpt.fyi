@@ -21,8 +21,13 @@ type MetadataFetcher interface {
 }
 
 // CollectMetadataWithURL iterates through wpt-metadata repository and returns a
-// map that maps a test path to its META.yml file content, using a given URL.
-func CollectMetadataWithURL(client *http.Client, url string) (res map[string][]byte, err error) {
+// map that maps a test path to its META.yml file content, using a given URL and ref.
+func CollectMetadataWithURL(client *http.Client, url string, ref *string) (res map[string][]byte, err error) {
+	// See https://developer.github.com/v3/repos/contents/#get-archive-link for the archive link format.
+	if ref != nil && *ref != "" {
+		url = url + "/" + *ref
+	}
+
 	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
