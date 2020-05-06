@@ -128,7 +128,7 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 	mockgu.EXPECT().GetWPTMetadataMasterSHA().Return(&sha, nil)
 
 	ctx := sharedtest.NewTestContext()
-	fetcher := webappMetadataFetcher{ctx, client, server.URL, mockgu}
+	fetcher := webappMetadataFetcher{ctx, client, server.URL, mockgu, false}
 	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 
@@ -200,7 +200,7 @@ func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 	mockgu.EXPECT().GetWPTMetadataMasterSHA().Return(&sha, nil)
 
 	ctx := sharedtest.NewTestContext()
-	fetcher := webappMetadataFetcher{ctx, client, server.URL, mockgu}
+	fetcher := webappMetadataFetcher{ctx, client, server.URL, mockgu, false}
 	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
 	metadataHandler.ServeHTTP(w, r)
 

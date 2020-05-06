@@ -18,16 +18,19 @@ import (
 const metadataCacheKey = "WPT-METADATA"
 
 type webappMetadataFetcher struct {
-	ctx        context.Context
-	client     *http.Client
-	url        string
-	gitHubUtil shared.GitHubUtil
+	ctx           context.Context
+	client        *http.Client
+	url           string
+	gitHubUtil    shared.GitHubUtil
+	isFetchMaster bool
 }
 
 func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
-	sha, metadataMap, err := getMetadataFromMemcache(f.ctx)
-	if err == nil && metadataMap != nil && sha != nil {
-		return sha, metadataMap, nil
+	if !f.isFetchMaster {
+		sha, metadataMap, err := getMetadataFromMemcache(f.ctx)
+		if err == nil && metadataMap != nil && sha != nil {
+			return sha, metadataMap, nil
+		}
 	}
 
 	sha, err = f.gitHubUtil.GetWPTMetadataMasterSHA()

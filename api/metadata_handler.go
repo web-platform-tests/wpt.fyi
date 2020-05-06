@@ -68,7 +68,12 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gitHubUtil := shared.NewGithubUtil(ctx, gitHubUtilClient)
-	fetcher := webappMetadataFetcher{ctx: ctx, client: aeAPI.GetHTTPClient(), url: shared.MetadataArchiveURL, gitHubUtil: gitHubUtil}
+	fetcher := webappMetadataFetcher{
+		ctx:           ctx,
+		client:        aeAPI.GetHTTPClient(),
+		url:           shared.MetadataArchiveURL,
+		gitHubUtil:    gitHubUtil,
+		isFetchMaster: true}
 	tm := shared.GetTriageMetadata(ctx, git, log, fetcher)
 
 	gac := shared.NewGitAccessControl(ctx, ds, githubBotClient, *token)
