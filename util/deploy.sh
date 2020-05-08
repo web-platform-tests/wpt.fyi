@@ -62,7 +62,8 @@ VERSION="${USER}${VERSION_BRANCH_NAME}"
 if [[ -n ${RELEASE} ]]
 then
   # Use SHA for releases.
-  VERSION="$(git rev-parse --short HEAD)"
+  # Add a prefix to prevent gcloud from interpreting the version name as a number.
+  VERSION="rev-$(git rev-parse --short HEAD)"
 fi
 
 PROMOTE_FLAG="--no-promote"
