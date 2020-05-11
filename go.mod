@@ -37,7 +37,7 @@ require (
 	golang.org/x/tools v0.0.0-20200506181757-c20a87c16a39 // indirect
 	google.golang.org/api v0.23.0
 	google.golang.org/appengine v1.6.6
-	google.golang.org/genproto v0.0.0-20200430143042-b979b6f78d84
+	google.golang.org/genproto v0.0.0-20200511104702-f5ebc3bea380
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )
