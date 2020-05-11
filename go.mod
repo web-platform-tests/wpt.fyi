@@ -29,15 +29,15 @@ require (
 	github.com/taskcluster/taskcluster-lib-urls v13.0.0+incompatible
 	github.com/taskcluster/taskcluster/v25 v25.4.0
 	github.com/tebeka/selenium v0.9.9
-	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79 // indirect
+	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3 // indirect
-	golang.org/x/tools v0.0.0-20200506181757-c20a87c16a39 // indirect
+	golang.org/x/sys v0.0.0-20200509044756-6aff5f38e54f // indirect
+	golang.org/x/tools v0.0.0-20200511202723-1762287ae9dd // indirect
 	google.golang.org/api v0.24.0
 	google.golang.org/appengine v1.6.6
-	google.golang.org/genproto v0.0.0-20200430143042-b979b6f78d84
+	google.golang.org/genproto v0.0.0-20200511104702-f5ebc3bea380
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )
