@@ -22,11 +22,11 @@ type webappMetadataFetcher struct {
 	client        *http.Client
 	url           string
 	gitHubUtil    shared.GitHubUtil
-	isFetchMaster bool
+	forceUpdate bool
 }
 
 func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
-	if !f.isFetchMaster {
+	if !f.forceUpdate {
 		sha, metadataMap, err := getMetadataFromMemcache(f.ctx)
 		if err == nil && metadataMap != nil && sha != nil {
 			return sha, metadataMap, nil
@@ -98,5 +98,8 @@ func fillMetadataToMemcache(ctx context.Context, sha string, metadataByteMap map
 		Value:      body,
 		Expiration: time.Minute * 10,
 	}
-	memcache.Set(ctx, item)
+	err = memcache.Set(ctx, item)
+	if err != nil {
+		log.Errorf("Error from memcache.Set in a cache miss: %s", err.Error())
+	}
 }
