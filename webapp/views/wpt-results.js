@@ -1045,8 +1045,10 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
     }
   }
 
-  handleSelectMetadata(index, test) {
+  handleSelectMetadata() {
     return (e) => {
+      // Prevent accidentally modifying these captured parameters in the closure.
+      const [index, test] = arguments;
       const td = e.target.closest('td');
       const browser = this.products[index].browser_name;
 
