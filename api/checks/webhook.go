@@ -184,7 +184,7 @@ func handleCheckRunEvent(
 	appID := checkRun.GetCheckRun().GetApp().GetID()
 	if !isWPTFYIApp(appID) &&
 		appID != azure.PipelinesAppID {
-		log.Infof("Ignoring check_suite App ID %v", appID)
+		log.Infof("Ignoring check_run App ID %v", appID)
 		return false, nil
 	}
 
