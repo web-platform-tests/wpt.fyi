@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/go-github/v31/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/memcache"
 )
@@ -18,11 +19,10 @@ import (
 const metadataCacheKey = "WPT-METADATA"
 
 type webappMetadataFetcher struct {
-	ctx           context.Context
-	client        *http.Client
-	url           string
-	gitHubUtil    shared.GitHubUtil
-	forceUpdate bool
+	ctx          context.Context
+	httpClient   *http.Client
+	gitHubClient *github.Client
+	forceUpdate  bool
 }
 
 func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
@@ -33,12 +33,12 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 		}
 	}
 
-	sha, err = f.gitHubUtil.GetWPTMetadataMasterSHA()
+	sha, err = shared.GetWPTMetadataMasterSHA(f.ctx, f.gitHubClient)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	res, err = shared.CollectMetadataWithURL(f.client, f.url, sha)
+	res, err = shared.GetWPTMetadataRepoData(f.httpClient, sha)
 	if err != nil {
 		return nil, nil, err
 	}

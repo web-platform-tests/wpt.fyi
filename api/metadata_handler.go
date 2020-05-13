@@ -32,14 +32,13 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
 	logger := shared.GetLogger(ctx)
-	gitHubUtilClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
+	metadataUtilClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		http.Error(w, "Unable to get Github Client for GitHubUtil: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Unable to get Github Client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	gitHubUtil := shared.NewGithubUtil(ctx, gitHubUtilClient)
-	fetcher := webappMetadataFetcher{ctx: ctx, client: client, url: shared.MetadataArchiveURL, gitHubUtil: gitHubUtil}
+	fetcher := webappMetadataFetcher{ctx: ctx, httpClient: client, gitHubClient: metadataUtilClient}
 	MetadataHandler{logger, fetcher}.ServeHTTP(w, r)
 }
 
@@ -61,19 +60,17 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	git := shared.GetMetadataGithub(githubBotClient, user.GitHubHandle, user.GithuhEmail)
 	log := shared.GetLogger(ctx)
-	gitHubUtilClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
+	metadataUtilClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		http.Error(w, "Unable to get Github Client for GitHubUtil: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Unable to get Github Client for MetadataUtil: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	gitHubUtil := shared.NewGithubUtil(ctx, gitHubUtilClient)
 	fetcher := webappMetadataFetcher{
-		ctx:         ctx,
-		client:      aeAPI.GetHTTPClient(),
-		url:         shared.MetadataArchiveURL,
-		gitHubUtil:  gitHubUtil,
-		forceUpdate: true}
+		ctx:          ctx,
+		httpClient:   aeAPI.GetHTTPClient(),
+		gitHubClient: metadataUtilClient,
+		forceUpdate:  true}
 	tm := shared.GetTriageMetadata(ctx, git, log, fetcher)
 
 	gac := shared.NewGitAccessControl(ctx, ds, githubBotClient, *token)

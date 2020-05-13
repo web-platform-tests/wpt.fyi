@@ -10,9 +10,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// MetadataArchiveURL is the URL that retrieves an archive of wpt-metadata repository.
-var MetadataArchiveURL = "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
-
 // ShowMetadataParam determines whether Metadata Information returns along
 // with a test result query request.
 const ShowMetadataParam = "metadataInfo"

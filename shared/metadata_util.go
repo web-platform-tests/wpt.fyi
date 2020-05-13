@@ -2,17 +2,26 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate mockgen -destination sharedtest/metadata_util_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared MetadataFetcher
+
 package shared
 
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/google/go-github/v31/github"
 )
+
+const sourceOwner string = "web-platform-tests"
+const sourceRepo string = "wpt-metadata"
+const baseBranch string = "master"
 
 // MetadataFetcher is an abstract interface that encapsulates the Fetch() method. Fetch() fetches metadata
 // for webapp and searchcache.
@@ -20,10 +29,21 @@ type MetadataFetcher interface {
 	Fetch() (sha *string, res map[string][]byte, err error)
 }
 
-// CollectMetadataWithURL iterates through wpt-metadata repository and returns a
-// map that maps a test path to its META.yml file content, using a given URL and ref.
-func CollectMetadataWithURL(client *http.Client, url string, ref *string) (res map[string][]byte, err error) {
+// GetWPTMetadataMasterSHA returns the SHA of the master branch of the wpt-metadata repo.
+func GetWPTMetadataMasterSHA(ctx context.Context, gitHubClient *github.Client) (*string, error) {
+	baseRef, _, err := gitHubClient.Git.GetRef(ctx, sourceOwner, sourceRepo, "refs/heads/"+baseBranch)
+	if err != nil {
+		return nil, err
+	}
+
+	return baseRef.Object.SHA, nil
+}
+
+// GetWPTMetadataRepoData iterates through wpt-metadata repository and returns a
+// map that maps a test path to its META.yml file content, using a given ref.
+func GetWPTMetadataRepoData(client *http.Client, ref *string) (res map[string][]byte, err error) {
 	// See https://developer.github.com/v3/repos/contents/#get-archive-link for the archive link format.
+	url := "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
 	if ref != nil && *ref != "" {
 		url = url + "/" + *ref
 	}
@@ -46,6 +66,7 @@ func CollectMetadataWithURL(client *http.Client, url string, ref *string) (res m
 	}
 	return parseMetadataFromGZip(gzip)
 }
+
 func parseMetadataFromGZip(gzip *gzip.Reader) (res map[string][]byte, err error) {
 	defer gzip.Close()
 
