@@ -101,7 +101,15 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, taskcluster
 		return false, err
 	}
 
+	action := checkSuite.GetAction()
+	owner := checkSuite.GetRepo().GetOwner().GetLogin()
+	repo := checkSuite.GetRepo().GetName()
+	sha := checkSuite.GetCheckSuite().GetHeadSHA()
+	appName := checkSuite.GetCheckSuite().GetApp().GetName()
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
+
+	log.Debugf("Check suite %s: %s/%s @ %s (App %v, ID %v)", action, owner, repo, shared.CropString(sha, 7), appName, appID)
+
 	if !isWPTFYIApp(appID) &&
 		appID != taskcluster.AppID {
 		log.Infof("Ignoring check_suite App ID %v", appID)
@@ -122,11 +130,6 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, taskcluster
 		return false, nil
 	}
 
-	action := checkSuite.GetAction()
-	owner := checkSuite.GetRepo().GetOwner().GetLogin()
-	repo := checkSuite.GetRepo().GetName()
-	sha := checkSuite.GetCheckSuite().GetHeadSHA()
-	log.Debugf("Check suite %s: %s/%s @ %s", action, owner, repo, shared.CropString(sha, 7))
 	if action == "requested" || action == "rerequested" {
 		pullRequests := checkSuite.GetCheckSuite().PullRequests
 		prNumbers := []int{}
@@ -179,9 +182,11 @@ func handleCheckRunEvent(
 	owner := checkRun.GetRepo().GetOwner().GetLogin()
 	repo := checkRun.GetRepo().GetName()
 	sha := checkRun.GetCheckRun().GetHeadSHA()
-	log.Debugf("Check run %s: %s/%s @ %s", action, owner, repo, shared.CropString(sha, 7))
-
+	appName := checkRun.GetCheckRun().GetApp().GetName()
 	appID := checkRun.GetCheckRun().GetApp().GetID()
+
+	log.Debugf("Check run %s: %s/%s @ %s (App %v, ID %v)", action, owner, repo, shared.CropString(sha, 7), appName, appID)
+
 	if !isWPTFYIApp(appID) &&
 		appID != azure.PipelinesAppID {
 		log.Infof("Ignoring check_run App ID %v", appID)
