@@ -34,7 +34,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	logger := shared.GetLogger(ctx)
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		http.Error(w, "Unable to get Github Client: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Unable to get Github client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -62,7 +62,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	log := shared.GetLogger(ctx)
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		http.Error(w, "Unable to get Github Client for MetadataUtil: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Unable to get Github client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
