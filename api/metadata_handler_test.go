@@ -242,7 +242,7 @@ func TestMetadataHandler_POST_NotJustLink(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestMetadata(t *testing.T) {
+func TestFilterMetadata(t *testing.T) {
 	metadata := shared.MetadataResults(shared.MetadataResults{
 		"/foo/bar/b.html": shared.MetadataLinks{
 			shared.MetadataLink{
