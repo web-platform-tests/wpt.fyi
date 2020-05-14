@@ -7,11 +7,13 @@
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
+import { PathInfo } from '../components/path.js';
 
-class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
+class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) {
   static get is() {
     return 'wpt-amend-metadata';
   }
@@ -59,7 +61,16 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
             <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
-            <li>[[test]]</li>
+            <template is="dom-if" if="[[hasHref(node.product)]]">
+              <li>
+                <a href="[[getSearchURLHref(test)]]" target="_blank">[[test]]</a>
+                <paper-tooltip offset="0" animation-delay="0">Search this test in Monorail</paper-tooltip>
+              </li>
+            </template>
+
+            <template is="dom-if" if="[[!hasHref(node.product)]]">
+              <li>[[test]]</li>
+            </template>
           </template>
         </template>
         <div class="buttons">
@@ -133,6 +144,21 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       }
     }
     return link;
+  }
+
+  hasHref(product) {
+    return product === 'chrome';
+  }
+
+  getSearchURLHref(testName) {
+    if (this.computePathIsATestFile(testName)) {
+      // Remove name flags and extensions: https://web-platform-tests.org/writing-tests/file-names.html
+      testName = testName.split('.')[0];
+    } else {
+      testName = testName.replace(/((\/\*)?$)/, '');
+    }
+
+    return 'https://bugs.chromium.org/p/chromium/issues/list?q=' + testName;
   }
 
   populateDisplayData() {
