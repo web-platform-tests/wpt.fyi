@@ -127,21 +127,6 @@ func (mr *MockAPIMockRecorder) IgnoreFailure(arg0, arg1, arg2, arg3, arg4 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IgnoreFailure", reflect.TypeOf((*MockAPI)(nil).IgnoreFailure), arg0, arg1, arg2, arg3, arg4)
 }
 
-// PendingCheckRun mocks base method
-func (m *MockAPI) PendingCheckRun(arg0 shared.CheckSuite, arg1 shared.ProductSpec) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PendingCheckRun", arg0, arg1)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PendingCheckRun indicates an expected call of PendingCheckRun
-func (mr *MockAPIMockRecorder) PendingCheckRun(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PendingCheckRun", reflect.TypeOf((*MockAPI)(nil).PendingCheckRun), arg0, arg1)
-}
-
 // ScheduleResultsProcessing mocks base method
 func (m *MockAPI) ScheduleResultsProcessing(arg0 string, arg1 shared.ProductSpec) error {
 	m.ctrl.T.Helper()

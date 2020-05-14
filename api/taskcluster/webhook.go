@@ -38,8 +38,7 @@ var (
 // Non-fatal error when there is no result (e.g. nothing finishes yet).
 var errNoResults = errors.New("no result URLs found in task group")
 
-// tcStatusWebhookHandler reacts to GitHub status webhook events. This is juxtaposed with
-// handleCheckSuiteEvent, which is how we react to the (new) CheckRun implementation of Taskcluster.
+// tcStatusWebhookHandler reacts to GitHub status webhook events.
 func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" ||
 		r.Header.Get("X-GitHub-Event") != "status" {
