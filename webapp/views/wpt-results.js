@@ -1045,20 +1045,24 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
     }
   }
 
-  handleSelectMetadata(index, test) {
+  handleSelectMetadata() {
+    // Prevent accidentally modifying these captured parameters in the closure.
+    const [index, test] = arguments;
     return (e) => {
       const td = e.target.closest('td');
       const browser = this.products[index].browser_name;
+
+      let selectedTest = test;
       if (this.computePathIsASubfolder(test)) {
-        test = test + '/*';
+        selectedTest = test + '/*';
       }
 
-      if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
-        this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
+      if (this.selectedMetadata.find(s => s.test === selectedTest && s.product === browser)) {
+        this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === selectedTest && s.product === browser));
         this.selectedCells = this.selectedCells.filter(c => c !== td);
         td.removeAttribute('selected');
       } else {
-        const selected = { test: test, product: browser };
+        const selected = { test: selectedTest, product: browser };
         this.selectedMetadata = [...this.selectedMetadata, selected];
         td.setAttribute('selected', 'selected');
         this.selectedCells.push(td);
