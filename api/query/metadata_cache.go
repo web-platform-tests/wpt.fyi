@@ -27,6 +27,6 @@ func (f searchcacheMetadataFetcher) Fetch() (sha *string, res map[string][]byte,
 
 	// TODO(kyleju): utilize the SHA information here to potentially resolve the metadata cache
 	// out-of-sync issue between searchcache and webapp.
-	res, err = shared.GetWPTMetadataRepoData(netClient, nil)
+	res, err = shared.GetWPTMetadataArchive(netClient, nil)
 	return nil, res, err
 }

@@ -38,7 +38,7 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 		return nil, nil, err
 	}
 
-	res, err = shared.GetWPTMetadataRepoData(f.httpClient, sha)
+	res, err = shared.GetWPTMetadataArchive(f.httpClient, sha)
 	if err != nil {
 		return nil, nil, err
 	}

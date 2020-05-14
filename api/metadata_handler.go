@@ -53,23 +53,18 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 
 	wptfyiBotClient, err := shared.GetGithubClientFromToken(ctx, "github-wpt-fyi-bot-token")
 	if err != nil {
-		http.Error(w, "Unable to get wptfyiBotClient: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Unable to get GitHub client for wpt-fyi-bot: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	git := shared.GetMetadataGithub(wptfyiBotClient, user.GitHubHandle, user.GithuhEmail)
 	log := shared.GetLogger(ctx)
-	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
-	if err != nil {
-		http.Error(w, "Unable to get Github client: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
 
 	fetcher := webappMetadataFetcher{
 		ctx:          ctx,
 		httpClient:   aeAPI.GetHTTPClient(),
-		gitHubClient: gitHubClient,
+		gitHubClient: wptfyiBotClient,
 		forceUpdate:  true}
 	tm := shared.GetTriageMetadata(ctx, git, log, fetcher)
 

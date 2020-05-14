@@ -39,11 +39,14 @@ func GetWPTMetadataMasterSHA(ctx context.Context, gitHubClient *github.Client) (
 	return baseRef.Object.SHA, nil
 }
 
-// GetWPTMetadataRepoData iterates through wpt-metadata repository and returns a
+// GetWPTMetadataArchive iterates through wpt-metadata repository and returns a
 // map that maps a test path to its META.yml file content, using a given ref.
-func GetWPTMetadataRepoData(client *http.Client, ref *string) (res map[string][]byte, err error) {
+func GetWPTMetadataArchive(client *http.Client, ref *string) (res map[string][]byte, err error) {
 	// See https://developer.github.com/v3/repos/contents/#get-archive-link for the archive link format.
-	url := "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball"
+	return getWPTMetadataArchiveWithURL(client, "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball", ref)
+}
+
+func getWPTMetadataArchiveWithURL(client *http.Client, url string, ref *string) (res map[string][]byte, err error) {
 	if ref != nil && *ref != "" {
 		url = url + "/" + *ref
 	}
