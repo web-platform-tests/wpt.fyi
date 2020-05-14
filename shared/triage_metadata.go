@@ -73,9 +73,6 @@ func getNewCommitBranchName(ctx context.Context, client *github.Client, sourceOw
 }
 
 func getWptmetadataGitHubInfo(ctx context.Context, client *github.Client) wptmetadataGitHubInfo {
-	sourceOwner := "web-platform-tests"
-	sourceRepo := "wpt-metadata"
-	baseBranch := "master"
 	commitBranch := getNewCommitBranchName(ctx, client, sourceOwner, sourceRepo)
 
 	return wptmetadataGitHubInfo{
@@ -92,14 +89,9 @@ func getWptmetadataGitHubInfo(ctx context.Context, client *github.Client) wptmet
 		prDescription: "PR for metadata triaged through /api/metadata/triage endpoint. See <insert a doc> for more information about how to use this service."}
 }
 
-func (tm triageMetadata) getCommitBranchRef() (ref *github.Reference, err error) {
+func (tm triageMetadata) getCommitBranchRef(sha *string) (ref *github.Reference, err error) {
 	client := tm.githubClient
-	var baseRef *github.Reference
-	if baseRef, _, err = client.Git.GetRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, "refs/heads/"+tm.baseBranch); err != nil {
-		return nil, err
-	}
-
-	newRef := &github.Reference{Ref: github.String("refs/heads/" + tm.commitBranch), Object: &github.GitObject{SHA: baseRef.Object.SHA}}
+	newRef := &github.Reference{Ref: github.String("refs/heads/" + tm.commitBranch), Object: &github.GitObject{SHA: sha}}
 	ref, _, err = client.Git.CreateRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, newRef)
 	return ref, err
 }
@@ -163,9 +155,9 @@ func (tm triageMetadata) createPR() (string, error) {
 	return pr.GetHTMLURL(), nil
 }
 
-func (tm triageMetadata) createWPTMetadataPR(triagedMetadataMap map[string][]byte) (string, error) {
+func (tm triageMetadata) createWPTMetadataPR(sha *string, triagedMetadataMap map[string][]byte) (string, error) {
 	log := tm.logger
-	ref, err := tm.getCommitBranchRef()
+	ref, err := tm.getCommitBranchRef(sha)
 	if err != nil {
 		log.Errorf("Unable to get/create the commit reference: %s", err)
 		return "", err
@@ -265,14 +257,14 @@ func generateRandomInt() string {
 }
 
 func (tm triageMetadata) Triage(metadata MetadataResults) (string, error) {
-	filesMap, err := GetMetadataByteMap(tm.logger, tm.fetcher)
+	sha, filesMap, err := GetMetadataByteMap(tm.logger, tm.fetcher)
 	if err != nil {
 		return "", err
 	}
 
 	triagedMetadataMap := addToFiles(metadata, filesMap, tm.logger)
 	tm.MetadataGithub.wptmetadataGitHubInfo = getWptmetadataGitHubInfo(tm.ctx, tm.githubClient)
-	return tm.createWPTMetadataPR(triagedMetadataMap)
+	return tm.createWPTMetadataPR(sha, triagedMetadataMap)
 }
 
 // GetTriageMetadata returns an instance of the triageMetadata struct to run Triage() method.

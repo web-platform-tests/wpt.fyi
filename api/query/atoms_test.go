@@ -8,12 +8,12 @@ package query
 
 import (
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func TestStructuredQuery_empty(t *testing.T) {
@@ -858,14 +858,18 @@ func TestStructuredQuery_bindCount(t *testing.T) {
 }
 
 func TestStructuredQuery_bindLink(t *testing.T) {
-	defer func(url string) {
-		shared.MetadataArchiveURL = url
-	}(shared.MetadataArchiveURL)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
-	e := shared.ParseProductSpecUnsafe("chrome")
-	f := shared.ParseProductSpecUnsafe("safari")
+	sha := "sha"
+	mockFetcher := sharedtest.NewMockMetadataFetcher(mockCtrl)
+	mockFetcher.EXPECT().Fetch().Return(&sha, getMetadataTestData(), nil)
+
+	e := shared.ParseProductSpecUnsafe("safari")
+	f := shared.ParseProductSpecUnsafe("firefox")
 	q := AbstractLink{
-		Pattern: "bugs.bar",
+		Pattern:         "bar",
+		metadataFetcher: mockFetcher,
 	}
 
 	runs := shared.TestRuns{
@@ -879,30 +883,16 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		},
 	}
 
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "../../shared/metadata_testdata/gzip_testfile.tar.gz")
-	}
-	server := httptest.NewServer(http.HandlerFunc(handler))
-	defer server.Close()
-
-	shared.MetadataArchiveURL = server.URL
-
 	expect := Link{
-		Pattern: "bugs.bar",
+		Pattern: "bar",
 		Metadata: map[string][]string{
-			"/randomfolder3/innerfolder1/random3foo.html":                     {"bugs.bar"},
-			"/randomfolder2/foo.html":                                         {"safari.foo.com"},
-			"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": {"bugs.bar?id=456"},
+			"/testB/b.html": {"bar.com"},
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindIs(t *testing.T) {
-	defer func(url string) {
-		shared.MetadataArchiveURL = url
-	}(shared.MetadataArchiveURL)
-
 	e := shared.ParseProductSpecUnsafe("chrome")
 	f := shared.ParseProductSpecUnsafe("safari")
 	q := MetadataQualityDifferent
@@ -1136,4 +1126,26 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 		Pattern: "cssom",
 	}
 	assert.Equal(t, expected, q.BindToRuns(runs...))
+}
+
+func getMetadataTestData() map[string][]byte {
+	metadataMap := make(map[string][]byte)
+	metadataMap["root/testA"] = []byte(`
+    links:
+      - product: chrome
+        url: foo.com
+        results:
+        - test: a.html
+          status: FAIL
+    `)
+
+	metadataMap["testB"] = []byte(`
+    links:
+      - product: firefox
+        url: bar.com
+        results:
+        - test: b.html
+          status: FAIL
+    `)
+	return metadataMap
 }

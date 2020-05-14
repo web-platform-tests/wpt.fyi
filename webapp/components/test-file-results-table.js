@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-import './wpt-amend-metadata.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
@@ -17,8 +16,9 @@ import { WPTColors } from './wpt-colors.js';
 import { PathInfo } from './path.js';
 import { Pluralizer } from './pluralize.js';
 import { WPTFlags } from './wpt-flags.js';
+import { AmendMetadataUtil } from './wpt-amend-metadata.js';
 
-class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRunsBase)))) {
+class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColors(PathInfo(TestRunsBase))))) {
   static get is() {
     return 'test-file-results-table';
   }
@@ -57,6 +57,13 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRu
   }
   td[selected] {
     border: 2px solid #000000;
+  }
+  td[triage] {
+    cursor: pointer;
+  }
+  td[triage]:hover {
+    opacity: 0.7;
+    box-shadow: 5px 5px 5px;
   }
   .ref-button {
     color: #333;
@@ -105,7 +112,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRu
 </style>
 
 <paper-toast id="selected-toast" duration="0">
-  <span>[[selectedMetadata.length]] [[testPlural]] selected</span>
+  <span>[[selectedMetadata.length]] [[pluralize('test', selectedMetadata.length)]] selected</span>
   <paper-button class="view-triage" on-click="openAmendMetadata" raised>TRIAGE</paper-button>
 </paper-toast>
 
@@ -132,29 +139,16 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRu
         <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
         <template is="dom-repeat" items="[[row.results]]" as="result">
-          <template is="dom-if" if="[[ !canAmendMetadata(result.status) ]]">
-            <td class$="[[ colorClass(result.status) ]]">
-              <code>[[ subtestMessage(result, verbose) ]]</code>
-              <template is="dom-if" if="[[result.screenshots]]">
-                <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
-                  <iron-icon icon="image:compare"></iron-icon>
-                  COMPARE
-                </a>
-              </template>
-            </td>
-          </template>
+          <td class$="[[ colorClass(result.status) ]]" onclick="[[handleTriageSelect(index, row.name, result.status)]]" onmouseover="[[handleTriageHover(result.status)]]">
+            <code>[[ subtestMessage(result, verbose) ]]</code>
 
-          <template is="dom-if" if="[[ canAmendMetadata(result.status) ]]">
-            <td class$="[[ colorClass(result.status) ]]" onclick="[[handleSelectMetadata(index, row.name, result.status)]]">
-              <code>[[ subtestMessage(result, verbose) ]]</code>
-              <template is="dom-if" if="[[result.screenshots]]">
-                <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
-                  <iron-icon icon="image:compare"></iron-icon>
-                  COMPARE
-                </a>
-              </template>
-            </td>
-          </template>
+            <template is="dom-if" if="[[result.screenshots]]">
+              <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
+                <iron-icon icon="image:compare"></iron-icon>
+                COMPARE
+              </a>
+            </template>
+          </td>
         </template>
 
         <template is="dom-if" if="[[diffRun]]">
@@ -214,23 +208,6 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRu
         type: Boolean,
         value: false,
       },
-      selectedMetadata: {
-        type: Array,
-        value: [],
-        observer: 'clearSelectedCells',
-      },
-      selectedCells: {
-        type: Array,
-        value: [],
-      },
-      testPlural: {
-        type: String,
-        computed: 'computeTestPlural(selectedMetadata)',
-      },
-      isTriageMode: {
-        type: Boolean,
-        observer: 'isTriageModeUpdated',
-      },
       matchers: {
         type: Array,
         value: [
@@ -279,25 +256,11 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRu
     };
   }
 
-  static get observers() {
-    return [
-      'pathUpdated(path)',
-    ];
-  }
-
   constructor() {
     super();
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;
     };
-  }
-
-  pathUpdated() {
-    this.selectedMetadata = [];
-  }
-
-  isTriageModeUpdated() {
-    this.rows = Object.values(this.rows);
   }
 
   subtestMessage(result, verbose) {
@@ -405,50 +368,32 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(WPTColors(PathInfo(TestRu
     }
   }
 
-  computeTestPlural(selectedMetadata) {
-    return this.pluralize('test', selectedMetadata.length);
-  }
-
-  clearSelectedCells(selectedMetadata) {
-    if (selectedMetadata.length === 0 && this.selectedCells.length) {
-      for (const cell of this.selectedCells) {
-        cell.removeAttribute('selected');
-      }
-      this.$['selected-toast'].hide();
-      this.selectedCells = [];
-    }
-  }
-
   canAmendMetadata(status) {
     return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status) && this.triageMetadataUI && this.isTriageMode;
   }
 
-  handleSelectMetadata(index, test, status) {
+  clearSelectedCells(selectedMetadata) {
+    this.handleClearBebaviours(selectedMetadata, this.$['selected-toast']);
+  }
+
+  handleTriageHover(status) {
     return (e) => {
-      const td = e.target.closest('td');
-      const browser = this.products[index].browser_name;
+      this.handleHoverBehaviours(e, this.canAmendMetadata(status));
+    };
+  }
 
-      if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
-        this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
-        this.selectedCells = this.selectedCells.filter(c => c !== td);
-        td.removeAttribute('selected');
-      } else {
-        const selected = { test: test, product: browser, status: status };
-        this.selectedMetadata = [...this.selectedMetadata, selected];
-        td.setAttribute('selected', 'selected');
-        this.selectedCells.push(td);
+  handleTriageSelect(index, test, status) {
+    return (e) => {
+      if (!this.canAmendMetadata(status)) {
+        return;
       }
 
-      if (this.selectedMetadata.length) {
-        this.$['selected-toast'].show();
-      } else {
-        this.$['selected-toast'].hide();
-      }
+      this.handleSelectBehaviours(e, this.products[index].browser_name, test, this.$['selected-toast']);
     };
   }
 
   openAmendMetadata() {
-    this.$.amend.open();
+    this.shadowRoot.querySelector('#amend').open();
   }
 }
 window.customElements.define(TestFileResultsTable.is, TestFileResultsTable);

@@ -7,9 +7,11 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
+	"github.com/google/go-github/v31/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/memcache"
 )
@@ -17,52 +19,78 @@ import (
 const metadataCacheKey = "WPT-METADATA"
 
 type webappMetadataFetcher struct {
-	ctx    context.Context
-	client *http.Client
-	url    string
+	ctx          context.Context
+	httpClient   *http.Client
+	gitHubClient *github.Client
+	forceUpdate  bool
 }
 
-func (f webappMetadataFetcher) Fetch() (res map[string][]byte, err error) {
-	metadataMap, err := getMetadataFromMemcache(f.ctx, f.client, f.url)
-	if err == nil && metadataMap != nil {
-		return metadataMap, nil
+func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
+	if !f.forceUpdate {
+		sha, metadataMap, err := getMetadataFromMemcache(f.ctx)
+		if err == nil && metadataMap != nil && sha != nil {
+			return sha, metadataMap, nil
+		}
 	}
 
-	return shared.CollectMetadataWithURL(f.client, f.url)
+	sha, err = shared.GetWPTMetadataMasterSHA(f.ctx, f.gitHubClient)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	res, err = shared.GetWPTMetadataArchive(f.httpClient, sha)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Caches missed.
+	fillMetadataToMemcache(f.ctx, *sha, res)
+	return sha, res, err
 }
 
-func getMetadataFromMemcache(ctx context.Context, client *http.Client, url string) (res map[string][]byte, err error) {
+func getMetadataFromMemcache(ctx context.Context) (sha *string, res map[string][]byte, err error) {
 	log := shared.GetLogger(ctx)
 	cached, err := memcache.Get(ctx, metadataCacheKey)
 
 	if err != nil && err != memcache.ErrCacheMiss {
 		log.Errorf("Error from getting Metadata in memcache: %s", err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err == nil && cached != nil {
 		// Caches hit; update Metadata.
-		var metadataMap map[string][]byte
-		err = json.Unmarshal(cached.Value, &metadataMap)
+		var metadataSHAMap map[string]map[string][]byte
+		err = json.Unmarshal(cached.Value, &metadataSHAMap)
 		if err != nil {
 			log.Errorf("Error from unmarshaling Metadata in memcache: %s", err.Error())
-			return nil, err
+			return nil, nil, err
 		}
 
-		return metadataMap, nil
+		var keys []string
+		for key := range metadataSHAMap {
+			keys = append(keys, key)
+		}
+
+		if len(keys) != 1 {
+			log.Errorf("Error from getting the wpt-metadata SHA in metadataSHAMap")
+			return nil, nil, errors.New("Error from getting the wpt-metadata SHA in metadataSHAMap")
+		}
+
+		sha = &keys[0]
+		return sha, metadataSHAMap[*sha], nil
 	}
 
-	// Caches missed.
-	metadataByteMap, err := shared.CollectMetadataWithURL(client, url)
-	if err != nil {
-		log.Errorf("Error from CollectMetadataWithURL in a cache miss: %s", err.Error())
-		return nil, err
-	}
+	return nil, nil, memcache.ErrCacheMiss
+}
 
-	body, err := json.Marshal(metadataByteMap)
+func fillMetadataToMemcache(ctx context.Context, sha string, metadataByteMap map[string][]byte) {
+	log := shared.GetLogger(ctx)
+
+	var metadataSHAMap = make(map[string]map[string][]byte)
+	metadataSHAMap[sha] = metadataByteMap
+	body, err := json.Marshal(metadataSHAMap)
 	if err != nil {
-		log.Errorf("Error from marshaling metadataByteMap in a cache miss: %s", err.Error())
-		return metadataByteMap, nil
+		log.Errorf("Error from marshaling metadataSHAMap in a cache miss: %s", err.Error())
 	}
 
 	item := &memcache.Item{
@@ -70,6 +98,8 @@ func getMetadataFromMemcache(ctx context.Context, client *http.Client, url strin
 		Value:      body,
 		Expiration: time.Minute * 10,
 	}
-	memcache.Set(ctx, item)
-	return metadataByteMap, nil
+	err = memcache.Set(ctx, item)
+	if err != nil {
+		log.Errorf("Error from memcache.Set in a cache miss: %s", err.Error())
+	}
 }
