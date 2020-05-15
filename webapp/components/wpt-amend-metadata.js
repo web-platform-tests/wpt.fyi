@@ -51,6 +51,14 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           margin-top: 5px;
           margin-left: 30px;
         }
+        .testname {
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+          max-width: 100ch;
+          display: inline-block;
+          vertical-align: bottom;
+        }
       </style>
       <paper-dialog id="dialog">
         <h3>Triage Failing Tests</h3>
@@ -61,16 +69,12 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
-            <template is="dom-if" if="[[hasHref(node.product)]]">
-              <li>
-                <a href="[[getSearchURLHref(test)]]" target="_blank">[[test]]</a>
-                <paper-tooltip offset="0" animation-delay="0">Search this test in Monorail</paper-tooltip>
-              </li>
-            </template>
-
-            <template is="dom-if" if="[[!hasHref(node.product)]]">
-              <li>[[test]]</li>
-            </template>
+            <li>
+              <div class="testname"> [[test]] </div>
+              <template is="dom-if" if="[[hasHref(node.product)]]">
+                <a href="[[getSearchURLHref(test)]]" target="_blank"> [Search in Monorail] </a>
+              </template>
+            </li>
           </template>
         </template>
         <div class="buttons">
