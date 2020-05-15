@@ -89,7 +89,7 @@ func wait(start time.Time, total time.Duration) {
 func KeepMetadataUpdated(client *http.Client, logger shared.Logger, interval time.Duration) {
 	logger.Infof("Metadata update via polling started")
 	for {
-		metadataCache, err := shared.CollectMetadataWithURL(client, shared.MetadataArchiveURL)
+		metadataCache, err := shared.GetWPTMetadataArchive(client, nil)
 		if err != nil {
 			logger.Errorf("Error fetching Metadata for update: %v", err)
 		}

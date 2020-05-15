@@ -15,12 +15,10 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// AppID is the ID of the Taskcluster GitHub app.
-const AppID = int64(1317)
+// AppID is the ID of the Community-TC GitHub app.
+const AppID = int64(40788)
 
-// https://docs.microsoft.com/en-us/rest/api/taskcluster/devops/build/artifacts/get?view=taskcluster-devops-rest-4.1
-
-// API is for Azure Taskcluster related requests.
+// API is for Taskcluster related requests.
 type API interface {
 	HandleCheckSuiteEvent(*github.CheckSuiteEvent) (bool, error)
 }

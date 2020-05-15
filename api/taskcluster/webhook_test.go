@@ -34,19 +34,19 @@ func TestShouldProcessStatus_states(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
-	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), &status))
 
 	status.Context = strPtr("Community-TC")
-	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), &status))
 
 	status.State = strPtr("failure")
-	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), &status))
 
 	status.State = strPtr("error")
-	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), &status))
 
 	status.State = strPtr("pending")
-	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), &status))
 }
 
 func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
@@ -54,7 +54,7 @@ func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Travis")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
-	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
+	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), &status))
 }
 
 func TestShouldProcessStatus_notOnMaster(t *testing.T) {
@@ -62,8 +62,7 @@ func TestShouldProcessStatus_notOnMaster(t *testing.T) {
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("gh-pages")}}
-	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), false, &status))
-	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), true, &status))
+	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), &status))
 }
 
 func TestIsOnMaster(t *testing.T) {

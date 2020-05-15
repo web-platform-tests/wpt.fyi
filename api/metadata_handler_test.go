@@ -28,13 +28,13 @@ func TestHandleMetadataTriage_Success(t *testing.T) {
 
 	body :=
 		`{
-		"/bar/foo.html": [
-			{
-				"product":"chrome",
-				"url":"bugs.bar",
-				"results":[{"status":6}]
-			}
-		]}`
+        "/bar/foo.html": [
+            {
+                "product":"chrome",
+                "url":"bugs.bar",
+                "results":[{"status":6}]
+            }
+        ]}`
 	bodyReader := strings.NewReader(body)
 	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
 	req.Header.Set("Content-Type", "application/json")
@@ -55,13 +55,13 @@ func TestHandleMetadataTriage_NonSimpleRequests(t *testing.T) {
 	w := httptest.NewRecorder()
 	body :=
 		`{
-		"/bar/foo.html": [
-			{
-				"product":"chrome",
-				"url":"bugs.bar",
-				"results":[{"status":6}]
-			}
-		]}`
+        "/bar/foo.html": [
+            {
+                "product":"chrome",
+                "url":"bugs.bar",
+                "results":[{"status":6}]
+            }
+        ]}`
 	bodyReader := strings.NewReader(body)
 	req := httptest.NewRequest("GET", "https://foo/metadata", bodyReader)
 	req.Header.Set("Content-Type", "application/json")
@@ -82,13 +82,13 @@ func TestHandleMetadataTriage_WrongContentType(t *testing.T) {
 	w := httptest.NewRecorder()
 	body :=
 		`{
-	"/bar/foo.html": [
-		{
-			"product":"chrome",
-			"url":"bugs.bar",
-			"results":[{"status":6}]
-		}
-	]}`
+    "/bar/foo.html": [
+        {
+            "product":"chrome",
+            "url":"bugs.bar",
+            "results":[{"status":6}]
+        }
+    ]}`
 	bodyReader := strings.NewReader(body)
 	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -109,20 +109,17 @@ func TestHandleMetadataTriage_InvalidBody(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestFilterMetadataHanlder_Success(t *testing.T) {
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "../shared/metadata_testdata/gzip_testfile.tar.gz")
-	}
-	server := httptest.NewServer(http.HandlerFunc(handler))
-	defer server.Close()
+func TestMetadataHanlder_GET_Success(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
-	r := httptest.NewRequest("GET", "/abd/api/metadata?product=chrome&product=safari", nil)
+	r := httptest.NewRequest("GET", "/abd/api/metadata?product=firefox", nil)
 	w := httptest.NewRecorder()
-	client := server.Client()
+	sha := "sha"
+	mockFetcher := sharedtest.NewMockMetadataFetcher(mockCtrl)
+	mockFetcher.EXPECT().Fetch().Return(&sha, getMetadataTestData(), nil)
 
-	ctx := sharedtest.NewTestContext()
-	fetcher := webappMetadataFetcher{ctx, client, server.URL}
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), mockFetcher}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -130,34 +127,18 @@ func TestFilterMetadataHanlder_Success(t *testing.T) {
 
 	var expected, actual shared.MetadataResults
 	json.Unmarshal([]byte(`{
-		"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": [
-			{
-				"product":"chrome",
-				"url":"bugs.bar?id=456",
-				"results":[
-					{ "status":6 }
-				]
-			}
-		],
-		"/randomfolder2/foo.html": [
-			{
-				"product": "safari",
-				"url":"safari.foo.com",
-				"results":[{"status":0}]
-			}
-		],
-		"/randomfolder3/innerfolder1/random3foo.html": [
-			{
-				"product":"chrome",
-				"url":"bugs.bar",
-				"results":[{"status":6}]
-			}
-		]}`), &expected)
+        "/testB/b.html": [
+            {
+                "product": "firefox",
+                "url":"bar.com",
+                "results":[{"status":6}]
+            }
+        ]}`), &expected)
 	json.Unmarshal([]byte(res), &actual)
 	assert.Equal(t, expected, actual)
 }
 
-func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
+func TestMetadataHanlder_GET_MissingProducts(t *testing.T) {
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", nil)
 	w := httptest.NewRecorder()
 
@@ -167,27 +148,25 @@ func TestFilterMetadataHanlder_MissingProducts(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestFilterMetadataHandlerPost_Success(t *testing.T) {
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "../shared/metadata_testdata/gzip_testfile.tar.gz")
-	}
-	server := httptest.NewServer(http.HandlerFunc(handler))
-	defer server.Close()
+func TestMetadataHandler_POST_Success(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
 	body :=
 		`{
-		"exists": [{
-			"link": "bugs.bar"
-		}]
-	}`
+        "exists": [{
+            "link": "foo"
+        }]
+    }`
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
-	client := server.Client()
 
-	ctx := sharedtest.NewTestContext()
-	fetcher := webappMetadataFetcher{ctx, client, server.URL}
-	metadataHandler := MetadataHandler{shared.NewNilLogger(), fetcher}
+	sha := "shaA"
+	mockFetcher := sharedtest.NewMockMetadataFetcher(mockCtrl)
+	mockFetcher.EXPECT().Fetch().Return(&sha, getMetadataTestData(), nil)
+
+	metadataHandler := MetadataHandler{shared.NewNilLogger(), mockFetcher}
 	metadataHandler.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -195,35 +174,27 @@ func TestFilterMetadataHandlerPost_Success(t *testing.T) {
 
 	var expected, actual shared.MetadataResults
 	json.Unmarshal([]byte(`{
-		"/randomfolder1/innerfolder1/innerfolder2/innerfolder3/foo1.html": [
-			{
-				"url": "bugs.bar?id=456",
-				"product": "chrome",
-				"results": [
-					{"status": 6 }
-				]
-			}
-		],
-		"/randomfolder3/innerfolder1/random3foo.html": [
-			{
-				"product": "chrome",
-				"url": "bugs.bar",
-				"results": [
-					{"status": 6 }
-				]}
-		]
-	}`), &expected)
+        "/root/testA/a.html": [
+            {
+                "product":"chrome",
+                "url":"foo.com",
+                "results":[
+                    { "status":6 }
+                ]
+            }
+        ]
+    }`), &expected)
 	json.Unmarshal([]byte(res), &actual)
 	assert.EqualValues(t, expected, actual)
 }
 
-func TestFilterMetadataHandlerPost_MissingProducts(t *testing.T) {
+func TestMetadataHandler_POST_MissingProducts(t *testing.T) {
 	body :=
 		`{
-		"exists": [{
-			"link": "bugs.chromium.org"
-		}]
-	}`
+        "exists": [{
+            "link": "bugs.chromium.org"
+        }]
+    }`
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("GET", "/abd/api/metadata?", bodyReader)
 	w := httptest.NewRecorder()
@@ -234,13 +205,13 @@ func TestFilterMetadataHandlerPost_MissingProducts(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestFilterMetadataHandlerPost_NotLink(t *testing.T) {
+func TestMetadataHandler_POST_NotLink(t *testing.T) {
 	body :=
 		`{
-		"exists": [{
-			"pattern": "bugs.chromium.org"
-		}]
-	}`
+        "exists": [{
+            "pattern": "bugs.chromium.org"
+        }]
+    }`
 	bodyReader := strings.NewReader(string(body))
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
@@ -251,16 +222,16 @@ func TestFilterMetadataHandlerPost_NotLink(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestFilterMetadataHandlerPost_NotJustLink(t *testing.T) {
+func TestMetadataHandler_POST_NotJustLink(t *testing.T) {
 	body :=
 		`{
-		"exists": [{
-			"and": [
-				{"pattern": "bugs.chromium.org"},
-				{"link": "abc"}
-			]
-		}]
-	}`
+        "exists": [{
+            "and": [
+                {"pattern": "bugs.chromium.org"},
+                {"link": "abc"}
+            ]
+        }]
+    }`
 	bodyReader := strings.NewReader(string(body))
 	r := httptest.NewRequest("POST", "/abd/api/metadata?product=chrome&product=safari", bodyReader)
 	w := httptest.NewRecorder()
@@ -293,4 +264,26 @@ func TestFilterMetadata(t *testing.T) {
 
 	assert.Equal(t, 1, len(res))
 	assert.Equal(t, "https://aa.com/item", res["/foo/bar/b.html"][0].URL)
+}
+
+func getMetadataTestData() map[string][]byte {
+	metadataMap := make(map[string][]byte)
+	metadataMap["root/testA"] = []byte(`
+    links:
+      - product: chrome
+        url: foo.com
+        results:
+        - test: a.html
+          status: FAIL
+    `)
+
+	metadataMap["testB"] = []byte(`
+    links:
+      - product: firefox
+        url: bar.com
+        results:
+        - test: b.html
+          status: FAIL
+    `)
+	return metadataMap
 }

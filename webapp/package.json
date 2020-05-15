@@ -26,8 +26,8 @@
     "@lhci/cli": "0.3.14",
     "@polymer/test-fixture": "4.0.2",
     "babel-eslint": "10.1.0",
-    "cpy-cli": "3.1.0",
-    "eslint": "6.8.0",
+    "cpy-cli": "3.1.1",
+    "eslint": "7.0.0",
     "eslint-plugin-html": "6.0.2",
     "wct-browser-legacy": "1.0.2",
     "web-component-tester": "6.9.2"
@@ -68,8 +68,8 @@
     "@polymer/paper-tooltip": "3.0.1",
     "@polymer/polymer": "3.4.1",
     "@vaadin/vaadin-context-menu": "4.4.0",
-    "@vaadin/vaadin-date-picker": "4.0.8",
-    "@vaadin/vaadin-grid": "5.5.3",
+    "@vaadin/vaadin-date-picker": "4.1.1",
+    "@vaadin/vaadin-grid": "5.6.1",
     "@webcomponents/webcomponentsjs": "2.4.3",
     "pluralize": "8.0.0"
   }
