@@ -59,7 +59,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'processTaskclusterCheckRunEvents',
       'runsByPRNumber',
       'serviceWorker',
-      'taskclusterAllBranches',
       'searchcacheDiffs',
     ];
   }
@@ -292,11 +291,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item sub-item>
       <paper-checkbox checked="{{experimentalAlignedExceptEdge}}">
         All experimental, except edge[stable], and aligned
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{taskclusterAllBranches}}">
-        Process all taskcluster results (not just master)
       </paper-checkbox>
     </paper-item>
     <paper-item>

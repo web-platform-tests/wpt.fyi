@@ -22,7 +22,6 @@ import (
 )
 
 const uploaderName = "taskcluster"
-const flagTaskclusterAllBranches = "taskclusterAllBranches"
 const flagPendingChecks = "pendingChecks"
 
 var (
@@ -72,9 +71,8 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	processAllBranches := aeAPI.IsFeatureEnabled(flagTaskclusterAllBranches)
 	var processed bool
-	if !shouldProcessStatus(log, processAllBranches, &status) {
+	if !shouldProcessStatus(log, &status) {
 		processed = false
 	} else {
 		processed, err = func() (bool, error) {
@@ -206,15 +204,12 @@ func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL, taskGroupID, ta
 	return true, nil
 }
 
-func shouldProcessStatus(log shared.Logger, processAllBranches bool, status *statusEventPayload) bool {
+func shouldProcessStatus(log shared.Logger, status *statusEventPayload) bool {
 	if !status.IsCompleted() {
 		log.Debugf("Ignoring status: %s", status.GetState())
 		return false
 	} else if !status.IsTaskcluster() {
 		log.Debugf("Ignoring non-Taskcluster context: %s", status.GetContext())
-		return false
-	} else if !processAllBranches && !status.IsOnMaster() {
-		log.Debugf("Ignoring non-master status event")
 		return false
 	}
 	return true
