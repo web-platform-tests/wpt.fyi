@@ -14,17 +14,19 @@ import (
 // MetadataMapCached is the local cache of Metadata in searchcache.
 var MetadataMapCached map[string][]byte = nil
 
-type searchcacheMetadataFetcher struct {
-	url string
-}
+type searchcacheMetadataFetcher struct{}
 
-func (f searchcacheMetadataFetcher) Fetch() (res map[string][]byte, err error) {
+func (f searchcacheMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
 	if MetadataMapCached != nil {
-		return MetadataMapCached, nil
+		return nil, MetadataMapCached, nil
 	}
 
 	var netClient = &http.Client{
 		Timeout: time.Second * 5,
 	}
-	return shared.CollectMetadataWithURL(netClient, f.url)
+
+	// TODO(kyleju): utilize the SHA information here to potentially resolve the metadata cache
+	// out-of-sync issue between searchcache and webapp.
+	res, err = shared.GetWPTMetadataArchive(netClient, nil)
+	return nil, res, err
 }
