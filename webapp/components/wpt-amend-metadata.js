@@ -158,7 +158,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       testName = testName.replace(/((\/\*)?$)/, '');
     }
 
-    return 'https://bugs.chromium.org/p/chromium/issues/list?q=' + testName;
+    return `https://bugs.chromium.org/p/chromium/issues/list?q="${testName}"`;
   }
 
   populateDisplayData() {
