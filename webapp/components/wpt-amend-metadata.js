@@ -36,7 +36,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           margin-bottom: 20px;
           margin-left: 10px;
         }
-        .metadataEntry {
+        .metadata-entry {
           display: flex;
           align-items: center;
           margin-top: 20px;
@@ -50,7 +50,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           margin-top: 5px;
           margin-left: 30px;
         }
-        .testname {
+        .list {
           text-overflow: ellipsis;
           overflow: hidden;
           white-space: nowrap;
@@ -62,14 +62,14 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       <paper-dialog id="dialog">
         <h3>Triage Failing Tests</h3>
         <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
-          <div class="metadataEntry">
+          <div class="metadata-entry">
             <img class="browser" src="[[displayLogo(node.product)]]">
             : 
             <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
             <li>
-              <div class="testname"> [[test]] </div>
+              <div class="list"> [[test]] </div>
               <template is="dom-if" if="[[hasHref(node.product)]]">
                 <a href="[[getSearchURLHref(test)]]" target="_blank"> [Search in Monorail] </a>
               </template>
