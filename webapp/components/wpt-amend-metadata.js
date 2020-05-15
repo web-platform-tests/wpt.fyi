@@ -7,7 +7,6 @@
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
-import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
