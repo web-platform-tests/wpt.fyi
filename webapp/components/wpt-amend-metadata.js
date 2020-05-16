@@ -71,7 +71,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             <li>
               <div class="list"> [[test]] </div>
               <template is="dom-if" if="[[hasHref(node.product)]]">
-                <a href="[[getSearchURLHref(test)]]" target="_blank"> [Search in Monorail] </a>
+                <a href="[[getSearchURLHref(test)]]" target="_blank"> [Search on crbug] </a>
               </template>
             </li>
           </template>
