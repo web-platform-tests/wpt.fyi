@@ -144,26 +144,6 @@ func (s statusEventPayload) IsOnMaster() bool {
 	return false
 }
 
-func (s statusEventPayload) HeadingBranches() branchInfos {
-	var branches branchInfos
-	for _, branch := range s.Branches {
-		if *branch.Commit.SHA == *s.SHA {
-			branches = append(branches, branch)
-		}
-	}
-	return branches
-}
-
-type branchInfos []*github.Branch
-
-func (b branchInfos) GetNames() []string {
-	names := make([]string, len(b))
-	for i := range b {
-		names[i] = *b[i].Name
-	}
-	return names
-}
-
 func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
 	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
