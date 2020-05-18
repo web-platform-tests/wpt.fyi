@@ -19,7 +19,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v31/github"
 	"github.com/stretchr/testify/assert"
-	"github.com/taskcluster/taskcluster/v25/clients/client-go/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
@@ -120,15 +119,15 @@ func TestParseTaskclusterURL(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_all_success_master(t *testing.T) {
-	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 5)}
-	group.Tasks[0].Task.Metadata.Name = "wpt-firefox-nightly-testharness-1"
-	group.Tasks[1].Task.Metadata.Name = "wpt-firefox-nightly-testharness-2"
-	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
-	group.Tasks[3].Task.Metadata.Name = "wpt-chrome-dev-reftest-1"
-	group.Tasks[4].Task.Metadata.Name = "wpt-chrome-dev-crashtest-1"
+	group := &taskGroupInfo{Tasks: make([]taskInfo, 5)}
+	group.Tasks[0].Name = "wpt-firefox-nightly-testharness-1"
+	group.Tasks[1].Name = "wpt-firefox-nightly-testharness-2"
+	group.Tasks[2].Name = "wpt-chrome-dev-testharness-1"
+	group.Tasks[3].Name = "wpt-chrome-dev-reftest-1"
+	group.Tasks[4].Name = "wpt-chrome-dev-crashtest-1"
 	for i := 0; i < len(group.Tasks); i++ {
-		group.Tasks[i].Status.State = "completed"
-		group.Tasks[i].Status.TaskID = fmt.Sprint(i)
+		group.Tasks[i].State = "completed"
+		group.Tasks[i].TaskID = fmt.Sprint(i)
 	}
 
 	t.Run("All", func(t *testing.T) {
@@ -177,13 +176,13 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
-	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 3)}
-	group.Tasks[0].Task.Metadata.Name = "wpt-chrome-dev-results"
-	group.Tasks[1].Task.Metadata.Name = "wpt-chrome-dev-stability" // must be skipped
-	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-results-without-changes"
+	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
+	group.Tasks[0].Name = "wpt-chrome-dev-results"
+	group.Tasks[1].Name = "wpt-chrome-dev-stability" // must be skipped
+	group.Tasks[2].Name = "wpt-chrome-dev-results-without-changes"
 	for i := 0; i < len(group.Tasks); i++ {
-		group.Tasks[i].Status.State = "completed"
-		group.Tasks[i].Status.TaskID = fmt.Sprint(i)
+		group.Tasks[i].State = "completed"
+		group.Tasks[i].TaskID = fmt.Sprint(i)
 	}
 
 	t.Run("All", func(t *testing.T) {
@@ -226,16 +225,16 @@ func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_with_failures(t *testing.T) {
-	group := &taskGroupInfo{Tasks: make([]tcqueue.TaskDefinitionAndStatus, 3)}
-	group.Tasks[0].Status.State = "failed"
-	group.Tasks[0].Status.TaskID = "foo"
-	group.Tasks[0].Task.Metadata.Name = "wpt-firefox-nightly-testharness-1"
-	group.Tasks[1].Status.State = "completed"
-	group.Tasks[1].Status.TaskID = "bar"
-	group.Tasks[1].Task.Metadata.Name = "wpt-firefox-nightly-testharness-2"
-	group.Tasks[2].Status.State = "completed"
-	group.Tasks[2].Status.TaskID = "baz"
-	group.Tasks[2].Task.Metadata.Name = "wpt-chrome-dev-testharness-1"
+	group := &taskGroupInfo{Tasks: make([]taskInfo, 3)}
+	group.Tasks[0].State = "failed"
+	group.Tasks[0].TaskID = "foo"
+	group.Tasks[0].Name = "wpt-firefox-nightly-testharness-1"
+	group.Tasks[1].State = "completed"
+	group.Tasks[1].TaskID = "bar"
+	group.Tasks[1].Name = "wpt-firefox-nightly-testharness-2"
+	group.Tasks[2].State = "completed"
+	group.Tasks[2].TaskID = "baz"
+	group.Tasks[2].Name = "wpt-chrome-dev-testharness-1"
 
 	urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
 	assert.Nil(t, err)
