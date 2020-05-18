@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+//go:generate mockgen -destination mock_taskcluster/webhook_mock.go github.com/web-platform-tests/wpt.fyi/api/taskcluster API
+
 package taskcluster
 
 import (
@@ -25,8 +27,8 @@ const uploaderName = "taskcluster"
 const flagPendingChecks = "pendingChecks"
 
 var (
-	// The pattern is based on task names in https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml
-	taskNameRegex = regexp.MustCompile(`^wpt-([a-z_]+-[a-z]+)-([a-z]+(?:-[a-z]+)*)(?:-\d+)?$`)
+	// TaskNameRegex is based on task names in https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml
+	TaskNameRegex = regexp.MustCompile(`^wpt-([a-z_]+-[a-z]+)-([a-z]+(?:-[a-z]+)*)(?:-\d+)?$`)
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
@@ -36,6 +38,92 @@ var (
 
 // Non-fatal error when there is no result (e.g. nothing finishes yet).
 var errNoResults = errors.New("no result URLs found in task group")
+
+// TaskInfo is an abstraction of a Taskcluster task, containing the necessary
+// information for us to process the task in wpt.fyi.
+type TaskInfo struct {
+	Name   string
+	TaskID string
+	State  string
+}
+
+// TaskGroupInfo is an abstraction of a Taskcluster task group, containing the
+// necessary information for us to process the group in wpt.fyi.
+type TaskGroupInfo struct {
+	TaskGroupID string
+	Tasks       []TaskInfo
+}
+
+// EventInfo is an abstraction of a GitHub Status event, containing the
+// necessary information for us to process the event in wpt.fyi.
+type EventInfo struct {
+	Sha     string
+	RootURL string
+	TaskID  string
+	Master  bool
+	Sender  string
+	Group   *TaskGroupInfo
+}
+
+// API is an interface for Taskcluster related methods.
+type API interface {
+	GetTaskGroupInfo(string, string) (*TaskGroupInfo, error)
+}
+
+type apiImpl struct {}
+
+// GetEventInfo turns a GitHub Status event payload into an EventInfo struct.
+//
+// It has two return values:
+//   * An EventInfo struct; this will be non-nil if and only if the event
+//     should be processed.
+//   * An error; if non-nil, then this event has caused an error that should be
+//     reported to the user.
+func GetEventInfo(payload []byte, log shared.Logger, api API) (*EventInfo, error) {
+	var status StatusEventPayload
+	if err := json.Unmarshal(payload, &status); err != nil {
+		// TODO: This now gives InternalServerError rather than StatusBadRequest; handle.
+		// log.Errorf("%v", err)
+		// http.Error(w, err.Error(), http.StatusBadRequest)
+		return nil, err
+	}
+
+	// If we aren't meant to process, the rest doesn't matter.
+	if !ShouldProcessStatus(log, &status) {
+		return nil, nil
+	}
+
+	if status.SHA == nil {
+		return nil, errors.New("No sha on taskcluster status event")
+	}
+
+	if status.TargetURL == nil {
+		return nil, errors.New("No target_url on taskcluster status event")
+	}
+
+	rootURL, taskGroupID, taskID := ParseTaskclusterURL(*status.TargetURL)
+	if taskGroupID == "" {
+		return nil, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
+	}
+
+	log.Debugf("Taskcluster task group %s", taskGroupID)
+
+	group, err := api.GetTaskGroupInfo(rootURL, taskGroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	event := EventInfo{
+		Sha:     *status.SHA,
+		RootURL: rootURL,
+		TaskID:  taskID,
+		Master:  status.IsOnMaster(),
+		Sender:  status.GetCommit().GetAuthor().GetLogin(),
+		Group:   group,
+	}
+
+	return &event, nil
+}
 
 // tcStatusWebhookHandler reacts to GitHub status webhook events.
 func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,47 +151,20 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
-	var status statusEventPayload
-	if err := json.Unmarshal(payload, &status); err != nil {
-		log.Errorf("%v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
-	var processed bool
-	if !shouldProcessStatus(log, &status) {
-		processed = false
-	} else {
-		processed, err = func() (bool, error) {
-			sha := *status.SHA
+	event, err := GetEventInfo(payload, log, &apiImpl{})
 
-			if status.TargetURL == nil {
-				return false, errors.New("No target_url on taskcluster status event")
-			}
-			rootURL, taskGroupID, taskID := parseTaskclusterURL(*status.TargetURL)
-			if taskGroupID == "" {
-				return false, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
-			}
+	processed := false
+	if event != nil {
+		labels := mapset.NewSet()
+		if event.Master {
+			labels.Add(shared.MasterLabel)
+		}
+		if event.Sender != "" {
+			labels.Add(shared.GetUserLabel(event.Sender))
+		}
 
-			log.Debugf("Taskcluster task group %s", taskGroupID)
-
-			labels := mapset.NewSet()
-			if status.IsOnMaster() {
-				labels.Add(shared.MasterLabel)
-			}
-			sender := status.GetCommit().GetAuthor().GetLogin()
-			if sender != "" {
-				labels.Add(shared.GetUserLabel(sender))
-			}
-
-			log.Debugf("Taskcluster task group %s", taskGroupID)
-			group, err := getTaskGroupInfo(rootURL, taskGroupID)
-			if err != nil {
-				return false, err
-			}
-
-			return processTaskclusterBuild(aeAPI, rootURL, group, taskID, sha, shared.ToStringSlice(labels)...)
-		}()
+		processed, err = processTaskclusterBuild(aeAPI, *event, shared.ToStringSlice(labels)...)
 	}
 
 	if err == errNoResults {
@@ -126,21 +187,25 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// StatusEventPayload wraps a github.StatusEvent so we can declare methods on it
 // https://developer.github.com/v3/activity/events/types/#statusevent
-type statusEventPayload struct {
+type StatusEventPayload struct {
 	github.StatusEvent
 }
 
-func (s statusEventPayload) IsCompleted() bool {
+// IsCompleted checks if a github.StatusEvent has completed.
+func (s StatusEventPayload) IsCompleted() bool {
 	return s.GetState() == "success" || s.GetState() == "failure"
 }
 
-func (s statusEventPayload) IsTaskcluster() bool {
+// IsTaskcluster checks if a github.StatusEvent is from Taskcluster.
+func (s StatusEventPayload) IsTaskcluster() bool {
 	return s.Context != nil && (strings.HasPrefix(*s.Context, "Taskcluster") ||
 		strings.HasPrefix(*s.Context, "Community-TC"))
 }
 
-func (s statusEventPayload) IsOnMaster() bool {
+// IsOnMaster checks if a github.StatusEvent affects the master branch.
+func (s StatusEventPayload) IsOnMaster() bool {
 	for _, branch := range s.Branches {
 		if branch.Name != nil && *branch.Name == "master" {
 			return true
@@ -164,15 +229,15 @@ type taskGroupInfo struct {
 	tasks       []taskInfo
 }
 
-func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL string, group *taskGroupInfo, taskID string, sha string, labels ...string) (bool, error) {
+func processTaskclusterBuild(aeAPI shared.AppEngineAPI, event EventInfo, labels ...string) (bool, error) {
 	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
 
-	if taskID != "" {
-		log.Debugf("Taskcluster task %s", taskID)
+	if event.TaskID != "" {
+		log.Debugf("Taskcluster task %s", event.TaskID)
 	}
 
-	urlsByProduct, err := extractArtifactURLs(rootURL, log, group, taskID)
+	urlsByProduct, err := ExtractArtifactURLs(event.RootURL, log, event.Group, event.TaskID)
 	if err != nil {
 		return false, err
 	}
@@ -183,10 +248,10 @@ func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL string, group *t
 		return false, err
 	}
 
-	err = createAllRuns(
+	err = CreateAllRuns(
 		log,
 		shared.NewAppEngineAPI(ctx),
-		sha,
+		event.Sha,
 		uploader.Username,
 		uploader.Password,
 		urlsByProduct,
@@ -198,7 +263,9 @@ func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL string, group *t
 	return true, nil
 }
 
-func shouldProcessStatus(log shared.Logger, status *statusEventPayload) bool {
+// ShouldProcessStatus determines whether we are interested in processing a
+// given StatusEventPayload or not.
+func ShouldProcessStatus(log shared.Logger, status *StatusEventPayload) bool {
 	if !status.IsCompleted() {
 		log.Debugf("Ignoring status: %s", status.GetState())
 		return false
@@ -209,7 +276,9 @@ func shouldProcessStatus(log shared.Logger, status *statusEventPayload) bool {
 	return true
 }
 
-func parseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string) {
+// ParseTaskclusterURL splits a given URL into its root URL, the Taskcluster
+// group id, and an optional specific task ID.
+func ParseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string) {
 	if matches := inspectorURLRegex.FindStringSubmatch(targetURL); matches != nil {
 		rootURL = matches[1]
 		taskGroupID = matches[2]
@@ -227,11 +296,11 @@ func parseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string)
 	return rootURL, taskGroupID, taskID
 }
 
-func getTaskGroupInfo(rootURL string, groupID string) (*taskGroupInfo, error) {
+func (api *apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupInfo, error) {
 	queue := tcqueue.New(nil, rootURL)
 
-	group := taskGroupInfo{
-		taskGroupID: groupID,
+	group := TaskGroupInfo{
+		TaskGroupID: groupID,
 	}
 	continuationToken := ""
 
@@ -242,10 +311,10 @@ func getTaskGroupInfo(rootURL string, groupID string) (*taskGroupInfo, error) {
 		}
 
 		for _, task := range ltgr.Tasks {
-			group.tasks = append(group.tasks, taskInfo{
-				name:   task.Task.Metadata.Name,
-				taskID: task.Status.TaskID,
-				state:  task.Status.State,
+			group.Tasks = append(group.Tasks, TaskInfo{
+				Name:   task.Task.Metadata.Name,
+				TaskID: task.Status.TaskID,
+				State:  task.Status.State,
 			})
 		}
 
@@ -257,27 +326,30 @@ func getTaskGroupInfo(rootURL string, groupID string) (*taskGroupInfo, error) {
 	return &group, nil
 }
 
-type artifactURLs struct {
+// ArtifactURLs holds the results and screenshot URLs for a Taskcluster run.
+type ArtifactURLs struct {
 	Results     []string
 	Screenshots []string
 }
 
-func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo, taskID string) (
-	urlsByProduct map[string]artifactURLs, err error) {
-	urlsByProduct = make(map[string]artifactURLs)
+// ExtractArtifactURLs extracts the results and screenshot URLs for a set of
+// tasks in a TaskGroupInfo.
+func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo, taskID string) (
+	urlsByProduct map[string]ArtifactURLs, err error) {
+	urlsByProduct = make(map[string]ArtifactURLs)
 	failures := mapset.NewSet()
-	for _, task := range group.tasks {
-		id := task.taskID
+	for _, task := range group.Tasks {
+		id := task.TaskID
 		if id == "" {
-			return nil, fmt.Errorf("task group %s has a task without taskId", group.taskGroupID)
+			return nil, fmt.Errorf("task group %s has a task without taskId", group.TaskGroupID)
 		} else if taskID != "" && taskID != id {
 			log.Debugf("Skipping task %s", id)
 			continue
 		}
 
-		matches := taskNameRegex.FindStringSubmatch(task.name)
+		matches := TaskNameRegex.FindStringSubmatch(task.Name)
 		if len(matches) != 3 { // full match, browser-channel, test type
-			log.Infof("Ignoring unrecognized task: %s", task.name)
+			log.Infof("Ignoring unrecognized task: %s", task.Name)
 			continue
 		}
 		product := matches[1]
@@ -291,9 +363,9 @@ func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo
 			product += "-" + shared.PRBaseLabel
 		}
 
-		if task.state != "completed" {
+		if task.State != "completed" {
 			log.Infof("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
-				group.taskGroupID, id, product)
+				group.TaskGroupID, id, product)
 			failures.Add(product)
 			continue
 		}
@@ -324,19 +396,21 @@ func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo
 	return urlsByProduct, nil
 }
 
-func createAllRuns(
+// CreateAllRuns creates run entries in wpt.fyi for a set of products coming
+// from Taskcluster.
+func CreateAllRuns(
 	log shared.Logger,
 	aeAPI shared.AppEngineAPI,
 	sha,
 	username,
 	password string,
-	urlsByProduct map[string]artifactURLs,
+	urlsByProduct map[string]ArtifactURLs,
 	labels []string) error {
 	errors := make(chan error, len(urlsByProduct))
 	var wg sync.WaitGroup
 	wg.Add(len(urlsByProduct))
 	for product, urls := range urlsByProduct {
-		go func(product string, urls artifactURLs) {
+		go func(product string, urls ArtifactURLs) {
 			defer wg.Done()
 			log.Infof("Reports for %s: %v", product, urls)
 
