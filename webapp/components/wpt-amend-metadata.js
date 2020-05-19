@@ -18,7 +18,6 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
       selectedMetadata: {
         type: Array,
         value: [],
-
         // This observer needs to be implemented in the subclass.
         observer: 'clearSelectedCells',
       },
@@ -30,6 +29,16 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
         type: Boolean
       },
     };
+  }
+
+  static get observers() {
+    return [
+      'pathUpdated(path)',
+    ];
+  }
+
+  pathUpdated() {
+    this.selectedMetadata = [];
   }
 
   handleClearBebaviours(selectedMetadata, toast) {

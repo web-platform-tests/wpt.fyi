@@ -139,8 +139,9 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
         <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
         <template is="dom-repeat" items="[[row.results]]" as="result">
-          <td class$="[[ colorClass(result.status) ]]" onclick="[[handleSelectMetadata(index, row.name, result.status)]]" onmouseover="[[handleTriageHover(result.status)]]">
+          <td class$="[[ colorClass(result.status) ]]" onclick="[[handleTriageSelect(index, row.name, result.status)]]" onmouseover="[[handleTriageHover(result.status)]]">
             <code>[[ subtestMessage(result, verbose) ]]</code>
+
             <template is="dom-if" if="[[result.screenshots]]">
               <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
                 <iron-icon icon="image:compare"></iron-icon>
@@ -148,6 +149,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
               </a>
             </template>
           </td>
+          /template>
 
         <template is="dom-if" if="[[diffRun]]">
           <td class$="diff [[ diffClass(row.results) ]]">
@@ -254,21 +256,11 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
     };
   }
 
-  static get observers() {
-    return [
-      'pathUpdated(path)',
-    ];
-  }
-
   constructor() {
     super();
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;
     };
-  }
-
-  pathUpdated() {
-    this.selectedMetadata = [];
   }
 
   subtestMessage(result, verbose) {
@@ -390,7 +382,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
     };
   }
 
-  handleSelectMetadata(index, test, status) {
+  handleTriageSelect(index, test, status) {
     return (e) => {
       if (!this.canAmendMetadata(status)) {
         return;
