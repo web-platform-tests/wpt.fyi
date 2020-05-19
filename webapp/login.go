@@ -138,7 +138,7 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 
 	user := &shared.User{
 		GitHubHandle: ghUser.GetLogin(),
-		GithuhEmail:  ghUser.GetEmail(),
+		GitHubEmail:  ghUser.GetEmail(),
 	}
 	setSession(ctx, ds, user, g.GetAccessToken(), w)
 	if err != nil {
