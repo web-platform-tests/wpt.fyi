@@ -10,8 +10,9 @@ import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
+import { PathInfo } from '../components/path.js';
 
-class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
+class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) {
   static get is() {
     return 'wpt-amend-metadata';
   }
@@ -35,7 +36,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           margin-bottom: 20px;
           margin-left: 10px;
         }
-        .metadataEntry {
+        .metadata-entry {
           display: flex;
           align-items: center;
           margin-top: 20px;
@@ -49,17 +50,30 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           margin-top: 5px;
           margin-left: 30px;
         }
+        .list {
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+          max-width: 100ch;
+          display: inline-block;
+          vertical-align: bottom;
+        }
       </style>
       <paper-dialog id="dialog">
         <h3>Triage Failing Tests</h3>
         <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
-          <div class="metadataEntry">
+          <div class="metadata-entry">
             <img class="browser" src="[[displayLogo(node.product)]]">
             : 
             <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
-            <li>[[test]]</li>
+            <li>
+              <div class="list"> [[test]] </div>
+              <template is="dom-if" if="[[hasHref(node.product)]]">
+                <a href="[[getSearchURLHref(test)]]" target="_blank"> [Search on crbug] </a>
+              </template>
+            </li>
           </template>
         </template>
         <div class="buttons">
@@ -133,6 +147,21 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       }
     }
     return link;
+  }
+
+  hasHref(product) {
+    return product === 'chrome';
+  }
+
+  getSearchURLHref(testName) {
+    if (this.computePathIsATestFile(testName)) {
+      // Remove name flags and extensions: https://web-platform-tests.org/writing-tests/file-names.html
+      testName = testName.split('.')[0];
+    } else {
+      testName = testName.replace(/((\/\*)?$)/, '');
+    }
+
+    return `https://bugs.chromium.org/p/chromium/issues/list?q="${testName}"`;
   }
 
   populateDisplayData() {
