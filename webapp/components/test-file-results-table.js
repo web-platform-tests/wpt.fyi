@@ -149,7 +149,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
               </a>
             </template>
           </td>
-          /template>
+        </template>
 
         <template is="dom-if" if="[[diffRun]]">
           <td class$="diff [[ diffClass(row.results) ]]">
@@ -388,7 +388,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
         return;
       }
 
-      this.handleSelectBehaviours(e, index, test, this.$['selected-toast']);
+      this.handleSelectBehaviours(e, this.products[index].browser_name, test, this.$['selected-toast']);
     };
   }
 

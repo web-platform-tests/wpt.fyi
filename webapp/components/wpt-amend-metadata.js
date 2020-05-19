@@ -61,16 +61,15 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
     td.setAttribute('triage', 'triage');
   }
 
-  handleSelectBehaviours(e, index, test, toast) {
+  handleSelectBehaviours(e, browser, test, toast) {
     const td = e.target.closest('td');
-    const browser = this.products[index].browser_name;
 
     if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
       this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
       this.selectedCells = this.selectedCells.filter(c => c !== td);
       td.removeAttribute('selected');
     } else {
-      const selected = { test: test, product: browser, status: status };
+      const selected = { test: test, product: browser };
       this.selectedMetadata = [...this.selectedMetadata, selected];
       td.setAttribute('selected', 'selected');
       this.selectedCells.push(td);
