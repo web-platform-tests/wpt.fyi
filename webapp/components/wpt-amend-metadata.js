@@ -33,11 +33,11 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
 
   static get observers() {
     return [
-      'pathUpdated(path)',
+      'pathChanged(path)',
     ];
   }
 
-  pathUpdated() {
+  pathChanged() {
     this.selectedMetadata = [];
   }
 
@@ -54,7 +54,10 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
   handleHoverBehaviours(e, canAmend) {
     const td = e.target.closest('td');
     if (!canAmend) {
-      td.removeAttribute('selected');
+      if (td.hasAttribute('triage')) {
+        td.removeAttribute('triage');
+      }
+
       return;
     }
 

@@ -376,13 +376,15 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
     this.handleClearBebaviours(selectedMetadata, this.$['selected-toast']);
   }
 
-  handleTriageHover(status) {
+  handleTriageHover() {
+    const [status] = arguments;
     return (e) => {
       this.handleHoverBehaviours(e, this.canAmendMetadata(status));
     };
   }
 
-  handleTriageSelect(index, test, status) {
+  handleTriageSelect() {
+    const [index, test, status] = arguments;
     return (e) => {
       if (!this.canAmendMetadata(status)) {
         return;

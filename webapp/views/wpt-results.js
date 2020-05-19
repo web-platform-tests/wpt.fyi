@@ -694,7 +694,6 @@ class WPTResults extends AmendMetadataUtil(Pluralizer(WPTColors(WPTFlags(PathInf
   }
 
   pathUpdated(path) {
-    this.selectedMetadata = [];
     this.refreshDisplayedNodes();
   }
 

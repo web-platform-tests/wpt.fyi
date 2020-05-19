@@ -41,7 +41,7 @@ suite('<wpt-amend-metadata>', () => {
   test('getTriagedMetadataMap(displayedMetadata) with a testfile path', () => {
     appFixture.path = '/abc/foo.html';
     const displayedMetadata = [
-      { product: 'firefox', url: 'foo',  tests: ['testA', 'testB'] },
+      { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
       { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
     ];
     const resultsFirefox = [{ subtest: 'testA' }, { subtest: 'testB' }];
@@ -62,7 +62,7 @@ suite('<wpt-amend-metadata>', () => {
     ];
     const expected = [
       { product: 'firefox', url: '', tests: ['testA.html', 'testB.html'] },
-      { product: 'chrome', url: '', tests: ['testC/*', 'testB.html' ] }
+      { product: 'chrome', url: '', tests: ['testC/*', 'testB.html'] }
     ];
 
     appFixture.populateDisplayData();
@@ -77,8 +77,8 @@ suite('<wpt-amend-metadata>', () => {
       { product: 'chrome', test: 'testB' }
     ];
     const expected = [
-      { product: 'firefox', url: '',  tests: ['testA', 'testB'] },
-      { product: 'chrome', url: '',  tests: ['testA', 'testB'] }
+      { product: 'firefox', url: '', tests: ['testA', 'testB'] },
+      { product: 'chrome', url: '', tests: ['testA', 'testB'] }
     ];
 
     appFixture.populateDisplayData();
