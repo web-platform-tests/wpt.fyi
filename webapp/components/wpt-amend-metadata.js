@@ -12,6 +12,69 @@ import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
 import { PathInfo } from './path.js';
 
+const AmendMetadataUtil = (superClass) => class extends superClass {
+  static get properties() {
+    return {
+      selectedMetadata: {
+        type: Array,
+        value: [],
+
+        // This observer needs to be implemented in the subclass.
+        observer: 'clearSelectedCells',
+      },
+      selectedCells: {
+        type: Array,
+        value: [],
+      },
+      isTriageMode: {
+        type: Boolean
+      },
+    };
+  }
+
+  handleClearBebaviours(selectedMetadata, toast) {
+    if (selectedMetadata.length === 0 && this.selectedCells.length) {
+      for (const cell of this.selectedCells) {
+        cell.removeAttribute('selected');
+      }
+      toast.hide();
+      this.selectedCells = [];
+    }
+  }
+
+  handleHoverBehaviours(e, canAmend) {
+    const td = e.target.closest('td');
+    if (!canAmend) {
+      td.removeAttribute('selected');
+      return;
+    }
+
+    td.setAttribute('triage', 'triage');
+  }
+
+  handleSelectBehaviours(e, index, test, toast) {
+    const td = e.target.closest('td');
+    const browser = this.products[index].browser_name;
+
+    if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
+      this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
+      this.selectedCells = this.selectedCells.filter(c => c !== td);
+      td.removeAttribute('selected');
+    } else {
+      const selected = { test: test, product: browser, status: status };
+      this.selectedMetadata = [...this.selectedMetadata, selected];
+      td.setAttribute('selected', 'selected');
+      this.selectedCells.push(td);
+    }
+
+    if (this.selectedMetadata.length) {
+      toast.show();
+    } else {
+      toast.hide();
+    }
+  }
+};
+
 class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) {
   static get is() {
     return 'wpt-amend-metadata';
@@ -98,11 +161,6 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         type: Array,
         value: []
       },
-      // This testStatusValues mapping is defined at shared/statuses.go.
-      testStatusValues: {
-        type: Object,
-        value: { 'FAIL': 6, 'TIMEOUT': 4, 'ERROR': 3 }
-      }
     };
   }
 
@@ -147,7 +205,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
         const results = [];
         for (const test of entry.tests) {
-          results.push({ 'subtest': test.testname, 'status': this.testStatusValues[test.status] });
+          results.push({ 'subtest': test.testname });
         }
         link[this.path].push({ 'url': entry.url, 'product': entry.product, 'results': results });
       }
@@ -190,11 +248,8 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       if (!(entry.product in browserMap)) {
         browserMap[entry.product] = [];
       }
-      if (this.computePathIsATestFile(this.path)) {
-        browserMap[entry.product].push({ testname: entry.test, status: entry.status });
-      } else {
-        browserMap[entry.product].push({ testname: entry.test });
-      }
+
+      browserMap[entry.product].push(entry.test);
     }
 
     for (const key in browserMap) {
@@ -240,3 +295,5 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 }
 
 window.customElements.define(AmendMetadata.is, AmendMetadata);
+
+export { AmendMetadataUtil, AmendMetadata };
