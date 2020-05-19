@@ -6,12 +6,12 @@
 package shared
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
 func TestAppendTestName(t *testing.T) {
@@ -304,11 +304,16 @@ links:
 	assert.Equal(t, "*", actual.Links[2].Results[0].TestPath)
 }
 
-func TestGetMetadataGithub(t *testing.T) {
-	m := GetMetadataGithub(nil, "testuser", "testemail@example.com")
+func TestNewTriageMetadata_email_fallback(t *testing.T) {
+	// They won't be used in the constructor.
+	ctx := context.Background()
+	fetcher := MetadataFetcher(nil)
+
+	m := NewTriageMetadata(ctx, nil, "testuser", "testemail@example.com", fetcher).(triageMetadata)
 	assert.Equal(t, m.authorName, "testuser")
 	assert.Equal(t, m.authorEmail, "testemail@example.com")
-	m = GetMetadataGithub(nil, "testuser", "")
+
+	m = NewTriageMetadata(ctx, nil, "testuser", "", fetcher).(triageMetadata)
 	assert.Equal(t, m.authorName, "testuser")
 	assert.Equal(t, m.authorEmail, "testuser@users.noreply.github.com")
 }

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination sharedtest/triage_metadata_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared TriageMetadataInterface
+//go:generate mockgen -destination sharedtest/triage_metadata_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared TriageMetadata
 
 package shared
 
@@ -17,28 +17,23 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// TriageMetadataInterface encapsulates the Triage() method for testing.
-type TriageMetadataInterface interface {
+// TriageMetadata encapsulates the Triage() method for testing.
+type TriageMetadata interface {
 	Triage(metadata MetadataResults) (string, error)
 }
 
 // triageMetadata encapsulates all dependencies for the Triage() method.
 type triageMetadata struct {
-	ctx context.Context
-	MetadataGithub
-	fetcher MetadataFetcher
-	logger  Logger
-}
-
-// MetadataGithub encapsulates all Github Information for the createWPTMetadataPR() method.
-type MetadataGithub struct {
-	githubClient *github.Client
-	authorName   string
 	authorEmail  string
+	authorName   string
+	ctx          context.Context
+	fetcher      MetadataFetcher
+	githubClient *github.Client
+	logger       Logger
 	wptmetadataGitHubInfo
 }
 
-// wptmetadataGitHubInfo encapsulates all static Github Information for the createWPTMetadataPR() method.
+// wptmetadataGitHubInfo encapsulates all static GitHub Information for the createWPTMetadataPR() method.
 type wptmetadataGitHubInfo struct {
 	sourceOwner   string
 	sourceRepo    string
@@ -263,29 +258,23 @@ func (tm triageMetadata) Triage(metadata MetadataResults) (string, error) {
 	}
 
 	triagedMetadataMap := addToFiles(metadata, filesMap, tm.logger)
-	tm.MetadataGithub.wptmetadataGitHubInfo = getWptmetadataGitHubInfo(tm.ctx, tm.githubClient)
+	tm.wptmetadataGitHubInfo = getWptmetadataGitHubInfo(tm.ctx, tm.githubClient)
 	return tm.createWPTMetadataPR(sha, triagedMetadataMap)
 }
 
-// GetTriageMetadata returns an instance of the triageMetadata struct to run Triage() method.
-func GetTriageMetadata(ctx context.Context, git MetadataGithub, logger Logger, fetcher MetadataFetcher) TriageMetadataInterface {
-	return triageMetadata{
-		ctx:            ctx,
-		MetadataGithub: git,
-		logger:         logger,
-		fetcher:        fetcher}
-}
-
-// GetMetadataGithub returns an instance of the MetadataGithub struct as a part of a triageMetadata struct.
-func GetMetadataGithub(githubClient *github.Client, authorName string, authorEmail string) MetadataGithub {
+// NewTriageMetadata returns an instance of the triageMetadata struct to run Triage() method.
+func NewTriageMetadata(ctx context.Context, githubClient *github.Client, authorName string, authorEmail string, fetcher MetadataFetcher) TriageMetadata {
 	if authorEmail == "" {
 		// Email is required when pushing commits. Use the no-reply email provided
 		// by GitHub as the fallback if the user does not have a public email:
 		// https://help.github.com/en/github/setting-up-and-managing-your-github-user-account/setting-your-commit-email-address#about-commit-email-addresses
 		authorEmail = authorName + "@users.noreply.github.com"
 	}
-	return MetadataGithub{
-		githubClient: githubClient,
+	return triageMetadata{
 		authorName:   authorName,
-		authorEmail:  authorEmail}
+		authorEmail:  authorEmail,
+		githubClient: githubClient,
+		ctx:          ctx,
+		logger:       GetLogger(ctx),
+		fetcher:      fetcher}
 }
