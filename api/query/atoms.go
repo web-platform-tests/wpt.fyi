@@ -232,13 +232,16 @@ func (l AbstractLessThan) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 // AbstractLink is represents the root of a link query, which matches Metadata URLs
 // to a pattern string; it is independent of test runs.
 type AbstractLink struct {
-	Pattern string
+	Pattern         string
+	metadataFetcher shared.MetadataFetcher
 }
 
 // BindToRuns for AbstractLink is a no-op; it is independent of test runs
 func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
-	fetcher := searchcacheMetadataFetcher{url: shared.MetadataArchiveURL}
-	metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), fetcher)
+	if l.metadataFetcher == nil {
+		l.metadataFetcher = searchcacheMetadataFetcher{}
+	}
+	metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), l.metadataFetcher)
 	metadataMap := shared.PrepareLinkFilter(metadata)
 
 	return Link{
@@ -250,17 +253,21 @@ func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 // AbstractTriaged represents the root of a triaged query that matches
 // tests where the test of a specific browser has been triaged through Metadata
 type AbstractTriaged struct {
-	Product *shared.ProductSpec
+	Product         *shared.ProductSpec
+	metadataFetcher shared.MetadataFetcher
 }
 
 // BindToRuns for AbstractTriaged binds each run of the AbstractTriaged ProductSpec
 // to a triaged object.
 func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	cq := make([]ConcreteQuery, 0)
-	fetcher := searchcacheMetadataFetcher{url: shared.MetadataArchiveURL}
+
+	if t.metadataFetcher == nil {
+		t.metadataFetcher = searchcacheMetadataFetcher{}
+	}
 	for _, run := range runs {
 		if t.Product == nil || t.Product.Matches(run) {
-			metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), fetcher)
+			metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), t.metadataFetcher)
 			metadataMap := shared.PrepareLinkFilter(metadata)
 			cq = append(cq, Triaged{run.ID, metadataMap})
 		}

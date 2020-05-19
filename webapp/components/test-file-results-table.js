@@ -8,12 +8,17 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
 import { PathInfo } from './path.js';
+import { Pluralizer } from './pluralize.js';
+import { WPTFlags } from './wpt-flags.js';
+import { AmendMetadataUtil } from './wpt-amend-metadata.js';
 
-class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
+class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColors(PathInfo(TestRunsBase))))) {
   static get is() {
     return 'test-file-results-table';
   }
@@ -49,6 +54,16 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
   }
   td.result {
     background-color: #eee;
+  }
+  td[selected] {
+    border: 2px solid #000000;
+  }
+  td[triage] {
+    cursor: pointer;
+  }
+  td[triage]:hover {
+    opacity: 0.7;
+    box-shadow: 5px 5px 5px;
   }
   .ref-button {
     color: #333;
@@ -91,7 +106,15 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     width: -moz-max-content;
     width: max-content;
   }
+  .view-triage {
+    margin-left: 30px;
+  }
 </style>
+
+<paper-toast id="selected-toast" duration="0">
+  <span>[[selectedMetadata.length]] [[pluralize('test', selectedMetadata.length)]] selected</span>
+  <paper-button class="view-triage" on-click="openAmendMetadata" raised>TRIAGE</paper-button>
+</paper-toast>
 
 <table terse$="[[!verbose]]" verbose$="[[verbose]]">
   <thead>
@@ -116,7 +139,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
         <td class="sub-test-name"><code>[[ row.name ]]</code></td>
 
         <template is="dom-repeat" items="[[row.results]]" as="result">
-          <td class$="[[ colorClass(result.status) ]]">
+          <td class$="[[ colorClass(result.status) ]]" onclick="[[handleTriageSelect(index, row.name, result.status)]]" onmouseover="[[handleTriageHover(result.status)]]">
             <code>[[ subtestMessage(result, verbose) ]]</code>
 
             <template is="dom-if" if="[[result.screenshots]]">
@@ -154,6 +177,7 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     </template>
   </tbody>
 </table>
+<wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
@@ -342,6 +366,34 @@ class TestFileResultsTable extends WPTColors(PathInfo(TestRunsBase)) {
     } else if (passed[1] && !passed[0]) {
       return this.passRateClass(1, 1);
     }
+  }
+
+  canAmendMetadata(status) {
+    return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status) && this.triageMetadataUI && this.isTriageMode;
+  }
+
+  clearSelectedCells(selectedMetadata) {
+    this.handleClearBebaviours(selectedMetadata, this.$['selected-toast']);
+  }
+
+  handleTriageHover(status) {
+    return (e) => {
+      this.handleHoverBehaviours(e, this.canAmendMetadata(status));
+    };
+  }
+
+  handleTriageSelect(index, test, status) {
+    return (e) => {
+      if (!this.canAmendMetadata(status)) {
+        return;
+      }
+
+      this.handleSelectBehaviours(e, this.products[index].browser_name, test, this.$['selected-toast']);
+    };
+  }
+
+  openAmendMetadata() {
+    this.shadowRoot.querySelector('#amend').open();
   }
 }
 window.customElements.define(TestFileResultsTable.is, TestFileResultsTable);

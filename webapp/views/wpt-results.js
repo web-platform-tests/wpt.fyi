@@ -18,7 +18,7 @@ import { WPTColors } from '../components/wpt-colors.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-prs.js';
-import '../components/wpt-amend-metadata.js';
+import { AmendMetadataUtil } from '../components/wpt-amend-metadata.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
@@ -38,7 +38,7 @@ import { Pluralizer } from '../components/pluralize.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase))))) {
+class WPTResults extends AmendMetadataUtil(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -93,10 +93,10 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         white-space: nowrap;
         color: black;
       }
-      td.triage {
+      td[triage] {
         cursor: pointer;
       }
-      td.triage:hover {
+      td[triage]:hover {
         opacity: 0.7;
         box-shadow: 5px 5px 5px;
       }
@@ -157,7 +157,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
     </style>
 
     <paper-toast id="selected-toast" duration="0">
-      <span>[[selectedMetadata.length]] [[testPlural]] selected</span>
+      <span>[[selectedMetadata.length]] [[pluralize('test', selectedMetadata.length)]] selected</span>
       <paper-button class="view-triage" on-click="openAmendMetadata" raised>TRIAGE</paper-button>
     </paper-toast>
 
@@ -191,6 +191,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
                            labels="[[labels]]"
                            products="[[products]]"
                            diff-run="[[diffRun]]"
+                           is-triage-mode="[[isTriageMode]]"
                            metadata="[[metadata]]">
         </test-file-results>
       </template>
@@ -229,22 +230,11 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
-                  <template is="dom-if" if="[[ canAmendMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers triage [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleSelectMetadata(index, node.path)]]">
-                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                      /
-                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-                    </td>
-                  </template>
-
-                  <template is="dom-if" if="[[ !canAmendMetadata(node, index, testRun) ]]">
-                    <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]">
-                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                      /
-                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-                    </td>
-                  </template>
-
+                  <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
+                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
+                    /
+                    <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+                  </td>
                 </template>
 
                 <template is="dom-if" if="[[diffRun]]">
@@ -328,7 +318,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
         </section>
       </template>
     </template>
-    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
@@ -416,28 +406,7 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
       // path => {type, file[, refPath]} simplification.
       manifest: Object,
       screenshots: Array,
-      selectedMetadata: {
-        type: Array,
-        value: [],
-        observer: 'clearSelectedCells',
-      },
-      selectedCells: {
-        type: Array,
-        value: [],
-      },
-      testPlural: {
-        type: String,
-        computed: 'computeTestPlural(selectedMetadata)',
-      },
-      isTriageMode: {
-        type: Boolean,
-        observer: 'isTriageModeUpdated',
-      }
     };
-  }
-
-  isTriageModeUpdated(isTriageMode) {
-    this.reloadData();
   }
 
   isInvalidDiffUse(diff, testRuns) {
@@ -1030,45 +999,25 @@ class WPTResults extends Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(Tes
     this.path = this.searchResults[(n + next) % n].test;
   }
 
-  computeTestPlural(selectedMetadata) {
-    return this.pluralize('test', selectedMetadata.length);
-  }
-
   clearSelectedCells(selectedMetadata) {
-    if (selectedMetadata.length === 0 && this.selectedCells.length) {
-      for (const cell of this.selectedCells) {
-        cell.removeAttribute('selected');
-      }
-      const toast = this.shadowRoot.querySelector('#selected-toast');
-      toast.hide();
-      this.selectedCells = [];
-    }
+    this.handleClearBebaviours(selectedMetadata, this.$['selected-toast']);
   }
 
-  handleSelectMetadata(index, test) {
+  handleTriageHover() {
+    const [index, node, testRun] = arguments;
     return (e) => {
-      const td = e.target.closest('td');
-      const browser = this.products[index].browser_name;
-      if (this.computePathIsASubfolder(test)) {
-        test = test + '/*';
+      this.handleHoverBehaviours(e, this.canAmendMetadata(node, index, testRun));
+    };
+  }
+
+  handleTriageSelect() {
+    const [index, node, testRun] = arguments;
+    return (e) => {
+      if (!this.canAmendMetadata(node, index, testRun)) {
+        return;
       }
 
-      if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
-        this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
-        this.selectedCells = this.selectedCells.filter(c => c !== td);
-        td.removeAttribute('selected');
-      } else {
-        const selected = { test: test, product: browser };
-        this.selectedMetadata = [...this.selectedMetadata, selected];
-        td.setAttribute('selected', 'selected');
-        this.selectedCells.push(td);
-      }
-      const toast = this.shadowRoot.querySelector('#selected-toast');
-      if (this.selectedMetadata.length) {
-        toast.show();
-      } else {
-        toast.hide();
-      }
+      this.handleSelectBehaviours(e, this.products[index].browser_name, node.path, this.$['selected-toast']);
     };
   }
 

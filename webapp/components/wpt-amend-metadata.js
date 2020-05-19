@@ -10,8 +10,80 @@ import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
+import { PathInfo } from './path.js';
 
-class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
+const AmendMetadataUtil = (superClass) => class extends superClass {
+  static get properties() {
+    return {
+      selectedMetadata: {
+        type: Array,
+        value: [],
+        // This observer needs to be implemented in the subclass.
+        observer: 'clearSelectedCells',
+      },
+      selectedCells: {
+        type: Array,
+        value: [],
+      },
+      isTriageMode: {
+        type: Boolean
+      },
+    };
+  }
+
+  static get observers() {
+    return [
+      'pathUpdated(path)',
+    ];
+  }
+
+  pathUpdated() {
+    this.selectedMetadata = [];
+  }
+
+  handleClearBebaviours(selectedMetadata, toast) {
+    if (selectedMetadata.length === 0 && this.selectedCells.length) {
+      for (const cell of this.selectedCells) {
+        cell.removeAttribute('selected');
+      }
+      toast.hide();
+      this.selectedCells = [];
+    }
+  }
+
+  handleHoverBehaviours(e, canAmend) {
+    const td = e.target.closest('td');
+    if (!canAmend) {
+      td.removeAttribute('selected');
+      return;
+    }
+
+    td.setAttribute('triage', 'triage');
+  }
+
+  handleSelectBehaviours(e, browser, test, toast) {
+    const td = e.target.closest('td');
+
+    if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
+      this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
+      this.selectedCells = this.selectedCells.filter(c => c !== td);
+      td.removeAttribute('selected');
+    } else {
+      const selected = { test: test, product: browser };
+      this.selectedMetadata = [...this.selectedMetadata, selected];
+      td.setAttribute('selected', 'selected');
+      this.selectedCells.push(td);
+    }
+
+    if (this.selectedMetadata.length) {
+      toast.show();
+    } else {
+      toast.hide();
+    }
+  }
+};
+
+class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) {
   static get is() {
     return 'wpt-amend-metadata';
   }
@@ -35,7 +107,7 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           margin-bottom: 20px;
           margin-left: 10px;
         }
-        .metadataEntry {
+        .metadata-entry {
           display: flex;
           align-items: center;
           margin-top: 20px;
@@ -49,17 +121,30 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
           margin-top: 5px;
           margin-left: 30px;
         }
+        .list {
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+          max-width: 100ch;
+          display: inline-block;
+          vertical-align: bottom;
+        }
       </style>
       <paper-dialog id="dialog">
         <h3>Triage Failing Tests</h3>
         <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
-          <div class="metadataEntry">
+          <div class="metadata-entry">
             <img class="browser" src="[[displayLogo(node.product)]]">
             : 
             <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
           </div>
           <template is="dom-repeat" items="[[node.tests]]" as="test">
-            <li>[[test]]</li>
+            <li>
+              <div class="list"> [[test]] </div>
+              <template is="dom-if" if="[[hasHref(node.product)]]">
+                <a href="[[getSearchURLHref(test)]]" target="_blank"> [Search on crbug] </a>
+              </template>
+            </li>
           </template>
         </template>
         <div class="buttons">
@@ -119,20 +204,49 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
 
   getTriagedMetadataMap(displayedMetadata) {
     var link = {};
-    for (const entry of displayedMetadata) {
-      if (entry.url === '') {
-        continue;
-      }
-
-      for (const test of entry.tests) {
-        const value = { 'url': entry.url, 'product': entry.product };
-        if (!(test in link)) {
-          link[test] = [];
+    if (this.computePathIsATestFile(this.path)) {
+      link[this.path] = [];
+      for (const entry of displayedMetadata) {
+        if (entry.url === '') {
+          continue;
         }
-        link[test].push(value);
+
+        const results = [];
+        for (const test of entry.tests) {
+          results.push({ 'subtest': test });
+        }
+        link[this.path].push({ 'url': entry.url, 'product': entry.product, 'results': results });
+      }
+    } else {
+      for (const entry of displayedMetadata) {
+        if (entry.url === '') {
+          continue;
+        }
+
+        for (const test of entry.tests) {
+          if (!(test in link)) {
+            link[test] = [];
+          }
+          link[test].push({ 'url': entry.url, 'product': entry.product });
+        }
       }
     }
     return link;
+  }
+
+  hasHref(product) {
+    return product === 'chrome';
+  }
+
+  getSearchURLHref(testName) {
+    if (this.computePathIsATestFile(testName)) {
+      // Remove name flags and extensions: https://web-platform-tests.org/writing-tests/file-names.html
+      testName = testName.split('.')[0];
+    } else {
+      testName = testName.replace(/((\/\*)?$)/, '');
+    }
+
+    return `https://bugs.chromium.org/p/chromium/issues/list?q="${testName}"`;
   }
 
   populateDisplayData() {
@@ -142,7 +256,13 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
       if (!(entry.product in browserMap)) {
         browserMap[entry.product] = [];
       }
-      browserMap[entry.product].push(entry.test);
+
+      let test = entry.test;
+      if (!this.computePathIsATestFile(this.path) && this.computePathIsASubfolder(test)) {
+        test = test + '/*';
+      }
+
+      browserMap[entry.product].push(test);
     }
 
     for (const key in browserMap) {
@@ -188,3 +308,5 @@ class AmendMetadata extends LoadingState(ProductInfo(PolymerElement)) {
 }
 
 window.customElements.define(AmendMetadata.is, AmendMetadata);
+
+export { AmendMetadataUtil, AmendMetadata };
