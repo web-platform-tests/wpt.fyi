@@ -224,10 +224,10 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         }
 
         for (const test of entry.tests) {
-          if (!(test.testname in link)) {
-            link[test.testname] = [];
+          if (!(test in link)) {
+            link[test] = [];
           }
-          link[test.testname].push({ 'url': entry.url, 'product': entry.product });
+          link[test].push({ 'url': entry.url, 'product': entry.product });
         }
       }
     }
