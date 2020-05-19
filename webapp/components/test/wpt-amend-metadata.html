@@ -84,6 +84,13 @@ suite('<wpt-amend-metadata>', () => {
     appFixture.populateDisplayData();
     assert.deepEqual(appFixture.displayedMetadata, expected);
   });
+  test('getSearchURLHref', () => {
+    expect(appFixture.getSearchURLHref('/a/b/*')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+    expect(appFixture.getSearchURLHref('/a/b.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+    expect(appFixture.getSearchURLHref('/a/b')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+    expect(appFixture.getSearchURLHref('/a/b.any.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+    expect(appFixture.getSearchURLHref('/a/b.worker.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+  });
 });
 </script>
 </body>
