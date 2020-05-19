@@ -86,7 +86,6 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// TODO: Better docstring
 // handleCheckSuiteEvent handles a check_suite (re)requested event by ensuring
 // that a check_run exists for each product that contains results for the head SHA.
 func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
@@ -116,9 +115,6 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 		return false, nil
 	}
 
-	// A CheckSuite is 'requested' whenever a commit is made in the
-	// repository, and can be re-requested by a user clicking a 'retry'
-	// button in the GitHub UI. For either of these events, we... TODO.
 	if action == "requested" || action == "rerequested" {
 		pullRequests := checkSuite.GetCheckSuite().PullRequests
 		prNumbers := []int{}
@@ -130,10 +126,6 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 
 		installationID := checkSuite.GetInstallation().GetID()
 		if action == "requested" {
-			// For new suites, check if the pull is across forks; if so, request a suite
-			// on the main repo (web-platform-tests/wpt) too.
-			//
-			// TODO: Explain why we need to do this when we have the pull_request event too.
 			for _, p := range pullRequests {
 				destRepoID := p.GetBase().GetRepo().GetID()
 				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
@@ -147,8 +139,6 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 			return false, err
 		}
 
-		// TODO: Explain why a rerequest should lead to calling
-		// scheduleProcessingForExistingRuns.
 		if action == "rerequested" {
 			return scheduleProcessingForExistingRuns(aeAPI.Context(), sha)
 		}
@@ -156,7 +146,6 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	return false, nil
 }
 
-// TODO: better docstring
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
 func handleCheckRunEvent(
@@ -196,15 +185,6 @@ func handleCheckRunEvent(
 	// CheckRuns[0]; see summaries.Summary.GetActions().
 	//
 	// [0]: https://developer.github.com/v3/checks/runs/#check-runs-and-requested-actions
-	//
-	// TODO: It's not clear to me who created the CheckRun that created
-	// this event. Did 'we' (wpt.fyi app) create this CheckRun, or is this
-	// an event from a CheckRun from AP/TaskCluster? It seems like there's a loop?
-	//
-	//	handleCheckRunEvent --> ScheduleResultsProcessing --> /api/checks/{sha}
-	//	--> updateChecksHandlers --> updateCheckRunSummary --> CreateCheckRun
-	//	--> [GitHub] --> /api/checks/webhook --> checkWebhookHandler
-	//	--> handleCheckRunEvent ...
 	status := checkRun.GetCheckRun().GetStatus()
 	shouldSchedule := false
 	if (action == "created" && status != "completed") || action == "rerequested" {
@@ -290,7 +270,6 @@ func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []
 	return false, nil
 }
 
-// TODO: Document what this function is for.
 func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products ...shared.ProductSpec) (bool, error) {
 	// Jump straight to completed check_run for already-present runs for the SHA.
 	store := shared.NewAppEngineDatastore(ctx, false)
@@ -314,7 +293,6 @@ func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products
 }
 
 // createCheckRun submits an http POST to create the check run on GitHub, handling JWT auth for the app.
-// TODO: Shouldn't this be in /api/check/api.go?
 func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.CreateCheckRunOptions) (bool, error) {
 	log := shared.GetLogger(ctx)
 	status := ""
@@ -349,9 +327,6 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 // result in wpt.fyi or staging.wpt.fyi summary results showing up. Currently
 // this is enabled for all users on prod, but only for some users on staging to
 // avoid having a confusing double-set of checks appear on the GitHub UI.
-//
-// TODO: Should we remove checksForAllUsersFeature and just differentiate based
-// on whether the AppId is prod/staging?
 func isUserWhitelisted(aeAPI shared.AppEngineAPI, login string) bool {
 	if aeAPI.IsFeatureEnabled(checksForAllUsersFeature) {
 		return true
