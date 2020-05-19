@@ -262,7 +262,8 @@ class Processor(object):
         if self.report.run_info.get('product'):
             payload['browser_name'] = self.report.run_info['product']
         if self.report.run_info.get('browser_version'):
-            payload['browser_version'] = self.report.run_info['browser_version']
+            payload['browser_version'] = \
+                self.report.run_info['browser_version']
         if self.report.run_info.get('os'):
             payload['os_name'] = self.report.run_info['os']
         if self.report.run_info.get('os_version'):
