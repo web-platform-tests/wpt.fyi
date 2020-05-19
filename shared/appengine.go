@@ -100,7 +100,7 @@ func (a appEngineAPIImpl) GetHTTPClientWithTimeout(timeout time.Duration) *http.
 
 func (a *appEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
 	if a.githubClient == nil {
-		client, err := GetGithubClientFromToken(a.ctx, "github-api-token")
+		client, err := NewGitHubClientFromToken(a.ctx, "github-api-token")
 		if err != nil {
 			return nil, err
 		}
@@ -184,8 +184,8 @@ func getURL(host, path string, filter TestRunFilter) *url.URL {
 	return detailsURL
 }
 
-// GetGithubClientFromToken returns a new Github client using the token stored in Datastore.
-func GetGithubClientFromToken(ctx context.Context, token string) (*github.Client, error) {
+// NewGitHubClientFromToken returns a new GitHub client using the token stored in Datastore.
+func NewGitHubClientFromToken(ctx context.Context, token string) (*github.Client, error) {
 	ds := NewAppEngineDatastore(ctx, false)
 	secret, err := GetSecret(ds, token)
 	if err != nil {
