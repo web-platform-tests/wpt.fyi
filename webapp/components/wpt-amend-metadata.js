@@ -10,11 +10,7 @@ import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
-<<<<<<< HEAD
 import { PathInfo } from './path.js';
-=======
-import { PathInfo } from '../components/path.js';
->>>>>>> bc0f887202ff5b8787f438ab10e26a87351de0bc
 
 class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) {
   static get is() {
