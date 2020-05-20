@@ -16,6 +16,7 @@
       import { AmendMetadataUtil } from '../wpt-amend-metadata.js';
 
       class ConcreteType extends AmendMetadataUtil(PolymerElement) {
+        // eslint-disable-next-line no-unused-vars
         clearSelectedCells(selectedMetadata) {}
       }
       window.customElements.define('amend-metadata-util-concrete', ConcreteType);
@@ -50,13 +51,13 @@ suite('wpt-amend-metadata', () => {
     });
 
     test('handleSelectBehaviours', () => {
-      appFixture.handleSelectBehaviours(td, 'chorme', 'testA', toast);
+      appFixture.handleSelectBehaviours(td, 'chrome', 'testA', toast);
 
       assert.deepEqual(appFixture.selectedMetadata, [{ test: 'testA', product: 'chrome' }]);
       expect(td.hasAttribute('selected')).to.be.true;
       expect(appFixture.selectedCells[0]).to.equal(td);
 
-     appFixture.handleSelectBehaviours(td, 'chorme', 'testA', toast);
+      appFixture.handleSelectBehaviours(td, 'chrome', 'testA', toast);
 
       assert.deepEqual(appFixture.selectedMetadata, []);
       expect(td.hasAttribute('selected')).to.be.false;
