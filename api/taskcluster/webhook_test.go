@@ -25,6 +25,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
+type branchInfos []*github.Branch
+
 func strPtr(s string) *string {
 	return &s
 }
@@ -84,7 +86,6 @@ func TestIsOnMaster(t *testing.T) {
 			Commit: &github.RepositoryCommit{SHA: strPtr("fd353d4ae7c19d2268397459524f849c129944a7")},
 		},
 	}
-	assert.Equal(t, []string{shared.MasterLabel}, status.HeadingBranches().GetNames())
 	assert.True(t, status.IsOnMaster())
 
 	status.Branches = status.Branches[1:]
