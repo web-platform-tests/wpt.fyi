@@ -395,7 +395,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
   }
 
   openAmendMetadata() {
-    this.shadowRoot.querySelector('#amend').open();
+    this.$.amend.open();
   }
 }
 window.customElements.define(TestFileResultsTable.is, TestFileResultsTable);

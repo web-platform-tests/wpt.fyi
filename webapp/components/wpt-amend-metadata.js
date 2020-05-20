@@ -56,7 +56,6 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
       if (td.hasAttribute('triage')) {
         td.removeAttribute('triage');
       }
-
       return;
     }
 
