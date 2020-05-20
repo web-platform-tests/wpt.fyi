@@ -379,7 +379,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
   handleTriageHover() {
     const [status] = arguments;
     return (e) => {
-      this.handleHoverBehaviours(e, this.canAmendMetadata(status));
+      this.handleHoverBehaviours(e.target.closest('td'), this.canAmendMetadata(status));
     };
   }
 
@@ -390,7 +390,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
         return;
       }
 
-      this.handleSelectBehaviours(e, this.products[index].browser_name, test, this.$['selected-toast']);
+      this.handleSelectBehaviours(e.target.closest('td'), this.products[index].browser_name, test, this.$['selected-toast']);
     };
   }
 

@@ -51,8 +51,7 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
     }
   }
 
-  handleHoverBehaviours(e, canAmend) {
-    const td = e.target.closest('td');
+  handleHoverBehaviours(td, canAmend) {
     if (!canAmend) {
       if (td.hasAttribute('triage')) {
         td.removeAttribute('triage');
@@ -64,9 +63,7 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
     td.setAttribute('triage', 'triage');
   }
 
-  handleSelectBehaviours(e, browser, test, toast) {
-    const td = e.target.closest('td');
-
+  handleSelectBehaviours(td, browser, test, toast) {
     if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
       this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
       this.selectedCells = this.selectedCells.filter(c => c !== td);

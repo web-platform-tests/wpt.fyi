@@ -1005,7 +1005,7 @@ class WPTResults extends AmendMetadataUtil(Pluralizer(WPTColors(WPTFlags(PathInf
   handleTriageHover() {
     const [index, node, testRun] = arguments;
     return (e) => {
-      this.handleHoverBehaviours(e, this.canAmendMetadata(node, index, testRun));
+      this.handleHoverBehaviours(e.target.closest('td'), this.canAmendMetadata(node, index, testRun));
     };
   }
 
@@ -1016,7 +1016,7 @@ class WPTResults extends AmendMetadataUtil(Pluralizer(WPTColors(WPTFlags(PathInf
         return;
       }
 
-      this.handleSelectBehaviours(e, this.products[index].browser_name, node.path, this.$['selected-toast']);
+      this.handleSelectBehaviours(e.target.closest('td'), this.products[index].browser_name, node.path, this.$['selected-toast']);
     };
   }
 
