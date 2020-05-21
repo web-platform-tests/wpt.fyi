@@ -24,7 +24,6 @@ import (
 const (
 	wptfyiCheckAppID        = int64(23318) // https://github.com/apps/wpt-fyi-status-check
 	wptfyiStagingCheckAppID = int64(19965) // https://github.com/apps/staging-wpt-fyi-status-check
-	checksStagingAppID      = int64(21580) // https://github.com/apps/checks-staging-instance
 
 	wptRepoInstallationID        = int64(577173)
 	wptRepoStagingInstallationID = int64(449270)
@@ -37,7 +36,6 @@ const (
 type API interface {
 	Context() context.Context
 	ScheduleResultsProcessing(sha string, browser shared.ProductSpec) error
-	PendingCheckRun(checkSuite shared.CheckSuite, browser shared.ProductSpec) (bool, error)
 	GetSuitesForSHA(sha string) ([]shared.CheckSuite, error)
 	IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
 	CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error
@@ -77,28 +75,6 @@ func (s checksAPIImpl) ScheduleResultsProcessing(sha string, product shared.Prod
 		log.Infof("Added %s @ %s to checks processing queue", product.String(), sha[:7])
 	}
 	return err
-}
-
-// PendingCheckRun posts an in_progress check run for the given CheckSuite/Product.
-// Returns true if any check_runs were created (i.e. the create succeeded).
-func (s checksAPIImpl) PendingCheckRun(suite shared.CheckSuite, product shared.ProductSpec) (bool, error) {
-	aeAPI := shared.NewAppEngineAPI(s.ctx)
-	filter := shared.TestRunFilter{SHAs: shared.SHAs{suite.SHA}}
-	runsURL := aeAPI.GetRunsURL(filter)
-
-	pending := summaries.Pending{
-		CheckState: summaries.CheckState{
-			HostName:   aeAPI.GetHostname(),
-			TestRun:    nil, // It's pending, no run exists yet.
-			Product:    product,
-			HeadSHA:    suite.SHA,
-			DetailsURL: runsURL,
-			Status:     "in_progress",
-			PRNumbers:  suite.PRNumbers,
-		},
-		RunsURL: runsURL.String(),
-	}
-	return updateCheckRunSummary(s.ctx, pending, suite)
 }
 
 // GetSuitesForSHA gets all existing check suites for the given Head SHA

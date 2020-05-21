@@ -11,10 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/url"
-	"strconv"
 
-	"github.com/google/go-github/v31/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -63,7 +60,6 @@ func (a *Build) IsMasterBranch() bool {
 
 // API is for Azure Pipelines related requests.
 type API interface {
-	HandleCheckRunEvent(*github.CheckRunEvent) (bool, error)
 	GetBuildURL(owner, repo string, buildID int64) string
 	GetAzureArtifactsURL(owner, repo string, buildID int64) string
 	GetBuild(owner, repo string, buildID int64) (*Build, error)
@@ -78,11 +74,6 @@ func NewAPI(ctx context.Context) API {
 	return apiImpl{
 		ctx: ctx,
 	}
-}
-
-// HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.
-func (a apiImpl) HandleCheckRunEvent(checkRun *github.CheckRunEvent) (bool, error) {
-	return HandleCheckRunEvent(a, shared.NewAppEngineAPI(a.ctx), checkRun)
 }
 
 func (a apiImpl) GetBuildURL(owner, repo string, buildID int64) string {
@@ -119,34 +110,4 @@ func (a apiImpl) GetBuild(owner, repo string, buildID int64) (*Build, error) {
 	log.Debugf("Source branch: %s", build.SourceBranch)
 	log.Debugf("Trigger PR branch: %s", build.TriggerInfo.SourceBranch)
 	return &build, nil
-}
-
-// HandleCheckRunEvent processes an Azure Pipelines check run "completed" event.
-func HandleCheckRunEvent(azureAPI API, aeAPI shared.AppEngineAPI, event *github.CheckRunEvent) (bool, error) {
-	log := shared.GetLogger(aeAPI.Context())
-	status := event.GetCheckRun().GetStatus()
-	if status != "completed" {
-		log.Infof("Ignoring non-completed status %s", status)
-		return false, nil
-	}
-	owner := event.GetRepo().GetOwner().GetLogin()
-	repo := event.GetRepo().GetName()
-	sender := event.GetSender().GetLogin()
-	detailsURL := event.GetCheckRun().GetDetailsURL()
-	buildID := extractBuildID(detailsURL)
-	if buildID == 0 {
-		log.Errorf("Failed to extract build ID from details_url \"%s\"", detailsURL)
-		return false, nil
-	}
-	return processBuild(aeAPI, azureAPI, owner, repo, sender, "", buildID)
-}
-
-func extractBuildID(detailsURL string) int64 {
-	parsedURL, err := url.Parse(detailsURL)
-	if err != nil {
-		return 0
-	}
-	id := parsedURL.Query().Get("buildId")
-	parsedID, _ := strconv.ParseInt(id, 0, 0)
-	return parsedID
 }
