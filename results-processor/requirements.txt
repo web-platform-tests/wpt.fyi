@@ -4,7 +4,7 @@ chardet==3.0.4
 click==7.1.2
 entrypoints==0.3
 filelock==3.0.12
-flake8==3.8.1
+flake8==3.8.2
 Flask==1.1.2
 google-api-core==1.17.0
 google-auth==1.15.0
