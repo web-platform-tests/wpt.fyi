@@ -10,6 +10,22 @@
 </head>
 
 <body>
+  <dom-module id="amend-metadata-util-concrete">
+    <script type="module">
+      import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+      import { AmendMetadataMixin } from '../wpt-amend-metadata.js';
+
+      class ConcreteType extends AmendMetadataMixin(PolymerElement) {}
+      window.customElements.define('amend-metadata-util-concrete', ConcreteType);
+    </script>
+  </dom-module>
+
+  <test-fixture id="amend-metadata-util-fixture">
+    <template>
+      <amend-metadata-util-concrete></amend-metadata-util-concrete>
+    </template>
+  </test-fixture>
+
   <test-fixture id="wpt-amend-metadata-fixture">
     <template>
       <wpt-amend-metadata></wpt-amend-metadata>
@@ -19,45 +35,105 @@
   <script type="module">
 
 import '../wpt-amend-metadata.js';
-suite('<wpt-amend-metadata>', () => {
-  let appFixture = null;
-  setup(() => {
-    appFixture = fixture('wpt-amend-metadata-fixture');
+suite('wpt-amend-metadata', () => {
+  suite('AmendMetadataMixin', () => {
+    let appFixture = null;
+    let td = null;
+    let toast = null;
+
+    setup(() => {
+      appFixture = fixture('amend-metadata-util-fixture');
+      td = document.createElement('td');
+      toast = document.createElement('paper-toast');
+    });
+
+    test('handleSelect', () => {
+      appFixture.handleSelect(td, 'chrome', 'testA', toast);
+
+      assert.deepEqual(appFixture.selectedMetadata, [{ test: 'testA', product: 'chrome' }]);
+      expect(td.hasAttribute('selected')).to.be.true;
+      expect(appFixture.selectedCells[0]).to.equal(td);
+
+      appFixture.handleSelect(td, 'chrome', 'testA', toast);
+
+      assert.deepEqual(appFixture.selectedMetadata, []);
+      expect(td.hasAttribute('selected')).to.be.false;
+      assert.deepEqual(appFixture.selectedMetadata, []);
+    });
   });
 
-  test('getTriagedMetadataMap(displayedMetadata)', () => {
-    const displayedMetadata = [
-      { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
-      { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
-    ];
-    const expected = {
-      'testA': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }],
-      'testB': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }]
-    };
+  suite('<wpt-amend-metadata>', () => {
+    let appFixture = null;
+    setup(() => {
+      appFixture = fixture('wpt-amend-metadata-fixture');
+    });
 
-    assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
-  });
-  test('populateDisplayData()', () => {
-    appFixture.selectedMetadata = [
-      { product: 'firefox', test: 'testA' },
-      { product: 'firefox', test: 'testB' },
-      { product: 'chrome', test: 'testA' },
-      { product: 'chrome', test: 'testB' }
-    ];
-    const expected = [
-      { product: 'firefox', url: '', tests: ['testA', 'testB'] },
-      { product: 'chrome', url: '', tests: ['testA', 'testB'] }
-    ];
+    test('getTriagedMetadataMap(displayedMetadata) with a non-testfile path', () => {
+      appFixture.path = '/abc';
+      const displayedMetadata = [
+        { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
+        { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
+      ];
+      const expected = {
+        'testA': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }],
+        'testB': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }]
+      };
 
-    appFixture.populateDisplayData();
-    assert.deepEqual(appFixture.displayedMetadata, expected);
-  });
-  test('getSearchURLHref', () => {
-    expect(appFixture.getSearchURLHref('/a/b/*')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-    expect(appFixture.getSearchURLHref('/a/b.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-    expect(appFixture.getSearchURLHref('/a/b')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-    expect(appFixture.getSearchURLHref('/a/b.any.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-    expect(appFixture.getSearchURLHref('/a/b.worker.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+      assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
+    });
+    test('getTriagedMetadataMap(displayedMetadata) with a testfile path', () => {
+      appFixture.path = '/abc/foo.html';
+      const displayedMetadata = [
+        { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
+        { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
+      ];
+      const resultsFirefox = [{ subtest: 'testA' }, { subtest: 'testB' }];
+      const resultsChrome = [{ subtest: 'testA' }, { subtest: 'testB' }];
+      const expected = {
+        '/abc/foo.html': [{ url: 'foo', product: 'firefox', results: resultsFirefox }, { url: 'bar', product: 'chrome', results: resultsChrome }],
+      };
+
+      assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
+    });
+    test('populateDisplayData() with a non-testfile path', () => {
+      appFixture.path = '/abc';
+      appFixture.selectedMetadata = [
+        { product: 'firefox', test: 'testA.html' },
+        { product: 'firefox', test: 'testB.html' },
+        { product: 'chrome', test: 'testC' },
+        { product: 'chrome', test: 'testB.html' }
+      ];
+      const expected = [
+        { product: 'firefox', url: '', tests: ['testA.html', 'testB.html'] },
+        { product: 'chrome', url: '', tests: ['testC/*', 'testB.html'] }
+      ];
+
+      appFixture.populateDisplayData();
+      assert.deepEqual(appFixture.displayedMetadata, expected);
+    });
+    test('populateDisplayData() with a testfile path', () => {
+      appFixture.path = '/abc/foo.html';
+      appFixture.selectedMetadata = [
+        { product: 'firefox', test: 'testA' },
+        { product: 'firefox', test: 'testB' },
+        { product: 'chrome', test: 'testA' },
+        { product: 'chrome', test: 'testB' }
+      ];
+      const expected = [
+        { product: 'firefox', url: '', tests: ['testA', 'testB'] },
+        { product: 'chrome', url: '', tests: ['testA', 'testB'] }
+      ];
+
+      appFixture.populateDisplayData();
+      assert.deepEqual(appFixture.displayedMetadata, expected);
+    });
+    test('getSearchURLHref', () => {
+      expect(appFixture.getSearchURLHref('/a/b/*')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+      expect(appFixture.getSearchURLHref('/a/b.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+      expect(appFixture.getSearchURLHref('/a/b')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+      expect(appFixture.getSearchURLHref('/a/b.any.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+      expect(appFixture.getSearchURLHref('/a/b.worker.html')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+    });
   });
 });
 </script>

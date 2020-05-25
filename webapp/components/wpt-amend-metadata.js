@@ -10,7 +10,75 @@ import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
-import { PathInfo } from '../components/path.js';
+import { PathInfo } from './path.js';
+
+const AmendMetadataMixin = (superClass) => class extends superClass {
+  static get properties() {
+    return {
+      selectedMetadata: {
+        type: Array,
+        value: [],
+      },
+      selectedCells: {
+        type: Array,
+        value: [],
+      },
+      isTriageMode: {
+        type: Boolean
+      },
+    };
+  }
+
+  static get observers() {
+    return [
+      'pathChanged(path)',
+    ];
+  }
+
+  pathChanged() {
+    this.selectedMetadata = [];
+  }
+
+  handleClear(selectedMetadata, toast) {
+    if (selectedMetadata.length === 0 && this.selectedCells.length) {
+      for (const cell of this.selectedCells) {
+        cell.removeAttribute('selected');
+      }
+      toast.hide();
+      this.selectedCells = [];
+    }
+  }
+
+  handleHover(td, canAmend) {
+    if (!canAmend) {
+      if (td.hasAttribute('triage')) {
+        td.removeAttribute('triage');
+      }
+      return;
+    }
+
+    td.setAttribute('triage', 'triage');
+  }
+
+  handleSelect(td, browser, test, toast) {
+    if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
+      this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
+      this.selectedCells = this.selectedCells.filter(c => c !== td);
+      td.removeAttribute('selected');
+    } else {
+      const selected = { test: test, product: browser };
+      this.selectedMetadata = [...this.selectedMetadata, selected];
+      td.setAttribute('selected', 'selected');
+      this.selectedCells.push(td);
+    }
+
+    if (this.selectedMetadata.length) {
+      toast.show();
+    } else {
+      toast.hide();
+    }
+  }
+};
 
 class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) {
   static get is() {
@@ -133,17 +201,31 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
   getTriagedMetadataMap(displayedMetadata) {
     var link = {};
-    for (const entry of displayedMetadata) {
-      if (entry.url === '') {
-        continue;
-      }
-
-      for (const test of entry.tests) {
-        const value = { 'url': entry.url, 'product': entry.product };
-        if (!(test in link)) {
-          link[test] = [];
+    if (this.computePathIsATestFile(this.path)) {
+      link[this.path] = [];
+      for (const entry of displayedMetadata) {
+        if (entry.url === '') {
+          continue;
         }
-        link[test].push(value);
+
+        const results = [];
+        for (const test of entry.tests) {
+          results.push({ 'subtest': test });
+        }
+        link[this.path].push({ 'url': entry.url, 'product': entry.product, 'results': results });
+      }
+    } else {
+      for (const entry of displayedMetadata) {
+        if (entry.url === '') {
+          continue;
+        }
+
+        for (const test of entry.tests) {
+          if (!(test in link)) {
+            link[test] = [];
+          }
+          link[test].push({ 'url': entry.url, 'product': entry.product });
+        }
       }
     }
     return link;
@@ -171,7 +253,13 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       if (!(entry.product in browserMap)) {
         browserMap[entry.product] = [];
       }
-      browserMap[entry.product].push(entry.test);
+
+      let test = entry.test;
+      if (!this.computePathIsATestFile(this.path) && this.computePathIsASubfolder(test)) {
+        test = test + '/*';
+      }
+
+      browserMap[entry.product].push(test);
     }
 
     for (const key in browserMap) {
@@ -217,3 +305,5 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 }
 
 window.customElements.define(AmendMetadata.is, AmendMetadata);
+
+export { AmendMetadataMixin, AmendMetadata };
