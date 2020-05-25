@@ -22,7 +22,7 @@ MarkupSafe==1.1.1
 mccabe==0.6.1
 mypy==0.770
 mypy-extensions==0.4.3
-protobuf==3.12.0
+protobuf==3.12.1
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycodestyle==2.6.0
