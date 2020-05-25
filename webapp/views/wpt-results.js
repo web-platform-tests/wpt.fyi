@@ -18,7 +18,7 @@ import { WPTColors } from '../components/wpt-colors.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-prs.js';
-import { AmendMetadataUtil } from '../components/wpt-amend-metadata.js';
+import { AmendMetadataMixin } from '../components/wpt-amend-metadata.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
@@ -38,7 +38,7 @@ import { Pluralizer } from '../components/pluralize.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
-class WPTResults extends AmendMetadataUtil(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
+class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
   static get template() {
     return html`
     <style include="wpt-colors">
@@ -407,6 +407,12 @@ class WPTResults extends AmendMetadataUtil(Pluralizer(WPTColors(WPTFlags(PathInf
       manifest: Object,
       screenshots: Array,
     };
+  }
+
+  static get observers() {
+    return [
+      'clearSelectedCells(selectedMetadata)',
+    ];
   }
 
   isInvalidDiffUse(diff, testRuns) {
@@ -999,13 +1005,13 @@ class WPTResults extends AmendMetadataUtil(Pluralizer(WPTColors(WPTFlags(PathInf
   }
 
   clearSelectedCells(selectedMetadata) {
-    this.handleClearBebaviours(selectedMetadata, this.$['selected-toast']);
+    this.handleClear(selectedMetadata, this.$['selected-toast']);
   }
 
   handleTriageHover() {
     const [index, node, testRun] = arguments;
     return (e) => {
-      this.handleHoverBehaviours(e.target.closest('td'), this.canAmendMetadata(node, index, testRun));
+      this.handleHover(e.target.closest('td'), this.canAmendMetadata(node, index, testRun));
     };
   }
 
@@ -1016,7 +1022,7 @@ class WPTResults extends AmendMetadataUtil(Pluralizer(WPTColors(WPTFlags(PathInf
         return;
       }
 
-      this.handleSelectBehaviours(e.target.closest('td'), this.products[index].browser_name, node.path, this.$['selected-toast']);
+      this.handleSelect(e.target.closest('td'), this.products[index].browser_name, node.path, this.$['selected-toast']);
     };
   }
 

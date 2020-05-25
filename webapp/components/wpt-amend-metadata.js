@@ -12,14 +12,12 @@ import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
 import { PathInfo } from './path.js';
 
-const AmendMetadataUtil = (superClass) => class extends superClass {
+const AmendMetadataMixin = (superClass) => class extends superClass {
   static get properties() {
     return {
       selectedMetadata: {
         type: Array,
         value: [],
-        // This observer needs to be implemented in the subclass.
-        observer: 'clearSelectedCells',
       },
       selectedCells: {
         type: Array,
@@ -41,7 +39,7 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
     this.selectedMetadata = [];
   }
 
-  handleClearBebaviours(selectedMetadata, toast) {
+  handleClear(selectedMetadata, toast) {
     if (selectedMetadata.length === 0 && this.selectedCells.length) {
       for (const cell of this.selectedCells) {
         cell.removeAttribute('selected');
@@ -51,7 +49,7 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
     }
   }
 
-  handleHoverBehaviours(td, canAmend) {
+  handleHover(td, canAmend) {
     if (!canAmend) {
       if (td.hasAttribute('triage')) {
         td.removeAttribute('triage');
@@ -62,7 +60,7 @@ const AmendMetadataUtil = (superClass) => class extends superClass {
     td.setAttribute('triage', 'triage');
   }
 
-  handleSelectBehaviours(td, browser, test, toast) {
+  handleSelect(td, browser, test, toast) {
     if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
       this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
       this.selectedCells = this.selectedCells.filter(c => c !== td);
@@ -308,4 +306,4 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
 window.customElements.define(AmendMetadata.is, AmendMetadata);
 
-export { AmendMetadataUtil, AmendMetadata };
+export { AmendMetadataMixin, AmendMetadata };

@@ -13,12 +13,9 @@
   <dom-module id="amend-metadata-util-concrete">
     <script type="module">
       import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-      import { AmendMetadataUtil } from '../wpt-amend-metadata.js';
+      import { AmendMetadataMixin } from '../wpt-amend-metadata.js';
 
-      class ConcreteType extends AmendMetadataUtil(PolymerElement) {
-        // eslint-disable-next-line no-unused-vars
-        clearSelectedCells(selectedMetadata) {}
-      }
+      class ConcreteType extends AmendMetadataMixin(PolymerElement) {}
       window.customElements.define('amend-metadata-util-concrete', ConcreteType);
     </script>
   </dom-module>
@@ -39,7 +36,7 @@
 
 import '../wpt-amend-metadata.js';
 suite('wpt-amend-metadata', () => {
-  suite('AmendMetadataUtil', () => {
+  suite('AmendMetadataMixin', () => {
     let appFixture = null;
     let td = null;
     let toast = null;
@@ -50,14 +47,14 @@ suite('wpt-amend-metadata', () => {
       toast = document.createElement('paper-toast');
     });
 
-    test('handleSelectBehaviours', () => {
-      appFixture.handleSelectBehaviours(td, 'chrome', 'testA', toast);
+    test('handleSelect', () => {
+      appFixture.handleSelect(td, 'chrome', 'testA', toast);
 
       assert.deepEqual(appFixture.selectedMetadata, [{ test: 'testA', product: 'chrome' }]);
       expect(td.hasAttribute('selected')).to.be.true;
       expect(appFixture.selectedCells[0]).to.equal(td);
 
-      appFixture.handleSelectBehaviours(td, 'chrome', 'testA', toast);
+      appFixture.handleSelect(td, 'chrome', 'testA', toast);
 
       assert.deepEqual(appFixture.selectedMetadata, []);
       expect(td.hasAttribute('selected')).to.be.false;

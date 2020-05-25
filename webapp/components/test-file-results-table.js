@@ -16,9 +16,9 @@ import { WPTColors } from './wpt-colors.js';
 import { PathInfo } from './path.js';
 import { Pluralizer } from './pluralize.js';
 import { WPTFlags } from './wpt-flags.js';
-import { AmendMetadataUtil } from './wpt-amend-metadata.js';
+import { AmendMetadataMixin } from './wpt-amend-metadata.js';
 
-class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColors(PathInfo(TestRunsBase))))) {
+class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTColors(PathInfo(TestRunsBase))))) {
   static get is() {
     return 'test-file-results-table';
   }
@@ -256,6 +256,12 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
     };
   }
 
+  static get observers() {
+    return [
+      'clearSelectedCells(selectedMetadata)',
+    ];
+  }
+
   constructor() {
     super();
     this.toggleDiffFilter = () => {
@@ -373,13 +379,13 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
   }
 
   clearSelectedCells(selectedMetadata) {
-    this.handleClearBebaviours(selectedMetadata, this.$['selected-toast']);
+    this.handleClear(selectedMetadata, this.$['selected-toast']);
   }
 
   handleTriageHover() {
     const [status] = arguments;
     return (e) => {
-      this.handleHoverBehaviours(e.target.closest('td'), this.canAmendMetadata(status));
+      this.handleHover(e.target.closest('td'), this.canAmendMetadata(status));
     };
   }
 
@@ -390,7 +396,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataUtil(WPTColo
         return;
       }
 
-      this.handleSelectBehaviours(e.target.closest('td'), this.products[index].browser_name, test, this.$['selected-toast']);
+      this.handleSelect(e.target.closest('td'), this.products[index].browser_name, test, this.$['selected-toast']);
     };
   }
 
