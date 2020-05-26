@@ -115,7 +115,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         color: var(--paper-red-500);
       }
       #show-history {
-        background: var(--paper-blue-500);
+        background: var(--paper-blue-700);
         color: white;
       }
       .test-type {
