@@ -152,16 +152,16 @@ func (s statusEventPayload) IsOnMaster() bool {
 // taskInfo is an abstraction of a Taskcluster task, containing the necessary
 // information for us to process the task in wpt.fyi.
 type taskInfo struct {
-	Name   string
-	TaskID string
-	State  string
+	name   string
+	taskID string
+	state  string
 }
 
 // taskGroupInfo is an abstraction of a Taskcluster task group, containing the
-// necessary information ofr us to process the group in wpt.fyi.
+// necessary information for us to process the group in wpt.fyi.
 type taskGroupInfo struct {
-	TaskGroupID string
-	Tasks       []taskInfo
+	taskGroupID string
+	tasks       []taskInfo
 }
 
 func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL string, group *taskGroupInfo, taskID string, sha string, labels ...string) (bool, error) {
@@ -231,7 +231,7 @@ func getTaskGroupInfo(rootURL string, groupID string) (*taskGroupInfo, error) {
 	queue := tcqueue.New(nil, rootURL)
 
 	group := taskGroupInfo{
-		TaskGroupID: groupID,
+		taskGroupID: groupID,
 	}
 	continuationToken := ""
 
@@ -242,10 +242,10 @@ func getTaskGroupInfo(rootURL string, groupID string) (*taskGroupInfo, error) {
 		}
 
 		for _, task := range ltgr.Tasks {
-			group.Tasks = append(group.Tasks, taskInfo{
-				Name:   task.Task.Metadata.Name,
-				TaskID: task.Status.TaskID,
-				State:  task.Status.State,
+			group.tasks = append(group.tasks, taskInfo{
+				name:   task.Task.Metadata.Name,
+				taskID: task.Status.TaskID,
+				state:  task.Status.State,
 			})
 		}
 
@@ -266,18 +266,18 @@ func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo
 	urlsByProduct map[string]artifactURLs, err error) {
 	urlsByProduct = make(map[string]artifactURLs)
 	failures := mapset.NewSet()
-	for _, task := range group.Tasks {
-		id := task.TaskID
+	for _, task := range group.tasks {
+		id := task.taskID
 		if id == "" {
-			return nil, fmt.Errorf("task group %s has a task without taskId", group.TaskGroupID)
+			return nil, fmt.Errorf("task group %s has a task without taskId", group.taskGroupID)
 		} else if taskID != "" && taskID != id {
 			log.Debugf("Skipping task %s", id)
 			continue
 		}
 
-		matches := taskNameRegex.FindStringSubmatch(task.Name)
+		matches := taskNameRegex.FindStringSubmatch(task.name)
 		if len(matches) != 3 { // full match, browser-channel, test type
-			log.Infof("Ignoring unrecognized task: %s", task.Name)
+			log.Infof("Ignoring unrecognized task: %s", task.name)
 			continue
 		}
 		product := matches[1]
@@ -291,9 +291,9 @@ func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo
 			product += "-" + shared.PRBaseLabel
 		}
 
-		if task.State != "completed" {
+		if task.state != "completed" {
 			log.Infof("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
-				group.TaskGroupID, id, product)
+				group.taskGroupID, id, product)
 			failures.Add(product)
 			continue
 		}
