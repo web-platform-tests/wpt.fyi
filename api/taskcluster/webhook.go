@@ -96,7 +96,13 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 				labels.Add(shared.GetUserLabel(sender))
 			}
 
-			return processTaskclusterBuild(aeAPI, rootURL, taskGroupID, taskID, sha, shared.ToStringSlice(labels)...)
+			log.Debugf("Taskcluster task group %s", taskGroupID)
+			group, err := getTaskGroupInfo(rootURL, taskGroupID)
+			if err != nil {
+				return false, err
+			}
+
+			return processTaskclusterBuild(aeAPI, rootURL, group, taskID, sha, shared.ToStringSlice(labels)...)
 		}()
 	}
 
@@ -143,21 +149,30 @@ func (s statusEventPayload) IsOnMaster() bool {
 	return false
 }
 
-func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL, taskGroupID, taskID string, sha string, labels ...string) (bool, error) {
+// taskInfo is an abstraction of a Taskcluster task, containing the necessary
+// information for us to process the task in wpt.fyi.
+type taskInfo struct {
+	name   string
+	taskID string
+	state  string
+}
+
+// taskGroupInfo is an abstraction of a Taskcluster task group, containing the
+// necessary information for us to process the group in wpt.fyi.
+type taskGroupInfo struct {
+	taskGroupID string
+	tasks       []taskInfo
+}
+
+func processTaskclusterBuild(aeAPI shared.AppEngineAPI, rootURL string, group *taskGroupInfo, taskID string, sha string, labels ...string) (bool, error) {
 	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
 
-	log.Debugf("Taskcluster task group %s", taskGroupID)
 	if taskID != "" {
 		log.Debugf("Taskcluster task %s", taskID)
 	}
 
-	taskGroup, err := getTaskGroupInfo(rootURL, taskGroupID)
-	if err != nil {
-		return false, err
-	}
-
-	urlsByProduct, err := extractArtifactURLs(rootURL, log, taskGroup, taskID)
+	urlsByProduct, err := extractArtifactURLs(rootURL, log, group, taskID)
 	if err != nil {
 		return false, err
 	}
@@ -212,16 +227,11 @@ func parseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string)
 	return rootURL, taskGroupID, taskID
 }
 
-type taskGroupInfo struct {
-	TaskGroupID string
-	Tasks       []tcqueue.TaskDefinitionAndStatus
-}
-
 func getTaskGroupInfo(rootURL string, groupID string) (*taskGroupInfo, error) {
 	queue := tcqueue.New(nil, rootURL)
 
 	group := taskGroupInfo{
-		TaskGroupID: groupID,
+		taskGroupID: groupID,
 	}
 	continuationToken := ""
 
@@ -231,7 +241,13 @@ func getTaskGroupInfo(rootURL string, groupID string) (*taskGroupInfo, error) {
 			return nil, err
 		}
 
-		group.Tasks = append(group.Tasks, ltgr.Tasks...)
+		for _, task := range ltgr.Tasks {
+			group.tasks = append(group.tasks, taskInfo{
+				name:   task.Task.Metadata.Name,
+				taskID: task.Status.TaskID,
+				state:  task.Status.State,
+			})
+		}
 
 		continuationToken = ltgr.ContinuationToken
 		if continuationToken == "" {
@@ -250,18 +266,18 @@ func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo
 	urlsByProduct map[string]artifactURLs, err error) {
 	urlsByProduct = make(map[string]artifactURLs)
 	failures := mapset.NewSet()
-	for _, task := range group.Tasks {
-		id := task.Status.TaskID
+	for _, task := range group.tasks {
+		id := task.taskID
 		if id == "" {
-			return nil, fmt.Errorf("task group %s has a task without taskId", group.TaskGroupID)
+			return nil, fmt.Errorf("task group %s has a task without taskId", group.taskGroupID)
 		} else if taskID != "" && taskID != id {
 			log.Debugf("Skipping task %s", id)
 			continue
 		}
 
-		matches := taskNameRegex.FindStringSubmatch(task.Task.Metadata.Name)
+		matches := taskNameRegex.FindStringSubmatch(task.name)
 		if len(matches) != 3 { // full match, browser-channel, test type
-			log.Infof("Ignoring unrecognized task: %s", task.Task.Metadata.Name)
+			log.Infof("Ignoring unrecognized task: %s", task.name)
 			continue
 		}
 		product := matches[1]
@@ -275,9 +291,9 @@ func extractArtifactURLs(rootURL string, log shared.Logger, group *taskGroupInfo
 			product += "-" + shared.PRBaseLabel
 		}
 
-		if task.Status.State != "completed" {
+		if task.state != "completed" {
 			log.Infof("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
-				group.TaskGroupID, id, product)
+				group.taskGroupID, id, product)
 			failures.Add(product)
 			continue
 		}
