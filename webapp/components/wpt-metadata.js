@@ -96,26 +96,28 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
           margin-bottom: 0.5em;
         }
       </style>
-      <template is="dom-if" if="[[firstThree]]">
-        <h4>Relevant links for <i>[[path]]</i> results</h4>
+      <template is="dom-if" if="[[!pathIsRootDir]]">
+        <template is="dom-if" if="[[firstThree]]">
+          <h4>Relevant links for <i>[[path]]</i> results</h4>
+        </template>
+        <template is="dom-repeat" items="[[firstThree]]" as="metadataNode">
+          <wpt-metadata-node metadata-node="[[metadataNode]]" path="[[path]]"></wpt-metadata-node>
+        </template>
+        <template is="dom-if" if="[[others]]">
+          <iron-collapse id="metadata-collapsible">
+            <template is="dom-repeat" items="[[others]]" as="metadataNode">
+              <wpt-metadata-node
+                metadata-node="[[metadataNode]]"
+                path="[[path]]"
+              ></wpt-metadata-node>
+            </template>
+          </iron-collapse>
+          <paper-button id="metadata-toggle" onclick="[[openCollapsible]]">
+            Show more
+          </paper-button>
+        </template>
+        <br>
       </template>
-      <template is="dom-repeat" items="[[firstThree]]" as="metadataNode">
-        <wpt-metadata-node metadata-node="[[metadataNode]]" path="[[path]]"></wpt-metadata-node>
-      </template>
-      <template is="dom-if" if="[[others]]">
-        <iron-collapse id="metadata-collapsible">
-          <template is="dom-repeat" items="[[others]]" as="metadataNode">
-            <wpt-metadata-node
-              metadata-node="[[metadataNode]]"
-              path="[[path]]"
-            ></wpt-metadata-node>
-          </template>
-        </iron-collapse>
-        <paper-button id="metadata-toggle" onclick="[[openCollapsible]]">
-          Show more
-        </paper-button>
-      </template>
-      <br>
     `;
   }
 

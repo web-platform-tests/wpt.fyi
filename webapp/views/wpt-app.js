@@ -145,12 +145,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
 
-      <template is="dom-if" if="[[!pathIsRootDir]]">
-        <template is="dom-if" if="[[displayMetadata]]">
-          <wpt-metadata products="[[products]]"
-                        path="[[path]]"
-                        metadata-map="{{metadataMap}}"></wpt-metadata>
-        </template>
+      <template is="dom-if" if="[[displayMetadata]]">
+        <wpt-metadata products="[[products]]"
+                      path="[[path]]"
+                      metadata-map="{{metadataMap}}"></wpt-metadata>
       </template>
 
       <paper-toast id="masterLabelMissing" duration="15000">
