@@ -135,7 +135,6 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       displayedMetadata: {
         type: Array,
         computed: 'computeDisplayedMetadata(path, metadata, products)',
-        notify: true,
       },
       firstThree: {
         type: Array,
@@ -144,6 +143,10 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       others: {
         type: Array,
         computed: 'computeOthers(displayedMetadata)'
+      },
+      metadataMap: {
+        type: Object,
+        notify: true,
       }
     };
   }
@@ -182,6 +185,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       return;
     }
 
+    let metadataMap = {};
     let displayedMetadata = [];
     for (const test of Object.keys(metadata).filter(k => this.checkPath(k, path))) {
       const seenURLs = new Set();
@@ -191,9 +195,9 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
           continue;
         }
         seenURLs.add(link.url);
+        metadataMap[test + link.product] = link.url;
         const wptMetadataNode = {
           test,
-          subtest: link.subtest,
           url: link.url,
           product: link.product,
         };
@@ -201,6 +205,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       }
     }
 
+    this.metadataMap = metadataMap;
     this._resetSelectors();
     return displayedMetadata;
   }

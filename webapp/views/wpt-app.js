@@ -134,7 +134,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      test-runs="{{testRuns}}"
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
-                     metadata="[[metadata]]"
+                     metadata-map="[[metadataMap]]"
                      is-triage-mode="[[isTriageMode]]"></wpt-results>
 
         <wpt-interop name="interop"
@@ -149,7 +149,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <template is="dom-if" if="[[displayMetadata]]">
           <wpt-metadata products="[[products]]"
                         path="[[path]]"
-                        displayed-metadata="{{metadata}}"></wpt-metadata>
+                        metadata-map="{{metadataMap}}"></wpt-metadata>
         </template>
       </template>
 
@@ -181,7 +181,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
       },
       searchResults: Array,
-      metadata: Array,
+      metadataMap: Object,
       resultsTotalsRangeMessage: {
         type: String,
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
