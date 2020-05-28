@@ -234,7 +234,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     /
                     <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
 
-                    <template is="dom-if" if="[[hasMetadata(index, node.path)]]">
+                    <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path)]]">
                       <a href="[[ getMetadataUrl(index, node.path) ]]" target="_blank">
                         <iron-icon class="bug" icon="bug-report"></iron-icon>
                       </a>
@@ -1035,8 +1035,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.$.amend.open();
   }
 
-  hasMetadata(index, testname) {
-    return this.displayMetadata && this.getMetadataUrl(index, testname) !== '';
+  shouldDisplayMetadata(index, testname) {
+    return !this.pathIsRootDir && this.displayMetadata && this.getMetadataUrl(index, testname) !== '';
   }
 
   getMetadataUrl(index, testname) {
