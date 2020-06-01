@@ -108,7 +108,7 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
 
 lighthouse: chrome webapp_node_modules_all
-	cd webapp; npx lhci autorun
+	cd webapp; npx lhci autorun --failOnUploadFailure
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
