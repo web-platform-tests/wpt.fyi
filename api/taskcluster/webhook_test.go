@@ -393,21 +393,6 @@ func TestTaskNameRegex(t *testing.T) {
 	assert.Nil(t, tc.TaskNameRegex.FindStringSubmatch("wpt-foo-bar-"))
 }
 
-func TestGetEventInfo_invalid_json(t *testing.T) {
-	mockC := gomock.NewController(t)
-	defer mockC.Finish()
-	api := mock_tc.NewMockAPI(mockC)
-
-	// In general unmarshalling JSON will usually succeed if the input
-	// valid JSON (even if it is missing fields), so we only test actually
-	// invalid JSON here to make sure that's handled properly. An invalid
-	// payload object is tested elsewhere.
-	payload := []byte(`I'm not JSON!`)
-	event, err := tc.GetEventInfo(payload, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
-	assert.NotNil(t, err)
-}
-
 func TestGetEventInfo_state(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
@@ -416,35 +401,24 @@ func TestGetEventInfo_state(t *testing.T) {
 
 	// The two completed states are 'success' and 'failure'. Any other
 	// value, including the state not being present, are non-fatal errors.
-	payload := []byte(`{
-		"state": "success",
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err := tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw")
+	status.Context = strPtr("Taskcluster")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Nil(t, err)
 
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "pending",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.State = strPtr("pending")
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.Nil(t, event)
 	assert.Nil(t, err)
 
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.State = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.Nil(t, event)
 	assert.Nil(t, err)
 }
@@ -455,37 +429,27 @@ func TestGetEventInfo_context(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil)
 
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
 	// The two accepted contexts are 'Taskcluster' and 'Community-TC'. Any
 	// other value, including the context not being present, are treated as
 	// non-fatal errors.
-	payload := []byte(`{
-		"state": "success",
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err := tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Nil(t, err)
 
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "GitHub",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.Context = strPtr("GitHub")
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.Nil(t, event)
 	assert.Nil(t, err)
 
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.Context = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.Nil(t, event)
 	assert.Nil(t, err)
 }
@@ -496,40 +460,29 @@ func TestGetEventInfo_target_url(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 	api.EXPECT().GetTaskGroupInfo("https://tc.community.com", "IWlO7NuxRnO0_8PKMuHFkw").Return(nil, nil)
 
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
 	// The target URL must be present, and must at least be a recognized
 	// URL containing a taskGroupID. ParseTaskclusterURL is tested
 	// separately, so just do a basic check here.
-	payload := []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err := tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Equal(t, event.RootURL, "https://tc.community.com")
 	assert.Equal(t, event.TaskID, "123")
 	assert.Nil(t, err)
 
-	payload = []byte(`{
-		"target_url": "https://example.com/nope/not/right",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.TargetURL = strPtr("https://example.com/nope/not/right")
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.Nil(t, event)
 	assert.NotNil(t, err)
 
-	payload = []byte(`{
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.TargetURL = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.Nil(t, event)
 	assert.NotNil(t, err)
 }
@@ -540,26 +493,21 @@ func TestGetEventInfo_sha(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil)
 
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
 	// We don't place requirements on the SHA other than it exists.
-	payload := []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err := tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Equal(t, event.Sha, "abcdef123")
 	assert.Nil(t, err)
 
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }]
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.SHA = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.Nil(t, event)
 	assert.NotNil(t, err)
 }
@@ -570,41 +518,30 @@ func TestGetEventInfo_master(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr("mybranch")}, &github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
 	// We check whether an event is for master by looking at the branches
 	// it is associated with.
-	payload := []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "mybranch" }, { "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err := tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Equal(t, event.Master, true)
 	assert.Nil(t, err)
 
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "mybranch" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.Branches = branchInfos{&github.Branch{Name: strPtr("mybranch")}}
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Equal(t, event.Master, false)
 	assert.Nil(t, err)
 
 	// Missing the 'branches' entry is not an error; the event just isn't
 	// for master.
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.Branches = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Equal(t, event.Master, false)
 	assert.Nil(t, err)
@@ -616,28 +553,22 @@ func TestGetEventInfo_sender(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
 	// The sender is entirely optional.
-	payload := []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123",
-		"commit": { "author": { "login": "someuser" } }
-	}`)
-	event, err := tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.Commit = &github.RepositoryCommit{Author: &github.User{Login: strPtr("someuser")}}
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Equal(t, event.Sender, "someuser")
 	assert.Nil(t, err)
 
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status.Commit = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Equal(t, event.Sender, "")
 	assert.Nil(t, err)
@@ -648,29 +579,22 @@ func TestGetEventInfo_group(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 0)}
-	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(group, nil).Times(1)
 
-	payload := []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err := tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
+	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(group, nil).Times(1)
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, event)
 	assert.Equal(t, event.Group, group)
 	assert.Nil(t, err)
 
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, errors.New("failed")).Times(1)
-	payload = []byte(`{
-		"target_url": "https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw",
-		"state": "success",
-		"context": "Community-TC",
-		"branches": [{ "name": "master" }],
-		"sha": "abcdef123"
-	}`)
-	event, err = tc.GetEventInfo(payload, shared.NewNilLogger(), api)
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
 	assert.Nil(t, event)
 	assert.NotNil(t, err)
 }

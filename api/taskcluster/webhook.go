@@ -72,22 +72,14 @@ type API interface {
 
 type apiImpl struct {}
 
-// GetEventInfo turns a GitHub Status event payload into an EventInfo struct.
+// GetEventInfo turns a StatusEventPayload into an EventInfo struct.
 //
 // It has two return values:
 //   * An EventInfo struct; this will be non-nil if and only if the event
 //     should be processed.
 //   * An error; if non-nil, then this event has caused an error that should be
 //     reported to the user.
-func GetEventInfo(payload []byte, log shared.Logger, api API) (*EventInfo, error) {
-	var status StatusEventPayload
-	if err := json.Unmarshal(payload, &status); err != nil {
-		// TODO: This now gives InternalServerError rather than StatusBadRequest; handle.
-		// log.Errorf("%v", err)
-		// http.Error(w, err.Error(), http.StatusBadRequest)
-		return nil, err
-	}
-
+func GetEventInfo(status StatusEventPayload, log shared.Logger, api API) (*EventInfo, error) {
 	// If we aren't meant to process, the rest doesn't matter.
 	if !ShouldProcessStatus(log, &status) {
 		return nil, nil
@@ -152,7 +144,13 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
 
-	event, err := GetEventInfo(payload, log, &apiImpl{})
+	var status StatusEventPayload
+	if err := json.Unmarshal(payload, &status); err != nil {
+		log.Errorf("%v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	event, err := GetEventInfo(status, log, &apiImpl{})
 
 	processed := false
 	if event != nil {
