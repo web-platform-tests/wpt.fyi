@@ -191,8 +191,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            labels="[[labels]]"
                            products="[[products]]"
                            diff-run="[[diffRun]]"
-                           is-triage-mode="[[isTriageMode]]"
-                           metadata="[[metadata]]">
+                           is-triage-mode="[[isTriageMode]]">
         </test-file-results>
       </template>
 
@@ -234,6 +233,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
                     /
                     <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
+
+                    <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
+                      <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank">
+                        <iron-icon class="bug" icon="bug-report"></iron-icon>
+                      </a>
+                    </template>
                   </td>
                 </template>
 
@@ -381,7 +386,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Array,
         computed: 'computeDisplayedTests(path, searchResults)',
       },
-      metadata: Object,
+      metadataMap: Object,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {
@@ -1028,6 +1033,18 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   openAmendMetadata() {
     this.$.amend.open();
+  }
+
+  shouldDisplayMetadata(index, testname, metadataMap) {
+    return !this.pathIsRootDir && this.displayMetadata && this.getMetadataUrl(index, testname, metadataMap) !== '';
+  }
+
+  getMetadataUrl(index, testname, metadataMap) {
+    const key = testname + this.products[index].browser_name;
+    if (key in metadataMap) {
+      return metadataMap[key];
+    }
+    return '';
   }
 }
 
