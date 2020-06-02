@@ -234,8 +234,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     /
                     <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
 
-                    <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path)]]">
-                      <a href="[[ getMetadataUrl(index, node.path) ]]" target="_blank">
+                    <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
+                      <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank">
                         <iron-icon class="bug" icon="bug-report"></iron-icon>
                       </a>
                     </template>
@@ -1035,14 +1035,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.$.amend.open();
   }
 
-  shouldDisplayMetadata(index, testname) {
-    return !this.pathIsRootDir && this.displayMetadata && this.getMetadataUrl(index, testname) !== '';
+  shouldDisplayMetadata(index, testname, metadataMap) {
+    return !this.pathIsRootDir && this.displayMetadata && this.getMetadataUrl(index, testname, metadataMap) !== '';
   }
 
-  getMetadataUrl(index, testname) {
+  getMetadataUrl(index, testname, metadataMap) {
     const key = testname + this.products[index].browser_name;
-    if (key in this.metadataMap) {
-      return this.metadataMap[key];
+    if (key in metadataMap) {
+      return metadataMap[key];
     }
     return '';
   }
