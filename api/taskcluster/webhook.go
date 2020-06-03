@@ -79,30 +79,25 @@ type apiImpl struct {}
 //     should be processed.
 //   * An error; if non-nil, then this event has caused an error that should be
 //     reported to the user.
-func GetEventInfo(status StatusEventPayload, log shared.Logger, api API) (*EventInfo, error) {
-	// If we aren't meant to process, the rest doesn't matter.
-	if !ShouldProcessStatus(log, &status) {
-		return nil, nil
-	}
-
+func GetEventInfo(status StatusEventPayload, log shared.Logger, api API) (EventInfo, error) {
 	if status.SHA == nil {
-		return nil, errors.New("No sha on taskcluster status event")
+		return EventInfo{}, errors.New("No sha on taskcluster status event")
 	}
 
 	if status.TargetURL == nil {
-		return nil, errors.New("No target_url on taskcluster status event")
+		return EventInfo{}, errors.New("No target_url on taskcluster status event")
 	}
 
 	rootURL, taskGroupID, taskID := ParseTaskclusterURL(*status.TargetURL)
 	if taskGroupID == "" {
-		return nil, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
+		return EventInfo{}, fmt.Errorf("unrecognized target_url: %s", *status.TargetURL)
 	}
 
 	log.Debugf("Taskcluster task group %s", taskGroupID)
 
 	group, err := api.GetTaskGroupInfo(rootURL, taskGroupID)
 	if err != nil {
-		return nil, err
+		return EventInfo{}, err
 	}
 
 	event := EventInfo{
@@ -114,7 +109,7 @@ func GetEventInfo(status StatusEventPayload, log shared.Logger, api API) (*Event
 		Group:   group,
 	}
 
-	return &event, nil
+	return event, nil
 }
 
 // tcStatusWebhookHandler reacts to GitHub status webhook events.
@@ -143,27 +138,35 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
-
 	var status StatusEventPayload
 	if err := json.Unmarshal(payload, &status); err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	event, err := GetEventInfo(status, log, &apiImpl{})
 
-	processed := false
-	if event != nil {
-		labels := mapset.NewSet()
-		if event.Master {
-			labels.Add(shared.MasterLabel)
-		}
-		if event.Sender != "" {
-			labels.Add(shared.GetUserLabel(event.Sender))
-		}
-
-		processed, err = processTaskclusterBuild(aeAPI, *event, shared.ToStringSlice(labels)...)
+	if !ShouldProcessStatus(log, &status) {
+		w.WriteHeader(http.StatusNoContent)
+		fmt.Fprintln(w, "Status was ignored")
+		return
 	}
+
+	event, err := GetEventInfo(status, log, &apiImpl{})
+	if err != nil {
+		log.Errorf("%v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	labels := mapset.NewSet()
+	if event.Master {
+		labels.Add(shared.MasterLabel)
+	}
+	if event.Sender != "" {
+		labels.Add(shared.GetUserLabel(event.Sender))
+	}
+
+	processed, err := processTaskclusterBuild(aeAPI, event, shared.ToStringSlice(labels)...)
 
 	if err == errNoResults {
 		log.Infof("%v", err)

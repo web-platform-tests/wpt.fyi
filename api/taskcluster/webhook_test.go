@@ -393,67 +393,6 @@ func TestTaskNameRegex(t *testing.T) {
 	assert.Nil(t, tc.TaskNameRegex.FindStringSubmatch("wpt-foo-bar-"))
 }
 
-func TestGetEventInfo_state(t *testing.T) {
-	mockC := gomock.NewController(t)
-	defer mockC.Finish()
-	api := mock_tc.NewMockAPI(mockC)
-	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil)
-
-	// The two completed states are 'success' and 'failure'. Any other
-	// value, including the state not being present, are non-fatal errors.
-	status := tc.StatusEventPayload{}
-	status.State = strPtr("success")
-	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw")
-	status.Context = strPtr("Taskcluster")
-	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
-	status.SHA = strPtr("abcdef123")
-
-	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
-	assert.Nil(t, err)
-
-	status.State = strPtr("pending")
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
-	assert.Nil(t, err)
-
-	status.State = nil
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
-	assert.Nil(t, err)
-}
-
-func TestGetEventInfo_context(t *testing.T) {
-	mockC := gomock.NewController(t)
-	defer mockC.Finish()
-	api := mock_tc.NewMockAPI(mockC)
-	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil)
-
-	status := tc.StatusEventPayload{}
-	status.State = strPtr("success")
-	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw")
-	status.Context = strPtr("Community-TC")
-	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
-	status.SHA = strPtr("abcdef123")
-
-	// The two accepted contexts are 'Taskcluster' and 'Community-TC'. Any
-	// other value, including the context not being present, are treated as
-	// non-fatal errors.
-	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
-	assert.Nil(t, err)
-
-	status.Context = strPtr("GitHub")
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
-	assert.Nil(t, err)
-
-	status.Context = nil
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
-	assert.Nil(t, err)
-}
-
 func TestGetEventInfo_target_url(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
@@ -471,19 +410,16 @@ func TestGetEventInfo_target_url(t *testing.T) {
 	// URL containing a taskGroupID. ParseTaskclusterURL is tested
 	// separately, so just do a basic check here.
 	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
 	assert.Equal(t, event.RootURL, "https://tc.community.com")
 	assert.Equal(t, event.TaskID, "123")
 	assert.Nil(t, err)
 
 	status.TargetURL = strPtr("https://example.com/nope/not/right")
 	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
 	assert.NotNil(t, err)
 
 	status.TargetURL = nil
 	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
 	assert.NotNil(t, err)
 }
 
@@ -502,13 +438,11 @@ func TestGetEventInfo_sha(t *testing.T) {
 
 	// We don't place requirements on the SHA other than it exists.
 	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
 	assert.Equal(t, event.Sha, "abcdef123")
 	assert.Nil(t, err)
 
 	status.SHA = nil
 	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
 	assert.NotNil(t, err)
 }
 
@@ -528,13 +462,11 @@ func TestGetEventInfo_master(t *testing.T) {
 	// We check whether an event is for master by looking at the branches
 	// it is associated with.
 	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
 	assert.Equal(t, event.Master, true)
 	assert.Nil(t, err)
 
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("mybranch")}}
 	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
 	assert.Equal(t, event.Master, false)
 	assert.Nil(t, err)
 
@@ -542,7 +474,6 @@ func TestGetEventInfo_master(t *testing.T) {
 	// for master.
 	status.Branches = nil
 	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
 	assert.Equal(t, event.Master, false)
 	assert.Nil(t, err)
 }
@@ -563,13 +494,11 @@ func TestGetEventInfo_sender(t *testing.T) {
 	// The sender is entirely optional.
 	status.Commit = &github.RepositoryCommit{Author: &github.User{Login: strPtr("someuser")}}
 	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
 	assert.Equal(t, event.Sender, "someuser")
 	assert.Nil(t, err)
 
 	status.Commit = nil
 	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
 	assert.Equal(t, event.Sender, "")
 	assert.Nil(t, err)
 }
@@ -589,12 +518,10 @@ func TestGetEventInfo_group(t *testing.T) {
 
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(group, nil).Times(1)
 	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.NotNil(t, event)
 	assert.Equal(t, event.Group, group)
 	assert.Nil(t, err)
 
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, errors.New("failed")).Times(1)
 	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
-	assert.Nil(t, event)
 	assert.NotNil(t, err)
 }
