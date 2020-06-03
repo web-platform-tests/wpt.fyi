@@ -73,12 +73,6 @@ type API interface {
 type apiImpl struct {}
 
 // GetEventInfo turns a StatusEventPayload into an EventInfo struct.
-//
-// It has two return values:
-//   * An EventInfo struct; this will be non-nil if and only if the event
-//     should be processed.
-//   * An error; if non-nil, then this event has caused an error that should be
-//     reported to the user.
 func GetEventInfo(status StatusEventPayload, log shared.Logger, api API) (EventInfo, error) {
 	if status.SHA == nil {
 		return EventInfo{}, errors.New("No sha on taskcluster status event")
