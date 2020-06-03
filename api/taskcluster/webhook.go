@@ -70,7 +70,7 @@ type API interface {
 	GetTaskGroupInfo(string, string) (*TaskGroupInfo, error)
 }
 
-type apiImpl struct {}
+type apiImpl struct{}
 
 // GetEventInfo turns a StatusEventPayload into an EventInfo struct.
 func GetEventInfo(status StatusEventPayload, log shared.Logger, api API) (EventInfo, error) {
