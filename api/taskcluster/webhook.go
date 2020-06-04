@@ -291,7 +291,7 @@ func ParseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string)
 	return rootURL, taskGroupID, taskID
 }
 
-func (api *apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupInfo, error) {
+func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupInfo, error) {
 	queue := tcqueue.New(nil, rootURL)
 
 	group := TaskGroupInfo{
