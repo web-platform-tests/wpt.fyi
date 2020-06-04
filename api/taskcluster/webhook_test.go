@@ -8,6 +8,7 @@ package taskcluster
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -375,6 +376,48 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	)
 	assert.NotNil(t, err)
 	assert.Equal(t, 2, strings.Count(err.Error(), "Client.Timeout"))
+}
+
+func TestCreateAllRuns_pr_labels_exclude_master(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		// We should not see a master label here, even though we
+		// specify one in the call to createAllRuns.
+		defer r.Body.Close()
+		body, _ := ioutil.ReadAll(r.Body)
+		assert.NotContains(t, string(body), "master")
+		w.Write([]byte("OK"))
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+	serverURL, _ := url.Parse(server.URL)
+	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
+
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
+	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return("localhost:8080")
+	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).AnyTimes().Return(server.Client())
+	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
+
+	// This test reproduces the case where Community-TC executes a pull
+	// request run on a master commit (which we have historically seen).
+	// When we get a master-tagged run which contains pull-request runs, we
+	// should ignore the tag. This is asserted by the HTTP handler above.
+	err := createAllRuns(
+		shared.NewNilLogger(),
+		aeAPI,
+		sha,
+		"username",
+		"password",
+		map[string]artifactURLs{
+			"chrome-dev-pr_head":     {Results: []string{"1"}},
+			"chrome-dev-pr_base":     {Results: []string{"1"}},
+			"firefox-stable-pr_head": {Results: []string{"1"}},
+			"firefox-stable-pr_base": {Results: []string{"1"}},
+		},
+		[]string{shared.MasterLabel, "user:person"},
+	)
+	assert.Nil(t, err)
 }
 
 func TestTaskNameRegex(t *testing.T) {
