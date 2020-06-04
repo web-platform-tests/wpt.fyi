@@ -345,6 +345,15 @@ func createAllRuns(
 			labelsForRun := labels
 			switch lastBit := bits[len(bits)-1]; lastBit {
 			case shared.PRBaseLabel, shared.PRHeadLabel:
+				// We have seen cases where Community-TC triggers a pull request
+				// for merged commits. To guard against that, we strip the
+				// master label here.
+				for i, label := range labelsForRun {
+					if label == shared.MasterLabel {
+						labelsForRun = append(labelsForRun[:i], labelsForRun[i+1:]...)
+						break
+					}
+				}
 				labelsForRun = append(labelsForRun, lastBit)
 			}
 
