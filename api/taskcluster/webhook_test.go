@@ -384,7 +384,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 func TestCreateAllRuns_pr_labels_exclude_master(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		// We should not see a master label here, even though we
-		// specify one in the call to createAllRuns.
+		// specify one in the call to tc.CreateAllRuns.
 		defer r.Body.Close()
 		body, _ := ioutil.ReadAll(r.Body)
 		assert.NotContains(t, string(body), "master")
@@ -406,13 +406,13 @@ func TestCreateAllRuns_pr_labels_exclude_master(t *testing.T) {
 	// request run on a master commit (which we have historically seen).
 	// When we get a master-tagged run which contains pull-request runs, we
 	// should ignore the tag. This is asserted by the HTTP handler above.
-	err := createAllRuns(
+	err := tc.CreateAllRuns(
 		shared.NewNilLogger(),
 		aeAPI,
 		sha,
 		"username",
 		"password",
-		map[string]artifactURLs{
+		map[string]tc.ArtifactURLs{
 			"chrome-dev-pr_head":     {Results: []string{"1"}},
 			"chrome-dev-pr_base":     {Results: []string{"1"}},
 			"firefox-stable-pr_head": {Results: []string{"1"}},
