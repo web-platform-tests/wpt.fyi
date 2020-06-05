@@ -29,7 +29,6 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata, undefined);
     });
     test('simple case', () => {
-      appFixture.products = [{ browser_name: 'chrome' }];
       appFixture.searchResults = [{ test: '/foo.html' }];
       appFixture.metadata = {
         '/foo.html': [
@@ -46,7 +45,6 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
     test('simple case with wildcard', () => {
-      appFixture.products = [{ browser_name: 'chrome' }];
       appFixture.searchResults = [{ test: '/foo/bar.html' }];
       appFixture.metadata = {
         '/foo/*': [
@@ -72,7 +70,6 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata.length, 0);
     });
     test('exclude path', () => {
-      appFixture.products = [{ browser_name: 'chrome' }];
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar/f.html' }];
       appFixture.metadata = {
         '/foo.html': [
@@ -88,7 +85,6 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
     });
     test('complex case', () => {
-      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }];
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/foo/bar.html' }, { test: '/foo/bar/foo1.html' }, { test: '/bar/foo.html' }];
       appFixture.metadata = {
         '/foo.html': [
@@ -117,7 +113,6 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[3].url, 'bug3');
     });
     test('check duplicates & empty', () => {
-      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }, { browser_name: 'edge' }];
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar.html' }];
       appFixture.metadata = {
         '/foo.html': [
@@ -139,7 +134,6 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
     });
     test('complex case with partial searchResults', () => {
-      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }];
       appFixture.searchResults = [{ test: '/foo/bar/foo1.html' }];
       appFixture.metadata = {
         '/foo.html': [

@@ -141,7 +141,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       metadata: Object,
       displayedMetadata: {
         type: Array,
-        computed: 'computeDisplayedMetadata(path, metadata, products, testResultSet)',
+        computed: 'computeDisplayedMetadata(path, metadata, testResultSet)',
       },
       firstThree: {
         type: Array,
@@ -195,8 +195,8 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     return new Set(searchResults.map(r => r.test));
   }
 
-  computeDisplayedMetadata(path, metadata, products, testResultSet) {
-    if (!metadata || !path || !products || !testResultSet) {
+  computeDisplayedMetadata(path, metadata, testResultSet) {
+    if (!metadata || !path || !testResultSet) {
       return;
     }
 
