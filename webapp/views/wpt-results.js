@@ -18,6 +18,7 @@ import { WPTColors } from '../components/wpt-colors.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-prs.js';
+import '../components/wpt-metadata.js';
 import { AmendMetadataMixin } from '../components/wpt-amend-metadata.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
@@ -322,6 +323,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           </div>
         </section>
       </template>
+    </template>
+
+    <template is="dom-if" if="[[displayMetadata]]">
+      <wpt-metadata products="[[products]]"
+                    path="[[path]]"
+                    search-results="[[searchResults]]"
+                    metadata-map="{{metadataMap}}"></wpt-metadata>
     </template>
     <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
 `;

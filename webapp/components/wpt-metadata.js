@@ -131,12 +131,17 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         type: Array,
         observer: 'loadAllMetadata'
       },
+      searchResults: Array,
+      testResultSet: {
+        type: Object,
+        computed: 'computTestResultSet(searchResults)',
+      },
       path: String,
       // metadata maps test => links
       metadata: Object,
       displayedMetadata: {
         type: Array,
-        computed: 'computeDisplayedMetadata(path, metadata, products)',
+        computed: 'computeDisplayedMetadata(path, metadata, products, testResultSet)',
       },
       firstThree: {
         type: Array,
@@ -182,14 +187,22 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     );
   }
 
-  computeDisplayedMetadata(path, metadata, products) {
-    if (!metadata || !path || !products) {
+  computTestResultSet(searchResults) {
+    if (!searchResults || !searchResults.length) {
+      return;
+    }
+
+    return new Set(searchResults.map(r => r.test));
+  }
+
+  computeDisplayedMetadata(path, metadata, products, testResultSet) {
+    if (!metadata || !path || !products || !testResultSet) {
       return;
     }
 
     let metadataMap = {};
     let displayedMetadata = [];
-    for (const test of Object.keys(metadata).filter(k => this.checkPath(k, path))) {
+    for (const test of Object.keys(metadata).filter(k => this.checkPath(k, path, testResultSet))) {
       const seenURLs = new Set();
       seenURLs.add(''); // Avoids accepting empty URLs.
       for (const link of metadata[test]) {
@@ -228,7 +241,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     this.shadowRoot.querySelector('#metadata-collapsible').opened = true;
   }
 
-  checkPath(testname, path) {
+  checkPath(testname, path, testResultSet) {
     if (testname.endsWith('/*')) {
       let curPath = path;
       if (this.pathIsASubfolder) {
@@ -236,7 +249,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       }
       return curPath.startsWith(testname.substring(0, testname.length - 1));
     }
-    return testname.startsWith(path);
+    return testname.startsWith(path) && testResultSet.has(testname);
   }
 }
 window.customElements.define(WPTMetadata.is, WPTMetadata);
