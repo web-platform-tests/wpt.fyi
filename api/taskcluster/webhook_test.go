@@ -4,9 +4,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package taskcluster
+package taskcluster_test
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,6 +22,8 @@ import (
 	"github.com/google/go-github/v31/github"
 	"github.com/stretchr/testify/assert"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
+	tc "github.com/web-platform-tests/wpt.fyi/api/taskcluster"
+	mock_tc "github.com/web-platform-tests/wpt.fyi/api/taskcluster/mock_taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
@@ -32,43 +35,43 @@ func strPtr(s string) *string {
 }
 
 func TestShouldProcessStatus_states(t *testing.T) {
-	status := statusEventPayload{}
+	status := tc.StatusEventPayload{}
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
-	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), &status))
+	assert.True(t, tc.ShouldProcessStatus(shared.NewNilLogger(), &status))
 
 	status.Context = strPtr("Community-TC")
-	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), &status))
+	assert.True(t, tc.ShouldProcessStatus(shared.NewNilLogger(), &status))
 
 	status.State = strPtr("failure")
-	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), &status))
+	assert.True(t, tc.ShouldProcessStatus(shared.NewNilLogger(), &status))
 
 	status.State = strPtr("error")
-	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), &status))
+	assert.False(t, tc.ShouldProcessStatus(shared.NewNilLogger(), &status))
 
 	status.State = strPtr("pending")
-	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), &status))
+	assert.False(t, tc.ShouldProcessStatus(shared.NewNilLogger(), &status))
 }
 
 func TestShouldProcessStatus_notTaskcluster(t *testing.T) {
-	status := statusEventPayload{}
+	status := tc.StatusEventPayload{}
 	status.State = strPtr("success")
 	status.Context = strPtr("Travis")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
-	assert.False(t, shouldProcessStatus(shared.NewNilLogger(), &status))
+	assert.False(t, tc.ShouldProcessStatus(shared.NewNilLogger(), &status))
 }
 
 func TestShouldProcessStatus_notOnMaster(t *testing.T) {
-	status := statusEventPayload{}
+	status := tc.StatusEventPayload{}
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("gh-pages")}}
-	assert.True(t, shouldProcessStatus(shared.NewNilLogger(), &status))
+	assert.True(t, tc.ShouldProcessStatus(shared.NewNilLogger(), &status))
 }
 
 func TestIsOnMaster(t *testing.T) {
-	status := statusEventPayload{}
+	status := tc.StatusEventPayload{}
 	status.SHA = strPtr("a10867b14bb761a232cd80139fbd4c0d33264240")
 	status.State = strPtr("success")
 	status.Context = strPtr("Taskcluster")
@@ -94,25 +97,25 @@ func TestIsOnMaster(t *testing.T) {
 
 func TestParseTaskclusterURL(t *testing.T) {
 	t.Run("Status", func(t *testing.T) {
-		root, group, task := parseTaskclusterURL("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
+		root, group, task := tc.ParseTaskclusterURL("https://tools.taskcluster.net/task-group-inspector/#/Y4rnZeqDRXGiRNiqxT5Qeg")
 		assert.Equal(t, "https://taskcluster.net", root)
 		assert.Equal(t, "Y4rnZeqDRXGiRNiqxT5Qeg", group)
 		assert.Equal(t, "", task)
 	})
 	t.Run("CheckRun with task", func(t *testing.T) {
-		root, group, task := parseTaskclusterURL("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
+		root, group, task := tc.ParseTaskclusterURL("https://tc.example.com/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/NOToWHr0T-u62B9yGQnD5w/details")
 		assert.Equal(t, "https://tc.example.com", root)
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "NOToWHr0T-u62B9yGQnD5w", task)
 	})
 	t.Run("CheckRun without task", func(t *testing.T) {
-		root, group, task := parseTaskclusterURL("https://tc.other-example.com/groups/IWlO7NuxRnO0_8PKMuHFkw")
+		root, group, task := tc.ParseTaskclusterURL("https://tc.other-example.com/groups/IWlO7NuxRnO0_8PKMuHFkw")
 		assert.Equal(t, "https://tc.other-example.com", root)
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "", task)
 	})
 	t.Run("CheckRun without task", func(t *testing.T) {
-		root, group, task := parseTaskclusterURL("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw")
+		root, group, task := tc.ParseTaskclusterURL("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw")
 		assert.Equal(t, "https://tc.community.com", root)
 		assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", group)
 		assert.Equal(t, "", task)
@@ -120,21 +123,21 @@ func TestParseTaskclusterURL(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_all_success_master(t *testing.T) {
-	group := &taskGroupInfo{tasks: make([]taskInfo, 5)}
-	group.tasks[0].name = "wpt-firefox-nightly-testharness-1"
-	group.tasks[1].name = "wpt-firefox-nightly-testharness-2"
-	group.tasks[2].name = "wpt-chrome-dev-testharness-1"
-	group.tasks[3].name = "wpt-chrome-dev-reftest-1"
-	group.tasks[4].name = "wpt-chrome-dev-crashtest-1"
-	for i := 0; i < len(group.tasks); i++ {
-		group.tasks[i].state = "completed"
-		group.tasks[i].taskID = fmt.Sprint(i)
+	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 5)}
+	group.Tasks[0].Name = "wpt-firefox-nightly-testharness-1"
+	group.Tasks[1].Name = "wpt-firefox-nightly-testharness-2"
+	group.Tasks[2].Name = "wpt-chrome-dev-testharness-1"
+	group.Tasks[3].Name = "wpt-chrome-dev-reftest-1"
+	group.Tasks[4].Name = "wpt-chrome-dev-crashtest-1"
+	for i := 0; i < len(group.Tasks); i++ {
+		group.Tasks[i].State = "completed"
+		group.Tasks[i].TaskID = fmt.Sprint(i)
 	}
 
 	t.Run("All", func(t *testing.T) {
-		urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
+		urls, err := tc.ExtractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
 		assert.Nil(t, err)
-		assert.Equal(t, map[string]artifactURLs{
+		assert.Equal(t, map[string]tc.ArtifactURLs{
 			"firefox-nightly": {
 				Results: []string{
 					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_report.json.gz",
@@ -161,9 +164,9 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 	})
 
 	t.Run("Filtered", func(t *testing.T) {
-		urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "0")
+		urls, err := tc.ExtractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "0")
 		assert.Nil(t, err)
-		assert.Equal(t, map[string]artifactURLs{
+		assert.Equal(t, map[string]tc.ArtifactURLs{
 			"firefox-nightly": {
 				Results: []string{
 					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_report.json.gz",
@@ -177,19 +180,19 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
-	group := &taskGroupInfo{tasks: make([]taskInfo, 3)}
-	group.tasks[0].name = "wpt-chrome-dev-results"
-	group.tasks[1].name = "wpt-chrome-dev-stability" // must be skipped
-	group.tasks[2].name = "wpt-chrome-dev-results-without-changes"
-	for i := 0; i < len(group.tasks); i++ {
-		group.tasks[i].state = "completed"
-		group.tasks[i].taskID = fmt.Sprint(i)
+	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 3)}
+	group.Tasks[0].Name = "wpt-chrome-dev-results"
+	group.Tasks[1].Name = "wpt-chrome-dev-stability" // must be skipped
+	group.Tasks[2].Name = "wpt-chrome-dev-results-without-changes"
+	for i := 0; i < len(group.Tasks); i++ {
+		group.Tasks[i].State = "completed"
+		group.Tasks[i].TaskID = fmt.Sprint(i)
 	}
 
 	t.Run("All", func(t *testing.T) {
-		urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
+		urls, err := tc.ExtractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
 		assert.Nil(t, err)
-		assert.Equal(t, map[string]artifactURLs{
+		assert.Equal(t, map[string]tc.ArtifactURLs{
 			"chrome-dev-pr_head": {
 				Results: []string{
 					"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_report.json.gz",
@@ -210,9 +213,9 @@ func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 	})
 
 	t.Run("Filtered", func(t *testing.T) {
-		urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "2")
+		urls, err := tc.ExtractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "2")
 		assert.Nil(t, err)
-		assert.Equal(t, map[string]artifactURLs{
+		assert.Equal(t, map[string]tc.ArtifactURLs{
 			"chrome-dev-pr_base": {
 				Results: []string{
 					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_report.json.gz",
@@ -226,18 +229,18 @@ func TestExtractArtifactURLs_all_success_pr(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_with_failures(t *testing.T) {
-	group := &taskGroupInfo{tasks: make([]taskInfo, 3)}
-	group.tasks[0].state = "failed"
-	group.tasks[0].taskID = "foo"
-	group.tasks[0].name = "wpt-firefox-nightly-testharness-1"
-	group.tasks[1].state = "completed"
-	group.tasks[1].taskID = "bar"
-	group.tasks[1].name = "wpt-firefox-nightly-testharness-2"
-	group.tasks[2].state = "completed"
-	group.tasks[2].taskID = "baz"
-	group.tasks[2].name = "wpt-chrome-dev-testharness-1"
+	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 3)}
+	group.Tasks[0].State = "failed"
+	group.Tasks[0].TaskID = "foo"
+	group.Tasks[0].Name = "wpt-firefox-nightly-testharness-1"
+	group.Tasks[1].State = "completed"
+	group.Tasks[1].TaskID = "bar"
+	group.Tasks[1].Name = "wpt-firefox-nightly-testharness-2"
+	group.Tasks[2].State = "completed"
+	group.Tasks[2].TaskID = "baz"
+	group.Tasks[2].Name = "wpt-chrome-dev-testharness-1"
 
-	urls, err := extractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
+	urls, err := tc.ExtractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(urls))
 	assert.Contains(t, urls, "chrome-dev")
@@ -263,13 +266,13 @@ func TestCreateAllRuns_success(t *testing.T) {
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
 	t.Run("master", func(t *testing.T) {
-		err := createAllRuns(
+		err := tc.CreateAllRuns(
 			shared.NewNilLogger(),
 			aeAPI,
 			sha,
 			"username",
 			"password",
-			map[string]artifactURLs{
+			map[string]tc.ArtifactURLs{
 				"safari-preview": {Results: []string{"1"}},
 				"chrome-dev":     {Results: []string{"1"}},
 				"firefox-stable": {Results: []string{"1", "2"}},
@@ -282,13 +285,13 @@ func TestCreateAllRuns_success(t *testing.T) {
 
 	requested = 0
 	t.Run("PR", func(t *testing.T) {
-		err := createAllRuns(
+		err := tc.CreateAllRuns(
 			shared.NewNilLogger(),
 			aeAPI,
 			sha,
 			"username",
 			"password",
-			map[string]artifactURLs{
+			map[string]tc.ArtifactURLs{
 				"chrome-dev-pr_head":     {Results: []string{"1"}},
 				"chrome-dev-pr_base":     {Results: []string{"1"}},
 				"firefox-stable-pr_head": {Results: []string{"1"}},
@@ -326,13 +329,13 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
-	err := createAllRuns(
+	err := tc.CreateAllRuns(
 		shared.NewNilLogger(),
 		aeAPI,
 		sha,
 		"username",
 		"password",
-		map[string]artifactURLs{
+		map[string]tc.ArtifactURLs{
 			"chrome":  {Results: []string{"1"}},
 			"firefox": {Results: []string{"1", "2"}},
 		},
@@ -362,13 +365,13 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
-	err := createAllRuns(
+	err := tc.CreateAllRuns(
 		shared.NewNilLogger(),
 		aeAPI,
 		sha,
 		"username",
 		"password",
-		map[string]artifactURLs{
+		map[string]tc.ArtifactURLs{
 			"chrome":  {Results: []string{"1"}},
 			"firefox": {Results: []string{"1", "2"}},
 		},
@@ -421,14 +424,147 @@ func TestCreateAllRuns_pr_labels_exclude_master(t *testing.T) {
 }
 
 func TestTaskNameRegex(t *testing.T) {
-	assert.Equal(t, []string{"chrome-dev", "results"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results")[1:])
-	assert.Equal(t, []string{"chrome-dev", "results-without-changes"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-results-without-changes")[1:])
-	assert.Equal(t, []string{"chrome-dev", "stability"}, taskNameRegex.FindStringSubmatch("wpt-chrome-dev-stability")[1:])
-	assert.Equal(t, []string{"chrome-stable", "reftest"}, taskNameRegex.FindStringSubmatch("wpt-chrome-stable-reftest-1")[1:])
-	assert.Equal(t, []string{"firefox-beta", "crashtest"}, taskNameRegex.FindStringSubmatch("wpt-firefox-beta-crashtest-2")[1:])
-	assert.Equal(t, []string{"firefox-nightly", "testharness"}, taskNameRegex.FindStringSubmatch("wpt-firefox-nightly-testharness-5")[1:])
-	assert.Equal(t, []string{"firefox-stable", "wdspec"}, taskNameRegex.FindStringSubmatch("wpt-firefox-stable-wdspec-1")[1:])
-	assert.Equal(t, []string{"webkitgtk_minibrowser-nightly", "testharness"}, taskNameRegex.FindStringSubmatch("wpt-webkitgtk_minibrowser-nightly-testharness-2")[1:])
-	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-foo-bar--1"))
-	assert.Nil(t, taskNameRegex.FindStringSubmatch("wpt-foo-bar-"))
+	assert.Equal(t, []string{"chrome-dev", "results"}, tc.TaskNameRegex.FindStringSubmatch("wpt-chrome-dev-results")[1:])
+	assert.Equal(t, []string{"chrome-dev", "results-without-changes"}, tc.TaskNameRegex.FindStringSubmatch("wpt-chrome-dev-results-without-changes")[1:])
+	assert.Equal(t, []string{"chrome-dev", "stability"}, tc.TaskNameRegex.FindStringSubmatch("wpt-chrome-dev-stability")[1:])
+	assert.Equal(t, []string{"chrome-stable", "reftest"}, tc.TaskNameRegex.FindStringSubmatch("wpt-chrome-stable-reftest-1")[1:])
+	assert.Equal(t, []string{"firefox-beta", "crashtest"}, tc.TaskNameRegex.FindStringSubmatch("wpt-firefox-beta-crashtest-2")[1:])
+	assert.Equal(t, []string{"firefox-nightly", "testharness"}, tc.TaskNameRegex.FindStringSubmatch("wpt-firefox-nightly-testharness-5")[1:])
+	assert.Equal(t, []string{"firefox-stable", "wdspec"}, tc.TaskNameRegex.FindStringSubmatch("wpt-firefox-stable-wdspec-1")[1:])
+	assert.Equal(t, []string{"webkitgtk_minibrowser-nightly", "testharness"}, tc.TaskNameRegex.FindStringSubmatch("wpt-webkitgtk_minibrowser-nightly-testharness-2")[1:])
+	assert.Nil(t, tc.TaskNameRegex.FindStringSubmatch("wpt-foo-bar--1"))
+	assert.Nil(t, tc.TaskNameRegex.FindStringSubmatch("wpt-foo-bar-"))
+}
+
+func TestGetEventInfo_target_url(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+	api.EXPECT().GetTaskGroupInfo("https://tc.community.com", "IWlO7NuxRnO0_8PKMuHFkw").Return(nil, nil)
+
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
+	// The target URL must be present, and must at least be a recognized
+	// URL containing a taskGroupID. ParseTaskclusterURL is tested
+	// separately, so just do a basic check here.
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.Equal(t, event.RootURL, "https://tc.community.com")
+	assert.Equal(t, event.TaskID, "123")
+	assert.Nil(t, err)
+
+	status.TargetURL = strPtr("https://example.com/nope/not/right")
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+
+	status.TargetURL = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+}
+
+func TestGetEventInfo_sha(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil)
+
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
+	// We don't place requirements on the SHA other than it exists.
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.Equal(t, event.Sha, "abcdef123")
+	assert.Nil(t, err)
+
+	status.SHA = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+}
+
+func TestGetEventInfo_master(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr("mybranch")}, &github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
+	// We check whether an event is for master by looking at the branches
+	// it is associated with.
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.Equal(t, event.Master, true)
+	assert.Nil(t, err)
+
+	status.Branches = branchInfos{&github.Branch{Name: strPtr("mybranch")}}
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.Equal(t, event.Master, false)
+	assert.Nil(t, err)
+
+	// Missing the 'branches' entry is not an error; the event just isn't
+	// for master.
+	status.Branches = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.Equal(t, event.Master, false)
+	assert.Nil(t, err)
+}
+
+func TestGetEventInfo_sender(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
+	// The sender is entirely optional.
+	status.Commit = &github.RepositoryCommit{Author: &github.User{Login: strPtr("someuser")}}
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.Equal(t, event.Sender, "someuser")
+	assert.Nil(t, err)
+
+	status.Commit = nil
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.Equal(t, event.Sender, "")
+	assert.Nil(t, err)
+}
+
+func TestGetEventInfo_group(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 0)}
+
+	status := tc.StatusEventPayload{}
+	status.State = strPtr("success")
+	status.TargetURL = strPtr("https://tc.community.com/tasks/groups/IWlO7NuxRnO0_8PKMuHFkw/tasks/123")
+	status.Context = strPtr("Community-TC")
+	status.Branches = branchInfos{&github.Branch{Name: strPtr(shared.MasterLabel)}}
+	status.SHA = strPtr("abcdef123")
+
+	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(group, nil).Times(1)
+	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.Equal(t, event.Group, group)
+	assert.Nil(t, err)
+
+	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, errors.New("failed")).Times(1)
+	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
 }
