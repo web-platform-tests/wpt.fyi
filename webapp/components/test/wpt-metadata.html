@@ -29,9 +29,9 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata, undefined);
     });
     test('simple case', () => {
-      appFixture.products = [{ browser_name: 'chrome' }];
+      appFixture.searchResults = [{ test: '/foo.html' }];
       appFixture.metadata = {
-        '/foo': [
+        '/foo.html': [
           {
             url: 'bug1',
             product: 'chrome'
@@ -40,12 +40,12 @@ suite('<wpt-metadata>', () => {
       };
       appFixture.path = '/';
       assert.equal(appFixture.displayedMetadata.length, 1);
-      assert.equal(appFixture.displayedMetadata[0].test, '/foo');
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
     test('simple case with wildcard', () => {
-      appFixture.products = [{ browser_name: 'chrome' }];
+      appFixture.searchResults = [{ test: '/foo/bar.html' }];
       appFixture.metadata = {
         '/foo/*': [
           {
@@ -70,57 +70,57 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata.length, 0);
     });
     test('exclude path', () => {
-      appFixture.products = [{ browser_name: 'chrome' }];
+      appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar/f.html' }];
       appFixture.metadata = {
-        '/foo': [
+        '/foo.html': [
           { url: 'bug1' }
         ],
-        '/bar/f': [
+        '/bar/f.html': [
           { url: 'bug2' }
         ]
       };
       appFixture.path = '/foo';
       assert.equal(appFixture.displayedMetadata.length, 1);
-      assert.equal(appFixture.displayedMetadata[0].test, '/foo');
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
     });
     test('complex case', () => {
-      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }];
+      appFixture.searchResults = [{ test: '/foo.html' }, { test: '/foo/bar.html' }, { test: '/foo/bar/foo1.html' }, { test: '/bar/foo.html' }];
       appFixture.metadata = {
-        '/foo': [
+        '/foo.html': [
           { url: 'bug1' }
         ],
-        '/foo/bar': [
+        '/foo/bar.html': [
           { url: 'bug2' },
           { url: 'safari1' }
         ],
-        '/foo/bar/foo1': [
+        '/foo/bar/foo1.html': [
           { url: 'bug3' }
         ],
-        '/bar/foo': [
+        '/bar/foo.html': [
           { url: 'bug4' }
         ]
       };
       appFixture.path = '/foo';
       assert.equal(appFixture.displayedMetadata.length, 4);
-      assert.equal(appFixture.displayedMetadata[0].test, '/foo');
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
-      assert.equal(appFixture.displayedMetadata[1].test, '/foo/bar');
+      assert.equal(appFixture.displayedMetadata[1].test, '/foo/bar.html');
       assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
-      assert.equal(appFixture.displayedMetadata[2].test, '/foo/bar');
+      assert.equal(appFixture.displayedMetadata[2].test, '/foo/bar.html');
       assert.equal(appFixture.displayedMetadata[2].url, 'safari1');
-      assert.equal(appFixture.displayedMetadata[3].test, '/foo/bar/foo1');
+      assert.equal(appFixture.displayedMetadata[3].test, '/foo/bar/foo1.html');
       assert.equal(appFixture.displayedMetadata[3].url, 'bug3');
     });
     test('check duplicates & empty', () => {
-      appFixture.products = [{ browser_name: 'chrome' }, { browser_name: 'safari' }, { browser_name: 'edge' }];
+      appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar.html' }];
       appFixture.metadata = {
-        '/foo': [
+        '/foo.html': [
           { url: 'bug1' },
           { url: 'bug1' },
           { url: 'bug1' }
         ],
-        '/bar': [
+        '/bar.html': [
           { url: '' },
           { url: 'bug2' },
           { url: '' }
@@ -128,10 +128,32 @@ suite('<wpt-metadata>', () => {
       };
       appFixture.path = '/';
       assert.equal(appFixture.displayedMetadata.length, 2);
-      assert.equal(appFixture.displayedMetadata[0].test, '/foo');
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
-      assert.equal(appFixture.displayedMetadata[1].test, '/bar');
+      assert.equal(appFixture.displayedMetadata[1].test, '/bar.html');
       assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
+    });
+    test('complex case with partial searchResults', () => {
+      appFixture.searchResults = [{ test: '/foo/bar/foo1.html' }];
+      appFixture.metadata = {
+        '/foo.html': [
+          { url: 'bug1' }
+        ],
+        '/foo/bar.html': [
+          { url: 'bug2' },
+          { url: 'safari1' }
+        ],
+        '/foo/bar/foo1.html': [
+          { url: 'bug3' }
+        ],
+        '/bar/foo.html': [
+          { url: 'bug4' }
+        ]
+      };
+      appFixture.path = '/foo';
+      assert.equal(appFixture.displayedMetadata.length, 1);
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo/bar/foo1.html');
+      assert.equal(appFixture.displayedMetadata[0].url, 'bug3');
     });
   });
 });
