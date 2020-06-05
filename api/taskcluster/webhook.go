@@ -209,21 +209,6 @@ func (s StatusEventPayload) IsOnMaster() bool {
 	return false
 }
 
-// taskInfo is an abstraction of a Taskcluster task, containing the necessary
-// information for us to process the task in wpt.fyi.
-type taskInfo struct {
-	name   string
-	taskID string
-	state  string
-}
-
-// taskGroupInfo is an abstraction of a Taskcluster task group, containing the
-// necessary information for us to process the group in wpt.fyi.
-type taskGroupInfo struct {
-	taskGroupID string
-	tasks       []taskInfo
-}
-
 func processTaskclusterBuild(aeAPI shared.AppEngineAPI, event EventInfo, labels ...string) (bool, error) {
 	ctx := aeAPI.Context()
 	log := shared.GetLogger(ctx)
