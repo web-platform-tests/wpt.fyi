@@ -106,6 +106,16 @@ function parseProduct(name) {
   };
 }
 
+function createProduct(browserName, browserVersion, labels, revision) {
+  const product = {
+    browser_name: browserName,
+    browser_version: browserVersion,
+    labels: labels,
+    revision: revision,
+  };
+  return product;
+}
+
 // eslint-disable-next-line no-unused-vars
 const ProductInfo = (superClass) => class extends superClass {
   static get properties() {
@@ -232,4 +242,5 @@ export {
   ProductInfo,
   parseProductSpec,
   parseProduct,
+  createProduct,
 };
