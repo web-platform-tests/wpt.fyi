@@ -7,6 +7,7 @@
 package taskcluster
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,6 +24,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// AppID is the ID of the Community-TC GitHub app.
+const AppID = int64(40788)
+
 const uploaderName = "taskcluster"
 const flagPendingChecks = "pendingChecks"
 
@@ -32,8 +36,9 @@ var (
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
-	inspectorURLRegex = regexp.MustCompile(`^(https://[^/]*)/task-group-inspector/#/([^/]*)`)
-	taskURLRegex      = regexp.MustCompile(`^(https://[^/]*)(?:/tasks)?/groups/([^/]*)(?:/tasks/([^/]*))?`)
+	inspectorURLRegex       = regexp.MustCompile(`^(https://[^/]*)/task-group-inspector/#/([^/]*)`)
+	taskURLRegex            = regexp.MustCompile(`^(https://[^/]*)(?:/tasks)?/groups/([^/]*)(?:/tasks/([^/]*))?`)
+	checkRunDetailsURLRegex = regexp.MustCompile(`^(https://[^/]*)/tasks/([^/]*)`)
 )
 
 // Non-fatal error when there is no result (e.g. nothing finishes yet).
@@ -65,15 +70,19 @@ type EventInfo struct {
 	Group   *TaskGroupInfo
 }
 
-// API is an interface for Taskcluster related methods.
+// API wraps externally provided methods so we can mock them for testing.
 type API interface {
 	GetTaskGroupInfo(string, string) (*TaskGroupInfo, error)
+	ListCheckRuns(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error)
 }
 
-type apiImpl struct{}
+type apiImpl struct {
+	ctx      context.Context
+	ghClient *github.Client
+}
 
-// GetEventInfo turns a StatusEventPayload into an EventInfo struct.
-func GetEventInfo(status StatusEventPayload, log shared.Logger, api API) (EventInfo, error) {
+// GetStatusEventInfo turns a StatusEventPayload into an EventInfo struct.
+func GetStatusEventInfo(status StatusEventPayload, log shared.Logger, api API) (EventInfo, error) {
 	if status.SHA == nil {
 		return EventInfo{}, errors.New("No sha on taskcluster status event")
 	}
@@ -106,10 +115,69 @@ func GetEventInfo(status StatusEventPayload, log shared.Logger, api API) (EventI
 	return event, nil
 }
 
+// GetCheckSuiteEventInfo turns a github.CheckSuiteEvent into an EventInfo struct.
+func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger, api API) (EventInfo, error) {
+	if checkSuite.GetCheckSuite().GetHeadSHA() == "" {
+		return EventInfo{}, errors.New("No sha on taskcluster check_suite event")
+	}
+
+	runs, _, err := api.ListCheckRuns(
+		shared.WPTRepoOwner, shared.WPTRepoName, checkSuite.GetCheckSuite().GetID())
+	if err != nil {
+		log.Errorf("Failed to fetch check runs for suite %v: %s", checkSuite.GetCheckSuite().GetID(), err.Error())
+		return EventInfo{}, err
+	}
+
+	if len(runs.CheckRuns) == 0 {
+		return EventInfo{}, errors.New("No check_runs for check_suite")
+	}
+
+	rootURL := ""
+	group := TaskGroupInfo{}
+	for _, run := range runs.CheckRuns {
+		matches := checkRunDetailsURLRegex.FindStringSubmatch(run.GetDetailsURL())
+		if matches == nil {
+			log.Errorf("Unable to parse details URL for suite %v, run %v: %s", checkSuite.GetCheckSuite().GetID(), run.GetID(), run.GetDetailsURL())
+			return EventInfo{}, errors.New("Unable to parse check_run details URL")
+		}
+		if rootURL != "" && rootURL != matches[1] {
+			log.Errorf("Conflicting root URLs for runs for suite %v (%s vs %s)", checkSuite.GetCheckSuite().GetID(), rootURL, matches[1])
+			return EventInfo{}, errors.New("Conflicting root URLs for runs in check_suite")
+		}
+		rootURL = matches[1]
+		taskID := matches[2]
+
+		// The task group's ID appear to be equivalent to the ID of the initial task
+		// that was created. For WPT, this is the decision task.
+		if run.GetName() == "wpt-decision-task" {
+			group.TaskGroupID = taskID
+		}
+
+		group.Tasks = append(group.Tasks, TaskInfo{
+			Name:   run.GetName(),
+			TaskID: taskID,
+			State:  run.GetStatus(),
+		})
+	}
+
+	event := EventInfo{
+		Sha:     checkSuite.GetCheckSuite().GetHeadSHA(),
+		RootURL: rootURL,
+		// The TaskID is a filter for a specific task. For check_suite events we
+		// only ever receieve events for an entire suite, so there is no TaskID.
+		TaskID: "",
+		Master: checkSuite.GetCheckSuite().GetHeadBranch() == "master",
+		Sender: checkSuite.GetSender().GetLogin(),
+		Group:  &group,
+	}
+
+	return event, nil
+}
+
 // tcStatusWebhookHandler reacts to GitHub status webhook events.
 func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != "application/json" ||
-		r.Header.Get("X-GitHub-Event") != "status" {
+	eventName := r.Header.Get("X-GitHub-Event")
+	if r.Header.Get("Content-Type") != "application/json" || (eventName != "status" && eventName != "check_suite") {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -132,20 +200,59 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
-	var status StatusEventPayload
-	if err := json.Unmarshal(payload, &status); err != nil {
-		log.Errorf("%v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+
+	ghClient, err := aeAPI.GetGitHubClient()
+	if err != nil {
+		log.Errorf("Failed to get GitHub client: %s", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	api := apiImpl{ctx: aeAPI.Context(), ghClient: ghClient}
 
-	if !ShouldProcessStatus(log, &status) {
-		w.WriteHeader(http.StatusNoContent)
-		fmt.Fprintln(w, "Status was ignored")
-		return
+	var event EventInfo
+	if eventName == "status" {
+		var status StatusEventPayload
+		if err := json.Unmarshal(payload, &status); err != nil {
+			log.Errorf("%v", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if !ShouldProcessStatus(log, &status) {
+			w.WriteHeader(http.StatusNoContent)
+			fmt.Fprintln(w, "Status was ignored")
+			return
+		}
+
+		event, err = GetStatusEventInfo(status, log, api)
+	} else {
+		var checkSuite github.CheckSuiteEvent
+		if err := json.Unmarshal(payload, &checkSuite); err != nil {
+			log.Errorf("%v", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if checkSuite.GetCheckSuite().GetApp().GetID() != AppID {
+			log.Debugf("Ignoring non-Taskcluster app: %s (%s)",
+				checkSuite.GetCheckSuite().GetApp().GetName(),
+				checkSuite.GetCheckSuite().GetApp().GetID())
+			w.WriteHeader(http.StatusNoContent)
+			fmt.Fprintln(w, "Status was ignored")
+			return
+		}
+
+		// As a webhook we should only receive completed check_suite events, as per
+		// https://developer.github.com/webhooks/event-payloads/#check_suite
+		if checkSuite.GetAction() != "completed" || checkSuite.GetCheckSuite().GetStatus() != "completed" {
+			log.Errorf("Received non-completed check_suite event (action: %s, status: %s)",
+				checkSuite.GetAction(), checkSuite.GetCheckSuite().GetStatus())
+			http.Error(w, "Non-completed check_suite event", http.StatusBadRequest)
+			return
+		}
+
+		event, err = GetCheckSuiteEventInfo(checkSuite, log, api)
 	}
-
-	event, err := GetEventInfo(status, log, &apiImpl{})
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -304,6 +411,10 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 		}
 	}
 	return &group, nil
+}
+
+func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error) {
+	return api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, nil)
 }
 
 // ArtifactURLs holds the results and screenshot URLs for a Taskcluster run.

@@ -436,7 +436,7 @@ func TestTaskNameRegex(t *testing.T) {
 	assert.Nil(t, tc.TaskNameRegex.FindStringSubmatch("wpt-foo-bar-"))
 }
 
-func TestGetEventInfo_target_url(t *testing.T) {
+func TestGetStatusEventInfo_target_url(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
@@ -452,21 +452,21 @@ func TestGetEventInfo_target_url(t *testing.T) {
 	// The target URL must be present, and must at least be a recognized
 	// URL containing a taskGroupID. ParseTaskclusterURL is tested
 	// separately, so just do a basic check here.
-	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err := tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.Equal(t, event.RootURL, "https://tc.community.com")
 	assert.Equal(t, event.TaskID, "123")
 	assert.Nil(t, err)
 
 	status.TargetURL = strPtr("https://example.com/nope/not/right")
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err = tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 
 	status.TargetURL = nil
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err = tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 }
 
-func TestGetEventInfo_sha(t *testing.T) {
+func TestGetStatusEventInfo_sha(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
@@ -480,16 +480,16 @@ func TestGetEventInfo_sha(t *testing.T) {
 	status.SHA = strPtr("abcdef123")
 
 	// We don't place requirements on the SHA other than it exists.
-	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err := tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.Equal(t, event.Sha, "abcdef123")
 	assert.Nil(t, err)
 
 	status.SHA = nil
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err = tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 }
 
-func TestGetEventInfo_master(t *testing.T) {
+func TestGetStatusEventInfo_master(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
@@ -504,24 +504,24 @@ func TestGetEventInfo_master(t *testing.T) {
 
 	// We check whether an event is for master by looking at the branches
 	// it is associated with.
-	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err := tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.Equal(t, event.Master, true)
 	assert.Nil(t, err)
 
 	status.Branches = branchInfos{&github.Branch{Name: strPtr("mybranch")}}
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err = tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.Equal(t, event.Master, false)
 	assert.Nil(t, err)
 
 	// Missing the 'branches' entry is not an error; the event just isn't
 	// for master.
 	status.Branches = nil
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err = tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.Equal(t, event.Master, false)
 	assert.Nil(t, err)
 }
 
-func TestGetEventInfo_sender(t *testing.T) {
+func TestGetStatusEventInfo_sender(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
@@ -536,17 +536,17 @@ func TestGetEventInfo_sender(t *testing.T) {
 
 	// The sender is entirely optional.
 	status.Commit = &github.RepositoryCommit{Author: &github.User{Login: strPtr("someuser")}}
-	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err := tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.Equal(t, event.Sender, "someuser")
 	assert.Nil(t, err)
 
 	status.Commit = nil
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err = tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.Equal(t, event.Sender, "")
 	assert.Nil(t, err)
 }
 
-func TestGetEventInfo_group(t *testing.T) {
+func TestGetStatusEventInfo_group(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
@@ -560,11 +560,192 @@ func TestGetEventInfo_group(t *testing.T) {
 	status.SHA = strPtr("abcdef123")
 
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(group, nil).Times(1)
-	event, err := tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err := tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
 	assert.Equal(t, event.Group, group)
 	assert.Nil(t, err)
 
 	api.EXPECT().GetTaskGroupInfo(gomock.Any(), gomock.Any()).Return(nil, errors.New("failed")).Times(1)
-	event, err = tc.GetEventInfo(status, shared.NewNilLogger(), api)
+	event, err = tc.GetStatusEventInfo(status, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+}
+
+func TestGetCheckSuiteEventInfo_sha(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+
+	runs := github.ListCheckRunsResults{}
+	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
+		Name:       strPtr("wpt-decision-task"),
+		Status:     strPtr("completed"),
+		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+	})
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+
+	event := github.CheckSuiteEvent{
+		CheckSuite: &github.CheckSuite{
+			HeadSHA: strPtr("abcdef123"),
+		},
+	}
+
+	// We don't place requirements on the SHA other than it exists.
+	eventInfo, err := tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.Equal(t, "abcdef123", eventInfo.Sha)
+	assert.Nil(t, err)
+
+	event.CheckSuite.HeadSHA = nil
+	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+}
+
+func TestGetCheckSuiteEventInfo_master(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+
+	runs := github.ListCheckRunsResults{}
+	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
+		Name:       strPtr("wpt-decision-task"),
+		Status:     strPtr("completed"),
+		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+	})
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+
+	event := github.CheckSuiteEvent{
+		CheckSuite: &github.CheckSuite{
+			HeadBranch: strPtr("master"),
+			HeadSHA:    strPtr("abcdef123"),
+		},
+	}
+
+	eventInfo, err := tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.Equal(t, true, eventInfo.Master)
+	assert.Nil(t, err)
+
+	event.CheckSuite.HeadBranch = strPtr("my-branch")
+	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.Equal(t, false, eventInfo.Master)
+	assert.Nil(t, err)
+}
+
+func TestGetCheckSuiteEventInfo_sender(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+
+	runs := github.ListCheckRunsResults{}
+	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
+		Name:       strPtr("wpt-decision-task"),
+		Status:     strPtr("completed"),
+		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+	})
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+
+	event := github.CheckSuiteEvent{
+		Sender: &github.User{
+			Login: strPtr("myuser"),
+		},
+		CheckSuite: &github.CheckSuite{
+			HeadSHA: strPtr("abcdef123"),
+		},
+	}
+
+	eventInfo, err := tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.Equal(t, "myuser", eventInfo.Sender)
+	assert.Nil(t, err)
+
+	event.Sender.Login = nil
+	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.Equal(t, "", eventInfo.Sender)
+	assert.Nil(t, err)
+}
+
+func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+
+	runs := github.ListCheckRunsResults{}
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+
+	// The list of check_run events give us two main pieces of information:
+	//
+	//	the RootURL, which must match across runs, and
+	//	the TaskGroupInfo:
+	//		TaskGroupID is the wpt-decision-tasks's taskID
+	//		Tasks is filled with each check_run's name, taskID, and status.
+	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
+		Name:       strPtr("wpt-decision-task"),
+		Status:     strPtr("completed"),
+		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+	})
+	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
+		Name:       strPtr("wpt-chrome-dev-testharness-1"),
+		Status:     strPtr("completed"),
+		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/IWlO7NuxRnO0_8PKMuHFkw"),
+	})
+
+	event := github.CheckSuiteEvent{
+		CheckSuite: &github.CheckSuite{
+			HeadSHA: strPtr("abcdef123"),
+		},
+	}
+
+	eventInfo, err := tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.Equal(t, "https://community-tc.services.mozilla.com", eventInfo.RootURL)
+	assert.Equal(t, "Jq4HzLz0R2eKkJFdmf47Bg", eventInfo.Group.TaskGroupID)
+	assert.Equal(t, "wpt-decision-task", eventInfo.Group.Tasks[0].Name)
+	assert.Equal(t, "Jq4HzLz0R2eKkJFdmf47Bg", eventInfo.Group.Tasks[0].TaskID)
+	assert.Equal(t, "completed", eventInfo.Group.Tasks[0].State)
+	assert.Equal(t, "wpt-chrome-dev-testharness-1", eventInfo.Group.Tasks[1].Name)
+	assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", eventInfo.Group.Tasks[1].TaskID)
+	assert.Equal(t, "completed", eventInfo.Group.Tasks[1].State)
+	assert.Nil(t, err)
+
+	// Check the case where a details URL will fail to parse.
+	runs.CheckRuns[0].DetailsURL = strPtr("https://example.com/nope/not/right")
+	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+
+	// Check the case where a details URL is missing.
+	runs.CheckRuns[0].DetailsURL = nil
+	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+
+	// Check the case where a details URL has a mismatching root URL.
+	runs.CheckRuns[0].DetailsURL = strPtr("https://tc.community.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg")
+	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+}
+
+func TestGetCheckSuiteEventInfo_checkRunsEmpty(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&github.ListCheckRunsResults{}, nil, nil)
+
+	event := github.CheckSuiteEvent{
+		CheckSuite: &github.CheckSuite{
+			HeadSHA: strPtr("abcdef123"),
+		},
+	}
+
+	_, err := tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
+	assert.NotNil(t, err)
+}
+
+func TestGetCheckSuiteEventInfo_checkRunsFailed(t *testing.T) {
+	mockC := gomock.NewController(t)
+	defer mockC.Finish()
+	api := mock_tc.NewMockAPI(mockC)
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, nil, errors.New("failed"))
+
+	event := github.CheckSuiteEvent{
+		CheckSuite: &github.CheckSuite{
+			HeadSHA: strPtr("abcdef123"),
+		},
+	}
+
+	_, err := tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 }
