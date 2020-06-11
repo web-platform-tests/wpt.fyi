@@ -10,6 +10,7 @@
     "major": {
       "enabled": false
     },
+    "ignoreDeps": ["google.golang.org/genproto"],
     "postUpdateOptions": ["gomodTidy"]
   },
   "npm": {
