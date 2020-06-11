@@ -73,7 +73,7 @@ type EventInfo struct {
 // API wraps externally provided methods so we can mock them for testing.
 type API interface {
 	GetTaskGroupInfo(string, string) (*TaskGroupInfo, error)
-	ListCheckRunsCheckSuite(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error)
+	ListCheckRuns(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error)
 }
 
 type apiImpl struct {
@@ -121,7 +121,7 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 		return EventInfo{}, errors.New("No sha on taskcluster check_suite event")
 	}
 
-	runs, _, err := api.ListCheckRunsCheckSuite(
+	runs, _, err := api.ListCheckRuns(
 		shared.WPTRepoOwner, shared.WPTRepoName, checkSuite.GetCheckSuite().GetID())
 	if err != nil {
 		log.Errorf("Failed to fetch check runs for suite %v: %s", checkSuite.GetCheckSuite().GetID(), err.Error())
@@ -413,7 +413,7 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 	return &group, nil
 }
 
-func (api apiImpl) ListCheckRunsCheckSuite(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error) {
+func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error) {
 	return api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, nil)
 }
 

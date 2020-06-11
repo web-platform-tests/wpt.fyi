@@ -580,7 +580,7 @@ func TestGetCheckSuiteEventInfo_sha(t *testing.T) {
 		Status:     strPtr("completed"),
 		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
 	})
-	api.EXPECT().ListCheckRunsCheckSuite(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
@@ -609,7 +609,7 @@ func TestGetCheckSuiteEventInfo_master(t *testing.T) {
 		Status:     strPtr("completed"),
 		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
 	})
-	api.EXPECT().ListCheckRunsCheckSuite(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
@@ -639,7 +639,7 @@ func TestGetCheckSuiteEventInfo_sender(t *testing.T) {
 		Status:     strPtr("completed"),
 		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
 	})
-	api.EXPECT().ListCheckRunsCheckSuite(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
 
 	event := github.CheckSuiteEvent{
 		Sender: &github.User{
@@ -666,7 +666,7 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 
 	runs := github.ListCheckRunsResults{}
-	api.EXPECT().ListCheckRunsCheckSuite(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
 
 	// The list of check_run events give us two main pieces of information:
 	//
@@ -722,7 +722,7 @@ func TestGetCheckSuiteEventInfo_checkRunsEmpty(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
-	api.EXPECT().ListCheckRunsCheckSuite(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&github.ListCheckRunsResults{}, nil, nil)
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&github.ListCheckRunsResults{}, nil, nil)
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
@@ -738,7 +738,7 @@ func TestGetCheckSuiteEventInfo_checkRunsFailed(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
-	api.EXPECT().ListCheckRunsCheckSuite(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, nil, errors.New("failed"))
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, nil, errors.New("failed"))
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{

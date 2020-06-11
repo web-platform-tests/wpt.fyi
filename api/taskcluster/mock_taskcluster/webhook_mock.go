@@ -49,18 +49,18 @@ func (mr *MockAPIMockRecorder) GetTaskGroupInfo(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaskGroupInfo", reflect.TypeOf((*MockAPI)(nil).GetTaskGroupInfo), arg0, arg1)
 }
 
-// ListCheckRunsCheckSuite mocks base method
-func (m *MockAPI) ListCheckRunsCheckSuite(arg0, arg1 string, arg2 int64) (*github.ListCheckRunsResults, *github.Response, error) {
+// ListCheckRuns mocks base method
+func (m *MockAPI) ListCheckRuns(arg0, arg1 string, arg2 int64) (*github.ListCheckRunsResults, *github.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCheckRunsCheckSuite", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ListCheckRuns", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*github.ListCheckRunsResults)
 	ret1, _ := ret[1].(*github.Response)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-// ListCheckRunsCheckSuite indicates an expected call of ListCheckRunsCheckSuite
-func (mr *MockAPIMockRecorder) ListCheckRunsCheckSuite(arg0, arg1, arg2 interface{}) *gomock.Call {
+// ListCheckRuns indicates an expected call of ListCheckRuns
+func (mr *MockAPIMockRecorder) ListCheckRuns(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCheckRunsCheckSuite", reflect.TypeOf((*MockAPI)(nil).ListCheckRunsCheckSuite), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCheckRuns", reflect.TypeOf((*MockAPI)(nil).ListCheckRuns), arg0, arg1, arg2)
 }
