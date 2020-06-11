@@ -14,7 +14,6 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/golang/mock v1.4.3
-	github.com/golang/protobuf v1.4.1 // indirect
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.2
@@ -37,7 +36,7 @@ require (
 	golang.org/x/tools v0.0.0-20200511202723-1762287ae9dd // indirect
 	google.golang.org/api v0.26.0
 	google.golang.org/appengine v1.6.6
-	google.golang.org/genproto v0.0.0-20200511104702-f5ebc3bea380
+	google.golang.org/genproto v0.0.0-20200611194920-44ba362f84c1
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
