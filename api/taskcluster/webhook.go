@@ -123,8 +123,8 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 
 	// TODO(smcgruer): Remove 'wpt-tc-checks' case once migration to
 	// Taskcluster Checks is complete.
-	owner := checkSuite.GetCheckSuite().GetRepository().GetOwner().GetLogin()
-	repo := checkSuite.GetCheckSuite().GetRepository().GetName()
+	owner := checkSuite.GetRepo().GetOwner().GetLogin()
+	repo := checkSuite.GetRepo().GetName()
 	if owner != shared.WPTRepoOwner || (repo != shared.WPTRepoName && repo != "wpt-tc-checks") {
 		log.Errorf("Received check_suite event from invalid repo %s/%s", owner, repo)
 		return EventInfo{}, errors.New("Invalid source repository")
