@@ -585,12 +585,12 @@ func TestGetCheckSuiteEventInfo_sourceRepo(t *testing.T) {
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
 			HeadSHA: strPtr("abcdef123"),
-			Repository: &github.Repository{
-				Owner: &github.User{
-					Login: strPtr("web-platform-tests"),
-				},
-				Name: strPtr("wpt"),
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{
+				Login: strPtr("web-platform-tests"),
 			},
+			Name: strPtr("wpt"),
 		},
 	}
 
@@ -599,13 +599,13 @@ func TestGetCheckSuiteEventInfo_sourceRepo(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Invalid name.
-	event.CheckSuite.Repository.Name = strPtr("not-wpt")
+	event.Repo.Name = strPtr("not-wpt")
 	_, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 
 	// Invalid owner.
-	event.CheckSuite.Repository.Name = strPtr("wpt")
-	event.CheckSuite.Repository.Owner.Login = strPtr("stephenmcgruer")
+	event.Repo.Name = strPtr("wpt")
+	event.Repo.Owner.Login = strPtr("stephenmcgruer")
 	_, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 }
@@ -626,12 +626,12 @@ func TestGetCheckSuiteEventInfo_sha(t *testing.T) {
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
 			HeadSHA: strPtr("abcdef123"),
-			Repository: &github.Repository{
-				Owner: &github.User{
-					Login: strPtr("web-platform-tests"),
-				},
-				Name: strPtr("wpt"),
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{
+				Login: strPtr("web-platform-tests"),
 			},
+			Name: strPtr("wpt"),
 		},
 	}
 
@@ -662,12 +662,12 @@ func TestGetCheckSuiteEventInfo_master(t *testing.T) {
 		CheckSuite: &github.CheckSuite{
 			HeadBranch: strPtr("master"),
 			HeadSHA:    strPtr("abcdef123"),
-			Repository: &github.Repository{
-				Owner: &github.User{
-					Login: strPtr("web-platform-tests"),
-				},
-				Name: strPtr("wpt"),
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{
+				Login: strPtr("web-platform-tests"),
 			},
+			Name: strPtr("wpt"),
 		},
 	}
 
@@ -700,12 +700,12 @@ func TestGetCheckSuiteEventInfo_sender(t *testing.T) {
 		},
 		CheckSuite: &github.CheckSuite{
 			HeadSHA: strPtr("abcdef123"),
-			Repository: &github.Repository{
-				Owner: &github.User{
-					Login: strPtr("web-platform-tests"),
-				},
-				Name: strPtr("wpt"),
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{
+				Login: strPtr("web-platform-tests"),
 			},
+			Name: strPtr("wpt"),
 		},
 	}
 
@@ -747,12 +747,12 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
 			HeadSHA: strPtr("abcdef123"),
-			Repository: &github.Repository{
-				Owner: &github.User{
-					Login: strPtr("web-platform-tests"),
-				},
-				Name: strPtr("wpt"),
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{
+				Login: strPtr("web-platform-tests"),
 			},
+			Name: strPtr("wpt"),
 		},
 	}
 
@@ -792,12 +792,12 @@ func TestGetCheckSuiteEventInfo_checkRunsEmpty(t *testing.T) {
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
 			HeadSHA: strPtr("abcdef123"),
-			Repository: &github.Repository{
-				Owner: &github.User{
-					Login: strPtr("web-platform-tests"),
-				},
-				Name: strPtr("wpt"),
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{
+				Login: strPtr("web-platform-tests"),
 			},
+			Name: strPtr("wpt"),
 		},
 	}
 
@@ -814,12 +814,12 @@ func TestGetCheckSuiteEventInfo_checkRunsFailed(t *testing.T) {
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
 			HeadSHA: strPtr("abcdef123"),
-			Repository: &github.Repository{
-				Owner: &github.User{
-					Login: strPtr("web-platform-tests"),
-				},
-				Name: strPtr("wpt"),
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{
+				Login: strPtr("web-platform-tests"),
 			},
+			Name: strPtr("wpt"),
 		},
 	}
 
