@@ -22,6 +22,7 @@ const TestRunsQueryLoader = (superClass) =>
           notify: true,
         },
         nextPageToken: String,
+        displayedProducts: Array,
       };
     }
 
@@ -50,7 +51,7 @@ const TestRunsQueryLoader = (superClass) =>
         return sum.concat(Array.isArray(item) ? item : [item]);
       }, []);
       this.testRuns = flattened;
-      this.products = this.testRuns.map(r => createProduct(r.browser_name, r.browser_version, r.labels, r.revision));
+      this.displayedProducts = this.testRuns.map(r => createProduct(r.browser_name, r.browser_version, r.labels, r.revision));
       return flattened;
     }
 
