@@ -6,7 +6,7 @@
 
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsQuery, TestRunsUIQuery } from './test-runs-query.js';
-import { createProduct } from './product-info.js';
+import { productFromRun } from './product-info.js';
 
 /**
  * Base class for re-use of results-fetching behaviour, between
@@ -51,7 +51,7 @@ const TestRunsQueryLoader = (superClass) =>
         return sum.concat(Array.isArray(item) ? item : [item]);
       }, []);
       this.testRuns = flattened;
-      this.displayedProducts = this.testRuns.map(r => createProduct(r.browser_name, r.browser_version, r.labels, r.revision));
+      this.displayedProducts = this.testRuns.map(productFromRun);
       return flattened;
     }
 

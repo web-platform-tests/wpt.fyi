@@ -17,7 +17,7 @@ import { PathInfo } from './path.js';
 import { Pluralizer } from './pluralize.js';
 import { WPTFlags } from './wpt-flags.js';
 import { AmendMetadataMixin } from './wpt-amend-metadata.js';
-import { createProduct } from './product-info.js';
+import { productFromRun } from './product-info.js';
 
 class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTColors(PathInfo(TestRunsBase))))) {
   static get is() {
@@ -275,7 +275,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   }
 
   computeDisplayedProducts(testRuns) {
-    return testRuns.map(r => createProduct(r.browser_name, r.browser_version, r.labels, r.revision));
+    return testRuns.map(productFromRun);
   }
 
   subtestMessage(result, verbose) {

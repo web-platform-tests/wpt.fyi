@@ -106,12 +106,12 @@ function parseProduct(name) {
   };
 }
 
-function createProduct(browserName, browserVersion, labels, revision) {
+function productFromRun(run) {
   const product = {
-    browser_name: browserName,
-    browser_version: browserVersion,
-    labels: labels,
-    revision: revision,
+    browser_name: run.browser_name,
+    browser_version: run.browser_version,
+    labels: run.labels,
+    revision: run.revision,
   };
   return product;
 }
@@ -242,5 +242,5 @@ export {
   ProductInfo,
   parseProductSpec,
   parseProduct,
-  createProduct,
+  productFromRun,
 };
