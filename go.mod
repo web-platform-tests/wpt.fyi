@@ -4,9 +4,9 @@ go 1.11
 
 require (
 	cloud.google.com/go v0.58.0
-	cloud.google.com/go/datastore v1.1.0
+	cloud.google.com/go/datastore v1.2.0
 	cloud.google.com/go/logging v1.0.0
-	cloud.google.com/go/storage v1.9.0
+	cloud.google.com/go/storage v1.10.0
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/deckarep/golang-set v1.7.1
@@ -15,6 +15,7 @@ require (
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/mock v1.4.3
+	github.com/google/go-cmp v0.5.0 // indirect
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.2
@@ -29,19 +30,21 @@ require (
 	github.com/taskcluster/taskcluster-lib-urls v13.0.0+incompatible
 	github.com/taskcluster/taskcluster/v25 v25.4.0
 	github.com/tebeka/selenium v0.9.9
-	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9 // indirect
-	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
+	go.opencensus.io v0.22.4 // indirect
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200610111108-226ff32320da // indirect
-	golang.org/x/tools v0.0.0-20200611134948-54cf04ef09c8 // indirect
-	google.golang.org/api v0.26.0
+	golang.org/x/sys v0.0.0-20200622214017-ed371f2e16b4 // indirect
+	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/tools v0.0.0-20200622203043-20e05c1c8ffa // indirect
+	google.golang.org/api v0.28.0
 	google.golang.org/appengine v1.6.6
-	google.golang.org/genproto v0.0.0-20200610212329-df9b449b0ff2
+	google.golang.org/genproto v0.0.0-20200622133129-d0ee0c36e670
+	google.golang.org/grpc v1.30.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.3.0
-	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
 
 // The project has been moved to GitHub and we don't want to depend on bzr (used by launchpad).
