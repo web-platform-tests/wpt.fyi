@@ -6,6 +6,7 @@
 
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsQuery, TestRunsUIQuery } from './test-runs-query.js';
+import { productFromRun } from './product-info.js';
 
 /**
  * Base class for re-use of results-fetching behaviour, between
@@ -21,6 +22,7 @@ const TestRunsQueryLoader = (superClass) =>
           notify: true,
         },
         nextPageToken: String,
+        displayedProducts: Array,
       };
     }
 
@@ -49,6 +51,7 @@ const TestRunsQueryLoader = (superClass) =>
         return sum.concat(Array.isArray(item) ? item : [item]);
       }, []);
       this.testRuns = flattened;
+      this.displayedProducts = this.testRuns.map(productFromRun);
       return flattened;
     }
 

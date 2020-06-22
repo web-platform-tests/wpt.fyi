@@ -326,7 +326,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     </template>
 
     <template is="dom-if" if="[[displayMetadata]]">
-      <wpt-metadata products="[[products]]"
+      <wpt-metadata products="[[displayedProducts]]"
                     path="[[path]]"
                     search-results="[[searchResults]]"
                     metadata-map="{{metadataMap}}"></wpt-metadata>
@@ -1035,7 +1035,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         return;
       }
 
-      this.handleSelect(e.target.closest('td'), this.products[index].browser_name, node.path, this.$['selected-toast']);
+      this.handleSelect(e.target.closest('td'), this.displayedProducts[index].browser_name, node.path, this.$['selected-toast']);
     };
   }
 
@@ -1048,7 +1048,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getMetadataUrl(index, testname, metadataMap) {
-    const key = testname + this.products[index].browser_name;
+    const key = testname + this.displayedProducts[index].browser_name;
     if (key in metadataMap) {
       return metadataMap[key];
     }
