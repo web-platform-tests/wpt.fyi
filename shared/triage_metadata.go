@@ -80,8 +80,7 @@ func getWptmetadataGitHubInfo(ctx context.Context, client *github.Client) wptmet
 		prRepo:        sourceRepo,
 		prBranch:      baseBranch,
 		prSubject:     "Automatically Triage New Metadata",
-		// TODO(kyleju): create a doc describing how to use this service.
-		prDescription: "PR for metadata triaged through /api/metadata/triage endpoint. See <insert a doc> for more information about how to use this service."}
+		prDescription: "This metadata PR was generated via the wpt.fyi `/api/metadata/triage` endpoint. See [the documentation](https://github.com/web-platform-tests/wpt.fyi/tree/master/api#apimetadatatriage) for more information about how to use this service."}
 }
 
 func (tm triageMetadata) getCommitBranchRef(sha *string) (ref *github.Reference, err error) {
