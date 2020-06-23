@@ -54,7 +54,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
                              path="[[path]]"
                              rows="[[rows]]"
                              verbose="[[isVerbose]]"
-                             is-triage-mode="[[isTriageMode]]">
+                             is-triage-mode="[[isTriageMode]]"
+                             metadata-map="[[metadataMap]]">
     </test-file-results-table>
 `;
   }
@@ -84,6 +85,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         computed: 'computeRows(resultsTable, onlyShowDifferences)'
       },
       isTriageMode: Boolean,
+      metadataMap: Object,
     };
   }
 

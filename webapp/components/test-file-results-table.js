@@ -143,6 +143,12 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
           <td class$="[[ colorClass(result.status) ]]" onclick="[[handleTriageSelect(index, row.name, result.status)]]" onmouseover="[[handleTriageHover(result.status)]]">
             <code>[[ subtestMessage(result, verbose) ]]</code>
 
+            <template is="dom-if" if="[[shouldDisplayMetadata(index, row.name, metadataMap)]]">
+              <a href="[[ getMetadataUrl(index, row.name, metadataMap) ]]" target="_blank">
+                <iron-icon class="bug" icon="bug-report"></iron-icon>
+              </a>
+            </template>
+
             <template is="dom-if" if="[[result.screenshots]]">
               <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
                 <iron-icon icon="image:compare"></iron-icon>
@@ -213,6 +219,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
         type: Array,
         computed: 'computeDisplayedProducts(testRuns)',
       },
+      metadataMap: Object,
       matchers: {
         type: Array,
         value: [
@@ -411,6 +418,28 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
 
   openAmendMetadata() {
     this.$.amend.open();
+  }
+
+  shouldDisplayMetadata(index, subtestname, metadataMap) {
+    if (!metadataMap) {
+      return false;
+    }
+    return this.displayMetadata && this.getMetadataUrl(index, subtestname, metadataMap) !== '';
+  }
+
+  getMetadataUrl(index, subtestname, metadataMap) {
+    const key = this.path + this.displayedProducts[index].browser_name;
+    if (key in metadataMap) {
+      if (subtestname in metadataMap[key]) {
+        return metadataMap[key][subtestname];
+      }
+
+      // If there is no subtest URL, falls back to the test-level URL.
+      if ('/' in metadataMap[key]) {
+        return metadataMap[key]['/'];
+      }
+    }
+    return '';
   }
 }
 window.customElements.define(TestFileResultsTable.is, TestFileResultsTable);

@@ -155,6 +155,71 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[0].test, '/foo/bar/foo1.html');
       assert.equal(appFixture.displayedMetadata[0].url, 'bug3');
     });
+    test('simple case for metadataMap', () => {
+      appFixture.searchResults = [{ test: '/foo.html' }];
+      appFixture.metadata = {
+        '/foo.html': [
+          {
+            url: 'bug1',
+            product: 'chrome'
+          }
+        ]
+      };
+      appFixture.path = '/';
+
+      assert.equal(Object.keys(appFixture.metadataMap).length, 1);
+      const subtestMap = appFixture.metadataMap['/foo.htmlchrome'];
+      assert.equal(Object.keys(subtestMap).length, 1);
+      assert.equal(subtestMap['/'], 'bug1');
+    });
+    test('metadata with subtests for metadataMap', () => {
+      appFixture.searchResults = [{ test: '/foo.html' }];
+      appFixture.metadata = {
+        '/foo.html': [
+          {
+            url: 'bug1',
+            product: 'chrome',
+            results: [{ subtest: 'a' }]
+          },
+          {
+            url: 'bug2',
+            product: 'chrome',
+            results: [{ subtest: 'b' }]
+          }
+        ]
+      };
+      appFixture.path = '/';
+
+      assert.equal(Object.keys(appFixture.metadataMap).length, 1);
+      const subtestMap = appFixture.metadataMap['/foo.htmlchrome'];
+      assert.equal(Object.keys(subtestMap).length, 2);
+      assert.equal(subtestMap['a'], 'bug1');
+      assert.equal(subtestMap['b'], 'bug2');
+    });
+    test('complex case for metadataMap', () => {
+      appFixture.searchResults = [{ test: '/foo.html' }, { test: '/foo/bar.html' }];
+      appFixture.metadata = {
+        '/foo.html': [
+          { url: 'bug1', product: 'chrome', results: [{ subtest: 'a' }, { subtest: 'c' }] },
+          { url: 'bug2', product: 'chrome', results: [{ subtest: 'b' }] },
+          { url: 'bug3', product: 'chrome', results: [{ status: 'FAIL' }] },
+        ],
+        '/foo/bar.html': [
+          { url: 'bug1', product: 'safari', results: [{ subtest: 'a' }] }
+        ]
+      };
+      appFixture.path = '/foo';
+
+      assert.equal(Object.keys(appFixture.metadataMap).length, 2);
+      const fooSubtestMap = appFixture.metadataMap['/foo.htmlchrome'];
+      assert.equal(Object.keys(fooSubtestMap).length, 4);
+      assert.equal(fooSubtestMap['a'], 'bug1');
+      assert.equal(fooSubtestMap['c'], 'bug1');
+      assert.equal(fooSubtestMap['b'], 'bug2');
+      assert.equal(fooSubtestMap['/'], 'bug3');
+      const barSubtestMap = appFixture.metadataMap['/foo/bar.htmlsafari'];
+      assert.equal(barSubtestMap['a'], 'bug1');
+    });
   });
 });
 </script>

@@ -210,7 +210,26 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
           continue;
         }
         seenURLs.add(link.url);
-        metadataMap[test + link.product] = link.url;
+        const subtestMap = {};
+        if ('results' in link) {
+          for (const resultEntry of link['results']) {
+            if ('subtest' in resultEntry) {
+              subtestMap[resultEntry['subtest']] = link.url;
+            }
+          }
+        }
+
+        const metadataMapKey = test + link.product;
+        if ((metadataMapKey in metadataMap) === false) {
+          metadataMap[metadataMapKey] = {};
+        }
+
+        if (Object.keys(subtestMap).length === 0) {
+          // When there is no subtest, it is a test-level URL.
+          metadataMap[metadataMapKey]['/'] = link.url ;
+        } else {
+          metadataMap[metadataMapKey] = Object.assign(metadataMap[metadataMapKey], subtestMap);
+        }
         const wptMetadataNode = {
           test,
           url: link.url,
