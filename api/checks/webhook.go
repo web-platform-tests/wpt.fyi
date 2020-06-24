@@ -110,8 +110,8 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	}
 
 	login := checkSuite.GetSender().GetLogin()
-	if !isUserWhitelisted(aeAPI, login) {
-		log.Infof("Sender %s not whitelisted for wpt.fyi checks", login)
+	if !checksEnabledForUser(aeAPI, login) {
+		log.Infof("Checks not enabled for sender %s", login)
 		return false, nil
 	}
 
@@ -174,8 +174,8 @@ func handleCheckRunEvent(
 	}
 
 	login := checkRun.GetSender().GetLogin()
-	if !isUserWhitelisted(aeAPI, login) {
-		log.Infof("Sender %s not whitelisted for wpt.fyi checks", login)
+	if !checksEnabledForUser(aeAPI, login) {
+		log.Infof("Checks not enabled for sender %s", login)
 		return false, nil
 	}
 
@@ -247,8 +247,8 @@ func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []
 	}
 
 	login := pullRequest.GetPullRequest().GetUser().GetLogin()
-	if !isUserWhitelisted(aeAPI, login) {
-		log.Infof("Sender %s not whitelisted for wpt.fyi checks", login)
+	if !checksEnabledForUser(aeAPI, login) {
+		log.Infof("Checks not enabled for sender %s", login)
 		return false, nil
 	}
 
@@ -323,15 +323,15 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 	return true, nil
 }
 
-// isUserWhitelisted checks if a commit from a given GitHub username should
-// result in wpt.fyi or staging.wpt.fyi summary results showing up. Currently
-// this is enabled for all users on prod, but only for some users on staging to
-// avoid having a confusing double-set of checks appear on the GitHub UI.
-func isUserWhitelisted(aeAPI shared.AppEngineAPI, login string) bool {
+// checksEnabledForUser returns if a commit from a given GitHub username should
+// cause wpt.fyi or staging.wpt.fyi summary results to show up in the GitHub
+// UI. Currently this is enabled for all users on prod, but only for some users
+// on staging to avoid having a confusing double-set of checks appear.
+func checksEnabledForUser(aeAPI shared.AppEngineAPI, login string) bool {
 	if aeAPI.IsFeatureEnabled(checksForAllUsersFeature) {
 		return true
 	}
-	whitelist := []string{
+	enabledLogins := []string{
 		"chromium-wpt-export-bot",
 		"gsnedders",
 		"jgraham",
@@ -339,5 +339,5 @@ func isUserWhitelisted(aeAPI shared.AppEngineAPI, login string) bool {
 		"lukebjerring",
 		"Ms2ger",
 	}
-	return shared.StringSliceContains(whitelist, login)
+	return shared.StringSliceContains(enabledLogins, login)
 }
