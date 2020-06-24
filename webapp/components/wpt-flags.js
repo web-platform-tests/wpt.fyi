@@ -331,7 +331,7 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{checksAllUsers}}">
-        Run the wpt.fyi GitHub status check for all users, not just whitelisted ones.
+        Run the wpt.fyi GitHub status check for all users.
       </paper-checkbox>
     </paper-item>
     <paper-item>

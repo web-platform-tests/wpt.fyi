@@ -61,12 +61,12 @@ func TestHandleCheckRunEvent_Created_Completed(t *testing.T) {
 	assert.False(t, processed)
 }
 
-func TestHandleCheckRunEvent_Created_Pending_UserNotWhitelisted(t *testing.T) {
+func TestHandleCheckRunEvent_Created_Pending_ChecksNotEnabledForUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	sha := strings.Repeat("0123456789", 4)
-	event := getCheckRunCreatedEvent("pending", "user-not-whitelisted", sha)
+	event := getCheckRunCreatedEvent("pending", "user-without-checks", sha)
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
@@ -235,12 +235,12 @@ func getCheckRunCreatedEvent(status, sender, sha string) github.CheckRunEvent {
 	}
 }
 
-func TestHandlePullRequestEvent_UserNotWhitelisted(t *testing.T) {
+func TestHandlePullRequestEvent_ChecksNotEnabledForUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	sha := strings.Repeat("1234567890", 4)
-	event := getOpenedPREvent("user-not-whitelisted", sha)
+	event := getOpenedPREvent("user-without-checks", sha)
 	payload, _ := json.Marshal(event)
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
@@ -253,7 +253,7 @@ func TestHandlePullRequestEvent_UserNotWhitelisted(t *testing.T) {
 	assert.False(t, processed)
 }
 
-func TestHandlePullRequestEvent_UserWhitelisted(t *testing.T) {
+func TestHandlePullRequestEvent_ChecksEnabledForUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
