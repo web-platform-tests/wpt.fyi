@@ -1048,6 +1048,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getMetadataUrl(index, testname, metadataMap) {
+    if (!metadataMap) {
+      return '';
+    }
+
     const key = testname + this.displayedProducts[index].browser_name;
     if (key in metadataMap) {
       return metadataMap[key];
