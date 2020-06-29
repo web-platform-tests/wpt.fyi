@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.11
 
 require (
-	cloud.google.com/go v0.58.0
+	cloud.google.com/go v0.60.0
 	cloud.google.com/go/datastore v1.2.0
 	cloud.google.com/go/logging v1.0.0
 	cloud.google.com/go/storage v1.10.0
@@ -13,9 +13,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.0
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/mock v1.4.3
-	github.com/google/go-cmp v0.5.0 // indirect
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.2
@@ -37,10 +35,9 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200622214017-ed371f2e16b4 // indirect
 	golang.org/x/text v0.3.3 // indirect
-	golang.org/x/tools v0.0.0-20200622203043-20e05c1c8ffa // indirect
 	google.golang.org/api v0.28.0
 	google.golang.org/appengine v1.6.6
-	google.golang.org/genproto v0.0.0-20200622133129-d0ee0c36e670
+	google.golang.org/genproto v0.0.0-20200626011028-ee7919e894b5
 	google.golang.org/grpc v1.30.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.3.0
