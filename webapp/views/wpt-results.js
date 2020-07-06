@@ -192,7 +192,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            labels="[[labels]]"
                            products="[[products]]"
                            diff-run="[[diffRun]]"
-                           is-triage-mode="[[isTriageMode]]">
+                           is-triage-mode="[[isTriageMode]]"
+                           metadata-map="[[metadataMap]]">
         </test-file-results>
       </template>
 
@@ -1054,7 +1055,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
     const key = testname + this.displayedProducts[index].browser_name;
     if (key in metadataMap) {
-      return metadataMap[key];
+      if ('/' in metadataMap[key]) {
+        return metadataMap[key]['/'];
+      }
+
+      // If a URL link does not exit on a test level, return the first subtest link.
+      const subtestMap = metadataMap[key];
+      return subtestMap[Object.keys(subtestMap)[0]];
     }
     return '';
   }
