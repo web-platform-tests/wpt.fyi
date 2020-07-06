@@ -144,7 +144,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
             <code>[[ subtestMessage(result, verbose) ]]</code>
 
             <template is="dom-if" if="[[shouldDisplayMetadata(index, row.name, metadataMap)]]">
-              <a href="[[ getMetadataUrl(index, row.name, metadataMap) ]]" target="_blank">
+              <a href="[[ getMetadataUrlForSubtest(index, row.name, metadataMap) ]]" target="_blank">
                 <iron-icon class="bug" icon="bug-report"></iron-icon>
               </a>
             </template>
@@ -424,10 +424,14 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     if (!metadataMap) {
       return false;
     }
-    return this.displayMetadata && this.getMetadataUrl(index, subtestname, metadataMap) !== '';
+    return this.displayMetadata && this.getMetadataUrlForSubtest(index, subtestname, metadataMap) !== '';
   }
 
-  getMetadataUrl(index, subtestname, metadataMap) {
+  getMetadataUrlForSubtest(index, subtestname, metadataMap) {
+    if (subtestname === 'Duration') {
+      return '';
+    }
+
     const key = this.path + this.displayedProducts[index].browser_name;
     if (key in metadataMap) {
       if (subtestname in metadataMap[key]) {
