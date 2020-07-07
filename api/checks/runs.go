@@ -86,7 +86,12 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 		return nil, err
 	}
 
-	runs, _, err := client.Checks.ListCheckRunsForRef(ctx, suite.Owner, suite.Repo, suite.SHA, nil)
+	options := github.ListCheckRunsOptions {
+		ListOptions: github.ListOptions {
+			PerPage: 100,
+		},
+	}
+	runs, _, err := client.Checks.ListCheckRunsForRef(ctx, suite.Owner, suite.Repo, suite.SHA, &options)
 	if err != nil {
 		return nil, err
 	}
