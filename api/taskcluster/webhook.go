@@ -432,7 +432,12 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 }
 
 func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error) {
-	return api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, nil)
+	options := github.ListCheckRunsOptions{
+		ListOptions: github.ListOptions {
+			PerPage: 100,
+		},
+	}
+	return api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, &options)
 }
 
 // ArtifactURLs holds the results and screenshot URLs for a Taskcluster run.
