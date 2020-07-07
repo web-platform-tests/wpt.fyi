@@ -172,6 +172,22 @@ suite('<wpt-results>', () => {
         expect(trf.resultsRangeMessage).to.contain(`revisions ${sha.substr(0, 7)}, ${sha2.substr(0, 7)}`);
       });
     });
+
+    suite('getMetadataUrl()', () => {
+      test('simple cases', () => {
+        trf.displayedProducts = ['chrome', 'safari']
+        const metadataMap = {
+          '/a.htmlchrome': { 'b': 'foo.com', 'c': 'bar.com', '/': 'test.com' },
+          '/a/abc/*safari': { '/': 'abc.com' },
+          '/c.htmlchrome': { 'b': 'foo1.com' },
+        };
+
+        assert.equal(trf.getMetadataUrl(0, '/a.html', metadataMap), 'test.com');
+        assert.equal(trf.getMetadataUrl(1, '/a.html', metadataMap), '');
+        assert.equal(trf.getMetadataUrl(1, '/a/abc', metadataMap), 'abc.com');
+        assert.equal(trf.getMetadataUrl(0, '/c.html', metadataMap), 'foo1.com');
+      });
+    });
   });
 
   teardown(() => {

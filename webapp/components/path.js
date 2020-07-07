@@ -78,6 +78,14 @@ const PathInfo = (superClass) => class extends superClass {
     return path && path === '/';
   }
 
+  isParentDir(path, dir) {
+    if (dir.startsWith(path)) {
+      const relativePath = dir.substring(path.length);
+      return relativePath.split('/').filter(p => p).length === 1;
+    }
+    return false;
+  }
+
   splitPathIntoLinkedParts(inputPath) {
     // Remove the leading slash.
     const encoded = this.encodeTestPath(inputPath).slice(1);

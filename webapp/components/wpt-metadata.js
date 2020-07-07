@@ -266,7 +266,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       if (this.pathIsASubfolder) {
         curPath = curPath + '/';
       }
-      return curPath.startsWith(testname.substring(0, testname.length - 1));
+      return curPath.startsWith(testname.substring(0, testname.length - 1)) || this.isParentDir(curPath, testname.substring(0, testname.length - 2));
     }
     return testname.startsWith(path) && testResultSet.has(testname);
   }
