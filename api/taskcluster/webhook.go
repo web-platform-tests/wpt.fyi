@@ -444,11 +444,10 @@ type ArtifactURLs struct {
 // ExtractArtifactURLs extracts the results and screenshot URLs for a set of
 // tasks in a TaskGroupInfo.
 func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo, taskID string) (
-	log.Debugf("Extracting artifact URLs for %d tasks", len(group.Tasks))
-
 	urlsByProduct map[string]ArtifactURLs, err error) {
 	urlsByProduct = make(map[string]ArtifactURLs)
 	failures := mapset.NewSet()
+	log.Debugf("Extracting artifact URLs for %d tasks", len(group.Tasks))
 	for _, task := range group.Tasks {
 		id := task.TaskID
 		if id == "" {
