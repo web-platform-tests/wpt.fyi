@@ -121,6 +121,8 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 		return EventInfo{}, errors.New("No sha on taskcluster check_suite event")
 	}
 
+	log.Debugf("Parsing check_suite event for commit %s", checkSuite.GetCheckSuite().GetHeadSHA())
+
 	// TODO(smcgruer): Remove 'wpt-tc-checks' case once migration to
 	// Taskcluster Checks is complete.
 	owner := checkSuite.GetRepo().GetOwner().GetLogin()
@@ -139,6 +141,8 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 	if len(runs.CheckRuns) == 0 {
 		return EventInfo{}, errors.New("No check_runs for check_suite")
 	}
+
+	log.Debugf("Found %d check_runs for check_suite", len(runs.CheckRuns))
 
 	rootURL := ""
 	group := TaskGroupInfo{}
@@ -160,6 +164,8 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 		if run.GetName() == "wpt-decision-task" {
 			group.TaskGroupID = taskID
 		}
+
+		log.Debugf("Adding task: %s, id: %s, status: %s", run.GetName(), taskID, run.GetStatus())
 
 		group.Tasks = append(group.Tasks, TaskInfo{
 			Name:   run.GetName(),
@@ -198,13 +204,17 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log := shared.GetLogger(ctx)
+	log.Debugf("Retrieved GitHub secret from datastore")
+
 	payload, err := github.ValidatePayload(r, []byte(secret))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+	log.Debugf("Payload validated against secret")
 
-	log := shared.GetLogger(ctx)
+
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
@@ -437,6 +447,7 @@ func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo
 	urlsByProduct map[string]ArtifactURLs, err error) {
 	urlsByProduct = make(map[string]ArtifactURLs)
 	failures := mapset.NewSet()
+	log.Debugf("Extracting artifact URLs for %d tasks", len(group.Tasks))
 	for _, task := range group.Tasks {
 		id := task.TaskID
 		if id == "" {
