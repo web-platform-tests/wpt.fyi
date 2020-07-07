@@ -204,13 +204,17 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log := shared.GetLogger(ctx)
+	log.Debugf("Retrieved GitHub secret from datastore")
+
 	payload, err := github.ValidatePayload(r, []byte(secret))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+	log.Debugf("Payload validated against secret")
 
-	log := shared.GetLogger(ctx)
+
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	aeAPI := shared.NewAppEngineAPI(ctx)
