@@ -175,7 +175,7 @@ suite('<wpt-results>', () => {
 
     suite('getMetadataUrl()', () => {
       test('simple cases', () => {
-        trf.displayedProducts = ['chrome', 'safari']
+        trf.displayedProducts = [{ browser_name: 'chrome' }, { browser_name: 'safari' }];
         const metadataMap = {
           '/a.htmlchrome': { 'b': 'foo.com', 'c': 'bar.com', '/': 'test.com' },
           '/a/abc/*safari': { '/': 'abc.com' },
