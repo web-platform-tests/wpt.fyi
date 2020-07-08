@@ -574,13 +574,14 @@ func TestGetCheckSuiteEventInfo_sourceRepo(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := github.ListCheckRunsResults{}
-	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
-		Name:       strPtr("wpt-decision-task"),
-		Status:     strPtr("completed"),
-		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
-	})
-	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+	runs := []*github.CheckRun {
+		&github.CheckRun {
+			Name:       strPtr("wpt-decision-task"),
+			Status:     strPtr("completed"),
+			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+		},
+	}
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(runs, nil)
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
@@ -615,13 +616,14 @@ func TestGetCheckSuiteEventInfo_sha(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := github.ListCheckRunsResults{}
-	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
-		Name:       strPtr("wpt-decision-task"),
-		Status:     strPtr("completed"),
-		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
-	})
-	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+	runs := []*github.CheckRun {
+		&github.CheckRun{
+			Name:       strPtr("wpt-decision-task"),
+			Status:     strPtr("completed"),
+			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+		},
+	}
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(runs, nil)
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
@@ -650,13 +652,14 @@ func TestGetCheckSuiteEventInfo_master(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := github.ListCheckRunsResults{}
-	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
-		Name:       strPtr("wpt-decision-task"),
-		Status:     strPtr("completed"),
-		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
-	})
-	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+	runs := []*github.CheckRun {
+		&github.CheckRun{
+			Name:       strPtr("wpt-decision-task"),
+			Status:     strPtr("completed"),
+			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+		},
+	}
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(runs, nil)
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
@@ -686,13 +689,14 @@ func TestGetCheckSuiteEventInfo_sender(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := github.ListCheckRunsResults{}
-	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
-		Name:       strPtr("wpt-decision-task"),
-		Status:     strPtr("completed"),
-		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
-	})
-	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
+	runs := []*github.CheckRun {
+		&github.CheckRun{
+			Name:       strPtr("wpt-decision-task"),
+			Status:     strPtr("completed"),
+			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+		},
+	}
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(runs, nil)
 
 	event := github.CheckSuiteEvent{
 		Sender: &github.User{
@@ -724,25 +728,26 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := github.ListCheckRunsResults{}
-	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&runs, nil, nil)
-
 	// The list of check_run events give us two main pieces of information:
 	//
 	//	the RootURL, which must match across runs, and
 	//	the TaskGroupInfo:
 	//		TaskGroupID is the wpt-decision-tasks's taskID
 	//		Tasks is filled with each check_run's name, taskID, and status.
-	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
-		Name:       strPtr("wpt-decision-task"),
-		Status:     strPtr("completed"),
-		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
-	})
-	runs.CheckRuns = append(runs.CheckRuns, &github.CheckRun{
-		Name:       strPtr("wpt-chrome-dev-testharness-1"),
-		Status:     strPtr("completed"),
-		DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/IWlO7NuxRnO0_8PKMuHFkw"),
-	})
+	runs := []*github.CheckRun {
+		&github.CheckRun{
+			Name:       strPtr("wpt-decision-task"),
+			Status:     strPtr("completed"),
+			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
+		},
+		&github.CheckRun{
+			Name:       strPtr("wpt-chrome-dev-testharness-1"),
+			Status:     strPtr("completed"),
+			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/IWlO7NuxRnO0_8PKMuHFkw"),
+		},
+	}
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(runs, nil)
+
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
@@ -768,17 +773,17 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Check the case where a details URL will fail to parse.
-	runs.CheckRuns[0].DetailsURL = strPtr("https://example.com/nope/not/right")
+	runs[0].DetailsURL = strPtr("https://example.com/nope/not/right")
 	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 
 	// Check the case where a details URL is missing.
-	runs.CheckRuns[0].DetailsURL = nil
+	runs[0].DetailsURL = nil
 	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 
 	// Check the case where a details URL has a mismatching root URL.
-	runs.CheckRuns[0].DetailsURL = strPtr("https://tc.community.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg")
+	runs[0].DetailsURL = strPtr("https://tc.community.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg")
 	eventInfo, err = tc.GetCheckSuiteEventInfo(event, shared.NewNilLogger(), api)
 	assert.NotNil(t, err)
 }
@@ -787,7 +792,7 @@ func TestGetCheckSuiteEventInfo_checkRunsEmpty(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
-	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&github.ListCheckRunsResults{}, nil, nil)
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return([]*github.CheckRun{}, nil)
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{
@@ -809,7 +814,7 @@ func TestGetCheckSuiteEventInfo_checkRunsFailed(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
-	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, nil, errors.New("failed"))
+	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.New("failed"))
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{

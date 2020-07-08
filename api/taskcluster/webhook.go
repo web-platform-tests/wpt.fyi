@@ -73,7 +73,7 @@ type EventInfo struct {
 // API wraps externally provided methods so we can mock them for testing.
 type API interface {
 	GetTaskGroupInfo(string, string) (*TaskGroupInfo, error)
-	ListCheckRuns(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error)
+	ListCheckRuns(owner string, repo string, checkSuiteID int64) ([]*github.CheckRun, error)
 }
 
 type apiImpl struct {
@@ -132,21 +132,21 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 		return EventInfo{}, errors.New("Invalid source repository")
 	}
 
-	runs, _, err := api.ListCheckRuns(owner, repo, checkSuite.GetCheckSuite().GetID())
+	runs, err := api.ListCheckRuns(owner, repo, checkSuite.GetCheckSuite().GetID())
 	if err != nil {
 		log.Errorf("Failed to fetch check runs for suite %v: %s", checkSuite.GetCheckSuite().GetID(), err.Error())
 		return EventInfo{}, err
 	}
 
-	if len(runs.CheckRuns) == 0 {
+	if len(runs) == 0 {
 		return EventInfo{}, errors.New("No check_runs for check_suite")
 	}
 
-	log.Debugf("Found %d check_runs for check_suite", len(runs.CheckRuns))
+	log.Debugf("Found %d check_runs for check_suite", len(runs))
 
 	rootURL := ""
 	group := TaskGroupInfo{}
-	for _, run := range runs.CheckRuns {
+	for _, run := range runs {
 		matches := checkRunDetailsURLRegex.FindStringSubmatch(run.GetDetailsURL())
 		if matches == nil {
 			log.Errorf("Unable to parse details URL for suite %v, run %v: %s", checkSuite.GetCheckSuite().GetID(), run.GetID(), run.GetDetailsURL())
@@ -431,13 +431,37 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 	return &group, nil
 }
 
-func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) (*github.ListCheckRunsResults, *github.Response, error) {
+func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) ([]*github.CheckRun, error) {
+	var runs []*github.CheckRun
 	options := github.ListCheckRunsOptions{
 		ListOptions: github.ListOptions {
 			PerPage: 100,
 		},
 	}
-	return api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, &options)
+
+	// As a safety-check, we will not do more than 5 iterations (at 100
+	// check runs per page, this gives us a 500 run upper limit).
+	hitEnd := false
+	for i := 0; i < 5; i++ {
+		result, response, err := api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, &options)
+		if err != nil {
+			return runs, err
+		}
+
+		runs = append(runs, result.CheckRuns...)
+
+		// Setup for the next call.
+		if response.NextPage >= response.LastPage {
+			hitEnd = true
+			break;
+		}
+		options.ListOptions.Page = response.NextPage
+	}
+	if !hitEnd {
+		return runs, errors.New("More than 5 pages of CheckRuns returned for CheckSuite")
+	}
+
+	return runs, nil
 }
 
 // ArtifactURLs holds the results and screenshot URLs for a Taskcluster run.
