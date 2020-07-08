@@ -84,6 +84,21 @@ suite('PathInfo', () => {
       .to.equal('/webgpu/cts.html%3Fq%3Dcts%3Acommand_buffer%2Fbasic%3A');
   });
 
+  test('isParentDir', () => {
+    assert.isTrue(pathInfo.isParentDir('/', '/abc'));
+    assert.isTrue(pathInfo.isParentDir('/a', '/a/bc'));
+    assert.isTrue(pathInfo.isParentDir('/a', '/a/bc/'));
+    assert.isTrue(pathInfo.isParentDir('/a/', '/a/bc'));
+    assert.isTrue(pathInfo.isParentDir('/ab/bc', '/ab/bc/cd'));
+    assert.isFalse(pathInfo.isParentDir('/a', '/a'));
+    assert.isFalse(pathInfo.isParentDir('/ab', '/a'));
+    assert.isFalse(pathInfo.isParentDir('/ab', '/abc/d'));
+    assert.isFalse(pathInfo.isParentDir('/ab/', '/abc/d'));
+    assert.isFalse(pathInfo.isParentDir('/', '/a/b'));
+    assert.isFalse(pathInfo.isParentDir('/ab', '/ab/bc/cd'));
+    assert.isFalse(pathInfo.isParentDir('/ab/', '/ab/bc/cd'));
+  });
+
   test('splitPathIntoLinkedParts', () => {
     expect(pathInfo.splitPathIntoLinkedParts('/')).to.deep.equal([]);
 

@@ -1053,6 +1053,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return '';
     }
 
+    if (this.computePathIsASubfolder(testname)) {
+      testname = testname + '/*';
+    }
+
     const key = testname + this.displayedProducts[index].browser_name;
     if (key in metadataMap) {
       if ('/' in metadataMap[key]) {
