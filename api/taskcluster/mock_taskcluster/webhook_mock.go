@@ -50,13 +50,12 @@ func (mr *MockAPIMockRecorder) GetTaskGroupInfo(arg0, arg1 interface{}) *gomock.
 }
 
 // ListCheckRuns mocks base method
-func (m *MockAPI) ListCheckRuns(arg0, arg1 string, arg2 int64) (*github.ListCheckRunsResults, *github.Response, error) {
+func (m *MockAPI) ListCheckRuns(arg0, arg1 string, arg2 int64) ([]*github.CheckRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListCheckRuns", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*github.ListCheckRunsResults)
-	ret1, _ := ret[1].(*github.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret0, _ := ret[0].([]*github.CheckRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ListCheckRuns indicates an expected call of ListCheckRuns
