@@ -47,11 +47,21 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       header nav a {
         margin-right: 1em;
       }
-      #caveat {
-        margin: 0.5em 0;
+      #solidarity {
+        margin: -0.5em 0 0.5em 0;
+      }
+      #solidarity p {
+        width: 100%;
+        text-align: center;
+        padding: 1em;
+        color: white;
+        background: black;
       }
     </style>
     <header>
+      <div id="solidarity">
+        <p>Black Lives Matter</p>
+      </div>
       <div>
         <h1>
           <img src="/static/logo.svg" alt="wpt.fyi logo">
