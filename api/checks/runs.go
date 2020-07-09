@@ -6,6 +6,7 @@ package checks
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/go-github/v31/github"
@@ -86,16 +87,33 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 		return nil, err
 	}
 
+	var runs []*github.CheckRun
 	options := github.ListCheckRunsOptions {
 		ListOptions: github.ListOptions {
+			// 100 is the maximum allowed items per page; see
+			// https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received
 			PerPage: 100,
 		},
 	}
-	runs, _, err := client.Checks.ListCheckRunsForRef(ctx, suite.Owner, suite.Repo, suite.SHA, &options)
-	if err != nil {
-		return nil, err
+
+	// As a safety-check, we will not do more than 10 iterations (at 100
+	// check runs per page, this gives us a 1000 run upper limit).
+	for i := 0; i < 10; i++ {
+		result, response, err := client.Checks.ListCheckRunsForRef(ctx, suite.Owner, suite.Repo, suite.SHA, &options)
+		if err != nil {
+			return nil, err
+		}
+
+		runs = append(runs, result.CheckRuns...)
+
+		if response.NextPage >= response.LastPage {
+			return runs, nil
+		}
+
+		// Setup for the next call.
+		options.ListOptions.Page = response.NextPage
 	}
-	return runs.CheckRuns, nil
+	return nil, fmt.Errorf("More than 10 pages of CheckRuns returned for ref %s", suite.SHA)
 }
 
 func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summary, suite shared.CheckSuite, run *github.CheckRun) (bool, error) {
