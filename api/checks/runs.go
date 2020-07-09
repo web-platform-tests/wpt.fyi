@@ -96,9 +96,9 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 		},
 	}
 
-	// As a safety-check, we will not do more than 5 iterations (at 100
-	// check runs per page, this gives us a 500 run upper limit).
-	for i := 0; i < 5; i++ {
+	// As a safety-check, we will not do more than 10 iterations (at 100
+	// check runs per page, this gives us a 1000 run upper limit).
+	for i := 0; i < 10; i++ {
 		result, response, err := client.Checks.ListCheckRunsForRef(ctx, suite.Owner, suite.Repo, suite.SHA, &options)
 		if err != nil {
 			return nil, err
@@ -113,7 +113,7 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 		// Setup for the next call.
 		options.ListOptions.Page = response.NextPage
 	}
-	return nil, fmt.Errorf("More than 5 pages of CheckRuns returned for ref %s", suite.SHA)
+	return nil, fmt.Errorf("More than 10 pages of CheckRuns returned for ref %s", suite.SHA)
 }
 
 func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summary, suite shared.CheckSuite, run *github.CheckRun) (bool, error) {
