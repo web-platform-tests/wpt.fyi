@@ -451,7 +451,10 @@ func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) 
 
 		runs = append(runs, result.CheckRuns...)
 
-		if response.NextPage >= response.LastPage {
+		// GitHub APIs indicate being on the last page by not returning any
+		// value for NextPage, which go-github translates into zero.
+		// See https://gowalker.org/github.com/google/go-github/github#Response
+		if response.NextPage == 0 {
 			return runs, nil
 		}
 
