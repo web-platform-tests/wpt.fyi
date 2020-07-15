@@ -33,7 +33,7 @@ suite('<wpt-metadata>', () => {
       appFixture.metadata = {
         '/foo.html': [
           {
-            url: 'https://bug1',
+            url: 'bug1',
             product: 'chrome'
           }
         ]
@@ -91,7 +91,7 @@ suite('<wpt-metadata>', () => {
           { url: 'https://bug1' }
         ],
         '/foo/bar.html': [
-          { url: 'https://bug2' },
+          { url: 'bug2' },
           { url: 'safari1' }
         ],
         '/foo/bar/foo1.html': [
@@ -140,11 +140,11 @@ suite('<wpt-metadata>', () => {
           { url: 'https://bug1' }
         ],
         '/foo/bar.html': [
-          { url: 'https://bug2' },
+          { url: 'bug2' },
           { url: 'safari1' }
         ],
         '/foo/bar/foo1.html': [
-          { url: 'https://bug3' }
+          { url: 'bug3' }
         ],
         '/bar/foo.html': [
           { url: 'https://bug4' }
@@ -201,8 +201,8 @@ suite('<wpt-metadata>', () => {
       appFixture.metadata = {
         '/foo.html': [
           { url: 'https://bug1', product: 'chrome', results: [{ subtest: 'a' }, { subtest: 'c' }] },
-          { url: 'https://bug2', product: 'chrome', results: [{ subtest: 'b' }] },
-          { url: 'https://bug3', product: 'chrome', results: [{ status: 'FAIL' }] },
+          { url: 'bug2', product: 'chrome', results: [{ subtest: 'b' }] },
+          { url: 'bug3', product: 'chrome', results: [{ status: 'FAIL' }] },
         ],
         '/foo/bar.html': [
           { url: 'https://bug1', product: 'safari', results: [{ subtest: 'a' }] }
