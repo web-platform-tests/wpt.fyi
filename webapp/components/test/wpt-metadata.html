@@ -69,6 +69,20 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/foobar';
       assert.equal(appFixture.displayedMetadata.length, 0);
     });
+    test('wildcard without searchResults', () => {
+      appFixture.searchResults = [{ test: '/foo/bar/test1.html' }];
+      appFixture.metadata = {
+        '/foo/bar1/*': [
+          {
+            url: 'bug1',
+            product: 'chrome'
+          }
+        ]
+      };
+      appFixture.path = '/foo';
+
+      assert.equal(appFixture.displayedMetadata.length, 0);
+    });
     test('exclude path', () => {
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar/f.html' }];
       appFixture.metadata = {
