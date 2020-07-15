@@ -245,9 +245,10 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
   }
 
   getUrlHref(url) {
-    const prefix = 'https://';
-    if (!url.startsWith(prefix)) {
-      return prefix + url;
+    const httpsPrefix = 'https://';
+    const httpPrefix = 'http://';
+    if (!(url.startsWith(httpsPrefix) || url.startsWith(httpPrefix))) {
+      return httpsPrefix + url;
     }
     return url;
   }
