@@ -192,7 +192,16 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       return;
     }
 
-    return new Set(searchResults.map(r => r.test));
+    const testResultSet = new Set();
+    for (const result of searchResults) {
+      var test = result.test;
+      // Dir terminates with ''
+      while (test !== '') {
+        testResultSet.add(test);
+        test = PathInfo.getDirname(test);
+      }
+    }
+    return testResultSet;
   }
 
   computeDisplayedMetadata(path, metadata, testResultSet) {
@@ -226,7 +235,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
 
         if (Object.keys(subtestMap).length === 0) {
           // When there is no subtest, it is a test-level URL.
-          metadataMap[metadataMapKey]['/'] = link.url ;
+          metadataMap[metadataMapKey]['/'] = link.url;
         } else {
           metadataMap[metadataMapKey] = Object.assign(metadataMap[metadataMapKey], subtestMap);
         }
@@ -267,7 +276,8 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         curPath = curPath + '/';
       }
       const dirname = testname.substring(0, testname.length - 1);
-      return curPath.startsWith(dirname) || this.isParentDir(curPath, dirname);
+      const dirnameWithoutSlash = testname.substring(0, testname.length - 2);
+      return curPath.startsWith(dirname) || (this.isParentDir(curPath, dirname) && testResultSet.has(dirnameWithoutSlash));
     }
     return testname.startsWith(path) && testResultSet.has(testname);
   }

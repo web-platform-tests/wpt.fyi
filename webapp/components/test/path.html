@@ -99,6 +99,17 @@ suite('PathInfo', () => {
     assert.isFalse(pathInfo.isParentDir('/ab/', '/ab/bc/cd'));
   });
 
+  test('getDirname', () => {
+    expect(pathInfo.getDirname('')).to.equal('');
+    expect(pathInfo.getDirname('/')).to.equal('');
+    expect(pathInfo.getDirname('/a.html')).to.equal('');
+    expect(pathInfo.getDirname('/a/b.html')).to.equal('/a');
+    expect(pathInfo.getDirname('/a/c/b.html')).to.equal('/a/c');
+    expect(pathInfo.getDirname('/a/')).to.equal('/a');
+    expect(pathInfo.getDirname('/a/b/c')).to.equal('/a/b');
+    expect(pathInfo.getDirname('/a/c/b/')).to.equal('/a/c/b');
+  });
+
   test('splitPathIntoLinkedParts', () => {
     expect(pathInfo.splitPathIntoLinkedParts('/')).to.deep.equal([]);
 
