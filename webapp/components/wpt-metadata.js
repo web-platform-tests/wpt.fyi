@@ -198,7 +198,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       // Dir terminates with ''
       while (test !== '') {
         testResultSet.add(test);
-        test = PathInfo.getDirname(test);
+        test = this.getDirname(test);
       }
     }
     return testResultSet;
