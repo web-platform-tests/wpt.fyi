@@ -123,7 +123,6 @@ github.com/frankban/quicktest v1.7.2/go.mod h1:jaStnuzAqU1AJdCO0l53JDCJrVDKcS03D
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/getsentry/raven-go v0.2.0/go.mod h1:KungGk8q33+aIAZUIVWZDr2OfAEBsO49PX4NzFV5kcQ=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
-github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 h1:xJdCV5uP69sUzCIIzmhAw6EKKdVk3Tu48oLzM86+XPI=
 github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
@@ -350,6 +349,8 @@ github.com/taskcluster/slugid-go v1.1.0/go.mod h1:5sOAcPHjqso1UkKxSl77CkKgOwha0D
 github.com/taskcluster/stateless-dns-go v1.0.6/go.mod h1:Nu9QAMTDA6EdWm4xyQVQurJDRXjhl8R6XDwxU/WNJ40=
 github.com/taskcluster/taskcluster-lib-urls v13.0.0+incompatible h1:JzXbHelZk1Kmi5JftwM47YOdHre2zddpP/cZCgXAkqM=
 github.com/taskcluster/taskcluster-lib-urls v13.0.0+incompatible/go.mod h1:ALqTgi15AmJGEGubRKM0ydlLAFatlQPrQrmal9YZpQs=
+github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible h1:Q3kagxQiHw7QNckRoeeBV16FDvyQC+iSmda99bJEK+U=
+github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible/go.mod h1:ALqTgi15AmJGEGubRKM0ydlLAFatlQPrQrmal9YZpQs=
 github.com/taskcluster/taskcluster/v25 v25.4.0 h1:PmU3TQyU78ZydslY0meeme+OjWNGH8G9gkpqX5AjXXc=
 github.com/taskcluster/taskcluster/v25 v25.4.0/go.mod h1:MfSjt+YYZZoh0mbnKKwfN/KknHJ079XNf2iBX3B8t5U=
 github.com/taskcluster/websocktunnel v2.0.0+incompatible/go.mod h1:Ky2uIex00xBd73oEXvmMdshUWgSjiWeAfeeX4p8JknY=
