@@ -143,7 +143,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
           <td class$="[[ colorClass(result.status) ]]" onclick="[[handleTriageSelect(index, row.name, result.status)]]" onmouseover="[[handleTriageHover(result.status)]]">
             <code>[[ subtestMessage(result, verbose) ]]</code>
 
-            <template is="dom-if" if="[[shouldDisplayMetadata(index, row.name, metadataMap)]]">
+            <template is="dom-if" if="[[shouldDisplayMetadata(index, row.name, metadataMap, result.status)]]">
               <a href="[[ getMetadataUrlForSubtest(index, row.name, metadataMap) ]]" target="_blank">
                 <iron-icon class="bug" icon="bug-report"></iron-icon>
               </a>
@@ -391,7 +391,11 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   }
 
   canAmendMetadata(status) {
-    return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status) && this.triageMetadataUI && this.isTriageMode;
+    return this.hasFailed(status) && this.triageMetadataUI && this.isTriageMode;
+  }
+
+  hasFailed(status) {
+    return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status);
   }
 
   clearSelectedCells(selectedMetadata) {
@@ -420,10 +424,15 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     this.$.amend.open();
   }
 
-  shouldDisplayMetadata(index, subtestname, metadataMap) {
+  shouldDisplayMetadata(index, subtestname, metadataMap, status) {
     if (!metadataMap) {
       return false;
     }
+
+    if (!this.hasFailed(status)) {
+      return false;
+    }
+
     return this.displayMetadata && this.getMetadataUrlForSubtest(index, subtestname, metadataMap) !== '';
   }
 

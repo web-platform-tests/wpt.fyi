@@ -43,7 +43,7 @@ class WPTMetadataNode extends ProductInfo(PolymerElement) {
         <div>
           <a href="[[testHref]]" target="_blank">[[metadataNode.test]]</a> >
           <img class="browser" src="[[displayLogo(metadataNode.product)]]"> :
-          <a href="[[urlHref]]" target="_blank">[[metadataNode.url]]</a>
+          <a href="[[metadataNode.url]]" target="_blank">[[metadataNode.url]]</a>
           <br />
         </div>
       </div>
@@ -58,23 +58,11 @@ class WPTMetadataNode extends ProductInfo(PolymerElement) {
     return {
       path: String,
       metadataNode: Object,
-      urlHref: {
-        type: String,
-        computed: 'computeUrlHref(metadataNode)'
-      },
       testHref: {
         type: String,
         computed: 'computeTestHref(path, metadataNode)'
       }
     };
-  }
-
-  computeUrlHref(metadataNode) {
-    const prefix = 'https://';
-    if (!metadataNode.url.startsWith(prefix)) {
-      return prefix + metadataNode.url;
-    }
-    return metadataNode.url;
   }
 
   computeTestHref(path, metadataNode) {
@@ -220,11 +208,12 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
           continue;
         }
         seenURLs.add(link.url);
+        const urlHref = this.getUrlHref(link.url);
         const subtestMap = {};
         if ('results' in link) {
           for (const resultEntry of link['results']) {
             if ('subtest' in resultEntry) {
-              subtestMap[resultEntry['subtest']] = link.url;
+              subtestMap[resultEntry['subtest']] = urlHref;
             }
           }
         }
@@ -236,13 +225,13 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
 
         if (Object.keys(subtestMap).length === 0) {
           // When there is no subtest, it is a test-level URL.
-          metadataMap[metadataMapKey]['/'] = link.url;
+          metadataMap[metadataMapKey]['/'] = urlHref;
         } else {
           metadataMap[metadataMapKey] = Object.assign(metadataMap[metadataMapKey], subtestMap);
         }
         const wptMetadataNode = {
           test,
-          url: link.url,
+          url: urlHref,
           product: link.product,
         };
         displayedMetadata.push(wptMetadataNode);
@@ -263,6 +252,15 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       return null;
     }
     return displayedMetadata.slice(3);
+  }
+
+  getUrlHref(url) {
+    const httpsPrefix = 'https://';
+    const httpPrefix = 'http://';
+    if (!(url.startsWith(httpsPrefix) || url.startsWith(httpPrefix))) {
+      return httpsPrefix + url;
+    }
+    return url;
   }
 
   handleOpenCollapsible() {

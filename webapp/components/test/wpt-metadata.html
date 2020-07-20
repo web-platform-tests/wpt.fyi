@@ -41,7 +41,7 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/';
       assert.equal(appFixture.displayedMetadata.length, 1);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
-      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
     test('simple case with wildcard', () => {
@@ -57,13 +57,13 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/foo/bar.html';
       assert.equal(appFixture.displayedMetadata.length, 1);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo/*');
-      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
 
       appFixture.path = '/foo';
       assert.equal(appFixture.displayedMetadata.length, 1);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo/*');
-      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
 
       appFixture.path = '/foobar';
@@ -96,7 +96,7 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/foo';
       assert.equal(appFixture.displayedMetadata.length, 1);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
-      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
     });
     test('complex case', () => {
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/foo/bar.html' }, { test: '/foo/bar/foo1.html' }, { test: '/bar/foo.html' }];
@@ -105,11 +105,11 @@ suite('<wpt-metadata>', () => {
           { url: 'bug1' }
         ],
         '/foo/bar.html': [
-          { url: 'bug2' },
+          { url: 'http://bug2' },
           { url: 'safari1' }
         ],
         '/foo/bar/foo1.html': [
-          { url: 'bug3' }
+          { url: 'https://bug3' }
         ],
         '/bar/foo.html': [
           { url: 'bug4' }
@@ -118,13 +118,13 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/foo';
       assert.equal(appFixture.displayedMetadata.length, 4);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
-      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[1].test, '/foo/bar.html');
-      assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
+      assert.equal(appFixture.displayedMetadata[1].url, 'http://bug2');
       assert.equal(appFixture.displayedMetadata[2].test, '/foo/bar.html');
-      assert.equal(appFixture.displayedMetadata[2].url, 'safari1');
+      assert.equal(appFixture.displayedMetadata[2].url, 'https://safari1');
       assert.equal(appFixture.displayedMetadata[3].test, '/foo/bar/foo1.html');
-      assert.equal(appFixture.displayedMetadata[3].url, 'bug3');
+      assert.equal(appFixture.displayedMetadata[3].url, 'https://bug3');
     });
     test('check duplicates & empty', () => {
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar.html' }];
@@ -143,9 +143,9 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/';
       assert.equal(appFixture.displayedMetadata.length, 2);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
-      assert.equal(appFixture.displayedMetadata[0].url, 'bug1');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[1].test, '/bar.html');
-      assert.equal(appFixture.displayedMetadata[1].url, 'bug2');
+      assert.equal(appFixture.displayedMetadata[1].url, 'https://bug2');
     });
     test('complex case with partial searchResults', () => {
       appFixture.searchResults = [{ test: '/foo/bar/foo1.html' }];
@@ -167,7 +167,7 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/foo';
       assert.equal(appFixture.displayedMetadata.length, 1);
       assert.equal(appFixture.displayedMetadata[0].test, '/foo/bar/foo1.html');
-      assert.equal(appFixture.displayedMetadata[0].url, 'bug3');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug3');
     });
     test('simple case for metadataMap', () => {
       appFixture.searchResults = [{ test: '/foo.html' }];
@@ -184,7 +184,7 @@ suite('<wpt-metadata>', () => {
       assert.equal(Object.keys(appFixture.metadataMap).length, 1);
       const subtestMap = appFixture.metadataMap['/foo.htmlchrome'];
       assert.equal(Object.keys(subtestMap).length, 1);
-      assert.equal(subtestMap['/'], 'bug1');
+      assert.equal(subtestMap['/'], 'https://bug1');
     });
     test('metadata with subtests for metadataMap', () => {
       appFixture.searchResults = [{ test: '/foo.html' }];
@@ -207,8 +207,8 @@ suite('<wpt-metadata>', () => {
       assert.equal(Object.keys(appFixture.metadataMap).length, 1);
       const subtestMap = appFixture.metadataMap['/foo.htmlchrome'];
       assert.equal(Object.keys(subtestMap).length, 2);
-      assert.equal(subtestMap['a'], 'bug1');
-      assert.equal(subtestMap['b'], 'bug2');
+      assert.equal(subtestMap['a'], 'https://bug1');
+      assert.equal(subtestMap['b'], 'https://bug2');
     });
     test('complex case for metadataMap', () => {
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/foo/bar.html' }];
@@ -227,12 +227,12 @@ suite('<wpt-metadata>', () => {
       assert.equal(Object.keys(appFixture.metadataMap).length, 2);
       const fooSubtestMap = appFixture.metadataMap['/foo.htmlchrome'];
       assert.equal(Object.keys(fooSubtestMap).length, 4);
-      assert.equal(fooSubtestMap['a'], 'bug1');
-      assert.equal(fooSubtestMap['c'], 'bug1');
-      assert.equal(fooSubtestMap['b'], 'bug2');
-      assert.equal(fooSubtestMap['/'], 'bug3');
+      assert.equal(fooSubtestMap['a'], 'https://bug1');
+      assert.equal(fooSubtestMap['c'], 'https://bug1');
+      assert.equal(fooSubtestMap['b'], 'https://bug2');
+      assert.equal(fooSubtestMap['/'], 'https://bug3');
       const barSubtestMap = appFixture.metadataMap['/foo/bar.htmlsafari'];
-      assert.equal(barSubtestMap['a'], 'bug1');
+      assert.equal(barSubtestMap['a'], 'https://bug1');
     });
   });
 });
