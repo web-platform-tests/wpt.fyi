@@ -194,8 +194,9 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
 
     const testResultSet = new Set();
     for (const result of searchResults) {
-      var test = result.test;
-      // getDirname eventually terminates with an empty string.
+      let test = result.test;
+      // Add all ancestor directories of test into testResultSet.
+      // getDirname eventually returns an empty string at the root to terminate the loop.
       while (test !== '') {
         testResultSet.add(test);
         test = this.getDirname(test);
