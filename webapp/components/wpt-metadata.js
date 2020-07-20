@@ -278,7 +278,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       }
       const dirname = testname.substring(0, testname.length - 1);
       const dirnameWithoutSlash = testname.substring(0, testname.length - 2);
-      return curPath.startsWith(dirname) || (this.isParentDir(curPath, dirname) && testResultSet.has(dirnameWithoutSlash));
+      return (curPath.startsWith(dirname) || this.isParentDir(curPath, dirname) && testResultSet.has(dirnameWithoutSlash);
     }
     return testname.startsWith(path) && testResultSet.has(testname);
   }
