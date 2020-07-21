@@ -180,7 +180,17 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       return;
     }
 
-    return new Set(searchResults.map(r => r.test));
+    const testResultSet = new Set();
+    for (const result of searchResults) {
+      let test = result.test;
+      // Add all ancestor directories of test into testResultSet.
+      // getDirname eventually returns an empty string at the root to terminate the loop.
+      while (test !== '') {
+        testResultSet.add(test);
+        test = this.getDirname(test);
+      }
+    }
+    return testResultSet;
   }
 
   computeDisplayedMetadata(path, metadata, testResultSet) {
@@ -190,7 +200,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
 
     let metadataMap = {};
     let displayedMetadata = [];
-    for (const test of Object.keys(metadata).filter(k => this.checkPath(k, path, testResultSet))) {
+    for (const test of Object.keys(metadata).filter(k => this.shouldShowMetadata(k, path, testResultSet))) {
       const seenURLs = new Set();
       seenURLs.add(''); // Avoids accepting empty URLs.
       for (const link of metadata[test]) {
@@ -258,16 +268,22 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     this.shadowRoot.querySelector('#metadata-collapsible').opened = true;
   }
 
-  checkPath(testname, path, testResultSet) {
-    if (testname.endsWith('/*')) {
+  shouldShowMetadata(metadataTestName, path, testResultSet) {
+    if (metadataTestName.endsWith('/*')) {
       let curPath = path;
       if (this.pathIsASubfolder) {
         curPath = curPath + '/';
       }
-      const dirname = testname.substring(0, testname.length - 1);
-      return curPath.startsWith(dirname) || this.isParentDir(curPath, dirname);
+      const metadataDirname = metadataTestName.substring(0, metadataTestName.length - 1);
+      const metadataDirnameWithoutSlash = metadataTestName.substring(0, metadataTestName.length - 2);
+      return (
+        // whether metadataDirname is an ancestor of curPath
+        curPath.startsWith(metadataDirname) ||
+        // whether metadataDirname is in the current directory and included by searchResults
+        (this.isParentDir(curPath, metadataDirname) && testResultSet.has(metadataDirnameWithoutSlash))
+      );
     }
-    return testname.startsWith(path) && testResultSet.has(testname);
+    return metadataTestName.startsWith(path) && testResultSet.has(metadataTestName);
   }
 }
 window.customElements.define(WPTMetadata.is, WPTMetadata);
