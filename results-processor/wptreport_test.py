@@ -582,26 +582,45 @@ class HelpersTest(unittest.TestCase):
         )
 
     def test_prepare_labels_from_browser_channel(self):
+        # Chrome Dev
         r = WPTReport()
         r._report = {
             'run_info': {
-                'product': 'firefox',
+                'product': 'chrome',
                 'browser_channel': 'dev',
             }
         }
         self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            {'blade-runner', 'dev', 'experimental', 'firefox'}
+            {'blade-runner', 'dev', 'experimental', 'chrome'}
         )
+
+        # Chrome Canary
+        r._report['run_info']['browser_channel'] = 'canary'
+        self.assertSetEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            {'blade-runner', 'canary', 'nightly', 'chrome'}
+        )
+
+        # Chrome Nightly
         r._report['run_info']['browser_channel'] = 'nightly'
         self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            {'blade-runner', 'experimental', 'firefox', 'nightly'}
+            {'blade-runner', 'nightly', 'chrome'}
         )
+
+        # Firefox Nightly
+        r._report['run_info']['product'] = 'firefox'
+        self.assertSetEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            {'blade-runner', 'nightly', 'experimental', 'firefox'}
+        )
+
+        # Firefox Beta
         r._report['run_info']['browser_channel'] = 'beta'
         self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            {'beta', 'blade-runner', 'firefox'}
+            {'blade-runner', 'beta', 'firefox'}
         )
 
     def test_normalize_product_edge_webdriver(self):
