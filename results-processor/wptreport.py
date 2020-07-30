@@ -499,7 +499,10 @@ class WPTReport(object):
 
 
 def _channel_to_labels(browser: str, channel: str) -> Set[str]:
-    """Maps browser-specific channels to well-known labels.
+    """Maps a browser-specific channel to labels.
+
+    The original channel is always preserved as a label. In addition,
+    well-known aliases of browser-specific channels are added.
 
     This aligns channels to RELEASE_CHANNEL_LABELS so that different browsers
     can be compared meaningfully on wpt.fyi. A few other aliases are added for
