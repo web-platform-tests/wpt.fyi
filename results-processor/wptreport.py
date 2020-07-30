@@ -559,6 +559,8 @@ def prepare_labels(report: WPTReport,
     elif not (labels & RELEASE_CHANNEL_LABELS):
         # Default to "stable" if no channel label or browser_channel is present
         # TODO(Hexcles): remove this fallback default eventually.
+        _log.warn('Test run does not have browser_channel or any channel label,'
+                  ' assumed stable.')
         labels.add('stable')
 
     # Remove any empty labels.
@@ -615,6 +617,8 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
     """
     if callback_url is None:
         callback_url = config.project_baseurl() + '/api/results/create'
+    _log.info('Creating run %s from %s using %s',
+              run_id, uploader, callback_url)
 
     labels = prepare_labels(report, labels_str, uploader)
     assert len(labels) > 0
