@@ -163,12 +163,18 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 			group.TaskGroupID = taskID
 		}
 
-		log.Debugf("Adding task: %s, id: %s, status: %s", run.GetName(), taskID, run.GetStatus())
+		log.Debugf("Adding task: %s, id: %s, conclusion: %s", run.GetName(), taskID, run.GetConclusion())
+
+		// Match the GitHub Check Runs API to the old Taskcluster status API.
+		state := "completed"
+		if run.GetConclusion() != "success" {
+			state = run.GetConclusion()
+		}
 
 		group.Tasks = append(group.Tasks, TaskInfo{
 			Name:   run.GetName(),
 			TaskID: taskID,
-			State:  run.GetStatus(),
+			State:  state,
 		})
 	}
 
@@ -501,7 +507,7 @@ func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo
 		}
 
 		if task.State != "completed" {
-			log.Infof("Task group %s has an unfinished task: %s; %s will be ignored in this group.",
+			log.Infof("Task group %s has a non-successful task: %s; %s will be ignored in this group.",
 				group.TaskGroupID, id, product)
 			failures.Add(product)
 			continue
