@@ -33,15 +33,8 @@ from mypy_extensions import TypedDict
 import config
 
 DEFAULT_PROJECT = 'wptdashboard'
-CHANNEL_TO_LABEL = {
-    'release': 'stable',
-    'stable': 'stable',
-    'beta': 'beta',
-    'dev': 'experimental',
-    'experimental': 'experimental',
-    'nightly': 'experimental',
-    'preview': 'experimental',
-}
+# These are the release channels understood by wpt.fyi.
+RELEASE_CHANNEL_LABELS = {'stable', 'beta', 'experimental'}
 # Ignore inconsistent browser minor versions for now.
 # TODO(Hexcles): Remove this when the TC decision task is implemented.
 IGNORED_CONFLICTS = {'browser_build_id', 'browser_changeset'}
@@ -505,6 +498,36 @@ class WPTReport(object):
         self.write_gzip_json(filepath, self._report)
 
 
+def _channel_to_labels(browser: str, channel: str) -> Set[str]:
+    """Maps a browser-specific channel to labels.
+
+    The original channel is always preserved as a label. In addition,
+    well-known aliases of browser-specific channels are added.
+
+    This aligns channels to RELEASE_CHANNEL_LABELS so that different browsers
+    can be compared meaningfully on wpt.fyi. A few other aliases are added for
+    convenience.
+    """
+    labels = {channel}
+    if channel == 'release':
+        # e.g. Edge release
+        labels.add('stable')
+    if channel == 'dev' or channel == 'preview':
+        # e.g. Chrome Dev and Safari Technology Preview
+        labels.add('experimental')
+    if channel == 'nightly' and browser == 'firefox':
+        # Only treat Firefox Nightly, but not Chrome Nightly, as experimental.
+        labels.add('experimental')
+    if channel == 'canary' and (
+            browser == 'chrome' or browser == 'edgechromium'):
+        # Chrome/Edge Canary is almost nightly.
+        labels.add('nightly')
+
+    # TODO(Hexcles): Figure out how we'd like to handle Chrome/Edge Canary.
+    # https://github.com/web-platform-tests/wpt.fyi/issues/1635
+    return labels
+
+
 def prepare_labels(report: WPTReport,
                    labels_str: str,
                    uploader: str) -> Set[str]:
@@ -523,20 +546,24 @@ def prepare_labels(report: WPTReport,
     Returns:
         A set of strings.
     """
+    browser = report.run_info['product']
+    # browser_channel is an optional field.
+    channel = report.run_info.get('browser_channel')
     labels = set()
-    labels.add(report.run_info['product'])
+    labels.add(browser)
     labels.add(uploader)
     # Empty labels may be generated here, but they will be removed later.
     for label in labels_str.split(','):
         labels.add(label.strip())
 
     # Add the release channel label.
-    if report.run_info.get('browser_channel'):
-        labels.add(report.run_info['browser_channel'])
-        if report.run_info['browser_channel'] in CHANNEL_TO_LABEL:
-            labels.add(CHANNEL_TO_LABEL[report.run_info['browser_channel']])
-    elif not any([i in labels for i in set(CHANNEL_TO_LABEL.values())]):
-        # Default to "stable".
+    if channel:
+        labels |= _channel_to_labels(browser, channel)
+    elif not (labels & RELEASE_CHANNEL_LABELS):
+        # Default to "stable" if no channel label or browser_channel is present
+        # TODO(Hexcles): remove this fallback default eventually.
+        _log.warn('Test run does not have browser_channel or any channel label'
+                  ', assumed stable.')
         labels.add('stable')
 
     # Remove any empty labels.
@@ -593,6 +620,8 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
     """
     if callback_url is None:
         callback_url = config.project_baseurl() + '/api/results/create'
+    _log.info('Creating run %s from %s using %s',
+              run_id, uploader, callback_url)
 
     labels = prepare_labels(report, labels_str, uploader)
     assert len(labels) > 0
