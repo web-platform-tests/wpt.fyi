@@ -562,8 +562,8 @@ def prepare_labels(report: WPTReport,
     elif not (labels & RELEASE_CHANNEL_LABELS):
         # Default to "stable" if no channel label or browser_channel is present
         # TODO(Hexcles): remove this fallback default eventually.
-        _log.warn('Test run does not have browser_channel or any channel label,'
-                  ' assumed stable.')
+        _log.warn('Test run does not have browser_channel or any channel label'
+                  ', assumed stable.')
         labels.add('stable')
 
     # Remove any empty labels.
