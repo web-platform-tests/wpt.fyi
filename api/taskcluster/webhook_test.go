@@ -738,11 +738,13 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 		&github.CheckRun{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
+			Conclusion: strPtr("success"),
 			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
 		},
 		&github.CheckRun{
 			Name:       strPtr("wpt-chrome-dev-testharness-1"),
 			Status:     strPtr("completed"),
+			Conclusion: strPtr("failed"),
 			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/IWlO7NuxRnO0_8PKMuHFkw"),
 		},
 	}
@@ -769,7 +771,7 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 	assert.Equal(t, "completed", eventInfo.Group.Tasks[0].State)
 	assert.Equal(t, "wpt-chrome-dev-testharness-1", eventInfo.Group.Tasks[1].Name)
 	assert.Equal(t, "IWlO7NuxRnO0_8PKMuHFkw", eventInfo.Group.Tasks[1].TaskID)
-	assert.Equal(t, "completed", eventInfo.Group.Tasks[1].State)
+	assert.Equal(t, "failed", eventInfo.Group.Tasks[1].State)
 	assert.Nil(t, err)
 
 	// Check the case where a details URL will fail to parse.
