@@ -165,10 +165,11 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 
 		log.Debugf("Adding task: %s, id: %s, conclusion: %s", run.GetName(), taskID, run.GetConclusion())
 
-		// Match the GitHub Check Runs API to the old Taskcluster status API.
-		state := "completed"
-		if run.GetConclusion() != "success" {
-			state = run.GetConclusion()
+		// Reconstruct Taskcluster TaskInfo from the check run without calling Taskcluster API.
+		state := run.GetConclusion()
+		if state == "success" {
+			// Checked in ExtractArtifactURLs.
+			state = "completed"
 		}
 
 		group.Tasks = append(group.Tasks, TaskInfo{
