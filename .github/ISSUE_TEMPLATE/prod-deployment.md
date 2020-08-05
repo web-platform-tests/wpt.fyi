@@ -1,7 +1,7 @@
 ---
 name: Prod Deployment
 about: Template for prod release tracking issues
-title: Deploy SHA to production
+title: Deploy NEW_SHA to production
 labels: release, prod
 assignees: ''
 
