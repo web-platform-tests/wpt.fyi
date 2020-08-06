@@ -146,9 +146,11 @@ const ProductInfo = (superClass) => class extends superClass {
     if (!name) {
       return;
     }
-    // TODO: Remove the special case for Servo when it has per-channel logos.
-    if (name !== 'servo' && labels) {
-      labels = new Set(labels);
+    labels = new Set(labels);
+    // Special case for Chrome nightly, which is in fact Chromium ToT:
+    if (name === 'chrome' && labels.has('nightly')) {
+      name = 'chromium';
+    } else if (name !== 'servo' && labels) {  // Servo does not have per-channel logos.
       let channel;
       const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
       for (const label of candidates) {
@@ -156,11 +158,6 @@ const ProductInfo = (superClass) => class extends superClass {
           channel = label;
           break;
         }
-      }
-      // Fall back to treating 'experimental' as 'dev'.
-      // TODO: Remove after https://github.com/web-platform-tests/wpt.fyi/issues/1539.
-      if (!channel && labels.has('experimental')) {
-        channel = 'dev';
       }
       if (channel) {
         name = `${name}-${channel}`;
