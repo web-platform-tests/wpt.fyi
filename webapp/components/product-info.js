@@ -150,7 +150,7 @@ const ProductInfo = (superClass) => class extends superClass {
     // Special case for Chrome nightly, which is in fact Chromium ToT:
     if (name === 'chrome' && labels.has('nightly')) {
       name = 'chromium';
-    } else if (name !== 'servo' && labels) {  // Servo does not have per-channel logos.
+    } else if (name !== 'servo') {  // Servo does not have per-channel logos.
       let channel;
       const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
       for (const label of candidates) {
