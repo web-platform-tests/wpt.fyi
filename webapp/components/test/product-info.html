@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+</head>
+<body>
+  <dom-module id="product-info-concrete">
+    <script type="module">
+      import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+      import { ProductInfo } from '../product-info.js';
+
+      class ConcreteProductInfo extends ProductInfo(PolymerElement) {}
+      window.customElements.define('product-info-concrete', ConcreteProductInfo);
+    </script>
+  </dom-module>
+
+  <test-fixture id="product-info-fixture">
+    <template>
+      <product-info-concrete></product-info-concrete>
+    </template>
+  </test-fixture>
+
+  <script type="module">
+suite('ProductInfo', () => {
+  let productInfo;
+
+  setup(() => {
+    productInfo = fixture('product-info-fixture');
+  });
+
+  test('displayName', () => {
+    expect(productInfo.displayName('chrome')).to.equal('Chrome');
+    expect(productInfo.displayName('chrome-experimental')).to.equal('Chrome');
+    expect(productInfo.displayName('uc')).to.equal('UC Browser');
+    expect(productInfo.displayName('unknown-browser')).to.equal('unknown-browser');
+  });
+
+  test('displayLabels', () => {
+    expect(productInfo.displayLabels(undefined)).to.equal('');
+    expect(productInfo.displayLabels(['foo', 'bar'])).to.equal('foo, bar');
+  });
+
+  test('displayLogo', () => {
+    expect(productInfo.displayLogo(undefined, undefined)).to.equal(undefined);
+    expect(productInfo.displayLogo('browser', undefined)).to.equal('/static/browser_64x64.png');
+    expect(productInfo.displayLogo('servo', ['nightly'])).to.equal('/static/servo_64x64.png');
+    expect(productInfo.displayLogo('chrome', ['nightly'])).to.equal('/static/chromium_64x64.png');
+    expect(productInfo.displayLogo('chrome', ['dev'])).to.equal('/static/chrome-dev_64x64.png');
+    expect(productInfo.displayLogo('firefox', ['stable'])).to.equal('/static/firefox_64x64.png');
+  });
+});
+  </script>
+</body>
+</html>
