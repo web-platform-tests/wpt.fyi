@@ -11,7 +11,7 @@ google-auth==1.20.1
 google-cloud-core==1.4.1
 google-cloud-datastore==1.14.0
 google-cloud-storage==1.30.0
-google-resumable-media==0.7.0
+google-resumable-media==0.7.1
 googleapis-common-protos==1.52.0
 grpcio==1.30.0
 gunicorn==20.0.4
