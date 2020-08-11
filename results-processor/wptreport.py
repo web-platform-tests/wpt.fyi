@@ -34,10 +34,10 @@ import config
 
 DEFAULT_PROJECT = 'wptdashboard'
 # These are the release channels understood by wpt.fyi.
-RELEASE_CHANNEL_LABELS = {'stable', 'beta', 'experimental'}
+RELEASE_CHANNEL_LABELS = frozenset({'stable', 'beta', 'experimental'})
 # Ignore inconsistent browser minor versions for now.
 # TODO(Hexcles): Remove this when the TC decision task is implemented.
-IGNORED_CONFLICTS = {'browser_build_id', 'browser_changeset'}
+IGNORED_CONFLICTS = frozenset({'browser_build_id', 'browser_changeset'})
 
 _log = logging.getLogger(__name__)
 
@@ -515,11 +515,13 @@ def _channel_to_labels(browser: str, channel: str) -> Set[str]:
     if channel == 'dev' or channel == 'preview':
         # e.g. Chrome Dev and Safari Technology Preview
         labels.add('experimental')
-    if channel == 'nightly' and browser == 'firefox':
-        # Only treat Firefox Nightly, but not Chrome Nightly, as experimental.
+    if channel == 'nightly' and \
+            browser in ('firefox', 'webkitgtk_minibrowser'):
+        # Notably, we don't want to treat Chrome Nightly (Chromium trunk) as
+        # experimental, as it would cause confusion with Chrome Dev.
         labels.add('experimental')
-    if channel == 'canary' and (
-            browser == 'chrome' or browser == 'edgechromium'):
+    if channel == 'canary' and \
+            browser in ('chrome', 'edgechromium'):
         # Chrome/Edge Canary is almost nightly.
         labels.add('nightly')
 
@@ -562,8 +564,8 @@ def prepare_labels(report: WPTReport,
     elif not (labels & RELEASE_CHANNEL_LABELS):
         # Default to "stable" if no channel label or browser_channel is present
         # TODO(Hexcles): remove this fallback default eventually.
-        _log.warn('Test run does not have browser_channel or any channel label'
-                  ', assumed stable.')
+        _log.warning('Test run does not have browser_channel or any channel '
+                     'label, assumed stable.')
         labels.add('stable')
 
     # Remove any empty labels.
