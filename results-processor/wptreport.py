@@ -515,13 +515,11 @@ def _channel_to_labels(browser: str, channel: str) -> Set[str]:
     if channel == 'dev' or channel == 'preview':
         # e.g. Chrome Dev and Safari Technology Preview
         labels.add('experimental')
-    if channel == 'nightly' and \
-            browser != 'chrome':
+    if channel == 'nightly' and browser != 'chrome':
         # Notably, we don't want to treat Chrome Nightly (Chromium trunk) as
         # experimental, as it would cause confusion with Chrome Dev.
         labels.add('experimental')
-    if channel == 'canary' and \
-            browser in ('chrome', 'edgechromium'):
+    if channel == 'canary' and browser in ('chrome', 'edgechromium'):
         # Chrome/Edge Canary is almost nightly.
         labels.add('nightly')
 
