@@ -178,7 +178,7 @@ class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
       dateStyle: 'short',
       timeStyle: 'medium',
     };
-    return new Date(date).toLocaletring('en-US', opts);
+    return new Date(date).toLocaleString('en-US', opts);
   }
 
   refreshContextMenu(e) {
