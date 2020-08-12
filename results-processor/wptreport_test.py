@@ -609,6 +609,14 @@ class HelpersTest(unittest.TestCase):
             {'blade-runner', 'nightly', 'chrome'}
         )
 
+        # WebKitGTK Nightly
+        r._report['run_info']['product'] = 'webkitgtk_minibrowser'
+        self.assertSetEqual(
+            prepare_labels(r, '', 'blade-runner'),
+            {'blade-runner', 'nightly', 'experimental',
+             'webkitgtk_minibrowser'}
+        )
+
         # Firefox Nightly
         r._report['run_info']['product'] = 'firefox'
         self.assertSetEqual(
