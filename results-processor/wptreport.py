@@ -516,7 +516,7 @@ def _channel_to_labels(browser: str, channel: str) -> Set[str]:
         # e.g. Chrome Dev and Safari Technology Preview
         labels.add('experimental')
     if channel == 'nightly' and \
-            browser in ('firefox', 'webkitgtk_minibrowser'):
+            browser != 'chrome':
         # Notably, we don't want to treat Chrome Nightly (Chromium trunk) as
         # experimental, as it would cause confusion with Chrome Dev.
         labels.add('experimental')
