@@ -191,7 +191,7 @@ curl: apt-get-curl
 gcc: apt-get-gcc
 git: apt-get-git
 psmisc: apt-get-psmisc
-python3: apt-get-python3.7
+python3: apt-get-python3.8
 python: apt-get-python
 tox: apt-get-tox
 unzip: apt-get-unzip

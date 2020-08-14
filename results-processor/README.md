@@ -1,6 +1,6 @@
 ## Basics
 
-The results processor runs on Python 3.7. The entry point is a Flask web server
+The results processor runs on Python 3.8. The entry point is a Flask web server
 (`main.py`). In production, gunicorn is used as the WSGI (see `Dockerfile`) and
 the container runs as a custom AppEnging Flex instance (see `app.yaml`).
 
@@ -10,7 +10,7 @@ We can create a virtualenv to recreate a setup close to production for daily
 development.
 
 ```bash
-virtualenv env -p python3.7
+virtualenv env -p python3.8
 . env/bin/activate
 pip install -r requirements.txt
 ```
