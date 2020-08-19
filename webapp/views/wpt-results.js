@@ -158,8 +158,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     </style>
 
     <paper-toast id="selected-toast" duration="0">
-      <span>[[selectedMetadata.length]] [[pluralize('test', selectedMetadata.length)]] selected</span>
-      <paper-button class="view-triage" on-click="openAmendMetadata" raised>TRIAGE</paper-button>
+      <span>[[triageToastMsg(selectedMetadata.length)]]</span>
+      <paper-button class="view-triage" on-click="openAmendMetadata" raised="[[hasSelections]]" disabled="[[!hasSelections]]">TRIAGE</paper-button>
     </paper-toast>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
@@ -426,6 +426,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   static get observers() {
     return [
       'clearSelectedCells(selectedMetadata)',
+      'handleTriageMode(isTriageMode)',
     ];
   }
 
@@ -1018,8 +1019,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.path = this.searchResults[(n + next) % n].test;
   }
 
+  handleTriageMode(isTriageMode) {
+    if (isTriageMode && this.pathIsATestFile) {
+      return;
+    }
+    this.handleTriageModeUI(isTriageMode, this.$['selected-toast']);
+  }
+
   clearSelectedCells(selectedMetadata) {
-    this.handleClear(selectedMetadata, this.$['selected-toast']);
+    this.handleClear(selectedMetadata);
   }
 
   handleTriageHover() {

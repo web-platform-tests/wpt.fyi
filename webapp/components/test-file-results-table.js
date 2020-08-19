@@ -113,8 +113,8 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
 </style>
 
 <paper-toast id="selected-toast" duration="0">
-  <span>[[selectedMetadata.length]] [[pluralize('test', selectedMetadata.length)]] selected</span>
-  <paper-button class="view-triage" on-click="openAmendMetadata" raised>TRIAGE</paper-button>
+  <span>[[triageToastMsg(selectedMetadata.length)]]</span>
+  <paper-button class="view-triage" on-click="openAmendMetadata" raised="[[hasSelections]]" disabled="[[!hasSelections]]">TRIAGE</paper-button>
 </paper-toast>
 
 <table terse$="[[!verbose]]" verbose$="[[verbose]]">
@@ -271,6 +271,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   static get observers() {
     return [
       'clearSelectedCells(selectedMetadata)',
+      'handleTriageMode(isTriageMode)',
     ];
   }
 
@@ -399,7 +400,14 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   }
 
   clearSelectedCells(selectedMetadata) {
-    this.handleClear(selectedMetadata, this.$['selected-toast']);
+    this.handleClear(selectedMetadata);
+  }
+
+  handleTriageMode(isTriageMode) {
+    if (isTriageMode && !this.pathIsATestFile) {
+      return;
+    }
+    this.handleTriageModeUI(isTriageMode, this.$['selected-toast']);
   }
 
   handleTriageHover() {
