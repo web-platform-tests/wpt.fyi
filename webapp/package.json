@@ -71,6 +71,7 @@
     "@vaadin/vaadin-date-picker": "4.2.0",
     "@vaadin/vaadin-grid": "5.6.6",
     "@webcomponents/webcomponentsjs": "2.4.3",
-    "pluralize": "8.0.0"
+    "pluralize": "8.0.0",
+    "selenium-standalone": "^6.17.0"
   }
 }
