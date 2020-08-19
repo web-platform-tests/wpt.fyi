@@ -24,10 +24,6 @@ USE_FRAME_BUFFER := true
 STAGING := false
 VERBOSE := -v
 
-# We want to control what selenium-based drivers are installed, so stop wct
-# from installing its defaults.
-export NOSELENIUM=y
-
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 

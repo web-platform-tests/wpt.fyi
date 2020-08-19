@@ -21,12 +21,8 @@ if [ "$USE_FRAME_BUFFER" == "true" ]; then
 fi
 
 cd webapp
-
 if [ "$UID" == "0" ]; then
-  # The 'browser' user is defined in .github/actions/make-in-docker/Dockerfile
-  # We need to make sure it has access to node_modules/ so it can install
-  # dependencies if required (e.g. webdriver clients for selenium-standalone)
-  chown -R browser:browser node_modules/
+  # Used in .github/actions/make-in-docker/Dockerfile
   sudo -u browser npm test
 else
   npm test
