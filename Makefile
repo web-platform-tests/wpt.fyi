@@ -143,8 +143,7 @@ firefox_install: firefox_deps bzip2 wget java
 firefox_deps:
 	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
-geckodriver: node-selenium-standalone
-	cd webapp; npx selenium-standalone install --singleDriverInstall=firefox
+geckodriver: node-wct-local
 
 golint: git
 	if [ "$$(which golint)" == "" ]; then \
