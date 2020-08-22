@@ -18,7 +18,7 @@ require (
 	github.com/golang/mock v1.4.3
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
-	github.com/gorilla/handlers v1.4.2
+	github.com/gorilla/handlers v1.5.0
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/securecookie v1.1.1
 	github.com/karrick/godirwalk v1.15.6 // indirect
@@ -34,7 +34,6 @@ require (
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.0.0-20200714190737-9048b464a08d // indirect
 	google.golang.org/api v0.29.0
 	google.golang.org/appengine v1.6.6
