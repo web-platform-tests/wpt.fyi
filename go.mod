@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.11
 
 require (
-	cloud.google.com/go v0.61.0
+	cloud.google.com/go v0.64.0
 	cloud.google.com/go/datastore v1.2.0
 	cloud.google.com/go/logging v1.0.0
 	cloud.google.com/go/storage v1.10.0
@@ -15,30 +15,33 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/golang/mock v1.4.3
+	github.com/golang/mock v1.4.4
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
-	github.com/gorilla/handlers v1.4.2
-	github.com/gorilla/mux v1.7.4
+	github.com/gorilla/handlers v1.5.0
+	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/securecookie v1.1.1
-	github.com/karrick/godirwalk v1.15.6 // indirect
-	github.com/rogpeppe/go-internal v1.6.0 // indirect
+	github.com/karrick/godirwalk v1.16.1 // indirect
+	github.com/pborman/uuid v1.2.1 // indirect
+	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/taskcluster/httpbackoff/v3 v3.1.0 // indirect
-	github.com/taskcluster/taskcluster-lib-urls v13.0.0+incompatible
+	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
 	github.com/taskcluster/taskcluster/v25 v25.4.0
 	github.com/tebeka/selenium v0.9.9
-	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
+	golang.org/x/sys v0.0.0-20200824131525-c12d262b63d8 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
-	golang.org/x/tools v0.0.0-20200714190737-9048b464a08d // indirect
-	google.golang.org/api v0.29.0
+	golang.org/x/tools v0.0.0-20200823205832-c024452afbcd // indirect
+	google.golang.org/api v0.30.0
 	google.golang.org/appengine v1.6.6
-	google.golang.org/genproto v0.0.0-20200714145754-f631a03bbd91
+	google.golang.org/genproto v0.0.0-20200815001618-f69a88009b70
+	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
