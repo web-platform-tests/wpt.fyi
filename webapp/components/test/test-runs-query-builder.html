@@ -18,27 +18,21 @@
 import '../test-runs-query-builder.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import { Channels } from '../product-info.js';
+import { stubFetch } from './util/helpers.js';
 
-suite('TestRunsQueryBuilder', () => {
-  let queryBuilder, sandbox;
+// Spoof an empty result for API calls to speed up tests.
+// Do this as early as possible, before instantiating components.
+suiteSetup(() => {
+  const fetchSandbox = sinon.sandbox.create();
+  stubFetch(fetchSandbox, '/api/(shas|versions)');
+});
+// No need to restore sandbox: the next test runs in a new window.
 
-  suiteSetup(() => {
-    sandbox = sinon.sandbox.create();
-    // Spoof an empty result for /api/shas to speed up tests.
-    // This is done in suiteSetup/suiteTeardown to avoid async fetches slipping
-    // through between tests.
-    const ignore = new RegExp('/api/(shas|versions)');
-    sandbox.stub(window, 'fetch', url => {
-      if (ignore.test(url.pathname)) {
-        return Promise.resolve(new Response('[]'));
-      }
-      throw url;
-    });
-  });
-
-  suiteTeardown(() => {
-    sandbox.restore();
-  });
+suite('TestRunsQueryBuilder', function() {
+  let queryBuilder;
+  // This is a slow test due to use of flush().
+  this.timeout(3000);
+  this.slow(1000);
 
   setup(() => {
     queryBuilder = fixture('query-builder-fixture');

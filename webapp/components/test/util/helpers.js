@@ -15,6 +15,19 @@ async function waitingOn(predicate) {
   });
 }
 
+function stubFetch(sandbox, pattern, response='[]') {
+  const regex = new RegExp(pattern);
+  sandbox.stub(window, 'fetch', url => {
+    if (url === undefined) {
+      throw 'url is undefined';
+    }
+    if (regex.test(url.pathname)) {
+      return Promise.resolve(new Response(response));
+    }
+    throw url.pathname;
+  })
+}
+
 const TEST_RUNS_DATA = [
   {
     id: 123,
@@ -58,4 +71,4 @@ const TEST_RUNS_DATA = [
   }
 ];
 
-export { waitingOn, TEST_RUNS_DATA };
+export { waitingOn, stubFetch, TEST_RUNS_DATA };

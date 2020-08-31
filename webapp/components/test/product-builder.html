@@ -16,6 +16,15 @@
 
   <script type="module">
 import '../product-builder.js';
+import { stubFetch } from './util/helpers.js';
+
+// Spoof an empty result for API calls to speed up tests.
+// Do this as early as possible, before instantiating components.
+suiteSetup(() => {
+  const fetchSandbox = sinon.sandbox.create();
+  stubFetch(fetchSandbox, '/api/(shas|versions)');
+});
+// No need to restore sandbox: the next test runs in a new window.
 
 suite('ProductBuilder', () => {
   let productBuilder;

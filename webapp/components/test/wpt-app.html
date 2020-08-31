@@ -17,37 +17,17 @@
 
   <script type="module">
 import '../../views/wpt-app.js';
-import { TEST_RUNS_DATA } from './util/helpers.js';
+import { stubFetch, TEST_RUNS_DATA } from './util/helpers.js';
 
+// Spoof an empty result for API calls to speed up tests.
+// Do this as early as possible, before instantiating components.
 suiteSetup(() => {
-  window.fetch = (url) => {
-    const href = url instanceof URL ? url.href : 'unknown';
-    assert.fail('actual', 'expected', `uncaptured fetch: ${href}`);
-  };
+  const fetchSandbox = sinon.sandbox.create();
+  stubFetch(fetchSandbox, '/api/(shas|versions|interop)');
 });
+// No need to restore sandbox: the next test runs in a new window.
 
 suite('<wpt-app>', () => {
-  let sandbox;
-
-  setup(() => {
-    sandbox = sinon.sandbox.create();
-    // Spoof an empty result for APIs used in this suite.
-    const captured = new RegExp('/api/(shas|versions|interop)');
-    sandbox.stub(window, 'fetch', url => {
-      if (url === undefined) {
-        throw 'url is undefined';
-      }
-      if (captured.test(url.pathname)) {
-        return Promise.resolve(new Response('[]'));
-      }
-      throw url.pathname;
-    });
-  });
-
-  teardown(() => {
-    sandbox.restore();
-  });
-
   suite('WPTApp.prototype.*', () => {
     let appFixture;
 
