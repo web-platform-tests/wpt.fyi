@@ -407,7 +407,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     if (isTriageMode && !this.pathIsATestFile) {
       return;
     }
-    this.handleTriageModeUI(isTriageMode, this.$['selected-toast']);
+    this.handleTriageModeChange(isTriageMode, this.$['selected-toast']);
   }
 
   handleTriageHover() {

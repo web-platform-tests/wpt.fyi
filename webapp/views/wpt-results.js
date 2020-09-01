@@ -1023,7 +1023,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     if (isTriageMode && this.pathIsATestFile) {
       return;
     }
-    this.handleTriageModeUI(isTriageMode, this.$['selected-toast']);
+    this.handleTriageModeChange(isTriageMode, this.$['selected-toast']);
   }
 
   clearSelectedCells(selectedMetadata) {

@@ -84,7 +84,7 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
     }
   }
 
-  handleTriageModeUI(mode, toast) {
+  handleTriageModeChange(mode, toast) {
     if (mode) {
       toast.show();
       return;
