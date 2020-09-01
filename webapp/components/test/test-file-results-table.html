@@ -55,6 +55,30 @@ suite('TestFileResultsTable', () => {
       });
     });
   });
+
+  suite('computeDisplayedProducts', () => {
+    test('null testRuns', () => {
+      assert.deepEqual(tfrt.computeDisplayedProducts(null), []);
+    });
+    test('simple testRuns', () => {
+      const testRuns = [{
+        browser_name: 'firefox',
+        browser_version: 1,
+        labels: ['labelA'],
+        time_start: '2018-01-12T12:00:00Z',
+        time_end: '2018-01-12T13:20:00Z',
+        revision: '0123456789',
+      }];
+
+      const result = tfrt.computeDisplayedProducts(testRuns);
+
+      assert.equal(result.length, 1);
+      assert.equal(result[0].browser_name, 'firefox');
+      assert.equal(result[0].browser_version, 1);
+      assert.deepEqual(result[0].labels, ['labelA']);
+      assert.equal(result[0].revision, '0123456789');
+    });
+  });
 });
 </script>
 </body>
