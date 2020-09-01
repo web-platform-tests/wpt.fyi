@@ -100,7 +100,7 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
     if (arrayLen > 0) {
       return arrayLen + ' ' + this.pluralize('test', arrayLen) + ' selected';
     } else {
-      return 'Select some cells to [Triage]';
+      return 'Select some cells to triage';
     }
   }
 };
