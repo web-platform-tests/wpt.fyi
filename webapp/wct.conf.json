@@ -19,6 +19,6 @@
   "compile": "never",
   "npm": true,
   "expanded": true,
-  "verbose": true,
+  "verbose": false,
   "testTimeout": 300000
 }
