@@ -54,29 +54,30 @@ suite('TestFileResultsTable', () => {
         assert.notEqual(tfrt.colorClass('OK'), tfrt.colorClass('PASS'));
       });
     });
+
+    suite('computeDisplayedProducts', () => {
+      test('null testRuns', () => {
+        assert.deepEqual(tfrt.computeDisplayedProducts(null), []);
+      });
+      test('simple testRuns', () => {
+        const testRuns = [{
+          browser_name: 'firefox',
+          browser_version: 1,
+          labels: ['labelA'],
+          revision: '0123456789',
+        }];
+
+        const result = tfrt.computeDisplayedProducts(testRuns);
+
+        assert.equal(result.length, 1);
+        assert.equal(result[0].browser_name, 'firefox');
+        assert.equal(result[0].browser_version, 1);
+        assert.deepEqual(result[0].labels, ['labelA']);
+        assert.equal(result[0].revision, '0123456789');
+      });
+    });
   });
 
-  suite('computeDisplayedProducts', () => {
-    test('null testRuns', () => {
-      assert.deepEqual(tfrt.computeDisplayedProducts(null), []);
-    });
-    test('simple testRuns', () => {
-      const testRuns = [{
-        browser_name: 'firefox',
-        browser_version: 1,
-        labels: ['labelA'],
-        revision: '0123456789',
-      }];
-
-      const result = tfrt.computeDisplayedProducts(testRuns);
-
-      assert.equal(result.length, 1);
-      assert.equal(result[0].browser_name, 'firefox');
-      assert.equal(result[0].browser_version, 1);
-      assert.deepEqual(result[0].labels, ['labelA']);
-      assert.equal(result[0].revision, '0123456789');
-    });
-  });
 });
 </script>
 </body>
