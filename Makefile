@@ -114,7 +114,7 @@ dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-d
 
 chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		ARCHIVE=google-chrome-beta_current_amd64.deb; \
+		ARCHIVE=google-chrome-unstable_current_amd64.deb; \
 		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
 		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
 		sudo apt-get install --fix-broken -qqy; \
