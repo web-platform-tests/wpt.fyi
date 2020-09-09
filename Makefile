@@ -119,7 +119,8 @@ chrome: wget
 		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
 		sudo apt-get install --fix-broken -qqy; \
 		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
-		sudo ln -s /usr/bin/google-chrome /usr/bin/google-chrome-beta \
+		ls -l /usr/bin/google-chrome || true; \
+		ls -l /etc/alternatives/google-chrome || true ; \
 	fi
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
