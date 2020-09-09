@@ -113,6 +113,7 @@ lighthouse: chrome webapp_node_modules_all
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
 chrome: wget
+	# Pinned to Chrome 84 to workaround https://github.com/web-platform-tests/wpt.fyi/issues/2128
 	if [[ -z "$$(which google-chrome)" ]]; then \
 		wget -q https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_84.0.4147.135-1_amd64.deb; \
 		sudo dpkg --install google-chrome-stable_84.0.4147.135-1_amd64.deb 2>/dev/null || true; \
