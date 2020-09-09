@@ -282,6 +282,10 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   }
 
   computeDisplayedProducts(testRuns) {
+    if (!testRuns) {
+      return [];
+    }
+
     return testRuns.map(productFromRun);
   }
 
