@@ -19,6 +19,10 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
         type: Array,
         value: [],
       },
+      hasSelections: {
+        type: Boolean,
+        computed: 'computeHasSelections(selectedMetadata)',
+      },
       selectedCells: {
         type: Array,
         value: [],
@@ -39,12 +43,15 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
     this.selectedMetadata = [];
   }
 
-  handleClear(selectedMetadata, toast) {
+  computeHasSelections(selectedMetadata) {
+    return selectedMetadata.length > 0;
+  }
+
+  handleClear(selectedMetadata) {
     if (selectedMetadata.length === 0 && this.selectedCells.length) {
       for (const cell of this.selectedCells) {
         cell.removeAttribute('selected');
       }
-      toast.hide();
       this.selectedCells = [];
     }
   }
@@ -74,8 +81,26 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
 
     if (this.selectedMetadata.length) {
       toast.show();
+    }
+  }
+
+  handleTriageModeChange(mode, toast) {
+    if (mode) {
+      toast.show();
+      return;
+    }
+
+    if (this.selectedMetadata.length > 0) {
+      this.selectedMetadata = [];
+    }
+    toast.hide();
+  }
+
+  triageToastMsg(arrayLen) {
+    if (arrayLen > 0) {
+      return arrayLen + ' ' + this.pluralize('test', arrayLen) + ' selected';
     } else {
-      toast.hide();
+      return 'Select some cells to triage';
     }
   }
 };
