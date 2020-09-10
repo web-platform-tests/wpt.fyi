@@ -107,7 +107,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 			if err := store.Get(store.NewIDKey("TestRun", int64(id)), runPtr); err != nil {
 				return &searchErr{
 					Detail:  err,
-					Message: "Unknown test run ID " + string(id),
+					Message: fmt.Sprintf("Unknown test run ID %d", id),
 					Code:    http.StatusBadRequest,
 				}
 			}
