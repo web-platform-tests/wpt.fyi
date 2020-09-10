@@ -12,10 +12,6 @@ import flask
 import processor
 
 
-# All the AppEngine internal requests (including other services and TaskQueue)
-# come from this IP address.
-# https://cloud.google.com/appengine/docs/standard/python/creating-firewalls#allowing_requests_from_your_services
-APPENGINE_INTERNAL_IP = '10.0.0.1'
 # The file will be flock()'ed if a report is being processed.
 LOCK_FILE = '/tmp/results-processor.lock'
 # If the file above is locked, this timestamp file contains the UNIX timestamp
@@ -65,11 +61,11 @@ def _serial_task(func):
 def _internal_only(func):
     @functools.wraps(func)
     def decorated_func(*args, **kwargs):
-        if not app.debug:
-            remote_ip = flask.request.access_route[0]
-            if remote_ip != APPENGINE_INTERNAL_IP:
-                return ('External requests not allowed',
-                        HTTPStatus.FORBIDDEN)
+        if (not app.debug and
+                # This header cannot be set by external requests.
+                # https://cloud.google.com/tasks/docs/creating-appengine-handlers?hl=en#reading_app_engine_task_request_headers
+                not flask.request.headers.get('X-AppEngine-QueueName')):
+            return ('External requests not allowed', HTTPStatus.FORBIDDEN)
         return func(*args, **kwargs)
 
     return decorated_func
