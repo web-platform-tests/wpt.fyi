@@ -20,7 +20,6 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	"google.golang.org/appengine/urlfetch"
 )
 
 // ErrRunNotInSearchCache is an error for 422 responses from the searchcache.
@@ -323,10 +322,10 @@ func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 // FetchRunResultsJSON fetches the results JSON summary for the given test run, but does not include subtests (since
 // a full run can span 20k files).
 func FetchRunResultsJSON(ctx context.Context, run TestRun) (results ResultsSummary, err error) {
-	client := urlfetch.Client(ctx)
+	aeAPI := NewAppEngineAPI(ctx)
 	url := strings.TrimSpace(run.ResultsURL)
 	var resp *http.Response
-	if resp, err = client.Get(url); err != nil {
+	if resp, err = aeAPI.GetHTTPClient().Get(url); err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()

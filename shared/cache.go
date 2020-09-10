@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"google.golang.org/appengine/memcache"
-	"google.golang.org/appengine/urlfetch"
 )
 
 var (
@@ -55,8 +54,8 @@ func (hr httpReadable) NewReadCloser(iURL interface{}) (io.ReadCloser, error) {
 		return nil, errNewReadCloserExpectedString
 	}
 
-	client := urlfetch.Client(hr.ctx)
-	r, err := client.Get(url)
+	aeAPI := NewAppEngineAPI(hr.ctx)
+	r, err := aeAPI.GetHTTPClient().Get(url)
 	if err != nil {
 		return nil, err
 	}
