@@ -9,7 +9,6 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/v31/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
-	taskqueue "google.golang.org/appengine/taskqueue"
 	io "io"
 	http "net/http"
 	url "net/url"
@@ -283,10 +282,10 @@ func (mr *MockAPIMockRecorder) LoginURL(arg0 interface{}) *gomock.Call {
 }
 
 // ScheduleResultsTask mocks base method
-func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1, arg2 []string, arg3 map[string]string) (*taskqueue.Task, error) {
+func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1, arg2 []string, arg3 map[string]string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ScheduleResultsTask", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*taskqueue.Task)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -295,6 +294,21 @@ func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1, arg2 []string, arg3 map
 func (mr *MockAPIMockRecorder) ScheduleResultsTask(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsTask", reflect.TypeOf((*MockAPI)(nil).ScheduleResultsTask), arg0, arg1, arg2, arg3)
+}
+
+// ScheduleTask mocks base method
+func (m *MockAPI) ScheduleTask(arg0, arg1 string, arg2 url.Values) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ScheduleTask", arg0, arg1, arg2)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ScheduleTask indicates an expected call of ScheduleTask
+func (mr *MockAPIMockRecorder) ScheduleTask(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAPI)(nil).ScheduleTask), arg0, arg1, arg2)
 }
 
 // UpdatePendingTestRun mocks base method
