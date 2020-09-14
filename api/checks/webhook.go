@@ -62,14 +62,13 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
 	var processed bool
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	checksAPI := NewAPI(ctx)
+	api := NewAPI(ctx)
 	if event == "check_suite" {
-		processed, err = handleCheckSuiteEvent(aeAPI, checksAPI, payload)
+		processed, err = handleCheckSuiteEvent(api, payload)
 	} else if event == "check_run" {
-		processed, err = handleCheckRunEvent(aeAPI, checksAPI, payload)
+		processed, err = handleCheckRunEvent(api, payload)
 	} else if event == "pull_request" {
-		processed, err = handlePullRequestEvent(aeAPI, checksAPI, payload)
+		processed, err = handlePullRequestEvent(api, payload)
 	}
 	if err != nil {
 		log.Errorf("%v", err)
@@ -88,8 +87,8 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 // handleCheckSuiteEvent handles a check_suite (re)requested event by ensuring
 // that a check_run exists for each product that contains results for the head SHA.
-func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
-	log := shared.GetLogger(aeAPI.Context())
+func handleCheckSuiteEvent(api API, payload []byte) (bool, error) {
+	log := shared.GetLogger(api.Context())
 	var checkSuite github.CheckSuiteEvent
 	if err := json.Unmarshal(payload, &checkSuite); err != nil {
 		return false, err
@@ -110,7 +109,7 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 	}
 
 	login := checkSuite.GetSender().GetLogin()
-	if !checksEnabledForUser(aeAPI, login) {
+	if !checksEnabledForUser(api, login) {
 		log.Infof("Checks not enabled for sender %s", login)
 		return false, nil
 	}
@@ -129,18 +128,18 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 			for _, p := range pullRequests {
 				destRepoID := p.GetBase().GetRepo().GetID()
 				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
-					checksAPI.CreateWPTCheckSuite(appID, installationID, sha, prNumbers...)
+					api.CreateWPTCheckSuite(appID, installationID, sha, prNumbers...)
 				}
 			}
 		}
 
-		suite, err := getOrCreateCheckSuite(aeAPI.Context(), sha, owner, repo, appID, installationID, prNumbers...)
+		suite, err := getOrCreateCheckSuite(api.Context(), sha, owner, repo, appID, installationID, prNumbers...)
 		if err != nil || suite == nil {
 			return false, err
 		}
 
 		if action == "rerequested" {
-			return scheduleProcessingForExistingRuns(aeAPI.Context(), sha)
+			return scheduleProcessingForExistingRuns(api.Context(), sha)
 		}
 	}
 	return false, nil
@@ -149,11 +148,10 @@ func handleCheckSuiteEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []b
 // handleCheckRunEvent handles a check_run rerequested events by updating
 // the status based on whether results for the check_run's product exist.
 func handleCheckRunEvent(
-	aeAPI shared.AppEngineAPI,
-	checksAPI API,
+	api API,
 	payload []byte) (bool, error) {
 
-	log := shared.GetLogger(aeAPI.Context())
+	log := shared.GetLogger(api.Context())
 	checkRun := new(github.CheckRunEvent)
 	if err := json.Unmarshal(payload, checkRun); err != nil {
 		return false, err
@@ -174,7 +172,7 @@ func handleCheckRunEvent(
 	}
 
 	login := checkRun.GetSender().GetLogin()
-	if !checksEnabledForUser(aeAPI, login) {
+	if !checksEnabledForUser(api, login) {
 		log.Infof("Checks not enabled for sender %s", login)
 		return false, nil
 	}
@@ -195,7 +193,7 @@ func handleCheckRunEvent(
 		case "recompute":
 			shouldSchedule = true
 		case "ignore":
-			err := checksAPI.IgnoreFailure(
+			err := api.IgnoreFailure(
 				login,
 				owner,
 				repo,
@@ -203,7 +201,7 @@ func handleCheckRunEvent(
 				checkRun.GetInstallation())
 			return err == nil, err
 		case "cancel":
-			err := checksAPI.CancelRun(
+			err := api.CancelRun(
 				login,
 				owner,
 				repo,
@@ -228,7 +226,7 @@ func handleCheckRunEvent(
 			log.Errorf("Failed to parse \"%s\" as product spec", name)
 			return false, err
 		}
-		checksAPI.ScheduleResultsProcessing(sha, spec)
+		api.ScheduleResultsProcessing(sha, spec)
 		return true, nil
 	}
 	log.Debugf("Ignoring %s action for %s check_run", action, status)
@@ -239,15 +237,15 @@ func handleCheckRunEvent(
 // GitHub check_suite is created in the main WPT repository for those. GitHub
 // automatically creates a check_suite for code pushed to the WPT repository,
 // so we don't need to do anything for same-repo pull requests.
-func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []byte) (bool, error) {
-	log := shared.GetLogger(aeAPI.Context())
+func handlePullRequestEvent(api API, payload []byte) (bool, error) {
+	log := shared.GetLogger(api.Context())
 	var pullRequest github.PullRequestEvent
 	if err := json.Unmarshal(payload, &pullRequest); err != nil {
 		return false, err
 	}
 
 	login := pullRequest.GetPullRequest().GetUser().GetLogin()
-	if !checksEnabledForUser(aeAPI, login) {
+	if !checksEnabledForUser(api, login) {
 		log.Infof("Checks not enabled for sender %s", login)
 		return false, nil
 	}
@@ -264,8 +262,8 @@ func handlePullRequestEvent(aeAPI shared.AppEngineAPI, checksAPI API, payload []
 	destRepoID := pullRequest.GetPullRequest().GetBase().GetRepo().GetID()
 	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
 		// Pull is across forks; request a check suite on the main fork too.
-		appID, installationID := checksAPI.GetWPTRepoAppInstallationIDs()
-		return checksAPI.CreateWPTCheckSuite(appID, installationID, sha, pullRequest.GetNumber())
+		appID, installationID := api.GetWPTRepoAppInstallationIDs()
+		return api.CreateWPTCheckSuite(appID, installationID, sha, pullRequest.GetNumber())
 	}
 	return false, nil
 }
@@ -327,8 +325,8 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 // cause wpt.fyi or staging.wpt.fyi summary results to show up in the GitHub
 // UI. Currently this is enabled for all users on prod, but only for some users
 // on staging to avoid having a confusing double-set of checks appear.
-func checksEnabledForUser(aeAPI shared.AppEngineAPI, login string) bool {
-	if aeAPI.IsFeatureEnabled(checksForAllUsersFeature) {
+func checksEnabledForUser(api API, login string) bool {
+	if api.IsFeatureEnabled(checksForAllUsersFeature) {
 		return true
 	}
 	enabledLogins := []string{
