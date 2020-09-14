@@ -96,8 +96,8 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to schedule task", http.StatusInternalServerError)
 		return
 	}
-	log.Infof("Task %s added to queue", t.Name)
-	fmt.Fprintf(w, "Task %s added to queue\n", t.Name)
+	log.Infof("Task %s added to queue", t)
+	fmt.Fprintf(w, "Task %s added to queue\n", t)
 }
 
 func saveToGCS(a API, uploader string, resultFiles, screenshotFiles []*multipart.FileHeader) (

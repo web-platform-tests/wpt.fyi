@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/taskqueue"
 )
 
 // gcsPattern is the pattern for gs:// URI.
@@ -45,9 +44,7 @@ type API interface {
 	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
 	UpdatePendingTestRun(pendingRun shared.PendingTestRun) error
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
-	ScheduleResultsTask(
-		uploader string, results, screenshots []string, extraParams map[string]string) (
-		*taskqueue.Task, error)
+	ScheduleResultsTask(uploader string, results, screenshots []string, extraParams map[string]string) (string, error)
 }
 
 type apiImpl struct {
@@ -159,10 +156,10 @@ func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 }
 
 func (a apiImpl) ScheduleResultsTask(
-	uploader string, results, screenshots []string, extraParams map[string]string) (*taskqueue.Task, error) {
+	uploader string, results, screenshots []string, extraParams map[string]string) (string, error) {
 	key, err := a.store.ReserveID("TestRun")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	pendingRun := shared.PendingTestRun{
@@ -174,7 +171,7 @@ func (a apiImpl) ScheduleResultsTask(
 		},
 	}
 	if err := a.UpdatePendingTestRun(pendingRun); err != nil {
-		return nil, err
+		return "", err
 	}
 
 	payload := url.Values{
@@ -189,8 +186,5 @@ func (a apiImpl) ScheduleResultsTask(
 			payload.Set(k, v)
 		}
 	}
-	t := taskqueue.NewPOSTTask(ResultsTarget, payload)
-	t.Name = fmt.Sprintf("%v", key.IntID())
-	t, err = taskqueue.Add(a.Context(), t, a.queue)
-	return t, err
+	return a.ScheduleTask(ResultsQueue, ResultsTarget, payload)
 }
