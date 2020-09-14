@@ -11,15 +11,52 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os/exec"
-	"strings"
+	"os"
 	"time"
 
 	"github.com/google/go-github/v31/github"
 	"golang.org/x/oauth2"
-	"google.golang.org/appengine"
+	apps "google.golang.org/api/appengine/v1"
+
+	// TODO(#1747): Deprecate this library.
 	"google.golang.org/appengine/user"
 )
+
+// runtimeIdentity contains the identity of the current AppEngine service when
+// running on GAE, or empty when running locally.
+var runtimeIdentity struct {
+	LocationID  string
+	AppID       string
+	Service     string
+	Version     string
+	application *apps.Application
+}
+
+func init() {
+	// Env vars available on GAE:
+	// https://cloud.google.com/appengine/docs/standard/go/runtime#environment_variables
+	// Note: the "region code" part of GAE_APPLICATION is NOT location ID.
+	if proj := os.Getenv("GOOGLE_CLOUD_PROJECT"); proj != "" {
+		runtimeIdentity.AppID = proj
+		runtimeIdentity.Service = os.Getenv("GAE_SERVICE")
+		if runtimeIdentity.Service == "" {
+			panic("Missing environment variable: GAE_SERVICE")
+		}
+		runtimeIdentity.Version = os.Getenv("GAE_VERSION")
+		if runtimeIdentity.Version == "" {
+			panic("Missing environment variable: GAE_VERSION")
+		}
+		service, err := apps.NewService(context.Background())
+		if err != nil {
+			panic(err)
+		}
+		runtimeIdentity.application, err = service.Apps.Get(proj).Do()
+		if err != nil {
+			panic(err)
+		}
+		runtimeIdentity.LocationID = runtimeIdentity.application.LocationId
+	}
+}
 
 // AppEngineAPI is an abstraction of some appengine context helper methods.
 type AppEngineAPI interface {
@@ -43,14 +80,14 @@ type AppEngineAPI interface {
 	GetHostname() string
 	// GetVersionedHostname returns the AppEngine hostname for the current
 	// version of the default service, i.e.,
-	//   version-dot-wptdashboard{,-staging}.appspot.com.
+	//   VERSION-dot-wptdashboard{,-staging}.REGION.r.appspot.com.
 	// Note: if the default service does not have the current version,
 	// AppEngine routing will find a version according to traffic split.
 	// https://cloud.google.com/appengine/docs/standard/go/how-requests-are-routed#soft_routing
 	GetVersionedHostname() string
 	// GetServiceHostname returns the AppEngine hostname for the current
 	// version of the given service, i.e.,
-	//   version-dot-service-dot-wptdashboard{,-staging}.appspot.com.
+	//   VERSION-dot-SERVICE-dot-wptdashboard{,-staging}.REGION.r.appspot.com.
 	// Note: if the specified service does not have the current version,
 	// AppEngine routing will find a version according to traffic split;
 	// if the service does not exist at all, AppEngine will fall back to
@@ -133,36 +170,35 @@ func (a appEngineAPIImpl) GetUploader(uploader string) (Uploader, error) {
 }
 
 func (a appEngineAPIImpl) GetHostname() string {
-	hostname := appengine.DefaultVersionHostname(a.ctx)
-	if hostname == "wptdashboard.appspot.com" {
+	if runtimeIdentity.AppID == "wptdashboard" {
 		return "wpt.fyi"
-	} else if hostname == "wptdashboard-staging.appspot.com" {
+	} else if runtimeIdentity.AppID == "wptdashboard-staging" {
 		return "staging.wpt.fyi"
+	} else if runtimeIdentity.application != nil {
+		return runtimeIdentity.application.DefaultHostname
 	}
-	return hostname
+	return "localhost"
 }
 
 func (a appEngineAPIImpl) GetVersion() string {
-	version := strings.Split(appengine.VersionID(a.ctx), ".")[0]
-	if appengine.IsDevAppServer() {
-		out, err := exec.Command("/usr/bin/git", "rev-parse", "--abbrev-ref", "HEAD").Output()
-		if err == nil && len(out) > 0 {
-			version = string(out)
-		} else {
-			version = "dev_appserver"
-		}
+	if runtimeIdentity.Version != "" {
+		return runtimeIdentity.Version
 	}
-	return version
+	return "local dev_appserver"
 }
 
 func (a appEngineAPIImpl) GetVersionedHostname() string {
-	hostname := appengine.DefaultVersionHostname(a.ctx)
-	return fmt.Sprintf("%s-dot-%s", a.GetVersion(), hostname)
+	if runtimeIdentity.application != nil {
+		return fmt.Sprintf("%s-dot-%s", a.GetVersion(), runtimeIdentity.application.DefaultHostname)
+	}
+	return "localhost"
 }
 
 func (a appEngineAPIImpl) GetServiceHostname(service string) string {
-	hostname := appengine.DefaultVersionHostname(a.ctx)
-	return fmt.Sprintf("%s-dot-%s-dot-%s", a.GetVersion(), service, hostname)
+	if runtimeIdentity.application != nil {
+		return fmt.Sprintf("%s-dot-%s-dot-%s", a.GetVersion(), service, runtimeIdentity.application.DefaultHostname)
+	}
+	return "localhost"
 }
 
 func (a appEngineAPIImpl) GetResultsURL(filter TestRunFilter) *url.URL {
