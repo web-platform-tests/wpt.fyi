@@ -19,7 +19,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/appengine/taskqueue"
 
 	"github.com/web-platform-tests/wpt.fyi/api/receiver/mock_receiver"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -117,14 +116,13 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 		"os_version":      "",
 		"callback_url":    "",
 	}
-	task := &taskqueue.Task{Name: "task"}
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
 		mockAE.EXPECT().ScheduleResultsTask(
-			"blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil, extraParams).Return(task, nil),
+			"blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil, extraParams).Return("task", nil),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
@@ -152,13 +150,12 @@ func TestHandleResultsUpload_azure(t *testing.T) {
 	req.SetBasicAuth("blade-runner", "123")
 	resp := httptest.NewRecorder()
 
-	task := &taskqueue.Task{Name: "task"}
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin().Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-		mockAE.EXPECT().ScheduleResultsTask("blade-runner", nil, nil, extraParams).Return(task, nil),
+		mockAE.EXPECT().ScheduleResultsTask("blade-runner", nil, nil, extraParams).Return("task", nil),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
@@ -183,13 +180,12 @@ func TestHandleResultsUpload_url(t *testing.T) {
 			req.SetBasicAuth("blade-runner", "123")
 			resp := httptest.NewRecorder()
 
-			task := &taskqueue.Task{Name: "task"}
 			mockAE := mock_receiver.NewMockAPI(mockCtrl)
 			mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 			gomock.InOrder(
 				mockAE.EXPECT().IsAdmin().Return(false),
 				mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-				mockAE.EXPECT().ScheduleResultsTask("blade-runner", urls, screenshot, emptyParams).Return(task, nil),
+				mockAE.EXPECT().ScheduleResultsTask("blade-runner", urls, screenshot, emptyParams).Return("task", nil),
 			)
 
 			HandleResultsUpload(mockAE, resp, req)
@@ -217,13 +213,12 @@ func TestHandleResultsUpload_file(t *testing.T) {
 			req.SetBasicAuth("blade-runner", "123")
 			resp := httptest.NewRecorder()
 
-			task := &taskqueue.Task{Name: "task"}
 			mockAE := mock_receiver.NewMockAPI(mockCtrl)
 			mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 			gomock.InOrder(
 				mockAE.EXPECT().IsAdmin().Return(false),
 				mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-				mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), emptyParams).Return(task, nil),
+				mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), emptyParams).Return("task", nil),
 			)
 			for range filenames {
 				mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer/blade-runner/.*\.json$`), gomock.Any(), true).Return(nil)
