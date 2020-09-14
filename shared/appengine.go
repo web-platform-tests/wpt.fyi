@@ -40,11 +40,11 @@ func init() {
 		runtimeIdentity.AppID = proj
 		runtimeIdentity.Service = os.Getenv("GAE_SERVICE")
 		if runtimeIdentity.Service == "" {
-			panic("Missing GAE_SERVICE")
+			panic("Missing environment variable: GAE_SERVICE")
 		}
 		runtimeIdentity.Version = os.Getenv("GAE_VERSION")
 		if runtimeIdentity.Version == "" {
-			panic("Missing GAE_VERSION")
+			panic("Missing environment variable: GAE_VERSION")
 		}
 		service, err := apps.NewService(context.Background())
 		if err != nil {
