@@ -46,7 +46,7 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 }
 
 // Close closes all clients in Clients. It must be called once and only once
-// before the server exits. Do not use any AppEngine APIs afterwards.
+// before the server exits. Do not use AppEngineAPI afterwards.
 func (c *clientsImpl) Close() error {
 	err := c.cloudtasks.Close()
 	c.cloudtasks = nil
