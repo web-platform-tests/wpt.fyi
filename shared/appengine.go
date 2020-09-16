@@ -37,6 +37,10 @@ var Clients clientsImpl
 // Init initializes all clients in Clients. If an error is encountered, it
 // returns immediately without trying to initialize the remaining clients.
 func (c *clientsImpl) Init(ctx context.Context) (err error) {
+	if runtimeIdentity.AppID == "" {
+		// When running in dev_appserver, do not create real clients.
+		return nil
+	}
 	c.cloudtasks, err = cloudtasks.NewClient(ctx)
 	return err
 }
@@ -47,44 +51,6 @@ func (c *clientsImpl) Close() error {
 	err := c.cloudtasks.Close()
 	c.cloudtasks = nil
 	return err
-}
-
-// runtimeIdentity contains the identity of the current AppEngine service when
-// running on GAE, or empty when running locally.
-var runtimeIdentity struct {
-	LocationID string
-	AppID      string
-	Service    string
-	Version    string
-
-	// Internal details of the application identity
-	application *apps.Application
-}
-
-func init() {
-	// Env vars available on GAE:
-	// https://cloud.google.com/appengine/docs/standard/go/runtime#environment_variables
-	// Note: the "region code" part of GAE_APPLICATION is NOT location ID.
-	if proj := os.Getenv("GOOGLE_CLOUD_PROJECT"); proj != "" {
-		runtimeIdentity.AppID = proj
-		runtimeIdentity.Service = os.Getenv("GAE_SERVICE")
-		if runtimeIdentity.Service == "" {
-			panic("Missing environment variable: GAE_SERVICE")
-		}
-		runtimeIdentity.Version = os.Getenv("GAE_VERSION")
-		if runtimeIdentity.Version == "" {
-			panic("Missing environment variable: GAE_VERSION")
-		}
-		if service, err := apps.NewService(context.Background()); err != nil {
-			panic(err)
-		} else {
-			if runtimeIdentity.application, err = service.Apps.Get(proj).Do(); err != nil {
-				panic(err)
-			}
-		}
-		runtimeIdentity.LocationID = runtimeIdentity.application.LocationId
-
-	}
 }
 
 // AppEngineAPI is an abstraction of some appengine context helper methods.
@@ -138,6 +104,44 @@ type AppEngineAPI interface {
 
 	// ScheduleTask schedules an AppEngine POST task on Cloud Tasks.
 	ScheduleTask(queueName, target string, params url.Values) (taskName string, err error)
+}
+
+// runtimeIdentity contains the identity of the current AppEngine service when
+// running on GAE, or empty when running locally.
+var runtimeIdentity struct {
+	LocationID string
+	AppID      string
+	Service    string
+	Version    string
+
+	// Internal details of the application identity
+	application *apps.Application
+}
+
+func init() {
+	// Env vars available on GAE:
+	// https://cloud.google.com/appengine/docs/standard/go/runtime#environment_variables
+	// Note: the "region code" part of GAE_APPLICATION is NOT location ID.
+	if proj := os.Getenv("GOOGLE_CLOUD_PROJECT"); proj != "" {
+		runtimeIdentity.AppID = proj
+		runtimeIdentity.Service = os.Getenv("GAE_SERVICE")
+		if runtimeIdentity.Service == "" {
+			panic("Missing environment variable: GAE_SERVICE")
+		}
+		runtimeIdentity.Version = os.Getenv("GAE_VERSION")
+		if runtimeIdentity.Version == "" {
+			panic("Missing environment variable: GAE_VERSION")
+		}
+		if service, err := apps.NewService(context.Background()); err != nil {
+			panic(err)
+		} else {
+			if runtimeIdentity.application, err = service.Apps.Get(proj).Do(); err != nil {
+				panic(err)
+			}
+		}
+		runtimeIdentity.LocationID = runtimeIdentity.application.LocationId
+
+	}
 }
 
 // NewAppEngineAPI returns an AppEngineAPI for the given context.
