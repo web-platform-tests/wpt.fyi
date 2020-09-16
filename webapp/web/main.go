@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
@@ -8,6 +10,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/api/screenshot"
 	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/webapp"
 	"google.golang.org/appengine"
 )
@@ -25,5 +28,9 @@ func init() {
 }
 
 func main() {
+	if err := shared.Clients.Init(context.Background()); err != nil {
+		panic(err)
+	}
+	defer shared.Clients.Close()
 	appengine.Main()
 }

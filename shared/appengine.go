@@ -24,6 +24,31 @@ import (
 	"google.golang.org/appengine/user"
 )
 
+type clientsImpl struct {
+	cloudtasks *cloudtasks.Client
+}
+
+// Clients is a singleton containing heavyweight (e.g. with connection pools)
+// clients that should be bound to the runtime instead of each request in order
+// to be reused. They are initialized and authenticated at startup using the
+// background context; each request should use its own context.
+var Clients clientsImpl
+
+// Init initializes all clients in Clients. If an error is encountered, it
+// returns immediately without trying to initialize the remaining clients.
+func (c *clientsImpl) Init(ctx context.Context) (err error) {
+	c.cloudtasks, err = cloudtasks.NewClient(ctx)
+	return err
+}
+
+// Close closes all clients in Clients. It must be called once and only once
+// before the server exits. Do not use any AppEngine APIs afterwards.
+func (c *clientsImpl) Close() error {
+	err := c.cloudtasks.Close()
+	c.cloudtasks = nil
+	return err
+}
+
 // runtimeIdentity contains the identity of the current AppEngine service when
 // running on GAE, or empty when running locally.
 var runtimeIdentity struct {
@@ -36,20 +61,11 @@ var runtimeIdentity struct {
 	application *apps.Application
 }
 
-// clients contains heavyweight (e.g. with connection pools) clients that
-// should be bound to the runtime instead of each request in order to be
-// reused. They are initialized and authenticated at startup using the
-// background context; each request should use its own context.
-var clients struct {
-	cloudtasks *cloudtasks.Client
-}
-
 func init() {
 	// Env vars available on GAE:
 	// https://cloud.google.com/appengine/docs/standard/go/runtime#environment_variables
 	// Note: the "region code" part of GAE_APPLICATION is NOT location ID.
 	if proj := os.Getenv("GOOGLE_CLOUD_PROJECT"); proj != "" {
-		ctx := context.Background()
 		runtimeIdentity.AppID = proj
 		runtimeIdentity.Service = os.Getenv("GAE_SERVICE")
 		if runtimeIdentity.Service == "" {
@@ -59,7 +75,7 @@ func init() {
 		if runtimeIdentity.Version == "" {
 			panic("Missing environment variable: GAE_VERSION")
 		}
-		if service, err := apps.NewService(ctx); err != nil {
+		if service, err := apps.NewService(context.Background()); err != nil {
 			panic(err)
 		} else {
 			if runtimeIdentity.application, err = service.Apps.Get(proj).Do(); err != nil {
@@ -68,10 +84,6 @@ func init() {
 		}
 		runtimeIdentity.LocationID = runtimeIdentity.application.LocationId
 
-		var err error
-		if clients.cloudtasks, err = cloudtasks.NewClient(ctx); err != nil {
-			panic(err)
-		}
 	}
 }
 
@@ -235,8 +247,8 @@ func (a appEngineAPIImpl) GetResultsUploadURL() *url.URL {
 }
 
 func (a appEngineAPIImpl) ScheduleTask(queueName, target string, params url.Values) (taskName string, err error) {
-	if clients.cloudtasks == nil {
-		panic("clients.cloudtasks is nil")
+	if Clients.cloudtasks == nil {
+		panic("Clients.cloudtasks is nil")
 	}
 
 	// Based on https://cloud.google.com/tasks/docs/creating-appengine-tasks#go
@@ -254,7 +266,7 @@ func (a appEngineAPIImpl) ScheduleTask(queueName, target string, params url.Valu
 		},
 	}
 	req.Task.GetAppEngineHttpRequest().Body = []byte(params.Encode())
-	createdTask, err := clients.cloudtasks.CreateTask(a.ctx, req)
+	createdTask, err := Clients.cloudtasks.CreateTask(a.ctx, req)
 	if err != nil {
 		return "", err
 	}
