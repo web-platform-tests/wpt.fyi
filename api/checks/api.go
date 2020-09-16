@@ -49,7 +49,7 @@ type checksAPIImpl struct {
 
 // NewAPI returns a real implementation of the API
 func NewAPI(ctx context.Context) API {
-	return &checksAPIImpl{
+	return checksAPIImpl{
 		AppEngineAPI: shared.NewAppEngineAPI(ctx),
 		queue:        CheckProcessingQueue,
 	}
