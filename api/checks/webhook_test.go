@@ -34,11 +34,10 @@ func TestHandleCheckRunEvent_InvalidApp(t *testing.T) {
 	}
 	payload, _ := json.Marshal(event)
 
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	checksAPI := mock_checks.NewMockAPI(mockCtrl)
+	api := mock_checks.NewMockAPI(mockCtrl)
+	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(api, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -51,12 +50,11 @@ func TestHandleCheckRunEvent_Created_Completed(t *testing.T) {
 	event := getCheckRunCreatedEvent("completed", "lukebjerring", sha)
 	payload, _ := json.Marshal(event)
 
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-	checksAPI := mock_checks.NewMockAPI(mockCtrl)
+	api := mock_checks.NewMockAPI(mockCtrl)
+	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(api, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -69,12 +67,11 @@ func TestHandleCheckRunEvent_Created_Pending_ChecksNotEnabledForUser(t *testing.
 	event := getCheckRunCreatedEvent("pending", "user-without-checks", sha)
 	payload, _ := json.Marshal(event)
 
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-	checksAPI := mock_checks.NewMockAPI(mockCtrl)
+	api := mock_checks.NewMockAPI(mockCtrl)
+	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(api, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -87,13 +84,12 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 	event := getCheckRunCreatedEvent("pending", "lukebjerring", sha)
 	payload, _ := json.Marshal(event)
 
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-	checksAPI := mock_checks.NewMockAPI(mockCtrl)
-	checksAPI.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome"))
+	api := mock_checks.NewMockAPI(mockCtrl)
+	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
+	api.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome")).Return(nil)
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(api, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
@@ -131,13 +127,12 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 			}
 			payload, _ := json.Marshal(event)
 
-			aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-			aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-			aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-			checksAPI := mock_checks.NewMockAPI(mockCtrl)
-			checksAPI.EXPECT().IgnoreFailure(username, owner, repo, event.GetCheckRun(), event.GetInstallation())
+			api := mock_checks.NewMockAPI(mockCtrl)
+			api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+			api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
+			api.EXPECT().IgnoreFailure(username, owner, repo, event.GetCheckRun(), event.GetInstallation())
 
-			processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+			processed, err := handleCheckRunEvent(api, payload)
 			assert.Nil(t, err)
 			assert.True(t, processed)
 		})
@@ -177,13 +172,12 @@ func TestHandleCheckRunEvent_ActionRequested_Recompute(t *testing.T) {
 			}
 			payload, _ := json.Marshal(event)
 
-			aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-			aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-			aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-			checksAPI := mock_checks.NewMockAPI(mockCtrl)
-			checksAPI.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome[experimental]"))
+			api := mock_checks.NewMockAPI(mockCtrl)
+			api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+			api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
+			api.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome[experimental]")).Return(nil)
 
-			processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+			processed, err := handleCheckRunEvent(api, payload)
 			assert.Nil(t, err)
 			assert.True(t, processed)
 		})
@@ -202,13 +196,12 @@ func TestHandleCheckRunEvent_ActionRequested_Cancel(t *testing.T) {
 	event.RequestedAction = &github.RequestedAction{Identifier: "cancel"}
 	payload, _ := json.Marshal(event)
 
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-	checksAPI := mock_checks.NewMockAPI(mockCtrl)
-	checksAPI.EXPECT().CancelRun(username, shared.WPTRepoOwner, shared.WPTRepoName, event.GetCheckRun(), event.GetInstallation())
+	api := mock_checks.NewMockAPI(mockCtrl)
+	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
+	api.EXPECT().CancelRun(username, shared.WPTRepoOwner, shared.WPTRepoName, event.GetCheckRun(), event.GetInstallation())
 
-	processed, err := handleCheckRunEvent(aeAPI, checksAPI, payload)
+	processed, err := handleCheckRunEvent(api, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
@@ -243,12 +236,11 @@ func TestHandlePullRequestEvent_ChecksNotEnabledForUser(t *testing.T) {
 	event := getOpenedPREvent("user-without-checks", sha)
 	payload, _ := json.Marshal(event)
 
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-	checksAPI := mock_checks.NewMockAPI(mockCtrl)
+	api := mock_checks.NewMockAPI(mockCtrl)
+	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 
-	processed, err := handlePullRequestEvent(aeAPI, checksAPI, payload)
+	processed, err := handlePullRequestEvent(api, payload)
 	assert.Nil(t, err)
 	assert.False(t, processed)
 }
@@ -261,14 +253,13 @@ func TestHandlePullRequestEvent_ChecksEnabledForUser(t *testing.T) {
 	event := getOpenedPREvent("lukebjerring", sha)
 	payload, _ := json.Marshal(event)
 
-	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	aeAPI.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	aeAPI.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-	checksAPI := mock_checks.NewMockAPI(mockCtrl)
-	checksAPI.EXPECT().GetWPTRepoAppInstallationIDs().Return(wptfyiStagingCheckAppID, wptRepoStagingInstallationID)
-	checksAPI.EXPECT().CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoStagingInstallationID, sha, 123).Return(true, nil)
+	api := mock_checks.NewMockAPI(mockCtrl)
+	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
+	api.EXPECT().GetWPTRepoAppInstallationIDs().Return(wptfyiStagingCheckAppID, wptRepoStagingInstallationID)
+	api.EXPECT().CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoStagingInstallationID, sha, 123).Return(true, nil)
 
-	processed, err := handlePullRequestEvent(aeAPI, checksAPI, payload)
+	processed, err := handlePullRequestEvent(api, payload)
 	assert.Nil(t, err)
 	assert.True(t, processed)
 }
@@ -285,7 +276,7 @@ func getOpenedPREvent(user, sha string) github.PullRequestEvent {
 		PullRequest: &github.PullRequest{
 			User: &github.User{Login: &user},
 			Head: &github.PullRequestBranch{
-				SHA: &sha,
+				SHA:  &sha,
 				Repo: &github.Repository{ID: &headRepoID},
 			},
 			Base: &github.PullRequestBranch{

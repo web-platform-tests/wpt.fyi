@@ -13,15 +13,15 @@ import (
 	"io"
 	"net/http/httptest"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/taskqueue"
 )
 
 type mockGcs struct {
@@ -85,34 +85,30 @@ func TestScheduleResultsTask(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(false)
 	assert.Nil(t, err)
 	defer done()
-
-	stats, err := taskqueue.QueueStats(ctx, []string{""})
-	assert.Nil(t, err)
-	assert.Equal(t, stats[0].Tasks, 0)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAE := sharedtest.NewMockAppEngineAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(ctx).AnyTimes()
 
 	a := NewAPI(ctx).(*apiImpl)
-	// dev_appserver does not support non-default queues, so we override the name of the queue here.
-	a.queue = ""
+	a.AppEngineAPI = mockAE
 	results := []string{"gs://blade-runner/test.json", "http://wpt.fyi/test.json.gz"}
 	screenshots := []string{"gs://blade-runner/test.db"}
+	payload := url.Values{
+		"results":     results,
+		"screenshots": screenshots,
+	}
+	// This id is reserved from Datastore; since we are using dev_appserver
+	// with an empty Datastore, we always get "1".
+	payload.Set("id", "1")
+	payload.Set("uploader", "blade-runner")
+	mockAE.EXPECT().ScheduleTask(ResultsQueue, "1", ResultsTarget, payload).Return("1", nil)
 	task, err := a.ScheduleResultsTask("blade-runner", results, screenshots, nil)
+	assert.Equal(t, "1", task)
 	assert.Nil(t, err)
-
-	payload, err := url.ParseQuery(string(task.Payload))
-	assert.Nil(t, err)
-	assert.Equal(t, task.Name, payload.Get("id"))
-	assert.Equal(t, "blade-runner", payload.Get("uploader"))
-	assert.Equal(t, results, payload["results"])
-	assert.Equal(t, screenshots, payload["screenshots"])
-
-	stats, err = taskqueue.QueueStats(ctx, []string{""})
-	assert.Nil(t, err)
-	assert.Equal(t, stats[0].Tasks, 1)
 
 	var pendingRun shared.PendingTestRun
-	id, err := strconv.Atoi(task.Name)
-	assert.Nil(t, err)
-	datastore.Get(ctx, datastore.NewKey(ctx, "PendingTestRun", "", int64(id), nil), &pendingRun)
+	datastore.Get(ctx, datastore.NewKey(ctx, "PendingTestRun", "", 1, nil), &pendingRun)
 	assert.Equal(t, "blade-runner", pendingRun.Uploader)
 	assert.Equal(t, shared.StageWptFyiReceived, pendingRun.Stage)
 }
