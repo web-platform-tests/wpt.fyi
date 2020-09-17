@@ -178,7 +178,7 @@ func (a apiImpl) ScheduleResultsTask(
 		"results":     results,
 		"screenshots": screenshots,
 	}
-	payload.Set("id", fmt.Sprintf("%v", key.IntID()))
+	payload.Set("id", fmt.Sprint(key.IntID()))
 	payload.Set("uploader", uploader)
 
 	for k, v := range extraParams {
@@ -186,5 +186,5 @@ func (a apiImpl) ScheduleResultsTask(
 			payload.Set(k, v)
 		}
 	}
-	return a.ScheduleTask(ResultsQueue, ResultsTarget, payload)
+	return a.ScheduleTask(ResultsQueue, fmt.Sprint(key.IntID()), ResultsTarget, payload)
 }

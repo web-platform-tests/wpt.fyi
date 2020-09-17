@@ -62,7 +62,7 @@ func (s checksAPIImpl) ScheduleResultsProcessing(sha string, product shared.Prod
 	target := fmt.Sprintf("/api/checks/%s", sha)
 	q := url.Values{}
 	q.Set("product", product.String())
-	_, err := s.ScheduleTask(s.queue, target, q)
+	_, err := s.ScheduleTask(s.queue, "", target, q)
 	if err != nil {
 		log.Warningf("Failed to queue %s @ %s: %s", product.String(), sha[:7], err.Error())
 	} else {

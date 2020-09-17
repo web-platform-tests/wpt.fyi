@@ -358,16 +358,16 @@ func (mr *MockAPIMockRecorder) ScheduleResultsProcessing(arg0, arg1 interface{})
 }
 
 // ScheduleTask mocks base method
-func (m *MockAPI) ScheduleTask(arg0, arg1 string, arg2 url.Values) (string, error) {
+func (m *MockAPI) ScheduleTask(arg0, arg1, arg2 string, arg3 url.Values) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScheduleTask", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ScheduleTask", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ScheduleTask indicates an expected call of ScheduleTask
-func (mr *MockAPIMockRecorder) ScheduleTask(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) ScheduleTask(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAPI)(nil).ScheduleTask), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAPI)(nil).ScheduleTask), arg0, arg1, arg2, arg3)
 }

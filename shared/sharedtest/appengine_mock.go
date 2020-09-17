@@ -266,16 +266,16 @@ func (mr *MockAppEngineAPIMockRecorder) LoginURL(arg0 interface{}) *gomock.Call 
 }
 
 // ScheduleTask mocks base method
-func (m *MockAppEngineAPI) ScheduleTask(arg0, arg1 string, arg2 url.Values) (string, error) {
+func (m *MockAppEngineAPI) ScheduleTask(arg0, arg1, arg2 string, arg3 url.Values) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScheduleTask", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ScheduleTask", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ScheduleTask indicates an expected call of ScheduleTask
-func (mr *MockAppEngineAPIMockRecorder) ScheduleTask(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockAppEngineAPIMockRecorder) ScheduleTask(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAppEngineAPI)(nil).ScheduleTask), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAppEngineAPI)(nil).ScheduleTask), arg0, arg1, arg2, arg3)
 }

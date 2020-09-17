@@ -102,7 +102,7 @@ func TestScheduleResultsTask(t *testing.T) {
 	// with an empty Datastore, we always get "1".
 	payload.Set("id", "1")
 	payload.Set("uploader", "blade-runner")
-	mockAE.EXPECT().ScheduleTask(ResultsQueue, ResultsTarget, payload).Return("1", nil)
+	mockAE.EXPECT().ScheduleTask(ResultsQueue, "1", ResultsTarget, payload).Return("1", nil)
 	task, err := a.ScheduleResultsTask("blade-runner", results, screenshots, nil)
 	assert.Equal(t, "1", task)
 	assert.Nil(t, err)
