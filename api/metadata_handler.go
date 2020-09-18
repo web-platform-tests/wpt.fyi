@@ -66,7 +66,11 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		forceUpdate:  true}
 	tm := shared.NewTriageMetadata(ctx, botClient, user.GitHubHandle, user.GitHubEmail, fetcher)
 
-	gac := shared.NewGitAccessControl(ctx, ds, botClient, *token)
+	gac, err := shared.NewGitHubAccessControl(ctx, ds, botClient, user, *token)
+	if err != nil {
+		http.Error(w, "Unable to create GitHub OAuth client: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	handleMetadataTriage(ctx, gac, tm, w, r)
 }
 
@@ -101,25 +105,14 @@ func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, t
 		return
 	}
 
-	code, err := gac.IsValidAccessToken()
-	if err != nil {
-		http.Error(w, "Failed to validate user token:"+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if code != http.StatusOK {
-		http.Error(w, "User token invalid; please log in again.", http.StatusUnauthorized)
-		return
-	}
-
-	code, err = gac.IsValidWPTMember()
+	valid, err := gac.IsValidWPTMember()
 	if err != nil {
 		http.Error(w, "Failed to validate web-platform-tests membership: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if code != http.StatusOK {
-		http.Error(w, "Logged-in user must be a member of the web-platform-tests GitHub organization. To join, please contact wpt.fyi team members.", http.StatusBadRequest)
+	if !valid {
+		http.Error(w, "Logged-in user must be a member of the web-platform-tests GitHub organization. To join, please contact wpt.fyi team members.", http.StatusForbidden)
 		return
 	}
 

@@ -162,26 +162,11 @@ func (m *MockGitHubAccessControl) EXPECT() *MockGitHubAccessControlMockRecorder 
 	return m.recorder
 }
 
-// IsValidAccessToken mocks base method
-func (m *MockGitHubAccessControl) IsValidAccessToken() (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsValidAccessToken")
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IsValidAccessToken indicates an expected call of IsValidAccessToken
-func (mr *MockGitHubAccessControlMockRecorder) IsValidAccessToken() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsValidAccessToken", reflect.TypeOf((*MockGitHubAccessControl)(nil).IsValidAccessToken))
-}
-
 // IsValidWPTMember mocks base method
-func (m *MockGitHubAccessControl) IsValidWPTMember() (int, error) {
+func (m *MockGitHubAccessControl) IsValidWPTMember() (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsValidWPTMember")
-	ret0, _ := ret[0].(int)
+	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

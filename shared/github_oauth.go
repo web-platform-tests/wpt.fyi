@@ -9,6 +9,7 @@ package shared
 import (
 	"context"
 	"encoding/gob"
+	"errors"
 	"net/http"
 
 	"github.com/google/go-github/v31/github"
@@ -30,15 +31,22 @@ type User struct {
 
 // GitHubAccessControl encapsulates implementation details of access control for the wpt-metadata repository.
 type GitHubAccessControl interface {
-	IsValidAccessToken() (int, error)
-	IsValidWPTMember() (int, error)
+	// IsValid* functions also verify the access token with GitHub.
+	IsValidWPTMember() (bool, error)
 }
 
 type githubAccessControlImpl struct {
-	ctx    context.Context
-	ds     Datastore
-	client *github.Client
-	token  string
+	ctx   context.Context
+	ds    Datastore
+	user  *User
+	token string
+
+	// This is the client for the OAuth app.
+	oauthClientID string
+	oauthGHClient *github.Client
+
+	// This is the bot account client.
+	botClient *github.Client
 }
 
 // GitHubOAuth encapsulates implementation details of GitHub OAuth flow.
@@ -106,16 +114,11 @@ func (g *githubOAuthImpl) GetGitHubUser(client *github.Client) (*github.User, er
 func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 	store := NewAppEngineDatastore(ctx, false)
 	log := GetLogger(ctx)
-	clientID, err := GetSecret(store, "github-oauth-client-id")
-	if err != nil {
-		log.Errorf("Failed to get github-oauth-client-id secret: %s", err.Error())
-		return &githubOAuthImpl{}, err
-	}
 
-	secret, err := GetSecret(store, "github-oauth-client-secret")
+	clientID, secret, err := getOAuthClientIDSecret(store)
 	if err != nil {
-		log.Errorf("Failed to get github-oauth-client-secret: %s", err.Error())
-		return &githubOAuthImpl{}, err
+		log.Errorf("Failed to get github-oauth-client-{id,secret}: %e", err)
+		return nil, err
 	}
 
 	oauth := &oauth2.Config{
@@ -129,47 +132,50 @@ func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 	return &githubOAuthImpl{ctx: ctx, conf: oauth, ds: store}, nil
 }
 
-func (gaci githubAccessControlImpl) IsValidAccessToken() (int, error) {
-	clientID, err := GetSecret(gaci.ds, "github-oauth-client-id")
+func (gaci githubAccessControlImpl) isValidAccessToken() (bool, error) {
+	_, res, err := gaci.oauthGHClient.Authorizations.Check(gaci.ctx, gaci.oauthClientID, gaci.token)
 	if err != nil {
-		return -1, err
+		return false, err
 	}
 
-	secret, err := GetSecret(gaci.ds, "github-oauth-client-secret")
+	return res.StatusCode == http.StatusOK, nil
+}
+
+func (gaci githubAccessControlImpl) IsValidWPTMember() (bool, error) {
+	valid, err := gaci.isValidAccessToken()
 	if err != nil {
-		return -1, err
+		return false, err
+	}
+	if !valid {
+		return false, errors.New("Invalid access token")
+	}
+	_, res, err := gaci.botClient.Organizations.GetOrgMembership(gaci.ctx, gaci.user.GitHubHandle, "web-platform-tests")
+	if err != nil {
+		return false, err
 	}
 
+	return res.StatusCode == http.StatusOK, nil
+}
+
+// NewGitHubAccessControl returns a GitHubAccessControl for checking the permission of a logged-in GitHub user.
+func NewGitHubAccessControl(ctx context.Context, ds Datastore, botClient *github.Client, user *User, token string) (GitHubAccessControl, error) {
+	clientID, secret, err := getOAuthClientIDSecret(ds)
+	if err != nil {
+		return nil, err
+	}
 	tp := github.BasicAuthTransport{
 		Username: clientID,
 		Password: secret,
 	}
-
-	oauthAppClient := github.NewClient(tp.Client())
-	_, res, err := oauthAppClient.Authorizations.Check(gaci.ctx, clientID, gaci.token)
-	if err != nil {
-		return -1, err
-	}
-
-	return res.StatusCode, nil
-}
-
-func (gaci githubAccessControlImpl) IsValidWPTMember() (int, error) {
-	_, res, err := gaci.client.Organizations.GetOrgMembership(gaci.ctx, "", "web-platform-tests")
-	if err != nil {
-		return -1, err
-	}
-
-	return res.StatusCode, nil
-}
-
-// NewGitAccessControl returns the implementation of GitHubAccessControl for apiMetadataTriageHandler.
-func NewGitAccessControl(ctx context.Context, ds Datastore, client *github.Client, token string) GitHubAccessControl {
 	return githubAccessControlImpl{
-		ctx:    ctx,
-		ds:     ds,
-		client: client,
-		token:  token}
+		ctx:           ctx,
+		ds:            ds,
+		user:          user,
+		token:         token,
+		oauthClientID: clientID,
+		oauthGHClient: github.NewClient(tp.Client()),
+		botClient:     botClient,
+	}, nil
 }
 
 // GetSecureCookie returns the securecookie instance for wpt.fyi. This instance can
@@ -224,4 +230,16 @@ func NewGitHubClientFromToken(ctx context.Context, token string) *github.Client 
 		AccessToken: token,
 	}))
 	return github.NewClient(oauthClient)
+}
+
+func getOAuthClientIDSecret(store Datastore) (clientID, clientSecret string, err error) {
+	clientID, err = GetSecret(store, "github-oauth-client-id")
+	if err != nil {
+		return "", "", err
+	}
+	clientSecret, err = GetSecret(store, "github-oauth-client-secret")
+	if err != nil {
+		return "", "", err
+	}
+	return clientID, clientSecret, nil
 }
