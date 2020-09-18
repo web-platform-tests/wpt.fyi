@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/securecookie"
 	"golang.org/x/oauth2"
 	ghOAuth "golang.org/x/oauth2/github"
-	"google.golang.org/appengine"
 )
 
 func init() {
@@ -94,6 +93,7 @@ func (g *githubOAuthImpl) GetNewClient(oauthToken string) (*github.Client, error
 }
 
 func (g *githubOAuthImpl) GetGitHubUser(client *github.Client) (*github.User, error) {
+	// Passing the empty string will fetch the authenticated user.
 	ghUser, _, err := client.Users.Get(g.ctx, "")
 	if err != nil {
 		return nil, err
@@ -209,10 +209,9 @@ func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*Use
 			decodedToken, okToken := cookieValue["token"].(string)
 			if okUser && okToken {
 				return &decodedUser, &decodedToken
-			} else if appengine.IsDevAppServer() {
-				log.Errorf("Failed to cast user or token")
 			}
-		} else if appengine.IsDevAppServer() {
+			log.Errorf("Failed to cast user or token")
+		} else {
 			log.Errorf("Failed to Decode cookie: %s", err.Error())
 		}
 	}

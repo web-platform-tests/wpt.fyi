@@ -128,7 +128,6 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Passing the empty string will fetch the authenticated user.
 	ghUser, err := g.GetGitHubUser(client)
 	if err != nil || ghUser == nil {
 		log.Errorf("Failed to get authenticated user: %v", err)
