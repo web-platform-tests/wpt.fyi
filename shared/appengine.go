@@ -17,7 +17,6 @@ import (
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"github.com/google/go-github/v31/github"
-	"golang.org/x/oauth2"
 	apps "google.golang.org/api/appengine/v1"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
@@ -176,12 +175,11 @@ func (a appEngineAPIImpl) GetHTTPClientWithTimeout(timeout time.Duration) *http.
 
 func (a *appEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
 	if a.githubClient == nil {
-		client, err := NewGitHubClientFromToken(a.ctx, "github-api-token")
+		secret, err := GetSecret(NewAppEngineDatastore(a.ctx, false), "github-api-token")
 		if err != nil {
 			return nil, err
 		}
-
-		a.githubClient = client
+		a.githubClient = NewGitHubClientFromToken(a.ctx, secret)
 	}
 	return a.githubClient, nil
 }
@@ -301,20 +299,4 @@ func getURL(host, path string, filter TestRunFilter) *url.URL {
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s%s", host, path))
 	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL
-}
-
-// NewGitHubClientFromToken returns a new GitHub client using the token stored in Datastore.
-func NewGitHubClientFromToken(ctx context.Context, token string) (*github.Client, error) {
-	ds := NewAppEngineDatastore(ctx, false)
-	secret, err := GetSecret(ds, token)
-	if err != nil {
-		return nil, err
-	}
-
-	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
-		AccessToken: secret,
-	}))
-	githubClient := github.NewClient(oauthClient)
-
-	return githubClient, nil
 }

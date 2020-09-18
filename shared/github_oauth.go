@@ -217,3 +217,11 @@ func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*Use
 	}
 	return nil, nil
 }
+
+// NewGitHubClientFromToken returns a new GitHub client from an access token.
+func NewGitHubClientFromToken(ctx context.Context, token string) *github.Client {
+	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: token,
+	}))
+	return github.NewClient(oauthClient)
+}
