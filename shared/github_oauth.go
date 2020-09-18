@@ -56,7 +56,7 @@ type GitHubOAuth interface {
 	GetAccessToken() *string
 	SetRedirectURL(url string)
 	GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
-	GetNewClient(oauthToken string) (*github.Client, error)
+	GetNewClient(oauthCode string) (*github.Client, error)
 	GetGitHubUser(client *github.Client) (*github.User, error)
 }
 
@@ -87,8 +87,8 @@ func (g *githubOAuthImpl) GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOp
 	return g.conf.AuthCodeURL(state, opts...)
 }
 
-func (g *githubOAuthImpl) GetNewClient(oauthToken string) (*github.Client, error) {
-	token, err := g.conf.Exchange(g.ctx, oauthToken)
+func (g *githubOAuthImpl) GetNewClient(oauthCode string) (*github.Client, error) {
+	token, err := g.conf.Exchange(g.ctx, oauthCode)
 	if err != nil {
 		return nil, err
 	}

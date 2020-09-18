@@ -115,13 +115,13 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	oauthToken := r.FormValue("code")
-	if oauthToken == "" {
-		http.Error(w, "No token or username provided", http.StatusBadRequest)
+	oauthCode := r.FormValue("code")
+	if oauthCode == "" {
+		http.Error(w, "No OAuth code provided", http.StatusBadRequest)
 		return
 	}
 
-	client, err := g.GetNewClient(oauthToken)
+	client, err := g.GetNewClient(oauthCode)
 	if err != nil {
 		log.Errorf("Error creating GitHub client using OAuth2 token: %v", err)
 		http.Error(w, "Error creating GitHub client using OAuth2 token", http.StatusBadRequest)
