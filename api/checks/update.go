@@ -61,10 +61,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	filter.SHAs = shared.SHAs{sha}
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
 	if err != nil {
-		msg := "Could not find runs to compare"
-		if err != nil {
-			msg = fmt.Sprintf("%s: %s", msg, err.Error())
-		}
+		msg := "Could not find runs to compare: " + err.Error()
 		log.Errorf(msg)
 		http.Error(w, msg, http.StatusNotFound)
 		return
