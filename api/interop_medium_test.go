@@ -3,7 +3,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -28,7 +27,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	defer i.Close()
 
 	r, _ := i.NewRequest("GET", "/api/interop?complete", nil)
-	ctx := context.Background()
+	ctx := r.Context()
 
 	firstRun := shared.TestRun{}
 	firstRun.Labels = []string{"stable"}
