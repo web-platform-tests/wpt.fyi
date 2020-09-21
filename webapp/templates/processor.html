@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 {{ template "_head_common.html" }}
+<script type="module" src="/components/wpt-header.js"></script>
 <script type="module" src="/components/wpt-processor.js"></script>
 <style>
   html, body { height: 100% }
@@ -19,7 +20,7 @@
 </head>
 <body>
 <div id="full-screen-content">
-  <wpt-header></wpt-header>
+  <wpt-header no-login></wpt-header>
   <wpt-processor></wpt-processor>
 </div>
 </body>

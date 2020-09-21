@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
 {{ template "_head_common.html" }}
+<script type="module" src="/components/wpt-header.js"></script>
 <script type="module" src="/components/wpt-runs.js"></script>
 </head>
 <body>
 <div id="content">
-  <wpt-header></wpt-header>
+  <wpt-header no-login></wpt-header>
   <div>
     <wpt-runs {{ template "_test_run_query_params.html" . }}
               {{- if .PR }} pr="{{.PR}}"{{end}}></wpt-runs>

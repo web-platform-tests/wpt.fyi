@@ -67,7 +67,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           <img src="/static/logo.svg" alt="wpt.fyi logo">
           <a href="/">web-platform-tests dashboard</a>
         </h1>
-        <template is="dom-if" if="[[githubLogin]]">
+        <template is="dom-if" if="[[showLogin]]">
           <github-login user="[[user]]" is-triage-mode="{{isTriageMode}}"></github-login>
         </template>
       </div>
@@ -96,8 +96,20 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       isTriageMode: {
         type: Boolean,
         notify: true,
-      }
+      },
+      noLogin: {
+        type: Boolean,
+        value: false,
+      },
+      showLogin: {
+        type: Boolean,
+        computed: 'computeShowLogin(noLogin, githubLogin)',
+      },
     };
+  }
+
+  computeShowLogin(noLogin, githubLogin) {
+    return !noLogin && githubLogin;
   }
 }
 window.customElements.define(WPTHeader.is, WPTHeader);
