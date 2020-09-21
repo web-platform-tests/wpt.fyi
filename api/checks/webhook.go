@@ -48,6 +48,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	secret, err := shared.GetSecret(ds, "github-check-webhook-secret")
 	if err != nil {
+		log.Errorf("Missing secret: github-check-webhook-secret")
 		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
 		return
 	}

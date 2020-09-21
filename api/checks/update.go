@@ -61,11 +61,8 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	filter.SHAs = shared.SHAs{sha}
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
 	if err != nil {
-		msg := "Could not find runs to compare"
-		if err != nil {
-			msg = fmt.Sprintf("%s: %s", msg, err.Error())
-			log.Errorf(msg)
-		}
+		msg := "Could not find runs to compare: " + err.Error()
+		log.Errorf(msg)
 		http.Error(w, msg, http.StatusNotFound)
 		return
 	}
@@ -77,6 +74,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	} else if len(suites) < 1 {
 		log.Debugf("No CheckSuites found for %s", sha)
 	}
