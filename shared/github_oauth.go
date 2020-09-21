@@ -34,6 +34,7 @@ type User struct {
 type GitHubAccessControl interface {
 	// IsValid* functions also verify the access token with GitHub.
 	IsValidWPTMember() (bool, error)
+	IsValidAdmin() (bool, error)
 }
 
 type githubAccessControlImpl struct {
@@ -154,7 +155,26 @@ func (gaci githubAccessControlImpl) IsValidWPTMember() (bool, error) {
 	return isMember, err
 }
 
-// NewGitHubAccessControl returns a GitHubAccessControl for checking the permission of a logged-in GitHub user.
+func (gaci githubAccessControlImpl) IsValidAdmin() (bool, error) {
+	valid, err := gaci.isValidAccessToken()
+	if err != nil {
+		return false, err
+	}
+	if !valid {
+		return false, errors.New("Invalid access token")
+	}
+	key := gaci.ds.NewNameKey("Admin", gaci.user.GitHubHandle)
+	var dst struct{}
+	if err := gaci.ds.Get(key, &dst); err == ErrNoSuchEntity {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// NewGitHubAccessControl returns a GitHubAccessControl for checking the
+// permission of a logged-in GitHub user.
 func NewGitHubAccessControl(ctx context.Context, ds Datastore, botClient *github.Client, user *User, token string) (GitHubAccessControl, error) {
 	clientID, secret, err := getOAuthClientIDSecret(ds)
 	if err != nil {
@@ -173,6 +193,22 @@ func NewGitHubAccessControl(ctx context.Context, ds Datastore, botClient *github
 		oauthGHClient: github.NewClient(tp.Client()),
 		botClient:     botClient,
 	}, nil
+}
+
+// NewGitHubAccessControlFromRequest returns a GitHubAccessControl for checking
+// the permission of a logged-in GitHub user from a request. (nil, nil) will be
+// returned if the user is not logged in.
+func NewGitHubAccessControlFromRequest(aeAPI AppEngineAPI, ds Datastore, r *http.Request) (GitHubAccessControl, error) {
+	ctx := aeAPI.Context()
+	botClient, err := aeAPI.GetGitHubClient()
+	if err != nil {
+		return nil, err
+	}
+	user, token := GetUserFromCookie(ctx, ds, r)
+	if user == nil {
+		return nil, nil
+	}
+	return NewGitHubAccessControl(ctx, ds, botClient, user, token)
 }
 
 // NewSecureCookie returns a SecureCookie instance for wpt.fyi. This instance

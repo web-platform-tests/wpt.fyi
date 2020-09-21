@@ -162,6 +162,21 @@ func (m *MockGitHubAccessControl) EXPECT() *MockGitHubAccessControlMockRecorder 
 	return m.recorder
 }
 
+// IsValidAdmin mocks base method
+func (m *MockGitHubAccessControl) IsValidAdmin() (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsValidAdmin")
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsValidAdmin indicates an expected call of IsValidAdmin
+func (mr *MockGitHubAccessControlMockRecorder) IsValidAdmin() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsValidAdmin", reflect.TypeOf((*MockGitHubAccessControl)(nil).IsValidAdmin))
+}
+
 // IsValidWPTMember mocks base method
 func (m *MockGitHubAccessControl) IsValidWPTMember() (bool, error) {
 	m.ctrl.T.Helper()

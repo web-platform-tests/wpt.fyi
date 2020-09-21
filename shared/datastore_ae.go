@@ -73,7 +73,11 @@ func (d aeDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 }
 
 func (d aeDatastore) Get(k Key, dst interface{}) error {
-	return datastore.Get(d.ctx, k.(*datastore.Key), dst)
+	err := datastore.Get(d.ctx, k.(*datastore.Key), dst)
+	if err == datastore.ErrNoSuchEntity {
+		return ErrNoSuchEntity
+	}
+	return err
 }
 
 func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
