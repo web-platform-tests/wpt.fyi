@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/aetest"
 )
 
@@ -38,7 +37,7 @@ func NewAEContext(stronglyConsistentDatastore bool) (context.Context, func(), er
 		inst.Close()
 		return nil, nil, err
 	}
-	ctx := appengine.NewContext(req)
+	ctx := req.Context()
 	ctx = context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
 	return ctx, func() {
 		inst.Close()

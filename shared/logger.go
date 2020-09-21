@@ -8,7 +8,6 @@ import (
 
 	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/appengine"
 	gaelog "google.golang.org/appengine/log"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
@@ -24,7 +23,7 @@ type Logger interface {
 
 // NewRequestContext creates a new  context bound to an *http.Request.
 func NewRequestContext(r *http.Request) context.Context {
-	ctx := appengine.NewContext(r)
+	ctx := r.Context()
 	return WithLogger(ctx, logrus.WithFields(logrus.Fields{
 		"request": r,
 	}))
@@ -66,7 +65,7 @@ func (lm loggerMux) Warningf(format string, args ...interface{}) {
 // NewAppEngineContext creates a new Google App Engine Standard-based
 // context bound to an http.Request.
 func NewAppEngineContext(r *http.Request) context.Context {
-	ctx := appengine.NewContext(r)
+	ctx := r.Context()
 	return WithLogger(ctx, NewGAELogger(ctx))
 }
 

@@ -3,6 +3,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -28,7 +28,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	defer i.Close()
 
 	r, _ := i.NewRequest("GET", "/api/interop?complete", nil)
-	ctx := appengine.NewContext(r)
+	ctx := context.Background()
 
 	firstRun := shared.TestRun{}
 	firstRun.Labels = []string{"stable"}
