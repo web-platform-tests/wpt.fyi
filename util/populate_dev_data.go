@@ -139,7 +139,6 @@ func main() {
 
 	log.Print("Adding local (empty) secrets...")
 	addSecretToken(ctx, "upload-token", emptySecretToken)
-	addSecretToken(ctx, "github-api-token", emptySecretToken)
 	addSecretToken(ctx, "github-wpt-fyi-bot-token", emptySecretToken)
 	addSecretToken(ctx, "github-oauth-client-id", emptySecretToken)
 	addSecretToken(ctx, "github-oauth-client-secret", emptySecretToken)
