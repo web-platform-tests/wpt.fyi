@@ -95,7 +95,11 @@ func (d cloudDatastore) GetAll(q Query, dst interface{}) ([]Key, error) {
 
 func (d cloudDatastore) Get(k Key, dst interface{}) error {
 	cast := k.(cloudKey).key
-	return d.client.Get(d.ctx, cast, dst)
+	err := d.client.Get(d.ctx, cast, dst)
+	if err == datastore.ErrNoSuchEntity {
+		return ErrNoSuchEntity
+	}
+	return err
 }
 
 func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {

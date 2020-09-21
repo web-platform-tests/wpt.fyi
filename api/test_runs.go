@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
 )
 
 const nextPageTokenHeaderName = "wpt-next-page"
@@ -41,7 +40,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	var nextPageToken string
 	if len(ids) > 0 {
 		testRuns, err = ids.LoadTestRuns(store)
-		if err == datastore.ErrNoSuchEntity {
+		if err == shared.ErrNoSuchEntity {
 			w.WriteHeader(http.StatusNotFound)
 			err = nil
 		}

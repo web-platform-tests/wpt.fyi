@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
 )
 
 // apiTestRunHandler is responsible for emitting the test-run JSON for a specific run.
@@ -37,7 +36,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 		run := new(shared.TestRun)
 		err = store.Get(store.NewIDKey("TestRun", id), run)
 		if err != nil {
-			if err == datastore.ErrNoSuchEntity {
+			if err == shared.ErrNoSuchEntity {
 				http.NotFound(w, r)
 				return
 			}

@@ -11,7 +11,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
 )
 
 // apiDiffHandler takes 2 test-run results JSON blobs and produces JSON in the same format, with only the differences
@@ -40,7 +39,7 @@ func loadDiffRuns(store shared.Datastore, q url.Values) (shared.TestRuns, error)
 		if multiError, ok := err.(appengine.MultiError); ok {
 			all404s := true
 			for _, err := range multiError {
-				if err != datastore.ErrNoSuchEntity {
+				if err != shared.ErrNoSuchEntity {
 					all404s = false
 					break
 				}
