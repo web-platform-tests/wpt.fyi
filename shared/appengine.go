@@ -273,7 +273,11 @@ func (a appEngineAPIImpl) ScheduleTask(queueName, taskName, target string, param
 				AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
 					HttpMethod:  taskspb.HttpMethod_POST,
 					RelativeUri: target,
-					Body:        []byte(params.Encode()),
+					// In appengine.taskqueue, The default for POST task was
+					// application/x-www-form-urlencoded, but the new SDK
+					// defaults to application/octet-stream.
+					Headers: map[string]string{"Content-Tye": "application/x-www-form-urlencoded"},
+					Body:    []byte(params.Encode()),
 				},
 			},
 		},
