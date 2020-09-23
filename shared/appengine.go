@@ -57,8 +57,10 @@ func (c *clientsImpl) Close() error {
 type AppEngineAPI interface {
 	Context() context.Context
 
-	// GitHub OAuth client
+	// GitHub OAuth client using the bot account (wptfyibot), which has
+	// repo and read:org permissions.
 	GetGitHubClient() (*github.Client, error)
+
 	// http.Client
 	GetHTTPClient() *http.Client
 	GetHTTPClientWithTimeout(time.Duration) *http.Client
@@ -175,7 +177,7 @@ func (a appEngineAPIImpl) GetHTTPClientWithTimeout(timeout time.Duration) *http.
 
 func (a *appEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
 	if a.githubClient == nil {
-		secret, err := GetSecret(NewAppEngineDatastore(a.ctx, false), "github-api-token")
+		secret, err := GetSecret(NewAppEngineDatastore(a.ctx, false), "github-wpt-fyi-bot-token")
 		if err != nil {
 			return nil, err
 		}

@@ -30,11 +30,13 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := shared.NewAppEngineContext(r)
-	client := shared.NewAppEngineAPI(ctx).GetHTTPClient()
+	aeAPI := shared.NewAppEngineAPI(ctx)
 	logger := shared.GetLogger(ctx)
+	client := aeAPI.GetHTTPClient()
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		http.Error(w, "Unable to get GitHub client: "+err.Error(), http.StatusInternalServerError)
+		logger.Errorf("Unable to get GitHub client: %s", err.Error())
+		http.Error(w, "Unable to get GitHub client", http.StatusInternalServerError)
 		return
 	}
 
@@ -45,20 +47,22 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	ds := shared.NewAppEngineDatastore(ctx, false)
+
 	user, token := shared.GetUserFromCookie(ctx, ds, r)
 	if user == nil {
 		http.Error(w, "User is not logged in", http.StatusUnauthorized)
 		return
 	}
 
-	botToken, err := shared.GetSecret(ds, "github-wpt-fyi-bot-token")
+	aeAPI := shared.NewAppEngineAPI(ctx)
+	logger := shared.GetLogger(ctx)
+	botClient, err := aeAPI.GetGitHubClient()
 	if err != nil {
-		http.Error(w, "Unable to get GitHub client for wpt-fyi-bot: "+err.Error(), http.StatusInternalServerError)
+		logger.Errorf("Unable to get GitHub client: %s", err.Error())
+		http.Error(w, "Unable to get GitHub client", http.StatusInternalServerError)
 		return
 	}
-	botClient := shared.NewGitHubClientFromToken(ctx, botToken)
 
-	aeAPI := shared.NewAppEngineAPI(ctx)
 	fetcher := webappMetadataFetcher{
 		ctx:          ctx,
 		httpClient:   aeAPI.GetHTTPClient(),
