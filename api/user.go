@@ -25,8 +25,8 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ds := shared.NewAppEngineDatastore(ctx, false)
-	user, token := shared.GetUserFromCookie(ctx, ds, r)
-	if user == nil || token == nil {
+	user, _ := shared.GetUserFromCookie(ctx, ds, r)
+	if user == nil {
 		response := loginResponse{Error: "Unable to retrieve login information, please log in again"}
 		marshalled, err := json.Marshal(response)
 		if err != nil {

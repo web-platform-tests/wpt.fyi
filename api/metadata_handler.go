@@ -46,7 +46,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	user, token := shared.GetUserFromCookie(ctx, ds, r)
-	if user == nil || token == nil {
+	if user == nil {
 		http.Error(w, "User is not logged in", http.StatusUnauthorized)
 		return
 	}
@@ -66,7 +66,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		forceUpdate:  true}
 	tm := shared.NewTriageMetadata(ctx, botClient, user.GitHubHandle, user.GitHubEmail, fetcher)
 
-	gac, err := shared.NewGitHubAccessControl(ctx, ds, botClient, user, *token)
+	gac, err := shared.NewGitHubAccessControl(ctx, ds, botClient, user, token)
 	if err != nil {
 		http.Error(w, "Unable to create GitHub OAuth client: "+err.Error(), http.StatusInternalServerError)
 		return

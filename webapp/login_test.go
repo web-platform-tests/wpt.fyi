@@ -43,9 +43,9 @@ func TestHandleLogin(t *testing.T) {
 
 	mockgo := sharedtest.NewMockGitHubOAuth(mockCtrl)
 	mockgo.EXPECT().Context().AnyTimes().Return(ctx)
-	mockgo.EXPECT().SetRedirectURL("https://foo/oauth?return=%2F").Return()
-	mockgo.EXPECT().GetAuthCodeURL(gomock.Any(), gomock.Any()).Return("https://redirect?")
 	mockgo.EXPECT().Datastore().AnyTimes().Return(mockStore)
+	mockgo.EXPECT().SetRedirectURL("https://foo/oauth?return=%2F")
+	mockgo.EXPECT().GetAuthCodeURL(gomock.Any(), gomock.Any()).Return("https://redirect?")
 
 	handleLogin(mockgo, w, req)
 
@@ -90,12 +90,15 @@ func TestHandleOauth(t *testing.T) {
 	userName := "ufoo"
 	userEmail := "ebar"
 	secret := "token"
+	dummyClient := &github.Client{}
 	mockgo := sharedtest.NewMockGitHubOAuth(mockCtrl)
 	mockgo.EXPECT().Context().AnyTimes().Return(ctx)
-	mockgo.EXPECT().GetNewClient(gomock.Any()).Return(nil, nil)
-	mockgo.EXPECT().GetGitHubUser(gomock.Any()).Return(&github.User{Login: &userName, Email: &userEmail}, nil)
 	mockgo.EXPECT().Datastore().AnyTimes().Return(mockStore)
-	mockgo.EXPECT().GetAccessToken().Return(&secret)
+	gomock.InOrder(
+		mockgo.EXPECT().NewClient("bar").Return(dummyClient, nil),
+		mockgo.EXPECT().GetUser(dummyClient).Return(&github.User{Login: &userName, Email: &userEmail}, nil),
+		mockgo.EXPECT().GetAccessToken().Return(secret),
+	)
 
 	handleOauth(mockgo, w, req)
 

@@ -53,18 +53,18 @@ type githubAccessControlImpl struct {
 type GitHubOAuth interface {
 	Context() context.Context
 	Datastore() Datastore
-	GetAccessToken() *string
-	SetRedirectURL(url string)
+	GetAccessToken() string
 	GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
-	GetNewClient(oauthCode string) (*github.Client, error)
-	GetGitHubUser(client *github.Client) (*github.User, error)
+	GetUser(client *github.Client) (*github.User, error)
+	NewClient(oauthCode string) (*github.Client, error)
+	SetRedirectURL(url string)
 }
 
 type githubOAuthImpl struct {
 	ctx         context.Context
 	ds          Datastore
 	conf        *oauth2.Config
-	accessToken *string
+	accessToken string
 }
 
 func (g *githubOAuthImpl) Datastore() Datastore {
@@ -75,7 +75,7 @@ func (g *githubOAuthImpl) Context() context.Context {
 	return g.ctx
 }
 
-func (g *githubOAuthImpl) GetAccessToken() *string {
+func (g *githubOAuthImpl) GetAccessToken() string {
 	return g.accessToken
 }
 
@@ -87,12 +87,12 @@ func (g *githubOAuthImpl) GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOp
 	return g.conf.AuthCodeURL(state, opts...)
 }
 
-func (g *githubOAuthImpl) GetNewClient(oauthCode string) (*github.Client, error) {
+func (g *githubOAuthImpl) NewClient(oauthCode string) (*github.Client, error) {
 	token, err := g.conf.Exchange(g.ctx, oauthCode)
 	if err != nil {
 		return nil, err
 	}
-	g.accessToken = &token.AccessToken
+	g.accessToken = token.AccessToken
 
 	oauthClient := oauth2.NewClient(g.ctx, oauth2.StaticTokenSource(token))
 	client := github.NewClient(oauthClient)
@@ -100,7 +100,7 @@ func (g *githubOAuthImpl) GetNewClient(oauthCode string) (*github.Client, error)
 	return client, nil
 }
 
-func (g *githubOAuthImpl) GetGitHubUser(client *github.Client) (*github.User, error) {
+func (g *githubOAuthImpl) GetUser(client *github.Client) (*github.User, error) {
 	// Passing the empty string will fetch the authenticated user.
 	ghUser, _, err := client.Users.Get(g.ctx, "")
 	if err != nil {
@@ -199,29 +199,29 @@ func GetSecureCookie(ctx context.Context, store Datastore) (*securecookie.Secure
 }
 
 // GetUserFromCookie extracts the User and GitHub OAuth token from a request's
-// session cookie, if it exists. If the cookie does not exist or cannot be decoded, nil
-// is returned for both.
-func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*User, *string) {
+// session cookie, if it exists. If the cookie does not exist or cannot be
+// decoded, (nil, "") will be returned.
+func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*User, string) {
 	log := GetLogger(ctx)
 	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
 		cookieValue := make(map[string]interface{})
 		sc, err := GetSecureCookie(ctx, ds)
 		if err != nil {
-			return nil, nil
+			return nil, ""
 		}
 
 		if err = sc.Decode("session", cookie.Value, &cookieValue); err == nil {
 			decodedUser, okUser := cookieValue["user"].(User)
 			decodedToken, okToken := cookieValue["token"].(string)
 			if okUser && okToken {
-				return &decodedUser, &decodedToken
+				return &decodedUser, decodedToken
 			}
 			log.Errorf("Failed to cast user or token")
 		} else {
-			log.Errorf("Failed to Decode cookie: %s", err.Error())
+			log.Errorf("Failed to decode cookie: %s", err.Error())
 		}
 	}
-	return nil, nil
+	return nil, ""
 }
 
 // NewGitHubClientFromToken returns a new GitHub client from an access token.
