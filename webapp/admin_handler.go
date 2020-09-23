@@ -15,38 +15,86 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+func checkAdmin(acl shared.GitHubAccessControl, log shared.Logger, w http.ResponseWriter) bool {
+	if acl == nil {
+		http.Error(w, "Log in from the homepage first", http.StatusUnauthorized)
+		return false
+	}
+	admin, err := acl.IsValidAdmin()
+	if err != nil {
+		log.Errorf("Error checking admin: %s", err.Error())
+		http.Error(w, "Error checking admin", http.StatusInternalServerError)
+		return false
+	}
+	if !admin {
+		http.Error(w, "Admin only", http.StatusForbidden)
+		return false
+	}
+	return true
+}
+
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	a := shared.NewAppEngineAPI(ctx)
-	showAdminUploadForm(a, w, r)
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	log := shared.GetLogger(ctx)
+	acl, err := shared.NewGitHubAccessControlFromRequest(a, ds, r)
+	if err != nil {
+		log.Errorf("Error creating GitHubAccessControl: %s", err.Error())
+		http.Error(w, "Error creating GitHubAccessControl", http.StatusInternalServerError)
+		return
+	}
+
+	showAdminUploadForm(a, acl, log, w)
 }
 
-func showAdminUploadForm(a shared.AppEngineAPI, w http.ResponseWriter, r *http.Request) {
+func showAdminUploadForm(a shared.AppEngineAPI, acl shared.GitHubAccessControl, log shared.Logger, w http.ResponseWriter) {
+	if !checkAdmin(acl, log, w) {
+		return
+	}
+
 	data := struct {
 		CallbackURL string
 	}{
 		CallbackURL: fmt.Sprintf("https://%s/api/results/create", a.GetVersionedHostname()),
 	}
-	assertAdminAndRenderTemplate(a, w, r, "/admin/results/upload", "admin_upload.html", data)
+	if err := templates.ExecuteTemplate(w, "admin_upload.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	a := shared.NewAppEngineAPI(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
-
-	data := struct {
-		Host string
-	}{
-		Host: a.GetHostname(),
+	log := shared.GetLogger(ctx)
+	acl, err := shared.NewGitHubAccessControlFromRequest(a, ds, r)
+	if err != nil {
+		log.Errorf("Error creating GitHubAccessControl: %s", err.Error())
+		http.Error(w, "Error creating GitHubAccessControl", http.StatusInternalServerError)
+		return
 	}
+
+	handleAdminFlags(a, ds, acl, log, w, r)
+}
+
+func handleAdminFlags(a shared.AppEngineAPI, ds shared.Datastore, acl shared.GitHubAccessControl, log shared.Logger, w http.ResponseWriter, r *http.Request) {
+	if !checkAdmin(acl, log, w) {
+		return
+	}
+
 	if r.Method == "GET" {
-		assertAdminAndRenderTemplate(a, w, r, "/admin/flags", "admin_flags.html", data)
-	} else if r.Method == "POST" {
-		if !a.IsAdmin() {
-			http.Error(w, "Admin only", http.StatusUnauthorized)
+		data := struct {
+			Host string
+		}{
+			Host: a.GetHostname(),
+		}
+		if err := templates.ExecuteTemplate(w, "admin_flags.html", data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	} else if r.Method == "POST" {
 		var flag shared.Flag
 		if bytes, err := ioutil.ReadAll(r.Body); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -61,32 +109,21 @@ func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func assertAdminAndRenderTemplate(
-	a shared.AppEngineAPI,
-	w http.ResponseWriter,
-	r *http.Request,
-	redirectPath,
-	template string,
-	data interface{}) {
-	if !a.IsAdmin() {
-		http.Error(w, "Admin only", http.StatusUnauthorized)
-		return
-	}
-
-	if err := templates.ExecuteTemplate(w, template, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
 func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := shared.NewAppEngineContext(r)
 	a := shared.NewAppEngineAPI(ctx)
-
-	if !a.IsAdmin() {
-		http.Error(w, "Admin only", http.StatusUnauthorized)
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	log := shared.GetLogger(ctx)
+	acl, err := shared.NewGitHubAccessControlFromRequest(a, ds, r)
+	if err != nil {
+		log.Errorf("Error creating GitHubAccessControl: %s", err.Error())
+		http.Error(w, "Error creating GitHubAccessControl", http.StatusInternalServerError)
 		return
 	}
+	if !checkAdmin(acl, log, w) {
+		return
+	}
+
 	if err := memcache.Flush(ctx); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {

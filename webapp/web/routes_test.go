@@ -118,7 +118,6 @@ func TestAdminResultsUploadBound(t *testing.T) {
 
 func TestAdminCacheFlushBound(t *testing.T) {
 	assertHandlerIs(t, "/admin/cache/flush", "admin-cache-flush")
-	assertHSTS(t, "/admin/cache/flush")
 }
 
 func TestApiMetadataCORS(t *testing.T) {
