@@ -35,7 +35,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	client := aeAPI.GetHTTPClient()
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		logger.Errorf("Unable to get GitHub client: %e", err)
+		logger.Errorf("Unable to get GitHub client: %s", err.Error())
 		http.Error(w, "Unable to get GitHub client", http.StatusInternalServerError)
 		return
 	}
@@ -58,7 +58,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 	logger := shared.GetLogger(ctx)
 	botClient, err := aeAPI.GetGitHubClient()
 	if err != nil {
-		logger.Errorf("Unable to get GitHub client: %e", err)
+		logger.Errorf("Unable to get GitHub client: %s", err.Error())
 		http.Error(w, "Unable to get GitHub client", http.StatusInternalServerError)
 		return
 	}
