@@ -117,7 +117,7 @@ func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 
 	clientID, secret, err := getOAuthClientIDSecret(store)
 	if err != nil {
-		log.Errorf("Failed to get github-oauth-client-{id,secret}: %e", err)
+		log.Errorf("Failed to get github-oauth-client-{id,secret}: %s", err.Error())
 		return nil, err
 	}
 
