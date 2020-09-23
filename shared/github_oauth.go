@@ -149,12 +149,8 @@ func (gaci githubAccessControlImpl) IsValidWPTMember() (bool, error) {
 	if !valid {
 		return false, errors.New("Invalid access token")
 	}
-	_, res, err := gaci.botClient.Organizations.GetOrgMembership(gaci.ctx, gaci.user.GitHubHandle, "web-platform-tests")
-	if err != nil {
-		return false, err
-	}
-
-	return res.StatusCode == http.StatusOK, nil
+	isMember, _, err := gaci.botClient.Organizations.IsMember(gaci.ctx, "web-platform-tests", gaci.user.GitHubHandle)
+	return isMember, err
 }
 
 // NewGitHubAccessControl returns a GitHubAccessControl for checking the permission of a logged-in GitHub user.
