@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v31/github"
@@ -174,20 +175,17 @@ func NewGitHubAccessControl(ctx context.Context, ds Datastore, botClient *github
 	}, nil
 }
 
-// GetSecureCookie returns the securecookie instance for wpt.fyi. This instance can
-// be used to encode and decode cookies set by wpt.fyi.
-func GetSecureCookie(ctx context.Context, store Datastore) (*securecookie.SecureCookie, error) {
-	log := GetLogger(ctx)
+// NewSecureCookie returns a SecureCookie instance for wpt.fyi. This instance
+// can be used to encode and decode cookies set by wpt.fyi.
+func NewSecureCookie(store Datastore) (*securecookie.SecureCookie, error) {
 	hashKey, err := GetSecret(store, "secure-cookie-hashkey")
 	if err != nil {
-		log.Errorf("Failed to get secure-cookie-hashkey secret: %s", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("failed to get secure-cookie-hashkey secret: %v", err)
 	}
 
 	blockKey, err := GetSecret(store, "secure-cookie-blockkey")
 	if err != nil {
-		log.Errorf("Failed to get secure-cookie-blockkey secret: %s", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("failed to get secure-cookie-blockkey secret: %v", err)
 	}
 
 	secureCookie := securecookie.New([]byte(hashKey), []byte(blockKey))
@@ -201,8 +199,9 @@ func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*Use
 	log := GetLogger(ctx)
 	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
 		cookieValue := make(map[string]interface{})
-		sc, err := GetSecureCookie(ctx, ds)
+		sc, err := NewSecureCookie(ds)
 		if err != nil {
+			log.Errorf("Failed to create SecureCookie: %s", err.Error())
 			return nil, ""
 		}
 
