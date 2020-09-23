@@ -171,9 +171,9 @@ func setSession(ctx context.Context, ds shared.Datastore, user *shared.User, tok
 		"token": token,
 	}
 
-	sc, err := shared.GetSecureCookie(ctx, ds)
+	sc, err := shared.NewSecureCookie(ds)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create SecureCookie: %v", err)
 	}
 
 	if encoded, err := sc.Encode("session", value); err == nil {
@@ -201,9 +201,9 @@ func setSession(ctx context.Context, ds shared.Datastore, user *shared.User, tok
 
 func setState(ctx context.Context, ds shared.Datastore, state string, response http.ResponseWriter) error {
 	var err error
-	sc, err := shared.GetSecureCookie(ctx, ds)
+	sc, err := shared.NewSecureCookie(ds)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create SecureCookie: %v", err)
 	}
 
 	if encoded, err := sc.Encode("state", state); err == nil {
@@ -224,9 +224,9 @@ func setState(ctx context.Context, ds shared.Datastore, state string, response h
 
 func decodeState(ctx context.Context, ds shared.Datastore, encryptedState *http.Cookie) (string, error) {
 	cookieValue := ""
-	sc, err := shared.GetSecureCookie(ctx, ds)
+	sc, err := shared.NewSecureCookie(ds)
 	if err != nil {
-		return "", fmt.Errorf("failed to create securecookie decoder: %v", err)
+		return "", fmt.Errorf("failed to create SecureCookie: %v", err)
 	}
 
 	if err := sc.Decode("state", encryptedState.Value, &cookieValue); err != nil {
