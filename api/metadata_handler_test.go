@@ -40,8 +40,7 @@ func TestHandleMetadataTriage_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	mockgac := sharedtest.NewMockGitHubAccessControl(mockCtrl)
-	mockgac.EXPECT().IsValidAccessToken().Return(http.StatusOK, nil)
-	mockgac.EXPECT().IsValidWPTMember().Return(http.StatusOK, nil)
+	mockgac.EXPECT().IsValidWPTMember().Return(true, nil)
 
 	mocktm := sharedtest.NewMockTriageMetadata(mockCtrl)
 	mocktm.EXPECT().Triage(gomock.Any()).Return("", nil)

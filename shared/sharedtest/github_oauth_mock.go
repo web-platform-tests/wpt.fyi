@@ -65,10 +65,10 @@ func (mr *MockGitHubOAuthMockRecorder) Datastore() *gomock.Call {
 }
 
 // GetAccessToken mocks base method
-func (m *MockGitHubOAuth) GetAccessToken() *string {
+func (m *MockGitHubOAuth) GetAccessToken() string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccessToken")
-	ret0, _ := ret[0].(*string)
+	ret0, _ := ret[0].(string)
 	return ret0
 }
 
@@ -97,34 +97,34 @@ func (mr *MockGitHubOAuthMockRecorder) GetAuthCodeURL(arg0 interface{}, arg1 ...
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthCodeURL", reflect.TypeOf((*MockGitHubOAuth)(nil).GetAuthCodeURL), varargs...)
 }
 
-// GetGitHubUser mocks base method
-func (m *MockGitHubOAuth) GetGitHubUser(arg0 *github.Client) (*github.User, error) {
+// GetUser mocks base method
+func (m *MockGitHubOAuth) GetUser(arg0 *github.Client) (*github.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGitHubUser", arg0)
+	ret := m.ctrl.Call(m, "GetUser", arg0)
 	ret0, _ := ret[0].(*github.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetGitHubUser indicates an expected call of GetGitHubUser
-func (mr *MockGitHubOAuthMockRecorder) GetGitHubUser(arg0 interface{}) *gomock.Call {
+// GetUser indicates an expected call of GetUser
+func (mr *MockGitHubOAuthMockRecorder) GetUser(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubUser", reflect.TypeOf((*MockGitHubOAuth)(nil).GetGitHubUser), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockGitHubOAuth)(nil).GetUser), arg0)
 }
 
-// GetNewClient mocks base method
-func (m *MockGitHubOAuth) GetNewClient(arg0 string) (*github.Client, error) {
+// NewClient mocks base method
+func (m *MockGitHubOAuth) NewClient(arg0 string) (*github.Client, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNewClient", arg0)
+	ret := m.ctrl.Call(m, "NewClient", arg0)
 	ret0, _ := ret[0].(*github.Client)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetNewClient indicates an expected call of GetNewClient
-func (mr *MockGitHubOAuthMockRecorder) GetNewClient(arg0 interface{}) *gomock.Call {
+// NewClient indicates an expected call of NewClient
+func (mr *MockGitHubOAuthMockRecorder) NewClient(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNewClient", reflect.TypeOf((*MockGitHubOAuth)(nil).GetNewClient), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewClient", reflect.TypeOf((*MockGitHubOAuth)(nil).NewClient), arg0)
 }
 
 // SetRedirectURL mocks base method
@@ -162,26 +162,11 @@ func (m *MockGitHubAccessControl) EXPECT() *MockGitHubAccessControlMockRecorder 
 	return m.recorder
 }
 
-// IsValidAccessToken mocks base method
-func (m *MockGitHubAccessControl) IsValidAccessToken() (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsValidAccessToken")
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IsValidAccessToken indicates an expected call of IsValidAccessToken
-func (mr *MockGitHubAccessControlMockRecorder) IsValidAccessToken() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsValidAccessToken", reflect.TypeOf((*MockGitHubAccessControl)(nil).IsValidAccessToken))
-}
-
 // IsValidWPTMember mocks base method
-func (m *MockGitHubAccessControl) IsValidWPTMember() (int, error) {
+func (m *MockGitHubAccessControl) IsValidWPTMember() (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsValidWPTMember")
-	ret0, _ := ret[0].(int)
+	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -9,13 +9,13 @@ package shared
 import (
 	"context"
 	"encoding/gob"
+	"errors"
 	"net/http"
 
 	"github.com/google/go-github/v31/github"
 	"github.com/gorilla/securecookie"
 	"golang.org/x/oauth2"
 	ghOAuth "golang.org/x/oauth2/github"
-	"google.golang.org/appengine"
 )
 
 func init() {
@@ -31,33 +31,40 @@ type User struct {
 
 // GitHubAccessControl encapsulates implementation details of access control for the wpt-metadata repository.
 type GitHubAccessControl interface {
-	IsValidAccessToken() (int, error)
-	IsValidWPTMember() (int, error)
+	// IsValid* functions also verify the access token with GitHub.
+	IsValidWPTMember() (bool, error)
 }
 
 type githubAccessControlImpl struct {
-	ctx    context.Context
-	ds     Datastore
-	client *github.Client
-	token  string
+	ctx   context.Context
+	ds    Datastore
+	user  *User
+	token string
+
+	// This is the client for the OAuth app.
+	oauthClientID string
+	oauthGHClient *github.Client
+
+	// This is the bot account client.
+	botClient *github.Client
 }
 
 // GitHubOAuth encapsulates implementation details of GitHub OAuth flow.
 type GitHubOAuth interface {
 	Context() context.Context
 	Datastore() Datastore
-	GetAccessToken() *string
-	SetRedirectURL(url string)
+	GetAccessToken() string
 	GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
-	GetNewClient(oauthToken string) (*github.Client, error)
-	GetGitHubUser(client *github.Client) (*github.User, error)
+	GetUser(client *github.Client) (*github.User, error)
+	NewClient(oauthCode string) (*github.Client, error)
+	SetRedirectURL(url string)
 }
 
 type githubOAuthImpl struct {
 	ctx         context.Context
 	ds          Datastore
 	conf        *oauth2.Config
-	accessToken *string
+	accessToken string
 }
 
 func (g *githubOAuthImpl) Datastore() Datastore {
@@ -68,7 +75,7 @@ func (g *githubOAuthImpl) Context() context.Context {
 	return g.ctx
 }
 
-func (g *githubOAuthImpl) GetAccessToken() *string {
+func (g *githubOAuthImpl) GetAccessToken() string {
 	return g.accessToken
 }
 
@@ -80,12 +87,12 @@ func (g *githubOAuthImpl) GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOp
 	return g.conf.AuthCodeURL(state, opts...)
 }
 
-func (g *githubOAuthImpl) GetNewClient(oauthToken string) (*github.Client, error) {
-	token, err := g.conf.Exchange(g.ctx, oauthToken)
+func (g *githubOAuthImpl) NewClient(oauthCode string) (*github.Client, error) {
+	token, err := g.conf.Exchange(g.ctx, oauthCode)
 	if err != nil {
 		return nil, err
 	}
-	g.accessToken = &token.AccessToken
+	g.accessToken = token.AccessToken
 
 	oauthClient := oauth2.NewClient(g.ctx, oauth2.StaticTokenSource(token))
 	client := github.NewClient(oauthClient)
@@ -93,7 +100,8 @@ func (g *githubOAuthImpl) GetNewClient(oauthToken string) (*github.Client, error
 	return client, nil
 }
 
-func (g *githubOAuthImpl) GetGitHubUser(client *github.Client) (*github.User, error) {
+func (g *githubOAuthImpl) GetUser(client *github.Client) (*github.User, error) {
+	// Passing the empty string will fetch the authenticated user.
 	ghUser, _, err := client.Users.Get(g.ctx, "")
 	if err != nil {
 		return nil, err
@@ -106,16 +114,11 @@ func (g *githubOAuthImpl) GetGitHubUser(client *github.Client) (*github.User, er
 func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 	store := NewAppEngineDatastore(ctx, false)
 	log := GetLogger(ctx)
-	clientID, err := GetSecret(store, "github-oauth-client-id")
-	if err != nil {
-		log.Errorf("Failed to get github-oauth-client-id secret: %s", err.Error())
-		return &githubOAuthImpl{}, err
-	}
 
-	secret, err := GetSecret(store, "github-oauth-client-secret")
+	clientID, secret, err := getOAuthClientIDSecret(store)
 	if err != nil {
-		log.Errorf("Failed to get github-oauth-client-secret: %s", err.Error())
-		return &githubOAuthImpl{}, err
+		log.Errorf("Failed to get github-oauth-client-{id,secret}: %s", err.Error())
+		return nil, err
 	}
 
 	oauth := &oauth2.Config{
@@ -129,47 +132,46 @@ func NewGitHubOAuth(ctx context.Context) (GitHubOAuth, error) {
 	return &githubOAuthImpl{ctx: ctx, conf: oauth, ds: store}, nil
 }
 
-func (gaci githubAccessControlImpl) IsValidAccessToken() (int, error) {
-	clientID, err := GetSecret(gaci.ds, "github-oauth-client-id")
+func (gaci githubAccessControlImpl) isValidAccessToken() (bool, error) {
+	_, res, err := gaci.oauthGHClient.Authorizations.Check(gaci.ctx, gaci.oauthClientID, gaci.token)
 	if err != nil {
-		return -1, err
+		return false, err
 	}
 
-	secret, err := GetSecret(gaci.ds, "github-oauth-client-secret")
-	if err != nil {
-		return -1, err
-	}
+	return res.StatusCode == http.StatusOK, nil
+}
 
+func (gaci githubAccessControlImpl) IsValidWPTMember() (bool, error) {
+	valid, err := gaci.isValidAccessToken()
+	if err != nil {
+		return false, err
+	}
+	if !valid {
+		return false, errors.New("Invalid access token")
+	}
+	isMember, _, err := gaci.botClient.Organizations.IsMember(gaci.ctx, "web-platform-tests", gaci.user.GitHubHandle)
+	return isMember, err
+}
+
+// NewGitHubAccessControl returns a GitHubAccessControl for checking the permission of a logged-in GitHub user.
+func NewGitHubAccessControl(ctx context.Context, ds Datastore, botClient *github.Client, user *User, token string) (GitHubAccessControl, error) {
+	clientID, secret, err := getOAuthClientIDSecret(ds)
+	if err != nil {
+		return nil, err
+	}
 	tp := github.BasicAuthTransport{
 		Username: clientID,
 		Password: secret,
 	}
-
-	oauthAppClient := github.NewClient(tp.Client())
-	_, res, err := oauthAppClient.Authorizations.Check(gaci.ctx, clientID, gaci.token)
-	if err != nil {
-		return -1, err
-	}
-
-	return res.StatusCode, nil
-}
-
-func (gaci githubAccessControlImpl) IsValidWPTMember() (int, error) {
-	_, res, err := gaci.client.Organizations.GetOrgMembership(gaci.ctx, "", "web-platform-tests")
-	if err != nil {
-		return -1, err
-	}
-
-	return res.StatusCode, nil
-}
-
-// NewGitAccessControl returns the implementation of GitHubAccessControl for apiMetadataTriageHandler.
-func NewGitAccessControl(ctx context.Context, ds Datastore, client *github.Client, token string) GitHubAccessControl {
 	return githubAccessControlImpl{
-		ctx:    ctx,
-		ds:     ds,
-		client: client,
-		token:  token}
+		ctx:           ctx,
+		ds:            ds,
+		user:          user,
+		token:         token,
+		oauthClientID: clientID,
+		oauthGHClient: github.NewClient(tp.Client()),
+		botClient:     botClient,
+	}, nil
 }
 
 // GetSecureCookie returns the securecookie instance for wpt.fyi. This instance can
@@ -193,28 +195,47 @@ func GetSecureCookie(ctx context.Context, store Datastore) (*securecookie.Secure
 }
 
 // GetUserFromCookie extracts the User and GitHub OAuth token from a request's
-// session cookie, if it exists. If the cookie does not exist or cannot be decoded, nil
-// is returned for both.
-func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*User, *string) {
+// session cookie, if it exists. If the cookie does not exist or cannot be
+// decoded, (nil, "") will be returned.
+func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*User, string) {
 	log := GetLogger(ctx)
 	if cookie, err := r.Cookie("session"); err == nil && cookie != nil {
 		cookieValue := make(map[string]interface{})
 		sc, err := GetSecureCookie(ctx, ds)
 		if err != nil {
-			return nil, nil
+			return nil, ""
 		}
 
 		if err = sc.Decode("session", cookie.Value, &cookieValue); err == nil {
 			decodedUser, okUser := cookieValue["user"].(User)
 			decodedToken, okToken := cookieValue["token"].(string)
 			if okUser && okToken {
-				return &decodedUser, &decodedToken
-			} else if appengine.IsDevAppServer() {
-				log.Errorf("Failed to cast user or token")
+				return &decodedUser, decodedToken
 			}
-		} else if appengine.IsDevAppServer() {
-			log.Errorf("Failed to Decode cookie: %s", err.Error())
+			log.Errorf("Failed to cast user or token")
+		} else {
+			log.Errorf("Failed to decode cookie: %s", err.Error())
 		}
 	}
-	return nil, nil
+	return nil, ""
+}
+
+// NewGitHubClientFromToken returns a new GitHub client from an access token.
+func NewGitHubClientFromToken(ctx context.Context, token string) *github.Client {
+	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: token,
+	}))
+	return github.NewClient(oauthClient)
+}
+
+func getOAuthClientIDSecret(store Datastore) (clientID, clientSecret string, err error) {
+	clientID, err = GetSecret(store, "github-oauth-client-id")
+	if err != nil {
+		return "", "", err
+	}
+	clientSecret, err = GetSecret(store, "github-oauth-client-secret")
+	if err != nil {
+		return "", "", err
+	}
+	return clientID, clientSecret, nil
 }

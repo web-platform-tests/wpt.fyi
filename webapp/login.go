@@ -35,7 +35,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 func handleLogin(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 	ctx := g.Context()
 	ds := g.Datastore()
-	user, token := shared.GetUserFromCookie(ctx, ds, r)
+	user, _ := shared.GetUserFromCookie(ctx, ds, r)
 	returnURL := r.FormValue("return")
 	if returnURL == "" {
 		returnURL = "/"
@@ -43,7 +43,7 @@ func handleLogin(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 
 	redirect := ""
 	log := shared.GetLogger(ctx)
-	if user == nil || token == nil {
+	if user == nil {
 		log.Infof("Initiating a new user login.")
 		g.SetRedirectURL(getCallbackURI(returnURL, r))
 		state, err := generateRandomState(32)
@@ -115,21 +115,20 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	oauthToken := r.FormValue("code")
-	if oauthToken == "" {
-		http.Error(w, "No token or username provided", http.StatusBadRequest)
+	oauthCode := r.FormValue("code")
+	if oauthCode == "" {
+		http.Error(w, "No OAuth code provided", http.StatusBadRequest)
 		return
 	}
 
-	client, err := g.GetNewClient(oauthToken)
+	client, err := g.NewClient(oauthCode)
 	if err != nil {
-		log.Errorf("Error creating GitHub client using OAuth2 token: %v", err)
-		http.Error(w, "Error creating GitHub client using OAuth2 token", http.StatusBadRequest)
+		log.Errorf("Error creating GitHub client using OAuth code: %v", err)
+		http.Error(w, "Error creating GitHub client using OAuth code", http.StatusBadRequest)
 		return
 	}
 
-	// Passing the empty string will fetch the authenticated user.
-	ghUser, err := g.GetGitHubUser(client)
+	ghUser, err := g.GetUser(client)
 	if err != nil || ghUser == nil {
 		log.Errorf("Failed to get authenticated user: %v", err)
 		http.Error(w, "Failed to get authenticated user", http.StatusBadRequest)
@@ -140,7 +139,12 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 		GitHubHandle: ghUser.GetLogin(),
 		GitHubEmail:  ghUser.GetEmail(),
 	}
-	setSession(ctx, ds, user, g.GetAccessToken(), w)
+	token := g.GetAccessToken()
+	if token == "" {
+		http.Error(w, "Got empty OAuth access token", http.StatusBadRequest)
+		return
+	}
+	setSession(ctx, ds, user, token, w)
 	if err != nil {
 		http.Error(w, "Failed to set credential cookie", http.StatusInternalServerError)
 		return
@@ -160,11 +164,11 @@ func logoutHandler(response http.ResponseWriter, r *http.Request) {
 	http.Redirect(response, r, "/", http.StatusFound)
 }
 
-func setSession(ctx context.Context, ds shared.Datastore, user *shared.User, token *string, response http.ResponseWriter) error {
+func setSession(ctx context.Context, ds shared.Datastore, user *shared.User, token string, response http.ResponseWriter) error {
 	var err error
 	value := map[string]interface{}{
 		"user":  *user,
-		"token": *token,
+		"token": token,
 	}
 
 	sc, err := shared.GetSecureCookie(ctx, ds)
