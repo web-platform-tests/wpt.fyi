@@ -7,45 +7,56 @@
 package webapp
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
-func TestShowAdminUploadForm_not_admin(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	req := httptest.NewRequest("GET", "/admin/results/upload", new(strings.Reader))
+func TestCheckAdmin_not_logged_in(t *testing.T) {
 	resp := httptest.NewRecorder()
-	mockAE := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().IsAdmin().Return(false)
-	mockAE.EXPECT().GetVersionedHostname().Return("")
-
-	showAdminUploadForm(mockAE, resp, req)
-
-	assert.Equal(t, resp.Code, http.StatusUnauthorized)
-	assert.NotContains(t, resp.Body.String(), "form")
+	assert.False(t, checkAdmin(nil, shared.NewNilLogger(), resp))
+	assert.Equal(t, http.StatusUnauthorized, resp.Code)
 }
 
-func TestShowAdminUploadForm_admin(t *testing.T) {
+func TestCheckAdmin_not_admin(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	req := httptest.NewRequest("GET", "/admin/results/upload", new(strings.Reader))
+	mockACL := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+	mockACL.EXPECT().IsValidAdmin().Return(false, nil)
+
 	resp := httptest.NewRecorder()
-	mockAE := sharedtest.NewMockAppEngineAPI(mockCtrl)
-	mockAE.EXPECT().IsAdmin().Return(true)
-	mockAE.EXPECT().GetVersionedHostname().Return("")
+	assert.False(t, checkAdmin(mockACL, shared.NewNilLogger(), resp))
+	assert.Equal(t, http.StatusForbidden, resp.Code)
+}
 
-	showAdminUploadForm(mockAE, resp, req)
+func TestCheckAdmin_error(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
-	assert.Equal(t, resp.Code, http.StatusOK)
-	assert.Contains(t, resp.Body.String(), "form")
+	mockACL := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+	mockACL.EXPECT().IsValidAdmin().Return(true, errors.New("error"))
+
+	resp := httptest.NewRecorder()
+	assert.False(t, checkAdmin(mockACL, shared.NewNilLogger(), resp))
+	assert.Equal(t, http.StatusInternalServerError, resp.Code)
+}
+
+func TestCheckAdmin_admin(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockACL := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+	mockACL.EXPECT().IsValidAdmin().Return(true, nil)
+
+	resp := httptest.NewRecorder()
+	assert.True(t, checkAdmin(mockACL, shared.NewNilLogger(), resp))
+	assert.Equal(t, http.StatusOK, resp.Code)
 }

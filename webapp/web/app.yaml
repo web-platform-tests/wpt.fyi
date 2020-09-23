@@ -49,12 +49,6 @@ handlers:
   expiration: 10m
   secure: always
 
-# Admin-only pages:
-- url: /admin/.*
-  script: auto
-  secure: always
-  login: admin
-
 # Remote API
 - url: /_ah/remote_api
   script: auto
