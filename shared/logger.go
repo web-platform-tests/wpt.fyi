@@ -58,12 +58,6 @@ type gaeLogger struct {
 	ctx context.Context
 }
 
-// newGAELogger returns a Google App Engine Standard Environment logger bound to
-// the given context.
-func newGAELogger(ctx context.Context) Logger {
-	return gaeLogger{ctx}
-}
-
 func (l gaeLogger) Debugf(format string, args ...interface{}) {
 	gaelog.Debugf(l.ctx, format, args...)
 }
@@ -78,6 +72,12 @@ func (l gaeLogger) Infof(format string, args ...interface{}) {
 
 func (l gaeLogger) Warningf(format string, args ...interface{}) {
 	gaelog.Warningf(l.ctx, format, args...)
+}
+
+// newGAELogger returns a Google App Engine Standard Environment logger bound to
+// the given context.
+func newGAELogger(ctx context.Context) Logger {
+	return gaeLogger{ctx}
 }
 
 // NewAppEngineContext creates a new Google App Engine Standard-based
