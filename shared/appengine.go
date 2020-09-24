@@ -19,9 +19,6 @@ import (
 	"github.com/google/go-github/v31/github"
 	apps "google.golang.org/api/appengine/v1"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
-
-	// TODO(#1747): Deprecate this library.
-	"google.golang.org/appengine/user"
 )
 
 type clientsImpl struct {
@@ -64,11 +61,6 @@ type AppEngineAPI interface {
 	// http.Client
 	GetHTTPClient() *http.Client
 	GetHTTPClientWithTimeout(time.Duration) *http.Client
-
-	// AppEngine User API
-	IsAdmin() bool
-	IsLoggedIn() bool
-	LoginURL(redirect string) (string, error)
 
 	// GetVersion returns the version name for the current environment.
 	GetVersion() string
@@ -184,18 +176,6 @@ func (a *appEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
 		a.githubClient = NewGitHubClientFromToken(a.ctx, secret)
 	}
 	return a.githubClient, nil
-}
-
-func (a appEngineAPIImpl) IsLoggedIn() bool {
-	return user.Current(a.ctx) != nil
-}
-
-func (a appEngineAPIImpl) LoginURL(redirect string) (string, error) {
-	return user.LoginURL(a.ctx, redirect)
-}
-
-func (a appEngineAPIImpl) IsAdmin() bool {
-	return user.IsAdmin(a.ctx)
 }
 
 func (a appEngineAPIImpl) IsFeatureEnabled(featureName string) bool {

@@ -33,7 +33,7 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	// size on AppEngine.
 
 	var uploader string
-	if a.IsAdmin() {
+	if a.IsAdmin(r) {
 		uploader = r.FormValue("user")
 		if uploader == "" {
 			http.Error(w, "Please specify uploader", http.StatusBadRequest)

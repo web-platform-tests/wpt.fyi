@@ -42,9 +42,10 @@ type API interface {
 	shared.AppEngineAPI
 
 	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
+	IsAdmin(*http.Request) bool
+	ScheduleResultsTask(uploader string, results, screenshots []string, extraParams map[string]string) (string, error)
 	UpdatePendingTestRun(pendingRun shared.PendingTestRun) error
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
-	ScheduleResultsTask(uploader string, results, screenshots []string, extraParams map[string]string) (string, error)
 }
 
 type apiImpl struct {
@@ -76,6 +77,24 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 		return nil, err
 	}
 	return key, nil
+}
+
+func (a apiImpl) IsAdmin(r *http.Request) bool {
+	logger := shared.GetLogger(a.Context())
+	acl, err := shared.NewGitHubAccessControlFromRequest(a, a.store, r)
+	if err != nil {
+		logger.Errorf("Error creating GitHubAccessControl: %s", err.Error())
+		return false
+	}
+	if acl == nil {
+		return false
+	}
+	admin, err := acl.IsValidAdmin()
+	if err != nil {
+		logger.Errorf("Error checking admin: %s", err.Error())
+		return false
+	}
+	return admin
 }
 
 func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {

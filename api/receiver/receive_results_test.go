@@ -67,7 +67,7 @@ func TestHandleResultsUpload_not_admin(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/results/upload", nil)
 	resp := httptest.NewRecorder()
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
-	mockAE.EXPECT().IsAdmin().Return(false)
+	mockAE.EXPECT().IsAdmin(req).Return(false)
 
 	HandleResultsUpload(mockAE, resp, req)
 	assert.Equal(t, resp.Code, http.StatusUnauthorized)
@@ -82,7 +82,7 @@ func TestHandleResultsUpload_http_basic_auth_invalid(t *testing.T) {
 	resp := httptest.NewRecorder()
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	gomock.InOrder(
-		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().IsAdmin(req).Return(false),
 		mockAE.EXPECT().GetUploader("not_a_user").Return(shared.Uploader{}, fmt.Errorf("not found")),
 	)
 
@@ -119,7 +119,7 @@ func TestHandleResultsUpload_extra_params(t *testing.T) {
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
-		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().IsAdmin(req).Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
 		mockAE.EXPECT().ScheduleResultsTask(
 			"blade-runner", []string{"http://wpt.fyi/test.json.gz"}, nil, extraParams).Return("task", nil),
@@ -153,7 +153,7 @@ func TestHandleResultsUpload_azure(t *testing.T) {
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
-		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().IsAdmin(req).Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
 		mockAE.EXPECT().ScheduleResultsTask("blade-runner", nil, nil, extraParams).Return("task", nil),
 	)
@@ -183,7 +183,7 @@ func TestHandleResultsUpload_url(t *testing.T) {
 			mockAE := mock_receiver.NewMockAPI(mockCtrl)
 			mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 			gomock.InOrder(
-				mockAE.EXPECT().IsAdmin().Return(false),
+				mockAE.EXPECT().IsAdmin(req).Return(false),
 				mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
 				mockAE.EXPECT().ScheduleResultsTask("blade-runner", urls, screenshot, emptyParams).Return("task", nil),
 			)
@@ -216,7 +216,7 @@ func TestHandleResultsUpload_file(t *testing.T) {
 			mockAE := mock_receiver.NewMockAPI(mockCtrl)
 			mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 			gomock.InOrder(
-				mockAE.EXPECT().IsAdmin().Return(false),
+				mockAE.EXPECT().IsAdmin(req).Return(false),
 				mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
 				mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), emptyParams).Return("task", nil),
 			)
@@ -247,7 +247,7 @@ func TestHandleResultsUpload_fail_uploading(t *testing.T) {
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
-		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().IsAdmin(req).Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
 		mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer/blade-runner/.*\.json$`), gomock.Any(), true).Return(errGCS),
 	)
@@ -268,7 +268,7 @@ func TestHandleResultsUpload_empty_payload(t *testing.T) {
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
 	gomock.InOrder(
-		mockAE.EXPECT().IsAdmin().Return(false),
+		mockAE.EXPECT().IsAdmin(req).Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
 	)
 
