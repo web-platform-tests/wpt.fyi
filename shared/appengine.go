@@ -16,7 +16,9 @@ import (
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	gclog "cloud.google.com/go/logging"
 	"github.com/google/go-github/v31/github"
+	"github.com/sirupsen/logrus"
 	apps "google.golang.org/api/appengine/v1"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
@@ -26,6 +28,7 @@ import (
 
 type clientsImpl struct {
 	cloudtasks *cloudtasks.Client
+	gclog      *gclog.Client
 }
 
 // Clients is a singleton containing heavyweight (e.g. with connection pools)
@@ -42,15 +45,28 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 		return nil
 	}
 	c.cloudtasks, err = cloudtasks.NewClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	c.gclog, err = gclog.NewClient(ctx, runtimeIdentity.AppID)
 	return err
 }
 
 // Close closes all clients in Clients. It must be called once and only once
 // before the server exits. Do not use AppEngineAPI afterwards.
-func (c *clientsImpl) Close() error {
+func (c *clientsImpl) Close() {
 	err := c.cloudtasks.Close()
+	if err != nil {
+		logrus.Warningf("Error closing cloudtasks: %s", err.Error())
+	}
 	c.cloudtasks = nil
-	return err
+
+	err = c.gclog.Close()
+	if err != nil {
+		logrus.Warningf("Error closing gclog: %s", err.Error())
+	}
+	c.gclog = nil
 }
 
 // AppEngineAPI is an abstraction of some appengine context helper methods.

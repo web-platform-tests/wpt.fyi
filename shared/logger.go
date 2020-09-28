@@ -108,17 +108,12 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 // newAppEngineFlexContext creates a new Google App Engine Flex-based
 // context, with a Google Cloud logger client bound to an http.Request.
 func newAppEngineFlexContext(r *http.Request, project string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
-	ctx = r.Context()
-	client, err := gclog.NewClient(ctx, project)
-	if err != nil {
-		return nil, err
-	}
 	// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
 	traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
 	if traceID != "" {
 		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
 	}
-	childLogger := client.Logger("stdout", gclog.CommonResource(commonResource))
+	childLogger := Clients.gclog.Logger("stdout", gclog.CommonResource(commonResource))
 	ctx = withLogger(ctx, &gcLogger{
 		childLogger: childLogger,
 		traceID:     traceID,
