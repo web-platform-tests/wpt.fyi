@@ -1,4 +1,4 @@
-// +build small
+// +build medium
 
 package webapp
 
@@ -9,10 +9,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 func TestAboutHandler(t *testing.T) {
-	req := httptest.NewRequest("GET", "/about", nil)
+	i, err := sharedtest.NewAEInstance(true)
+	assert.Nil(t, err)
+	defer i.Close()
+	req, err := i.NewRequest("GET", "/about", nil)
+	assert.Nil(t, err)
 	resp := httptest.NewRecorder()
 	aboutHandler(resp, req)
 	assert.Equal(t, resp.Code, http.StatusOK)
