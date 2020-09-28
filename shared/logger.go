@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
-	gaelog "google.golang.org/appengine/log"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
@@ -54,37 +54,26 @@ func NewNilLogger() Logger {
 	return nl
 }
 
-type gaeLogger struct {
-	ctx context.Context
-}
-
-func (l gaeLogger) Debugf(format string, args ...interface{}) {
-	gaelog.Debugf(l.ctx, format, args...)
-}
-
-func (l gaeLogger) Errorf(format string, args ...interface{}) {
-	gaelog.Errorf(l.ctx, format, args...)
-}
-
-func (l gaeLogger) Infof(format string, args ...interface{}) {
-	gaelog.Infof(l.ctx, format, args...)
-}
-
-func (l gaeLogger) Warningf(format string, args ...interface{}) {
-	gaelog.Warningf(l.ctx, format, args...)
-}
-
-// newGAELogger returns a Google App Engine Standard Environment logger bound to
-// the given context.
-func newGAELogger(ctx context.Context) Logger {
-	return gaeLogger{ctx}
-}
-
 // NewAppEngineContext creates a new Google App Engine Standard-based
 // context bound to an http.Request.
 func NewAppEngineContext(r *http.Request) context.Context {
 	ctx := r.Context()
-	return withLogger(ctx, newGAELogger(ctx))
+	monitoredResource := mrpb.MonitoredResource{
+		Type: "gae_app",
+		Labels: map[string]string{
+			"project_id": os.Getenv("GOOGLE_CLOUD_PROJECT"),
+			// https://cloud.google.com/appengine/docs/standard/go/runtime#environment_variables
+			"module_id":  os.Getenv("GAE_SERVICE"),
+			"version_id": os.Getenv("GAE_VERSION"),
+		},
+	}
+
+	ctx, err := newAppEngineFlexContext(r, os.Getenv("GOOGLE_CLOUD_PROJECT"), &monitoredResource)
+	if err != nil {
+		return r.Context()
+	}
+
+	return ctx
 }
 
 type gcLogger struct {
@@ -129,7 +118,7 @@ func newAppEngineFlexContext(r *http.Request, project string, commonResource *mr
 	if traceID != "" {
 		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
 	}
-	childLogger := client.Logger("request_log_entries", gclog.CommonResource(commonResource))
+	childLogger := client.Logger("stdout", gclog.CommonResource(commonResource))
 	ctx = withLogger(ctx, &gcLogger{
 		childLogger: childLogger,
 		traceID:     traceID,
