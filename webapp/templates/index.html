@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  {{ template "_head_common.html" }}
-  <script type="module" src="/views/wpt-app.js"></script>
-  <script type="module" src="/components/test-runs-query.js"></script>
+{{ template "_head_common.html" . }}
+<script type="module" src="/views/wpt-app.js"></script>
+<script type="module" src="/components/test-runs-query.js"></script>
 </head>
 <body>
   <div id="content">
-    <wpt-app {{if .User}}user="{{.User}}"{{end}}
-             {{- template "_test_run_ui_query_params.html" . }}></wpt-app>
+    <wpt-app {{if .User}}user="{{.User.GitHubHandle}}"{{end}}
+             {{- template "_test_run_ui_query_params.html" .Data }}></wpt-app>
   </div>
 </body>
 </html>

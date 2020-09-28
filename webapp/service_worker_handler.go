@@ -38,5 +38,6 @@ func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Version: version,
 	}
-	templates.ExecuteTemplate(w, "service-worker.js", data)
+	// We don't need user info in this template.
+	RenderTemplate(w, nil, "service-worker.js", data)
 }

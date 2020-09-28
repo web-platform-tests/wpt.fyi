@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  {{ template "_head_common.html" }}
-  <script type="module" src="/components/wpt-insights.js"></script>
+{{ template "_head_common.html" . }}
+<script type="module" src="/components/wpt-insights.js"></script>
 </head>
 <body>
 <div id="content">
-  <wpt-header></wpt-header>
+  <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
   <wpt-insights></wpt-insights>
 </div>
 </body>

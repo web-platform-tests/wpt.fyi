@@ -58,10 +58,8 @@ func showAdminUploadForm(a shared.AppEngineAPI, acl shared.GitHubAccessControl, 
 	}{
 		CallbackURL: fmt.Sprintf("https://%s/api/results/create", a.GetVersionedHostname()),
 	}
-	if err := templates.ExecuteTemplate(w, "admin_upload.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// We don't need user info in this template.
+	RenderTemplate(w, nil, "admin_upload.html", data)
 }
 
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
@@ -90,10 +88,8 @@ func handleAdminFlags(a shared.AppEngineAPI, ds shared.Datastore, acl shared.Git
 		}{
 			Host: a.GetHostname(),
 		}
-		if err := templates.ExecuteTemplate(w, "admin_flags.html", data); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// We don't need user info in this template.
+		RenderTemplate(w, nil, "admin_flags.html", data)
 	} else if r.Method == "POST" {
 		var flag shared.Flag
 		if bytes, err := ioutil.ReadAll(r.Body); err != nil {

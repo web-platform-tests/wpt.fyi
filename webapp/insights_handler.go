@@ -11,9 +11,5 @@ import (
 // insightsHandler handles the view listing a range of useful queries for the
 // wpt results.
 func insightsHandler(w http.ResponseWriter, r *http.Request) {
-	data := struct{}{}
-	if err := templates.ExecuteTemplate(w, "insights.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	RenderTemplate(w, r, "insights.html", nil)
 }

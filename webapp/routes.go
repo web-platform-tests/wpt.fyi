@@ -2,33 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate packr2
-
 package webapp
 
 import (
-	"html/template"
-
-	"github.com/gobuffalo/packr/v2"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	_ "google.golang.org/appengine/remote_api" // Registers the remote API in init
 )
-
-var templates *template.Template
-
-func init() {
-	box := packr.New("html templates", "./templates/")
-	templates = template.New("all.html")
-	for _, t := range box.List() {
-		tmpl := templates.New(t)
-		body, err := box.FindString(t)
-		if err != nil {
-			panic(err)
-		} else if _, err = tmpl.Parse(body); err != nil {
-			panic(err)
-		}
-	}
-}
 
 // RegisterRoutes adds the route handlers for the webapp.
 func RegisterRoutes() {

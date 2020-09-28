@@ -9,7 +9,5 @@ import (
 )
 
 func flagsHandler(w http.ResponseWriter, r *http.Request) {
-	if err := templates.ExecuteTemplate(w, "flags.html", nil); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	RenderTemplate(w, r, "flags.html", nil)
 }

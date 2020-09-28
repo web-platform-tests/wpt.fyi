@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  {{ template "_head_common.html" }}
+{{ template "_head_common.html" . }}
 </head>
 <body>
 <div id="content">
-  <wpt-header></wpt-header>
+  <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
   <article>
     <h1>Features</h1>
     <wpt-flags-editor></wpt-flags-editor>

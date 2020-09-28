@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-{{ template "_head_common.html" }}
+{{ template "_head_common.html" . }}
 <script type="module" src="/components/wpt-processor.js"></script>
 <style>
   html, body { height: 100% }
@@ -19,7 +19,7 @@
 </head>
 <body>
 <div id="full-screen-content">
-  <wpt-header></wpt-header>
+  <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
   <wpt-processor></wpt-processor>
 </div>
 </body>
