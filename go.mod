@@ -24,7 +24,7 @@ require (
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/rogpeppe/go-internal v1.6.2 // indirect
-	github.com/sirupsen/logrus v1.6.0
+	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.0.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/taskcluster/httpbackoff/v3 v3.1.0 // indirect
@@ -36,7 +36,6 @@ require (
 	golang.org/x/net v0.0.0-20200904194848-62affa334b73 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009 // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.0.0-20200913032122-97363e29fc9b // indirect
 	google.golang.org/api v0.31.0
 	google.golang.org/appengine v1.6.6
