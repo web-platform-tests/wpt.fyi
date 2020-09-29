@@ -430,8 +430,7 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 		RunIDs []int64         `json:"run_ids"`
 		Query  json.RawMessage `json:"query"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.RunIDs) == 0 {
@@ -455,8 +454,7 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 // {"pattern":<test name pattern string>}.
 func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	patternMsg, ok := data["pattern"]
@@ -476,8 +474,7 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 // {"subtest":<subtest name pattern string>}.
 func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	subtestMsg, ok := data["subtest"]
@@ -497,8 +494,7 @@ func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
 // {"path":<test name pattern string>}.
 func (tp *TestPath) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	pathMsg, ok := data["path"]
@@ -522,8 +518,7 @@ func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 		Product     string `json:"product"`
 		Status      string `json:"status"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if data.Product == "" && data.BrowserName != "" {
@@ -564,8 +559,7 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 			Not string `json:"not"`
 		} `json:"status"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if data.Product == "" && data.BrowserName != "" {
@@ -602,8 +596,7 @@ func (n *AbstractNot) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Not json.RawMessage `json:"not"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Not) == 0 {
@@ -621,8 +614,7 @@ func (o *AbstractOr) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Or []json.RawMessage `json:"or"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Or) == 0 {
@@ -647,8 +639,7 @@ func (a *AbstractAnd) UnmarshalJSON(b []byte) error {
 	var data struct {
 		And []json.RawMessage `json:"and"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.And) == 0 {
@@ -673,8 +664,7 @@ func (e *AbstractExists) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Exists []json.RawMessage `json:"exists"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Exists) == 0 {
@@ -699,8 +689,7 @@ func (e *AbstractAll) UnmarshalJSON(b []byte) error {
 	var data struct {
 		All []json.RawMessage `json:"all"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.All) == 0 {
@@ -725,8 +714,7 @@ func (e *AbstractNone) UnmarshalJSON(b []byte) error {
 	var data struct {
 		None []json.RawMessage `json:"none"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.None) == 0 {
@@ -751,8 +739,7 @@ func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Sequential []json.RawMessage `json:"sequential"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Sequential) == 0 {
@@ -773,13 +760,12 @@ func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
 
 // UnmarshalJSON for AbstractCount attempts to interpret a query atom as
 // {"count": int, "where": query}.
-func (c *AbstractCount) UnmarshalJSON(b []byte) error {
+func (c *AbstractCount) UnmarshalJSON(b []byte) (err error) {
 	var data struct {
 		Count json.RawMessage `json:"count"`
 		Where json.RawMessage `json:"where"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Count) == 0 {
@@ -789,8 +775,7 @@ func (c *AbstractCount) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing count property: "where"`)
 	}
 
-	err = json.Unmarshal(data.Count, &c.Count)
-	if err != nil {
+	if err := json.Unmarshal(data.Count, &c.Count); err != nil {
 		return err
 	}
 	c.Where, err = unmarshalQ(data.Where)
@@ -807,8 +792,7 @@ func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
 		Count json.RawMessage `json:"lessThan"`
 		Where json.RawMessage `json:"where"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Count) == 0 {
@@ -818,7 +802,7 @@ func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing count property: "where"`)
 	}
 
-	err = json.Unmarshal(data.Count, &l.Count)
+	err := json.Unmarshal(data.Count, &l.Count)
 	if err != nil {
 		return err
 	}
@@ -831,13 +815,12 @@ func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
 
 // UnmarshalJSON for AbstractMoreThan attempts to interpret a query atom as
 // {"count": int, "where": query}.
-func (m *AbstractMoreThan) UnmarshalJSON(b []byte) error {
+func (m *AbstractMoreThan) UnmarshalJSON(b []byte) (err error) {
 	var data struct {
 		Count json.RawMessage `json:"moreThan"`
 		Where json.RawMessage `json:"where"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Count) == 0 {
@@ -847,8 +830,7 @@ func (m *AbstractMoreThan) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing count property: "where"`)
 	}
 
-	err = json.Unmarshal(data.Count, &m.Count)
-	if err != nil {
+	if err := json.Unmarshal(data.Count, &m.Count); err != nil {
 		return err
 	}
 	m.Where, err = unmarshalQ(data.Where)
@@ -862,8 +844,7 @@ func (m *AbstractMoreThan) UnmarshalJSON(b []byte) error {
 // {"link":<metadata url pattern string>}.
 func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	patternMsg, ok := data["link"]
@@ -883,8 +864,7 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 // {"triaged":<browser name>}.
 func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 
@@ -913,10 +893,9 @@ func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
 
 // UnmarshalJSON for MetadataQuality attempts to interpret a query atom as
 // {"is":<metadata quality>}.
-func (q *MetadataQuality) UnmarshalJSON(b []byte) error {
+func (q *MetadataQuality) UnmarshalJSON(b []byte) (err error) {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	is, ok := data["is"]
@@ -948,120 +927,103 @@ func MetadataQualityFromString(quality string) (MetadataQuality, error) {
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	{
 		var tnp TestNamePattern
-		err := json.Unmarshal(b, &tnp)
-		if err == nil {
+		if err := json.Unmarshal(b, &tnp); err == nil {
 			return tnp, nil
 		}
 	}
 	{
 		var stnp SubtestNamePattern
-		err := json.Unmarshal(b, &stnp)
-		if err == nil {
+		if err := json.Unmarshal(b, &stnp); err == nil {
 			return stnp, nil
 		}
 	}
 	{
 		var tp TestPath
-		err := json.Unmarshal(b, &tp)
-		if err == nil {
+		if err := json.Unmarshal(b, &tp); err == nil {
 			return tp, nil
 		}
 	}
 	{
 		var tse TestStatusEq
-		err := json.Unmarshal(b, &tse)
-		if err == nil {
+		if err := json.Unmarshal(b, &tse); err == nil {
 			return tse, nil
 		}
 	}
 	{
 		var tsn TestStatusNeq
-		err := json.Unmarshal(b, &tsn)
-		if err == nil {
+		if err := json.Unmarshal(b, &tsn); err == nil {
 			return tsn, nil
 		}
 	}
 	{
 		var n AbstractNot
-		err := json.Unmarshal(b, &n)
-		if err == nil {
+		if err := json.Unmarshal(b, &n); err == nil {
 			return n, nil
 		}
 	}
 	{
 		var o AbstractOr
-		err := json.Unmarshal(b, &o)
-		if err == nil {
+		if err := json.Unmarshal(b, &o); err == nil {
 			return o, nil
 		}
 	}
 	{
 		var a AbstractAnd
-		err := json.Unmarshal(b, &a)
-		if err == nil {
+		if err := json.Unmarshal(b, &a); err == nil {
 			return a, nil
 		}
 	}
 	{
 		var e AbstractExists
-		err := json.Unmarshal(b, &e)
-		if err == nil {
+		if err := json.Unmarshal(b, &e); err == nil {
 			return e, nil
 		}
 	}
 	{
 		var a AbstractAll
-		err := json.Unmarshal(b, &a)
-		if err == nil {
+		if err := json.Unmarshal(b, &a); err == nil {
 			return a, nil
 		}
 	}
 	{
 		var n AbstractNone
-		err := json.Unmarshal(b, &n)
-		if err == nil {
+		if err := json.Unmarshal(b, &n); err == nil {
 			return n, nil
 		}
 	}
 	{
 		var s AbstractSequential
-		err := json.Unmarshal(b, &s)
-		if err == nil {
+		if err := json.Unmarshal(b, &s); err == nil {
 			return s, nil
 		}
 	}
 	{
 		var c AbstractCount
-		err := json.Unmarshal(b, &c)
-		if err == nil {
+		if err := json.Unmarshal(b, &c); err == nil {
 			return c, nil
 		}
 	}
 	{
 		var c AbstractLessThan
-		err := json.Unmarshal(b, &c)
-		if err == nil {
+		if err := json.Unmarshal(b, &c); err == nil {
 			return c, nil
 		}
 	}
 	{
 		var c AbstractMoreThan
-		err := json.Unmarshal(b, &c)
-		if err == nil {
+		if err := json.Unmarshal(b, &c); err == nil {
 			return c, nil
 		}
 	}
 	{
 		var l AbstractLink
-		err := json.Unmarshal(b, &l)
-		if err == nil {
+		if err := json.Unmarshal(b, &l); err == nil {
 			return l, nil
 		}
 	}
 	{
 		var i MetadataQuality
-		err := json.Unmarshal(b, &i)
-		if err == nil {
+		if err := json.Unmarshal(b, &i); err == nil {
 			return i, nil
 		}
 	}
