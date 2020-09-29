@@ -98,7 +98,7 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 // context, with a Google Cloud logger client bound to an http.Request.
 func newAppEngineFlexContext(r *http.Request, project string) (ctx context.Context, err error) {
 	if Clients.gclog == nil {
-		return ctx, nil
+		return r.Context(), nil
 	}
 
 	// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
