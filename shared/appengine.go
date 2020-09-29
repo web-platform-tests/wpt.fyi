@@ -72,17 +72,23 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 // Close closes all clients in Clients. It must be called once and only once
 // before the server exits. Do not use AppEngineAPI afterwards.
 func (c *clientsImpl) Close() {
-	err := c.cloudtasks.Close()
-	if err != nil {
-		logrus.Warningf("Error closing cloudtasks: %s", err.Error())
+	if c.cloudtasks != nil {
+		err := c.cloudtasks.Close()
+		if err != nil {
+			logrus.Warningf("Error closing cloudtasks: %s", err.Error())
+		}
+		c.cloudtasks = nil
 	}
-	c.cloudtasks = nil
 
-	err = c.gclog.Close()
-	if err != nil {
-		logrus.Warningf("Error closing gclog: %s", err.Error())
+	if c.gclog != nil {
+		err := c.gclog.Close()
+		if err != nil {
+			logrus.Warningf("Error closing gclog: %s", err.Error())
+		}
+
+		c.gclog = nil
+		c.logger = nil
 	}
-	c.gclog = nil
 }
 
 // AppEngineAPI is an abstraction of some appengine context helper methods.
