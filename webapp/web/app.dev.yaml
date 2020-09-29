@@ -48,10 +48,6 @@ handlers:
   expiration: 10m
   secure: always
 
-# Remote API
-- url: /_ah/remote_api
-  script: _go_app
-
 # Everything else (templates & APIs):
 - url: /.*
   script: auto
