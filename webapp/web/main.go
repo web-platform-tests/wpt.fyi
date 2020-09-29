@@ -28,6 +28,7 @@ func init() {
 }
 
 func main() {
+	// TODO: The issue here is if cloudtasks initialized successfully but gclog doesn't, cloudtasks still needs to be closed.
 	if err := shared.Clients.Init(context.Background()); err != nil {
 		panic(err)
 	}

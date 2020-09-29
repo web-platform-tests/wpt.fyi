@@ -20,6 +20,7 @@ import (
 	"github.com/google/go-github/v31/github"
 	"github.com/sirupsen/logrus"
 	apps "google.golang.org/api/appengine/v1"
+	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
 	// TODO(#1747): Deprecate this library.
@@ -29,6 +30,7 @@ import (
 type clientsImpl struct {
 	cloudtasks *cloudtasks.Client
 	gclog      *gclog.Client
+	logger     *gclog.Logger
 }
 
 // Clients is a singleton containing heavyweight (e.g. with connection pools)
@@ -50,7 +52,21 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 	}
 
 	c.gclog, err = gclog.NewClient(ctx, runtimeIdentity.AppID)
-	return err
+	if err != nil {
+		return err
+	}
+
+	monitoredResource := mrpb.MonitoredResource{
+		Type: "gae_app",
+		Labels: map[string]string{
+			"project_id": os.Getenv("GOOGLE_CLOUD_PROJECT"),
+			// https://cloud.google.com/appengine/docs/standard/go/runtime#environment_variables
+			"module_id":  os.Getenv("GAE_SERVICE"),
+			"version_id": os.Getenv("GAE_VERSION"),
+		},
+	}
+	c.logger = c.gclog.Logger("stdout", gclog.CommonResource(&monitoredResource))
+	return nil
 }
 
 // Close closes all clients in Clients. It must be called once and only once
