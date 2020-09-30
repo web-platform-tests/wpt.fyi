@@ -56,16 +56,6 @@ func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
-// FileContentsQuery is a query atom that matches test contents to a query string.
-type FileContentsQuery struct {
-	Query string
-}
-
-// BindToRuns for FileContentsQuery is a no-op; it is independent of test runs.
-func (fcq FileContentsQuery) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
-	return fcq
-}
-
 // SubtestNamePattern is a query atom that matches subtest names to a pattern string.
 type SubtestNamePattern struct {
 	Subtest string
@@ -440,8 +430,7 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 		RunIDs []int64         `json:"run_ids"`
 		Query  json.RawMessage `json:"query"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.RunIDs) == 0 {
@@ -465,8 +454,7 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 // {"pattern":<test name pattern string>}.
 func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	patternMsg, ok := data["pattern"]
@@ -482,33 +470,11 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalJSON for FileContentsQuery attempts to interpret a query atom as
-// {"contains":<test contents contains string>}.
-func (fcq *FileContentsQuery) UnmarshalJSON(b []byte) error {
-	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
-		return err
-	}
-	containsData, ok := data["contains"]
-	if !ok {
-		return errors.New(`Missing test contents property: "contains"`)
-	}
-	var contains string
-	if err := json.Unmarshal(*containsData, &contains); err != nil {
-		return errors.New(`Test contents property "contains" is not a string`)
-	}
-
-	fcq.Query = contains
-	return nil
-}
-
 // UnmarshalJSON for SubtestNamePattern attempts to interpret a query atom as
 // {"subtest":<subtest name pattern string>}.
 func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	subtestMsg, ok := data["subtest"]
@@ -528,8 +494,7 @@ func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
 // {"path":<test name pattern string>}.
 func (tp *TestPath) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	pathMsg, ok := data["path"]
@@ -553,8 +518,7 @@ func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 		Product     string `json:"product"`
 		Status      string `json:"status"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if data.Product == "" && data.BrowserName != "" {
@@ -595,8 +559,7 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 			Not string `json:"not"`
 		} `json:"status"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if data.Product == "" && data.BrowserName != "" {
@@ -633,8 +596,7 @@ func (n *AbstractNot) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Not json.RawMessage `json:"not"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Not) == 0 {
@@ -652,8 +614,7 @@ func (o *AbstractOr) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Or []json.RawMessage `json:"or"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Or) == 0 {
@@ -678,8 +639,7 @@ func (a *AbstractAnd) UnmarshalJSON(b []byte) error {
 	var data struct {
 		And []json.RawMessage `json:"and"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.And) == 0 {
@@ -704,8 +664,7 @@ func (e *AbstractExists) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Exists []json.RawMessage `json:"exists"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Exists) == 0 {
@@ -730,8 +689,7 @@ func (e *AbstractAll) UnmarshalJSON(b []byte) error {
 	var data struct {
 		All []json.RawMessage `json:"all"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.All) == 0 {
@@ -756,8 +714,7 @@ func (e *AbstractNone) UnmarshalJSON(b []byte) error {
 	var data struct {
 		None []json.RawMessage `json:"none"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.None) == 0 {
@@ -782,8 +739,7 @@ func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
 	var data struct {
 		Sequential []json.RawMessage `json:"sequential"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Sequential) == 0 {
@@ -804,13 +760,12 @@ func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
 
 // UnmarshalJSON for AbstractCount attempts to interpret a query atom as
 // {"count": int, "where": query}.
-func (c *AbstractCount) UnmarshalJSON(b []byte) error {
+func (c *AbstractCount) UnmarshalJSON(b []byte) (err error) {
 	var data struct {
 		Count json.RawMessage `json:"count"`
 		Where json.RawMessage `json:"where"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Count) == 0 {
@@ -820,8 +775,7 @@ func (c *AbstractCount) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing count property: "where"`)
 	}
 
-	err = json.Unmarshal(data.Count, &c.Count)
-	if err != nil {
+	if err := json.Unmarshal(data.Count, &c.Count); err != nil {
 		return err
 	}
 	c.Where, err = unmarshalQ(data.Where)
@@ -838,8 +792,7 @@ func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
 		Count json.RawMessage `json:"lessThan"`
 		Where json.RawMessage `json:"where"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Count) == 0 {
@@ -849,7 +802,7 @@ func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing count property: "where"`)
 	}
 
-	err = json.Unmarshal(data.Count, &l.Count)
+	err := json.Unmarshal(data.Count, &l.Count)
 	if err != nil {
 		return err
 	}
@@ -862,13 +815,12 @@ func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
 
 // UnmarshalJSON for AbstractMoreThan attempts to interpret a query atom as
 // {"count": int, "where": query}.
-func (m *AbstractMoreThan) UnmarshalJSON(b []byte) error {
+func (m *AbstractMoreThan) UnmarshalJSON(b []byte) (err error) {
 	var data struct {
 		Count json.RawMessage `json:"moreThan"`
 		Where json.RawMessage `json:"where"`
 	}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	if len(data.Count) == 0 {
@@ -878,8 +830,7 @@ func (m *AbstractMoreThan) UnmarshalJSON(b []byte) error {
 		return errors.New(`Missing count property: "where"`)
 	}
 
-	err = json.Unmarshal(data.Count, &m.Count)
-	if err != nil {
+	if err := json.Unmarshal(data.Count, &m.Count); err != nil {
 		return err
 	}
 	m.Where, err = unmarshalQ(data.Where)
@@ -893,8 +844,7 @@ func (m *AbstractMoreThan) UnmarshalJSON(b []byte) error {
 // {"link":<metadata url pattern string>}.
 func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	patternMsg, ok := data["link"]
@@ -914,8 +864,7 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 // {"triaged":<browser name>}.
 func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 
@@ -944,10 +893,9 @@ func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
 
 // UnmarshalJSON for MetadataQuality attempts to interpret a query atom as
 // {"is":<metadata quality>}.
-func (q *MetadataQuality) UnmarshalJSON(b []byte) error {
+func (q *MetadataQuality) UnmarshalJSON(b []byte) (err error) {
 	var data map[string]*json.RawMessage
-	err := json.Unmarshal(b, &data)
-	if err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	is, ok := data["is"]
@@ -981,12 +929,6 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 		var tnp TestNamePattern
 		if err := json.Unmarshal(b, &tnp); err == nil {
 			return tnp, nil
-		}
-	}
-	{
-		var fcq FileContentsQuery
-		if err := json.Unmarshal(b, &fcq); err == nil {
-			return fcq, nil
 		}
 	}
 	{
