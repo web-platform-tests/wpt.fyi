@@ -49,9 +49,6 @@ handlers:
   expiration: 10m
   secure: always
 
-# Remote API
-- url: /_ah/remote_api
-  script: auto
 
 # Everything else (templates & APIs):
 - url: /.*
