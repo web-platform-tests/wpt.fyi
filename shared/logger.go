@@ -9,6 +9,7 @@ import (
 
 	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
+	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
 // Logger is an abstract logging interface that contains an intersection of
@@ -56,7 +57,16 @@ func NewNilLogger() Logger {
 // NewAppEngineContext creates a new Google App Engine Standard-based
 // context bound to an http.Request.
 func NewAppEngineContext(r *http.Request) context.Context {
-	ctx, err := newAppEngineFlexContext(r, os.Getenv("GOOGLE_CLOUD_PROJECT"))
+	monitoredResource := mrpb.MonitoredResource{
+		Type: "gae_app",
+		Labels: map[string]string{
+			"project_id": os.Getenv("GOOGLE_CLOUD_PROJECT"),
+			// https://cloud.google.com/appengine/docs/standard/go/runtime#environment_variables
+			"module_id":  os.Getenv("GAE_SERVICE"),
+			"version_id": os.Getenv("GAE_VERSION"),
+		},
+	}
+	ctx, err := newAppEngineFlexContext(r, os.Getenv("GOOGLE_CLOUD_PROJECT"), &monitoredResource)
 	if err != nil {
 		return r.Context()
 	}
@@ -95,9 +105,13 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 
 // newAppEngineFlexContext creates a new Google App Engine Flex-based
 // context, with a Google Cloud logger client bound to an http.Request.
-func newAppEngineFlexContext(r *http.Request, project string) (ctx context.Context, err error) {
+func newAppEngineFlexContext(r *http.Request, project string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
 	if Clients.gclog == nil {
 		return withLogger(r.Context(), NewNilLogger()), nil
+	}
+
+	if Clients.logger == nil {
+		Clients.logger = Clients.gclog.Logger("stdout", gclog.CommonResource(commonResource))
 	}
 
 	// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
@@ -118,9 +132,9 @@ func newAppEngineFlexContext(r *http.Request, project string) (ctx context.Conte
 // commonResource is an optional override to the monitored resource details appended to each log.
 // e.g. in the Flex environment, it pays to override this value to type gae_app, to ensure finding
 // logs is consistent between services.
-func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string) http.HandlerFunc {
+func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, commonResource *mrpb.MonitoredResource) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, err := newAppEngineFlexContext(r, project)
+		ctx, err := newAppEngineFlexContext(r, project, commonResource)
 		if err != nil {
 			h(w, r)
 			return
