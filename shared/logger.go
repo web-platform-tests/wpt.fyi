@@ -56,7 +56,6 @@ func NewNilLogger() Logger {
 // NewAppEngineContext creates a new Google App Engine Standard-based
 // context bound to an http.Request.
 func NewAppEngineContext(r *http.Request) context.Context {
-	ctx := r.Context()
 	ctx, err := newAppEngineFlexContext(r, os.Getenv("GOOGLE_CLOUD_PROJECT"))
 	if err != nil {
 		return r.Context()
@@ -106,7 +105,7 @@ func newAppEngineFlexContext(r *http.Request, project string) (ctx context.Conte
 	if traceID != "" {
 		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
 	}
-	ctx = withLogger(ctx, &gcLogger{
+	ctx = withLogger(r.Context(), &gcLogger{
 		childLogger: Clients.logger,
 		traceID:     traceID,
 	})
