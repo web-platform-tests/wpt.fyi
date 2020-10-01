@@ -8,9 +8,11 @@ import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
-import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
+import '../node_modules/@polymer/iron-icons/iron-icons.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
+import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 
@@ -35,7 +37,9 @@ class GitHubLogin extends PolymerElement {
       }
     </style>
     <template is="dom-if" if="[[!user]]">
-      <iron-icon class="help" icon="icons:help-outline" on-click="openHelpDialog"></iron-icon>
+      <template is="dom-if" if="[[showTriage]]">
+        <iron-icon class="help" icon="icons:help-outline" on-click="openHelpDialog"></iron-icon>
+      </template>
       <paper-button class="login-button" raised on-click="handleLogIn">
         <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
           Sign in with GitHub
@@ -43,8 +47,10 @@ class GitHubLogin extends PolymerElement {
     </template>
     <template is="dom-if" if="[[user]]">
       <div class="logged-in">
-        <paper-toggle-button checked="{{isTriageMode}}"></paper-toggle-button>
-        Triage Mode
+        <template is="dom-if" if="[[showTriage]]">
+          <paper-toggle-button checked="{{isTriageMode}}"></paper-toggle-button>
+          Triage Mode
+        </template>
         <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
         [[user]]
         <paper-icon-button title="Sign out" icon="exit-to-app" on-click="handleLogOut"></paper-icon-button>
@@ -75,6 +81,10 @@ class GitHubLogin extends PolymerElement {
       isTriageMode: {
         type: Boolean,
         notify: true,
+      },
+      showTriage: {
+        type: Boolean,
+        computed: 'computeShowTriage(isTriageMode)',
       }
     };
   }
@@ -95,5 +105,10 @@ class GitHubLogin extends PolymerElement {
     this.$.dialog.open();
   }
 
+  computeShowTriage(isTriageMode) {
+    // Hide triage button/help icon when isTriageMode is undefined, which only
+    // happens when the embedder does not pass the is-triage-mode property.
+    return isTriageMode !== undefined;
+  }
 }
 window.customElements.define(GitHubLogin.is, GitHubLogin);

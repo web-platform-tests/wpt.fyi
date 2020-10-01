@@ -41,5 +41,7 @@ func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("Error loading flags: %s", err.Error())
 	}
 	data := struct{ Flags []shared.Flag }{flags}
-	componentTemplates.ExecuteTemplate(w, "wpt-env-flags.js", data)
+	if componentTemplates.ExecuteTemplate(w, "wpt-env-flags.js", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

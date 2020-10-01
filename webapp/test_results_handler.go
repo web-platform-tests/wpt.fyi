@@ -32,12 +32,10 @@ type testRunUIFilter struct {
 	TestRuns string
 }
 
-type templateData struct {
+type homepageData struct {
 	testRunUIFilter
-	Diff                bool
-	DiffFilter          string
-	EnableServiceWorker bool
-	User                string
+	Diff       bool
+	DiffFilter string
 }
 
 // This handler is responsible for all pages that display test results.
@@ -65,21 +63,20 @@ func testResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := populateTemplateData(r)
+	data, err := populateHomepageData(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "index.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	RenderTemplate(w, r, "index.html", data)
 }
 
-// populateTemplateData parses the standard TestRunFilter from the incoming
+// populateHomepageData parses the standard TestRunFilter from the incoming
 // request, as well as the extra diff params (diff, before, after) & flags, to
-// populate the template data used for rendering.
-func populateTemplateData(r *http.Request) (data templateData, err error) {
+// populate the template data used for rendering the homepage (results or
+// interop).
+func populateHomepageData(r *http.Request) (data homepageData, err error) {
 	q := r.URL.Query()
 	testRunFilter, err := shared.ParseTestRunFilterParams(q)
 	if err != nil {
@@ -152,14 +149,6 @@ func populateTemplateData(r *http.Request) (data templateData, err error) {
 	}
 
 	data.Search = r.URL.Query().Get("q")
-
-	data.EnableServiceWorker = aeAPI.IsFeatureEnabled("serviceWorker")
-
-	ds := shared.NewAppEngineDatastore(ctx, false)
-	user, _ := shared.GetUserFromCookie(ctx, ds, r)
-	if user != nil {
-		data.User = user.GitHubHandle
-	}
 
 	return data, nil
 }

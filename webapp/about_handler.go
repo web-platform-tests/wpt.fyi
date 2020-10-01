@@ -20,7 +20,5 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Version: version,
 	}
-	if err := templates.ExecuteTemplate(w, "about.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	RenderTemplate(w, r, "about.html", data)
 }

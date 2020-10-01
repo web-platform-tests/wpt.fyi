@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  {{ template "_head_common.html" }}
-  <style>
-    .version {
-      color: #777;
-    }
-  </style>
+{{ template "_head_common.html" . }}
+<style>
+  .version {
+    color: #777;
+  }
+</style>
 </head>
 <body>
 <div id="content">
-  <wpt-header></wpt-header>
+  <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
   <article>
     <h1>About</h1>
     <p>The WPT Dashboard, <a href="http://wpt.fyi/">wpt.fyi</a>, displays results for the <a href="https://github.com/web-platform-tests/wpt">web-platform-tests</a>, or WPT, which are a group of test suites for many web platform specifications.</p>
@@ -38,8 +38,8 @@
     <p>Please file a <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new">GitHub issue</a>. For other discussion, most people who contribute to the WPT Dashboard monitor the <a href="http://lists.w3.org/Archives/Public/public-test-infra/">public-test-infra@w3.org</a> mailing list.</p>
   </article>
   <article>
-    {{ if .Version }}
-    <i class="version">wpt.fyi version {{ .Version }}</i>
+    {{ if .Data.Version }}
+    <i class="version">wpt.fyi version {{ .Data.Version }}</i>
     {{ end }}
   </article>
 </div>

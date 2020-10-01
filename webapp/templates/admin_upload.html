@@ -42,7 +42,7 @@
 <div class="column">
   <h2>File payload</h2>
   <form method="POST" action="/api/results/upload" enctype="multipart/form-data">
-    {{if .CallbackURL}}<input type="hidden" name="callback_url" value="{{.CallbackURL}}">{{end}}
+    {{if .Data.CallbackURL}}<input type="hidden" name="callback_url" value="{{.Data.CallbackURL}}">{{end}}
     <paper-input-container auto-validate>
       <label slot="label">Uploader</label>
       <iron-input slot="input" required>
@@ -112,7 +112,7 @@
 <div class="column">
   <h2>URL payload</h2>
   <form method="POST" action="/api/results/upload">
-    {{if .CallbackURL}}<input type="hidden" name="callback_url" value="{{.CallbackURL}}">{{end}}
+    {{if .Data.CallbackURL}}<input type="hidden" name="callback_url" value="{{.Data.CallbackURL}}">{{end}}
     <paper-input-container auto-validate>
       <label slot="label">Uploader</label>
       <iron-input slot="input" required>

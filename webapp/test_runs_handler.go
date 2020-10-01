@@ -23,10 +23,7 @@ func testRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "test-runs.html", filter); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	RenderTemplate(w, r, "test-runs.html", filter)
 }
 
 // parseTestRunsUIFilter parses the standard TestRunFilter, as well as the extra

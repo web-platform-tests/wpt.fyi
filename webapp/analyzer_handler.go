@@ -40,8 +40,5 @@ func analyzerHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf("https://storage.googleapis.com/%s/%s.png", bucket, screenshots[0]),
 		fmt.Sprintf("https://storage.googleapis.com/%s/%s.png", bucket, screenshots[1]),
 	}
-	if err := templates.ExecuteTemplate(w, "analyzer.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	RenderTemplate(w, r, "analyzer.html", data)
 }

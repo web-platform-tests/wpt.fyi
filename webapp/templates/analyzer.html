@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-{{ template "_head_common.html" }}
+{{ template "_head_common.html" . }}
 <script type="module">
 import '/components/reftest-analyzer.js';
 
@@ -16,8 +16,7 @@ document.body.addEventListener('keydown', e => {
 </head>
 <body>
 <div id="content">
-  <reftest-analyzer before="{{.Before}}"
-                    after="{{.After}}">
+  <reftest-analyzer before="{{.Data.Before}}" after="{{.Data.After}}">
   </reftest-analyzer>
 </div>
 </body>

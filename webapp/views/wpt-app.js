@@ -175,7 +175,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
       },
-      isTriageMode: Boolean,
+      isTriageMode: {
+        type: Boolean,
+        value: false,
+      }
     };
   }
 

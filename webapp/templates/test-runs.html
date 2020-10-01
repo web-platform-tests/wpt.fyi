@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-{{ template "_head_common.html" }}
+{{ template "_head_common.html" . }}
 <script type="module" src="/components/wpt-runs.js"></script>
 </head>
 <body>
 <div id="content">
-  <wpt-header></wpt-header>
+  <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
   <div>
-    <wpt-runs {{ template "_test_run_query_params.html" . }}
-              {{- if .PR }} pr="{{.PR}}"{{end}}></wpt-runs>
+    <wpt-runs {{ template "_test_run_query_params.html" .Data }}
+              {{- if .Data.PR }} pr="{{.Data.PR}}"{{end}}></wpt-runs>
   </div>
 </div>
 </body>
