@@ -225,17 +225,17 @@ func (mr *MockAPIMockRecorder) GetVersionedHostname() *gomock.Call {
 }
 
 // IsAdmin mocks base method
-func (m *MockAPI) IsAdmin() bool {
+func (m *MockAPI) IsAdmin(arg0 *http.Request) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAdmin")
+	ret := m.ctrl.Call(m, "IsAdmin", arg0)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // IsAdmin indicates an expected call of IsAdmin
-func (mr *MockAPIMockRecorder) IsAdmin() *gomock.Call {
+func (mr *MockAPIMockRecorder) IsAdmin(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAdmin", reflect.TypeOf((*MockAPI)(nil).IsAdmin))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAdmin", reflect.TypeOf((*MockAPI)(nil).IsAdmin), arg0)
 }
 
 // IsFeatureEnabled mocks base method
@@ -250,35 +250,6 @@ func (m *MockAPI) IsFeatureEnabled(arg0 string) bool {
 func (mr *MockAPIMockRecorder) IsFeatureEnabled(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAPI)(nil).IsFeatureEnabled), arg0)
-}
-
-// IsLoggedIn mocks base method
-func (m *MockAPI) IsLoggedIn() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsLoggedIn")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsLoggedIn indicates an expected call of IsLoggedIn
-func (mr *MockAPIMockRecorder) IsLoggedIn() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoggedIn", reflect.TypeOf((*MockAPI)(nil).IsLoggedIn))
-}
-
-// LoginURL mocks base method
-func (m *MockAPI) LoginURL(arg0 string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoginURL", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoginURL indicates an expected call of LoginURL
-func (mr *MockAPIMockRecorder) LoginURL(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAPI)(nil).LoginURL), arg0)
 }
 
 // ScheduleResultsTask mocks base method

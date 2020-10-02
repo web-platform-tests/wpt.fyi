@@ -208,20 +208,6 @@ func (mr *MockAppEngineAPIMockRecorder) GetVersionedHostname() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersionedHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetVersionedHostname))
 }
 
-// IsAdmin mocks base method
-func (m *MockAppEngineAPI) IsAdmin() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAdmin")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsAdmin indicates an expected call of IsAdmin
-func (mr *MockAppEngineAPIMockRecorder) IsAdmin() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAdmin", reflect.TypeOf((*MockAppEngineAPI)(nil).IsAdmin))
-}
-
 // IsFeatureEnabled mocks base method
 func (m *MockAppEngineAPI) IsFeatureEnabled(arg0 string) bool {
 	m.ctrl.T.Helper()
@@ -234,35 +220,6 @@ func (m *MockAppEngineAPI) IsFeatureEnabled(arg0 string) bool {
 func (mr *MockAppEngineAPIMockRecorder) IsFeatureEnabled(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAppEngineAPI)(nil).IsFeatureEnabled), arg0)
-}
-
-// IsLoggedIn mocks base method
-func (m *MockAppEngineAPI) IsLoggedIn() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsLoggedIn")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsLoggedIn indicates an expected call of IsLoggedIn
-func (mr *MockAppEngineAPIMockRecorder) IsLoggedIn() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoggedIn", reflect.TypeOf((*MockAppEngineAPI)(nil).IsLoggedIn))
-}
-
-// LoginURL mocks base method
-func (m *MockAppEngineAPI) LoginURL(arg0 string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoginURL", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoginURL indicates an expected call of LoginURL
-func (mr *MockAppEngineAPIMockRecorder) LoginURL(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAppEngineAPI)(nil).LoginURL), arg0)
 }
 
 // ScheduleTask mocks base method

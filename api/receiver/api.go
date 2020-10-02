@@ -42,9 +42,10 @@ type API interface {
 	shared.AppEngineAPI
 
 	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
+	IsAdmin(*http.Request) bool
+	ScheduleResultsTask(uploader string, results, screenshots []string, extraParams map[string]string) (string, error)
 	UpdatePendingTestRun(pendingRun shared.PendingTestRun) error
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
-	ScheduleResultsTask(uploader string, results, screenshots []string, extraParams map[string]string) (string, error)
 }
 
 type apiImpl struct {
@@ -53,14 +54,21 @@ type apiImpl struct {
 	gcs   gcs
 	store shared.Datastore
 	queue string
+
+	githubACLFactory func(*http.Request) (shared.GitHubAccessControl, error)
 }
 
 // NewAPI creates a real API from a given context.
 func NewAPI(ctx context.Context) API {
+	api := shared.NewAppEngineAPI(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	return &apiImpl{
-		AppEngineAPI: shared.NewAppEngineAPI(ctx),
-		store:        shared.NewAppEngineDatastore(ctx, false),
+		AppEngineAPI: api,
+		store:        store,
 		queue:        ResultsQueue,
+		githubACLFactory: func(r *http.Request) (shared.GitHubAccessControl, error) {
+			return shared.NewGitHubAccessControlFromRequest(api, store, r)
+		},
 	}
 }
 
@@ -76,6 +84,24 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 		return nil, err
 	}
 	return key, nil
+}
+
+func (a apiImpl) IsAdmin(r *http.Request) bool {
+	logger := shared.GetLogger(a.Context())
+	acl, err := a.githubACLFactory(r)
+	if err != nil {
+		logger.Errorf("Error creating GitHubAccessControl: %s", err.Error())
+		return false
+	}
+	if acl == nil {
+		return false
+	}
+	admin, err := acl.IsValidAdmin()
+	if err != nil {
+		logger.Errorf("Error checking admin: %s", err.Error())
+		return false
+	}
+	return admin
 }
 
 func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {

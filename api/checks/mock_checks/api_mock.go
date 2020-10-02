@@ -286,20 +286,6 @@ func (mr *MockAPIMockRecorder) IgnoreFailure(arg0, arg1, arg2, arg3, arg4 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IgnoreFailure", reflect.TypeOf((*MockAPI)(nil).IgnoreFailure), arg0, arg1, arg2, arg3, arg4)
 }
 
-// IsAdmin mocks base method
-func (m *MockAPI) IsAdmin() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAdmin")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsAdmin indicates an expected call of IsAdmin
-func (mr *MockAPIMockRecorder) IsAdmin() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAdmin", reflect.TypeOf((*MockAPI)(nil).IsAdmin))
-}
-
 // IsFeatureEnabled mocks base method
 func (m *MockAPI) IsFeatureEnabled(arg0 string) bool {
 	m.ctrl.T.Helper()
@@ -312,35 +298,6 @@ func (m *MockAPI) IsFeatureEnabled(arg0 string) bool {
 func (mr *MockAPIMockRecorder) IsFeatureEnabled(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAPI)(nil).IsFeatureEnabled), arg0)
-}
-
-// IsLoggedIn mocks base method
-func (m *MockAPI) IsLoggedIn() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsLoggedIn")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsLoggedIn indicates an expected call of IsLoggedIn
-func (mr *MockAPIMockRecorder) IsLoggedIn() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoggedIn", reflect.TypeOf((*MockAPI)(nil).IsLoggedIn))
-}
-
-// LoginURL mocks base method
-func (m *MockAPI) LoginURL(arg0 string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoginURL", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoginURL indicates an expected call of LoginURL
-func (mr *MockAPIMockRecorder) LoginURL(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginURL", reflect.TypeOf((*MockAPI)(nil).LoginURL), arg0)
 }
 
 // ScheduleResultsProcessing mocks base method

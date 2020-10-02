@@ -9,8 +9,10 @@ package receiver
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -49,6 +51,66 @@ func (m *mockGcs) NewWriter(bucketName, fileName, contentType, contentEncoding s
 	return &m.mockWriter, m.errOnNew
 }
 
+func TestIsAdmin_failsToConstructACL(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+	a := NewAPI(ctx).(*apiImpl)
+	r := httptest.NewRequest("GET", "/api/results/upload", nil)
+
+	// User not logged in
+	a.githubACLFactory = func(_ *http.Request) (shared.GitHubAccessControl, error) {
+		return nil, nil
+	}
+	assert.False(t, a.IsAdmin(r))
+
+	a.githubACLFactory = func(_ *http.Request) (shared.GitHubAccessControl, error) {
+		return nil, errors.New("error constructing ACL")
+	}
+	assert.False(t, a.IsAdmin(r))
+}
+
+func TestIsAdmin_mockACL(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+	a := NewAPI(ctx).(*apiImpl)
+	r := httptest.NewRequest("GET", "/api/results/upload", nil)
+
+	t.Run("error", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+		mockACL := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+		mockACL.EXPECT().IsValidAdmin().Return(true, errors.New("error checking admin"))
+		a.githubACLFactory = func(_ *http.Request) (shared.GitHubAccessControl, error) {
+			return mockACL, nil
+		}
+		assert.False(t, a.IsAdmin(r))
+	})
+
+	t.Run("admin", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+		mockACL := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+		mockACL.EXPECT().IsValidAdmin().Return(true, nil)
+		a.githubACLFactory = func(_ *http.Request) (shared.GitHubAccessControl, error) {
+			return mockACL, nil
+		}
+		assert.True(t, a.IsAdmin(r))
+	})
+
+	t.Run("nonadmin", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+		mockACL := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+		mockACL.EXPECT().IsValidAdmin().Return(false, nil)
+		a.githubACLFactory = func(_ *http.Request) (shared.GitHubAccessControl, error) {
+			return mockACL, nil
+		}
+		assert.False(t, a.IsAdmin(r))
+	})
+}
+
 func TestUploadToGCS(t *testing.T) {
 	ctx := context.Background()
 	a := NewAPI(ctx).(*apiImpl)
@@ -82,7 +144,7 @@ func TestUploadToGCS_handlesErrors(t *testing.T) {
 }
 
 func TestScheduleResultsTask(t *testing.T) {
-	ctx, done, err := sharedtest.NewAEContext(false)
+	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
 	mockCtrl := gomock.NewController(t)
