@@ -54,14 +54,21 @@ type apiImpl struct {
 	gcs   gcs
 	store shared.Datastore
 	queue string
+
+	githubACLFactory func(*http.Request) (shared.GitHubAccessControl, error)
 }
 
 // NewAPI creates a real API from a given context.
 func NewAPI(ctx context.Context) API {
+	api := shared.NewAppEngineAPI(ctx)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	return &apiImpl{
-		AppEngineAPI: shared.NewAppEngineAPI(ctx),
-		store:        shared.NewAppEngineDatastore(ctx, false),
+		AppEngineAPI: api,
+		store:        store,
 		queue:        ResultsQueue,
+		githubACLFactory: func(r *http.Request) (shared.GitHubAccessControl, error) {
+			return shared.NewGitHubAccessControlFromRequest(api, store, r)
+		},
 	}
 }
 
@@ -81,7 +88,7 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 
 func (a apiImpl) IsAdmin(r *http.Request) bool {
 	logger := shared.GetLogger(a.Context())
-	acl, err := shared.NewGitHubAccessControlFromRequest(a, a.store, r)
+	acl, err := a.githubACLFactory(r)
 	if err != nil {
 		logger.Errorf("Error creating GitHubAccessControl: %s", err.Error())
 		return false
