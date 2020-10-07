@@ -118,15 +118,10 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 
 // newAppEngineFlexContext creates a new Google App Engine Flex-based
 // context, with a Google Cloud logger client bound to an http.Request.
-func newAppEngineFlexContext(r *http.Request, gcClient *gclog.Client, project string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
+func newAppEngineFlexContext(r *http.Request, gcClient *gclog.Client, traceID string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
 	ctx = r.Context()
-	logger := gcClient.Logger("stdout", gclog.CommonResource(commonResource))
+	logger := gcClient.Logger("request_logs", gclog.CommonResource(commonResource))
 
-	// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
-	traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
-	if traceID != "" {
-		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
-	}
 	ctx = withLogger(ctx, &gcLogger{
 		childLogger: logger,
 		traceID:     traceID,
@@ -142,12 +137,29 @@ func newAppEngineFlexContext(r *http.Request, gcClient *gclog.Client, project st
 // logs is consistent between services.
 func HandleWithGoogleCloudLogging(h http.HandlerFunc, gcClient *gclog.Client, project string, commonResource *mrpb.MonitoredResource) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, err := newAppEngineFlexContext(r, gcClient, project, commonResource)
+		// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
+		traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
+		if traceID != "" {
+			traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
+		}
+		ctx, err := newAppEngineFlexContext(r, gcClient, traceID, commonResource)
 		if err != nil {
 			h(w, r)
 			return
 		}
 		h(w, r.WithContext(ctx))
+		parentLogger := gcClient.Logger("request")
+		e := gclog.Entry{
+			Trace:    traceID,
+			Severity: gclog.Info,
+			HTTPRequest: &gclog.HTTPRequest{
+				Request: r,
+				Status:  200,
+			},
+		}
+
+		parentLogger.Log(e)
+
 	}
 }
 
