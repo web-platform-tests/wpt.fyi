@@ -118,20 +118,17 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 
 // newAppEngineFlexContext creates a new Google App Engine Flex-based
 // context, with a Google Cloud logger client bound to an http.Request.
-func newAppEngineFlexContext(r *http.Request, project string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
+func newAppEngineFlexContext(r *http.Request, gcClient *gclog.Client, project string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
 	ctx = r.Context()
-	client, err := gclog.NewClient(ctx, project)
-	if err != nil {
-		return nil, err
-	}
+	logger := gcClient.Logger("stdout", gclog.CommonResource(commonResource))
+
 	// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
 	traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
 	if traceID != "" {
 		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
 	}
-	childLogger := client.Logger("request_log_entries", gclog.CommonResource(commonResource))
 	ctx = withLogger(ctx, &gcLogger{
-		childLogger: childLogger,
+		childLogger: logger,
 		traceID:     traceID,
 	})
 	return ctx, nil
@@ -143,9 +140,9 @@ func newAppEngineFlexContext(r *http.Request, project string, commonResource *mr
 // commonResource is an optional override to the monitored resource details appended to each log.
 // e.g. in the Flex environment, it pays to override this value to type gae_app, to ensure finding
 // logs is consistent between services.
-func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, commonResource *mrpb.MonitoredResource) http.HandlerFunc {
+func HandleWithGoogleCloudLogging(h http.HandlerFunc, gcClient *gclog.Client, project string, commonResource *mrpb.MonitoredResource) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, err := newAppEngineFlexContext(r, project, commonResource)
+		ctx, err := newAppEngineFlexContext(r, gcClient, project, commonResource)
 		if err != nil {
 			h(w, r)
 			return

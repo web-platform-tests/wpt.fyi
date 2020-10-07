@@ -16,6 +16,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
+	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
@@ -158,12 +159,22 @@ func main() {
 	var netClient = &http.Client{
 		Timeout: time.Second * 5,
 	}
+
+	// Initializes Logger
+	var gcClient *gclog.Client
+
+	gcClient, err = gclog.NewClient(context.Background(), *projectID)
+	if err != nil {
+		logrus.Fatalf("Failed to initiate gclog: %v", err)
+	}
+	defer gcClient.Close()
+
 	// Polls Metadata update every 10 minutes.
 	go poll.KeepMetadataUpdated(netClient, logger, time.Minute*10)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
-	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID, &monitoredResource))
+	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, gcClient, *projectID, &monitoredResource))
 	logrus.Infof("Listening on port %d", *port)
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
