@@ -148,7 +148,7 @@ func HandleWithGoogleCloudLogging(h http.HandlerFunc, gcClient *gclog.Client, pr
 			return
 		}
 		h(w, r.WithContext(ctx))
-		parentLogger := gcClient.Logger("request")
+		parentLogger := gcClient.Logger("request", gclog.CommonResource(commonResource))
 		e := gclog.Entry{
 			Trace:    traceID,
 			Severity: gclog.Info,
