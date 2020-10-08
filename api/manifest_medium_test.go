@@ -33,7 +33,7 @@ func TestGetGitHubReleaseAsset_Caches(t *testing.T) {
 	data := getManifestPayload(content)
 
 	manifestAPI := mock_manifest.NewMockAPI(mockCtrl)
-	manifestAPI.EXPECT().GetManifestForSHA("latest").Return(fullSHA, data, nil)
+	manifestAPI.EXPECT().GetManifestForSHA("").Return(fullSHA, data, nil)
 
 	// Should be added to cache
 	_, latestManifest, _ := getManifest(ctx, manifestAPI, "", nil)

@@ -15,7 +15,6 @@ import (
 
 	"github.com/web-platform-tests/wpt.fyi/api/manifest"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/memcache"
 )
 
 func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,57 +40,96 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getManifest(ctx context.Context, manifestAPI manifest.API, sha string, paths []string) (string, []byte, error) {
-	if sha == "" {
-		sha = "latest"
-	}
-	fetchedSHA := sha
-	var body []byte
-	cached, err := memcache.Get(ctx, manifestCacheKey(sha))
+	log := shared.GetLogger(ctx)
+	mc := shared.NewMemcacheReadWritable(ctx, time.Hour*48)
+	// Shorter expiry for latest SHA, to keep it current.
+	latestMC := shared.NewMemcacheReadWritable(ctx, time.Minute*5)
 
-	if err != nil && err != memcache.ErrCacheMiss {
-		return "", nil, err
-	} else if cached != nil {
-		// "latest" caches which SHA is latest; Return the manifest for that SHA.
-		if sha == "latest" {
-			return getManifest(ctx, manifestAPI, string(cached.Value), paths)
+	var fetchedSHA string
+	var body []byte
+
+	if shared.IsLatest(sha) {
+		// Attempt to find the "latest" SHA in cache.
+		if latestSHA, err := readByKey(latestMC, "latest"); err != nil {
+			log.Debugf("Latest SHA not found in cache: %v", err)
+		} else {
+			// Found! Now delegate to get manifest for that specific SHA.
+			return getManifest(ctx, manifestAPI, string(latestSHA), paths)
 		}
-		body = cached.Value
 	} else {
-		fetchedSHA, body, err = manifestAPI.GetManifestForSHA(sha)
-		if err != nil {
+		// Attempt to find the manifest for a specific SHA in cache.
+		if cached, err := readByKey(mc, sha); err != nil {
+			log.Debugf("Manifest for SHA %s not found in cache: %v", sha, err)
+		} else {
+			// Do not return here yet as we still need to filter by paths.
+			fetchedSHA = sha
+			body = cached
+		}
+	}
+
+	// Cache missed; download the manifest for real.
+	if body == nil {
+		var err error
+		if fetchedSHA, body, err = manifestAPI.GetManifestForSHA(sha); err != nil {
 			return fetchedSHA, nil, err
 		}
-		if paths != nil {
-			if body, err = manifest.Filter(body, paths); err != nil {
-				return fetchedSHA, nil, err
-			}
-		}
 	}
 
-	item := &memcache.Item{
-		Key:   manifestCacheKey(fetchedSHA),
-		Value: body,
+	// Write manifest to cache.
+	if err := writeByKey(mc, fetchedSHA, body); err != nil {
+		log.Errorf("Error writing manifest to cache: %v", err)
 	}
-	memcache.Set(ctx, item)
 
-	// Shorter expiry for latest SHA, to keep it current.
+	// Write latest SHA to cache, if needed.
 	if shared.IsLatest(sha) {
-		latestSHAItem := &memcache.Item{
-			Key:        manifestCacheKey("latest"),
-			Value:      []byte(fetchedSHA),
-			Expiration: time.Minute * 5,
+		if err := writeByKey(latestMC, "latest", []byte(fetchedSHA)); err != nil {
+			log.Errorf("Error writing latest SHA to cache: %v", err)
 		}
-		memcache.Set(ctx, latestSHAItem)
 	}
 
+	// Decompress the manifest and filter it by paths if needed.
 	gzReader, err := gzip.NewReader(bytes.NewReader(body))
 	if err != nil {
 		return fetchedSHA, nil, err
 	}
-	body, err = ioutil.ReadAll(gzReader)
-	return fetchedSHA, body, err
+	unzipped, err := ioutil.ReadAll(gzReader)
+	if err != nil {
+		return fetchedSHA, nil, err
+	}
+	if paths != nil {
+		var err error
+		if unzipped, err = manifest.Filter(unzipped, paths); err != nil {
+			return fetchedSHA, nil, err
+		}
+	}
+	return fetchedSHA, unzipped, err
 }
 
 func manifestCacheKey(sha string) string {
 	return fmt.Sprintf("MANIFEST-%s", sha)
+}
+
+func readByKey(readable shared.Readable, key string) ([]byte, error) {
+	ikey := manifestCacheKey(key)
+	reader, err := readable.NewReadCloser(ikey)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(reader)
+}
+
+func writeByKey(writable shared.ReadWritable, key string, body []byte) error {
+	ikey := manifestCacheKey(key)
+	writer, err := writable.NewWriteCloser(ikey)
+	if err != nil {
+		return err
+	}
+	n, err := writer.Write(body)
+	if err != nil {
+		return err
+	}
+	if n != len(body) {
+		return fmt.Errorf("incomplete write; expected %d bytes but %d written", len(body), n)
+	}
+	return writer.Close()
 }
