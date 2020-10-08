@@ -241,6 +241,15 @@ func (a appEngineAPIImpl) ScheduleTask(queueName, taskName, target string, param
 		panic("Clients.cloudtasks is nil")
 	}
 
+	// HACK (https://cloud.google.com/tasks/docs/dual-overview):
+	// "Note that two locations, called europe-west and us-central in App
+	// Engine commands, are called, respectively, europe-west1 and
+	// us-central1 in Cloud Tasks commands."
+	location := runtimeIdentity.LocationID
+	if location == "us-central" {
+		location = "us-central1"
+	}
+
 	// Based on https://cloud.google.com/tasks/docs/creating-appengine-tasks#go
 	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s",
 		runtimeIdentity.AppID, runtimeIdentity.LocationID, queueName)
