@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
 	gaelog "google.golang.org/appengine/log"
-	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
 // Logger is an abstract logging interface that contains an intersection of
@@ -118,12 +118,11 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 
 // newAppEngineFlexContext creates a new Google App Engine Flex-based
 // context, with a Google Cloud logger client bound to an http.Request.
-func newAppEngineFlexContext(r *http.Request, gcClient *gclog.Client, traceID string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
+func newAppEngineFlexContext(r *http.Request, gcClient *gclog.Client, traceID string, childrenLogger *gclog.Logger) (ctx context.Context, err error) {
 	ctx = r.Context()
-	logger := gcClient.Logger("request_logs", gclog.CommonResource(commonResource))
 
 	ctx = withLogger(ctx, &gcLogger{
-		childLogger: logger,
+		childLogger: childrenLogger,
 		traceID:     traceID,
 	})
 	return ctx, nil
@@ -135,26 +134,30 @@ func newAppEngineFlexContext(r *http.Request, gcClient *gclog.Client, traceID st
 // commonResource is an optional override to the monitored resource details appended to each log.
 // e.g. in the Flex environment, it pays to override this value to type gae_app, to ensure finding
 // logs is consistent between services.
-func HandleWithGoogleCloudLogging(h http.HandlerFunc, gcClient *gclog.Client, project string, commonResource *mrpb.MonitoredResource) http.HandlerFunc {
+func HandleWithGoogleCloudLogging(h http.HandlerFunc, gcClient *gclog.Client, project string, childrenLogger, parentLogger *gclog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
 		// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
 		traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
 		if traceID != "" {
 			traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
 		}
-		ctx, err := newAppEngineFlexContext(r, gcClient, traceID, commonResource)
+		ctx, err := newAppEngineFlexContext(r, gcClient, traceID, childrenLogger)
 		if err != nil {
 			h(w, r)
 			return
 		}
 		h(w, r.WithContext(ctx))
-		parentLogger := gcClient.Logger("request", gclog.CommonResource(commonResource))
+
+		end := time.Now()
 		e := gclog.Entry{
-			Trace:    traceID,
-			Severity: gclog.Info,
+			Timestamp: end,
+			Trace:     traceID,
+			Severity:  gclog.Info,
 			HTTPRequest: &gclog.HTTPRequest{
 				Request: r,
-				Status:  200,
+				Status:  0,
+				Latency: end.Sub(start),
 			},
 		}
 
