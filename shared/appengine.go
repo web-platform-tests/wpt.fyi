@@ -252,7 +252,7 @@ func (a appEngineAPIImpl) ScheduleTask(queueName, taskName, target string, param
 
 	// Based on https://cloud.google.com/tasks/docs/creating-appengine-tasks#go
 	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s",
-		runtimeIdentity.AppID, runtimeIdentity.LocationID, queueName)
+		runtimeIdentity.AppID, location, queueName)
 	taskPrefix := queuePath + "/tasks/"
 	if taskName != "" {
 		taskName = taskPrefix + taskName
