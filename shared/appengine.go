@@ -241,39 +241,7 @@ func (a appEngineAPIImpl) ScheduleTask(queueName, taskName, target string, param
 		panic("Clients.cloudtasks is nil")
 	}
 
-	// HACK (https://cloud.google.com/tasks/docs/dual-overview):
-	// "Note that two locations, called europe-west and us-central in App
-	// Engine commands, are called, respectively, europe-west1 and
-	// us-central1 in Cloud Tasks commands."
-	location := runtimeIdentity.LocationID
-	if location == "us-central" {
-		location = "us-central1"
-	}
-
-	// Based on https://cloud.google.com/tasks/docs/creating-appengine-tasks#go
-	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s",
-		runtimeIdentity.AppID, location, queueName)
-	taskPrefix := queuePath + "/tasks/"
-	if taskName != "" {
-		taskName = taskPrefix + taskName
-	}
-	req := &taskspb.CreateTaskRequest{
-		Parent: queuePath,
-		Task: &taskspb.Task{
-			Name: taskName,
-			MessageType: &taskspb.Task_AppEngineHttpRequest{
-				AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
-					HttpMethod:  taskspb.HttpMethod_POST,
-					RelativeUri: target,
-					// In appengine.taskqueue, The default for POST task was
-					// application/x-www-form-urlencoded, but the new SDK
-					// defaults to application/octet-stream.
-					Headers: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-					Body:    []byte(params.Encode()),
-				},
-			},
-		},
-	}
+	taskPrefix, req := createTaskRequest(queueName, taskName, target, params)
 	createdTask, err := Clients.cloudtasks.CreateTask(a.ctx, req)
 	if err != nil {
 		return "", err
@@ -297,4 +265,40 @@ func getURL(host, path string, filter TestRunFilter) *url.URL {
 	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s%s", host, path))
 	detailsURL.RawQuery = filter.ToQuery().Encode()
 	return detailsURL
+}
+
+func createTaskRequest(queueName, taskName, target string, params url.Values) (taskPrefix string, req *taskspb.CreateTaskRequest) {
+	// HACK (https://cloud.google.com/tasks/docs/dual-overview):
+	// "Note that two locations, called europe-west and us-central in App
+	// Engine commands, are called, respectively, europe-west1 and
+	// us-central1 in Cloud Tasks commands."
+	location := runtimeIdentity.LocationID
+	if location == "us-central" {
+		location = "us-central1"
+	}
+
+	// Based on https://cloud.google.com/tasks/docs/creating-appengine-tasks#go
+	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s",
+		runtimeIdentity.AppID, location, queueName)
+	taskPrefix = queuePath + "/tasks/"
+	if taskName != "" {
+		taskName = taskPrefix + taskName
+	}
+	return taskPrefix, &taskspb.CreateTaskRequest{
+		Parent: queuePath,
+		Task: &taskspb.Task{
+			Name: taskName,
+			MessageType: &taskspb.Task_AppEngineHttpRequest{
+				AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
+					HttpMethod:  taskspb.HttpMethod_POST,
+					RelativeUri: target,
+					// In appengine.taskqueue, The default for POST task was
+					// application/x-www-form-urlencoded, but the new SDK
+					// defaults to application/octet-stream.
+					Headers: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+					Body:    []byte(params.Encode()),
+				},
+			},
+		},
+	}
 }
