@@ -37,10 +37,9 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76 // indirect
 	golang.org/x/sys v0.0.0-20201005172224-997123666555 // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.0.0-20201005185003-576e169c3de7 // indirect
 	google.golang.org/api v0.32.0
-	google.golang.org/appengine v1.6.6
+	google.golang.org/appengine v1.6.7
 	google.golang.org/genproto v0.0.0-20201002142447-3860012362da
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
