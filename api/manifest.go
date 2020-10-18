@@ -7,7 +7,6 @@ package api
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,7 +28,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := shared.NewAppEngineContext(r)
 	manifestAPI := manifest.NewAPI(ctx)
-	sha, manifest, err := getManifest(ctx, manifestAPI, sha, paths)
+	sha, manifest, err := getManifest(shared.GetLogger(ctx), manifestAPI, sha, paths)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -39,11 +38,10 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(manifest)
 }
 
-func getManifest(ctx context.Context, manifestAPI manifest.API, sha string, paths []string) (string, []byte, error) {
-	log := shared.GetLogger(ctx)
-	mc := shared.NewMemcacheReadWritable(ctx, time.Hour*48)
+func getManifest(log shared.Logger, manifestAPI manifest.API, sha string, paths []string) (string, []byte, error) {
+	mc := manifestAPI.NewMemcache(time.Hour * 48)
 	// Shorter expiry for latest SHA, to keep it current.
-	latestMC := shared.NewMemcacheReadWritable(ctx, time.Minute*5)
+	latestMC := manifestAPI.NewMemcache(time.Minute * 5)
 
 	var fetchedSHA string
 	var body []byte
@@ -54,7 +52,7 @@ func getManifest(ctx context.Context, manifestAPI manifest.API, sha string, path
 			log.Debugf("Latest SHA not found in cache: %v", err)
 		} else {
 			// Found! Now delegate to get manifest for that specific SHA.
-			return getManifest(ctx, manifestAPI, string(latestSHA), paths)
+			return getManifest(log, manifestAPI, string(latestSHA), paths)
 		}
 	} else {
 		// Attempt to find the manifest for a specific SHA in cache.
@@ -73,11 +71,11 @@ func getManifest(ctx context.Context, manifestAPI manifest.API, sha string, path
 		if fetchedSHA, body, err = manifestAPI.GetManifestForSHA(sha); err != nil {
 			return fetchedSHA, nil, err
 		}
-	}
 
-	// Write manifest to cache.
-	if err := writeByKey(mc, fetchedSHA, body); err != nil {
-		log.Errorf("Error writing manifest to cache: %v", err)
+		// Write manifest to cache.
+		if err := writeByKey(mc, fetchedSHA, body); err != nil {
+			log.Errorf("Error writing manifest to cache: %v", err)
+		}
 	}
 
 	// Write latest SHA to cache, if needed.

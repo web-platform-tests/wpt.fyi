@@ -6,7 +6,9 @@ package mock_manifest
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	reflect "reflect"
+	time "time"
 )
 
 // MockAPI is a mock of API interface
@@ -46,4 +48,18 @@ func (m *MockAPI) GetManifestForSHA(arg0 string) (string, []byte, error) {
 func (mr *MockAPIMockRecorder) GetManifestForSHA(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManifestForSHA", reflect.TypeOf((*MockAPI)(nil).GetManifestForSHA), arg0)
+}
+
+// NewMemcache mocks base method
+func (m *MockAPI) NewMemcache(arg0 time.Duration) shared.ReadWritable {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewMemcache", arg0)
+	ret0, _ := ret[0].(shared.ReadWritable)
+	return ret0
+}
+
+// NewMemcache indicates an expected call of NewMemcache
+func (mr *MockAPIMockRecorder) NewMemcache(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewMemcache", reflect.TypeOf((*MockAPI)(nil).NewMemcache), arg0)
 }
