@@ -34,7 +34,7 @@ func checkAdmin(acl shared.GitHubAccessControl, log shared.Logger, w http.Respon
 }
 
 func adminUploadHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	a := shared.NewAppEngineAPI(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	log := shared.GetLogger(ctx)
@@ -63,7 +63,7 @@ func showAdminUploadForm(a shared.AppEngineAPI, acl shared.GitHubAccessControl, 
 }
 
 func adminFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	a := shared.NewAppEngineAPI(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	log := shared.GetLogger(ctx)
@@ -106,7 +106,7 @@ func handleAdminFlags(a shared.AppEngineAPI, ds shared.Datastore, acl shared.Git
 }
 
 func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	a := shared.NewAppEngineAPI(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	log := shared.GetLogger(ctx)

@@ -42,7 +42,7 @@ type structuredSearchHandler struct {
 }
 
 func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
-	api := shared.NewAppEngineAPI(shared.NewAppEngineContext(r))
+	api := shared.NewAppEngineAPI(r.Context())
 	searchHandler{api}.ServeHTTP(w, r)
 }
 
@@ -224,7 +224,7 @@ var cacheKey = func(r *http.Request) interface{} {
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		msg := fmt.Sprintf("Failed to read non-GET request body for generating cache key: %v", err)
-		shared.GetLogger(shared.NewAppEngineContext(r)).Errorf(msg)
+		shared.GetLogger(r.Context()).Errorf(msg)
 		panic(msg)
 	}
 	defer body.Close()

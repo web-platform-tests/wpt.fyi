@@ -28,7 +28,7 @@ const onlyChangesAsRegressionsFeature = "onlyChangesAsRegressions"
 
 // updateCheckHandler handles /api/checks/[commit] POST requests.
 func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	log := shared.GetLogger(ctx)
 
 	vars := mux.Vars(r)

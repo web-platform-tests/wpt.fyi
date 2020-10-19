@@ -17,7 +17,7 @@ import (
 )
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	if !aeAPI.IsFeatureEnabled("githubLogin") {
 		http.Error(w, "Feature not enabled", http.StatusNotImplemented)
@@ -73,7 +73,7 @@ func handleLogin(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 }
 
 func oauthHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	githuboauthImp, err := shared.NewGitHubOAuth(ctx)
 	if err != nil {
 		http.Error(w, "Error creating githuboauthImp", http.StatusInternalServerError)
@@ -156,7 +156,7 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(response http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	log := shared.GetLogger(ctx)
 	clearSession(response)
 

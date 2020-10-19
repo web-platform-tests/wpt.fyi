@@ -187,7 +187,6 @@ func isDevAppserver() bool {
 }
 
 // NewAppEngineAPI returns an AppEngineAPI for the given context.
-// Note that the context should be created using NewAppEngineContext.
 func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 	return &appEngineAPIImpl{
 		ctx: ctx,

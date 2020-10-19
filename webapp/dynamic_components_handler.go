@@ -32,7 +32,7 @@ func init() {
 
 func flagsComponentHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "text/javascript")
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	flags, err := shared.GetFeatureFlags(ds)
 	if err != nil {

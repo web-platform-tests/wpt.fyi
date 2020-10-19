@@ -48,7 +48,7 @@ type templateData struct {
 func RenderTemplate(w http.ResponseWriter, r *http.Request, name string, data interface{}) {
 	tdata := templateData{Data: data}
 	if r != nil {
-		ctx := shared.NewAppEngineContext(r)
+		ctx := r.Context()
 		ds := shared.NewAppEngineDatastore(ctx, false)
 		tdata.User, _ = shared.GetUserFromCookie(ctx, ds, r)
 		tdata.EnableServiceWorker = shared.IsFeatureEnabled(ds, "serviceworker")

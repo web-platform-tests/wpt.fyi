@@ -26,7 +26,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	assert.Nil(t, err)
 
 	// 'Yesterday', v66...139 earlier version.
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	now := time.Now()
 	chrome := shared.TestRun{
 		ProductAtRevision: shared.ProductAtRevision{
@@ -98,7 +98,7 @@ func TestGetTestRuns_RunIDs(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/runs?run_id=123", nil)
 	assert.Nil(t, err)
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	now := time.Now()
 	run := shared.TestRun{}
 	run.BrowserVersion = "66.0.3359.139"
@@ -147,7 +147,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/runs", nil)
 	assert.Nil(t, err)
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	now := time.Now()
 	run := shared.TestRun{}
 	run.BrowserVersion = "66.0.3359.139"
@@ -221,7 +221,7 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/runs", nil)
 	assert.Nil(t, err)
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	store := shared.NewAppEngineDatastore(ctx, false)
 	now := time.Now()
 	run := shared.TestRun{}

@@ -33,7 +33,7 @@ func TestAPIPendingTestHandler(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/status", nil)
 	assert.Nil(t, err)
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	now := time.Now().Truncate(time.Minute).In(time.UTC)
 	yesterday := now.Add(time.Hour * -24)

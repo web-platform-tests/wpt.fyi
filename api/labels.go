@@ -23,7 +23,7 @@ type LabelsHandler struct {
 // apiLabelsHandler is responsible for emitting just all labels used for test runs.
 func apiLabelsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to LabelsHandler on cache miss.
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	shared.NewCachingHandler(ctx, LabelsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
 }
 

@@ -26,7 +26,7 @@ func analyzerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	bucket := "wptd-screenshots-staging"
 	if aeAPI.GetHostname() == "wpt.fyi" {

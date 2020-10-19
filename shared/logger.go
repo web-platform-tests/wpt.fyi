@@ -92,12 +92,6 @@ func HandleWithStandardGCL(h http.HandlerFunc, project string, childLogger, pare
 	}
 }
 
-// NewAppEngineContext creates a new Google App Engine Standard-based
-// context bound to an http.Request.
-func NewAppEngineContext(r *http.Request) context.Context {
-	return r.Context()
-}
-
 type gcLogger struct {
 	logger      *gclog.Logger
 	traceID     string

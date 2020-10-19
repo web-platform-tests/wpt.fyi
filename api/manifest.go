@@ -26,7 +26,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	paths := shared.ParsePathsParam(q)
 	sha := shas.FirstOrLatest()
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	manifestAPI := manifest.NewAPI(ctx)
 	sha, manifest, err := getManifest(shared.GetLogger(ctx), manifestAPI, sha, paths)
 	if err != nil {

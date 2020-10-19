@@ -73,7 +73,7 @@ func loadDiffRuns(store shared.Datastore, q url.Values) (shared.TestRuns, error)
 }
 
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	store := shared.NewAppEngineDatastore(ctx, true)
 	q := r.URL.Query()
 
@@ -116,7 +116,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 // handleAPIDiffPost handles POST requests to /api/diff, which allows the caller to produce the diff of an arbitrary
 // run result JSON blob against a historical production run.
 func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	params, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {

@@ -24,7 +24,7 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	idParam := vars["id"]
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	store := shared.NewAppEngineDatastore(ctx, true)
 	var testRun shared.TestRun
 	if idParam != "" {
