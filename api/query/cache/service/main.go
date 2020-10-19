@@ -161,9 +161,7 @@ func main() {
 	}
 
 	// Initializes Logger.
-	var gclogClient *gclog.Client
-
-	gclogClient, err = gclog.NewClient(context.Background(), *projectID)
+	gclogClient, err := gclog.NewClient(context.Background(), *projectID)
 	if err != nil {
 		logrus.Fatalf("Failed to initiate gclog Client: %v", err)
 	}
