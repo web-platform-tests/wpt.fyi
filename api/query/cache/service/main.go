@@ -160,17 +160,17 @@ func main() {
 		Timeout: time.Second * 5,
 	}
 
-	// Initializes Logger
-	var gcClient *gclog.Client
+	// Initializes Logger.
+	var gclogClient *gclog.Client
 
-	gcClient, err = gclog.NewClient(context.Background(), *projectID)
+	gclogClient, err = gclog.NewClient(context.Background(), *projectID)
 	if err != nil {
-		logrus.Fatalf("Failed to initiate gclog: %v", err)
+		logrus.Fatalf("Failed to initiate gclog Client: %v", err)
 	}
-	defer gcClient.Close()
+	defer gclogClient.Close()
 
-	childLogger := gcClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
-	parentLogger := gcClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
+	childLogger := gclogClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
+	parentLogger := gclogClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
 
 	// Polls Metadata update every 10 minutes.
 	go poll.KeepMetadataUpdated(netClient, logger, time.Minute*10)
