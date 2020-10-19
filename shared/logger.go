@@ -9,7 +9,6 @@ import (
 
 	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
-	gaelog "google.golang.org/appengine/log"
 )
 
 // Logger is an abstract logging interface that contains an intersection of
@@ -54,37 +53,49 @@ func NewNilLogger() Logger {
 	return nl
 }
 
-type gaeLogger struct {
-	ctx context.Context
-}
+// HandleWithStandardGCL - TODO: Refactor
+func HandleWithStandardGCL(h http.HandlerFunc, project string, childLogger, parentLogger *gclog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if isDevAppserver() || childLogger == nil || parentLogger == nil {
+			h(w, r.WithContext(withLogger(r.Context(), logrus.New())))
+			return
+		}
 
-func (l gaeLogger) Debugf(format string, args ...interface{}) {
-	gaelog.Debugf(l.ctx, format, args...)
-}
+		start := time.Now()
+		// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
+		traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
+		if traceID != "" {
+			traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
+		}
 
-func (l gaeLogger) Errorf(format string, args ...interface{}) {
-	gaelog.Errorf(l.ctx, format, args...)
-}
+		gcl := gcLogger{
+			logger:      childLogger,
+			traceID:     traceID,
+			maxSeverity: gclog.Default,
+		}
+		h(w, r.WithContext(withLogger(r.Context(), &gcl)))
 
-func (l gaeLogger) Infof(format string, args ...interface{}) {
-	gaelog.Infof(l.ctx, format, args...)
-}
+		end := time.Now()
+		e := gclog.Entry{
+			Timestamp: end,
+			Trace:     traceID,
+			Severity:  gcl.maxSeverity,
+			HTTPRequest: &gclog.HTTPRequest{
+				Request: r,
+				// TODO(kyleju): Set Status based on w.
+				Latency: end.Sub(start),
+			},
+		}
 
-func (l gaeLogger) Warningf(format string, args ...interface{}) {
-	gaelog.Warningf(l.ctx, format, args...)
-}
+		parentLogger.Log(e)
 
-// newGAELogger returns a Google App Engine Standard Environment logger bound to
-// the given context.
-func newGAELogger(ctx context.Context) Logger {
-	return gaeLogger{ctx}
+	}
 }
 
 // NewAppEngineContext creates a new Google App Engine Standard-based
 // context bound to an http.Request.
 func NewAppEngineContext(r *http.Request) context.Context {
-	ctx := r.Context()
-	return withLogger(ctx, newGAELogger(ctx))
+	return r.Context()
 }
 
 type gcLogger struct {

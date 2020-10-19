@@ -26,7 +26,7 @@ func Router() *mux.Router {
 // AddRoute is a helper for registering a handler for an http path (route).
 // Note that it adds an HSTS header to the response.
 func AddRoute(route, name string, h http.HandlerFunc) *mux.Route {
-	return Router().Handle(route, WrapHSTS(h)).Name(name)
+	return Router().Handle(route, HandleWithStandardGCL(WrapHSTS(h), runtimeIdentity.AppID, Clients.childLogger, Clients.parentLogger)).Name(name)
 }
 
 // WrapHSTS wraps the given handler func in one that sets the

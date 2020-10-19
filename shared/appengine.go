@@ -16,13 +16,19 @@ import (
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	gclog "cloud.google.com/go/logging"
 	"github.com/google/go-github/v32/github"
+	"github.com/sirupsen/logrus"
 	apps "google.golang.org/api/appengine/v1"
+	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
 
 type clientsImpl struct {
-	cloudtasks *cloudtasks.Client
+	cloudtasks   *cloudtasks.Client
+	gclogClient  *gclog.Client
+	childLogger  *gclog.Logger
+	parentLogger *gclog.Logger
 }
 
 // Clients is a singleton containing heavyweight (e.g. with connection pools)
@@ -34,23 +40,56 @@ var Clients clientsImpl
 // Init initializes all clients in Clients. If an error is encountered, it
 // returns immediately without trying to initialize the remaining clients.
 func (c *clientsImpl) Init(ctx context.Context) (err error) {
-	if runtimeIdentity.AppID == "" {
+	if isDevAppserver() {
 		// When running in dev_appserver, do not create real clients.
 		return nil
 	}
 	c.cloudtasks, err = cloudtasks.NewClient(ctx)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Intializes Logger.
+	c.gclogClient, err = gclog.NewClient(ctx, runtimeIdentity.AppID)
+	if err != nil {
+		return err
+	}
+
+	monitoredResource := mrpb.MonitoredResource{
+		Type: "gae_app",
+		Labels: map[string]string{
+			"project_id": runtimeIdentity.AppID,
+			"module_id":  runtimeIdentity.Service,
+			"version_id": runtimeIdentity.Version,
+		},
+	}
+	c.childLogger = c.gclogClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
+	c.parentLogger = c.gclogClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
+
+	return nil
 }
 
 // Close closes all clients in Clients. It must be called once and only once
 // before the server exits. Do not use AppEngineAPI afterwards.
-func (c *clientsImpl) Close() (err error) {
+func (c *clientsImpl) Close() {
 	if c.cloudtasks != nil {
-		err = c.cloudtasks.Close()
+		err := c.cloudtasks.Close()
+		if err != nil {
+			logrus.Warningf("Error closing cloudtasks: %s", err.Error())
+		}
 		c.cloudtasks = nil
 	}
 
-	return err
+	if c.gclogClient != nil {
+		err := c.gclogClient.Close()
+		if err != nil {
+			logrus.Warningf("Error closing gclog client: %s", err.Error())
+		}
+
+		c.gclogClient = nil
+		c.childLogger = nil
+		c.parentLogger = nil
+	}
 }
 
 // AppEngineAPI is an abstraction of some appengine context helper methods.
@@ -141,6 +180,10 @@ func init() {
 		runtimeIdentity.LocationID = runtimeIdentity.application.LocationId
 
 	}
+}
+
+func isDevAppserver() bool {
+	return runtimeIdentity.AppID == ""
 }
 
 // NewAppEngineAPI returns an AppEngineAPI for the given context.
