@@ -7,7 +7,7 @@ package sharedtest
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/v31/github"
+	github "github.com/google/go-github/v32/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	oauth2 "golang.org/x/oauth2"
 	reflect "reflect"

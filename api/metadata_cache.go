@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/go-github/v31/github"
+	"github.com/google/go-github/v32/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/memcache"
 )

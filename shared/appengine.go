@@ -16,7 +16,7 @@ import (
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
-	"github.com/google/go-github/v31/github"
+	"github.com/google/go-github/v32/github"
 	apps "google.golang.org/api/appengine/v1"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
