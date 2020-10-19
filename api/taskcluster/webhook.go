@@ -19,7 +19,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/v32/github"
 	tcurls "github.com/taskcluster/taskcluster-lib-urls"
-	"github.com/taskcluster/taskcluster/v25/clients/client-go/tcqueue"
+	"github.com/taskcluster/taskcluster/v37/clients/client-go/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -218,7 +218,6 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Debugf("Payload validated against secret")
-
 
 	log.Debugf("GitHub Delivery: %s", r.Header.Get("X-GitHub-Delivery"))
 
@@ -439,7 +438,7 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) ([]*github.CheckRun, error) {
 	var runs []*github.CheckRun
 	options := github.ListCheckRunsOptions{
-		ListOptions: github.ListOptions {
+		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page; see
 			// https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received
 			PerPage: 100,
@@ -516,7 +515,7 @@ func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo
 
 		urls := urlsByProduct[product]
 		// Generate some URLs that point directly to
-		// https://docs.taskcluster.net/docs/reference/platform/queue/api#get-artifact-from-latest-run
+		// https://docs.taskcluster.net/docs/reference/platform/queue/api#getLatestArtifact
 		urls.Results = append(urls.Results,
 			tcurls.API(
 				rootURL, "queue", "v1",
