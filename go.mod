@@ -39,7 +39,7 @@ require (
 	google.golang.org/appengine v1.6.7
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154
 	google.golang.org/grpc v1.33.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )
 
 // The project has been moved to GitHub and we don't want to depend on bzr (used by launchpad).

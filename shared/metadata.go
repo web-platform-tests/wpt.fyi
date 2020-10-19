@@ -7,7 +7,7 @@ package shared
 import (
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // ShowMetadataParam determines whether Metadata Information returns along

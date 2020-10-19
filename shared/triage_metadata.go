@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v32/github"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // TriageMetadata encapsulates the Triage() method for testing.
