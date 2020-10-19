@@ -94,7 +94,8 @@ type gcLogger struct {
 }
 
 func (gcl *gcLogger) log(severity gclog.Severity, format string, params ...interface{}) {
-	// The underlying type of gclog.Severity is int, https://pkg.go.dev/cloud.google.com/go/logging#Severity.
+	// "Severity levels are ordered, with numerically smaller levels treated as less severe than numerically larger levels".
+	// https://pkg.go.dev/cloud.google.com/go/logging#Severity.
 	if int(severity) > int(gcl.maxSeverity) {
 		gcl.maxSeverity = severity
 	}
