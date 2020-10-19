@@ -167,6 +167,7 @@ func main() {
 	}
 	defer gclogClient.Close()
 
+	// Reuse loggers to prevent leaking goroutines: https://github.com/googleapis/google-cloud-go/issues/720#issuecomment-346199870
 	childLogger := gclogClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
 	parentLogger := gclogClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
 
