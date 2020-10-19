@@ -90,9 +90,15 @@ func NewAppEngineContext(r *http.Request) context.Context {
 type gcLogger struct {
 	childLogger *gclog.Logger
 	traceID     string
+	maxSeverity gclog.Severity
 }
 
 func (gcl *gcLogger) log(severity gclog.Severity, format string, params ...interface{}) {
+	// The underlying type of gclog.Severity is int, https://pkg.go.dev/cloud.google.com/go/logging#Severity.
+	if int(severity) > int(gcl.maxSeverity) {
+		gcl.maxSeverity = severity
+	}
+
 	gcl.childLogger.Log(gclog.Entry{
 		Severity: severity,
 		Payload:  fmt.Sprintf(format, params...),
@@ -116,25 +122,13 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 	gcl.log(gclog.Error, format, params...)
 }
 
-// newAppEngineFlexContext creates a new Google App Engine Flex-based
-// context, with a Google Cloud logger client bound to an http.Request.
-func newAppEngineFlexContext(r *http.Request, gcClient *gclog.Client, traceID string, childrenLogger *gclog.Logger) (ctx context.Context, err error) {
-	ctx = r.Context()
-
-	ctx = withLogger(ctx, &gcLogger{
-		childLogger: childrenLogger,
-		traceID:     traceID,
-	})
-	return ctx, nil
-}
-
 // HandleWithGoogleCloudLogging handles the request with the given handler, setting the logger
 // on the request's context to be a Google Cloud logging client for the given project.
 //
 // commonResource is an optional override to the monitored resource details appended to each log.
 // e.g. in the Flex environment, it pays to override this value to type gae_app, to ensure finding
 // logs is consistent between services.
-func HandleWithGoogleCloudLogging(h http.HandlerFunc, gcClient *gclog.Client, project string, childrenLogger, parentLogger *gclog.Logger) http.HandlerFunc {
+func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, childLogger, parentLogger *gclog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
@@ -142,21 +136,22 @@ func HandleWithGoogleCloudLogging(h http.HandlerFunc, gcClient *gclog.Client, pr
 		if traceID != "" {
 			traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
 		}
-		ctx, err := newAppEngineFlexContext(r, gcClient, traceID, childrenLogger)
-		if err != nil {
-			h(w, r)
-			return
+
+		gcl := gcLogger{
+			childLogger: childLogger,
+			traceID:     traceID,
+			maxSeverity: gclog.Default,
 		}
-		h(w, r.WithContext(ctx))
+		h(w, r.WithContext(withLogger(r.Context(), &gcl)))
 
 		end := time.Now()
 		e := gclog.Entry{
 			Timestamp: end,
 			Trace:     traceID,
-			Severity:  gclog.Info,
+			Severity:  gcl.maxSeverity,
 			HTTPRequest: &gclog.HTTPRequest{
 				Request: r,
-				Status:  0,
+				// TODO(kyleju): Set Status based on w.
 				Latency: end.Sub(start),
 			},
 		}

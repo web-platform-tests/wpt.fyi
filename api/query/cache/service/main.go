@@ -169,15 +169,15 @@ func main() {
 	}
 	defer gcClient.Close()
 
-	childrenLogger := gcClient.Logger("request_logs", gclog.CommonResource(&monitoredResource))
-	parentLogger := gcClient.Logger("request", gclog.CommonResource(&monitoredResource))
+	childLogger := gcClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
+	parentLogger := gcClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
 
 	// Polls Metadata update every 10 minutes.
 	go poll.KeepMetadataUpdated(netClient, logger, time.Minute*10)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
-	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, gcClient, *projectID, childrenLogger, parentLogger))
+	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID, childLogger, parentLogger))
 	logrus.Infof("Listening on port %d", *port)
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
