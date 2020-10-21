@@ -53,23 +53,22 @@ func NewNilLogger() Logger {
 	return nl
 }
 
-// HandleWithStandardGCL - TODO: Refactor
-func HandleWithStandardGCL(h http.HandlerFunc, project string, childLogger, parentLogger *gclog.Logger) http.HandlerFunc {
+// HandleWithStandardGCL - TODO(kyleju): Refactor this function and HandleWithGoogleCloudLogging.
+func HandleWithStandardGCL(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if isDevAppserver() || childLogger == nil || parentLogger == nil {
+		if isDevAppserver() || Clients.childLogger == nil || Clients.parentLogger == nil {
 			h(w, r.WithContext(withLogger(r.Context(), logrus.New())))
 			return
 		}
 
 		start := time.Now()
-		// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
 		traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
 		if traceID != "" {
-			traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
+			traceID = fmt.Sprintf("projects/%s/traces/%s", runtimeIdentity.AppID, traceID)
 		}
 
 		gcl := gcLogger{
-			logger:      childLogger,
+			logger:      Clients.childLogger,
 			traceID:     traceID,
 			maxSeverity: gclog.Default,
 		}
@@ -87,7 +86,7 @@ func HandleWithStandardGCL(h http.HandlerFunc, project string, childLogger, pare
 			},
 		}
 
-		parentLogger.Log(e)
+		Clients.parentLogger.Log(e)
 
 	}
 }
