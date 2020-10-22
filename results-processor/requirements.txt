@@ -10,7 +10,7 @@ google-api-core==1.22.4
 google-auth==1.22.1
 google-cloud-core==1.4.3
 google-cloud-datastore==1.15.3
-google-cloud-storage==1.31.2
+google-cloud-storage==1.32.0
 google-crc32c==1.0.0
 google-resumable-media==1.1.0
 googleapis-common-protos==1.52.0
@@ -36,6 +36,6 @@ rsa==4.6
 six==1.15.0
 typed-ast==1.4.1
 typing-extensions==3.7.4.3
-urllib3==1.25.10
+urllib3==1.25.11
 Werkzeug==1.0.1
-zipp==3.3.0
+zipp==3.3.1
