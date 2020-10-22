@@ -43,30 +43,32 @@ func getManifest(log shared.Logger, manifestAPI manifest.API, sha string, paths 
 	// Shorter expiry for latest SHA, to keep it current.
 	latestMC := manifestAPI.NewMemcache(time.Minute * 5)
 
-	var fetchedSHA string
 	var body []byte
 
 	if shared.IsLatest(sha) {
 		// Attempt to find the "latest" SHA in cache.
-		if latestSHA, err := readByKey(latestMC, "latest"); err != nil {
-			log.Debugf("Latest SHA not found in cache: %v", err)
-		} else {
+		latestSHA, err := readByKey(latestMC, "latest")
+		if err == nil {
 			// Found! Now delegate to get manifest for that specific SHA.
 			return getManifest(log, manifestAPI, string(latestSHA), paths)
 		}
+		log.Debugf("Latest SHA not found in cache: %v", err)
 	} else {
 		// Attempt to find the manifest for a specific SHA in cache.
-		if cached, err := readByKey(mc, sha); err != nil {
+		var err error
+		body, err = readByKey(mc, sha)
+		if err != nil {
 			log.Debugf("Manifest for SHA %s not found in cache: %v", sha, err)
-		} else {
-			// Do not return here yet as we still need to filter by paths.
-			fetchedSHA = sha
-			body = cached
 		}
+		// Do not return here yet as we still need to filter by paths.
 	}
 
-	// Cache missed; download the manifest for real.
-	if body == nil {
+	var fetchedSHA string
+	if body != nil {
+		// Cache hit; fetchedSHA is requested SHA, which is guaranteed to be specific.
+		fetchedSHA = sha
+	} else {
+		// Cache missed; download the manifest for real.
 		var err error
 		if fetchedSHA, body, err = manifestAPI.GetManifestForSHA(sha); err != nil {
 			return fetchedSHA, nil, err
