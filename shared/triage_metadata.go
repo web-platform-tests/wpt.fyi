@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/go-github/v31/github"
-	"gopkg.in/yaml.v2"
+	"github.com/google/go-github/v32/github"
+	"gopkg.in/yaml.v3"
 )
 
 // TriageMetadata encapsulates the Triage() method for testing.

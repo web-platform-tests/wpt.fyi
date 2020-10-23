@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/v31/github"
+	"github.com/google/go-github/v32/github"
 	"github.com/stretchr/testify/assert"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	tc "github.com/web-platform-tests/wpt.fyi/api/taskcluster"
