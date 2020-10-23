@@ -92,6 +92,7 @@ func getManifest(log shared.Logger, manifestAPI manifest.API, sha string, paths 
 	if err != nil {
 		return fetchedSHA, nil, err
 	}
+	defer gzReader.Close()
 	unzipped, err := ioutil.ReadAll(gzReader)
 	if err != nil {
 		return fetchedSHA, nil, err
