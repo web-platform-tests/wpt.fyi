@@ -38,4 +38,4 @@ typed-ast==1.4.1
 typing-extensions==3.7.4.3
 urllib3==1.25.11
 Werkzeug==1.0.1
-zipp==3.3.1
+zipp==3.4.0
