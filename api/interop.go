@@ -11,9 +11,8 @@ import (
 	"net/http"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
+	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 // interopHandler handles the view of test results broken down by the
@@ -69,12 +68,12 @@ func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter)
 		return nil, nil
 	}
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
+	query := store.NewQuery(passRateType).Order("-StartTime").Limit(1)
 	for _, key := range keys.AllKeys() {
 		query = query.Filter("TestRunIDs =", key.IntID())
 	}
 	var results []metrics.PassRateMetadataLegacy
-	if _, err = query.GetAll(ctx, &results); err != nil {
+	if _, err = store.GetAll(query, &results); err != nil {
 		return nil, err
 	} else if len(results) < 1 {
 		return nil, nil
@@ -127,7 +126,7 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 	found := false
 	for {
 		_, err := it.Next(&interop)
-		if err == datastore.Done {
+		if err == store.Done().(error) {
 			return nil, nil
 		} else if err != nil {
 			return nil, err
