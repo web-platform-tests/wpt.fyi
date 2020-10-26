@@ -70,7 +70,7 @@
     "@polymer/polymer": "3.4.1",
     "@vaadin/vaadin-context-menu": "4.5.0",
     "@vaadin/vaadin-date-picker": "4.4.1",
-    "@vaadin/vaadin-grid": "5.7.4",
+    "@vaadin/vaadin-grid": "5.7.5",
     "@webcomponents/webcomponentsjs": "2.5.0",
     "pluralize": "8.0.0"
   }
