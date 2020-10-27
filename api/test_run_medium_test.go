@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestGetTestRunByID(t *testing.T) {
@@ -38,7 +37,8 @@ func TestGetTestRunByID(t *testing.T) {
 		},
 	}
 
-	datastore.Put(ctx, datastore.NewKey(ctx, "TestRun", "", 123, nil), &chrome)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	store.Put(store.NewIDKey("TestRun", 123), &chrome)
 	resp = httptest.NewRecorder()
 	apiTestRunHandler(resp, r)
 	assert.Equal(t, http.StatusOK, resp.Code)

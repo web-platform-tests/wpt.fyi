@@ -12,10 +12,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 // TestApiInteropHandler_CompleteRunFallback tests that when a ?complete param
@@ -41,15 +40,16 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	secondRun.TimeStart = time.Now()
 
 	products := shared.GetDefaultProducts()
-	firstRunKeys := make([]*datastore.Key, len(products))
-	secondRunKeys := make([]*datastore.Key, len(products))
+	store := shared.NewAppEngineDatastore(ctx, false)
+	firstRunKeys := make([]shared.Key, len(products))
+	secondRunKeys := make([]shared.Key, len(products))
 	for i, product := range products {
 		run := firstRun
 		run.Product = product.Product
-		firstRunKeys[i], _ = datastore.Put(ctx, datastore.NewKey(ctx, "TestRun", "", 0, nil), &run)
+		firstRunKeys[i], _ = store.Put(store.NewIDKey("TestRun", 0), &run)
 		run = secondRun
 		run.Product = product.Product
-		secondRunKeys[i], _ = datastore.Put(ctx, datastore.NewKey(ctx, "TestRun", "", 0, nil), &run)
+		secondRunKeys[i], _ = store.Put(store.NewIDKey("TestRun", 0), &run)
 	}
 
 	// No interop data.
@@ -68,7 +68,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 		interop.TestRunIDs[i] = key.IntID()
 	}
 	interopKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	datastore.Put(ctx, datastore.NewKey(ctx, interopKindName, "", 0, nil), &interop)
+	store.Put(store.NewIDKey(interopKindName, 0), &interop)
 
 	resp = httptest.NewRecorder()
 	apiInteropHandler(resp, r)
@@ -80,7 +80,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	for i, key := range firstRunKeys {
 		interop.TestRunIDs[i] = key.IntID()
 	}
-	datastore.Put(ctx, datastore.NewKey(ctx, interopKindName, "", 0, nil), &interop)
+	store.Put(store.NewIDKey(interopKindName, 0), &interop)
 
 	// Load the tests + clear the IDs, to match the output of apiInteropHandler below.
 	interop.LoadTestRuns(ctx)
