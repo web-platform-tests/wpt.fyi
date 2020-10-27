@@ -66,6 +66,12 @@ func (d cloudDatastore) NewIDKey(typeName string, id int64) Key {
 	}
 }
 
+func (d cloudDatastore) NewIncompleteKey(typeName string) Key {
+	return cloudKey{
+		key: datastore.IncompleteKey(typeName, nil),
+	}
+}
+
 func (d cloudDatastore) ReserveID(typeName string) (Key, error) {
 	keys, err := d.client.AllocateIDs(d.ctx, []*datastore.Key{datastore.IncompleteKey(typeName, nil)})
 	if err != nil {
@@ -113,6 +119,20 @@ func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 func (d cloudDatastore) Put(key Key, src interface{}) (Key, error) {
 	newkey, err := d.client.Put(d.ctx, key.(cloudKey).key, src)
 	return cloudKey{newkey}, err
+}
+
+func (d cloudDatastore) PutMulti(keys []Key, src interface{}) ([]Key, error) {
+	cast := make([]*datastore.Key, len(keys))
+	for i := range keys {
+		cast[i] = keys[i].(cloudKey).key
+	}
+
+	srcKeys, err := d.client.PutMulti(d.ctx, cast, src)
+	newKeys := make([]Key, len(srcKeys))
+	for i := range srcKeys {
+		newKeys[i] = cloudKey{srcKeys[i]}
+	}
+	return newKeys, err
 }
 
 func (d cloudDatastore) Insert(key Key, src interface{}) error {

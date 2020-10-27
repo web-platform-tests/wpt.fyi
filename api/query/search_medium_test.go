@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 type shouldCache struct {
@@ -71,9 +70,10 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
 		ctx := shared.NewAppEngineContext(req)
+		store := shared.NewAppEngineDatastore(ctx, false)
 
 		for idx := range testRuns {
-			key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &testRuns[idx])
+			key, err := store.Put(store.NewIncompleteKey("TestRun"), &testRuns[idx])
 			assert.Nil(t, err)
 			id := key.IntID()
 			assert.NotEqual(t, 0, id)
@@ -195,9 +195,10 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
 		ctx := shared.NewAppEngineContext(req)
+		store := shared.NewAppEngineDatastore(ctx, false)
 
 		for idx, testRun := range testRuns {
-			key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &testRun)
+			key, err := store.Put(store.NewIncompleteKey("TestRun"), &testRun)
 			assert.Nil(t, err)
 			id := key.IntID()
 			assert.NotEqual(t, 0, id)
@@ -326,9 +327,10 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
 		ctx := shared.NewAppEngineContext(req)
+		store := shared.NewAppEngineDatastore(ctx, false)
 
 		for idx, testRun := range testRuns {
-			key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &testRun)
+			key, err := store.Put(store.NewIncompleteKey("TestRun"), &testRun)
 			assert.Nil(t, err)
 			id := key.IntID()
 			assert.NotEqual(t, 0, id)
@@ -420,9 +422,10 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
 		ctx := shared.NewAppEngineContext(req)
+		store := shared.NewAppEngineDatastore(ctx, false)
 
 		for idx, testRun := range testRuns {
-			key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &testRun)
+			key, err := store.Put(store.NewIncompleteKey("TestRun"), &testRun)
 			assert.Nil(t, err)
 			id := key.IntID()
 			assert.NotEqual(t, 0, id)

@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestLabelsHandler(t *testing.T) {
@@ -24,9 +23,10 @@ func TestLabelsHandler(t *testing.T) {
 	assert.Nil(t, err)
 	defer done()
 
-	key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-	_, err = datastore.Put(ctx, key, &shared.TestRun{Labels: []string{"b", "c"}})
-	_, err = datastore.Put(ctx, key, &shared.TestRun{Labels: []string{"b", "a"}})
+	store := shared.NewAppEngineDatastore(ctx, false)
+	key := store.NewIncompleteKey("TestRun")
+	_, err = store.Put(key, &shared.TestRun{Labels: []string{"b", "c"}})
+	_, err = store.Put(key, &shared.TestRun{Labels: []string{"b", "a"}})
 	assert.Nil(t, err)
 
 	handler := LabelsHandler{ctx: ctx}
@@ -45,8 +45,9 @@ func TestLabelsHandler_Caches(t *testing.T) {
 	r, _ := instance.NewRequest("GET", "/api/labels", nil)
 	ctx := shared.NewAppEngineContext(r)
 
-	key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-	_, err = datastore.Put(ctx, key, &shared.TestRun{
+	store := shared.NewAppEngineDatastore(ctx, false)
+	key := store.NewIncompleteKey("TestRun")
+	_, err = store.Put(key, &shared.TestRun{
 		Labels: []string{"a"},
 	})
 	assert.Nil(t, err)
@@ -57,7 +58,7 @@ func TestLabelsHandler_Caches(t *testing.T) {
 	assert.Equal(t, labels, []string{"a"})
 
 	// Should cache; add a "b" and don't find it.
-	_, err = datastore.Put(ctx, key, &shared.TestRun{
+	_, err = store.Put(key, &shared.TestRun{
 		Labels: []string{"b"},
 	})
 	apiLabelsHandler(w, r)

@@ -14,7 +14,6 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/remote_api"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -315,28 +314,31 @@ func labelRuns(runs []shared.TestRun, labels ...string) {
 }
 
 func addSecretToken(ctx context.Context, id string, data interface{}) {
-	key := datastore.NewKey(ctx, "Token", id, 0, nil)
-	if _, err := datastore.Put(ctx, key, data); err != nil {
+	store := shared.NewAppEngineDatastore(ctx, false)
+	key := store.NewNameKey("Token", id)
+	if _, err := store.Put(key, data); err != nil {
 		log.Fatalf("Failed to add %s secret: %s", id, err.Error())
 	}
 	log.Printf("Added %s secret", id)
 }
 
 func addFlag(ctx context.Context, id string, data interface{}) {
-	key := datastore.NewKey(ctx, "Flag", id, 0, nil)
-	if _, err := datastore.Put(ctx, key, data); err != nil {
+	store := shared.NewAppEngineDatastore(ctx, false)
+	key := store.NewNameKey("Flag", id)
+	if _, err := store.Put(key, data); err != nil {
 		log.Fatalf("Failed to add %s flag: %s", id, err.Error())
 	}
 	log.Printf("Added %s flag", id)
 }
 
-func addData(ctx context.Context, kindName string, data []interface{}) (keys []*datastore.Key) {
-	keys = make([]*datastore.Key, len(data))
+func addData(ctx context.Context, kindName string, data []interface{}) (keys []shared.Key) {
+	store := shared.NewAppEngineDatastore(ctx, false)
+	keys = make([]shared.Key, len(data))
 	for i := range data {
-		keys[i] = datastore.NewIncompleteKey(ctx, kindName, nil)
+		keys[i] = store.NewIncompleteKey(kindName)
 	}
 	var err error
-	if keys, err = datastore.PutMulti(ctx, keys, data); err != nil {
+	if keys, err = store.PutMulti(keys, data); err != nil {
 		log.Fatalf("Failed to add %s entities: %s", kindName, err.Error())
 	}
 	log.Printf("Added %v %s entities", len(data), kindName)

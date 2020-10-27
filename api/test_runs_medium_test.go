@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestGetTestRuns_VersionPrefix(t *testing.T) {
@@ -39,16 +38,17 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 		},
 		TimeStart: now.AddDate(0, 0, -1),
 	}
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	store.Put(store.NewIncompleteKey("TestRun"), &chrome)
 
 	// 'Today', v66...181 (revision increased)
 	chrome.BrowserVersion = "66.0.3359.181 beta"
 	chrome.TimeStart = now
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
+	store.Put(store.NewIncompleteKey("TestRun"), &chrome)
 
 	// Also 'today', a v68 run.
 	chrome.BrowserVersion = "68.0.3432.3"
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &chrome)
+	store.Put(store.NewIncompleteKey("TestRun"), &chrome)
 
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-6", nil)
 	resp := httptest.NewRecorder()
@@ -105,12 +105,13 @@ func TestGetTestRuns_RunIDs(t *testing.T) {
 	run.FullRevisionHash = strings.Repeat("abcdef0123", 4)
 	run.Revision = run.FullRevisionHash[:10]
 	run.TimeStart = now.AddDate(0, 0, -1)
-	keys := make([]*datastore.Key, 2)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	keys := make([]shared.Key, 2)
 
 	run.BrowserName = "chrome"
-	keys[0], _ = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	keys[0], _ = store.Put(store.NewIncompleteKey("TestRun"), &run)
 	run.BrowserName = "safari"
-	keys[1], _ = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	keys[1], _ = store.Put(store.NewIncompleteKey("TestRun"), &run)
 
 	// run_id=123 from above should 404.
 	resp := httptest.NewRecorder()
@@ -155,19 +156,20 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	run.TimeStart = now.AddDate(0, 0, -1)
 
 	run.BrowserName = "chrome"
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	store.Put(store.NewIncompleteKey("TestRun"), &run)
 	run.BrowserName = "safari"
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	store.Put(store.NewIncompleteKey("TestRun"), &run)
 
 	run.FullRevisionHash = strings.Repeat("9876543210", 4)
 	run.Revision = run.FullRevisionHash[:10]
 	run.BrowserName = "firefox"
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	store.Put(store.NewIncompleteKey("TestRun"), &run)
 
 	run.FullRevisionHash = strings.Repeat("9999999999", 4)
 	run.Revision = run.FullRevisionHash[:10]
 	run.BrowserName = "edge"
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	store.Put(store.NewIncompleteKey("TestRun"), &run)
 
 	r, _ = i.NewRequest("GET", "/api/runs?sha=abcdef0123", nil)
 	resp := httptest.NewRecorder()
@@ -200,7 +202,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	run.Revision = run.FullRevisionHash[:10]
 	for _, name := range shared.GetDefaultBrowserNames() {
 		run.BrowserName = name
-		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+		store.Put(store.NewIncompleteKey("TestRun"), &run)
 	}
 	r, _ = i.NewRequest("GET", "/api/runs?aligned", nil)
 	resp = httptest.NewRecorder()
@@ -220,13 +222,13 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 	assert.Nil(t, err)
 
 	ctx := shared.NewAppEngineContext(r)
-	ds := shared.NewAppEngineDatastore(ctx, false)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	now := time.Now()
 	run := shared.TestRun{}
 	run.BrowserName = "chrome"
 	for _, d := range []int{-3, -2, -1} {
 		run.TimeStart = now.AddDate(0, 0, d)
-		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+		store.Put(store.NewIncompleteKey("TestRun"), &run)
 	}
 
 	r, _ = i.NewRequest("GET", "/api/runs?product=chrome&max-count=2", nil)
@@ -238,7 +240,7 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 	assert.Equal(t, "", next)
 
 	// Feature enabled
-	shared.SetFeature(ds, shared.Flag{Name: paginationTokenFeatureFlagName, Enabled: true})
+	shared.SetFeature(store, shared.Flag{Name: paginationTokenFeatureFlagName, Enabled: true})
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
 	next = resp.Header().Get(nextPageTokenHeaderName)

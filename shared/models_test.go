@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestTestRunIDs_LoadTestRuns(t *testing.T) {
@@ -29,17 +28,17 @@ func TestTestRunIDs_LoadTestRuns(t *testing.T) {
 	assert.Nil(t, err)
 	defer done()
 
-	keys := make([]*datastore.Key, 0, len(testRuns))
+	keys := make([]shared.Key, 0, len(testRuns))
+	store := shared.NewAppEngineDatastore(ctx, false)
 	for range testRuns {
-		keys = append(keys, datastore.NewIncompleteKey(ctx, "TestRun", nil))
+		keys = append(keys, store.NewIncompleteKey("TestRun"))
 	}
-	keys, err = datastore.PutMulti(ctx, keys, testRuns)
+	keys, err = store.PutMulti(keys, testRuns)
 	assert.Nil(t, err)
 	for i, key := range keys {
 		testRuns[i].ID = key.IntID()
 	}
 
-	store := shared.NewAppEngineDatastore(ctx, false)
 	trs, err := testRuns.GetTestRunIDs().LoadTestRuns(store)
 	assert.Nil(t, err)
 	assert.Equal(t, testRuns, trs)
