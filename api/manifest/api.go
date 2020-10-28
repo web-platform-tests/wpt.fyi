@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"regexp"
+	"time"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -24,6 +25,7 @@ var AssetRegex = regexp.MustCompile(`^MANIFEST-([0-9a-fA-F]{40}).json.gz$`)
 // API handles manifest-related fetches and caching.
 type API interface {
 	GetManifestForSHA(string) (string, []byte, error)
+	NewMemcache(duration time.Duration) shared.ReadWritable
 }
 
 type apiImpl struct {
@@ -100,4 +102,9 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 		}
 	}
 	return "", nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
+}
+
+// NewMemcache creates a new MemcacheReadWritable with the given duration.
+func (a apiImpl) NewMemcache(duration time.Duration) shared.ReadWritable {
+	return shared.NewMemcacheReadWritable(a.ctx, duration)
 }
