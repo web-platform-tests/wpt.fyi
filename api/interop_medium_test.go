@@ -46,7 +46,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	for i, product := range products {
 		run := firstRun
 		run.Product = product.Product
-		firstRunKeys[i], _ = store.Put(store.NewIDKey("TestRun", 0), &run)
+		firstRunKeys[i], _ = store.Put(store.NewIncompleteKey("TestRun"), &run)
 		run = secondRun
 		run.Product = product.Product
 		secondRunKeys[i], _ = store.Put(store.NewIDKey("TestRun", 0), &run)
