@@ -195,7 +195,7 @@ func TestAddTestRun(t *testing.T) {
 
 	var testRun2 shared.TestRun
 	store := shared.NewAppEngineDatastore(ctx, false)
-	store.Get(store.NewIDKey(key.Kind(), key.IntID()), &testRun2)
+	store.Get(key, &testRun2)
 	testRun2.ID = key.IntID()
 	assert.Equal(t, testRun, testRun2)
 }
