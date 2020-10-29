@@ -80,7 +80,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 	for i, key := range firstRunKeys {
 		interop.TestRunIDs[i] = key.IntID()
 	}
-	store.Put(store.NewIDKey(interopKindName, 0), &interop)
+	store.Put(store.NewIncompleteKey(interopKindName), &interop)
 
 	// Load the tests + clear the IDs, to match the output of apiInteropHandler below.
 	interop.LoadTestRuns(ctx)
