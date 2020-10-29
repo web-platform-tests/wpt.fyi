@@ -49,7 +49,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 		firstRunKeys[i], _ = store.Put(store.NewIncompleteKey("TestRun"), &run)
 		run = secondRun
 		run.Product = product.Product
-		secondRunKeys[i], _ = store.Put(store.NewIDKey("TestRun", 0), &run)
+		secondRunKeys[i], _ = store.Put(store.NewIncompleteKey("TestRun"), &run)
 	}
 
 	// No interop data.
