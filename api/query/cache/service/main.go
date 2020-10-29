@@ -14,7 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
 	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
@@ -29,7 +28,7 @@ import (
 
 var (
 	port                   = flag.Int("port", 8080, "Port to listen on")
-	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
+	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from environment")
 	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
@@ -107,17 +106,17 @@ func init() {
 
 	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
 
-	autoProjectID, err := metadata.ProjectID()
-	if err != nil {
-		logrus.Warningf("Failed to get project ID from metadata service")
+	autoProjectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if autoProjectID == "" {
+		logrus.Warningf("Failed to get project ID from environment")
 	} else {
 		if *projectID == "" {
-			logrus.Infof(`Using project ID from metadata service: %s`, autoProjectID)
+			logrus.Infof("Using project ID from environment: %s", autoProjectID)
 			*projectID = autoProjectID
 		} else if *projectID != autoProjectID {
-			logrus.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
+			logrus.Warningf("Using project ID from flag: %s, even though environment reports project ID: %s", *projectID, autoProjectID)
 		} else {
-			logrus.Infof(`Using project ID: %s`, *projectID)
+			logrus.Infof("Using project ID: %s", *projectID)
 		}
 	}
 
