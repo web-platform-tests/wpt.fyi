@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
 	gaelog "google.golang.org/appengine/log"
-	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
 // Logger is an abstract logging interface that contains an intersection of
@@ -88,12 +88,20 @@ func NewAppEngineContext(r *http.Request) context.Context {
 }
 
 type gcLogger struct {
-	childLogger *gclog.Logger
+	logger      *gclog.Logger
 	traceID     string
+	maxSeverity gclog.Severity
+	statusCode  int
 }
 
 func (gcl *gcLogger) log(severity gclog.Severity, format string, params ...interface{}) {
-	gcl.childLogger.Log(gclog.Entry{
+	// "Severity levels are ordered, with numerically smaller levels treated as less severe than numerically larger levels".
+	// https://pkg.go.dev/cloud.google.com/go/logging#Severity.
+	if int(severity) > int(gcl.maxSeverity) {
+		gcl.maxSeverity = severity
+	}
+
+	gcl.logger.Log(gclog.Entry{
 		Severity: severity,
 		Payload:  fmt.Sprintf(format, params...),
 		Trace:    gcl.traceID,
@@ -116,25 +124,28 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 	gcl.log(gclog.Error, format, params...)
 }
 
-// newAppEngineFlexContext creates a new Google App Engine Flex-based
-// context, with a Google Cloud logger client bound to an http.Request.
-func newAppEngineFlexContext(r *http.Request, project string, commonResource *mrpb.MonitoredResource) (ctx context.Context, err error) {
-	ctx = r.Context()
-	client, err := gclog.NewClient(ctx, project)
-	if err != nil {
-		return nil, err
+type gcResponseWriter struct {
+	gcLogger *gcLogger
+	w        http.ResponseWriter
+}
+
+func (gw gcResponseWriter) Header() http.Header {
+	return gw.w.Header()
+}
+
+func (gw gcResponseWriter) Write(b []byte) (int, error) {
+	// We must duplicate this behaviour of implicit WriteHeader here.
+	// Otherwise, w.Write would call its own w.WriteHeader instead of our
+	// own WriteHeader due to the lack of true polymorphism.
+	if gw.gcLogger.statusCode == 0 {
+		gw.WriteHeader(http.StatusOK)
 	}
-	// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
-	traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
-	if traceID != "" {
-		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
-	}
-	childLogger := client.Logger("request_log_entries", gclog.CommonResource(commonResource))
-	ctx = withLogger(ctx, &gcLogger{
-		childLogger: childLogger,
-		traceID:     traceID,
-	})
-	return ctx, nil
+	return gw.w.Write(b)
+}
+
+func (gw gcResponseWriter) WriteHeader(statusCode int) {
+	gw.gcLogger.statusCode = statusCode
+	gw.w.WriteHeader(statusCode)
 }
 
 // HandleWithGoogleCloudLogging handles the request with the given handler, setting the logger
@@ -143,14 +154,35 @@ func newAppEngineFlexContext(r *http.Request, project string, commonResource *mr
 // commonResource is an optional override to the monitored resource details appended to each log.
 // e.g. in the Flex environment, it pays to override this value to type gae_app, to ensure finding
 // logs is consistent between services.
-func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, commonResource *mrpb.MonitoredResource) http.HandlerFunc {
+func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, childLogger, parentLogger *gclog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, err := newAppEngineFlexContext(r, project, commonResource)
-		if err != nil {
-			h(w, r)
-			return
+		start := time.Now()
+		// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
+		traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
+		if traceID != "" {
+			traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
 		}
-		h(w, r.WithContext(ctx))
+
+		gcl := gcLogger{
+			logger:      childLogger,
+			traceID:     traceID,
+			maxSeverity: gclog.Default,
+		}
+		h(gcResponseWriter{gcLogger: &gcl, w: w}, r.WithContext(withLogger(r.Context(), &gcl)))
+
+		end := time.Now()
+		e := gclog.Entry{
+			Timestamp: end,
+			Trace:     traceID,
+			Severity:  gcl.maxSeverity,
+			HTTPRequest: &gclog.HTTPRequest{
+				Request: r,
+				Status:  gcl.statusCode,
+				Latency: end.Sub(start),
+			},
+		}
+		parentLogger.Log(e)
+
 	}
 }
 
