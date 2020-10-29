@@ -138,7 +138,7 @@ func (gw gcResponseWriter) Write(b []byte) (int, error) {
 	// Otherwise, w.Write would call its own w.WriteHeader instead of our
 	// own WriteHeader due to the lack of true polymorphism.
 	if gw.gcLogger.statusCode == 0 {
-		gw.w.WriteHeader(http.StatusOK)
+		gw.WriteHeader(http.StatusOK)
 	}
 	return gw.w.Write(b)
 }
