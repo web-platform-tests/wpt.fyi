@@ -126,7 +126,7 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 	found := false
 	for {
 		_, err := it.Next(&interop)
-		if err == store.Done().(error) {
+		if err == store.Done() {
 			return nil, nil
 		} else if err != nil {
 			return nil, err
