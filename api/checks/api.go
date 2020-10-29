@@ -15,7 +15,6 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
 )
 
 const (
@@ -74,7 +73,8 @@ func (s checksAPIImpl) ScheduleResultsProcessing(sha string, product shared.Prod
 // GetSuitesForSHA gets all existing check suites for the given Head SHA
 func (s checksAPIImpl) GetSuitesForSHA(sha string) ([]shared.CheckSuite, error) {
 	var suites []shared.CheckSuite
-	_, err := datastore.NewQuery("CheckSuite").Filter("SHA =", sha).GetAll(s.Context(), &suites)
+	store := shared.NewAppEngineDatastore(s.Context(), false)
+	_, err := store.GetAll(store.NewQuery("CheckSuite").Filter("SHA =", sha), &suites)
 	return suites, err
 }
 

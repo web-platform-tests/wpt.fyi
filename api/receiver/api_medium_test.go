@@ -23,7 +23,6 @@ import (
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 type mockGcs struct {
@@ -170,7 +169,8 @@ func TestScheduleResultsTask(t *testing.T) {
 	assert.Nil(t, err)
 
 	var pendingRun shared.PendingTestRun
-	datastore.Get(ctx, datastore.NewKey(ctx, "PendingTestRun", "", 1, nil), &pendingRun)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	store.Get(store.NewIDKey("PendingTestRun", 1), &pendingRun)
 	assert.Equal(t, "blade-runner", pendingRun.Uploader)
 	assert.Equal(t, shared.StageWptFyiReceived, pendingRun.Stage)
 }
@@ -194,7 +194,8 @@ func TestAddTestRun(t *testing.T) {
 	assert.Equal(t, int64(123456), key.IntID())
 
 	var testRun2 shared.TestRun
-	datastore.Get(ctx, datastore.NewKey(ctx, key.Kind(), "", key.IntID(), nil), &testRun2)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	store.Get(key, &testRun2)
 	testRun2.ID = key.IntID()
 	assert.Equal(t, testRun, testRun2)
 }
@@ -206,7 +207,8 @@ func TestUpdatePendingTestRun(t *testing.T) {
 	a := NewAPI(ctx)
 
 	sha := "0123456789012345678901234567890123456789"
-	key := datastore.NewKey(ctx, "PendingTestRun", "", 1, nil)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	key := store.NewIDKey("PendingTestRun", 1)
 	run := shared.PendingTestRun{
 		ID:         1,
 		CheckRunID: 100,
@@ -217,7 +219,7 @@ func TestUpdatePendingTestRun(t *testing.T) {
 	}
 	assert.Nil(t, a.UpdatePendingTestRun(run))
 	var run2 shared.PendingTestRun
-	datastore.Get(ctx, key, &run2)
+	store.Get(key, &run2)
 	assert.Equal(t, shared.StageWptFyiReceived, run2.Stage)
 	assert.Equal(t, sha, run2.FullRevisionHash)
 	assert.Equal(t, sha[:10], run2.Revision)
@@ -227,7 +229,7 @@ func TestUpdatePendingTestRun(t *testing.T) {
 	run.Stage = shared.StageValid
 	assert.Nil(t, a.UpdatePendingTestRun(run))
 	var run3 shared.PendingTestRun
-	datastore.Get(ctx, key, &run3)
+	store.Get(key, &run3)
 	assert.Equal(t, int64(100), run3.CheckRunID)
 	assert.Equal(t, shared.StageValid, run3.Stage)
 	assert.Equal(t, run2.Created, run3.Created)
@@ -250,8 +252,9 @@ func TestAuthenticateUploader(t *testing.T) {
 	req.SetBasicAuth(InternalUsername, "123")
 	assert.Equal(t, "", AuthenticateUploader(a, req))
 
-	key := datastore.NewKey(ctx, "Uploader", InternalUsername, 0, nil)
-	datastore.Put(ctx, key, &shared.Uploader{Username: InternalUsername, Password: "123"})
+	store := shared.NewAppEngineDatastore(ctx, false)
+	key := store.NewNameKey("Uploader", InternalUsername)
+	store.Put(key, &shared.Uploader{Username: InternalUsername, Password: "123"})
 	assert.Equal(t, InternalUsername, AuthenticateUploader(a, req))
 
 	req.SetBasicAuth(InternalUsername, "456")

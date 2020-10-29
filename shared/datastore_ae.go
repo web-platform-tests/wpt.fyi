@@ -51,6 +51,10 @@ func (d aeDatastore) NewIDKey(typeName string, id int64) Key {
 	return datastore.NewKey(d.ctx, typeName, "", id, nil)
 }
 
+func (d aeDatastore) NewIncompleteKey(typeName string) Key {
+	return datastore.NewIncompleteKey(d.ctx, typeName, nil)
+}
+
 func (d aeDatastore) ReserveID(typeName string) (Key, error) {
 	id, _, err := datastore.AllocateIDs(d.ctx, typeName, nil, 1)
 	if err != nil {
@@ -90,6 +94,20 @@ func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 
 func (d aeDatastore) Put(key Key, src interface{}) (Key, error) {
 	return datastore.Put(d.ctx, key.(*datastore.Key), src)
+}
+
+func (d aeDatastore) PutMulti(keys []Key, src interface{}) ([]Key, error) {
+	cast := make([]*datastore.Key, len(keys))
+	for i := range keys {
+		cast[i] = keys[i].(*datastore.Key)
+	}
+
+	srcKeys, err := datastore.PutMulti(d.ctx, cast, src)
+	newKeys := make([]Key, len(srcKeys))
+	for i := range srcKeys {
+		newKeys[i] = srcKeys[i]
+	}
+	return newKeys, err
 }
 
 func (d aeDatastore) Insert(key Key, src interface{}) error {

@@ -53,12 +53,14 @@ type Datastore interface {
 	Done() interface{}
 	NewQuery(typeName string) Query
 	NewIDKey(typeName string, id int64) Key
+	NewIncompleteKey(typeName string) Key
 	NewNameKey(typeName string, name string) Key
 	ReserveID(typeName string) (Key, error)
 	Get(key Key, dst interface{}) error
 	GetAll(q Query, dst interface{}) ([]Key, error)
 	GetMulti(keys []Key, dst interface{}) error
 	Put(key Key, src interface{}) (Key, error)
+	PutMulti(keys []Key, src interface{}) ([]Key, error)
 
 	// Atomically insert a new entity.
 	Insert(key Key, src interface{}) error
