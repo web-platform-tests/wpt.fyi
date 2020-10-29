@@ -53,44 +53,6 @@ func NewNilLogger() Logger {
 	return nl
 }
 
-// HandleWithStandardGCL - TODO(kyleju): Refactor this function and HandleWithGoogleCloudLogging.
-func HandleWithStandardGCL(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if isDevAppserver() || Clients.childLogger == nil || Clients.parentLogger == nil {
-			h(w, r.WithContext(withLogger(r.Context(), logrus.New())))
-			return
-		}
-
-		start := time.Now()
-		traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
-		if traceID != "" {
-			traceID = fmt.Sprintf("projects/%s/traces/%s", runtimeIdentity.AppID, traceID)
-		}
-
-		gcl := gcLogger{
-			logger:      Clients.childLogger,
-			traceID:     traceID,
-			maxSeverity: gclog.Default,
-		}
-		h(w, r.WithContext(withLogger(r.Context(), &gcl)))
-
-		end := time.Now()
-		e := gclog.Entry{
-			Timestamp: end,
-			Trace:     traceID,
-			Severity:  gcl.maxSeverity,
-			HTTPRequest: &gclog.HTTPRequest{
-				Request: r,
-				// TODO(kyleju): Set Status based on w.
-				Latency: end.Sub(start),
-			},
-		}
-
-		Clients.parentLogger.Log(e)
-
-	}
-}
-
 type gcLogger struct {
 	logger      *gclog.Logger
 	traceID     string
@@ -152,42 +114,53 @@ func (gw gcResponseWriter) WriteHeader(statusCode int) {
 	gw.w.WriteHeader(statusCode)
 }
 
-// HandleWithGoogleCloudLogging handles the request with the given handler, setting the logger
-// on the request's context to be a Google Cloud logging client for the given project.
-//
-// commonResource is an optional override to the monitored resource details appended to each log.
-// e.g. in the Flex environment, it pays to override this value to type gae_app, to ensure finding
-// logs is consistent between services.
-func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, childLogger, parentLogger *gclog.Logger) http.HandlerFunc {
+// HandleWithGCLStandard handles the request with the given handler, setting the logger
+// on the request's context to be a Google Cloud logging client in webapp.
+func HandleWithGCLStandard(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
-		traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
-		if traceID != "" {
-			traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
+		if isDevAppserver() || Clients.childLogger == nil || Clients.parentLogger == nil {
+			h(w, r.WithContext(withLogger(r.Context(), logrus.New())))
+			return
 		}
-
-		gcl := gcLogger{
-			logger:      childLogger,
-			traceID:     traceID,
-			maxSeverity: gclog.Default,
-		}
-		h(gcResponseWriter{gcLogger: &gcl, w: w}, r.WithContext(withLogger(r.Context(), &gcl)))
-
-		end := time.Now()
-		e := gclog.Entry{
-			Timestamp: end,
-			Trace:     traceID,
-			Severity:  gcl.maxSeverity,
-			HTTPRequest: &gclog.HTTPRequest{
-				Request: r,
-				Status:  gcl.statusCode,
-				Latency: end.Sub(start),
-			},
-		}
-		parentLogger.Log(e)
-
+		setUpGCL(h, w, r, runtimeIdentity.AppID, Clients.childLogger, Clients.parentLogger)
 	}
+}
+
+// HandleWithGCLFlex handles the request with the given handler, setting the logger
+// on the request's context to be a Google Cloud logging client in searchcache.
+func HandleWithGCLFlex(h http.HandlerFunc, project string, childLogger, parentLogger *gclog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		setUpGCL(h, w, r, project, childLogger, parentLogger)
+	}
+}
+
+func setUpGCL(h http.HandlerFunc, w http.ResponseWriter, r *http.Request, project string, childLogger, parentLogger *gclog.Logger) {
+	start := time.Now()
+	// See https://cloud.google.com/appengine/docs/flexible/go/writing-application-logs
+	traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
+	if traceID != "" {
+		traceID = fmt.Sprintf("projects/%s/traces/%s", project, traceID)
+	}
+
+	gcl := gcLogger{
+		logger:      childLogger,
+		traceID:     traceID,
+		maxSeverity: gclog.Default,
+	}
+	h(gcResponseWriter{gcLogger: &gcl, w: w}, r.WithContext(withLogger(r.Context(), &gcl)))
+
+	end := time.Now()
+	e := gclog.Entry{
+		Timestamp: end,
+		Trace:     traceID,
+		Severity:  gcl.maxSeverity,
+		HTTPRequest: &gclog.HTTPRequest{
+			Request: r,
+			Status:  gcl.statusCode,
+			Latency: end.Sub(start),
+		},
+	}
+	parentLogger.Log(e)
 }
 
 // GetLogger retrieves a non-nil Logger that is appropriate for use in ctx. If
