@@ -102,10 +102,10 @@ func (d aeDatastore) PutMulti(keys []Key, src interface{}) ([]Key, error) {
 		cast[i] = keys[i].(*datastore.Key)
 	}
 
-	cast, err := datastore.PutMulti(d.ctx, cast, src)
-	newKeys := make([]Key, len(cast))
-	for i := range cast {
-		newKeys[i] = cast[i]
+	srcKeys, err := datastore.PutMulti(d.ctx, cast, src)
+	newKeys := make([]Key, len(srcKeys))
+	for i := range srcKeys {
+		newKeys[i] = srcKeys[i]
 	}
 	return newKeys, err
 }
