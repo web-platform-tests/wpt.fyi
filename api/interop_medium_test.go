@@ -68,7 +68,7 @@ func TestApiInteropHandler_CompleteRunFallback(t *testing.T) {
 		interop.TestRunIDs[i] = key.IntID()
 	}
 	interopKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	store.Put(store.NewIDKey(interopKindName, 0), &interop)
+	store.Put(store.NewIncompleteKey(interopKindName), &interop)
 
 	resp = httptest.NewRecorder()
 	apiInteropHandler(resp, r)
