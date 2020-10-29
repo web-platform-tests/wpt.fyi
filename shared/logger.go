@@ -88,9 +88,10 @@ func NewAppEngineContext(r *http.Request) context.Context {
 }
 
 type gcLogger struct {
-	childLogger *gclog.Logger
+	logger      *gclog.Logger
 	traceID     string
 	maxSeverity gclog.Severity
+	statusCode  int
 }
 
 func (gcl *gcLogger) log(severity gclog.Severity, format string, params ...interface{}) {
@@ -100,7 +101,7 @@ func (gcl *gcLogger) log(severity gclog.Severity, format string, params ...inter
 		gcl.maxSeverity = severity
 	}
 
-	gcl.childLogger.Log(gclog.Entry{
+	gcl.logger.Log(gclog.Entry{
 		Severity: severity,
 		Payload:  fmt.Sprintf(format, params...),
 		Trace:    gcl.traceID,
@@ -123,6 +124,30 @@ func (gcl *gcLogger) Errorf(format string, params ...interface{}) {
 	gcl.log(gclog.Error, format, params...)
 }
 
+type gcResponseWriter struct {
+	gcLogger *gcLogger
+	w        http.ResponseWriter
+}
+
+func (gw gcResponseWriter) Header() http.Header {
+	return gw.w.Header()
+}
+
+func (gw gcResponseWriter) Write(b []byte) (int, error) {
+	// We must duplicate this behaviour of implicit WriteHeader here.
+	// Otherwise, w.Write would call its own w.WriteHeader instead of our
+	// own WriteHeader due to the lack of true polymorphism.
+	if gw.gcLogger.statusCode == 0 {
+		gw.w.WriteHeader(http.StatusOK)
+	}
+	return gw.w.Write(b)
+}
+
+func (gw gcResponseWriter) WriteHeader(statusCode int) {
+	gw.gcLogger.statusCode = statusCode
+	gw.w.WriteHeader(statusCode)
+}
+
 // HandleWithGoogleCloudLogging handles the request with the given handler, setting the logger
 // on the request's context to be a Google Cloud logging client for the given project.
 //
@@ -139,11 +164,11 @@ func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, childLogge
 		}
 
 		gcl := gcLogger{
-			childLogger: childLogger,
+			logger:      childLogger,
 			traceID:     traceID,
 			maxSeverity: gclog.Default,
 		}
-		h(w, r.WithContext(withLogger(r.Context(), &gcl)))
+		h(gcResponseWriter{gcLogger: &gcl, w: w}, r.WithContext(withLogger(r.Context(), &gcl)))
 
 		end := time.Now()
 		e := gclog.Entry{
@@ -152,11 +177,10 @@ func HandleWithGoogleCloudLogging(h http.HandlerFunc, project string, childLogge
 			Severity:  gcl.maxSeverity,
 			HTTPRequest: &gclog.HTTPRequest{
 				Request: r,
-				// TODO(kyleju): Set Status based on w.
+				Status:  gcl.statusCode,
 				Latency: end.Sub(start),
 			},
 		}
-
 		parentLogger.Log(e)
 
 	}
