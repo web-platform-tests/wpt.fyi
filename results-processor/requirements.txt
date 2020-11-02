@@ -7,14 +7,14 @@ filelock==3.0.12
 flake8==3.8.4
 Flask==1.1.2
 google-api-core==1.23.0
-google-auth==1.22.1
+google-auth==1.23.0
 google-cloud-core==1.4.3
 google-cloud-datastore==1.15.3
 google-cloud-storage==1.32.0
 google-crc32c==1.0.0
 google-resumable-media==1.1.0
 googleapis-common-protos==1.52.0
-grpcio==1.33.1
+grpcio==1.33.2
 gunicorn==20.0.4
 idna==2.10
 importlib-metadata==2.0.0
@@ -30,7 +30,7 @@ pyasn1-modules==0.2.8
 pycodestyle==2.6.0
 pycparser==2.20
 pyflakes==2.2.0
-pytz==2020.1
+pytz==2020.4
 requests==2.24.0
 rsa==4.6
 six==1.15.0
