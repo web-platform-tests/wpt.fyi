@@ -22,12 +22,11 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/api/option"
-	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
 var (
 	port                   = flag.Int("port", 8080, "Port to listen on")
-	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from environment")
+	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, used for connecting to Datastore")
 	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
@@ -45,8 +44,6 @@ var (
 	idx index.Index
 	mon monitor.Monitor
 )
-
-var monitoredResource mrpb.MonitoredResource
 
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Alive"))
@@ -117,16 +114,6 @@ func init() {
 		} else {
 			logrus.Infof("Using project ID: %s", *projectID)
 		}
-	}
-
-	monitoredResource = mrpb.MonitoredResource{
-		Type: "gae_app",
-		Labels: map[string]string{
-			"project_id": *projectID,
-			// https://cloud.google.com/appengine/docs/flexible/go/migrating#modules
-			"module_id":  os.Getenv("GAE_SERVICE"),
-			"version_id": os.Getenv("GAE_VERSION"),
-		},
 	}
 }
 
