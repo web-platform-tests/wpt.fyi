@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	gclog "cloud.google.com/go/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
@@ -159,23 +158,18 @@ func main() {
 		Timeout: time.Second * 5,
 	}
 
-	// Initializes Logger.
-	gclogClient, err := gclog.NewClient(context.Background(), *projectID)
-	if err != nil {
-		logrus.Fatalf("Failed to initiate gclog Client: %v", err)
+	// Initializes clients.
+	if err = shared.Clients.Init(context.Background()); err != nil {
+		logrus.Fatalf("Failed to initialize Google Cloud clients: %v", err)
 	}
-	defer gclogClient.Close()
-
-	// Reuse loggers to prevent leaking goroutines: https://github.com/googleapis/google-cloud-go/issues/720#issuecomment-346199870
-	childLogger := gclogClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
-	parentLogger := gclogClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
+	defer shared.Clients.Close()
 
 	// Polls Metadata update every 10 minutes.
 	go poll.KeepMetadataUpdated(netClient, logger, time.Minute*10)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
-	http.HandleFunc("/api/search/cache", shared.HandleWithGCLFlex(searchHandler, *projectID, childLogger, parentLogger))
+	http.HandleFunc("/api/search/cache", shared.HandleWithLogging(searchHandler))
 	logrus.Infof("Listening on port %d", *port)
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }

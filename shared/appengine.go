@@ -9,6 +9,7 @@ package shared
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,7 +19,6 @@ import (
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	gclog "cloud.google.com/go/logging"
 	"github.com/google/go-github/v32/github"
-	"github.com/sirupsen/logrus"
 	apps "google.golang.org/api/appengine/v1"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
@@ -63,6 +63,7 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 			"version_id": runtimeIdentity.Version,
 		},
 	}
+	// Reuse loggers to prevent leaking goroutines: https://github.com/googleapis/google-cloud-go/issues/720#issuecomment-346199870
 	c.childLogger = c.gclogClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
 	c.parentLogger = c.gclogClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
 
@@ -75,7 +76,7 @@ func (c *clientsImpl) Close() {
 	if c.cloudtasks != nil {
 		err := c.cloudtasks.Close()
 		if err != nil {
-			logrus.Warningf("Error closing cloudtasks: %s", err.Error())
+			log.Printf("Error closing cloudtasks: %s", err.Error())
 		}
 		c.cloudtasks = nil
 	}
@@ -83,9 +84,8 @@ func (c *clientsImpl) Close() {
 	if c.gclogClient != nil {
 		err := c.gclogClient.Close()
 		if err != nil {
-			logrus.Warningf("Error closing gclog client: %s", err.Error())
+			log.Printf("Error closing gclog client: %s", err.Error())
 		}
-
 		c.gclogClient = nil
 		c.childLogger = nil
 		c.parentLogger = nil
