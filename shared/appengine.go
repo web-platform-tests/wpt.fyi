@@ -18,6 +18,7 @@ import (
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	gclog "cloud.google.com/go/logging"
+	"github.com/gomodule/redigo/redis"
 	"github.com/google/go-github/v32/github"
 	apps "google.golang.org/api/appengine/v1"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
@@ -29,6 +30,7 @@ type clientsImpl struct {
 	gclogClient  *gclog.Client
 	childLogger  *gclog.Logger
 	parentLogger *gclog.Logger
+	redisPool    *redis.Pool
 }
 
 // Clients is a singleton containing heavyweight (e.g. with connection pools)
@@ -44,17 +46,18 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 		// When running in dev_appserver, do not create real clients.
 		return nil
 	}
+
+	// Cloud Tasks
 	c.cloudtasks, err = cloudtasks.NewClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Intializes Logger.
+	// Cloud Logging
 	c.gclogClient, err = gclog.NewClient(ctx, runtimeIdentity.AppID)
 	if err != nil {
 		return err
 	}
-
 	monitoredResource := mrpb.MonitoredResource{
 		Type: "gae_app",
 		Labels: map[string]string{
@@ -67,6 +70,16 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 	c.childLogger = c.gclogClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
 	c.parentLogger = c.gclogClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
 
+	// Cloud Memorystore (Redis)
+	// Based on https://cloud.google.com/appengine/docs/standard/go/using-memorystore#importing_and_creating_the_client
+	redisHost := os.Getenv("REDISHOST")
+	redisPort := os.Getenv("REDISPORT")
+	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+	const maxConnections = 10
+	Clients.redisPool = redis.NewPool(func() (redis.Conn, error) {
+		return redis.Dial("tcp", redisAddr)
+	}, maxConnections)
+
 	return nil
 }
 
@@ -74,21 +87,26 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 // before the server exits. Do not use AppEngineAPI afterwards.
 func (c *clientsImpl) Close() {
 	if c.cloudtasks != nil {
-		err := c.cloudtasks.Close()
-		if err != nil {
+		if err := c.cloudtasks.Close(); err != nil {
 			log.Printf("Error closing cloudtasks: %s", err.Error())
 		}
 		c.cloudtasks = nil
 	}
 
 	if c.gclogClient != nil {
-		err := c.gclogClient.Close()
-		if err != nil {
+		if err := c.gclogClient.Close(); err != nil {
 			log.Printf("Error closing gclog client: %s", err.Error())
 		}
 		c.gclogClient = nil
 		c.childLogger = nil
 		c.parentLogger = nil
+	}
+
+	if c.redisPool != nil {
+		if err := c.redisPool.Close(); err != nil {
+			log.Printf("Error closing redis client: %s", err.Error())
+		}
+		c.redisPool = nil
 	}
 }
 

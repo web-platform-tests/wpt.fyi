@@ -10,8 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"google.golang.org/appengine/memcache"
-
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -120,7 +118,7 @@ func adminCacheFlushHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := memcache.Flush(ctx); err != nil {
+	if err := shared.FlushCache(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
 		w.Write([]byte("Successfully flushed cache"))

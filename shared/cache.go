@@ -18,15 +18,17 @@ import (
 	"net/http"
 	"time"
 
-	"google.golang.org/appengine/memcache"
+	"github.com/gomodule/redigo/redis"
 )
 
 var (
 	errNewReadCloserExpectedString        = errors.New("NewReadCloser(arg) expected arg string")
 	errMemcacheWriteCloserWriteAfterClose = errors.New("memcacheWriteCloser: Write() after Close()")
+	errMemcacheInvalidResponseType        = errors.New("memcache: type received from GET is not []byte")
 	errByteCachedStoreExpectedByteSlice   = errors.New("contextualized byte CachedStore expected []byte output arg")
 	errDatastoreObjectStoreExpectedInt64  = errors.New("datastore ObjectStore expected int64 ID")
 	errCacheMiss                          = errors.New("cache miss")
+	errNoRedis                            = errors.New("not connected to redis")
 )
 
 // Readable is a provider interface for an io.ReadCloser.
@@ -152,9 +154,9 @@ type memcacheReadWritable struct {
 }
 
 type memcacheWriteCloser struct {
-	memcacheReadWritable
+	rw         memcacheReadWritable
+	conn       redis.Conn
 	key        string
-	expiry     time.Duration
 	b          bytes.Buffer
 	hasWritten bool
 	isClosed   bool
@@ -165,14 +167,24 @@ func (mc memcacheReadWritable) NewReadCloser(iKey interface{}) (io.ReadCloser, e
 	if !ok {
 		return nil, errNewReadCloserExpectedString
 	}
-
-	item, err := memcache.Get(mc.ctx, key)
-	if err == memcache.ErrCacheMiss {
-		return nil, errCacheMiss
-	} else if err != nil {
-		return nil, err
+	if Clients.redisPool == nil {
+		return nil, errNoRedis
 	}
-	return ioutil.NopCloser(bytes.NewReader(item.Value)), nil
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+
+	// https://redis.io/commands/get
+	result, err := conn.Do("GET", key)
+	if err != nil {
+		return nil, err
+	} else if result == nil {
+		return nil, errCacheMiss
+	}
+	b, ok := result.([]byte)
+	if !ok {
+		return nil, errMemcacheInvalidResponseType
+	}
+	return ioutil.NopCloser(bytes.NewReader(b)), nil
 }
 
 func (mc memcacheReadWritable) NewWriteCloser(iKey interface{}) (io.WriteCloser, error) {
@@ -180,8 +192,11 @@ func (mc memcacheReadWritable) NewWriteCloser(iKey interface{}) (io.WriteCloser,
 	if !ok {
 		return nil, errNewReadCloserExpectedString
 	}
-
-	return &memcacheWriteCloser{mc, key, mc.expiry, bytes.Buffer{}, false, false}, nil
+	var conn redis.Conn
+	if Clients.redisPool != nil {
+		conn = Clients.redisPool.Get()
+	}
+	return &memcacheWriteCloser{mc, conn, key, bytes.Buffer{}, false, false}, nil
 }
 
 func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
@@ -194,15 +209,17 @@ func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
 
 func (mw *memcacheWriteCloser) Close() error {
 	mw.isClosed = true
+	if mw.conn == nil {
+		return nil
+	}
+	defer mw.conn.Close()
 	if !mw.hasWritten {
 		return nil
 	}
 
-	return memcache.Set(mw.ctx, &memcache.Item{
-		Key:        mw.key,
-		Value:      mw.b.Bytes(),
-		Expiration: mw.expiry,
-	})
+	// https://redis.io/commands/set
+	_, err := mw.conn.Do("SET", mw.key, mw.b.Bytes(), "EX", int(mw.rw.expiry.Seconds()))
+	return err
 }
 
 // NewMemcacheReadWritable produces a ReadWritable that performs read/write
@@ -246,7 +263,7 @@ func (cs byteCachedStore) Get(cacheID, storeID, iValue interface{}) error {
 		}
 	}
 
-	if err != errCacheMiss {
+	if err != errCacheMiss && err != errNoRedis {
 		logger.Warningf("Error fetching cache key %v: %v", cacheID, err)
 	}
 	err = nil
@@ -410,4 +427,16 @@ func (cs objectCachedStore) Get(cacheID, storeID, value interface{}) error {
 // and ObjectStore.
 func NewObjectCachedStore(ctx context.Context, cache ObjectCache, store ObjectStore) CachedStore {
 	return objectCachedStore{ctx, cache, store}
+}
+
+// FlushCache purges everything from Memorystore.
+func FlushCache() error {
+	if Clients.redisPool == nil {
+		return errNoRedis
+	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+	// https://redis.io/commands/flushall
+	_, err := conn.Do("FLUSHALL")
+	return err
 }
