@@ -37,35 +37,6 @@ func TestLabelsHandler(t *testing.T) {
 	assert.Equal(t, labels, []string{"a", "b", "c"}) // Ordered and deduped
 }
 
-func TestLabelsHandler_Caches(t *testing.T) {
-	instance, err := sharedtest.NewAEInstance(true)
-	assert.Nil(t, err)
-	defer instance.Close()
-
-	r, _ := instance.NewRequest("GET", "/api/labels", nil)
-	ctx := r.Context()
-
-	store := shared.NewAppEngineDatastore(ctx, false)
-	key := store.NewIncompleteKey("TestRun")
-	_, err = store.Put(key, &shared.TestRun{
-		Labels: []string{"a"},
-	})
-	assert.Nil(t, err)
-
-	w := httptest.NewRecorder()
-	apiLabelsHandler(w, r)
-	labels := parseLabelsResponse(t, w)
-	assert.Equal(t, labels, []string{"a"})
-
-	// Should cache; add a "b" and don't find it.
-	_, err = store.Put(key, &shared.TestRun{
-		Labels: []string{"b"},
-	})
-	apiLabelsHandler(w, r)
-	labels = parseLabelsResponse(t, w)
-	assert.Equal(t, labels, []string{"a"})
-}
-
 func parseLabelsResponse(t *testing.T, w *httptest.ResponseRecorder) []string {
 	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 	out, _ := ioutil.ReadAll(w.Body)
