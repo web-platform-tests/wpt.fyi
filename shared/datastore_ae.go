@@ -7,6 +7,7 @@ package shared
 import (
 	"context"
 
+	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -89,7 +90,19 @@ func (d aeDatastore) GetMulti(keys []Key, dst interface{}) error {
 	for i := range keys {
 		cast[i] = keys[i].(*datastore.Key)
 	}
-	return datastore.GetMulti(d.ctx, cast, dst)
+	err := datastore.GetMulti(d.ctx, cast, dst)
+	if multiError, ok := err.(appengine.MultiError); ok {
+		errors := make([]error, len(multiError))
+		for i, err := range multiError {
+			if err == datastore.ErrNoSuchEntity {
+				errors[i] = ErrNoSuchEntity
+			} else {
+				errors[i] = err
+			}
+		}
+		return NewMultiError(errors, "datastore.GetMulti")
+	}
+	return err
 }
 
 func (d aeDatastore) Put(key Key, src interface{}) (Key, error) {

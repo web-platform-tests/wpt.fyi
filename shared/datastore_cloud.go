@@ -113,7 +113,19 @@ func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 	for i := range keys {
 		cast[i] = keys[i].(cloudKey).key
 	}
-	return d.client.GetMulti(d.ctx, cast, dst)
+	err := d.client.GetMulti(d.ctx, cast, dst)
+	if multiError, ok := err.(datastore.MultiError); ok {
+		errors := make([]error, len(multiError))
+		for i, err := range multiError {
+			if err == datastore.ErrNoSuchEntity {
+				errors[i] = ErrNoSuchEntity
+			} else {
+				errors[i] = err
+			}
+		}
+		return NewMultiError(errors, "datastore.GetMulti")
+	}
+	return err
 }
 
 func (d cloudDatastore) Put(key Key, src interface{}) (Key, error) {
