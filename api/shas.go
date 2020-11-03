@@ -22,7 +22,7 @@ type SHAsHandler struct {
 // apiSHAsHandler is responsible for emitting just the revision SHAs for test runs.
 func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to SHAsHandler on cache miss.
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	shared.NewCachingHandler(ctx, SHAsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
 }
 

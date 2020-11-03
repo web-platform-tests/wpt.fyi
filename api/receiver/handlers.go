@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
-	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 func apiResultsUploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +16,7 @@ func apiResultsUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	a := NewAPI(ctx)
 	HandleResultsUpload(a, w, r)
 }
@@ -28,7 +27,7 @@ func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	a := NewAPI(ctx)
 	s := checks.NewAPI(ctx)
 	HandleResultsCreate(a, s, w, r)
@@ -40,7 +39,7 @@ func apiPendingTestRunUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	a := NewAPI(ctx)
 	HandleUpdatePendingTestRun(a, w, r)
 }

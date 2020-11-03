@@ -19,7 +19,7 @@ import (
 var sevenCharSHA, _ = regexp.Compile("^[0-9a-f]{7}$")
 
 func serviceWorkerHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	if !aeAPI.IsFeatureEnabled("serviceWorker") {
 		http.NotFound(w, r)

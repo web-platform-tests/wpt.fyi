@@ -17,7 +17,7 @@ import (
 // apiPendingTestRunsHandler is responsible for emitting JSON for
 // all the non-completed PendingTestRun entities.
 func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	store := shared.NewAppEngineDatastore(ctx, false)
 
 	filter := strings.ToLower(mux.Vars(r)["filter"])

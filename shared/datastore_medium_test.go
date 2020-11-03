@@ -18,7 +18,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 	assert.Nil(t, err)
 
 	flagName := "foo"
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	key := ds.NewNameKey("Flag", flagName)
 
@@ -40,7 +40,7 @@ func TestGetSecret(t *testing.T) {
 	assert.Nil(t, err)
 
 	tokenName := "foo"
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	key := ds.NewNameKey("Token", tokenName)
 

@@ -20,7 +20,7 @@ func TestApiVersionsHandler(t *testing.T) {
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/versions", nil)
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	// No results - empty JSON array, 404
 	var versions []string

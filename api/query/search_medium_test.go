@@ -69,7 +69,7 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 	{
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
-		ctx := shared.NewAppEngineContext(req)
+		ctx := req.Context()
 		store := shared.NewAppEngineDatastore(ctx, false)
 
 		for idx := range testRuns {
@@ -102,7 +102,7 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 		url.QueryEscape(q))
 	r, err := i.NewRequest("GET", url, nil)
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	w := httptest.NewRecorder()
 
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
@@ -194,7 +194,7 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	{
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
-		ctx := shared.NewAppEngineContext(req)
+		ctx := req.Context()
 		store := shared.NewAppEngineDatastore(ctx, false)
 
 		for idx, testRun := range testRuns {
@@ -230,7 +230,7 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 		"query": {"exists": [{"pattern": %s}] }
 	}`, testRuns[0].ID, testRuns[1].ID, string(q)))))
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	w := httptest.NewRecorder()
 
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
@@ -326,7 +326,7 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	{
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
-		ctx := shared.NewAppEngineContext(req)
+		ctx := req.Context()
 		store := shared.NewAppEngineDatastore(ctx, false)
 
 		for idx, testRun := range testRuns {
@@ -361,7 +361,7 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 		url.QueryEscape(q))
 	r, err := i.NewRequest("GET", url, nil)
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	w := httptest.NewRecorder()
 
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
@@ -421,7 +421,7 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	{
 		req, err := i.NewRequest("GET", "/", nil)
 		assert.Nil(t, err)
-		ctx := shared.NewAppEngineContext(req)
+		ctx := req.Context()
 		store := shared.NewAppEngineDatastore(ctx, false)
 
 		for idx, testRun := range testRuns {
@@ -457,7 +457,7 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 		"query": {"exists": [{"pattern": %s}] }
 	}`, testRuns[0].ID, testRuns[1].ID, string(q)))))
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	w := httptest.NewRecorder()
 
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be

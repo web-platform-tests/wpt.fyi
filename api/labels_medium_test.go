@@ -43,7 +43,7 @@ func TestLabelsHandler_Caches(t *testing.T) {
 	defer instance.Close()
 
 	r, _ := instance.NewRequest("GET", "/api/labels", nil)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	store := shared.NewAppEngineDatastore(ctx, false)
 	key := store.NewIncompleteKey("TestRun")

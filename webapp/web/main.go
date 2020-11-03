@@ -29,6 +29,7 @@ func init() {
 
 func main() {
 	if err := shared.Clients.Init(context.Background()); err != nil {
+		shared.Clients.Close()
 		panic(err)
 	}
 	defer shared.Clients.Close()
