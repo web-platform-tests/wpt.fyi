@@ -170,6 +170,12 @@ func TestApiMetadataTriageCORS(t *testing.T) {
 	assert.Equal(t, http.StatusMethodNotAllowed, rr.StatusCode)
 }
 
+func TestApiBSFBound(t *testing.T) {
+	assertHandlerIs(t, "/api/bsf", "api-bsf")
+	assertHSTS(t, "/api/bsf")
+	assertNoCORS(t, "/api/bsf")
+}
+
 func assertBound(t *testing.T, path string) mux.RouteMatch {
 	req := httptest.NewRequest("GET", path, nil)
 	router := shared.Router()

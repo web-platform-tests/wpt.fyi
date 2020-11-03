@@ -18,6 +18,7 @@ the endpoints can be found in `routes.go`.
  - [/api/manifest](#apimanifest)
  - [/api/search](#apisearch)
  - [/api/metadata](#apimetadata)
+ - [/api/bsf](#apibsf)
 
 Also see [results creation](#results-creation) for endpoints to add new data.
 
@@ -643,5 +644,48 @@ This endpoint returns the URL of a PR that is created in the wpt-metadata repo.
       "product": "firefox"
     }
   ]
+}
+```
+
+## Browser Specific Failure
+
+### /api/bsf
+Gets the BSF data for a given directory.
+
+The endpoint accepts POST requests only.
+
+__Parameters__
+
+__`from`__ : RFC3339 timestamp, for which to include BSF data that occured after the given time inclusively.
+
+__`to`__ : RFC3339 timestamp, for which to include BSF data that occured before the given time exclusively.
+
+__`product`__ : Product(s) to include (repeated param), e.g. `chrome` or `firefox-60`.
+
+__`baseline`__ : A YYYY-MM-DD date to 'pin' WPT to. Any test name not in
+    existence on the baseline date will be ignored.
+
+__`experimental`__ : A boolean to calculate metrics for experimental runs. (default: false)
+
+_JSON Request Payload_
+```json
+{
+    "/path/to/a/directory": ["subdirectory A", "subdirectory B", ...],
+}
+```
+
+Where `[subdirectory]` is a direct subdirectory of `[/path/to/a/directory]`. If empty, this endpoint fetches
+data for all directories under `[/path/to/a/directory]`
+
+__Response format__
+```json
+{
+  "dir": /path/to/a/directory,
+  "subdirs": ["subdirectory A", "subdirectory B", ...],
+  "results": https://developers.google.com/chart/interactive/docs/reference#arraytodatatable
+  "time_start": MILLISECONDS_SINCE_EPOCH,
+  "time_end": MILLISECONDS_SINCE_EPOCH,
+  "baseline": SHA[0:10],
+  "experimental": false
 }
 ```
