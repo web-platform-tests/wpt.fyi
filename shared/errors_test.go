@@ -19,9 +19,11 @@ func TestNewMultiErrorFromChan_non_empty(t *testing.T) {
 	errs <- errors.New("test2")
 	close(errs)
 	err := NewMultiErrorFromChan(errs, "testing")
-	assert.Equal(t, "2 error(s) occurred when testing:\ntest1\ntest2\n", err.Error())
-	_, ok := err.(*MultiError)
+	assert.Equal(t, "2 error(s) occurred when testing:\ntest1\ntest2", err.Error())
+	merr, ok := err.(MultiError)
 	assert.True(t, ok)
+	assert.Equal(t, 2, merr.Count())
+	assert.Equal(t, 2, len(merr.Errors()))
 }
 
 func TestNewMultiErrorFromChan_nil(t *testing.T) {
@@ -36,6 +38,22 @@ func TestNewMultiErrorFromChan_nil(t *testing.T) {
 	// NewMultiErrorFromChan incorrectly returns a concrete
 	// (*MultiError)(nil).
 	assert.Equal(t, nil, err)
-	_, ok := err.(*MultiError)
+	_, ok := err.(MultiError)
 	assert.False(t, ok)
+}
+
+func TestNewMultiError_non_empty(t *testing.T) {
+	errs := []error{errors.New("test1"), errors.New("test2")}
+	err := NewMultiError(errs, "testing")
+	assert.Equal(t, "2 error(s) occurred when testing:\ntest1\ntest2", err.Error())
+	merr, ok := err.(MultiError)
+	assert.True(t, ok)
+	assert.Equal(t, 2, merr.Count())
+	assert.Equal(t, 2, len(merr.Errors()))
+}
+
+func TestNewMultiError_nil(t *testing.T) {
+	var err error
+	err = NewMultiError(nil, "testing")
+	assert.Equal(t, nil, err)
 }
