@@ -114,7 +114,7 @@ dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-d
 
 chrome: wget unzip chrome_deps
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		REV="780724"; \
+		REV="781048"; \
 		wget -q http://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/$$REV/chrome-linux.zip; \
 		unzip -q chrome-linux.zip; \
 		sudo ln -s $$PWD/chrome-linux/chrome /usr/bin/google-chrome; \
