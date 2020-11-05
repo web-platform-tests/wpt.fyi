@@ -36,6 +36,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'reftestAnalyzerMockScreenshots',
       'reftestIframes',
       'searchCacheInterop',
+      'showBSF',
       'showTestType',
       'showTestRefURL',
       'structuredQueries',
@@ -255,6 +256,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{githubLogin}}">
         Enable GitHub OAuth login
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{showBSF}}">
+        Enable BSF graph
       </paper-checkbox>
     </paper-item>
 `;

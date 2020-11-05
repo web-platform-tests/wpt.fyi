@@ -6,6 +6,7 @@ import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
+import '../components/wpt-bsf.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
@@ -108,6 +109,13 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       </section>
 
       <div class="separator"></div>
+
+      <template is="dom-if" if="[[showBSF]]">
+      <info-banner>
+        BSF Graph
+      </info-banner>
+      <wpt-bsf></wpt-bsf>
+    </template>
 
       <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>

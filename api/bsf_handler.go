@@ -5,9 +5,46 @@
 package api
 
 import (
+	"encoding/csv"
+	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
+
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // apiBSFHandler fetches browser-specific failure data.
 func apiBSFHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := shared.GetLogger(ctx)
+	_, path, _, _ := runtime.Caller(0)
+	file, err := os.Open(filepath.Join(filepath.Dir(path), "stable-browser-specific-failures.csv"))
+	if err != nil {
+		log.Errorf("%v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	lines, err := csv.NewReader(file).ReadAll()
+	if err != nil {
+		log.Errorf("%v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	marshalled, err := json.Marshal(lines)
+	if err != nil {
+		log.Errorf("%v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(marshalled)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
