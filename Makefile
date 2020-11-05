@@ -112,14 +112,21 @@ lighthouse: chrome webapp_node_modules_all
 
 dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
 
-chrome: wget
+chrome: wget unzip chrome_deps
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		ARCHIVE=google-chrome-stable_current_amd64.deb; \
-		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
-		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
-		sudo apt-get install --fix-broken -qqy; \
-		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
+		REV="768968"; \
+		wget -q http://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/$$REV/chrome-linux.zip; \
+		unzip -q chrome-linux.zip; \
+		sudo ln -s $$PWD/chrome-linux/chrome /usr/bin/google-chrome; \
+		google-chrome --version; \
+		wget -q http://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/$$REV/chromedriver_linux64.zip; \
+		unzip chromedriver_linux64.zip; \
+		sudo mv chromedriver_linux64/chromedriver /usr/bin/chromedriver; \
+		chromedriver --version; \
 	fi
+
+chrome_deps:
+	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends chromium | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
 chromedriver: wget unzip chrome
