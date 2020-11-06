@@ -17,8 +17,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"github.com/gomodule/redigo/redis"
 )
 
 var (
@@ -155,7 +153,6 @@ type memcacheReadWritable struct {
 
 type memcacheWriteCloser struct {
 	rw         memcacheReadWritable
-	conn       redis.Conn
 	key        string
 	b          bytes.Buffer
 	hasWritten bool
@@ -192,11 +189,7 @@ func (mc memcacheReadWritable) NewWriteCloser(iKey interface{}) (io.WriteCloser,
 	if !ok {
 		return nil, errNewReadCloserExpectedString
 	}
-	var conn redis.Conn
-	if Clients.redisPool != nil {
-		conn = Clients.redisPool.Get()
-	}
-	return &memcacheWriteCloser{mc, conn, key, bytes.Buffer{}, false, false}, nil
+	return &memcacheWriteCloser{mc, key, bytes.Buffer{}, false, false}, nil
 }
 
 func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
@@ -209,16 +202,14 @@ func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
 
 func (mw *memcacheWriteCloser) Close() error {
 	mw.isClosed = true
-	if mw.conn == nil {
+	if Clients.redisPool == nil || !mw.hasWritten {
 		return nil
 	}
-	defer mw.conn.Close()
-	if !mw.hasWritten {
-		return nil
-	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
 
 	// https://redis.io/commands/set
-	_, err := mw.conn.Do("SET", mw.key, mw.b.Bytes(), "EX", int(mw.rw.expiry.Seconds()))
+	_, err := conn.Do("SET", mw.key, mw.b.Bytes(), "EX", int(mw.rw.expiry.Seconds()))
 	return err
 }
 
