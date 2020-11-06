@@ -278,7 +278,7 @@ node-%: node
 
 pip-%: pip
 	@ echo "# installing $*..."
-	pip show $* >/dev/null || pip install --user $*
+	pip show $* >/dev/null || sudo pip install $*
 
 apt-get-%:
 	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi
