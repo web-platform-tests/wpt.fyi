@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/memcache"
 )
 
 func TestGet_cacheHit(t *testing.T) {
@@ -48,9 +47,10 @@ func TestGet_cacheMiss(t *testing.T) {
 	cs := shared.NewByteCachedStore(sharedtest.NewTestContext(), cache, store)
 
 	data := []byte("{}")
+	errMissing := errors.New("Failed to fetch from store")
 	cw := sharedtest.NewMockWriteCloser(t)
 	sr := sharedtest.NewMockReadCloser(t, data)
-	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, memcache.ErrCacheMiss)
+	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, errMissing)
 	store.EXPECT().NewReadCloser(&storeID).Return(sr, nil)
 	cache.EXPECT().NewWriteCloser(&cacheID).Return(cw, nil)
 
@@ -72,7 +72,7 @@ func TestGet_missing(t *testing.T) {
 	cs := shared.NewByteCachedStore(sharedtest.NewTestContext(), cache, store)
 
 	errMissing := errors.New("Failed to fetch from store")
-	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, memcache.ErrCacheMiss)
+	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, errMissing)
 	store.EXPECT().NewReadCloser(&storeID).Return(nil, errMissing)
 
 	var v []byte

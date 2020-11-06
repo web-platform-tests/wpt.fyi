@@ -11,7 +11,7 @@ inbound_services:
 default_expiration: "1d"
 
 vpc_access_connector:
-  name: projects/wptdashboard/locations/us-central1/connectors/appengine-connector
+  name: projects/wptdashboard-staging/locations/us-east4/connectors/appengine-connector
 
 env_variables:
   REDISHOST: "10.171.142.203"
