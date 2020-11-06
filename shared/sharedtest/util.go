@@ -40,9 +40,11 @@ func (i aeInstance) NewRequest(method, urlStr string, body io.Reader) (*http.Req
 // logs are suppressed. It takes a boolean argument for whether the Datastore
 // emulation should be strongly consistent.
 func NewAEInstance(stronglyConsistentDatastore bool) (Instance, error) {
+	t := true
 	instance, err := aetest.NewInstance(&aetest.Options{
 		StronglyConsistentDatastore: stronglyConsistentDatastore,
 		SuppressDevAppServerLog:     true,
+		SupportDatastoreEmulator:    &t,
 	})
 	return aeInstance{instance}, err
 }
