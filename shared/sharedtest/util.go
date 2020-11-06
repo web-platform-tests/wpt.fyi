@@ -43,8 +43,8 @@ func NewAEInstance(stronglyConsistentDatastore bool) (Instance, error) {
 	t := true
 	instance, err := aetest.NewInstance(&aetest.Options{
 		StronglyConsistentDatastore: stronglyConsistentDatastore,
-		SuppressDevAppServerLog:     true,
-		SupportDatastoreEmulator:    &t,
+		//SuppressDevAppServerLog:     true,
+		SupportDatastoreEmulator: &t,
 	})
 	return aeInstance{instance}, err
 }
