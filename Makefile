@@ -110,7 +110,7 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 lighthouse: chrome webapp_node_modules_all
 	cd webapp; npx lhci autorun --failOnUploadFailure
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
+dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator pip-grpcio
 
 chrome: wget
 	# Pinned to Chrome 84 to workaround https://github.com/web-platform-tests/wpt.fyi/issues/2128
@@ -191,6 +191,7 @@ git: apt-get-git
 psmisc: apt-get-psmisc
 python3: apt-get-python3.7
 python: apt-get-python
+pip: apt-get-python-pip
 tox: apt-get-tox
 unzip: apt-get-unzip
 wget: apt-get-wget
@@ -274,6 +275,10 @@ node-%: node
 	@ echo "# Installing $*..."
 	# Hack to (more quickly) detect whether a package is already installed (available in node).
 	cd webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
+
+pip-%: pip
+	@ echo "# installing $*..."
+	pip show $* >/dev/null || pip install --user $*
 
 apt-get-%:
 	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi
