@@ -175,7 +175,7 @@ func (d cloudDatastore) Insert(key Key, src interface{}) error {
 		}
 		_, err = txn.Put(key.(cloudKey).key, src)
 		return err
-	}, nil)
+	})
 	return err
 }
 
@@ -189,7 +189,7 @@ func (d cloudDatastore) Update(key Key, dst interface{}, mutator func(obj interf
 		}
 		_, err := txn.Put(key.(cloudKey).key, dst)
 		return err
-	}, nil)
+	})
 	return err
 }
 
