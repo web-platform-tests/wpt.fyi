@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"time"
 
+	"cloud.google.com/go/datastore"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -66,6 +67,30 @@ type TestRunsMetadata struct {
 	DataURL    string            `json:"url"`
 }
 
+// Load is part of the datastore.PropertyLoadSaver interface.
+// We use it to reset all time to UTC and trim their monotonic clock.
+func (t *TestRunsMetadata) Load(ps []datastore.Property) error {
+	if err := datastore.LoadStruct(t, ps); err != nil {
+		return err
+	}
+	t.StartTime = t.StartTime.UTC().Round(0)
+	t.EndTime = t.EndTime.UTC().Round(0)
+	return nil
+}
+
+// Save is part of the datastore.PropertyLoadSaver interface.
+// Delegate to the default behaviour.
+func (t *TestRunsMetadata) Save() ([]datastore.Property, error) {
+	return datastore.SaveStruct(t)
+}
+
+// LoadTestRuns fetches the TestRun entities for the PassRateMetadata's TestRunIDs.
+func (t *TestRunsMetadata) LoadTestRuns(ctx context.Context) (err error) {
+	ds := shared.NewAppEngineDatastore(ctx, false)
+	t.TestRuns, err = t.TestRunIDs.LoadTestRuns(ds)
+	return err
+}
+
 // TODO(lukebjerring): Remove TestRunLegacy when old format migrated.
 
 // TestRunLegacy is a copy of the TestRun struct, before the `Labels` field
@@ -95,6 +120,24 @@ type TestRunLegacy struct {
 	Labels []string `datastore:"-" json:"labels"`
 }
 
+// Load is part of the datastore.PropertyLoadSaver interface.
+// We use it to reset all time to UTC and trim their monotonic clock.
+func (r *TestRunLegacy) Load(ps []datastore.Property) error {
+	if err := datastore.LoadStruct(r, ps); err != nil {
+		return err
+	}
+	r.CreatedAt = r.CreatedAt.UTC().Round(0)
+	r.TimeStart = r.TimeStart.UTC().Round(0)
+	r.TimeEnd = r.TimeEnd.UTC().Round(0)
+	return nil
+}
+
+// Save is part of the datastore.PropertyLoadSaver interface.
+// Delegate to the default behaviour.
+func (r *TestRunLegacy) Save() ([]datastore.Property, error) {
+	return datastore.SaveStruct(r)
+}
+
 // ConvertRuns converts TestRuns into the legacy format.
 func ConvertRuns(runs shared.TestRuns) (converted []TestRunLegacy, err error) {
 	if serialized, err := json.Marshal(runs); err != nil {
@@ -118,23 +161,33 @@ type TestRunsMetadataLegacy struct {
 }
 
 // LoadTestRuns fetches the TestRun entities for the PassRateMetadata's TestRunIDs.
-func (metadata *TestRunsMetadata) LoadTestRuns(ctx context.Context) (err error) {
-	ds := shared.NewAppEngineDatastore(ctx, false)
-	metadata.TestRuns, err = metadata.TestRunIDs.LoadTestRuns(ds)
-	return err
-}
-
-// LoadTestRuns fetches the TestRun entities for the PassRateMetadata's TestRunIDs.
-func (metadata *TestRunsMetadataLegacy) LoadTestRuns(ctx context.Context) (err error) {
-	if len(metadata.TestRuns) == 0 {
+func (t *TestRunsMetadataLegacy) LoadTestRuns(ctx context.Context) (err error) {
+	if len(t.TestRuns) == 0 {
 		ds := shared.NewAppEngineDatastore(ctx, false)
-		newRuns, err := metadata.TestRunIDs.LoadTestRuns(ds)
+		newRuns, err := t.TestRunIDs.LoadTestRuns(ds)
 		if err != nil {
 			return err
 		}
-		metadata.TestRuns, err = ConvertRuns(newRuns)
+		t.TestRuns, err = ConvertRuns(newRuns)
 	}
 	return err
+}
+
+// Load is part of the datastore.PropertyLoadSaver interface.
+// We use it to reset all time to UTC and trim their monotonic clock.
+func (t *TestRunsMetadataLegacy) Load(ps []datastore.Property) error {
+	if err := datastore.LoadStruct(t, ps); err != nil {
+		return err
+	}
+	t.StartTime = t.StartTime.UTC().Round(0)
+	t.EndTime = t.EndTime.UTC().Round(0)
+	return nil
+}
+
+// Save is part of the datastore.PropertyLoadSaver interface.
+// Delegate to the default behaviour.
+func (t *TestRunsMetadataLegacy) Save() ([]datastore.Property, error) {
+	return datastore.SaveStruct(t)
 }
 
 // PassRateMetadata constitutes metadata capturing:
