@@ -73,7 +73,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	json.Unmarshal(body, &result66139)
 	assert.Equal(t, "66.0.3359.139", result66139.BrowserVersion)
 
-	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.181 beta", nil)
+	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.181%20beta", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunHandler(resp, r)
 	body, _ = ioutil.ReadAll(resp.Result().Body)
