@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -155,22 +156,25 @@ func TestScheduleResultsTask(t *testing.T) {
 	a.AppEngineAPI = mockAE
 	results := []string{"gs://blade-runner/test.json", "http://wpt.fyi/test.json.gz"}
 	screenshots := []string{"gs://blade-runner/test.db"}
-	payload := url.Values{
-		"results":     results,
-		"screenshots": screenshots,
-	}
-	// This id is reserved from Datastore; since we are using dev_appserver
-	// with an empty Datastore, we always get "1".
-	payload.Set("id", "1")
-	payload.Set("uploader", "blade-runner")
-	mockAE.EXPECT().ScheduleTask(ResultsQueue, "1", ResultsTarget, payload).Return("1", nil)
+	var id string
+	mockAE.EXPECT().ScheduleTask(ResultsQueue, gomock.Any(), ResultsTarget, gomock.Any()).DoAndReturn(
+		func(queueName, taskName, target string, params url.Values) (string, error) {
+			assert.Equal(t, results, params["results"])
+			assert.Equal(t, screenshots, params["screenshots"])
+			assert.Equal(t, "blade-runner", params.Get("uploader"))
+			assert.Equal(t, taskName, params.Get("id"))
+			id = taskName
+			return id, nil
+		})
 	task, err := a.ScheduleResultsTask("blade-runner", results, screenshots, nil)
-	assert.Equal(t, "1", task)
+	assert.Equal(t, id, task)
 	assert.Nil(t, err)
 
+	intID, err := strconv.ParseInt(id, 10, 64)
+	assert.Nil(t, err)
 	var pendingRun shared.PendingTestRun
 	store := shared.NewAppEngineDatastore(ctx, false)
-	store.Get(store.NewIDKey("PendingTestRun", 1), &pendingRun)
+	store.Get(store.NewIDKey("PendingTestRun", intID), &pendingRun)
 	assert.Equal(t, "blade-runner", pendingRun.Uploader)
 	assert.Equal(t, shared.StageWptFyiReceived, pendingRun.Stage)
 }
