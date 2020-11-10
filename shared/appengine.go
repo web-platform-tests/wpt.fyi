@@ -17,6 +17,7 @@ import (
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	"cloud.google.com/go/datastore"
 	gclog "cloud.google.com/go/logging"
 	"github.com/gomodule/redigo/redis"
 	"github.com/google/go-github/v32/github"
@@ -27,6 +28,7 @@ import (
 
 type clientsImpl struct {
 	cloudtasks   *cloudtasks.Client
+	datastore    *datastore.Client
 	gclogClient  *gclog.Client
 	childLogger  *gclog.Logger
 	parentLogger *gclog.Logger
@@ -43,12 +45,20 @@ var Clients clientsImpl
 // returns immediately without trying to initialize the remaining clients.
 func (c *clientsImpl) Init(ctx context.Context) (err error) {
 	if isDevAppserver() {
-		// When running in dev_appserver, do not create real clients.
-		return nil
+		// Use empty project ID to pick up emulator settings.
+		c.datastore, err = datastore.NewClient(ctx, "")
+		// When running in dev_appserver, do not create other real clients.
+		return err
 	}
 
 	// Cloud Tasks
 	c.cloudtasks, err = cloudtasks.NewClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Cloud Datastore
+	c.datastore, err = datastore.NewClient(ctx, runtimeIdentity.AppID)
 	if err != nil {
 		return err
 	}
@@ -96,6 +106,14 @@ func (c *clientsImpl) Close() {
 		c.cloudtasks = nil
 		if err := client.Close(); err != nil {
 			log.Printf("Error closing cloudtasks: %s", err.Error())
+		}
+	}
+
+	if c.datastore != nil {
+		client := c.datastore
+		c.datastore = nil
+		if err := client.Close(); err != nil {
+			log.Printf("Error closing datastore: %s", err.Error())
 		}
 	}
 
