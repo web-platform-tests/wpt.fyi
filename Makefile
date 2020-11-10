@@ -191,7 +191,6 @@ git: apt-get-git
 psmisc: apt-get-psmisc
 python3: apt-get-python3.7
 python: apt-get-python
-pip: apt-get-python-pip
 tox: apt-get-tox
 unzip: apt-get-unzip
 wget: apt-get-wget
@@ -206,6 +205,12 @@ gpg:
 	@ # gpg has a different apt-get package name.
 	if [[ "$$(which gpg)" == "" ]]; then \
 		sudo apt-get install -qqy --no-install-suggests gnupg; \
+	fi
+
+pip:
+	@ # pip has a different apt-get package name.
+	if [[ "$$(which pip2)" == "" ]]; then \
+		sudo apt-get install -qqy --no-install-suggests python-pip; \
 	fi
 
 node: curl gpg
