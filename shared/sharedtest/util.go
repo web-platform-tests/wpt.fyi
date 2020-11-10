@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/phayes/freeport"
+
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -50,8 +52,11 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 	}
 	// Project ID isn't important as long as it's valid.
 	project := "test-app"
-	// TODO(Hexcles): Check the port is available.
-	i.hostPort = "127.0.0.1:63842"
+	port, err := freeport.GetFreePort()
+	if err != nil {
+		return err
+	}
+	i.hostPort = fmt.Sprintf("127.0.0.1:%d", port)
 	i.gcd = exec.Command("gcloud", "beta", "emulators", "datastore", "start",
 		"--no-store-on-disk",
 		"--consistency="+consistency,
