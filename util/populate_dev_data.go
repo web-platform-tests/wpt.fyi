@@ -9,26 +9,26 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	"google.golang.org/appengine/remote_api"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 var (
-	localHost          = flag.String("local_host", "localhost:8080", "local dev_appserver.py webapp host")
-	localRemoteAPIHost = flag.String("local_remote_api_host", "localhost:9999", "local dev_appserver.py host for the remote API")
-	remoteHost         = flag.String("remote_host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
-	numRemoteRuns      = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
-	staticRuns         = flag.Bool("static_runs", false, "Include runs in the /static dir")
-	remoteRuns         = flag.Bool("remote_runs", true, "Include copies of remote runs")
-	seenTestRunIDs     = mapset.NewSet()
-	labels             = flag.String("labels", "", "Labels for which to fetch runs")
+	project        = flag.String("project", "", "project ID used to connect to Datastore")
+	datastoreHost  = flag.String("datastore_host", "", "Cloud Datastore emulator host")
+	localHost      = flag.String("local_host", "localhost:8080", "local dev_appserver.py webapp host")
+	remoteHost     = flag.String("remote_host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
+	numRemoteRuns  = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
+	staticRuns     = flag.Bool("static_runs", false, "Include runs in the /static dir")
+	remoteRuns     = flag.Bool("remote_runs", true, "Include copies of remote runs")
+	seenTestRunIDs = mapset.NewSet()
+	labels         = flag.String("labels", "", "Labels for which to fetch runs")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -40,12 +40,17 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 
-	ctx, err := getRemoteAPIContext()
-	if err != nil {
-		log.Fatal(err)
+	if *project != "" {
+		os.Setenv("DATASTORE_PROJECT_ID", *project)
+	}
+	if *datastoreHost != "" {
+		os.Setenv("DATASTORE_EMULATOR_HOST", *datastoreHost)
 	}
 
-	log.Printf("Adding dev data to host %s...", *localRemoteAPIHost)
+	ctx := context.Background()
+	shared.Clients.Init(ctx)
+
+	log.Printf("Adding dev data to local emulator...")
 
 	emptySecretToken := &shared.Token{}
 	enabledFlag := &shared.Flag{Enabled: true}
@@ -340,11 +345,6 @@ func addData(store shared.Datastore, kindName string, data []interface{}) (keys 
 	}
 	log.Printf("Added %v %s entities", len(data), kindName)
 	return keys
-}
-
-func getRemoteAPIContext() (context.Context, error) {
-	remoteContext, err := remote_api.NewRemoteContext(*localRemoteAPIHost, http.DefaultClient)
-	return remoteContext, err
 }
 
 // FetchInterop fetches the PassRateMetadata for the given sha / labels, using

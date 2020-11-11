@@ -2,7 +2,6 @@ package webdriver
 
 import (
 	"bufio"
-	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -15,8 +14,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"time"
-
-	"google.golang.org/appengine/remote_api"
 )
 
 var (
@@ -57,9 +54,6 @@ type DevAppServerInstance interface {
 	// AwaitReady starts the Webserver command and waits until the output has
 	// said the server is running.
 	AwaitReady() error
-
-	// NewContext creates a context object backed by a remote api HTTP request.
-	NewContext() (context.Context, error)
 }
 
 type devAppServerInstance struct {
@@ -67,9 +61,10 @@ type devAppServerInstance struct {
 	stderr         io.ReadCloser
 	startupTimeout time.Duration
 
+	project string
 	host    string
 	port    int
-	apiPort int
+	gcdPort int
 
 	baseURL  *url.URL
 	adminURL *url.URL
@@ -136,9 +131,10 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 	s = &devAppServerInstance{
 		startupTimeout: 60 * time.Second,
 
+		project: "wptdashboard-local",
 		host:    "localhost",
 		port:    pickUnusedPort(),
-		apiPort: pickUnusedPort(),
+		gcdPort: pickUnusedPort(),
 	}
 
 	absAppYAMLPath, err := filepath.Abs("../webapp/web/app.dev.yaml")
@@ -147,18 +143,19 @@ func newDevAppServer() (s *devAppServerInstance, err error) {
 	}
 	s.cmd = exec.Command(
 		"dev_appserver.py",
+		"-A", s.project,
 		fmt.Sprintf("--port=%d", s.port),
-		fmt.Sprintf("--api_port=%d", s.apiPort),
-		// Let dev_appserver find a free port itself. We don't use the
-		// admin port directly so we don't need to use pickUnusedPort.
-		fmt.Sprintf("--admin_port=%d", 0),
+		// Let dev_appserver find free ports itself. We don't use the
+		// admin or API port directly.
+		"--api_port=0",
+		"--admin_port=0",
 		"--automatic_restart=false",
-		"--support_datastore_emulator=true",
 		"--skip_sdk_update_check=true",
+		"--support_datastore_emulator=true",
 		"--clear_datastore=true",
 		"--datastore_consistency_policy=consistent",
+		fmt.Sprintf("--datastore_emulator_port=%d", s.gcdPort),
 		"--clear_search_indexes=true",
-		"-A=wptdashboard",
 		absAppYAMLPath,
 	)
 
@@ -255,20 +252,14 @@ func (i *devAppServerInstance) AwaitReady() error {
 	return nil
 }
 
-func (i *devAppServerInstance) NewContext() (ctx context.Context, err error) {
-	ctx = context.Background()
-	host := fmt.Sprintf("%s:%d", i.host, i.apiPort)
-	remoteContext, err := remote_api.NewRemoteContext(host, http.DefaultClient)
-	return remoteContext, err
-}
-
 func addStaticData(i *devAppServerInstance) (err error) {
 	cmd := exec.Command(
 		"go",
 		"run",
 		"../util/populate_dev_data.go",
+		fmt.Sprintf("--project=%s", i.project),
+		fmt.Sprintf("--datastore_host=127.0.0.1:%d", i.gcdPort),
 		fmt.Sprintf("--local_host=localhost:%v", i.port),
-		fmt.Sprintf("--local_remote_api_host=localhost:%v", i.apiPort),
 		"--remote_runs=false",
 		"--static_runs=true",
 	)
