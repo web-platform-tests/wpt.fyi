@@ -110,7 +110,7 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 lighthouse: chrome webapp_node_modules_all
 	cd webapp; npx lhci autorun --failOnUploadFailure
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
+dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator pip-grpcio
 
 chrome: wget
 	# Pinned to Chrome 84 to workaround https://github.com/web-platform-tests/wpt.fyi/issues/2128
@@ -207,6 +207,12 @@ gpg:
 		sudo apt-get install -qqy --no-install-suggests gnupg; \
 	fi
 
+pip:
+	@ # pip has a different apt-get package name.
+	if [[ "$$(which pip2)" == "" ]]; then \
+		sudo apt-get install -qqy --no-install-suggests python-pip; \
+	fi
+
 node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
 		curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -; \
@@ -274,6 +280,10 @@ node-%: node
 	@ echo "# Installing $*..."
 	# Hack to (more quickly) detect whether a package is already installed (available in node).
 	cd webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
+
+pip-%: pip
+	@ echo "# installing $*..."
+	pip show $* >/dev/null || sudo pip install $*
 
 apt-get-%:
 	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi

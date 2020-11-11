@@ -8,20 +8,45 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/golang/mock/gomock"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/appengine/aetest"
 )
 
+// Instance represents a running instance of the development API Server.
+type Instance interface {
+	// Close kills the child api_server.py process, releasing its resources.
+	io.Closer
+	// NewRequest returns an *http.Request associated with this instance.
+	NewRequest(method, urlStr string, body io.Reader) (*http.Request, error)
+}
+
+type aeInstance struct {
+	Instance
+}
+
+func (i aeInstance) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
+	req, err := i.Instance.NewRequest(method, urlStr, body)
+	if err != nil {
+		return req, err
+	}
+	return req.WithContext(ctxWithNilLogger(req.Context())), err
+}
+
 // NewAEInstance creates a new aetest instance backed by dev_appserver whose
 // logs are suppressed. It takes a boolean argument for whether the Datastore
 // emulation should be strongly consistent.
-func NewAEInstance(stronglyConsistentDatastore bool) (aetest.Instance, error) {
-	return aetest.NewInstance(&aetest.Options{
+func NewAEInstance(stronglyConsistentDatastore bool) (Instance, error) {
+	t := true
+	instance, err := aetest.NewInstance(&aetest.Options{
 		StronglyConsistentDatastore: stronglyConsistentDatastore,
 		SuppressDevAppServerLog:     true,
+		SupportDatastoreEmulator:    &t,
 	})
+	return aeInstance{instance}, err
 }
 
 // NewAEContext creates a new aetest context backed by dev_appserver whose
@@ -37,8 +62,7 @@ func NewAEContext(stronglyConsistentDatastore bool) (context.Context, func(), er
 		inst.Close()
 		return nil, nil, err
 	}
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
+	ctx := ctxWithNilLogger(req.Context())
 	return ctx, func() {
 		inst.Close()
 	}, nil
@@ -46,9 +70,11 @@ func NewAEContext(stronglyConsistentDatastore bool) (context.Context, func(), er
 
 // NewTestContext creates a new context.Context for small tests.
 func NewTestContext() context.Context {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
-	return ctx
+	return ctxWithNilLogger(context.Background())
+}
+
+func ctxWithNilLogger(ctx context.Context) context.Context {
+	return context.WithValue(ctx, shared.DefaultLoggerCtxKey(), shared.NewNilLogger())
 }
 
 type sameStringSpec struct {
