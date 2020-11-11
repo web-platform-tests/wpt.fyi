@@ -15,15 +15,17 @@ const { DevAppserver } = require('./dev_appserver.js');
  */
 function populate(server) {
   return new Promise(resolve => {
-    const child = spawn('go',
-      [
+    const args = [
         'run',
         '../util/populate_dev_data.go',
+        `--project=${server.config.project}`,
+        `--datastore_host=${server.datastoreUrl.host}`,
         `--local_host=${server.url.host}`,
-        `--local_remote_api_host=${server.remoteUrl.host}`,
         `--remote_runs=false`,
         `--static_runs=true`,
-      ]);
+    ];
+    log('Running go ' + args.join(' '));
+    const child = spawn('go', args);
     process.on('exit', () => {
       log('killing dev_data subprocess...');
       child.kill();

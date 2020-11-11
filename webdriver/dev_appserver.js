@@ -15,6 +15,7 @@ const ready = Symbol('ready');
 class DevAppserver {
   /**
    * @typedef {Object} DevAppserverConfig
+   * @property {string} project
    * @property {Number} port
    * @property {Number} apiPort
    * @property {Number} adminPort
@@ -26,6 +27,7 @@ class DevAppserver {
   constructor(config) {
     this.config = Object.freeze(
       Object.assign({
+        project: 'wptdashboard-local',
         port: 0,
         apiPort: 0,
         adminPort: 0,
@@ -49,6 +51,11 @@ class DevAppserver {
      * @type {URL} adminUrl The URL of the dev_appserver admin frontend
      */
     this.adminUrl = null;
+
+    /**
+     * @type {URL} datastoreUrl The URL of the Cloud Datastore emulator
+     */
+    this.datastoreUrl = null;
   }
 
   /**
@@ -63,6 +70,7 @@ class DevAppserver {
       const _ready = /Starting module "default" running at: (\S+)/;
       const _api = /Starting API server at: (\S+)/;
       const _admin = /Starting admin server at: (\S+)/;
+      const _gcd = /Starting Cloud Datastore emulator at: (\S+)/
       const _warmup = new RegExp('GET /_ah/warmup');
 
       const logDevAppserver = debug('wpt.fyi:devAppserver');
@@ -70,7 +78,10 @@ class DevAppserver {
         const str = buffer.toString();
 
         logDevAppserver(str);
-        if (_ready.test(str)) {
+        if (_gcd.test(str)) {
+          this.datastoreUrl = new URL(_gcd.exec(str)[1]);
+          log('Cloud Datastore emulator started @ %s', this.datastoreUrl);
+        } else if (_ready.test(str)) {
           this.url = new URL(_ready.exec(str)[1]);
           log('DevAppserver started @ %s', this.url);
         } else if (_api.test(str)) {
@@ -105,15 +116,16 @@ function launch(config) {
 function startDevAppserver(config) {
   const child = spawn('dev_appserver.py',
     [
+      `-A=${config.project}`,
       `--port=${config.port}`,
       `--api_port=${config.apiPort}`,
       `--admin_port=${config.adminPort}`,
       '--automatic_restart=false',
       '--skip_sdk_update_check=true',
+      '--support_datastore_emulator=true',
       '--clear_datastore=true',
       '--datastore_consistency_policy=consistent',
       '--clear_search_indexes=true',
-      '-A=wptdashboard',
       '../webapp/web/app.dev.yaml',
     ]);
   process.on('exit', () => {

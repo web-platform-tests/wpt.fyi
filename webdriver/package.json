@@ -8,7 +8,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "mocha --ui tdd webdriver.js"
+    "test": "mocha --ui tdd --timeout 12000 webdriver.js"
   },
   "dependencies": {
     "chai": "4.2.0",
