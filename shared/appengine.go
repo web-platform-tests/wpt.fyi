@@ -86,27 +86,31 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 // Close closes all clients in Clients. It must be called once and only once
 // before the server exits. Do not use AppEngineAPI afterwards.
 func (c *clientsImpl) Close() {
+	log.Printf("Closing clients")
 	if c.cloudtasks != nil {
-		if err := c.cloudtasks.Close(); err != nil {
+		client := c.cloudtasks
+		c.cloudtasks = nil
+		if err := client.Close(); err != nil {
 			log.Printf("Error closing cloudtasks: %s", err.Error())
 		}
-		c.cloudtasks = nil
 	}
 
 	if c.gclogClient != nil {
-		if err := c.gclogClient.Close(); err != nil {
-			log.Printf("Error closing gclog client: %s", err.Error())
-		}
+		client := c.gclogClient
 		c.gclogClient = nil
 		c.childLogger = nil
 		c.parentLogger = nil
+		if err := client.Close(); err != nil {
+			log.Printf("Error closing gclog client: %s", err.Error())
+		}
 	}
 
 	if c.redisPool != nil {
-		if err := c.redisPool.Close(); err != nil {
+		client := c.redisPool
+		c.redisPool = nil
+		if err := client.Close(); err != nil {
 			log.Printf("Error closing redis client: %s", err.Error())
 		}
-		c.redisPool = nil
 	}
 }
 
