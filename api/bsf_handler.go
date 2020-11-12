@@ -7,10 +7,10 @@ package api
 import (
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -19,8 +19,10 @@ import (
 func apiBSFHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := shared.GetLogger(ctx)
-	_, path, _, _ := runtime.Caller(0)
-	file, err := os.Open(filepath.Join(filepath.Dir(path), "stable-browser-specific-failures.csv"))
+	path, _ := os.Getwd()
+	rootPath := filepath.Dir(filepath.Dir(path))
+	fmt.Println(rootPath)
+	file, err := os.Open(filepath.Join(rootPath, "api", "stable-browser-specific-failures.csv"))
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
