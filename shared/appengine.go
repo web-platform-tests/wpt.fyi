@@ -86,7 +86,11 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 // Close closes all clients in Clients. It must be called once and only once
 // before the server exits. Do not use AppEngineAPI afterwards.
 func (c *clientsImpl) Close() {
-	log.Printf("Closing clients")
+	log.Println("Closing clients")
+	// In the code below, we set clients to nil before closing them. This would
+	// cause a panic if we use a client that's being closed, which should never
+	// happen but we are not sure how exactly App Engine manages instances.
+
 	if c.cloudtasks != nil {
 		client := c.cloudtasks
 		c.cloudtasks = nil
