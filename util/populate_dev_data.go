@@ -49,6 +49,7 @@ func main() {
 
 	ctx := context.Background()
 	shared.Clients.Init(ctx)
+	defer shared.Clients.Close()
 
 	log.Printf("Adding dev data to local emulator...")
 
