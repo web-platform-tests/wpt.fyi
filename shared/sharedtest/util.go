@@ -95,6 +95,7 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 
 func (i aeInstance) stop() error {
 	// Do not kill, terminate or interrupt the emulator process; its subprocesses will keep running.
+	// https://github.com/googleapis/google-cloud-go/issues/224#issuecomment-218327626
 	postShutdown := func() {
 		res, err := http.PostForm(fmt.Sprintf("http://%s/shutdown", i.hostPort), nil)
 		if err == nil {
