@@ -13,6 +13,12 @@ inbound_services:
 
 default_expiration: "1d"
 
+env_variables:
+  # datastore.NewClient(ctx, "") relies on it to pick up the project ID of the
+  # emulator, but dev_appserver does not set it for us (it only sets
+  # DATASTORE_EMULATOR_HOST).
+  DATASTORE_PROJECT_ID: "wptdashboard-local"
+
 # Also refer to dispatch.yaml for higher-priority routing rules.
 handlers:
 # Special dynamic components:

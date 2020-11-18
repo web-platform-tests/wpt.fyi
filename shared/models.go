@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"cloud.google.com/go/datastore"
 	mapset "github.com/deckarep/golang-set"
 )
 
@@ -138,6 +139,24 @@ func (r TestRun) Channel() string {
 	return ""
 }
 
+// Load is part of the datastore.PropertyLoadSaver interface.
+// We use it to reset all time to UTC and trim their monotonic clock.
+func (r *TestRun) Load(ps []datastore.Property) error {
+	if err := datastore.LoadStruct(r, ps); err != nil {
+		return err
+	}
+	r.CreatedAt = r.CreatedAt.UTC().Round(0)
+	r.TimeStart = r.TimeStart.UTC().Round(0)
+	r.TimeEnd = r.TimeEnd.UTC().Round(0)
+	return nil
+}
+
+// Save is part of the datastore.PropertyLoadSaver interface.
+// Delegate to the default behaviour.
+func (r *TestRun) Save() ([]datastore.Property, error) {
+	return datastore.SaveStruct(r)
+}
+
 // PendingTestRunStage represents the stage of a test run in its life cycle.
 type PendingTestRunStage int
 
@@ -254,6 +273,23 @@ func (s *PendingTestRun) Transition(next PendingTestRunStage) error {
 	}
 	s.Stage = next
 	return nil
+}
+
+// Load is part of the datastore.PropertyLoadSaver interface.
+// We use it to reset all time to UTC and trim their monotonic clock.
+func (s *PendingTestRun) Load(ps []datastore.Property) error {
+	if err := datastore.LoadStruct(s, ps); err != nil {
+		return err
+	}
+	s.Created = s.Created.UTC().Round(0)
+	s.Updated = s.Updated.UTC().Round(0)
+	return nil
+}
+
+// Save is part of the datastore.PropertyLoadSaver interface.
+// Delegate to the default behaviour.
+func (s *PendingTestRun) Save() ([]datastore.Property, error) {
+	return datastore.SaveStruct(s)
 }
 
 // PendingTestRunByUpdated sorts the pending test runs by updated (asc)

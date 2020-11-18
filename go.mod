@@ -25,6 +25,7 @@ require (
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
+	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/rogpeppe/go-internal v1.6.2 // indirect
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1 // indirect

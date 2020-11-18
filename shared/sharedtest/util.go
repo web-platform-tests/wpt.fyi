@@ -10,10 +10,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"os/exec"
+	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/phayes/freeport"
+
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/aetest"
 )
 
 // Instance represents a running instance of the development API Server.
@@ -25,28 +30,108 @@ type Instance interface {
 }
 
 type aeInstance struct {
-	Instance
+	// Google Cloud Datastore emulator
+	gcd      *exec.Cmd
+	hostPort string
+}
+
+func (i aeInstance) Close() error {
+	shared.Clients.Close()
+	return i.stop()
 }
 
 func (i aeInstance) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
-	req, err := i.Instance.NewRequest(method, urlStr, body)
-	if err != nil {
-		return req, err
-	}
-	return req.WithContext(ctxWithNilLogger(req.Context())), err
+	req := httptest.NewRequest(method, urlStr, body)
+	return req.WithContext(ctxWithNilLogger(context.Background())), nil
 }
 
-// NewAEInstance creates a new aetest instance backed by dev_appserver whose
-// logs are suppressed. It takes a boolean argument for whether the Datastore
-// emulation should be strongly consistent.
+func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
+	consistency := "1.0"
+	if !stronglyConsistentDatastore {
+		consistency = "0.5"
+	}
+	// Project ID isn't important as long as it's valid.
+	project := "test-app"
+	port, err := freeport.GetFreePort()
+	if err != nil {
+		return err
+	}
+	i.hostPort = fmt.Sprintf("127.0.0.1:%d", port)
+	i.gcd = exec.Command("gcloud", "beta", "emulators", "datastore", "start",
+		"--no-store-on-disk",
+		"--consistency="+consistency,
+		"--project="+project,
+		"--host-port="+i.hostPort)
+	if err := i.gcd.Start(); err != nil {
+		return err
+	}
+
+	started := make(chan bool)
+	go func() {
+		for {
+			res, err := http.Get("http://" + i.hostPort)
+			if err == nil {
+				res.Body.Close()
+				if res.StatusCode == http.StatusOK {
+					started <- true
+					return
+				}
+			}
+			time.Sleep(time.Millisecond * 100)
+		}
+	}()
+	select {
+	case <-started:
+		break
+	case <-time.After(time.Second * 10):
+		i.stop()
+		return errors.New("timed out starting Datastore emulator")
+	}
+
+	os.Setenv("DATASTORE_PROJECT_ID", project)
+	os.Setenv("DATASTORE_EMULATOR_HOST", i.hostPort)
+	return nil
+}
+
+func (i aeInstance) stop() error {
+	// Do not kill, terminate or interrupt the emulator process; its subprocesses will keep running.
+	// https://github.com/googleapis/google-cloud-go/issues/224#issuecomment-218327626
+	postShutdown := func() {
+		res, err := http.PostForm(fmt.Sprintf("http://%s/shutdown", i.hostPort), nil)
+		if err == nil {
+			res.Body.Close()
+		}
+	}
+
+	stopped := make(chan error)
+	go func() {
+		postShutdown()
+		for {
+			select {
+			case <-stopped:
+				return
+			case <-time.After(time.Second):
+				postShutdown()
+			}
+		}
+	}()
+	stopped <- i.gcd.Wait()
+	return nil
+}
+
+// NewAEInstance creates a new test instance backed by Cloud Datastore emulator.
+// It takes a boolean argument for whether the Datastore emulation should be
+// strongly consistent.
 func NewAEInstance(stronglyConsistentDatastore bool) (Instance, error) {
-	t := true
-	instance, err := aetest.NewInstance(&aetest.Options{
-		StronglyConsistentDatastore: stronglyConsistentDatastore,
-		SuppressDevAppServerLog:     true,
-		SupportDatastoreEmulator:    &t,
-	})
-	return aeInstance{instance}, err
+	i := aeInstance{}
+	if err := i.start(stronglyConsistentDatastore); err != nil {
+		return nil, err
+	}
+	if err := shared.Clients.Init(context.Background()); err != nil {
+		i.Close()
+		return nil, err
+	}
+	return i, nil
 }
 
 // NewAEContext creates a new aetest context backed by dev_appserver whose

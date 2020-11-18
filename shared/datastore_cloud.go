@@ -28,8 +28,25 @@ func (k cloudKey) Kind() string {
 	return k.key.Kind
 }
 
+// NewAppEngineDatastore creates a Datastore implementation, or a Datastore
+// implementation with Memcache in front to cache all TestRun reads if cached
+// is true.
+//
+// Both variants (cached or not) are backed by Cloud Datastore SDK, using
+// Clients initialized at startup in webapp.
+func NewAppEngineDatastore(ctx context.Context, cached bool) Datastore {
+	ds := cloudDatastore{
+		ctx:    ctx,
+		client: Clients.datastore,
+	}
+	if cached {
+		return cachedDatastore{ds, ctx}
+	}
+	return ds
+}
+
 // NewCloudDatastore creates a Datastore implementation that is backed by a
-// standard cloud datastore client (i.e. not running in AppEngine standard).
+// given Cloud Datastore client.
 func NewCloudDatastore(ctx context.Context, client *datastore.Client) Datastore {
 	return cloudDatastore{
 		ctx:    ctx,
@@ -158,7 +175,7 @@ func (d cloudDatastore) Insert(key Key, src interface{}) error {
 		}
 		_, err = txn.Put(key.(cloudKey).key, src)
 		return err
-	}, nil)
+	})
 	return err
 }
 
@@ -172,7 +189,7 @@ func (d cloudDatastore) Update(key Key, dst interface{}, mutator func(obj interf
 		}
 		_, err := txn.Put(key.(cloudKey).key, dst)
 		return err
-	}, nil)
+	})
 	return err
 }
 

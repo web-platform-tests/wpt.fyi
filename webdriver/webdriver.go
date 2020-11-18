@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"runtime"
 	"testing"
 
+	"github.com/phayes/freeport"
 	"github.com/tebeka/selenium"
 )
 
@@ -24,25 +24,9 @@ func frameBufferDefault() bool {
 	return runtime.GOOS != "darwin"
 }
 
-// pickUnusedPort asks a free ephemeral port from the kernel. This usually
-// works but it cannot prevent race conditions caused by other processes.
-// Use this only when necessary (e.g. if the subprocess doesn't support
-// binding to free ports itself, or if we need to know the port number).
-// https://eklitzke.org/binding-on-port-zero
 func pickUnusedPort() int {
-	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:0")
+	port, err := freeport.GetFreePort()
 	if err != nil {
-		panic(err)
-	}
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	port := l.Addr().(*net.TCPAddr).Port
-	// Closing the socket puts it into TIME_WAIT. Kernel won't reassign the
-	// port until TIME_WAIT times out (default is 2 mins). However, other
-	// processes can still explicitly bind to this port immediately.
-	if err := l.Close(); err != nil {
 		panic(err)
 	}
 	return port

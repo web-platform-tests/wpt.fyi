@@ -24,13 +24,13 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	q := store.NewQuery("PendingTestRun")
 	switch filter {
 	case "pending":
-		q = q.Order("-Stage").Filter("Stage < ", shared.StageValid)
+		q = q.Order("-Stage").Filter("Stage < ", int(shared.StageValid))
 	case "invalid":
-		q = q.Filter("Stage = ", shared.StageInvalid)
+		q = q.Filter("Stage = ", int(shared.StageInvalid))
 	case "empty":
-		q = q.Filter("Stage = ", shared.StageEmpty)
+		q = q.Filter("Stage = ", int(shared.StageEmpty))
 	case "duplicate":
-		q = q.Filter("Stage = ", shared.StageDuplicate)
+		q = q.Filter("Stage = ", int(shared.StageDuplicate))
 	case "":
 		// No-op
 	default:
