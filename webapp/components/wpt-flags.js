@@ -57,7 +57,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'paginationTokens',
       'pendingChecks',
       'runsByPRNumber',
-      'serviceWorker',
       'searchcacheDiffs',
     ];
   }
@@ -300,11 +299,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{runsByPRNumber}}">
         Allow /api/runs?pr=[GitHub PR number]
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{serviceWorker}}">
-        Install a service worker to cache all the web components.
       </paper-checkbox>
     </paper-item>
     <paper-item>
