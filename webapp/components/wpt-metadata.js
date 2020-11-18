@@ -202,12 +202,12 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     let displayedMetadata = [];
     for (const test of Object.keys(metadata).filter(k => this.shouldShowMetadata(k, path, testResultSet))) {
       const seenURLs = new Set();
-      seenURLs.add(''); // Avoids accepting empty URLs.
       for (const link of metadata[test]) {
-        if (seenURLs.has(link.url)) {
+        const serializedURL = link.product.trim() + link.url.trim();
+        if (link.url === '' || seenURLs.has(serializedURL)) {
           continue;
         }
-        seenURLs.add(link.url);
+        seenURLs.add(serializedURL);
         const urlHref = this.getUrlHref(link.url);
         const subtestMap = {};
         if ('results' in link) {
