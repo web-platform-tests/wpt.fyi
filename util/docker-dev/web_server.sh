@@ -48,6 +48,9 @@ wptd_exec_it dev_appserver.py \
    --admin_port=8000 \
    --api_host=$WPTD_CONTAINER_HOST \
    --api_port=9999 \
-   -A=wptdashboard \
+   --support_datastore_emulator=true \
+   --datastore_consistency_policy=consistent \
+   --datastore_emulator_port=8001 \
+   -A=wptdashboard-local \
    /home/user/wpt.fyi/webapp/web/app.dev.yaml
 

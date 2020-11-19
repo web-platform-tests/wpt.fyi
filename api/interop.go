@@ -121,10 +121,9 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 	}
 
 	// Iterate until we find interop data where its TestRunIDs match the query.
-	var interop metrics.PassRateMetadataLegacy
 	it := query.Run(store)
-	found := false
 	for {
+		var interop metrics.PassRateMetadataLegacy
 		_, err := it.Next(&interop)
 		if err == store.Done() {
 			return nil, nil
@@ -134,13 +133,10 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 		if keysChecker != nil && !keysChecker(interop.TestRunIDs) {
 			continue
 		}
-		found = true
+		result = &interop
 		break
 	}
-	if !found {
-		return nil, nil
-	}
-	return &interop, nil
+	return result, nil
 }
 
 func checkKeysAreAligned(shaKeys map[string]shared.KeysByProduct) func(shared.TestRunIDs) bool {
