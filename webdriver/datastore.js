@@ -4,19 +4,20 @@
  * found in the LICENSE file.
  */
 
-const { spawn } = require('child_process');
-const { debug } = require('debug');
+const http = require('http');
 const process = require('process');
+const { spawn } = require('child_process');
 
+const { debug } = require('debug');
 const log = debug('wpt.fyi');
 
 const ready = Symbol('ready');
 
 class DatastoreEmulator {
   /**
-   * @typedef {Object} DatastoreEmulatorConfig
-   * @property {String} hostPort
-   * @property {Number} startupTimeout
+   * @typedef {object} DatastoreEmulatorConfig
+   * @property {string} project
+   * @property {number} port
    */
   /**
    * @param {DatastoreEmulatorConfig} config
@@ -24,7 +25,8 @@ class DatastoreEmulator {
   constructor(config) {
     this.config = Object.freeze(
       Object.assign({
-        hostPort: 'localhost:8081',
+        project: 'test-app',
+        port: 9091,
       }, config)
     );
     this.process = startDatastoreEmulator(this.config);
@@ -40,34 +42,43 @@ class DatastoreEmulator {
 
   _awaitReady(process) {
     return new Promise(resolve => {
-      const _ready = /API endpoint: (\S+)/;
-      const _warmup = new RegExp('Dev App Server is now running.');
+      function retryRequest(url) {
+        http.get(url, (res) => {
+          if (res.statusCode == 200) {
+            resolve();
+          } else {
+            retryRequest(url);
+          }
+        }).on('error', () => {
+          retryRequest(url);
+        });
+      }
+      retryRequest(`http://127.0.0.1:${this.config.port}`);
 
       const logDatastoreEmulator = debug('wpt.fyi:datastore');
       process.stderr.on('data', buffer => {
-        const str = buffer.toString();
-
-        logDatastoreEmulator(str);
-        if (_ready.test(str)) {
-          this.url = _ready.exec(str)[1];
-          log('DatastoreEmulator started @ %s', this.url);
-        } else if (_warmup.test(str)) {
-          log('DatastoreEmulator warmed up');
-          resolve();
-        }
+        logDatastoreEmulator(buffer.toString());
       });
     });
-  };
+  }
 
   close() {
-    this.process.kill();
+    return new Promise(resolve => {
+      this.process.on('close', () => {
+        resolve();
+      });
+      http.request(
+          `http://127.0.0.1:${this.config.port}/shutdown`,
+          {method: 'POST'}
+          ).end();
+    });
   }
 }
 
 /**
  * Launch a dev_appserver.py subprocess.
  *
- * @param {Object} config
+ * @param {object} config
  * @returns DatastoreEmulator
  */
 function launch(config) {
@@ -81,10 +92,13 @@ function startDatastoreEmulator(config) {
       'emulators',
       'datastore',
       'start',
-      `--host-port=${config.hostPort}`,
+      '--no-store-on-disk',
+      '--consistency=1.0',
+      `--project=${config.project}`,
+      `--host-port=127.0.0.1:${config.port}`,
     ]);
   process.on('exit', () => {
-    log('killing datastore subprocess...');
+    log('killing Datastore emulator subprocess...');
     child.kill();
   });
   return child;

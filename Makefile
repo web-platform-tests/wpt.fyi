@@ -15,7 +15,7 @@
 SHELL := /bin/bash
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-WPT_PATH := $(dir $(WPTD_PATH)/../)
+WPT_PATH := $(dir $(WPTD_PATH)../)
 NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
@@ -82,7 +82,7 @@ go_firefox_test: firefox geckodriver
 go_chrome_test: chrome chromedriver
 	make _go_webdriver_test BROWSER=chrome
 
-puppeteer_chrome_test: chrome dev_appserver_deps webdriver_node_deps
+puppeteer_chrome_test: go_build dev_appserver_deps webdriver_node_deps
 	cd webdriver; npm test
 
 webdriver_node_deps:
@@ -112,7 +112,7 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 lighthouse: chrome webapp_node_modules_all
 	cd webapp; npx lhci autorun --failOnUploadFailure
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator java pip-grpcio
+dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java pip-grpcio
 
 chrome: wget
 	# Pinned to Chrome 84 to workaround https://github.com/web-platform-tests/wpt.fyi/issues/2128
@@ -235,7 +235,7 @@ eslint: webapp_node_modules_all
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
-	go run $(WPTD_PATH)/util/populate_dev_data.go $(FLAGS)
+	go run $(WPTD_PATH)util/populate_dev_data.go $(FLAGS)
 
 gcloud_login: gcloud
 	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
