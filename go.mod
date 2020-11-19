@@ -1,6 +1,6 @@
 module github.com/web-platform-tests/wpt.fyi
 
-go 1.11
+go 1.12
 
 require (
 	cloud.google.com/go v0.70.0
