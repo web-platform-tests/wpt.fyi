@@ -44,7 +44,10 @@ python_test: python3 tox
 go_build: git mockgen packr2
 	make webapp_node_modules_prod
 	go generate ./...
+	# Check all packages without producing any output.
 	go build ./...
+	# Build the webapp.
+	go build ./webapp/web
 
 go_lint: golint go_test_tag_lint
 	@echo "# Linting the go packages..."
@@ -92,8 +95,7 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_dep
 	# The following variables are defined here because we don't know the
 	# path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
-	cd webdriver; \
-	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large -args \
+	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large ./webdriver -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \

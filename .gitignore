@@ -2,3 +2,4 @@ node_modules/
 debug.test
 packrd/
 *-packr.go
+/web

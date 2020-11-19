@@ -1,19 +1,14 @@
 package webdriver
 
 import (
-	"bufio"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"regexp"
-	"time"
+
+	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
 var (
@@ -46,60 +41,46 @@ func (i *remoteAppServer) Close() error {
 	return nil // Nothing needed here :)
 }
 
-// DevAppServerInstance is an interface for controlling an instance of the webapp
-// development server.
-type DevAppServerInstance interface {
-	AppServer
-
-	// AwaitReady starts the Webserver command and waits until the output has
-	// said the server is running.
-	AwaitReady() error
-}
-
 type devAppServerInstance struct {
-	cmd            *exec.Cmd
-	stderr         io.ReadCloser
-	startupTimeout time.Duration
-
-	project string
-	host    string
-	port    int
-	gcdPort int
-
-	baseURL  *url.URL
-	adminURL *url.URL
+	gcd  sharedtest.Instance
+	app  *exec.Cmd
+	port int
 }
 
 func (i *devAppServerInstance) GetWebappURL(path string) string {
-	if i.baseURL != nil {
-		return fmt.Sprintf("%s%s", i.baseURL.String(), path)
-	}
 	// Local dev server doesn't have HTTPS.
-	return fmt.Sprintf("http://%s:%d%s", i.host, i.port, path)
+	return fmt.Sprintf("http://localhost:%d%s", i.port, path)
 }
 
 func (i *devAppServerInstance) Close() error {
-	errc := make(chan error, 1)
-	go func() {
-		errc <- i.cmd.Wait()
-	}()
+	i.app.Process.Kill()
+	return i.gcd.Close()
+}
 
-	// Call the quit handler on the admin server.
-	res, err := http.Get(i.adminURL.String() + "/quit")
+// newDevAppServer creates a dev appserve instance.
+func newDevAppServer() (*devAppServerInstance, error) {
+	gcd, err := sharedtest.NewAEInstance(true)
 	if err != nil {
-		i.cmd.Process.Kill()
-		return fmt.Errorf("unable to call /quit handler: %v", err)
+		return nil, err
 	}
-	res.Body.Close()
+	port := pickUnusedPort()
+	os.Setenv("PORT", fmt.Sprint(port))
+	// Start the webapp server at last to pick up env vars (including those
+	// set by NewAEInstance).
+	// When running a test, CWD is the directory where the test file is;
+	// reset it to the root of the repo to run the server.
+	app := exec.Command("./web")
+	app.Dir = ".."
+	if err = app.Start(); err != nil {
+		return nil, err
+	}
 
-	select {
-	case <-time.After(15 * time.Second):
-		i.cmd.Process.Kill()
-		return errors.New("timeout killing child process")
-	case err = <-errc:
-		// Do nothing.
+	s := &devAppServerInstance{
+		gcd:  gcd,
+		app:  app,
+		port: port,
 	}
-	return err
+	return s, nil
 }
 
 // NewWebserver creates an AppServer instance, which may be backed by local or
@@ -115,9 +96,6 @@ func NewWebserver() (s AppServer, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = app.AwaitReady(); err != nil {
-		return nil, err
-	}
 	if err = addStaticData(app); err != nil {
 		// dev_appserver has started.
 		app.Close()
@@ -126,146 +104,19 @@ func NewWebserver() (s AppServer, err error) {
 	return app, err
 }
 
-// newDevAppServer creates a dev appserve instance.
-func newDevAppServer() (s *devAppServerInstance, err error) {
-	s = &devAppServerInstance{
-		startupTimeout: 60 * time.Second,
-
-		project: "wptdashboard-local",
-		host:    "localhost",
-		port:    pickUnusedPort(),
-		gcdPort: pickUnusedPort(),
-	}
-
-	absAppYAMLPath, err := filepath.Abs("../webapp/web/app.dev.yaml")
-	if err != nil {
-		return nil, err
-	}
-	s.cmd = exec.Command(
-		"dev_appserver.py",
-		"-A", s.project,
-		fmt.Sprintf("--port=%d", s.port),
-		// Let dev_appserver find free ports itself. We don't use the
-		// admin or API port directly.
-		"--api_port=0",
-		"--admin_port=0",
-		"--automatic_restart=false",
-		"--skip_sdk_update_check=true",
-		"--support_datastore_emulator=true",
-		"--clear_datastore=true",
-		"--datastore_consistency_policy=consistent",
-		fmt.Sprintf("--datastore_emulator_port=%d", s.gcdPort),
-		"--clear_search_indexes=true",
-		absAppYAMLPath,
-	)
-
-	log.Println("Starting dev_appserver")
-	for _, arg := range s.cmd.Args {
-		log.Println("  " + arg)
-	}
-
-	// dev_appserver.py usually does not print to stdout.
-	s.cmd.Stdout = os.Stderr
-	s.stderr, err = s.cmd.StderrPipe()
-	return s, err
-}
-
-var hostRE = regexp.MustCompile(`Starting module "default" running at: (\S+)`)
-var adminURLRE = regexp.MustCompile(`Starting admin server at: (\S+)`)
-var readyRE = regexp.MustCompile(`GET /_ah/warmup`)
-
-func (i *devAppServerInstance) AwaitReady() error {
-	if err := i.cmd.Start(); err != nil {
-		return err
-	}
-
-	// Read stderr until server is warmed up.
-	errc := make(chan error)
-	ready := false
-	go func() {
-		s := bufio.NewScanner(i.stderr)
-		defer i.stderr.Close()
-		for s.Scan() {
-			str := s.Text()
-			log.Println(str)
-			if match := readyRE.FindStringSubmatch(str); match != nil {
-				ready = true
-				errc <- nil
-				return
-			}
-			if match := hostRE.FindStringSubmatch(str); match != nil {
-				u, err := url.Parse(match[1])
-				if err != nil {
-					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
-					return
-				}
-				i.baseURL = u
-			}
-			if match := adminURLRE.FindStringSubmatch(str); match != nil {
-				u, err := url.Parse(match[1])
-				if err != nil {
-					errc <- fmt.Errorf("failed to parse URL %q: %v", match[1], err)
-					return
-				}
-				i.adminURL = u
-			}
-		}
-		errc <- s.Err()
-	}()
-
-	exited := make(chan error)
-	go func() {
-		exited <- i.cmd.Wait()
-	}()
-
-	select {
-	case <-time.After(i.startupTimeout):
-		if p := i.cmd.Process; p != nil {
-			p.Kill()
-		}
-		return errors.New("timeout starting dev_appserver.py")
-	case err := <-errc:
-		if err != nil {
-			if p := i.cmd.Process; p != nil {
-				p.Kill()
-			}
-			return fmt.Errorf("error waiting for dev_appserver.py: %v", err)
-		}
-	case err := <-exited:
-		if err != nil {
-			return err
-		}
-	}
-
-	if !ready {
-		if p := i.cmd.Process; p != nil {
-			p.Kill()
-		}
-		return errors.New("dev_appserver.py unable to warm up")
-	}
-	if i.baseURL == nil {
-		return errors.New("unable to find webserver URL")
-	}
-	if i.adminURL == nil {
-		return errors.New("unable to find admin URL")
-	}
-	return nil
-}
-
 func addStaticData(i *devAppServerInstance) (err error) {
 	cmd := exec.Command(
 		"go",
 		"run",
 		"../util/populate_dev_data.go",
-		fmt.Sprintf("--project=%s", i.project),
-		fmt.Sprintf("--datastore_host=127.0.0.1:%d", i.gcdPort),
-		fmt.Sprintf("--local_host=localhost:%v", i.port),
+		fmt.Sprintf("--local_host=localhost:%d", i.port),
 		"--remote_runs=false",
 		"--static_runs=true",
 	)
-	cmd.Stderr = os.Stderr
-	if err = cmd.Start(); err != nil {
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("%s", output)
 		return err
 	}
-	return cmd.Wait()
+	return nil
 }
