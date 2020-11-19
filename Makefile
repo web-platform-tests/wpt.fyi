@@ -110,7 +110,7 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 lighthouse: chrome webapp_node_modules_all
 	cd webapp; npx lhci autorun --failOnUploadFailure
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator pip-grpcio
+dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator java pip-grpcio
 
 chrome: wget
 	# Pinned to Chrome 84 to workaround https://github.com/web-platform-tests/wpt.fyi/issues/2128
