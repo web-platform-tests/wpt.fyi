@@ -96,7 +96,8 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_GCD_PORT}:8001" \
       --workdir "/home/user/wpt.fyi" \
-      --name "${DOCKER_INSTANCE}" wptd-dev
+      --name "${DOCKER_INSTANCE}" \
+      webplatformtests/wpt.fyi:latest
   info "Setting up local user"
   wptd_useradd
 

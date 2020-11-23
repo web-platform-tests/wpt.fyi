@@ -10,10 +10,10 @@ wpt.fyi is a dashboard of cross-browser results for [web-platform-tests](https:/
 
 ## Setting up your environment
 
-You'll need [Docker](https://www.docker.com/). With Docker installed, build the base image and development image, and start a development server instance:
+You'll need [Docker](https://www.docker.com/). With Docker installed, start the development container:
 
 ```sh
-docker build -t wptd-dev .
+docker pull webplatformtests/wpt.fyi:latest   # Optional: this forces fetching the latest version, instead of using the locally cached version.
 ./util/docker-dev/run.sh
 ```
 
@@ -29,7 +29,7 @@ Once the instance is running, you can fire up the web server in another terminal
 
 This will build dependencies and start the Google App Engine development server inside `wptd-dev-instance`.
 
-With the webserver running, you'll also need to populate the app datastore with some initial data. In another terminal,
+Meanwhile, you'll also need to populate the app datastore with some initial data. In another terminal,
 execute the script which leverages `util/populate_dev_data.go` by running:
 
 ```sh
