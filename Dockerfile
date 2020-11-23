@@ -1,38 +1,47 @@
-FROM gcr.io/gcp-runtimes/go1-builder:1.12
+# vim: set expandtab sw=4
+FROM golang:1.12-buster
 
-#
-# Dockerfile suitable for development and continuous integration of all wpt.fyi
-# services. It contains an environment suitable for installing and running
-# services using the project-level Makefile.
-#
-# See Dockerfiles in sub-directories for individual service deployments.
+# Create a non-priviledged user to run browsers as (Firefox and Chrome do not
+# like to run as root).
+RUN chmod a+rx $HOME && useradd --uid 9999 --user-group --create-home browser
 
-USER root
+# Sort the package names!
+# firefox-esr: provides deps for Firefox (we don't use ESR directly)
+# openjdk-11-jdk: provides JDK/JRE to Selenium & gcloud SDK
+# python-crcmod: native module to speed up CRC checksum in gsutil
+RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
+        curl \
+        firefox-esr \
+        lsb-release \
+        openjdk-11-jdk \
+        python-crcmod \
+        python3.7 \
+        sudo \
+        tox \
+        wget \
+        xvfb && \
+    rm /usr/bin/firefox
 
-ENV USER_HOME="/home/user"
-ENV WPTD_PATH="${USER_HOME}/wpt.fyi"
-ENV WPT_PATH="${USER_HOME}/web-platform-tests"
-ENV WPTD_OUT_PATH="${USER_HOME}/wptdout"
+# The base golang image adds Go paths to PATH, which cannot be inherited in
+# sudo by default because of the `secure_path` directive. Overwrite sudoers to
+# discard the setting.
+RUN echo "root ALL=(ALL:ALL) ALL" > /etc/sudoers
 
-# Setup go environment
-ENV GOPATH="${USER_HOME}/go"
-RUN mkdir -p "${GOPATH}"
-ENV GCLOUD_PATH="${USER_HOME}/google-cloud-sdk"
-ENV WPTD_GO_PATH="${GOPATH}/src/github.com/web-platform-tests/wpt.fyi"
+# Node LTS
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
+    apt-get install -qqy nodejs
 
-# Setup go + python binaries path
-ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin:${USER_HOME}/.local/bin:${GCLOUD_PATH}/bin
-
-# Install sudo so that unpriv'd dev user can "sudo apt-get install ..." in from
-# Makefile.
-RUN apt-get update && apt-get install sudo make
-
-# Put wpt.fyi code in GOPATH
-RUN mkdir -p "${GOPATH}/src/github.com/web-platform-tests"
-RUN ln -s "${WPTD_PATH}" "${GOPATH}/src/github.com/web-platform-tests/wpt.fyi"
-
-RUN mkdir -p "${WPTD_PATH}"
-RUN mkdir -p "${WPT_PATH}"
-
-# Drop dev environment into source path
-WORKDIR "${WPTD_PATH}"
+# Google Cloud SDK
+# Based on https://github.com/GoogleCloudPlatform/cloud-sdk-docker/blob/master/Dockerfile
+RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
+    echo "deb https://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" > /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get update -qqy && apt-get install -qqy \
+        google-cloud-sdk \
+        google-cloud-sdk-app-engine-python \
+        google-cloud-sdk-app-engine-python-extras \
+        google-cloud-sdk-app-engine-go \
+        google-cloud-sdk-datastore-emulator && \
+    gcloud config set core/disable_usage_reporting true && \
+    gcloud config set component_manager/disable_update_check true && \
+    gcloud --version

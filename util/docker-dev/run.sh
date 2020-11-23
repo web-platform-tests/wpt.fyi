@@ -95,7 +95,9 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
       --cap-add=SYS_ADMIN \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_GCD_PORT}:8001" \
-      --name "${DOCKER_INSTANCE}" wptd-dev
+      --workdir "/home/user/wpt.fyi" \
+      --name "${DOCKER_INSTANCE}" \
+      webplatformtests/wpt.fyi:latest
   info "Setting up local user"
   wptd_useradd
 

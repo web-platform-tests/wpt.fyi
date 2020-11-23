@@ -5,7 +5,7 @@ on:
     # branch, too -- the automatically built Docker image will be tagged with
     # the branch name instead of "latest".
     paths:
-      - '.github/actions/make-in-docker/Dockerfile'
+      - 'Dockerfile'
       - '.github/workflows/docker-update.yml'
   schedule:
     # Rebuild the image weekly.
@@ -23,5 +23,5 @@ jobs:
           name: webplatformtests/wpt.fyi
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-          dockerfile: .github/actions/make-in-docker/Dockerfile
+          dockerfile: Dockerfile
           snapshot: true
