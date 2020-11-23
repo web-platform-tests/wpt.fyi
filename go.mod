@@ -1,6 +1,6 @@
 module github.com/web-platform-tests/wpt.fyi
 
-go 1.11
+go 1.12
 
 require (
 	cloud.google.com/go v0.70.0
@@ -27,6 +27,7 @@ require (
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/rogpeppe/go-internal v1.6.2 // indirect
+	github.com/samthor/nicehttp v1.0.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1 // indirect
 	github.com/stretchr/testify v1.6.1
@@ -41,7 +42,7 @@ require (
 	golang.org/x/sys v0.0.0-20201018230417-eeed37f84f13 // indirect
 	golang.org/x/tools v0.0.0-20201019175715-b894a3290fff // indirect
 	google.golang.org/api v0.33.0
-	google.golang.org/appengine v1.6.7
+	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776

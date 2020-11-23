@@ -8,7 +8,7 @@ const log = require('debug')('wpt.fyi');
 const logDevData = require('debug')('wpt.fyi:dev_data');
 const { spawn } = require('child_process');
 const process = require('process');
-const { DevAppserver } = require('./dev_appserver.js');
+const { DevAppserver } = require('./appserver.js');
 
 /**
  * @param {DevAppserver} server
@@ -19,8 +19,8 @@ function populate(server) {
         'run',
         '../util/populate_dev_data.go',
         `--project=${server.config.project}`,
-        `--datastore_host=${server.datastoreUrl.host}`,
-        `--local_host=${server.url.host}`,
+        `--datastore_host=127.0.0.1:${server.config.gcdPort}`,
+        `--local_host=localhost:${server.config.port}`,
         `--remote_runs=false`,
         `--static_runs=true`,
     ];

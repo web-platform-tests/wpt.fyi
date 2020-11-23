@@ -1,6 +1,11 @@
 #!/bin/bash
 
+DOCKER_DIR=$(dirname $0)
 DOCKER_INSTANCE="${DOCKER_INSTANCE:-wptd-dev-instance}"
+WPTD_HOST_WEB_PORT=${WPTD_HOST_WEB_PORT:-"8080"}
+WPTD_HOST_GCD_PORT=${WPTD_HOST_GCD_PORT:-"8001"}
+WPT_PATH=${WPT_PATH:-$(realpath ${DOCKER_DIR}/../../..)}
+WPTD_PATH="${WPT_PATH}/wpt.fyi"
 
 function wptd_chown() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) $1

@@ -15,7 +15,7 @@
 SHELL := /bin/bash
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-WPT_PATH := $(dir $(WPTD_PATH)/../)
+WPT_PATH := $(dir $(WPTD_PATH)../)
 NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
@@ -44,7 +44,10 @@ python_test: python3 tox
 go_build: git mockgen packr2
 	make webapp_node_modules_prod
 	go generate ./...
+	# Check all packages without producing any output.
 	go build ./...
+	# Build the webapp.
+	go build ./webapp/web
 
 go_lint: golint go_test_tag_lint
 	@echo "# Linting the go packages..."
@@ -79,7 +82,7 @@ go_firefox_test: firefox geckodriver
 go_chrome_test: chrome chromedriver
 	make _go_webdriver_test BROWSER=chrome
 
-puppeteer_chrome_test: chrome dev_appserver_deps webdriver_node_deps
+puppeteer_chrome_test: go_build dev_appserver_deps webdriver_node_deps
 	cd webdriver; npm test
 
 webdriver_node_deps:
@@ -92,8 +95,7 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_dep
 	# The following variables are defined here because we don't know the
 	# path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
-	cd webdriver; \
-	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large -args \
+	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large ./webdriver -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
@@ -110,7 +112,7 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 lighthouse: chrome webapp_node_modules_all
 	cd webapp; npx lhci autorun --failOnUploadFailure
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator java pip-grpcio
+dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
 chrome: wget
 	# Pinned to Chrome 84 to workaround https://github.com/web-platform-tests/wpt.fyi/issues/2128
@@ -207,12 +209,6 @@ gpg:
 		sudo apt-get install -qqy --no-install-suggests gnupg; \
 	fi
 
-pip:
-	@ # pip has a different apt-get package name.
-	if [[ "$$(which pip2)" == "" ]]; then \
-		sudo apt-get install -qqy --no-install-suggests python-pip; \
-	fi
-
 node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
 		curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -; \
@@ -233,7 +229,7 @@ eslint: webapp_node_modules_all
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
-	go run $(WPTD_PATH)/util/populate_dev_data.go $(FLAGS)
+	go run $(WPTD_PATH)util/populate_dev_data.go $(FLAGS)
 
 gcloud_login: gcloud
 	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
@@ -280,10 +276,6 @@ node-%: node
 	@ echo "# Installing $*..."
 	# Hack to (more quickly) detect whether a package is already installed (available in node).
 	cd webapp; node -p "require('$*/package.json').version" 2>/dev/null || npm install --no-save $*
-
-pip-%: pip
-	@ echo "# installing $*..."
-	pip show $* >/dev/null || sudo pip install $*
 
 apt-get-%:
 	if [[ "$$(which $*)" == "" ]]; then sudo apt-get install -qqy --no-install-suggests $*; fi

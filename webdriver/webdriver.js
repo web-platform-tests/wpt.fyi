@@ -4,9 +4,12 @@
  * found in the LICENSE file.
  */
 
-const dev_appserver = require('./dev_appserver');
-const log = require('debug')('wpt.fyi');
 const puppeteer = require('puppeteer');
+const log = require('debug')('wpt.fyi');
+
+const appserver = require('./appserver');
+const datastore = require('./datastore');
+const devData = require('./dev-data');
 
 /**
  * @fileoverview The full puppeteer webdriver test suite.
@@ -16,12 +19,20 @@ suite('Webdriver', function () {
   suiteSetup(async function() {
     this.timeout(90000);
 
-    log('Launching dev_appserver...');
-    this.server = dev_appserver.launch();
+    // TODO(Hexcles): Pick free ports.
+    log('Launching Datastore emulator...');
+    this.gcd = datastore.launch();
+    await this.gcd.ready;
+
+    log('Launching appserver...');
+    this.server = appserver.launch({
+      project: this.gcd.config.project,
+      gcdPort: this.gcd.config.port,
+    });
     await this.server.ready;
 
     log('Adding static data...');
-    await require('./dev-data').populate(this.server);
+    await devData.populate(this.server);
   });
 
   setup(async function() {
@@ -37,7 +48,10 @@ suite('Webdriver', function () {
   });
 
   suiteTeardown(async function() {
-    log('closing dev_appserver...');
-    this.server.close();
+    log('closing appserver...');
+    await this.server.close();
+    log('closing Datastore emulator...');
+    await this.gcd.close();
+    log('Bye!');
   });
 });
