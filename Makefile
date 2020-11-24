@@ -133,17 +133,13 @@ chromedriver: wget unzip chrome
 		sudo chmod +x $(CHROMEDRIVER_PATH); \
 	fi
 
-firefox:
+firefox: bzip2 wget
 	if [[ -z "$$(which firefox)" ]]; then \
-		make firefox_install; \
+		wget -O firefox.tar.bz2 -q "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"; \
+		mkdir -p $$HOME/browsers; \
+		tar -xjf firefox.tar.bz2 -C $$HOME/browsers; \
+		sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH); \
 	fi
-
-firefox_install: firefox_deps bzip2 wget java
-	$(WPTD_PATH)webdriver/install.sh $$HOME/browsers
-	sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH)
-
-firefox_deps:
-	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 geckodriver: node-wct-local
 
