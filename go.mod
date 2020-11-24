@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.14
 
 require (
-	cloud.google.com/go v0.70.0
+	cloud.google.com/go v0.72.0
 	cloud.google.com/go/datastore v1.3.0
 	cloud.google.com/go/logging v1.1.0
 	cloud.google.com/go/storage v1.12.0
@@ -32,14 +32,11 @@ require (
 	github.com/taskcluster/taskcluster/v37 v37.5.1
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
-	golang.org/x/net v0.0.0-20201016165138-7b1cca2348c0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520 // indirect
 	golang.org/x/sys v0.0.0-20201018230417-eeed37f84f13 // indirect
-	golang.org/x/tools v0.0.0-20201019175715-b894a3290fff // indirect
-	google.golang.org/api v0.33.0
+	google.golang.org/api v0.35.0
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154
+	google.golang.org/genproto v0.0.0-20201109203340-2640f1f9cdfb
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )
 
