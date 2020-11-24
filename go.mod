@@ -14,7 +14,7 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/golang/mock v1.4.4
-	github.com/gomodule/redigo v1.8.2
+	github.com/gomodule/redigo v1.8.3
 	github.com/google/go-github/v32 v32.1.0
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/handlers v1.5.1
