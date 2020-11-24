@@ -37,7 +37,7 @@ require (
 	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520 // indirect
 	golang.org/x/sys v0.0.0-20201018230417-eeed37f84f13 // indirect
 	golang.org/x/tools v0.0.0-20201019175715-b894a3290fff // indirect
-	google.golang.org/api v0.33.0
+	google.golang.org/api v0.35.0
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
