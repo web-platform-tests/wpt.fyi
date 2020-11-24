@@ -114,14 +114,21 @@ lighthouse: chrome webapp_node_modules_all
 
 dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
-chrome: wget
-	# Pinned to Chrome 84 to workaround https://github.com/web-platform-tests/wpt.fyi/issues/2128
+chrome: wget unzip chrome_deps
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		wget -q https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_84.0.4147.135-1_amd64.deb; \
-		sudo dpkg --install google-chrome-stable_84.0.4147.135-1_amd64.deb 2>/dev/null || true; \
-		sudo apt-get install --fix-broken -qqy; \
-		sudo dpkg --install google-chrome-stable_84.0.4147.135-1_amd64.deb 2>/dev/null; \
+		REV="781267"; \
+		wget -q http://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/$$REV/chrome-linux.zip; \
+		unzip -q chrome-linux.zip; \
+		sudo ln -s $$PWD/chrome-linux/chrome /usr/bin/google-chrome; \
+		google-chrome --version; \
+		wget -q http://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/$$REV/chromedriver_linux64.zip; \
+		unzip chromedriver_linux64.zip; \
+		sudo mv chromedriver_linux64/chromedriver /usr/bin/chromedriver; \
+		chromedriver --version; \
 	fi
+
+chrome_deps:
+	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends chromium | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
 chromedriver: wget unzip chrome
