@@ -12,7 +12,7 @@ require (
 	github.com/deckarep/golang-set v1.7.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
-	github.com/gobuffalo/packr/v2 v2.8.0
+	github.com/gobuffalo/packr/v2 v2.8.1
 	github.com/golang/mock v1.4.4
 	github.com/gomodule/redigo v1.8.3
 	github.com/google/go-github/v32 v32.1.0
