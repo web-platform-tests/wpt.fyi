@@ -9,6 +9,7 @@ import '../components/wpt-permalinks.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
+import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
@@ -118,7 +119,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                           test-runs="[[testRuns]]">
           </wpt-permalinks>
           <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-          <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+          <paper-button id="edit" onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+          <template is="dom-if" if="[[!editable]]">
+            <paper-tooltip offset="0" for="edit">EDIT does not support URLs with run_id or max_count params</paper-tooltip>
+          </template>
         </info-banner>
       </template>
       <iron-collapse opened="[[editingQuery]]">
@@ -166,6 +170,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
+      editable: {
+        type: Boolean,
+        computed: 'computeEditable(queryParams)',
+      },
       isLoading: {
         type: Boolean,
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
@@ -193,6 +201,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     super();
     this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleQueryEdit = () => {
+      if (!this.editable) {
+        return;
+      }
       this.editingQuery = !this.editingQuery;
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
@@ -290,6 +301,13 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     builder.master = true;
     this.handleSubmitQuery();
     this.dismissToast(e);
+  }
+
+  computeEditable(queryParams) {
+    if (queryParams.run_id || 'max-count' in queryParams) {
+      return false;
+    }
+    return true;
   }
 
   computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
