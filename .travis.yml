@@ -11,7 +11,7 @@ notifications:
 
 branches:
   only:
-    - master
+    - main
 
 services:
   - docker
@@ -33,10 +33,10 @@ env:
 stages:
   - name: deploy PR
     if: type = pull_request
-  - name: deploy master
-    if: (type = push) AND (branch = master)
+  - name: deploy main
+    if: (type = push) AND (branch = main)
   - name: clean up versions
-    if: (type = push) AND (branch = master)
+    if: (type = push) AND (branch = main)
 
 jobs:
   allow_failures:
@@ -51,8 +51,8 @@ jobs:
         - MAKE_TEST_TARGET=puppeteer_chrome_test
     - env:
         - MAKE_TEST_TARGET=lighthouse
-      # Only run Lighthouse CI on master (against staging).
-      if: (type = push) AND (branch = master)
+      # Only run Lighthouse CI on main (against staging).
+      if: (type = push) AND (branch = main)
 
     - stage: deploy PR
       env:
@@ -62,7 +62,7 @@ jobs:
     - env:
       - DEPLOY_PR_STAGING_TARGET=api/query/cache/service/app.staging.yaml
 
-    - stage: deploy master
+    - stage: deploy main
       env:
       - DEPLOY_STAGING_TARGET=webapp/web/app.staging.yaml
       - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
@@ -100,7 +100,7 @@ script:
     elif [[ -n "${DEPLOY_PR_STAGING_TARGET}" ]]; then
       bash util/travis-deploy-staging.sh "${DEPLOY_PR_STAGING_TARGET}";
     else
-      echo "Not on master or a PR. Skipping deployment.";
+      echo "Not on main or a PR. Skipping deployment.";
     fi
   - |
     # Run tests
