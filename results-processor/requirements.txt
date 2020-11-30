@@ -1,6 +1,6 @@
 cachetools==4.1.1
 certifi==2020.11.8
-cffi==1.14.3
+cffi==1.14.4
 chardet==3.0.4
 click==7.1.2
 filelock==3.0.12
@@ -17,7 +17,7 @@ googleapis-common-protos==1.52.0
 grpcio==1.33.2
 gunicorn==20.0.4
 idna==2.10
-importlib-metadata==3.0.0
+importlib-metadata==3.1.0
 itsdangerous==1.1.0
 Jinja2==2.11.2
 MarkupSafe==1.1.1
