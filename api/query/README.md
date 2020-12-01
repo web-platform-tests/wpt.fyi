@@ -189,7 +189,7 @@ The `/api/search` endpoint takes an HTTP `POST` method, where the body is of the
 
     {
       "run_ids": [123, 456, ...],
-      "q": {
+      "query": {
         [Structured query]
       }
     }
