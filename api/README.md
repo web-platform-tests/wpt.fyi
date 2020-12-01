@@ -436,9 +436,8 @@ querying the `/api/runs` API. Defaults to the default runs returned by
 `/api/runs`. NOTE: This is not the same set of runs as is shown on wpt.fyi by
 default.
 
-__`q`__: (Optional) A query string for search. Only results data for tests that
-contain the `q` value as a substring of the test name will be returned. Defaults
-to the empty string, which will yield all test results for the selected runs.
+__`query`__: (Optional) See [search query](./query/README.md#apisearch)
+documentaton for the structure of this parameter.
 
 #### Examples
 
