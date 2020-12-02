@@ -194,10 +194,6 @@ The `/api/search` endpoint takes an HTTP `POST` method, where the body is of the
       }
     }
 
-> NOTE: If, rather than a specific set of runs, the user wishes to query for the latest
-> results for a set of products, the `/api/search` endpoint supports the same query
-> parameters as /api/runs, outlined [in the API docs](../README.md)
-
 ### Structured query objects
 
 Structured query objects are produced by the syntax parser on wpt.fyi.
