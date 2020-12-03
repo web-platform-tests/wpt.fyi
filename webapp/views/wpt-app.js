@@ -9,7 +9,6 @@ import '../components/wpt-permalinks.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
-import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
@@ -113,16 +112,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>
           [[resultsTotalsRangeMessage]]
+          <template is="dom-if" if="[[!editable]]">
+            <a href="/[[page]][[path]]"> (switch to the default product set instead)</a>
+          </template>
           <wpt-permalinks path="[[path]]"
                           path-prefix="/[[page]]/"
                           query-params="[[queryParams]]"
                           test-runs="[[testRuns]]">
           </wpt-permalinks>
           <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-          <paper-button id="edit" onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
-          <template is="dom-if" if="[[!editable]]">
-            <paper-tooltip offset="0" for="edit">EDIT does not support URLs with run_id or max_count params</paper-tooltip>
-          </template>
+          <paper-button onclick="[[toggleQueryEdit]]" slot="small" hidden="[[!editable]]">Edit</paper-button>
         </info-banner>
       </template>
       <iron-collapse opened="[[editingQuery]]">
@@ -181,7 +180,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       searchResults: Array,
       resultsTotalsRangeMessage: {
         type: String,
-        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
+        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds)',
       },
       isTriageMode: {
         type: Boolean,
@@ -201,9 +200,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     super();
     this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleQueryEdit = () => {
-      if (!this.editable) {
-        return;
-      }
       this.editingQuery = !this.editingQuery;
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
@@ -310,8 +306,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return true;
   }
 
-  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
-    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
+  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds) {
+    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds);
     if (page === 'results' && searchResults) {
       let subtests = 0, tests = 0;
       for (const r of searchResults) {
