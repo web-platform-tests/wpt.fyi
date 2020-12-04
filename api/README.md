@@ -430,7 +430,7 @@ Search for test results over some set of test runs. This endpoint accepts POST a
 
 - POST requests are used for structured queries, with `run_ids` and `query` fields in the JSON payload; see [search query](./query/README.md#apisearch) documentaton for more information.
 
-- GET requests use the following parameter:
+- GET requests use the following parameters:
 
 
 __Parameters__
