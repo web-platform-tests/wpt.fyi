@@ -426,18 +426,27 @@ This is an *internal* endpoint used by the results processor.
 
 ### /api/search
 
-Search for test results over some set of test runs.
+Search for test results over some set of test runs. This endpoint accepts POST and GET requests.
+
+- POST requests are forwarded to the searchcache for structured queries, with
+  `run_ids` and `query` fields in the JSON payload; see [search query](./query/README.md#apisearch)
+  documentaton for more information.
+
+- GET requests are unstructured queries with the following parameters:
+
 
 __Parameters__
 
-__`run_ids`__ : A comma-separated list of numerical ids associated with the runs
-over which to search. IDs associated with runs can be obtained by querying the
-`/api/runs` API. Defaults to the default runs returned by `/api/runs`. NOTE:
-This is not the same set of runs as is shown on wpt.fyi by default.
+__`run_ids`__ : (Optional) A comma-separated list of numerical ids associated
+with the runs over which to search. IDs associated with runs can be obtained by
+querying the `/api/runs` API. Defaults to the default runs returned by
+`/api/runs`. NOTE: This is not the same set of runs as is shown on wpt.fyi by
+default.
 
 __`q`__: (Optional) A query string for search. Only results data for tests that
 contain the `q` value as a substring of the test name will be returned. Defaults
 to the empty string, which will yield all test results for the selected runs.
+NOTE: structured search queries are not supported.
 
 #### Examples
 
