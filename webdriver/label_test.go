@@ -89,22 +89,6 @@ func testLabel(
 	}
 }
 
-func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
-	if err != nil {
-		return nil, err
-	}
-	return FindShadowElements(wd, e, element, "test-run")
-}
-
-func getTabElements(wd selenium.WebDriver) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
-	if err != nil {
-		return nil, err
-	}
-	return FindShadowElements(wd, e, "results-tabs", "paper-tab")
-}
-
 func assertAligned(t *testing.T, wd selenium.WebDriver, testRuns []selenium.WebElement) {
 	if len(testRuns) < 2 {
 		return

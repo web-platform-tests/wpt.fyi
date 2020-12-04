@@ -14,6 +14,7 @@ import (
 	"github.com/tebeka/selenium"
 )
 
+// Flags
 var (
 	debug            = flag.Bool("debug", false, "Turn on debug logging")
 	browser          = flag.String("browser", "firefox", "Which browser to run the tests with")
@@ -34,25 +35,7 @@ func pickUnusedPort() int {
 
 type webdriverTest func(t *testing.T, app AppServer, wd selenium.WebDriver)
 
-// runWebdriverTest is a helper for starting a webdriver, and using it for a test.
-func runWebdriverTest(t *testing.T, test webdriverTest) {
-	app, err := NewWebserver()
-	if err != nil {
-		log.Println("Failed to create webserver: " + err.Error())
-		panic(err)
-	}
-	defer app.Close()
-
-	service, wd, err := GetWebDriver()
-	if err != nil {
-		log.Println("Failed to create webdriver: " + err.Error())
-		panic(err)
-	}
-	defer service.Stop()
-	defer wd.Quit()
-
-	test(t, app, wd)
-}
+// Generic helpers for WebDriver
 
 // GetWebDriver starts a WebDriver service (server) and creates a remote
 // (client).
@@ -151,10 +134,58 @@ func FindShadowText(
 	return element.Text()
 }
 
-func extractScriptRawValue(bytes []byte, key string) (value interface{}, err error) {
+// ExtractScriptRawValue extracts the value of a given key from the return
+// value of webdriver.ExecuteScriptRaw (raw bytes).
+func ExtractScriptRawValue(bytes []byte, key string) (value interface{}, err error) {
 	var parsed map[string]interface{}
 	if err = json.Unmarshal(bytes, &parsed); err != nil {
 		return nil, err
 	}
 	return parsed[key], nil
+}
+
+// The following are helpers specific to wpt.fyi.
+
+// runWebdriverTest is a helper for starting both the server and WebDriver for a test.
+func runWebdriverTest(t *testing.T, test webdriverTest) {
+	app, err := NewWebserver()
+	if err != nil {
+		log.Println("Failed to create webserver: " + err.Error())
+		panic(err)
+	}
+	defer app.Close()
+
+	service, wd, err := GetWebDriver()
+	if err != nil {
+		log.Println("Failed to create webdriver: " + err.Error())
+		panic(err)
+	}
+	defer service.Stop()
+	defer wd.Quit()
+
+	test(t, app, wd)
+}
+
+func getTabElements(wd selenium.WebDriver) ([]selenium.WebElement, error) {
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
+	if err != nil {
+		return nil, err
+	}
+	return FindShadowElements(wd, e, "results-tabs", "paper-tab")
+}
+
+func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
+	if err != nil {
+		return nil, err
+	}
+	return FindShadowElements(wd, e, element, "test-run")
+}
+
+func getPathPartElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
+	e, err := wd.FindElement(selenium.ByTagName, "wpt-app")
+	if err != nil {
+		return nil, err
+	}
+	return FindShadowElements(wd, e, element, "path-part")
 }

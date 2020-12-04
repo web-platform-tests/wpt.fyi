@@ -106,11 +106,3 @@ func getSearchElement(wd selenium.WebDriver) (selenium.WebElement, error) {
 	}
 	return inputs[0], err
 }
-
-func getPathPartElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByTagName, "wpt-app")
-	if err != nil {
-		return nil, err
-	}
-	return FindShadowElements(wd, e, element, "path-part")
-}
