@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/phayes/freeport"
 	"github.com/tebeka/selenium"
@@ -19,6 +20,13 @@ var (
 	debug            = flag.Bool("debug", false, "Turn on debug logging")
 	browser          = flag.String("browser", "firefox", "Which browser to run the tests with")
 	startFrameBuffer = flag.Bool("frame_buffer", frameBufferDefault(), "Whether to use a frame buffer")
+)
+
+const (
+	// LongTimeout is the timeout for waiting the full page to load, with
+	// data coming from Datastore. You may not need this if you only need
+	// to wait for the initial Polymer rendering.
+	LongTimeout = time.Second * 30
 )
 
 func frameBufferDefault() bool {

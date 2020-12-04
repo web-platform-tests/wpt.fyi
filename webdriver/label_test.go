@@ -5,7 +5,6 @@ package webdriver
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	mapset "github.com/deckarep/golang-set"
 
@@ -62,7 +61,7 @@ func testLabel(
 		}
 		return len(testRuns) > 0, nil
 	}
-	if err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10); err != nil {
+	if err := wd.WaitWithTimeout(runsLoadedCondition, LongTimeout); err != nil {
 		assert.FailNow(t, fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
 	}
 

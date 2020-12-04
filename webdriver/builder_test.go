@@ -9,7 +9,6 @@ package webdriver
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +37,7 @@ func TestQueryBuilder_MasterCheckedForMasterLabelQuery(t *testing.T) {
 			}
 			return e != nil, nil
 		}
-		if err := wd.WaitWithTimeout(loaded, time.Second*10); err != nil {
+		if err := wd.WaitWithTimeout(loaded, LongTimeout); err != nil {
 			assert.FailNow(t, fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
 		}
 
@@ -55,7 +54,7 @@ func TestQueryBuilder_MasterCheckedForMasterLabelQuery(t *testing.T) {
 			}
 			return cb != nil, nil
 		}
-		if err := wd.WaitWithTimeout(expanded, time.Second*10); err != nil {
+		if err := wd.WaitWithTimeout(expanded, LongTimeout); err != nil {
 			assert.FailNow(t, fmt.Sprintf("Error waiting for builder to expand: %s", err.Error()))
 		}
 		// NOTE: 'checked' is a property on the class, but not an attr in the HTML.

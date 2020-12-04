@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tebeka/selenium"
@@ -43,7 +42,7 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path, elemen
 			if err := wd.Get(app.GetWebappURL(path)); err != nil {
 				assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
 			}
-			err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+			err := wd.WaitWithTimeout(resultsLoadedCondition, LongTimeout)
 			assert.Nil(t, err)
 
 			// Type the search.
@@ -63,7 +62,7 @@ func testSearch(t *testing.T, wd selenium.WebDriver, app AppServer, path, elemen
 			assert.FailNow(t, fmt.Sprintf("Error navigating to homepage: %s", err.Error()))
 		}
 
-		err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+		err := wd.WaitWithTimeout(resultsLoadedCondition, LongTimeout)
 		assert.Nil(t, err)
 		assertListIsFiltered(t, wd, elementName, folder+"/")
 	})
@@ -79,7 +78,7 @@ func assertListIsFiltered(t *testing.T, wd selenium.WebDriver, elementName strin
 		}
 		return len(pathParts) == len(paths), nil
 	}
-	err = wd.WaitWithTimeout(filteredPathPartsCondition, time.Second*120)
+	err = wd.WaitWithTimeout(filteredPathPartsCondition, LongTimeout)
 	if err != nil {
 		assert.Fail(t, fmt.Sprintf("Expected exactly %v results", len(paths)))
 		return
