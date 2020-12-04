@@ -266,7 +266,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
   computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds) {
     if (runIds && runIds.length) {
-      return 'Showing ${runIds.length} run(s) based on query parameters';
+      return `Showing ${runIds.length} run(s) based on query parameters`;
     }
     const latest = this.computeIsLatest(shas) ? 'the latest ' : '';
     const branch = master ? 'master ' : '';
