@@ -426,7 +426,12 @@ This is an *internal* endpoint used by the results processor.
 
 ### /api/search
 
-Search for test results over some set of test runs.
+Search for test results over some set of test runs. This endpoint accepts POST and GET requests.
+
+- POST requests are used for structured queries, with run_ids and query fields in the JSON payload; see [search query](./query/README.md#apisearch) documentaton for more information.
+
+- GET requests use the following parameter:
+
 
 __Parameters__
 
@@ -435,12 +440,9 @@ over which to search. IDs associated with runs can be obtained by querying the
 `/api/runs` API. Defaults to the default runs returned by `/api/runs`. NOTE:
 This is not the same set of runs as is shown on wpt.fyi by default.
 
-__`query`__: (Optional) See [search query](./query/README.md#apisearch)
-documentaton for the structure of this parameter.
-
 #### Examples
 
-- https://staging.wpt.fyi/api/search?run_ids=6311104602963968,5132783244541952&q=xyz
+- https://staging.wpt.fyi/api/search?run_ids=6311104602963968,5132783244541952
 
 <details><summary><b>Example JSON</b></summary>
 
@@ -488,7 +490,7 @@ documentaton for the structure of this parameter.
   ],
   "results": [
     {
-      "test": "\/html\/dom\/elements\/global-attributes\/lang-xyzzy.html",
+      "test": "\/html\/dom\/elements\/global-attributes\/lang-foo.html",
       "legacy_status": [
         {
           "passes": 1,
