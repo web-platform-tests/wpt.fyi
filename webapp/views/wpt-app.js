@@ -112,13 +112,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>
           [[resultsTotalsRangeMessage]]
+          <template is="dom-if" if="[[!editable]]">
+            <a href="javascript:window.location.search='';"> (switch to the default product set instead)</a>
+          </template>
           <wpt-permalinks path="[[path]]"
                           path-prefix="/[[page]]/"
                           query-params="[[queryParams]]"
                           test-runs="[[testRuns]]">
           </wpt-permalinks>
           <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-          <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+          <paper-button onclick="[[toggleQueryEdit]]" slot="small" hidden="[[!editable]]">Edit</paper-button>
         </info-banner>
       </template>
       <iron-collapse opened="[[editingQuery]]">
@@ -166,6 +169,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
+      editable: {
+        type: Boolean,
+        computed: 'computeEditable(queryParams)',
+      },
       isLoading: {
         type: Boolean,
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
@@ -173,7 +180,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       searchResults: Array,
       resultsTotalsRangeMessage: {
         type: String,
-        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
+        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds)',
       },
       isTriageMode: {
         type: Boolean,
@@ -292,8 +299,15 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.dismissToast(e);
   }
 
-  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
-    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
+  computeEditable(queryParams) {
+    if (queryParams.run_id || 'max-count' in queryParams) {
+      return false;
+    }
+    return true;
+  }
+
+  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds) {
+    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds);
     if (page === 'results' && searchResults) {
       let subtests = 0, tests = 0;
       for (const r of searchResults) {

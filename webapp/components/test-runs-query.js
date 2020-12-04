@@ -47,7 +47,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       },
       resultsRangeMessage: {
         type: String,
-        computed: 'computeResultsRangeMessage(shas, productSpecs, to, from, maxCount, labels, master)',
+        computed: 'computeResultsRangeMessage(shas, productSpecs, to, from, maxCount, labels, master, runIds)',
       },
     };
   }
@@ -264,7 +264,10 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     return batchUpdate;
   }
 
-  computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master) {
+  computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds) {
+    if (runIds && runIds.length) {
+      return `Showing ${runIds.length} run(s) based on query parameters`;
+    }
     const latest = this.computeIsLatest(shas) ? 'the latest ' : '';
     const branch = master ? 'master ' : '';
     let msg = `Showing ${latest}${branch}test runs`;
