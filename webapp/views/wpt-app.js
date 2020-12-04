@@ -113,7 +113,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <info-banner>
           [[resultsTotalsRangeMessage]]
           <template is="dom-if" if="[[!editable]]">
-            <a href="" onclick="[[loadDefaultProductURL]]"> (switch to the default product set instead)</a>
+            <a href="javascript:window.location.search='';"> (switch to the default product set instead)</a>
           </template>
           <wpt-permalinks path="[[path]]"
                           path-prefix="/[[page]]/"
@@ -201,9 +201,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleQueryEdit = () => {
       this.editingQuery = !this.editingQuery;
-    };
-    this.loadDefaultProductURL = () => {
-      window.location.search = '';
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
