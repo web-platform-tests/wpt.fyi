@@ -5,7 +5,6 @@ package webdriver
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tebeka/selenium"
@@ -26,7 +25,7 @@ func TestTestRuns(t *testing.T) {
 			}
 			return len(rows) > 1, nil
 		}
-		err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10)
+		err := wd.WaitWithTimeout(runsLoadedCondition, LongTimeout)
 		assert.Nil(t, err)
 	})
 }

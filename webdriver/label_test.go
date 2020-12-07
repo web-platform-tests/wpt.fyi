@@ -5,7 +5,6 @@ package webdriver
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	mapset "github.com/deckarep/golang-set"
 
@@ -62,7 +61,7 @@ func testLabel(
 		}
 		return len(testRuns) > 0, nil
 	}
-	if err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10); err != nil {
+	if err := wd.WaitWithTimeout(runsLoadedCondition, LongTimeout); err != nil {
 		assert.FailNow(t, fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
 	}
 
@@ -87,22 +86,6 @@ func testLabel(
 		assert.Nil(t, err)
 		assert.Contains(t, href, "label="+label)
 	}
-}
-
-func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
-	if err != nil {
-		return nil, err
-	}
-	return FindShadowElements(wd, e, element, "test-run")
-}
-
-func getTabElements(wd selenium.WebDriver) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
-	if err != nil {
-		return nil, err
-	}
-	return FindShadowElements(wd, e, "results-tabs", "paper-tab")
 }
 
 func assertAligned(t *testing.T, wd selenium.WebDriver, testRuns []selenium.WebElement) {

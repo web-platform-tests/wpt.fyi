@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +77,7 @@ func testProducts(
 		}
 		return len(testRuns) > 0, nil
 	}
-	if err := wd.WaitWithTimeout(runsLoadedCondition, time.Second*10); err != nil {
+	if err := wd.WaitWithTimeout(runsLoadedCondition, LongTimeout); err != nil {
 		assert.FailNow(t, fmt.Sprintf("Error waiting for test runs: %s", err.Error()))
 	}
 
@@ -121,7 +120,7 @@ func testProducts(
 		}
 		return len(pathParts) > 0, nil
 	}
-	err = wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+	err = wd.WaitWithTimeout(resultsLoadedCondition, LongTimeout)
 	assert.Nil(t, err)
 }
 
@@ -133,11 +132,11 @@ func assertProducts(t *testing.T, wd selenium.WebDriver, testRuns []selenium.Web
 	for i, product := range products {
 		args := []interface{}{testRuns[i]}
 		browserNameBytes, _ := wd.ExecuteScriptRaw("return arguments[0].testRun.browser_name", args)
-		browserName, _ := extractScriptRawValue(browserNameBytes, "value")
+		browserName, _ := ExtractScriptRawValue(browserNameBytes, "value")
 		assert.Equal(t, product.BrowserName, browserName.(string))
 		if product.Labels != nil {
 			labelBytes, _ := wd.ExecuteScriptRaw("return arguments[0].testRun.labels", args)
-			labels, _ := extractScriptRawValue(labelBytes, "value")
+			labels, _ := ExtractScriptRawValue(labelBytes, "value")
 			for label := range product.Labels.Iter() {
 				assert.Contains(t, labels, label)
 			}
