@@ -19,7 +19,7 @@ First log into the `wptdashboard` project. You need to be a project member with
 at least Editor privileges. Then from the project root directory:
 
 ```sh
-git checkout master
+git checkout main
 git pull
 make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
 make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
