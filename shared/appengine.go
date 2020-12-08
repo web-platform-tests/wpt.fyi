@@ -22,8 +22,11 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/google/go-github/v32/github"
 	apps "google.golang.org/api/appengine/v1"
+	"google.golang.org/api/option"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 type clientsImpl struct {
@@ -51,8 +54,13 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 		return err
 	}
 
+	keepAlive := option.WithGRPCDialOption(grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time: 5 * time.Minute,
+	}))
+
 	// Cloud Tasks
-	c.cloudtasks, err = cloudtasks.NewClient(ctx)
+	// Use keepalive to work around https://github.com/googleapis/google-cloud-go/issues/3205
+	c.cloudtasks, err = cloudtasks.NewClient(ctx, keepAlive)
 	if err != nil {
 		return err
 	}
