@@ -67,11 +67,13 @@ func FilterandExtractBSFData(rawBSFdata [][]string, from *time.Time, to *time.Ti
 			continue
 		}
 
+		// from is inclusive.
 		if from != nil && updated.Before(*from) {
 			continue
 		}
 
-		if to != nil && updated.After(*to) {
+		// to is exclusive.
+		if to != nil && (updated.After(*to) || updated.Equal(*to)) {
 			continue
 		}
 

@@ -671,7 +671,11 @@ __`to`__ : (Optional) RFC3339 timestamp, for which to include BSF data that occu
 
 __`experimental`__ : A boolean to return BSF data for experimental or stable runs. Defaults to false.
 
-__Response format__
+__JSON Response__
+
+`fields` corresponds to the fields (columns) in the `data` table.
+
+`data` returns BSF data in chronological order.
 ```json
 {
    "lastUpdateRevision":"eea0b54014e970a2f94f1c35ec6e18ece76beb76",
