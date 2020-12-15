@@ -6,7 +6,6 @@
 DOCKER_DIR=$(dirname $0)
 source "${DOCKER_DIR}/../commands.sh"
 source "${DOCKER_DIR}/../logging.sh"
-source "${DOCKER_DIR}/../path.sh"
 
 set -e
 

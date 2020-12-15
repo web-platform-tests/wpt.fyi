@@ -4,8 +4,7 @@
 
 REPO_DIR="$(dirname "${BASH_SOURCE[0]}")/.."
 source "${REPO_DIR}/util/logging.sh"
-source "${REPO_DIR}/util/path.sh"
-WPTD_PATH=${WPTD_PATH:-$(absdir ${REPO_DIR})}
+WPTD_PATH=${WPTD_PATH:-$(realpath "${REPO_DIR}")}
 
 usage() {
   USAGE="Usage: deploy.sh [-p] [-r] [-q] [-b] [-h] [app path]
