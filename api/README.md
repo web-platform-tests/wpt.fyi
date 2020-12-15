@@ -18,6 +18,7 @@ the endpoints can be found in `routes.go`.
  - [/api/manifest](#apimanifest)
  - [/api/search](#apisearch)
  - [/api/metadata](#apimetadata)
+ - [/api/bsf](#apibsf)
 
 Also see [results creation](#results-creation) for endpoints to add new data.
 
@@ -651,5 +652,60 @@ This endpoint returns the URL of a PR that is created in the wpt-metadata repo.
       "product": "firefox"
     }
   ]
+}
+```
+</details>
+
+## Browser Specific Failure
+
+### /api/bsf
+Gets the BSF data of Chrome, Firefox, Safari for the home directory.
+
+The endpoint accepts GET requests.
+
+__Parameters__
+
+__`from`__ : (Optional) RFC3339 timestamp, for which to include BSF data that occured after the given time inclusively.
+
+__`to`__ : (Optional) RFC3339 timestamp, for which to include BSF data that occured before the given time exclusively.
+
+__`experimental`__ : A boolean to return BSF data for experimental or stable runs. Defaults to false.
+
+__Response format__
+```json
+{
+   "lastUpdateRevision":"eea0b54014e970a2f94f1c35ec6e18ece76beb76",
+   "fields":[
+      "sha",
+      "date",
+      "chrome-version",
+      "chrome",
+      "firefox-version",
+      "firefox",
+      "safari-version",
+      "safari"
+   ],
+   "data":[
+      [
+         "eea0b54014e970a2f94f1c35ec6e18ece76beb76",
+         "2018-08-07",
+         "70.0.3510.0 dev",
+         "602.0505256721168",
+         "63.0a1",
+         "1617.1788882804883",
+         "12.1",
+         "2900.3438625831423"
+      ],
+      [
+         "203c34855f6871d6e55eaf7b55b50dad563f781f",
+         "2018-08-18",
+         "70.0.3521.2 dev",
+         "605.3869030161061",
+         "63.0a1",
+         "1521.908686731921",
+         "12.1",
+         "2966.686195133767"
+      ]
+   ]
 }
 ```
