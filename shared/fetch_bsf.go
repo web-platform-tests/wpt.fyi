@@ -90,7 +90,7 @@ func FilterandExtractBSFData(rawBSFdata [][]string, from *time.Time, to *time.Ti
 	return response
 }
 
-// FetchBSF encapsulates the Fetch() method for testing.
+// FetchBSF encapsulates the Fetch(isExperimental bool) method for testing.
 type FetchBSF interface {
 	Fetch(isExperimental bool) ([][]string, error)
 }
