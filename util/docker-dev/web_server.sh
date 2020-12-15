@@ -9,8 +9,9 @@ source "${DOCKER_DIR}/../logging.sh"
 
 set -e
 
+wptd_exec make inotifywait
 info "Building web server..."
-wptd_exec make go_build
+wptd_exec make go_build_dev
 
 DOCKER_STATUS="${?}"
 if [ "${DOCKER_STATUS}" != "0" ]; then
@@ -19,4 +20,4 @@ if [ "${DOCKER_STATUS}" != "0" ]; then
 fi
 
 info "Starting web server. Port forwarded to host: ${WPTD_HOST_WEB_PORT}"
-wptd_exec "\$(gcloud beta emulators datastore env-init) && ./web"
+wptd_exec "\$(gcloud beta emulators datastore env-init) && util/server-watch.sh"

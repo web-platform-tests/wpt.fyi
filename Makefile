@@ -49,8 +49,12 @@ go_build: git mockgen packr2
 	# Build the webapp.
 	go build ./webapp/web
 
+go_build_dev: git
+	@ # Disable packr to always serve local node modules and dynamic components.
+	@ # There's thus no need to prune node_modules.
+	go build -tags skippackr ./webapp/web
+
 go_lint: golint go_test_tag_lint
-	@echo "# Linting the go packages..."
 	golint -set_exit_status ./api/...
 	golint -set_exit_status ./shared/...
 	golint -set_exit_status ./util/...
@@ -58,7 +62,7 @@ go_lint: golint go_test_tag_lint
 	golint -set_exit_status ./webdriver/...
 
 go_test_tag_lint:
-	# Printing a list of test files without +build tag, asserting empty...
+	@ # Printing a list of test files without +build tag, asserting empty...
 	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
@@ -91,9 +95,9 @@ webdriver_node_deps:
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
 _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_deps gcc
-	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
-	# The following variables are defined here because we don't know the
-	# path before installing geckodriver as it includes version strings.
+	@ # This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
+	@ # The following variables are defined here because we don't know the
+	@ # path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
 	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large ./webdriver -args \
 		-firefox_path=$(FIREFOX_PATH) \
@@ -203,6 +207,12 @@ gpg:
 	@ # gpg has a different apt-get package name.
 	if [[ "$$(which gpg)" == "" ]]; then \
 		sudo apt-get install -qqy --no-install-suggests gnupg; \
+	fi
+
+inotifywait:
+	@ # inotifywait has a different apt-get package name.
+	if [[ "$$(which inotifywait)" == "" ]]; then \
+		sudo apt-get install -qqy --no-install-suggests inotify-tools; \
 	fi
 
 node: curl gpg
