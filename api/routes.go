@@ -78,4 +78,7 @@ func RegisterRoutes() {
 
 	// API endpoint for checking a user's login status.
 	shared.AddRoute("/api/user", "api-user", shared.WrapApplicationJSON(shared.WrapTrustedCORS(apiUserHandler, CORSList, nil)))
+
+	// API endpoint for fetching browser-specific failure data.
+	shared.AddRoute("/api/bsf", "api-bsf", shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiBSFHandler)))
 }
