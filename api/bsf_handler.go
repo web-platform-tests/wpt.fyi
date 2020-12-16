@@ -20,11 +20,11 @@ type BSFHandler struct {
 // apiBSFHandler fetches browser-specific failure data based on the URL params.
 func apiBSFHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	// Serve cached with 5 minute expiry. Delegate to BSFHandler on cache miss.
+	// Serve cached with 60-minute expiry. Delegate to BSFHandler on cache miss.
 	shared.NewCachingHandler(
-		r.Context(),
+		ctx,
 		BSFHandler{shared.NewFetchBSF()},
-		shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)),
+		shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 60*time.Minute)),
 		shared.AlwaysCachable,
 		shared.URLAsCacheKey,
 		shared.CacheStatusOK).ServeHTTP(w, r)
