@@ -1,5 +1,9 @@
 schedule: "every week"
 
+# Shortened from the default "pyup-"
+# Workaround for https://github.com/web-platform-tests/wpt.fyi/issues/2315
+branch_prefix: "py-"
+
 requirements:
   - results-processor/requirements-top_level.txt:
       # This file is manually maintained, with only the top-level dependencies.
