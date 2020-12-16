@@ -673,9 +673,16 @@ __`experimental`__ : A boolean to return BSF data for experimental or stable run
 
 __JSON Response__
 
+The response has three top-level fields:
+
+`lastUpdateRevision` indicates the latest WPT Revision updated in `data`.
+
 `fields` corresponds to the fields (columns) in the `data` table.
 
 `data` returns BSF data in chronological order.
+
+<details><summary><b>Example JSON</b></summary>
+
 ```json
 {
    "lastUpdateRevision":"eea0b54014e970a2f94f1c35ec6e18ece76beb76",
@@ -713,3 +720,4 @@ __JSON Response__
    ]
 }
 ```
+</details>

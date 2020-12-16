@@ -34,7 +34,7 @@ func TestBSFHandler_Success(t *testing.T) {
 	rawBSFData = append(rawBSFData, dataRow)
 	mockBSFFetcher.EXPECT().Fetch(false).Return(rawBSFData, nil)
 
-	handleBSF(w, r, mockBSFFetcher)
+	BSFHandler{mockBSFFetcher}.ServeHTTP(w, r)
 
 	var bsfData shared.BSFData
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -66,7 +66,7 @@ func TestBSFHandler_Success_WithParams(t *testing.T) {
 	rawBSFData = append(rawBSFData, dataRow4)
 	mockBSFFetcher.EXPECT().Fetch(true).Return(rawBSFData, nil)
 
-	handleBSF(w, r, mockBSFFetcher)
+	BSFHandler{mockBSFFetcher}.ServeHTTP(w, r)
 
 	var bsfData shared.BSFData
 	assert.Equal(t, http.StatusOK, w.Code)
