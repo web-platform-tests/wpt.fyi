@@ -11,7 +11,8 @@ set -e
 
 wptd_exec make inotifywait
 info "Building web server..."
-wptd_exec make go_build_dev
+# Build the full go_build_dev target to get node_modules.
+wptd_exec make go_build
 
 DOCKER_STATUS="${?}"
 if [ "${DOCKER_STATUS}" != "0" ]; then

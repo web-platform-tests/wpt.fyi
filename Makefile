@@ -49,7 +49,7 @@ go_build: git mockgen packr2
 	# Build the webapp.
 	go build ./webapp/web
 
-go_build_dev: git
+go_build_dev:
 	@ # Disable packr to always serve local node modules and dynamic components.
 	@ # There's thus no need to prune node_modules.
 	go build -tags skippackr ./webapp/web
