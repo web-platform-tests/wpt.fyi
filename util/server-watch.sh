@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+make go_build_dev
 ./web &
 SERVER_PID=$!
 # node_modules is already served live by packr;
