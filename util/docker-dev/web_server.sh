@@ -11,7 +11,7 @@ set -e
 
 wptd_exec make inotifywait
 info "Building web server..."
-# Build the full go_build_dev target to get node_modules.
+# Build the full go_build target to get node_modules.
 wptd_exec make go_build
 
 DOCKER_STATUS="${?}"
@@ -21,4 +21,4 @@ if [ "${DOCKER_STATUS}" != "0" ]; then
 fi
 
 info "Starting web server. Port forwarded to host: ${WPTD_HOST_WEB_PORT}"
-wptd_exec "\$(gcloud beta emulators datastore env-init) && util/server-watch.sh"
+wptd_exec_it "\$(gcloud beta emulators datastore env-init) && util/server-watch.sh"
