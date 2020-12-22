@@ -36,6 +36,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'reftestAnalyzerMockScreenshots',
       'reftestIframes',
       'searchCacheInterop',
+      'showBSF',
       'showTestType',
       'showTestRefURL',
       'structuredQueries',
@@ -92,6 +93,18 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
     const props = {};
     makeFeatureProperties(props, wpt.ClientSideFeatures, readOnly, useLocalStorage);
     return props;
+  }
+
+  setLocalStorageFlag(value, feature) {
+    localStorage.setItem(`features.${feature}`, JSON.stringify(value));
+  }
+
+  getLocalStorageFlag(feature) {
+    const stored = localStorage.getItem(`features.${feature}`);
+    if (stored === null) {
+      return null;
+    }
+    return JSON.parse(stored);
   }
 };
 
@@ -254,6 +267,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{githubLogin}}">
         Enable GitHub OAuth login
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{showBSF}}">
+        Enable Browser Specific Failures graph
       </paper-checkbox>
     </paper-item>
 `;

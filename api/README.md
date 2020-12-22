@@ -677,7 +677,9 @@ The response has three top-level fields:
 
 `lastUpdateRevision` indicates the latest WPT Revision updated in `data`.
 
-`fields` corresponds to the fields (columns) in the `data` table.
+`fields` corresponds to the fields (columns) in the `data` table and has the format of an array of:
+
+- sha, date, [product-version, product-score]+
 
 `data` returns BSF data in chronological order.
 

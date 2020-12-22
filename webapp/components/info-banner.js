@@ -18,7 +18,7 @@ class InfoBanner extends PolymerElement {
       :host {
         display: block;
         margin-bottom: 1em;
-        margin-top: 2em;
+        margin-top: 1em;
       }
       .banner {
         display: flex;
