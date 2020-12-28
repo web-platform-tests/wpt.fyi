@@ -78,7 +78,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
             <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
             <a class="link" href="[[githubHref]]" target="_blank"><paper-button>[[shortSHA]]</paper-button></a>
           </div>
-          <h5>Click + drag on graphs to zoom, right click to un-zoom</h5>
+          <h5>Click + drag on graph to zoom, right click to un-zoom</h5>
         </div>
         <google-chart type="line" class="chart" data="[[data]]" options="[[chartOptions]]"></google-chart>
       </div>
