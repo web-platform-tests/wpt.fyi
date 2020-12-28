@@ -68,7 +68,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
       </style>
       <div class="bsf">
         <div class="left">
-          <h5>Channel tabs</h5>
+          <h5>Channel</h5>
           <div class="channel">
             <paper-button class\$="[[stableButtonClass(isExperimental)]]" onclick="[[clickStable]]">Stable</paper-button>
             <paper-button class\$="[[experimentalButtonClass(isExperimental)]]" onclick="[[clickExperimental]]">Experimental</paper-button>
