@@ -73,7 +73,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
             <paper-button class\$="[[stableButtonClass(isExperimental)]]" onclick="[[clickStable]]">Stable</paper-button>
             <paper-button class\$="[[experimentalButtonClass(isExperimental)]]" onclick="[[clickExperimental]]">Experimental</paper-button>
           </div>
-          <h5>Last updated GitHub SHA</h5>
+          <h5>Last updated WPT revision</h5>
           <div class="sha">
             <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
             <a class="link" href="[[githubHref]]" target="_blank"><paper-button>[[shortSHA]]</paper-button></a>
