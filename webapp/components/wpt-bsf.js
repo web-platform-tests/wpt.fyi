@@ -135,7 +135,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
   constructor() {
     super();
     this.clickStable = () => {
-      if (this.isExperimental === false) {
+      if (!this.isExperimental) {
         return;
       }
       this.isExperimental = false;
