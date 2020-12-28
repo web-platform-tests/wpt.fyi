@@ -6,9 +6,12 @@ import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
+import '../components/wpt-bsf.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
+import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
+import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
@@ -55,6 +58,12 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         }
         .query-actions paper-button {
           display: inline-block;
+        }
+        paper-icon-button {
+          vertical-align: middle;
+          margin-right: 10px;
+          padding: 0px;
+          height: 28px;
         }
       </style>
 
@@ -108,6 +117,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       </section>
 
       <div class="separator"></div>
+
+      <template is="dom-if" if="[[showBSFGraph]]">
+        <info-banner>
+          <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]"></paper-icon-button>
+          [[bsfBannerMessage]]
+        </info-banner>
+        <iron-collapse opened="[[!isBSFCollapsed]]">
+          <wpt-bsf></wpt-bsf>
+        </iron-collapse>
+      </template>
 
       <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>
@@ -182,6 +201,18 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         type: String,
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds)',
       },
+      bsfBannerMessage: {
+        type: String,
+        computed: 'computeBSFBannerMessage(isBSFCollapsed)',
+      },
+      showBSFGraph: {
+        type: Boolean,
+        computed: 'computeShowBSFGraph(pathIsRootDir, showBSF)',
+      },
+      isBSFCollapsed: {
+        type: Boolean,
+        computed: 'computeIsBSFCollapsed()',
+      },
       isTriageMode: {
         type: Boolean,
         value: false,
@@ -201,6 +232,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleQueryEdit = () => {
       this.editingQuery = !this.editingQuery;
+    };
+    this.handleCollapse = () => {
+      this.isBSFCollapsed = !this.isBSFCollapsed;
+      this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
@@ -339,6 +374,33 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         `Showing ${testsAndSubtests} from `);
     }
     return msg;
+  }
+
+  computeBSFBannerMessage(isBSFCollapsed) {
+    const actionText = isBSFCollapsed ? 'expand' : 'collapse';
+    return `Browser Specific Failures graph (click the arrow to ${actionText})`;
+  }
+
+  // Currently we only have BSF data for the entirety of the WPT test suite. To avoid
+  // confusing the user, we only display the graph when they are looking at top-level
+  // test results and hide it when in a subdirectory.
+  computeShowBSFGraph(pathIsRootDir, showBSF) {
+    return pathIsRootDir && showBSF;
+  }
+
+  computeIsBSFCollapsed() {
+    const stored = this.getLocalStorageFlag('isBSFCollapsed');
+    if (stored === null) {
+      return false;
+    }
+    return stored;
+  }
+
+  getCollapseIcon(isBSFCollapsed) {
+    if (isBSFCollapsed) {
+      return '/static/expand_more.svg';
+    }
+    return '/static/expand_less.svg';
   }
 }
 customElements.define(WPTApp.is, WPTApp);
