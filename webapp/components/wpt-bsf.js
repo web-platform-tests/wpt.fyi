@@ -34,7 +34,6 @@ class WPTBSF extends LoadingState(PolymerElement) {
           display: inline-flex;
           height: 25px;
           margin-top: 0px;
-          margin-left: 15px;
         }
         h5 {
           margin-top: 20px;
@@ -48,12 +47,6 @@ class WPTBSF extends LoadingState(PolymerElement) {
         .link {
           text-decoration: none;
           font-size: 12px;
-        }
-        .github-icon {
-          margin-right: 35px;
-          fill: white;
-          width: 25px;
-          height: 25px;
         }
         .unselected {
           background-color: white;
@@ -75,7 +68,6 @@ class WPTBSF extends LoadingState(PolymerElement) {
           </div>
           <h5>Last updated WPT revision</h5>
           <div class="sha">
-            <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
             <a class="link" href="[[githubHref]]" target="_blank"><paper-button>[[shortSHA]]</paper-button></a>
           </div>
           <h5>Click + drag on graph to zoom, right click to un-zoom</h5>
@@ -160,18 +152,11 @@ class WPTBSF extends LoadingState(PolymerElement) {
   }
 
   stableButtonClass(isExperimental) {
-    return this.getChannelClass(!isExperimental);
+    return isExperimental ? 'unselected' : 'selected';
   }
 
   experimentalButtonClass(isExperimental) {
-    return this.getChannelClass(isExperimental);
-  }
-
-  getChannelClass(isChannel) {
-    if (isChannel) {
-      return 'selected';
-    }
-    return 'unselected';
+    return isExperimental ? 'selected' : 'unselected';
   }
 
   loadBSFData() {
@@ -181,34 +166,44 @@ class WPTBSF extends LoadingState(PolymerElement) {
     }
 
     this.load(
-      window.fetch(url).then(r => r.json()).then(bsf => {
-        this.sha = bsf.lastUpdateRevision;
-        // Insert fields into the 0th row of the data table.
-        bsf.data.splice(0, 0, bsf.fields);
-        // BSF data's columns have the format of an array of
-        //  sha, date, [product-version, product-score]+
-        // google-chart.js only needs the date and product
-        // scores to produce the graph, so drop the other columns.
-        this.data = bsf.data.map((row, rowIdx) => {
-          // Drop the sha.
-          row = row.slice(1);
+      window.fetch(url).then(
+        async r => {
+          if (!r.ok || r.status !== 200) {
+            throw new Error(`status ${r.status}`);
+          }
+          return r.json();
+        })
+        .then(bsf => {
+          this.sha = bsf.lastUpdateRevision;
+          // Insert fields into the 0th row of the data table.
+          bsf.data.splice(0, 0, bsf.fields);
+          // BSF data's columns have the format of an array of
+          //  sha, date, [product-version, product-score]+
+          // google-chart.js only needs the date and product
+          // scores to produce the graph, so drop the other columns.
+          this.data = bsf.data.map((row, rowIdx) => {
+            // Drop the sha.
+            row = row.slice(1);
 
-          // Drop the version columns.
-          row = row.filter((c, i) => (i % 2) === 0);
+            // Drop the version columns.
+            row = row.filter((c, i) => (i % 2) === 0);
 
-          if (rowIdx === 0) {
+            if (rowIdx === 0) {
+              return row;
+            }
+
+            const dateParts = row[0].split('-').map(x => parseInt(x));
+            // Javascript Date objects take 0-indexed months, whilst the CSV is 1-indexed.
+            row[0] = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+            for (let i = 1; i < row.length; i++) {
+              row[i] = parseFloat(row[i]);
+            }
             return row;
-          }
-
-          const dateParts = row[0].split('-').map(x => parseInt(x));
-          // Javascript Date objects take 0-indexed months, whilst the CSV is 1-indexed.
-          row[0] = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-          for (let i = 1; i < row.length; i++) {
-            row[i] = parseFloat(row[i]);
-          }
-          return row;
-        });
-      })
+          });
+        }).catch(e => {
+          // eslint-disable-next-line no-console
+          console.log(`Failed to load BSF data: ${e}`);
+        })
     );
   }
 }

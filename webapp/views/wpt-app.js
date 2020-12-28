@@ -61,7 +61,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         }
         paper-icon-button {
           vertical-align: middle;
-          margin-right: 20px;
+          margin-right: 10px;
           padding: 0px;
           height: 28px;
         }
@@ -377,12 +377,13 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   }
 
   computeBSFBannerMessage(isBSFCollapsed) {
-    if (isBSFCollapsed) {
-      return 'Browser Specific Failures graph (click the arrow to expand)';
-    }
-    return 'Browser Specific Failures graph (click the arrow to collapse)';
+    const actionText = isBSFCollapsed ? 'expand' : 'collapse';
+    return `Browser Specific Failures graph (click the arrow to ${actionText})`;
   }
 
+  // Currently we only have BSF data for the entirety of the WPT test suite. To avoid
+  // confusing the user, we only display the graph when they are looking at top-level
+  // test results and hide it when in a subdirectory.
   computeShowBSFGraph(pathIsRootDir, showBSF) {
     return pathIsRootDir && showBSF;
   }
