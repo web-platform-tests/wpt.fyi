@@ -142,7 +142,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
       this.loadBSFData();
     };
     this.clickExperimental = () => {
-      if (this.isExperimental === true) {
+      if (this.isExperimental) {
         return;
       }
       this.isExperimental = true;
