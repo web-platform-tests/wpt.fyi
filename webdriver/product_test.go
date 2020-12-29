@@ -4,7 +4,6 @@ package webdriver
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -85,29 +84,6 @@ func testProducts(
 	testRuns, err := getTestRunElements(wd, "wpt-results")
 	if err != nil {
 		assert.FailNow(t, fmt.Sprintf("Failed to get test runs: %s", err.Error()))
-	}
-
-	// Check tab URLs propagate label
-	tabs, err := getTabElements(wd)
-	assert.Len(t, tabs, 2)
-	for _, tab := range tabs {
-		a, err := tab.FindElement(selenium.ByTagName, "a")
-		assert.Nil(t, err)
-		assert.NotNil(t, a)
-		href, err := a.GetAttribute("href")
-		assert.Nil(t, err)
-		for _, p := range products {
-			label := ""
-			if p.Labels != nil {
-				label = p.Labels.ToSlice()[0].(string)
-			}
-			// Shared channels can get pulled into the label param.
-			hasLabelAndHasProduct :=
-				label != "" && strings.Contains(href, "label="+url.QueryEscape(label)) &&
-					strings.Contains(href, "product="+p.BrowserName)
-			hasFullProductSpec := strings.Contains(href, "product="+url.QueryEscape(p.String()))
-			assert.True(t, hasLabelAndHasProduct || hasFullProductSpec)
-		}
 	}
 
 	assertProducts(t, wd, testRuns, products...)

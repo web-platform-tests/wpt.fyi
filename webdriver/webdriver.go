@@ -174,14 +174,6 @@ func runWebdriverTest(t *testing.T, test webdriverTest) {
 	test(t, app, wd)
 }
 
-func getTabElements(wd selenium.WebDriver) ([]selenium.WebElement, error) {
-	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
-	if err != nil {
-		return nil, err
-	}
-	return FindShadowElements(wd, e, "results-tabs", "paper-tab")
-}
-
 func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
 	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
 	if err != nil {

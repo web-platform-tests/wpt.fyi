@@ -75,6 +75,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       <nav>
         <!-- TODO: handle onclick with wpt-results.navigate if available -->
         <a href="/">Latest Run</a>
+        <a href="/interop[[path]]?[[query]]">Interoperability</a>
         <a href="/runs">Recent Runs</a>
         <a href="/insights">Insights</a>
         <template is="dom-if" if="[[processorTab]]">
@@ -92,6 +93,14 @@ class WPTHeader extends WPTFlags(PolymerElement) {
 
   static get properties() {
     return {
+      path: {
+        type: String,
+        value: '',
+      },
+      query: {
+        type: String,
+        value: '',
+      },
       user: String,
       isTriageMode: {
         type: Boolean,

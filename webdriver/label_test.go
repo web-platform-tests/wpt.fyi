@@ -74,18 +74,6 @@ func testLabel(
 	if aligned {
 		assertAligned(t, wd, testRuns)
 	}
-
-	// Check tab URLs propagate label
-	tabs, err := getTabElements(wd)
-	assert.Len(t, tabs, 2)
-	for _, tab := range tabs {
-		a, err := tab.FindElement(selenium.ByTagName, "a")
-		assert.Nil(t, err)
-		assert.NotNil(t, a)
-		href, err := a.GetAttribute("href")
-		assert.Nil(t, err)
-		assert.Contains(t, href, "label="+label)
-	}
 }
 
 func assertAligned(t *testing.T, wd selenium.WebDriver, testRuns []selenium.WebElement) {
