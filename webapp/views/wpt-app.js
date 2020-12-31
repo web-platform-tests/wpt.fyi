@@ -123,7 +123,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
             [[bsfBannerMessage]]
           </info-banner>
           <iron-collapse opened="[[!isBSFCollapsed]]">
-            <wpt-bsf></wpt-bsf>
+            <wpt-bsf is-interacting="{{isInteracting}}"></wpt-bsf>
           </iron-collapse>
         </div>
       </template>
@@ -220,7 +220,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       bsfStartTime: {
         type: Object,
         value: null,
-      }
+      },
+      isInteracting: Boolean,
     };
   }
 
@@ -253,10 +254,13 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
     };
     this.enterBSF = () => {
+      if (this.isInteracting) {
+        return;
+      }
       this.bsfStartTime = new Date();
     };
     this.exitBSF = () => {
-      if (!this.bsfStartTime) {
+      if (this.isInteracting || !this.bsfStartTime) {
         return;
       }
       const diff = new Date().getTime() - this.bsfStartTime.getTime();
