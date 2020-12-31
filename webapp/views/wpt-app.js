@@ -117,13 +117,15 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <div class="separator"></div>
 
       <template is="dom-if" if="[[showBSFGraph]]">
-        <info-banner>
-          <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]"></paper-icon-button>
-          [[bsfBannerMessage]]
-        </info-banner>
-        <iron-collapse opened="[[!isBSFCollapsed]]">
-          <wpt-bsf></wpt-bsf>
-        </iron-collapse>
+        <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
+          <info-banner>
+            <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]"></paper-icon-button>
+            [[bsfBannerMessage]]
+          </info-banner>
+          <iron-collapse opened="[[!isBSFCollapsed]]">
+            <wpt-bsf></wpt-bsf>
+          </iron-collapse>
+        </div>
       </template>
 
       <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
@@ -214,6 +216,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       isTriageMode: {
         type: Boolean,
         value: false,
+      },
+      bsfStartTime: {
+        type: Object,
+        value: null,
       }
     };
   }
@@ -241,10 +247,33 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           eventCategory: 'bsf',
           eventAction: 'hide',
           eventLabel: this.path,
-          eventValue: this.isBSFCollapsed ? 1 : -1
+          eventValue: this.isBSFCollapsed ? 1 : 0
         });
       }
       this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
+    };
+    this.enterBSF = () => {
+      this.bsfStartTime = new Date();
+    };
+    this.exitBSF = () => {
+      if (!this.bsfStartTime) {
+        return;
+      }
+      const diff = new Date().getTime() - this.bsfStartTime.getTime();
+      const duration = Math.round(diff / 1000);
+      if (duration <= 0) {
+        return;
+      }
+
+      if ('ga' in window) {
+        window.ga('send', {
+          hitType: 'event',
+          eventCategory: 'bsf',
+          eventAction: 'hover',
+          eventLabel: this.path,
+          eventValue: duration
+        });
+      }
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
