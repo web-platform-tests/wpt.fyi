@@ -75,9 +75,9 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       <nav>
         <!-- TODO: handle onclick with wpt-results.navigate if available -->
         <a href="/">Latest Run</a>
-        <a href="/interop[[path]]?[[query]]">Interoperability</a>
         <a href="/runs">Recent Runs</a>
         <a href="/insights">Insights</a>
+        <a href="/interop[[path]]?[[query]]">Interoperability</a>
         <template is="dom-if" if="[[processorTab]]">
           <a href="/status">Processor</a>
         </template>
