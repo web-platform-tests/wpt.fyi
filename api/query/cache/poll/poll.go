@@ -5,6 +5,7 @@
 package poll
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -88,13 +89,16 @@ func wait(start time.Time, total time.Duration) {
 // interval duration.
 func KeepMetadataUpdated(client *http.Client, logger shared.Logger, interval time.Duration) {
 	logger.Infof("Metadata update via polling started")
+	ctx := context.Background()
 	for {
-		metadataCache, err := shared.GetWPTMetadataArchive(client, nil)
+		mCache := shared.NewJSONObjectCache(ctx, shared.NewMemcacheReadWritable(ctx, shared.MetadataCacheExpiry))
+		_, metadataCache, err := shared.GetMetadataFromMemcache(mCache)
 		if err != nil {
-			logger.Errorf("Error fetching Metadata for update: %v", err)
+			logger.Errorf("Error fetching Metadata in searchcache for update: %v", err)
 		}
 
 		if err == nil && metadataCache != nil {
+			logger.Infof("Metadata cache in searchcache hits")
 			query.MetadataMapCached = metadataCache
 		}
 

@@ -6,16 +6,11 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
-	"time"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
-
-const metadataCacheKey = "WPT-METADATA"
-const metadataCacheExpiry = time.Minute * 10
 
 type webappMetadataFetcher struct {
 	ctx          context.Context
@@ -26,9 +21,9 @@ type webappMetadataFetcher struct {
 
 func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
 	log := shared.GetLogger(f.ctx)
-	mCache := shared.NewJSONObjectCache(f.ctx, shared.NewMemcacheReadWritable(f.ctx, metadataCacheExpiry))
+	mCache := shared.NewJSONObjectCache(f.ctx, shared.NewMemcacheReadWritable(f.ctx, shared.MetadataCacheExpiry))
 	if !f.forceUpdate {
-		sha, metadataMap, err := getMetadataFromMemcache(mCache)
+		sha, metadataMap, err := shared.GetMetadataFromMemcache(mCache)
 		if err == nil {
 			return sha, metadataMap, nil
 		}
@@ -55,30 +50,9 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 	return sha, res, nil
 }
 
-func getMetadataFromMemcache(cache shared.ObjectCache) (sha *string, res map[string][]byte, err error) {
-	var metadataSHAMap map[string]map[string][]byte
-	err = cache.Get(metadataCacheKey, &metadataSHAMap)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Caches hit; update Metadata.
-	var keys []string
-	for key := range metadataSHAMap {
-		keys = append(keys, key)
-	}
-
-	if len(keys) != 1 {
-		return nil, nil, errors.New("error from getting the wpt-metadata SHA in metadataSHAMap")
-	}
-
-	sha = &keys[0]
-	return sha, metadataSHAMap[*sha], nil
-}
-
 func fillMetadataToMemcache(cache shared.ObjectCache, sha string, metadataByteMap map[string][]byte) error {
 	metadataSHAMap := make(map[string]map[string][]byte)
 	metadataSHAMap[sha] = metadataByteMap
 
-	return cache.Put(metadataCacheKey, metadataSHAMap)
+	return cache.Put(shared.MetadataCacheKey, metadataSHAMap)
 }

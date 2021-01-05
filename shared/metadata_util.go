@@ -10,14 +10,22 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v32/github"
 )
+
+// MetadataCacheKey is the key for the Metadata cache in Redis.
+const MetadataCacheKey = "WPT-METADATA"
+
+// MetadataCacheExpiry is the expire time for the Metadata cache in Redis.
+const MetadataCacheExpiry = time.Minute * 10
 
 const sourceOwner string = "web-platform-tests"
 const sourceRepo string = "wpt-metadata"
@@ -44,6 +52,28 @@ func GetWPTMetadataMasterSHA(ctx context.Context, gitHubClient *github.Client) (
 func GetWPTMetadataArchive(client *http.Client, ref *string) (res map[string][]byte, err error) {
 	// See https://developer.github.com/v3/repos/contents/#get-archive-link for the archive link format.
 	return getWPTMetadataArchiveWithURL(client, "https://api.github.com/repos/web-platform-tests/wpt-metadata/tarball", ref)
+}
+
+// GetMetadataFromMemcache retrieves the cached Metadata from Redis.
+func GetMetadataFromMemcache(cache ObjectCache) (sha *string, res map[string][]byte, err error) {
+	var metadataSHAMap map[string]map[string][]byte
+	err = cache.Get(MetadataCacheKey, &metadataSHAMap)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Caches hit; update Metadata.
+	var keys []string
+	for key := range metadataSHAMap {
+		keys = append(keys, key)
+	}
+
+	if len(keys) != 1 {
+		return nil, nil, errors.New("error from getting the wpt-metadata SHA in metadataSHAMap")
+	}
+
+	sha = &keys[0]
+	return sha, metadataSHAMap[*sha], nil
 }
 
 func getWPTMetadataArchiveWithURL(client *http.Client, url string, ref *string) (res map[string][]byte, err error) {
