@@ -203,11 +203,9 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     for (const test of Object.keys(metadata).filter(k => this.shouldShowMetadata(k, path, testResultSet))) {
       const seenProductURLs = new Set();
       for (const link of metadata[test]) {
-        const serializedProductURL = link.product.trim() + '_' + link.url.trim();
-        if (link.url === '' || seenProductURLs.has(serializedProductURL)) {
+        if (link.url === '') {
           continue;
         }
-        seenProductURLs.add(serializedProductURL);
         const urlHref = this.getUrlHref(link.url);
         const subtestMap = {};
         if ('results' in link) {
@@ -229,6 +227,11 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         } else {
           metadataMap[metadataMapKey] = Object.assign(metadataMap[metadataMapKey], subtestMap);
         }
+        const serializedProductURL = link.product.trim() + '_' + link.url.trim();
+        if (seenProductURLs.has(serializedProductURL)) {
+          continue;
+        }
+        seenProductURLs.add(serializedProductURL);
         const wptMetadataNode = {
           test,
           url: urlHref,
