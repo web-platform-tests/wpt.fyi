@@ -205,7 +205,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       },
       showBSFGraph: {
         type: Boolean,
-        computed: 'computeShowBSFGraph(pathIsRootDir, showBSF)',
+        computed: 'computeShowBSFGraph(page, queryParams, pathIsRootDir, showBSF)',
       },
       isBSFCollapsed: {
         type: Boolean,
@@ -382,7 +382,17 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   // Currently we only have BSF data for the entirety of the WPT test suite. To avoid
   // confusing the user, we only display the graph when they are looking at top-level
   // test results and hide it when in a subdirectory.
-  computeShowBSFGraph(pathIsRootDir, showBSF) {
+  computeShowBSFGraph(page, queryParams, pathIsRootDir, showBSF) {
+    // Only show on the results page.
+    if (page !== 'results') {
+      return false;
+    }
+
+    // Hide when search is in use or query by run_id/sha.
+    if (queryParams.q || queryParams.run_id || queryParams.sha) {
+      return false;
+    }
+
     return pathIsRootDir && showBSF;
   }
 
