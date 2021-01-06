@@ -77,6 +77,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         <a href="/">Latest Run</a>
         <a href="/runs">Recent Runs</a>
         <a href="/insights">Insights</a>
+        <a href="/interop[[path]]?[[query]]">Interoperability</a>
         <template is="dom-if" if="[[processorTab]]">
           <a href="/status">Processor</a>
         </template>
@@ -92,6 +93,14 @@ class WPTHeader extends WPTFlags(PolymerElement) {
 
   static get properties() {
     return {
+      path: {
+        type: String,
+        value: '',
+      },
+      query: {
+        type: String,
+        value: '',
+      },
       user: String,
       isTriageMode: {
         type: Boolean,
