@@ -32,7 +32,7 @@ const interopQueryCompute =
   'interopQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, search)';
 
 class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
-  TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
+    TestRunsQueryLoader(TestRunsUIQuery(PolymerElement, interopQueryCompute)))))) {
   static get template() {
     return html`
   <style>
@@ -326,7 +326,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
           // cases, retry fetch up to 5 times with 5000ms waits in between.
           const toast = this.shadowRoot.querySelector('#runsNotInCache');
           return this.retry(
-            async () => {
+            async() => {
               const r = await window.fetch(url, fetchOpts);
               if (!r.ok) {
                 if (r.status === 422) {
@@ -398,7 +398,7 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
       }
     }
     const q = this.search;
-    if (q && q.length) {
+    if (q  && q.length) {
       searchResults.results = searchResults.results.filter(t => t.test.toLowerCase().includes(q));
     }
     this.searchResults = searchResults;
@@ -531,8 +531,8 @@ class WPTInterop extends WPTColors(WPTFlags(LoadingState(PathInfo(
 
   _move(forward) {
     if (!this.searchResults
-      || !this.searchResults.results
-      || !this.searchResults.results.length) {
+        || !this.searchResults.results
+        || !this.searchResults.results.length) {
       return;
     }
     const results = this.searchResults.results.sort((a, b) => a.test.localeCompare(b.test));
