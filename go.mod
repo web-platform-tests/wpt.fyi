@@ -35,7 +35,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
 	google.golang.org/api v0.36.0
 	google.golang.org/genproto v0.0.0-20201210142538-e3217bee35cc
-	google.golang.org/grpc v1.34.0
+	google.golang.org/grpc v1.34.1
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )
 
