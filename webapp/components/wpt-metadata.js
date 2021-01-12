@@ -198,6 +198,9 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       return;
     }
 
+    // This loop constructs both the metadataMap, which is used to show inline
+    // bug icons in the test results, and displayedMetdata, which is the list of
+    // metadata links shown at the bottom of the page.
     let metadataMap = {};
     let displayedMetadata = [];
     for (const test of Object.keys(metadata).filter(k => this.shouldShowMetadata(k, path, testResultSet))) {
@@ -227,6 +230,8 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         } else {
           metadataMap[metadataMapKey] = Object.assign(metadataMap[metadataMapKey], subtestMap);
         }
+
+        // Avoid showing duplicate bug links in the list of metadata shown at the bottom of the page.
         const serializedProductURL = link.product.trim() + '_' + link.url.trim();
         if (seenProductURLs.has(serializedProductURL)) {
           continue;

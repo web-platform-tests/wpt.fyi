@@ -237,7 +237,12 @@ suite('<wpt-metadata>', () => {
           {
             url: 'bug1',
             product: 'chrome',
-            results: [{ subtest: 'a' }]
+            results: [{ subtest: 'a' }, { subtest: 'd' }]
+          },
+          {
+            url: 'bug1',
+            product: 'chrome',
+            results: [{ subtest: 'c' }]
           },
           {
             url: 'bug2',
@@ -250,8 +255,10 @@ suite('<wpt-metadata>', () => {
 
       assert.equal(Object.keys(appFixture.metadataMap).length, 1);
       const subtestMap = appFixture.metadataMap['/foo.htmlchrome'];
-      assert.equal(Object.keys(subtestMap).length, 2);
+      assert.equal(Object.keys(subtestMap).length, 4);
       assert.equal(subtestMap['a'], 'https://bug1');
+      assert.equal(subtestMap['c'], 'https://bug1');
+      assert.equal(subtestMap['d'], 'https://bug1');
       assert.equal(subtestMap['b'], 'https://bug2');
     });
     test('complex case for metadataMap', () => {
