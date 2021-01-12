@@ -32,7 +32,7 @@ require (
 	github.com/taskcluster/taskcluster/v37 v37.5.1
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
-	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
+	golang.org/x/oauth2 v0.0.0-20210112200429-01de73cf58bd
 	google.golang.org/api v0.36.0
 	google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7
 	google.golang.org/grpc v1.34.1
