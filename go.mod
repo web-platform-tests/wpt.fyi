@@ -27,7 +27,7 @@ require (
 	github.com/samthor/nicehttp v1.0.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1 // indirect
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
 	github.com/taskcluster/taskcluster/v37 v37.5.1
 	github.com/tebeka/selenium v0.9.9
