@@ -164,7 +164,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             <li>
               <div class="list"> [[test]] </div>
               <template is="dom-if" if="[[hasSearchURL(node.product)]]">
-                <a href="[[getSearchURL(node.product, test)]]" target="_blank"> [Search for bug] </a>
+                <a href="[[getSearchURL(test, node.product)]]" target="_blank"> [Search for bug] </a>
               </template>
             </li>
           </template>
@@ -258,10 +258,10 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
   hasSearchURL(product) {
     return product === 'chrome' || product === 'edge' || product === 'firefox' ||
-           product === 'safari' || product === 'servo' || product === 'webkitgtk';
+      product === 'safari' || product === 'servo' || product === 'webkitgtk';
   }
 
-  getSearchURL(product, testName) {
+  getSearchURL(testName, product) {
     if (this.computePathIsATestFile(testName)) {
       // Remove name flags and extensions: https://web-platform-tests.org/writing-tests/file-names.html
       testName = testName.split('.')[0];
@@ -272,15 +272,15 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     if (product === 'chrome' || product === 'edge') {
       return `https://bugs.chromium.org/p/chromium/issues/list?q="${testName}"`;
     }
-    
+
     if (product === 'firefox') {
       return `https://bugzilla.mozilla.org/buglist.cgi?quicksearch="${testName}"`;
     }
-    
+
     if (product === 'safari' || product === 'webkitgtk') {
       return `https://bugs.webkit.org/buglist.cgi?quicksearch="${testName}"`;
     }
-    
+
     if (product === 'servo') {
       return `https://github.com/servo/servo/issues?q="${testName}"`;
     }
