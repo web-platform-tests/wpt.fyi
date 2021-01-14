@@ -24,7 +24,7 @@ type PRsHandler struct {
 // apiPRsHandler executes a search for PRs for a particular directory.
 func apiPRsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to PRsHandler on cache miss.
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	shared.NewCachingHandler(
 		ctx,
 		PRsHandler{ctx},

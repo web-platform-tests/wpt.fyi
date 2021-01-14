@@ -11,7 +11,7 @@ import (
 )
 
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	version := aeAPI.GetVersion()
 

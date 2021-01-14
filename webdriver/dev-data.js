@@ -8,22 +8,24 @@ const log = require('debug')('wpt.fyi');
 const logDevData = require('debug')('wpt.fyi:dev_data');
 const { spawn } = require('child_process');
 const process = require('process');
-const { DevAppserver } = require('./dev_appserver.js');
+const { DevAppserver } = require('./appserver.js');
 
 /**
  * @param {DevAppserver} server
  */
 function populate(server) {
   return new Promise(resolve => {
-    const child = spawn('go',
-      [
+    const args = [
         'run',
         '../util/populate_dev_data.go',
-        `--local_host=${server.url.host}`,
-        `--local_remote_api_host=${server.remoteUrl.host}`,
+        `--project=${server.config.project}`,
+        `--datastore_host=127.0.0.1:${server.config.gcdPort}`,
+        `--local_host=localhost:${server.config.port}`,
         `--remote_runs=false`,
         `--static_runs=true`,
-      ]);
+    ];
+    log('Running go ' + args.join(' '));
+    const child = spawn('go', args);
     process.on('exit', () => {
       log('killing dev_data subprocess...');
       child.kill();

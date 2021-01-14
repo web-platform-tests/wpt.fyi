@@ -4,8 +4,7 @@
 
 REPO_DIR="$(dirname "${BASH_SOURCE[0]}")/.."
 source "${REPO_DIR}/util/logging.sh"
-source "${REPO_DIR}/util/path.sh"
-WPTD_PATH=${WPTD_PATH:-$(absdir ${REPO_DIR})}
+WPTD_PATH=${WPTD_PATH:-$(realpath "${REPO_DIR}")}
 
 usage() {
   USAGE="Usage: deploy.sh [-p] [-r] [-q] [-b] [-h] [app path]
@@ -37,6 +36,7 @@ done
 if [[ "${APP_PATH}" == ""  ]]; then fatal "app path not specified."; fi
 case "${APP_PATH}" in
   "webapp/web" | \
+  "webapp/web/app.staging.yaml" | \
   "results-processor" | \
   "api/query/cache/service" | \
   "api/query/cache/service/app.staging.yaml")

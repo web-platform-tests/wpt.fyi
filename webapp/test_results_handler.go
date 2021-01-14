@@ -82,7 +82,7 @@ func populateHomepageData(r *http.Request) (data homepageData, err error) {
 	if err != nil {
 		return data, err
 	}
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 
 	var pr *int

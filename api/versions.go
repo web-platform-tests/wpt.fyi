@@ -24,7 +24,7 @@ type VersionsHandler struct {
 func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to VersionsHandler on cache
 	// miss.
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	shared.NewCachingHandler(ctx, VersionsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
 }
 

@@ -5,7 +5,6 @@ package webdriver
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tebeka/selenium"
@@ -44,7 +43,7 @@ func testPath(t *testing.T, app AppServer, wd selenium.WebDriver, path, elementN
 		"canvas_complexshapes_arcto_001.htm",
 		"canvas_complexshapes_beziercurveto_001.htm",
 	}
-	err := wd.WaitWithTimeout(resultsLoadedCondition, time.Second*10)
+	err := wd.WaitWithTimeout(resultsLoadedCondition, LongTimeout)
 	assert.Nil(t, err)
 	assertListIsFiltered(t, wd, elementName, paths...)
 }

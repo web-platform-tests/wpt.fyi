@@ -44,6 +44,29 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
+    test('simple case with same URLs', () => {
+      appFixture.searchResults = [{ test: '/foo.html' }];
+      appFixture.metadata = {
+        '/foo.html': [
+          {
+            url: 'github1',
+            product: 'chrome'
+          },
+          {
+            url: 'github1',
+            product: 'edge'
+          }
+        ]
+      };
+      appFixture.path = '/';
+      assert.equal(appFixture.displayedMetadata.length, 2);
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://github1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+      assert.equal(appFixture.displayedMetadata[1].test, '/foo.html');
+      assert.equal(appFixture.displayedMetadata[1].url, 'https://github1');
+      assert.equal(appFixture.displayedMetadata[1].product, 'edge');
+    });
     test('simple case with wildcard', () => {
       appFixture.searchResults = [{ test: '/foo/bar.html' }];
       appFixture.metadata = {
@@ -87,10 +110,16 @@ suite('<wpt-metadata>', () => {
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar/f.html' }];
       appFixture.metadata = {
         '/foo.html': [
-          { url: 'bug1' }
+          {
+            url: 'bug1',
+            product: 'chrome'
+          }
         ],
         '/bar/f.html': [
-          { url: 'bug2' }
+          {
+            url: 'bug2',
+            product: 'chrome'
+          }
         ]
       };
       appFixture.path = '/foo';
@@ -102,17 +131,32 @@ suite('<wpt-metadata>', () => {
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/foo/bar.html' }, { test: '/foo/bar/foo1.html' }, { test: '/bar/foo.html' }];
       appFixture.metadata = {
         '/foo.html': [
-          { url: 'bug1' }
+          {
+            url: 'bug1',
+            product: 'chrome'
+          }
         ],
         '/foo/bar.html': [
-          { url: 'http://bug2' },
-          { url: 'safari1' }
+          {
+            url: 'http://bug2',
+            product: 'safari'
+          },
+          {
+            url: 'safari1',
+            product: 'safari'
+          }
         ],
         '/foo/bar/foo1.html': [
-          { url: 'https://bug3' }
+          {
+            url: 'https://bug3',
+            product: 'chrome'
+          }
         ],
         '/bar/foo.html': [
-          { url: 'bug4' }
+          {
+            url: 'bug4',
+            product: 'chrome'
+          }
         ]
       };
       appFixture.path = '/foo';
@@ -130,14 +174,14 @@ suite('<wpt-metadata>', () => {
       appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar.html' }];
       appFixture.metadata = {
         '/foo.html': [
-          { url: 'bug1' },
-          { url: 'bug1' },
-          { url: 'bug1' }
+          { url: 'bug1', product: 'chrome' },
+          { url: 'bug1', product: 'chrome' },
+          { url: 'bug1', product: 'chrome' }
         ],
         '/bar.html': [
-          { url: '' },
-          { url: 'bug2' },
-          { url: '' }
+          { url: '', product: 'chrome' },
+          { url: 'bug2', product: 'chrome' },
+          { url: '', product: 'chrome' }
         ],
       };
       appFixture.path = '/';
@@ -151,17 +195,17 @@ suite('<wpt-metadata>', () => {
       appFixture.searchResults = [{ test: '/foo/bar/foo1.html' }];
       appFixture.metadata = {
         '/foo.html': [
-          { url: 'bug1' }
+          { url: 'bug1', product: 'chrome' }
         ],
         '/foo/bar.html': [
-          { url: 'bug2' },
-          { url: 'safari1' }
+          { url: 'bug2', product: 'chrome' },
+          { url: 'safari1', product: 'chrome' }
         ],
         '/foo/bar/foo1.html': [
-          { url: 'bug3' }
+          { url: 'bug3', product: 'chrome' }
         ],
         '/bar/foo.html': [
-          { url: 'bug4' }
+          { url: 'bug4', product: 'chrome' }
         ]
       };
       appFixture.path = '/foo';
@@ -193,7 +237,12 @@ suite('<wpt-metadata>', () => {
           {
             url: 'bug1',
             product: 'chrome',
-            results: [{ subtest: 'a' }]
+            results: [{ subtest: 'a' }, { subtest: 'd' }]
+          },
+          {
+            url: 'bug1',
+            product: 'chrome',
+            results: [{ subtest: 'c' }]
           },
           {
             url: 'bug2',
@@ -206,8 +255,10 @@ suite('<wpt-metadata>', () => {
 
       assert.equal(Object.keys(appFixture.metadataMap).length, 1);
       const subtestMap = appFixture.metadataMap['/foo.htmlchrome'];
-      assert.equal(Object.keys(subtestMap).length, 2);
+      assert.equal(Object.keys(subtestMap).length, 4);
       assert.equal(subtestMap['a'], 'https://bug1');
+      assert.equal(subtestMap['c'], 'https://bug1');
+      assert.equal(subtestMap['d'], 'https://bug1');
       assert.equal(subtestMap['b'], 'https://bug2');
     });
     test('complex case for metadataMap', () => {

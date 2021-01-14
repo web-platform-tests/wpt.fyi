@@ -1,6 +1,12 @@
 #!/bin/bash
 
-DOCKER_INSTANCE="${DOCKER_INSTANCE:-wptd-dev-instance}"
+DOCKER_DIR=$(dirname $0)
+DOCKER_IMAGE=${DOCKER_IMAGE:-"webplatformtests/wpt.fyi:latest"}
+DOCKER_INSTANCE=${DOCKER_INSTANCE:-"wptd-dev-instance"}
+WPTD_HOST_WEB_PORT=${WPTD_HOST_WEB_PORT:-"8080"}
+WPTD_HOST_GCD_PORT=${WPTD_HOST_GCD_PORT:-"8001"}
+WPT_PATH=${WPT_PATH:-$(realpath "${DOCKER_DIR}/../../..")}
+WPTD_PATH="${WPT_PATH}/wpt.fyi"
 
 function wptd_chown() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) $1
@@ -10,7 +16,7 @@ function wptd_useradd() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" groupadd -g $(id -g $USER) user || [ $? == 4 ]
   # Add user to audio & video groups to ensure Chrome can use sandbox.
   docker exec -u 0:0 "${DOCKER_INSTANCE}" useradd -u $(id -u $USER) -g $(id -g $USER) -G audio,video user
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers'
+  docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers'
 }
 function wptd_exec() {
   docker exec -u $(id -u $USER) "${DOCKER_INSTANCE}" sh -c "$*"

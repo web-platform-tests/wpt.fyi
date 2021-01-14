@@ -11,15 +11,14 @@ import (
 	"net/http"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-	"google.golang.org/appengine/datastore"
+	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 // interopHandler handles the view of test results broken down by the
 // number of browsers for which the test passes.
 func apiInteropHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	filters, err := shared.ParseTestRunFilterParams(r.URL.Query())
 	if err != nil {
@@ -69,12 +68,12 @@ func loadMostRecentInteropRun(ctx context.Context, filters shared.TestRunFilter)
 		return nil, nil
 	}
 	passRateType := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-	query := datastore.NewQuery(passRateType).Order("-StartTime").Limit(1)
+	query := store.NewQuery(passRateType).Order("-StartTime").Limit(1)
 	for _, key := range keys.AllKeys() {
 		query = query.Filter("TestRunIDs =", key.IntID())
 	}
 	var results []metrics.PassRateMetadataLegacy
-	if _, err = query.GetAll(ctx, &results); err != nil {
+	if _, err = store.GetAll(query, &results); err != nil {
 		return nil, err
 	} else if len(results) < 1 {
 		return nil, nil
@@ -122,12 +121,11 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 	}
 
 	// Iterate until we find interop data where its TestRunIDs match the query.
-	var interop metrics.PassRateMetadataLegacy
 	it := query.Run(store)
-	found := false
 	for {
+		var interop metrics.PassRateMetadataLegacy
 		_, err := it.Next(&interop)
-		if err == datastore.Done {
+		if err == store.Done() {
 			return nil, nil
 		} else if err != nil {
 			return nil, err
@@ -135,13 +133,10 @@ func loadFallbackInteropRun(ctx context.Context, filters shared.TestRunFilter) (
 		if keysChecker != nil && !keysChecker(interop.TestRunIDs) {
 			continue
 		}
-		found = true
+		result = &interop
 		break
 	}
-	if !found {
-		return nil, nil
-	}
-	return &interop, nil
+	return result, nil
 }
 
 func checkKeysAreAligned(shaKeys map[string]shared.KeysByProduct) func(shared.TestRunIDs) bool {

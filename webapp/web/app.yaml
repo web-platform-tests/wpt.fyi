@@ -2,13 +2,20 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-runtime: go111
+runtime: go114
 instance_class: F4_1G
 
 inbound_services:
 - warmup
 
 default_expiration: "1d"
+
+vpc_access_connector:
+  name: projects/wptdashboard/locations/us-central1/connectors/appengine-connector
+
+env_variables:
+  REDISHOST: "10.171.142.203"
+  REDISPORT: "6379"
 
 # Also refer to dispatch.yaml for higher-priority routing rules.
 handlers:
@@ -22,14 +29,6 @@ handlers:
 # Static files:
 - url: /static
   static_dir: webapp/static
-  secure: always
-- url: /service-worker-installer.js
-  static_files: webapp/service-worker-installer.js
-  upload: webapp/service-worker-installer.js
-  secure: always
-- url: /service-worker-uninstaller.js
-  static_files: webapp/service-worker-uninstaller.js
-  upload: webapp/service-worker-uninstaller.js
   secure: always
 - url: /favicon.ico
   static_files: webapp/static/favicon.ico

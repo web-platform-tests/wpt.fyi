@@ -6,15 +6,6 @@
 DOCKER_DIR=$(dirname $0)
 source "${DOCKER_DIR}/../commands.sh"
 source "${DOCKER_DIR}/../logging.sh"
-source "${DOCKER_DIR}/../path.sh"
-WPT_PATH=${WPT_PATH:-$(absdir ${DOCKER_DIR}/../../..)}
-WPTD_PATH="${WPT_PATH}/wpt.fyi"
-
-DOCKER_INSTANCE="${DOCKER_INSTANCE:-wptd-dev-instance}"
-
-WPTD_HOST_WEB_PORT=${WPTD_HOST_WEB_PORT:-"8080"}
-WPTD_HOST_ADMIN_WEB_PORT=${WPTD_HOST_ADMIN_WEB_PORT:-"8000"}
-WPTD_HOST_API_WEB_PORT=${WPTD_HOST_API_WEB_PORT:-"9999"}
 
 function usage() {
   USAGE="USAGE: $(basename ${0}) [-q] [-a] [-d]
@@ -102,9 +93,10 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
       -u $(id -u $USER) \
       --cap-add=SYS_ADMIN \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
-      -p "${WPTD_HOST_ADMIN_WEB_PORT}:8000" \
-      -p "${WPTD_HOST_API_WEB_PORT}:9999" \
-      --name "${DOCKER_INSTANCE}" wptd-dev
+      -p "${WPTD_HOST_GCD_PORT}:8001" \
+      --workdir "/home/user/wpt.fyi" \
+      --name "${DOCKER_INSTANCE}" \
+      ${DOCKER_IMAGE}
   info "Setting up local user"
   wptd_useradd
 
@@ -121,18 +113,21 @@ else
   exit 0
 fi
 
+trap quit INT
+
 info "Updating system/packages..."
 wptd_exec make sys_deps
+
+info "Installing dev dependencies..."
+wptd_exec make dev_appserver_deps
 
 if [[ "${DAEMON}" == "true" ]]; then
   exit 0
 fi
 
-trap quit INT
-
-while true; do
-    info "Hit Ctrl+C to end"
-    read input
-    [[ $input == finish ]] && break
-    bash -c "$input"
-done
+info "Starting Cloud Datastore emulator. Port forwarded to host: ${WPTD_HOST_GCD_PORT}"
+info "=== Hit Ctrl+C to end ==="
+wptd_exec gcloud beta emulators datastore start \
+  --project=wptdashboard-local \
+  --consistency=1.0 \
+  --host-port=localhost:8001 2> /dev/null

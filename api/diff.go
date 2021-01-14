@@ -9,8 +9,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/web-platform-tests/wpt.fyi/shared"
-
-	"google.golang.org/appengine"
 )
 
 // apiDiffHandler takes 2 test-run results JSON blobs and produces JSON in the same format, with only the differences
@@ -36,9 +34,9 @@ func loadDiffRuns(store shared.Datastore, q url.Values) (shared.TestRuns, error)
 		runs, err := runIDs.LoadTestRuns(store)
 		// If all errors are NoSuchEntity, we don't treat it as an error.
 		// If err is nil, the type conversion will fail.
-		if multiError, ok := err.(appengine.MultiError); ok {
+		if multiError, ok := err.(shared.MultiError); ok {
 			all404s := true
-			for _, err := range multiError {
+			for _, err := range multiError.Errors() {
 				if err != shared.ErrNoSuchEntity {
 					all404s = false
 					break
@@ -73,7 +71,7 @@ func loadDiffRuns(store shared.Datastore, q url.Values) (shared.TestRuns, error)
 }
 
 func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	store := shared.NewAppEngineDatastore(ctx, true)
 	q := r.URL.Query()
 
@@ -116,7 +114,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 // handleAPIDiffPost handles POST requests to /api/diff, which allows the caller to produce the diff of an arbitrary
 // run result JSON blob against a historical production run.
 func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	params, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {

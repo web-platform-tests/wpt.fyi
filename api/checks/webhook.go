@@ -26,7 +26,7 @@ func isWPTFYIApp(appID int64) bool {
 //
 // [0]: https://github.com/apps/wpt-fyi and https://github.com/apps/staging-wpt-fyi
 func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	log := shared.GetLogger(ctx)
 	ds := shared.NewAppEngineDatastore(ctx, false)
 

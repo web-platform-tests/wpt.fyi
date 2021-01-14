@@ -133,6 +133,20 @@ func (mr *MockDatastoreMockRecorder) NewIDKey(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIDKey", reflect.TypeOf((*MockDatastore)(nil).NewIDKey), arg0, arg1)
 }
 
+// NewIncompleteKey mocks base method
+func (m *MockDatastore) NewIncompleteKey(arg0 string) shared.Key {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewIncompleteKey", arg0)
+	ret0, _ := ret[0].(shared.Key)
+	return ret0
+}
+
+// NewIncompleteKey indicates an expected call of NewIncompleteKey
+func (mr *MockDatastoreMockRecorder) NewIncompleteKey(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIncompleteKey", reflect.TypeOf((*MockDatastore)(nil).NewIncompleteKey), arg0)
+}
+
 // NewNameKey mocks base method
 func (m *MockDatastore) NewNameKey(arg0, arg1 string) shared.Key {
 	m.ctrl.T.Helper()
@@ -174,6 +188,21 @@ func (m *MockDatastore) Put(arg0 shared.Key, arg1 interface{}) (shared.Key, erro
 func (mr *MockDatastoreMockRecorder) Put(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockDatastore)(nil).Put), arg0, arg1)
+}
+
+// PutMulti mocks base method
+func (m *MockDatastore) PutMulti(arg0 []shared.Key, arg1 interface{}) ([]shared.Key, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutMulti", arg0, arg1)
+	ret0, _ := ret[0].([]shared.Key)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutMulti indicates an expected call of PutMulti
+func (mr *MockDatastoreMockRecorder) PutMulti(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutMulti", reflect.TypeOf((*MockDatastore)(nil).PutMulti), arg0, arg1)
 }
 
 // ReserveID mocks base method

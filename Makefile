@@ -15,7 +15,7 @@
 SHELL := /bin/bash
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-WPT_PATH := $(dir $(WPTD_PATH)/../)
+WPT_PATH := $(dir $(WPTD_PATH)../)
 NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
@@ -44,10 +44,17 @@ python_test: python3 tox
 go_build: git mockgen packr2
 	make webapp_node_modules_prod
 	go generate ./...
+	# Check all packages without producing any output.
 	go build ./...
+	# Build the webapp.
+	go build ./webapp/web
+
+go_build_dev:
+	@ # Disable packr to always serve local node modules and dynamic components.
+	@ # There's thus no need to prune node_modules.
+	go build -tags skippackr ./webapp/web
 
 go_lint: golint go_test_tag_lint
-	@echo "# Linting the go packages..."
 	golint -set_exit_status ./api/...
 	golint -set_exit_status ./shared/...
 	golint -set_exit_status ./util/...
@@ -55,7 +62,7 @@ go_lint: golint go_test_tag_lint
 	golint -set_exit_status ./webdriver/...
 
 go_test_tag_lint:
-	# Printing a list of test files without +build tag, asserting empty...
+	@ # Printing a list of test files without +build tag, asserting empty...
 	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
@@ -79,7 +86,7 @@ go_firefox_test: firefox geckodriver
 go_chrome_test: chrome chromedriver
 	make _go_webdriver_test BROWSER=chrome
 
-puppeteer_chrome_test: chrome dev_appserver_deps webdriver_node_deps
+puppeteer_chrome_test: go_build dev_appserver_deps webdriver_node_deps
 	cd webdriver; npm test
 
 webdriver_node_deps:
@@ -88,12 +95,11 @@ webdriver_node_deps:
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
 _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_deps gcc
-	# This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
-	# The following variables are defined here because we don't know the
-	# path before installing geckodriver as it includes version strings.
+	@ # This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
+	@ # The following variables are defined here because we don't know the
+	@ # path before installing geckodriver as it includes version strings.
 	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
-	cd webdriver; \
-	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large -args \
+	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large ./webdriver -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
 		-chrome_path=$(CHROME_PATH) \
@@ -110,15 +116,15 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 lighthouse: chrome webapp_node_modules_all
 	cd webapp; npx lhci autorun --failOnUploadFailure
 
-dev_appserver_deps: gcloud-app-engine-python gcloud-app-engine-go gcloud-cloud-datastore-emulator
+dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
 chrome: wget
-	# Pinned to Chrome 84 to workaround https://github.com/web-platform-tests/wpt.fyi/issues/2128
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		wget -q https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_84.0.4147.135-1_amd64.deb; \
-		sudo dpkg --install google-chrome-stable_84.0.4147.135-1_amd64.deb 2>/dev/null || true; \
+		ARCHIVE=google-chrome-stable_current_amd64.deb; \
+		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
+		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
 		sudo apt-get install --fix-broken -qqy; \
-		sudo dpkg --install google-chrome-stable_84.0.4147.135-1_amd64.deb 2>/dev/null; \
+		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
 	fi
 
 # https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
@@ -131,17 +137,13 @@ chromedriver: wget unzip chrome
 		sudo chmod +x $(CHROMEDRIVER_PATH); \
 	fi
 
-firefox:
+firefox: bzip2 wget
 	if [[ -z "$$(which firefox)" ]]; then \
-		make firefox_install; \
+		wget -O firefox.tar.bz2 -q "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"; \
+		mkdir -p $$HOME/browsers; \
+		tar -xjf firefox.tar.bz2 -C $$HOME/browsers; \
+		sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH); \
 	fi
-
-firefox_install: firefox_deps bzip2 wget java
-	$(WPTD_PATH)webdriver/install.sh $$HOME/browsers
-	sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH)
-
-firefox_deps:
-	sudo apt-get install -qqy --no-install-suggests $$(apt-cache depends firefox | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
 
 geckodriver: node-wct-local
 
@@ -207,6 +209,12 @@ gpg:
 		sudo apt-get install -qqy --no-install-suggests gnupg; \
 	fi
 
+inotifywait:
+	@ # inotifywait has a different apt-get package name.
+	if [[ "$$(which inotifywait)" == "" ]]; then \
+		sudo apt-get install -qqy --no-install-suggests inotify-tools; \
+	fi
+
 node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
 		curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -; \
@@ -227,7 +235,7 @@ eslint: webapp_node_modules_all
 
 dev_data: FLAGS := -remote_host=staging.wpt.fyi
 dev_data: git
-	go run $(WPTD_PATH)/util/populate_dev_data.go $(FLAGS)
+	go run $(WPTD_PATH)util/populate_dev_data.go $(FLAGS)
 
 gcloud_login: gcloud
 	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
@@ -240,7 +248,7 @@ deploy_staging: git apt-get-jq
 deploy_staging: BRANCH_NAME := $$(git rev-parse --abbrev-ref HEAD)
 deploy_staging: deployment_state var-BRANCH_NAME
 	gcloud config set project wptdashboard-staging
-	if [[ "$(BRANCH_NAME)" == "master" ]]; then \
+	if [[ "$(BRANCH_NAME)" == "main" ]]; then \
 		util/deploy.sh -q -r -p $(APP_PATH); \
 	else \
 		util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \

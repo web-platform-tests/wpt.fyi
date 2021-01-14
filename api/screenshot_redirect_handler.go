@@ -23,7 +23,7 @@ func apiScreenshotRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Screenshot id missing", http.StatusBadRequest)
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	bucket := "wptd-screenshots-staging"
 	if aeAPI.GetHostname() == "wpt.fyi" {

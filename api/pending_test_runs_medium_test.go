@@ -16,12 +16,12 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/appengine/datastore"
 )
 
 func createPendingRun(ctx context.Context, run *shared.PendingTestRun) error {
-	key := datastore.NewIncompleteKey(ctx, "PendingTestRun", nil)
-	key, err := datastore.Put(ctx, key, run)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	key := store.NewIncompleteKey("PendingTestRun")
+	key, err := store.Put(key, run)
 	run.ID = key.IntID()
 	return err
 }
@@ -33,7 +33,7 @@ func TestAPIPendingTestHandler(t *testing.T) {
 	r, err := i.NewRequest("GET", "/api/status", nil)
 	assert.Nil(t, err)
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	now := time.Now().Truncate(time.Minute).In(time.UTC)
 	yesterday := now.Add(time.Hour * -24)

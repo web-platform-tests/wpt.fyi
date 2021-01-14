@@ -26,7 +26,7 @@ func parseParams(r *http.Request) (browser, browserVersion, os, osVersion string
 }
 
 func getHashesHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	browser, browserVersion, os, osVersion := parseParams(r)
@@ -49,7 +49,7 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	if receiver.AuthenticateUploader(aeAPI, r) != receiver.InternalUsername {
 		http.Error(w, "This is a private API.", http.StatusUnauthorized)

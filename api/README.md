@@ -18,6 +18,7 @@ the endpoints can be found in `routes.go`.
  - [/api/manifest](#apimanifest)
  - [/api/search](#apisearch)
  - [/api/metadata](#apimetadata)
+ - [/api/bsf](#apibsf)
 
 Also see [results creation](#results-creation) for endpoints to add new data.
 
@@ -426,7 +427,14 @@ This is an *internal* endpoint used by the results processor.
 
 ### /api/search
 
-Search for test results over some set of test runs.
+Search for test results over some set of test runs. This endpoint accepts POST and GET requests.
+
+- POST requests are forwarded to the searchcache for structured queries, with
+  `run_ids` and `query` fields in the JSON payload; see [search query](./query/README.md#apisearch)
+  documentaton for more information.
+
+- GET requests are unstructured queries with the following parameters:
+
 
 __Parameters__
 
@@ -439,6 +447,7 @@ default.
 __`q`__: (Optional) A query string for search. Only results data for tests that
 contain the `q` value as a substring of the test name will be returned. Defaults
 to the empty string, which will yield all test results for the selected runs.
+NOTE: structured search queries are not supported.
 
 #### Examples
 
@@ -645,3 +654,72 @@ This endpoint returns the URL of a PR that is created in the wpt-metadata repo.
   ]
 }
 ```
+</details>
+
+## Browser Specific Failure
+
+### /api/bsf
+Gets the BSF data of Chrome, Firefox, Safari for the home directory.
+
+The endpoint accepts GET requests.
+
+__Parameters__
+
+__`from`__ : (Optional) RFC3339 timestamp, for which to include BSF data that occured after the given time inclusively.
+
+__`to`__ : (Optional) RFC3339 timestamp, for which to include BSF data that occured before the given time exclusively.
+
+__`experimental`__ : A boolean to return BSF data for experimental or stable runs. Defaults to false.
+
+__JSON Response__
+
+The response has three top-level fields:
+
+`lastUpdateRevision` indicates the latest WPT Revision updated in `data`.
+
+`fields` corresponds to the fields (columns) in the `data` table and has the format of an array of:
+
+- sha, date, [product-version, product-score]+
+
+`data` returns BSF data in chronological order.
+
+<details><summary><b>Example JSON</b></summary>
+
+```json
+{
+   "lastUpdateRevision":"eea0b54014e970a2f94f1c35ec6e18ece76beb76",
+   "fields":[
+      "sha",
+      "date",
+      "chrome-version",
+      "chrome",
+      "firefox-version",
+      "firefox",
+      "safari-version",
+      "safari"
+   ],
+   "data":[
+      [
+         "eea0b54014e970a2f94f1c35ec6e18ece76beb76",
+         "2018-08-07",
+         "70.0.3510.0 dev",
+         "602.0505256721168",
+         "63.0a1",
+         "1617.1788882804883",
+         "12.1",
+         "2900.3438625831423"
+      ],
+      [
+         "203c34855f6871d6e55eaf7b55b50dad563f781f",
+         "2018-08-18",
+         "70.0.3521.2 dev",
+         "605.3869030161061",
+         "63.0a1",
+         "1521.908686731921",
+         "12.1",
+         "2966.686195133767"
+      ]
+   ]
+}
+```
+</details>

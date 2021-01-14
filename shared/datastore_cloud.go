@@ -28,8 +28,25 @@ func (k cloudKey) Kind() string {
 	return k.key.Kind
 }
 
+// NewAppEngineDatastore creates a Datastore implementation, or a Datastore
+// implementation with Memcache in front to cache all TestRun reads if cached
+// is true.
+//
+// Both variants (cached or not) are backed by Cloud Datastore SDK, using
+// Clients initialized at startup in webapp.
+func NewAppEngineDatastore(ctx context.Context, cached bool) Datastore {
+	ds := cloudDatastore{
+		ctx:    ctx,
+		client: Clients.datastore,
+	}
+	if cached {
+		return cachedDatastore{ds, ctx}
+	}
+	return ds
+}
+
 // NewCloudDatastore creates a Datastore implementation that is backed by a
-// standard cloud datastore client (i.e. not running in AppEngine standard).
+// given Cloud Datastore client.
 func NewCloudDatastore(ctx context.Context, client *datastore.Client) Datastore {
 	return cloudDatastore{
 		ctx:    ctx,
@@ -63,6 +80,12 @@ func (d cloudDatastore) NewQuery(typeName string) Query {
 func (d cloudDatastore) NewIDKey(typeName string, id int64) Key {
 	return cloudKey{
 		key: datastore.IDKey(typeName, id, nil),
+	}
+}
+
+func (d cloudDatastore) NewIncompleteKey(typeName string) Key {
+	return cloudKey{
+		key: datastore.IncompleteKey(typeName, nil),
 	}
 }
 
@@ -107,12 +130,38 @@ func (d cloudDatastore) GetMulti(keys []Key, dst interface{}) error {
 	for i := range keys {
 		cast[i] = keys[i].(cloudKey).key
 	}
-	return d.client.GetMulti(d.ctx, cast, dst)
+	err := d.client.GetMulti(d.ctx, cast, dst)
+	if multiError, ok := err.(datastore.MultiError); ok {
+		errors := make([]error, len(multiError))
+		for i, err := range multiError {
+			if err == datastore.ErrNoSuchEntity {
+				errors[i] = ErrNoSuchEntity
+			} else {
+				errors[i] = err
+			}
+		}
+		return NewMultiError(errors, "datastore.GetMulti")
+	}
+	return err
 }
 
 func (d cloudDatastore) Put(key Key, src interface{}) (Key, error) {
 	newkey, err := d.client.Put(d.ctx, key.(cloudKey).key, src)
 	return cloudKey{newkey}, err
+}
+
+func (d cloudDatastore) PutMulti(keys []Key, src interface{}) ([]Key, error) {
+	cast := make([]*datastore.Key, len(keys))
+	for i := range keys {
+		cast[i] = keys[i].(cloudKey).key
+	}
+
+	srcKeys, err := d.client.PutMulti(d.ctx, cast, src)
+	newKeys := make([]Key, len(srcKeys))
+	for i := range srcKeys {
+		newKeys[i] = cloudKey{srcKeys[i]}
+	}
+	return newKeys, err
 }
 
 func (d cloudDatastore) Insert(key Key, src interface{}) error {
@@ -126,7 +175,7 @@ func (d cloudDatastore) Insert(key Key, src interface{}) error {
 		}
 		_, err = txn.Put(key.(cloudKey).key, src)
 		return err
-	}, nil)
+	})
 	return err
 }
 
@@ -140,7 +189,7 @@ func (d cloudDatastore) Update(key Key, dst interface{}, mutator func(obj interf
 		}
 		_, err := txn.Put(key.(cloudKey).key, dst)
 		return err
-	}, nil)
+	})
 	return err
 }
 

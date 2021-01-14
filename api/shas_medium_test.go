@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestApiSHAsHandler(t *testing.T) {
@@ -22,7 +21,7 @@ func TestApiSHAsHandler(t *testing.T) {
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/shas", nil)
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	// No results - empty JSON array, 404
 	var shas []string
@@ -41,13 +40,14 @@ func TestApiSHAsHandler(t *testing.T) {
 			Revision: "abcdef0123",
 		},
 	}
+	store := shared.NewAppEngineDatastore(ctx, false)
 	for _, browser := range browserNames {
 		run.BrowserName = browser
-		datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+		store.Put(store.NewIncompleteKey("TestRun"), &run)
 	}
 	run.FullRevisionHash = strings.Repeat("abcdef0000", 4)
 	run.Revision = run.FullRevisionHash[:10]
-	datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+	store.Put(store.NewIncompleteKey("TestRun"), &run)
 
 	// Aligned
 	shas = nil

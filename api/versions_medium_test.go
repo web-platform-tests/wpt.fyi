@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestApiVersionsHandler(t *testing.T) {
@@ -21,7 +20,7 @@ func TestApiVersionsHandler(t *testing.T) {
 	defer i.Close()
 	r, err := i.NewRequest("GET", "/api/versions", nil)
 	assert.Nil(t, err)
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 
 	// No results - empty JSON array, 404
 	var versions []string
@@ -37,11 +36,12 @@ func TestApiVersionsHandler(t *testing.T) {
 	someVersions := []string{"2", "1.1.1", "1.1", "1.1", "1.0", "1"}
 	run := shared.TestRun{}
 	browserNames := shared.GetDefaultBrowserNames()
+	store := shared.NewAppEngineDatastore(ctx, false)
 	for _, browser := range browserNames {
 		run.BrowserName = browser
 		for _, version := range someVersions {
 			run.BrowserVersion = version
-			datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "TestRun", nil), &run)
+			store.Put(store.NewIncompleteKey("TestRun"), &run)
 		}
 	}
 

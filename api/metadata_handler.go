@@ -29,7 +29,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	logger := shared.GetLogger(ctx)
 	client := aeAPI.GetHTTPClient()
@@ -45,7 +45,7 @@ func apiMetadataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	user, token := shared.GetUserFromCookie(ctx, ds, r)

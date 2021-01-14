@@ -6,9 +6,12 @@ import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
+import '../components/wpt-bsf.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
+import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-pages/iron-pages.js';
+import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
@@ -56,14 +59,18 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         .query-actions paper-button {
           display: inline-block;
         }
+        paper-icon-button {
+          vertical-align: middle;
+          margin-right: 10px;
+          padding: 0px;
+          height: 28px;
+        }
       </style>
 
       <app-location route="{{route}}" url-space-regex="^/(results|interop)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
-      <wpt-header user="[[user]]" is-triage-mode="{{isTriageMode}}"></wpt-header>
-
-      <results-tabs tab="[[page]]" path="[[encodedPath]]" query="[[query]]"></results-tabs>
+      <wpt-header path="[[encodedPath]]" query="[[query]]" user="[[user]]" is-triage-mode="{{isTriageMode}}"></wpt-header>
 
       <section class="search">
         <div class="path">
@@ -109,16 +116,29 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <div class="separator"></div>
 
+      <template is="dom-if" if="[[showBSFGraph]]">
+        <info-banner>
+          <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]"></paper-icon-button>
+          [[bsfBannerMessage]]
+        </info-banner>
+        <iron-collapse opened="[[!isBSFCollapsed]]">
+          <wpt-bsf></wpt-bsf>
+        </iron-collapse>
+      </template>
+
       <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>
           [[resultsTotalsRangeMessage]]
+          <template is="dom-if" if="[[!editable]]">
+            <a href="javascript:window.location.search='';"> (switch to the default product set instead)</a>
+          </template>
           <wpt-permalinks path="[[path]]"
                           path-prefix="/[[page]]/"
                           query-params="[[queryParams]]"
                           test-runs="[[testRuns]]">
           </wpt-permalinks>
           <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-          <paper-button onclick="[[toggleQueryEdit]]" slot="small">Edit</paper-button>
+          <paper-button onclick="[[toggleQueryEdit]]" slot="small" hidden="[[!editable]]">Edit</paper-button>
         </info-banner>
       </template>
       <iron-collapse opened="[[editingQuery]]">
@@ -166,6 +186,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       structuredSearch: Object,
       interopLoading: Boolean,
       resultsLoading: Boolean,
+      editable: {
+        type: Boolean,
+        computed: 'computeEditable(queryParams)',
+      },
       isLoading: {
         type: Boolean,
         computed: '_computeIsLoading(interopLoading, resultsLoading)',
@@ -173,7 +197,19 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       searchResults: Array,
       resultsTotalsRangeMessage: {
         type: String,
-        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master)',
+        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds)',
+      },
+      bsfBannerMessage: {
+        type: String,
+        computed: 'computeBSFBannerMessage(isBSFCollapsed)',
+      },
+      showBSFGraph: {
+        type: Boolean,
+        computed: 'computeShowBSFGraph(page, queryParams, pathIsRootDir, showBSF)',
+      },
+      isBSFCollapsed: {
+        type: Boolean,
+        computed: 'computeIsBSFCollapsed()',
       },
       isTriageMode: {
         type: Boolean,
@@ -194,6 +230,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleQueryEdit = () => {
       this.editingQuery = !this.editingQuery;
+    };
+    this.handleCollapse = () => {
+      this.isBSFCollapsed = !this.isBSFCollapsed;
+      this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
@@ -292,8 +332,15 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.dismissToast(e);
   }
 
-  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master) {
-    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master);
+  computeEditable(queryParams) {
+    if (queryParams.run_id || 'max-count' in queryParams) {
+      return false;
+    }
+    return true;
+  }
+
+  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds) {
+    const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds);
     if (page === 'results' && searchResults) {
       let subtests = 0, tests = 0;
       for (const r of searchResults) {
@@ -325,6 +372,43 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         `Showing ${testsAndSubtests} from `);
     }
     return msg;
+  }
+
+  computeBSFBannerMessage(isBSFCollapsed) {
+    const actionText = isBSFCollapsed ? 'expand' : 'collapse';
+    return `Browser Specific Failures graph (click the arrow to ${actionText})`;
+  }
+
+  // Currently we only have BSF data for the entirety of the WPT test suite. To avoid
+  // confusing the user, we only display the graph when they are looking at top-level
+  // test results and hide it when in a subdirectory.
+  computeShowBSFGraph(page, queryParams, pathIsRootDir, showBSF) {
+    // Only show on the results page.
+    if (page !== 'results') {
+      return false;
+    }
+
+    // Hide when search is in use or query by run_id/sha.
+    if (queryParams.q || queryParams.run_id || queryParams.sha) {
+      return false;
+    }
+
+    return pathIsRootDir && showBSF;
+  }
+
+  computeIsBSFCollapsed() {
+    const stored = this.getLocalStorageFlag('isBSFCollapsed');
+    if (stored === null) {
+      return false;
+    }
+    return stored;
+  }
+
+  getCollapseIcon(isBSFCollapsed) {
+    if (isBSFCollapsed) {
+      return '/static/expand_more.svg';
+    }
+    return '/static/expand_less.svg';
   }
 }
 customElements.define(WPTApp.is, WPTApp);

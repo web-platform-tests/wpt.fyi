@@ -6,7 +6,6 @@
 
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
-import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 /**
  * QueryBuilder contains a helper method for building a query string from
@@ -107,79 +106,6 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
     return result;
   }
 };
-
-class ResultsTabs extends PolymerElement {
-  static get template() {
-    return html`
-    <style>
-      paper-tabs {
-        --paper-tabs-selection-bar-color: var(--paper-blue-500);
-      }
-      paper-tab {
-        display: block;
-        --paper-tab-ink: var(--paper-blue-300);
-      }
-      paper-tab a {
-        display: block;
-        width: 100%;
-        height: 100%;
-        text-align: center;
-        text-decoration: none;
-        color: var(--paper-blue-500);
-        font-weight: normal;
-      }
-      paper-tab a:hover {
-        color: var(--paper-blue-700);
-      }
-      paper-tab.iron-selected a {
-        color: var(--paper-blue-700);
-        font-weight: bold;
-      }
-    </style>
-    <paper-tabs selected="[[selected]]">
-      <paper-tab>
-        <a href="/results[[path]]?[[query]]">
-          <h2>Test Results</h2>
-        </a>
-      </paper-tab>
-      <paper-tab>
-        <a href="/interop[[path]]?[[query]]">
-          <h2>Interoperability</h2>
-        </a>
-      </paper-tab>
-    </paper-tabs>
-`;
-  }
-
-  static get is() {
-    return 'results-tabs';
-  }
-
-  static get properties() {
-    return {
-      tab: String,
-      selected: {
-        type: Number,
-        computed: 'computeSelectedTab(tab)',
-        value: 0,
-      },
-      path: {
-        type: String,
-        value: '',
-      },
-      query: {
-        type: String,
-        value: '',
-      }
-    };
-  }
-
-  computeSelectedTab(tab) {
-    return tab === 'interop' ? 1 : 0;
-  }
-}
-
-window.customElements.define(ResultsTabs.is, ResultsTabs);
 
 export { QueryBuilder };
 

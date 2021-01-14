@@ -11,7 +11,7 @@ notifications:
 
 branches:
   only:
-    - master
+    - main
 
 services:
   - docker
@@ -33,10 +33,10 @@ env:
 stages:
   - name: deploy PR
     if: type = pull_request
-  - name: deploy master
-    if: (type = push) AND (branch = master)
+  - name: deploy main
+    if: (type = push) AND (branch = main)
   - name: clean up versions
-    if: (type = push) AND (branch = master)
+    if: (type = push) AND (branch = main)
 
 jobs:
   allow_failures:
@@ -51,20 +51,20 @@ jobs:
         - MAKE_TEST_TARGET=puppeteer_chrome_test
     - env:
         - MAKE_TEST_TARGET=lighthouse
-      # Only run Lighthouse CI on master (against staging).
-      if: (type = push) AND (branch = master)
+      # Only run Lighthouse CI on main (against staging).
+      if: (type = push) AND (branch = main)
 
     - stage: deploy PR
       env:
-      - DEPLOY_PR_STAGING_TARGET=webapp/web
+      - DEPLOY_PR_STAGING_TARGET=webapp/web/app.staging.yaml
     - env:
       - DEPLOY_PR_STAGING_TARGET=results-processor
     - env:
       - DEPLOY_PR_STAGING_TARGET=api/query/cache/service/app.staging.yaml
 
-    - stage: deploy master
+    - stage: deploy main
       env:
-      - DEPLOY_STAGING_TARGET=webapp/web
+      - DEPLOY_STAGING_TARGET=webapp/web/app.staging.yaml
       - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
       - MAKE_TEST_FLAGS="STAGING=true"
     - env:
@@ -78,12 +78,12 @@ jobs:
       - MAKE_TEST_TARGET=cleanup_staging_versions
 
 before_install: |
-  export DOCKER_IMAGE=wptd-dev
-  export DOCKER_INSTANCE=wptd-dev-${RANDOM}
+  export DOCKER_IMAGE="webplatformtests/wpt.fyi:latest"
+  export DOCKER_INSTANCE="wptd-dev-${RANDOM}"
   # Decrypt client-secret.json for Appengine.
   openssl aes-256-cbc -K $encrypted_2fd045226a67_key -iv $encrypted_2fd045226a67_iv -in client-secret.json.enc -out client-secret.json -d
 
-  travis_retry docker build -t "${DOCKER_IMAGE}" .
+  travis_retry docker pull "${DOCKER_IMAGE}"
   travis_retry bash ./util/docker-dev/run.sh -d -q
 
 install: |
@@ -100,7 +100,7 @@ script:
     elif [[ -n "${DEPLOY_PR_STAGING_TARGET}" ]]; then
       bash util/travis-deploy-staging.sh "${DEPLOY_PR_STAGING_TARGET}";
     else
-      echo "Not on master or a PR. Skipping deployment.";
+      echo "Not on main or a PR. Skipping deployment.";
     fi
   - |
     # Run tests

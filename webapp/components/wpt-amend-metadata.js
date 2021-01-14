@@ -5,6 +5,7 @@
  */
 
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
+import '../node_modules/@polymer/paper-dialog-scrollable/paper-dialog-scrollable.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -154,21 +155,23 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       </style>
       <paper-dialog id="dialog">
         <h3>Triage Failing Tests</h3>
-        <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
-          <div class="metadata-entry">
-            <img class="browser" src="[[displayLogo(node.product)]]">
-            : 
-            <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
-          </div>
-          <template is="dom-repeat" items="[[node.tests]]" as="test">
-            <li>
-              <div class="list"> [[test]] </div>
-              <template is="dom-if" if="[[hasSearchURL(node.product)]]">
-                <a href="[[getSearchURL(test, node.product)]]" target="_blank"> [Search for bug] </a>
-              </template>
-            </li>
+        <paper-dialog-scrollable>
+          <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
+            <div class="metadata-entry">
+              <img class="browser" src="[[displayLogo(node.product)]]">
+              :
+              <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
+            </div>
+            <template is="dom-repeat" items="[[node.tests]]" as="test">
+              <li>
+                <div class="list"> [[test]] </div>
+                <template is="dom-if" if="[[hasSearchURL(node.product)]]">
+                  <a href="[[getSearchURL(node.product, test)]]" target="_blank"> [Search for bug] </a>
+                </template>
+              </li>
+            </template>
           </template>
-        </template>
+        </paper-dialog-scrollable>
         <div class="buttons">
           <paper-button onclick="[[close]]">Dismiss</paper-button>
           <paper-button onclick="[[triage]]" dialog-confirm>Triage</paper-button>

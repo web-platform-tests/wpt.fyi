@@ -5,33 +5,35 @@
 package shared
 
 import (
+	"context"
 	"sync"
 	"time"
 )
 
-// aeTestRunCacheTTL is the expiration for each test run in Memcache.
-var aeTestRunCacheTTL = 48 * time.Hour
+// testRunCacheTTL is the expiration for each test run in Memcache.
+var testRunCacheTTL = 48 * time.Hour
 
-type aeCachedDatastore struct {
-	aeDatastore
+type cachedDatastore struct {
+	Datastore
+	ctx context.Context
 }
 
-func (d aeCachedDatastore) Get(k Key, dst interface{}) error {
+func (d cachedDatastore) Get(k Key, dst interface{}) error {
 	if k.Kind() != "TestRun" {
-		return d.aeDatastore.Get(k, dst)
+		return d.Datastore.Get(k, dst)
 	}
 
 	cs := NewObjectCachedStore(
 		d.ctx,
-		NewJSONObjectCache(d.ctx, NewMemcacheReadWritable(d.ctx, aeTestRunCacheTTL)),
-		aeTestRunObjectStore{d})
+		NewJSONObjectCache(d.ctx, NewMemcacheReadWritable(d.ctx, testRunCacheTTL)),
+		testRunObjectStore{d})
 	return cs.Get(getTestRunMemcacheKey(k.IntID()), k.IntID(), dst)
 }
 
-func (d aeCachedDatastore) GetMulti(keys []Key, dst interface{}) error {
+func (d cachedDatastore) GetMulti(keys []Key, dst interface{}) error {
 	for _, key := range keys {
 		if key.Kind() != "TestRun" {
-			return d.aeDatastore.GetMulti(keys, dst)
+			return d.Datastore.GetMulti(keys, dst)
 		}
 	}
 
@@ -51,21 +53,21 @@ func (d aeCachedDatastore) GetMulti(keys []Key, dst interface{}) error {
 	return err
 }
 
-// aeTestRunObjectStore is an adapter from Datastore to ObjectStore.
-type aeTestRunObjectStore struct {
-	aeCachedDatastore
+// testRunObjectStore is an adapter from Datastore to ObjectStore.
+type testRunObjectStore struct {
+	cachedDatastore
 }
 
-func (d aeTestRunObjectStore) Get(id, dst interface{}) error {
+func (d testRunObjectStore) Get(id, dst interface{}) error {
 	intID, ok := id.(int64)
 	if !ok {
 		return errDatastoreObjectStoreExpectedInt64
 	}
 	key := d.NewIDKey("TestRun", intID)
-	err := d.aeDatastore.Get(key, dst)
+	err := d.Datastore.Get(key, dst)
 	if err == nil {
 		run := dst.(*TestRun)
 		run.ID = key.IntID()
 	}
-	return d.aeDatastore.Get(key, dst)
+	return d.Datastore.Get(key, dst)
 }

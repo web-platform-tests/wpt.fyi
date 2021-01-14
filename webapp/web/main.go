@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/samthor/nicehttp"
+
 	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
@@ -12,7 +14,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/webapp"
-	"google.golang.org/appengine"
 )
 
 func init() {
@@ -29,8 +30,16 @@ func init() {
 
 func main() {
 	if err := shared.Clients.Init(context.Background()); err != nil {
+		shared.Clients.Close()
 		panic(err)
 	}
 	defer shared.Clients.Close()
-	appengine.Main()
+
+	// This behaves differently in prod and locally:
+	// * Prod: the provided app.yaml is not used; it simply starts the
+	//   DefaultServerMux on $PORT (defaults to 8080).
+	// * Local: in addition to the prod behaviour, it also starts some
+	//   static handlers according to app.yaml, which effectively replaces
+	//   dev_appserver.py.
+	nicehttp.Serve("webapp/web/app.staging.yaml", nil)
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestLoadRunsToCompare_master(t *testing.T) {
@@ -31,12 +30,13 @@ func TestLoadRunsToCompare_master(t *testing.T) {
 		Labels: []string{"master"},
 	}
 	yesterday := time.Now().AddDate(0, 0, -1)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	for i := 0; i < 2; i++ {
 		testRun.FullRevisionHash = strings.Repeat(strconv.Itoa(i), 40)
 		testRun.Revision = testRun.FullRevisionHash[:10]
 		testRun.TimeStart = yesterday.Add(time.Duration(i) * time.Hour)
-		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-		key, _ = datastore.Put(ctx, key, &testRun)
+		key := store.NewIncompleteKey("TestRun")
+		key, _ = store.Put(key, &testRun)
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")
@@ -60,6 +60,7 @@ func TestLoadRunsToCompare_pr_base_first(t *testing.T) {
 
 	labelsForRuns := [][]string{{"pr_base"}, {"pr_head"}}
 	yesterday := time.Now().AddDate(0, 0, -1)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	for i := 0; i < 2; i++ {
 		testRun := shared.TestRun{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -72,8 +73,8 @@ func TestLoadRunsToCompare_pr_base_first(t *testing.T) {
 			TimeStart: yesterday.Add(time.Duration(i) * time.Hour),
 			Labels:    labelsForRuns[i],
 		}
-		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-		key, _ = datastore.Put(ctx, key, &testRun)
+		key := store.NewIncompleteKey("TestRun")
+		key, _ = store.Put(key, &testRun)
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")
@@ -97,6 +98,7 @@ func TestLoadRunsToCompare_pr_head_first(t *testing.T) {
 
 	labelsForRuns := [][]string{{"pr_head"}, {"pr_base"}}
 	yesterday := time.Now().AddDate(0, 0, -1)
+	store := shared.NewAppEngineDatastore(ctx, false)
 	for i := 0; i < 2; i++ {
 		testRun := shared.TestRun{
 			ProductAtRevision: shared.ProductAtRevision{
@@ -109,8 +111,8 @@ func TestLoadRunsToCompare_pr_head_first(t *testing.T) {
 			TimeStart: yesterday.Add(time.Duration(i) * time.Hour),
 			Labels:    labelsForRuns[i],
 		}
-		key := datastore.NewIncompleteKey(ctx, "TestRun", nil)
-		key, _ = datastore.Put(ctx, key, &testRun)
+		key := store.NewIncompleteKey("TestRun")
+		key, _ = store.Put(key, &testRun)
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")

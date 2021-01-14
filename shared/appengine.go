@@ -9,6 +9,7 @@ package shared
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,13 +17,25 @@ import (
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	"cloud.google.com/go/datastore"
+	gclog "cloud.google.com/go/logging"
+	"github.com/gomodule/redigo/redis"
 	"github.com/google/go-github/v32/github"
 	apps "google.golang.org/api/appengine/v1"
+	"google.golang.org/api/option"
+	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 type clientsImpl struct {
-	cloudtasks *cloudtasks.Client
+	cloudtasks   *cloudtasks.Client
+	datastore    *datastore.Client
+	gclogClient  *gclog.Client
+	childLogger  *gclog.Logger
+	parentLogger *gclog.Logger
+	redisPool    *redis.Pool
 }
 
 // Clients is a singleton containing heavyweight (e.g. with connection pools)
@@ -34,23 +47,101 @@ var Clients clientsImpl
 // Init initializes all clients in Clients. If an error is encountered, it
 // returns immediately without trying to initialize the remaining clients.
 func (c *clientsImpl) Init(ctx context.Context) (err error) {
-	if runtimeIdentity.AppID == "" {
-		// When running in dev_appserver, do not create real clients.
-		return nil
+	if isDevAppserver() {
+		// Use empty project ID to pick up emulator settings.
+		c.datastore, err = datastore.NewClient(ctx, "")
+		// When running in dev_appserver, do not create other real clients.
+		return err
 	}
-	c.cloudtasks, err = cloudtasks.NewClient(ctx)
-	return err
+
+	keepAlive := option.WithGRPCDialOption(grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time: 5 * time.Minute,
+	}))
+
+	// Cloud Tasks
+	// Use keepalive to work around https://github.com/googleapis/google-cloud-go/issues/3205
+	c.cloudtasks, err = cloudtasks.NewClient(ctx, keepAlive)
+	if err != nil {
+		return err
+	}
+
+	// Cloud Datastore
+	c.datastore, err = datastore.NewClient(ctx, runtimeIdentity.AppID)
+	if err != nil {
+		return err
+	}
+
+	// Cloud Logging
+	c.gclogClient, err = gclog.NewClient(ctx, runtimeIdentity.AppID)
+	if err != nil {
+		return err
+	}
+	monitoredResource := mrpb.MonitoredResource{
+		Type: "gae_app",
+		Labels: map[string]string{
+			"project_id": runtimeIdentity.AppID,
+			"module_id":  runtimeIdentity.Service,
+			"version_id": runtimeIdentity.Version,
+		},
+	}
+	// Reuse loggers to prevent leaking goroutines: https://github.com/googleapis/google-cloud-go/issues/720#issuecomment-346199870
+	c.childLogger = c.gclogClient.Logger("request_log_entries", gclog.CommonResource(&monitoredResource))
+	c.parentLogger = c.gclogClient.Logger("request_log", gclog.CommonResource(&monitoredResource))
+
+	// Cloud Memorystore (Redis)
+	// Based on https://cloud.google.com/appengine/docs/standard/go/using-memorystore#importing_and_creating_the_client
+	redisHost := os.Getenv("REDISHOST")
+	redisPort := os.Getenv("REDISPORT")
+	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+	const maxConnections = 10
+	Clients.redisPool = redis.NewPool(func() (redis.Conn, error) {
+		return redis.Dial("tcp", redisAddr)
+	}, maxConnections)
+
+	return nil
 }
 
 // Close closes all clients in Clients. It must be called once and only once
 // before the server exits. Do not use AppEngineAPI afterwards.
-func (c *clientsImpl) Close() (err error) {
+func (c *clientsImpl) Close() {
+	log.Println("Closing clients")
+	// In the code below, we set clients to nil before closing them. This would
+	// cause a panic if we use a client that's being closed, which should never
+	// happen but we are not sure how exactly App Engine manages instances.
+
 	if c.cloudtasks != nil {
-		err = c.cloudtasks.Close()
+		client := c.cloudtasks
 		c.cloudtasks = nil
+		if err := client.Close(); err != nil {
+			log.Printf("Error closing cloudtasks: %s", err.Error())
+		}
 	}
 
-	return err
+	if c.datastore != nil {
+		client := c.datastore
+		c.datastore = nil
+		if err := client.Close(); err != nil {
+			log.Printf("Error closing datastore: %s", err.Error())
+		}
+	}
+
+	if c.gclogClient != nil {
+		client := c.gclogClient
+		c.gclogClient = nil
+		c.childLogger = nil
+		c.parentLogger = nil
+		if err := client.Close(); err != nil {
+			log.Printf("Error closing gclog client: %s", err.Error())
+		}
+	}
+
+	if c.redisPool != nil {
+		client := c.redisPool
+		c.redisPool = nil
+		if err := client.Close(); err != nil {
+			log.Printf("Error closing redis client: %s", err.Error())
+		}
+	}
 }
 
 // AppEngineAPI is an abstraction of some appengine context helper methods.
@@ -143,8 +234,11 @@ func init() {
 	}
 }
 
+func isDevAppserver() bool {
+	return runtimeIdentity.AppID == ""
+}
+
 // NewAppEngineAPI returns an AppEngineAPI for the given context.
-// Note that the context should be created using NewAppEngineContext.
 func NewAppEngineAPI(ctx context.Context) AppEngineAPI {
 	return &appEngineAPIImpl{
 		ctx: ctx,

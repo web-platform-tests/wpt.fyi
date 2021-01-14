@@ -20,7 +20,7 @@ const paginationTokenFeatureFlagName = "paginationTokens"
 // URL Params:
 //     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	log := shared.GetLogger(ctx)
 	store := shared.NewAppEngineDatastore(ctx, true)
 	aeAPI := shared.NewAppEngineAPI(ctx)

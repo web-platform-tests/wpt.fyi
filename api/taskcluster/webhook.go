@@ -201,7 +201,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	secret, err := shared.GetSecret(ds, "github-tc-webhook-secret")
 	if err != nil {

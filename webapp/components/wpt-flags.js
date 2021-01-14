@@ -36,6 +36,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'reftestAnalyzerMockScreenshots',
       'reftestIframes',
       'searchCacheInterop',
+      'showBSF',
       'showTestType',
       'showTestRefURL',
       'structuredQueries',
@@ -57,7 +58,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'paginationTokens',
       'pendingChecks',
       'runsByPRNumber',
-      'serviceWorker',
       'searchcacheDiffs',
     ];
   }
@@ -93,6 +93,18 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
     const props = {};
     makeFeatureProperties(props, wpt.ClientSideFeatures, readOnly, useLocalStorage);
     return props;
+  }
+
+  setLocalStorageFlag(value, feature) {
+    localStorage.setItem(`features.${feature}`, JSON.stringify(value));
+  }
+
+  getLocalStorageFlag(feature) {
+    const stored = localStorage.getItem(`features.${feature}`);
+    if (stored === null) {
+      return null;
+    }
+    return JSON.parse(stored);
   }
 };
 
@@ -257,6 +269,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Enable GitHub OAuth login
       </paper-checkbox>
     </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{showBSF}}">
+        Enable Browser Specific Failures graph
+      </paper-checkbox>
+    </paper-item>
 `;
   }
 
@@ -300,11 +317,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{runsByPRNumber}}">
         Allow /api/runs?pr=[GitHub PR number]
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{serviceWorker}}">
-        Install a service worker to cache all the web components.
       </paper-checkbox>
     </paper-item>
     <paper-item>

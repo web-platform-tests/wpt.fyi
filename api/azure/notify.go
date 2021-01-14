@@ -23,7 +23,7 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := shared.NewAppEngineContext(r)
+	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	azureAPI := NewAPI(ctx)
 	log := shared.GetLogger(ctx)

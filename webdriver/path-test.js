@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-require ('./dev_appserver');
 const {Page} = require('puppeteer');
 const expect = require('chai').expect;
 

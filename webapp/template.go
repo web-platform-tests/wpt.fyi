@@ -33,9 +33,8 @@ func init() {
 }
 
 type templateData struct {
-	Data                interface{}
-	EnableServiceWorker bool
-	User                *shared.User
+	Data interface{}
+	User *shared.User
 }
 
 // RenderTemplate renders an HTML template to a response. The provided data
@@ -48,10 +47,9 @@ type templateData struct {
 func RenderTemplate(w http.ResponseWriter, r *http.Request, name string, data interface{}) {
 	tdata := templateData{Data: data}
 	if r != nil {
-		ctx := shared.NewAppEngineContext(r)
+		ctx := r.Context()
 		ds := shared.NewAppEngineDatastore(ctx, false)
 		tdata.User, _ = shared.GetUserFromCookie(ctx, ds, r)
-		tdata.EnableServiceWorker = shared.IsFeatureEnabled(ds, "serviceworker")
 	}
 	if err := templates.ExecuteTemplate(w, name, tdata); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

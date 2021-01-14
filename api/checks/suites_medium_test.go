@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
-	"google.golang.org/appengine/datastore"
 )
 
 func TestGetOrCreateCheckSuite(t *testing.T) {
@@ -30,6 +29,7 @@ func TestGetOrCreateCheckSuite(t *testing.T) {
 	assert.NotNil(t, suite2)
 	assert.Equal(t, *suite, *suite2)
 	suites := []shared.CheckSuite{}
-	datastore.NewQuery("CheckSuite").GetAll(ctx, &suites)
+	store := shared.NewAppEngineDatastore(ctx, false)
+	store.GetAll(store.NewQuery("CheckSuite"), &suites)
 	assert.Len(t, suites, 1)
 }

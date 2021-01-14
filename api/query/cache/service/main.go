@@ -14,7 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/datastore"
 	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
@@ -23,12 +22,11 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/poll"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"google.golang.org/api/option"
-	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
 var (
 	port                   = flag.Int("port", 8080, "Port to listen on")
-	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, if different from ID detected from metadata service")
+	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, used for connecting to Datastore")
 	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
@@ -46,8 +44,6 @@ var (
 	idx index.Index
 	mon monitor.Monitor
 )
-
-var monitoredResource mrpb.MonitoredResource
 
 func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Alive"))
@@ -106,28 +102,18 @@ func init() {
 
 	maxRunsPerRequestMsg = fmt.Sprintf("Too many runs specified; maximum is %d.", *maxRunsPerRequest)
 
-	autoProjectID, err := metadata.ProjectID()
-	if err != nil {
-		logrus.Warningf("Failed to get project ID from metadata service")
+	autoProjectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if autoProjectID == "" {
+		logrus.Warningf("Failed to get project ID from environment")
 	} else {
 		if *projectID == "" {
-			logrus.Infof(`Using project ID from metadata service: %s`, autoProjectID)
+			logrus.Infof("Using project ID from environment: %s", autoProjectID)
 			*projectID = autoProjectID
 		} else if *projectID != autoProjectID {
-			logrus.Warningf(`Using project ID from flag: "%s" even though metadata service reports project ID of "%s"`, *projectID, autoProjectID)
+			logrus.Warningf("Using project ID from flag: %s, even though environment reports project ID: %s", *projectID, autoProjectID)
 		} else {
-			logrus.Infof(`Using project ID: %s`, *projectID)
+			logrus.Infof("Using project ID: %s", *projectID)
 		}
-	}
-
-	monitoredResource = mrpb.MonitoredResource{
-		Type: "gae_app",
-		Labels: map[string]string{
-			"project_id": *projectID,
-			// https://cloud.google.com/appengine/docs/flexible/go/migrating#modules
-			"module_id":  os.Getenv("GAE_SERVICE"),
-			"version_id": os.Getenv("GAE_VERSION"),
-		},
 	}
 }
 
@@ -158,12 +144,19 @@ func main() {
 	var netClient = &http.Client{
 		Timeout: time.Second * 5,
 	}
+
+	// Initializes clients.
+	if err = shared.Clients.Init(context.Background()); err != nil {
+		logrus.Fatalf("Failed to initialize Google Cloud clients: %v", err)
+	}
+	defer shared.Clients.Close()
+
 	// Polls Metadata update every 10 minutes.
 	go poll.KeepMetadataUpdated(netClient, logger, time.Minute*10)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
-	http.HandleFunc("/api/search/cache", shared.HandleWithGoogleCloudLogging(searchHandler, *projectID, &monitoredResource))
+	http.HandleFunc("/api/search/cache", shared.HandleWithLogging(searchHandler))
 	logrus.Infof("Listening on port %d", *port)
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }

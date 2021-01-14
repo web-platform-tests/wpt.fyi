@@ -9,27 +9,26 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/remote_api"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 var (
-	localHost          = flag.String("local_host", "localhost:8080", "local dev_appserver.py webapp host")
-	localRemoteAPIHost = flag.String("local_remote_api_host", "localhost:9999", "local dev_appserver.py host for the remote API")
-	remoteHost         = flag.String("remote_host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
-	numRemoteRuns      = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
-	staticRuns         = flag.Bool("static_runs", false, "Include runs in the /static dir")
-	remoteRuns         = flag.Bool("remote_runs", true, "Include copies of remote runs")
-	seenTestRunIDs     = mapset.NewSet()
-	labels             = flag.String("labels", "", "Labels for which to fetch runs")
+	project        = flag.String("project", "", "project ID used to connect to Datastore")
+	datastoreHost  = flag.String("datastore_host", "", "Cloud Datastore emulator host")
+	localHost      = flag.String("local_host", "localhost:8080", "local dev_appserver.py webapp host")
+	remoteHost     = flag.String("remote_host", "wpt.fyi", "wpt.fyi host to fetch prod runs from")
+	numRemoteRuns  = flag.Int("num_remote_runs", 10, "number of remote runs to copy from host to local environment")
+	staticRuns     = flag.Bool("static_runs", false, "Include runs in the /static dir")
+	remoteRuns     = flag.Bool("remote_runs", true, "Include copies of remote runs")
+	seenTestRunIDs = mapset.NewSet()
+	labels         = flag.String("labels", "", "Labels for which to fetch runs")
 )
 
 // populate_dev_data.go populates a local running webapp instance with some
@@ -41,12 +40,18 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 
-	ctx, err := getRemoteAPIContext()
-	if err != nil {
-		log.Fatal(err)
+	if *project != "" {
+		os.Setenv("DATASTORE_PROJECT_ID", *project)
+	}
+	if *datastoreHost != "" {
+		os.Setenv("DATASTORE_EMULATOR_HOST", *datastoreHost)
 	}
 
-	log.Printf("Adding dev data to host %s...", *localRemoteAPIHost)
+	ctx := context.Background()
+	shared.Clients.Init(ctx)
+	defer shared.Clients.Close()
+
+	log.Printf("Adding dev data to local emulator...")
 
 	emptySecretToken := &shared.Token{}
 	enabledFlag := &shared.Flag{Enabled: true}
@@ -138,35 +143,36 @@ func main() {
 		metrics.PassRateMetadata{})
 
 	log.Print("Adding local (empty) secrets...")
-	addSecretToken(ctx, "upload-token", emptySecretToken)
-	addSecretToken(ctx, "github-wpt-fyi-bot-token", emptySecretToken)
-	addSecretToken(ctx, "github-oauth-client-id", emptySecretToken)
-	addSecretToken(ctx, "github-oauth-client-secret", emptySecretToken)
-	addSecretToken(ctx, "secure-cookie-hashkey", &shared.Token{
+	store := shared.NewAppEngineDatastore(ctx, false)
+	addSecretToken(store, "upload-token", emptySecretToken)
+	addSecretToken(store, "github-wpt-fyi-bot-token", emptySecretToken)
+	addSecretToken(store, "github-oauth-client-id", emptySecretToken)
+	addSecretToken(store, "github-oauth-client-secret", emptySecretToken)
+	addSecretToken(store, "secure-cookie-hashkey", &shared.Token{
 		Secret: "a-very-secret-sixty-four-bytes!!a-very-secret-sixty-four-bytes!!",
 	})
-	addSecretToken(ctx, "secure-cookie-blockkey", &shared.Token{
+	addSecretToken(store, "secure-cookie-blockkey", &shared.Token{
 		Secret: "a-very-secret-thirty-two-bytes!!",
 	})
 
 	log.Print("Adding flag defaults...")
-	addFlag(ctx, "queryBuilder", enabledFlag)
-	addFlag(ctx, "diffFilter", enabledFlag)
-	addFlag(ctx, "diffFromAPI", enabledFlag)
-	addFlag(ctx, "experimentalByDefault", enabledFlag)
-	addFlag(ctx, "experimentalAlignedExceptEdge", enabledFlag)
-	addFlag(ctx, "structuredQueries", enabledFlag)
-	addFlag(ctx, "diffRenames", enabledFlag)
-	addFlag(ctx, "paginationTokens", enabledFlag)
+	addFlag(store, "queryBuilder", enabledFlag)
+	addFlag(store, "diffFilter", enabledFlag)
+	addFlag(store, "diffFromAPI", enabledFlag)
+	addFlag(store, "experimentalByDefault", enabledFlag)
+	addFlag(store, "experimentalAlignedExceptEdge", enabledFlag)
+	addFlag(store, "structuredQueries", enabledFlag)
+	addFlag(store, "diffRenames", enabledFlag)
+	addFlag(store, "paginationTokens", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")
-	addData(ctx, "Uploader", []interface{}{
+	addData(store, "Uploader", []interface{}{
 		&shared.Uploader{Username: "test", Password: "123"},
 	})
 
 	if *staticRuns {
 		log.Print("Adding local mock data (static/)...")
-		for i, key := range addData(ctx, testRunKindName, staticTestRunMetadata) {
+		for i, key := range addData(store, testRunKindName, staticTestRunMetadata) {
 			staticTestRuns[i].ID = key.IntID()
 		}
 		stableRuns := shared.TestRuns{}
@@ -183,7 +189,7 @@ func main() {
 		stableInterop.TestRunIDs = stableRuns.GetTestRunIDs()
 		defaultInterop := passRateMetadata
 		defaultInterop.TestRunIDs = defaultRuns.GetTestRunIDs()
-		addData(ctx, passRateMetadataKindName, []interface{}{
+		addData(store, passRateMetadataKindName, []interface{}{
 			&stableInterop,
 			&defaultInterop,
 		})
@@ -203,34 +209,33 @@ func main() {
 			Labels:   extraLabels.Union(mapset.NewSetWith(shared.StableLabel)),
 			MaxCount: numRemoteRuns,
 		}
-		copyProdRuns(ctx, filters)
+		copyProdRuns(store, filters)
 
 		log.Print("Adding latest master TestRun data...")
 		filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.MasterLabel))
-		copyProdRuns(ctx, filters)
+		copyProdRuns(store, filters)
 
 		log.Print("Adding latest experimental TestRun data...")
 		filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.ExperimentalLabel))
-		copyProdRuns(ctx, filters)
+		copyProdRuns(store, filters)
 
 		log.Print("Adding latest beta TestRun data...")
 		filters.Labels = extraLabels.Union(mapset.NewSetWith(shared.BetaLabel))
-		copyProdRuns(ctx, filters)
+		copyProdRuns(store, filters)
 
 		log.Print("Adding latest aligned Edge stable and Chrome/Firefox/Safari experimental data...")
 		filters.Labels = extraLabels.Union(mapset.NewSet(shared.MasterLabel))
 		filters.Products, _ = shared.ParseProductSpecs("chrome[experimental]", "edge[stable]", "firefox[experimental]", "safari[experimental]")
-		copyProdRuns(ctx, filters)
+		copyProdRuns(store, filters)
 
 		log.Printf("Successfully copied a total of %v distinct TestRuns", seenTestRunIDs.Cardinality())
 
 		log.Print("Adding latest production PendingTestRun...")
-		copyProdPendingRuns(ctx, *numRemoteRuns)
+		copyProdPendingRuns(store, *numRemoteRuns)
 	}
 }
 
-func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
-	store := shared.NewAppEngineDatastore(ctx, false)
+func copyProdRuns(store shared.Datastore, filters shared.TestRunFilter) {
 	q := store.TestRunQuery()
 	for _, aligned := range []bool{false, true} {
 		if aligned {
@@ -250,7 +255,7 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 				latestProductionTestRunMetadata = append(latestProductionTestRunMetadata, &prodTestRuns[i])
 			}
 		}
-		addData(ctx, "TestRun", latestProductionTestRunMetadata)
+		addData(store, "TestRun", latestProductionTestRunMetadata)
 
 		passRateMetadataKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
 		filters.MaxCount = nil
@@ -290,11 +295,11 @@ func copyProdRuns(ctx context.Context, filters shared.TestRunFilter) {
 		for i := range prodPassRateMetadata.TestRunIDs {
 			prodPassRateMetadata.TestRunIDs[i] = localRunCopies[i].ID
 		}
-		addData(ctx, passRateMetadataKindName, []interface{}{&prodPassRateMetadata})
+		addData(store, passRateMetadataKindName, []interface{}{&prodPassRateMetadata})
 	}
 }
 
-func copyProdPendingRuns(ctx context.Context, numRuns int) {
+func copyProdPendingRuns(store shared.Datastore, numRuns int) {
 	pendingRuns, err := FetchPendingRuns(*remoteHost)
 	if err != nil {
 		log.Fatalf("Failed to fetch pending runs: %s", err.Error())
@@ -303,7 +308,7 @@ func copyProdPendingRuns(ctx context.Context, numRuns int) {
 	for i := range pendingRuns {
 		castRuns = append(castRuns, &pendingRuns[i])
 	}
-	addData(ctx, "PendingTestRun", castRuns)
+	addData(store, "PendingTestRun", castRuns)
 }
 
 func labelRuns(runs []shared.TestRun, labels ...string) {
@@ -314,38 +319,33 @@ func labelRuns(runs []shared.TestRun, labels ...string) {
 	}
 }
 
-func addSecretToken(ctx context.Context, id string, data interface{}) {
-	key := datastore.NewKey(ctx, "Token", id, 0, nil)
-	if _, err := datastore.Put(ctx, key, data); err != nil {
+func addSecretToken(store shared.Datastore, id string, data interface{}) {
+	key := store.NewNameKey("Token", id)
+	if _, err := store.Put(key, data); err != nil {
 		log.Fatalf("Failed to add %s secret: %s", id, err.Error())
 	}
 	log.Printf("Added %s secret", id)
 }
 
-func addFlag(ctx context.Context, id string, data interface{}) {
-	key := datastore.NewKey(ctx, "Flag", id, 0, nil)
-	if _, err := datastore.Put(ctx, key, data); err != nil {
+func addFlag(store shared.Datastore, id string, data interface{}) {
+	key := store.NewNameKey("Flag", id)
+	if _, err := store.Put(key, data); err != nil {
 		log.Fatalf("Failed to add %s flag: %s", id, err.Error())
 	}
 	log.Printf("Added %s flag", id)
 }
 
-func addData(ctx context.Context, kindName string, data []interface{}) (keys []*datastore.Key) {
-	keys = make([]*datastore.Key, len(data))
+func addData(store shared.Datastore, kindName string, data []interface{}) (keys []shared.Key) {
+	keys = make([]shared.Key, len(data))
 	for i := range data {
-		keys[i] = datastore.NewIncompleteKey(ctx, kindName, nil)
+		keys[i] = store.NewIncompleteKey(kindName)
 	}
 	var err error
-	if keys, err = datastore.PutMulti(ctx, keys, data); err != nil {
+	if keys, err = store.PutMulti(keys, data); err != nil {
 		log.Fatalf("Failed to add %s entities: %s", kindName, err.Error())
 	}
 	log.Printf("Added %v %s entities", len(data), kindName)
 	return keys
-}
-
-func getRemoteAPIContext() (context.Context, error) {
-	remoteContext, err := remote_api.NewRemoteContext(*localRemoteAPIHost, http.DefaultClient)
-	return remoteContext, err
 }
 
 // FetchInterop fetches the PassRateMetadata for the given sha / labels, using

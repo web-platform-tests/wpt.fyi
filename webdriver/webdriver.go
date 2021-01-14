@@ -6,43 +6,36 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"runtime"
 	"testing"
+	"time"
 
+	"github.com/phayes/freeport"
 	"github.com/tebeka/selenium"
 )
 
+// Flags
 var (
 	debug            = flag.Bool("debug", false, "Turn on debug logging")
 	browser          = flag.String("browser", "firefox", "Which browser to run the tests with")
 	startFrameBuffer = flag.Bool("frame_buffer", frameBufferDefault(), "Whether to use a frame buffer")
 )
 
+const (
+	// LongTimeout is the timeout for waiting the full page to load, with
+	// data coming from Datastore. You may not need this if you only need
+	// to wait for the initial Polymer rendering.
+	LongTimeout = time.Second * 30
+)
+
 func frameBufferDefault() bool {
 	return runtime.GOOS != "darwin"
 }
 
-// pickUnusedPort asks a free ephemeral port from the kernel. This usually
-// works but it cannot prevent race conditions caused by other processes.
-// Use this only when necessary (e.g. if the subprocess doesn't support
-// binding to free ports itself, or if we need to know the port number).
-// https://eklitzke.org/binding-on-port-zero
 func pickUnusedPort() int {
-	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:0")
+	port, err := freeport.GetFreePort()
 	if err != nil {
-		panic(err)
-	}
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	port := l.Addr().(*net.TCPAddr).Port
-	// Closing the socket puts it into TIME_WAIT. Kernel won't reassign the
-	// port until TIME_WAIT times out (default is 2 mins). However, other
-	// processes can still explicitly bind to this port immediately.
-	if err := l.Close(); err != nil {
 		panic(err)
 	}
 	return port
@@ -50,25 +43,7 @@ func pickUnusedPort() int {
 
 type webdriverTest func(t *testing.T, app AppServer, wd selenium.WebDriver)
 
-// runWebdriverTest is a helper for starting a webdriver, and using it for a test.
-func runWebdriverTest(t *testing.T, test webdriverTest) {
-	app, err := NewWebserver()
-	if err != nil {
-		log.Println("Failed to create webserver: " + err.Error())
-		panic(err)
-	}
-	defer app.Close()
-
-	service, wd, err := GetWebDriver()
-	if err != nil {
-		log.Println("Failed to create webdriver: " + err.Error())
-		panic(err)
-	}
-	defer service.Stop()
-	defer wd.Quit()
-
-	test(t, app, wd)
-}
+// Generic helpers for WebDriver
 
 // GetWebDriver starts a WebDriver service (server) and creates a remote
 // (client).
@@ -167,10 +142,50 @@ func FindShadowText(
 	return element.Text()
 }
 
-func extractScriptRawValue(bytes []byte, key string) (value interface{}, err error) {
+// ExtractScriptRawValue extracts the value of a given key from the return
+// value of webdriver.ExecuteScriptRaw (raw bytes).
+func ExtractScriptRawValue(bytes []byte, key string) (value interface{}, err error) {
 	var parsed map[string]interface{}
 	if err = json.Unmarshal(bytes, &parsed); err != nil {
 		return nil, err
 	}
 	return parsed[key], nil
+}
+
+// The following are helpers specific to wpt.fyi.
+
+// runWebdriverTest is a helper for starting both the server and WebDriver for a test.
+func runWebdriverTest(t *testing.T, test webdriverTest) {
+	app, err := NewWebserver()
+	if err != nil {
+		log.Println("Failed to create webserver: " + err.Error())
+		panic(err)
+	}
+	defer app.Close()
+
+	service, wd, err := GetWebDriver()
+	if err != nil {
+		log.Println("Failed to create webdriver: " + err.Error())
+		panic(err)
+	}
+	defer service.Stop()
+	defer wd.Quit()
+
+	test(t, app, wd)
+}
+
+func getTestRunElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
+	e, err := wd.FindElement(selenium.ByCSSSelector, "wpt-app")
+	if err != nil {
+		return nil, err
+	}
+	return FindShadowElements(wd, e, element, "test-run")
+}
+
+func getPathPartElements(wd selenium.WebDriver, element string) ([]selenium.WebElement, error) {
+	e, err := wd.FindElement(selenium.ByTagName, "wpt-app")
+	if err != nil {
+		return nil, err
+	}
+	return FindShadowElements(wd, e, element, "path-part")
 }

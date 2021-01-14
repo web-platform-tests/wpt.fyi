@@ -189,14 +189,10 @@ The `/api/search` endpoint takes an HTTP `POST` method, where the body is of the
 
     {
       "run_ids": [123, 456, ...],
-      "q": {
+      "query": {
         [Structured query]
       }
     }
-
-> NOTE: If, rather than a specific set of runs, the user wishes to query for the latest
-> results for a set of products, the `/api/search` endpoint supports the same query
-> parameters as /api/runs, outlined [in the API docs](../README.md)
 
 ### Structured query objects
 
