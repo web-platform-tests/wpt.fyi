@@ -246,7 +246,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         window.ga('send', {
           hitType: 'event',
           eventCategory: 'bsf',
-          eventAction: 'hide',
+          eventAction: 'visibility change',
           eventLabel: this.path,
           eventValue: this.isBSFCollapsed ? 1 : 0
         });
@@ -254,12 +254,18 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
     };
     this.enterBSF = () => {
+      // The use of isInteracting is a workaround for a known issue,
+      // https://stackoverflow.com/questions/17244996/why-do-the-mouseenter-mouseleave-events-fire-when-entering-leaving-child-element;
+      // when users interact with the BSF chart itself, enterBSF is triggered unexpectedly.
+      // In that case, isInteracting is set to true to avoid resetting bsfStartTime.
       if (this.isInteracting) {
         return;
       }
       this.bsfStartTime = new Date();
     };
     this.exitBSF = () => {
+      // Similarly, when users interact with the BSF chart, isInteracting is set to
+      // true to avoid sending analytics prematurely in exitBSF.
       if (this.isInteracting || !this.bsfStartTime) {
         return;
       }
@@ -278,6 +284,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           eventValue: duration
         });
       }
+      this.bsfStartTime = null;
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
