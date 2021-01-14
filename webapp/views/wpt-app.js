@@ -117,13 +117,15 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <div class="separator"></div>
 
       <template is="dom-if" if="[[showBSFGraph]]">
-        <info-banner>
-          <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]"></paper-icon-button>
-          [[bsfBannerMessage]]
-        </info-banner>
-        <iron-collapse opened="[[!isBSFCollapsed]]">
-          <wpt-bsf></wpt-bsf>
-        </iron-collapse>
+        <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
+          <info-banner>
+            <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]"></paper-icon-button>
+            [[bsfBannerMessage]]
+          </info-banner>
+          <iron-collapse opened="[[!isBSFCollapsed]]">
+            <wpt-bsf is-interacting="{{isInteracting}}"></wpt-bsf>
+          </iron-collapse>
+        </div>
       </template>
 
       <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
@@ -214,7 +216,12 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       isTriageMode: {
         type: Boolean,
         value: false,
-      }
+      },
+      bsfStartTime: {
+        type: Object,
+        value: null,
+      },
+      isInteracting: Boolean,
     };
   }
 
@@ -233,7 +240,51 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     };
     this.handleCollapse = () => {
       this.isBSFCollapsed = !this.isBSFCollapsed;
+      // Record hide/open actions on the BSF graph. Currently, we only
+      // show it on the homepage.
+      if ('ga' in window) {
+        window.ga('send', {
+          hitType: 'event',
+          eventCategory: 'bsf',
+          eventAction: 'visibility change',
+          eventLabel: this.path,
+          eventValue: this.isBSFCollapsed ? 1 : 0
+        });
+      }
       this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
+    };
+    this.enterBSF = () => {
+      // The use of isInteracting is a workaround for a known issue,
+      // https://stackoverflow.com/questions/17244996/why-do-the-mouseenter-mouseleave-events-fire-when-entering-leaving-child-element;
+      // when users interact with the BSF chart itself, enterBSF is triggered unexpectedly.
+      // In that case, isInteracting is set to true to avoid resetting bsfStartTime.
+      if (this.isInteracting) {
+        return;
+      }
+      this.bsfStartTime = new Date();
+    };
+    this.exitBSF = () => {
+      // Similarly, when users interact with the BSF chart, isInteracting is set to
+      // true to avoid sending analytics prematurely in exitBSF.
+      if (this.isInteracting || !this.bsfStartTime) {
+        return;
+      }
+      const diff = new Date().getTime() - this.bsfStartTime.getTime();
+      const duration = Math.round(diff / 1000);
+      if (duration <= 0) {
+        return;
+      }
+
+      if ('ga' in window) {
+        window.ga('send', {
+          hitType: 'event',
+          eventCategory: 'bsf',
+          eventAction: 'hover',
+          eventLabel: this.path,
+          eventValue: duration
+        });
+      }
+      this.bsfStartTime = null;
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);

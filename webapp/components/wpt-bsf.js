@@ -72,7 +72,12 @@ class WPTBSF extends LoadingState(PolymerElement) {
           </div>
           <h5>Click + drag on graph to zoom, right click to un-zoom</h5>
         </div>
-        <google-chart type="line" class="chart" data="[[data]]" options="[[chartOptions]]"></google-chart>
+        <google-chart type="line"
+                      class="chart"
+                      data="[[data]]"
+                      options="[[chartOptions]]"
+                      onmouseenter="[[enterChart]]"
+                      onmouseleave="[[exitChart]]"></google-chart>
       </div>
     `;
   }
@@ -85,6 +90,10 @@ class WPTBSF extends LoadingState(PolymerElement) {
     return {
       data: Array,
       sha: String,
+      isInteracting: {
+        type: Boolean,
+        notify: true,
+      },
       shortSHA: {
         type: String,
         computed: 'computeShortSHA(sha)',
@@ -139,6 +148,12 @@ class WPTBSF extends LoadingState(PolymerElement) {
       }
       this.isExperimental = true;
       this.loadBSFData();
+    };
+    this.enterChart = () => {
+      this.isInteracting = true;
+    };
+    this.exitChart = () => {
+      this.isInteracting = false;
     };
     this.loadBSFData();
   }
