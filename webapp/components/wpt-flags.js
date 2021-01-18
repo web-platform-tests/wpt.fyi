@@ -36,6 +36,8 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'reftestAnalyzerMockScreenshots',
       'reftestIframes',
       'searchCacheInterop',
+      // TODO(kyleju): paper-checkbox is removed for this flag.
+      // This is disable until GitHub issue #2349 is fixed.
       'showBSF',
       'showTestType',
       'showTestRefURL',
@@ -267,11 +269,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{githubLogin}}">
         Enable GitHub OAuth login
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{showBSF}}">
-        Enable Browser Specific Failures graph
       </paper-checkbox>
     </paper-item>
 `;
