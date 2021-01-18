@@ -17,7 +17,7 @@ googleapis-common-protos==1.52.0
 grpcio==1.34.1
 gunicorn==20.0.4
 idna==3.1
-importlib-metadata==3.3.0
+importlib-metadata==3.4.0
 itsdangerous==1.1.0
 Jinja2==2.11.2
 MarkupSafe==1.1.1
