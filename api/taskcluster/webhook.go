@@ -439,15 +439,18 @@ func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) 
 	var runs []*github.CheckRun
 	options := github.ListCheckRunsOptions{
 		ListOptions: github.ListOptions{
-			// 100 is the maximum allowed items per page; see
-			// https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received
-			PerPage: 100,
+			// 100 is the maximum allowed items per page[0], but due to
+			// https://github.com/web-platform-tests/wpt/issues/27243 we
+			// request only 25 at a time.
+			//
+			// [0]: https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received
+			PerPage: 25,
 		},
 	}
 
-	// As a safety-check, we will not do more than 5 iterations (at 100
+	// As a safety-check, we will not do more than 20 iterations (at 25
 	// check runs per page, this gives us a 500 run upper limit).
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 20; i++ {
 		result, response, err := api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, &options)
 		if err != nil {
 			return runs, err
@@ -465,7 +468,7 @@ func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) 
 		// Setup for the next call.
 		options.ListOptions.Page = response.NextPage
 	}
-	return runs, errors.New("More than 5 pages of CheckRuns returned for CheckSuite")
+	return runs, errors.New("More than 500 CheckRuns returned for CheckSuite")
 }
 
 // ArtifactURLs holds the results and screenshot URLs for a Taskcluster run.
