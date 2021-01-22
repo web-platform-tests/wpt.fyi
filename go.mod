@@ -16,7 +16,7 @@ require (
 	github.com/golang/mock v1.4.4
 	github.com/gomodule/redigo v1.8.3
 	github.com/google/go-github/v32 v32.1.0
-	github.com/google/uuid v1.1.5
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/securecookie v1.1.1
