@@ -122,9 +122,11 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
             <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]"></paper-icon-button>
             [[bsfBannerMessage]]
           </info-banner>
-          <iron-collapse opened="[[!isBSFCollapsed]]">
-            <wpt-bsf is-interacting="{{isInteracting}}"></wpt-bsf>
-          </iron-collapse>
+          <template is="dom-if" if="[[!isBSFCollapsed]]">
+            <iron-collapse opened="[[!isBSFCollapsed]]">
+              <wpt-bsf is-interacting="{{isInteracting}}"></wpt-bsf>
+            </iron-collapse>
+          </template>
         </div>
       </template>
 
