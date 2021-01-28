@@ -169,16 +169,22 @@ class WPTReport(object):
         if 'run_info' in chunk:
             conflicts = []
             for key in chunk['run_info']:
+                source = cast(Dict, chunk['run_info'])
+                target = cast(Dict, self._report['run_info'])
+
+                # We clear the target value as part of update_property;
+                # record it here to be used in the conflict report if needed.
+                target_value = target[key] if key in target else ""
+
                 conflict = update_property(
-                    key,
-                    cast(Dict, chunk['run_info']),
-                    cast(Dict, self._report['run_info']),
+                    key, source, target,
                     lambda _1, _2: None,  # Set conflicting fields to None.
                 )
                 # Delay raising exceptions even when conflicts are not ignored,
                 # so that we can set as much metadata as possible.
                 if conflict and key not in IGNORED_CONFLICTS:
-                    conflicts.append(key)
+                    conflicts.append(
+                        "%s: [%s, %s]" % (key, source[key], target_value))
             if conflicts:
                 raise ConflictingDataError(', '.join(conflicts))
 
