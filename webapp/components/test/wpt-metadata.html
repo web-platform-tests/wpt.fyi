@@ -44,6 +44,28 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
+    test('simple case with subfolders', () => {
+      appFixture.searchResults = [{ test: '/abc.html' }, { test: '/ab/foo.html' }];
+      appFixture.metadata = {
+        '/ab/foo.html': [
+          {
+            url: 'bug1',
+            product: 'chrome'
+          }
+        ],
+        '/abc.html': [
+          {
+            url: 'bug2',
+            product: 'chrome'
+          }
+        ]
+      };
+      appFixture.path = '/ab';
+      assert.equal(appFixture.displayedMetadata.length, 1);
+      assert.equal(appFixture.displayedMetadata[0].test, '/ab/foo.html');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+    });
     test('simple case with same URLs', () => {
       appFixture.searchResults = [{ test: '/foo.html' }];
       appFixture.metadata = {

@@ -277,11 +277,12 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
   }
 
   shouldShowMetadata(metadataTestName, path, testResultSet) {
+    let curPath = path;
+    if (this.pathIsASubfolder) {
+      curPath = curPath + '/';
+    }
+
     if (metadataTestName.endsWith('/*')) {
-      let curPath = path;
-      if (this.pathIsASubfolder) {
-        curPath = curPath + '/';
-      }
       const metadataDirname = metadataTestName.substring(0, metadataTestName.length - 1);
       const metadataDirnameWithoutSlash = metadataTestName.substring(0, metadataTestName.length - 2);
       return (
@@ -291,7 +292,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         (this.isParentDir(curPath, metadataDirname) && testResultSet.has(metadataDirnameWithoutSlash))
       );
     }
-    return metadataTestName.startsWith(path) && testResultSet.has(metadataTestName);
+    return metadataTestName.startsWith(curPath) && testResultSet.has(metadataTestName);
   }
 }
 window.customElements.define(WPTMetadata.is, WPTMetadata);
