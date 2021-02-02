@@ -439,6 +439,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     }
 
     // Show icons for passing subtests when triageMode is enabled.
+    // See https://github.com/web-platform-tests/wpt.fyi/issues/2300
     if (!this.hasFailed(status) && !isTriageMode) {
       return false;
     }
