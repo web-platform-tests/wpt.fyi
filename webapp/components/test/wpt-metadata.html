@@ -44,6 +44,28 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
+    test('simple case with subfolders', () => {
+      appFixture.searchResults = [{ test: '/abc.html' }, { test: '/ab/foo.html' }];
+      appFixture.metadata = {
+        '/ab/foo.html': [
+          {
+            url: 'bug1',
+            product: 'chrome'
+          }
+        ],
+        '/abc.html': [
+          {
+            url: 'bug2',
+            product: 'chrome'
+          }
+        ]
+      };
+      appFixture.path = '/ab';
+      assert.equal(appFixture.displayedMetadata.length, 1);
+      assert.equal(appFixture.displayedMetadata[0].test, '/ab/foo.html');
+      assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
+      assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
+    });
     test('simple case with same URLs', () => {
       appFixture.searchResults = [{ test: '/foo.html' }];
       appFixture.metadata = {
@@ -107,9 +129,9 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata.length, 0);
     });
     test('exclude path', () => {
-      appFixture.searchResults = [{ test: '/foo.html' }, { test: '/bar/f.html' }];
+      appFixture.searchResults = [{ test: '/foo/foo1.html' }, { test: '/bar/f.html' }];
       appFixture.metadata = {
-        '/foo.html': [
+        '/foo/foo1.html': [
           {
             url: 'bug1',
             product: 'chrome'
@@ -124,13 +146,13 @@ suite('<wpt-metadata>', () => {
       };
       appFixture.path = '/foo';
       assert.equal(appFixture.displayedMetadata.length, 1);
-      assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo/foo1.html');
       assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
     });
     test('complex case', () => {
-      appFixture.searchResults = [{ test: '/foo.html' }, { test: '/foo/bar.html' }, { test: '/foo/bar/foo1.html' }, { test: '/bar/foo.html' }];
+      appFixture.searchResults = [{ test: '/foo/foo1.html' }, { test: '/foo/bar.html' }, { test: '/foo/bar/foo1.html' }, { test: '/bar/foo.html' }];
       appFixture.metadata = {
-        '/foo.html': [
+        '/foo/foo1.html': [
           {
             url: 'bug1',
             product: 'chrome'
@@ -161,7 +183,7 @@ suite('<wpt-metadata>', () => {
       };
       appFixture.path = '/foo';
       assert.equal(appFixture.displayedMetadata.length, 4);
-      assert.equal(appFixture.displayedMetadata[0].test, '/foo.html');
+      assert.equal(appFixture.displayedMetadata[0].test, '/foo/foo1.html');
       assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[1].test, '/foo/bar.html');
       assert.equal(appFixture.displayedMetadata[1].url, 'http://bug2');
@@ -262,9 +284,9 @@ suite('<wpt-metadata>', () => {
       assert.equal(subtestMap['b'], 'https://bug2');
     });
     test('complex case for metadataMap', () => {
-      appFixture.searchResults = [{ test: '/foo.html' }, { test: '/foo/bar.html' }];
+      appFixture.searchResults = [{ test: '/foo/foo1.html' }, { test: '/foo/bar.html' }];
       appFixture.metadata = {
-        '/foo.html': [
+        '/foo/foo1.html': [
           { url: 'bug1', product: 'chrome', results: [{ subtest: 'a' }, { subtest: 'c' }] },
           { url: 'bug2', product: 'chrome', results: [{ subtest: 'b' }] },
           { url: 'bug3', product: 'chrome', results: [{ status: 'FAIL' }] },
@@ -276,7 +298,7 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/foo';
 
       assert.equal(Object.keys(appFixture.metadataMap).length, 2);
-      const fooSubtestMap = appFixture.metadataMap['/foo.htmlchrome'];
+      const fooSubtestMap = appFixture.metadataMap['/foo/foo1.htmlchrome'];
       assert.equal(Object.keys(fooSubtestMap).length, 4);
       assert.equal(fooSubtestMap['a'], 'https://bug1');
       assert.equal(fooSubtestMap['c'], 'https://bug1');
