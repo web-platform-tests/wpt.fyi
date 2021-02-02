@@ -143,7 +143,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
           <td class$="[[ colorClass(result.status) ]]" onclick="[[handleTriageSelect(index, row.name, result.status)]]" onmouseover="[[handleTriageHover(result.status)]]">
             <code>[[ subtestMessage(result, verbose) ]]</code>
 
-            <template is="dom-if" if="[[shouldDisplayMetadata(index, row.name, metadataMap, result.status)]]">
+            <template is="dom-if" if="[[shouldDisplayMetadata(index, row.name, metadataMap, result.status, isTriageMode)]]">
               <a href="[[ getMetadataUrlForSubtest(index, row.name, metadataMap) ]]" target="_blank">
                 <iron-icon class="bug" icon="bug-report"></iron-icon>
               </a>
@@ -433,12 +433,13 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     this.$.amend.open();
   }
 
-  shouldDisplayMetadata(index, subtestname, metadataMap, status) {
+  shouldDisplayMetadata(index, subtestname, metadataMap, status, isTriageMode) {
     if (!metadataMap) {
       return false;
     }
 
-    if (!this.hasFailed(status)) {
+    // Show icons for passing subtests when triageMode is enabled.
+    if (!this.hasFailed(status) && !isTriageMode) {
       return false;
     }
 
