@@ -168,8 +168,8 @@ class WPTReportTest(unittest.TestCase):
                 },
             }, f)
         with open(tmp_path, 'rb') as f:
-            with self.assertRaisesRegex(ConflictingDataError,
-                                        "product, browser_version"):
+            reg = r"product: \[chrome, firefox\], browser_version: \[70, 59\]"
+            with self.assertRaisesRegex(ConflictingDataError, reg):
                 r.load_json(f)
 
         # Fields without conflict should be preserved.
