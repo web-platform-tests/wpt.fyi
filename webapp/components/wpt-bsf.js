@@ -61,6 +61,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
       </style>
       <div class="bsf">
         <div class="left">
+          <h5>Browser-specific failures are the number of WPT tests which fail in exactly one browser. This graph shows the BSF scores for Chrome, Firefox and Safari over the last two years.</h5>
           <h5>Channel</h5>
           <div class="channel">
             <paper-button class\$="[[stableButtonClass(isExperimental)]]" onclick="[[clickStable]]">Stable</paper-button>
