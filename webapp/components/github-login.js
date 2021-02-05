@@ -48,7 +48,7 @@ class GitHubLogin extends PolymerElement {
     <template is="dom-if" if="[[user]]">
       <div class="logged-in">
         <template is="dom-if" if="[[showTriage]]">
-          <paper-toggle-button checked="{{isTriageMode}}"></paper-toggle-button>
+          <paper-toggle-button checked="{{isTriageMode}}" aria-label="Toggle Triage Mode"></paper-toggle-button>
           Triage Mode
         </template>
         <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>

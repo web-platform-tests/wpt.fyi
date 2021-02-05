@@ -119,7 +119,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <template is="dom-if" if="[[showBSFGraph]]">
         <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
           <info-banner>
-            <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]"></paper-icon-button>
+            <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]" aria-label="Hide BSF graph"></paper-icon-button>
             [[bsfBannerMessage]]
           </info-banner>
           <template is="dom-if" if="[[!isBSFCollapsed]]">
