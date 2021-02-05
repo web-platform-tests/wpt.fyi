@@ -41,7 +41,7 @@ class GitHubLogin extends PolymerElement {
         <iron-icon class="help" icon="icons:help-outline" on-click="openHelpDialog"></iron-icon>
       </template>
       <paper-button class="login-button" raised on-click="handleLogIn">
-        <iron-icon class="github-icon" src="/static/github.svg" alt="GitHub icon"></iron-icon>
+        <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
           Sign in with GitHub
       </paper-button>
     </template>
