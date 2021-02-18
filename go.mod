@@ -21,15 +21,13 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/karrick/godirwalk v1.16.1 // indirect
-	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/rogpeppe/go-internal v1.6.2 // indirect
 	github.com/samthor/nicehttp v1.0.0
 	github.com/sirupsen/logrus v1.8.0
-	github.com/spf13/cobra v1.1.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
-	github.com/taskcluster/taskcluster/v37 v37.5.1
+	github.com/taskcluster/taskcluster/v41 v41.0.2
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
 	golang.org/x/oauth2 v0.0.0-20210216194517-16ff1888fd2e
