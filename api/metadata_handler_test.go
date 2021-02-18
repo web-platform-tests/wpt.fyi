@@ -108,6 +108,30 @@ func TestHandleMetadataTriage_InvalidBody(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
+func TestHandleMetadataTriage_InvalidProduct(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := sharedtest.NewTestContext()
+	w := httptest.NewRecorder()
+
+	body :=
+		`{
+        "/bar/foo.html": [
+            {
+                "product":"foobar",
+                "url":"bugs.bar",
+                "results":[{"status":6}]
+            }
+        ]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
+
+	handleMetadataTriage(ctx, nil, nil, w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
 func TestMetadataHanlder_GET_Success(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
