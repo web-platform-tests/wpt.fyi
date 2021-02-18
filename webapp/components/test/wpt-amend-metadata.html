@@ -81,6 +81,19 @@ suite('wpt-amend-metadata', () => {
 
       assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
     });
+    test('getTriagedMetadataMap(displayedMetadata) for a test-level triage', () => {
+      appFixture.path = '/abc';
+      const displayedMetadata = [
+        { product: '', url: 'foo', tests: ['testA.html'] },
+      ];
+      // When there is no product, we have to remove the product from the
+      // metadata map for calling into /api/metadata/triage.
+      const expected = {
+        'testA.html': [{ url: 'foo' }],
+      };
+
+      assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
+    });
     test('getTriagedMetadataMap(displayedMetadata) with a testfile path', () => {
       appFixture.path = '/abc/foo.html';
       const displayedMetadata = [

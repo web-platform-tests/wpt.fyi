@@ -158,7 +158,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         <paper-dialog-scrollable>
           <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
             <div class="metadata-entry">
-              <img class="browser" src="[[displayLogo(node.product)]]">
+              <img class="browser" src="[[displayMetadataLogo(node.product)]]">
               :
               <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
             </div>
@@ -252,7 +252,11 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           if (!(test in link)) {
             link[test] = [];
           }
-          link[test].push({ 'url': entry.url, 'product': entry.product });
+          const metadata = { 'url': entry.url };
+          if (entry.product !== '') {
+            metadata['product'] = entry.product;
+          }
+          link[test].push(metadata);
         }
       }
     }

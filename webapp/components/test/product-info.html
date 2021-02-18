@@ -42,6 +42,11 @@ suite('ProductInfo', () => {
     expect(productInfo.displayLabels(['foo', 'bar'])).to.equal('foo, bar');
   });
 
+  test('displayMetadataLogo', () => {
+    expect(productInfo.displayMetadataLogo('')).to.equal('/static/wpt_64x64.png');
+    expect(productInfo.displayMetadataLogo('chrome')).to.equal('/static/chrome_64x64.png');
+  });
+
   test('displayLogo', () => {
     expect(productInfo.displayLogo(undefined, undefined)).to.equal(undefined);
     expect(productInfo.displayLogo('browser', undefined)).to.equal('/static/browser_64x64.png');

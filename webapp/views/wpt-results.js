@@ -226,8 +226,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     </template>
                   </template>
                 </td>
-                <td>
+                <td onclick="[[handleTriageSelect(null, node, testRun)]]" onmouseover="[[handleTriageHover(null, node, testRun)]]">
                   <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}"></path-part>
+                  <template is="dom-if" if="[[shouldDisplayMetadata(null, node.path, metadataMap)]]">
+                    <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank">
+                      <iron-icon class="bug" icon="bug-report"></iron-icon>
+                    </a>
+                  </template>
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
@@ -871,6 +876,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   canAmendMetadata(node, index, testRun) {
+    // It is always possible in triage mode to amend metadata for a problem
+    // with a test file itself.
+    if (index === undefined) {
+      return !node.isDir && this.triageMetadataUI && this.isTriageMode;
+    }
+
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
     return (totalTests - passedTests) > 0 && this.triageMetadataUI && this.isTriageMode;
@@ -1044,7 +1055,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         return;
       }
 
-      this.handleSelect(e.target.closest('td'), this.displayedProducts[index].browser_name, node.path, this.$['selected-toast']);
+      const product = index === undefined ? '' : this.displayedProducts[index].browser_name;
+      this.handleSelect(e.target.closest('td'), product, node.path, this.$['selected-toast']);
     };
   }
 
@@ -1065,13 +1077,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       testname = testname + '/*';
     }
 
-    const key = testname + this.displayedProducts[index].browser_name;
+    const browserName = index === undefined ? '' : this.displayedProducts[index].browser_name;
+    const key = testname + browserName;
     if (key in metadataMap) {
       if ('/' in metadataMap[key]) {
         return metadataMap[key]['/'];
       }
 
-      // If a URL link does not exit on a test level, return the first subtest link.
+      // If a URL link does not exist on a test level, return the first subtest link.
       const subtestMap = metadataMap[key];
       return subtestMap[Object.keys(subtestMap)[0]];
     }

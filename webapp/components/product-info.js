@@ -142,6 +142,14 @@ const ProductInfo = (superClass) => class extends superClass {
     return '';
   }
 
+  displayMetadataLogo(productName) {
+    // Special case for metadata; an empty product name maps to the WPT logo.
+    if (productName === '') {
+      productName = 'wpt';
+    }
+    return this.displayLogo(productName);
+  }
+
   displayLogo(name, labels) {
     if (!name) {
       return;
