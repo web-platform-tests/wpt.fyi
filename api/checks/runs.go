@@ -135,7 +135,6 @@ func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summar
 	title := state.Title()
 	opts := github.UpdateCheckRunOptions{
 		Name:       state.Name(),
-		HeadSHA:    &state.HeadSHA,
 		DetailsURL: &detailsURLStr,
 		Status:     &state.Status,
 		Conclusion: state.Conclusion,
