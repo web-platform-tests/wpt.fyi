@@ -42,7 +42,7 @@ class WPTMetadataNode extends ProductInfo(PolymerElement) {
         <iron-icon class="bug" icon="bug-report"></iron-icon>
         <div>
           <a href="[[testHref]]" target="_blank">[[metadataNode.test]]</a> >
-          <img class="browser" src="[[displayLogo(metadataNode.product)]]"> :
+          <img class="browser" src="[[displayMetadataLogo(metadataNode.product)]]"> :
           <a href="[[metadataNode.url]]" target="_blank">[[metadataNode.url]]</a>
           <br />
         </div>
