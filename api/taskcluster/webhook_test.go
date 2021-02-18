@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v33/github"
 	"github.com/stretchr/testify/assert"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	tc "github.com/web-platform-tests/wpt.fyi/api/taskcluster"
@@ -574,8 +574,8 @@ func TestGetCheckSuiteEventInfo_sourceRepo(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := []*github.CheckRun {
-		&github.CheckRun {
+	runs := []*github.CheckRun{
+		&github.CheckRun{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
 			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
@@ -616,7 +616,7 @@ func TestGetCheckSuiteEventInfo_sha(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := []*github.CheckRun {
+	runs := []*github.CheckRun{
 		&github.CheckRun{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
@@ -652,7 +652,7 @@ func TestGetCheckSuiteEventInfo_master(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := []*github.CheckRun {
+	runs := []*github.CheckRun{
 		&github.CheckRun{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
@@ -689,7 +689,7 @@ func TestGetCheckSuiteEventInfo_sender(t *testing.T) {
 	defer mockC.Finish()
 	api := mock_tc.NewMockAPI(mockC)
 
-	runs := []*github.CheckRun {
+	runs := []*github.CheckRun{
 		&github.CheckRun{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
@@ -734,7 +734,7 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 	//	the TaskGroupInfo:
 	//		TaskGroupID is the wpt-decision-tasks's taskID
 	//		Tasks is filled with each check_run's name, taskID, and status.
-	runs := []*github.CheckRun {
+	runs := []*github.CheckRun{
 		&github.CheckRun{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
@@ -749,7 +749,6 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 		},
 	}
 	api.EXPECT().ListCheckRuns(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(runs, nil)
-
 
 	event := github.CheckSuiteEvent{
 		CheckSuite: &github.CheckSuite{

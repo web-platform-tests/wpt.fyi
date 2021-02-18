@@ -20,7 +20,7 @@ import (
 	"cloud.google.com/go/datastore"
 	gclog "cloud.google.com/go/logging"
 	"github.com/gomodule/redigo/redis"
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v33/github"
 	apps "google.golang.org/api/appengine/v1"
 	"google.golang.org/api/option"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"

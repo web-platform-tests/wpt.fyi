@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v33/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -88,8 +88,8 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 	}
 
 	var runs []*github.CheckRun
-	options := github.ListCheckRunsOptions {
-		ListOptions: github.ListOptions {
+	options := github.ListCheckRunsOptions{
+		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page; see
 			// https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received
 			PerPage: 100,
@@ -135,7 +135,6 @@ func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summar
 	title := state.Title()
 	opts := github.UpdateCheckRunOptions{
 		Name:       state.Name(),
-		HeadSHA:    &state.HeadSHA,
 		DetailsURL: &detailsURLStr,
 		Status:     &state.Status,
 		Conclusion: state.Conclusion,
