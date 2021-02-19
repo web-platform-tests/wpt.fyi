@@ -28,6 +28,9 @@ links:
       subtest: Something should happen
       status: FAIL
     - test: c.html
+  - url: https://github-issue.com/1234
+    results:
+    - test: d.html
 `)
 	yaml.Unmarshal(metadataInBytes, &metadata)
 	acutalInBytes, _ := yaml.Marshal(metadata)
