@@ -32,7 +32,7 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	go.opencensus.io v0.22.6 // indirect
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
-	golang.org/x/oauth2 v0.0.0-20210218202405-ba52d332ba99
+	golang.org/x/oauth2 v0.0.0-20210220000619-9bb904979d93
 	golang.org/x/sys v0.0.0-20210217105451-b926d437f341 // indirect
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf // indirect
 	google.golang.org/api v0.40.0
