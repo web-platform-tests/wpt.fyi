@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.14
 
 require (
-	cloud.google.com/go v0.77.0
+	cloud.google.com/go v0.78.0
 	cloud.google.com/go/datastore v1.4.0
 	cloud.google.com/go/logging v1.2.0
 	cloud.google.com/go/storage v1.13.0
@@ -33,10 +33,9 @@ require (
 	go.opencensus.io v0.22.6 // indirect
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
 	golang.org/x/oauth2 v0.0.0-20210220000619-9bb904979d93
-	golang.org/x/sys v0.0.0-20210217105451-b926d437f341 // indirect
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf // indirect
 	google.golang.org/api v0.40.0
-	google.golang.org/genproto v0.0.0-20210217220511-c18582744cc2
+	google.golang.org/genproto v0.0.0-20210222152913-aa3ee6e6a81c
 	google.golang.org/grpc v1.35.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
