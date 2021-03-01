@@ -10,21 +10,21 @@ google-api-core==1.26.0
 google-auth==1.27.0
 google-cloud-core==1.6.0
 google-cloud-datastore==2.1.0
-google-cloud-storage==1.36.0
+google-cloud-storage==1.36.1
 google-crc32c==1.0.0
 google-resumable-media==1.2.0
-googleapis-common-protos==1.52.0
-grpcio==1.35.0
+googleapis-common-protos==1.53.0
+grpcio==1.36.0
 gunicorn==20.0.4
 idna==2.10 # pyup: ignore file # see https://github.com/web-platform-tests/wpt.fyi/issues/2389
-importlib-metadata==3.4.0
+importlib-metadata==3.7.0
 itsdangerous==1.1.0
 Jinja2==2.11.3
 MarkupSafe==1.1.1
 mccabe==0.6.1
 mypy==0.812
 mypy-extensions==0.4.3
-protobuf==3.15.1
+protobuf==3.15.3
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycodestyle==2.6.0
@@ -32,7 +32,7 @@ pycparser==2.20
 pyflakes==2.2.0
 pytz==2021.1
 requests==2.25.1
-rsa==4.7.1
+rsa==4.7.2
 six==1.15.0
 typed-ast==1.4.2
 typing-extensions==3.7.4.3
