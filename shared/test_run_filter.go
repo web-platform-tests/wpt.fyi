@@ -119,23 +119,6 @@ func (filter TestRunFilter) OrExperimentalRuns() TestRunFilter {
 	return filter
 }
 
-// OrAlignedExperimentalRunsExceptEdge returns the current filter, or, if it is a default
-// query, returns a query for the latest experimental runs.
-func (filter TestRunFilter) OrAlignedExperimentalRunsExceptEdge() TestRunFilter {
-	if !filter.IsDefaultQuery() {
-		return filter
-	}
-	aligned := true
-	filter.Aligned = &aligned
-	filter.Products = GetDefaultProducts()
-	for i := range filter.Products {
-		if filter.Products[i].BrowserName != "edge" {
-			filter.Products[i].Labels = mapset.NewSetWith("experimental")
-		}
-	}
-	return filter
-}
-
 // MasterOnly returns the current filter, ensuring it has with the master-only
 // restriction (a label of "master").
 func (filter TestRunFilter) MasterOnly() TestRunFilter {
