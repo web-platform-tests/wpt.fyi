@@ -4,9 +4,28 @@
  * found in the LICENSE file.
  */
 
-/*
-`<wpt-flags>` is a component for checking wpt.fyi feature flags.
-*/
+/**
+ * wpt-flags.js defines components for checking wpt.fyi feature flags, which
+ * are boolean switches primarily used to enable or disable features.
+ *
+ * Feature flags in wpt.fyi use two different layers of storage. Firstly, the
+ * default value for the flag (if any) is recorded in AppEngine DataStore and
+ * provided to the frontend via the `WPTEnvironmentFlags` dynamic component. If
+ * no default exists, it is considered to be false. This layer is often
+ * referred to as 'admin flags', and can be modified from the wpt.fyi UI by
+ * users with the relevant permissions.
+ *
+ * The other layer of storage for feature flags is the browser's localStorage,
+ * which is used to let users override the default value. Again by default (and
+ * assuming no underlying admin value) a feature flag is assumed to be false if
+ * it has no value.
+ *
+ * Feature flags are split into client-side features, which only impact the
+ * wpt.fyi UI, and server-side features, which affect the backend too.
+ * Server-side features only care about the backing datastore storage layer,
+ * and do not interact with localStorage.
+ */
+
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -84,6 +103,9 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
   }
 };
 
+// FlagsClass defines a shared superclass for reading feature flags. It assumes
+// that it will be part of a custom element class chain, as it relies on
+// Polymer's 'properties' concept to expose the feature flag values.
 wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superClass {
   static get is() {
     return 'wpt-flags';
@@ -108,8 +130,24 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
   }
 };
 
+// WPTFlags is a 'reader' class function for feature flags. To use it, a custom
+// element should include WPTFlags in its extension chain and then access flag
+// values via 'this', e.g.:
+//
+//     class MyCustomElement extends WPTFlags(PolymerElement) {
+//       foo() {
+//         const featureEnabled = this.myFeatureFlag;
+//         ...
+//       }
+//     }
 const WPTFlags = (superClass) => wpt.FlagsClass(superClass, /*readOnly*/ true, /*useLocalStorage*/ true);
 
+// FlagsEditorClass is a 'writer' class function for feature flags. It allows
+// both reading values (identically to WPTFlags) and writing to them.
+//
+// The environmentFlags argument controls whether the class will read/write
+// from localStorage (if environmentFlags is false) or the backing datastore
+// (if environmentFlags is true).
 const FlagsEditorClass = (environmentFlags) =>
   class extends wpt.FlagsClass(PolymerElement, /*readOnly*/ false, /*useLocalStorage*/ !environmentFlags) {
     ready() {
@@ -155,6 +193,9 @@ const FlagsEditorClass = (environmentFlags) =>
     }
   };
 
+// WPTFlagsEditor is a Polymer custom element for modifying client-side feature
+// flags. It presents a set of checkboxes that the user can select/unselect to
+// override the feature flag value at the localStorage layer.
 class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
   static get template() {
     return html`
@@ -283,6 +324,10 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
 }
 window.customElements.define(WPTFlagsEditor.is, WPTFlagsEditor);
 
+// WPTEnvironmentFlagsEditor is a Polymer custom element for modifying the
+// default values for both client-side and server-side feature flags. It
+// presents a set of checkboxes that an authorized user can select/unselect to
+// override the feature flag value at the datastore layer.
 class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ true) {
   static get template() {
     return html`
