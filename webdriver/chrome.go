@@ -34,7 +34,7 @@ func ChromeWebDriver(port int, options []selenium.ServiceOption) (*selenium.Serv
 	}
 
 	ChromeCapabilities := chrome.Capabilities{
-		Args: []string{"no-sandbox"},
+		Args: []string{"no-sandbox", "disable-dev-shm-usage"},
 	}
 	chromeAbsPath, err := filepath.Abs(*chromePath)
 	if err != nil {
