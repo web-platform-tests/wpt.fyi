@@ -15,13 +15,8 @@ import (
 
 func TestLabelParam_Results(t *testing.T) {
 	runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
-		// Local static data only have 2 experimental browsers, and neither has aligned
-		// experimental runs.
-		if *staging {
-			testLabel(t, wd, app, "/", "experimental", "wpt-results", 4, false)
-		} else {
-			testLabel(t, wd, app, "/", "experimental", "wpt-results", 3, false)
-		}
+		aligned := false
+		testLabel(t, wd, app, "/", "experimental", "wpt-results", 4, aligned)
 	})
 
 }
