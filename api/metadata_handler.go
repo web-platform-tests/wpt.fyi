@@ -174,7 +174,9 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metadataResponse, err := shared.GetMetadataResponseOnProducts(productSpecs, h.logger, h.fetcher)
+	includeTestLevel := q.Get("includeTestLevel") == "true"
+
+	metadataResponse, err := shared.GetMetadataResponseOnProducts(productSpecs, includeTestLevel, h.logger, h.fetcher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

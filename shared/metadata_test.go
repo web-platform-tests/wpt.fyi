@@ -109,7 +109,7 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, false, metadataMap)
 
 	assert.Equal(t, 1, len(MetadataResults))
 	assert.Equal(t, 2, len(MetadataResults["/foo/bar/a.html"]))
@@ -145,7 +145,7 @@ func TestConstructMetadataResponse_NoMatchingLink(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, false, metadataMap)
 
 	assert.Equal(t, 0, len(MetadataResults))
 }
@@ -176,7 +176,7 @@ func TestConstructMetadataResponse_MultipleLinks(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, false, metadataMap)
 
 	assert.Equal(t, 2, len(MetadataResults))
 	assert.Equal(t, MetadataResults["/foo/bar/a.html"][0].URL, "https://bug.com/item")
@@ -209,13 +209,15 @@ func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, false,metadataMap)
 
 	assert.Equal(t, 1, len(MetadataResults))
 	assert.Equal(t, MetadataResults["/foo/bar/a.html"][0].URL, "https://bug.com/item")
 }
 
-func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
+func TestConstructMetadataResponse_TestIssueMetadata(t *testing.T) {
+	// Metadata relating to issues with the test itself have empty product specs, and should only
+	// show up if we pass includeTestIssues=true to constructMetadataResponse.
 	productSpecs := []ProductSpec{
 		ParseProductSpecUnsafe("Firefox-54"),
 		ParseProductSpecUnsafe("Chrome"),
@@ -224,13 +226,6 @@ func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
 	metadataMap := map[string]Metadata{
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
-				MetadataLink{
-					Product: ParseProductSpecUnsafe("ChrOme"),
-					URL:     "https://external.com/item",
-					Results: []MetadataTestResult{{
-						TestPath: "b.html",
-					}},
-				},
 				MetadataLink{
 					Product: ProductSpec{},
 					URL:     "https://bug.com/item",
@@ -242,13 +237,14 @@ func TestConstructMetadataResponse_WithEmptyProductSpec(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productSpecs, metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, true, metadataMap)
 
-	assert.Equal(t, 2, len(MetadataResults))
+	assert.Equal(t, 1, len(MetadataResults))
 	assert.Equal(t, 1, len(MetadataResults["/foo/bar/a.html"]))
 	assert.Equal(t, MetadataResults["/foo/bar/a.html"][0].URL, "https://bug.com/item")
-	assert.Equal(t, 1, len(MetadataResults["/foo/bar/b.html"]))
-	assert.Equal(t, MetadataResults["/foo/bar/b.html"][0].URL, "https://external.com/item")
+
+	MetadataResults = constructMetadataResponse(productSpecs, false, metadataMap)
+	assert.Equal(t, 0, len(MetadataResults))
 }
 
 func TestGetWPTTestPath(t *testing.T) {

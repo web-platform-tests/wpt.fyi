@@ -262,7 +262,8 @@ func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	if l.metadataFetcher == nil {
 		l.metadataFetcher = searchcacheMetadataFetcher{}
 	}
-	metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), l.metadataFetcher)
+	includeTestLevel := true
+	metadata, _ := shared.GetMetadataResponse(runs, includeTestLevel, logrus.StandardLogger(), l.metadataFetcher)
 	metadataMap := shared.PrepareLinkFilter(metadata)
 
 	return Link{
@@ -288,7 +289,14 @@ func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 	for _, run := range runs {
 		if t.Product == nil || t.Product.Matches(run) {
-			metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), t.metadataFetcher)
+			includeTestLevel := false
+			metadataRuns := runs
+			// Product being nil means that we want test-level issues.
+			if (t.Product == nil) {
+				includeTestLevel = true
+				metadataRuns = make([]shared.TestRun, 0)
+			}
+			metadata, _ := shared.GetMetadataResponse(metadataRuns, includeTestLevel, logrus.StandardLogger(), t.metadataFetcher)
 			metadataMap := shared.PrepareLinkFilter(metadata)
 			cq = append(cq, Triaged{run.ID, metadataMap})
 		}

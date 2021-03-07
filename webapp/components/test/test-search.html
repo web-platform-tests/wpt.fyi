@@ -403,6 +403,10 @@ suite('<test-search>', () => {
       });
     });
 
+    test('test-level triaged search', () => {
+      assertQueryParse('triaged:test-issue', { exists: [{ triaged: '' }] });
+    });
+
     test('multi-root', () => {
       assertQueryParse('none(status:missing) count>0(status:!pass)', {
         and: [
