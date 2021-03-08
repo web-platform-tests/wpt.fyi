@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{ template "_head_common.html" . }}
+<script type="module" src="/components/compat-2021.js"></script>
+</head>
+<body>
+<div id="content">
+  <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
+  <compat-2021></compat-2021>
+</div>
+</body>
+</html>
