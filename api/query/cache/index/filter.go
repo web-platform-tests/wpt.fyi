@@ -4,6 +4,17 @@
 
 package index
 
+// This file implements filtering of tests (or subtests) and their results for
+// a set of test runs using a search tree (see api/query/atoms.go).
+//
+// Each search atom in the tree must define a Filter method, which is called
+// for each TestID (test/subtest) to determine whether or not the TestID meets
+// the search criteria. Atoms are responsible for recursing into their children.
+//
+// Before being filtered, search atoms are bound to an in-memory index giving
+// them access to the full set of tests being filtered and a results map for
+// each run.
+
 import (
 	"errors"
 	"fmt"
