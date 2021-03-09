@@ -4,6 +4,37 @@
 
 package query
 
+// This file defines search atoms on the backend. All wpt.fyi search queries
+// are broken down into a tree of search atoms, which is then traversed by the
+// searchcache to find matching tests to include.
+//
+// All search atoms must define two methods:
+//   i. BindToRuns
+//   ii. UnmarshalJSON
+//
+// These are best understood in reverse, as that is also the order they are
+// called in. UnmarshalJSON is used to convert from the original JSON search
+// query into the tree of abstract search atoms. The atoms are referred to as
+// abstract as they do not yet relate to any underlying data (i.e. any test
+// runs). Many types of atom (such as AbstractExists) perform this
+// unmarshalling recursively, which is how we end up with a tree.
+//
+// Once we have an abstract search tree, BindToRuns will convert it to a
+// concrete search tree (that is, a tree of ConcreteQuery atoms). This gives
+// the search atoms access to the specific runs that are being searched over,
+// to pull any specific information needed. For example, this allows
+// TestStatusEq to only produce results for test runs that match the specified
+// product (and short-circuit entirely if no test runs match).
+//
+// Some abstract search atoms may produce more than one concrete search atom
+// (e.g. AbstractExists, which produces a disjunction), whilst others may
+// ignore the test runs entirely if they aren't relevant (e.g.
+// TestNamePattern, which only cares about the test name and not the results).
+//
+// Note that this file does not perform the actual filtering of tests from the
+// test runs to produce the search response; for that see the `filter` type in
+// api/query/cache/index/filter.go
+
 import (
 	"encoding/json"
 	"errors"
