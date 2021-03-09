@@ -21,11 +21,10 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/karrick/godirwalk v1.16.1 // indirect
-	github.com/magefile/mage v1.11.0 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/rogpeppe/go-internal v1.7.0 // indirect
 	github.com/samthor/nicehttp v1.0.0
-	github.com/sirupsen/logrus v1.8.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
 	github.com/taskcluster/taskcluster/v41 v41.1.0
