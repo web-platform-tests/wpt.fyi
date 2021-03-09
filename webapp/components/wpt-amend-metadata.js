@@ -106,6 +106,9 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
   }
 };
 
+// AmendMetadata is a UI component that allows the user to associate a set of
+// tests or test results with a URL (usually a link to a bug-tracker). It is
+// commonly referred to as the 'triage UI'.
 class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) {
   static get is() {
     return 'wpt-amend-metadata';
@@ -167,6 +170,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
                 <div class="list"> [[test]] </div>
                 <template is="dom-if" if="[[hasSearchURL(node.product)]]">
                   <a href="[[getSearchURL(test, node.product)]]" target="_blank"> [Search for bug] </a>
+                </template>
+                <template is="dom-if" if="[[hasFileIssueURL(node.product)]]">
+                  <a href="[[getFileIssueURL(test)]]" target="_blank"> [File test-level issue] </a>
                 </template>
               </li>
             </template>
@@ -291,6 +297,20 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     if (product === 'servo') {
       return `https://github.com/servo/servo/issues?q="${testName}"`;
     }
+  }
+
+  hasFileIssueURL(product) {
+    // We only support filing issues for test-level problems
+    // (https://github.com/web-platform-tests/wpt.fyi/issues/2420). In this
+    // class the test-level product is represented by an empty string.
+    return product === '';
+  }
+
+  getFileIssueURL(testName) {
+    const params = new URLSearchParams();
+    params.append('title', `[compat2021] ${testName} fails due to test issue`);
+    params.append('labels', 'compat2021-test-issue');
+    return `https://github.com/web-platform-tests/wpt-metadata/issues/new?${params}`;
   }
 
   populateDisplayData() {

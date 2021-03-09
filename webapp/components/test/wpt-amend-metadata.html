@@ -152,6 +152,19 @@ suite('wpt-amend-metadata', () => {
       expect(appFixture.getSearchURL('/a/b.html', 'webkitgtk')).to.equal('https://bugs.webkit.org/buglist.cgi?quicksearch="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'servo')).to.equal('https://github.com/servo/servo/issues?q="/a/b"');
     });
+    test('hasFileIssueURL', () => {
+      expect(appFixture.hasFileIssueURL('')).to.be.true;
+      expect(appFixture.hasFileIssueURL(null)).to.be.false;
+      expect(appFixture.hasFileIssueURL(undefined)).to.be.false;
+      expect(appFixture.hasFileIssueURL('chrome')).to.be.false;
+      expect(appFixture.hasFileIssueURL('firefox')).to.be.false;
+    });
+    test('getFileIssueURL', () => {
+      const expectedURL = 'https://github.com/web-platform-tests/wpt-metadata' +
+          '/issues/new?title=%5Bcompat2021%5D+%2Ffoo%2Fbar.html+fails+due+to' +
+          '+test+issue&labels=compat2021-test-issue';
+      expect(appFixture.getFileIssueURL('/foo/bar.html')).to.equal(expectedURL);
+    });
   });
 });
 </script>
