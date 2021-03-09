@@ -165,8 +165,6 @@ func main() {
 	addFlag(store, "queryBuilder", enabledFlag)
 	addFlag(store, "diffFilter", enabledFlag)
 	addFlag(store, "diffFromAPI", enabledFlag)
-	addFlag(store, "experimentalByDefault", enabledFlag)
-	addFlag(store, "experimentalAligned", enabledFlag)
 	addFlag(store, "structuredQueries", enabledFlag)
 	addFlag(store, "diffRenames", enabledFlag)
 	addFlag(store, "paginationTokens", enabledFlag)
