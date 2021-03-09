@@ -24,8 +24,6 @@ env:
   global:
     # ${GITHUB_TOKEN}
     - secure: "S8l1gZE3e+o++bzIe2tf881aHD+0m2vDx2k8xW1pmJ7fBWL7xQuv8diDElb/US/TA+zxxbedLy9BF42N6pcOGmDakpB7c/orsiK0pQw9N1BbyvOvo9HFttVQiuVLzlXWnVdnbklWu3GwOkDh6GSadCGuScLkvq9jpnSwW+3sucq8o5fSAuJBG/MJzcJdmcdRk0pGuqs558yX/HCn2OgQVJ+1DXo7u6IFE7hWv2bVPESX5Q0cBbIfSxZrDNj8SpgfpWDKsBgn5oqOBBXDsxAKZjCHcdl10LUaAODdyA1CBf9A3RDFxd33MJ59bn6X8JQqgxuP9qJdZmhpjLFetJzDVx7jR03OZHB28C14WHyLvGQbsvYz2ltRqrDWRFp7ChDuslLXtNFRmxwqQuD+F0J1Fwneg7TpAE6wXv2Mc2OezjOAPZ4Roqz6IYdNOO0Yl7RfNJjrD02mXUlHCiisqovZTYinylqlRRqRxN55x7ZwazUgBn4FCup/qn1w44KkWNgtoKiLGAAi4TC0LEUTGUhyc5OpUnXyvuO/7J5dDoOI9AW99GXxgXV+4+K2NuPk8g9EQ67ThFkwoRuRiY9jlChWF1CkT70UPcZeTU84Du1hYnC9s7czBz5laEUXwhso25t2hNUh6bf2r7l8u1HQLA/5advR+azHwnvsRkBwc7lYwPk="
-    # ${LHCI_GITHUB_APP_TOKEN}
-    - secure: "F5M/ux7dDvPKLdGU2oILT20grzhjloXU9wTrLD4voMkmClacPSG6xAHC2+FwAbZ99johmd3o1IylwLbyF0ccWairFr6rnLwmjoAzmPW+o2+j6nlzNGN/nlUSI3WEp8GuATL1e/nybHQzjo9QrcV0LgEjVG2oWeHdU+x5KoBZdb0HualJsVtxAXJhmVbAYN6QRA2Vdh8QTqFlWQA+rNkMKqLYIKfVdgnDgiaeVwH9xfrUqL7/Xypk7xyHwtBSG5Y/IWAUimV7BU0qK+CdFxqb28E1vOXwdDtiJZrO/O09jTdF/l0qN9FnwNlTLxOOB4KtIJuucWHTNU/UGwoGZhdriDKhpM2H8QICR2VNR2va5H5aQQyO1KrRocv7Z99DjzG39lZm9C4Y95oFi848iYRcKxF4Jv+c6WhI5dbfEqn96lo2icSlhQS65Ws4ajP4Akz/A4BceETCzMOyuSq+1zffH6cTSgRDy/jbzxuhiScuUbx1CoBS62ua1iLI7ysRqCdLf6WzWaoAPnx+ZecTQPmOgCOaWEL95iIg9os6QjT5te/9Fnypv77X1MtGmlPuJ9oqhdOEuMZ+TNKVIqQGCJrZ7hMvPVqTmj5ARjVBIZPiJPK2odqRCCa3RqpHEcTp4U+zohlZreuNHc3p/AQS4dRv0ac9CN4SN9irKXJGKq1HI84="
 
 # Stages run in order. Jobs in the same stage run in parallel.
 # In jobs.include, each job will inherit the stage of the previous job and the
@@ -46,14 +44,9 @@ jobs:
   include:
     # These are the default "test" stage, which will run at the *end*.
     # All the other tests run on GitHub Actions. We haven't migrated Puppeteer
-    # tests and Lighthouse CI because they need to wait for deployments.
+    # tests because they need to wait for deployments.
     - env:
         - MAKE_TEST_TARGET=puppeteer_chrome_test
-    - env:
-        - MAKE_TEST_TARGET=lighthouse
-      # Only run Lighthouse CI on main (against staging).
-      if: (type = push) AND (branch = main)
-
     - stage: deploy PR
       env:
       - DEPLOY_PR_STAGING_TARGET=webapp/web/app.staging.yaml
@@ -104,8 +97,6 @@ script:
     fi
   - |
     # Run tests
-    if [[ "${MAKE_TEST_TARGET}" == "lighthouse" ]]; then
-      docker exec -e LHCI_GITHUB_APP_TOKEN -e TRAVIS_BRANCH -e TRAVIS_PULL_REQUEST_BRANCH -t "${DOCKER_INSTANCE}" make lighthouse;
-    elif [[ -n "${MAKE_TEST_TARGET}" ]]; then
+    if [[ -n "${MAKE_TEST_TARGET}" ]]; then
       docker exec -t "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS};
     fi

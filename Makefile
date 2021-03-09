@@ -113,9 +113,6 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_dep
 web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
 
-lighthouse: chrome webapp_node_modules_all
-	cd webapp; npx lhci autorun --failOnUploadFailure
-
 dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
 chrome: wget
