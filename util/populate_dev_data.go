@@ -89,6 +89,11 @@ func main() {
 	edge.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "edge[stable].json")
 	edge.Labels = []string{"edge", shared.StableLabel}
 
+	edgeExp := edge
+	edgeExp.BrowserVersion = "20"
+	edgeExp.ResultsURL = strings.Replace(edge.ResultsURL, "[stable]", "[experimental]", -1)
+	edgeExp.Labels = []string{"edge", shared.ExperimentalLabel}
+
 	firefox := chrome
 	firefox.BrowserName = "firefox"
 	firefox.BrowserVersion = "66"
@@ -115,6 +120,7 @@ func main() {
 		chrome,
 		chromeExp,
 		edge,
+		edgeExp,
 		firefox,
 		firefoxExp,
 		safari,
@@ -160,7 +166,7 @@ func main() {
 	addFlag(store, "diffFilter", enabledFlag)
 	addFlag(store, "diffFromAPI", enabledFlag)
 	addFlag(store, "experimentalByDefault", enabledFlag)
-	addFlag(store, "experimentalAlignedExceptEdge", enabledFlag)
+	addFlag(store, "experimentalAligned", enabledFlag)
 	addFlag(store, "structuredQueries", enabledFlag)
 	addFlag(store, "diffRenames", enabledFlag)
 	addFlag(store, "paginationTokens", enabledFlag)

@@ -105,14 +105,10 @@ func populateHomepageData(r *http.Request) (data homepageData, err error) {
 	} else {
 		if pr == nil && testRunFilter.IsDefaultQuery() {
 			if aeAPI.IsFeatureEnabled("experimentalByDefault") {
-				if aeAPI.IsFeatureEnabled("experimentalAlignedExceptEdge") {
-					testRunFilter = testRunFilter.OrAlignedExperimentalRunsExceptEdge()
-				} else {
-					testRunFilter = testRunFilter.OrExperimentalRuns()
-					if aeAPI.IsFeatureEnabled("experimentalAligned") {
-						aligned := true
-						testRunFilter.Aligned = &aligned
-					}
+				testRunFilter = testRunFilter.OrExperimentalRuns()
+				if aeAPI.IsFeatureEnabled("experimentalAligned") || true {
+					aligned := true
+					testRunFilter.Aligned = &aligned
 				}
 			} else {
 				testRunFilter = testRunFilter.OrAlignedStableRuns()

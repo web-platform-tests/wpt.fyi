@@ -42,7 +42,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'displayMetadata',
       'experimentalByDefault',
       'experimentalAligned',
-      'experimentalAlignedExceptEdge',
       'fetchManifestForTestList',
       'githubCommitLinks',
       'githubLogin',
@@ -347,11 +346,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item sub-item>
       <paper-checkbox checked="{{experimentalAligned}}">
         Align the default experimental runs
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item>
-      <paper-checkbox checked="{{experimentalAlignedExceptEdge}}">
-        All experimental, except edge[stable], and aligned
       </paper-checkbox>
     </paper-item>
     <paper-item>
