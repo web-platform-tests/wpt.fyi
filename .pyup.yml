@@ -1,4 +1,4 @@
-schedule: "every week"
+schedule: "every month"
 
 # Shortened from the default "pyup-"
 # Workaround for https://github.com/web-platform-tests/wpt.fyi/issues/2315
