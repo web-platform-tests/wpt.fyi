@@ -220,7 +220,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
             status: data && data.status,
             message: data && data.message,
           };
-          if (this.reftestAnalyzer && data && data.screenshots) {
+          if (data && data.screenshots) {
             result.screenshots = this.shuffleScreenshots(this.path, data.screenshots);
           }
           return result;
