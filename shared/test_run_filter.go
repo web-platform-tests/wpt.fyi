@@ -94,6 +94,10 @@ func (filter TestRunFilter) IsDefaultQuery() bool {
 // OrDefault returns the current filter, or, if it is a default query, returns
 // the query used by default in wpt.fyi.
 func (filter TestRunFilter) OrDefault() TestRunFilter {
+	// TODO(smcgruer): OrAlignedStableRuns is not the default query in
+	// wpt.fyi, and has not been for many years (ever since the
+	// experimentalByDefault flag was turned on). Usage of this method
+	// should be audited.
 	return filter.OrAlignedStableRuns()
 }
 

@@ -40,8 +40,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'colorHomepage',
       'diffFromAPI',
       'displayMetadata',
-      'experimentalByDefault',
-      'experimentalAligned',
       'fetchManifestForTestList',
       'githubCommitLinks',
       'githubLogin',
@@ -336,16 +334,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox checked="{{diffRenames}}">
         Compute renames in diffs with the GitHub API
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{experimentalByDefault}}">
-        Fetch experimental runs as the default (homepage) query
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item>
-      <paper-checkbox checked="{{experimentalAligned}}">
-        Align the default experimental runs
       </paper-checkbox>
     </paper-item>
     <paper-item>

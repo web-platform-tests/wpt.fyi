@@ -82,8 +82,6 @@ func populateHomepageData(r *http.Request) (data homepageData, err error) {
 	if err != nil {
 		return data, err
 	}
-	ctx := r.Context()
-	aeAPI := shared.NewAppEngineAPI(ctx)
 
 	var pr *int
 	pr, err = shared.ParsePRParam(q)
@@ -104,15 +102,9 @@ func populateHomepageData(r *http.Request) (data homepageData, err error) {
 		data.TestRunIDs = string(marshalled)
 	} else {
 		if pr == nil && testRunFilter.IsDefaultQuery() {
-			if aeAPI.IsFeatureEnabled("experimentalByDefault") {
-				testRunFilter = testRunFilter.OrExperimentalRuns()
-				if aeAPI.IsFeatureEnabled("experimentalAligned") || true {
-					aligned := true
-					testRunFilter.Aligned = &aligned
-				}
-			} else {
-				testRunFilter = testRunFilter.OrAlignedStableRuns()
-			}
+			testRunFilter = testRunFilter.OrExperimentalRuns()
+			aligned := true
+			testRunFilter.Aligned = &aligned
 			testRunFilter = testRunFilter.MasterOnly()
 		}
 		data.testRunUIFilter = convertTestRunUIFilter(testRunFilter)
