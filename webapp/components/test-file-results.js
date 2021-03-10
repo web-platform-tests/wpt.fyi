@@ -199,15 +199,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     if (!response.ok) {
       return null;
     }
-    if (!this.reftestAnalyzerMockScreenshots) {
-      return response.json();
-    }
-    // Use some arbitrary screenshots for any without them.
-    const screenshots = {};
-    screenshots[this.path] = 'sha1:000c495e8f587dac40894d0cacb5a7ca769410c6';
-    screenshots[this.path.replace(/.html$/, '-ref.html')] = 'sha1:000c495e8f587dac40894d0cacb5a7ca769410c6';
-    return response.json()
-      .then(r => Object.assign({ screenshots }, r));
+    return response.json();
   }
 
   resultsTableHeaders(resultsPerTestRun) {
