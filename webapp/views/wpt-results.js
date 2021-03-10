@@ -17,7 +17,6 @@ import '../components/test-search.js';
 import { WPTColors } from '../components/wpt-colors.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
-import '../components/wpt-prs.js';
 import '../components/wpt-metadata.js';
 import { AmendMetadataMixin } from '../components/wpt-amend-metadata.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';

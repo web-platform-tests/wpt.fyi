@@ -20,13 +20,4 @@ function timeTaken(millis) {
   return `${s} seconds`;
 }
 
-function timeAgo(time) {
-  const date = new Date(time);
-  const taken = timeTaken(Math.floor(new Date() - date));
-  return `${taken} ago`;
-}
-
-function ensureTrailingSlash(path) {
-  return path.endsWith('/') ? path : (path + '/');
-}
-export { ensureTrailingSlash, timeAgo, timeTaken };
+export { timeTaken };
