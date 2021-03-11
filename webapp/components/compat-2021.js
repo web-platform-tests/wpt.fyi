@@ -32,8 +32,18 @@ class Compat2021 extends PolymerElement {
           experimental features enabled.
         </template>
       </p>
-      <compat-2021-feature-chart stable="[[stable]]"></compat-2021-feature-chart>
-      <p>TODO: Test results table</p>
+
+      <!-- TODO: Use a paper-toggle instead -->
+      <div>
+        <label for="stableVersionCheckbox">Show results from Stable browser releases:</label>
+        <input id="stableVersionCheckbox" type="checkbox" />
+      </div>
+
+      <compat-2021-feature-chart stable="[[stable]]"
+                                 feature="{{feature}}">
+      </compat-2021-feature-chart>
+
+      <!-- TODO: Test results table -->
 `;
   }
 
@@ -44,7 +54,14 @@ class Compat2021 extends PolymerElement {
   static get properties() {
     return {
       stable: Boolean,
+      feature: String,
     };
+  }
+
+  static get observers() {
+    return [
+      'updateUrlParams(stable, feature)',
+    ];
   }
 
   ready() {
@@ -52,6 +69,32 @@ class Compat2021 extends PolymerElement {
 
     const params = (new URL(document.location)).searchParams;
     this.stable = params.get('stable') !== null;
+
+    this.$.stableVersionCheckbox.checked = this.stable;
+    this.$.stableVersionCheckbox.addEventListener('change', () => {
+      this.stable = this.$.stableVersionCheckbox.checked;
+    });
+  }
+
+  updateUrlParams(stable, feature) {
+    // Our observer may be called before the feature is set, so debounce that.
+    if (feature === undefined) {
+      return;
+    }
+
+    const params = [];
+    if (feature) {
+      params.push(`feature=${feature}`);
+    }
+    if (stable) {
+      params.push('stable');
+    }
+
+    // We always append a '?' at the very least, as passing empty-string to
+    // pushState does not update the URL. So if you have only stable selected
+    // (with no feature) and then you un-select the checkbox, the URL wouldn't
+    // change unless we set it to '?'.
+    history.pushState('', '', `?${params.join('&')}`);
   }
 }
 window.customElements.define(Compat2021.is, Compat2021);
@@ -282,7 +325,12 @@ class Compat2021FeatureChart extends PolymerElement {
   static get properties() {
     return {
       stable: Boolean,
-      feature: String,
+      feature: {
+        type: String,
+        // Compat2021FeatureChart owns the feature-select dropdown, but our
+        // parent needs to know about it too so it uses two-way data binding.
+        notify: true,
+      },
       chartOptions: {
         type: Object,
         readyOnly: true,
