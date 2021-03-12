@@ -41,6 +41,9 @@ func RegisterRoutes() {
 	shared.AddRoute("/runs", "test-runs", testRunsHandler)
 	shared.AddRoute("/test-runs", "test-runs", testRunsHandler) // Legacy name
 
+	// Dashboard for the compat-2021 effort.
+	shared.AddRoute("/compat2021", "compat-2021", compat2021Handler)
+
 	// Admin-only manual results upload.
 	shared.AddRoute("/admin/results/upload", "admin-results-upload", adminUploadHandler)
 
