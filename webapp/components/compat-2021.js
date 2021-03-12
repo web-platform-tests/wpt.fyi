@@ -12,7 +12,7 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 class Compat2021 extends PolymerElement {
   static get template() {
     return html`
-      <h1>2021 DevSat Compat Dashboard</h1>
+      <h1>Compat 2021 Dashboard</h1>
       <p>TODO: Summary scores</p>
       <p>
         These scores represent how well browser engines are doing on the 2021
@@ -36,4 +36,3 @@ class Compat2021 extends PolymerElement {
   }
 }
 window.customElements.define(Compat2021.is, Compat2021);
-
