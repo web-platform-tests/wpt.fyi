@@ -53,8 +53,31 @@ if [[ "${APP_PATH}" == "webapp" ]]; then
   make deployment_state || fatal "Error installing deps"
 fi
 
+format_branch_name() {
+  local BRANCH="$1"
+  # Normalize to lower-case, and replace all non-alphanumeric characters
+  # with '-'.
+  BRANCH="$(echo -n $BRANCH | tr [:upper:] [:lower:] | tr -c [:alnum:] -)"
+
+  # Limit version names to 22 characters, to leave enough space for the HTTPS
+  # domain name (which could have a very long suffix like
+  # "-dot-searchcache-wptdashboard-staging"). Domain name parts can be no
+  # longer than 63 characters in total.
+  BRANCH="$(echo -n $BRANCH | cut -c 1-22)"
+
+  # GCP requires that the branch name start and end in a letter or digit.
+  while [[ "$BRANCH" == -* ]]; do
+    BRANCH="${BRANCH:1}"
+  done
+  while [[ "$BRANCH" == *- ]]; do
+    BRANCH="${BRANCH::-1}"
+  done
+
+  echo $BRANCH
+}
+
 # Create a name for this version
-VERSION_BRANCH_NAME="$(echo -n ${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"} | tr [:upper:] [:lower:] | tr -c [:alnum:] - | cut -c 1-22)"
+VERSION_BRANCH_NAME="$(format_branch_name "${BRANCH_NAME:-"$(git rev-parse --abbrev-ref HEAD)"}")"
 USER="$(git remote -v get-url origin | sed -E 's#(https?:\/\/|git@)github.com(\/|:)##' | sed 's#/.*$##')-"
 if [[ "${USER}" == "web-platform-tests-" ]]; then USER=""; fi
 
