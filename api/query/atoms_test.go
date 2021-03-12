@@ -891,9 +891,9 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 	}
 
 	// AbstractLink should include test-level issues since it's about
-	// searching for links across all runs.
-	// TODO: Shouldn't this also pick up the chromium link too (a.html),
-	// because link isn't meant to care about which product its for?
+	// searching for links across all runs. It does not include the
+	// Chromium link because there is no run for Chromium (and thus no
+	// reason to include it, as the frontend won't show it).
 	expect := Link{
 		Pattern: "bar",
 		Metadata: map[string][]string{
@@ -947,22 +947,7 @@ func TestStructuredQuery_bindTriaged(t *testing.T) {
 		Product:         &safari,
 		metadataFetcher: mockFetcher,
 	}
-	// TODO: This should be False{}, but we pass the entire 'runs' array to
-	// shared.GetMetadataResponse in BindToRuns, which means we return the
-	// Firefox entry even though we only matched against Safari in BindToRuns!
-	//
-	//assert.Equal(t, False{}, q.BindToRuns(runs...))
-	expect = Or{
-		Args:[]ConcreteQuery{
-			Triaged{
-				Run: 0,
-				Metadata: map[string][]string{
-					"/testB/b.html": {"bar.com"},
-				},
-			},
-		},
-	}
-	assert.Equal(t, expect, q.BindToRuns(runs...))
+	assert.Equal(t, False{}, q.BindToRuns(runs...))
 }
 
 func TestStructuredQuery_bindTriagedNilProduct(t *testing.T) {

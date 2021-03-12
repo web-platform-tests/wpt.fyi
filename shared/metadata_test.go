@@ -209,7 +209,7 @@ func TestConstructMetadataResponse_OneMatchingBrowserVersion(t *testing.T) {
 		},
 	}
 
-	MetadataResults := constructMetadataResponse(productSpecs, false,metadataMap)
+	MetadataResults := constructMetadataResponse(productSpecs, false, metadataMap)
 
 	assert.Equal(t, 1, len(MetadataResults))
 	assert.Equal(t, MetadataResults["/foo/bar/a.html"][0].URL, "https://bug.com/item")

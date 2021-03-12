@@ -174,7 +174,8 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	includeTestLevel := q.Get("includeTestLevel") == "true"
+	val, _ := shared.ParseBooleanParam(q, "includeTestLevel")
+	includeTestLevel := val != nil && *val
 
 	metadataResponse, err := shared.GetMetadataResponseOnProducts(productSpecs, includeTestLevel, h.logger, h.fetcher)
 	if err != nil {

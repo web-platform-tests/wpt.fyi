@@ -167,7 +167,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     }
 
     const url = new URL('/api/metadata', window.location);
-    url.searchParams.set('includeTestLevel', 'true');
+    url.searchParams.set('includeTestLevel', true);
     url.searchParams.set('products', productVal.join(','));
     this.load(
       window.fetch(url).then(r => r.json()).then(metadata => {
