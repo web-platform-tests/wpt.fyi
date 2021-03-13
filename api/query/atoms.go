@@ -250,19 +250,22 @@ func (l AbstractLessThan) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return LessThan{c}
 }
 
-// AbstractLink is represents the root of a link query, which matches Metadata URLs
-// to a pattern string; it is independent of test runs.
+// AbstractLink is represents the root of a link query, which matches Metadata
+// URLs to a pattern string.
 type AbstractLink struct {
 	Pattern         string
 	metadataFetcher shared.MetadataFetcher
 }
 
-// BindToRuns for AbstractLink is a no-op; it is independent of test runs
+// BindToRuns for AbstractLink fetches metadata for either test-level issues or
+// issues associated with the given runs. It does not filter the metadata by
+// the pattern yet.
 func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	if l.metadataFetcher == nil {
 		l.metadataFetcher = searchcacheMetadataFetcher{}
 	}
-	metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), l.metadataFetcher)
+	includeTestLevel := true
+	metadata, _ := shared.GetMetadataResponse(runs, includeTestLevel, logrus.StandardLogger(), l.metadataFetcher)
 	metadataMap := shared.PrepareLinkFilter(metadata)
 
 	return Link{
@@ -278,8 +281,8 @@ type AbstractTriaged struct {
 	metadataFetcher shared.MetadataFetcher
 }
 
-// BindToRuns for AbstractTriaged binds each run of the AbstractTriaged ProductSpec
-// to a triaged object.
+// BindToRuns for AbstractTriaged binds each run matching the AbstractTriaged
+// ProductSpec to a triaged object.
 func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	cq := make([]ConcreteQuery, 0)
 
@@ -288,9 +291,21 @@ func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	}
 	for _, run := range runs {
 		if t.Product == nil || t.Product.Matches(run) {
-			metadata, _ := shared.GetMetadataResponse(runs, logrus.StandardLogger(), t.metadataFetcher)
+			// We only want to fetch metadata for this specific run (or for no runs, if
+			// the search is for test-level issues).
+			includeTestLevel := false
+			metadataRuns := []shared.TestRun{run}
+
+			// Product being nil means that we want test-level issues.
+			if t.Product == nil {
+				includeTestLevel = true
+				metadataRuns = []shared.TestRun{}
+			}
+			metadata, _ := shared.GetMetadataResponse(metadataRuns, includeTestLevel, logrus.StandardLogger(), t.metadataFetcher)
 			metadataMap := shared.PrepareLinkFilter(metadata)
-			cq = append(cq, Triaged{run.ID, metadataMap})
+			if len(metadataMap) > 0 {
+				cq = append(cq, Triaged{run.ID, metadataMap})
+			}
 		}
 	}
 

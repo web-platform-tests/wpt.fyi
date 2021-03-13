@@ -462,6 +462,25 @@ func TestStructuredQuery_triaged(t *testing.T) {
 		}}, rq)
 }
 
+func TestStructuredQuery_triagedEmptyProduct(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [{
+				"triaged": ""
+			}]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			AbstractTriaged{
+				Product: nil,
+			}},
+		}}, rq)
+}
+
 func TestStructuredQuery_isDifferent(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -871,10 +890,107 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		},
 	}
 
+	// AbstractLink should bind test-level issues too as the pattern might match
+	// them. It should not include the Chromium link however, as there is no run
+	// for Chromium and thus no reason to include it - the frontend won't show it.
 	expect := Link{
 		Pattern: "bar",
 		Metadata: map[string][]string{
 			"/testB/b.html": {"bar.com"},
+			"/testC/c.html": {"baz.com"},
+		},
+	}
+	assert.Equal(t, expect, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindTriaged(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	sha := "sha"
+	mockFetcher := sharedtest.NewMockMetadataFetcher(mockCtrl)
+	mockFetcher.EXPECT().Fetch().Return(&sha, getMetadataTestData(), nil).AnyTimes()
+
+	safari := shared.ParseProductSpecUnsafe("safari")
+	firefox := shared.ParseProductSpecUnsafe("firefox")
+	q := AbstractTriaged{
+		Product:         &firefox,
+		metadataFetcher: mockFetcher,
+	}
+
+	runs := shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: safari.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: firefox.ProductAtRevision,
+		},
+	}
+
+	expect := Or{
+		Args:[]ConcreteQuery{
+			Triaged{
+				Run: 1,
+				Metadata: map[string][]string{
+					"/testB/b.html": {"bar.com"},
+				},
+			},
+		},
+	}
+	assert.Equal(t, expect, q.BindToRuns(runs...))
+
+	// This query doesn't match any of the runs, so should convert to False.
+	q = AbstractTriaged{
+		Product:         &safari,
+		metadataFetcher: mockFetcher,
+	}
+	assert.Equal(t, False{}, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindTriagedNilProduct(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	sha := "sha"
+	mockFetcher := sharedtest.NewMockMetadataFetcher(mockCtrl)
+	mockFetcher.EXPECT().Fetch().Return(&sha, getMetadataTestData(), nil).AnyTimes()
+
+	q := AbstractTriaged{
+		Product:         nil,
+		metadataFetcher: mockFetcher,
+	}
+
+	safari := shared.ParseProductSpecUnsafe("safari")
+	firefox := shared.ParseProductSpecUnsafe("firefox")
+	runs := shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: safari.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: firefox.ProductAtRevision,
+		},
+	}
+
+	// This is inefficient, but currently a nil product binds to all runs, with
+	// the same metadata in all cases.
+	expect := Or{
+		Args:[]ConcreteQuery{
+			Triaged{
+				Run: 0,
+				Metadata: map[string][]string{
+					"/testC/c.html": {"baz.com"},
+				},
+			},
+			Triaged{
+				Run: 1,
+				Metadata: map[string][]string{
+					"/testC/c.html": {"baz.com"},
+				},
+			},
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))
@@ -1135,5 +1251,15 @@ func getMetadataTestData() map[string][]byte {
         - test: b.html
           status: FAIL
     `)
+
+	// A test-level issue, which has no product associated with it.
+	metadataMap["testC"] = []byte(`
+    links:
+      - url: baz.com
+        results:
+        - test: c.html
+          status: FAIL
+    `)
+
 	return metadataMap
 }

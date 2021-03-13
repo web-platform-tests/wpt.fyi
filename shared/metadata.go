@@ -47,8 +47,11 @@ type MetadataTestResult struct {
 	Status      *TestStatus `yaml:"status,omitempty"  json:"status,omitempty"`
 }
 
-// GetMetadataResponse retrieves the response to a WPT Metadata query.
-func GetMetadataResponse(testRuns []TestRun, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
+// GetMetadataResponse retrieves the response to a WPT Metadata query. Metadata
+// is included for any product that matches a passed TestRun. Test-level
+// metadata (i.e. that is not associated with any product) may be fetched by
+// passing true for includeTestLevel.
+func GetMetadataResponse(testRuns []TestRun, includeTestLevel bool, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
 	var productSpecs = make([]ProductSpec, len(testRuns))
 	for i, run := range testRuns {
 		productSpecs[i] = ProductSpec{ProductAtRevision: run.ProductAtRevision, Labels: run.LabelsSet()}
@@ -61,11 +64,14 @@ func GetMetadataResponse(testRuns []TestRun, log Logger, fetcher MetadataFetcher
 		return nil, err
 	}
 
-	return constructMetadataResponse(productSpecs, metadata), nil
+	return constructMetadataResponse(productSpecs, includeTestLevel, metadata), nil
 }
 
-// GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
-func GetMetadataResponseOnProducts(productSpecs ProductSpecs, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
+// GetMetadataResponseOnProducts constructs the response to a WPT Metadata
+// query, given ProductSpecs. Metdata is included for any product that matches
+// a passed ProductSpec. Test-level metadata (i.e. that is not associated with
+// any product) may be fetched by passing true for includeTestLevel.
+func GetMetadataResponseOnProducts(productSpecs ProductSpecs, includeTestLevel bool, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
 	// TODO(kyleju): Include the SHA information in API response;
 	// see https://github.com/web-platform-tests/wpt.fyi/issues/1938
 	_, metadata, err := GetMetadataByteMap(log, fetcher)
@@ -73,7 +79,7 @@ func GetMetadataResponseOnProducts(productSpecs ProductSpecs, log Logger, fetche
 		return nil, err
 	}
 
-	return constructMetadataResponse(productSpecs, metadata), nil
+	return constructMetadataResponse(productSpecs, includeTestLevel, metadata), nil
 }
 
 // GetMetadataByteMap collects and parses all META.yml files from
@@ -103,38 +109,52 @@ func parseMetadata(metadataByteMap map[string][]byte, log Logger) map[string]Met
 	return metadataMap
 }
 
+// addResponseLink is a helper method for constructMetadataResponse. It creates a new MetadataLink
+// object corresponding to a specific MetadataTestResult for a given test, and adds it to a
+// MetadataResults map.
+func addResponseLink(fullTestName string, link MetadataLink, result MetadataTestResult, outMap MetadataResults) {
+	newLink := MetadataLink{
+		Product: link.Product,
+		URL:     link.URL,
+	}
+	if result.SubtestName != nil || result.Status != nil {
+		newLink.Results = []MetadataTestResult{
+			{
+				SubtestName: result.SubtestName,
+				Status:      result.Status,
+				// TestPath is redundant (it's the map key in outMap)
+			},
+		}
+	}
+	if _, ok := outMap[fullTestName]; !ok {
+		outMap[fullTestName] = MetadataLinks{newLink}
+	} else {
+		outMap[fullTestName] = append(outMap[fullTestName], newLink)
+	}
+}
+
 // constructMetadataResponse constructs the response to a WPT Metadata query, given ProductSpecs.
-func constructMetadataResponse(productSpecs ProductSpecs, metadata map[string]Metadata) MetadataResults {
+func constructMetadataResponse(productSpecs ProductSpecs, includeTestLevel bool, metadata map[string]Metadata) MetadataResults {
 	res := make(MetadataResults)
 	for folderPath, data := range metadata {
 		for i := range data.Links {
 			link := data.Links[i]
 			for _, result := range link.Results {
 				//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
-				var fullTestName = GetWPTTestPath(folderPath, result.TestPath)
+				fullTestName := GetWPTTestPath(folderPath, result.TestPath)
+
+				if link.Product.BrowserName == "" {
+					if includeTestLevel {
+						addResponseLink(fullTestName, link, result, res)
+					}
+					break
+				}
+
+				// Find any matching product for this link result (there can be at most one).
 				for _, productSpec := range productSpecs {
-					// Matches browser type if a version is not specified.
-					if link.Product.MatchesProductSpec(productSpec) ||
-						// Matches to all browsers if product is not specified.
-						link.Product.BrowserName == "" {
-						output := MetadataLink{
-							Product: link.Product,
-							URL:     link.URL,
-						}
-						if result.SubtestName != nil || result.Status != nil {
-							output.Results = []MetadataTestResult{
-								{
-									SubtestName: result.SubtestName,
-									Status:      result.Status,
-									// TestPath is redundant (it's the map key)
-								},
-							}
-						}
-						if _, ok := res[fullTestName]; !ok {
-							res[fullTestName] = MetadataLinks{output}
-						} else {
-							res[fullTestName] = append(res[fullTestName], output)
-						}
+					// Matches on browser type if a version is not specified.
+					if link.Product.MatchesProductSpec(productSpec) {
+						addResponseLink(fullTestName, link, result, res)
 						break
 					}
 				}
