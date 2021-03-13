@@ -47,7 +47,10 @@ type MetadataTestResult struct {
 	Status      *TestStatus `yaml:"status,omitempty"  json:"status,omitempty"`
 }
 
-// GetMetadataResponse retrieves the response to a WPT Metadata query.
+// GetMetadataResponse retrieves the response to a WPT Metadata query. Metadata
+// is included for any product that matches a passed TestRun. Test-level
+// metadata (i.e. that is not associated with any product) may be fetched by
+// passing true for includeTestLevel.
 func GetMetadataResponse(testRuns []TestRun, includeTestLevel bool, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
 	var productSpecs = make([]ProductSpec, len(testRuns))
 	for i, run := range testRuns {
@@ -64,7 +67,10 @@ func GetMetadataResponse(testRuns []TestRun, includeTestLevel bool, log Logger, 
 	return constructMetadataResponse(productSpecs, includeTestLevel, metadata), nil
 }
 
-// GetMetadataResponseOnProducts constructs the response to a WPT Metadata query, given ProductSpecs.
+// GetMetadataResponseOnProducts constructs the response to a WPT Metadata
+// query, given ProductSpecs. Metdata is included for any product that matches
+// a passed ProductSpec. Test-level metadata (i.e. that is not associated with
+// any product) may be fetched by passing true for includeTestLevel.
 func GetMetadataResponseOnProducts(productSpecs ProductSpecs, includeTestLevel bool, log Logger, fetcher MetadataFetcher) (MetadataResults, error) {
 	// TODO(kyleju): Include the SHA information in API response;
 	// see https://github.com/web-platform-tests/wpt.fyi/issues/1938

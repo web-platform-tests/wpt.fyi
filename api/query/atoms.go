@@ -297,7 +297,7 @@ func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 			metadataRuns := []shared.TestRun{run}
 
 			// Product being nil means that we want test-level issues.
-			if (t.Product == nil) {
+			if t.Product == nil {
 				includeTestLevel = true
 				metadataRuns = []shared.TestRun{}
 			}

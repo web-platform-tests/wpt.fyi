@@ -890,10 +890,9 @@ func TestStructuredQuery_bindLink(t *testing.T) {
 		},
 	}
 
-	// AbstractLink should include test-level issues since it's about
-	// searching for links across all runs. It does not include the
-	// Chromium link because there is no run for Chromium (and thus no
-	// reason to include it, as the frontend won't show it).
+	// AbstractLink should bind test-level issues too as the pattern might match
+	// them. It should not include the Chromium link however, as there is no run
+	// for Chromium and thus no reason to include it - the frontend won't show it.
 	expect := Link{
 		Pattern: "bar",
 		Metadata: map[string][]string{
@@ -942,7 +941,7 @@ func TestStructuredQuery_bindTriaged(t *testing.T) {
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))
 
-	// This case doesn't match, so we should get back False.
+	// This query doesn't match any of the runs, so should convert to False.
 	q = AbstractTriaged{
 		Product:         &safari,
 		metadataFetcher: mockFetcher,
@@ -976,8 +975,8 @@ func TestStructuredQuery_bindTriagedNilProduct(t *testing.T) {
 		},
 	}
 
-	// This is inefficient, but currently a nil product binds to all runs,
-	// with the same metadata in all cases.
+	// This is inefficient, but currently a nil product binds to all runs, with
+	// the same metadata in all cases.
 	expect := Or{
 		Args:[]ConcreteQuery{
 			Triaged{
