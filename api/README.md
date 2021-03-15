@@ -608,6 +608,9 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 ```
 </details>
 
+### /api/metadata/pending
+API endpoint for retrieving pending metadata whose PRs are not merged yet. This endpoint is used along with the /api/metadata endpoint to retrieve all metadata, pending or non-pending. It accepts GET requests and returns the same JSON response as [/api/metadata](#apimetadata).
+
 ### /api/metadata/triage
 
 This API is available for trusted third parties.
