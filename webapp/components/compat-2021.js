@@ -44,7 +44,7 @@ class Compat2021 extends PolymerElement {
         .unselected {
           background-color: white;
         }
-        .selected{
+        .selected {
           background-color: var(--paper-blue-100);
         }
 
@@ -130,10 +130,7 @@ class Compat2021 extends PolymerElement {
     this.stable = params.get('stable') !== null;
     this.feature = params.get('feature');
 
-    // The default behavior of the page (when loaded with no params) is to not
-    // select any graph, so we can directly set `value` from the param here.
     this.$.featureSelect.value = this.feature;
-
     this.$.featureSelect.addEventListener('change', () => {
       this.feature = this.$.featureSelect.value;
     });
@@ -153,11 +150,11 @@ class Compat2021 extends PolymerElement {
       params.push('stable');
     }
 
-    // We always append a '?' at the very least, as passing empty-string to
-    // pushState does not update the URL. So if you have only stable selected
-    // (with no feature) and then you un-select the checkbox, the URL wouldn't
-    // change unless we set it to '?'.
-    history.pushState('', '', `?${params.join('&')}`);
+    let url = location.pathname;
+    if (params.length) {
+      url += `?${params.join('&')}`;
+    }
+    history.pushState('', '', url);
   }
 
   experimentalButtonClass(stable) {
