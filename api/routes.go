@@ -68,6 +68,9 @@ func RegisterRoutes() {
 	// API endpoint for searching Metadata for the products.
 	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapPermissiveCORS(apiMetadataHandler))
 
+	// API endpoint for searching pending Metadata stored in memory.
+	shared.AddRoute("/api/metadata/pending", "api-pending-metadata", shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiPendingMetadataHandler)))
+
 	// API endpoint for modifying Metadata.
 	shared.AddRoute("/api/metadata/triage", "api-metadata-triage", shared.WrapTrustedCORS(apiMetadataTriageHandler, CORSList, []string{"PATCH"}))
 

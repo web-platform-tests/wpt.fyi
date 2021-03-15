@@ -17,6 +17,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/gomodule/redigo/redis"
 )
 
 var (
@@ -430,4 +432,66 @@ func FlushCache() error {
 	// https://redis.io/commands/flushall
 	_, err := conn.Do("FLUSHALL")
 	return err
+}
+
+// MemcacheSet is an interface for an memcacheSetReadWritable,
+// which performs Add/Remove/GetAll operations via the App Engine Redis API.
+type MemcacheSet interface {
+	// Add inserts value to the set stored at key; ignored if value is
+	// already a member of this set.
+	Add(key string, value string) error
+	// Remove removes value to the set stored at key; ignored if value is
+	// not a member of this set.
+	Remove(key string, value string) error
+	// GetAll returns all the members of the set stored at key.
+	GetAll(key string) ([]string, error)
+}
+
+type memcacheSetReadWritable struct{}
+
+// NewMemcacheSet returns a new memcacheSetReadWritable.
+func NewMemcacheSet() MemcacheSet {
+	return memcacheSetReadWritable{}
+}
+
+func (ms memcacheSetReadWritable) Add(key string, value string) error {
+	if Clients.redisPool == nil {
+		return errNoRedis
+	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+
+	// https://redis.io/commands/sadd
+	_, err := conn.Do("SADD", key, value)
+	return err
+}
+
+func (ms memcacheSetReadWritable) Remove(key string, value string) error {
+	if Clients.redisPool == nil {
+		return errNoRedis
+	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+
+	// https://redis.io/commands/srem
+	_, err := conn.Do("SREM", key, value)
+	return err
+}
+
+func (ms memcacheSetReadWritable) GetAll(key string) ([]string, error) {
+	if Clients.redisPool == nil {
+		return nil, errNoRedis
+	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+
+	// https://redis.io/commands/smembers
+	value, err := redis.Strings(conn.Do("SMEMBERS", key))
+	if err != nil {
+		return nil, err
+	} else if value == nil {
+		return nil, errCacheMiss
+	}
+
+	return value, nil
 }
