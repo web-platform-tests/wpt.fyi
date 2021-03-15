@@ -8,6 +8,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -309,4 +310,103 @@ func getMetadataTestData() map[string][]byte {
           status: FAIL
     `)
 	return metadataMap
+}
+
+func TestPendingMetadataHandler_Success(t *testing.T) {
+	ctx := sharedtest.NewTestContext()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	r := httptest.NewRequest("GET", "/api/metadata/pending", nil)
+	w := httptest.NewRecorder()
+
+	mockSet := sharedtest.NewMockMemcacheSet(mockCtrl)
+	mockSet.EXPECT().GetAll(shared.PendingMetadataCacheKey).Return([]string{"123", "456"}, nil)
+
+	var expected, result1, result2, actual shared.MetadataResults
+	json.Unmarshal([]byte(`{
+            "/testB/b.html": [
+                {
+                    "product": "firefox",
+                    "url":"bar.com",
+                    "results":[{"status":6}]
+                }
+            ],
+            "/foo1/bar1.html": [
+                {
+                    "product": "chrome",
+                    "url": "bugs.bar",
+                    "results": [
+                        {"status": 6, "subtest": "sub-bar1" },
+                        {"status": 3 }
+                    ]}
+            ]
+        }`), &expected)
+
+	json.Unmarshal([]byte(`{
+            "/testB/b.html": [
+                {
+                    "product": "firefox",
+                    "url":"bar.com",
+                    "results":[{"status":6}]
+                }
+            ]
+        }`), &result1)
+
+	json.Unmarshal([]byte(`{
+            "/foo1/bar1.html": [
+                {
+                    "product": "chrome",
+                    "url": "bugs.bar",
+                    "results": [
+                        {"status": 6, "subtest": "sub-bar1" },
+                        {"status": 3 }
+                    ]}
+            ]
+        }`), &result2)
+
+	results := []shared.MetadataResults{
+		result1,
+		result2,
+	}
+	bindMetadataResults := func(i int) func(_, _ interface{}) {
+		return func(cid, ms interface{}) {
+			ptr := ms.(*shared.MetadataResults)
+			*ptr = results[i]
+		}
+	}
+
+	mockCache := sharedtest.NewMockObjectCache(mockCtrl)
+	keys := []string{
+		shared.PendingMetadataCachePrefix + "123",
+		shared.PendingMetadataCachePrefix + "456",
+	}
+	for i, key := range keys {
+		mockCache.EXPECT().Get(key, gomock.Any()).Do(bindMetadataResults(i)).Return(nil)
+	}
+
+	handlePendingMetadata(ctx, mockCache, mockSet, w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	res := w.Body.String()
+	json.Unmarshal([]byte(res), &actual)
+	assert.Equal(t, expected, actual)
+}
+
+func TestPendingMetadataHandler_Fail(t *testing.T) {
+	ctx := sharedtest.NewTestContext()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	r := httptest.NewRequest("GET", "/api/metadata/pending", nil)
+	w := httptest.NewRecorder()
+
+	mockCache := sharedtest.NewMockObjectCache(mockCtrl)
+	mockSet := sharedtest.NewMockMemcacheSet(mockCtrl)
+	mockSet.EXPECT().GetAll(shared.PendingMetadataCacheKey).Return(nil, errors.New("Cache miss"))
+
+	handlePendingMetadata(ctx, mockCache, mockSet, w, r)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }

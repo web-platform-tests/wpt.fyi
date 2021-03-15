@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination sharedtest/cache_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared CachedStore,ObjectCache,ObjectStore,ReadWritable,Readable
+//go:generate mockgen -destination sharedtest/cache_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared CachedStore,ObjectCache,ObjectStore,ReadWritable,Readable,MemcacheSet
 
 package shared
 
@@ -443,7 +443,8 @@ type MemcacheSet interface {
 	// Remove removes value to the set stored at key; ignored if value is
 	// not a member of this set.
 	Remove(key string, value string) error
-	// GetAll returns all the members of the set stored at key.
+	// GetAll returns all the members of the set stored at key; returns an
+	// empty string[] if the key is not present.
 	GetAll(key string) ([]string, error)
 }
 

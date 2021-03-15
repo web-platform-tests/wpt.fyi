@@ -23,7 +23,7 @@ import (
 // pending metadata PRs in Redis.
 const PendingMetadataCacheKey = "WPT-PENDING-METADATA"
 
-// PendingMetadataCachePrefix is the key prefix for the pending metadata
+// PendingMetadataCachePrefix is the key prefix for pending metadata
 // stored in Redis.
 const PendingMetadataCachePrefix = "PENDING-PR-"
 

@@ -234,7 +234,7 @@ func handlePendingMetadata(ctx context.Context, jsonObjectCache shared.ObjectCac
 	}
 
 	// TODO(kyleju): Check if a PR has been merged or closed; if so, remove them from Redis.
-	var allPendingResults shared.MetadataResults
+	allPendingResults := make(shared.MetadataResults)
 	for _, pr := range prs {
 		var pendingMetadata shared.MetadataResults
 		pendingMetadataKey := shared.PendingMetadataCachePrefix + pr
