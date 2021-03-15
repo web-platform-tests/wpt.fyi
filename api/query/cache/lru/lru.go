@@ -19,14 +19,16 @@ type LRU interface {
 	// Access stores the current time as the "last accessed" time for the given
 	// value in the collection. The first access of an unevicted value implicitly
 	// adds the value to the collection.
-	Access(int64)
-	// EvictLRU deletes the oldest value from the collection and returns it. If
-	// the collection is empty, then an error is returned.
-	EvictLRU(float64) []int64
+	Access(value int64)
+	// EvictLRU removes and returns a fraction of the collection, based on
+	// the passed percentage. It will always remove at least one item. When
+	// deciding which items to remove, EvictLRU deletes older values from
+	// the collection first. If the collection is empty, nil is returned.
+	EvictLRU(percent float64) []int64
 }
 
 type lru struct {
-	byRunID map[int64]time.Time
+	values map[int64]time.Time
 	m       *sync.Mutex
 }
 
@@ -35,56 +37,59 @@ type lruEntry struct {
 	time.Time
 }
 
-type byTime []lruEntry
+type lruEntries []lruEntry
 
-func (s byTime) Len() int           { return len(s) }
-func (s byTime) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s byTime) Less(i, j int) bool { return s[i].Time.Before(s[j].Time) }
+// Satisfy the Sort interface requirements (https://golang.org/pkg/sort/#Sort)
+func (s lruEntries) Len() int           { return len(s) }
+func (s lruEntries) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s lruEntries) Less(i, j int) bool { return s[i].Time.Before(s[j].Time) }
 
 var errEmpty = errors.New("LRU is empty")
 
-func (l *lru) Access(r int64) {
-	l.syncAccess(r)
+func (l *lru) Access(v int64) {
+	l.syncAccess(v)
 }
 
 func (l *lru) EvictLRU(percent float64) []int64 {
-	if len(l.byRunID) == 0 {
+	if len(l.values) == 0 {
 		return nil
 	}
 	percent = math.Max(0.0, math.Min(1.0, percent))
-	return l.syncEvictLRU(int(math.Max(1.0, math.Floor(float64(len(l.byRunID))*percent))))
+	numValuesToDelete := math.Floor(float64(len(l.values)) * percent)
+	// Always delete at least one entry.
+	return l.syncEvictLRU(int(math.Max(1.0, numValuesToDelete)))
 }
 
 // NewLRU constructs a new empty LRU.
 func NewLRU() LRU {
 	return &lru{
-		byRunID: make(map[int64]time.Time),
+		values: make(map[int64]time.Time),
 		m:       &sync.Mutex{},
 	}
 }
 
-func (l *lru) syncAccess(r int64) {
+func (l *lru) syncAccess(v int64) {
 	l.m.Lock()
 	defer l.m.Unlock()
 
-	l.byRunID[r] = time.Now()
+	l.values[v] = time.Now()
 }
 
 func (l *lru) syncEvictLRU(num int) []int64 {
 	l.m.Lock()
 	defer l.m.Unlock()
 
-	rs := make(byTime, 0, len(l.byRunID))
-	for r, t := range l.byRunID {
-		rs = append(rs, lruEntry{r, t})
+	vs := make(lruEntries, 0, len(l.values))
+	for v, t := range l.values {
+		vs = append(vs, lruEntry{v, t})
 	}
-	sort.Sort(rs)
-	toRemove := rs[:num]
+	sort.Sort(vs)
+	toRemove := vs[:num]
 	ret := make([]int64, num)
 	for i := range toRemove {
-		id := toRemove[i].int64
-		ret[i] = id
-		delete(l.byRunID, id)
+		value := toRemove[i].int64
+		ret[i] = value
+		delete(l.values, value)
 	}
 
 	return ret
