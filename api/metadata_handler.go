@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -221,17 +222,41 @@ func apiPendingMetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	cacheSet := shared.NewMemcacheSet()
-	jsonObjectCache := shared.NewJSONObjectCache(ctx, shared.NewMemcacheReadWritable(ctx, 0))
+	jsonObjectCache := shared.NewJSONObjectCache(ctx, shared.NewMemcacheReadWritable(ctx, time.Minute*10))
 	handlePendingMetadata(ctx, jsonObjectCache, cacheSet, w, r)
 }
 
 func handlePendingMetadata(ctx context.Context, jsonObjectCache shared.ObjectCache, cacheSet shared.MemcacheSet, w http.ResponseWriter, r *http.Request) {
+	// Add Dummy Data in staging
+	err := cacheSet.Add(shared.PendingMetadataCacheKey, "testing")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var dummy shared.MetadataResults
+	json.Unmarshal([]byte(`{
+            "/dummya": [
+                {
+                    "product": "firefox",
+                    "url":"foo.com",
+                    "results":[{"status":6}]
+                }
+            ]
+        }`), &dummy)
+	err = jsonObjectCache.Put(shared.PendingMetadataCachePrefix+"testing", dummy)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	logger := shared.GetLogger(ctx)
 	prs, err := cacheSet.GetAll(shared.PendingMetadataCacheKey)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	logger.Infof("Get %s from Redis", prs[0])
 
 	// TODO(kyleju): Check if a PR has been merged or closed; if so, remove them from Redis.
 	allPendingResults := make(shared.MetadataResults)
