@@ -5,6 +5,7 @@
  */
 
 import {load} from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
@@ -16,6 +17,45 @@ const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt
 class Compat2021 extends PolymerElement {
   static get template() {
     return html`
+      <style>
+        :host {
+          font-family: system-ui, sans-serif;
+          line-height: 1.5;
+        }
+
+        h1 {
+          text-align: center;
+        }
+
+        .channel-area {
+          display: inline-flex;
+          height: 35px;
+          margin-top: 0;
+          margin-bottom: 10px;
+        }
+
+        .channel-label {
+          font-size: 18px;
+          display: flex;
+          justify-content: center;
+          flex-direction: column;
+        }
+
+        .unselected {
+          background-color: white;
+        }
+        .selected {
+          background-color: var(--paper-blue-100);
+        }
+
+        .focus-area {
+          font-size: 18px;
+        }
+
+        #featureSelect {
+          padding: 0.5rem;
+        }
+      </style>
       <h1>Compat 2021 Dashboard</h1>
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
       <p>
@@ -27,13 +67,42 @@ class Compat2021 extends PolymerElement {
       <p>
         The set of tests used is derived from the full wpt.fyi test suite for
         each feature, filtered by believed importance to web developers.
+        The results shown here are from
+        <template is="dom-if" if="[[stable]]">
+          released stable builds.
+        </template>
         <template is="dom-if" if="[[!stable]]">
-          The results shown here are from developer preview builds with
-          experimental features enabled.
+          developer preview builds with experimental features enabled.
         </template>
       </p>
-      <compat-2021-feature-chart stable="[[stable]]"></compat-2021-feature-chart>
-      <p>TODO: Test results table</p>
+
+      <fieldset>
+        <legend>Configuration:</legend>
+
+        <div class="channel-area">
+          <span class="channel-label">Browser Type:</span>
+          <paper-button class\$="[[experimentalButtonClass(stable)]]" raised on-click="clickExperimental">Experimental</paper-button>
+          <paper-button class\$="[[stableButtonClass(stable)]]" raised on-click="clickStable">Stable</paper-button>
+        </div>
+
+        <!-- TODO: replace with paper-dropdown-menu -->
+        <div class="focus-area">
+          <label for="featureSelect">Focus area:</label>
+          <select id="featureSelect">
+            <option value="aspect-ratio">aspect-ratio</option>
+            <option value="css-flexbox">css-flexbox</option>
+            <option value="css-grid">css-grid</option>
+            <option value="css-transforms">css-transforms</option>
+            <option value="position-sticky">position-sticky</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <compat-2021-feature-chart stable="[[stable]]"
+                                 feature="{{feature}}">
+      </compat-2021-feature-chart>
+
+      <!-- TODO: Test results table -->
 `;
   }
 
@@ -44,7 +113,14 @@ class Compat2021 extends PolymerElement {
   static get properties() {
     return {
       stable: Boolean,
+      feature: String,
     };
+  }
+
+  static get observers() {
+    return [
+      'updateUrlParams(stable, feature)',
+    ];
   }
 
   ready() {
@@ -52,6 +128,55 @@ class Compat2021 extends PolymerElement {
 
     const params = (new URL(document.location)).searchParams;
     this.stable = params.get('stable') !== null;
+    this.feature = params.get('feature');
+
+    this.$.featureSelect.value = this.feature;
+    this.$.featureSelect.addEventListener('change', () => {
+      this.feature = this.$.featureSelect.value;
+    });
+  }
+
+  updateUrlParams(stable, feature) {
+    // Our observer may be called before the feature is set, so debounce that.
+    if (feature === undefined) {
+      return;
+    }
+
+    const params = [];
+    if (feature) {
+      params.push(`feature=${feature}`);
+    }
+    if (stable) {
+      params.push('stable');
+    }
+
+    let url = location.pathname;
+    if (params.length) {
+      url += `?${params.join('&')}`;
+    }
+    history.pushState('', '', url);
+  }
+
+  experimentalButtonClass(stable) {
+    return stable ? 'unselected' : 'selected';
+  }
+
+  stableButtonClass(stable) {
+    return stable ? 'selected' : 'unselected';
+  }
+
+  clickExperimental() {
+    if (!this.stable) {
+      return;
+    }
+    this.stable = false;
+  }
+
+  clickStable() {
+    if (this.stable) {
+      return;
+    }
+    this.stable = true;
   }
 }
 window.customElements.define(Compat2021.is, Compat2021);
@@ -71,6 +196,9 @@ const EXPERIMENTAL_TITLES = [
 class Compat2021Summary extends PolymerElement {
   static get template() {
     return html`
+      <link rel="preconnect" href="https://fonts.gstatic.com">
+      <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+
       <style>
         #summaryContainer {
           padding-top: 1em;
@@ -80,14 +208,14 @@ class Compat2021Summary extends PolymerElement {
         }
 
         .summary-flex-item {
-          /* TODO: Relative so it contains the absolute-positioned child; is this ok? */
           position: relative;
           width: 125px;
+          cursor: help;
         }
 
         .summary-number {
           font-size: 5em;
-          font-family: monospace;
+          font-family: 'Roboto Mono', monospace;
           text-align: center;
         }
 
@@ -95,7 +223,8 @@ class Compat2021Summary extends PolymerElement {
           text-align: center;
         }
 
-        .summary-flex-item:hover .summary-tooltip {
+        .summary-flex-item:hover .summary-tooltip,
+        .summary-flex-item:focus .summary-tooltip {
           display: block;
         }
 
@@ -103,32 +232,40 @@ class Compat2021Summary extends PolymerElement {
           display: none;
           position: absolute;
           /* TODO: find a better solution for drawing on-top of other numbers */
-          z-index: 100;
-          width: 100%;
-          border: 1px black solid;
+          z-index: 1;
+          width: 150px;
+          border: 1px lightgrey solid;
           background: white;
-          left: 100%;
-          top: -10%;
           border-radius: 3px;
           padding: 5px;
+          top: 105%;
+          left: -20%;
+          padding: 0.5rem 0.75rem;
+          line-height: 1.4;
+          box-shadow: 0 0 20px 0px #c3c3c3;
+        }
+
+        .summary-tooltip > div {
+          display: flex;
+          justify-content: space-between;
         }
       </style>
 
       <div id="summaryContainer">
         <!-- Chrome/Edge -->
-        <div class="summary-flex-item">
+        <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
           <div class="summary-browser-name"></div>
         </div>
         <!-- Firefox -->
-        <div class="summary-flex-item">
+        <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
           <div class="summary-browser-name"></div>
         </div>
         <!-- Safari -->
-        <div class="summary-flex-item">
+        <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
           <div class="summary-browser-name"></div>
@@ -260,20 +397,6 @@ class Compat2021FeatureChart extends PolymerElement {
         }
       </style>
 
-      <h3>Individual Features</h3>
-
-      <!-- TODO: replace with paper-dropdown-menu -->
-      <div>
-        <label for="featureSelect">Focus area:</label>
-        <select id="featureSelect">
-          <option value="aspect-ratio">aspect-ratio</option>
-          <option value="css-flexbox">css-flexbox</option>
-          <option value="css-grid">css-grid</option>
-          <option value="css-transforms">css-transforms</option>
-          <option value="position-sticky">position-sticky</option>
-        </select>
-      </div>
-
       <!-- TODO: replace with google-chart polymer element? -->
       <div id="failuresChart" class="chart"></div>
 `;
@@ -335,16 +458,6 @@ class Compat2021FeatureChart extends PolymerElement {
 
   ready() {
     super.ready();
-    const params = (new URL(document.location)).searchParams;
-    this.feature = params.get('feature');
-
-    // The default behavior of the page (when loaded with no params) is to not
-    // select any graph, so we can directly set `value` from the param here.
-    this.$.featureSelect.value = this.feature;
-
-    this.$.featureSelect.addEventListener('change', () => {
-      this.feature = this.$.featureSelect.value;
-    });
   }
 
   async updateChart(feature, stable) {
