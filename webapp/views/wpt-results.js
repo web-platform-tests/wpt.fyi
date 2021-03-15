@@ -124,13 +124,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         border-radius: 4px;
         background-color: var(--paper-blue-100);
       }
-      .test-type-icon {
-        padding: 0;
-      }
-      .test-type-icon iron-icon {
-        height: 16px;
-        width: 16px;
-      }
 
       @media (max-width: 1200px) {
         table tr td:first-child::after {
@@ -141,16 +134,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
       }
 
-      .compare {
-        display: flex;
-      }
-      .compare .column {
-        flex-grow: 1;
-      }
-      .compare .column iframe {
-        width: 100%;
-        height: 600px;
-      }
       .view-triage {
         margin-left: 30px;
       }
@@ -218,13 +201,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
             <template is="dom-repeat" items="{{displayedNodes}}" as="node">
               <tr>
-                <td class="test-type-icon">
-                  <template is="dom-if" if="{{showTestType}}">
-                    <template is="dom-if" if="{{node.testTypeIcon}}">
-                      <iron-icon icon="{{node.testTypeIcon}}" title="[[node.testType]] test"></iron-icon>
-                    </template>
-                  </template>
-                </td>
                 <td onclick="[[handleTriageSelect(null, node, testRun)]]" onmouseover="[[handleTriageHover(null, node, testRun)]]">
                   <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}"></path-part>
                   <template is="dom-if" if="[[shouldDisplayMetadata(null, node.path, metadataMap)]]">
@@ -307,29 +283,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </div>
     </template>
 
-    <template is="dom-if" if="[[isRefTest]]">
-      <template is="dom-if" if="[[ reftestIframes ]]">
-        <div class="separator"></div>
-        <section>
-          <h4>[[path]] in this browser</h4>
-          <div class="compare">
-            <div class="column">
-              <h5>Result</h5>
-              <template is="dom-if" if="[[testURL]]">
-                <iframe src="[[https(testURL)]]"></iframe>
-              </template>
-            </div>
-            <div class="column">
-              <h5>Reference</h5>
-              <template is="dom-if" if="[[testRefURL]]">
-                <iframe src="[[https(testRefURL)]]"></iframe>
-              </template>
-            </div>
-          </div>
-        </section>
-      </template>
-    </template>
-
     <template is="dom-if" if="[[displayMetadata]]">
       <wpt-metadata products="[[displayedProducts]]"
                     path="[[path]]"
@@ -354,27 +307,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       pathIsASubfolderOrFile: {
         type: Boolean,
         computed: 'computePathIsASubfolderOrFile(pathIsASubfolder, pathIsATestFile)'
-      },
-      sourcePath: {
-        type: String,
-        computed: 'computeSourcePath(path, manifest)',
-      },
-      testType: {
-        type: String,
-        computed: 'computeTestType(path, manifest)',
-        value: '',
-      },
-      isRefTest: {
-        type: Boolean,
-        computed: 'computeIsRefTest(testType)'
-      },
-      testURL: {
-        type: String,
-        computed: 'computeTestURL(testType, path)',
-      },
-      testRefURL: {
-        type: String,
-        computed: 'computeTestRefURL(testType, path, manifest)',
       },
       liveTestDomain: {
         type: String,
@@ -422,7 +354,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       },
       onlyShowDifferences: Boolean,
       // path => {type, file[, refPath]} simplification.
-      manifest: Object,
       screenshots: Array,
     };
   }
@@ -442,61 +373,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return isSubfolder || isFile;
   }
 
-  computeSourcePath(path, manifest) {
-    if (!this.computePathIsATestFile(path) || !manifest) {
-      return path;
-    }
-    const metadata = manifest.get(path);
-    if (metadata) {
-      return metadata.file;
-    }
-  }
-
-  computeIsRefTest(testType) {
-    return testType === 'reftest';
-  }
-
-  computeTestURL(testType, path) {
-    if (testType === 'wdspec') {
-      return;
-    }
-    return new URL(`${this.scheme}://${this.liveTestDomain}${path}`);
-  }
-
-  computeTestRefURL(testType, path, manifest) {
-    if (!this.showTestRefURL || testType !== 'reftest') {
-      return;
-    }
-    const metadata = manifest.get(path);
-    if (metadata && metadata.refPath) {
-      return this.computeTestURL(testType, metadata.refPath);
-    }
-  }
-
   computeLiveTestDomain() {
     if (this.webPlatformTestsLive) {
       return 'wpt.live';
     }
     return 'w3c-test.org';
-  }
-
-  https(url) {
-    return `${url}`.replace(/^http:/, 'https:');
-  }
-
-  computeTestType(path, manifest) {
-    if (!this.computePathIsATestFile(path) || !manifest) {
-      return;
-    }
-    const metadata = manifest.get(path);
-    return metadata && metadata.type;
-  }
-
-  computeTestTypeIcon(testType) {
-    switch (testType) {
-    case 'manual': return 'touch-app';
-    case 'reftest': return 'image:compare';
-    }
   }
 
   computeTestPaths(searchResults) {
@@ -553,13 +434,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             browser_name: 'diff',
           };
           this.fetchDiff();
-        }
-
-        // Load a manifest.
-        if (this.fetchManifestForTestList && runs && runs.length) {
-          const shas = new Set((runs || []).map(r => r.revision));
-          const sha = shas.size === 1 ? Array.from(shas)[0] : 'latest';
-          this.fetchManifestForSHA(sha);
         }
       }),
       () => {
@@ -664,60 +538,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     );
   }
 
-  fetchManifestForSHA(sha) {
-    const url = new URL('/api/manifest', window.location);
-    const isSpecificSHA = sha && !this.computeIsLatest(sha);
-    if (isSpecificSHA) {
-      url.searchParams.set('sha', sha);
-    }
-    this.load(
-      fetch(url).then(
-        async r => {
-          if (!r.ok) {
-            // eslint-disable-next-line no-console
-            console.warn(`Failed to load manifest for ${sha}: ${r.status} - ${r.statusText}`);
-            // Fall back to the latest manifest if we 404 for a specific SHA.
-            return r.status === 404
-              && isSpecificSHA
-              && this.fetchManifestForSHA('latest');
-          }
-          let manifestJSON = await r.json();
-          const manifest = new Map();
-          manifest.sha = sha || r.headers && r.headers['X-WPT-SHA'];
-          for (const [type, items] of Object.entries(manifestJSON.items)) {
-            if (!TEST_TYPES.includes(type)) {
-              continue;
-            }
-            for (const [file, tests] of Object.entries(items)) {
-              for (const test of tests) {
-                const metadata = {
-                  file,
-                  type,
-                };
-                if (type === 'reftest') {
-                  metadata.refPath = test[1][0][0];
-                }
-                // Ensure leading slashes (e.g. manual/visual tests don't).
-                if (!metadata.file.startsWith('/')) {
-                  metadata.file = `/${file}`;
-                }
-                let path = test[0];
-                if (!path.startsWith('/')) {
-                  path = `/${path}`;
-                }
-                manifest.set(path, metadata);
-              }
-            }
-          }
-          this.manifest = manifest;
-          // eslint-disable-next-line no-console
-          console.info(`Loaded manifest ${manifest.sha}`);
-          this.refreshDisplayedNodes();
-        }
-      )
-    );
-  }
-
   pathUpdated(path) {
     this.refreshDisplayedNodes();
   }
@@ -756,24 +576,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           })),
         };
       }
-      if (this.computePathIsATestFile(name)) {
-        nodes[name].testType = this.computeTestType(testPath, this.manifest);
-        nodes[name].testTypeIcon = this.computeTestTypeIcon(nodes[name].testType);
-      }
       return name;
     };
-
-    // Add an empty row for all the tests known from the manifest.
-    const knownNodes = {};
-    if (this.manifest && !this.search) {
-      for (const [path, { type }] of Object.entries(this.manifest)) {
-        if (TEST_TYPES.includes(type)) {
-          if (path.startsWith(prefix)) {
-            collapsePathOnto(path, knownNodes);
-          }
-        }
-      }
-    }
 
     const resultsByPath = this.searchResults
       // Filter out files not in this directory.
@@ -835,7 +639,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           }
         }
         return nodes;
-      }, knownNodes);
+      }, {});
     this.displayedNodes = Object.values(resultsByPath)
       .filter(row => {
         if (!this.onlyShowDifferences) {

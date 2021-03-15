@@ -40,19 +40,14 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'colorHomepage',
       'diffFromAPI',
       'displayMetadata',
-      'fetchManifestForTestList',
       'githubCommitLinks',
       'githubLogin',
       'permalinks',
       'processorTab',
       'queryBuilder',
       'queryBuilderSHA',
-      'reftestAnalyzerMockScreenshots',
-      'reftestIframes',
       'searchCacheInterop',
       'showBSF',
-      'showTestType',
-      'showTestRefURL',
       'structuredQueries',
       'triageMetadataUI',
       'webPlatformTestsLive',
@@ -227,31 +222,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item sub-item>
       <paper-checkbox checked="{{searchCacheInterop}}">
         Compute interop results the fly, using the searchcache
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox checked="{{fetchManifestForTestList}}">
-        Fetch a manifest for a complete (expected) list of tests.
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item>
-      <paper-checkbox checked="{{showTestType}}">
-        Display test types
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item>
-      <paper-checkbox checked="{{showTestRefURL}}">
-        Display link to ref (for reftests)
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item>
-      <paper-checkbox checked="{{reftestIframes}}">
-        Display comparitive iframes for reftests
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item>
-      <paper-checkbox checked="{{reftestAnalyzerMockScreenshots}}">
-        Use mock screenshots for all the reftests
       </paper-checkbox>
     </paper-item>
     <paper-item>
