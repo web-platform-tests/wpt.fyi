@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+import {load} from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
@@ -31,7 +32,7 @@ class Compat2021 extends PolymerElement {
           experimental features enabled.
         </template>
       </p>
-      <p>TODO: Individual feature graph</p>
+      <compat-2021-feature-chart stable="[[stable]]"></compat-2021-feature-chart>
       <p>TODO: Test results table</p>
 `;
   }
@@ -196,13 +197,7 @@ class Compat2021Summary extends PolymerElement {
   async calculateSummaryScores(stable) {
     const label = stable ? 'stable' : 'experimental';
     const url = `${GITHUB_URL_PREFIX}/data/compat2021/summary-${label}.csv`;
-    const csvResp = await fetch(url);
-    if (!csvResp.ok) {
-      throw new Error(`Fetching chart csv data failed: ${csvResp.status}`);
-    }
-    const csvText = await csvResp.text();
-    const csvLines = csvText.split('\n').filter(l => l);
-    csvLines.shift();  // We don't need the CSV header.
+    const csvLines = await fetchCsvContents(url);
 
     if (csvLines.length !== 5) {
       throw new Error(`${url} did not contain 5 results`);
@@ -252,3 +247,231 @@ class Compat2021Summary extends PolymerElement {
   }
 }
 window.customElements.define(Compat2021Summary.is, Compat2021Summary);
+
+class Compat2021FeatureChart extends PolymerElement {
+  static get template() {
+    return html`
+      <style>
+        .chart {
+          /* Reserve vertical space to avoid layout shift. Should be kept in sync
+             with the JavaScript defined height. */
+          height: 350px;
+          margin: 0 auto;
+        }
+      </style>
+
+      <h3>Individual Features</h3>
+
+      <!-- TODO: replace with paper-dropdown-menu -->
+      <div>
+        <label for="featureSelect">Focus area:</label>
+        <select id="featureSelect">
+          <option value="aspect-ratio">aspect-ratio</option>
+          <option value="css-flexbox">css-flexbox</option>
+          <option value="css-grid">css-grid</option>
+          <option value="css-transforms">css-transforms</option>
+          <option value="position-sticky">position-sticky</option>
+        </select>
+      </div>
+
+      <!-- TODO: replace with google-chart polymer element? -->
+      <div id="failuresChart" class="chart"></div>
+`;
+  }
+
+  static get properties() {
+    return {
+      stable: Boolean,
+      feature: String,
+      chartOptions: {
+        type: Object,
+        readyOnly: true,
+        value: {
+          width: 800,
+          height: 350,
+          chartArea: {
+            height: '80%',
+          },
+          tooltip: {
+            trigger: 'both',
+          },
+          hAxis: {
+            title: 'Date',
+            format: 'MMM-YYYY',
+          },
+          vAxis: {
+            title: 'Percentage of tests passing',
+            format: 'percent',
+            viewWindow: {
+              // We set a global minimum value for the y-axis to keep the graphs
+              // consistent when you switch features. Currently the lowest value
+              // is aspect-ratio, with a ~25% pass-rate on Safari STP, Safari
+              // Stable, and Firefox Stable.
+              min: 0.2,
+              max: 1,
+            }
+          },
+          explorer: {
+            actions: ['dragToZoom', 'rightClickToReset'],
+            axis: 'horizontal',
+            keepInBounds: true,
+            maxZoomIn: 4.0,
+          },
+          colors: ['#4285f4', '#ea4335', '#fbbc04'],
+        }
+      },
+    };
+  }
+
+  static get observers() {
+    return [
+      'updateChart(feature, stable)',
+    ];
+  }
+
+  static get is() {
+    return 'compat-2021-feature-chart';
+  }
+
+  ready() {
+    super.ready();
+    const params = (new URL(document.location)).searchParams;
+    this.feature = params.get('feature');
+
+    // The default behavior of the page (when loaded with no params) is to not
+    // select any graph, so we can directly set `value` from the param here.
+    this.$.featureSelect.value = this.feature;
+
+    this.$.featureSelect.addEventListener('change', () => {
+      this.feature = this.$.featureSelect.value;
+    });
+  }
+
+  async updateChart(feature, stable) {
+    // Our observer may be called before the feature is set, so debounce that.
+    if (!feature) {
+      return;
+    }
+
+    // Ensure that Google Charts has loaded.
+    await load();
+
+    const div = this.$.failuresChart;
+    const label = stable ? 'stable' : 'experimental';
+    const url = `${GITHUB_URL_PREFIX}/data/compat2021/${feature}-${label}.csv`;
+    const csvLines = await fetchCsvContents(url);
+
+    // Now convert the CSV into a datatable for use by Google Charts.
+    const dataTable = new window.google.visualization.DataTable();
+    dataTable.addColumn('date', 'Date');
+    dataTable.addColumn('number', 'Chrome/Edge');
+    dataTable.addColumn({type: 'string', role: 'tooltip'});
+    dataTable.addColumn('number', 'Firefox');
+    dataTable.addColumn({type: 'string', role: 'tooltip'});
+    dataTable.addColumn('number', 'Safari');
+    dataTable.addColumn({type: 'string', role: 'tooltip'});
+
+    // We list Chrome/Edge on the legend, but when creating the tooltip we
+    // include the version information and so should be clear about which browser
+    // exactly gave the results.
+    const tooltipBrowserNames = [
+      'Chrome',
+      'Firefox',
+      'Safari',
+    ];
+
+    // We store a lookup table of browser versions to help with the 'show
+    // revision diff' tooltip action below.
+    const browserVersions = [[], [], []];
+
+    csvLines.forEach(line => {
+      // We control the CSV data source, so are quite lazy with parsing it.
+      //
+      // The CSV columns are:
+      //   sha, date, [product-version, product-score,]+
+
+      let csvValues = line.split(',');
+      let dataTableCells = [];
+
+      // The first datatable cell is the date. Javascript Date objects use
+      // 0-indexed months, whilst the CSV is 1-indexed, so adjust for that.
+      const dateParts = csvValues[1].split('-').map(x => parseInt(x));
+      dataTableCells.push(new Date(dateParts[0], dateParts[1] - 1, dateParts[2]));
+
+      // Now handle each of the browsers. For each there is a version column,
+      // then a score column. We use the version to create the tooltip.
+      for (let i = 2; i < csvValues.length; i += 2) {
+        const version = csvValues[i];
+        const score = parseFloat(csvValues[i + 1]);
+        const browserName = tooltipBrowserNames[(i / 2) - 1];
+        const tooltip = this.createTooltip(browserName, version, score);
+
+        dataTableCells.push(score);
+        dataTableCells.push(tooltip);
+
+        // Update the browser versions lookup table; used for the revision-diff
+        // tooltip action.
+        browserVersions[(i / 2) - 1].push(version);
+      }
+      dataTable.addRow(dataTableCells);
+    });
+
+    const chart = new window.google.visualization.LineChart(div);
+
+    // Setup the tooltips to show revision diff.
+    chart.setAction({
+      id: 'revisionDiff',
+      text: 'Show diff from previous release',
+      action: () => {
+        let selection = chart.getSelection();
+        let row = selection[0].row;
+        let column = selection[0].column;
+
+        // Not implemented for Firefox or Safari yet.
+        if (column !== 1) {
+          alert('Diff only supported for Chrome currently');
+          return;
+        }
+
+        // Map from the selected column to the browser index. In the datatable
+        // Chrome is 1, Firefox is 3, Safari is 5 => these must map to [0, 1, 2].
+        let browserIdx = (column - 1) / 2;
+
+        let version = browserVersions[browserIdx][row];
+        let lastVersion = version;
+        while (row > 0 && lastVersion === version) {
+          row -= 1;
+          lastVersion = browserVersions[browserIdx][row];
+        }
+        // TODO: If row == -1, we've failed, but we should grey out the
+        // option instead in that case.
+        window.open(this.getChromeDiffUrl(lastVersion, version));
+      },
+    });
+
+    chart.draw(dataTable, this.chartOptions);
+  }
+
+  getChromeDiffUrl(fromVersion, toVersion) {
+    // Strip off the 'dev' suffix if there.
+    fromVersion = fromVersion.split(' ')[0];
+    toVersion = toVersion.split(' ')[0];
+    return `https://chromium.googlesource.com/chromium/src/+log/${fromVersion}..${toVersion}?pretty=fuller&n=10000`;
+  }
+
+  createTooltip(browser, version, score) {
+    return `${browser} ${version}: ${score.toFixed(3)}`;
+  }
+}
+window.customElements.define(Compat2021FeatureChart.is, Compat2021FeatureChart);
+
+async function fetchCsvContents(url) {
+  const csvResp = await fetch(url);
+  if (!csvResp.ok) {
+    throw new Error(`Fetching chart csv data failed: ${csvResp.status}`);
+  }
+  const csvText = await csvResp.text();
+  const csvLines = csvText.split('\n').filter(l => l);
+  csvLines.shift();  // We don't need the CSV header.
+  return csvLines;
+}
