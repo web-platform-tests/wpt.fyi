@@ -6,7 +6,9 @@
 </head>
 <body>
 <div id="content">
-  <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
+  {{if not .Data.Embedded}}
+    <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
+  {{end}}
   <compat-2021></compat-2021>
 </div>
 </body>

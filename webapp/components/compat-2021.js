@@ -112,6 +112,7 @@ class Compat2021 extends PolymerElement {
 
   static get properties() {
     return {
+      embedded: Boolean,
       stable: Boolean,
       feature: String,
     };
@@ -119,7 +120,7 @@ class Compat2021 extends PolymerElement {
 
   static get observers() {
     return [
-      'updateUrlParams(stable, feature)',
+      'updateUrlParams(embedded, stable, feature)',
     ];
   }
 
@@ -127,6 +128,7 @@ class Compat2021 extends PolymerElement {
     super.ready();
 
     const params = (new URL(document.location)).searchParams;
+    this.embedded = params.get('embedded') !== null;
     this.stable = params.get('stable') !== null;
     this.feature = params.get('feature');
 
@@ -136,7 +138,7 @@ class Compat2021 extends PolymerElement {
     });
   }
 
-  updateUrlParams(stable, feature) {
+  updateUrlParams(embedded, stable, feature) {
     // Our observer may be called before the feature is set, so debounce that.
     if (feature === undefined) {
       return;
@@ -148,6 +150,9 @@ class Compat2021 extends PolymerElement {
     }
     if (stable) {
       params.push('stable');
+    }
+    if (embedded) {
+      params.push('embedded');
     }
 
     let url = location.pathname;
