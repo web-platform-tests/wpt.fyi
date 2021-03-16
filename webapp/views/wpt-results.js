@@ -183,7 +183,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         <table>
           <thead>
             <tr>
-              <th colspan="2">Path</th>
+              <th>Path</th>
               <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                 <!-- Repeats for as many different browser test runs are available -->
                 <th><test-run test-run="[[testRun]]" show-source show-platform></test-run></th>
