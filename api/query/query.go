@@ -113,14 +113,14 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 }
 
 func (qh queryHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
-	mkey := getMemcacheKey(testRun)
+	mkey := getRedisKey(testRun)
 	url := shared.GetResultsURL(testRun, "")
 	var data []byte
 	err := qh.dataSource.Get(mkey, url, &data)
 	return data, err
 }
 
-func getMemcacheKey(testRun shared.TestRun) string {
+func getRedisKey(testRun shared.TestRun) string {
 	return "RESULTS_SUMMARY-" + strconv.FormatInt(testRun.ID, 10)
 }
 

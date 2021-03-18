@@ -19,8 +19,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
-func TestGetMemcacheKey(t *testing.T) {
-	assert.Equal(t, "RESULTS_SUMMARY-1", getMemcacheKey(shared.TestRun{
+func TestGetRedisKey(t *testing.T) {
+	assert.Equal(t, "RESULTS_SUMMARY-1", getRedisKey(shared.TestRun{
 		ID: 1,
 	}))
 }
@@ -44,8 +44,8 @@ func TestLoadSummaries_success(t *testing.T) {
 		},
 	}
 	keys := []string{
-		getMemcacheKey(testRuns[0]),
-		getMemcacheKey(testRuns[1]),
+		getRedisKey(testRuns[0]),
+		getRedisKey(testRuns[1]),
 	}
 
 	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)
@@ -94,8 +94,8 @@ func TestLoadSummaries_fail(t *testing.T) {
 		},
 	}
 	keys := []string{
-		getMemcacheKey(testRuns[0]),
-		getMemcacheKey(testRuns[1]),
+		getRedisKey(testRuns[0]),
+		getRedisKey(testRuns[1]),
 	}
 
 	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)

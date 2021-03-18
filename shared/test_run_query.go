@@ -416,6 +416,6 @@ func VersionPrefix(query Query, fieldName, versionPrefix string, desc bool) Quer
 		Filter(fieldName+" <=", fmt.Sprintf("%s.%c", versionPrefix, '9'+1))
 }
 
-func getTestRunMemcacheKey(id int64) string {
+func getTestRunRedisKey(id int64) string {
 	return "TEST_RUN-" + strconv.FormatInt(id, 10)
 }

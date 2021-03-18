@@ -29,7 +29,7 @@ func (k cloudKey) Kind() string {
 }
 
 // NewAppEngineDatastore creates a Datastore implementation, or a Datastore
-// implementation with Memcache in front to cache all TestRun reads if cached
+// implementation with Redis in front to cache all TestRun reads if cached
 // is true.
 //
 // Both variants (cached or not) are backed by Cloud Datastore SDK, using

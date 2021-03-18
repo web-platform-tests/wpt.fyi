@@ -107,7 +107,7 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
 	// abstracted and tested directly.
-	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
+	mc := shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 48*time.Hour))
 	sh := unstructuredSearchHandler{queryHandler{
 		store:      shared.NewAppEngineDatastore(ctx, false),
 		dataSource: shared.NewByteCachedStore(ctx, mc, cache),
@@ -236,7 +236,7 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
 	// abstracted and tested directly.
 	api := shared.NewAppEngineAPI(ctx)
-	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
+	mc := shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 48*time.Hour))
 	sh := structuredSearchHandler{
 		queryHandler{
 			store:      shared.NewAppEngineDatastore(ctx, false),
@@ -366,7 +366,7 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
 	// abstracted and tested directly.
-	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
+	mc := shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 48*time.Hour))
 	sh := unstructuredSearchHandler{
 		queryHandler{
 			store:      shared.NewAppEngineDatastore(ctx, false),
@@ -463,7 +463,7 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	// TODO: This is parroting apiSearchHandler details. Perhaps they should be
 	// abstracted and tested directly.
 	api := shared.NewAppEngineAPI(ctx)
-	mc := shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 48*time.Hour))
+	mc := shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 48*time.Hour))
 	sh := structuredSearchHandler{
 		queryHandler{
 			store:      shared.NewAppEngineDatastore(ctx, false),
