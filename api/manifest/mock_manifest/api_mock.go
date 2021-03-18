@@ -50,16 +50,16 @@ func (mr *MockAPIMockRecorder) GetManifestForSHA(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManifestForSHA", reflect.TypeOf((*MockAPI)(nil).GetManifestForSHA), arg0)
 }
 
-// NewMemcache mocks base method
-func (m *MockAPI) NewMemcache(arg0 time.Duration) shared.ReadWritable {
+// NewRedis mocks base method
+func (m *MockAPI) NewRedis(arg0 time.Duration) shared.ReadWritable {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewMemcache", arg0)
+	ret := m.ctrl.Call(m, "NewRedis", arg0)
 	ret0, _ := ret[0].(shared.ReadWritable)
 	return ret0
 }
 
-// NewMemcache indicates an expected call of NewMemcache
-func (mr *MockAPIMockRecorder) NewMemcache(arg0 interface{}) *gomock.Call {
+// NewRedis indicates an expected call of NewRedis
+func (mr *MockAPIMockRecorder) NewRedis(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewMemcache", reflect.TypeOf((*MockAPI)(nil).NewMemcache), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRedis", reflect.TypeOf((*MockAPI)(nil).NewRedis), arg0)
 }
