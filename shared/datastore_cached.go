@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// testRunCacheTTL is the expiration for each test run in Memcache.
+// testRunCacheTTL is the expiration for each test run in Redis.
 var testRunCacheTTL = 48 * time.Hour
 
 type cachedDatastore struct {
@@ -27,7 +27,7 @@ func (d cachedDatastore) Get(k Key, dst interface{}) error {
 		d.ctx,
 		NewJSONObjectCache(d.ctx, NewRedisReadWritable(d.ctx, testRunCacheTTL)),
 		testRunObjectStore{d})
-	return cs.Get(getTestRunMemcacheKey(k.IntID()), k.IntID(), dst)
+	return cs.Get(getTestRunRedisKey(k.IntID()), k.IntID(), dst)
 }
 
 func (d cachedDatastore) GetMulti(keys []Key, dst interface{}) error {

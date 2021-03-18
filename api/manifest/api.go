@@ -104,7 +104,7 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 	return "", nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
 }
 
-// NewRedis creates a new MemcacheReadWritable with the given duration.
+// NewRedis creates a new redisReadWritable with the given duration.
 func (a apiImpl) NewRedis(duration time.Duration) shared.ReadWritable {
 	return shared.NewRedisReadWritable(a.ctx, duration)
 }
