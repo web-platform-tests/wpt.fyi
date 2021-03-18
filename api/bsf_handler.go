@@ -24,7 +24,7 @@ func apiBSFHandler(w http.ResponseWriter, r *http.Request) {
 	shared.NewCachingHandler(
 		ctx,
 		BSFHandler{shared.NewFetchBSF()},
-		shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 60*time.Minute)),
+		shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 60*time.Minute)),
 		shared.AlwaysCachable,
 		shared.URLAsCacheKey,
 		shared.CacheStatusOK).ServeHTTP(w, r)

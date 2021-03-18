@@ -25,7 +25,7 @@ func (d cachedDatastore) Get(k Key, dst interface{}) error {
 
 	cs := NewObjectCachedStore(
 		d.ctx,
-		NewJSONObjectCache(d.ctx, NewMemcacheReadWritable(d.ctx, testRunCacheTTL)),
+		NewJSONObjectCache(d.ctx, NewRedisReadWritable(d.ctx, testRunCacheTTL)),
 		testRunObjectStore{d})
 	return cs.Get(getTestRunMemcacheKey(k.IntID()), k.IntID(), dst)
 }

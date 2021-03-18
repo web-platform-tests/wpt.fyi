@@ -106,5 +106,5 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 
 // NewMemcache creates a new MemcacheReadWritable with the given duration.
 func (a apiImpl) NewMemcache(duration time.Duration) shared.ReadWritable {
-	return shared.NewMemcacheReadWritable(a.ctx, duration)
+	return shared.NewRedisReadWritable(a.ctx, duration)
 }

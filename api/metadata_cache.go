@@ -26,7 +26,7 @@ type webappMetadataFetcher struct {
 
 func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err error) {
 	log := shared.GetLogger(f.ctx)
-	mCache := shared.NewJSONObjectCache(f.ctx, shared.NewMemcacheReadWritable(f.ctx, metadataCacheExpiry))
+	mCache := shared.NewJSONObjectCache(f.ctx, shared.NewRedisReadWritable(f.ctx, metadataCacheExpiry))
 	if !f.forceUpdate {
 		sha, metadataMap, err := getMetadataFromMemcache(mCache)
 		if err == nil {
