@@ -320,7 +320,7 @@ func TestPendingMetadataHandler_Success(t *testing.T) {
 	r := httptest.NewRequest("GET", "/api/metadata/pending", nil)
 	w := httptest.NewRecorder()
 
-	mockSet := sharedtest.NewMockMemcacheSet(mockCtrl)
+	mockSet := sharedtest.NewMockRedisSet(mockCtrl)
 	mockSet.EXPECT().GetAll(shared.PendingMetadataCacheKey).Return([]string{"123", "456"}, nil)
 
 	var expected, result1, result2, actual shared.MetadataResults
@@ -403,7 +403,7 @@ func TestPendingMetadataHandler_Fail(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockCache := sharedtest.NewMockObjectCache(mockCtrl)
-	mockSet := sharedtest.NewMockMemcacheSet(mockCtrl)
+	mockSet := sharedtest.NewMockRedisSet(mockCtrl)
 	mockSet.EXPECT().GetAll(shared.PendingMetadataCacheKey).Return(nil, errors.New("Cache miss"))
 
 	handlePendingMetadata(ctx, mockCache, mockSet, w, r)

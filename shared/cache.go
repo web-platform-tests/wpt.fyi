@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination sharedtest/cache_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared CachedStore,ObjectCache,ObjectStore,ReadWritable,Readable,MemcacheSet
+//go:generate mockgen -destination sharedtest/cache_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared CachedStore,ObjectCache,ObjectStore,ReadWritable,Readable,RedisSet
 
 package shared
 
@@ -434,9 +434,9 @@ func FlushCache() error {
 	return err
 }
 
-// MemcacheSet is an interface for an memcacheSetReadWritable,
+// RedisSet is an interface for an redisSetReadWritable,
 // which performs Add/Remove/GetAll operations via the App Engine Redis API.
-type MemcacheSet interface {
+type RedisSet interface {
 	// Add inserts value to the set stored at key; ignored if value is
 	// already a member of this set.
 	Add(key string, value string) error
@@ -448,14 +448,14 @@ type MemcacheSet interface {
 	GetAll(key string) ([]string, error)
 }
 
-type memcacheSetReadWritable struct{}
+type redisSetReadWritable struct{}
 
-// NewMemcacheSet returns a new memcacheSetReadWritable.
-func NewMemcacheSet() MemcacheSet {
-	return memcacheSetReadWritable{}
+// NewRedisSet returns a new redisSetReadWritable.
+func NewRedisSet() RedisSet {
+	return redisSetReadWritable{}
 }
 
-func (ms memcacheSetReadWritable) Add(key string, value string) error {
+func (ms redisSetReadWritable) Add(key string, value string) error {
 	if Clients.redisPool == nil {
 		return errNoRedis
 	}
@@ -467,7 +467,7 @@ func (ms memcacheSetReadWritable) Add(key string, value string) error {
 	return err
 }
 
-func (ms memcacheSetReadWritable) Remove(key string, value string) error {
+func (ms redisSetReadWritable) Remove(key string, value string) error {
 	if Clients.redisPool == nil {
 		return errNoRedis
 	}
@@ -479,7 +479,7 @@ func (ms memcacheSetReadWritable) Remove(key string, value string) error {
 	return err
 }
 
-func (ms memcacheSetReadWritable) GetAll(key string) ([]string, error) {
+func (ms redisSetReadWritable) GetAll(key string) ([]string, error) {
 	if Clients.redisPool == nil {
 		return nil, errNoRedis
 	}
