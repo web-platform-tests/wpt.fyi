@@ -28,7 +28,7 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 	log := shared.GetLogger(f.ctx)
 	mCache := shared.NewJSONObjectCache(f.ctx, shared.NewRedisReadWritable(f.ctx, metadataCacheExpiry))
 	if !f.forceUpdate {
-		sha, metadataMap, err := getMetadataFromMemcache(mCache)
+		sha, metadataMap, err := getMetadataFromRedis(mCache)
 		if err == nil {
 			return sha, metadataMap, nil
 		}
@@ -47,7 +47,7 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 		return nil, nil, err
 	}
 
-	if err := fillMetadataToMemcache(mCache, *sha, res); err != nil {
+	if err := fillMetadataToRedis(mCache, *sha, res); err != nil {
 		// This is not a fatal failure.
 		log.Errorf("Error storing metadata to cache: %v", err)
 	}
@@ -55,7 +55,7 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 	return sha, res, nil
 }
 
-func getMetadataFromMemcache(cache shared.ObjectCache) (sha *string, res map[string][]byte, err error) {
+func getMetadataFromRedis(cache shared.ObjectCache) (sha *string, res map[string][]byte, err error) {
 	var metadataSHAMap map[string]map[string][]byte
 	err = cache.Get(metadataCacheKey, &metadataSHAMap)
 	if err != nil {
@@ -76,7 +76,7 @@ func getMetadataFromMemcache(cache shared.ObjectCache) (sha *string, res map[str
 	return sha, metadataSHAMap[*sha], nil
 }
 
-func fillMetadataToMemcache(cache shared.ObjectCache, sha string, metadataByteMap map[string][]byte) error {
+func fillMetadataToRedis(cache shared.ObjectCache, sha string, metadataByteMap map[string][]byte) error {
 	metadataSHAMap := make(map[string]map[string][]byte)
 	metadataSHAMap[sha] = metadataByteMap
 
