@@ -28,14 +28,14 @@ const FEATURES = [
 class Compat2021DataManager {
   constructor() {
     this._dataLoaded = load().then(() => {
-      return Promise.all([this._loadCsv(true), this._loadCsv(false)]);
+      return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
     });
   }
 
   // Fetches the datatable for the given feature and stable/experimental state.
   // This will wait as needed for the underlying CSV data to be loaded and
   // processed before returning the datatable.
-  async getDatatable(feature, stable) {
+  async getDataTable(feature, stable) {
     await this._dataLoaded;
     return stable ?
       this.stableDatatables.get(feature) :
@@ -56,13 +56,12 @@ class Compat2021DataManager {
   // processes it into the set of datatables provided by this class. Will
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
-  async _loadCsv(stable) {
-    const label = stable ? 'stable' : 'experimental';
+  async _loadCsv(label) {
     const url = `${GITHUB_URL_PREFIX}/data/compat2021/unified-scores-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     const features = [SUMMARY_FEATURE_NAME, ...FEATURES];
-    const datatables = new Map(features.map(feature => {
+    const dataTables = new Map(features.map(feature => {
       const dataTable = new window.google.visualization.DataTable();
       dataTable.addColumn('date', 'Date');
       dataTable.addColumn('number', 'Chrome/Edge');
@@ -94,7 +93,7 @@ class Compat2021DataManager {
       //   date, [browser-version, browser-feature-a, browser-feature-b, ...]+
       const csvValues = line.split(',');
 
-      // Javascript Date objects use 0-indexed months whilst the CSV is
+      // JavaScript Date objects use 0-indexed months whilst the CSV is
       // 1-indexed, so adjust for that.
       const dateParts = csvValues[0].split('-').map(x => parseInt(x));
       const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
@@ -133,17 +132,17 @@ class Compat2021DataManager {
 
       // Push the new rows onto the corresponding datatable.
       newRows.forEach((row, feature) => {
-        datatables.get(feature).addRow(row);
+        dataTables.get(feature).addRow(row);
       });
     });
 
     // The datatables are now complete, so assign them to the appropriate
     // member variable.
-    if (stable) {
-      this.stableDatatables = datatables;
+    if (label === 'stable') {
+      this.stableDatatables = dataTables;
       this.stableBrowserVersions = browserVersions;
     } else {
-      this.experimentalDatatables = datatables;
+      this.experimentalDatatables = dataTables;
       this.experimentalBrowserVersions = browserVersions;
     }
   }
@@ -566,16 +565,16 @@ class Compat2021FeatureChart extends PolymerElement {
           Nightly builds of Firefox are all given the same sub-version,
           <code>0a1</code>, so we cannot automatically determine the changelog.
           To find the changelog of a specific Nightly release, locate the
-          corresponding SHAs on the
+          corresponding revision on the
           <a href="https://hg.mozilla.org/mozilla-central/firefoxreleases"
              target="_blank">release page</a>, enter them below, and click "Go".
-          <paper-input id="firefoxNightlyDialogFrom" label="From SHA"></paper-input>
-          <paper-input id="firefoxNightlyDialogTo" label="To SHA"></paper-input>
+          <paper-input id="firefoxNightlyDialogFrom" label="From revision"></paper-input>
+          <paper-input id="firefoxNightlyDialogTo" label="To revision"></paper-input>
         </div>
 
         <div class="buttons">
           <paper-button dialog-dismiss>Cancel</paper-button>
-          <paper-button dialog-confirm on-click="onFirefoxNightlyDialogGo">Go</paper-button>
+          <paper-button dialog-confirm on-click="clickFirefoxNightlyDialogGoButton">Go</paper-button>
         </div>
       </paper-dialog>
 
@@ -630,7 +629,7 @@ class Compat2021FeatureChart extends PolymerElement {
     }
 
     // Fetching the datatable first ensures that Google Charts has been loaded.
-    const dataTable = await this.dataManager.getDatatable(feature, stable);
+    const dataTable = await this.dataManager.getDataTable(feature, stable);
 
     const div = this.$.failuresChart;
     const chart = new window.google.visualization.LineChart(div);
@@ -698,7 +697,7 @@ class Compat2021FeatureChart extends PolymerElement {
     return `https://hg.mozilla.org/mozilla-unified/pushloghtml?fromchange=${fromRelease}&tochange=${toRelease}`;
   }
 
-  onFirefoxNightlyDialogGo() {
+  clickFirefoxNightlyDialogGoButton() {
     const fromSha = this.$.firefoxNightlyDialogFrom.value;
     const toSha = this.$.firefoxNightlyDialogTo.value;
     const url = `https://hg.mozilla.org/mozilla-unified/pushloghtml?fromchange=${fromSha}&tochange=${toSha}`;
