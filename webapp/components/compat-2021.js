@@ -10,6 +10,146 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis/gh-pages';
+const SUMMARY_FEATURE_NAME = 'summary';
+const FEATURES = [
+  'aspect-ratio',
+  'css-flexbox',
+  'css-grid',
+  'css-transforms',
+  'position-sticky',
+];
+
+// Compat2021DataManager encapsulates the loading of the CSV data that backs
+// both the summary scores and graphs shown on the Compat 2021 dashboard. It
+// fetches the CSV data, processes it into sets of datatables, and then caches
+// those tables for later use by the dashboard.
+class Compat2021DataManager {
+  constructor() {
+    this._dataLoaded = load().then(() => {
+      return Promise.all([this._loadCsv(true), this._loadCsv(false)]);
+    });
+  }
+
+  // Fetches the datatable for the given feature and stable/experimental state.
+  // This will wait as needed for the underlying CSV data to be loaded and
+  // processed before returning the datatable.
+  async getDatatable(feature, stable) {
+    await this._dataLoaded;
+    return stable ?
+      this.stableDatatables.get(feature) :
+      this.experimentalDatatables.get(feature);
+  }
+
+  // Fetches a list of browser versions for stable or experimental. This is a
+  // helper method for building tooltip actions; the returned list has one
+  // entry per row in the corresponding datatables.
+  async getBrowserVersions(stable) {
+    await this._dataLoaded;
+    return stable ?
+      this.stableBrowserVersions :
+      this.experimentalBrowserVersions;
+  }
+
+  // Loads the unified CSV file for either stable or experimental, and
+  // processes it into the set of datatables provided by this class. Will
+  // ultimately set either this.stableDatatables or this.experimentalDatatables
+  // with a map of {feature name --> datatable}.
+  async _loadCsv(stable) {
+    const label = stable ? 'stable' : 'experimental';
+    const url = `${GITHUB_URL_PREFIX}/data/compat2021/unified-scores-${label}.csv`;
+    const csvLines = await fetchCsvContents(url);
+
+    const features = [SUMMARY_FEATURE_NAME, ...FEATURES];
+    const datatables = new Map(features.map(feature => {
+      const dataTable = new window.google.visualization.DataTable();
+      dataTable.addColumn('date', 'Date');
+      dataTable.addColumn('number', 'Chrome/Edge');
+      dataTable.addColumn({type: 'string', role: 'tooltip'});
+      dataTable.addColumn('number', 'Firefox');
+      dataTable.addColumn({type: 'string', role: 'tooltip'});
+      dataTable.addColumn('number', 'Safari');
+      dataTable.addColumn({type: 'string', role: 'tooltip'});
+      return [feature, dataTable];
+    }));
+
+    // We list Chrome/Edge on the legend, but when creating the tooltip we
+    // include the version information and so should be clear about which browser
+    // exactly gave the results.
+    const tooltipBrowserNames = [
+      'Chrome',
+      'Firefox',
+      'Safari',
+    ];
+
+    // We store a lookup table of browser versions to help with the 'show
+    // revision changelog' tooltip action.
+    const browserVersions = [[], [], []];
+
+    csvLines.forEach(line => {
+      // We control the CSV data source, so are quite lazy with parsing it.
+      //
+      // The format is:
+      //   date, [browser-version, browser-feature-a, browser-feature-b, ...]+
+      const csvValues = line.split(',');
+
+      // Javascript Date objects use 0-indexed months whilst the CSV is
+      // 1-indexed, so adjust for that.
+      const dateParts = csvValues[0].split('-').map(x => parseInt(x));
+      const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+
+      // Initialize a new row for each feature, with the date column set.
+      const newRows = new Map(features.map(feature => {
+        return [feature, [date]];
+      }));
+
+      // Now handle each of the browsers. For each there is a version column,
+      // then the scores for each of the five features.
+      for (let i = 1; i < csvValues.length; i += 6) {
+        const browserIdx = Math.floor(i / 6);
+        const browserName = tooltipBrowserNames[browserIdx];
+        const version = csvValues[i];
+        browserVersions[browserIdx].push(version);
+
+        let summaryScore = 0;
+        FEATURES.forEach((feature, j) => {
+          const score = parseFloat(csvValues[i + 1 + j]);
+          const tooltip = this.createTooltip(browserName, version, score.toFixed(3));
+          newRows.get(feature).push(score);
+          newRows.get(feature).push(tooltip);
+
+          // The summary scores are calculated as a x/100 score, where each
+          // feature is allowed to contribute up to 20 points. We use floor
+          // rather than round to avoid claiming the full 20 points until we
+          // are at 100%
+          summaryScore += Math.floor(score * 20);
+        });
+
+        const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
+        newRows.get(SUMMARY_FEATURE_NAME).push(summaryScore);
+        newRows.get(SUMMARY_FEATURE_NAME).push(summaryTooltip);
+      }
+
+      // Push the new rows onto the corresponding datatable.
+      newRows.forEach((row, feature) => {
+        datatables.get(feature).addRow(row);
+      });
+    });
+
+    // The datatables are now complete, so assign them to the appropriate
+    // member variable.
+    if (stable) {
+      this.stableDatatables = datatables;
+      this.stableBrowserVersions = browserVersions;
+    } else {
+      this.experimentalDatatables = datatables;
+      this.experimentalBrowserVersions = browserVersions;
+    }
+  }
+
+  createTooltip(browser, version, score) {
+    return `${browser} ${version}: ${score}`;
+  }
+}
 
 // Compat2021 is a custom element that holds the overall compat-2021 dashboard.
 // The dashboard breaks down into top-level summary scores, a small description,
@@ -89,6 +229,7 @@ class Compat2021 extends PolymerElement {
         <div class="focus-area">
           <label for="featureSelect">Focus area:</label>
           <select id="featureSelect">
+            <option value="summary">Summary</option>
             <option value="aspect-ratio">aspect-ratio</option>
             <option value="css-flexbox">css-flexbox</option>
             <option value="css-grid">css-grid</option>
@@ -98,7 +239,8 @@ class Compat2021 extends PolymerElement {
         </div>
       </fieldset>
 
-      <compat-2021-feature-chart stable="[[stable]]"
+      <compat-2021-feature-chart data-manager="[[dataManager]]"
+                                 stable="[[stable]]"
                                  feature="{{feature}}">
       </compat-2021-feature-chart>
 
@@ -115,6 +257,7 @@ class Compat2021 extends PolymerElement {
       embedded: Boolean,
       stable: Boolean,
       feature: String,
+      dataManager: Object,
     };
   }
 
@@ -127,10 +270,14 @@ class Compat2021 extends PolymerElement {
   ready() {
     super.ready();
 
+    this.dataManager = new Compat2021DataManager();
+
     const params = (new URL(document.location)).searchParams;
     this.embedded = params.get('embedded') !== null;
+    // The default view of the page is the summary scores graph for
+    // experimental releases of browsers.
     this.stable = params.get('stable') !== null;
-    this.feature = params.get('feature');
+    this.feature = params.get('feature') || SUMMARY_FEATURE_NAME;
 
     this.$.featureSelect.value = this.feature;
     this.$.featureSelect.addEventListener('change', () => {
@@ -390,6 +537,10 @@ class Compat2021Summary extends PolymerElement {
 }
 window.customElements.define(Compat2021Summary.is, Compat2021Summary);
 
+// Compat2021FeatureChart is a wrapper around a Google Charts chart. We cannot
+// use the polymer google-chart element as it does not support setting tooltip
+// actions, which we rely on to let users load a changelog between subsequent
+// versions of the same browser.
 class Compat2021FeatureChart extends PolymerElement {
   static get template() {
     return html`
@@ -401,53 +552,15 @@ class Compat2021FeatureChart extends PolymerElement {
           margin: 0 auto;
         }
       </style>
-
-      <!-- TODO: replace with google-chart polymer element? -->
       <div id="failuresChart" class="chart"></div>
 `;
   }
 
   static get properties() {
     return {
+      dataManager: Object,
       stable: Boolean,
       feature: String,
-      chartOptions: {
-        type: Object,
-        readyOnly: true,
-        value: {
-          width: 800,
-          height: 350,
-          chartArea: {
-            height: '80%',
-          },
-          tooltip: {
-            trigger: 'both',
-          },
-          hAxis: {
-            title: 'Date',
-            format: 'MMM-YYYY',
-          },
-          vAxis: {
-            title: 'Percentage of tests passing',
-            format: 'percent',
-            viewWindow: {
-              // We set a global minimum value for the y-axis to keep the graphs
-              // consistent when you switch features. Currently the lowest value
-              // is aspect-ratio, with a ~25% pass-rate on Safari STP, Safari
-              // Stable, and Firefox Stable.
-              min: 0.2,
-              max: 1,
-            }
-          },
-          explorer: {
-            actions: ['dragToZoom', 'rightClickToReset'],
-            axis: 'horizontal',
-            keepInBounds: true,
-            maxZoomIn: 4.0,
-          },
-          colors: ['#4285f4', '#ea4335', '#fbbc04'],
-        }
-      },
     };
   }
 
@@ -461,85 +574,26 @@ class Compat2021FeatureChart extends PolymerElement {
     return 'compat-2021-feature-chart';
   }
 
-  ready() {
-    super.ready();
-  }
-
   async updateChart(feature, stable) {
     // Our observer may be called before the feature is set, so debounce that.
     if (!feature) {
       return;
     }
 
-    // Ensure that Google Charts has loaded.
-    await load();
+    // Fetching the datatable first ensures that Google Charts has been loaded.
+    const dataTable = await this.dataManager.getDatatable(feature, stable);
 
     const div = this.$.failuresChart;
-    const label = stable ? 'stable' : 'experimental';
-    const url = `${GITHUB_URL_PREFIX}/data/compat2021/${feature}-${label}.csv`;
-    const csvLines = await fetchCsvContents(url);
-
-    // Now convert the CSV into a datatable for use by Google Charts.
-    const dataTable = new window.google.visualization.DataTable();
-    dataTable.addColumn('date', 'Date');
-    dataTable.addColumn('number', 'Chrome/Edge');
-    dataTable.addColumn({type: 'string', role: 'tooltip'});
-    dataTable.addColumn('number', 'Firefox');
-    dataTable.addColumn({type: 'string', role: 'tooltip'});
-    dataTable.addColumn('number', 'Safari');
-    dataTable.addColumn({type: 'string', role: 'tooltip'});
-
-    // We list Chrome/Edge on the legend, but when creating the tooltip we
-    // include the version information and so should be clear about which browser
-    // exactly gave the results.
-    const tooltipBrowserNames = [
-      'Chrome',
-      'Firefox',
-      'Safari',
-    ];
-
-    // We store a lookup table of browser versions to help with the 'show
-    // revision diff' tooltip action below.
-    const browserVersions = [[], [], []];
-
-    csvLines.forEach(line => {
-      // We control the CSV data source, so are quite lazy with parsing it.
-      //
-      // The CSV columns are:
-      //   sha, date, [product-version, product-score,]+
-
-      let csvValues = line.split(',');
-      let dataTableCells = [];
-
-      // The first datatable cell is the date. Javascript Date objects use
-      // 0-indexed months, whilst the CSV is 1-indexed, so adjust for that.
-      const dateParts = csvValues[1].split('-').map(x => parseInt(x));
-      dataTableCells.push(new Date(dateParts[0], dateParts[1] - 1, dateParts[2]));
-
-      // Now handle each of the browsers. For each there is a version column,
-      // then a score column. We use the version to create the tooltip.
-      for (let i = 2; i < csvValues.length; i += 2) {
-        const version = csvValues[i];
-        const score = parseFloat(csvValues[i + 1]);
-        const browserName = tooltipBrowserNames[(i / 2) - 1];
-        const tooltip = this.createTooltip(browserName, version, score);
-
-        dataTableCells.push(score);
-        dataTableCells.push(tooltip);
-
-        // Update the browser versions lookup table; used for the revision-diff
-        // tooltip action.
-        browserVersions[(i / 2) - 1].push(version);
-      }
-      dataTable.addRow(dataTableCells);
-    });
-
     const chart = new window.google.visualization.LineChart(div);
 
-    // Setup the tooltips to show revision diff.
+    // We define a tooltip action that can quickly show users the changelog
+    // between two subsequent versions of a browser. The goal is to help users
+    // understand why an improvement or regression may have happened - though
+    // this only exposes browser changes and not test suite changes.
+    const browserVersions = await this.dataManager.getBrowserVersions(stable);
     chart.setAction({
-      id: 'revisionDiff',
-      text: 'Show diff from previous release',
+      id: 'revisionChangelog',
+      text: 'Show changelog against previous version',
       action: () => {
         let selection = chart.getSelection();
         let row = selection[0].row;
@@ -547,13 +601,14 @@ class Compat2021FeatureChart extends PolymerElement {
 
         // Not implemented for Firefox or Safari yet.
         if (column !== 1) {
-          alert('Diff only supported for Chrome currently');
+          // TODO: Use paper-dialog instead.
+          alert('Loading a changelog is only supported for Chrome currently');
           return;
         }
 
         // Map from the selected column to the browser index. In the datatable
         // Chrome is 1, Firefox is 3, Safari is 5 => these must map to [0, 1, 2].
-        let browserIdx = (column - 1) / 2;
+        let browserIdx = Math.floor(column / 2);
 
         let version = browserVersions[browserIdx][row];
         let lastVersion = version;
@@ -563,22 +618,67 @@ class Compat2021FeatureChart extends PolymerElement {
         }
         // TODO: If row == -1, we've failed, but we should grey out the
         // option instead in that case.
-        window.open(this.getChromeDiffUrl(lastVersion, version));
+        window.open(this.getChromeChangelogUrl(lastVersion, version));
       },
     });
 
-    chart.draw(dataTable, this.chartOptions);
+    chart.draw(dataTable, this.getChartOptions(feature));
   }
 
-  getChromeDiffUrl(fromVersion, toVersion) {
+  getChromeChangelogUrl(fromVersion, toVersion) {
     // Strip off the 'dev' suffix if there.
     fromVersion = fromVersion.split(' ')[0];
     toVersion = toVersion.split(' ')[0];
     return `https://chromium.googlesource.com/chromium/src/+log/${fromVersion}..${toVersion}?pretty=fuller&n=10000`;
   }
 
-  createTooltip(browser, version, score) {
-    return `${browser} ${version}: ${score.toFixed(3)}`;
+  getChartOptions(feature) {
+    const options = {
+      width: 800,
+      height: 350,
+      chartArea: {
+        height: '80%',
+      },
+      tooltip: {
+        trigger: 'both',
+      },
+      hAxis: {
+        title: 'Date',
+        format: 'MMM-YYYY',
+      },
+      explorer: {
+        actions: ['dragToZoom', 'rightClickToReset'],
+        axis: 'horizontal',
+        keepInBounds: true,
+        maxZoomIn: 4.0,
+      },
+      colors: ['#4285f4', '#ea4335', '#fbbc04'],
+    };
+
+    if (feature === SUMMARY_FEATURE_NAME) {
+      options.vAxis = {
+        title: 'Compat 2021 Score',
+        viewWindow: {
+          min: 50,
+          max: 100,
+        }
+      };
+    } else {
+      options.vAxis = {
+        title: 'Percentage of tests passing',
+        format: 'percent',
+        viewWindow: {
+          // We set a global minimum value for the y-axis to keep the graphs
+          // consistent when you switch features. Currently the lowest value
+          // is aspect-ratio, with a ~25% pass-rate on Safari STP, Safari
+          // Stable, and Firefox Stable.
+          min: 0.2,
+          max: 1,
+        }
+      };
+    }
+
+    return options;
   }
 }
 window.customElements.define(Compat2021FeatureChart.is, Compat2021FeatureChart);
