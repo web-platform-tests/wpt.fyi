@@ -6,6 +6,8 @@
 
 import {load} from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
+import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
@@ -551,8 +553,55 @@ class Compat2021FeatureChart extends PolymerElement {
           height: 350px;
           margin: 0 auto;
         }
+
+        paper-dialog {
+          max-width: 600px;
+        }
       </style>
       <div id="failuresChart" class="chart"></div>
+
+      <paper-dialog with-backdrop id="firefoxNightlyDialog">
+        <h2>Firefox Nightly Changelogs</h2>
+        <div>
+          Nightly builds of Firefox are all given the same sub-version,
+          <code>0a1</code>, so we cannot automatically determine the changelog.
+          To find the changelog of a specific Nightly release, locate the
+          corresponding SHAs on the
+          <a href="https://hg.mozilla.org/mozilla-central/firefoxreleases"
+             target="_blank">release page</a>, enter them below, and click "Go".
+          <paper-input id="firefoxNightlyDialogFrom" label="From SHA"></paper-input>
+          <paper-input id="firefoxNightlyDialogTo" label="To SHA"></paper-input>
+        </div>
+
+        <div class="buttons">
+          <paper-button dialog-dismiss>Cancel</paper-button>
+          <paper-button dialog-confirm on-click="onFirefoxNightlyDialogGo">Go</paper-button>
+        </div>
+      </paper-dialog>
+
+      <paper-dialog with-backdrop id="safariDialog">
+        <h2>Safari Changelogs</h2>
+        <template is="dom-if" if="[[stable]]">
+          <div>
+            Stable releases of Safari do not publish changelogs, but some insight
+            may be gained from the
+            <a href="https://developer.apple.com/documentation/safari-release-notes"
+               target="_blank">Release Notes</a>.
+          </div>
+        </template>
+        <template is="dom-if" if="[[!stable]]">
+          <div>
+            For Safari Technology Preview releases, release notes can be found on
+            the <a href="https://webkit.org/blog/" target="_blank">WebKit Blog</a>.
+            Each post usually contains a revision changelog link - look for the
+            text "This release covers WebKit revisions ...".
+          </div>
+        </template>
+
+        <div class="buttons">
+          <paper-button dialog-dismiss>Dismiss</paper-button>
+        </div>
+      </paper-dialog>
 `;
   }
 
@@ -593,18 +642,11 @@ class Compat2021FeatureChart extends PolymerElement {
     const browserVersions = await this.dataManager.getBrowserVersions(stable);
     chart.setAction({
       id: 'revisionChangelog',
-      text: 'Show changelog against previous version',
+      text: 'Show browser changelog',
       action: () => {
         let selection = chart.getSelection();
         let row = selection[0].row;
         let column = selection[0].column;
-
-        // Not implemented for Firefox or Safari yet.
-        if (column !== 1) {
-          // TODO: Use paper-dialog instead.
-          alert('Loading a changelog is only supported for Chrome currently');
-          return;
-        }
 
         // Map from the selected column to the browser index. In the datatable
         // Chrome is 1, Firefox is 3, Safari is 5 => these must map to [0, 1, 2].
@@ -616,9 +658,23 @@ class Compat2021FeatureChart extends PolymerElement {
           row -= 1;
           lastVersion = browserVersions[browserIdx][row];
         }
-        // TODO: If row == -1, we've failed, but we should grey out the
-        // option instead in that case.
-        window.open(this.getChromeChangelogUrl(lastVersion, version));
+        // TODO: If row == -1 here then we've failed.
+
+        if (browserIdx === 0) {
+          window.open(this.getChromeChangelogUrl(lastVersion, version));
+          return;
+        }
+
+        if (browserIdx === 1) {
+          if (stable) {
+            window.open(this.getFirefoxStableChangelogUrl(lastVersion, version));
+          } else {
+            this.$.firefoxNightlyDialog.open();
+          }
+          return;
+        }
+
+        this.$.safariDialog.open();
       },
     });
 
@@ -630,6 +686,23 @@ class Compat2021FeatureChart extends PolymerElement {
     fromVersion = fromVersion.split(' ')[0];
     toVersion = toVersion.split(' ')[0];
     return `https://chromium.googlesource.com/chromium/src/+log/${fromVersion}..${toVersion}?pretty=fuller&n=10000`;
+  }
+
+  getFirefoxStableChangelogUrl(fromVersion, toVersion) {
+    // The version numbers are reported as XX.Y.Z, but pushlog wants
+    // 'FIREFOX_XX_Y_Z_RELEASE'.
+    const fromParts = fromVersion.split('.');
+    const fromRelease = `FIREFOX_${fromParts.join('_')}_RELEASE`;
+    const toParts = toVersion.split('.');
+    const toRelease = `FIREFOX_${toParts.join('_')}_RELEASE`;
+    return `https://hg.mozilla.org/mozilla-unified/pushloghtml?fromchange=${fromRelease}&tochange=${toRelease}`;
+  }
+
+  onFirefoxNightlyDialogGo() {
+    const fromSha = this.$.firefoxNightlyDialogFrom.value;
+    const toSha = this.$.firefoxNightlyDialogTo.value;
+    const url = `https://hg.mozilla.org/mozilla-unified/pushloghtml?fromchange=${fromSha}&tochange=${toSha}`;
+    window.open(url);
   }
 
   getChartOptions(feature) {
