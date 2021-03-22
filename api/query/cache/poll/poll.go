@@ -5,9 +5,12 @@
 package poll
 
 import (
+	"context"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/google/go-github/v33/github"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -84,20 +87,73 @@ func wait(start time.Time, total time.Duration) {
 	}
 }
 
-// KeepMetadataUpdated implements updates to metadataMapCached via simple polling every
+// MetadataPollingService performs metadata-related services via simple polling every
 // interval duration.
-func KeepMetadataUpdated(client *http.Client, logger shared.Logger, interval time.Duration) {
-	logger.Infof("Metadata update via polling started")
+func MetadataPollingService(ctx context.Context, logger shared.Logger, interval time.Duration) {
+	logger.Infof("Metadata polling service started")
+	netClient := &http.Client{Timeout: time.Second * 5}
+	cacheSet := shared.NewRedisSet()
+	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
+	if err != nil {
+		logger.Errorf("Unable to get GitHub client: %v", err)
+	}
+
 	for {
-		metadataCache, err := shared.GetWPTMetadataArchive(client, nil)
-		if err != nil {
-			logger.Errorf("Error fetching Metadata for update: %v", err)
-		}
-
-		if err == nil && metadataCache != nil {
-			query.MetadataMapCached = metadataCache
-		}
-
+		keepMetadataUpdated(netClient, logger)
+		cleanOrphanedPendingMetadata(ctx, gitHubClient, cacheSet, logger)
 		time.Sleep(interval)
+	}
+}
+
+// keepMetadataUpdated fetches a new copy of the wpt-metadata repo and updates metadataMapCached.
+func keepMetadataUpdated(client *http.Client, logger shared.Logger) {
+	metadataCache, err := shared.GetWPTMetadataArchive(client, nil)
+	if err != nil {
+		logger.Errorf("Error fetching Metadata for update: %v", err)
+		return
+	}
+
+	if metadataCache != nil {
+		query.MetadataMapCached = metadataCache
+	}
+}
+
+// cleanOrphanedPendingMetadata cleans and removes orphaned pending metadata in Redis.
+func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, cacheSet shared.RedisSet, logger shared.Logger) {
+	if ghClient == nil {
+		logger.Errorf("GitHub client is not initialized, skipping cleanOrphanedPendingMetadata.")
+		return
+	}
+
+	prs, err := cacheSet.GetAll(shared.PendingMetadataCacheKey)
+	if err != nil {
+		logger.Errorf("Error fetching pending PRs from cacheSet: %v", err)
+		return
+	}
+
+	for _, pr := range prs {
+		// Parse PR string into integer
+		prInt, err := strconv.Atoi(pr)
+		if err != nil {
+			logger.Errorf("Error parsing %s into integer in cleanOrphanedPendingMetadata", pr)
+			// Not an integer; remove it from the cache set.
+			cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
+			shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
+			continue
+		}
+
+		res, _, err := ghClient.PullRequests.Get(ctx, shared.SourceOwner, shared.SourceRepo, prInt)
+		if err != nil {
+			logger.Errorf("Error getting information for PR %s: %v", pr, err)
+			continue
+		}
+
+		if res.State == nil || *res.State != "closed" {
+			continue
+		}
+
+		// pr is closed; remove pr from the cache set and its pending metadata from Redis.
+		cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
+		shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
 	}
 }
