@@ -160,6 +160,10 @@ class Compat2021 extends PolymerElement {
     return html`
       <style>
         :host {
+          display: block;
+          max-width: 700px;
+          /* Override wpt.fyi's automatically injected common.css */
+          margin: 0 auto !important;
           font-family: system-ui, sans-serif;
           line-height: 1.5;
         }
@@ -551,6 +555,8 @@ class Compat2021FeatureChart extends PolymerElement {
              with the JavaScript defined height. */
           height: 350px;
           margin: 0 auto;
+          display: flex;
+          justify-content: center;
         }
 
         paper-dialog {
@@ -622,6 +628,14 @@ class Compat2021FeatureChart extends PolymerElement {
     return 'compat-2021-feature-chart';
   }
 
+  ready() {
+    super.ready();
+
+    window.addEventListener('resize', () => {
+      this.updateChart(this.feature, this.stable);
+    });
+  }
+
   async updateChart(feature, stable) {
     // Our observer may be called before the feature is set, so debounce that.
     if (!feature) {
@@ -677,7 +691,7 @@ class Compat2021FeatureChart extends PolymerElement {
       },
     });
 
-    chart.draw(dataTable, this.getChartOptions(feature));
+    chart.draw(dataTable, this.getChartOptions(div, feature));
   }
 
   getChromeChangelogUrl(fromVersion, toVersion) {
@@ -704,13 +718,9 @@ class Compat2021FeatureChart extends PolymerElement {
     window.open(url);
   }
 
-  getChartOptions(feature) {
+  getChartOptions(containerDiv, feature) {
     const options = {
-      width: 800,
       height: 350,
-      chartArea: {
-        height: '80%',
-      },
       tooltip: {
         trigger: 'both',
       },
@@ -747,6 +757,30 @@ class Compat2021FeatureChart extends PolymerElement {
           min: 0.2,
           max: 1,
         }
+      };
+    }
+
+    // We draw the chart in two ways, depending on the viewport width. In
+    // 'full' mode the legend is on the right and we limit the chart size to
+    // 700px wide. In 'mobile' mode the legend is on the top and we use all the
+    // space we can get for the chart.
+    //
+    // Google Charts is not responsive, so once drawn the settings are static
+    // (e.g. 100% does not cause it to resize as the window resizes).
+    if (containerDiv.clientWidth >= 700) {
+      options.width = 700;
+      options.chartArea = {
+        height: '80%'
+      };
+    } else {
+      options.width = '100%';
+      options.legend = {
+        position: 'top',
+        alignment: 'center',
+      };
+      options.chartArea = {
+        left: 75,
+        width: '80%',
       };
     }
 
