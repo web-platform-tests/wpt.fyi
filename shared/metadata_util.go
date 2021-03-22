@@ -19,6 +19,14 @@ import (
 	"github.com/google/go-github/v33/github"
 )
 
+// PendingMetadataCacheKey is the key for the set that stores a list of
+// pending metadata PRs in Redis.
+const PendingMetadataCacheKey = "WPT-PENDING-METADATA"
+
+// PendingMetadataCachePrefix is the key prefix for pending metadata
+// stored in Redis.
+const PendingMetadataCachePrefix = "PENDING-PR-"
+
 const sourceOwner string = "web-platform-tests"
 const sourceRepo string = "wpt-metadata"
 const baseBranch string = "master"

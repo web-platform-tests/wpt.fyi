@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination sharedtest/cache_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared CachedStore,ObjectCache,ObjectStore,ReadWritable,Readable
+//go:generate mockgen -destination sharedtest/cache_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared CachedStore,ObjectCache,ObjectStore,ReadWritable,Readable,RedisSet
 
 package shared
 
@@ -17,6 +17,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/gomodule/redigo/redis"
 )
 
 var (
@@ -430,4 +432,65 @@ func FlushCache() error {
 	// https://redis.io/commands/flushall
 	_, err := conn.Do("FLUSHALL")
 	return err
+}
+
+// RedisSet is an interface for an redisSetReadWritable,
+// which performs Add/Remove/GetAll operations via the App Engine Redis API.
+type RedisSet interface {
+	// Add inserts value to the set stored at key; ignored if value is
+	// already a member of the set.
+	Add(key string, value string) error
+	// Remove removes value from the set stored at key; ignored if value is
+	// not a member of the set.
+	Remove(key string, value string) error
+	// GetAll returns all the members of the set stored at key; returns an
+	// empty string[] if the key is not present.
+	GetAll(key string) ([]string, error)
+}
+
+type redisSetReadWritable struct{}
+
+// NewRedisSet returns a new redisSetReadWritable.
+func NewRedisSet() RedisSet {
+	return redisSetReadWritable{}
+}
+
+func (ms redisSetReadWritable) Add(key string, value string) error {
+	if Clients.redisPool == nil {
+		return errNoRedis
+	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+
+	// https://redis.io/commands/sadd
+	_, err := conn.Do("SADD", key, value)
+	return err
+}
+
+func (ms redisSetReadWritable) Remove(key string, value string) error {
+	if Clients.redisPool == nil {
+		return errNoRedis
+	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+
+	// https://redis.io/commands/srem
+	_, err := conn.Do("SREM", key, value)
+	return err
+}
+
+func (ms redisSetReadWritable) GetAll(key string) ([]string, error) {
+	if Clients.redisPool == nil {
+		return nil, errNoRedis
+	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+
+	// https://redis.io/commands/smembers
+	value, err := redis.Strings(conn.Do("SMEMBERS", key))
+	if err != nil {
+		return nil, err
+	}
+
+	return value, nil
 }

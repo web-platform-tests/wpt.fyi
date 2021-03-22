@@ -173,7 +173,11 @@ func TestApiMetadataTriageCORS(t *testing.T) {
 func TestApiBSFBound(t *testing.T) {
 	assertHandlerIs(t, "/api/bsf", "api-bsf")
 	assertHSTS(t, "/api/bsf")
-	assertNoCORS(t, "/api/bsf")
+}
+
+func TestApiPendingMetadataBound(t *testing.T) {
+	assertHandlerIs(t, "/api/metadata/pending", "api-pending-metadata")
+	assertHSTS(t, "/api/metadata/pending")
 }
 
 func assertBound(t *testing.T, path string) mux.RouteMatch {

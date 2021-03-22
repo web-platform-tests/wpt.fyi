@@ -211,3 +211,53 @@ func filterMetadata(linkQuery query.AbstractLink, metadata shared.MetadataResult
 	}
 	return res
 }
+
+// apiPendingMetadataHandler searches pending Metadata stored in memory.
+func apiPendingMetadataHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	cacheSet := shared.NewRedisSet()
+	jsonObjectCache := shared.NewJSONObjectCache(ctx, shared.NewRedisReadWritable(ctx, 0))
+	handlePendingMetadata(ctx, jsonObjectCache, cacheSet, w, r)
+}
+
+func handlePendingMetadata(ctx context.Context, jsonObjectCache shared.ObjectCache, cacheSet shared.RedisSet, w http.ResponseWriter, r *http.Request) {
+	logger := shared.GetLogger(ctx)
+	prs, err := cacheSet.GetAll(shared.PendingMetadataCacheKey)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// TODO(kyleju): Check if a PR has been merged or closed; if so, remove them from Redis.
+	allPendingResults := make(shared.MetadataResults)
+	for _, pr := range prs {
+		var pendingMetadata shared.MetadataResults
+		pendingMetadataKey := shared.PendingMetadataCachePrefix + pr
+		err = jsonObjectCache.Get(pendingMetadataKey, &pendingMetadata)
+		if err != nil {
+			logger.Errorf("Unable to get %s from Redis: %s", pendingMetadataKey, err.Error())
+			continue
+		}
+
+		// Merge pending MetadataResults into allPendingResults.
+		for testName, links := range pendingMetadata {
+			if _, ok := allPendingResults[testName]; !ok {
+				allPendingResults[testName] = links
+			} else {
+				allPendingResults[testName] = append(allPendingResults[testName], links...)
+			}
+		}
+	}
+
+	marshalled, err := json.Marshal(allPendingResults)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(marshalled)
+}
