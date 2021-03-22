@@ -394,6 +394,36 @@ func TestPendingMetadataHandler_Success(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestPendingMetadataHandler_EmptyObjectCache(t *testing.T) {
+	ctx := sharedtest.NewTestContext()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	r := httptest.NewRequest("GET", "/api/metadata/pending", nil)
+	w := httptest.NewRecorder()
+
+	mockSet := sharedtest.NewMockRedisSet(mockCtrl)
+	mockSet.EXPECT().GetAll(shared.PendingMetadataCacheKey).Return([]string{"123", "456"}, nil)
+
+	mockCache := sharedtest.NewMockObjectCache(mockCtrl)
+	keys := []string{
+		shared.PendingMetadataCachePrefix + "123",
+		shared.PendingMetadataCachePrefix + "456",
+	}
+	for _, key := range keys {
+		mockCache.EXPECT().Get(key, gomock.Any()).Return(errors.New("Cache miss"))
+	}
+
+	handlePendingMetadata(ctx, mockCache, mockSet, w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var actual shared.MetadataResults
+	res := w.Body.String()
+	json.Unmarshal([]byte(res), &actual)
+	assert.Equal(t, shared.MetadataResults{}, actual)
+}
+
 func TestPendingMetadataHandler_Fail(t *testing.T) {
 	ctx := sharedtest.NewTestContext()
 	mockCtrl := gomock.NewController(t)

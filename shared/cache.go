@@ -490,8 +490,6 @@ func (ms redisSetReadWritable) GetAll(key string) ([]string, error) {
 	value, err := redis.Strings(conn.Do("SMEMBERS", key))
 	if err != nil {
 		return nil, err
-	} else if value == nil {
-		return nil, errCacheMiss
 	}
 
 	return value, nil
