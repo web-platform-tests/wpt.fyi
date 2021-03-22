@@ -440,7 +440,7 @@ type RedisSet interface {
 	// Add inserts value to the set stored at key; ignored if value is
 	// already a member of the set.
 	Add(key string, value string) error
-	// Remove removes value to the set stored at key; ignored if value is
+	// Remove removes value from the set stored at key; ignored if value is
 	// not a member of the set.
 	Remove(key string, value string) error
 	// GetAll returns all the members of the set stored at key; returns an
