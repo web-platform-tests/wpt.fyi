@@ -438,7 +438,7 @@ func FlushCache() error {
 // which performs Add/Remove/GetAll operations via the App Engine Redis API.
 type RedisSet interface {
 	// Add inserts value to the set stored at key; ignored if value is
-	// already a member of this set.
+	// already a member of the set.
 	Add(key string, value string) error
 	// Remove removes value to the set stored at key; ignored if value is
 	// not a member of this set.
