@@ -58,7 +58,9 @@ func TestRepeatAccess(t *testing.T) {
 	l.Access(1)
 	l.Access(2)
 	l.Access(1)
-	removed := l.EvictLRU(0.5)
+	// Remove slightly over half of the items to avoid floating point
+	// errors in the case that 0.5 * 2 is < 1.
+	removed := l.EvictLRU(0.51)
 	assert.Equal(t, []int64{int64(2)}, removed)
 }
 

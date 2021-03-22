@@ -40,8 +40,8 @@ func TestGetGitHubReleaseAsset_Caches(t *testing.T) {
 		mockLatestMC := sharedtest.NewMockReadWritable(mockCtrl)
 		mockLatestWC := sharedtest.NewMockWriteCloser(t)
 		manifestAPI := mock_manifest.NewMockAPI(mockCtrl)
-		manifestAPI.EXPECT().NewMemcache(time.Hour * 48).Return(mockMC)
-		manifestAPI.EXPECT().NewMemcache(time.Minute * 5).Return(mockLatestMC)
+		manifestAPI.EXPECT().NewRedis(time.Hour * 48).Return(mockMC)
+		manifestAPI.EXPECT().NewRedis(time.Minute * 5).Return(mockLatestMC)
 		gomock.InOrder(
 			mockLatestMC.EXPECT().NewReadCloser("MANIFEST-latest").Return(nil, errNotFound),
 			manifestAPI.EXPECT().GetManifestForSHA("").Return(fullSHA, data, nil),
@@ -69,8 +69,8 @@ func TestGetGitHubReleaseAsset_Caches(t *testing.T) {
 		mockLatestMC := sharedtest.NewMockReadWritable(mockCtrl)
 		mockLatestRC := sharedtest.NewMockReadCloser(t, []byte(fullSHA))
 		manifestAPI := mock_manifest.NewMockAPI(mockCtrl)
-		manifestAPI.EXPECT().NewMemcache(time.Hour * 48).AnyTimes().Return(mockMC)
-		manifestAPI.EXPECT().NewMemcache(time.Minute * 5).AnyTimes().Return(mockLatestMC)
+		manifestAPI.EXPECT().NewRedis(time.Hour * 48).AnyTimes().Return(mockMC)
+		manifestAPI.EXPECT().NewRedis(time.Minute * 5).AnyTimes().Return(mockLatestMC)
 		gomock.InOrder(
 			mockLatestMC.EXPECT().NewReadCloser("MANIFEST-latest").Return(mockLatestRC, nil),
 			mockMC.EXPECT().NewReadCloser("MANIFEST-"+fullSHA).Return(mockRC, nil),
@@ -91,8 +91,8 @@ func TestGetGitHubReleaseAsset_Caches(t *testing.T) {
 		mockRC := sharedtest.NewMockReadCloser(t, []byte(data))
 		mockLatestMC := sharedtest.NewMockReadWritable(mockCtrl)
 		manifestAPI := mock_manifest.NewMockAPI(mockCtrl)
-		manifestAPI.EXPECT().NewMemcache(time.Hour * 48).Return(mockMC)
-		manifestAPI.EXPECT().NewMemcache(time.Minute * 5).Return(mockLatestMC)
+		manifestAPI.EXPECT().NewRedis(time.Hour * 48).Return(mockMC)
+		manifestAPI.EXPECT().NewRedis(time.Minute * 5).Return(mockLatestMC)
 		mockMC.EXPECT().NewReadCloser("MANIFEST-"+fullSHA).Return(mockRC, nil)
 
 		// Load from cache without touching API.

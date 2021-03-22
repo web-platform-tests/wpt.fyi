@@ -39,9 +39,9 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getManifest(log shared.Logger, manifestAPI manifest.API, sha string, paths []string) (string, []byte, error) {
-	mc := manifestAPI.NewMemcache(time.Hour * 48)
+	mc := manifestAPI.NewRedis(time.Hour * 48)
 	// Shorter expiry for latest SHA, to keep it current.
-	latestMC := manifestAPI.NewMemcache(time.Minute * 5)
+	latestMC := manifestAPI.NewRedis(time.Minute * 5)
 
 	var body []byte
 

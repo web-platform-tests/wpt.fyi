@@ -22,13 +22,13 @@ import (
 )
 
 var (
-	errNewReadCloserExpectedString        = errors.New("NewReadCloser(arg) expected arg string")
-	errMemcacheWriteCloserWriteAfterClose = errors.New("memcacheWriteCloser: Write() after Close()")
-	errMemcacheInvalidResponseType        = errors.New("memcache: type received from GET is not []byte")
-	errByteCachedStoreExpectedByteSlice   = errors.New("contextualized byte CachedStore expected []byte output arg")
-	errDatastoreObjectStoreExpectedInt64  = errors.New("datastore ObjectStore expected int64 ID")
-	errCacheMiss                          = errors.New("cache miss")
-	errNoRedis                            = errors.New("not connected to redis")
+	errNewReadCloserExpectedString       = errors.New("NewReadCloser(arg) expected arg string")
+	errRedisWriteCloserWriteAfterClose   = errors.New("redisWriteCloser: Write() after Close()")
+	errRedisInvalidResponseType          = errors.New("redis: type received from GET is not []byte")
+	errByteCachedStoreExpectedByteSlice  = errors.New("contextualized byte CachedStore expected []byte output arg")
+	errDatastoreObjectStoreExpectedInt64 = errors.New("datastore ObjectStore expected int64 ID")
+	errCacheMiss                         = errors.New("cache miss")
+	errNoRedis                           = errors.New("not connected to redis")
 )
 
 // Readable is a provider interface for an io.ReadCloser.
@@ -148,20 +148,20 @@ func NewGZReadWritable(delegate ReadWritable) ReadWritable {
 	return gzipReadWritable{delegate}
 }
 
-type memcacheReadWritable struct {
+type redisReadWritable struct {
 	ctx    context.Context
 	expiry time.Duration
 }
 
-type memcacheWriteCloser struct {
-	rw         memcacheReadWritable
+type redisWriteCloser struct {
+	rw         redisReadWritable
 	key        string
 	b          bytes.Buffer
 	hasWritten bool
 	isClosed   bool
 }
 
-func (mc memcacheReadWritable) NewReadCloser(iKey interface{}) (io.ReadCloser, error) {
+func (mc redisReadWritable) NewReadCloser(iKey interface{}) (io.ReadCloser, error) {
 	key, ok := iKey.(string)
 	if !ok {
 		return nil, errNewReadCloserExpectedString
@@ -181,28 +181,28 @@ func (mc memcacheReadWritable) NewReadCloser(iKey interface{}) (io.ReadCloser, e
 	}
 	b, ok := result.([]byte)
 	if !ok {
-		return nil, errMemcacheInvalidResponseType
+		return nil, errRedisInvalidResponseType
 	}
 	return ioutil.NopCloser(bytes.NewReader(b)), nil
 }
 
-func (mc memcacheReadWritable) NewWriteCloser(iKey interface{}) (io.WriteCloser, error) {
+func (mc redisReadWritable) NewWriteCloser(iKey interface{}) (io.WriteCloser, error) {
 	key, ok := iKey.(string)
 	if !ok {
 		return nil, errNewReadCloserExpectedString
 	}
-	return &memcacheWriteCloser{mc, key, bytes.Buffer{}, false, false}, nil
+	return &redisWriteCloser{mc, key, bytes.Buffer{}, false, false}, nil
 }
 
-func (mw *memcacheWriteCloser) Write(p []byte) (n int, err error) {
+func (mw *redisWriteCloser) Write(p []byte) (n int, err error) {
 	mw.hasWritten = true
 	if mw.isClosed {
-		return 0, errMemcacheWriteCloserWriteAfterClose
+		return 0, errRedisWriteCloserWriteAfterClose
 	}
 	return mw.b.Write(p)
 }
 
-func (mw *memcacheWriteCloser) Close() error {
+func (mw *redisWriteCloser) Close() error {
 	mw.isClosed = true
 	if Clients.redisPool == nil || !mw.hasWritten {
 		return nil
@@ -215,10 +215,10 @@ func (mw *memcacheWriteCloser) Close() error {
 	return err
 }
 
-// NewMemcacheReadWritable produces a ReadWritable that performs read/write
-// operations via the App Engine memcache API through the input context.Context.
-func NewMemcacheReadWritable(ctx context.Context, expiry time.Duration) ReadWritable {
-	return memcacheReadWritable{ctx, expiry}
+// NewRedisReadWritable produces a ReadWritable that performs read/write
+// operations via the App Engine redis API through the input context.Context.
+func NewRedisReadWritable(ctx context.Context, expiry time.Duration) ReadWritable {
+	return redisReadWritable{ctx, expiry}
 }
 
 // CachedStore is a read-only interface that attempts to read from a cache, and

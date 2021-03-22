@@ -166,7 +166,7 @@ func AlwaysCachable(r *http.Request) bool {
 }
 
 // URLAsCacheKey is a helper for returning the request's full URL as a cache key.
-// If this string is too long to be a memcache key then writes to memcache will fail,
+// If this string is too long to be a redis key then writes to redis will fail,
 // but that is not a big concern; it simply means that requests for cacheable long
 // URLs will not be cached.
 func URLAsCacheKey(r *http.Request) interface{} {

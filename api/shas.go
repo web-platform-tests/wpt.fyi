@@ -23,7 +23,7 @@ type SHAsHandler struct {
 func apiSHAsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to SHAsHandler on cache miss.
 	ctx := r.Context()
-	shared.NewCachingHandler(ctx, SHAsHandler{ctx}, shared.NewGZReadWritable(shared.NewMemcacheReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
+	shared.NewCachingHandler(ctx, SHAsHandler{ctx}, shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
 }
 
 func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
