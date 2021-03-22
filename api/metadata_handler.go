@@ -221,7 +221,7 @@ func apiPendingMetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	cacheSet := shared.NewRedisSet()
-	jsonObjectCache := shared.NewJSONObjectCache(ctx, shared.NewMemcacheReadWritable(ctx, 0))
+	jsonObjectCache := shared.NewJSONObjectCache(ctx, shared.NewRedisReadWritable(ctx, 0))
 	handlePendingMetadata(ctx, jsonObjectCache, cacheSet, w, r)
 }
 
