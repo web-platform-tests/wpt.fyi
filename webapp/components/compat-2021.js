@@ -631,6 +631,8 @@ class Compat2021FeatureChart extends PolymerElement {
   ready() {
     super.ready();
 
+    // Google Charts is not responsive, even if one sets a percentage-width, so
+    // we add a resize observer to redraw the chart if the size changes.
     window.addEventListener('resize', () => {
       this.updateChart(this.feature, this.stable);
     });
@@ -721,6 +723,7 @@ class Compat2021FeatureChart extends PolymerElement {
   getChartOptions(containerDiv, feature) {
     const options = {
       height: 350,
+      fontSize: 14,
       tooltip: {
         trigger: 'both',
       },
@@ -764,9 +767,6 @@ class Compat2021FeatureChart extends PolymerElement {
     // 'full' mode the legend is on the right and we limit the chart size to
     // 700px wide. In 'mobile' mode the legend is on the top and we use all the
     // space we can get for the chart.
-    //
-    // Google Charts is not responsive, so once drawn the settings are static
-    // (e.g. 100% does not cause it to resize as the window resizes).
     if (containerDiv.clientWidth >= 700) {
       options.width = 700;
       options.chartArea = {
