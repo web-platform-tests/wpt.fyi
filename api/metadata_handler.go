@@ -79,7 +79,7 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 
 	cacheSet := shared.NewRedisSet()
 	// jsonCache writes pending metadata to Redis, with a 7-day TTL.
-	jsonCache := shared.NewJSONObjectCache(ctx, shared.NewRedisReadWritable(ctx, 168*time.Hour))
+	jsonCache := shared.NewJSONObjectCache(ctx, shared.NewRedisReadWritable(ctx, 24*7*time.Hour))
 	handleMetadataTriage(ctx, gac, tm, jsonCache, cacheSet, w, r)
 }
 
@@ -133,6 +133,11 @@ func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, t
 	}
 
 	prArray := strings.Split(prURL, "/")
+	if len(prArray) == 0 {
+		http.Error(w, "Invalid PR URL format: "+prURL, http.StatusInternalServerError)
+		return
+	}
+
 	prNum := prArray[len(prArray)-1]
 	// Stores the PR number and its pending metadata to Redis.
 	err = cacheSet.Add(shared.PendingMetadataCacheKey, prNum)
