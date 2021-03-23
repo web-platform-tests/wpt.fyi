@@ -95,7 +95,7 @@ func MetadataPollingService(ctx context.Context, logger shared.Logger, interval 
 	cacheSet := shared.NewRedisSet()
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
-		logger.Errorf("Unable to get GitHub client: %v", err)
+		logger.Infof("Unable to get GitHub client: %v", err)
 	}
 
 	for {
@@ -107,6 +107,7 @@ func MetadataPollingService(ctx context.Context, logger shared.Logger, interval 
 
 // keepMetadataUpdated fetches a new copy of the wpt-metadata repo and updates metadataMapCached.
 func keepMetadataUpdated(client *http.Client, logger shared.Logger) {
+	logger.Infof("Running keepMetadataUpdated...")
 	metadataCache, err := shared.GetWPTMetadataArchive(client, nil)
 	if err != nil {
 		logger.Errorf("Error fetching Metadata for update: %v", err)
@@ -120,22 +121,24 @@ func keepMetadataUpdated(client *http.Client, logger shared.Logger) {
 
 // cleanOrphanedPendingMetadata cleans and removes orphaned pending metadata in Redis.
 func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, cacheSet shared.RedisSet, logger shared.Logger) {
+	logger.Infof("Running cleanOrphanedPendingMetadata...")
 	if ghClient == nil {
-		logger.Errorf("GitHub client is not initialized, skipping cleanOrphanedPendingMetadata.")
+		logger.Infof("GitHub client is not initialized, skipping cleanOrphanedPendingMetadata.")
 		return
 	}
 
 	prs, err := cacheSet.GetAll(shared.PendingMetadataCacheKey)
 	if err != nil {
-		logger.Errorf("Error fetching pending PRs from cacheSet: %v", err)
+		logger.Infof("Error fetching pending PRs from cacheSet: %v", err)
 		return
 	}
+	logger.Infof("Pending PR numbers in cacheSet are: %v", prs)
 
 	for _, pr := range prs {
 		// Parse PR string into integer
 		prInt, err := strconv.Atoi(pr)
 		if err != nil {
-			logger.Errorf("Error parsing %s into integer in cleanOrphanedPendingMetadata", pr)
+			logger.Infof("Error parsing %s into integer in cleanOrphanedPendingMetadata", pr)
 			// Not an integer; remove it from the cache set.
 			cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
 			shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
@@ -144,7 +147,7 @@ func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, 
 
 		res, _, err := ghClient.PullRequests.Get(ctx, shared.SourceOwner, shared.SourceRepo, prInt)
 		if err != nil {
-			logger.Errorf("Error getting information for PR %s: %v", pr, err)
+			logger.Infof("Error getting information for PR %s: %v", pr, err)
 			continue
 		}
 
@@ -152,6 +155,7 @@ func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, 
 			continue
 		}
 
+		logger.Infof("Removing PR %s and its pending metadata from Redis", pr)
 		// pr is closed; remove pr from the cache set and its pending metadata from Redis.
 		cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
 		shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
