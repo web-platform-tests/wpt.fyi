@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -75,10 +76,14 @@ func apiMetadataTriageHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to create GitHub OAuth client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	handleMetadataTriage(ctx, gac, tm, w, r)
+
+	cacheSet := shared.NewRedisSet()
+	// jsonCache writes pending metadata to Redis, with a 7-day TTL.
+	jsonCache := shared.NewJSONObjectCache(ctx, shared.NewRedisReadWritable(ctx, 24*7*time.Hour))
+	handleMetadataTriage(ctx, gac, tm, jsonCache, cacheSet, w, r)
 }
 
-func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, tm shared.TriageMetadata, w http.ResponseWriter, r *http.Request) {
+func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, tm shared.TriageMetadata, jsonCache shared.ObjectCache, cacheSet shared.RedisSet, w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PATCH" {
 		http.Error(w, "Invalid HTTP method; only accept PATCH", http.StatusBadRequest)
 		return
@@ -121,13 +126,32 @@ func handleMetadataTriage(ctx context.Context, gac shared.GitHubAccessControl, t
 	}
 
 	// TODO(kyleju): Check github client permission levels for auto merge.
-	pr, err := tm.Triage(metadata)
+	prURL, err := tm.Triage(metadata)
 	if err != nil {
 		http.Error(w, "Unable to triage metadata: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Write([]byte(pr))
+	prArray := strings.Split(prURL, "/")
+	if len(prArray) == 0 {
+		http.Error(w, "Invalid PR URL format: "+prURL, http.StatusInternalServerError)
+		return
+	}
+
+	prNum := prArray[len(prArray)-1]
+	// Stores the PR number and its pending metadata to Redis.
+	err = cacheSet.Add(shared.PendingMetadataCacheKey, prNum)
+	if err == nil {
+		pendingMetadataKey := shared.PendingMetadataCachePrefix + prNum
+		err = jsonCache.Put(pendingMetadataKey, metadata)
+	}
+
+	if err != nil {
+		logger := shared.GetLogger(ctx)
+		logger.Errorf("Unable to cache %s to Redis: %s", prURL, err.Error())
+	}
+
+	w.Write([]byte(prURL))
 }
 
 func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -44,9 +44,84 @@ func TestHandleMetadataTriage_Success(t *testing.T) {
 	mockgac.EXPECT().IsValidWPTMember().Return(true, nil)
 
 	mocktm := sharedtest.NewMockTriageMetadata(mockCtrl)
-	mocktm.EXPECT().Triage(gomock.Any()).Return("", nil)
+	mocktm.EXPECT().Triage(gomock.Any()).Return("https://github.com/web-platform-tests/wpt-metadata/pull/1", nil)
 
-	handleMetadataTriage(ctx, mockgac, mocktm, w, req)
+	mockSet := sharedtest.NewMockRedisSet(mockCtrl)
+	mockSet.EXPECT().Add(shared.PendingMetadataCacheKey, "1").Return(nil)
+
+	mockCache := sharedtest.NewMockObjectCache(mockCtrl)
+	mockCache.EXPECT().Put(shared.PendingMetadataCachePrefix+"1", gomock.Any()).Return(nil)
+
+	handleMetadataTriage(ctx, mockgac, mocktm, mockCache, mockSet, w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestHandleMetadataTriage_FailToCachePr(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := sharedtest.NewTestContext()
+	w := httptest.NewRecorder()
+
+	body :=
+		`{
+        "/bar/foo.html": [
+            {
+                "product":"chrome",
+                "url":"bugs.bar",
+                "results":[{"status":6}]
+            }
+        ]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
+
+	mockgac := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+	mockgac.EXPECT().IsValidWPTMember().Return(true, nil)
+
+	mocktm := sharedtest.NewMockTriageMetadata(mockCtrl)
+	mocktm.EXPECT().Triage(gomock.Any()).Return("https://github.com/web-platform-tests/wpt-metadata/pull/1", nil)
+
+	mockSet := sharedtest.NewMockRedisSet(mockCtrl)
+	mockSet.EXPECT().Add(shared.PendingMetadataCacheKey, "1").Return(errors.New("Cache failed"))
+
+	handleMetadataTriage(ctx, mockgac, mocktm, nil, mockSet, w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestHandleMetadataTriage_FailToCacheMetadata(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := sharedtest.NewTestContext()
+	w := httptest.NewRecorder()
+
+	body :=
+		`{
+        "/bar/foo.html": [
+            {
+                "product":"chrome",
+                "url":"bugs.bar",
+                "results":[{"status":6}]
+            }
+        ]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
+
+	mockgac := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+	mockgac.EXPECT().IsValidWPTMember().Return(true, nil)
+
+	mocktm := sharedtest.NewMockTriageMetadata(mockCtrl)
+	mocktm.EXPECT().Triage(gomock.Any()).Return("https://github.com/web-platform-tests/wpt-metadata/pull/1", nil)
+
+	mockSet := sharedtest.NewMockRedisSet(mockCtrl)
+	mockSet.EXPECT().Add(shared.PendingMetadataCacheKey, "1").Return(nil)
+
+	mockCache := sharedtest.NewMockObjectCache(mockCtrl)
+	mockCache.EXPECT().Put(shared.PendingMetadataCachePrefix+"1", gomock.Any()).Return(errors.New("Cache failed"))
+
+	handleMetadataTriage(ctx, mockgac, mocktm, mockCache, mockSet, w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
@@ -66,14 +141,14 @@ func TestHandleMetadataTriage_NonSimpleRequests(t *testing.T) {
 	req := httptest.NewRequest("GET", "https://foo/metadata", bodyReader)
 	req.Header.Set("Content-Type", "application/json")
 
-	handleMetadataTriage(nil, nil, nil, w, req)
+	handleMetadataTriage(nil, nil, nil, nil, nil, w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	w = httptest.NewRecorder()
 	req = httptest.NewRequest("POST", "https://foo/metadata", bodyReader)
 
-	handleMetadataTriage(nil, nil, nil, w, req)
+	handleMetadataTriage(nil, nil, nil, nil, nil, w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
@@ -93,7 +168,7 @@ func TestHandleMetadataTriage_WrongContentType(t *testing.T) {
 	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	handleMetadataTriage(nil, nil, nil, w, req)
+	handleMetadataTriage(nil, nil, nil, nil, nil, w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
@@ -104,7 +179,7 @@ func TestHandleMetadataTriage_InvalidBody(t *testing.T) {
 	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
 	req.Header.Set("Content-Type", "application/json")
 
-	handleMetadataTriage(nil, nil, nil, w, req)
+	handleMetadataTriage(nil, nil, nil, nil, nil, w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
@@ -128,7 +203,7 @@ func TestHandleMetadataTriage_InvalidProduct(t *testing.T) {
 	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
 	req.Header.Set("Content-Type", "application/json")
 
-	handleMetadataTriage(ctx, nil, nil, w, req)
+	handleMetadataTriage(ctx, nil, nil, nil, nil, w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
