@@ -45,8 +45,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-var browsers = shared.GetDefaultBrowserNames()
-
 // AbstractQuery is an intermetidate representation of a test results query that
 //  has not been bound to specific shared.TestRun specs for processing.
 type AbstractQuery interface {
