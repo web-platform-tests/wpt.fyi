@@ -360,7 +360,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
              value="{{ queryInput::input }}" placeholder="[[placeholder]]"
              onchange="[[onChange]]" onkeyup="[[onKeyUp]]" onkeydown="[[onKeyDown]]" onfocus="[[onFocus]]" onblur="[[onBlur]]">
       <span class="help">
-        For information on the search syntax, <a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/query/README.md">view the search documentation</a>
+        For information on the search syntax, <a href="https://github.com/web-platform-tests/wpt.fyi/blob/main/api/query/README.md">view the search documentation</a>
       </span>
 
       <!-- TODO(markdittmer): Static id will break multiple search components. -->
