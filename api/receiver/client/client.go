@@ -50,7 +50,7 @@ func (c client) CreateRun(
 	resultURLs []string,
 	screenshotURLs []string,
 	labels []string) error {
-	// https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#url-payload
+	// https://github.com/web-platform-tests/wpt.fyi/blob/main/api/README.md#url-payload
 	payload := make(url.Values)
 	// Not to be confused with `revision` in the wpt.fyi TestRun model, this
 	// parameter is the full revision hash.
