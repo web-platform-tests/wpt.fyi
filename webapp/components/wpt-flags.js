@@ -312,7 +312,7 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item sub-item>
       <paper-checkbox checked="{{onlyChangesAsRegressions}}">
         Only treat C (changed) differences as possible regressions.
-        (<a href="https://github.com/web-platform-tests/wpt.fyi/blob/master/api/README.md#apidiff">See docs for definition</a>)
+        (<a href="https://github.com/web-platform-tests/wpt.fyi/blob/main/api/README.md#apidiff">See docs for definition</a>)
       </paper-checkbox>
     </paper-item>
     <paper-item>
