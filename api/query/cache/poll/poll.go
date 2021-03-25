@@ -87,10 +87,10 @@ func wait(start time.Time, total time.Duration) {
 	}
 }
 
-// MetadataPollingService performs metadata-related services via simple polling every
+// StartMetadataPollingService performs metadata-related services via simple polling every
 // interval duration.
-func MetadataPollingService(ctx context.Context, logger shared.Logger, interval time.Duration) {
-	logger.Infof("Metadata polling service started")
+func StartMetadataPollingService(ctx context.Context, logger shared.Logger, interval time.Duration) {
+	logger.Infof("Starting Metadata polling service.")
 	netClient := &http.Client{Timeout: time.Second * 5}
 	cacheSet := shared.NewRedisSet()
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
@@ -100,7 +100,11 @@ func MetadataPollingService(ctx context.Context, logger shared.Logger, interval 
 
 	for {
 		keepMetadataUpdated(netClient, logger)
-		cleanOrphanedPendingMetadata(ctx, gitHubClient, cacheSet, logger)
+		if gitHubClient != nil {
+			cleanOrphanedPendingMetadata(ctx, gitHubClient, cacheSet, logger)
+		} else {
+			logger.Infof("GitHub client is not initialized, skipping cleanOrphanedPendingMetadata.")
+		}
 		time.Sleep(interval)
 	}
 }
@@ -110,7 +114,7 @@ func keepMetadataUpdated(client *http.Client, logger shared.Logger) {
 	logger.Infof("Running keepMetadataUpdated...")
 	metadataCache, err := shared.GetWPTMetadataArchive(client, nil)
 	if err != nil {
-		logger.Errorf("Error fetching Metadata for update: %v", err)
+		logger.Infof("Error fetching Metadata for update: %v", err)
 		return
 	}
 
@@ -122,11 +126,6 @@ func keepMetadataUpdated(client *http.Client, logger shared.Logger) {
 // cleanOrphanedPendingMetadata cleans and removes orphaned pending metadata in Redis.
 func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, cacheSet shared.RedisSet, logger shared.Logger) {
 	logger.Infof("Running cleanOrphanedPendingMetadata...")
-	if ghClient == nil {
-		logger.Infof("GitHub client is not initialized, skipping cleanOrphanedPendingMetadata.")
-		return
-	}
-
 	prs, err := cacheSet.GetAll(shared.PendingMetadataCacheKey)
 	if err != nil {
 		logger.Infof("Error fetching pending PRs from cacheSet: %v", err)

@@ -148,7 +148,7 @@ func main() {
 	defer shared.Clients.Close()
 
 	// Polls Metadata update every 10 minutes.
-	go poll.MetadataPollingService(context.Background(), logger, time.Minute*10)
+	go poll.StartMetadataPollingService(context.Background(), logger, time.Minute*10)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
