@@ -200,6 +200,10 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         type: Array,
         value: []
       },
+      triageObserver: {
+        type: Boolean,
+        notify: true,
+      },
     };
   }
 
@@ -361,6 +365,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       .then(text => {
         this.prLink = text;
         this.prText = 'Created PR: ' + text;
+        // Create an observeable change to trigger /api/metadata/pending
+        // reload.
+        this.triageObserver = !this.triageObserver;
         toast.open();
       }).catch(error => {
         this.errorMessage = error.message;

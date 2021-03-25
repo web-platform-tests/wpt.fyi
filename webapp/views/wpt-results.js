@@ -175,7 +175,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            products="[[products]]"
                            diff-run="[[diffRun]]"
                            is-triage-mode="[[isTriageMode]]"
-                           metadata-map="[[metadataMap]]">
+                           metadata-map="[[metadataMap]]"
+                           triage-observer="{{triageObserver}}">
         </test-file-results>
       </template>
 
@@ -287,9 +288,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       <wpt-metadata products="[[displayedProducts]]"
                     path="[[path]]"
                     search-results="[[searchResults]]"
-                    metadata-map="{{metadataMap}}"></wpt-metadata>
+                    metadata-map="{{metadataMap}}"
+                    triage-observer="[[triageObserver]]"></wpt-metadata>
     </template>
-    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]" triage-observer="{{triageObserver}}"></wpt-amend-metadata>
 `;
   }
 
@@ -332,6 +334,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         computed: 'computeDisplayedTests(path, searchResults)',
       },
       metadataMap: Object,
+      triageObserver: Boolean,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {

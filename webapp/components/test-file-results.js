@@ -55,7 +55,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
                              rows="[[rows]]"
                              verbose="[[isVerbose]]"
                              is-triage-mode="[[isTriageMode]]"
-                             metadata-map="[[metadataMap]]">
+                             metadata-map="[[metadataMap]]"
+                             triage-observer="{{triageObserver}}">
     </test-file-results-table>
 `;
   }
@@ -86,6 +87,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       },
       isTriageMode: Boolean,
       metadataMap: Object,
+      triageObserver: Boolean,
     };
   }
 
