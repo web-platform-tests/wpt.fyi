@@ -27,8 +27,11 @@ const PendingMetadataCacheKey = "WPT-PENDING-METADATA"
 // stored in Redis.
 const PendingMetadataCachePrefix = "PENDING-PR-"
 
-const sourceOwner string = "web-platform-tests"
-const sourceRepo string = "wpt-metadata"
+// SourceOwner is the owner name of the wpt-metadata repo.
+const SourceOwner string = "web-platform-tests"
+
+// SourceRepo is the wpt-metadata repo.
+const SourceRepo string = "wpt-metadata"
 const baseBranch string = "master"
 
 // MetadataFetcher is an abstract interface that encapsulates the Fetch() method. Fetch() fetches metadata
@@ -39,7 +42,7 @@ type MetadataFetcher interface {
 
 // GetWPTMetadataMasterSHA returns the SHA of the master branch of the wpt-metadata repo.
 func GetWPTMetadataMasterSHA(ctx context.Context, gitHubClient *github.Client) (*string, error) {
-	baseRef, _, err := gitHubClient.Git.GetRef(ctx, sourceOwner, sourceRepo, "refs/heads/"+baseBranch)
+	baseRef, _, err := gitHubClient.Git.GetRef(ctx, SourceOwner, SourceRepo, "refs/heads/"+baseBranch)
 	if err != nil {
 		return nil, err
 	}

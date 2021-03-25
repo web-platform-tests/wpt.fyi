@@ -434,6 +434,19 @@ func FlushCache() error {
 	return err
 }
 
+// DeleteCache deletes the object stored at key in Redis.
+// A key is ignored if it does not exist.
+func DeleteCache(key string) error {
+	if Clients.redisPool == nil {
+		return errNoRedis
+	}
+	conn := Clients.redisPool.Get()
+	defer conn.Close()
+	// https://redis.io/commands/del
+	_, err := conn.Do("DEL", key)
+	return err
+}
+
 // RedisSet is an interface for an redisSetReadWritable,
 // which performs Add/Remove/GetAll operations via the App Engine Redis API.
 type RedisSet interface {

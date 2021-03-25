@@ -141,10 +141,6 @@ func main() {
 	// after backfilling was started.
 	go poll.KeepRunsUpdated(store, logger, *updateInterval, *updateMaxRuns, idx)
 
-	var netClient = &http.Client{
-		Timeout: time.Second * 5,
-	}
-
 	// Initializes clients.
 	if err = shared.Clients.Init(context.Background()); err != nil {
 		logrus.Fatalf("Failed to initialize Google Cloud clients: %v", err)
@@ -152,7 +148,7 @@ func main() {
 	defer shared.Clients.Close()
 
 	// Polls Metadata update every 10 minutes.
-	go poll.KeepMetadataUpdated(netClient, logger, time.Minute*10)
+	go poll.StartMetadataPollingService(context.Background(), logger, time.Minute*10)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)

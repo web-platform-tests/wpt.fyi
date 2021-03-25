@@ -17,3 +17,10 @@ liveness_check:
 
 readiness_check:
   path: "/_ah/readiness_check"
+
+network:
+  name: default
+
+env_variables:
+  REDISHOST: "10.171.142.203"
+  REDISPORT: "6379"

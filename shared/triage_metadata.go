@@ -68,16 +68,16 @@ func getNewCommitBranchName(ctx context.Context, client *github.Client, sourceOw
 }
 
 func getWptmetadataGitHubInfo(ctx context.Context, client *github.Client) wptmetadataGitHubInfo {
-	commitBranch := getNewCommitBranchName(ctx, client, sourceOwner, sourceRepo)
+	commitBranch := getNewCommitBranchName(ctx, client, SourceOwner, SourceRepo)
 
 	return wptmetadataGitHubInfo{
-		sourceOwner:   sourceOwner,
-		sourceRepo:    sourceRepo,
+		sourceOwner:   SourceOwner,
+		sourceRepo:    SourceRepo,
 		commitMessage: "Commit New Metadata",
 		commitBranch:  commitBranch,
 		baseBranch:    baseBranch,
-		prRepoOwner:   sourceOwner,
-		prRepo:        sourceRepo,
+		prRepoOwner:   SourceOwner,
+		prRepo:        SourceRepo,
 		prBranch:      baseBranch,
 		prSubject:     "Automatically Triage New Metadata",
 		prDescription: "This metadata PR was generated via the wpt.fyi `/api/metadata/triage` endpoint. See [the documentation](https://github.com/web-platform-tests/wpt.fyi/tree/master/api#apimetadatatriage) for more information about how to use this service."}
