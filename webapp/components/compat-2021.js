@@ -64,11 +64,11 @@ class Compat2021DataManager {
     const dataTables = new Map(features.map(feature => {
       const dataTable = new window.google.visualization.DataTable();
       dataTable.addColumn('date', 'Date');
-      dataTable.addColumn('number', 'Chrome/Edge');
+      dataTable.addColumn('number', 'Chromium');
       dataTable.addColumn({type: 'string', role: 'tooltip'});
-      dataTable.addColumn('number', 'Firefox');
+      dataTable.addColumn('number', 'Gecko');
       dataTable.addColumn({type: 'string', role: 'tooltip'});
-      dataTable.addColumn('number', 'Safari');
+      dataTable.addColumn('number', 'WebKit');
       dataTable.addColumn({type: 'string', role: 'tooltip'});
       return [feature, dataTable];
     }));
@@ -200,6 +200,12 @@ class Compat2021 extends PolymerElement {
         #featureSelect {
           padding: 0.5rem;
         }
+
+        footer {
+          padding-top: 2em;
+          font-size: 12px;
+          font-style: italic;
+        }
       </style>
       <h1>Compat 2021 Dashboard</h1>
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
@@ -250,6 +256,15 @@ class Compat2021 extends PolymerElement {
       </compat-2021-feature-chart>
 
       <!-- TODO: Test results table -->
+
+      <footer>
+        <ol>
+          <li>
+            Scores are determined from test runs on representative browsers
+            for each engine: Google Chrome, Mozilla Firefox, and Apple Safari.
+          </li>
+        </ol>
+      </footer>
 `;
   }
 
@@ -339,15 +354,15 @@ class Compat2021 extends PolymerElement {
 window.customElements.define(Compat2021.is, Compat2021);
 
 const STABLE_TITLES = [
-  'Chrome/Edge Stable',
-  'Firefox Stable',
-  'Safari Stable',
+  'Chromium Stable<sup>1</sup>',
+  'Gecko Stable<sup>1</sup>',
+  'WebKit Stable<sup>1</sup>',
 ];
 
 const EXPERIMENTAL_TITLES = [
-  'Chrome/Edge Dev',
-  'Firefox Nightly',
-  'Safari Preview',
+  'Chromium Dev<sup>1</sup>',
+  'Gecko Nightly<sup>1</sup>',
+  'WebKit Preview<sup>1</sup>',
 ];
 
 class Compat2021Summary extends PolymerElement {
@@ -409,19 +424,19 @@ class Compat2021Summary extends PolymerElement {
       </style>
 
       <div id="summaryContainer">
-        <!-- Chrome/Edge -->
+        <!-- Chromium -->
         <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
           <div class="summary-browser-name"></div>
         </div>
-        <!-- Firefox -->
+        <!-- Gecko -->
         <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
           <div class="summary-browser-name"></div>
         </div>
-        <!-- Safari -->
+        <!-- WebKit -->
         <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
@@ -453,7 +468,7 @@ class Compat2021Summary extends PolymerElement {
     let titleDivs = this.$.summaryContainer.querySelectorAll('.summary-browser-name');
     let titles = this.stable ? STABLE_TITLES : EXPERIMENTAL_TITLES;
     for (let i = 0; i < titleDivs.length; i++) {
-      titleDivs[i].innerText = titles[i];
+      titleDivs[i].innerHTML = titles[i];
     }
   }
 
@@ -771,6 +786,11 @@ class Compat2021FeatureChart extends PolymerElement {
       options.width = 700;
       options.chartArea = {
         height: '80%'
+      };
+      options.legend = {
+        textStyle: {
+          fontSize: 12,
+        },
       };
     } else {
       options.width = '100%';
