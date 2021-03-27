@@ -258,7 +258,8 @@ class Compat2021 extends PolymerElement {
       <div id="testListText" style$="visibility: [[getTestListTextVisibility(feature)]]">
         The score for this component is determined by pass rate on
         <a href="[[getTestListHref(feature)]]" target="_blank">this set of tests</a>.
-        New tests cases are always welcome; please contribute them to
+        The test suite is never complete, and improvements are always welcome.
+        Please contribute changes to
         <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
         and then
         <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
