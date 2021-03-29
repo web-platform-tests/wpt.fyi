@@ -11,7 +11,7 @@ import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
-const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis/gh-pages';
+const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
 const SUMMARY_FEATURE_NAME = 'summary';
 const FEATURES = [
   'aspect-ratio',
@@ -57,7 +57,7 @@ class Compat2021DataManager {
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
   async _loadCsv(label) {
-    const url = `${GITHUB_URL_PREFIX}/data/compat2021/unified-scores-${label}.csv`;
+    const url = `${GITHUB_URL_PREFIX}/gh-pages/data/compat2021/unified-scores-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     const features = [SUMMARY_FEATURE_NAME, ...FEATURES];
@@ -200,6 +200,10 @@ class Compat2021 extends PolymerElement {
         #featureSelect {
           padding: 0.5rem;
         }
+
+        #testListText {
+          padding-top: 1em;
+        }
       </style>
       <h1>Compat 2021 Dashboard</h1>
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
@@ -248,6 +252,19 @@ class Compat2021 extends PolymerElement {
                                  stable="[[stable]]"
                                  feature="{{feature}}">
       </compat-2021-feature-chart>
+
+      <!-- We use a 'hidden' style rather than dom-if to avoid layout shift when
+           the feature is changed to/from summary. -->
+      <div id="testListText" style$="visibility: [[getTestListTextVisibility(feature)]]">
+        The score for this component is determined by pass rate on
+        <a href="[[getTestListHref(feature)]]" target="_blank">this set of tests</a>.
+        The test suite is never complete, and improvements are always welcome.
+        Please contribute changes to
+        <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
+        and then
+        <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
+        to add them to the Compat 2021 effort!
+      </div>
 
       <!-- TODO: Test results table -->
 `;
@@ -334,6 +351,14 @@ class Compat2021 extends PolymerElement {
       return;
     }
     this.stable = true;
+  }
+
+  getTestListTextVisibility(feature) {
+    return FEATURES.includes(feature) ? 'visible' : 'hidden';
+  }
+
+  getTestListHref(feature) {
+    return `${GITHUB_URL_PREFIX}/main/compat-2021/${feature}-tests.txt`;
   }
 }
 window.customElements.define(Compat2021.is, Compat2021);
@@ -490,7 +515,7 @@ class Compat2021Summary extends PolymerElement {
 
   async calculateSummaryScores(stable) {
     const label = stable ? 'stable' : 'experimental';
-    const url = `${GITHUB_URL_PREFIX}/data/compat2021/summary-${label}.csv`;
+    const url = `${GITHUB_URL_PREFIX}/gh-pages/data/compat2021/summary-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     if (csvLines.length !== 5) {
