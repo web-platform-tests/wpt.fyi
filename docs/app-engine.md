@@ -21,12 +21,30 @@ Flex.
 First log into the `wptdashboard` project. You need to be a project member with
 at least Editor privileges. Then from the project root directory:
 
+If you are running on Linux:
+
 ```sh
 git checkout main
 git pull
 make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
 make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
 make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
+```
+
+If you are running on non-Linux, first start a Docker instance:
+
+```sh
+./util/docker-dev/run.sh
+```
+
+Once the instance is running, run:
+
+```sh
+git checkout main
+git pull
+wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
+wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
+wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
 ```
 
 If you've updated [`index.yaml`](../webapp/web/index.yaml),
