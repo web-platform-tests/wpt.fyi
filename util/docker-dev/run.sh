@@ -79,7 +79,7 @@ set -e
 # -v "${WPTD_PATH}":/wpt.fyi             Mount the repository
 # -u $(id -u $USER)                      Run as current user
 # --cap-add=SYS_ADMIN                    Allow Chrome to use sandbox:
-#   https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md
+#   https://github.com/GoogleChrome/puppeteer/blob/main/docs/troubleshooting.md
 # -p "${WPTD_HOST_WEB_PORT}:8080"        Expose web server port
 # --name "${DOCKER_INSTANCE}"            Name the instance
 # wptd-dev                               Identify image to use
