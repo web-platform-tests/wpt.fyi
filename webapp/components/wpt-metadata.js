@@ -148,13 +148,13 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         type: Object,
         notify: true,
       },
-      triageObserver: Boolean,
+      triageNotifier: Boolean,
     };
   }
 
   static get observers() {
     return [
-      'loadPendingMetadata(triageObserver)',
+      'loadPendingMetadata(triageNotifier)',
     ];
   }
 

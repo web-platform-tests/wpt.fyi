@@ -184,7 +184,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     </template>
   </tbody>
 </table>
-<wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]" triage-observer="{{triageObserver}}"></wpt-amend-metadata>
+<wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
@@ -220,7 +220,6 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
         computed: 'computeDisplayedProducts(testRuns)',
       },
       metadataMap: Object,
-      triageObserver: Boolean,
       matchers: {
         type: Array,
         value: [

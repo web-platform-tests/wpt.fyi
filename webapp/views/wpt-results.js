@@ -175,8 +175,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            products="[[products]]"
                            diff-run="[[diffRun]]"
                            is-triage-mode="[[isTriageMode]]"
-                           metadata-map="[[metadataMap]]"
-                           triage-observer="{{triageObserver}}">
+                           metadata-map="[[metadataMap]]">
         </test-file-results>
       </template>
 
@@ -289,9 +288,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     path="[[path]]"
                     search-results="[[searchResults]]"
                     metadata-map="{{metadataMap}}"
-                    triage-observer="[[triageObserver]]"></wpt-metadata>
+                    triage-notifier="[[triageNotifier]]"></wpt-metadata>
     </template>
-    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]" triage-observer="{{triageObserver}}"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
@@ -334,7 +333,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         computed: 'computeDisplayedTests(path, searchResults)',
       },
       metadataMap: Object,
-      triageObserver: Boolean,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {
@@ -358,6 +356,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       onlyShowDifferences: Boolean,
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
+      triageNotifier: Boolean,
     };
   }
 
@@ -366,6 +365,16 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       'clearSelectedCells(selectedMetadata)',
       'handleTriageMode(isTriageMode)',
     ];
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('triagemetadata', this.handleReloadPendingMetadata.bind(this));
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('triagemetadata', this.handleReloadPendingMetadata.bind(this));
+    super.disconnectedCallback();
   }
 
   isInvalidDiffUse(diff, testRuns) {
@@ -864,6 +873,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       const product = index === undefined ? '' : this.displayedProducts[index].browser_name;
       this.handleSelect(e.target.closest('td'), product, node.path, this.$['selected-toast']);
     };
+  }
+
+  handleReloadPendingMetadata() {
+    this.triageNotifier = !this.triageNotifier;
   }
 
   openAmendMetadata() {
