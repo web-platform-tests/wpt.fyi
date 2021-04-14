@@ -91,6 +91,7 @@ func wait(start time.Time, total time.Duration) {
 // interval duration.
 func StartMetadataPollingService(ctx context.Context, logger shared.Logger, interval time.Duration) {
 	logger.Infof("Starting Metadata polling service.")
+	toBeRemovedPRs := make([]string, 0)
 	netClient := &http.Client{Timeout: time.Second * 5}
 	cacheSet := shared.NewRedisSet()
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
@@ -101,7 +102,7 @@ func StartMetadataPollingService(ctx context.Context, logger shared.Logger, inte
 	for {
 		keepMetadataUpdated(netClient, logger)
 		if gitHubClient != nil {
-			cleanOrphanedPendingMetadata(ctx, gitHubClient, cacheSet, logger)
+			cleanOrphanedPendingMetadata(ctx, gitHubClient, cacheSet, logger, &toBeRemovedPRs)
 		} else {
 			logger.Infof("GitHub client is not initialized, skipping cleanOrphanedPendingMetadata.")
 		}
@@ -124,8 +125,15 @@ func keepMetadataUpdated(client *http.Client, logger shared.Logger) {
 }
 
 // cleanOrphanedPendingMetadata cleans and removes orphaned pending metadata in Redis.
-func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, cacheSet shared.RedisSet, logger shared.Logger) {
+func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, cacheSet shared.RedisSet, logger shared.Logger, toBeRemovedPRs *[]string) {
 	logger.Infof("Running cleanOrphanedPendingMetadata...")
+
+	for _, pr := range *toBeRemovedPRs {
+		logger.Infof("Removing PR %s and its pending metadata from Redis", pr)
+		cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
+		shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
+	}
+
 	prs, err := cacheSet.GetAll(shared.PendingMetadataCacheKey)
 	if err != nil {
 		logger.Infof("Error fetching pending PRs from cacheSet: %v", err)
@@ -133,14 +141,14 @@ func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, 
 	}
 	logger.Infof("Pending PR numbers in cacheSet are: %v", prs)
 
+	newRemovePRs := make([]string, 0)
 	for _, pr := range prs {
 		// Parse PR string into integer
 		prInt, err := strconv.Atoi(pr)
 		if err != nil {
 			logger.Infof("Error parsing %s into integer in cleanOrphanedPendingMetadata", pr)
-			// Not an integer; remove it from the cache set.
-			cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
-			shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
+			// Not an integer; remove it.
+			newRemovePRs = append(newRemovePRs, pr)
 			continue
 		}
 
@@ -153,10 +161,7 @@ func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, 
 		if res.State == nil || *res.State != "closed" {
 			continue
 		}
-
-		logger.Infof("Removing PR %s and its pending metadata from Redis", pr)
-		// pr is closed; remove pr from the cache set and its pending metadata from Redis.
-		cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
-		shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
+		newRemovePRs = append(newRemovePRs, pr)
 	}
+	*toBeRemovedPRs = newRemovePRs
 }
