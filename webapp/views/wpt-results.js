@@ -287,7 +287,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       <wpt-metadata products="[[displayedProducts]]"
                     path="[[path]]"
                     search-results="[[searchResults]]"
-                    metadata-map="{{metadataMap}}"></wpt-metadata>
+                    metadata-map="{{metadataMap}}"
+                    triage-notifier="[[triageNotifier]]"></wpt-metadata>
     </template>
     <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
 `;
@@ -355,6 +356,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       onlyShowDifferences: Boolean,
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
+      triageNotifier: Boolean,
     };
   }
 
@@ -417,6 +419,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.refreshDisplayedNodes();
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
+    this.reloadPendingMetadata = this.handleReloadPendingMetadata.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('triagemetadata', this.reloadPendingMetadata);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('triagemetadata', this.reloadPendingMetadata);
+    super.disconnectedCallback();
   }
 
   loadData() {
@@ -861,6 +874,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       const product = index === undefined ? '' : this.displayedProducts[index].browser_name;
       this.handleSelect(e.target.closest('td'), product, node.path, this.$['selected-toast']);
     };
+  }
+
+  handleReloadPendingMetadata() {
+    this.triageNotifier = !this.triageNotifier;
   }
 
   openAmendMetadata() {

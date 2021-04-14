@@ -361,6 +361,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       .then(text => {
         this.prLink = text;
         this.prText = 'Created PR: ' + text;
+        this.dispatchEvent(new CustomEvent('triagemetadata', { bubbles: true, composed: true }));
         toast.open();
       }).catch(error => {
         this.errorMessage = error.message;

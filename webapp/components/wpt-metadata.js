@@ -117,16 +117,21 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     return {
       products: {
         type: Array,
-        observer: 'loadAllMetadata'
+        observer: 'loadMergedMetadata'
       },
       searchResults: Array,
       testResultSet: {
         type: Object,
-        computed: 'computTestResultSet(searchResults)',
+        computed: 'computeTestResultSet(searchResults)',
       },
       path: String,
       // metadata maps test => links
-      metadata: Object,
+      metadata: {
+        type: Object,
+        computed: 'computeMetadata(mergedMetadata, pendingMetadata)',
+      },
+      mergedMetadata: Object,
+      pendingMetadata: Object,
       displayedMetadata: {
         type: Array,
         computed: 'computeDisplayedMetadata(path, metadata, testResultSet)',
@@ -142,12 +147,20 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       metadataMap: {
         type: Object,
         notify: true,
-      }
+      },
+      triageNotifier: Boolean,
     };
+  }
+
+  static get observers() {
+    return [
+      'loadPendingMetadata(triageNotifier)',
+    ];
   }
 
   constructor() {
     super();
+    this.loadPendingMetadata();
     this.openCollapsible = this.handleOpenCollapsible.bind(this);
   }
 
@@ -160,7 +173,8 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     }
   }
 
-  loadAllMetadata(products) {
+  // loadMergedMetadata is called when products is changed.
+  loadMergedMetadata(products) {
     let productVal = [];
     for (let i = 0; i < products.length; i++) {
       productVal.push(products[i].browser_name);
@@ -170,13 +184,39 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     url.searchParams.set('includeTestLevel', true);
     url.searchParams.set('products', productVal.join(','));
     this.load(
-      window.fetch(url).then(r => r.json()).then(metadata => {
-        this.metadata = metadata;
+      window.fetch(url).then(r => r.json()).then(mergedMetadata => {
+        this.mergedMetadata = mergedMetadata;
       })
     );
   }
 
-  computTestResultSet(searchResults) {
+  // loadPendingMetadata is called when wpt-metadata.js is initialized
+  // through constructor() or when users triage new metadata, unlike loadMergedMetadata().
+  loadPendingMetadata() {
+    const url = new URL('/api/metadata/pending', window.location);
+    this.load(
+      window.fetch(url).then(r => r.json()).then(pendingMetadata => {
+        this.pendingMetadata = pendingMetadata;
+      })
+    );
+  }
+
+  computeMetadata(mergedMetadata, pendingMetadata) {
+    if (!mergedMetadata || !pendingMetadata) {
+      return;
+    }
+    const metadata = Object.assign({}, mergedMetadata);
+    for (const testname of Object.keys(pendingMetadata)) {
+      if (testname in metadata) {
+        metadata[testname] = metadata[testname].concat(pendingMetadata[testname]);
+      } else {
+        metadata[testname] = pendingMetadata[testname];
+      }
+    }
+    return metadata;
+  }
+
+  computeTestResultSet(searchResults) {
     if (!searchResults || !searchResults.length) {
       return;
     }
