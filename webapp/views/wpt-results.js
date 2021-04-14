@@ -367,16 +367,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     ];
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.addEventListener('triagemetadata', this.handleReloadPendingMetadata.bind(this));
-  }
-
-  disconnectedCallback() {
-    this.removeEventListener('triagemetadata', this.handleReloadPendingMetadata.bind(this));
-    super.disconnectedCallback();
-  }
-
   isInvalidDiffUse(diff, testRuns) {
     return diff && testRuns && testRuns.length !== 2;
   }
@@ -429,6 +419,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.refreshDisplayedNodes();
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
+    this.reloadPendingMetadata = this.handleReloadPendingMetadata.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('triagemetadata', this.reloadPendingMetadata);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('triagemetadata', this.reloadPendingMetadata);
+    super.disconnectedCallback();
   }
 
   loadData() {
