@@ -26,7 +26,7 @@
     "@polymer/test-fixture": "4.0.2",
     "babel-eslint": "10.1.0",
     "cpy-cli": "3.1.1",
-    "eslint": "7.25.0",
+    "eslint": "7.26.0",
     "eslint-plugin-html": "6.1.2",
     "wct-browser-legacy": "1.0.2",
     "wct-local": "2.1.5",
