@@ -2,7 +2,7 @@ cachetools==4.2.2
 certifi==2021.5.30
 cffi==1.14.5
 chardet==4.0.0
-click==7.1.2
+click==8.0.1
 filelock==3.0.12
 flake8==3.9.1
 Flask==1.1.2
