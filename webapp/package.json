@@ -68,7 +68,7 @@
     "@polymer/paper-toggle-button": "3.0.1",
     "@polymer/paper-tooltip": "3.0.1",
     "@polymer/polymer": "3.4.1",
-    "@vaadin/vaadin-context-menu": "4.5.0",
+    "@vaadin/vaadin-context-menu": "20.0.0",
     "@vaadin/vaadin-date-picker": "20.0.0",
     "@vaadin/vaadin-grid": "20.0.0",
     "@webcomponents/webcomponentsjs": "2.5.0",
