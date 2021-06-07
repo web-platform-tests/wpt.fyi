@@ -1,4 +1,5 @@
 import { PathInfo } from '../components/path.js';
+import { DefaultBrowserNames } from '../components/product-info.js';
 import '../components/test-runs-query-builder.js';
 import { TestRunsUIBase } from '../components/test-runs.js';
 import '../components/test-search.js';
@@ -129,6 +130,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           [[resultsTotalsRangeMessage]]
           <template is="dom-if" if="[[!editable]]">
             <a href="javascript:window.location.search='';"> (switch to the default product set instead)</a>
+          </template>
+          <template is="dom-if" if="[[showAddEdgeBackLink(queryParams)]]">
+            <a href='#' on-click="addEdgeBack"> (add Microsoft Edge back)</a>
           </template>
           <wpt-permalinks path="[[path]]"
                           path-prefix="/[[page]]/"
@@ -384,6 +388,21 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       return false;
     }
     return true;
+  }
+
+  showAddEdgeBackLink(queryParams) {
+    // We only show the 'add edge' link when the user has originally gone to
+    // the main page (e.g. just https://wpt.fyi/results). We can detect that by
+    // checking that no products were specified.
+    return queryParams.product === undefined;
+  }
+
+  addEdgeBack() {
+    // Attempt to put Edge back in the place it used to go (next to Chrome),
+    // but also allow for some change in the default browser set.
+    const newProducts = [DefaultBrowserNames[0], 'edge', ...DefaultBrowserNames.slice(1)];
+    this.queryParams.product = newProducts;
+    this.updateQueryParams(this.queryParams);
   }
 
   computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds) {

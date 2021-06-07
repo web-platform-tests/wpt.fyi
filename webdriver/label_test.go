@@ -16,7 +16,7 @@ import (
 func TestLabelParam_Results(t *testing.T) {
 	runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
 		aligned := false
-		testLabel(t, wd, app, "/", "experimental", "wpt-results", 4, aligned)
+		testLabel(t, wd, app, "/", "experimental", "wpt-results", 3, aligned)
 	})
 
 }

@@ -42,7 +42,9 @@ const AllBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari', 's
 // The list of default browsers used in cases where the user has not otherwise
 // chosen a set of browsers (e.g. which browsers to show runs for). Stored as
 // an ordered list so that the first entry can be used as a consistent default.
-const DefaultBrowserNames = Object.freeze(['chrome', 'edge', 'firefox', 'safari']);
+//
+// This should be kept in sync with defaultBrowsers in shared/browsers.go
+const DefaultBrowserNames = Object.freeze(['chrome', 'firefox', 'safari']);
 const DefaultProductSpecs = DefaultBrowserNames;
 
 // The above sets, encoded as product objects. This avoids repeatedly calling

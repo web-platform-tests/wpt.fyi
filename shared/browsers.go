@@ -9,12 +9,12 @@ import (
 // A list of browsers that are shown on the homepage by default.
 // (Must be sorted alphabetically!)
 var defaultBrowsers = []string{
-	"chrome", "edge", "firefox", "safari",
+	"chrome", "firefox", "safari",
 }
 
 // An extra list of known browsers.
 var extraBrowsers = []string{
-	"android_webview", "epiphany", "servo", "uc", "webkitgtk",
+	"android_webview", "edge", "epiphany", "servo", "uc", "webkitgtk",
 }
 
 var allBrowsers mapset.Set

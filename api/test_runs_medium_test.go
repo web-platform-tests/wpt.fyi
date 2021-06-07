@@ -210,7 +210,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	body, _ = ioutil.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	json.Unmarshal(body, &results)
-	assert.Equal(t, 4, len(results))
+	assert.Equal(t, 3, len(results))
 	assert.Equal(t, "1111111111", results[0].Revision)
 }
 
