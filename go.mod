@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.14
 
 require (
-	cloud.google.com/go v0.82.0
+	cloud.google.com/go v0.83.0
 	cloud.google.com/go/datastore v1.5.0
 	cloud.google.com/go/logging v1.4.2
 	cloud.google.com/go/storage v1.15.0
@@ -18,7 +18,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.5.0
 	github.com/gomodule/redigo v1.8.4
-	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.2.0
@@ -40,9 +39,8 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea // indirect
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
-	golang.org/x/tools v0.1.2 // indirect
 	google.golang.org/api v0.47.0
-	google.golang.org/genproto v0.0.0-20210524171403-669157292da3
+	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
 	google.golang.org/grpc v1.38.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
