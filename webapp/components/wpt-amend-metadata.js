@@ -270,8 +270,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   }
 
   hasSearchURL(product) {
-    return product === 'chrome' || product === 'edge' || product === 'firefox' ||
-      product === 'safari' || product === 'servo' || product === 'webkitgtk';
+    return product === 'chrome' || product === 'deno' || product === 'edge' ||
+      product === 'firefox' || product === 'safari' || product === 'servo' ||
+      product === 'webkitgtk';
   }
 
   getSearchURL(testName, product) {
@@ -284,6 +285,10 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
     if (product === 'chrome' || product === 'edge') {
       return `https://bugs.chromium.org/p/chromium/issues/list?q="${testName}"`;
+    }
+
+    if (product === 'deno') {
+      return `https://github.com/denoland/deno/issues?q="${testName}"`;
     }
 
     if (product === 'firefox') {
