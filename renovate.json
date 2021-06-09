@@ -19,6 +19,11 @@
   "npm": {
     "postUpdateOptions": ["npmDedupe"]
   },
+  "ignoreDeps": [
+    "@vaadin/vaadin-grid",
+    "@vaadin/vaadin-date-picker",
+    "@vaadin/vaadin-context-menu"
+  ],
   "packageRules": [
     {
       "groupName": "Browser Logos",
