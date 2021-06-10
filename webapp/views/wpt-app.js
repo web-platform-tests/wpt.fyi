@@ -153,11 +153,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      search-results="{{searchResults}}"
                      is-triage-mode="[[isTriageMode]]"></wpt-results>
 
-        <wpt-interop name="interop"
-                     is-loading="{{interopLoading}}"
-                     structured-search="[[structuredSearch]]"
-                     path="{{subroute.path}}"></wpt-interop>
-
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
 
