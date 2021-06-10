@@ -183,7 +183,7 @@ const ProductInfo = (superClass) => class extends superClass {
   }
 
   minorIsSignificant(browserName) {
-    return browserName === 'safari' || browserName === 'webkitgtk';
+    return browserName === 'deno' || browserName === 'safari' || browserName === 'webkitgtk';
   }
 
   /**
