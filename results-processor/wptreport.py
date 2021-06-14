@@ -528,6 +528,9 @@ def _channel_to_labels(browser: str, channel: str) -> Set[str]:
     if channel == 'canary' and browser in ('chrome', 'edgechromium'):
         # Chrome/Edge Canary is almost nightly.
         labels.add('nightly')
+    if channel == 'canary' and browser == 'deno':
+        # Deno Canary is the experimental channel.
+        labels.add('experimental')
 
     # TODO(Hexcles): Figure out how we'd like to handle Chrome/Edge Canary.
     # https://github.com/web-platform-tests/wpt.fyi/issues/1635
