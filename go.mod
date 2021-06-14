@@ -16,7 +16,7 @@ require (
 	github.com/gobuffalo/logger v1.0.4 // indirect
 	github.com/gobuffalo/packr/v2 v2.8.1
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/mock v1.5.0
+	github.com/golang/mock v1.6.0
 	github.com/gomodule/redigo v1.8.5
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/go-querystring v1.1.0 // indirect
