@@ -1,0 +1,114 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - main
+      - github-actions # TODO: remove
+jobs:
+  deploy-staging:
+    name: Deploy staging.wpt.fyi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: bash util/travis-deploy-staging.sh
+
+# original travis.yml content:
+#
+# dist: bionic
+#
+# notifications:
+#   email:
+#     on_success: never # default: change
+#     on_failure: always # default: always
+#
+# branches:
+#   only:
+#     - main
+#
+# services:
+#   - docker
+#
+# cache:
+#   directories:
+#     - webapp/node_modules
+#
+# env:
+#   global:
+#     # ${GITHUB_TOKEN}
+#     - secure: "S8l1gZE3e+o++bzIe2tf881aHD+0m2vDx2k8xW1pmJ7fBWL7xQuv8diDElb/US/TA+zxxbedLy9BF42N6pcOGmDakpB7c/orsiK0pQw9N1BbyvOvo9HFttVQiuVLzlXWnVdnbklWu3GwOkDh6GSadCGuScLkvq9jpnSwW+3sucq8o5fSAuJBG/MJzcJdmcdRk0pGuqs558yX/HCn2OgQVJ+1DXo7u6IFE7hWv2bVPESX5Q0cBbIfSxZrDNj8SpgfpWDKsBgn5oqOBBXDsxAKZjCHcdl10LUaAODdyA1CBf9A3RDFxd33MJ59bn6X8JQqgxuP9qJdZmhpjLFetJzDVx7jR03OZHB28C14WHyLvGQbsvYz2ltRqrDWRFp7ChDuslLXtNFRmxwqQuD+F0J1Fwneg7TpAE6wXv2Mc2OezjOAPZ4Roqz6IYdNOO0Yl7RfNJjrD02mXUlHCiisqovZTYinylqlRRqRxN55x7ZwazUgBn4FCup/qn1w44KkWNgtoKiLGAAi4TC0LEUTGUhyc5OpUnXyvuO/7J5dDoOI9AW99GXxgXV+4+K2NuPk8g9EQ67ThFkwoRuRiY9jlChWF1CkT70UPcZeTU84Du1hYnC9s7czBz5laEUXwhso25t2hNUh6bf2r7l8u1HQLA/5advR+azHwnvsRkBwc7lYwPk="
+#
+# # Stages run in order. Jobs in the same stage run in parallel.
+# # In jobs.include, each job will inherit the stage of the previous job and the
+# # default stage is "test".
+# stages:
+#   - name: deploy PR
+#     if: type = pull_request
+#   - name: deploy main
+#     if: (type = push) AND (branch = main)
+#   - name: clean up versions
+#     if: (type = push) AND (branch = main)
+#
+# jobs:
+#   allow_failures:
+#     - env:
+#         - MAKE_TEST_TARGET=puppeteer_chrome_test
+#
+#   include:
+#     # These are the default "test" stage, which will run at the *end*.
+#     # All the other tests run on GitHub Actions. We haven't migrated Puppeteer
+#     # tests because they need to wait for deployments.
+#     - env:
+#         - MAKE_TEST_TARGET=puppeteer_chrome_test
+#     - stage: deploy PR
+#       env:
+#       - DEPLOY_PR_STAGING_TARGET=webapp/web/app.staging.yaml
+#     - env:
+#       - DEPLOY_PR_STAGING_TARGET=results-processor
+#     - env:
+#       - DEPLOY_PR_STAGING_TARGET=api/query/cache/service/app.staging.yaml
+#
+#     - stage: deploy main
+#       env:
+#       - DEPLOY_STAGING_TARGET=webapp/web/app.staging.yaml
+#       - MAKE_TEST_TARGET=go_large_test # Run integration tests after webapp deployment.
+#       - MAKE_TEST_FLAGS="STAGING=true"
+#     - env:
+#       - DEPLOY_STAGING_TARGET=results-processor
+#     - env:
+#       - DEPLOY_STAGING_TARGET=api/query/cache/service
+#
+#     # Run this job in a different stage to prevent racing with deployment.
+#     - stage: clean up versions
+#       env:
+#       - MAKE_TEST_TARGET=cleanup_staging_versions
+#
+# before_install: |
+#   export DOCKER_IMAGE="webplatformtests/wpt.fyi:latest"
+#   export DOCKER_INSTANCE="wptd-dev-${RANDOM}"
+#   # Decrypt client-secret.json for Appengine.
+#   openssl aes-256-cbc -K $encrypted_2fd045226a67_key -iv $encrypted_2fd045226a67_iv -in client-secret.json.enc -out client-secret.json -d
+#
+#   travis_retry docker pull "${DOCKER_IMAGE}"
+#   travis_retry bash ./util/docker-dev/run.sh -d -q
+#
+# install: |
+#   # Retry `go get` to avoid intermittent network issues.
+#   travis_retry docker exec -t "${DOCKER_INSTANCE}" make go_build;
+#
+# script:
+#   - |
+#     # Deploy PR to staging environment (only when Travis secrets are available).
+#     # Note: Done here (in 'script', not 'deploy') because we need deploy to happen before staging webdriver test.
+#     set -e
+#     if [[ -n "${DEPLOY_STAGING_TARGET}" ]]; then
+#       bash util/travis-deploy-staging.sh -f "${DEPLOY_STAGING_TARGET}";
+#     elif [[ -n "${DEPLOY_PR_STAGING_TARGET}" ]]; then
+#       bash util/travis-deploy-staging.sh "${DEPLOY_PR_STAGING_TARGET}";
+#     else
+#       echo "Not on main or a PR. Skipping deployment.";
+#     fi
+#   - |
+#     # Run tests
+#     if [[ -n "${MAKE_TEST_TARGET}" ]]; then
+#       docker exec -t "${DOCKER_INSTANCE}" make "${MAKE_TEST_TARGET}" ${MAKE_TEST_FLAGS};
+#     fi
