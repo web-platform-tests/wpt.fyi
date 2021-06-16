@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: webplatformtests/wpt.fyi:latest
-      DOCKER_INSTANCE: ${{ wptd-dev-${RANDOM} }}
+      DOCKER_INSTANCE: ${{ 'wptd-dev-${RANDOM}' }}
     steps:
       - uses: actions/checkout@v2
       - name: pre-installation
