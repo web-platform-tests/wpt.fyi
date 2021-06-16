@@ -31,15 +31,16 @@ EXCLUSIONS="_test.go$|webapp/components/test/"
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
 
-if [ "${TRAVIS_SECURE_ENV_VARS}" != "true" ]; then
-  info "Travis secrets unavaible. Skipping ${APP_PATH} deployment."
-  exit 0
-fi
+# Migration: TRAVIS_SECURE_ENV_VARS is a default env in travis; removed.
+#if [ "${TRAVIS_SECURE_ENV_VARS}" != "true" ]; then
+#  info "Travis secrets unavaible. Skipping ${APP_PATH} deployment."
+#  exit 0
+#fi
 
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];
 then
-  git diff --name-only ${TRAVIS_BRANCH}..HEAD | egrep -v "${EXCLUSIONS}" | egrep "${APP_DEPS_REGEX}" || {
+  git diff --name-only ${GITHUB_REF}..HEAD | egrep -v "${EXCLUSIONS}" | egrep "${APP_DEPS_REGEX}" || {
     info "No changes detected under ${APP_DEPS}. Skipping deploying ${APP_PATH}."
     exit 0
   }
@@ -51,13 +52,13 @@ docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
     make deploy_staging \
         PROJECT=wptdashboard-staging \
         APP_PATH="${APP_PATH}" \
-        BRANCH_NAME="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}" 2>&1 \
+        BRANCH_NAME="${GITHUB_HEAD_REF:-$GITHUB_REF}" 2>&1 \
             | tee ${TEMP_FILE}
 if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
 DEPLOYED_URL=$(tr -d "\r" < ${TEMP_FILE} | sed -ne 's/^Deployed service.*to \[\(.*\)\]$/\1/p')
 
 # Add a GitHub comment to the PR (if there is a PR).
-if [[ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]];
+if [[ -n "${GITHUB_HEAD_REF}" ]];
 then
   ${UTIL_DIR}/deploy-comment.sh -e "${APP_PATH}" "${DEPLOYED_URL}";
 fi
