@@ -10,15 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: webplatformtests/wpt.fyi:latest
+      # (kyleju): fix this
       DOCKER_INSTANCE: ${{ 'wptd-dev-${RANDOM}' }}
     steps:
       - uses: actions/checkout@v2
       - name: pre-installation
         run: |
-          echo "${DOCKER_IMAGE}"
-          echo "${DOCKER_INSTANCE}"
+          echo "abc"
           # Decrypt client-secret.json for Appengine.
           openssl aes-256-cbc -K $encrypted_2fd045226a67_key -iv $encrypted_2fd045226a67_iv -in client-secret.json.enc -out client-secret.json -d
+          echo "abc"
           docker pull "${DOCKER_IMAGE}"
           bash ./util/docker-dev/run.sh -d -q
 
