@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: webplatformtests/wpt.fyi:latest
-      # (kyleju): fix this
-      DOCKER_INSTANCE: ${{ 'wptd-dev-${RANDOM}' }}
+      # TODO(kyleju): fix this
+      DOCKER_INSTANCE: wptd-dev-0000
     steps:
       - uses: actions/checkout@v2
       - name: pre-installation
