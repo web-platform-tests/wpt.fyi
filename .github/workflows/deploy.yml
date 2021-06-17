@@ -14,13 +14,14 @@ jobs:
       DOCKER_INSTANCE: wptd-dev-0000
     steps:
       - uses: actions/checkout@v2
+
+      - name: secrets
+        run: echo "$GCLOUD_KEY_FILE_JSON" > client-secret.json
+        env:
+         GCLOUD_KEY_FILE_JSON: ${{ secrets.GCLOUD_KEY_FILE_JSON }}
+
       - name: pre-installation
         run: |
-          echo "abc"
-          # Decrypt client-secret.json for Appengine.
-          # TODO: Figure out this line
-          # openssl aes-256-cbc -K $encrypted_2fd045226a67_key -iv $encrypted_2fd045226a67_iv -in client-secret.json.enc -out client-secret.json -d
-          echo "abc"
           docker pull "${DOCKER_IMAGE}"
           bash ./util/docker-dev/run.sh -d -q
 
@@ -29,31 +30,10 @@ jobs:
 
       - name: build
         run: bash util/travis-deploy-staging.sh -f webapp/web/app.staging.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-# original travis.yml content:
-#
-# dist: bionic
-#
-# notifications:
-#   email:
-#     on_success: never # default: change
-#     on_failure: always # default: always
-#
-# branches:
-#   only:
-#     - main
-#
-# services:
-#   - docker
-#
-# cache:
-#   directories:
-#     - webapp/node_modules
-#
-# env:
-#   global:
-#     # ${GITHUB_TOKEN}
-#     - secure: "S8l1gZE3e+o++bzIe2tf881aHD+0m2vDx2k8xW1pmJ7fBWL7xQuv8diDElb/US/TA+zxxbedLy9BF42N6pcOGmDakpB7c/orsiK0pQw9N1BbyvOvo9HFttVQiuVLzlXWnVdnbklWu3GwOkDh6GSadCGuScLkvq9jpnSwW+3sucq8o5fSAuJBG/MJzcJdmcdRk0pGuqs558yX/HCn2OgQVJ+1DXo7u6IFE7hWv2bVPESX5Q0cBbIfSxZrDNj8SpgfpWDKsBgn5oqOBBXDsxAKZjCHcdl10LUaAODdyA1CBf9A3RDFxd33MJ59bn6X8JQqgxuP9qJdZmhpjLFetJzDVx7jR03OZHB28C14WHyLvGQbsvYz2ltRqrDWRFp7ChDuslLXtNFRmxwqQuD+F0J1Fwneg7TpAE6wXv2Mc2OezjOAPZ4Roqz6IYdNOO0Yl7RfNJjrD02mXUlHCiisqovZTYinylqlRRqRxN55x7ZwazUgBn4FCup/qn1w44KkWNgtoKiLGAAi4TC0LEUTGUhyc5OpUnXyvuO/7J5dDoOI9AW99GXxgXV+4+K2NuPk8g9EQ67ThFkwoRuRiY9jlChWF1CkT70UPcZeTU84Du1hYnC9s7czBz5laEUXwhso25t2hNUh6bf2r7l8u1HQLA/5advR+azHwnvsRkBwc7lYwPk="
+# remaining travis.yml content to convert:
 #
 # # Stages run in order. Jobs in the same stage run in parallel.
 # # In jobs.include, each job will inherit the stage of the previous job and the
