@@ -29,7 +29,7 @@ jobs:
         run: docker exec -t "${DOCKER_INSTANCE}" make go_build;
 
       - name: build
-        run: bash util/travis-deploy-staging.sh -f webapp/web/app.staging.yaml
+        run: ./util/deploy-staging.sh -f webapp/web/app.staging.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
