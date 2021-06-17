@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Helper script for posting a GitHub comment pointing to the deployed environment,
-# from Travis CI. Also see deploy.sh
+# from GitHub Actions. Also see deploy.sh
 
 usage() {
   USAGE="Usage: travis-staging-deploy.sh [-f] [app path]
@@ -30,12 +30,6 @@ EXCLUSIONS="_test.go$|webapp/components/test/"
 
 UTIL_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${UTIL_DIR}/logging.sh"
-
-# Migration: TRAVIS_SECURE_ENV_VARS is a default env in travis; removed.
-#if [ "${TRAVIS_SECURE_ENV_VARS}" != "true" ]; then
-#  info "Travis secrets unavaible. Skipping ${APP_PATH} deployment."
-#  exit 0
-#fi
 
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];

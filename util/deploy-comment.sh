@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Helper script for posting a GitHub comment pointing to the deployed environment,
-# from Travis CI. Also see deploy.sh
+# from GitHub Actions. Also see deploy.sh
 
 usage() {
   USAGE='Usage: deploy-comment.sh [-e environment-name] [deployed url]
@@ -32,6 +32,7 @@ if [[ -z "${GITHUB_TOKEN}" ]];
 then fatal "GitHub Token is required";
 else debug "GitHub token detected.";
 fi
+# TODO: rewrite to GitHub Actions equivalent:
 if [[ -z "${TRAVIS_REPO_SLUG}" ]];
 then fatal "Travis Repo slug (user/repo) is required";
 else debug "Travis Repo slug: ${TRAVIS_REPO_SLUG}";

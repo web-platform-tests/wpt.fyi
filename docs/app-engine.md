@@ -58,7 +58,7 @@ gcloud app deploy --project=wptdashboard index.yaml queue.yaml dispatch.yaml
 
 ### To staging
 
-([Travis](../.travis.yml) deploys all services automatically,but not
+([GitHub Actions](../.github/workflows/deploy.yml) deploys all services automatically, but not
 `index.yaml`, `queue.yaml` or `dispatch.yaml`.)
 
 To deploy manually, follow the same instructions as production but replace
