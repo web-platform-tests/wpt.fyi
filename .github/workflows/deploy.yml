@@ -45,7 +45,7 @@ jobs:
         run: docker exec -t "${DOCKER_INSTANCE}" make go_large_test STAGING=true
 
       - name: build processor
-        run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}"results-processor
+        run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}" results-processor
 
       - name: build searchcache
         run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}" api/query/cache/service/app.staging.yaml
@@ -54,6 +54,6 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
         run: docker exec -t "${DOCKER_INSTANCE}" make cleanup_staging_versions
 
-      # Note: These have been failing for a long time
+      # TODO: These have been failing for a long time
       - name: Run puppeteer_chrome_test tests
         run: docker exec -t "${DOCKER_INSTANCE}" make puppeteer_chrome_test
