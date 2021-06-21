@@ -3,14 +3,14 @@ on:
   push:
     branches:
       - main
-      - github-actions # TODO: remove
+      - github-actions # TODO: change it to Pull requests
 jobs:
   deploy-staging:
     name: Deploy staging.wpt.fyi
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: webplatformtests/wpt.fyi:latest
-      # TODO(kyleju): fix this
+      # TODO: make the number random using $RANDOM
       DOCKER_INSTANCE: wptd-dev-0000
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -26,19 +26,34 @@ jobs:
           docker pull "${DOCKER_IMAGE}"
           bash ./util/docker-dev/run.sh -d -q
 
+# TODO: This step is rerun every step below
       - name: installation
         run: docker exec -t "${DOCKER_INSTANCE}" make go_build;
 
 # TODO Need to run set -e?
 
+      # Set -f for main branch.
+      - name: set deployment flag
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: echo "DEPLOYMENT_FLAG=-f" >> $GITHUB_ENV
+
       - name: build webapp
-        run: ./util/deploy-staging.sh -f webapp/web/app.staging.yaml
+        run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}" webapp/web/app.staging.yaml
+
+      - name: Run go_large_test in main
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: docker exec -t "${DOCKER_INSTANCE}" make go_large_test STAGING=true
 
       - name: build processor
-        run: ./util/deploy-staging.sh -f results-processor
+        run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}"results-processor
 
       - name: build searchcache
-        run: ./util/deploy-staging.sh -f api/query/cache/service/app.staging.yaml
+        run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}" api/query/cache/service/app.staging.yaml
 
+      - name: Clean up versions in main
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: docker exec -t "${DOCKER_INSTANCE}" make cleanup_staging_versions
+
+      # Note: These have been failing for a long time
       - name: Run puppeteer_chrome_test tests
         run: docker exec -t "${DOCKER_INSTANCE}" make puppeteer_chrome_test
