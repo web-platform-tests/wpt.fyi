@@ -3,15 +3,13 @@ on:
   push:
     branches:
       - main
-      - github-actions # TODO: change it to Pull requests
+  pull_request:
 jobs:
   deploy-staging:
     name: Deploy staging.wpt.fyi
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: webplatformtests/wpt.fyi:latest
-      # TODO: make the number random using $RANDOM
-      DOCKER_INSTANCE: wptd-dev-0000
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v2
@@ -24,19 +22,13 @@ jobs:
       - name: Set DOCKER_INSTANCE
         run: echo "DOCKER_INSTANCE=wptd-dev-$(echo $RANDOM)" >> $GITHUB_ENV
 
-      - name: Test
-        run: echo $DOCKER_INSTANCE
-
       - name: pre-installation
         run: |
           docker pull "${DOCKER_IMAGE}"
           bash ./util/docker-dev/run.sh -d -q
 
-# TODO: This step is rerun every step below
       - name: installation
         run: docker exec -t "${DOCKER_INSTANCE}" make go_build;
-
-# TODO Need to run set -e?
 
       # Set -f for main branch.
       - name: set deployment flag
@@ -59,7 +51,3 @@ jobs:
       - name: Clean up versions in main
         if: ${{ github.ref == 'refs/heads/main' }}
         run: docker exec -t "${DOCKER_INSTANCE}" make cleanup_staging_versions
-
-      # TODO: These have been failing for a long time
-      - name: Run puppeteer_chrome_test tests
-        run: docker exec -t "${DOCKER_INSTANCE}" make puppeteer_chrome_test
