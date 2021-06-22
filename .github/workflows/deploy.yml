@@ -21,6 +21,12 @@ jobs:
         env:
          GCLOUD_KEY_FILE_JSON: ${{ secrets.GCLOUD_KEY_FILE_JSON }}
 
+      - name: Set DOCKER_INSTANCE
+        run: echo "DOCKER_INSTANCE=wptd-dev-$(echo $RANDOM)" >> $GITHUB_ENV
+
+      - name: Test
+        run: echo $DOCKER_INSTANCE
+
       - name: pre-installation
         run: |
           docker pull "${DOCKER_IMAGE}"
