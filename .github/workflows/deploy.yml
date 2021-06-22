@@ -33,20 +33,20 @@ jobs:
       # Set -f for main branch.
       - name: set deployment flag
         if: ${{ github.ref == 'refs/heads/main' }}
-        run: echo "DEPLOYMENT_FLAG=-f" >> $GITHUB_ENV
+        run: echo "FORCE_DEPLOYMENT=-f" >> $GITHUB_ENV
 
       - name: build webapp
-        run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}" webapp/web/app.staging.yaml
+        run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" webapp/web/app.staging.yaml
 
       - name: Run go_large_test in main
         if: ${{ github.ref == 'refs/heads/main' }}
         run: docker exec -t "${DOCKER_INSTANCE}" make go_large_test STAGING=true
 
       - name: build processor
-        run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}" results-processor
+        run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" results-processor
 
       - name: build searchcache
-        run: ./util/deploy-staging.sh "${DEPLOYMENT_FLAG}" api/query/cache/service/app.staging.yaml
+        run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" api/query/cache/service/app.staging.yaml
 
       - name: Clean up versions in main
         if: ${{ github.ref == 'refs/heads/main' }}
