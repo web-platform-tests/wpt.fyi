@@ -34,7 +34,7 @@ source "${UTIL_DIR}/logging.sh"
 # Skip if nothing under $APP_PATH was modified.
 if [ "${FORCE_PUSH}" != "true" ];
 then
-  git diff --name-only ${GITHUB_REF}..HEAD | egrep -v "${EXCLUSIONS}" | egrep "${APP_DEPS_REGEX}" || {
+  git diff --name-only ${GITHUB_REF}..HEAD^1 | egrep -v "${EXCLUSIONS}" | egrep "${APP_DEPS_REGEX}" || {
     info "No changes detected under ${APP_DEPS}. Skipping deploying ${APP_PATH}."
     exit 0
   }
