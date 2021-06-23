@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-  pull_request:
+      - github-actions # TODO: change it to Pull requests
 jobs:
   deploy-staging:
     name: Deploy staging.wpt.fyi
@@ -21,6 +21,9 @@ jobs:
 
       - name: Set DOCKER_INSTANCE
         run: echo "DOCKER_INSTANCE=wptd-dev-$(echo $RANDOM)" >> $GITHUB_ENV
+
+      - name: test
+        run: echo ${GITHUB_REF}
 
       - name: pre-installation
         run: |
