@@ -34,14 +34,14 @@ jobs:
 
       # Set -f for main branch.
       - name: set deployment flag
-        if: ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: echo "FORCE_DEPLOYMENT=-f" >> $GITHUB_ENV
 
-      - name: build webapp
+      - name: deploy webapp
         run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" webapp/web/app.staging.yaml
 
       - name: Run go_large_test in main
-        if: ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker exec -t "${DOCKER_INSTANCE}" make go_large_test STAGING=true
 
       - name: build processor
@@ -51,5 +51,5 @@ jobs:
         run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" api/query/cache/service/app.staging.yaml
 
       - name: Clean up versions in main
-        if: ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker exec -t "${DOCKER_INSTANCE}" make cleanup_staging_versions
