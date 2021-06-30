@@ -4,7 +4,7 @@
 # from GitHub Actions. Also see deploy.sh
 
 usage() {
-  USAGE="Usage: travis-staging-deploy.sh [-f] [app path]
+  USAGE="Usage: deploy-staging.sh [-f] [app path]
     -f : Always deploy (even if no changes detected)
     app path: wpt.fyi relative path for the app, e.g. \"webapp\""
   echo "${USAGE}"
@@ -51,8 +51,9 @@ docker exec -t -u $(id -u $USER):$(id -g $USER) "${DOCKER_INSTANCE}" \
 if [ "${EXIT_CODE:=${PIPESTATUS[0]}}" != "0" ]; then exit ${EXIT_CODE}; fi
 DEPLOYED_URL=$(tr -d "\r" < ${TEMP_FILE} | sed -ne 's/^Deployed service.*to \[\(.*\)\]$/\1/p')
 
+# TODO(kyle): Fix deploy-comment.sh; rewrite to GitHub Actions equivalent.
 # Add a GitHub comment to the PR (if there is a PR).
-if [[ -n "${GITHUB_HEAD_REF}" ]];
-then
-  ${UTIL_DIR}/deploy-comment.sh -e "${APP_PATH}" "${DEPLOYED_URL}";
-fi
+#if [[ -n "${GITHUB_HEAD_REF}" ]];
+#then
+#  ${UTIL_DIR}/deploy-comment.sh -e "${APP_PATH}" "${DEPLOYED_URL}";
+#fi
