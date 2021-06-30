@@ -4,7 +4,7 @@
 # from GitHub Actions. Also see deploy.sh
 
 usage() {
-  USAGE="Usage: travis-staging-deploy.sh [-f] [app path]
+  USAGE="Usage: deploy-staging.sh [-f] [app path]
     -f : Always deploy (even if no changes detected)
     app path: wpt.fyi relative path for the app, e.g. \"webapp\""
   echo "${USAGE}"
