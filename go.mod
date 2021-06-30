@@ -3,10 +3,10 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.14
 
 require (
-	cloud.google.com/go v0.84.0
+	cloud.google.com/go v0.85.0
 	cloud.google.com/go/datastore v1.5.0
 	cloud.google.com/go/logging v1.4.2
-	cloud.google.com/go/storage v1.15.0
+	cloud.google.com/go/storage v1.16.0
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/deckarep/golang-set v1.7.1
@@ -33,14 +33,15 @@ require (
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
 	github.com/taskcluster/taskcluster/v42 v42.1.1
 	github.com/tebeka/selenium v0.9.9
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
+	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
-	golang.org/x/oauth2 v0.0.0-20210622215436-a8dc77f794b6
-	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
-	google.golang.org/api v0.49.0
-	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
-	google.golang.org/grpc v1.38.0
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
+	google.golang.org/api v0.50.0
+	google.golang.org/genproto v0.0.0-20210630183607-d20f26d13c79
+	google.golang.org/grpc v1.39.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
