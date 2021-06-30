@@ -1,0 +1,55 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  deploy-staging:
+    name: Deploy staging.wpt.fyi
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_IMAGE: webplatformtests/wpt.fyi:latest
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: secrets
+        run: echo "$GCLOUD_KEY_FILE_JSON" > client-secret.json
+        env:
+         GCLOUD_KEY_FILE_JSON: ${{ secrets.GCLOUD_KEY_FILE_JSON }}
+
+      - name: Set DOCKER_INSTANCE
+        run: echo "DOCKER_INSTANCE=wptd-dev-$(echo $RANDOM)" >> $GITHUB_ENV
+
+      - name: pre-installation
+        run: |
+          docker pull "${DOCKER_IMAGE}"
+          bash ./util/docker-dev/run.sh -d -q
+
+      - name: installation
+        run: docker exec -t "${DOCKER_INSTANCE}" make go_build;
+
+      # Set -f for main branch.
+      - name: set deployment flag
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "FORCE_DEPLOYMENT=-f" >> $GITHUB_ENV
+
+      - name: deploy webapp
+        run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" webapp/web/app.staging.yaml
+
+      - name: Run go_large_test in main
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: docker exec -t "${DOCKER_INSTANCE}" make go_large_test STAGING=true
+
+      - name: build processor
+        run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" results-processor
+
+      - name: build searchcache
+        run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" api/query/cache/service/app.staging.yaml
+
+      - name: Clean up versions in main
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: docker exec -t "${DOCKER_INSTANCE}" make cleanup_staging_versions

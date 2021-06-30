@@ -6,8 +6,8 @@ different Docker images.
 ## Development
 
 The root [`Dockerfile`](../Dockerfile) is the image we use for [local
-development](../README.md#development) and CI testing (on both Travis and GitHub
-Actions). We have a [cron
+development](../README.md#development) and CI testing on GitHub
+Actions. We have a [cron
 job](https://github.com/web-platform-tests/wpt.fyi/actions?query=workflow%3A%22Update+Docker+image%22)
 that rebuilds the image and pushes it to Docker Hub weekly (or whenever
 `Dockerfile` changes) so that CI can pull the image directly instead of building
