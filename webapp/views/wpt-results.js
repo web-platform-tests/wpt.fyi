@@ -724,12 +724,16 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
       return `delta ${delta > 0 ? 'positive' : 'negative'}`;
     } else {
-      // Non-diff case: total=0 -> 'none'; path='/' -> 'top';
+      // Non-diff case: result=undefined -> 'none'; path='/' -> 'top';
+      // result.passes=0 && result.total=0 -> 'top';
       // otherwise -> 'passes-[colouring-by-percent]'.
       if (typeof result === 'undefined' && prop === 'total') {
         return 'none';
       }
       if (this.path === '/' && !this.colorHomepage) {
+        return 'top';
+      }
+      if (result.passes === 0 && result.total === 0) {
         return 'top';
       }
       return this.passRateClass(result.passes, result.total);
