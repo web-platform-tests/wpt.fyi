@@ -22,7 +22,7 @@ itsdangerous==2.0.1
 Jinja2==3.0.1
 MarkupSafe==2.0.1
 mccabe==0.6.1
-mypy==0.812
+mypy==0.812 # pyup: ignore file # see https://github.com/web-platform-tests/wpt.fyi/issues/2586
 mypy-extensions==0.4.3
 protobuf==3.17.3
 pyasn1==0.4.8
