@@ -92,17 +92,20 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           <div class="links">
             <ul>
               <li>
-                <a href\$="https://github.com/web-platform-tests/wpt/blob/master[[path]]" target="_blank">View source on GitHub</a></li>
+                View source on GitHub
+                (<a href\$="https://github.com/web-platform-tests/wpt/blob/[[testRuns.0.revision]][[path]]" target="_blank">current commit</a>)
+                (<a href\$="https://github.com/web-platform-tests/wpt/blob/master[[path]]" target="_blank">master branch</a>)
+              </li>
 
-                <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
-                  <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
-                  browser on w3c-test.org</a></li>
-                </template>
+              <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
+                <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
+                browser on w3c-test.org</a></li>
+              </template>
 
-                <template is="dom-if" if="[[ webPlatformTestsLive ]]">
-                  <li><a href\$="[[scheme]]://wpt.live[[path]]" target="_blank">Run in your
-                    browser on wpt.live</a></li>
-                </template>
+              <template is="dom-if" if="[[ webPlatformTestsLive ]]">
+                <li><a href\$="[[scheme]]://wpt.live[[path]]" target="_blank">Run in your
+                  browser on wpt.live</a></li>
+              </template>
             </ul>
           </div>
         </template>
