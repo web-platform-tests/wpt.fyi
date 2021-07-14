@@ -82,6 +82,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
             When actual and expected pixels are different, the upper-left half shows the
             actual and the lower-right half shows the expected.
           </p>
+          <strong>maxDifference:</strong> [[maxDifference]] <br>
+          <strong>totalPixels:</strong> [[totalPixels]]
           <p>
             Any suggestions?
             <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?template=screenshots.md&projects=web-platform-tests/wpt.fyi/9" target="_blank">File an issue!</a>
@@ -163,6 +165,8 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
       canvasBefore: Object,
       canvasAfter: Object,
       diff: String, // data:image URL.
+      totalPixels: Number,
+      maxDifference: Number,
       showDiff: {
         type: Boolean,
         value: true,
@@ -270,17 +274,26 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
 
       const beforePixels = beforeCtx.getImageData(0, 0, out.width, out.height);
       const afterPixels = afterCtx.getImageData(0, 0, out.width, out.height);
+      let totalPixels = 0;
+      let maxDifference = 0;
       for (let i = 0; i < out.width * out.height; i++) {
+        let thisPixelDifferent = false;
         for (let j = i * 4; j < i * 4 + 4; j++) {
           if (beforePixels.data[j] !== afterPixels.data[j]) {
-            const x = i % out.width;
-            const y = Math.floor(i / out.width);
-            outCtx.fillRect(x, y, 1, 1);
-            break;
+            maxDifference = Math.max(maxDifference, Math.abs(beforePixels.data[j] - afterPixels.data[j]));
+            if (!thisPixelDifferent) {
+              thisPixelDifferent = true;
+              ++totalPixels;
+              const x = i % out.width;
+              const y = Math.floor(i / out.width);
+              outCtx.fillRect(x, y, 1, 1);
+            }
           }
         }
       }
       this.diff = out.toDataURL('image/png');
+      this.totalPixels = totalPixels;
+      this.maxDifference = maxDifference;
       const display = this.shadowRoot.querySelector('#different-pixels');
       display.setAttribute('width', out.width);
       display.setAttribute('height', out.height);
