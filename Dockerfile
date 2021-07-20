@@ -15,7 +15,7 @@ RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         lsb-release \
         openjdk-11-jdk \
         python-crcmod \
-        python3.7 \
+        python3.8 \
         sudo \
         tox \
         wget \

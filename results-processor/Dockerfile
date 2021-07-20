@@ -18,7 +18,7 @@ RUN gcloud config set disable_usage_reporting false
 RUN rm -f $HOME/.config/gcloud/gce
 
 # Setup and activate virtualenv.
-RUN virtualenv -p python3.7 /env
+RUN virtualenv -p python3.8 /env
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
