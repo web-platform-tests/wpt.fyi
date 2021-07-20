@@ -57,7 +57,8 @@ class Compat2021DataManager {
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
   async _loadCsv(label) {
-    const url = `${GITHUB_URL_PREFIX}/gh-pages/data/compat2021/unified-scores-${label}.csv`;
+    // Point at https://github.com/Ecosystem-Infra/wpt-results-analysis/pull/52
+    const url = `${GITHUB_URL_PREFIX}/smcgruer/tmp/data/compat2021/unified-scores-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     const features = [SUMMARY_FEATURE_NAME, ...FEATURES];
