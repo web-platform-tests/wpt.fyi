@@ -163,7 +163,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             <div class="metadata-entry">
               <img class="browser" src="[[displayMetadataLogo(node.product)]]">
               :
-              <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
+              <paper-input label="Bug URL" value="{{node.url}}" auto-validate pattern="^((http|https):\/\/)[\w.-]+" error-message="Missing http(s):// prefix" autofocus></paper-input>
             </div>
             <template is="dom-repeat" items="[[node.tests]]" as="test">
               <li>
