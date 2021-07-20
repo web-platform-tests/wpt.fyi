@@ -6,6 +6,7 @@ on:
   pull_request:
 jobs:
   deploy-staging:
+    if: ${{ github.repository == 'web-platform-tests/wpt.fyi' }}
     name: Deploy staging.wpt.fyi
     runs-on: ubuntu-latest
     env:
