@@ -17,7 +17,7 @@ googleapis-common-protos==1.53.0
 grpcio==1.39.0
 gunicorn==20.1.0
 idna==2.10 # pyup: ignore file # see https://github.com/web-platform-tests/wpt.fyi/issues/2389
-importlib-metadata==4.6.0
+importlib-metadata==4.6.3
 itsdangerous==2.0.1
 Jinja2==3.0.1
 MarkupSafe==2.0.1
