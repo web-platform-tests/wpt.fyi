@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.14
 
 require (
-	cloud.google.com/go v0.89.0
+	cloud.google.com/go v0.90.0
 	cloud.google.com/go/datastore v1.5.0
 	cloud.google.com/go/logging v1.4.2
 	cloud.google.com/go/storage v1.16.0
@@ -29,17 +29,19 @@ require (
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/samthor/nicehttp v1.0.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
 	github.com/taskcluster/taskcluster/v42 v42.1.1
 	github.com/tebeka/selenium v0.9.9
-	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/oauth2 v0.0.0-20210805134026-6f1e6394065a
+	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	google.golang.org/api v0.52.0
-	google.golang.org/genproto v0.0.0-20210728212813-7823e685a01f
+	google.golang.org/genproto v0.0.0-20210809142519-0135a39c2737
 	google.golang.org/grpc v1.39.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
