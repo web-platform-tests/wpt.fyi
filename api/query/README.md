@@ -100,6 +100,18 @@ inequality comparator.
 Within a root query, there are several search atoms that can be used to
 filter the results (according to the root query).
 
+#### Path
+
+    path:[path]
+
+Filters results to a specific path prefix. For example, this search atom can be
+used to list only results for the `/dom/` directory:
+
+    path:/dom/
+
+Note that without the trailing `/`, the `/domparsing/` and `/domxpath`
+directories would also be included.
+
 #### Status
 
 Filters to results with a specific status (or, _not_ a specific status).
@@ -263,6 +275,12 @@ equality (exact count).
 #### or
 
     {"or": [query1, query2, ...]}
+
+#### path
+
+Takes a string of the path prefix to match.
+
+    {"path": "/dom/"}
 
 #### status
 
