@@ -27,7 +27,7 @@
     "babel-eslint": "10.1.0",
     "cpy-cli": "3.1.1",
     "eslint": "7.32.0",
-    "eslint-plugin-html": "6.1.2",
+    "eslint-plugin-html": "6.2.0",
     "wct-browser-legacy": "1.0.2",
     "wct-local": "2.1.5",
     "web-component-tester": "6.9.2"
