@@ -3,7 +3,7 @@ certifi==2021.5.30
 cffi==1.14.6
 chardet==4.0.0
 click==8.0.1
-filelock==3.0.12
+filelock==3.2.0
 flake8==3.9.2
 Flask==2.0.1
 google-api-core==2.0.1
