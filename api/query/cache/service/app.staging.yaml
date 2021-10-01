@@ -7,7 +7,7 @@ service: searchcache
 
 resources:
   cpu: 2
-  memory_gb: 10
+  memory_gb: 12.5
 
 manual_scaling:
   instances: 1
