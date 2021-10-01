@@ -1,20 +1,20 @@
-cachetools==4.2.2
+cachetools==4.2.4
 certifi==2021.5.30
 cffi==1.14.6
 chardet==4.0.0
 click==8.0.1
-filelock==3.0.12
+filelock==3.2.0
 flake8==3.9.2
 Flask==2.0.1
 google-api-core==2.0.1
-google-auth==2.0.2
+google-auth==2.2.1
 google-cloud-core==2.0.0
 google-cloud-datastore==2.1.6
-google-cloud-storage==1.42.0
-google-crc32c==1.0.0
-google-resumable-media==2.0.1
+google-cloud-storage==1.42.3
+google-crc32c==1.2.0
+google-resumable-media==2.0.3
 googleapis-common-protos==1.53.0
-grpcio==1.39.0
+grpcio==1.41.0
 gunicorn==20.1.0
 idna==2.10 # pyup: ignore file # see https://github.com/web-platform-tests/wpt.fyi/issues/2389
 importlib-metadata==4.8.1
@@ -24,7 +24,7 @@ MarkupSafe==2.0.1
 mccabe==0.6.1
 mypy==0.812 # pyup: ignore file # see https://github.com/web-platform-tests/wpt.fyi/issues/2586
 mypy-extensions==0.4.3
-protobuf==3.17.3
+protobuf==3.18.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycodestyle==2.7.0
@@ -36,6 +36,6 @@ rsa==4.7.2
 six==1.16.0
 typed-ast==1.4.3
 typing-extensions==3.10.0.2
-urllib3==1.26.6
+urllib3==1.26.7
 Werkzeug==2.0.1
-zipp==3.5.0
+zipp==3.6.0
