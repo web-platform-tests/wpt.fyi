@@ -71,6 +71,8 @@ class Compat2021DataManager {
       dataTable.addColumn({type: 'string', role: 'tooltip'});
       dataTable.addColumn('number', 'Safari');
       dataTable.addColumn({type: 'string', role: 'tooltip'});
+      dataTable.addColumn('number', 'WebkitGTK');
+      dataTable.addColumn({type: 'string', role: 'tooltip'});
       return [feature, dataTable];
     }));
 
@@ -81,11 +83,12 @@ class Compat2021DataManager {
       'Chrome',
       'Firefox',
       'Safari',
+      'WebKitGTK',
     ];
 
     // We store a lookup table of browser versions to help with the 'show
     // revision changelog' tooltip action.
-    const browserVersions = [[], [], []];
+    const browserVersions = [[], [], [], []];
 
     csvLines.forEach(line => {
       // We control the CSV data source, so are quite lazy with parsing it.
@@ -763,7 +766,7 @@ class Compat2021FeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
-      colors: ['#4285f4', '#ea4335', '#fbbc04'],
+      colors: ['#4285f4', '#ea4335', '#fbbc04', '#018786'],
     };
 
     if (feature === SUMMARY_FEATURE_NAME) {
