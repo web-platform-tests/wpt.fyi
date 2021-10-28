@@ -57,8 +57,8 @@ class Compat2021DataManager {
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
   async _loadCsv(label) {
-    // Point at https://github.com/Ecosystem-Infra/wpt-results-analysis/pull/59
-    const url = `${GITHUB_URL_PREFIX}/webkit-gtk/data/compat2021/unified-scores-${label}.csv`;
+    // Point at https://github.com/Ecosystem-Infra/wpt-results-analysis/pull/62
+    const url = `${GITHUB_URL_PREFIX}/smcgruer/webkitgtk-replacing-safari/data/compat2021/unified-scores-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     const features = [SUMMARY_FEATURE_NAME, ...FEATURES];
@@ -516,7 +516,7 @@ class Compat2021Summary extends PolymerElement {
 
   async calculateSummaryScores(stable) {
     const label = stable ? 'stable' : 'experimental';
-    const url = `${GITHUB_URL_PREFIX}/gh-pages/data/compat2021/summary-${label}.csv`;
+    const url = `${GITHUB_URL_PREFIX}/smcgruer/webkitgtk-replacing-safari/data/compat2021/summary-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     if (csvLines.length !== 5) {
