@@ -12,6 +12,13 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
+const DATA_BRANCH = 'gh-pages';
+// Support a 'use_webkitgtk' query parameter to substitute WebKitGTK in for
+// Safari, to deal with the ongoing lack of new STP versions on wpt.fyi.
+const DATA_FILES_PATH = (new URL(document.location)).searchParams.has('use_webkitgtk')
+  ? 'data/compat2021/webkitgtk'
+  : 'data/compat2021';
+
 const SUMMARY_FEATURE_NAME = 'summary';
 const FEATURES = [
   'aspect-ratio',
@@ -57,7 +64,7 @@ class Compat2021DataManager {
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
   async _loadCsv(label) {
-    const url = `${GITHUB_URL_PREFIX}/gh-pages/data/compat2021/unified-scores-${label}.csv`;
+    const url = `${GITHUB_URL_PREFIX}/${DATA_BRANCH}/${DATA_FILES_PATH}/unified-scores-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     const features = [SUMMARY_FEATURE_NAME, ...FEATURES];
@@ -277,6 +284,7 @@ class Compat2021 extends PolymerElement {
   static get properties() {
     return {
       embedded: Boolean,
+      useWebkitGTK: Boolean,
       stable: Boolean,
       feature: String,
       dataManager: Object,
@@ -285,7 +293,7 @@ class Compat2021 extends PolymerElement {
 
   static get observers() {
     return [
-      'updateUrlParams(embedded, stable, feature)',
+      'updateUrlParams(embedded, useWebKitGTK, stable, feature)',
     ];
   }
 
@@ -296,6 +304,7 @@ class Compat2021 extends PolymerElement {
 
     const params = (new URL(document.location)).searchParams;
     this.embedded = params.get('embedded') !== null;
+    this.useWebKitGTK = params.get('use_webkitgtk') !== null;
     // The default view of the page is the summary scores graph for
     // experimental releases of browsers.
     this.stable = params.get('stable') !== null;
@@ -307,7 +316,7 @@ class Compat2021 extends PolymerElement {
     });
   }
 
-  updateUrlParams(embedded, stable, feature) {
+  updateUrlParams(embedded, useWebKitGTK, stable, feature) {
     // Our observer may be called before the feature is set, so debounce that.
     if (feature === undefined) {
       return;
@@ -322,6 +331,9 @@ class Compat2021 extends PolymerElement {
     }
     if (embedded) {
       params.push('embedded');
+    }
+    if (useWebKitGTK) {
+      params.push('use_webkitgtk');
     }
 
     let url = location.pathname;
@@ -515,7 +527,7 @@ class Compat2021Summary extends PolymerElement {
 
   async calculateSummaryScores(stable) {
     const label = stable ? 'stable' : 'experimental';
-    const url = `${GITHUB_URL_PREFIX}/gh-pages/data/compat2021/summary-${label}.csv`;
+    const url = `${GITHUB_URL_PREFIX}/${DATA_BRANCH}/${DATA_FILES_PATH}/summary-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     if (csvLines.length !== 5) {
