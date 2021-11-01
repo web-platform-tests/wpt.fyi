@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/cloudtasks v0.1.0
 	cloud.google.com/go/datastore v1.6.0
 	cloud.google.com/go/logging v1.4.2
-	cloud.google.com/go/storage v1.16.0
+	cloud.google.com/go/storage v1.18.2
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/deckarep/golang-set v1.7.1
@@ -40,7 +40,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	google.golang.org/api v0.59.0
-	google.golang.org/genproto v0.0.0-20211008145708-270636b82663
+	google.golang.org/genproto v0.0.0-20211016002631-37fc39342514
 	google.golang.org/grpc v1.41.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
