@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	cloud.google.com/go/cloudtasks v0.1.0
-	cloud.google.com/go/datastore v1.5.0
+	cloud.google.com/go/datastore v1.6.0
 	cloud.google.com/go/logging v1.4.2
 	cloud.google.com/go/storage v1.16.0
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
