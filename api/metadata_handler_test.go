@@ -196,7 +196,7 @@ func TestHandleMetadataTriage_InvalidProduct(t *testing.T) {
             {
                 "product":"foobar",
                 "url":"bugs.bar",
-                "results":[{"status":6}]
+                "results":[{"status":6, "label":labelA}]
             }
         ]}`
 	bodyReader := strings.NewReader(body)

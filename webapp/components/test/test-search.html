@@ -407,6 +407,10 @@ suite('<test-search>', () => {
       assertQueryParse('triaged:test-issue', { exists: [{ triaged: '' }] });
     });
 
+    test('test label search', () => {
+      assertQueryParse('testlabel:interop123', { exists: [{ testlabel: 'interop123' }] });
+    });
+
     test('multi-root', () => {
       assertQueryParse('none(status:missing) count>0(status:!pass)', {
         and: [

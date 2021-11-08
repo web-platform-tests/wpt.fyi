@@ -97,6 +97,13 @@ type Triaged struct {
 	metadata map[string][]string
 }
 
+// TestLabel is a query.TestLabel bound to an in-memory index and MetadataResults.
+type TestLabel struct {
+	index
+	label    string
+	metadata map[string][]string
+}
+
 // MetadataQuality is a query.MetadataQuality bound to an in-memory index.
 type MetadataQuality struct {
 	index
@@ -302,6 +309,27 @@ func (tr Triaged) Filter(t TestID) bool {
 	return false
 }
 
+// Filter interprets a TestLabel as a filter function over TestIDs.
+func (tl TestLabel) Filter(t TestID) bool {
+	name, _, err := tl.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+
+	labels, ok := tl.metadata[name]
+	if !ok {
+		return false
+	}
+
+	for _, label := range labels {
+		if strings.ToLower(label) == strings.ToLower(tl.label) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Filter interprets a MetadataQuality as a filter function over TestIDs.
 func (q MetadataQuality) Filter(t TestID) bool {
 	switch q.quality {
@@ -407,6 +435,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return Link{idx, v.Pattern, v.Metadata}, nil
 	case query.Triaged:
 		return Triaged{idx, v.Metadata}, nil
+	case query.TestLabel:
+		return TestLabel{idx, v.Label, v.Metadata}, nil
 	case query.MetadataQuality:
 		return MetadataQuality{idx, v}, nil
 	case query.And:
