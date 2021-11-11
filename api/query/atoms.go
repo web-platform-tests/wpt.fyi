@@ -316,8 +316,8 @@ func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return Or{cq}
 }
 
-// AbstractTestLabel is represents the root of a testlabel query, which matches Metadata
-// labels to a string.
+// AbstractTestLabel represents the root of a testlabel query, which matches test-level metadata
+// labels to a searched label.
 type AbstractTestLabel struct {
 	Label           string
 	metadataFetcher shared.MetadataFetcher
