@@ -348,7 +348,7 @@ Where label is a string.
 
  E.g.
 
-Search triaged tests with a label interop2020 -
+Search triaged tests with a label interop-2022:
 
     testlabel:interop2020
 
