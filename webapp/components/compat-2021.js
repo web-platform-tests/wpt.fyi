@@ -216,9 +216,9 @@ class Compat2021 extends PolymerElement {
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
       <template is="dom-if" if="[[showSTPWarning]]">
         <info-banner>
-          <em>NOTE:</em> Due to an
-          <a href="https://github.com/web-platform-tests/wpt/issues/31147"
-          >infrastructure issue</a>, the version of Safari Technology Preview
+          <em>NOTE:</em> Due to an <a
+          href="https://github.com/web-platform-tests/wpt/issues/31147">
+          infrastructure issue</a>, the version of Safari Technology Preview
           used here is significantly out of date.
         </info-banner>
       </template>
