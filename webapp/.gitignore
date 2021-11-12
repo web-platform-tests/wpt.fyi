@@ -4,6 +4,8 @@
 # See also: https://github.com/alrra/browser-logos
 
 static/chrome*_64x64.png
+static/chromium_64x64.png
+static/deno_64x64.png
 static/edge*_64x64.png
 static/firefox*_64x64.png
 static/safari*_64x64.png
