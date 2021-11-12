@@ -214,6 +214,14 @@ class Compat2021 extends PolymerElement {
       </style>
       <h1>Compat 2021 Dashboard</h1>
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
+      <template is="dom-if" if="[[showSTPWarning]]">
+        <info-banner>
+          <em>NOTE:</em> Due to an <a
+          href="https://github.com/web-platform-tests/wpt/issues/31147">
+          infrastructure issue</a>, the version of Safari Technology Preview
+          used here is significantly out of date.
+        </info-banner>
+      </template>
       <p>
         These scores represent how well browser engines are doing on the 2021
         Compat Focus Areas, as measured by wpt.fyi test results. Each feature
@@ -288,6 +296,10 @@ class Compat2021 extends PolymerElement {
       stable: Boolean,
       feature: String,
       dataManager: Object,
+      showSTPWarning: {
+        type: Boolean,
+        computed: 'computeShowSTPWarning(stable, useWebKitGTK)',
+      },
     };
   }
 
@@ -371,6 +383,10 @@ class Compat2021 extends PolymerElement {
 
   getTestListHref(feature) {
     return `${GITHUB_URL_PREFIX}/main/compat-2021/${feature}-tests.txt`;
+  }
+
+  computeShowSTPWarning(stable, useWebKitGTK) {
+    return !stable && !useWebKitGTK;
   }
 }
 window.customElements.define(Compat2021.is, Compat2021);
