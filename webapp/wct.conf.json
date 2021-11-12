@@ -4,6 +4,7 @@
   ],
   "plugins": {
     "local": {
+      "skipSeleniumInstall": true,
       "browserOptions": {
         "chrome": [
           "headless",
@@ -20,6 +21,6 @@
   "compile": "never",
   "npm": true,
   "expanded": true,
-  "verbose": false,
+  "verbose": true,
   "testTimeout": 300000
 }
