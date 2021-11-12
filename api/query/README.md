@@ -350,7 +350,7 @@ Where label is a string.
 
 Search triaged tests with a label interop-2022:
 
-    testlabel:interop2020
+    testlabel:interop-2022
 
 #### is
 
