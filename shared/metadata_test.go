@@ -334,7 +334,6 @@ func TestGetMetadataFilePath(t *testing.T) {
 }
 
 func TestPrepareLinkFilter(t *testing.T) {
-	label := "labelA"
 	subtestName := "Something should happen"
 	fail := TestStatusFail
 	metadataResults := map[string]MetadataLinks{
@@ -344,7 +343,6 @@ func TestPrepareLinkFilter(t *testing.T) {
 				Results: []MetadataTestResult{{
 					SubtestName: &subtestName,
 					Status:      &fail,
-					Label:       &label,
 				}},
 			},
 		},
@@ -360,14 +358,12 @@ func TestPrepareLinkFilter(t *testing.T) {
 func TestPrepareTestLabelFilter(t *testing.T) {
 	label := "labelA"
 	labelb := "labelB"
-	subtestName := "Something should happen"
-	fail := TestStatusFail
 	metadataResults := map[string]MetadataLinks{
 		"/foo/bar/a.html": []MetadataLink{
 			{
 				Product: ProductSpec{},
 				URL:     "https://bug.com/item",
-				Results: []MetadataTestResult{{SubtestName: &subtestName, Status: &fail, Label: &label}, {SubtestName: &subtestName, Status: &fail, Label: &labelb}},
+				Results: []MetadataTestResult{{Label: &label}, {Label: &labelb}},
 			},
 		},
 	}
