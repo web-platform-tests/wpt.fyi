@@ -516,6 +516,21 @@ func TestStructuredQuery_combinedTestlabel(t *testing.T) {
 		AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, AbstractTestLabel{Label: "interop"}}}}, rq)
 }
 
+func TestStructuredQuery_andTestLabels(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"and": [
+				{"testlabel": "interop1"},
+				{"testlabel": "interop2"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{AbstractTestLabel{Label: "interop1"}, AbstractTestLabel{Label: "interop2"}}}}, rq)
+}
+
 func TestStructuredQuery_isDifferent(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{

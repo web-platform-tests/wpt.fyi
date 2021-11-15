@@ -344,7 +344,7 @@ regardless of browsers.
 
     {"testlabel": label}
 
-Where label is a string.
+Where label is a string and case-insensitive.
 
  E.g.
 

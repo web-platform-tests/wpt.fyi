@@ -658,8 +658,8 @@ func TestBindExecute_TestLabel(t *testing.T) {
 		"/d/e/f":          {""},
 	}
 
-	link := query.Or{Args: []query.ConcreteQuery{query.TestLabel{Label: "interop2", Metadata: metadata}}}
-	plan, err := idx.Bind(runs, link)
+	testlabel := query.TestLabel{Label: "interop2", Metadata: metadata}
+	plan, err := idx.Bind(runs, testlabel)
 	assert.Nil(t, err)
 
 	res := plan.Execute(runs, query.AggregationOpts{})

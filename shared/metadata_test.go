@@ -22,6 +22,8 @@ links:
     results:
     - test: a.html
       label: labelA
+    - test: a.html
+      label: labelB
   - product: firefox-2
     url: https://bug.com/item
     results:
@@ -357,6 +359,7 @@ func TestPrepareLinkFilter(t *testing.T) {
 
 func TestPrepareTestLabelFilter(t *testing.T) {
 	label := "labelA"
+	labelb := "labelB"
 	subtestName := "Something should happen"
 	fail := TestStatusFail
 	metadataResults := map[string]MetadataLinks{
@@ -364,7 +367,7 @@ func TestPrepareTestLabelFilter(t *testing.T) {
 			{
 				Product: ProductSpec{},
 				URL:     "https://bug.com/item",
-				Results: []MetadataTestResult{{SubtestName: &subtestName, Status: &fail, Label: &label}},
+				Results: []MetadataTestResult{{SubtestName: &subtestName, Status: &fail, Label: &label}, {SubtestName: &subtestName, Status: &fail, Label: &labelb}},
 			},
 		},
 	}
@@ -372,6 +375,7 @@ func TestPrepareTestLabelFilter(t *testing.T) {
 	metaddataMap := PrepareTestLabelFilter(metadataResults)
 
 	assert.Equal(t, 1, len(metaddataMap))
-	assert.Equal(t, 1, len(metaddataMap["/foo/bar/a.html"]))
+	assert.Equal(t, 2, len(metaddataMap["/foo/bar/a.html"]))
 	assert.Equal(t, "labelA", metaddataMap["/foo/bar/a.html"][0])
+	assert.Equal(t, "labelB", metaddataMap["/foo/bar/a.html"][1])
 }
