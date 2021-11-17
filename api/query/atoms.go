@@ -943,7 +943,7 @@ func (t *AbstractTestLabel) UnmarshalJSON(b []byte) error {
 	}
 	var label string
 	if err := json.Unmarshal(*labelMsg, &label); err != nil {
-		return errors.New(`Missing testlabel pattern property "label" is not a string`)
+		return errors.New(`Property "testlabel" is not a string`)
 	}
 
 	t.Label = label
