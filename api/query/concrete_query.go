@@ -75,6 +75,12 @@ type Triaged struct {
 	Metadata map[string][]string
 }
 
+// TestLabel is a ConcreteQuery of AbstractTestLabel.
+type TestLabel struct {
+	Label    string
+	Metadata map[string][]string
+}
+
 // RunTestStatusEq constrains search results to include only test results from a
 // particular run that have a particular test status value. Run IDs are those
 // values automatically assigned to shared.TestRun instances by Datastore.
@@ -135,6 +141,10 @@ func (Link) Size() int { return 1 }
 // Size of Triaged is 1: servicing such a query requires a single
 // lookup in a test run result mapping per test
 func (Triaged) Size() int { return 1 }
+
+// Size of TestLabel has a size of 1: servicing such a query requires a
+// label match per Metadata Link Node.
+func (TestLabel) Size() int { return 1 }
 
 // Size of Count is the sum of the sizes of its constituent ConcretQuery instances.
 func (c Count) Size() int { return size(c.Args) }

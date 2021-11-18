@@ -45,6 +45,7 @@ type MetadataTestResult struct {
 	TestPath    string      `yaml:"test"    json:"test,omitempty"`
 	SubtestName *string     `yaml:"subtest,omitempty" json:"subtest,omitempty"`
 	Status      *TestStatus `yaml:"status,omitempty"  json:"status,omitempty"`
+	Label       *string     `yaml:"label,omitempty"  json:"label,omitempty"`
 }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query. Metadata
@@ -117,11 +118,12 @@ func addResponseLink(fullTestName string, link MetadataLink, result MetadataTest
 		Product: link.Product,
 		URL:     link.URL,
 	}
-	if result.SubtestName != nil || result.Status != nil {
+	if result.SubtestName != nil || result.Status != nil || result.Label != nil {
 		newLink.Results = []MetadataTestResult{
 			{
 				SubtestName: result.SubtestName,
 				Status:      result.Status,
+				Label:       result.Label,
 				// TestPath is redundant (it's the map key in outMap)
 			},
 		}
@@ -173,6 +175,26 @@ func PrepareLinkFilter(metadata MetadataResults) map[string][]string {
 				metadataMap[test] = []string{link.URL}
 			} else {
 				metadataMap[test] = append(urls, link.URL)
+			}
+		}
+	}
+	return metadataMap
+}
+
+// PrepareTestLabelFilter maps a MetadataResult test name to its labels.
+func PrepareTestLabelFilter(metadata MetadataResults) map[string][]string {
+	metadataMap := make(map[string][]string)
+	for test, links := range metadata {
+		for _, link := range links {
+			for _, result := range link.Results {
+				if result.Label == nil {
+					continue
+				}
+				if labels, ok := metadataMap[test]; !ok {
+					metadataMap[test] = []string{*result.Label}
+				} else {
+					metadataMap[test] = append(labels, *result.Label)
+				}
 			}
 		}
 	}

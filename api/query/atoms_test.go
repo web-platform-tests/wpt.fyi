@@ -481,6 +481,56 @@ func TestStructuredQuery_triagedEmptyProduct(t *testing.T) {
 		}}, rq)
 }
 
+func TestStructuredQuery_testlabel(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+        "run_ids": [0, 1, 2],
+        "query": {
+            "exists": [{
+                "label": "interop1"
+            }]
+        }
+    }`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{
+			AbstractTestLabel{
+				Label: "interop1",
+			}},
+		}}, rq)
+}
+
+func TestStructuredQuery_combinedTestlabel(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+        "run_ids": [0, 1, 2],
+        "query": {
+            "exists": [
+                {"pattern": "cssom"},
+                {"label": "interop"}
+            ]
+        }
+    }`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}, AbstractTestLabel{Label: "interop"}}}}, rq)
+}
+
+func TestStructuredQuery_andTestLabels(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"and": [
+				{"label": "interop1"},
+				{"label": "interop2"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractAnd{[]AbstractQuery{AbstractTestLabel{Label: "interop1"}, AbstractTestLabel{Label: "interop2"}}}}, rq)
+}
+
 func TestStructuredQuery_isDifferent(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -930,7 +980,7 @@ func TestStructuredQuery_bindTriaged(t *testing.T) {
 	}
 
 	expect := Or{
-		Args:[]ConcreteQuery{
+		Args: []ConcreteQuery{
 			Triaged{
 				Run: 1,
 				Metadata: map[string][]string{
@@ -978,7 +1028,7 @@ func TestStructuredQuery_bindTriagedNilProduct(t *testing.T) {
 	// This is inefficient, but currently a nil product binds to all runs, with
 	// the same metadata in all cases.
 	expect := Or{
-		Args:[]ConcreteQuery{
+		Args: []ConcreteQuery{
 			Triaged{
 				Run: 0,
 				Metadata: map[string][]string{
@@ -991,6 +1041,41 @@ func TestStructuredQuery_bindTriagedNilProduct(t *testing.T) {
 					"/testC/c.html": {"baz.com"},
 				},
 			},
+		},
+	}
+	assert.Equal(t, expect, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindTestLabel(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	sha := "sha"
+	mockFetcher := sharedtest.NewMockMetadataFetcher(mockCtrl)
+	mockFetcher.EXPECT().Fetch().Return(&sha, getMetadataTestData(), nil).AnyTimes()
+
+	safari := shared.ParseProductSpecUnsafe("safari")
+	firefox := shared.ParseProductSpecUnsafe("firefox")
+	q := AbstractTestLabel{
+		Label:           "interop",
+		metadataFetcher: mockFetcher,
+	}
+
+	runs := shared.TestRuns{
+		{
+			ID:                int64(0),
+			ProductAtRevision: safari.ProductAtRevision,
+		},
+		{
+			ID:                int64(1),
+			ProductAtRevision: firefox.ProductAtRevision,
+		},
+	}
+
+	expect := TestLabel{
+		Label: "interop",
+		Metadata: map[string][]string{
+			"/testC/c.html": {"labelA"},
 		},
 	}
 	assert.Equal(t, expect, q.BindToRuns(runs...))
@@ -1259,6 +1344,7 @@ func getMetadataTestData() map[string][]byte {
         results:
         - test: c.html
           status: FAIL
+          label: labelA
     `)
 
 	return metadataMap

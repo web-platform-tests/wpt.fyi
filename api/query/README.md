@@ -337,6 +337,21 @@ Search triaged Chrome tests -
 
     chrome:pass and triaged:chrome
 
+#### label
+
+`label` query atoms perform a search for tests that have a matching metadata label,
+regardless of browsers.
+
+    {"label": label}
+
+Where label is a string and case-insensitive.
+
+ E.g.
+
+Search triaged tests with a label interop-2022:
+
+    label:interop-2022
+
 #### is
 
 `is` query atoms perform a search for tests that possess some meta quality.

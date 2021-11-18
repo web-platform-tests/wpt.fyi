@@ -316,6 +316,30 @@ func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return Or{cq}
 }
 
+// AbstractTestLabel represents the root of a testlabel query, which matches test-level metadata
+// labels to a searched label.
+type AbstractTestLabel struct {
+	Label           string
+	metadataFetcher shared.MetadataFetcher
+}
+
+// BindToRuns for AbstractTestLabel fetches test-level metadata; it is independent of test runs.
+func (t AbstractTestLabel) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+	if t.metadataFetcher == nil {
+		t.metadataFetcher = searchcacheMetadataFetcher{}
+	}
+
+	includeTestLevel := true
+	// Passing []shared.TestRun{} means that we want test-level issues.
+	metadata, _ := shared.GetMetadataResponse([]shared.TestRun{}, includeTestLevel, logrus.StandardLogger(), t.metadataFetcher)
+	metadataMap := shared.PrepareTestLabelFilter(metadata)
+
+	return TestLabel{
+		Label:    t.Label,
+		Metadata: metadataMap,
+	}
+}
+
 // MetadataQuality represents the root of an "is" query, which asserts known
 // metadata qualities to the results
 type MetadataQuality int
@@ -906,6 +930,26 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON for AbstractTestLabel attempts to interpret a query atom as
+// {"label":<label string>}.
+func (t *AbstractTestLabel) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	if err := json.Unmarshal(b, &data); err != nil {
+		return err
+	}
+	labelMsg, ok := data["label"]
+	if !ok {
+		return errors.New(`Missing label pattern property: "label"`)
+	}
+	var label string
+	if err := json.Unmarshal(*labelMsg, &label); err != nil {
+		return errors.New(`Property "label" is not a string`)
+	}
+
+	t.Label = label
+	return nil
+}
+
 // UnmarshalJSON for AbstractTriaged attempts to interpret a query atom as
 // {"triaged":<browser name>}.
 func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
@@ -1075,6 +1119,12 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 	}
 	{
 		var t AbstractTriaged
+		if err := json.Unmarshal(b, &t); err == nil {
+			return t, nil
+		}
+	}
+	{
+		var t AbstractTestLabel
 		if err := json.Unmarshal(b, &t); err == nil {
 			return t, nil
 		}
