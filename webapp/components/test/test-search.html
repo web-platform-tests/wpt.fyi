@@ -407,8 +407,8 @@ suite('<test-search>', () => {
       assertQueryParse('triaged:test-issue', { exists: [{ triaged: '' }] });
     });
 
-    test('test label search', () => {
-      assertQueryParse('testlabel:interop123', { exists: [{ testlabel: 'interop123' }] });
+    test('metadata label search', () => {
+      assertQueryParse('label:interop123', { exists: [{ label: 'interop123' }] });
     });
 
     test('multi-root', () => {

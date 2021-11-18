@@ -337,12 +337,12 @@ Search triaged Chrome tests -
 
     chrome:pass and triaged:chrome
 
-#### testlabel
+#### label
 
-`testlabel` query atoms perform a search for tests that have a matching metadata label,
+`label` query atoms perform a search for tests that have a matching metadata label,
 regardless of browsers.
 
-    {"testlabel": label}
+    {"label": label}
 
 Where label is a string and case-insensitive.
 
@@ -350,7 +350,7 @@ Where label is a string and case-insensitive.
 
 Search triaged tests with a label interop-2022:
 
-    testlabel:interop-2022
+    label:interop-2022
 
 #### is
 

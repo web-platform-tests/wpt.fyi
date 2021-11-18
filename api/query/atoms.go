@@ -931,19 +931,19 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON for AbstractTestLabel attempts to interpret a query atom as
-// {"testlabel":<label string>}.
+// {"label":<label string>}.
 func (t *AbstractTestLabel) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
-	labelMsg, ok := data["testlabel"]
+	labelMsg, ok := data["label"]
 	if !ok {
-		return errors.New(`Missing testlabel pattern property: "testlabel"`)
+		return errors.New(`Missing label pattern property: "label"`)
 	}
 	var label string
 	if err := json.Unmarshal(*labelMsg, &label); err != nil {
-		return errors.New(`Property "testlabel" is not a string`)
+		return errors.New(`Property "label" is not a string`)
 	}
 
 	t.Label = label

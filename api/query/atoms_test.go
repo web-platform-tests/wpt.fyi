@@ -487,7 +487,7 @@ func TestStructuredQuery_testlabel(t *testing.T) {
         "run_ids": [0, 1, 2],
         "query": {
             "exists": [{
-                "testlabel": "interop1"
+                "label": "interop1"
             }]
         }
     }`), &rq)
@@ -507,7 +507,7 @@ func TestStructuredQuery_combinedTestlabel(t *testing.T) {
         "query": {
             "exists": [
                 {"pattern": "cssom"},
-                {"testlabel": "interop"}
+                {"label": "interop"}
             ]
         }
     }`), &rq)
@@ -522,8 +522,8 @@ func TestStructuredQuery_andTestLabels(t *testing.T) {
 		"run_ids": [0, 1, 2],
 		"query": {
 			"and": [
-				{"testlabel": "interop1"},
-				{"testlabel": "interop2"}
+				{"label": "interop1"},
+				{"label": "interop2"}
 			]
 		}
 	}`), &rq)

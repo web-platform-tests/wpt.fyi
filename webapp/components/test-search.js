@@ -105,7 +105,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | linkExp
       | isExp
       | triagedExp
-      | testlabelExp
+      | labelExp
       | statusExp
       | subtestExp
       | pathExp
@@ -130,8 +130,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = caseInsensitive<"triaged"> ":" browserName
       | caseInsensitive<"triaged"> ":" "test-issue"
 
-    testlabelExp
-      = caseInsensitive<"testlabel"> ":" nameFragment
+    labelExp
+      = caseInsensitive<"label"> ":" nameFragment
 
     isExp
       = caseInsensitive<"is"> ":" metadataQualityLiteral
@@ -321,9 +321,9 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
     // Test-level issues are represented on the backend as an empty product.
     return { triaged: ps.toLowerCase().replace('test-issue', '') };
   },
-  testlabelExp: (l, colon, r) => {
+  labelExp: (l, colon, r) => {
     const ps = r.eval();
-    return ps.length === 0 ? emptyQuery : {testlabel: ps };
+    return ps.length === 0 ? emptyQuery : {label: ps };
   },
   subtestExp: (l, colon, r) => {
     return { subtest: r.eval() };
