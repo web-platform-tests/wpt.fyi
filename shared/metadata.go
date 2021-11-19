@@ -36,6 +36,7 @@ type MetadataLinks []MetadataLink
 type MetadataLink struct {
 	Product ProductSpec          `yaml:"product,omitempty" json:"product,omitempty"`
 	URL     string               `yaml:"url"     json:"url"`
+	Label   string               `yaml:"label,omitempty"  json:"label,omitempty"`
 	Results []MetadataTestResult `yaml:"results" json:"results,omitempty"`
 }
 
@@ -45,7 +46,6 @@ type MetadataTestResult struct {
 	TestPath    string      `yaml:"test"    json:"test,omitempty"`
 	SubtestName *string     `yaml:"subtest,omitempty" json:"subtest,omitempty"`
 	Status      *TestStatus `yaml:"status,omitempty"  json:"status,omitempty"`
-	Label       *string     `yaml:"label,omitempty"  json:"label,omitempty"`
 }
 
 // GetMetadataResponse retrieves the response to a WPT Metadata query. Metadata
@@ -117,13 +117,13 @@ func addResponseLink(fullTestName string, link MetadataLink, result MetadataTest
 	newLink := MetadataLink{
 		Product: link.Product,
 		URL:     link.URL,
+		Label:   link.Label,
 	}
-	if result.SubtestName != nil || result.Status != nil || result.Label != nil {
+	if result.SubtestName != nil || result.Status != nil {
 		newLink.Results = []MetadataTestResult{
 			{
 				SubtestName: result.SubtestName,
 				Status:      result.Status,
-				Label:       result.Label,
 				// TestPath is redundant (it's the map key in outMap)
 			},
 		}
@@ -171,6 +171,9 @@ func PrepareLinkFilter(metadata MetadataResults) map[string][]string {
 	metadataMap := make(map[string][]string)
 	for test, links := range metadata {
 		for _, link := range links {
+			if link.URL == "" {
+				continue
+			}
 			if urls, ok := metadataMap[test]; !ok {
 				metadataMap[test] = []string{link.URL}
 			} else {
@@ -186,16 +189,15 @@ func PrepareTestLabelFilter(metadata MetadataResults) map[string][]string {
 	metadataMap := make(map[string][]string)
 	for test, links := range metadata {
 		for _, link := range links {
-			for _, result := range link.Results {
-				if result.Label == nil {
-					continue
-				}
-				if labels, ok := metadataMap[test]; !ok {
-					metadataMap[test] = []string{*result.Label}
-				} else {
-					metadataMap[test] = append(labels, *result.Label)
-				}
+			if link.Label == "" {
+				continue
 			}
+			if labels, ok := metadataMap[test]; !ok {
+				metadataMap[test] = []string{link.Label}
+			} else {
+				metadataMap[test] = append(labels, link.Label)
+			}
+
 		}
 	}
 	return metadataMap
