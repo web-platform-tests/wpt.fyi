@@ -658,6 +658,7 @@ func TestBindExecute_QueryAndTestLabel(t *testing.T) {
 		"/d/e/f":          {""},
 	}
 
+	// It is equivalent to searching "label:interop1 & label:interop2".
 	testlabel := query.And{[]query.ConcreteQuery{query.TestLabel{Label: "interop2", Metadata: metadata}, query.TestLabel{Label: "interop1", Metadata: metadata}}}
 	plan, err := idx.Bind(runs, testlabel)
 	assert.Nil(t, err)
@@ -712,6 +713,7 @@ func TestBindExecute_QueryOrTestLabel(t *testing.T) {
 		"/d/e/f":          {"interop1"},
 	}
 
+	// It is equivalent to searching "label:interop1 | label:interop2".
 	testlabel := query.Or{[]query.ConcreteQuery{query.TestLabel{Label: "interop2", Metadata: metadata}, query.TestLabel{Label: "interop1", Metadata: metadata}}}
 	plan, err := idx.Bind(runs, testlabel)
 	assert.Nil(t, err)
