@@ -1340,11 +1340,11 @@ func getMetadataTestData() map[string][]byte {
 	// A test-level issue, which has no product associated with it.
 	metadataMap["testC"] = []byte(`
     links:
-      - url: baz.com
+      - label: labelA
+        url: baz.com
         results:
         - test: c.html
           status: FAIL
-          label: labelA
     `)
 
 	return metadataMap
