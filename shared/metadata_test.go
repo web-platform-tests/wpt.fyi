@@ -34,6 +34,7 @@ links:
     label: labelB
     results:
     - test: d.html
+    - test: e.html
 `)
 	yaml.Unmarshal(metadataInBytes, &metadata)
 	acutalInBytes, _ := yaml.Marshal(metadata)
@@ -63,6 +64,7 @@ links:
   - label: labelA
     results:
     - test: c.html
+    - test: e.html
 `)
 
 	metadatamap := parseMetadata(metadataByteMap, NewNilLogger())
@@ -85,6 +87,7 @@ links:
 	assert.Equal(t, TestStatusFail, *(metadatamap[path].Links[1].Results[0].Status))
 	assert.Equal(t, "labelA", metadatamap[path].Links[2].Label)
 	assert.Equal(t, "c.html", metadatamap[path].Links[2].Results[0].TestPath)
+	assert.Equal(t, "e.html", metadatamap[path].Links[2].Results[1].TestPath)
 }
 
 func TestConstructMetadataResponse_OneLink(t *testing.T) {
@@ -123,9 +126,14 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 				},
 				MetadataLink{
 					Label: labelB,
-					Results: []MetadataTestResult{{
-						TestPath: "a.html",
-					}},
+					Results: []MetadataTestResult{
+						{
+							TestPath: "a.html",
+						},
+						{
+							TestPath: "e.html",
+						},
+					},
 				},
 			},
 		},
@@ -133,7 +141,7 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 
 	MetadataResults := constructMetadataResponse(productSpecs, true, metadataMap)
 
-	assert.Equal(t, 1, len(MetadataResults))
+	assert.Equal(t, 2, len(MetadataResults))
 	assert.Equal(t, 4, len(MetadataResults["/foo/bar/a.html"]))
 	assert.Equal(t, "https://external.com/item", MetadataResults["/foo/bar/a.html"][0].URL)
 	assert.True(t, ParseProductSpecUnsafe("chrome").MatchesProductSpec(MetadataResults["/foo/bar/a.html"][0].Product))
@@ -141,6 +149,7 @@ func TestConstructMetadataResponse_OneLink(t *testing.T) {
 	assert.True(t, ParseProductSpecUnsafe("firefox").MatchesProductSpec(MetadataResults["/foo/bar/a.html"][1].Product))
 	assert.Equal(t, label, MetadataResults["/foo/bar/a.html"][2].Label)
 	assert.Equal(t, labelB, MetadataResults["/foo/bar/a.html"][3].Label)
+	assert.Equal(t, labelB, MetadataResults["/foo/bar/e.html"][0].Label)
 
 	// Remove test-level metadata.
 	MetadataResults = constructMetadataResponse(productSpecs, false, metadataMap)
@@ -276,27 +285,29 @@ func TestConstructMetadataResponse_TestIssueMetadata(t *testing.T) {
 		ParseProductSpecUnsafe("Chrome"),
 		ParseProductSpecUnsafe("Safari"),
 	}
-	label := "labelA"
 	metadataMap := map[string]Metadata{
 		"foo/bar": Metadata{
 			Links: []MetadataLink{
 				MetadataLink{
 					Product: ProductSpec{},
 					URL:     "https://bug.com/item",
-					Label:   label,
 					Results: []MetadataTestResult{{
 						TestPath: "a.html",
-					}},
+					},
+						{
+							TestPath: "e.html",
+						},
+					},
 				},
 			},
 		},
 	}
 
 	MetadataResults := constructMetadataResponse(productSpecs, true, metadataMap)
-	assert.Equal(t, 1, len(MetadataResults))
+	assert.Equal(t, 2, len(MetadataResults))
 	assert.Equal(t, 1, len(MetadataResults["/foo/bar/a.html"]))
 	assert.Equal(t, "https://bug.com/item", MetadataResults["/foo/bar/a.html"][0].URL)
-	assert.Equal(t, label, MetadataResults["/foo/bar/a.html"][0].Label)
+	assert.Equal(t, "https://bug.com/item", MetadataResults["/foo/bar/e.html"][0].URL)
 
 	MetadataResults = constructMetadataResponse(productSpecs, false, metadataMap)
 	assert.Equal(t, 0, len(MetadataResults))
