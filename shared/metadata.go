@@ -144,12 +144,8 @@ func constructMetadataResponse(productSpecs ProductSpecs, includeTestLevel bool,
 			for _, result := range link.Results {
 				//TODO(kyleju): Concatenate test path on WPT Metadata repository instead of here.
 				fullTestName := GetWPTTestPath(folderPath, result.TestPath)
-
-				if link.Product.BrowserName == "" {
-					if includeTestLevel {
-						addResponseLink(fullTestName, link, result, res)
-					}
-					break
+				if link.Product.BrowserName == "" && includeTestLevel {
+					addResponseLink(fullTestName, link, result, res)
 				}
 
 				// Find any matching product for this link result (there can be at most one).
