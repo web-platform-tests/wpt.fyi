@@ -234,6 +234,19 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     return testResultSet;
   }
 
+  appendTestLabel(metadataMapKey, metadataMap, label) {
+    if (label === '') {
+      return;
+    }
+
+    if ((metadataMapKey in metadataMap) === false) {
+      metadataMap[metadataMapKey] = {};
+      metadataMap[metadataMapKey]['testlabel'] = label;
+    } else {
+      metadataMap[metadataMapKey]['testlabel'] = metadataMap[metadataMapKey]['testlabel'] + ',' + label;
+    }
+  }
+
   computeDisplayedMetadata(path, metadata, testResultSet) {
     if (!metadata || !path || !testResultSet) {
       return;
@@ -248,6 +261,9 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       const seenProductURLs = new Set();
       for (const link of metadata[test]) {
         if (link.url === '') {
+          if (link.product === '') {
+            this.appendTestLabel(test, metadataMap, link.label);
+          }
           continue;
         }
         const urlHref = this.getUrlHref(link.url);
@@ -268,6 +284,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         if (Object.keys(subtestMap).length === 0) {
           // When there is no subtest, it is a test-level URL.
           metadataMap[metadataMapKey]['/'] = urlHref;
+          this.appendTestLabel(test, metadataMap, link.label);
         } else {
           metadataMap[metadataMapKey] = Object.assign(metadataMap[metadataMapKey], subtestMap);
         }

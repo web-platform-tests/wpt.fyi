@@ -208,6 +208,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       <iron-icon class="bug" icon="bug-report"></iron-icon>
                     </a>
                   </template>
+                  <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, metadataMap)]]">
+                    <img class="bug" src="[[displayLogo('testlabel')]]" title="[[getTestLabel(node.path, metadataMap)]]">
+                  </template>
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
@@ -886,6 +889,24 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   openAmendMetadata() {
     this.$.amend.open();
+  }
+
+  shouldDisplayTestLabel(testname, metadataMap) {
+    return !this.pathIsRootDir && this.displayMetadata && this.getTestLabel(testname, metadataMap) !== '';
+  }
+
+  getTestLabel(testname, metadataMap) {
+    if (!metadataMap) {
+      return '';
+    }
+
+    if (testname in metadataMap) {
+      if ('testlabel' in metadataMap[testname]) {
+        return metadataMap[testname]['testlabel'];
+      }
+    }
+
+    return '';
   }
 
   shouldDisplayMetadata(index, testname, metadataMap) {
