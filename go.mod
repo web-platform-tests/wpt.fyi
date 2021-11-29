@@ -13,7 +13,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/felixge/httpsnoop v1.0.2 // indirect
-	github.com/gobuffalo/packr/v2 v2.8.2
+	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0
 	github.com/gomodule/redigo v1.8.5
