@@ -164,6 +164,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
               <img class="browser" src="[[displayMetadataLogo(node.product)]]">
               :
               <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
+              <template is="dom-if" if="[[!node.product]]">
+                <paper-input label="Label" value="{{node.label}}"></paper-input>
+              </template>
             </div>
             <template is="dom-repeat" items="[[node.tests]]" as="test">
               <li>
@@ -250,7 +253,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       }
     } else {
       for (const entry of displayedMetadata) {
-        if (entry.url === '') {
+        if (entry.url === '' && entry.label === '') {
           continue;
         }
 
@@ -258,9 +261,15 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           if (!(test in link)) {
             link[test] = [];
           }
-          const metadata = { 'url': entry.url };
+          const metadata = {};
+          if (entry.url !== '') {
+            metadata['url'] = entry.url;
+          }
           if (entry.product !== '') {
             metadata['product'] = entry.product;
+          }
+          if (entry.label && entry.label !== '') {
+            metadata['label'] = entry.label;
           }
           link[test].push(metadata);
         }
@@ -335,7 +344,11 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     }
 
     for (const key in browserMap) {
-      this.displayedMetadata.push({ product: key, url: '', tests: browserMap[key] });
+      let node = { product: key, url: '', tests: browserMap[key] };
+      if (key === '') {
+        node['label'] = '';
+      }
+      this.displayedMetadata.push(node);
     }
   }
 
