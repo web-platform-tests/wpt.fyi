@@ -54,7 +54,6 @@ suite('ProductInfo', () => {
     expect(productInfo.displayLogo('chrome', ['nightly'])).to.equal('/static/chromium_64x64.png');
     expect(productInfo.displayLogo('chrome', ['dev'])).to.equal('/static/chrome-dev_64x64.png');
     expect(productInfo.displayLogo('firefox', ['stable'])).to.equal('/static/firefox_64x64.png');
-    expect(productInfo.displayLogo('testlabel')).to.equal('/static/testlabel.png');
   });
 });
   </script>

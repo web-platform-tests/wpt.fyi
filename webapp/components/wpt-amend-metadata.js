@@ -164,9 +164,6 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
               <img class="browser" src="[[displayMetadataLogo(node.product)]]">
               :
               <paper-input label="Bug URL" value="{{node.url}}" autofocus></paper-input>
-              <template is="dom-if" if="[[!node.product]]">
-                <paper-input label="label" value="{{node.label}}" autofocus></paper-input>
-              </template>
             </div>
             <template is="dom-repeat" items="[[node.tests]]" as="test">
               <li>

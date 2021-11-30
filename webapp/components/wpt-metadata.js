@@ -234,16 +234,17 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     return testResultSet;
   }
 
-  appendTestLabel(metadataMapKey, metadataMap, label) {
-    if (label === '') {
+  appendTestLabel(testname, metadataMap, label) {
+    if (!label || label === '') {
       return;
     }
 
+    const metadataMapKey = testname + 'testlabel';
     if ((metadataMapKey in metadataMap) === false) {
       metadataMap[metadataMapKey] = {};
-      metadataMap[metadataMapKey]['testlabel'] = label;
+      metadataMap[metadataMapKey]['/'] = label;
     } else {
-      metadataMap[metadataMapKey]['testlabel'] = metadataMap[metadataMapKey]['testlabel'] + ',' + label;
+      metadataMap[metadataMapKey]['/'] = metadataMap[metadataMapKey]['/'] + ',' + label;
     }
   }
 

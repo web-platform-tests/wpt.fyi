@@ -209,7 +209,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     </a>
                   </template>
                   <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, metadataMap)]]">
-                    <img class="bug" src="[[displayLogo('testlabel')]]" title="[[getTestLabel(node.path, metadataMap)]]">
+                    <iron-icon class="bug" src="/static/testlabel.svg" title="[[getTestLabel(node.path, metadataMap)]]"></iron-icon>
                   </template>
                 </td>
 
@@ -900,10 +900,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return '';
     }
 
-    if (testname in metadataMap) {
-      if ('testlabel' in metadataMap[testname]) {
-        return metadataMap[testname]['testlabel'];
-      }
+    const testlabelKey = testname + 'testlabel';
+    if (testlabelKey in metadataMap) {
+      return metadataMap[testlabelKey]['/'];
     }
 
     return '';
