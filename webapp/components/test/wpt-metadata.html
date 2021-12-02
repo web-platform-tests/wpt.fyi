@@ -61,7 +61,7 @@ suite('<wpt-metadata>', () => {
       appFixture.path = '/';
 
       assert.deepEqual(appFixture.displayedMetadata, []);
-      assert.deepEqual(appFixture.labelMap, { '/foo.html': "label1" });
+      assert.deepEqual(appFixture.labelMap, { '/foo.html': 'label1' });
     });
     test('simple case with different pending metadata tests', () => {
       appFixture.searchResults = [{ test: '/foo.html' }];

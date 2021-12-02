@@ -209,7 +209,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     </a>
                   </template>
                   <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, labelMap)]]">
-                    <iron-icon class="bug" src="/static/testlabel.svg" title="[[getTestLabel(node.path, labelMap)]]"></iron-icon>
+                    <iron-icon class="bug" icon="label" title="[[getTestLabel(node.path, labelMap)]]"></iron-icon>
                   </template>
                 </td>
 
