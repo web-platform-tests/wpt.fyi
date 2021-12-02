@@ -208,8 +208,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       <iron-icon class="bug" icon="bug-report"></iron-icon>
                     </a>
                   </template>
-                  <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, metadataMap)]]">
-                    <iron-icon class="bug" src="/static/testlabel.svg" title="[[getTestLabel(node.path, metadataMap)]]"></iron-icon>
+                  <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, labelMap)]]">
+                    <iron-icon class="bug" src="/static/testlabel.svg" title="[[getTestLabel(node.path, labelMap)]]"></iron-icon>
                   </template>
                 </td>
 
@@ -291,6 +291,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     path="[[path]]"
                     search-results="[[searchResults]]"
                     metadata-map="{{metadataMap}}"
+                    label-map="{{labelMap}}"
                     triage-notifier="[[triageNotifier]]"></wpt-metadata>
     </template>
     <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
@@ -336,6 +337,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         computed: 'computeDisplayedTests(path, searchResults)',
       },
       metadataMap: Object,
+      labelMap: Object,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {
@@ -891,18 +893,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.$.amend.open();
   }
 
-  shouldDisplayTestLabel(testname, metadataMap) {
-    return !this.pathIsRootDir && this.displayMetadata && this.getTestLabel(testname, metadataMap) !== '';
+  shouldDisplayTestLabel(testname, labelMap) {
+    return !this.pathIsRootDir && this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
   }
 
-  getTestLabel(testname, metadataMap) {
-    if (!metadataMap) {
+  getTestLabel(testname, labelMap) {
+    if (!labelMap) {
       return '';
     }
 
-    const testlabelKey = testname + 'testlabel';
-    if (testlabelKey in metadataMap) {
-      return metadataMap[testlabelKey]['/'];
+    if (testname in labelMap) {
+      return labelMap[testname];
     }
 
     return '';

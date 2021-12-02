@@ -148,6 +148,10 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         type: Object,
         notify: true,
       },
+      labelMap: {
+        type: Object,
+        notify: true,
+      },
       triageNotifier: Boolean,
     };
   }
@@ -234,17 +238,15 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     return testResultSet;
   }
 
-  appendTestLabel(testname, metadataMap, label) {
+  appendTestLabel(testname, labelMap, label) {
     if (!label || label === '') {
       return;
     }
 
-    const metadataMapKey = testname + 'testlabel';
-    if ((metadataMapKey in metadataMap) === false) {
-      metadataMap[metadataMapKey] = {};
-      metadataMap[metadataMapKey]['/'] = label;
+    if ((testname in labelMap) === false) {
+      labelMap[testname] = label;
     } else {
-      metadataMap[metadataMapKey]['/'] = metadataMap[metadataMapKey]['/'] + ',' + label;
+      labelMap[testname] = labelMap[testname] + ',' + label;
     }
   }
 
@@ -257,13 +259,14 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     // bug icons in the test results, and displayedMetdata, which is the list of
     // metadata links shown at the bottom of the page.
     let metadataMap = {};
+    let labelMap = {};
     let displayedMetadata = [];
     for (const test of Object.keys(metadata).filter(k => this.shouldShowMetadata(k, path, testResultSet))) {
       const seenProductURLs = new Set();
       for (const link of metadata[test]) {
         if (link.url === '') {
           if (link.product === '') {
-            this.appendTestLabel(test, metadataMap, link.label);
+            this.appendTestLabel(test, labelMap, link.label);
           }
           continue;
         }
@@ -285,7 +288,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
         if (Object.keys(subtestMap).length === 0) {
           // When there is no subtest, it is a test-level URL.
           metadataMap[metadataMapKey]['/'] = urlHref;
-          this.appendTestLabel(test, metadataMap, link.label);
+          this.appendTestLabel(test, labelMap, link.label);
         } else {
           metadataMap[metadataMapKey] = Object.assign(metadataMap[metadataMapKey], subtestMap);
         }
@@ -305,6 +308,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       }
     }
 
+    this.labelMap = labelMap;
     this.metadataMap = metadataMap;
     this._resetSelectors();
     return displayedMetadata;

@@ -54,17 +54,14 @@ suite('<wpt-metadata>', () => {
           {
             product: '',
             url: '',
-            label: 'bug1'
+            label: 'label1'
           }
         ]
       };
       appFixture.path = '/';
 
-      assert.equal(appFixture.displayedMetadata.length, 0);
-      assert.equal(Object.keys(appFixture.metadataMap).length, 1);
-      const subtestMap = appFixture.metadataMap['/foo.htmltestlabel'];
-      assert.equal(Object.keys(subtestMap).length, 1);
-      assert.equal(subtestMap['/'], 'bug1');
+      assert.deepEqual(appFixture.displayedMetadata, []);
+      assert.deepEqual(appFixture.labelMap, { '/foo.html': "label1" });
     });
     test('simple case with different pending metadata tests', () => {
       appFixture.searchResults = [{ test: '/foo.html' }];

@@ -192,13 +192,11 @@ suite('<wpt-results>', () => {
     suite('getTestLabel()', () => {
       test('simple cases', () => {
         trf.displayedProducts = [{ browser_name: 'chrome' }, { browser_name: 'safari' }];
-        const metadataMap = {
-          '/a.htmltestlabel': { '/': 'interop1,interop2' },
-          '/a/abc/*safari': { '/': 'abc.com' },
-          '/c.htmlchrome': { 'b': 'foo1.com' },
+        const labelMap = {
+          '/a.html': 'interop1,interop2',
         };
 
-        assert.equal(trf.getTestLabel('/a.html', metadataMap), 'interop1,interop2');
+        assert.equal(trf.getTestLabel('/a.html', labelMap), 'interop1,interop2');
       });
     });
   });
