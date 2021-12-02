@@ -253,7 +253,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       }
     } else {
       for (const entry of displayedMetadata) {
-        if (entry.url === '' && entry.label === '') {
+        if (entry.url === '' && (!entry.label || entry.label === '')) {
           continue;
         }
 
