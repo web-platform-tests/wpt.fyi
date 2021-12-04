@@ -209,7 +209,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     </a>
                   </template>
                   <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, labelMap)]]">
-                    <iron-icon class="bug" icon="label" title="[[getTestLabel(node.path, labelMap)]]"></iron-icon>
+                    <iron-icon class="bug" icon="label" title="[[getTestLabelTitle(node.path, labelMap)]]"></iron-icon>
                   </template>
                 </td>
 
@@ -895,6 +895,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   shouldDisplayTestLabel(testname, labelMap) {
     return !this.pathIsRootDir && this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
+  }
+
+  getTestLabelTitle(testname, labelMap) {
+    const labels = this.getTestLabel(testname, labelMap);
+    if (labels.includes(',')) {
+      return 'labels: ' + labels;
+    }
+    return 'label: ' + labels;
   }
 
   getTestLabel(testname, labelMap) {
