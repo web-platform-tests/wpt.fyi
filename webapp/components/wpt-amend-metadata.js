@@ -157,7 +157,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         }
       </style>
       <paper-dialog id="dialog">
-        <h3>Triage Failing Tests</h3>
+        <h3>Triage Failing Tests (<a href="https://github.com/web-platform-tests/wpt-metadata/blob/master/README.md" target="_blank">See metadata documentation</a>)</h3>
         <paper-dialog-scrollable>
           <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
             <div class="metadata-entry">
@@ -253,7 +253,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       }
     } else {
       for (const entry of displayedMetadata) {
-        if (entry.url === '' && (!entry.label || entry.label === '')) {
+        // entry.url always exists while entry.label only exists when product is empty;
+        // in other words, a test-level triage.
+        if (entry.url === '' && !entry.label) {
           continue;
         }
 
@@ -345,6 +347,8 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
     for (const key in browserMap) {
       let node = { product: key, url: '', tests: browserMap[key] };
+      // when key (product) is empty, we will set a label field becuase
+      // this is a test-level triage.
       if (key === '') {
         node['label'] = '';
       }
@@ -354,16 +358,30 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
   handleTriage() {
     const url = new URL('/api/metadata/triage', window.location);
+    const toast = this.shadowRoot.querySelector('#show-pr');
+
+    const triagedMetadataMap = this.getTriagedMetadataMap(this.displayedMetadata);
+    if (Object.keys(triagedMetadataMap).length === 0) {
+      let errMsg = '';
+      if (this.displayedMetadata.length > 0 && this.displayedMetadata[0].product === '') {
+        errMsg = 'Invalid triage: Bug URL and Label fields cannot both be empty.';
+      } else {
+        errMsg = 'Invalid triage: Bug URLs cannot be empty.';
+      }
+      this.errorMessage = errMsg;
+      toast.open();
+      return;
+    }
+
     const fetchOpts = {
       method: 'PATCH',
-      body: JSON.stringify(this.getTriagedMetadataMap(this.displayedMetadata)),
+      body: JSON.stringify(triagedMetadataMap),
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json'
       },
     };
 
-    const toast = this.shadowRoot.querySelector('#show-pr');
     window.fetch(url, fetchOpts).then(
       async r => {
         this.prText = '';

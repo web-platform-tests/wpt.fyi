@@ -116,7 +116,7 @@ links:
     url: https://external.com/item
     results:
     - test: a.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
@@ -166,7 +166,7 @@ links:
     url: foo
     results:
     - test: b.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
@@ -220,7 +220,7 @@ links:
     url: foo
     results:
     - test: b.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
@@ -270,7 +270,7 @@ links:
     url: foo
     results:
     - test: b.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
@@ -362,7 +362,7 @@ links:
     url: foo
     results:
     - test: b.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
