@@ -46,6 +46,23 @@ suite('<wpt-metadata>', () => {
       assert.equal(appFixture.displayedMetadata[0].url, 'https://bug1');
       assert.equal(appFixture.displayedMetadata[0].product, 'chrome');
     });
+    test('simple case for labels', () => {
+      appFixture.searchResults = [{ test: '/foo.html' }];
+      appFixture.pendingMetadata = {};
+      appFixture.mergedMetadata = {
+        '/foo.html': [
+          {
+            product: '',
+            url: '',
+            label: 'label1'
+          }
+        ]
+      };
+      appFixture.path = '/';
+
+      assert.deepEqual(appFixture.displayedMetadata, []);
+      assert.deepEqual(appFixture.labelMap, { '/foo.html': 'label1' });
+    });
     test('simple case with different pending metadata tests', () => {
       appFixture.searchResults = [{ test: '/foo.html' }];
       appFixture.pendingMetadata = {

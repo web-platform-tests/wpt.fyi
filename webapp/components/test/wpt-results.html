@@ -188,6 +188,17 @@ suite('<wpt-results>', () => {
         assert.equal(trf.getMetadataUrl(0, '/c.html', metadataMap), 'foo1.com');
       });
     });
+
+    suite('getTestLabel()', () => {
+      test('simple cases', () => {
+        trf.displayedProducts = [{ browser_name: 'chrome' }, { browser_name: 'safari' }];
+        const labelMap = {
+          '/a.html': 'interop1,interop2',
+        };
+
+        assert.equal(trf.getTestLabel('/a.html', labelMap), 'interop1,interop2');
+      });
+    });
   });
 
   teardown(() => {

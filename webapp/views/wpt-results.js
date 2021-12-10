@@ -208,6 +208,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       <iron-icon class="bug" icon="bug-report"></iron-icon>
                     </a>
                   </template>
+                  <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, labelMap)]]">
+                    <iron-icon class="bug" icon="label" title="[[getTestLabelTitle(node.path, labelMap)]]"></iron-icon>
+                  </template>
                 </td>
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
@@ -288,6 +291,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     path="[[path]]"
                     search-results="[[searchResults]]"
                     metadata-map="{{metadataMap}}"
+                    label-map="{{labelMap}}"
                     triage-notifier="[[triageNotifier]]"></wpt-metadata>
     </template>
     <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
@@ -333,6 +337,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         computed: 'computeDisplayedTests(path, searchResults)',
       },
       metadataMap: Object,
+      labelMap: Object,
       // Users request to show a diff column.
       diff: Boolean,
       diffRun: {
@@ -886,6 +891,30 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   openAmendMetadata() {
     this.$.amend.open();
+  }
+
+  shouldDisplayTestLabel(testname, labelMap) {
+    return !this.pathIsRootDir && this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
+  }
+
+  getTestLabelTitle(testname, labelMap) {
+    const labels = this.getTestLabel(testname, labelMap);
+    if (labels.includes(',')) {
+      return 'labels: ' + labels;
+    }
+    return 'label: ' + labels;
+  }
+
+  getTestLabel(testname, labelMap) {
+    if (!labelMap) {
+      return '';
+    }
+
+    if (testname in labelMap) {
+      return labelMap[testname];
+    }
+
+    return '';
   }
 
   shouldDisplayMetadata(index, testname, metadataMap) {
