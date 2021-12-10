@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -722,7 +723,6 @@ func TestBindExecute_QueryOrTestLabel(t *testing.T) {
 	srs, ok := res.([]shared.SearchResult)
 	assert.True(t, ok)
 
-	assert.Equal(t, 2, len(srs))
 	expectedResult := shared.SearchResult{
 		Test: matchingTestName,
 		LegacyStatus: []shared.LegacySearchRunResult{
@@ -744,9 +744,9 @@ func TestBindExecute_QueryOrTestLabel(t *testing.T) {
 			},
 		},
 	}
-
-	assert.Equal(t, expectedResult1, srs[0])
-	assert.Equal(t, expectedResult, srs[1])
+	assert.Equal(t, 2, len(srs))
+	assert.Contains(t, srs, expectedResult)
+	assert.Contains(t, srs, expectedResult1)
 }
 
 func TestBindExecute_TestLabel(t *testing.T) {
