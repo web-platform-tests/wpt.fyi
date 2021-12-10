@@ -365,7 +365,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       this.selectedMetadata = [];
       let errMsg = '';
       if (this.displayedMetadata.length > 0 && this.displayedMetadata[0].product === '') {
-        errMsg = 'Invalid triage: Bug URL and Label fields cannot both be empty.';
+        errMsg = 'Failed to triage: Bug URL and Label fields cannot both be empty.';
       } else {
         errMsg = 'Invalid triage: Bug URLs cannot be empty.';
       }
