@@ -347,7 +347,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
     for (const key in browserMap) {
       let node = { product: key, url: '', tests: browserMap[key] };
-      // when key (product) is empty, we will set a label field becuase
+      // when key (product) is empty, we will set a label field because
       // this is a test-level triage.
       if (key === '') {
         node['label'] = '';
