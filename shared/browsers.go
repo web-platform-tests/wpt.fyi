@@ -14,7 +14,7 @@ var defaultBrowsers = []string{
 
 // An extra list of known browsers.
 var extraBrowsers = []string{
-	"chrome_android", "android_webview", "deno", "epiphany", "flow", "servo", "uc", "webkitgtk",
+	"android_webview", "deno", "epiphany", "flow", "servo", "uc", "webkitgtk", "chrome_android"
 }
 
 var allBrowsers mapset.Set
