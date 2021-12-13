@@ -9,7 +9,6 @@ const DisplayNames = (() => {
   ['edge', 'edge-experimental'].forEach(n => m.set(n, 'Edge'));
   ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
-  m.set('chrome_android', 'ChromeAndroid');
   m.set('android_webview', 'WebView');
   m.set('deno', 'Deno');
   m.set('flow', 'Flow');
