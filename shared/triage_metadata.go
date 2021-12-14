@@ -198,7 +198,7 @@ func addToFiles(metadata MetadataResults, filesMap map[string]Metadata, logger L
 			existingMetadata := filesMap[folderName]
 			hasMerged := false
 			for index, existingLink := range existingMetadata.Links {
-				if link.URL == existingLink.URL && link.Product.MatchesProductSpec(existingLink.Product) {
+				if link.URL == existingLink.URL && link.Product.MatchesProductSpec(existingLink.Product) && link.Label == existingLink.Label {
 					// Add new MetadataResult to the existing link.
 					filesMap[folderName].Links[index].Results = append(existingMetadata.Links[index].Results, link.Results...)
 					hasMerged = true

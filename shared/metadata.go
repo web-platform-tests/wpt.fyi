@@ -35,7 +35,7 @@ type MetadataLinks []MetadataLink
 // filtered by product and a specific test.
 type MetadataLink struct {
 	Product ProductSpec          `yaml:"product,omitempty" json:"product,omitempty"`
-	URL     string               `yaml:"url"     json:"url"`
+	URL     string               `yaml:"url,omitempty"     json:"url"`
 	Label   string               `yaml:"label,omitempty"  json:"label,omitempty"`
 	Results []MetadataTestResult `yaml:"results" json:"results,omitempty"`
 }

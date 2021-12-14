@@ -1,4 +1,6 @@
+//go:build small
 // +build small
+
 // Copyright 2019 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -114,7 +116,7 @@ links:
     url: https://external.com/item
     results:
     - test: a.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
@@ -164,7 +166,7 @@ links:
     url: foo
     results:
     - test: b.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
@@ -218,7 +220,7 @@ links:
     url: foo
     results:
     - test: b.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
@@ -250,6 +252,94 @@ links:
 	assert.Equal(t, "a.html", actual.Links[2].Results[0].TestPath)
 }
 
+func TestAddToFiles_AddNewMetadataLink_Label(t *testing.T) {
+	var amendment MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/foo1/abc.html": [
+			{
+				"label": "interop"
+			}
+		]
+	}`), &amendment)
+
+	var path = "foo/foo1"
+	var fileMap = make(map[string]Metadata)
+	fileInBytes := []byte(`
+links:
+  - product: chrome
+    url: foo
+    results:
+    - test: b.html
+  - product: firefox
+    url: https://bug.com/item
+    results:
+    - test: b.html
+      subtest: Something should happen
+      status: FAIL
+    - test: c.html
+`)
+	var file Metadata
+	yaml.Unmarshal(fileInBytes, &file)
+	fileMap[path] = file
+
+	actualMap := addToFiles(amendment, fileMap, NewNilLogger())
+
+	assert.Equal(t, 1, len(actualMap))
+	actualInBytes, ok := actualMap["foo/foo1"]
+	assert.True(t, ok)
+
+	var actual Metadata
+	yaml.Unmarshal(actualInBytes, &actual)
+	assert.Equal(t, 3, len(actual.Links))
+	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
+	assert.Equal(t, "foo", actual.Links[0].URL)
+	assert.Equal(t, 1, len(actual.Links[0].Results))
+	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
+	assert.Equal(t, "firefox", actual.Links[1].Product.BrowserName)
+	assert.Equal(t, "https://bug.com/item", actual.Links[1].URL)
+	assert.Equal(t, "", actual.Links[2].Product.String())
+	assert.Equal(t, "", actual.Links[2].URL)
+	assert.Equal(t, "interop", actual.Links[2].Label)
+}
+
+func TestAddToFiles_AddNewMetadataResults_Label(t *testing.T) {
+	var amendment MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/foo1/abc.html": [
+			{
+				"label": "interop"
+			}
+		]
+	}`), &amendment)
+
+	var path = "foo/foo1"
+	var fileMap = make(map[string]Metadata)
+	fileInBytes := []byte(`
+links:
+  - label: interop
+    results:
+    - test: b.html
+`)
+	var file Metadata
+	yaml.Unmarshal(fileInBytes, &file)
+	fileMap[path] = file
+
+	actualMap := addToFiles(amendment, fileMap, NewNilLogger())
+
+	assert.Equal(t, 1, len(actualMap))
+	actualInBytes, ok := actualMap["foo/foo1"]
+	assert.True(t, ok)
+
+	var actual Metadata
+	yaml.Unmarshal(actualInBytes, &actual)
+	assert.Equal(t, 1, len(actual.Links))
+	assert.Equal(t, "", actual.Links[0].Product.BrowserName)
+	assert.Equal(t, "interop", actual.Links[0].Label)
+	assert.Equal(t, 2, len(actual.Links[0].Results))
+	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
+	assert.Equal(t, "abc.html", actual.Links[0].Results[1].TestPath)
+}
+
 func TestAddToFiles_AddNewMetadataLink_Asterisk(t *testing.T) {
 	var amendment MetadataResults
 	json.Unmarshal([]byte(`{
@@ -272,7 +362,7 @@ links:
     url: foo
     results:
     - test: b.html
-  - product: firefox-2
+  - product: firefox
     url: https://bug.com/item
     results:
     - test: b.html
