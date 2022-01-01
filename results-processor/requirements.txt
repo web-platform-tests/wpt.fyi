@@ -4,7 +4,7 @@ cffi==1.15.0
 chardet==4.0.0
 click==8.0.3
 filelock==3.4.2
-flake8==3.9.2
+flake8==4.0.1
 Flask==2.0.2
 google-api-core==2.2.1
 google-auth==2.3.2
