@@ -16,7 +16,7 @@ require (
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0
-	github.com/gomodule/redigo v1.8.6
+	github.com/gomodule/redigo v1.8.8
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.3.0
