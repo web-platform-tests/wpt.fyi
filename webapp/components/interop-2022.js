@@ -212,7 +212,7 @@ class Compat2021 extends PolymerElement {
           padding-top: 1em;
         }
       </style>
-      <h1>Compat 2021 Dashboard</h1>
+      <h1>Interop 2022 Dashboard</h1>
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
       <p>
         These scores represent how well browser engines are doing on the 2021

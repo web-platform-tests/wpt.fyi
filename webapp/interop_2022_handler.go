@@ -14,7 +14,7 @@ type interop2022Data struct {
 	Embedded bool
 }
 
-// interop2022Handler handles GET requests to /interop2022
+// interop2022Handler handles GET requests to /interop-2022
 func interop2022Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
