@@ -245,12 +245,17 @@ class Compat2021 extends PolymerElement {
         <div class="focus-area">
           <label for="featureSelect">Focus area:</label>
           <select id="featureSelect">
-            <option value="summary">Summary</option>
-            <option value="aspect-ratio">aspect-ratio</option>
-            <option value="css-flexbox">css-flexbox</option>
-            <option value="css-grid">css-grid</option>
-            <option value="css-transforms">css-transforms</option>
-            <option value="position-sticky">position-sticky</option>
+            <optgroup label="2022">
+              <option value="summary">Summary</option>
+              <option value="aspect-ratio">aspect-ratio</option>
+              <option value="css-flexbox">css-flexbox</option>
+              <option value="css-grid">css-grid</option>
+              <option value="css-transforms">css-transforms</option>
+              <option value="position-sticky">position-sticky</option>
+            </optgroup>
+            <optgroup label="2021">
+              <option>Summary</option>
+            </optgroup>
           </select>
         </div>
       </fieldset>
