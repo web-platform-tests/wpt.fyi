@@ -29,7 +29,7 @@ pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycodestyle==2.8.0
 pycparser==2.21
-pyflakes==2.3.1
+pyflakes==2.4.0
 pytz==2021.3
 requests==2.26.0
 rsa==4.7.2
