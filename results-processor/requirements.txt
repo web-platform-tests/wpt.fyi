@@ -35,7 +35,7 @@ requests==2.27.1
 rsa==4.8
 six==1.16.0
 typed-ast==1.5.2
-typing-extensions==3.10.0.2
+typing-extensions==4.0.1
 urllib3==1.26.7
 Werkzeug==2.0.2
 zipp==3.6.0
