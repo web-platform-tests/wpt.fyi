@@ -175,33 +175,59 @@ class Compat2021 extends PolymerElement {
           line-height: 1.5;
         }
 
-        h1 {
+        h1, h2 {
           text-align: center;
         }
 
         .channel-area {
-          display: inline-flex;
-          height: 35px;
-          margin-top: 0;
-          margin-bottom: 10px;
+          display: flex;
+          max-width: fit-content;
+          margin-inline: auto;
+          margin-block-start: 75px;
+          border-radius: 3px;
+          overflow: hidden;
+          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
 
-        .channel-label {
-          font-size: 18px;
-          display: flex;
-          justify-content: center;
-          flex-direction: column;
+        .channel-area > paper-button {
+          margin: 0;
+        }
+
+        .channel-area > paper-button:first-of-type {
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+
+        .channel-area > paper-button:last-of-type {
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
         }
 
         .unselected {
           background-color: white;
         }
         .selected {
-          background-color: var(--paper-blue-100);
+          background-color: var(--paper-blue-700);
+          color: white;
+        }
+
+        .focus-area-section {
+          margin-block-start: 75px;
+          padding: 30px;
+          border-radius: 3px;
+          border: 1px solid #eee;
+          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
 
         .focus-area {
-          font-size: 18px;
+          font-size: 24px;
+          text-align: center;
+        }
+
+        .prose {
+          max-inline-size: 40ch;
+          margin-inline: auto;
+          text-align: center;
         }
 
         #featureSelect {
@@ -212,38 +238,32 @@ class Compat2021 extends PolymerElement {
           padding-top: 1em;
         }
       </style>
-      <h1>Interop 2022 Dashboard</h1>
+      <h1>Interop Dashboard</h1>
+      <p class="prose">
+        These scores represent how well browser engines are doing on <a href="#">Compat Focus Areas</a>, 
+        as measured by their <a href="/">wpt.fyi</a> test results. 
+      </p>
+
+      <div class="channel-area">
+        <paper-button class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
+        <paper-button class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
+      </div>
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
-      <p>
-        These scores represent how well browser engines are doing on the 2021
-        Compat Focus Areas, as measured by wpt.fyi test results. Each feature
-        contributes up to 20 points to the score, based on passing-test
-        percentage, giving a maximum possible score of 100 for each browser.
-      </p>
-      <p>
-        The set of tests used is derived from the full wpt.fyi test suite for
-        each feature, filtered by believed importance to web developers.
-        The results shown here are from
-        <template is="dom-if" if="[[stable]]">
-          released stable builds.
-        </template>
-        <template is="dom-if" if="[[!stable]]">
-          developer preview builds with experimental features enabled.
-        </template>
+      
+      <p class="prose">
+        Interact with scores to reveal how and what was used to calculate the total.
       </p>
 
-      <fieldset>
-        <legend>Configuration:</legend>
+      <section class="focus-area-section">
+        <h2 class="focus-area-header">Focus Areas</h2>
 
-        <div class="channel-area">
-          <span class="channel-label">Browser Type:</span>
-          <paper-button class\$="[[experimentalButtonClass(stable)]]" raised on-click="clickExperimental">Experimental</paper-button>
-          <paper-button class\$="[[stableButtonClass(stable)]]" raised on-click="clickStable">Stable</paper-button>
-        </div>
+        <p class="prose">
+          Here you can see how focus areas are improving over time. 
+          The more tests that pass, the higher the score.
+        </p>
 
         <!-- TODO: replace with paper-dropdown-menu -->
         <div class="focus-area">
-          <label for="featureSelect">Focus area:</label>
           <select id="featureSelect">
             <optgroup label="2022">
               <option>Summary</option>
@@ -267,27 +287,27 @@ class Compat2021 extends PolymerElement {
             </optgroup>
           </select>
         </div>
-      </fieldset>
 
-      <compat-2021-feature-chart data-manager="[[dataManager]]"
-                                 stable="[[stable]]"
-                                 feature="{{feature}}">
-      </compat-2021-feature-chart>
+        <compat-2021-feature-chart data-manager="[[dataManager]]"
+                                   stable="[[stable]]"
+                                   feature="{{feature}}">
+        </compat-2021-feature-chart>
 
-      <!-- We use a 'hidden' style rather than dom-if to avoid layout shift when
-           the feature is changed to/from summary. -->
-      <div id="testListText" style$="visibility: [[getTestListTextVisibility(feature)]]">
-        The score for this component is determined by pass rate on
-        <a href="[[getTestListHref(feature)]]" target="_blank">this set of tests</a>.
-        The test suite is never complete, and improvements are always welcome.
-        Please contribute changes to
-        <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
-        and then
-        <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
-        to add them to the Compat 2021 effort!
-      </div>
+        <!-- We use a 'hidden' style rather than dom-if to avoid layout shift when
+             the feature is changed to/from summary. -->
+        <div id="testListText" style$="visibility: [[getTestListTextVisibility(feature)]]">
+          The score for this component is determined by pass rate on
+          <a href="[[getTestListHref(feature)]]" target="_blank">this set of tests</a>.
+          The test suite is never complete, and improvements are always welcome.
+          Please contribute changes to
+          <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
+          and then
+          <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
+          to add them to the Compat 2021 effort!
+        </div>
 
-      <!-- TODO: Test results table -->
+        <!-- TODO: Test results table -->
+      </section>
 `;
   }
 
@@ -409,7 +429,7 @@ class Compat2021Summary extends PolymerElement {
 
       <style>
         #summaryContainer {
-          padding-top: 1em;
+          padding-block: 30px;
           display: flex;
           justify-content: center;
           gap: 30px;
@@ -417,18 +437,32 @@ class Compat2021Summary extends PolymerElement {
 
         .summary-flex-item {
           position: relative;
-          width: 125px;
-          cursor: help;
         }
 
         .summary-number {
           font-size: 5em;
+          width: 3ch;
+          height: 3ch;
+          padding: 10px;
           font-family: 'Roboto Mono', monospace;
-          text-align: center;
+          display: grid;
+          place-content: center;
+          aspect-ratio: 1;
+          border-radius: 50%;
+          margin-bottom: 10px;
+          cursor: help;
         }
 
         .summary-browser-name {
           text-align: center;
+        }
+
+        .summary-browser-name[data-stable-browsers] > :not(.stable) {
+          display: none;
+        }
+
+        .summary-browser-name:not([data-stable-browsers]) > .stable {
+          display: none;
         }
 
         .summary-flex-item:hover .summary-tooltip,
@@ -445,12 +479,12 @@ class Compat2021Summary extends PolymerElement {
           border: 1px lightgrey solid;
           background: white;
           border-radius: 3px;
-          padding: 5px;
+          padding: 10px;
           top: 105%;
           left: -20%;
-          padding: 0.5rem 0.75rem;
+          padding: 1rem 1.25rem;
           line-height: 1.4;
-          box-shadow: 0 0 20px 0px #c3c3c3;
+          box-shadow: var(--shadow-elevation-16dp_-_box-shadow);
         }
 
         .summary-tooltip > div {
@@ -464,19 +498,48 @@ class Compat2021Summary extends PolymerElement {
         <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
-          <div class="summary-browser-name"></div>
+          <template is="dom-if" if="[[stable]]">
+            <div class="summary-browser-name">
+              <img src="/static/chrome_64x64.png" width="36" alt="Chrome" /> 
+              <img src="/static/edge_64x64.png" width="36" alt="Edge" /> 
+            </div>
+          </template>
+          <template is="dom-if" if="[[!stable]]">
+            <div class="summary-browser-name">
+              <img src="/static/chrome-canary_64x64.png" width="36" alt="Chrome Canary" /> 
+              <img src="/static/edge-beta_64x64.png" width="36" alt="Edge Beta" /> 
+            </div>
+          </template>
         </div>
         <!-- Firefox -->
         <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
-          <div class="summary-browser-name"></div>
+          <template is="dom-if" if="[[stable]]">
+            <div class="summary-browser-name">
+              <img src="/static/firefox_64x64.png" width="36" alt="Firefox" /> 
+            </div>
+          </template>
+          <template is="dom-if" if="[[!stable]]">
+            <div class="summary-browser-name">
+              <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" /> 
+            </div>
+          </template>
         </div>
         <!-- Safari -->
         <div class="summary-flex-item" tabindex="0">
           <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
-          <div class="summary-browser-name"></div>
+          <template is="dom-if" if="[[stable]]">
+            <div class="summary-browser-name">
+              <img src="/static/safari_64x64.png" width="36" alt="Safari" /> 
+            </div>
+          </template>
+          <template is="dom-if" if="[[!stable]]">
+            <div class="summary-browser-name">
+              <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
+            </div>
+          </template>
         </div>
       </div>
 `;
@@ -496,16 +559,7 @@ class Compat2021Summary extends PolymerElement {
   }
 
   _stableChanged() {
-    this.updateSummaryTitles();
     this.updateSummaryScores();
-  }
-
-  updateSummaryTitles() {
-    let titleDivs = this.$.summaryContainer.querySelectorAll('.summary-browser-name');
-    let titles = this.stable ? STABLE_TITLES : EXPERIMENTAL_TITLES;
-    for (let i = 0; i < titleDivs.length; i++) {
-      titleDivs[i].innerText = titles[i];
-    }
   }
 
   async updateSummaryScores() {
@@ -514,7 +568,8 @@ class Compat2021Summary extends PolymerElement {
     let tooltips = this.$.summaryContainer.querySelectorAll('.summary-tooltip');
     for (let i = 0; i < scores.length; i++) {
       numbers[i].innerText = scores[i].total;
-      numbers[i].style.color = this.calculateColor(scores[i].total);
+      numbers[i].style.color = this.calculateColor(scores[i].total)[0];
+      numbers[i].style.backgroundColor = this.calculateColor(scores[i].total)[1];
 
       // TODO: Replace tooltips with paper-tooltip.
       this.updateSummaryTooltip(tooltips[i], scores[i].breakdown);
@@ -525,11 +580,12 @@ class Compat2021Summary extends PolymerElement {
     tooltipDiv.innerHTML = '';
 
     scoreBreakdown.forEach((val, key) => {
-      const keySpan = document.createElement('span');
+      const keySpan = document.createElement('a');
+      keySpan.href = '#' // todo: make real links
       keySpan.innerText = `${key}: `;
       const valueSpan = document.createElement('span');
       valueSpan.innerText = val;
-      valueSpan.style.color = this.calculateColor(val * 5);  // Scale to 0-100
+      valueSpan.style.color = this.calculateColor(val * 5)[0];  // Scale to 0-100
 
       const textDiv = document.createElement('div');
       textDiv.appendChild(keySpan);
@@ -577,18 +633,18 @@ class Compat2021Summary extends PolymerElement {
   calculateColor(score) {
     // RGB values from https://material.io/design/color/
     if (score >= 95) {
-      return '#388E3C';  // Green 700
+      return ['#388E3C', '#00c70a1a'];  // Green 700
     }
     if (score > 75) {
-      return '#689F38';  // Light Green 700
+      return ['#689F38', '#64d60026'];  // Light Green 700
     }
     if (score > 50) {
-      return '#FBC02D';  // Yellow 700
+      return ['#FBC02D', '#ffc22926'];  // Yellow 700
     }
     if (score > 25) {
-      return '#F57C00';  // Orange 700
+      return ['#F57C00', '#f57a0026'];  // Orange 700
     }
-    return '#D32F2F'; // Red 700
+    return ['#D32F2F', '#ff050526']; // Red 700
   }
 }
 window.customElements.define(Compat2021Summary.is, Compat2021Summary);
