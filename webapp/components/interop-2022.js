@@ -121,7 +121,7 @@ class Compat2021DataManager {
         let summaryScore = 0;
         FEATURES.forEach((feature, j) => {
           const score = parseFloat(csvValues[i + 1 + j]);
-          const tooltip = this.createTooltip(browserName, version, score.toFixed(3));
+          const tooltip = this.createTooltip(browserName, version, Math.round(score.toFixed(3) * 100) + '%');
           newRows.get(feature).push(score);
           newRows.get(feature).push(tooltip);
 
@@ -132,7 +132,7 @@ class Compat2021DataManager {
           summaryScore += Math.floor(score * 20);
         });
 
-        const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
+        const summaryTooltip = this.createTooltip(browserName, version, summaryScore + '%');
         newRows.get(SUMMARY_FEATURE_NAME).push(summaryScore);
         newRows.get(SUMMARY_FEATURE_NAME).push(summaryTooltip);
       }
@@ -155,7 +155,7 @@ class Compat2021DataManager {
   }
 
   createTooltip(browser, version, score) {
-    return `${browser} ${version}: ${score}`;
+    return `${score} passing \n${browser} ${version}`;
   }
 }
 
