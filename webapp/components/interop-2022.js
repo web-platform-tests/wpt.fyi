@@ -246,15 +246,24 @@ class Compat2021 extends PolymerElement {
           <label for="featureSelect">Focus area:</label>
           <select id="featureSelect">
             <optgroup label="2022">
+              <option>Summary</option>
+              <option>Cascade layers</option>
+              <option>Color 4 and 5</option>
+              <option>Containment</option>
+              <option>Dialog and ::backdrop</option>
+              <option>Forms</option>
+              <option>Scrolling</option>
+              <option>Subgrid</option>
+              <option>Text</option>
+              <option>Viewport</option>
+            </optgroup>
+            <optgroup label="2021">
               <option value="summary">Summary</option>
               <option value="aspect-ratio">aspect-ratio</option>
               <option value="css-flexbox">css-flexbox</option>
               <option value="css-grid">css-grid</option>
               <option value="css-transforms">css-transforms</option>
               <option value="position-sticky">position-sticky</option>
-            </optgroup>
-            <optgroup label="2021">
-              <option>Summary</option>
             </optgroup>
           </select>
         </div>
