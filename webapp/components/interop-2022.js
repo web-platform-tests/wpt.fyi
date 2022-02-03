@@ -193,7 +193,7 @@ class Compat2021DataManager {
         let summaryScore = 0;
         Object.entries(FEATURES).forEach(([feature, feature_meta], j) => {
           const score = parseFloat(csvValues[i + 1 + j]);
-          const tooltip = this.createTooltip(browserName, version, Math.round(score.toFixed(3) * 100) + '%');
+          const tooltip = this.createTooltip(browserName, version, score);
           newRows.get(feature).push(score);
           newRows.get(feature).push(tooltip);
 
@@ -257,7 +257,6 @@ class Compat2021 extends PolymerElement {
           margin-inline: auto;
           margin-block-start: 75px;
           border-radius: 3px;
-          overflow: hidden;
           box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
 
@@ -294,13 +293,24 @@ class Compat2021 extends PolymerElement {
         .focus-area {
           font-size: 24px;
           text-align: center;
-          margin-block-end: 20px;
+          margin-block: 40px 10px;
         }
 
         .prose {
           max-inline-size: 40ch;
           margin-inline: auto;
           text-align: center;
+        }
+
+        .score-details {
+          display: flex;
+          justify-content: center;
+        }
+
+        details, summary {
+          border-radius: 3px;
+          padding-block: .5ch;
+          padding-inline: 1ch;
         }
 
         #featureSelect {
@@ -311,16 +321,24 @@ class Compat2021 extends PolymerElement {
           padding-top: 1em;
         }
 
+        #featureReferenceList {
+          display: flex;
+          gap: 2ch;
+          place-content: center;
+          margin-block-end: 20px;
+          color: GrayText;
+        }
+
         @media (prefers-color-scheme: dark) {
           :host {
-            color: initial;
+            color: white;
           }
 
           paper-button.unselected {
             color: #333;
           }
 
-          .focus-area-section {
+          .focus-area-section, details {
             background: hsl(0 0% 10%);
             border-color: hsl(0 0% 20%);
             box-shadow: none;
@@ -339,9 +357,15 @@ class Compat2021 extends PolymerElement {
       </div>
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
       
-      <p class="prose">
-        Interact with scores to reveal how and what was used to calculate the total.
-      </p>
+      <div class="score-details">
+        <details>
+          <summary>Score Breakdown</summary>
+
+          <p>
+            Interact with scores to reveal how and what was used to calculate the total.
+          </p>
+        </details>
+      </div>
 
       <section class="focus-area-section">
         <h2 class="focus-area-header">Focus Areas</h2>
@@ -377,6 +401,12 @@ class Compat2021 extends PolymerElement {
           </select>
         </div>
 
+        <div id="featureReferenceList" style$="display: [[getTestListTextVisibility(feature)]]">
+          <a href="{{featureLinks.spec}}" style$="display: [[getFeatureLinkVisibility(featureLinks.spec)]]">Spec</a> 
+          <a href="{{featureLinks.mdn}}" style$="display: [[getFeatureLinkVisibility(featureLinks.mdn)]]">MDN</a> 
+          <a href="{{featureLinks.tests}}" style$="display: [[getFeatureLinkVisibility(featureLinks.tests)]]">Tests</a>
+        </div>
+
         <compat-2021-feature-chart data-manager="[[dataManager]]"
                                    stable="[[stable]]"
                                    feature="{{feature}}">
@@ -385,8 +415,6 @@ class Compat2021 extends PolymerElement {
         <!-- We use a 'hidden' style rather than dom-if to avoid layout shift when
              the feature is changed to/from summary. -->
         <div id="testListText" style$="visibility: [[getTestListTextVisibility(feature)]]">
-          <a href="#">Spec</a> | <a href="#">MDN</a> | <a href="#">Tests</a>
-          <br>
           The score for this component is determined by pass rate on
           <a href="[[getTestListHref(feature)]]" target="_blank">this set of tests</a>.
           The test suite is never complete, and improvements are always welcome.
@@ -434,10 +462,12 @@ class Compat2021 extends PolymerElement {
     // experimental releases of browsers.
     this.stable = params.get('stable') !== null;
     this.feature = params.get('feature') || SUMMARY_FEATURE_NAME;
+    this.featureLinks = FEATURES[params.get('feature')];
 
     this.$.featureSelect.value = this.feature;
     this.$.featureSelect.addEventListener('change', () => {
       this.feature = this.$.featureSelect.value;
+      this.featureLinks = FEATURES[this.$.featureSelect.value];
     });
   }
 
@@ -492,6 +522,10 @@ class Compat2021 extends PolymerElement {
 
   getTestListTextVisibility(feature) {
     return FEATURES[feature] ? 'visible' : 'hidden';
+  }
+
+  getFeatureLinkVisibility(featureLink) {
+    return featureLink ? 'inline' : 'none';
   }
 
   getTestListHref(feature) {
@@ -567,8 +601,8 @@ class Compat2021Summary extends PolymerElement {
           /* TODO: find a better solution for drawing on-top of other numbers */
           z-index: 1;
           width: 150px;
-          border: 1px lightgrey solid;
-          background: white;
+          border: 1px InactiveBorder solid;
+          background: Canvas;
           border-radius: 3px;
           padding: 10px;
           top: 105%;
