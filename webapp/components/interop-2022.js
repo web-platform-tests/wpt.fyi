@@ -308,10 +308,8 @@ class Compat2021 extends PolymerElement {
         }
 
         .table-card {
-          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
           padding: 30px;
           border-radius: 3px;
-          border: 1px solid #eee;
         }
 
         .score-table {
@@ -352,6 +350,10 @@ class Compat2021 extends PolymerElement {
           border-radius: 3px;
           padding-block: .5ch;
           padding-inline: 1ch;
+        }
+
+        details[open] {
+          box-shadow: inner 0 0 3px hsl(0 0% 0% / 10%);
         }
 
         #featureSelect {
