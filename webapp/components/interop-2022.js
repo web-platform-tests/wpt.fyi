@@ -401,7 +401,7 @@ class Compat2021 extends PolymerElement {
           </select>
         </div>
 
-        <div id="featureReferenceList" style$="display: [[getTestListTextVisibility(feature)]]">
+        <div id="featureReferenceList">
           <a href="{{featureLinks.spec}}" style$="display: [[getFeatureLinkVisibility(featureLinks.spec)]]">Spec</a> 
           <a href="{{featureLinks.mdn}}" style$="display: [[getFeatureLinkVisibility(featureLinks.mdn)]]">MDN</a> 
           <a href="{{featureLinks.tests}}" style$="display: [[getFeatureLinkVisibility(featureLinks.tests)]]">Tests</a>
@@ -411,22 +411,16 @@ class Compat2021 extends PolymerElement {
                                    stable="[[stable]]"
                                    feature="{{feature}}">
         </compat-2021-feature-chart>
-
-        <!-- We use a 'hidden' style rather than dom-if to avoid layout shift when
-             the feature is changed to/from summary. -->
-        <div id="testListText" style$="visibility: [[getTestListTextVisibility(feature)]]">
-          The score for this component is determined by pass rate on
-          <a href="[[getTestListHref(feature)]]" target="_blank">this set of tests</a>.
-          The test suite is never complete, and improvements are always welcome.
-          Please contribute changes to
-          <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
-          and then
-          <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
-          to add them to the Compat 2021 effort!
-        </div>
-
-        <!-- TODO: Test results table -->
       </section>
+      <p id="testListText">
+        The score for these components is determined by pass rate on their tests.
+        The test suite is never complete, and improvements are always welcome.
+        Please contribute changes to
+        <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
+        and then
+        <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
+        to add them to the 2022 Interop effort!
+      </p>
 `;
   }
 
@@ -518,10 +512,6 @@ class Compat2021 extends PolymerElement {
       return;
     }
     this.stable = true;
-  }
-
-  getTestListTextVisibility(feature) {
-    return FEATURES[feature] ? 'visible' : 'hidden';
   }
 
   getFeatureLinkVisibility(featureLink) {
