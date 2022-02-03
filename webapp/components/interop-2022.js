@@ -674,7 +674,7 @@ class Compat2021Summary extends PolymerElement {
           aspect-ratio: 1;
           border-radius: 50%;
           margin-bottom: 10px;
-          cursor: help;
+          /*cursor: help;*/
         }
 
         .summary-browser-name {
@@ -689,10 +689,10 @@ class Compat2021Summary extends PolymerElement {
           display: none;
         }
 
-        .summary-flex-item:hover .summary-tooltip,
+        /*.summary-flex-item:hover .summary-tooltip,
         .summary-flex-item:focus .summary-tooltip {
           display: block;
-        }
+        }*/
 
         .summary-tooltip {
           display: none;
