@@ -11,13 +11,14 @@ import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
-const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
+// const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
+const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/foolip/wpt-results-analysis'
 const DATA_BRANCH = 'gh-pages';
 // Support a 'use_webkitgtk' query parameter to substitute WebKitGTK in for
 // Safari, to deal with the ongoing lack of new STP versions on wpt.fyi.
 const DATA_FILES_PATH = (new URL(document.location)).searchParams.has('use_webkitgtk')
-  ? 'data/compat2021/webkitgtk'
-  : 'data/compat2021';
+  ? 'data/interop-2022/webkitgtk'
+  : 'data/interop-2022';
 
 const SUMMARY_FEATURE_NAME = 'summary';
 const FEATURES = [
@@ -112,8 +113,8 @@ class Compat2021DataManager {
 
       // Now handle each of the browsers. For each there is a version column,
       // then the scores for each of the five features.
-      for (let i = 1; i < csvValues.length; i += 6) {
-        const browserIdx = Math.floor(i / 6);
+      for (let i = 1; i < csvValues.length; i += 16) {
+        const browserIdx = Math.floor(i / 16);
         const browserName = tooltipBrowserNames[browserIdx];
         const version = csvValues[i];
         browserVersions[browserIdx].push(version);
@@ -265,20 +266,20 @@ class Compat2021 extends PolymerElement {
         <!-- TODO: replace with paper-dropdown-menu -->
         <div class="focus-area">
           <select id="featureSelect">
+            <option value="summary">Summary</option>
             <optgroup label="2022">
-              <option>Summary</option>
-              <option>Cascade layers</option>
-              <option>Color 4 and 5</option>
-              <option>Containment</option>
-              <option>Dialog and ::backdrop</option>
-              <option>Forms</option>
-              <option>Scrolling</option>
-              <option>Subgrid</option>
-              <option>Text</option>
-              <option>Viewport</option>
+              <option value="@layer">Cascade layers</option>
+              <option value="color">Color 4 and 5</option>
+              <option value="contain">Containment</option>
+              <option value="dialog">Dialog and ::backdrop</option>
+              <option value="forms">Forms</option>
+              <option value="scrolling">Scrolling</option>
+              <option value="subgrid">Subgrid</option>
+              <option value="text">Text</option>
+              <option value="viewport">Viewport</option>
+              <option value="webcompat">WebCompat</option>
             </optgroup>
             <optgroup label="2021">
-              <option value="summary">Summary</option>
               <option value="aspect-ratio">aspect-ratio</option>
               <option value="css-flexbox">css-flexbox</option>
               <option value="css-grid">css-grid</option>
@@ -600,7 +601,7 @@ class Compat2021Summary extends PolymerElement {
     const url = `${GITHUB_URL_PREFIX}/${DATA_BRANCH}/${DATA_FILES_PATH}/summary-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
-    if (csvLines.length !== 5) {
+    if (csvLines.length !== 15) {
       throw new Error(`${url} did not contain 5 results`);
     }
 
