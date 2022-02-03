@@ -727,15 +727,15 @@ class Compat2021Summary extends PolymerElement {
       return ['#388E3C', '#00c70a1a'];  // Green 700
     }
     if (score > 75) {
-      return ['#689F38', '#64d60026'];  // Light Green 700
+      return ['#568f24', '#64d60026'];  // Light Green 700
     }
     if (score > 50) {
-      return ['#FBC02D', '#ffc22926'];  // Yellow 700
+      return ['#b88400', '#ffc22926'];  // Yellow 700
     }
     if (score > 25) {
-      return ['#F57C00', '#f57a0026'];  // Orange 700
+      return ['#d16900', '#f57a0026'];  // Orange 700
     }
-    return ['#D32F2F', '#ff050526']; // Red 700
+    return ['#ee2b2b', '#ff050526']; // Red 700
   }
 }
 window.customElements.define(Compat2021Summary.is, Compat2021Summary);
