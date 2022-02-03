@@ -21,13 +21,84 @@ const DATA_FILES_PATH = (new URL(document.location)).searchParams.has('use_webki
   : 'data/interop-2022';
 
 const SUMMARY_FEATURE_NAME = 'summary';
-const FEATURES = [
-  'aspect-ratio',
-  'css-flexbox',
-  'css-grid',
-  'css-transforms',
-  'position-sticky',
-];
+
+const FEATURES = {
+  'aspect-ratio': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/aspect-ratio',
+    spec: 'https://www.w3.org/TR/css-sizing-4/#aspect-ratio',
+    tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-aspect-ratio',
+  },
+  'css-flexbox': {
+    mdn: 'https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox',
+    spec: 'https://www.w3.org/TR/css-flexbox-1/',
+    tests: 'https://wpt.fyi/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-flexbox',
+  },
+  'css-grid': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/grid',
+    spec: 'https://www.w3.org/TR/css-grid-1/',
+    tests: 'https://wpt.fyi/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-grid',
+  },
+  'css-transforms': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/transform',
+    spec: 'https://www.w3.org/TR/css-transforms-2/#transform-functions',
+    tests: 'https://wpt.fyi/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-transforms',
+  },
+  'position-sticky': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/position',
+    spec: 'https://www.w3.org/TR/css-position/#position-property',
+    tests: 'https://wpt.fyi/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-position-sticky',
+  },
+  '@layer': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/@layer',
+    spec: 'https://www.w3.org/TR/css-cascade-5/#layering',
+    tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=layer',
+  },
+  'color': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value/color()',
+    spec: 'https://www.w3.org/TR/css-color-5/',
+    tests: 'https://wpt.fyi/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-color',
+  },
+  'contain': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/contain',
+    spec: 'https://www.w3.org/TR/css-contain/#contain-property',
+    tests: 'https://wpt.fyi/results/css/css-contain?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-contain',
+  },
+  'dialog': {
+    mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/dialog',
+    spec: 'https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element',
+    tests: 'https://wpt.fyi/results/html/semantics/interactive-elements/the-dialog-element?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-dialog',
+  },
+  'forms': {
+    mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/form',
+    spec: 'https://html.spec.whatwg.org/multipage/forms.html#the-form-element',
+    tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-forms',
+  },
+  'scrolling': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/overflow',
+    spec: 'https://www.w3.org/TR/css-overflow/#propdef-overflow',
+    tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-scrolling',
+  },
+  'subgrid': {
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout/Subgrid',
+    spec: 'https://www.w3.org/TR/css-grid-2/',
+    tests: 'https://wpt.fyi/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-subgrid',
+  },
+  'text': {
+    mdn: '',
+    spec: '',
+    tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-text',
+  },
+  'viewport': {
+    mdn: '',
+    spec: '',
+    tests: 'https://wpt.fyi/results/css/css-values/viewport-units-parsing.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
+  },
+  'meta-webcompat': {
+    mdn: '',
+    spec: '',
+    tests: 'https://wpt.fyi/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-webcompat',
+  },
+}
 
 // Compat2021DataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Compat 2021 dashboard. It
@@ -68,7 +139,7 @@ class Compat2021DataManager {
     const url = `${GITHUB_URL_PREFIX}/${DATA_BRANCH}/${DATA_FILES_PATH}/unified-scores-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
-    const features = [SUMMARY_FEATURE_NAME, ...FEATURES];
+    const features = [SUMMARY_FEATURE_NAME, ...Object.keys(FEATURES)];
     const dataTables = new Map(features.map(feature => {
       const dataTable = new window.google.visualization.DataTable();
       dataTable.addColumn('date', 'Date');
@@ -120,7 +191,7 @@ class Compat2021DataManager {
         browserVersions[browserIdx].push(version);
 
         let summaryScore = 0;
-        FEATURES.forEach((feature, j) => {
+        Object.entries(FEATURES).forEach(([feature, feature_meta], j) => {
           const score = parseFloat(csvValues[i + 1 + j]);
           const tooltip = this.createTooltip(browserName, version, Math.round(score.toFixed(3) * 100) + '%');
           newRows.get(feature).push(score);
@@ -401,7 +472,7 @@ class Compat2021 extends PolymerElement {
   }
 
   getTestListTextVisibility(feature) {
-    return FEATURES.includes(feature) ? 'visible' : 'hidden';
+    return FEATURES[feature] ? 'visible' : 'hidden';
   }
 
   getTestListHref(feature) {
