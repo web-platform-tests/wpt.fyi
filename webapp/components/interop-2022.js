@@ -309,6 +309,22 @@ class Compat2021 extends PolymerElement {
         #testListText {
           padding-top: 1em;
         }
+
+        @media (prefers-color-scheme: dark) {
+          :host {
+            color: initial;
+          }
+
+          paper-button.unselected {
+            color: #333;
+          }
+
+          .focus-area-section {
+            background: hsl(0 0% 10%);
+            border-color: hsl(0 0% 20%);
+            box-shadow: none;
+          }
+        }
       </style>
       <h1>Interop Dashboard</h1>
       <p class="prose">
