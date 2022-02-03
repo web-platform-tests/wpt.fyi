@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v42/github"
 	"gopkg.in/yaml.v3"
 )
 
