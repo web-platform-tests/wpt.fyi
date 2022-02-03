@@ -294,6 +294,7 @@ class Compat2021 extends PolymerElement {
         .focus-area {
           font-size: 24px;
           text-align: center;
+          margin-block-end: 20px;
         }
 
         .prose {
