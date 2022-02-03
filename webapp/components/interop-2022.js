@@ -183,16 +183,16 @@ class Compat2021DataManager {
       }));
 
       // Now handle each of the browsers. For each there is a version column,
-      // then the scores for each of the five features.
-      for (let i = 1; i < csvValues.length; i += 16) {
-        const browserIdx = Math.floor(i / 16);
+      // then the scores for each of the features.
+      for (let i = 1; i < csvValues.length; i += 17) {
+        const browserIdx = Math.floor(i / 17);
         const browserName = tooltipBrowserNames[browserIdx];
         const version = csvValues[i];
         browserVersions[browserIdx].push(version);
 
         let summaryScore = 0;
         Object.entries(FEATURES).forEach(([feature, feature_meta], j) => {
-          const score = parseFloat(csvValues[i + 1 + j]);
+          const score = parseInt(csvValues[i + 1 + j]);
           const tooltip = this.createTooltip(browserName, version, score);
           newRows.get(feature).push(score);
           newRows.get(feature).push(tooltip);
@@ -201,7 +201,7 @@ class Compat2021DataManager {
           // feature is allowed to contribute up to 20 points. We use floor
           // rather than round to avoid claiming the full 20 points until we
           // are at 100%
-          summaryScore += Math.floor(score * 20);
+          summaryScore += score;
         });
 
         const summaryTooltip = this.createTooltip(browserName, version, summaryScore + '%');
@@ -735,7 +735,7 @@ class Compat2021Summary extends PolymerElement {
       for (let i = 0; i < parts.length; i++) {
         // Use floor rather than round to avoid claiming the full 20 points until
         // definitely there.
-        let contribution = Math.floor(parseFloat(parts[i]) * 20);
+        let contribution = parseInt(parts[i]);
         scores[i].total += contribution;
         scores[i].breakdown.set(feature, contribution);
       }
