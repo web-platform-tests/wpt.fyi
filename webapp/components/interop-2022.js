@@ -307,6 +307,47 @@ class Compat2021 extends PolymerElement {
           justify-content: center;
         }
 
+        .table-card {
+          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
+          padding: 30px;
+          border-radius: 3px;
+          border: 1px solid #eee;
+        }
+
+        .score-table {
+          border-collapse: collapse;
+        }
+
+        .score-table thead th {
+          text-align: left;
+          border-bottom: 1px solid GrayText;
+        }
+
+        .score-table .browser-icons {
+          display: flex;
+        }
+
+        .score-table tr > th:first-of-type {
+          width: 20ch;
+        }
+
+        .score-table td {
+          min-width: 7ch;
+        }
+
+        .score-table :is(tfoot,thead) {
+          height: 4ch;
+          vertical-align: middle;
+        }
+
+        .score-table tfoot th {
+          border-top: 1px solid GrayText;
+        }
+
+        .score-table tbody > tr:nth-child(even) {
+          background: hsl(0 0% 0% / 5%);
+        }
+
         details, summary {
           border-radius: 3px;
           padding-block: .5ch;
@@ -338,7 +379,7 @@ class Compat2021 extends PolymerElement {
             color: #333;
           }
 
-          .focus-area-section, details {
+          .focus-area-section, details, .score-table {
             background: hsl(0 0% 10%);
             border-color: hsl(0 0% 20%);
             box-shadow: none;
@@ -359,11 +400,73 @@ class Compat2021 extends PolymerElement {
       
       <div class="score-details">
         <details>
-          <summary>Score Breakdown</summary>
+          <summary>How is this score calculated?</summary>
 
-          <p>
-            Interact with scores to reveal how and what was used to calculate the total.
-          </p>
+          <div class="table-card">
+            <table class="score-table">
+              <thead>
+                <tr>
+                  <th>Interop Feature</th>
+                  <th>
+                    <template is="dom-if" if="[[stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/chrome_64x64.png" width="20" alt="Chrome" /> 
+                        <img src="/static/edge_64x64.png" width="20" alt="Edge" /> 
+                      </div>
+                    </template>
+                    <template is="dom-if" if="[[!stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/chrome-canary_64x64.png" width="20" alt="Chrome Canary" /> 
+                        <img src="/static/edge-beta_64x64.png" width="20" alt="Edge Beta" /> 
+                      </div>
+                    </template>
+                  </th>
+                  <th>
+                    <template is="dom-if" if="[[stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/firefox_64x64.png" width="20" alt="Firefox" /> 
+                      </div>
+                    </template>
+                    <template is="dom-if" if="[[!stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" /> 
+                      </div>
+                    </template>
+                  </th>
+                  <th>
+                    <template is="dom-if" if="[[stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/safari_64x64.png" width="20" alt="Safari" /> 
+                      </div>
+                    </template>
+                    <template is="dom-if" if="[[!stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" />
+                      </div>
+                    </template>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <template is="dom-repeat" items="{{featureKeys}}">
+                  <tr>
+                    <td>{{item}}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                </template>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th><b>totals</b></th>
+                  <th>90%</th>
+                  <th>90%</th>
+                  <th>90%</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </details>
       </div>
 
@@ -434,6 +537,12 @@ class Compat2021 extends PolymerElement {
       useWebkitGTK: Boolean,
       stable: Boolean,
       feature: String,
+      featureKeys: {
+        type: Array,
+        value() {
+          return Object.keys(FEATURES)
+        }
+      },
       dataManager: Object,
     };
   }
