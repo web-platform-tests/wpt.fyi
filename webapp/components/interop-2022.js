@@ -384,6 +384,8 @@ class Compat2021 extends PolymerElement {
         <!-- We use a 'hidden' style rather than dom-if to avoid layout shift when
              the feature is changed to/from summary. -->
         <div id="testListText" style$="visibility: [[getTestListTextVisibility(feature)]]">
+          <a href="#">Spec</a> | <a href="#">MDN</a> | <a href="#">Tests</a>
+          <br>
           The score for this component is determined by pass rate on
           <a href="[[getTestListHref(feature)]]" target="_blank">this set of tests</a>.
           The test suite is never complete, and improvements are always welcome.
