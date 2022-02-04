@@ -14,11 +14,7 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 // const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
 const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/foolip/wpt-results-analysis'
 const DATA_BRANCH = 'gh-pages';
-// Support a 'use_webkitgtk' query parameter to substitute WebKitGTK in for
-// Safari, to deal with the ongoing lack of new STP versions on wpt.fyi.
-const DATA_FILES_PATH = (new URL(document.location)).searchParams.has('use_webkitgtk')
-  ? 'data/interop-2022/webkitgtk'
-  : 'data/interop-2022';
+const DATA_FILES_PATH = 'data/interop-2022';
 
 const SUMMARY_FEATURE_NAME = 'summary';
 
@@ -536,7 +532,6 @@ class Compat2021 extends PolymerElement {
   static get properties() {
     return {
       embedded: Boolean,
-      useWebkitGTK: Boolean,
       stable: Boolean,
       feature: String,
       featureKeys: {
@@ -551,7 +546,7 @@ class Compat2021 extends PolymerElement {
 
   static get observers() {
     return [
-      'updateUrlParams(embedded, useWebKitGTK, stable, feature)',
+      'updateUrlParams(embedded, stable, feature)',
     ];
   }
 
@@ -562,7 +557,6 @@ class Compat2021 extends PolymerElement {
 
     const params = (new URL(document.location)).searchParams;
     this.embedded = params.get('embedded') !== null;
-    this.useWebKitGTK = params.get('use_webkitgtk') !== null;
     // The default view of the page is the summary scores graph for
     // experimental releases of browsers.
     this.stable = params.get('stable') !== null;
@@ -576,7 +570,7 @@ class Compat2021 extends PolymerElement {
     });
   }
 
-  updateUrlParams(embedded, useWebKitGTK, stable, feature) {
+  updateUrlParams(embedded, stable, feature) {
     // Our observer may be called before the feature is set, so debounce that.
     if (feature === undefined) {
       return;
@@ -591,9 +585,6 @@ class Compat2021 extends PolymerElement {
     }
     if (embedded) {
       params.push('embedded');
-    }
-    if (useWebKitGTK) {
-      params.push('use_webkitgtk');
     }
 
     let url = location.pathname;
