@@ -10,6 +10,7 @@ import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
 
 // const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
 const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/foolip/wpt-results-analysis'
@@ -24,17 +25,17 @@ const FEATURES = {
     spec: 'https://www.w3.org/TR/css-sizing-4/#aspect-ratio',
     tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-aspect-ratio',
   },
-  'css-flexbox': {
+  'flexbox': {
     mdn: 'https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox',
     spec: 'https://www.w3.org/TR/css-flexbox-1/',
     tests: 'https://wpt.fyi/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-flexbox',
   },
-  'css-grid': {
+  'grid': {
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/grid',
     spec: 'https://www.w3.org/TR/css-grid-1/',
     tests: 'https://wpt.fyi/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-grid',
   },
-  'css-transforms': {
+  'transforms': {
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/transform',
     spec: 'https://www.w3.org/TR/css-transforms-2/#transform-functions',
     tests: 'https://wpt.fyi/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-transforms',
@@ -44,7 +45,7 @@ const FEATURES = {
     spec: 'https://www.w3.org/TR/css-position/#position-property',
     tests: 'https://wpt.fyi/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-position-sticky',
   },
-  '@layer': {
+  'cascade': {
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/@layer',
     spec: 'https://www.w3.org/TR/css-cascade-5/#layering',
     tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=layer',
@@ -89,7 +90,7 @@ const FEATURES = {
     spec: '',
     tests: 'https://wpt.fyi/results/css/css-values/viewport-units-parsing.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
   },
-  'meta-webcompat': {
+  'webcompat': {
     mdn: '',
     spec: '',
     tests: 'https://wpt.fyi/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-webcompat',
@@ -321,10 +322,15 @@ class Compat2021 extends PolymerElement {
 
         .score-table .browser-icons {
           display: flex;
+          justify-content: flex-end;
         }
 
         .score-table tr > th:first-of-type {
           width: 20ch;
+        }
+
+        .score-table tr > :is(td,th):not(:first-of-type) {
+          text-align: right;
         }
 
         .score-table td {
@@ -332,16 +338,26 @@ class Compat2021 extends PolymerElement {
         }
 
         .score-table :is(tfoot,thead) {
-          height: 4ch;
+          height: 5ch;
           vertical-align: middle;
         }
 
         .score-table tfoot th {
           border-top: 1px solid GrayText;
+          text-align: right;
         }
 
         .score-table tbody > tr:nth-child(even) {
           background: hsl(0 0% 0% / 5%);
+        }
+
+        .score-table tbody > tr:is(:first-of-type, :last-of-type) {
+          height: 4ch;
+          vertical-align: bottom;
+        }
+
+        .score-table tbody > tr:last-of-type {
+          vertical-align: top;
         }
 
         details, summary {
@@ -399,11 +415,11 @@ class Compat2021 extends PolymerElement {
       <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
       
       <div class="score-details">
-        <details>
+        <details open>
           <summary>How is this score calculated?</summary>
 
           <div class="table-card">
-            <table class="score-table">
+            <table id="score-table" class="score-table">
               <thead>
                 <tr>
                   <th>Interop Feature</th>
@@ -449,20 +465,20 @@ class Compat2021 extends PolymerElement {
               </thead>
               <tbody>
                 <template is="dom-repeat" items="{{featureKeys}}">
-                  <tr>
-                    <td>{{item}}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                  <tr data-feature$="[[item]]">
+                    <td>[[item]]</td>
+                    <td>[[getBrowserScoreForFeature(0, item)]]</td>
+                    <td>[[getBrowserScoreForFeature(1, item)]]</td>
+                    <td>[[getBrowserScoreForFeature(2, item)]]</td>
                   </tr>
                 </template>
               </tbody>
               <tfoot>
                 <tr>
-                  <th><b>totals</b></th>
-                  <th>90%</th>
-                  <th>90%</th>
-                  <th>90%</th>
+                  <th><b>TOTAL</b></th>
+                  <th>[[getBrowserScoreTotal(0)]]</th>
+                  <th>[[getBrowserScoreTotal(1)]]</th>
+                  <th>[[getBrowserScoreTotal(2)]]</th>
                 </tr>
               </tfoot>
             </table>
@@ -539,10 +555,11 @@ class Compat2021 extends PolymerElement {
       featureKeys: {
         type: Array,
         value() {
-          return Object.keys(FEATURES)
+          return Object.keys(FEATURES);
         }
       },
       dataManager: Object,
+      scores: Object,
     };
   }
 
@@ -552,24 +569,41 @@ class Compat2021 extends PolymerElement {
     ];
   }
 
-  ready() {
-    super.ready();
+  async ready() {
+    const params = (new URL(document.location)).searchParams;
 
+    this.stable = params.get('stable') !== null;
+    this.scores = await calculateSummaryScores(this.stable);
     this.dataManager = new Compat2021DataManager();
 
-    const params = (new URL(document.location)).searchParams;
+    super.ready();
+
     this.embedded = params.get('embedded') !== null;
     // The default view of the page is the summary scores graph for
     // experimental releases of browsers.
-    this.stable = params.get('stable') !== null;
     this.feature = params.get('feature') || SUMMARY_FEATURE_NAME;
     this.featureLinks = FEATURES[params.get('feature')];
 
     this.$.featureSelect.value = this.feature;
-    this.$.featureSelect.addEventListener('change', () => {
+    this.$.featureSelect.addEventListener('change', async () => {
+      this.scores = await calculateSummaryScores(this.stable);
       this.feature = this.$.featureSelect.value;
       this.featureLinks = FEATURES[this.$.featureSelect.value];
     });
+  }
+
+  getBrowserScoreForFeature(browserIndex, feature) {
+    let featureScore = 
+      this.scores[browserIndex].breakdown.get(`interop-2021-${feature}`)?.toString() 
+      || 
+      this.scores[browserIndex].breakdown.get(`interop-2022-${feature}`)?.toString() 
+      || 
+      "?"
+    return featureScore
+  }
+
+  getBrowserScoreTotal(browserIndex) {
+    return this.scores[browserIndex].total / 10 + '%'
   }
 
   updateUrlParams(embedded, stable, feature) {
@@ -594,6 +628,10 @@ class Compat2021 extends PolymerElement {
       url += `?${params.join('&')}`;
     }
     history.pushState('', '', url);
+  }
+
+  updateScoreTable() {
+    this.scores = calculateSummaryScores(this.stable);
   }
 
   experimentalButtonClass(stable) {
@@ -683,33 +721,6 @@ class Compat2021Summary extends PolymerElement {
         .summary-browser-name:not([data-stable-browsers]) > .stable {
           display: none;
         }
-
-        /*.summary-flex-item:hover .summary-tooltip,
-        .summary-flex-item:focus .summary-tooltip {
-          display: block;
-        }*/
-
-        .summary-tooltip {
-          display: none;
-          position: absolute;
-          /* TODO: find a better solution for drawing on-top of other numbers */
-          z-index: 1;
-          width: 150px;
-          border: 1px InactiveBorder solid;
-          background: Canvas;
-          border-radius: 3px;
-          padding: 10px;
-          top: 105%;
-          left: -20%;
-          padding: 1rem 1.25rem;
-          line-height: 1.4;
-          box-shadow: var(--shadow-elevation-16dp_-_box-shadow);
-        }
-
-        .summary-tooltip > div {
-          display: flex;
-          justify-content: space-between;
-        }
       </style>
 
       <div id="summaryContainer">
@@ -782,75 +793,15 @@ class Compat2021Summary extends PolymerElement {
   }
 
   async updateSummaryScores() {
-    let scores = await this.calculateSummaryScores(this.stable);
+    let scores = await calculateSummaryScores(this.stable);
     let numbers = this.$.summaryContainer.querySelectorAll('.summary-number');
     let tooltips = this.$.summaryContainer.querySelectorAll('.summary-tooltip');
     for (let i = 0; i < scores.length; i++) {
       let score = Math.floor(scores[i].total / 10);
-      numbers[i].innerText = score;
+      new CountUp(numbers[i], score).start();
       numbers[i].style.color = this.calculateColor(score)[0];
       numbers[i].style.backgroundColor = this.calculateColor(score)[1];
-
-      // TODO: Replace tooltips with paper-tooltip.
-      this.updateSummaryTooltip(tooltips[i], scores[i].breakdown);
     }
-  }
-
-  updateSummaryTooltip(tooltipDiv, scoreBreakdown) {
-    tooltipDiv.innerHTML = '';
-
-    scoreBreakdown.forEach((val, key) => {
-      const score = val / 10; // Scale to 0-100
-      const keySpan = document.createElement('a');
-      keySpan.href = '#' // todo: make real links
-      keySpan.innerText = `${key}: `;
-      const valueSpan = document.createElement('span');
-      valueSpan.innerText = score;
-      valueSpan.style.color = this.calculateColor(score)[0];
-
-      const textDiv = document.createElement('div');
-      textDiv.appendChild(keySpan);
-      textDiv.appendChild(valueSpan);
-
-      tooltipDiv.appendChild(textDiv);
-    });
-  }
-
-  async calculateSummaryScores(stable) {
-    const label = stable ? 'stable' : 'experimental';
-    const url = `${GITHUB_URL_PREFIX}/${DATA_BRANCH}/${DATA_FILES_PATH}/summary-${label}.csv`;
-    const csvLines = await fetchCsvContents(url);
-
-    if (csvLines.length !== 15) {
-      throw new Error(`${url} did not contain 15 results`);
-    }
-
-    let scores = [
-      { total: 0, breakdown: new Map() },
-      { total: 0, breakdown: new Map() },
-      { total: 0, breakdown: new Map() },
-    ];
-
-    for (const line of csvLines) {
-      let parts = line.split(',');
-      if (parts.length !== 4) {
-        throw new Error(`${url} had an invalid line`);
-      }
-
-      const feature = parts.shift();
-      for (let i = 0; i < parts.length; i++) {
-        let contribution = parseInt(parts[i]);
-        scores[i].total += contribution;
-        scores[i].breakdown.set(feature, contribution);
-      }
-    }
-
-    // Divide totals by number of areas (15)
-    for (let i = 0; i < scores.length; i++) {
-      scores[i].total = Math.floor(scores[i].total / csvLines.length);
-    }
-
-    return scores;
   }
 
   // TODO: Reuse the code from wpt-colors.js
@@ -1129,4 +1080,41 @@ async function fetchCsvContents(url) {
   const csvLines = csvText.split('\n').filter(l => l);
   csvLines.shift();  // We don't need the CSV header.
   return csvLines;
+}
+
+async function calculateSummaryScores(stable) {
+  const label = stable ? 'stable' : 'experimental';
+  const url = `${GITHUB_URL_PREFIX}/${DATA_BRANCH}/${DATA_FILES_PATH}/summary-${label}.csv`;
+  const csvLines = await fetchCsvContents(url);
+
+  if (csvLines.length !== 15) {
+    throw new Error(`${url} did not contain 15 results`);
+  }
+
+  let scores = [
+    { total: 0, breakdown: new Map() },
+    { total: 0, breakdown: new Map() },
+    { total: 0, breakdown: new Map() },
+  ];
+
+  for (const line of csvLines) {
+    let parts = line.split(',');
+    if (parts.length !== 4) {
+      throw new Error(`${url} had an invalid line`);
+    }
+
+    const feature = parts.shift();
+    for (let i = 0; i < parts.length; i++) {
+      let contribution = parseInt(parts[i]);
+      scores[i].total += contribution;
+      scores[i].breakdown.set(feature, contribution);
+    }
+  }
+
+  // Divide totals by number of areas (15)
+  for (let i = 0; i < scores.length; i++) {
+    scores[i].total = Math.floor(scores[i].total / csvLines.length);
+  }
+
+  return scores;
 }
