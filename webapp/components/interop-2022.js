@@ -193,14 +193,12 @@ class Compat2021DataManager {
           newRows.get(feature).push(score);
           newRows.get(feature).push(tooltip);
 
-          // The summary scores are calculated as a x/100 score, where each
-          // feature is allowed to contribute up to 20 points. We use floor
-          // rather than round to avoid claiming the full 20 points until we
-          // are at 100%
           summaryScore += score;
         });
 
-        const summaryTooltip = this.createTooltip(browserName, version, summaryScore + '%');
+        summaryScore = Math.floor(summaryScore / 15);
+
+        const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
         newRows.get(SUMMARY_FEATURE_NAME).push(summaryScore);
         newRows.get(SUMMARY_FEATURE_NAME).push(summaryTooltip);
       }
@@ -223,7 +221,11 @@ class Compat2021DataManager {
   }
 
   createTooltip(browser, version, score) {
-    return `${score} passing \n${browser} ${version}`;
+    // The score is an integer in the range 0-1000, representing a percentage
+    // with one decimal point.
+    // TODO: format score with 1 decimal point if < 100 and otherwise
+    // no decimal point.
+    return `${score / 10}% passing \n${browser} ${version}`;
   }
 }
 
@@ -784,9 +786,10 @@ class Compat2021Summary extends PolymerElement {
     let numbers = this.$.summaryContainer.querySelectorAll('.summary-number');
     let tooltips = this.$.summaryContainer.querySelectorAll('.summary-tooltip');
     for (let i = 0; i < scores.length; i++) {
-      numbers[i].innerText = scores[i].total;
-      numbers[i].style.color = this.calculateColor(scores[i].total)[0];
-      numbers[i].style.backgroundColor = this.calculateColor(scores[i].total)[1];
+      let score = Math.floor(scores[i].total / 10);
+      numbers[i].innerText = score;
+      numbers[i].style.color = this.calculateColor(score)[0];
+      numbers[i].style.backgroundColor = this.calculateColor(score)[1];
 
       // TODO: Replace tooltips with paper-tooltip.
       this.updateSummaryTooltip(tooltips[i], scores[i].breakdown);
@@ -797,12 +800,13 @@ class Compat2021Summary extends PolymerElement {
     tooltipDiv.innerHTML = '';
 
     scoreBreakdown.forEach((val, key) => {
+      const score = val / 10; // Scale to 0-100
       const keySpan = document.createElement('a');
       keySpan.href = '#' // todo: make real links
       keySpan.innerText = `${key}: `;
       const valueSpan = document.createElement('span');
-      valueSpan.innerText = val;
-      valueSpan.style.color = this.calculateColor(val * 5)[0];  // Scale to 0-100
+      valueSpan.innerText = score;
+      valueSpan.style.color = this.calculateColor(score)[0];
 
       const textDiv = document.createElement('div');
       textDiv.appendChild(keySpan);
@@ -818,7 +822,7 @@ class Compat2021Summary extends PolymerElement {
     const csvLines = await fetchCsvContents(url);
 
     if (csvLines.length !== 15) {
-      throw new Error(`${url} did not contain 5 results`);
+      throw new Error(`${url} did not contain 15 results`);
     }
 
     let scores = [
@@ -835,12 +839,15 @@ class Compat2021Summary extends PolymerElement {
 
       const feature = parts.shift();
       for (let i = 0; i < parts.length; i++) {
-        // Use floor rather than round to avoid claiming the full 20 points until
-        // definitely there.
         let contribution = parseInt(parts[i]);
         scores[i].total += contribution;
         scores[i].breakdown.set(feature, contribution);
       }
+    }
+
+    // Divide totals by number of areas (15)
+    for (let i = 0; i < scores.length; i++) {
+      scores[i].total = Math.floor(scores[i].total / csvLines.length);
     }
 
     return scores;
@@ -1082,7 +1089,7 @@ class Compat2021FeatureChart extends PolymerElement {
           // is aspect-ratio, with a ~25% pass-rate on Safari STP, Safari
           // Stable, and Firefox Stable.
           min: 0.2,
-          max: 1,
+          max: 1000, // TODO: scale data instead
         }
       };
     }
