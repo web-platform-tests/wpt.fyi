@@ -181,8 +181,8 @@ class Interop2022DataManager {
 
       // Now handle each of the browsers. For each there is a version column,
       // then the scores for each of the features.
-      for (let i = 1; i < csvValues.length; i += 17) {
-        const browserIdx = Math.floor(i / 17);
+      for (let i = 1; i < csvValues.length; i += 16) {
+        const browserIdx = Math.floor(i / 16);
         const browserName = tooltipBrowserNames[browserIdx];
         const version = csvValues[i];
         browserVersions[browserIdx].push(version);
@@ -190,6 +190,9 @@ class Interop2022DataManager {
         let summaryScore = 0;
         Object.entries(FEATURES).forEach(([feature, feature_meta], j) => {
           const score = parseInt(csvValues[i + 1 + j]);
+          if (!(score >= 0 && score <= 1000)) {
+            throw new Error(`Expected score in 0-1000 range, got ${score}`);
+          }
           const tooltip = this.createTooltip(browserName, version, score);
           newRows.get(feature).push(score);
           newRows.get(feature).push(tooltip);
