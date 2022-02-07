@@ -833,8 +833,9 @@ class Interop2022Summary extends PolymerElement {
     for (let i = 0; i < this.scores.length; i++) {
       let score = Math.floor(this.scores[i][SUMMARY_FEATURE_NAME] / 10);
       new CountUp(numbers[i], score).start();
-      numbers[i].style.color = this.calculateColor(score)[0];
-      numbers[i].style.backgroundColor = this.calculateColor(score)[1];
+      const colors = this.calculateColor(score);
+      numbers[i].style.color = colors[0];
+      numbers[i].style.backgroundColor = colors[1];
     }
   }
 
