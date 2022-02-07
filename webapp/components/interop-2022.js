@@ -97,11 +97,11 @@ const FEATURES = {
   },
 }
 
-// Compat2021DataManager encapsulates the loading of the CSV data that backs
-// both the summary scores and graphs shown on the Compat 2021 dashboard. It
+// Interop2022DataManager encapsulates the loading of the CSV data that backs
+// both the summary scores and graphs shown on the Interop 2022 dashboard. It
 // fetches the CSV data, processes it into sets of datatables, and then caches
 // those tables for later use by the dashboard.
-class Compat2021DataManager {
+class Interop2022DataManager {
   constructor() {
     this._dataLoaded = load().then(() => {
       return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
@@ -230,10 +230,10 @@ class Compat2021DataManager {
   }
 }
 
-// Compat2021 is a custom element that holds the overall compat-2021 dashboard.
+// Interop2022 is a custom element that holds the overall interop-2022 dashboard.
 // The dashboard breaks down into top-level summary scores, a small description,
 // graphs per feature, and a table of currently tracked tests.
-class Compat2021 extends PolymerElement {
+class Interop2022 extends PolymerElement {
   static get template() {
     return html`
       <style>
@@ -404,16 +404,16 @@ class Compat2021 extends PolymerElement {
       </style>
       <h1>Interop Dashboard</h1>
       <p class="prose">
-        These scores represent how well browser engines are doing on <a href="#">Compat Focus Areas</a>, 
-        as measured by their <a href="/">wpt.fyi</a> test results. 
+        These scores represent how well browser engines are doing on 15 focus areas,
+        as measured by their <a href="/">wpt.fyi</a> test results.
       </p>
 
       <div class="channel-area">
         <paper-button class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
         <paper-button class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
       </div>
-      <compat-2021-summary stable="[[stable]]"></compat-2021-summary>
-      
+      <interop-2022-summary stable="[[stable]]"></interop-2022-summary>
+
       <div class="score-details">
         <details open>
           <summary>How is this score calculated?</summary>
@@ -426,33 +426,33 @@ class Compat2021 extends PolymerElement {
                   <th>
                     <template is="dom-if" if="[[stable]]">
                       <div class="browser-icons">
-                        <img src="/static/chrome_64x64.png" width="20" alt="Chrome" /> 
-                        <img src="/static/edge_64x64.png" width="20" alt="Edge" /> 
+                        <img src="/static/chrome_64x64.png" width="20" alt="Chrome" />
+                        <img src="/static/edge_64x64.png" width="20" alt="Edge" />
                       </div>
                     </template>
                     <template is="dom-if" if="[[!stable]]">
                       <div class="browser-icons">
-                        <img src="/static/chrome-canary_64x64.png" width="20" alt="Chrome Canary" /> 
-                        <img src="/static/edge-beta_64x64.png" width="20" alt="Edge Beta" /> 
+                        <img src="/static/chrome-canary_64x64.png" width="20" alt="Chrome Canary" />
+                        <img src="/static/edge-beta_64x64.png" width="20" alt="Edge Beta" />
                       </div>
                     </template>
                   </th>
                   <th>
                     <template is="dom-if" if="[[stable]]">
                       <div class="browser-icons">
-                        <img src="/static/firefox_64x64.png" width="20" alt="Firefox" /> 
+                        <img src="/static/firefox_64x64.png" width="20" alt="Firefox" />
                       </div>
                     </template>
                     <template is="dom-if" if="[[!stable]]">
                       <div class="browser-icons">
-                        <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" /> 
+                        <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" />
                       </div>
                     </template>
                   </th>
                   <th>
                     <template is="dom-if" if="[[stable]]">
                       <div class="browser-icons">
-                        <img src="/static/safari_64x64.png" width="20" alt="Safari" /> 
+                        <img src="/static/safari_64x64.png" width="20" alt="Safari" />
                       </div>
                     </template>
                     <template is="dom-if" if="[[!stable]]">
@@ -490,7 +490,7 @@ class Compat2021 extends PolymerElement {
         <h2 class="focus-area-header">Focus Areas</h2>
 
         <p class="prose">
-          Here you can see how focus areas are improving over time. 
+          Here you can see how focus areas are improving over time.
           The more tests that pass, the higher the score.
         </p>
 
@@ -521,15 +521,15 @@ class Compat2021 extends PolymerElement {
         </div>
 
         <div id="featureReferenceList">
-          <a href="{{featureLinks.spec}}" style$="display: [[getFeatureLinkVisibility(featureLinks.spec)]]">Spec</a> 
-          <a href="{{featureLinks.mdn}}" style$="display: [[getFeatureLinkVisibility(featureLinks.mdn)]]">MDN</a> 
+          <a href="{{featureLinks.spec}}" style$="display: [[getFeatureLinkVisibility(featureLinks.spec)]]">Spec</a>
+          <a href="{{featureLinks.mdn}}" style$="display: [[getFeatureLinkVisibility(featureLinks.mdn)]]">MDN</a>
           <a href="{{featureLinks.tests}}" style$="display: [[getFeatureLinkVisibility(featureLinks.tests)]]">Tests</a>
         </div>
 
-        <compat-2021-feature-chart data-manager="[[dataManager]]"
-                                   stable="[[stable]]"
-                                   feature="{{feature}}">
-        </compat-2021-feature-chart>
+        <interop-2022-feature-chart data-manager="[[dataManager]]"
+                                    stable="[[stable]]"
+                                    feature="{{feature}}">
+        </interop-2022-feature-chart>
       </section>
       <p id="testListText">
         The score for these components is determined by pass rate on their tests.
@@ -537,8 +537,8 @@ class Compat2021 extends PolymerElement {
         Please contribute changes to
         <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
         and then
-        <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
-        to add them to the 2022 Interop effort!
+        <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[interop-2022]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
+        to add them to the Interop 2022 effort!
       </p>
 `;
   }
@@ -574,7 +574,7 @@ class Compat2021 extends PolymerElement {
 
     this.stable = params.get('stable') !== null;
     this.scores = await calculateSummaryScores(this.stable);
-    this.dataManager = new Compat2021DataManager();
+    this.dataManager = new Interop2022DataManager();
 
     super.ready();
 
@@ -593,11 +593,11 @@ class Compat2021 extends PolymerElement {
   }
 
   getBrowserScoreForFeature(browserIndex, feature) {
-    let featureScore = 
-      this.scores[browserIndex].breakdown.get(`interop-2021-${feature}`)?.toString() 
-      || 
-      this.scores[browserIndex].breakdown.get(`interop-2022-${feature}`)?.toString() 
-      || 
+    let featureScore =
+      this.scores[browserIndex].breakdown.get(`interop-2021-${feature}`)?.toString()
+      ||
+      this.scores[browserIndex].breakdown.get(`interop-2022-${feature}`)?.toString()
+      ||
       "?"
     return featureScore
   }
@@ -659,12 +659,8 @@ class Compat2021 extends PolymerElement {
   getFeatureLinkVisibility(featureLink) {
     return featureLink ? 'inline' : 'none';
   }
-
-  getTestListHref(feature) {
-    return `${GITHUB_URL_PREFIX}/main/compat-2021/${feature}-tests.txt`;
-  }
 }
-window.customElements.define(Compat2021.is, Compat2021);
+window.customElements.define(Interop2022.is, Interop2022);
 
 const STABLE_TITLES = [
   'Chrome/Edge Stable',
@@ -678,7 +674,7 @@ const EXPERIMENTAL_TITLES = [
   'Safari Preview',
 ];
 
-class Compat2021Summary extends PolymerElement {
+class Interop2022Summary extends PolymerElement {
   static get template() {
     return html`
       <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -730,14 +726,14 @@ class Compat2021Summary extends PolymerElement {
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
-              <img src="/static/chrome_64x64.png" width="36" alt="Chrome" /> 
-              <img src="/static/edge_64x64.png" width="36" alt="Edge" /> 
+              <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
+              <img src="/static/edge_64x64.png" width="36" alt="Edge" />
             </div>
           </template>
           <template is="dom-if" if="[[!stable]]">
             <div class="summary-browser-name">
-              <img src="/static/chrome-canary_64x64.png" width="36" alt="Chrome Canary" /> 
-              <img src="/static/edge-beta_64x64.png" width="36" alt="Edge Beta" /> 
+              <img src="/static/chrome-canary_64x64.png" width="36" alt="Chrome Canary" />
+              <img src="/static/edge-beta_64x64.png" width="36" alt="Edge Beta" />
             </div>
           </template>
         </div>
@@ -747,12 +743,12 @@ class Compat2021Summary extends PolymerElement {
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
-              <img src="/static/firefox_64x64.png" width="36" alt="Firefox" /> 
+              <img src="/static/firefox_64x64.png" width="36" alt="Firefox" />
             </div>
           </template>
           <template is="dom-if" if="[[!stable]]">
             <div class="summary-browser-name">
-              <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" /> 
+              <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" />
             </div>
           </template>
         </div>
@@ -762,7 +758,7 @@ class Compat2021Summary extends PolymerElement {
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
-              <img src="/static/safari_64x64.png" width="36" alt="Safari" /> 
+              <img src="/static/safari_64x64.png" width="36" alt="Safari" />
             </div>
           </template>
           <template is="dom-if" if="[[!stable]]">
@@ -776,7 +772,7 @@ class Compat2021Summary extends PolymerElement {
   }
 
   static get is() {
-    return 'compat-2021-summary';
+    return 'interop-2022-summary';
   }
 
   static get properties() {
@@ -822,13 +818,13 @@ class Compat2021Summary extends PolymerElement {
     return ['#ee2b2b', '#ff050526']; // Red 700
   }
 }
-window.customElements.define(Compat2021Summary.is, Compat2021Summary);
+window.customElements.define(Interop2022Summary.is, Interop2022Summary);
 
-// Compat2021FeatureChart is a wrapper around a Google Charts chart. We cannot
+// Interop2022FeatureChart is a wrapper around a Google Charts chart. We cannot
 // use the polymer google-chart element as it does not support setting tooltip
 // actions, which we rely on to let users load a changelog between subsequent
 // versions of the same browser.
-class Compat2021FeatureChart extends PolymerElement {
+class Interop2022FeatureChart extends PolymerElement {
   static get template() {
     return html`
       <style>
@@ -907,7 +903,7 @@ class Compat2021FeatureChart extends PolymerElement {
   }
 
   static get is() {
-    return 'compat-2021-feature-chart';
+    return 'interop-2022-feature-chart';
   }
 
   ready() {
@@ -1024,7 +1020,7 @@ class Compat2021FeatureChart extends PolymerElement {
 
     if (feature === SUMMARY_FEATURE_NAME) {
       options.vAxis = {
-        title: 'Compat 2021 Score',
+        title: 'Interop 2022 Score',
         viewWindow: {
           min: 50,
           max: 100,
@@ -1069,7 +1065,7 @@ class Compat2021FeatureChart extends PolymerElement {
     return options;
   }
 }
-window.customElements.define(Compat2021FeatureChart.is, Compat2021FeatureChart);
+window.customElements.define(Interop2022FeatureChart.is, Interop2022FeatureChart);
 
 async function fetchCsvContents(url) {
   const csvResp = await fetch(url);
