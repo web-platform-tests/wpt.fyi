@@ -455,7 +455,7 @@ class Interop2022 extends PolymerElement {
       <interop-2022-summary scores="[[scores]]" stable="[[stable]]"></interop-2022-summary>
 
       <div class="score-details">
-        <details open>
+        <details>
           <summary>How is this score calculated?</summary>
 
           <div class="table-card">
