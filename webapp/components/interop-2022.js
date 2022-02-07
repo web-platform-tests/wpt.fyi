@@ -506,19 +506,19 @@ class Interop2022 extends PolymerElement {
               <tbody>
                 <template is="dom-repeat" items="{{featureKeys}}">
                   <tr data-feature$="[[item]]">
-                    <td>[[getFeatureName(item)]]</td>
-                    <td>[[getBrowserScoreForFeature(0, item)]]</td>
-                    <td>[[getBrowserScoreForFeature(1, item)]]</td>
-                    <td>[[getBrowserScoreForFeature(2, item)]]</td>
+                    <td>[[getFeatureName(item, stable)]]</td>
+                    <td>[[getBrowserScoreForFeature(0, item, stable)]]</td>
+                    <td>[[getBrowserScoreForFeature(1, item, stable)]]</td>
+                    <td>[[getBrowserScoreForFeature(2, item, stable)]]</td>
                   </tr>
                 </template>
               </tbody>
               <tfoot>
                 <tr>
                   <th><b>TOTAL</b></th>
-                  <th>[[getBrowserScoreTotal(0)]]</th>
-                  <th>[[getBrowserScoreTotal(1)]]</th>
-                  <th>[[getBrowserScoreTotal(2)]]</th>
+                  <th>[[getBrowserScoreTotal(0, stable)]]</th>
+                  <th>[[getBrowserScoreTotal(1, stable)]]</th>
+                  <th>[[getBrowserScoreTotal(2, stable)]]</th>
                 </tr>
               </tfoot>
             </table>
@@ -606,6 +606,7 @@ class Interop2022 extends PolymerElement {
   static get observers() {
     return [
       'updateUrlParams(embedded, stable, feature)',
+      'updateScoresTable(stable)',
     ];
   }
 
@@ -646,6 +647,10 @@ class Interop2022 extends PolymerElement {
 
   getBrowserScoreTotal(browserIndex) {
     return this.getBrowserScoreForFeature(browserIndex, SUMMARY_FEATURE_NAME);
+  }
+
+  async updateScoresTable(stable) {
+    this.scores = await this.dataManager.getMostRecentScores(stable);
   }
 
   updateUrlParams(embedded, stable, feature) {
