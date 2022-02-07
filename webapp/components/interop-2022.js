@@ -20,77 +20,92 @@ const DATA_FILES_PATH = 'data/interop-2022';
 const SUMMARY_FEATURE_NAME = 'summary';
 
 const FEATURES = {
-  'aspect-ratio': {
+  'interop-2021-aspect-ratio': {
+    description: 'aspect-ratio',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/aspect-ratio',
     spec: 'https://www.w3.org/TR/css-sizing-4/#aspect-ratio',
     tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-aspect-ratio',
   },
-  'flexbox': {
+  'interop-2021-flexbox': {
+    description: 'Flexbox',
     mdn: 'https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox',
     spec: 'https://www.w3.org/TR/css-flexbox-1/',
     tests: 'https://wpt.fyi/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-flexbox',
   },
-  'grid': {
+  'interop-2021-grid': {
+    description: 'Grid',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/grid',
     spec: 'https://www.w3.org/TR/css-grid-1/',
     tests: 'https://wpt.fyi/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-grid',
   },
-  'transforms': {
+  'interop-2021-transforms': {
+    description: 'Transforms',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/transform',
     spec: 'https://www.w3.org/TR/css-transforms-2/#transform-functions',
     tests: 'https://wpt.fyi/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-transforms',
   },
-  'position-sticky': {
+  'interop-2021-position-sticky': {
+    description: 'position: sticky',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/position',
     spec: 'https://www.w3.org/TR/css-position/#position-property',
     tests: 'https://wpt.fyi/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-position-sticky',
   },
-  'cascade': {
+  'interop-2022-cascade': {
+    description: 'Cascade Layers',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/@layer',
     spec: 'https://www.w3.org/TR/css-cascade-5/#layering',
     tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=layer',
   },
-  'color': {
+  'interop-2022-color': {
+    description: 'color()',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value/color()',
     spec: 'https://www.w3.org/TR/css-color-5/',
     tests: 'https://wpt.fyi/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-color',
   },
-  'contain': {
+  'interop-2022-contain': {
+    description: 'Containment',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/contain',
     spec: 'https://www.w3.org/TR/css-contain/#contain-property',
     tests: 'https://wpt.fyi/results/css/css-contain?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-contain',
   },
-  'dialog': {
+  'interop-2022-dialog': {
+    description: '<dialog> and ::backdrop',
     mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/dialog',
     spec: 'https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element',
     tests: 'https://wpt.fyi/results/html/semantics/interactive-elements/the-dialog-element?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-dialog',
   },
-  'forms': {
+  'interop-2022-forms': {
+    description: 'Forms',
     mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/form',
     spec: 'https://html.spec.whatwg.org/multipage/forms.html#the-form-element',
     tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-forms',
   },
-  'scrolling': {
+  'interop-2022-scrolling': {
+    description: 'Scrolling',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/overflow',
     spec: 'https://www.w3.org/TR/css-overflow/#propdef-overflow',
     tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-scrolling',
   },
-  'subgrid': {
+  'interop-2022-subgrid': {
+    description: 'Subgrid',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout/Subgrid',
     spec: 'https://www.w3.org/TR/css-grid-2/',
     tests: 'https://wpt.fyi/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-subgrid',
   },
-  'text': {
+  'interop-2022-text': {
+    description: 'Text',
     mdn: '',
     spec: '',
     tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-text',
   },
-  'viewport': {
+  'interop-2022-viewport': {
+    description: 'Viewport',
     mdn: '',
     spec: '',
     tests: 'https://wpt.fyi/results/css/css-values/viewport-units-parsing.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
   },
-  'webcompat': {
+  'interop-2022-webcompat': {
+    description: 'Web Compat',
     mdn: '',
     spec: '',
     tests: 'https://wpt.fyi/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-webcompat',
@@ -116,6 +131,28 @@ class Interop2022DataManager {
     return stable ?
       this.stableDatatables.get(feature) :
       this.experimentalDatatables.get(feature);
+  }
+
+  // Fetches the most recent scores from the datatables for display as summary
+  // numbers and tables. Scores are represented as an array of objects, where
+  // the object is a feature->score mapping.
+  async getMostRecentScores(stable) {
+    await this._dataLoaded;
+    const dataTables = stable ? this.stableDatatables : this.experimentalDatatables;
+
+    const scores = [{}, {}, {}];
+    for (const feature of [SUMMARY_FEATURE_NAME, ...Object.keys(FEATURES)]) {
+      const dataTable = dataTables.get(feature);
+      // Assumption: The rows are ordered by dates with the most recent entry last.
+      const lastRowIndex = dataTable.getNumberOfRows() - 1;
+
+      // The order of these needs to be in sync with the markup.
+      scores[0][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Chrome/Edge'));
+      scores[1][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Firefox'));
+      scores[2][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Safari'));
+    }
+
+    return scores;
   }
 
   // Fetches a list of browser versions for stable or experimental. This is a
@@ -415,7 +452,7 @@ class Interop2022 extends PolymerElement {
         <paper-button class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
         <paper-button class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
       </div>
-      <interop-2022-summary stable="[[stable]]"></interop-2022-summary>
+      <interop-2022-summary scores="[[scores]]" stable="[[stable]]"></interop-2022-summary>
 
       <div class="score-details">
         <details open>
@@ -425,7 +462,7 @@ class Interop2022 extends PolymerElement {
             <table id="score-table" class="score-table">
               <thead>
                 <tr>
-                  <th>Interop Feature</th>
+                  <th>Focus Area</th>
                   <th>
                     <template is="dom-if" if="[[stable]]">
                       <div class="browser-icons">
@@ -469,7 +506,7 @@ class Interop2022 extends PolymerElement {
               <tbody>
                 <template is="dom-repeat" items="{{featureKeys}}">
                   <tr data-feature$="[[item]]">
-                    <td>[[item]]</td>
+                    <td>[[getFeatureName(item)]]</td>
                     <td>[[getBrowserScoreForFeature(0, item)]]</td>
                     <td>[[getBrowserScoreForFeature(1, item)]]</td>
                     <td>[[getBrowserScoreForFeature(2, item)]]</td>
@@ -502,23 +539,23 @@ class Interop2022 extends PolymerElement {
           <select id="featureSelect">
             <option value="summary">Summary</option>
             <optgroup label="2022">
-              <option value="@layer">Cascade layers</option>
-              <option value="color">Color 4 and 5</option>
-              <option value="contain">Containment</option>
-              <option value="dialog">Dialog and ::backdrop</option>
-              <option value="forms">Forms</option>
-              <option value="scrolling">Scrolling</option>
-              <option value="subgrid">Subgrid</option>
-              <option value="text">Text</option>
-              <option value="viewport">Viewport</option>
-              <option value="webcompat">WebCompat</option>
+              <option value="interop-2022-cascade">Cascade Layers</option>
+              <option value="interop-2022-color">Color 4 and 5</option>
+              <option value="interop-2022-contain">Containment</option>
+              <option value="interop-2022-dialog">&lt;dialog> and ::backdrop</option>
+              <option value="interop-2022-forms">Forms</option>
+              <option value="interop-2022-scrolling">Scrolling</option>
+              <option value="interop-2022-subgrid">Subgrid</option>
+              <option value="interop-2022-text">Text</option>
+              <option value="interop-2022-viewport">Viewport</option>
+              <option value="interop-2022-webcompat">Web Compat</option>
             </optgroup>
             <optgroup label="2021">
-              <option value="aspect-ratio">aspect-ratio</option>
-              <option value="css-flexbox">css-flexbox</option>
-              <option value="css-grid">css-grid</option>
-              <option value="css-transforms">css-transforms</option>
-              <option value="position-sticky">position-sticky</option>
+              <option value="interop-2021-aspect-ratio">aspect-ratio</option>
+              <option value="interop-2021-flexbox">Flexbox</option>
+              <option value="interop-2021-grid">Grid</option>
+              <option value="interop-2021-transforms">Transforms</option>
+              <option value="interop-2021-position-sticky">position: sticky</option>
             </optgroup>
           </select>
         </div>
@@ -576,8 +613,9 @@ class Interop2022 extends PolymerElement {
     const params = (new URL(document.location)).searchParams;
 
     this.stable = params.get('stable') !== null;
-    this.scores = await calculateSummaryScores(this.stable);
     this.dataManager = new Interop2022DataManager();
+    // TODO: update when stable changes
+    this.scores = await this.dataManager.getMostRecentScores(this.stable);
 
     super.ready();
 
@@ -589,24 +627,25 @@ class Interop2022 extends PolymerElement {
 
     this.$.featureSelect.value = this.feature;
     this.$.featureSelect.addEventListener('change', async () => {
-      this.scores = await calculateSummaryScores(this.stable);
       this.feature = this.$.featureSelect.value;
       this.featureLinks = FEATURES[this.$.featureSelect.value];
     });
   }
 
+  getFeatureName(feature) {
+    return FEATURES[feature].description;
+  }
+
   getBrowserScoreForFeature(browserIndex, feature) {
-    let featureScore =
-      this.scores[browserIndex].breakdown.get(`interop-2021-${feature}`)?.toString()
-      ||
-      this.scores[browserIndex].breakdown.get(`interop-2022-${feature}`)?.toString()
-      ||
-      "?"
-    return featureScore
+    const score = this.scores[browserIndex][feature];
+    if (score === 1000) {
+      return '100%';
+    }
+    return `${(score / 10).toFixed(1)}%`;
   }
 
   getBrowserScoreTotal(browserIndex) {
-    return this.scores[browserIndex].total / 10 + '%'
+    return this.getBrowserScoreForFeature(browserIndex, SUMMARY_FEATURE_NAME);
   }
 
   updateUrlParams(embedded, stable, feature) {
@@ -631,10 +670,6 @@ class Interop2022 extends PolymerElement {
       url += `?${params.join('&')}`;
     }
     history.pushState('', '', url);
-  }
-
-  updateScoreTable() {
-    this.scores = calculateSummaryScores(this.stable);
   }
 
   experimentalButtonClass(stable) {
@@ -725,7 +760,6 @@ class Interop2022Summary extends PolymerElement {
       <div id="summaryContainer">
         <!-- Chrome/Edge -->
         <div class="summary-flex-item" tabindex="0">
-          <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
@@ -742,7 +776,6 @@ class Interop2022Summary extends PolymerElement {
         </div>
         <!-- Firefox -->
         <div class="summary-flex-item" tabindex="0">
-          <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
@@ -757,7 +790,6 @@ class Interop2022Summary extends PolymerElement {
         </div>
         <!-- Safari -->
         <div class="summary-flex-item" tabindex="0">
-          <span class="summary-tooltip"></span>
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
@@ -780,6 +812,8 @@ class Interop2022Summary extends PolymerElement {
 
   static get properties() {
     return {
+      // TODO: this isn't updated when stable changes
+      scores: Object,
       stable: {
         type: Boolean,
         observer: '_stableChanged',
@@ -792,11 +826,12 @@ class Interop2022Summary extends PolymerElement {
   }
 
   async updateSummaryScores() {
-    let scores = await calculateSummaryScores(this.stable);
     let numbers = this.$.summaryContainer.querySelectorAll('.summary-number');
-    let tooltips = this.$.summaryContainer.querySelectorAll('.summary-tooltip');
-    for (let i = 0; i < scores.length; i++) {
-      let score = Math.floor(scores[i].total / 10);
+    if (numbers.length !== this.scores.length) {
+      throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
+    }
+    for (let i = 0; i < this.scores.length; i++) {
+      let score = Math.floor(this.scores[i][SUMMARY_FEATURE_NAME] / 10);
       new CountUp(numbers[i], score).start();
       numbers[i].style.color = this.calculateColor(score)[0];
       numbers[i].style.backgroundColor = this.calculateColor(score)[1];
@@ -1079,41 +1114,4 @@ async function fetchCsvContents(url) {
   const csvLines = csvText.split('\n').filter(l => l);
   csvLines.shift();  // We don't need the CSV header.
   return csvLines;
-}
-
-async function calculateSummaryScores(stable) {
-  const label = stable ? 'stable' : 'experimental';
-  const url = `${GITHUB_URL_PREFIX}/${DATA_BRANCH}/${DATA_FILES_PATH}/summary-${label}.csv`;
-  const csvLines = await fetchCsvContents(url);
-
-  if (csvLines.length !== 15) {
-    throw new Error(`${url} did not contain 15 results`);
-  }
-
-  let scores = [
-    { total: 0, breakdown: new Map() },
-    { total: 0, breakdown: new Map() },
-    { total: 0, breakdown: new Map() },
-  ];
-
-  for (const line of csvLines) {
-    let parts = line.split(',');
-    if (parts.length !== 4) {
-      throw new Error(`${url} had an invalid line`);
-    }
-
-    const feature = parts.shift();
-    for (let i = 0; i < parts.length; i++) {
-      let contribution = parseInt(parts[i]);
-      scores[i].total += contribution;
-      scores[i].breakdown.set(feature, contribution);
-    }
-  }
-
-  // Divide totals by number of areas (15)
-  for (let i = 0; i < scores.length; i++) {
-    scores[i].total = Math.floor(scores[i].total / csvLines.length);
-  }
-
-  return scores;
 }
