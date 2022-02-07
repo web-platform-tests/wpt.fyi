@@ -402,7 +402,7 @@ class Interop2022 extends PolymerElement {
           }
         }
       </style>
-      <h1>Interop Dashboard</h1>
+      <h1>Interop 2022 Dashboard</h1>
       <p class="prose">
         These scores represent how well browser engines are doing on 15 focus areas,
         as measured by their <a href="/">wpt.fyi</a> test results.
