@@ -57,8 +57,8 @@ const FEATURES = {
     tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=layer',
   },
   'interop-2022-color': {
-    description: 'color()',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value/color()',
+    description: 'Color',
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value',
     spec: 'https://drafts.csswg.org/css-color/',
     tests: 'https://wpt.fyi/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-color',
   },
@@ -540,7 +540,7 @@ class Interop2022 extends PolymerElement {
             <option value="summary">Summary</option>
             <optgroup label="2022">
               <option value="interop-2022-cascade">Cascade Layers</option>
-              <option value="interop-2022-color">Color 4 and 5</option>
+              <option value="interop-2022-color">Color</option>
               <option value="interop-2022-contain">Containment</option>
               <option value="interop-2022-dialog">&lt;dialog> and ::backdrop</option>
               <option value="interop-2022-forms">Forms</option>
