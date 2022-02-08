@@ -12,7 +12,7 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/v33/github"
+	github "github.com/google/go-github/v42/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
