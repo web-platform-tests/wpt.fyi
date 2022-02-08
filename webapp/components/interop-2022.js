@@ -660,7 +660,7 @@ class Interop2022 extends PolymerElement {
     }
 
     const params = [];
-    if (feature) {
+    if (feature && feature !== SUMMARY_FEATURE_NAME) {
       params.push(`feature=${feature}`);
     }
     if (stable) {
