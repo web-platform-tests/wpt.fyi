@@ -15,7 +15,6 @@
 SHELL := /bin/bash
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-WPT_PATH := $(dir $(WPTD_PATH)../)
 NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
 FIREFOX_PATH := /usr/bin/firefox
 CHROME_PATH := /usr/bin/google-chrome
