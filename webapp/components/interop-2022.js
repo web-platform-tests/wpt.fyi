@@ -705,18 +705,6 @@ class Interop2022 extends PolymerElement {
 }
 window.customElements.define(Interop2022.is, Interop2022);
 
-const STABLE_TITLES = [
-  'Chrome/Edge Stable',
-  'Firefox Stable',
-  'Safari Stable',
-];
-
-const EXPERIMENTAL_TITLES = [
-  'Chrome/Edge Dev',
-  'Firefox Nightly',
-  'Safari Preview',
-];
-
 class Interop2022Summary extends PolymerElement {
   static get template() {
     return html`
