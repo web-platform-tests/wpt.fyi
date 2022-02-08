@@ -21,7 +21,7 @@ const SUMMARY_FEATURE_NAME = 'summary';
 
 const FEATURES = {
   'interop-2021-aspect-ratio': {
-    description: 'aspect-ratio',
+    description: 'Aspect Ratio',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/aspect-ratio',
     spec: 'https://www.w3.org/TR/css-sizing-4/#aspect-ratio',
     tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-aspect-ratio',
@@ -38,17 +38,17 @@ const FEATURES = {
     spec: 'https://www.w3.org/TR/css-grid-1/',
     tests: 'https://wpt.fyi/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-grid',
   },
-  'interop-2021-transforms': {
-    description: 'Transforms',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/transform',
-    spec: 'https://www.w3.org/TR/css-transforms-2/#transform-functions',
-    tests: 'https://wpt.fyi/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-transforms',
-  },
   'interop-2021-position-sticky': {
     description: 'position: sticky',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/position',
     spec: 'https://www.w3.org/TR/css-position/#position-property',
     tests: 'https://wpt.fyi/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-position-sticky',
+  },
+  'interop-2021-transforms': {
+    description: 'Transforms',
+    mdn: 'https://developer.mozilla.org/docs/Web/CSS/transform',
+    spec: 'https://www.w3.org/TR/css-transforms-2/#transform-functions',
+    tests: 'https://wpt.fyi/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-transforms',
   },
   'interop-2022-cascade': {
     description: 'Cascade Layers',
@@ -551,11 +551,11 @@ class Interop2022 extends PolymerElement {
               <option value="interop-2022-webcompat">Web Compat</option>
             </optgroup>
             <optgroup label="2021">
-              <option value="interop-2021-aspect-ratio">aspect-ratio</option>
+              <option value="interop-2021-aspect-ratio">Aspect Ratio</option>
               <option value="interop-2021-flexbox">Flexbox</option>
               <option value="interop-2021-grid">Grid</option>
-              <option value="interop-2021-transforms">Transforms</option>
               <option value="interop-2021-position-sticky">position: sticky</option>
+              <option value="interop-2021-transforms">Transforms</option>
             </optgroup>
           </select>
         </div>
