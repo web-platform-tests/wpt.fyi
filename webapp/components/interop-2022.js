@@ -23,49 +23,49 @@ const FEATURES = {
   'interop-2021-aspect-ratio': {
     description: 'Aspect Ratio',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/aspect-ratio',
-    spec: 'https://www.w3.org/TR/css-sizing-4/#aspect-ratio',
+    spec: 'https://drafts.csswg.org/css-sizing/#aspect-ratio',
     tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-aspect-ratio',
   },
   'interop-2021-flexbox': {
     description: 'Flexbox',
     mdn: 'https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox',
-    spec: 'https://www.w3.org/TR/css-flexbox-1/',
+    spec: 'https://drafts.csswg.org/css-flexbox/',
     tests: 'https://wpt.fyi/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-flexbox',
   },
   'interop-2021-grid': {
     description: 'Grid',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/grid',
-    spec: 'https://www.w3.org/TR/css-grid-1/',
+    spec: 'https://drafts.csswg.org/css-grid-1/',
     tests: 'https://wpt.fyi/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-grid',
   },
   'interop-2021-position-sticky': {
     description: 'position: sticky',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/position',
-    spec: 'https://www.w3.org/TR/css-position/#position-property',
+    spec: 'https://drafts.csswg.org/css-position/#position-property',
     tests: 'https://wpt.fyi/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-position-sticky',
   },
   'interop-2021-transforms': {
     description: 'Transforms',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/transform',
-    spec: 'https://www.w3.org/TR/css-transforms-2/#transform-functions',
+    spec: 'https://drafts.csswg.org/css-transforms/',
     tests: 'https://wpt.fyi/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-transforms',
   },
   'interop-2022-cascade': {
     description: 'Cascade Layers',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/@layer',
-    spec: 'https://www.w3.org/TR/css-cascade-5/#layering',
+    spec: 'https://drafts.csswg.org/css-cascade/#layering',
     tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=layer',
   },
   'interop-2022-color': {
     description: 'color()',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value/color()',
-    spec: 'https://www.w3.org/TR/css-color-5/',
+    spec: 'https://drafts.csswg.org/css-color/',
     tests: 'https://wpt.fyi/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-color',
   },
   'interop-2022-contain': {
     description: 'Containment',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/contain',
-    spec: 'https://www.w3.org/TR/css-contain/#contain-property',
+    spec: 'https://drafts.csswg.org/css-contain/#contain-property',
     tests: 'https://wpt.fyi/results/css/css-contain?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-contain',
   },
   'interop-2022-dialog': {
@@ -83,13 +83,13 @@ const FEATURES = {
   'interop-2022-scrolling': {
     description: 'Scrolling',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/overflow',
-    spec: 'https://www.w3.org/TR/css-overflow/#propdef-overflow',
+    spec: 'https://drafts.csswg.org/css-overflow/#propdef-overflow',
     tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-scrolling',
   },
   'interop-2022-subgrid': {
     description: 'Subgrid',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout/Subgrid',
-    spec: 'https://www.w3.org/TR/css-grid-2/',
+    spec: 'https://drafts.csswg.org/css-grid-2/#subgrids',
     tests: 'https://wpt.fyi/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-subgrid',
   },
   'interop-2022-text': {
