@@ -5,36 +5,37 @@
 package mock_manifest
 
 import (
-	gomock "github.com/golang/mock/gomock"
-	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	reflect "reflect"
 	time "time"
+
+	gomock "github.com/golang/mock/gomock"
+	shared "github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// MockAPI is a mock of API interface
+// MockAPI is a mock of API interface.
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
 }
 
-// MockAPIMockRecorder is the mock recorder for MockAPI
+// MockAPIMockRecorder is the mock recorder for MockAPI.
 type MockAPIMockRecorder struct {
 	mock *MockAPI
 }
 
-// NewMockAPI creates a new mock instance
+// NewMockAPI creates a new mock instance.
 func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 	mock := &MockAPI{ctrl: ctrl}
 	mock.recorder = &MockAPIMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
-// GetManifestForSHA mocks base method
+// GetManifestForSHA mocks base method.
 func (m *MockAPI) GetManifestForSHA(arg0 string) (string, []byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetManifestForSHA", arg0)
@@ -44,13 +45,13 @@ func (m *MockAPI) GetManifestForSHA(arg0 string) (string, []byte, error) {
 	return ret0, ret1, ret2
 }
 
-// GetManifestForSHA indicates an expected call of GetManifestForSHA
+// GetManifestForSHA indicates an expected call of GetManifestForSHA.
 func (mr *MockAPIMockRecorder) GetManifestForSHA(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManifestForSHA", reflect.TypeOf((*MockAPI)(nil).GetManifestForSHA), arg0)
 }
 
-// NewRedis mocks base method
+// NewRedis mocks base method.
 func (m *MockAPI) NewRedis(arg0 time.Duration) shared.ReadWritable {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewRedis", arg0)
@@ -58,7 +59,7 @@ func (m *MockAPI) NewRedis(arg0 time.Duration) shared.ReadWritable {
 	return ret0
 }
 
-// NewRedis indicates an expected call of NewRedis
+// NewRedis indicates an expected call of NewRedis.
 func (mr *MockAPIMockRecorder) NewRedis(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRedis", reflect.TypeOf((*MockAPI)(nil).NewRedis), arg0)

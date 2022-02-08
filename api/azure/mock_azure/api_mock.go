@@ -5,35 +5,36 @@
 package mock_azure
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	azure "github.com/web-platform-tests/wpt.fyi/api/azure"
-	reflect "reflect"
 )
 
-// MockAPI is a mock of API interface
+// MockAPI is a mock of API interface.
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
 }
 
-// MockAPIMockRecorder is the mock recorder for MockAPI
+// MockAPIMockRecorder is the mock recorder for MockAPI.
 type MockAPIMockRecorder struct {
 	mock *MockAPI
 }
 
-// NewMockAPI creates a new mock instance
+// NewMockAPI creates a new mock instance.
 func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 	mock := &MockAPI{ctrl: ctrl}
 	mock.recorder = &MockAPIMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
-// GetAzureArtifactsURL mocks base method
+// GetAzureArtifactsURL mocks base method.
 func (m *MockAPI) GetAzureArtifactsURL(arg0, arg1 string, arg2 int64) string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAzureArtifactsURL", arg0, arg1, arg2)
@@ -41,13 +42,13 @@ func (m *MockAPI) GetAzureArtifactsURL(arg0, arg1 string, arg2 int64) string {
 	return ret0
 }
 
-// GetAzureArtifactsURL indicates an expected call of GetAzureArtifactsURL
+// GetAzureArtifactsURL indicates an expected call of GetAzureArtifactsURL.
 func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureArtifactsURL", reflect.TypeOf((*MockAPI)(nil).GetAzureArtifactsURL), arg0, arg1, arg2)
 }
 
-// GetBuild mocks base method
+// GetBuild mocks base method.
 func (m *MockAPI) GetBuild(arg0, arg1 string, arg2 int64) (*azure.Build, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBuild", arg0, arg1, arg2)
@@ -56,13 +57,13 @@ func (m *MockAPI) GetBuild(arg0, arg1 string, arg2 int64) (*azure.Build, error) 
 	return ret0, ret1
 }
 
-// GetBuild indicates an expected call of GetBuild
+// GetBuild indicates an expected call of GetBuild.
 func (mr *MockAPIMockRecorder) GetBuild(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuild", reflect.TypeOf((*MockAPI)(nil).GetBuild), arg0, arg1, arg2)
 }
 
-// GetBuildURL mocks base method
+// GetBuildURL mocks base method.
 func (m *MockAPI) GetBuildURL(arg0, arg1 string, arg2 int64) string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBuildURL", arg0, arg1, arg2)
@@ -70,7 +71,7 @@ func (m *MockAPI) GetBuildURL(arg0, arg1 string, arg2 int64) string {
 	return ret0
 }
 
-// GetBuildURL indicates an expected call of GetBuildURL
+// GetBuildURL indicates an expected call of GetBuildURL.
 func (mr *MockAPIMockRecorder) GetBuildURL(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuildURL", reflect.TypeOf((*MockAPI)(nil).GetBuildURL), arg0, arg1, arg2)

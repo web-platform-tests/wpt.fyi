@@ -2,9 +2,9 @@
 
 # Helper script for using a standardized version flag when deploying.
 
-REPO_DIR="$(dirname "${BASH_SOURCE[0]}")/.."
+REPO_DIR="$(git rev-parse --show-toplevel)"
 source "${REPO_DIR}/util/logging.sh"
-WPTD_PATH=${WPTD_PATH:-$(realpath "${REPO_DIR}")}
+WPTD_PATH=${WPTD_PATH:-"${REPO_DIR}"}
 
 usage() {
   USAGE="Usage: deploy.sh [-p] [-r] [-q] [-b] [-h] [app path]
@@ -48,7 +48,7 @@ esac
 
 # Ensure dependencies are installed.
 if [[ -z "${QUIET}" ]]; then info "Installing dependencies..."; fi
-cd ${WPTD_PATH}
+cd "${WPTD_PATH}"
 if [[ "${APP_PATH}" == "webapp" ]]; then
   make deployment_state || fatal "Error installing deps"
 fi
