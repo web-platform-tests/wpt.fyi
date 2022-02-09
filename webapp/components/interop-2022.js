@@ -517,6 +517,18 @@ class Interop2022 extends PolymerElement {
               </tbody>
               <tfoot>
                 <tr>
+                  <th><b>Focus Areas (&times;90%)</b></th>
+                  <th>[[getBrowserScoreAllFeatures(0, stable)]]</th>
+                  <th>[[getBrowserScoreAllFeatures(1, stable)]]</th>
+                  <th>[[getBrowserScoreAllFeatures(2, stable)]]</th>
+                </tr>
+                <tr>
+                  <th><b>Investigation (&times;10%)</b></th>
+                  <th>0%</th>
+                  <th>0%</th>
+                  <th>0%</th>
+                </tr>
+                <tr>
                   <th><b>TOTAL</b></th>
                   <th>[[getBrowserScoreTotal(0, stable)]]</th>
                   <th>[[getBrowserScoreTotal(1, stable)]]</th>
@@ -647,8 +659,18 @@ class Interop2022 extends PolymerElement {
     return `${(score / 10).toFixed(1)}%`;
   }
 
-  getBrowserScoreTotal(browserIndex) {
+  getBrowserScoreAllFeatures(browserIndex) {
     return this.getBrowserScoreForFeature(browserIndex, SUMMARY_FEATURE_NAME);
+  }
+
+  getBrowserScoreTotal(browserIndex) {
+    const testScore = this.scores[browserIndex][SUMMARY_FEATURE_NAME];
+    const investigationScore = 0; // TODO
+    const total = (90 * testScore) + (10 * investigationScore);
+    if (total === 100000) {
+      return '100%';
+    }
+    return `${(total / 1000).toFixed(1)}%`;
   }
 
   async updateScoresTable(stable) {
@@ -826,7 +848,8 @@ class Interop2022Summary extends PolymerElement {
       throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
     }
     for (let i = 0; i < this.scores.length; i++) {
-      let score = Math.floor(this.scores[i][SUMMARY_FEATURE_NAME] / 10);
+      // TODO: share 10/90% calculation with getBrowserScoreTotal
+      let score = Math.floor(90 * this.scores[i][SUMMARY_FEATURE_NAME] / 1000);
       new CountUp(numbers[i], score).start();
       const colors = this.calculateColor(score);
       numbers[i].style.color = colors[0];
