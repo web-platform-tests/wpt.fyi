@@ -138,6 +138,8 @@ class Interop2022DataManager {
   // the object is a feature->score mapping.
   async getMostRecentScores(stable) {
     await this._dataLoaded;
+    // TODO: Don't get the data from the data tables (which are for the graphs)
+    // but instead extract it separately when parsing the CSV.
     const dataTables = stable ? this.stableDatatables : this.experimentalDatatables;
 
     const scores = [{}, {}, {}];
@@ -147,9 +149,9 @@ class Interop2022DataManager {
       const lastRowIndex = dataTable.getNumberOfRows() - 1;
 
       // The order of these needs to be in sync with the markup.
-      scores[0][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Chrome/Edge'));
-      scores[1][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Firefox'));
-      scores[2][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Safari'));
+      scores[0][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Chrome/Edge')) * 1000;
+      scores[1][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Firefox')) * 1000;
+      scores[2][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Safari')) * 1000;
     }
 
     return scores;
@@ -195,8 +197,8 @@ class Interop2022DataManager {
       'Safari',
     ];
 
-    // We store a lookup table of browser versions to help with the 'show
-    // revision changelog' tooltip action.
+    // We store a lookup table of browser versions to help with the
+    // 'Show browser changelog' tooltip action.
     const browserVersions = [[], [], []];
 
     csvLines.forEach(line => {
@@ -231,7 +233,7 @@ class Interop2022DataManager {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
           }
           const tooltip = this.createTooltip(browserName, version, score);
-          newRows.get(feature).push(score);
+          newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
           summaryScore += score;
@@ -240,7 +242,7 @@ class Interop2022DataManager {
         summaryScore = Math.floor(summaryScore / 15);
 
         const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
-        newRows.get(SUMMARY_FEATURE_NAME).push(summaryScore);
+        newRows.get(SUMMARY_FEATURE_NAME).push(summaryScore / 1000);
         newRows.get(SUMMARY_FEATURE_NAME).push(summaryTooltip);
       }
 
@@ -515,6 +517,18 @@ class Interop2022 extends PolymerElement {
               </tbody>
               <tfoot>
                 <tr>
+                  <th><b>Focus Areas (&times;90%)</b></th>
+                  <th>[[getBrowserScoreAllFeatures(0, stable)]]</th>
+                  <th>[[getBrowserScoreAllFeatures(1, stable)]]</th>
+                  <th>[[getBrowserScoreAllFeatures(2, stable)]]</th>
+                </tr>
+                <tr>
+                  <th><b>Investigation (&times;10%)</b></th>
+                  <th>0%</th>
+                  <th>0%</th>
+                  <th>0%</th>
+                </tr>
+                <tr>
                   <th><b>TOTAL</b></th>
                   <th>[[getBrowserScoreTotal(0, stable)]]</th>
                   <th>[[getBrowserScoreTotal(1, stable)]]</th>
@@ -645,8 +659,18 @@ class Interop2022 extends PolymerElement {
     return `${(score / 10).toFixed(1)}%`;
   }
 
-  getBrowserScoreTotal(browserIndex) {
+  getBrowserScoreAllFeatures(browserIndex) {
     return this.getBrowserScoreForFeature(browserIndex, SUMMARY_FEATURE_NAME);
+  }
+
+  getBrowserScoreTotal(browserIndex) {
+    const testScore = this.scores[browserIndex][SUMMARY_FEATURE_NAME];
+    const investigationScore = 0; // TODO
+    const total = (90 * testScore) + (10 * investigationScore);
+    if (total === 100000) {
+      return '100%';
+    }
+    return `${(total / 1000).toFixed(1)}%`;
   }
 
   async updateScoresTable(stable) {
@@ -824,7 +848,8 @@ class Interop2022Summary extends PolymerElement {
       throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
     }
     for (let i = 0; i < this.scores.length; i++) {
-      let score = Math.floor(this.scores[i][SUMMARY_FEATURE_NAME] / 10);
+      // TODO: share 10/90% calculation with getBrowserScoreTotal
+      let score = Math.floor(90 * this.scores[i][SUMMARY_FEATURE_NAME] / 1000);
       new CountUp(numbers[i], score).start();
       const colors = this.calculateColor(score);
       numbers[i].style.color = colors[0];
@@ -1053,22 +1078,19 @@ class Interop2022FeatureChart extends PolymerElement {
     if (feature === SUMMARY_FEATURE_NAME) {
       options.vAxis = {
         title: 'Interop 2022 Score',
+        format: 'percent',
         viewWindow: {
-          min: 50,
-          max: 100,
+          min: 0.6,
+          max: 1,
         }
       };
     } else {
       options.vAxis = {
-        title: 'Percentage of tests passing',
+        title: `${FEATURES[feature].description} Score`,
         format: 'percent',
         viewWindow: {
-          // We set a global minimum value for the y-axis to keep the graphs
-          // consistent when you switch features. Currently the lowest value
-          // is aspect-ratio, with a ~25% pass-rate on Safari STP, Safari
-          // Stable, and Firefox Stable.
-          min: 0.2,
-          max: 1000, // TODO: scale data instead
+          min: feature.startsWith('interop-2021-') ? 0.8 : 0,
+          max: 1,
         }
       };
     }
