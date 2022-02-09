@@ -390,6 +390,7 @@ class Interop2022 extends PolymerElement {
 
         .score-table tfoot tr:first-of-type th {
           border-top: 1px solid GrayText;
+          padding-top: 10px;
         }
 
         .score-table tbody > tr:nth-child(even) {
@@ -858,7 +859,10 @@ class Interop2022Summary extends PolymerElement {
     for (let i = 0; i < scores.length; i++) {
       // TODO: share 10/90% calculation with getBrowserScoreTotal
       let score = Math.floor(90 * scores[i][SUMMARY_FEATURE_NAME] / 1000);
-      new CountUp(numbers[i], score).start();
+      let curScore = numbers[i].innerText;
+      new CountUp(numbers[i], score, {
+        startVal: curScore === '--' ? 0 : curScore
+      }).start();
       const colors = this.calculateColor(score);
       numbers[i].style.color = colors[0];
       numbers[i].style.backgroundColor = colors[1];
