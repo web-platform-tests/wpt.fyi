@@ -197,8 +197,8 @@ class Interop2022DataManager {
       'Safari',
     ];
 
-    // We store a lookup table of browser versions to help with the 'show
-    // revision changelog' tooltip action.
+    // We store a lookup table of browser versions to help with the
+    // 'Show browser changelog' tooltip action.
     const browserVersions = [[], [], []];
 
     csvLines.forEach(line => {
