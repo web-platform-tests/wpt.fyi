@@ -620,7 +620,6 @@ class Interop2022 extends PolymerElement {
   static get observers() {
     return [
       'updateUrlParams(embedded, stable, feature)',
-      'updateScoresTable(stable)',
     ];
   }
 
@@ -629,8 +628,10 @@ class Interop2022 extends PolymerElement {
 
     this.stable = params.get('stable') !== null;
     this.dataManager = new Interop2022DataManager();
-    // TODO: update when stable changes
-    this.scores = await this.dataManager.getMostRecentScores(this.stable);
+    
+    this.scores = {}
+    this.scores.experimental = await this.dataManager.getMostRecentScores(!this.stable);
+    this.scores.stable = await this.dataManager.getMostRecentScores(this.stable);
 
     super.ready();
 
@@ -652,7 +653,8 @@ class Interop2022 extends PolymerElement {
   }
 
   getBrowserScoreForFeature(browserIndex, feature) {
-    const score = this.scores[browserIndex][feature];
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    const score = scores[browserIndex][feature];
     if (score === 1000) {
       return '100%';
     }
@@ -664,17 +666,14 @@ class Interop2022 extends PolymerElement {
   }
 
   getBrowserScoreTotal(browserIndex) {
-    const testScore = this.scores[browserIndex][SUMMARY_FEATURE_NAME];
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    const testScore = scores[browserIndex][SUMMARY_FEATURE_NAME];
     const investigationScore = 0; // TODO
     const total = (90 * testScore) + (10 * investigationScore);
     if (total === 100000) {
       return '100%';
     }
     return `${(total / 1000).toFixed(1)}%`;
-  }
-
-  async updateScoresTable(stable) {
-    this.scores = await this.dataManager.getMostRecentScores(stable);
   }
 
   updateUrlParams(embedded, stable, feature) {
@@ -829,7 +828,6 @@ class Interop2022Summary extends PolymerElement {
 
   static get properties() {
     return {
-      // TODO: this isn't updated when stable changes
       scores: Object,
       stable: {
         type: Boolean,
@@ -844,12 +842,13 @@ class Interop2022Summary extends PolymerElement {
 
   async updateSummaryScores() {
     let numbers = this.$.summaryContainer.querySelectorAll('.summary-number');
-    if (numbers.length !== this.scores.length) {
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    if (numbers.length !== scores.length) {
       throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
     }
-    for (let i = 0; i < this.scores.length; i++) {
+    for (let i = 0; i < scores.length; i++) {
       // TODO: share 10/90% calculation with getBrowserScoreTotal
-      let score = Math.floor(90 * this.scores[i][SUMMARY_FEATURE_NAME] / 1000);
+      let score = Math.floor(90 * scores[i][SUMMARY_FEATURE_NAME] / 1000);
       new CountUp(numbers[i], score).start();
       const colors = this.calculateColor(score);
       numbers[i].style.color = colors[0];
