@@ -630,8 +630,8 @@ class Interop2022 extends PolymerElement {
     this.dataManager = new Interop2022DataManager();
     
     this.scores = {}
-    this.scores.experimental = await this.dataManager.getMostRecentScores(!this.stable);
-    this.scores.stable = await this.dataManager.getMostRecentScores(this.stable);
+    this.scores.experimental = await this.dataManager.getMostRecentScores(false);
+    this.scores.stable = await this.dataManager.getMostRecentScores(true);
 
     super.ready();
 
