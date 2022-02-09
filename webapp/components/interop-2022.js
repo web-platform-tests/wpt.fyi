@@ -508,7 +508,9 @@ class Interop2022 extends PolymerElement {
               <tbody>
                 <template is="dom-repeat" items="{{featureKeys}}">
                   <tr data-feature$="[[item]]">
-                    <td>[[getFeatureName(item, stable)]]</td>
+                    <td>
+                      <a href$="[[getFeatureTestsURL(item)]]">[[getFeatureName(item, stable)]]</a>
+                    </td>
                     <td>[[getBrowserScoreForFeature(0, item, stable)]]</td>
                     <td>[[getBrowserScoreForFeature(1, item, stable)]]</td>
                     <td>[[getBrowserScoreForFeature(2, item, stable)]]</td>
@@ -650,6 +652,10 @@ class Interop2022 extends PolymerElement {
 
   getFeatureName(feature) {
     return FEATURES[feature].description;
+  }
+
+  getFeatureTestsURL(feature) {
+    return FEATURES[feature].tests;
   }
 
   getBrowserScoreForFeature(browserIndex, feature) {
