@@ -552,7 +552,7 @@ class Interop2022 extends PolymerElement {
         <div class="focus-area">
           <select id="featureSelect">
             <option value="summary">Summary</option>
-            <optgroup label="2022">
+            <optgroup label="2022 Focus Areas">
               <option value="interop-2022-cascade">Cascade Layers</option>
               <option value="interop-2022-color">Color</option>
               <option value="interop-2022-contain">Containment</option>
@@ -564,7 +564,7 @@ class Interop2022 extends PolymerElement {
               <option value="interop-2022-viewport">Viewport</option>
               <option value="interop-2022-webcompat">Web Compat</option>
             </optgroup>
-            <optgroup label="2021">
+            <optgroup label="2021 Focus Areas">
               <option value="interop-2021-aspect-ratio">Aspect Ratio</option>
               <option value="interop-2021-flexbox">Flexbox</option>
               <option value="interop-2021-grid">Grid</option>
