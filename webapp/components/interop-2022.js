@@ -385,8 +385,11 @@ class Interop2022 extends PolymerElement {
         }
 
         .score-table tfoot th {
-          border-top: 1px solid GrayText;
           text-align: right;
+        }
+
+        .score-table tfoot tr:first-of-type th {
+          border-top: 1px solid GrayText;
         }
 
         .score-table tbody > tr:nth-child(even) {
@@ -519,13 +522,13 @@ class Interop2022 extends PolymerElement {
               </tbody>
               <tfoot>
                 <tr>
-                  <th><b>Focus Areas (&times;90%)</b></th>
+                  <th>Focus Areas (&times;90%)</th>
                   <th>[[getBrowserScoreAllFeatures(0, stable)]]</th>
                   <th>[[getBrowserScoreAllFeatures(1, stable)]]</th>
                   <th>[[getBrowserScoreAllFeatures(2, stable)]]</th>
                 </tr>
                 <tr>
-                  <th><b>Investigation (&times;10%)</b></th>
+                  <th>Investigation (&times;10%)</th>
                   <th>0%</th>
                   <th>0%</th>
                   <th>0%</th>
