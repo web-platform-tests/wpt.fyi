@@ -377,6 +377,7 @@ class Interop2022 extends PolymerElement {
 
         .score-table td {
           min-width: 7ch;
+          font-variant-numeric: tabular-nums;
         }
 
         .score-table :is(tfoot,thead) {
