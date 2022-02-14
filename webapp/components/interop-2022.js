@@ -445,8 +445,8 @@ class Interop2022 extends PolymerElement {
       </p>
 
       <div class="channel-area">
-        <paper-button class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
-        <paper-button class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
+        <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
+        <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
       </div>
       <interop-2022-summary scores="[[scores]]" stable="[[stable]]"></interop-2022-summary>
 
@@ -655,6 +655,9 @@ class Interop2022 extends PolymerElement {
       this.feature = this.$.featureSelect.value;
       this.featureLinks = FEATURES[this.$.featureSelect.value];
     });
+
+    this.$.toggleStable.setAttribute('aria-pressed', this.stable);
+    this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
   }
 
   computeFilter(year) {
@@ -721,6 +724,8 @@ class Interop2022 extends PolymerElement {
       return;
     }
     this.stable = false;
+    this.$.toggleStable.setAttribute('aria-pressed', false);
+    this.$.toggleExperimental.setAttribute('aria-pressed', true);
   }
 
   clickStable() {
@@ -728,6 +733,8 @@ class Interop2022 extends PolymerElement {
       return;
     }
     this.stable = true;
+    this.$.toggleStable.setAttribute('aria-pressed', true);
+    this.$.toggleExperimental.setAttribute('aria-pressed', false);
   }
 
   getFeatureLinkVisibility(featureLink) {
