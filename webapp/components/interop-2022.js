@@ -777,6 +777,18 @@ class Interop2022Summary extends PolymerElement {
 
         .summary-browser-name {
           text-align: center;
+          display: flex;
+          place-content: center;
+          justify-content: space-around;
+          gap: 2ch;
+        }
+
+        .summary-browser-name > figure {
+          margin: 0;
+        }
+
+        .summary-browser-name > figure > figcaption {
+          line-height: 1.1;
         }
 
         .summary-browser-name[data-stable-browsers] > :not(.stable) {
@@ -794,14 +806,26 @@ class Interop2022Summary extends PolymerElement {
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
-              <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
-              <img src="/static/edge_64x64.png" width="36" alt="Edge" />
+              <figure>
+                <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
+                <figcaption>Chrome</figcaption>
+              </figure>
+              <figure>
+                <img src="/static/edge_64x64.png" width="36" alt="Edge" />
+                <figcaption>Edge</figcaption>
+              </figure>
             </div>
           </template>
           <template is="dom-if" if="[[!stable]]">
             <div class="summary-browser-name">
-              <img src="/static/chrome-canary_64x64.png" width="36" alt="Chrome Canary" />
-              <img src="/static/edge-beta_64x64.png" width="36" alt="Edge Beta" />
+              <figure>
+                <img src="/static/chrome-canary_64x64.png" width="36" alt="Chrome Canary" />
+                <figcaption>Chrome<br>Canary</figcaption>
+              </figure>
+              <figure>
+                <img src="/static/edge-beta_64x64.png" width="36" alt="Edge Beta" />
+                <figcaption>Edge<br>Beta</figcaption>
+              </figure>
             </div>
           </template>
         </div>
@@ -810,12 +834,18 @@ class Interop2022Summary extends PolymerElement {
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
-              <img src="/static/firefox_64x64.png" width="36" alt="Firefox" />
+              <figure>
+                <img src="/static/firefox_64x64.png" width="36" alt="Firefox" />
+                <figcaption>Firefox</figcaption>
+              </figure>
             </div>
           </template>
           <template is="dom-if" if="[[!stable]]">
             <div class="summary-browser-name">
-              <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" />
+              <figure>
+                <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" />
+                <figcaption>Firefox<br>Nightly</figcaption>
+              </figure>
             </div>
           </template>
         </div>
@@ -824,12 +854,18 @@ class Interop2022Summary extends PolymerElement {
           <div class="summary-number">--</div>
           <template is="dom-if" if="[[stable]]">
             <div class="summary-browser-name">
-              <img src="/static/safari_64x64.png" width="36" alt="Safari" />
+              <figure>
+                <img src="/static/safari_64x64.png" width="36" alt="Safari" />
+                <figcaption>Safari</figcaption>
+              </figure>
             </div>
           </template>
           <template is="dom-if" if="[[!stable]]">
             <div class="summary-browser-name">
-              <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
+              <figure>
+                <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
+                <figcaption>Safari<br>Tech Preview</figcaption>
+              </figure>
             </div>
           </template>
         </div>
