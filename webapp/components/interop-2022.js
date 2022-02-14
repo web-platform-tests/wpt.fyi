@@ -54,7 +54,7 @@ const FEATURES = {
     description: 'Cascade Layers',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/@layer',
     spec: 'https://drafts.csswg.org/css-cascade/#layering',
-    tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=layer',
+    tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-cascade',
   },
   'interop-2022-color': {
     description: 'Color',
