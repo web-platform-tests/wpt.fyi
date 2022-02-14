@@ -1069,6 +1069,8 @@ class Interop2022FeatureChart extends PolymerElement {
   }
 
   getChartOptions(containerDiv, feature) {
+    const description = feature === SUMMARY_FEATURE_NAME ?
+        'Interop 2022' : FEATURES[feature].description;
     const options = {
       height: 350,
       fontSize: 14,
@@ -1079,6 +1081,14 @@ class Interop2022FeatureChart extends PolymerElement {
         title: 'Date',
         format: 'MMM-YYYY',
       },
+      vAxis: {
+        title: `${description} Score`,
+        format: 'percent',
+        viewWindow: {
+          min: 0,
+          max: 1,
+        }
+      },
       explorer: {
         actions: ['dragToZoom', 'rightClickToReset'],
         axis: 'horizontal',
@@ -1087,26 +1097,6 @@ class Interop2022FeatureChart extends PolymerElement {
       },
       colors: ['#4285f4', '#ea4335', '#fbbc04'],
     };
-
-    if (feature === SUMMARY_FEATURE_NAME) {
-      options.vAxis = {
-        title: 'Interop 2022 Score',
-        format: 'percent',
-        viewWindow: {
-          min: 0.6,
-          max: 1,
-        }
-      };
-    } else {
-      options.vAxis = {
-        title: `${FEATURES[feature].description} Score`,
-        format: 'percent',
-        viewWindow: {
-          min: feature.startsWith('interop-2021-') ? 0.8 : 0,
-          max: 1,
-        }
-      };
-    }
 
     // We draw the chart in two ways, depending on the viewport width. In
     // 'full' mode the legend is on the right and we limit the chart size to
