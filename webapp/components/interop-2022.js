@@ -266,8 +266,6 @@ class Interop2022DataManager {
   createTooltip(browser, version, score) {
     // The score is an integer in the range 0-1000, representing a percentage
     // with one decimal point.
-    // TODO: format score with 1 decimal point if < 100 and otherwise
-    // no decimal point.
     return `${score / 10}% passing \n${browser} ${version}`;
   }
 }
@@ -666,10 +664,7 @@ class Interop2022 extends PolymerElement {
   getBrowserScoreForFeature(browserIndex, feature) {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
-    if (score === 1000) {
-      return '100%';
-    }
-    return `${(score / 10).toFixed(1)}%`;
+    return `${Math.floor(score / 10)}%`;
   }
 
   getBrowserScoreAllFeatures(browserIndex) {
@@ -681,10 +676,7 @@ class Interop2022 extends PolymerElement {
     const testScore = scores[browserIndex][SUMMARY_FEATURE_NAME];
     const investigationScore = 0; // TODO
     const total = (90 * testScore) + (10 * investigationScore);
-    if (total === 100000) {
-      return '100%';
-    }
-    return `${(total / 1000).toFixed(1)}%`;
+    return `${Math.floor(total / 1000)}%`;
   }
 
   updateUrlParams(embedded, stable, feature) {
