@@ -321,6 +321,20 @@ class Interop2022 extends PolymerElement {
           color: white;
         }
 
+        .selected::before {
+          --_size: 1rem;
+          --_half-size: calc(var(--_size) / 2);
+
+          content: "";
+          position: absolute;
+          bottom: calc(var(--_half-size) * -1 + 1px);
+          width: var(--_size);
+          height: var(--_half-size);
+          left: calc(50% - var(--_half-size));
+          background: var(--paper-blue-700);
+          clip-path: polygon(46% 100%, 0 0, 100% 0);
+        }
+
         .focus-area-section {
           margin-block-start: 50px;
           padding: 30px;
