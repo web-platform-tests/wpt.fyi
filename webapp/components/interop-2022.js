@@ -864,7 +864,7 @@ class Interop2022Summary extends PolymerElement {
             <div class="summary-browser-name">
               <figure>
                 <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
-                <figcaption>Safari<br>Tech Preview</figcaption>
+                <figcaption>Safari<br>Technology Preview</figcaption>
               </figure>
             </div>
           </template>
