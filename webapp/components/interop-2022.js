@@ -422,6 +422,12 @@ class Interop2022 extends PolymerElement {
           color: GrayText;
         }
 
+        .compat-footer {
+          padding-block: 50px 30px;
+          display: grid;
+          place-items: center;
+        }
+
         @media (prefers-color-scheme: dark) {
           :host {
             color: white;
@@ -603,6 +609,9 @@ class Interop2022 extends PolymerElement {
           </table>
         </div>
       </div>
+      <footer class="compat-footer">
+        <a href="https://github.com/web-platform-tests/wpt.fyi">Source on Github</a>
+      </footer>
 `;
   }
 
