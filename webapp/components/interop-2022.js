@@ -785,6 +785,7 @@ class Interop2022Summary extends PolymerElement {
 
         .summary-browser-name > figure {
           margin: 0;
+          flex: 1;
         }
 
         .summary-browser-name > figure > figcaption {
