@@ -99,7 +99,7 @@ const FEATURES = {
     tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-text',
   },
   'interop-2022-viewport': {
-    description: 'Viewport',
+    description: 'Viewport Units',
     mdn: '',
     spec: '',
     tests: 'https://wpt.fyi/results/css/css-values/viewport-units-parsing.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
@@ -355,9 +355,10 @@ class Interop2022 extends PolymerElement {
           border-collapse: collapse;
         }
 
-        .score-table thead th {
+        .score-table tbody th {
           text-align: left;
           border-bottom: 1px solid GrayText;
+          padding-top: 1em;
         }
 
         .score-table .browser-icons {
@@ -385,11 +386,9 @@ class Interop2022 extends PolymerElement {
 
         .score-table tfoot th {
           text-align: right;
-        }
-
-        .score-table tfoot tr:first-of-type th {
+          /* Adam, help! How can we make this look sensible, with a bit more
+             space between score tables and the totals? */
           border-top: 1px solid GrayText;
-          padding-top: 10px;
         }
 
         .score-table tbody > tr:nth-child(even) {
@@ -461,13 +460,13 @@ class Interop2022 extends PolymerElement {
 
       <div class="score-details">
         <details>
-          <summary>How is this score calculated?</summary>
+          <summary>How are these scores calculated?</summary>
 
           <div class="table-card">
             <table id="score-table" class="score-table">
-              <thead>
+              <tbody>
                 <tr>
-                  <th>Focus Area</th>
+                  <th>2022 Focus Areas (60%)</th>
                   <th>
                     <template is="dom-if" if="[[stable]]">
                       <div class="browser-icons">
@@ -507,9 +506,7 @@ class Interop2022 extends PolymerElement {
                     </template>
                   </th>
                 </tr>
-              </thead>
-              <tbody>
-                <template is="dom-repeat" items="{{featureKeys}}">
+                <template is="dom-repeat" items="{{featureKeys}}" filter="{{computeFilter(2022)}}">
                   <tr data-feature$="[[item]]">
                     <td>
                       <a href$="[[getFeatureTestsURL(item)]]">[[getFeatureName(item, stable)]]</a>
@@ -519,20 +516,76 @@ class Interop2022 extends PolymerElement {
                     <td>[[getBrowserScoreForFeature(2, item, stable)]]</td>
                   </tr>
                 </template>
+                <tr>
+                  <th>2021 Focus Areas (30%)</th>
+                  <!-- TODO: share this row of icons with above -->
+                  <th>
+                    <template is="dom-if" if="[[stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/chrome_64x64.png" width="20" alt="Chrome" />
+                        <img src="/static/edge_64x64.png" width="20" alt="Edge" />
+                      </div>
+                    </template>
+                    <template is="dom-if" if="[[!stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/chrome-canary_64x64.png" width="20" alt="Chrome Canary" />
+                        <img src="/static/edge-beta_64x64.png" width="20" alt="Edge Beta" />
+                      </div>
+                    </template>
+                  </th>
+                  <th>
+                    <template is="dom-if" if="[[stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/firefox_64x64.png" width="20" alt="Firefox" />
+                      </div>
+                    </template>
+                    <template is="dom-if" if="[[!stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" />
+                      </div>
+                    </template>
+                  </th>
+                  <th>
+                    <template is="dom-if" if="[[stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/safari_64x64.png" width="20" alt="Safari" />
+                      </div>
+                    </template>
+                    <template is="dom-if" if="[[!stable]]">
+                      <div class="browser-icons">
+                        <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" />
+                      </div>
+                    </template>
+                  </th>
+                </tr>
+                <template is="dom-repeat" items="{{featureKeys}}" filter="{{computeFilter(2021)}}">
+                  <tr data-feature$="[[item]]">
+                    <td>
+                      <a href$="[[getFeatureTestsURL(item)]]">[[getFeatureName(item, stable)]]</a>
+                    </td>
+                    <td>[[getBrowserScoreForFeature(0, item, stable)]]</td>
+                    <td>[[getBrowserScoreForFeature(1, item, stable)]]</td>
+                    <td>[[getBrowserScoreForFeature(2, item, stable)]]</td>
+                  </tr>
+                </template>
+                <tr>
+                  <th>2022 Investigation (10%)</th>
+                  <th colspan=3>Group Progress</th>
+                </tr>
+                <tr>
+                  <td colspan=3>Editing, contenteditable and execCommand</td>
+                  <td>0%</td>
+                </tr>
+                <tr>
+                  <td colspan=3>Pointer and Mouse Events</td>
+                  <td>0%</td>
+                </tr>
+                <tr>
+                  <td colspan=3>Viewport Measurement</td>
+                  <td>0%</td>
+                </tr>
               </tbody>
               <tfoot>
-                <tr>
-                  <th>Focus Areas (&times;90%)</th>
-                  <th>[[getBrowserScoreAllFeatures(0, stable)]]</th>
-                  <th>[[getBrowserScoreAllFeatures(1, stable)]]</th>
-                  <th>[[getBrowserScoreAllFeatures(2, stable)]]</th>
-                </tr>
-                <tr>
-                  <th>Investigation (&times;10%)</th>
-                  <th>0%</th>
-                  <th>0%</th>
-                  <th>0%</th>
-                </tr>
                 <tr>
                   <th><b>TOTAL</b></th>
                   <th>[[getBrowserScoreTotal(0, stable)]]</th>
@@ -566,7 +619,7 @@ class Interop2022 extends PolymerElement {
               <option value="interop-2022-scrolling">Scrolling</option>
               <option value="interop-2022-subgrid">Subgrid</option>
               <option value="interop-2022-text">Text</option>
-              <option value="interop-2022-viewport">Viewport</option>
+              <option value="interop-2022-viewport">Viewport Units</option>
               <option value="interop-2022-webcompat">Web Compat</option>
             </optgroup>
             <optgroup label="2021 Focus Areas">
@@ -653,6 +706,11 @@ class Interop2022 extends PolymerElement {
     });
   }
 
+  computeFilter(year) {
+    const prefix = `interop-${year}-`;
+    return (feature) => feature.startsWith(prefix);
+  }
+
   getFeatureName(feature) {
     return FEATURES[feature].description;
   }
@@ -665,10 +723,6 @@ class Interop2022 extends PolymerElement {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
     return `${Math.floor(score / 10)}%`;
-  }
-
-  getBrowserScoreAllFeatures(browserIndex) {
-    return this.getBrowserScoreForFeature(browserIndex, SUMMARY_FEATURE_NAME);
   }
 
   getBrowserScoreTotal(browserIndex) {
