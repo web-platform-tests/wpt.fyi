@@ -424,10 +424,6 @@ class Interop2022 extends PolymerElement {
           padding: 0.5rem;
         }
 
-        #testListText {
-          padding-top: 1em;
-        }
-
         #featureReferenceList {
           display: flex;
           gap: 2ch;
@@ -515,15 +511,6 @@ class Interop2022 extends PolymerElement {
                                     feature="{{feature}}">
         </interop-2022-feature-chart>
       </section>
-      <p id="testListText">
-        The score for these components is determined by pass rate on their tests.
-        The test suite is never complete, and improvements are always welcome.
-        Please contribute changes to
-        <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
-        and then
-        <a href="https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[interop-2022]%20Add%20new%20tests%20to%20dashboard&body=" target="_blank">file an issue</a>
-        to add them to the Interop 2022 effort!
-      </p>
       <div class="score-details">
         <div class="table-card">
           <table id="score-table" class="score-table">
@@ -624,7 +611,14 @@ class Interop2022 extends PolymerElement {
         </div>
       </div>
       <footer class="compat-footer">
-        <a href="https://github.com/web-platform-tests/wpt.fyi">Source on Github</a>
+        <p>Focus Area scores are calculated based on test pass rates. No test
+        suite is perfect and improvements are always welcome. Please feel free
+        to contribute improvements to
+        <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
+        and then
+        <a href="https://github.com/web-platform-tests/interop-2022/issues/new" target="_blank">file an issue</a>
+        to request updating the set of tests used for Interop 2022!</p>
+        <p><a href="https://github.com/web-platform-tests/wpt.fyi">Source on Github</a></p>
       </footer>
 `;
   }
