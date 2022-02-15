@@ -373,6 +373,11 @@ class Interop2022 extends PolymerElement {
           border-collapse: collapse;
         }
 
+        .score-table caption {
+          font-size: 20px;
+          font-weight: bold;
+        }
+
         .score-table tbody th {
           text-align: left;
           border-bottom: 1px solid GrayText;
@@ -514,6 +519,7 @@ class Interop2022 extends PolymerElement {
       <div class="score-details">
         <div class="table-card">
           <table id="score-table" class="score-table">
+            <caption>How are these scores calculated?</caption>
             <tbody>
               <tr class="section-header">
                 <th>2022 Focus Areas (60%)</th>
