@@ -461,8 +461,8 @@ class Interop2022 extends PolymerElement {
       </style>
       <h1>Interop 2022 Dashboard</h1>
       <p class="prose">
-        These scores represent how well browser engines are doing on 15 focus areas,
-        as measured by their <a href="/">wpt.fyi</a> test results.
+        These scores represent how browser engines are doing in 15 focus areas
+        and 3 joint investigation efforts.
       </p>
 
       <div class="channel-area">
