@@ -539,8 +539,8 @@ class Interop2022 extends PolymerElement {
                   </template>
                   <template is="dom-if" if="[[!stable]]">
                     <div class="browser-icons">
-                      <img src="/static/chrome-canary_64x64.png" width="20" alt="Chrome Canary" />
-                      <img src="/static/edge-beta_64x64.png" width="20" alt="Edge Beta" />
+                      <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" />
+                      <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" />
                     </div>
                   </template>
                 </th>
@@ -843,12 +843,12 @@ class Interop2022Summary extends PolymerElement {
           <template is="dom-if" if="[[!stable]]">
             <div class="summary-browser-name">
               <figure>
-                <img src="/static/chrome-canary_64x64.png" width="36" alt="Chrome Canary" />
-                <figcaption>Chrome<br>Canary</figcaption>
+                <img src="/static/chrome-dev_64x64.png" width="36" alt="Chrome Dev" />
+                <figcaption>Chrome<br>Dev</figcaption>
               </figure>
               <figure>
-                <img src="/static/edge-beta_64x64.png" width="36" alt="Edge Beta" />
-                <figcaption>Edge<br>Beta</figcaption>
+                <img src="/static/edge-dev_64x64.png" width="36" alt="Edge Dev" />
+                <figcaption>Edge<br>Dev</figcaption>
               </figure>
             </div>
           </template>
