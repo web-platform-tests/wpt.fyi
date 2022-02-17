@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/cloudtasks v0.1.0
 	cloud.google.com/go/datastore v1.6.0
 	cloud.google.com/go/logging v1.4.2
-	cloud.google.com/go/storage v1.19.0
+	cloud.google.com/go/storage v1.20.0
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/deckarep/golang-set v1.8.0
@@ -17,8 +17,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0
 	github.com/gomodule/redigo v1.8.8
-	github.com/google/go-github/v33 v33.0.0
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-github/v42 v42.0.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -28,13 +27,12 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
-	github.com/taskcluster/taskcluster/v42 v42.1.1
+	github.com/taskcluster/taskcluster/v44 v44.5.0
 	github.com/tebeka/selenium v0.9.9
-	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	google.golang.org/api v0.66.0
-	google.golang.org/genproto v0.0.0-20220118154757-00ab72f36ad5
+	google.golang.org/genproto v0.0.0-20220201184016-50beb8ab5c44
 	google.golang.org/grpc v1.44.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

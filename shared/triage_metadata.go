@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v42/github"
 	"gopkg.in/yaml.v3"
 )
 
@@ -108,7 +108,7 @@ func (tm triageMetadata) getTree(ref *github.Reference, triagedMetadataMap map[s
 func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (err error) {
 	client := tm.githubClient
 	// Get the parent commit to attach the commit to.
-	parent, _, err := client.Repositories.GetCommit(tm.ctx, tm.sourceOwner, tm.sourceRepo, *ref.Object.SHA)
+	parent, _, err := client.Repositories.GetCommit(tm.ctx, tm.sourceOwner, tm.sourceRepo, *ref.Object.SHA, &github.ListOptions{})
 	if err != nil {
 		return err
 	}
