@@ -526,38 +526,38 @@ class Interop2022 extends PolymerElement {
                 <th>
                   <template is="dom-if" if="[[stable]]">
                     <div class="browser-icons">
-                      <img src="/static/chrome_64x64.png" width="20" alt="Chrome" />
-                      <img src="/static/edge_64x64.png" width="20" alt="Edge" />
+                      <img src="/static/chrome_64x64.png" width="20" alt="Chrome" title="Chrome" />
+                      <img src="/static/edge_64x64.png" width="20" alt="Edge" title="Edge" />
                     </div>
                   </template>
                   <template is="dom-if" if="[[!stable]]">
                     <div class="browser-icons">
-                      <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" />
-                      <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" />
+                      <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" title="Chrome Dev" />
+                      <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" title="Edge Dev" />
                     </div>
                   </template>
                 </th>
                 <th>
                   <template is="dom-if" if="[[stable]]">
                     <div class="browser-icons">
-                      <img src="/static/firefox_64x64.png" width="20" alt="Firefox" />
+                      <img src="/static/firefox_64x64.png" width="20" alt="Firefox" title="Firefox" />
                     </div>
                   </template>
                   <template is="dom-if" if="[[!stable]]">
                     <div class="browser-icons">
-                      <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" />
+                      <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" title="Firefox Nightly" />
                     </div>
                   </template>
                 </th>
                 <th>
                   <template is="dom-if" if="[[stable]]">
                     <div class="browser-icons">
-                      <img src="/static/safari_64x64.png" width="20" alt="Safari" />
+                      <img src="/static/safari_64x64.png" width="20" alt="Safari" title="Safari" />
                     </div>
                   </template>
                   <template is="dom-if" if="[[!stable]]">
                     <div class="browser-icons">
-                      <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" />
+                      <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" title="Safari Technology Preview" />
                     </div>
                   </template>
                 </th>
