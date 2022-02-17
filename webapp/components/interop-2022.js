@@ -13,7 +13,7 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
 
 // const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
-const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/foolip/wpt-results-analysis'
+const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/foolip/wpt-results-analysis';
 const DATA_BRANCH = 'gh-pages';
 const DATA_FILES_PATH = 'data/interop-2022';
 
@@ -110,7 +110,7 @@ const FEATURES = {
     spec: '',
     tests: 'https://wpt.fyi/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-webcompat',
   },
-}
+};
 
 // Interop2022DataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop 2022 dashboard. It
@@ -227,7 +227,7 @@ class Interop2022DataManager {
         browserVersions[browserIdx].push(version);
 
         let summaryScore = 0;
-        Object.entries(FEATURES).forEach(([feature, feature_meta], j) => {
+        Object.keys(FEATURES).forEach((feature, j) => {
           const score = parseInt(csvValues[i + 1 + j]);
           if (!(score >= 0 && score <= 1000)) {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
@@ -660,8 +660,8 @@ class Interop2022 extends PolymerElement {
 
     this.stable = params.get('stable') !== null;
     this.dataManager = new Interop2022DataManager();
-    
-    this.scores = {}
+
+    this.scores = {};
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
     this.scores.stable = await this.dataManager.getMostRecentScores(true);
 
@@ -674,7 +674,7 @@ class Interop2022 extends PolymerElement {
     this.featureLinks = FEATURES[params.get('feature')];
 
     this.$.featureSelect.value = this.feature;
-    this.$.featureSelect.addEventListener('change', async () => {
+    this.$.featureSelect.addEventListener('change', () => {
       this.feature = this.$.featureSelect.value;
       this.featureLinks = FEATURES[this.$.featureSelect.value];
     });
@@ -1134,7 +1134,7 @@ class Interop2022FeatureChart extends PolymerElement {
 
   getChartOptions(containerDiv, feature) {
     const description = feature === SUMMARY_FEATURE_NAME ?
-        'Interop 2022' : FEATURES[feature].description;
+      'Interop 2022' : FEATURES[feature].description;
     const options = {
       height: 350,
       fontSize: 14,
