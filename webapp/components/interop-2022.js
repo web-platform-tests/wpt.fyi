@@ -495,13 +495,13 @@ class Interop2022 extends PolymerElement {
             <option value="summary">Summary</option>
             <optgroup label="2022 Focus Areas">
               <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2022)}}">
-                <option value$="[[item.id]]">[[item.description]]</option>
+                <option value$="[[item.id]]" selected="[[isSelected(item.id)]]">[[item.description]]</option>
               </template>
             </optgroup>
             <optgroup label="2021 Focus Areas">
-            <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2021)}}">
-            <option value$="[[item.id]]">[[item.description]]</option>
-          </template>
+              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2021)}}">
+                <option value$="[[item.id]]" selected="[[isSelected(item.id)]]">[[item.description]]</option>
+              </template>
             </optgroup>
           </select>
         </div>
@@ -690,6 +690,10 @@ class Interop2022 extends PolymerElement {
 
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
+  }
+
+  isSelected(feature) {
+    return feature === this.feature;
   }
 
   featureLinks(feature) {
