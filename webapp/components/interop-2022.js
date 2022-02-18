@@ -507,9 +507,14 @@ class Interop2022 extends PolymerElement {
         </div>
 
         <div id="featureReferenceList">
-          <a href="{{featureLinks.spec}}" style$="display: [[getFeatureLinkVisibility(featureLinks.spec)]]">Spec</a>
-          <a href="{{featureLinks.mdn}}" style$="display: [[getFeatureLinkVisibility(featureLinks.mdn)]]">MDN</a>
-          <a href="{{featureLinks.tests}}" style$="display: [[getFeatureLinkVisibility(featureLinks.tests)]]">Tests</a>
+          <template is="dom-repeat" items="[[featureLinks(feature)]]">
+            <template is="dom-if" if="[[item.href]]">
+              <a href$="[[item.href]]">[[item.text]]</a>
+            </template>
+            <template is="dom-if" if="[[!item.href]]">
+              <span>[[item.text]]</span>
+            </template>
+          </template>
         </div>
 
         <interop-2022-feature-chart data-manager="[[dataManager]]"
@@ -677,16 +682,23 @@ class Interop2022 extends PolymerElement {
     // The default view of the page is the summary scores graph for
     // experimental releases of browsers.
     this.feature = params.get('feature') || SUMMARY_FEATURE_NAME;
-    this.featureLinks = FEATURES[params.get('feature')];
 
     this.$.featureSelect.value = this.feature;
     this.$.featureSelect.addEventListener('change', () => {
       this.feature = this.$.featureSelect.value;
-      this.featureLinks = FEATURES[this.$.featureSelect.value];
     });
 
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
+  }
+
+  featureLinks(feature) {
+    const data = FEATURES[feature];
+    return [
+      { text: 'Spec', href: data?.spec },
+      { text: 'MDN', href: data?.mdn },
+      { text: 'Tests', href: data?.tests },
+    ];
   }
 
   computeFilter(year) {
@@ -756,10 +768,6 @@ class Interop2022 extends PolymerElement {
     this.stable = true;
     this.$.toggleStable.setAttribute('aria-pressed', true);
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
-  }
-
-  getFeatureLinkVisibility(featureLink) {
-    return featureLink ? 'inline' : 'none';
   }
 }
 window.customElements.define(Interop2022.is, Interop2022);
