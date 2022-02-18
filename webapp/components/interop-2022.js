@@ -39,7 +39,7 @@ const FEATURES = {
     tests: 'https://wpt.fyi/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-grid',
   },
   'interop-2021-position-sticky': {
-    description: 'position: sticky',
+    description: 'Sticky Positioning',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/position',
     spec: 'https://drafts.csswg.org/css-position/#position-property',
     tests: 'https://wpt.fyi/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-position-sticky',
@@ -57,7 +57,7 @@ const FEATURES = {
     tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-cascade',
   },
   'interop-2022-color': {
-    description: 'Color',
+    description: 'Color Spaces and Functions',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value',
     spec: 'https://drafts.csswg.org/css-color/',
     tests: 'https://wpt.fyi/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-color',
@@ -69,7 +69,7 @@ const FEATURES = {
     tests: 'https://wpt.fyi/results/css/css-contain?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-contain',
   },
   'interop-2022-dialog': {
-    description: '<dialog> and ::backdrop',
+    description: 'Dialog Element',
     mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/dialog',
     spec: 'https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element',
     tests: 'https://wpt.fyi/results/html/semantics/interactive-elements/the-dialog-element?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-dialog',
@@ -93,7 +93,7 @@ const FEATURES = {
     tests: 'https://wpt.fyi/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-subgrid',
   },
   'interop-2022-text': {
-    description: 'Text',
+    description: 'Typography and Encodings',
     mdn: '',
     spec: '',
     tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-text',
@@ -484,23 +484,14 @@ class Interop2022 extends PolymerElement {
           <select id="featureSelect">
             <option value="summary">Summary</option>
             <optgroup label="2022 Focus Areas">
-              <option value="interop-2022-cascade">Cascade Layers</option>
-              <option value="interop-2022-color">Color</option>
-              <option value="interop-2022-contain">Containment</option>
-              <option value="interop-2022-dialog">&lt;dialog> and ::backdrop</option>
-              <option value="interop-2022-forms">Forms</option>
-              <option value="interop-2022-scrolling">Scrolling</option>
-              <option value="interop-2022-subgrid">Subgrid</option>
-              <option value="interop-2022-text">Text</option>
-              <option value="interop-2022-viewport">Viewport Units</option>
-              <option value="interop-2022-webcompat">Web Compat</option>
+              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2022)}}">
+                <option value$="[[item.id]]">[[item.description]]</option>
+              </template>
             </optgroup>
             <optgroup label="2021 Focus Areas">
-              <option value="interop-2021-aspect-ratio">Aspect Ratio</option>
-              <option value="interop-2021-flexbox">Flexbox</option>
-              <option value="interop-2021-grid">Grid</option>
-              <option value="interop-2021-position-sticky">position: sticky</option>
-              <option value="interop-2021-transforms">Transforms</option>
+            <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2021)}}">
+            <option value$="[[item.id]]">[[item.description]]</option>
+          </template>
             </optgroup>
           </select>
         </div>
@@ -562,14 +553,14 @@ class Interop2022 extends PolymerElement {
                   </template>
                 </th>
               </tr>
-              <template is="dom-repeat" items="{{featureKeys}}" filter="{{computeFilter(2022)}}">
-                <tr data-feature$="[[item]]">
+              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2022)}}">
+                <tr data-feature$="[[item.id]]">
                   <td>
-                    <a href$="[[getFeatureTestsURL(item)]]">[[getFeatureName(item, stable)]]</a>
+                    <a href$="[[item.tests]]">[[item.description]]</a>
                   </td>
-                  <td>[[getBrowserScoreForFeature(0, item, stable)]]</td>
-                  <td>[[getBrowserScoreForFeature(1, item, stable)]]</td>
-                  <td>[[getBrowserScoreForFeature(2, item, stable)]]</td>
+                  <td>[[getBrowserScoreForFeature(0, item.id, stable)]]</td>
+                  <td>[[getBrowserScoreForFeature(1, item.id, stable)]]</td>
+                  <td>[[getBrowserScoreForFeature(2, item.id, stable)]]</td>
                 </tr>
               </template>
               <tr class="section-header">
@@ -578,14 +569,14 @@ class Interop2022 extends PolymerElement {
                 <th></th>
                 <th></th>
               </tr>
-              <template is="dom-repeat" items="{{featureKeys}}" filter="{{computeFilter(2021)}}">
-                <tr data-feature$="[[item]]">
+              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2021)}}">
+                <tr data-feature$="[[item.id]]">
                   <td>
-                    <a href$="[[getFeatureTestsURL(item)]]">[[getFeatureName(item, stable)]]</a>
+                    <a href$="[[item.tests]]">[[item.description]]</a>
                   </td>
-                  <td>[[getBrowserScoreForFeature(0, item, stable)]]</td>
-                  <td>[[getBrowserScoreForFeature(1, item, stable)]]</td>
-                  <td>[[getBrowserScoreForFeature(2, item, stable)]]</td>
+                  <td>[[getBrowserScoreForFeature(0, item.id, stable)]]</td>
+                  <td>[[getBrowserScoreForFeature(1, item.id, stable)]]</td>
+                  <td>[[getBrowserScoreForFeature(2, item.id, stable)]]</td>
                 </tr>
               </template>
               <tr class="section-header">
@@ -593,7 +584,7 @@ class Interop2022 extends PolymerElement {
                 <th colspan=3>Group Progress</th>
               </tr>
               <tr>
-                <td colspan=3>Editing, contenteditable and execCommand</td>
+                <td colspan=3>Editing, contenteditable, and execCommand</td>
                 <td>0%</td>
               </tr>
               <tr>
@@ -638,10 +629,12 @@ class Interop2022 extends PolymerElement {
       embedded: Boolean,
       stable: Boolean,
       feature: String,
-      featureKeys: {
+      features: {
         type: Array,
         value() {
-          return Object.keys(FEATURES);
+          return Object.entries(FEATURES).map(([id, info]) => {
+            return Object.assign({ id }, info);
+          });
         }
       },
       dataManager: Object,
@@ -685,15 +678,7 @@ class Interop2022 extends PolymerElement {
 
   computeFilter(year) {
     const prefix = `interop-${year}-`;
-    return (feature) => feature.startsWith(prefix);
-  }
-
-  getFeatureName(feature) {
-    return FEATURES[feature].description;
-  }
-
-  getFeatureTestsURL(feature) {
-    return FEATURES[feature].tests;
+    return (feature) => feature.id.startsWith(prefix);
   }
 
   getBrowserScoreForFeature(browserIndex, feature) {
