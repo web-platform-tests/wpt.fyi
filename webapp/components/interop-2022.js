@@ -287,7 +287,6 @@ class Interop2022 extends PolymerElement {
         }
 
         a {
-          color: #0d5de6;
           text-decoration: none;
         }
 
@@ -449,25 +448,25 @@ class Interop2022 extends PolymerElement {
           place-items: center;
         }
 
-        @media (prefers-color-scheme: dark) {
-          :host {
-            color: white;
-          }
+        // Can restore dark mode with color-scheme once there's no accessibility contrast issues across browsers
+        // https://bugs.webkit.org/show_bug.cgi?id=226893
+        // see also interop-2022.html line 5
+        //
+        // @media (prefers-color-scheme: dark) {
+        //   :host {
+        //     color: white;
+        //   }
 
-          a {
-            color: #9e9eff;
-          }
+        //   paper-button.unselected {
+        //     color: #333;
+        //   }
 
-          paper-button.unselected {
-            color: #333;
-          }
-
-          .focus-area-section, details, .table-card {
-            background: hsl(0 0% 10%);
-            border-color: hsl(0 0% 20%);
-            box-shadow: none;
-          }
-        }
+        //   .focus-area-section, details, .table-card {
+        //     background: hsl(0 0% 10%);
+        //     border-color: hsl(0 0% 20%);
+        //     box-shadow: none;
+        //   }
+        // }
       </style>
       <h1>Interop 2022 Dashboard</h1>
       <p class="prose">
