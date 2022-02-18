@@ -427,6 +427,7 @@ class Interop2022 extends PolymerElement {
 
         #featureSelect {
           padding: 0.5rem;
+          font-size: 16px;
         }
 
         #featureReferenceList {
