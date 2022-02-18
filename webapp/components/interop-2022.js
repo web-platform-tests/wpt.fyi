@@ -101,7 +101,7 @@ const FEATURES = {
   'interop-2022-viewport': {
     description: 'Viewport Units',
     mdn: '',
-    spec: '',
+    spec: 'https://drafts.csswg.org/css-values/#viewport-relative-units',
     tests: 'https://wpt.fyi/results/css/css-values/viewport-units-parsing.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
   },
   'interop-2022-webcompat': {
