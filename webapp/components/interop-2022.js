@@ -286,6 +286,11 @@ class Interop2022 extends PolymerElement {
           line-height: 1.5;
         }
 
+        a {
+          color: #0d5de6;
+          text-decoration: none;
+        }
+
         h1, h2 {
           text-align: center;
         }
@@ -447,6 +452,10 @@ class Interop2022 extends PolymerElement {
         @media (prefers-color-scheme: dark) {
           :host {
             color: white;
+          }
+
+          a {
+            color: #9e9eff;
           }
 
           paper-button.unselected {
