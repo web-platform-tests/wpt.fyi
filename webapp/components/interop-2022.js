@@ -72,7 +72,7 @@ const FEATURES = {
     description: 'Dialog Element',
     mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/dialog',
     spec: 'https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element',
-    tests: 'https://wpt.fyi/results/html/semantics/interactive-elements/the-dialog-element?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-dialog',
+    tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-dialog',
   },
   'interop-2022-forms': {
     description: 'Forms',
@@ -96,13 +96,13 @@ const FEATURES = {
     description: 'Typography and Encodings',
     mdn: '',
     spec: '',
-    tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-text',
+    tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-text',
   },
   'interop-2022-viewport': {
     description: 'Viewport Units',
     mdn: '',
     spec: 'https://drafts.csswg.org/css-values/#viewport-relative-units',
-    tests: 'https://wpt.fyi/results/css/css-values/viewport-units-parsing.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
+    tests: 'https://wpt.fyi/results/css/css-values?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
   },
   'interop-2022-webcompat': {
     description: 'Web Compat',
