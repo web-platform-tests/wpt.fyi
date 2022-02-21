@@ -12,10 +12,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
 
-// const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
-const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/foolip/wpt-results-analysis';
-const DATA_BRANCH = 'gh-pages';
-const DATA_FILES_PATH = 'data/interop-2022';
+const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis/gh-pages/data/interop-2022';
 
 const SUMMARY_FEATURE_NAME = 'summary';
 
@@ -172,7 +169,7 @@ class Interop2022DataManager {
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
   async _loadCsv(label) {
-    const url = `${GITHUB_URL_PREFIX}/${DATA_BRANCH}/${DATA_FILES_PATH}/unified-scores-${label}.csv`;
+    const url = `${GITHUB_URL_PREFIX}/interop-2022-${label}.csv`;
     const csvLines = await fetchCsvContents(url);
 
     const features = [SUMMARY_FEATURE_NAME, ...Object.keys(FEATURES)];
