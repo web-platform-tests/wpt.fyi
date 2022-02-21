@@ -354,7 +354,7 @@ class Interop2022 extends PolymerElement {
         }
 
         .prose {
-          max-inline-size: 40ch;
+          max-inline-size: 42ch;
           margin-inline: auto;
           text-align: center;
         }
