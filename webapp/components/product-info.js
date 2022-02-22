@@ -173,7 +173,7 @@ const ProductInfo = (superClass) => class extends superClass {
       if (channel) {
         name = `${name}-${channel}`;
       }
-    } else if (name === "android_webview") {
+    } else if (name === 'android_webview') {
       return `/static/${name}.svg`;
     }
     return `/static/${name}_64x64.png`;
