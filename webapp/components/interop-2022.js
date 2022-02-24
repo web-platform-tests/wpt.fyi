@@ -470,7 +470,7 @@ class Interop2022 extends PolymerElement {
       -->
       <div class="table-card">
         <p class="prose" style="font-size: 36px">
-          Interop 2022 will launch soon,<br>please wait for an announcement.
+          Interop 2022 will launch soon
         </p>
       </div>
 
