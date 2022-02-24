@@ -466,6 +466,12 @@ class Interop2022 extends PolymerElement {
         // }
       </style>
       <h1>Interop 2022 Dashboard</h1>
+      <div class="table-card">
+        <p class="prose" style="font-size: 36px">
+          Interop 2022 will launch soon,<br>please wait for an announcement.
+        </p>
+      </div>
+
       <p class="prose">
         These scores represent how browser engines are doing in 15 focus areas
         and 3 joint investigation efforts.
