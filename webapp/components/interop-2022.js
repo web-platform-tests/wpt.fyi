@@ -465,13 +465,16 @@ class Interop2022 extends PolymerElement {
         //   }
         // }
       </style>
+      <!--
       <h1>Interop 2022 Dashboard</h1>
+      -->
       <div class="table-card">
         <p class="prose" style="font-size: 36px">
           Interop 2022 will launch soon,<br>please wait for an announcement.
         </p>
       </div>
 
+      <!--
       <p class="prose">
         These scores represent how browser engines are doing in 15 focus areas
         and 3 joint investigation efforts.
@@ -491,7 +494,6 @@ class Interop2022 extends PolymerElement {
           The more tests that pass, the higher the score.
         </p>
 
-        <!-- TODO: replace with paper-dropdown-menu -->
         <div class="focus-area">
           <select id="featureSelect">
             <option value="summary">Summary</option>
@@ -636,6 +638,7 @@ class Interop2022 extends PolymerElement {
         <a href="https://app.element.io/#/room/#interop2022:matrix.org" target="_blank">join
         the conversation on Matrix</a>!</p>
       </footer>
+      -->
 `;
   }
 
