@@ -223,7 +223,7 @@ class Interop2022DataManager {
         const version = csvValues[i];
         browserVersions[browserIdx].push(version);
 
-        let summaryScore = 0;
+        let testScore = 0;
         Object.keys(FEATURES).forEach((feature, j) => {
           const score = parseInt(csvValues[i + 1 + j]);
           if (!(score >= 0 && score <= 1000)) {
@@ -233,10 +233,13 @@ class Interop2022DataManager {
           newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
-          summaryScore += score;
+          testScore += score;
         });
 
-        summaryScore = Math.floor(summaryScore / 15);
+        // TODO: get the investigation score at this date.
+        const investigationScore = 0;
+
+        const summaryScore = Math.floor((0.9 * testScore) / 15 + (0.1 * investigationScore));
 
         const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
         newRows.get(SUMMARY_FEATURE_NAME).push(summaryScore / 1000);
@@ -712,11 +715,7 @@ class Interop2022 extends PolymerElement {
   }
 
   getBrowserScoreTotal(browserIndex) {
-    const scores = this.stable ? this.scores.stable : this.scores.experimental;
-    const testScore = scores[browserIndex][SUMMARY_FEATURE_NAME];
-    const investigationScore = 0; // TODO
-    const total = (90 * testScore) + (10 * investigationScore);
-    return `${Math.floor(total / 1000)}%`;
+    return this.getBrowserScoreForFeature(browserIndex, SUMMARY_FEATURE_NAME);
   }
 
   updateUrlParams(embedded, stable, feature) {
@@ -927,8 +926,7 @@ class Interop2022Summary extends PolymerElement {
       throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
     }
     for (let i = 0; i < scores.length; i++) {
-      // TODO: share 10/90% calculation with getBrowserScoreTotal
-      let score = Math.floor(90 * scores[i][SUMMARY_FEATURE_NAME] / 1000);
+      let score = Math.floor(scores[i][SUMMARY_FEATURE_NAME] / 10);
       let curScore = numbers[i].innerText;
       new CountUp(numbers[i], score, {
         startVal: curScore === '--' ? 0 : curScore
