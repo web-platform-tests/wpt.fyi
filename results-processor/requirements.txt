@@ -14,7 +14,7 @@ google-cloud-storage==2.1.0
 google-crc32c==1.3.0
 google-resumable-media==2.3.0
 googleapis-common-protos==1.55.0
-grpcio==1.41.1
+grpcio==1.44.0
 gunicorn==20.1.0
 idna==2.10 # pyup: ignore file # see https://github.com/web-platform-tests/wpt.fyi/issues/2389
 importlib-metadata==4.8.1
