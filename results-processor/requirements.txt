@@ -5,7 +5,7 @@ chardet==4.0.0
 click==8.0.4
 filelock==3.6.0
 flake8==4.0.1
-Flask==2.0.2
+Flask==2.0.3
 google-api-core==2.2.1
 google-auth==2.3.2
 google-cloud-core==2.1.0
