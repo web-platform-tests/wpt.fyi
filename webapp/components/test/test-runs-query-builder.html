@@ -52,10 +52,10 @@ suite('TestRunsQueryBuilder', () => {
   test('add item', () => {
     queryBuilder.addProduct();
     assert.equal(queryBuilder.products.length, 3);
-    assert.equal(queryBuilder.products[2].browser_name, 'deno');
+    assert.equal(queryBuilder.products[2].browser_name, 'chrome_android');
     queryBuilder.addProduct();
     assert.equal(queryBuilder.products.length, 4);
-    assert.equal(queryBuilder.products[3].browser_name, 'firefox');
+    assert.equal(queryBuilder.products[3].browser_name, 'deno');
   });
 
   test('delete item', (done) => {
