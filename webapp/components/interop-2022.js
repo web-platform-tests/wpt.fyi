@@ -630,7 +630,7 @@ class Interop2022 extends PolymerElement {
         <a href="https://github.com/web-platform-tests/interop-2022/issues/new" target="_blank">file an issue</a>
         to request updating the set of tests used for Interop 2022. You're also
         welcome to
-        <a href="https://app.element.io/#/room/#interop2022:matrix.org" target="_blank">join
+        <a href="https://matrix.to/#/#interop2022:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
         the conversation on Matrix</a>!</p>
       </footer>
 `;
