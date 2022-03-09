@@ -344,8 +344,8 @@ The high-level structure of the `v4` manifest is as follows:
 Uploads a wptreport to the dashboard to create the test run.
 
 This endpoint only accepts POST requests. Requests need to be authenticated via HTTP basic auth.
-Please contact [Ecosystem Infra](mailto:ecosystem-infra@chromium.org) if you want to register as a
-"test runner", to upload results.
+Please [file an issue](https://github.com/web-platform-tests/wpt.fyi/issues/new) if you want to
+register as a "test runner", to upload results.
 
 #### File payload
 

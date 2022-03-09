@@ -12,7 +12,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
 
-const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis/gh-pages/data/interop-2022';
+const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022';
 
 const SUMMARY_FEATURE_NAME = 'summary';
 
