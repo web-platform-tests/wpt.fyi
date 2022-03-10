@@ -12,7 +12,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
 
-const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis/gh-pages/data/interop-2022';
+const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022';
 
 const SUMMARY_FEATURE_NAME = 'summary';
 
@@ -21,91 +21,91 @@ const FEATURES = {
     description: 'Aspect Ratio',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/aspect-ratio',
     spec: 'https://drafts.csswg.org/css-sizing/#aspect-ratio',
-    tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-aspect-ratio',
+    tests: '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-aspect-ratio',
   },
   'interop-2021-flexbox': {
     description: 'Flexbox',
     mdn: 'https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox',
     spec: 'https://drafts.csswg.org/css-flexbox/',
-    tests: 'https://wpt.fyi/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-flexbox',
+    tests: '/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-flexbox',
   },
   'interop-2021-grid': {
     description: 'Grid',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/grid',
     spec: 'https://drafts.csswg.org/css-grid-1/',
-    tests: 'https://wpt.fyi/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-grid',
+    tests: '/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-grid',
   },
   'interop-2021-position-sticky': {
     description: 'Sticky Positioning',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/position',
     spec: 'https://drafts.csswg.org/css-position/#position-property',
-    tests: 'https://wpt.fyi/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-position-sticky',
+    tests: '/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-position-sticky',
   },
   'interop-2021-transforms': {
     description: 'Transforms',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/transform',
     spec: 'https://drafts.csswg.org/css-transforms/',
-    tests: 'https://wpt.fyi/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-transforms',
+    tests: '/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2021-transforms',
   },
   'interop-2022-cascade': {
     description: 'Cascade Layers',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/@layer',
     spec: 'https://drafts.csswg.org/css-cascade/#layering',
-    tests: 'https://wpt.fyi/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-cascade',
+    tests: '/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-cascade',
   },
   'interop-2022-color': {
     description: 'Color Spaces and Functions',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value',
     spec: 'https://drafts.csswg.org/css-color/',
-    tests: 'https://wpt.fyi/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-color',
+    tests: '/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-color',
   },
   'interop-2022-contain': {
     description: 'Containment',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/contain',
     spec: 'https://drafts.csswg.org/css-contain/#contain-property',
-    tests: 'https://wpt.fyi/results/css/css-contain?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-contain',
+    tests: '/results/css/css-contain?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-contain',
   },
   'interop-2022-dialog': {
     description: 'Dialog Element',
     mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/dialog',
     spec: 'https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element',
-    tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-dialog',
+    tests: '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-dialog',
   },
   'interop-2022-forms': {
     description: 'Forms',
     mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/form',
     spec: 'https://html.spec.whatwg.org/multipage/forms.html#the-form-element',
-    tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-forms',
+    tests: '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-forms',
   },
   'interop-2022-scrolling': {
     description: 'Scrolling',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/overflow',
     spec: 'https://drafts.csswg.org/css-overflow/#propdef-overflow',
-    tests: 'https://wpt.fyi/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-scrolling',
+    tests: '/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-scrolling',
   },
   'interop-2022-subgrid': {
     description: 'Subgrid',
     mdn: 'https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout/Subgrid',
     spec: 'https://drafts.csswg.org/css-grid-2/#subgrids',
-    tests: 'https://wpt.fyi/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-subgrid',
+    tests: '/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-subgrid',
   },
   'interop-2022-text': {
     description: 'Typography and Encodings',
     mdn: '',
     spec: '',
-    tests: 'https://wpt.fyi/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-text',
+    tests: '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-text',
   },
   'interop-2022-viewport': {
     description: 'Viewport Units',
     mdn: '',
     spec: 'https://drafts.csswg.org/css-values/#viewport-relative-units',
-    tests: 'https://wpt.fyi/results/css/css-values?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
+    tests: '/results/css/css-values?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-viewport',
   },
   'interop-2022-webcompat': {
     description: 'Web Compat',
     mdn: '',
     spec: '',
-    tests: 'https://wpt.fyi/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-webcompat',
+    tests: '/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&q=label%3Ainterop-2022-webcompat',
   },
 };
 
@@ -223,7 +223,7 @@ class Interop2022DataManager {
         const version = csvValues[i];
         browserVersions[browserIdx].push(version);
 
-        let summaryScore = 0;
+        let testScore = 0;
         Object.keys(FEATURES).forEach((feature, j) => {
           const score = parseInt(csvValues[i + 1 + j]);
           if (!(score >= 0 && score <= 1000)) {
@@ -233,10 +233,13 @@ class Interop2022DataManager {
           newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
-          summaryScore += score;
+          testScore += score;
         });
 
-        summaryScore = Math.floor(summaryScore / 15);
+        // TODO: get the investigation score at this date.
+        const investigationScore = 0;
+
+        const summaryScore = Math.floor((0.9 * testScore) / 15 + (0.1 * investigationScore));
 
         const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
         newRows.get(SUMMARY_FEATURE_NAME).push(summaryScore / 1000);
@@ -466,6 +469,7 @@ class Interop2022 extends PolymerElement {
         // }
       </style>
       <h1>Interop 2022 Dashboard</h1>
+
       <p class="prose">
         These scores represent how browser engines are doing in 15 focus areas
         and 3 joint investigation efforts.
@@ -485,7 +489,6 @@ class Interop2022 extends PolymerElement {
           The more tests that pass, the higher the score.
         </p>
 
-        <!-- TODO: replace with paper-dropdown-menu -->
         <div class="focus-area">
           <select id="featureSelect">
             <option value="summary">Summary</option>
@@ -625,11 +628,10 @@ class Interop2022 extends PolymerElement {
         <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
         and then
         <a href="https://github.com/web-platform-tests/interop-2022/issues/new" target="_blank">file an issue</a>
-        to request updating the set of tests used for Interop 2022!</p>
-        <p>
-          <a href="https://app.element.io/#/room/#interop2022:matrix.org">Chat on Matrix</a>
-          · <a href="https://github.com/web-platform-tests/wpt.fyi">Source on Github</a>
-        </p>
+        to request updating the set of tests used for Interop 2022. You're also
+        welcome to
+        <a href="https://matrix.to/#/#interop2022:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
+        the conversation on Matrix</a>!</p>
       </footer>
 `;
   }
@@ -713,11 +715,7 @@ class Interop2022 extends PolymerElement {
   }
 
   getBrowserScoreTotal(browserIndex) {
-    const scores = this.stable ? this.scores.stable : this.scores.experimental;
-    const testScore = scores[browserIndex][SUMMARY_FEATURE_NAME];
-    const investigationScore = 0; // TODO
-    const total = (90 * testScore) + (10 * investigationScore);
-    return `${Math.floor(total / 1000)}%`;
+    return this.getBrowserScoreForFeature(browserIndex, SUMMARY_FEATURE_NAME);
   }
 
   updateUrlParams(embedded, stable, feature) {
@@ -928,8 +926,7 @@ class Interop2022Summary extends PolymerElement {
       throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
     }
     for (let i = 0; i < scores.length; i++) {
-      // TODO: share 10/90% calculation with getBrowserScoreTotal
-      let score = Math.floor(90 * scores[i][SUMMARY_FEATURE_NAME] / 1000);
+      let score = Math.floor(scores[i][SUMMARY_FEATURE_NAME] / 10);
       let curScore = numbers[i].innerText;
       new CountUp(numbers[i], score, {
         startVal: curScore === '--' ? 0 : curScore

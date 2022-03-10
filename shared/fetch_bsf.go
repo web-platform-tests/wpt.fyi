@@ -16,10 +16,10 @@ import (
 const (
 	// experimentalBSFURL is the GitHub URL for fetching the experimental BSF data
 	// for Chrome, Firefox and Safari.
-	experimentalBSFURL = "https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis/gh-pages/data/experimental-browser-specific-failures.csv"
+	experimentalBSFURL = "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/experimental-browser-specific-failures.csv"
 	// stableBSFURL is the GitHub URL for fetching the stable BSF data
 	// for Chrome, Firefox and Safari.
-	stableBSFURL = "https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis/gh-pages/data/stable-browser-specific-failures.csv"
+	stableBSFURL = "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/stable-browser-specific-failures.csv"
 )
 
 // BSFData stores BSF data of the latest WPT revision.

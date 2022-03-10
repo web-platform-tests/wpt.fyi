@@ -11,7 +11,7 @@ import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
-const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/Ecosystem-Infra/wpt-results-analysis';
+const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/web-platform-tests/results-analysis';
 const DATA_BRANCH = 'gh-pages';
 // Support a 'use_webkitgtk' query parameter to substitute WebKitGTK in for
 // Safari, to deal with the ongoing lack of new STP versions on wpt.fyi.
