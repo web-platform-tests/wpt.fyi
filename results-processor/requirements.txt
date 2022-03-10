@@ -14,7 +14,7 @@ click==8.0.4
     # via flask
 filelock==3.4.2
     # via -r requirements.in
-flake8==3.9.2
+flake8==4.0.1
     # via -r requirements.in
 flask==2.0.2
     # via -r requirements.in
@@ -54,10 +54,6 @@ gunicorn==20.1.0
     # via -r requirements.in
 idna==3.3
     # via requests
-importlib-metadata==4.2.0
-    # via
-    #   click
-    #   flake8
 itsdangerous==2.1.1
     # via flask
 jinja2==3.0.3
@@ -89,9 +85,9 @@ pyasn1==0.4.8
     #   rsa
 pyasn1-modules==0.2.8
     # via google-auth
-pycodestyle==2.7.0
+pycodestyle==2.8.0
     # via flake8
-pyflakes==2.3.1
+pyflakes==2.4.0
     # via flake8
 pyyaml==6.0
     # via libcst
@@ -110,7 +106,6 @@ typed-ast==1.4.3
     # via mypy
 typing-extensions==4.1.1
     # via
-    #   importlib-metadata
     #   libcst
     #   mypy
     #   typing-inspect
@@ -120,8 +115,6 @@ urllib3==1.26.8
     # via requests
 werkzeug==2.0.3
     # via flask
-zipp==3.7.0
-    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
