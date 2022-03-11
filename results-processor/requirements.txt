@@ -16,7 +16,7 @@ filelock==3.4.2
     # via -r requirements.in
 flake8==4.0.1
     # via -r requirements.in
-flask==2.0.2
+flask==2.0.3
     # via -r requirements.in
 google-api-core[grpc]==2.7.1
     # via
