@@ -32,7 +32,7 @@ google-cloud-core==2.2.3
     # via
     #   google-cloud-datastore
     #   google-cloud-storage
-google-cloud-datastore==2.4.0
+google-cloud-datastore==2.5.1
     # via -r requirements.in
 google-cloud-storage==2.1.0
     # via -r requirements.in
@@ -58,8 +58,6 @@ itsdangerous==2.1.1
     # via flask
 jinja2==3.0.3
     # via flask
-libcst==0.4.1
-    # via google-cloud-datastore
 markupsafe==2.1.0
     # via jinja2
 mccabe==0.6.1
@@ -67,9 +65,7 @@ mccabe==0.6.1
 mypy==0.812
     # via -r requirements.in
 mypy-extensions==0.4.3
-    # via
-    #   mypy
-    #   typing-inspect
+    # via mypy
 proto-plus==1.20.3
     # via google-cloud-datastore
 protobuf==3.19.4
@@ -89,8 +85,6 @@ pycodestyle==2.8.0
     # via flake8
 pyflakes==2.4.0
     # via flake8
-pyyaml==6.0
-    # via libcst
 requests==2.27.1
     # via
     #   -r requirements.in
@@ -105,12 +99,7 @@ six==1.16.0
 typed-ast==1.4.3
     # via mypy
 typing-extensions==4.1.1
-    # via
-    #   libcst
-    #   mypy
-    #   typing-inspect
-typing-inspect==0.7.1
-    # via libcst
+    # via mypy
 urllib3==1.26.8
     # via requests
 werkzeug==2.0.3
