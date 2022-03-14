@@ -62,7 +62,7 @@ markupsafe==2.1.0
     # via jinja2
 mccabe==0.6.1
     # via flake8
-mypy==0.812
+mypy==0.941
     # via -r requirements.in
 mypy-extensions==0.4.3
     # via mypy
