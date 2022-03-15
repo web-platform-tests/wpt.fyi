@@ -162,6 +162,10 @@ const ProductInfo = (superClass) => class extends superClass {
     // Special case for Chrome nightly, which is in fact Chromium ToT:
     if (name === 'chrome' && labels.has('nightly')) {
       name = 'chromium';
+
+    } else if (name === 'android_webview') {
+      return `/static/${name}.svg`;
+
     } else if (name !== 'deno' && name !== 'flow' && name !== 'servo') {  // Deno, Flow & Servo do not have per-channel logos.
       let channel;
       const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
@@ -174,8 +178,6 @@ const ProductInfo = (superClass) => class extends superClass {
       if (channel) {
         name = `${name}-${channel}`;
       }
-    } else if (name === 'android_webview') {
-      return `/static/${name}.svg`;
     }
     return `/static/${name}_64x64.png`;
   }
@@ -216,7 +218,7 @@ const ProductInfo = (superClass) => class extends superClass {
     return parseProduct(name);
   }
 
-  getSpec(product, withRevision = true) {
+  getSpec(product, withRevision=true) {
     let spec = product.browser_name;
     if (product.browser_version) {
       spec += `-${product.browser_version}`;
