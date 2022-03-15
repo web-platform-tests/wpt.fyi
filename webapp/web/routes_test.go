@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
@@ -37,23 +38,12 @@ func TestFlagsBound(t *testing.T) {
 	assertHandlerIs(t, "/flags", "flags")
 }
 
-func TestInteropBound(t *testing.T) {
-	assertHandlerIs(t, "/interop", "interop")
-	assertHandlerIs(t, "/interop/", "interop")
-	assertHandlerIs(t, "/interop/2dcontext", "interop")
-	assertHandlerIs(t, "/interop/BackgroundSync/interfaces.any.html", "interop")
-}
-
 func TestRunsBound(t *testing.T) {
 	assertHandlerIs(t, "/test-runs", "test-runs")
 }
 
 func TestApiDiffBound(t *testing.T) {
 	assertHandlerIs(t, "/api/diff", "api-diff")
-}
-
-func TestApiInteropBound(t *testing.T) {
-	assertHandlerIs(t, "/api/interop", "api-interop")
 }
 
 func TestApiManifestBound(t *testing.T) {

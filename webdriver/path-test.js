@@ -8,7 +8,7 @@ const {Page} = require('puppeteer');
 const expect = require('chai').expect;
 
 exports.tests = function(ctx) {
-  for (const view of ['results', 'interop']) {
+  for (const view of ['results']) {
     test(view, async () => {
       /** @type {Page} */
       const page = await ctx.browser.newPage();

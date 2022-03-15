@@ -149,7 +149,7 @@ class PathPart extends PathInfo(PolymerElement) {
       query: {
         type: String
       },
-      // Domain path-prefix, e.g. '/interop/'
+      // Domain path-prefix, e.g. '/result/'
       prefix: {
         type: String,
         default: '/'

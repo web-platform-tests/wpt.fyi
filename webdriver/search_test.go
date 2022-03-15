@@ -19,9 +19,6 @@ func TestSearch(t *testing.T) {
 		t.Run("wpt-results", func(t *testing.T) {
 			testSearch(t, wd, app, "/", "wpt-results")
 		})
-		t.Run("wpt-interop", func(t *testing.T) {
-			testSearch(t, wd, app, "/interop/", "wpt-interop")
-		})
 	})
 }
 

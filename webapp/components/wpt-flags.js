@@ -35,7 +35,7 @@ window.wpt = window.wpt || {};
 
 /* global wpt */
 Object.defineProperty(wpt, 'ClientSideFeatures', {
-  get: function() {
+  get: function () {
     return [
       'colorHomepage',
       'diffFromAPI',
@@ -46,7 +46,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'processorTab',
       'queryBuilder',
       'queryBuilderSHA',
-      'searchCacheInterop',
       'showBSF',
       'structuredQueries',
       'triageMetadataUI',
@@ -55,7 +54,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
   }
 });
 Object.defineProperty(wpt, 'ServerSideFeatures', {
-  get: function() {
+  get: function () {
     return [
       'checksAllUsers',
       'diffRenames',
@@ -71,7 +70,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
   }
 });
 
-const makeFeatureProperties = function(target, features, readOnly, useLocalStorage) {
+const makeFeatureProperties = function (target, features, readOnly, useLocalStorage) {
   for (const feature of features) {
     let value = null;
     if (useLocalStorage) {
@@ -79,7 +78,7 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
       value = stored && JSON.parse(stored);
     }
     // Fall back to env default.
-    if (value === null && typeof(WPTEnvironmentFlags) !== 'undefined') {
+    if (value === null && typeof (WPTEnvironmentFlags) !== 'undefined') {
       // 'false' is needed for [[!foo]] Polymer bindings
       value = WPTEnvironmentFlags[feature] || false;
     }
@@ -217,11 +216,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       <paper-checkbox checked="{{structuredQueries}}">
         Interpret query strings as structured queries over test names and test
         status/result values
-      </paper-checkbox>
-    </paper-item>
-    <paper-item sub-item>
-      <paper-checkbox checked="{{searchCacheInterop}}">
-        Compute interop results the fly, using the searchcache
       </paper-checkbox>
     </paper-item>
     <paper-item>
