@@ -35,7 +35,7 @@ window.wpt = window.wpt || {};
 
 /* global wpt */
 Object.defineProperty(wpt, 'ClientSideFeatures', {
-  get: function () {
+  get: function() {
     return [
       'colorHomepage',
       'diffFromAPI',
@@ -54,7 +54,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
   }
 });
 Object.defineProperty(wpt, 'ServerSideFeatures', {
-  get: function () {
+  get: function() {
     return [
       'checksAllUsers',
       'diffRenames',
@@ -70,7 +70,7 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
   }
 });
 
-const makeFeatureProperties = function (target, features, readOnly, useLocalStorage) {
+const makeFeatureProperties = function(target, features, readOnly, useLocalStorage) {
   for (const feature of features) {
     let value = null;
     if (useLocalStorage) {
