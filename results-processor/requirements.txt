@@ -66,7 +66,7 @@ markupsafe==2.1.0
     # via jinja2
 mccabe==0.6.1
     # via flake8
-mypy==0.812
+mypy==0.941
     # via -r requirements.in
 mypy-extensions==0.4.3
     # via mypy
@@ -100,6 +100,8 @@ six==1.16.0
     # via
     #   google-auth
     #   grpcio
+tomli==2.0.1
+    # via mypy
 typed-ast==1.4.3
     # via mypy
 typing-extensions==4.1.1
