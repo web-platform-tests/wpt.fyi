@@ -164,7 +164,7 @@ const ProductInfo = (superClass) => class extends superClass {
       name = 'chromium';
 
     } else if (name === 'android_webview') {
-      return `/static/${name}.svg`;
+      return `/static/${name}.png`;
 
     } else if (name !== 'deno' && name !== 'flow' && name !== 'servo') {  // Deno, Flow & Servo do not have per-channel logos.
       let channel;
