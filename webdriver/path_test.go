@@ -18,9 +18,6 @@ func TestPath(t *testing.T) {
 		t.Run("results", func(t *testing.T) {
 			testPath(t, app, wd, "/results/", "wpt-results")
 		})
-		t.Run("interop", func(t *testing.T) {
-			testPath(t, app, wd, "/interop/", "wpt-interop")
-		})
 	})
 }
 

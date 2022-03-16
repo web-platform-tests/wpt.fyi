@@ -240,7 +240,6 @@ func main() {
 }
 
 func copyProdRuns(store shared.Datastore, filters shared.TestRunFilter) {
-	q := store.TestRunQuery()
 	for _, aligned := range []bool{false, true} {
 		if aligned {
 			filters.Aligned = &aligned
@@ -260,46 +259,6 @@ func copyProdRuns(store shared.Datastore, filters shared.TestRunFilter) {
 			}
 		}
 		addData(store, "TestRun", latestProductionTestRunMetadata)
-
-		passRateMetadataKindName := metrics.GetDatastoreKindName(metrics.PassRateMetadata{})
-		filters.MaxCount = nil
-		prodPassRateMetadata, err := FetchInterop(*remoteHost, filters)
-		if err != nil {
-			log.Printf("Failed to fetch interop (?aligned=%v).", aligned)
-			continue
-		}
-		// Update the interop IDs to match the newly-copied local test-run IDs.
-		// We re-fetch locally because we might have copied a large number of runs,
-		// but only want the latest for interop.
-		prodPassRateMetadata.TestRunIDs = make([]int64, len(prodPassRateMetadata.TestRuns))
-		one := 1
-		sha := shared.LatestSHA
-		var localRunCopies shared.TestRuns
-		if aligned {
-			var shas []string
-			var keys map[string]shared.KeysByProduct
-			if shas, keys, err = q.GetAlignedRunSHAs(shared.GetDefaultProducts(), filters.Labels, nil, nil, &one, nil); err != nil {
-				log.Printf("Failed to load a aligned run SHA: %s", err.Error())
-				continue
-			}
-			if len(shas) > 0 {
-				sha = shas[0]
-				if loaded, err := q.LoadTestRunsByKeys(keys[sha]); err != nil {
-					log.Printf("Failed to load test runs by keys: %s", err.Error())
-					continue
-				} else {
-					localRunCopies = loaded.AllRuns()
-				}
-			}
-		}
-		if len(localRunCopies) != len(prodPassRateMetadata.TestRunIDs) {
-			log.Printf("Could not find local copies for SHA %s", sha)
-			continue
-		}
-		for i := range prodPassRateMetadata.TestRunIDs {
-			prodPassRateMetadata.TestRunIDs[i] = localRunCopies[i].ID
-		}
-		addData(store, passRateMetadataKindName, []interface{}{&prodPassRateMetadata})
 	}
 }
 
@@ -350,18 +309,6 @@ func addData(store shared.Datastore, kindName string, data []interface{}) (keys 
 	}
 	log.Printf("Added %v %s entities", len(data), kindName)
 	return keys
-}
-
-// FetchInterop fetches the PassRateMetadata for the given sha / labels, using
-// the API on the given host.
-// TODO(lukebjerring): Migrate to results-analysis
-func FetchInterop(wptdHost string, filter shared.TestRunFilter) (metrics.PassRateMetadata, error) {
-	url := "https://" + wptdHost + "/api/interop"
-	url += "?" + filter.OrDefault().ToQuery().Encode()
-
-	var interop metrics.PassRateMetadata
-	err := shared.FetchJSON(url, &interop)
-	return interop, err
 }
 
 // FetchPendingRuns fetches recent PendingTestRuns.

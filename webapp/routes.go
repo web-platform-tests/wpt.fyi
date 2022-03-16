@@ -27,10 +27,6 @@ func RegisterRoutes() {
 
 	shared.AddRoute("/node_modules/{path:.*}", "components", componentsHandler)
 
-	// Test run results, viewed by pass-rate across the browsers
-	shared.AddRoute("/interop/", "interop", interopHandler)
-	shared.AddRoute("/interop/{path:.*}", "interop", interopHandler)
-
 	// A list of useful/insightful queries
 	shared.AddRoute("/insights", "insights", insightsHandler)
 

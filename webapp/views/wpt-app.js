@@ -15,7 +15,6 @@ import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
-import '../views/wpt-interop.js';
 import '../views/wpt-results.js';
 
 class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
@@ -67,7 +66,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         }
       </style>
 
-      <app-location route="{{route}}" url-space-regex="^/(results|interop)/"></app-location>
+      <app-location route="{{route}}" url-space-regex="^/(results)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
       <wpt-header path="[[encodedPath]]" query="[[query]]" user="[[user]]" is-triage-mode="{{isTriageMode}}"></wpt-header>
@@ -156,11 +155,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      search-results="{{searchResults}}"
                      is-triage-mode="[[isTriageMode]]"></wpt-results>
 
-        <wpt-interop name="interop"
-                     is-loading="{{interopLoading}}"
-                     structured-search="[[structuredSearch]]"
-                     path="{{subroute.path}}"></wpt-interop>
-
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
 
@@ -185,7 +179,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       path: String,
       testPaths: Set,
       structuredSearch: Object,
-      interopLoading: Boolean,
       resultsLoading: Boolean,
       editable: {
         type: Boolean,
@@ -193,7 +186,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       },
       isLoading: {
         type: Boolean,
-        computed: '_computeIsLoading(interopLoading, resultsLoading)',
+        computed: '_computeIsLoading(resultsLoading)',
       },
       searchResults: Array,
       resultsTotalsRangeMessage: {
@@ -340,8 +333,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return this.shadowRoot.querySelector(`wpt-${this.page}`);
   }
 
-  _computeIsLoading(interopLoading, resultsLoading) {
-    return interopLoading || resultsLoading;
+  _computeIsLoading(resultsLoading) {
+    return resultsLoading;
   }
 
   handleKeyDown(e) {

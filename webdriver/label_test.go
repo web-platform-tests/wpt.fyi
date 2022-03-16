@@ -21,16 +21,6 @@ func TestLabelParam_Results(t *testing.T) {
 
 }
 
-func TestLabelParam_Interop(t *testing.T) {
-	for _, aligned := range []bool{true, false} {
-		t.Run(fmt.Sprintf("?aligned=%v", aligned), func(t *testing.T) {
-			runWebdriverTest(t, func(t *testing.T, app AppServer, wd selenium.WebDriver) {
-				testLabel(t, wd, app, "/interop/", shared.StableLabel, "wpt-interop", 4, aligned)
-			})
-		})
-	}
-}
-
 func testLabel(
 	t *testing.T,
 	wd selenium.WebDriver,

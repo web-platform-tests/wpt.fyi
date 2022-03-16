@@ -13,11 +13,6 @@ func RegisterRoutes() {
 		shared.WrapApplicationJSON(
 			shared.WrapPermissiveCORS(apiDiffHandler)))
 
-	// API endpoint for fetching interoperability metadata.
-	shared.AddRoute("/api/interop", "api-interop",
-		shared.WrapApplicationJSON(
-			shared.WrapPermissiveCORS(apiInteropHandler)))
-
 	// API endpoint for fetching all labels.
 	shared.AddRoute("/api/labels", "api-labels",
 		shared.WrapApplicationJSON(
