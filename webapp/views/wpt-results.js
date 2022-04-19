@@ -169,6 +169,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
+                           subtest-rows={{subtestRows}}
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
@@ -328,6 +329,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Array,
         value: [],
         notify: true,
+      },
+      subtestRows: {
+        type: Number,
+        notify: true
       },
       testPaths: {
         type: Set,
@@ -566,16 +571,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.refreshDisplayedNodes();
   }
 
-  nodeSort(a, b) {
-    if (a.path < b.path) {
-      return -1;
-    }
-    if (a.path > b.path) {
-      return 1;
-    }
-    return 0;
-  }
-
   refreshDisplayedNodes() {
     if (!this.searchResults || !this.searchResults.length) {
       this.displayedNodes = [];
@@ -670,9 +665,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           return true;
         }
         return row.diff;
-      })
-      // TODO(markdittmer): Is this still necessary?
-      .sort(this.nodeSort);
+      });
   }
 
   computeDifferences(before, after) {

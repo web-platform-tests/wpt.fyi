@@ -153,6 +153,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      test-runs="{{testRuns}}"
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
+                     subtest-rows={{subtestRows}}
                      is-triage-mode="[[isTriageMode]]"></wpt-results>
 
         <wpt-404 name="404" ></wpt-404>
@@ -191,8 +192,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       searchResults: Array,
       resultsTotalsRangeMessage: {
         type: String,
-        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds)',
+        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds, subtestRows)',
       },
+      subtestRows: Number,
       bsfBannerMessage: {
         type: String,
         computed: 'computeBSFBannerMessage(isBSFCollapsed)',
@@ -382,21 +384,23 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return true;
   }
 
-  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds) {
+  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds, subtestRows) {
     const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds);
     if (page === 'results' && searchResults) {
+      // If the view is displaying subtests of a single test,
+      // we show the number of rows excluding TestHarness rows.
+      if (this.computePathIsATestFile(path)) {
+        if (!subtestRows || subtestRows === 1) {
+          return msg;
+        }
+        return msg.replace('Showing ', `Showing ${subtestRows} subtests from `);
+      }
       let subtests = 0, tests = 0;
       for (const r of searchResults) {
         if (r.test.startsWith(this.path)) {
           tests++;
           subtests += Math.max(...r.legacy_status.map(s => s.total));
         }
-      }
-      if (this.computePathIsATestFile(path)) {
-        if (subtests <= 1) {
-          return msg;
-        }
-        return msg.replace('Showing ', `Showing ${subtests} subtests from `);
       }
       let folder = '';
       if (path && path.length > 1) {

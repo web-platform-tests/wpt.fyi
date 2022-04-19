@@ -84,6 +84,11 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         type: Array,
         computed: 'computeRows(resultsTable, onlyShowDifferences)'
       },
+      subtestRows: {
+        type: Number,
+        value: 0,
+        notify: true
+      },
       isTriageMode: Boolean,
       metadataMap: Object,
     };
@@ -289,12 +294,18 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
   computeRows(resultsTable, onlyShowDifferences) {
     if (!resultsTable || !resultsTable.length || !onlyShowDifferences) {
+      // If displaying subtests of a single test, the first two rows will
+      // reflect TestHarness status and duration, so we don't count them
+      // when displaying the number of subtests in the blue banner.
+      this.subtestRows = (resultsTable && resultsTable.length - 2 > 0) ? resultsTable.length - 2 : 0;
       return resultsTable;
     }
     const [first, ...others] = resultsTable;
-    return [first, ...others.filter(r => {
+    const rows = [first, ...others.filter(r => {
       return r.results[0].status !== r.results[1].status;
     })];
+    this.subtestRows = (rows.length - 2 > 0) ? resultsTable.length - 2 : 0;
+    return rows;
   }
 }
 

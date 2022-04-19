@@ -107,6 +107,10 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     width: -moz-max-content;
     width: max-content;
   }
+  .totals-row {
+    border-top: 8px solid white;
+    padding: 8px;
+  }
   .view-triage {
     margin-left: 30px;
   }
@@ -165,7 +169,16 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
         </template>
       </tr>
     </template>
-
+    <template is="dom-if" if="[[shouldShowTotals(totals)]]">
+      <tr class="totals-row">
+        <td class="sub-test-name"><code>Total</code></td>
+        <template is="dom-repeat" items="[[totals]]" as="totals">
+          <td class$="[[ totalsColorClass(totals.passes, totals.total) ]]">
+            <code>[[ totals.passes ]]/[[ totals.total ]]</code>
+          </td>
+        </template>
+      </tr>
+    </template>
     <template is="dom-if" if="[[verbose]]">
       <template is="dom-if" if="[[anyScreenshots(firstRow)]]">
         <tr>
@@ -218,6 +231,10 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
       displayedProducts: {
         type: Array,
         computed: 'computeDisplayedProducts(testRuns)',
+      },
+      totals: {
+        type: Array,
+        computed: 'computeTotals(rows)'
       },
       metadataMap: Object,
       matchers: {
@@ -335,13 +352,50 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     return rows && rows.length && rows[0];
   }
 
+  computeTotals(rows) {
+    // The first two rows display TestHarness status and duration,
+    // so we don't need to count them. If only these rows exist,
+    // there is no need to show totals.
+    if (rows.length <= 2) {
+      return [];
+    }
+    // keep a total for each for each browser.
+    let totals = new Array(rows[2].results.length);
+    for (let i = 0; i < totals.length; i++) {
+      totals[i] = {passes: 0, total: 0};
+    }
+
+    // Tally the number of passes and total tests.
+    for (let i = 2; i < rows.length; i++) {
+      rows[i].results.forEach((result, index) => {
+        if (result.status === 'PASS') {
+          totals[index].passes++;
+        }
+        // If the test status is missing, it's not counted toward the total.
+        if (result.status) {
+          totals[index].total++;
+        }
+      });
+    }
+    return totals;
+  }
+
   colorClass(status) {
     if (['PASS'].includes(status)) {
       return this.passRateClass(1, 1);
-    } else if (['FAIL', 'ERROR'].includes(status)) {
+    } else if (['FAIL', 'ERROR', 'TIMEOUT', 'NOTRUN'].includes(status)) {
       return this.passRateClass(0, 1);
     }
     return 'result';
+  }
+
+  totalsColorClass(passes, total) {
+    // Gray cell color if no tests were run.
+    if (total === 0) {
+      return 'result';
+    }
+    // If tests were run, choose a color based on the % of tests passed.
+    return this.passRateClass(passes, total);
   }
 
   parseFailureMessage(result) {
@@ -445,6 +499,10 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     }
 
     return this.displayMetadata && this.getMetadataUrlForSubtest(index, subtestname, metadataMap) !== '';
+  }
+
+  shouldShowTotals(totals) {
+    return totals && totals.length > 0;
   }
 
   getMetadataUrlForSubtest(index, subtestname, metadataMap) {
