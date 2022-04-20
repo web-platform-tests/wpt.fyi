@@ -178,6 +178,11 @@ const ProductInfo = (superClass) => class extends superClass {
       if (channel) {
         name = `${name}-${channel}`;
       }
+      // TODO(kyle): A temporary workaround; remove this check when
+      // chrome_android is mapped to chrome on wptrunner.
+      if (name === 'chrome_android') {
+        name = 'chrome';
+      }
     }
     return `/static/${name}_64x64.png`;
   }
