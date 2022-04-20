@@ -103,6 +103,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       td[selected] {
         border: 2px solid #000000;
       }
+      .totals-row {
+        border-top: 4px solid white;
+        padding: 4px;
+      }
       .yellow-button {
         color: var(--paper-yellow-500);
         margin-left: 32px;
@@ -248,6 +252,20 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
               </tr>
             </template>
 
+            <template is="dom-if" if="[[ shouldDisplayTotals(displayedTotals, diffRun) ]]">
+              <tr class="totals-row">
+                <td>
+                  <code><strong>Total</strong></code>
+                </td>
+                <template is="dom-repeat" items="[[displayedTotals]]" as="totals">
+                  <td class\$="numbers [[ testTotalsClass(totals.passes, totals.total) ]]">
+                    <span class\$="passes [[ testTotalsClass(totals.passes, totals.total) ]]">[[ totals.passes ]]</span>
+                    /
+                    <span class\$="total [[ testTotalsClass(totals.passes, totals.total) ]]">[[ totals.total ]]</span>
+                  </td>
+                </template>
+              </tr>
+            </template>
           </tbody>
         </table>
 
@@ -346,6 +364,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       displayedTests: {
         type: Array,
         computed: 'computeDisplayedTests(path, searchResults)',
+      },
+      displayedTotals: {
+        type: Array,
+        value: [],
       },
       metadataMap: Object,
       labelMap: Object,
@@ -477,6 +499,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
     this.testRuns = [];
     this.searchResults = [];
+    this.displayedTotals = [];
     this.refreshDisplayedNodes();
     this.loadData();
   }
@@ -625,7 +648,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           return nodes;
         }
         const row = nodes[name];
+        
+        // Keep track of overall total.
+        if (!nodes.hasOwnProperty('totals')) {
+          nodes['totals'] = this.testRuns.map(() => ({passes: 0, total: 0}));
+        }
         for (let i = 0; i < rs.length; i++) {
+          nodes.totals[i].passes += rs[i].passes;
+          nodes.totals[i].total += rs[i].total;
           row.results[i].passes += rs[i].passes;
           row.results[i].total += rs[i].total;
         }
@@ -659,6 +689,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
         return nodes;
       }, {});
+    
+    // Take the calculated totals to be displayed at bottom of results page.
+    // Delete key after reassignment.
+    this.displayedTotals = resultsByPath.totals;
+    delete resultsByPath.totals;
+
     this.displayedNodes = Object.values(resultsByPath)
       .filter(row => {
         if (!this.onlyShowDifferences) {
@@ -742,6 +778,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
       return this.passRateClass(result.passes, result.total);
     }
+  }
+
+  testTotalsClass(passes, total) {
+    if ((this.path === '/' && !this.colorHomepage) || total === 0) {
+      return 'top'
+    }
+    return this.passRateClass(passes, total);
   }
 
   getDiffDelta(node, prop) {
@@ -894,6 +937,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   shouldDisplayTestLabel(testname, labelMap) {
     return !this.pathIsRootDir && this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
+  }
+
+  shouldDisplayTotals(displayedTotals, diffRun) {
+    return !diffRun && displayedTotals && displayedTotals.length > 0;
   }
 
   getTestLabelTitle(testname, labelMap) {
