@@ -370,8 +370,8 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       this.triageCanSubmit = false;
       return;
     }
-    for (const data of this.displayedMetadata) {
-      if (data.label === '' || data.url === '') {
+    for (const {url, label} of this.displayedMetadata) {
+      if (url === '' && (label === '' || label === undefined)) {
         this.triageCanSubmit = false;
         return;
       }

@@ -183,7 +183,7 @@ class PathPart extends PathInfo(PolymerElement) {
     // Disable the link if triage mode is enabled
     // and this cell is viable for triage (a test file).
     if (isTriageMode && this.pathIsATestFile) {
-      return "javascript:void(0)";
+      return 'javascript:void(0)';
     }
     const encodedPath = this.encodeTestPath(path);
     const href = new URL(window.location);
