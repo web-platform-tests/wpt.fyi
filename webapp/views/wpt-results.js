@@ -202,7 +202,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             <template is="dom-repeat" items="{{displayedNodes}}" as="node">
               <tr>
                 <td onclick="[[handleTriageSelect(null, node, testRun)]]" onmouseover="[[handleTriageHover(null, node, testRun)]]">
-                  <path-part prefix="/results" path="{{ node.path }}" query="{{ query }}" is-dir="{{ node.isDir }}"></path-part>
+                  <path-part
+                      prefix="/results"
+                      path="{{ node.path }}"
+                      query="{{ query }}"
+                      is-dir="{{ node.isDir }}"
+                      is-triage-mode=[[isTriageMode]]>
+                  </path-part>
                   <template is="dom-if" if="[[shouldDisplayMetadata(null, node.path, metadataMap)]]">
                     <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank">
                       <iron-icon class="bug" icon="bug-report"></iron-icon>
