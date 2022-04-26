@@ -195,6 +195,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       prLink: String,
       prText: String,
       errorMessage: String,
+      fieldsFilled: Object,
       selectedMetadata: {
         type: Array,
         notify: true,
@@ -340,6 +341,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
   populateDisplayData() {
     this.displayedMetadata = [];
+    // Info to keep track of which fields have been filled.
+    this.fieldsFilled = {filled: [], numEmpty: 0};
+
     const browserMap = {};
     for (const entry of this.selectedMetadata) {
       if (!(entry.product in browserMap)) {
@@ -362,21 +366,40 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         node['label'] = '';
       }
       this.displayedMetadata.push(node);
+      this.fieldsFilled.filled.push(false);
     }
+    // A URL or label must be supplied for every triage item,
+    // which are all currently empty.
+    this.fieldsFilled.numEmpty = this.displayedMetadata.length;
   }
 
-  checkEnableTriageButton() {
-    if (this.displayedMetadata.length === 0) {
+  checkEnableTriageButton(event) {
+    // Detect which input was filled.
+    const index = event.model.__data.index;
+    const url = this.displayedMetadata[index].url;
+    const label = this.displayedMetadata[index].label;
+
+    // Check if the input is filled enough to submit.
+    if (url === '' && (label === '' || label === undefined)) {
+      // If the field was previously considered filled, it's now empty.
+      if (this.fieldsFilled.filled[index]) {
+        this.fieldsFilled.numEmpty++;
+      }
+      this.fieldsFilled.filled[index] = false;
+
       this.triageCanSubmit = false;
       return;
     }
-    for (const {url, label} of this.displayedMetadata) {
-      if (url === '' && (label === '' || label === undefined)) {
-        this.triageCanSubmit = false;
-        return;
-      }
+    // If the field was previously empty, it is now considered filled.
+    if (!this.fieldsFilled.filled[index]) {
+      this.fieldsFilled.numEmpty--;
+      this.fieldsFilled.filled[index] = true;
     }
-    this.triageCanSubmit = true;
+
+    // If all triage items have input, triage can be submitted.
+    if (this.fieldsFilled.numEmpty === 0) {
+      this.triageCanSubmit = true;
+    }
   }
 
   handleTriage() {
