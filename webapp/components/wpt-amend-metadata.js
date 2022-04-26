@@ -163,9 +163,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             <div class="metadata-entry">
               <img class="browser" src="[[displayMetadataLogo(node.product)]]">
               :
-              <paper-input label="Bug URL" on-input="checkEnableTriageButton" value="{{node.url}}" autofocus></paper-input>
+              <paper-input label="Bug URL" on-input="handleFieldInput" value="{{node.url}}" autofocus></paper-input>
               <template is="dom-if" if="[[!node.product]]">
-                <paper-input label="Label" on-input="checkEnableTriageButton" value="{{node.label}}"></paper-input>
+                <paper-input label="Label" on-input="handleFieldInput" value="{{node.label}}"></paper-input>
               </template>
             </div>
             <template is="dom-repeat" items="[[node.tests]]" as="test">
@@ -183,7 +183,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         </paper-dialog-scrollable>
         <div class="buttons">
           <paper-button onclick="[[close]]">Dismiss</paper-button>
-          <paper-button disabled="[[!triageCanSubmit]]" onclick="[[triage]]" dialog-confirm>Triage</paper-button>
+          <paper-button disabled="[[triageSubmitDisabled]]" onclick="[[triage]]" dialog-confirm>Triage</paper-button>
         </div>
       </paper-dialog>
       <paper-toast id="show-pr" duration="10000"><span>[[errorMessage]]</span><a class="link" target="_blank" href="[[prLink]]">[[prText]]</a></paper-toast>
@@ -204,9 +204,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         type: Array,
         value: []
       },
-      triageCanSubmit: {
+      triageSubmitDisabled: {
         type: Boolean,
-        value: false
+        value: true
       }
     };
   }
@@ -230,8 +230,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
   close() {
     this.dialog.removeEventListener('keydown', this.enter);
-    this.triageCanSubmit = false;
+    this.triageSubmitDisabled = true;
     this.selectedMetadata = [];
+    this.fieldsFilled = {filled: [], numEmpty: 0};
     this.dialog.close();
   }
 
@@ -241,7 +242,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   }
 
   triageOnEnter(e) {
-    if (e.which === 13 && this.triageCanSubmit) {
+    if (e.which === 13 && !this.triageSubmitDisabled) {
       this.triageSubmit();
     }
   }
@@ -373,33 +374,31 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     this.fieldsFilled.numEmpty = this.displayedMetadata.length;
   }
 
-  checkEnableTriageButton(event) {
+  handleFieldInput(event) {
     // Detect which input was filled.
     const index = event.model.__data.index;
     const url = this.displayedMetadata[index].url;
     const label = this.displayedMetadata[index].label;
 
-    // Check if the input is filled enough to submit.
+    // Check if the input is empty.
     if (url === '' && (label === '' || label === undefined)) {
       // If the field was previously considered filled, it's now empty.
       if (this.fieldsFilled.filled[index]) {
         this.fieldsFilled.numEmpty++;
       }
       this.fieldsFilled.filled[index] = false;
-
-      this.triageCanSubmit = false;
-      return;
-    }
-    // If the field was previously empty, it is now considered filled.
-    if (!this.fieldsFilled.filled[index]) {
+    } else if (!this.fieldsFilled.filled[index]) {
+      // If the field was previously empty, it is now considered filled.
       this.fieldsFilled.numEmpty--;
       this.fieldsFilled.filled[index] = true;
     }
+    this.checkEnableTriageButton();
+  }
 
+  checkEnableTriageButton() {
     // If all triage items have input, triage can be submitted.
-    if (this.fieldsFilled.numEmpty === 0) {
-      this.triageCanSubmit = true;
-    }
+    this.triageSubmitDisabled = (this.fieldsFilled.numEmpty > 0
+      || this.displayedMetadata.length === 0);
   }
 
   handleTriage() {
