@@ -1,12 +1,14 @@
 module github.com/web-platform-tests/wpt.fyi
 
-go 1.14
+go 1.16
 
 require (
-	cloud.google.com/go/cloudtasks v0.1.0
+	cloud.google.com/go v0.101.0 // indirect
+	cloud.google.com/go/cloudtasks v1.3.0
+	cloud.google.com/go/compute v1.6.1 // indirect
 	cloud.google.com/go/datastore v1.6.0
 	cloud.google.com/go/logging v1.4.2
-	cloud.google.com/go/storage v1.20.0
+	cloud.google.com/go/storage v1.22.0
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/deckarep/golang-set v1.8.0
@@ -17,23 +19,30 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0
 	github.com/gomodule/redigo v1.8.8
+	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/securecookie v1.1.1
+	github.com/kr/pretty v0.2.0 // indirect
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
+	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/samthor/nicehttp v1.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
-	github.com/taskcluster/taskcluster/v44 v44.5.0
+	github.com/taskcluster/taskcluster/v44 v44.12.3
 	github.com/tebeka/selenium v0.9.9
+	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	google.golang.org/api v0.66.0
-	google.golang.org/genproto v0.0.0-20220201184016-50beb8ab5c44
-	google.golang.org/grpc v1.44.0
+	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
+	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
+	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
+	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171 // indirect
+	google.golang.org/api v0.76.0
+	google.golang.org/genproto v0.0.0-20220426171045-31bebdecfb46
+	google.golang.org/grpc v1.46.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
