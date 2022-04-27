@@ -392,13 +392,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       this.fieldsFilled.numEmpty--;
       this.fieldsFilled.filled[index] = true;
     }
-    this.checkEnableTriageButton();
-  }
 
-  checkEnableTriageButton() {
     // If all triage items have input, triage can be submitted.
-    this.triageSubmitDisabled = (this.fieldsFilled.numEmpty > 0
-      || this.displayedMetadata.length === 0);
+    this.triageSubmitDisabled = this.fieldsFilled.numEmpty > 0;
   }
 
   handleTriage() {
