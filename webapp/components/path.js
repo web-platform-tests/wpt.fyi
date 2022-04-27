@@ -166,7 +166,11 @@ class PathPart extends PathInfo(PolymerElement) {
       },
       href: {
         type: Location,
-        computed: 'computeHref(prefix, path, query)'
+        computed: 'computeHref(prefix, path, query, isTriageMode)'
+      },
+      isTriageMode: {
+        type: Boolean,
+        value: false
       },
       styleClass: {
         type: String,
@@ -175,7 +179,12 @@ class PathPart extends PathInfo(PolymerElement) {
     };
   }
 
-  computeHref(prefix, path, query) {
+  computeHref(prefix, path, query, isTriageMode) {
+    // Disable the link if triage mode is enabled
+    // and this cell is viable for triage (a test file).
+    if (isTriageMode && this.pathIsATestFile) {
+      return 'javascript:void(0)';
+    }
     const encodedPath = this.encodeTestPath(path);
     const href = new URL(window.location);
     href.pathname = `${prefix || ''}${encodedPath}`;
