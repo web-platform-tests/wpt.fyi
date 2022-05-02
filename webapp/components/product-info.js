@@ -169,7 +169,7 @@ const ProductInfo = (superClass) => class extends superClass {
     } else if (name === 'chrome_android') {
       // TODO(kyle): A temporary workaround; remove this check when
       // chrome_android is mapped to chrome on wptrunner.
-      return `/static/chrome_64x64.png`;
+      return '/static/chrome_64x64.png';
 
     } else if (name !== 'deno' && name !== 'flow' && name !== 'servo') {  // Deno, Flow & Servo do not have per-channel logos.
       let channel;
