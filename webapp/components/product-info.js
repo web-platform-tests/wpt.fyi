@@ -166,6 +166,11 @@ const ProductInfo = (superClass) => class extends superClass {
     } else if (name === 'android_webview') {
       return `/static/${name}.png`;
 
+    } else if (name === 'chrome_android') {
+      // TODO(kyle): A temporary workaround; remove this check when
+      // chrome_android is mapped to chrome on wptrunner.
+      return `/static/chrome_64x64.png`;
+
     } else if (name !== 'deno' && name !== 'flow' && name !== 'servo') {  // Deno, Flow & Servo do not have per-channel logos.
       let channel;
       const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
@@ -177,11 +182,6 @@ const ProductInfo = (superClass) => class extends superClass {
       }
       if (channel) {
         name = `${name}-${channel}`;
-      }
-      // TODO(kyle): A temporary workaround; remove this check when
-      // chrome_android is mapped to chrome on wptrunner.
-      if (name === 'chrome_android') {
-        name = 'chrome';
       }
     }
     return `/static/${name}_64x64.png`;
