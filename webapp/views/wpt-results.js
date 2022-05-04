@@ -133,7 +133,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           min-height: 30px;
         }
       }
-
+      .sort-row {
+        border-top: 4px solid white;
+        padding: 4px;
+      }
       .view-triage {
         margin-left: 30px;
       }
@@ -198,6 +201,16 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           </thead>
 
           <tbody>
+            <tr class="sort-row">
+              <td>
+                <paper-icon-button onclick="[[sortTestname]]" aria-label="Sort the test name column"></paper-icon-button>
+              </td>
+              <template is="dom-repeat" items="[[testRuns]]">
+                <td>
+                  <paper-icon-button onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
+                </td>
+              </template>
+            </tr>
 
             <template is="dom-repeat" items="{{displayedNodes}}" as="node">
               <tr>
@@ -431,6 +444,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
     this.reloadPendingMetadata = this.handleReloadPendingMetadata.bind(this);
+    this.sortTestname = this.sortTestname.bind(this);
   }
 
   connectedCallback() {
@@ -859,6 +873,34 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
     // % in js is not modulo, it's remainder. Ensure it's positive.
     this.path = this.searchResults[(n + next) % n].test;
+  }
+
+  sortTestname() {
+    if (!this.displayedNodes) {
+      return;
+    }
+    const sortedNodes = this.displayedNodes.slice();
+    sortedNodes.sort(function (a, b) {
+      return a.path > b.path;
+    })
+
+    this.displayedNodes = sortedNodes;
+  }
+
+  sortTestResults() {
+    const [index] = arguments;
+    return () => {
+      if (!this.displayedNodes) {
+        return;
+      }
+
+      const sortedNodes = this.displayedNodes.slice();
+      sortedNodes.sort(function (a, b) {
+        return a.results[index].passes > b.results[index].passes;
+      })
+
+      this.displayedNodes = sortedNodes;
+    };
   }
 
   handleTriageMode(isTriageMode) {
