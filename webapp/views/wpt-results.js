@@ -203,11 +203,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           <tbody>
             <tr class="sort-row">
               <td>
-                <paper-icon-button onclick="[[sortTestname]]" aria-label="Sort the test name column"></paper-icon-button>
+                <paper-icon-button src="/static/expand_more.svg" onclick="[[sortTestname]]" aria-label="Sort the test name column"></paper-icon-button>
               </td>
               <template is="dom-repeat" items="[[testRuns]]">
                 <td>
-                  <paper-icon-button onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
+                  <paper-icon-button src="/static/expand_more.svg" onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
                 </td>
               </template>
             </tr>
