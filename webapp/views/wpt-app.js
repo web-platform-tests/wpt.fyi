@@ -153,7 +153,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      test-runs="{{testRuns}}"
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
-                     subtest-rows={{subtestRows}}
+                     subtest-row-count={{subtestRowCount}}
                      is-triage-mode="[[isTriageMode]]"></wpt-results>
 
         <wpt-404 name="404" ></wpt-404>
@@ -192,9 +192,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       searchResults: Array,
       resultsTotalsRangeMessage: {
         type: String,
-        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds, subtestRows)',
+        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds, subtestRowCount)',
       },
-      subtestRows: Number,
+      subtestRowCount: Number,
       bsfBannerMessage: {
         type: String,
         computed: 'computeBSFBannerMessage(isBSFCollapsed)',
@@ -384,16 +384,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return true;
   }
 
-  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds, subtestRows) {
+  computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds, subtestRowCount) {
     const msg = super.computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds);
     if (page === 'results' && searchResults) {
       // If the view is displaying subtests of a single test,
-      // we show the number of rows excluding TestHarness rows.
+      // we show the number of rows excluding Harness duration.
       if (this.computePathIsATestFile(path)) {
-        if (!subtestRows || subtestRows === 1) {
+        if (!subtestRowCount || subtestRowCount === 1) {
           return msg;
         }
-        return msg.replace('Showing ', `Showing ${subtestRows} subtests from `);
+        return msg.replace('Showing ', `Showing ${subtestRowCount} subtests from `);
       }
       let subtests = 0, tests = 0;
       for (const r of searchResults) {

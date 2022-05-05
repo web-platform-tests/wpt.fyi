@@ -173,7 +173,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
-                           subtest-rows={{subtestRows}}
+                           subtest-row-count={{subtestRowCount}}
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
@@ -257,11 +257,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 <td>
                   <code><strong>Total</strong></code>
                 </td>
-                <template is="dom-repeat" items="[[displayedTotals]]" as="totals">
-                  <td class\$="numbers [[ testTotalsClass(totals.passes, totals.total) ]]">
-                    <span class\$="passes [[ testTotalsClass(totals.passes, totals.total) ]]">[[ totals.passes ]]</span>
+                <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
+                  <td class\$="numbers [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">
+                    <span class\$="passes [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">[[ columnTotal.passes ]]</span>
                     /
-                    <span class\$="total [[ testTotalsClass(totals.passes, totals.total) ]]">[[ totals.total ]]</span>
+                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">[[ columnTotal.total ]]</span>
                   </td>
                 </template>
               </tr>
@@ -348,7 +348,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         value: [],
         notify: true,
       },
-      subtestRows: {
+      subtestRowCount: {
         type: Number,
         notify: true
       },

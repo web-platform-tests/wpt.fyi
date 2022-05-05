@@ -171,10 +171,10 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     </template>
     <template is="dom-if" if="[[shouldShowTotals(totals)]]">
       <tr class="totals-row">
-        <td class="sub-test-name"><code>Total</code></td>
-        <template is="dom-repeat" items="[[totals]]" as="totals">
-          <td class$="[[ totalsColorClass(totals.passes, totals.total) ]]">
-            <code>[[ totals.passes ]]/[[ totals.total ]]</code>
+        <td class="sub-test-name"><code><strong>Total</strong></code></td>
+        <template is="dom-repeat" items="[[totals]]" as="columnTotal">
+          <td class$="[[ totalsColorClass(columnTotal.passes, columnTotal.total) ]]">
+            <code>[[ columnTotal.passes ]]/[[ columnTotal.total ]]</code>
           </td>
         </template>
       </tr>
@@ -359,29 +359,33 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     if (rows.length <= 2) {
       return [];
     }
+
     // Keep a total for each browser.
-    const totals = new Array(rows[2].results.length);
+    const totals = new Array(rows[0].results.length);
     for (let i = 0; i < totals.length; i++) {
       totals[i] = {passes: 0, total: 0};
     }
 
     // Tally the number of passes and total tests.
-    for (let i = 2; i < rows.length; i++) {
-      rows[i].results.forEach((result, index) => {
-        if (result.status === 'PASS') {
-          totals[index].passes++;
-        }
-        // If the test status is missing, it's not counted toward the total.
-        if (result.status) {
-          totals[index].total++;
-        }
-      });
-    }
+    rows.forEach(row => {
+      // Don't count the Harness duration row.
+      if (row.name !== 'Duration') {
+        row.results.forEach((result, index) => {
+          if (result.status === 'PASS' || result.status === 'OK') {
+            totals[index].passes++;
+          }
+          // If the test status is missing, it's not counted toward the total.
+          if (result.status) {
+            totals[index].total++;
+          }
+        });
+      }
+    });
     return totals;
   }
 
   colorClass(status) {
-    if (['PASS'].includes(status)) {
+    if (['PASS', 'OK'].includes(status)) {
       return this.passRateClass(1, 1);
     } else if (['FAIL', 'ERROR', 'TIMEOUT', 'NOTRUN'].includes(status)) {
       return this.passRateClass(0, 1);
