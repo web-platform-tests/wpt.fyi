@@ -881,7 +881,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
     const sortedNodes = this.displayedNodes.slice();
     sortedNodes.sort(function (a, b) {
-      return a.path > b.path;
+      if (a.path < b.path) {
+        return -1;
+      }
+
+      if (a.path > b.path) {
+        return 1;
+      }
+      return 0;
     })
 
     this.displayedNodes = sortedNodes;
@@ -896,7 +903,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
       const sortedNodes = this.displayedNodes.slice();
       sortedNodes.sort(function (a, b) {
-        return a.results[index].passes > b.results[index].passes;
+        return a.results[index].passes - b.results[index].passes;
       })
 
       this.displayedNodes = sortedNodes;
