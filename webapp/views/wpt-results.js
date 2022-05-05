@@ -124,7 +124,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         border-radius: 4px;
         background-color: var(--paper-blue-100);
       }
-
       @media (max-width: 1200px) {
         table tr td:first-child::after {
           content: "";
@@ -136,6 +135,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       .sort-row {
         border-top: 4px solid white;
         padding: 4px;
+      }
+      .sort-button {
+        margin-left: -15px;
       }
       .view-triage {
         margin-left: 30px;
@@ -203,11 +205,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           <tbody>
             <tr class="sort-row">
               <td>
-                <paper-icon-button src="/static/expand_more.svg" onclick="[[sortTestname]]" aria-label="Sort the test name column"></paper-icon-button>
+                <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestname]]" aria-label="Sort the test name column"></paper-icon-button>
               </td>
               <template is="dom-repeat" items="[[testRuns]]">
                 <td>
-                  <paper-icon-button src="/static/expand_more.svg" onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
+                  <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
                 </td>
               </template>
             </tr>
