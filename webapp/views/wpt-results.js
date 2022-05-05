@@ -203,16 +203,18 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           </thead>
 
           <tbody>
-            <tr class="sort-row">
-              <td>
-                <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestname]]" aria-label="Sort the test name column"></paper-icon-button>
-              </td>
-              <template is="dom-repeat" items="[[testRuns]]">
+            <template is="dom-if" if="[[displayedNodes]]">
+              <tr class="sort-row">
                 <td>
-                  <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
+                  <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestname]]" aria-label="Sort the test name column"></paper-icon-button>
                 </td>
-              </template>
-            </tr>
+                <template is="dom-repeat" items="[[testRuns]]">
+                  <td>
+                    <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
+                  </td>
+                </template>
+              </tr>
+            </template>
 
             <template is="dom-repeat" items="{{displayedNodes}}" as="node">
               <tr>
