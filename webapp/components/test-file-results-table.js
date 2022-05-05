@@ -359,8 +359,8 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     if (rows.length <= 2) {
       return [];
     }
-    // keep a total for each for each browser.
-    let totals = new Array(rows[2].results.length);
+    // Keep a total for each browser.
+    const totals = new Array(rows[2].results.length);
     for (let i = 0; i < totals.length; i++) {
       totals[i] = {passes: 0, total: 0};
     }
