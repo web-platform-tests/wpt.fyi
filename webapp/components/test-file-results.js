@@ -298,11 +298,11 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       rows = resultsTable;
     } else {
       const [first, ...others] = resultsTable;
-      const rows = [first, ...others.filter(r => {
+      rows = [first, ...others.filter(r => {
         return r.results[0].status !== r.results[1].status;
       })];
     }
-    
+
     // If displaying subtests of a single test, the first two rows will
     // reflect TestHarness status and duration, so we count them as 1 subtest
     // when displaying the number of subtests in the blue banner.
