@@ -103,6 +103,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       td[selected] {
         border: 2px solid #000000;
       }
+      .totals-row {
+        border-top: 4px solid white;
+        padding: 4px;
+      }
       .yellow-button {
         color: var(--paper-yellow-500);
         margin-left: 32px;
@@ -169,6 +173,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
+                           subtest-row-count={{subtestRowCount}}
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
@@ -247,6 +252,20 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
               </tr>
             </template>
 
+            <template is="dom-if" if="[[ shouldDisplayTotals(displayedTotals, diffRun) ]]">
+              <tr class="totals-row">
+                <td>
+                  <code><strong>Total</strong></code>
+                </td>
+                <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
+                  <td class\$="numbers [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">
+                    <span class\$="passes [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">[[ columnTotal.passes ]]</span>
+                    /
+                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">[[ columnTotal.total ]]</span>
+                  </td>
+                </template>
+              </tr>
+            </template>
           </tbody>
         </table>
 
@@ -329,6 +348,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         value: [],
         notify: true,
       },
+      subtestRowCount: {
+        type: Number,
+        notify: true
+      },
       testPaths: {
         type: Set,
         computed: 'computeTestPaths(searchResults)',
@@ -341,6 +364,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       displayedTests: {
         type: Array,
         computed: 'computeDisplayedTests(path, searchResults)',
+      },
+      displayedTotals: {
+        type: Array,
+        value: [],
       },
       metadataMap: Object,
       labelMap: Object,
@@ -472,6 +499,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
     this.testRuns = [];
     this.searchResults = [];
+    this.displayedTotals = [];
     this.refreshDisplayedNodes();
     this.loadData();
   }
@@ -566,16 +594,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.refreshDisplayedNodes();
   }
 
-  nodeSort(a, b) {
-    if (a.path < b.path) {
-      return -1;
-    }
-    if (a.path > b.path) {
-      return 1;
-    }
-    return 0;
-  }
-
   refreshDisplayedNodes() {
     if (!this.searchResults || !this.searchResults.length) {
       this.displayedNodes = [];
@@ -630,7 +648,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           return nodes;
         }
         const row = nodes[name];
+        
+        // Keep track of overall total.
+        if (!nodes.hasOwnProperty('totals')) {
+          nodes['totals'] = this.testRuns.map(() => ({passes: 0, total: 0}));
+        }
         for (let i = 0; i < rs.length; i++) {
+          nodes.totals[i].passes += rs[i].passes;
+          nodes.totals[i].total += rs[i].total;
           row.results[i].passes += rs[i].passes;
           row.results[i].total += rs[i].total;
         }
@@ -664,15 +689,19 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
         return nodes;
       }, {});
+    
+    // Take the calculated totals to be displayed at bottom of results page.
+    // Delete key after reassignment.
+    this.displayedTotals = resultsByPath.totals;
+    delete resultsByPath.totals;
+
     this.displayedNodes = Object.values(resultsByPath)
       .filter(row => {
         if (!this.onlyShowDifferences) {
           return true;
         }
         return row.diff;
-      })
-      // TODO(markdittmer): Is this still necessary?
-      .sort(this.nodeSort);
+      });
   }
 
   computeDifferences(before, after) {
@@ -749,6 +778,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
       return this.passRateClass(result.passes, result.total);
     }
+  }
+
+  testTotalsClass(passes, total) {
+    if ((this.path === '/' && !this.colorHomepage) || total === 0) {
+      return 'top'
+    }
+    return this.passRateClass(passes, total);
   }
 
   getDiffDelta(node, prop) {
@@ -901,6 +937,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   shouldDisplayTestLabel(testname, labelMap) {
     return !this.pathIsRootDir && this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
+  }
+
+  shouldDisplayTotals(displayedTotals, diffRun) {
+    return !diffRun && displayedTotals && displayedTotals.length > 0;
   }
 
   getTestLabelTitle(testname, labelMap) {

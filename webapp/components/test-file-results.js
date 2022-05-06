@@ -84,6 +84,11 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         type: Array,
         computed: 'computeRows(resultsTable, onlyShowDifferences)'
       },
+      subtestRowCount: {
+        type: Number,
+        value: 0,
+        notify: true
+      },
       isTriageMode: Boolean,
       metadataMap: Object,
     };
@@ -288,13 +293,26 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   }
 
   computeRows(resultsTable, onlyShowDifferences) {
+    let rows;
     if (!resultsTable || !resultsTable.length || !onlyShowDifferences) {
-      return resultsTable;
+      rows = resultsTable;
+    } else {
+      const [first, ...others] = resultsTable;
+      rows = [first, ...others.filter(r => {
+        return r.results[0].status !== r.results[1].status;
+      })];
     }
-    const [first, ...others] = resultsTable;
-    return [first, ...others.filter(r => {
-      return r.results[0].status !== r.results[1].status;
-    })];
+
+    // If displaying subtests of a single test, the first two rows will
+    // reflect TestHarness status and duration, so we count them as 1 subtest
+    // when displaying the number of subtests in the blue banner.
+    if (rows.length >= 2 && rows[1].name === 'Duration') {
+      this.subtestRowCount = rows.length - 1;
+    } else {
+      this.subtestRowCount = rows.length;
+    }
+
+    return rows;
   }
 }
 
