@@ -480,6 +480,8 @@ type LegacySearchRunResult struct {
 	Passes int `json:"passes"`
 	// Total is the total number of test results for this run/file pair.
 	Total int `json:"total"`
+	// HasHarnessOK represents whether an "OK" value existed in the subtest results.
+	HasHarnessOK bool `json:"has_harness_ok"`
 }
 
 // SearchResult contains data regarding a particular test file over a collection
