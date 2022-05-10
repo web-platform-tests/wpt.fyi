@@ -187,7 +187,7 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 	// Dedup visited file names via a map of results.
 	resMap := make(map[string]shared.SearchResult)
 	for i, s := range summaries {
-		for filename, passAndTotal := range s {
+		for filename, testInfo := range s {
 			// Exclude filenames that do not match query.
 			if !strings.Contains(canonicalizeStr(filename), q) {
 				continue
@@ -199,9 +199,13 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 					LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
 				}
 			}
+			newScoringProcess := (len(testInfo) == 3)
+			hasHarnessOK := (newScoringProcess && testInfo[2] == 1)
 			resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
-				Passes: passAndTotal[0],
-				Total:  passAndTotal[1],
+				Passes:            testInfo[0],
+				Total:             testInfo[1],
+				HasHarnessOK:      hasHarnessOK,
+				NewScoringProcess: newScoringProcess,
 			}
 		}
 	}

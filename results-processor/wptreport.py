@@ -326,9 +326,15 @@ class WPTReport(object):
                 raise ConflictingDataError(test_file)
 
             if result['status'] in ('OK', 'PASS'):
-                self._summary[test_file] = [1, 1]
+                self._summary[test_file] = [0, 0, 1]
             else:
-                self._summary[test_file] = [0, 1]
+                self._summary[test_file] = [0, 0, 0]
+
+            # If no subtests are present,
+            # count the status toward the test totals.
+            if len(result['subtests']) == 0:
+                self._summary[test_file][0] += self._summary[test_file][2]
+                self._summary[test_file][1] += 1
 
             for subtest in result['subtests']:
                 if subtest['status'] == 'PASS':

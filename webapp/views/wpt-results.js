@@ -691,7 +691,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           
           // The test must have a Harness "OK" to partially pass.
           // Otherwise, it will only be considered passing if all subtests pass.
-          if (rs[i].has_harness_ok || rs[i].passes === rs[i].total) {
+          if (!rs[i].newScoringProcess || rs[i].hasHarnessOK || rs[i].passes === rs[i].total) {
             const percentPassed = rs[i].passes / rs[i].total;
             nodes.totals[i].passes += percentPassed
             row.results[i].passes += percentPassed;

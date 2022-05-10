@@ -194,7 +194,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
     // Set name for test-level status entry after subtests discovered.
     // Parameter is number of subtests.
-    resultsTable[0].name = this.statusName(resultsTable.length - 1);
+    resultsTable[0].name = this.statusName(resultsTable.length - 2);
     return resultsTable;
   }
 

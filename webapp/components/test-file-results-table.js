@@ -384,7 +384,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   colorClass(status) {
     if (['PASS'].includes(status)) {
       return this.passRateClass(1, 1);
-    } else if (['FAIL', 'ERROR', 'TIMEOUT', 'NOTRUN'].includes(status)) {
+    } else if (['FAIL', 'ERROR', 'TIMEOUT', 'NOTRUN', 'CRASH'].includes(status)) {
       return this.passRateClass(0, 1);
     }
     return 'result';

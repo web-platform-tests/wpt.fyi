@@ -74,6 +74,7 @@ func (a *indexAggregator) Add(t TestID) error {
 		//
 		// Only include tests with non-UNKNOWN status for this run's total.
 		if res != shared.TestStatusUnknown {
+			results[i].NewScoringProcess = true
 			if res.IsHarnessStatus() {
 				results[i].HasHarnessOK = true
 			} else if res.IsPass() {
