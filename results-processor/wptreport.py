@@ -325,6 +325,10 @@ class WPTReport(object):
             if test_file in self._summary:
                 raise ConflictingDataError(test_file)
 
+            # Each test will have 3 numbers representing test information.
+            # The first number represents the number of subtest passes, the
+            # second number represents the total number of subtests, and the
+            # third number represents whether the status was a pass or fail.
             if result['status'] in ('OK', 'PASS'):
                 self._summary[test_file] = [0, 0, 1]
             else:

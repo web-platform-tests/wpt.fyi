@@ -199,6 +199,10 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 					LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
 				}
 			}
+			// If the summary file was aggregated using the new scoring process,
+			// testInfo will contain a 3rd integer representing whether we have
+			// seen a Harness "OK" status for this test. If there is no 3rd
+			// integer, we know this summary was computed using the old scoring method.
 			newScoringProcess := (len(testInfo) == 3)
 			hasHarnessOK := (newScoringProcess && testInfo[2] == 1)
 			resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{

@@ -243,7 +243,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
-                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
+                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
                     <template is="dom-if" if="[[!computePathIsATestFile(node.path)]]">
                       <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ formatTestTotal(node, index) }}</span>
                     </template>
@@ -684,14 +684,23 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           nodes['totals'] = this.testRuns.map(() => ({passes: 0, total: 0}));
         }
         for (let i = 0; i < rs.length; i++) {
-          // Ignore test if there are no results.
-          if (rs[i].total === 0) {
+          // Ignore aggregating test if there are no results.
+          if (rs[i].total ===  0 && !rs[i].newScoringProcess) {
             continue;
           }
           
-          // The test must have a Harness "OK" to partially pass.
-          // Otherwise, it will only be considered passing if all subtests pass.
+          // If we're using the new scoring method that does not count the Harness
+          // status toward the subtest count, the test must have a Harness "OK" to
+          // partially pass. Otherwise, it will only be considered passing if all
+          // subtests pass. If the summary was generated before this new scoring
+          // process, calculate as usual.
           if (!rs[i].newScoringProcess || rs[i].hasHarnessOK || rs[i].passes === rs[i].total) {
+            // If only a Harness "OK" exists in the subtests, count that as a pass.
+            if (rs[i].total === 0) {
+              rs[i].passes += 1;
+              rs[i].total += 1;
+            }
+            // Take the passes / total subtests to get a percentage passing.
             const percentPassed = rs[i].passes / rs[i].total;
             nodes.totals[i].passes += percentPassed
             row.results[i].passes += percentPassed;
@@ -865,7 +874,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   formatTestTotal(node, index) {
     // Display the total amount of tests that exist in a subfolder.
-    // This will not be displayed in a celll that represents a single test.
+    // This will not be displayed in a cell that represents a single test.
     const total = node.results[index].total;
     return (total === 0) ? "" : ` (${total})`;
   }
@@ -880,6 +889,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getNodeResult(node, index) {
+    // Calculate what should be displayed in a given results row.
     const passes = node.results[index].passes;
     const total = node.results[index].total;
     return this.formatTestPercentage(passes, total);
