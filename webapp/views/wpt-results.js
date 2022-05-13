@@ -38,6 +38,21 @@ import { Pluralizer } from '../components/pluralize.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
+// Map of abbreviations for status values stored in summary files.
+// This is used to expand the status to its full value after being
+// abbreviated for smaller storage in summary files.
+const STATUS_ABBREVIATIONS = {
+  "P": "PASS",
+  "O": "OK",
+  "F": "FAIL",
+  "S": "SKIP",
+  "E": "ERROR",
+  "N": "NOTRUN",
+  "C": "CRASH",
+  "T": "TIMEOUT",
+  "PF": "PRECONDITION_FAILED"
+}
+
 class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
   static get template() {
     return html`
@@ -231,6 +246,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       is-dir="{{ node.isDir }}"
                       is-triage-mode=[[isTriageMode]]>
                   </path-part>
+                  <template is="dom-if" if="[[!computePathIsATestFile(node.path)]]">
+                    <span class="total">{{ getTestTotal(node) }}</span>
+                  </template>
                   <template is="dom-if" if="[[shouldDisplayMetadata(null, node.path, metadataMap)]]">
                     <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank">
                       <iron-icon class="bug" icon="bug-report"></iron-icon>
@@ -244,9 +262,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
                     <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
-                    <template is="dom-if" if="[[!computePathIsATestFile(node.path)]]">
-                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ formatTestTotal(node, index) }}</span>
-                    </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
                       <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank">
                         <iron-icon class="bug" icon="bug-report"></iron-icon>
@@ -681,30 +696,35 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         
         // Keep track of overall total.
         if (!nodes.hasOwnProperty('totals')) {
-          nodes['totals'] = this.testRuns.map(() => ({passes: 0, total: 0}));
+          nodes['totals'] = this.testRuns.map(() => ({ passes: 0, total: 0 }));
         }
         for (let i = 0; i < rs.length; i++) {
-          // Ignore aggregating test if there are no results.
-          if (rs[i].total ===  0 && !rs[i].newScoringProcess) {
-            continue;
+          // Keep the status to show on the cell display
+          // if this is a test that has no subtests.
+          if (rs[i].newScoringProcess && rs[i].status && rs[i].total === 0) {
+            row.results[i].status = STATUS_ABBREVIATIONS[rs[i].status];
           }
-          
-          // If we're using the new scoring method that does not count the Harness
-          // status toward the subtest count, the test must have a Harness "OK" to
-          // partially pass. Otherwise, it will only be considered passing if all
-          // subtests pass. If the summary was generated before this new scoring
-          // process, calculate as usual.
-          if (!rs[i].newScoringProcess || rs[i].hasHarnessOK || rs[i].passes === rs[i].total) {
-            // If only a Harness "OK" exists in the subtests, count that as a pass.
+
+          // If this is an old summary, aggregate using the old scoring process.
+          if (!rs[i].newScoringProcess) {
+            // Ignore aggregating test if there are no results.
             if (rs[i].total === 0) {
-              rs[i].passes += 1;
-              rs[i].total += 1;
+              continue;
             }
             // Take the passes / total subtests to get a percentage passing.
             const percentPassed = rs[i].passes / rs[i].total;
-            nodes.totals[i].passes += percentPassed
+            nodes.totals[i].passes += percentPassed;
+            row.results[i].passes += percentPassed;
+          // If this is a new summary, aggregate using the new scoring process.
+          } else if (["O", "P"].includes(rs[i].status) || (rs[i].total > 0
+            && rs[i].total === rs[i].passes)) {
+            // If we have a total of 0 subtests but the status is passing,
+            // mark as 100% passing.
+            const percentPassed = (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
+            nodes.totals[i].passes += percentPassed;
             row.results[i].passes += percentPassed;
           }
+          // Add this test to the total count of tests.
           row.results[i].total += 1;
           nodes.totals[i].total += 1;
         }
@@ -872,23 +892,29 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
-  formatTestTotal(node, index) {
+  getTestTotal(node) {
     // Display the total amount of tests that exist in a subfolder.
     // This will not be displayed in a cell that represents a single test.
-    const total = node.results[index].total;
+    const total = node.results.reduce((a, b) => Math.max(a, b.total), 0);
     return (total === 0) ? "" : ` (${total})`;
   }
 
   formatTestPercentage(passes, total) {
-    // Display "Missing" text if there are no tests or subtests.
+    // Display "MISSING" text if there are no tests or subtests.
     if (total === 0) {
-      return "Missing";
+      return "MISSING";
     }
     const percent = parseFloat((passes / total) * 100).toFixed(1);
     return `${percent}%`;
   }
 
   getNodeResult(node, index) {
+    // If the cell represents a single test and it has no subtests,
+    // show the status of the test on the cell rather than a percentage.
+    if (!node.isDir && node.results[index].status) {
+      return node.results[index].status;
+    }
+
     // Calculate what should be displayed in a given results row.
     const passes = node.results[index].passes;
     const total = node.results[index].total;

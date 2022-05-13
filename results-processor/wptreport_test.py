@@ -252,8 +252,8 @@ class WPTReportTest(unittest.TestCase):
             }
         ]}
         self.assertEqual(r.summarize(), {
-            '/js/with-statement.html': [1, 2, 1],
-            '/js/isNaN.html': [2, 3, 1]
+            '/js/with-statement.html': {'s': 'O', 'c': [1, 2]},
+            '/js/isNaN.html': {'s': 'O', 'c': [2, 3]}
         })
 
     def test_summarize_zero_results(self):
@@ -305,8 +305,8 @@ class WPTReportTest(unittest.TestCase):
             }
         ]}
         self.assertEqual(r.summarize(), {
-            '/ref/reftest.html': [1, 1, 1],
-            '/ref/reftest-fail.html': [0, 1, 0]
+            '/ref/reftest.html': {'s': 'P', 'c': [0, 0]},
+            '/ref/reftest-fail.html': {'s': 'F', 'c': [0, 0]}
         })
 
     def test_each_result(self):

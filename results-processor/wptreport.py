@@ -39,6 +39,20 @@ RELEASE_CHANNEL_LABELS = frozenset({'stable', 'beta', 'experimental'})
 # TODO(Hexcles): Remove this when the TC decision task is implemented.
 IGNORED_CONFLICTS = frozenset({'browser_build_id', 'browser_changeset'})
 
+# A map of abbreviations for test statuses. This will be used
+# to convert test statuses to smaller formats to store in summary files.
+STATUS_ABBREVIATIONS = {
+    "PASS": "P",
+    "OK": "O",
+    "FAIL": "F",
+    "SKIP": "S",
+    "ERROR": "E",
+    "NOTRUN": "N",
+    "CRASH": "C",
+    "TIMEOUT": "T",
+    "PRECONDITION_FAILED": "PF"
+}
+
 _log = logging.getLogger(__name__)
 
 
@@ -139,7 +153,7 @@ class WPTReport(object):
             'results': [],
             'run_info': {},
         }
-        self._summary: Dict[str, List[int]] = {}
+        self._summary: Dict[str, Dict[str, Any]] = {}
 
     def _add_chunk(self, chunk: RawWPTReport) -> None:
         self._report['results'].extend(chunk['results'])
@@ -304,7 +318,7 @@ class WPTReport(object):
         """Hex checksum of the decompressed, concatenated report."""
         return self._hash.hashsum()
 
-    def summarize(self) -> Dict[str, List[int]]:
+    def summarize(self) -> Dict[str, Dict[str, Any]]:
         """Creates a summary of all the test results.
 
         The summary will be cached after the first call to this method.
@@ -325,26 +339,15 @@ class WPTReport(object):
             if test_file in self._summary:
                 raise ConflictingDataError(test_file)
 
-            # Each test will have 3 numbers representing test information.
-            # The first number represents the number of subtest passes, the
-            # second number represents the total number of subtests, and the
-            # third number represents whether the status was a pass or fail.
-            if result['status'] in ('OK', 'PASS'):
-                self._summary[test_file] = [0, 0, 1]
-            else:
-                self._summary[test_file] = [0, 0, 0]
-
-            # If no subtests are present,
-            # count the status toward the test totals.
-            if len(result['subtests']) == 0:
-                self._summary[test_file][0] += self._summary[test_file][2]
-                self._summary[test_file][1] += 1
+            # Abbreviate the status to store in the summary file.
+            status = STATUS_ABBREVIATIONS.get(result['status'],
+                                              result['status'])
+            self._summary[test_file] = {'s': status, 'c': [0, 0]}
 
             for subtest in result['subtests']:
                 if subtest['status'] == 'PASS':
-                    self._summary[test_file][0] += 1
-                self._summary[test_file][1] += 1
-
+                    self._summary[test_file]['c'][0] += 1
+                self._summary[test_file]['c'][1] += 1
         return self._summary
 
     def each_result(self) -> Iterator[Any]:

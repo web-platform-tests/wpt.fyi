@@ -14,9 +14,23 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// summary is the golang type for the JSON format in pass/total summary files.
-type summary map[string][]int
+// SummaryResult is the format of the data from summary files generated with the newest aggregation method.
+type SummaryResult struct {
+	// Status represents the 1-2 character abbreviation for the status of the test.
+	Status string `json:"s"`
+	// Counts represents the subtest counts (passes and total).
+	Counts []int `json:"c"`
+}
 
+// summary is the golang type for the JSON format in pass/total summary files.
+// It has an old structure and a new structure - each which represent summary files
+// that match the old or new summary format.
+type summary struct {
+	// Old summary format. This will be null if the summary is using the new format.
+	Old map[string][]int
+	// New summary format that keeps status information.
+	New map[string]SummaryResult
+}
 type queryHandler struct {
 	store      shared.Datastore
 	dataSource shared.CachedStore
@@ -93,16 +107,25 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 			defer wg.Done()
 
 			var data []byte
-			s := make(summary)
+			s := summary{
+				Old: nil,
+				New: nil,
+			}
 			data, loadErr := qh.loadSummary(testRun)
 			if err == nil && loadErr != nil {
 				err = fmt.Errorf("Failed to load test run %v: %s", testRun.ID, loadErr.Error())
 				return
 			}
-			marshalErr := json.Unmarshal(data, &s)
+			// Try to unmarshal the json using the new aggregation structure.
+			marshalErr := json.Unmarshal(data, &s.New)
 			if err == nil && marshalErr != nil {
-				err = marshalErr
-				return
+				// If that failed, this is likely an old summary format.
+				// Umarshal using the old structure.
+				oldMarshalErr := json.Unmarshal(data, &s.Old)
+				if oldMarshalErr != nil {
+					err = oldMarshalErr
+					return
+				}
 			}
 			summaries[i] = s
 		}(i, testRun)

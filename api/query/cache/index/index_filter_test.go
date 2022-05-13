@@ -135,7 +135,7 @@ func TestBindExecute_TestNamePattern(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -213,7 +213,7 @@ func TestBindExecute_SubtestNamePattern(t *testing.T) {
 					{
 						Passes:            testCase.Passes, // Only matches the subtest.
 						Total:             testCase.Total,
-						HasHarnessOK:      false,
+						Status:            "",
 						NewScoringProcess: true,
 					},
 				},
@@ -263,7 +263,7 @@ func TestBindExecute_TestPath(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -389,14 +389,14 @@ func TestBindExecute_TestStatus(t *testing.T) {
 				{
 					Passes:            0,
 					Total:             1,
-					HasHarnessOK:      false,
+					Status:            "",
 					NewScoringProcess: true,
 				},
 				// Run [1]: Safari: match1Name status is PASS: 1 / 1.
 				{
 					Passes:            1,
 					Total:             1,
-					HasHarnessOK:      false,
+					Status:            "",
 					NewScoringProcess: true,
 				},
 			},
@@ -409,7 +409,7 @@ func TestBindExecute_TestStatus(t *testing.T) {
 				{
 					Passes:            0,
 					Total:             1,
-					HasHarnessOK:      false,
+					Status:            "",
 					NewScoringProcess: true,
 				},
 				// Run [1]: Safari: match1Name.match2Sub is missing;
@@ -418,7 +418,7 @@ func TestBindExecute_TestStatus(t *testing.T) {
 				{
 					Passes:            0,
 					Total:             0,
-					HasHarnessOK:      false,
+					Status:            "",
 					NewScoringProcess: false,
 				},
 			},
@@ -472,7 +472,7 @@ func TestBindExecute_Link(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -530,7 +530,7 @@ func TestBindExecute_LinkWithWildcards(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -585,7 +585,7 @@ func TestBindExecute_Triaged(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -641,7 +641,7 @@ func TestBindExecute_TriagedWildcards(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -698,7 +698,7 @@ func TestBindExecute_QueryAndTestLabel(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -754,7 +754,7 @@ func TestBindExecute_QueryOrTestLabel(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -767,7 +767,7 @@ func TestBindExecute_QueryOrTestLabel(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -824,7 +824,7 @@ func TestBindExecute_TestLabel(t *testing.T) {
 				// Only matching test passes.
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -887,13 +887,13 @@ func TestBindExecute_IsDifferent(t *testing.T) {
 			{
 				Passes:            0,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 			{
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -941,7 +941,7 @@ func TestBindExecute_IsTentative(t *testing.T) {
 			{
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -989,7 +989,7 @@ func TestBindExecute_IsOptional(t *testing.T) {
 			{
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -1058,13 +1058,13 @@ func TestBindExecute_MoreThan(t *testing.T) {
 			{
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 			{
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -1133,13 +1133,13 @@ func TestBindExecute_LessThan(t *testing.T) {
 			{
 				Passes:            0,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 			{
 				Passes:            1,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -1234,7 +1234,7 @@ func TestBindExecute_NotLink(t *testing.T) {
 			{
 				Passes:            0,
 				Total:             1,
-				HasHarnessOK:      false,
+				Status:            "",
 				NewScoringProcess: true,
 			},
 		},
@@ -1288,7 +1288,7 @@ func TestBindExecute_HandleHarness(t *testing.T) {
 			{
 				Passes:            0,
 				Total:             0,
-				HasHarnessOK:      true,
+				Status:            "O",
 				NewScoringProcess: true,
 			},
 		},

@@ -480,9 +480,9 @@ type LegacySearchRunResult struct {
 	Passes int `json:"passes"`
 	// Total is the total number of test results for this run/file pair.
 	Total int `json:"total"`
-	// HasHarnessOK represents whether an "OK" value existed in the subtest results.
-	// or the test status was marked as "PASS" when the summary was created.
-	HasHarnessOK bool `json:"hasHarnessOK"`
+	// Status represents either the test status or harness status.
+	// This will be an empty string for old summaries.
+	Status string `json:"status"`
 	// NewScoringProcess represents whether the summary was created with the old
 	// or new aggregation process.
 	NewScoringProcess bool `json:"newScoringProcess"`

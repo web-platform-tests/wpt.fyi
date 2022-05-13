@@ -78,7 +78,7 @@ func (a *indexAggregator) Add(t TestID) error {
 			// If we see a Harness "OK", we mark that we have seen one
 			// rather than adding it to the subtest total.
 			if res.IsHarnessStatus() {
-				results[i].HasHarnessOK = true
+				results[i].Status = "O"
 			} else if res.IsPass() {
 				results[i].Total++
 				results[i].Passes++

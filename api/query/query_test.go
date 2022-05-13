@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -34,11 +35,11 @@ func TestLoadSummaries_success(t *testing.T) {
 		"https://example.com/2-summary.json.gz",
 	}
 	testRuns := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:         1,
 			ResultsURL: urls[0],
 		},
-		shared.TestRun{
+		{
 			ID:         2,
 			ResultsURL: urls[1],
 		},
@@ -55,8 +56,14 @@ func TestLoadSummaries_success(t *testing.T) {
 		[]byte(`{"/x/y/z":[3,4]}`),
 	}
 	summaries := []summary{
-		map[string][]int{"/a/b/c": []int{1, 2}},
-		map[string][]int{"/x/y/z": []int{3, 4}},
+		{
+			Old: map[string][]int{"/a/b/c": {1, 2}},
+			New: map[string]SummaryResult{"/a/b/c": {Status: "", Counts: []int(nil)}},
+		},
+		{
+			Old: map[string][]int{"/x/y/z": {3, 4}},
+			New: map[string]SummaryResult{"/x/y/z": {Status: "", Counts: []int(nil)}},
+		},
 	}
 
 	bindCopySlice := func(i int) func(_, _, _ interface{}) {

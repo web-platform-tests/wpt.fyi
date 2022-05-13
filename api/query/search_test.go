@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -39,14 +40,19 @@ func doTestIC(t *testing.T, p, q string) {
 		Q:      q,
 	}
 	summaries := []summary{
-		map[string][]int{
-			"/a" + p + "c": []int{1, 2},
-			p + "c":        []int{9, 9},
-		},
-		map[string][]int{
-			"/z" + p + "c": []int{0, 8},
-			"/x/y/z":       []int{3, 4},
-			p + "c":        []int{5, 9},
+		{
+			Old: map[string][]int{
+				"/a" + p + "c": []int{1, 2},
+				p + "c":        []int{9, 9},
+			},
+			New: nil,
+		}, {
+			Old: map[string][]int{
+				"/z" + p + "c": []int{0, 8},
+				"/x/y/z":       []int{3, 4},
+				p + "c":        []int{5, 9},
+			},
+			New: nil,
 		},
 	}
 

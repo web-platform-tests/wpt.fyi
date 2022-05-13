@@ -187,29 +187,45 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 	// Dedup visited file names via a map of results.
 	resMap := make(map[string]shared.SearchResult)
 	for i, s := range summaries {
-		for filename, testInfo := range s {
-			// Exclude filenames that do not match query.
-			if !strings.Contains(canonicalizeStr(filename), q) {
-				continue
-			}
-
-			if _, ok := resMap[filename]; !ok {
-				resMap[filename] = shared.SearchResult{
-					Test:         filename,
-					LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
+		if s.Old != nil {
+			// This is an old summary. Format according to old process.
+			for filename, passAndTotal := range s.Old {
+				// Exclude filenames that do not match query.
+				if !strings.Contains(canonicalizeStr(filename), q) {
+					continue
+				}
+				if _, ok := resMap[filename]; !ok {
+					resMap[filename] = shared.SearchResult{
+						Test:         filename,
+						LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
+					}
+				}
+				resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
+					Passes:            passAndTotal[0],
+					Total:             passAndTotal[1],
+					Status:            "",
+					NewScoringProcess: false,
 				}
 			}
-			// If the summary file was aggregated using the new scoring process,
-			// testInfo will contain a 3rd integer representing whether we have
-			// seen a Harness "OK" status for this test. If there is no 3rd
-			// integer, we know this summary was computed using the old scoring method.
-			newScoringProcess := (len(testInfo) == 3)
-			hasHarnessOK := (newScoringProcess && testInfo[2] == 1)
-			resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
-				Passes:            testInfo[0],
-				Total:             testInfo[1],
-				HasHarnessOK:      hasHarnessOK,
-				NewScoringProcess: newScoringProcess,
+		} else {
+			// This is a new summary. Aggregate using new process.
+			for filename, testInfo := range s.New {
+				// Exclude filenames that do not match query.
+				if !strings.Contains(canonicalizeStr(filename), q) {
+					continue
+				}
+				if _, ok := resMap[filename]; !ok {
+					resMap[filename] = shared.SearchResult{
+						Test:         filename,
+						LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
+					}
+				}
+				resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
+					Passes:            testInfo.Counts[0],
+					Total:             testInfo.Counts[1],
+					Status:            testInfo.Status,
+					NewScoringProcess: true,
+				}
 			}
 		}
 	}
