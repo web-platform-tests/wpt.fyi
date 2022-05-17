@@ -226,10 +226,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
-                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                    /
-                    <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-
+                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
+                    <template is="dom-if" if="[[!computePathIsATestFile(node.path)]]">
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ formatTestTotal(node, index) }}</span>
+                    </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
                       <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank">
                         <iron-icon class="bug" icon="bug-report"></iron-icon>
@@ -259,9 +259,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
                   <td class\$="numbers [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">
-                    <span class\$="passes [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">[[ columnTotal.passes ]]</span>
-                    /
-                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">[[ columnTotal.total ]]</span>
+                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">{{ formatTestPercentage(columnTotal.passes, columnTotal.total) }}</span>
                   </td>
                 </template>
               </tr>
@@ -654,10 +652,16 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           nodes['totals'] = this.testRuns.map(() => ({passes: 0, total: 0}));
         }
         for (let i = 0; i < rs.length; i++) {
-          nodes.totals[i].passes += rs[i].passes;
-          nodes.totals[i].total += rs[i].total;
-          row.results[i].passes += rs[i].passes;
-          row.results[i].total += rs[i].total;
+          // Ignore aggregating test if there are no results.
+          if (rs[i].total ===  0) {
+            continue;
+          }
+          // Take the passes / total subtests to get a percentage passing.
+          const percentPassed = rs[i].passes / rs[i].total;
+          nodes.totals[i].passes += percentPassed;
+          row.results[i].passes += percentPassed;
+          nodes.totals[i].total += 1;
+          row.results[i].total += 1;
         }
         if (previousTestPath) {
           const previous = this.searchResults.find(r => r.test === previousTestPath);
@@ -689,7 +693,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
         return nodes;
       }, {});
-    
+
     // Take the calculated totals to be displayed at bottom of results page.
     // Delete key after reassignment.
     this.displayedTotals = resultsByPath.totals;
@@ -821,6 +825,29 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     if (index >= 0 && index < node.results.length) {
       return node.results[index][property];
     }
+  }
+
+  formatTestTotal(node, index) {
+    // Display the total amount of tests that exist in a subfolder.
+    // This will not be displayed in a cell that represents a single test.
+    const total = node.results[index].total;
+    return (total === 0) ? "" : ` (${total})`;
+  }
+
+  formatTestPercentage(passes, total) {
+    // Display "Missing" text if there are no tests or subtests.
+    if (total === 0) {
+      return "Missing";
+    }
+    const percent = parseFloat((passes / total) * 100).toFixed(1);
+    return `${percent}%`;
+  }
+
+  getNodeResult(node, index) {
+    // Calculate what should be displayed in a given results row.
+    const passes = node.results[index].passes;
+    const total = node.results[index].total;
+    return this.formatTestPercentage(passes, total);
   }
 
   /* Function for getting total numbers.
