@@ -258,10 +258,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     <iron-icon class="bug" icon="label" title="[[getTestLabelTitle(node.path, labelMap)]]"></iron-icon>
                   </template>
                 </td>
-
+                
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
-                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
+                    <template is="dom-if" if="[[diffRun]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_total') }}</span>
+                    </template>
+                    <template is="dom-if" if="[[!diffRun]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
+                    </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
                       <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank">
                         <iron-icon class="bug" icon="bug-report"></iron-icon>
@@ -666,6 +673,56 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return name;
     };
 
+    const aggregateTestTotals = (nodes, row, rs) => {
+      // Keep track of overall total.
+      if (!nodes.hasOwnProperty('totals')) {
+        nodes['totals'] = this.testRuns.map(() => ({ passes: 0, total: 0 }));
+      }
+      for (let i = 0; i < rs.length; i++) {
+        // If we have a harness status that's not "OK",
+        // save it to display instead of showing a percentage.
+        if (rs[i].newScoringProcess && rs[i].status && rs[i].status !== 'O') {
+          row.results[i].status = STATUS_ABBREVIATIONS[rs[i].status];
+        }
+
+        // Keep total subtest total for run comparisons.
+        if (!row.results[i].subtest_total) {
+          row.results[i].subtest_passes = 0;
+          row.results[i].subtest_total = 0;
+        }
+        row.results[i].subtest_passes += rs[i].passes;
+        row.results[i].subtest_total += rs[i].total;
+        if (rs[i].status === 'O') {
+          row.results[i].subtest_passes += 1;
+          row.results[i].subtest_total += 1;
+        }
+
+        // If this is an old summary, aggregate using the old scoring process.
+        if (!rs[i].newScoringProcess) {
+          // Ignore aggregating test if there are no results.
+          if (rs[i].total === 0) {
+            continue;
+          }
+          // Take the passes / total subtests to get a percentage passing.
+          const percentPassed = rs[i].passes / rs[i].total;
+          nodes.totals[i].passes += percentPassed;
+          row.results[i].passes += percentPassed;
+        // If this is a new summary, aggregate using the new scoring process.
+        } else if (["O", "P"].includes(rs[i].status) || (rs[i].total > 0
+          && rs[i].total === rs[i].passes)) {
+          // If we have a total of 0 subtests but the status is passing,
+          // mark as 100% passing.
+          const percentPassed = (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
+          nodes.totals[i].passes += percentPassed;
+          row.results[i].passes += percentPassed;
+        }
+
+        // Add this test to the total count of tests.
+        row.results[i].total++;
+        nodes.totals[i].total++;
+      }
+    }
+
     const resultsByPath = this.searchResults
       // Filter out files not in this directory.
       .filter(r => r.test.startsWith(prefix))
@@ -687,47 +744,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
         const name = collapsePathOnto(testPath, nodes);
 
-        // Accumulate the sums.
+        
         const rs = r.legacy_status;
+        const row = nodes[name];
         if (!rs) {
           return nodes;
         }
-        const row = nodes[name];
-        
-        // Keep track of overall total.
-        if (!nodes.hasOwnProperty('totals')) {
-          nodes['totals'] = this.testRuns.map(() => ({ passes: 0, total: 0 }));
-        }
-        for (let i = 0; i < rs.length; i++) {
-          // If we have a harness status that's not "OK",
-          // save it to display instead of showing a percentage.
-          if (rs[i].newScoringProcess && rs[i].status && rs[i].status !== 'O') {
-            row.results[i].status = STATUS_ABBREVIATIONS[rs[i].status];
-          }
+        // Accumulate the sums.
+        aggregateTestTotals(nodes, row, r.legacy_status);
 
-          // If this is an old summary, aggregate using the old scoring process.
-          if (!rs[i].newScoringProcess) {
-            // Ignore aggregating test if there are no results.
-            if (rs[i].total === 0) {
-              continue;
-            }
-            // Take the passes / total subtests to get a percentage passing.
-            const percentPassed = rs[i].passes / rs[i].total;
-            nodes.totals[i].passes += percentPassed;
-            row.results[i].passes += percentPassed;
-          // If this is a new summary, aggregate using the new scoring process.
-          } else if (["O", "P"].includes(rs[i].status) || (rs[i].total > 0
-            && rs[i].total === rs[i].passes)) {
-            // If we have a total of 0 subtests but the status is passing,
-            // mark as 100% passing.
-            const percentPassed = (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
-            nodes.totals[i].passes += percentPassed;
-            row.results[i].passes += percentPassed;
-          }
-          // Add this test to the total count of tests.
-          row.results[i].total += 1;
-          nodes.totals[i].total += 1;
-        }
         if (previousTestPath) {
           const previous = this.searchResults.find(r => r.test === previousTestPath);
           if (previous) {
