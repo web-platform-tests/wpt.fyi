@@ -699,9 +699,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           nodes['totals'] = this.testRuns.map(() => ({ passes: 0, total: 0 }));
         }
         for (let i = 0; i < rs.length; i++) {
-          // Keep the status to show on the cell display
-          // if this is a test that has no subtests.
-          if (rs[i].newScoringProcess && rs[i].status && rs[i].total === 0) {
+          // If we have a harness status that's not "OK",
+          // save it to display instead of showing a percentage.
+          if (rs[i].newScoringProcess && rs[i].status && rs[i].status !== 'O') {
             row.results[i].status = STATUS_ABBREVIATIONS[rs[i].status];
           }
 
@@ -896,15 +896,23 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // Display the total amount of tests that exist in a subfolder.
     // This will not be displayed in a cell that represents a single test.
     const total = node.results.reduce((a, b) => Math.max(a, b.total), 0);
-    return (total === 0) ? "" : ` (${total})`;
+    return (total === 0) ? '' : ` (${total})`;
   }
 
   formatTestPercentage(passes, total) {
     // Display "MISSING" text if there are no tests or subtests.
     if (total === 0) {
-      return "MISSING";
+      return 'MISSING';
     }
-    const percent = parseFloat((passes / total) * 100).toFixed(1);
+
+    // Show flat 0% or 100% if all or no tests/subtests pass.
+    if (passes === 0) {
+      return '0%';
+    }
+    if (passes === total) {
+      return '100%';
+    }
+    const percent = parseFloat(passes / total * 100).toFixed(1);
     return `${percent}%`;
   }
 
