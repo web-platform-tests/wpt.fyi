@@ -206,7 +206,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             <template is="dom-if" if="[[displayedNodes]]">
               <tr class="sort-row">
                 <td>
-                  <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestname]]" aria-label="Sort the test name column"></paper-icon-button>
+                  <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestName]]" aria-label="Sort the test name column"></paper-icon-button>
                 </td>
                 <template is="dom-repeat" items="[[testRuns]]">
                   <td>
@@ -448,7 +448,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     };
     this.dismissToast = e => e.target.closest('paper-toast').close();
     this.reloadPendingMetadata = this.handleReloadPendingMetadata.bind(this);
-    this.sortTestname = this.sortTestname.bind(this);
+    this.sortTestName = this.sortTestName.bind(this);
   }
 
   connectedCallback() {
@@ -879,17 +879,19 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.path = this.searchResults[(n + next) % n].test;
   }
 
-  sortTestname() {
+  sortTestName() {
     if (!this.displayedNodes) {
       return;
     }
     const sortedNodes = this.displayedNodes.slice();
     sortedNodes.sort(function (a, b) {
-      if (a.path < b.path) {
+      const pathA = a.path.toLowerCase();
+      const pathB = b.path.toLowerCase();
+      if (pathA < pathB) {
         return -1;
       }
 
-      if (a.path > b.path) {
+      if (pathA > pathB) {
         return 1;
       }
       return 0;
