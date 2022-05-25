@@ -8,7 +8,6 @@ import '../components/info-banner.js';
 import { LoadingState } from '../components/loading-state.js';
 import '../components/path.js';
 import '../components/test-file-results.js';
-import '../components/test-results-chart.js';
 import '../components/test-results-history-grid.js';
 import '../components/test-run.js';
 import '../components/test-runs-query-builder.js';
@@ -288,14 +287,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           <h3>
             History <span>(Experimental)</span>
           </h3>
-          <test-results-chart
-              product-specs="[[productSpecs]]"
-              path="[[path]]"
-              labels="[[labels]]"
-              master="true"
-              aligned="[[aligned]]"
-              tests="[[displayedTests]]">
-          </test-results-chart>
 
           <template is="dom-if" if="[[pathIsATestFile]]">
             <test-results-history-grid
