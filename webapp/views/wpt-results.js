@@ -584,16 +584,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.refreshDisplayedNodes();
   }
 
-  nodeSort(a, b) {
-    if (a.path < b.path) {
-      return -1;
-    }
-    if (a.path > b.path) {
-      return 1;
-    }
-    return 0;
-  }
-
   refreshDisplayedNodes() {
     if (!this.searchResults || !this.searchResults.length) {
       this.displayedNodes = [];
@@ -690,7 +680,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         return row.diff;
       })
       // TODO(markdittmer): Is this still necessary?
-      .sort(this.nodeSort);
+      .sort(this.compareTestName);
   }
 
   computeDifferences(before, after) {
@@ -884,20 +874,21 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return;
     }
     const sortedNodes = this.displayedNodes.slice();
-    sortedNodes.sort(function (a, b) {
-      const pathA = a.path.toLowerCase();
-      const pathB = b.path.toLowerCase();
-      if (pathA < pathB) {
-        return -1;
-      }
-
-      if (pathA > pathB) {
-        return 1;
-      }
-      return 0;
-    })
-
+    sortedNodes.sort(this.compareTestName);
     this.displayedNodes = sortedNodes;
+  }
+
+  compareTestName(a, b) {
+    const pathA = a.path.toLowerCase();
+    const pathB = b.path.toLowerCase();
+    if (pathA < pathB) {
+      return -1;
+    }
+
+    if (pathA > pathB) {
+      return 1;
+    }
+    return 0;
   }
 
   sortTestResults() {
@@ -909,8 +900,22 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
       const sortedNodes = this.displayedNodes.slice();
       sortedNodes.sort(function (a, b) {
-        return a.results[index].passes - b.results[index].passes;
-      })
+        // Both 0/0 cases; compare test names.
+        if (a.results[index].total === 0 && b.results[index].total === 0) {
+          return this.compareTestName(a, b);
+        }
+
+        // One of them is 0/0; compare passes;
+        if (a.results[index].total === 0 || b.results[index].total === 0) {
+          return a.results[index].passes - b.results[index].passes;
+        }
+        const percentageA = a.results[index].passes / a.results[index].total;
+        const percentageB = b.results[index].passes / b.results[index].total;
+        if (percentageA === percentageB) {
+          return this.compareTestName(a, b);
+        }
+        return percentageA - percentageB;
+      });
 
       this.displayedNodes = sortedNodes;
     };
