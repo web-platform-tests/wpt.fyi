@@ -49,9 +49,10 @@ suite('TestFileResultsTable', () => {
       test('Fail and error are colored identically', () => {
         assert.equal(tfrt.colorClass('FAIL'), tfrt.colorClass('ERROR'));
       });
-      test('Harness status is not equivalent to pass', () => {
-        // OK is used for harness status and should not be colored green.
-        assert.notEqual(tfrt.colorClass('OK'), tfrt.colorClass('PASS'));
+      test('Harness status OK is equivalent to pass', () => {
+        // Harness status is currently counted as a passable subtest and affects
+        // the total count of passing or failing tests, so OK will be shown as green.
+        assert.equal(tfrt.colorClass('OK'), tfrt.colorClass('PASS'));
       });
     });
 
