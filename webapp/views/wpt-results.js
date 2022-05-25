@@ -246,9 +246,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       is-dir="{{ node.isDir }}"
                       is-triage-mode=[[isTriageMode]]>
                   </path-part>
-                  <template is="dom-if" if="[[!computePathIsATestFile(node.path)]]">
-                    <span class="total">{{ getTestTotal(node) }}</span>
-                  </template>
+                  <span class="total">{{ getTestTotal(node) }}</span>
                   <template is="dom-if" if="[[shouldDisplayMetadata(null, node.path, metadataMap)]]">
                     <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank">
                       <iron-icon class="bug" icon="bug-report"></iron-icon>
@@ -918,9 +916,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getTestTotal(node) {
-    // Display the total amount of tests that exist in a subfolder.
-    // This will not be displayed in a cell that represents a single test.
-    const total = node.results.reduce((a, b) => Math.max(a, b.total), 0);
+    // Display test totals in the subfolder if this cell represents a directory.
+    // If this cell represents a single test, display subtests.
+    const prop = (node.isDir) ? 'total': 'subtest_total';
+
+    const total = node.results.reduce((a, b) => Math.max(a, b[prop]), 0);
+    if (!node.isDir) {
+      return (total - 1 <= 0) ? '' : ` (${total - 1})`;
+    }
     return (total === 0) ? '' : ` (${total})`;
   }
 
