@@ -945,10 +945,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
 
       const sortedNodes = this.displayedNodes.slice();
+      const self = this;
       sortedNodes.sort(function (a, b) {
         // Both 0/0 cases; compare test names.
         if (a.results[index].total === 0 && b.results[index].total === 0) {
-          return this.compareTestName(a, b);
+          return self.compareTestName(a, b);
         }
 
         // One of them is 0/0; compare passes;
@@ -958,7 +959,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         const percentageA = a.results[index].passes / a.results[index].total;
         const percentageB = b.results[index].passes / b.results[index].total;
         if (percentageA === percentageB) {
-          return this.compareTestName(a, b);
+          return self.compareTestName(a, b);
         }
         return percentageA - percentageB;
       });
