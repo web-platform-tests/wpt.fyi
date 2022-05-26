@@ -620,8 +620,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   pathUpdated(path) {
     this.refreshDisplayedNodes();
-    this.sortRow = new Array(this.testRuns.length).fill(false);
-    this.isPathSorted = false;
+    if (this.testRuns) {
+      this.sortRow = new Array(this.testRuns.length).fill(false);
+      this.isPathSorted = false;
+    }
   }
 
   refreshDisplayedNodes() {
